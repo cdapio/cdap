@@ -1,7 +1,7 @@
 .. meta::
-    :author: Cask Data, Inc.
+:author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+       :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _http-restful-api-stream:
 
@@ -31,33 +31,33 @@ A stream can be created with an HTTP PUT method to the URL::
   PUT /v3/namespaces/<namespace-id>/streams/<new-stream-id>
 
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Parameter
-     - Description
-   * - ``namespace-id``
+      * - Parameter
+        - Description
+      * - ``namespace-id``
      - Namespace ID
    * - ``new-stream-id``
      - Name of the stream to be created
 
 .. rubric:: HTTP Responses
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Status Codes
-     - Description
-   * - ``200 OK``
+      * - Status Codes
+        - Description
+      * - ``200 OK``
      - The event either successfully created a stream or the stream already exists
 
 .. rubric:: Example
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :stub-columns: 1
 
-   * - HTTP Method
-     - ``PUT /v3/namespaces/default/streams/mystream``
+      * - HTTP Method
+        - ``PUT /v3/namespaces/default/streams/mystream``
    * - Description
      - Create a new stream named *mystream* in the namespace *default* 
 
@@ -70,13 +70,13 @@ Optionally, properties for the stream can be set by providing them in the body o
 be retrieved and modified afterwards using the ``/properties`` endpoint.
 
 .. list-table::
-   :widths: 20 20 60
+:widths: 20 20 60
    :header-rows: 1
 
-   * - Parameter
-     - Default Value
-     - Description
-   * - ``ttl``
+      * - Parameter
+        - Default Value
+        - Description
+      * - ``ttl``
      - ``Long.MAX`` (2^63 - 1)
      - Number of seconds that an event will be valid for, since it was ingested
    * - ``format``
@@ -91,6 +91,9 @@ be retrieved and modified afterwards using the ``/properties`` endpoint.
    * - ``description``
      - ``null``
      - Description of the stream
+   * - ``principal``
+     - ``null``
+     - Kerberos principal of the owner.
 
 If a property is not given in the request body, the default value will be used instead.
 
@@ -107,24 +110,24 @@ asynchronously to a stream with higher throughput by sending an HTTP POST method
   POST /v3/namespaces/<namespace-id>/streams/<stream-id>/async
 
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Parameter
-     - Description
-   * - ``namespace-id``
+      * - Parameter
+        - Description
+      * - ``namespace-id``
      - Namespace ID
    * - ``stream-id``
      - Name of an existing stream
 
 .. rubric:: HTTP Responses
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Status Codes
-     - Description
-   * - ``200 OK``
+      * - Status Codes
+        - Description
+      * - ``200 OK``
      - The event was successfully received and persisted
    * - ``202 ACCEPTED``
      - The event was successfully received but may not be persisted; only the asynchronous endpoint will return this status code
@@ -134,11 +137,11 @@ asynchronously to a stream with higher throughput by sending an HTTP POST method
 
 .. rubric:: Example
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :stub-columns: 1
 
-   * - HTTP Method
-     - ``POST /v3/namespaces/default/streams/mystream``
+      * - HTTP Method
+        - ``POST /v3/namespaces/default/streams/mystream``
    * - Description
      - Send an event to the existing stream named *mystream* in the namespace *default*
 
@@ -165,12 +168,12 @@ The ``Content-Type`` header must be specified to describe the data type in the P
 types are supported:
 
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Content-Type
-     - Description
-   * - ``namespace-id``
+      * - Content-Type
+        - Description
+      * - ``namespace-id``
      - Namespace ID
    * - ``text/{sub-type}``
      - Text content with one line per event; the ``sub-type`` can be anything
@@ -179,32 +182,32 @@ types are supported:
 
 .. rubric:: HTTP Responses
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Status Codes
-     - Description
-   * - ``200 OK``
+      * - Status Codes
+        - Description
+      * - ``200 OK``
      - All events were successfully received and persisted
    * - ``404 Not Found``
      - The stream does not exist
 
 .. rubric:: Example
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :stub-columns: 1
 
-   * - HTTP Method
-     - ``POST /v3/namespaces/default/streams/mystream/batch``
+      * - HTTP Method
+        - ``POST /v3/namespaces/default/streams/mystream/batch``
    * - Content type header
      - ``Content-type: text/csv``
    * - POST body
      - A comma-separated record per line::
-     
+
         1,Sam,Smith,18
         2,Max,Johnson,28
         3,Bill,Jones,20
-        
+
    * - Description
      - Writes three comma-separated events to the stream named *mystream* in the namespace *default*
 
@@ -225,12 +228,12 @@ Reading events from an existing stream is performed with an HTTP GET method to t
   GET /v3/namespaces/<namespace-id>/streams/<stream-id>/events?start=<startTime>&end=<endTime>&limit=<limit>
 
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Parameter
-     - Description
-   * - ``namespace-id``
+      * - Parameter
+        - Description
+      * - ``namespace-id``
      - Namespace ID
    * - ``stream-id``
      - Name of an existing stream
@@ -243,12 +246,12 @@ Reading events from an existing stream is performed with an HTTP GET method to t
 
 .. rubric:: HTTP Responses
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Status Codes
-     - Description
-   * - ``200 OK``
+      * - Status Codes
+        - Description
+      * - ``200 OK``
      - The event was successfully received and the result of the read was returned
    * - ``204 No Content``
      - The stream exists but there are no events that satisfy the request
@@ -257,18 +260,18 @@ Reading events from an existing stream is performed with an HTTP GET method to t
 
 The response body is a JSON array with the stream event objects as array elements::
 
-   [ 
-     {"timestamp" : ... , "headers": { ... }, "body" : ... }, 
-     {"timestamp" : ... , "headers": { ... }, "body" : ... } 
+   [
+     {"timestamp" : ... , "headers": { ... }, "body" : ... },
+     {"timestamp" : ... , "headers": { ... }, "body" : ... }
    ]
 
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Field
-     - Description
-   * - ``timestamp``
+      * - Field
+        - Description
+      * - ``timestamp``
      - Timestamp in milliseconds of the stream event at ingestion time
    * - ``headers``
      - A JSON map of all custom headers associated with the stream event
@@ -277,11 +280,11 @@ The response body is a JSON array with the stream event objects as array element
 
 .. rubric:: Example
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :stub-columns: 1
 
-   * - HTTP Method
-     - ``GET /v3/namespaces/default/streams/mystream/events?limit=1``
+      * - HTTP Method
+        - ``GET /v3/namespaces/default/streams/mystream/events?limit=1``
    * - Description
      - Read the initial event from an existing stream named *mystream* in the namespace *default*
    * - Response body
@@ -296,35 +299,35 @@ A stream can be truncated with an HTTP POST method to the URL::
   POST /v3/namespaces/<namespace-id>/streams/<stream-id>/truncate
 
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Parameter
-     - Description
-   * - ``namespace-id``
+      * - Parameter
+        - Description
+      * - ``namespace-id``
      - Namespace ID
    * - ``stream-id``
      - Name of an existing stream
 
 .. rubric:: HTTP Responses
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Status Codes
-     - Description
-   * - ``200 OK``
+      * - Status Codes
+        - Description
+      * - ``200 OK``
      - The stream was successfully truncated
    * - ``404 Not Found``
      - The stream ``{stream-id}`` does not exist
 
 .. rubric:: Example
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :stub-columns: 1
 
-   * - HTTP Method
-     - ``POST /v3/namespaces/default/streams/mystream/truncate``
+      * - HTTP Method
+        - ``POST /v3/namespaces/default/streams/mystream/truncate``
    * - Description
      - Delete all events in the stream named *mystream* in the namespace *default*
 
@@ -339,35 +342,35 @@ A stream can be deleted with an HTTP DELETE method to the URL::
   DELETE /v3/namespaces/<namespace-id>/streams/<stream-id>
 
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Parameter
-     - Description
-   * - ``namespace-id``
+      * - Parameter
+        - Description
+      * - ``namespace-id``
      - Namespace ID
    * - ``stream-id``
      - Name of an existing stream
 
 .. rubric:: HTTP Responses
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Status Codes
-     - Description
-   * - ``200 OK``
+      * - Status Codes
+        - Description
+      * - ``200 OK``
      - The stream was successfully deleted
    * - ``404 Not Found``
      - The stream ``{stream-id}`` does not exist
 
 .. rubric:: Example
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :stub-columns: 1
 
-   * - HTTP Method
-     - ``DELETE /v3/namespaces/default/streams/mystream``
+      * - HTTP Method
+        - ``DELETE /v3/namespaces/default/streams/mystream``
    * - Description
      - Deletes the stream named *mystream* in the namespace *default* and all events in
        the stream
@@ -378,7 +381,7 @@ Getting and Setting Stream Properties
 =====================================
 There are a number of stream properties that can be retrieved and specified.
 
-The **Time-To-Live** (TTL, specified in seconds) property governs how long an event is valid for consumption since 
+The **Time-To-Live** (TTL, specified in seconds) property governs how long an event is valid for consumption since
 it was written to the stream.
 The default TTL for all streams is infinite, meaning that events will never expire.
 
@@ -399,26 +402,26 @@ Stream properties can be retrieved with an HTTP PUT method to the URL::
   GET /v3/namespaces/<namespace-id>/streams/<stream-id>
 
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Parameter
-     - Description
-   * - ``namespace-id``
+      * - Parameter
+        - Description
+      * - ``namespace-id``
      - Namespace ID
    * - ``stream-id``
      - Name of an existing stream
 
 .. rubric:: Example
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :stub-columns: 1
 
-   * - HTTP Method
-     - ``GET /v3/namespaces/default/streams/who``
+      * - HTTP Method
+        - ``GET /v3/namespaces/default/streams/who``
        ::
 
-         { 
+         {
            "ttl" : 9223372036854775,
            "format": {
              "name": "text",
@@ -433,6 +436,7 @@ Stream properties can be retrieved with an HTTP PUT method to the URL::
            },
            "notification.threshold.mb" : 1024,
            "description" : "Web access logs"
+           "principal" : "alice/somehost.net@SOMEKDC.net"
          }
      
    * - Description
@@ -445,12 +449,12 @@ Stream properties can be changed with an HTTP PUT method to the URL::
   PUT /v3/namespaces/<namespace-id>/streams/<stream-id>/properties
 
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Parameter
-     - Description
-   * - ``namespace-id``
+      * - Parameter
+        - Description
+      * - ``namespace-id``
      - Namespace ID
    * - ``stream-id``
      - Name of an existing stream
@@ -458,12 +462,12 @@ Stream properties can be changed with an HTTP PUT method to the URL::
 New properties are passed in the JSON request body.
 
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Parameter
-     - Description
-   * - ``ttl``
+      * - Parameter
+        - Description
+      * - ``ttl``
      - Number of seconds that an event will be valid for, since it was ingested
    * - ``format``
      - JSON Object describing the format name, schema, and settings. Accepted formats are
@@ -482,12 +486,12 @@ the stream and re-create it with the new schema.
 
 .. rubric:: HTTP Responses
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Status Codes
-     - Description
-   * - ``200 OK``
+      * - Status Codes
+        - Description
+      * - ``200 OK``
      - Stream properties were changed successfully
    * - ``400 Bad Request``
      - The TTL value is not a non-negative integer, the format was not known,
@@ -497,11 +501,11 @@ the stream and re-create it with the new schema.
 
 .. rubric:: Example
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :stub-columns: 1
 
-   * - HTTP Method
-     - ``PUT /v3/namespaces/default/streams/mystream/properties``
+      * - HTTP Method
+        - ``PUT /v3/namespaces/default/streams/mystream/properties``
        ::
 
          { 
@@ -534,24 +538,24 @@ You can retrieve a list of streams used by an application by issuing a HTTP GET 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/streams
 
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Parameter
-     - Description
-   * - ``namespace-id``
+      * - Parameter
+        - Description
+      * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Application ID
 
 .. rubric:: HTTP Responses
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Status Codes
-     - Description
-   * - ``200 OK``
+      * - Status Codes
+        - Description
+      * - ``200 OK``
      - Request was successful
 
 Streams used by a Program
@@ -561,12 +565,12 @@ You can retrieve a list of streams used by a program by issuing a HTTP GET reque
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/streams 
 
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Parameter
-     - Description
-   * - ``namespace-id``
+      * - Parameter
+        - Description
+      * - ``namespace-id``
      - Namespace ID
    * - ``app-id``
      - Application ID
@@ -577,12 +581,12 @@ You can retrieve a list of streams used by a program by issuing a HTTP GET reque
 
 .. rubric:: HTTP Responses
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Status Codes
-     - Description
-   * - ``200 OK``
+      * - Status Codes
+        - Description
+      * - ``200 OK``
      - Request was successful
 
 Programs using a Stream 
@@ -592,22 +596,22 @@ You can retrieve a list of programs that are using a stream by issuing a HTTP GE
   GET /v3/namespaces/<namespace-id>/data/datasets/<dataset-id>/programs
 
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Parameter
-     - Description
-   * - ``namespace-id``
+      * - Parameter
+        - Description
+      * - ``namespace-id``
      - Namespace ID
    * - ``dataset-id``
      - Dataset ID
 
 .. rubric:: HTTP Responses
 .. list-table::
-   :widths: 20 80
+:widths: 20 80
    :header-rows: 1
 
-   * - Status Codes
-     - Description
-   * - ``200 OK``
+      * - Status Codes
+        - Description
+      * - ``200 OK``
      - Request was successful
