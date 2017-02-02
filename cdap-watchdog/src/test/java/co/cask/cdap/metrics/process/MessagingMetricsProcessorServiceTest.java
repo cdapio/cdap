@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricSearchQuery;
@@ -40,16 +39,13 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Testing possible race condition of the {@link MessagingMetricsProcessorService}
@@ -61,7 +57,9 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
   private static final int PARTITION_SIZE = 2;
 
   @Test
-  public void persistMetricsTests() throws IOException, TopicNotFoundException, InterruptedException, TimeoutException, ExecutionException {
+  public void persistMetricsTests()
+    throws Exception {
+
     injector.getInstance(TransactionManager.class).startAndWait();
     injector.getInstance(DatasetOpExecutor.class).startAndWait();
     injector.getInstance(DatasetService.class).startAndWait();
@@ -71,32 +69,42 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
       partitions.add(i);
     }
 
-    final MockMetricStore metricStore = new MockMetricStore();
-
-    injector.getInstance(MetricStore.class);
-
-    MessagingMetricsProcessorService messagingMetricsProcessorService =
-      new MessagingMetricsProcessorService(injector.getInstance(MetricDatasetFactory.class), TOPIC_PREFIX,
-                                           partitions, messagingService, injector.getInstance(SchemaGenerator.class),
-                                           injector.getInstance(DatumReaderFactory.class),
-                                           metricStore,
-                                           5);
-    messagingMetricsProcessorService.startAndWait();
-    for (int i = 0; i < 50; i++) {
-      publishMessagingMetrics(i, METRICS_CONTEXT, expected, MetricType.COUNTER);
-    }
-    for (int i = 50; i < 100; i++) {
-      publishMessagingMetrics(i, METRICS_CONTEXT, expected, MetricType.GAUGE);
-    }
-
-    Tasks.waitFor(51, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return metricStore.getAllMetrics().size();
+    for (int iteration = 0; iteration < 20; iteration++) {
+      // First publish all metrics before MessagingMetricsProcessorService starts, so that fetchers of different topics
+      // will fetch metrics concurrently.
+      for (int i = 0; i < 50; i++) {
+        // TOPIC_PREFIX + (i % PARTITION_SIZE) decides which topic the metric is published to
+        publishMessagingMetrics(i, METRICS_CONTEXT, expected, "", MetricType.COUNTER);
       }
-    }, 15, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+      for (int i = 50; i < 100; i++) {
+        // TOPIC_PREFIX + (i % PARTITION_SIZE) decides which topic the metric is published to
+        publishMessagingMetrics(i, METRICS_CONTEXT, expected, "", MetricType.GAUGE);
+      }
 
-    assertMetricsResult(expected, metricStore.getAllMetrics());
+      final MockMetricStore metricStore = new MockMetricStore();
+      // Create new MessagingMetricsProcessorService instance every time because the same instance cannot be started
+      // again after it's stopped
+      MessagingMetricsProcessorService messagingMetricsProcessorService =
+        new MessagingMetricsProcessorService(injector.getInstance(MetricDatasetFactory.class), TOPIC_PREFIX,
+                                             partitions, messagingService, injector.getInstance(SchemaGenerator.class),
+                                             injector.getInstance(DatumReaderFactory.class), metricStore, 5);
+      messagingMetricsProcessorService.startAndWait();
+
+      // Wait for the 1 aggregated counter metric (with value 50) and 50 gauge metrics to be stored in the metricStore
+      Tasks.waitFor(51, new Callable<Integer>() {
+        @Override
+        public Integer call() throws Exception {
+          return metricStore.getAllMetrics().size();
+        }
+      }, 15, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+
+      assertMetricsResult(expected, metricStore.getAllMetrics());
+      // Clear metricStore and expected results for the next iteration
+      metricStore.deleteAll();
+      expected.clear();
+      // Stop messagingMetricsProcessorService
+      messagingMetricsProcessorService.stopAndWait();
+    }
   }
 
   private void assertMetricsResult(Map<String, Long> expected, Map<String, Long> actual) {
@@ -115,7 +123,7 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
 
     @Override
     public void setMetricsContext(MetricsContext metricsContext) {
-      // no-op
+
     }
 
     @Override
@@ -127,21 +135,20 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
     public void add(Collection<? extends MetricValues> metricValues) throws Exception {
       for (MetricValues metric : metricValues) {
         for (MetricValue metricValue : metric.getMetrics()) {
+          // Store the metricValue only if it's gauge type and name starts with GAUGE_METRIC_NAME_PREFIX
           if (MetricType.GAUGE.equals(metricValue.getType())
             && metricValue.getName().startsWith(GAUGE_METRIC_NAME_PREFIX)) {
-            metricsMap.put(EXPECTED_METRIC_PREFIX + metricValue.getName(), metricValue.getValue());
+            metricsMap.put(metricValue.getName(), metricValue.getValue());
           } else {
             if (!COUNTER_METRIC_NAME.equals(metricValue.getName())) {
               continue;
             }
-            Long currentValue = metricsMap.get(EXPECTED_COUNTER_METRIC_NAME);
-            // Sleep for 10 seconds to increase the odd of race condition when this add method
-            // is called by multiple threads concurrently
-            Thread.sleep(10);
+            // Only increment the same COUNTER_METRIC_NAME metric's value for counter type metric
+            Long currentValue = metricsMap.get(COUNTER_METRIC_NAME);
             if (currentValue == null) {
-              metricsMap.put(EXPECTED_COUNTER_METRIC_NAME, 1L);
+              metricsMap.put(COUNTER_METRIC_NAME, 1L);
             } else {
-              metricsMap.put(EXPECTED_COUNTER_METRIC_NAME, currentValue + 1);
+              metricsMap.put(COUNTER_METRIC_NAME, currentValue + 1);
             }
           }
         }
@@ -165,7 +172,7 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
 
     @Override
     public void deleteAll() throws Exception {
-
+      metricsMap.clear();
     }
 
     @Override

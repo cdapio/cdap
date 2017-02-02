@@ -68,6 +68,8 @@ import java.util.concurrent.TimeUnit;
 public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorServiceTest.class);
 
+  private static final String SYSTEM_METRIC_PREFIX = "system.";
+
   @ClassRule
   public static TemporaryFolder tmpFolder1 = new TemporaryFolder();
 
@@ -132,7 +134,7 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
 
     // Publish metrics with messaging service and record expected metrics
     for (int i = 10; i < 20; i++) {
-      publishMessagingMetrics(i, METRICS_CONTEXT, expected, MetricType.COUNTER);
+      publishMessagingMetrics(i, METRICS_CONTEXT, expected, SYSTEM_METRIC_PREFIX, MetricType.COUNTER);
     }
 
     Thread.sleep(5000);
@@ -150,7 +152,7 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
 
     // Publish metrics after MessagingMetricsProcessorService restarts and record expected metrics
     for (int i = 20; i < 30; i++) {
-      publishMessagingMetrics(i, METRICS_CONTEXT, expected, MetricType.GAUGE);
+      publishMessagingMetrics(i, METRICS_CONTEXT, expected, SYSTEM_METRIC_PREFIX, MetricType.GAUGE);
     }
 
     Tasks.waitFor(true, new Callable<Boolean>() {
@@ -166,7 +168,8 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
     // Query for the 5 counter metrics published with Kafka and 5 counter metrics published with messaging
     Collection<MetricTimeSeries> queryResult =
       metricStore.query(new MetricDataQuery(START_TIME + 5, START_TIME + 14, 1, Integer.MAX_VALUE,
-                                            ImmutableMap.of(EXPECTED_COUNTER_METRIC_NAME, AggregationFunction.SUM),
+                                            ImmutableMap.of(SYSTEM_METRIC_PREFIX + COUNTER_METRIC_NAME,
+                                                            AggregationFunction.SUM),
                                             METRICS_CONTEXT, ImmutableList.<String>of(), null));
     MetricTimeSeries timeSeries = Iterables.getOnlyElement(queryResult);
     Assert.assertEquals(10, timeSeries.getTimeValues().size());
@@ -186,7 +189,7 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
   private void addKafkaMetrics(int i, Map<String, String> metricsContext, Map<String, Long> expected,
                                KafkaPublisher.Preparer preparer, MetricType metricType)
     throws IOException, TopicNotFoundException {
-    MetricValues metric = getMetricValuesAddToExpected(i, metricsContext, expected, metricType);
+    MetricValues metric = getMetricValuesAddToExpected(i, metricsContext, expected, SYSTEM_METRIC_PREFIX, metricType);
     // partitioning by the context
     preparer.add(ByteBuffer.wrap(encoderOutputStream.toByteArray()), metric.getTags().hashCode());
     encoderOutputStream.reset();
@@ -221,7 +224,6 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
       MetricTimeSeries timeSeries = Iterables.getOnlyElement(queryResult);
       List<TimeValue> timeValues = timeSeries.getTimeValues();
       TimeValue timeValue = Iterables.getOnlyElement(timeValues);
-      LOG.debug("Expected metrics {} with value {}", metric.getKey(), metric.getValue());
       Assert.assertEquals(metric.getValue().longValue(), timeValue.getValue());
     }
   }

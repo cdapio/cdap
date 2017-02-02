@@ -58,12 +58,10 @@ import java.util.Map;
 
 abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
 
-  protected static final String EXPECTED_METRIC_PREFIX = "system.";
   protected static final String COUNTER_METRIC_NAME = "counter_metric";
   protected static final String GAUGE_METRIC_NAME_PREFIX = "gauge_metric";
   protected static final int PARTITION_SIZE = 2;
   protected static final long START_TIME = 1;
-  protected static final String EXPECTED_COUNTER_METRIC_NAME = EXPECTED_METRIC_PREFIX + COUNTER_METRIC_NAME;
   protected static final Map<String, String> METRICS_CONTEXT = ImmutableMap.<String, String>builder()
     .put(Constants.Metrics.Tag.NAMESPACE, "NS_1")
     .put(Constants.Metrics.Tag.APP, "APP_1")
@@ -77,9 +75,9 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
   private final Encoder encoder = new BinaryEncoder(encoderOutputStream);
 
   protected void publishMessagingMetrics(int i, Map<String, String> metricsContext, Map<String, Long> expected,
-                                       MetricType metricType)
+                                         String expectedMetricPrefix, MetricType metricType)
     throws IOException, TopicNotFoundException {
-    getMetricValuesAddToExpected(i, metricsContext, expected, metricType);
+    getMetricValuesAddToExpected(i, metricsContext, expected, expectedMetricPrefix, metricType);
     messagingService.publish(StoreRequestBuilder.of(NamespaceId.SYSTEM.topic(TOPIC_PREFIX + (i % PARTITION_SIZE)))
                                .addPayloads(encoderOutputStream.toByteArray()).build());
     encoderOutputStream.reset();
@@ -89,24 +87,28 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
    * Returns expected {@link MetricValues} of the given {@link MetricType}. Add the {@link MetricValues} to the
    * {@code expected} metrics map. If the {@link MetricValues} is of type {@code MetricType.COUNTER} and is present
    * in {@code expected}, increment the existing value of it.
+   *
+   * @param expectedMetricPrefix The prefix added to metric names by {@link MetricStore}
    */
   protected MetricValues getMetricValuesAddToExpected(int i, Map<String, String> metricsContext,
-                                                    Map<String, Long> expected, MetricType metricType)
+                                                      Map<String, Long> expected, String expectedMetricPrefix,
+                                                      MetricType metricType)
     throws TopicNotFoundException, IOException {
     MetricValues metric;
     if (MetricType.GAUGE.equals(metricType)) {
       String metricName = GAUGE_METRIC_NAME_PREFIX + i;
       metric =
         new MetricValues(metricsContext, metricName, START_TIME + i, i, metricType);
-      expected.put(EXPECTED_METRIC_PREFIX + metricName, (long) i);
+      expected.put(expectedMetricPrefix + metricName, (long) i);
     } else {
       metric =
         new MetricValues(metricsContext, COUNTER_METRIC_NAME, START_TIME + i, 1, metricType);
-      Long currentValue = expected.get(EXPECTED_COUNTER_METRIC_NAME);
+      String expectedCounterMetricName = expectedMetricPrefix + COUNTER_METRIC_NAME;
+      Long currentValue = expected.get(expectedCounterMetricName);
       if (currentValue == null) {
-        expected.put(EXPECTED_COUNTER_METRIC_NAME, 1L);
+        expected.put(expectedCounterMetricName, 1L);
       } else {
-        expected.put(EXPECTED_COUNTER_METRIC_NAME, currentValue + 1);
+        expected.put(expectedCounterMetricName, currentValue + 1);
       }
     }
 
