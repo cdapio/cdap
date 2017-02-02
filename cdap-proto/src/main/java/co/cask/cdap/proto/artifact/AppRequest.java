@@ -30,7 +30,7 @@ public class AppRequest<T> {
   private final ArtifactSummary artifact;
   private final T config;
   private final PreviewConfig preview;
-  @SerializedName("owner.principal")
+  @SerializedName("principal")
   private final String ownerPrincipal;
 
   public AppRequest(ArtifactSummary artifact) {
