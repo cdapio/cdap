@@ -225,16 +225,22 @@ public class HelpCommand implements Command {
     }
 
     int beginIdx = 0;
+    int returnIdx = 0;
+
     while (beginIdx < str.length()) {
       int idx;
       if (beginIdx + colWidth >= str.length()) {
         idx = str.length();
       } else {
-        idx = str.lastIndexOf(' ', beginIdx + colWidth);
+        idx = str.lastIndexOf(" ", beginIdx + colWidth);
+        returnIdx = str.indexOf("\n", beginIdx);
+      }
+      if (idx > 0 && returnIdx > 0 && returnIdx < idx) {
+        idx = returnIdx;
       }
 
       // Cannot break line if no space found between beginIdx and (beginIdx + colWidth)
-      // The best we can do is to look forward.
+      // The best we can do is to look further.
       // The line will be longer than colWidth though.
       if (idx < 0 || idx < beginIdx) {
         idx = str.indexOf(' ', beginIdx + colWidth);
@@ -243,8 +249,8 @@ public class HelpCommand implements Command {
         }
       }
       output.printf("%s%s", prefix, str.substring(beginIdx, idx));
-      beginIdx = idx + 1;
       output.println();
+      beginIdx = idx + 1;
     }
   }
 }
