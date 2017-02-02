@@ -83,7 +83,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, artifactRepository, impersonator));
-    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin));
+    pipeline.addLast(new ApplicationVerificationStage(cConf, store, datasetFramework, ownerAdmin));
     pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework,
                                                    inMemoryDatasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework));
