@@ -35,8 +35,6 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.verification.Verifier;
 import co.cask.cdap.app.verification.VerifyResult;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.kerberos.SecurityUtil;
@@ -77,19 +75,16 @@ import javax.annotation.Nullable;
  */
 public class ApplicationVerificationStage extends AbstractStage<ApplicationDeployable> {
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationVerificationStage.class);
-  private final CConfiguration cConf;
   private final Map<Class<?>, Verifier<?>> verifiers = Maps.newIdentityHashMap();
   private final DatasetFramework dsFramework;
   private final Store store;
   private final OwnerAdmin ownerAdmin;
 
-  public ApplicationVerificationStage(CConfiguration cConf, Store store, DatasetFramework dsFramework,
-                                      OwnerAdmin ownerAdmin) {
+  public ApplicationVerificationStage(Store store, DatasetFramework dsFramework, OwnerAdmin ownerAdmin) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.dsFramework = dsFramework;
     this.ownerAdmin = ownerAdmin;
-    this.cConf = cConf;
   }
 
   /**
@@ -105,13 +100,8 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
     ApplicationSpecification specification = input.getSpecification();
     ApplicationId appId = input.getApplicationId();
 
-    // verify that kerberos is enabled and owner principal is valid if one was given
+    // verify that the owner principal is valid if one was given
     if (input.getOwnerPrincipal() != null) {
-      if (!SecurityUtil.isKerberosEnabled(cConf)) {
-        throw new BadRequestException(String.format("Kerberos is not enabled to create %s with principal %s. " +
-                                                      "Please enable kerberos or try again without principal.", appId,
-                                                    input.getOwnerPrincipal()));
-      }
       SecurityUtil.validateKerberosPrincipal(input.getOwnerPrincipal());
     }
 

@@ -242,7 +242,7 @@ public abstract class DatasetServiceTestBase {
       typeManager, namespaceAdmin, namespacedLocationFactory, authEnforcer, privilegesManager, authenticationContext,
       cConf, impersonator, txSystemClientService, inMemoryDatasetFramework, txExecutorFactory, defaultModules);
 
-    instanceService = new DatasetInstanceService(cConf, typeService, instanceManager, opExecutor, exploreFacade,
+    instanceService = new DatasetInstanceService(typeService, instanceManager, opExecutor, exploreFacade,
                                                  namespaceQueryAdmin, ownerAdmin, authEnforcer, privilegesManager,
                                                  authenticationContext);
 
