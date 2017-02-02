@@ -342,17 +342,19 @@ public final class Locations {
   }
 
   /**
-   * Given a locationPath which is derived from URI.getPath() and a locationFactory
-   * this method generates a Location with URI generated from the given Absolute path
+   * Get a Location using a specified location factory and absolute path
    * @param locationFactory locationFactory to create Location from given Path
    * @param absolutePath Path to be used for Location
    * @return Location resulting from absolute locationPath
    */
   public static Location getLocationFromAbsolutePath(LocationFactory locationFactory, String absolutePath) {
-    URI basePathURI = URI.create(locationFactory.create("").toURI().getPath());
-    URI locationURI = URI.create(absolutePath);
-    URI relativePathURI = basePathURI.relativize(locationURI);
-    return locationFactory.create(relativePathURI);
+    URI homeURI = locationFactory.getHomeLocation().toURI();
+    try {
+      return locationFactory.create(new URI(homeURI.getScheme(), homeURI.getAuthority(), absolutePath, null, null));
+    } catch (URISyntaxException e) {
+      // Should not happen.
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
