@@ -61,7 +61,6 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
   protected static final String COUNTER_METRIC_NAME = "counter_metric";
   protected static final String GAUGE_METRIC_NAME_PREFIX = "gauge_metric";
   protected static final int PARTITION_SIZE = 2;
-  protected static final long START_TIME = 1;
   protected static final Map<String, String> METRICS_CONTEXT = ImmutableMap.<String, String>builder()
     .put(Constants.Metrics.Tag.NAMESPACE, "NS_1")
     .put(Constants.Metrics.Tag.APP, "APP_1")
@@ -98,11 +97,11 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
     if (MetricType.GAUGE.equals(metricType)) {
       String metricName = GAUGE_METRIC_NAME_PREFIX + i;
       metric =
-        new MetricValues(metricsContext, metricName, START_TIME + i, i, metricType);
+        new MetricValues(metricsContext, metricName, i, i, metricType);
       expected.put(expectedMetricPrefix + metricName, (long) i);
     } else {
       metric =
-        new MetricValues(metricsContext, COUNTER_METRIC_NAME, START_TIME + i, 1, metricType);
+        new MetricValues(metricsContext, COUNTER_METRIC_NAME, i, 1, metricType);
       String expectedCounterMetricName = expectedMetricPrefix + COUNTER_METRIC_NAME;
       Long currentValue = expected.get(expectedCounterMetricName);
       if (currentValue == null) {

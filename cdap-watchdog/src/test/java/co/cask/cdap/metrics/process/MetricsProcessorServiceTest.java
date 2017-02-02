@@ -167,7 +167,7 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
 
     // Query for the 5 counter metrics published with Kafka and 5 counter metrics published with messaging
     Collection<MetricTimeSeries> queryResult =
-      metricStore.query(new MetricDataQuery(START_TIME + 5, START_TIME + 14, 1, Integer.MAX_VALUE,
+      metricStore.query(new MetricDataQuery(5, 14, 1, Integer.MAX_VALUE,
                                             ImmutableMap.of(SYSTEM_METRIC_PREFIX + COUNTER_METRIC_NAME,
                                                             AggregationFunction.SUM),
                                             METRICS_CONTEXT, ImmutableList.<String>of(), null));

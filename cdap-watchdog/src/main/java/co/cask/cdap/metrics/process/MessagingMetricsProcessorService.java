@@ -39,6 +39,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
@@ -231,12 +232,15 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         MessageFetcher fetcher = messagingService.prepareFetch(topicIdMetaKey.getTopicId());
         fetcher.setLimit(fetcherLimit);
         if (lastMessageId != null) {
+          LOG.debug("Start fetching from lastMessageId = {}", lastMessageId);
           fetcher.setStartMessage(lastMessageId, false);
         } else {
+          LOG.debug("Start fetching from beginning");
           fetcher.setStartTime(0L);
         }
 
-        byte[] nextMessageId = null;
+        byte[] currentMessageId = null;
+        String lastMessageName = null;
         try (CloseableIterator<RawMessage> iterator = fetcher.fetch()) {
           while (iterator.hasNext() && isRunning()) {
             RawMessage input = iterator.next();
@@ -244,7 +248,10 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
               payloadInput.reset(input.getPayload());
               MetricValues metricValues = recordReader.read(decoder, recordSchema);
               records.add(metricValues);
-              nextMessageId = input.getId();
+              currentMessageId = input.getId();
+              lastMessageName = Iterables.getOnlyElement(metricValues.getMetrics()).getName();
+              LOG.debug("currentMessageId = {}, currentMessageName = {}, time = {}", currentMessageId, lastMessageName,
+                        metricValues.getTimestamp());
               LOG.trace("Received message {} with metrics: {}", Bytes.toStringBinary(lastMessageId), metricValues);
             } catch (IOException e) {
               LOG.warn("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
@@ -252,9 +259,10 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
           }
         }
 
-        if (nextMessageId != null) {
-          metaKeyMap.put(topicIdMetaKey, nextMessageId);
-          lastMessageId = nextMessageId;
+        if (currentMessageId != null) {
+          metaKeyMap.put(topicIdMetaKey, currentMessageId);
+          lastMessageId = currentMessageId;
+          LOG.debug("lastMessageId = {}, lastMessageName = {}", lastMessageId, lastMessageName);
         }
 
         if (records.isEmpty()) {
@@ -265,15 +273,21 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         // Ensure there's only one thread can persist records when the persistingFlag is false.
         // The thread set persistingFlag to true when it starts to persist.
         if (!persistingFlag.compareAndSet(false, true)) {
+          LOG.debug("Cannot persist because persistingFlag is grabbed.");
           return;
         }
-        Map<TopicIdMetaKey, byte[]> metaKeyMapCopy = new HashMap<>(metaKeyMap);
         List<MetricValues> recordsCopy = new ArrayList<>(records.size());
-        Iterator<MetricValues> itr = records.iterator();
-        while (itr.hasNext()) {
-          recordsCopy.add(itr.next());
-          itr.remove();
+        while (!records.isEmpty()) {
+          recordsCopy.add(records.poll());
         }
+        Map<TopicIdMetaKey, byte[]> metaKeyMapCopy = new HashMap<>(metaKeyMap);
+        LOG.debug("records after removal: {}", records);
+        LOG.debug("Persisting recordsCopy: {}", recordsCopy);
+        List<String> metaKeys = new ArrayList<>();
+        for (Map.Entry<TopicIdMetaKey, byte[]> entry : metaKeyMapCopy.entrySet()) {
+          metaKeys.add(entry.getKey().getTopicId().toString() + ":" + entry.getValue());
+        }
+        LOG.debug("Persisting recordsCopy: {}", metaKeys);
         try {
           persistRecords(recordsCopy);
           persistMessageIds(metaKeyMapCopy);
