@@ -18,10 +18,9 @@ package co.cask.cdap.logging.plugins;
 
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.rolling.RolloverFailure;
-import ch.qos.logback.core.rolling.helper.CompressionMode;
-import ch.qos.logback.core.rolling.helper.FileFilterUtil;
 import ch.qos.logback.core.rolling.helper.FileNamePattern;
 import ch.qos.logback.core.rolling.helper.IntegerTokenConverter;
+import co.cask.cdap.common.io.Locations;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -30,14 +29,11 @@ import java.io.IOException;
  * When rolling over, renames files according to a fixed window algorithm.
  */
 public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
+  // TODO Support compression
+  private int minIndex;
   private static final String FNP_NOT_SET =
     "The \"FileNamePattern\" property must be set before using FixedWindowRollingPolicy. ";
   private int maxIndex;
-  private int minIndex;
-  // TODO Support compression
-//  private Compressor compressor;
-
-  private static final String ZIP_ENTRY_DATE_PATTERN = "yyyy-MM-dd_HHmm";
 
   /**
    * It's almost always a bad idea to have a large window size, say over 12.
@@ -53,7 +49,6 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
   public void start() {
     if (fileNamePatternStr != null) {
       fileNamePattern = new FileNamePattern(fileNamePatternStr, this.context);
-      determineCompressionMode();
     } else {
       addError(FNP_NOT_SET);
       addError(CoreConstants.SEE_FNP_NOT_SET);
@@ -81,42 +76,16 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
                                         + "] does not contain a valid IntegerToken");
     }
 
-    if (compressionMode == CompressionMode.ZIP) {
-      String zipEntryFileNamePatternStr = transformFileNamePatternFromInt2Date(fileNamePatternStr);
-      zipEntryFileNamePattern = new FileNamePattern(zipEntryFileNamePatternStr, context);
-    }
-
     super.start();
-  }
-
-  private String transformFileNamePatternFromInt2Date(String fileNamePatternStr) {
-    String slashified = FileFilterUtil.slashify(fileNamePatternStr);
-    String stemOfFileNamePattern = FileFilterUtil.afterLastSlash(slashified);
-    return stemOfFileNamePattern.replace("%i", "%d{" + ZIP_ENTRY_DATE_PATTERN + "}");
-  }
-
-  /**
-   * Given the FileNamePattern string, this method determines the compression
-   * mode depending on last letters of the fileNamePatternStr. Patterns ending
-   * with .gz imply GZIP compression, endings with '.zip' imply ZIP compression.
-   * Otherwise and by default, there is no compression.
-   */
-  @Override
-  protected void determineCompressionMode() {
-    if (fileNamePatternStr.endsWith(".gz")) {
-      addInfo("Will use gz compression");
-      compressionMode = CompressionMode.GZ;
-    } else if (fileNamePatternStr.endsWith(".zip")) {
-      addInfo("Will use zip compression");
-      compressionMode = CompressionMode.ZIP;
-    } else {
-      addInfo("No compression will be used");
-      compressionMode = CompressionMode.NONE;
-    }
   }
 
   @Override
   public void rollover() throws RolloverFailure {
+    Location parentLocation = Locations.getParent(activeFileLocation);
+
+    if (parentLocation == null) {
+      return;
+    }
 
     // Inside this method it is guaranteed that the hereto active log file is
     // closed.
@@ -125,7 +94,7 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
       try {
         // Delete the oldest file, to keep Windows happy.
         String fileName = fileNamePattern.convertInt(maxIndex);
-        Location deleteLocation = activeParentLocation.append(fileName);
+        Location deleteLocation = parentLocation.append(fileName);
         if (deleteLocation.exists()) {
           deleteLocation.delete();
         }
@@ -133,10 +102,10 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
         // Map {(maxIndex - 1), ..., minIndex} to {maxIndex, ..., minIndex+1}
         for (int i = maxIndex - 1; i >= minIndex; i--) {
           String toRenameStr = fileNamePattern.convertInt(i);
-          Location toRename = activeParentLocation.append(toRenameStr);
+          Location toRename = parentLocation.append(toRenameStr);
           // no point in trying to rename an non existent file
           if (toRename.exists()) {
-            Location newName = activeParentLocation.append(fileNamePattern.convertInt(i + 1));
+            Location newName = parentLocation.append(fileNamePattern.convertInt(i + 1));
             toRename.renameTo(newName);
           } else {
             addInfo("Skipping roll-over for inexistent file " + toRenameStr);
@@ -146,22 +115,13 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
         throw new RolloverFailure(e.getMessage());
       }
 
-      // move active file name to min
-      switch (compressionMode) {
-        case NONE:
-          try {
-            activeFileLocation.renameTo(activeParentLocation.append(fileNamePattern.convertInt(minIndex)));
-          } catch (IOException e) {
-            throw new RolloverFailure(String.format("Exception while renaming file: %s, %s",
-                                                    activeFileLocation.getName(), e.getMessage()));
-          }
-          break;
-        case GZ:
-          // not supported
-          break;
-        case ZIP:
-          // not supported
-          break;
+      try {
+        // close outputstream of active location before renaming it
+        closeable.close();
+        activeFileLocation.renameTo(parentLocation.append(fileNamePattern.convertInt(minIndex)));
+      } catch (IOException e) {
+        throw new RolloverFailure(String.format("Exception while renaming file: %s, %s",
+                                                activeFileLocation.getName(), e.getMessage()));
       }
     }
   }

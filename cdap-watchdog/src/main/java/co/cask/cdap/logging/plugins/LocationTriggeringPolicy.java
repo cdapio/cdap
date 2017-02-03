@@ -25,6 +25,14 @@ import org.apache.twill.filesystem.Location;
  */
 public interface LocationTriggeringPolicy extends TriggeringPolicy<ILoggingEvent> {
   /**
+   * Should roll-over be triggered at this time?
+   *
+   * @param event which {@link LocationTriggeringPolicy#setLocation(Location)}
+   * @return true if a roll-over should occur.
+   */
+  boolean isTriggeringEvent(final ILoggingEvent event);
+
+  /**
    * set location of Rolling policy
    *
    * @param location location which can trigger roll over

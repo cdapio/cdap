@@ -19,15 +19,18 @@ package co.cask.cdap.logging.plugins;
 import ch.qos.logback.core.rolling.RollingPolicy;
 import org.apache.twill.filesystem.Location;
 
+import java.io.Closeable;
+
 /**
  * Location rolling policy
  */
 public interface LocationRollingPolicy extends RollingPolicy {
   /**
+   /**
    * Update Active file location
    *
-   * @param parentDirLocation  Parent directory where files are located
    * @param activeFileLocation Current open file to be rolled over
+   * @param closeable closeable to close location before renaming for rollover
    */
-  void setLocation(Location parentDirLocation, Location activeFileLocation);
+  void setLocation(Location activeFileLocation, Closeable closeable);
 }

@@ -24,6 +24,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -64,7 +65,7 @@ import java.io.InputStreamReader;
 import java.util.Map;
 
 /**
- *
+ * Unit test for {@link RollingLocationLogAppender}
  */
 public class RollingLocationLogAppenderTest {
 
@@ -134,24 +135,24 @@ public class RollingLocationLogAppenderTest {
     addTagsToMdc("test Ns", "testApp");
     Logger logger = LoggerFactory.getLogger(RollingLocationLogAppenderTest.class);
     ingestLogs(logger, 5);
-    Map<LocationIdentifier, Location> activeFilesToLocation = rollingAppender.getLocationManager()
-      .getActiveFilesLocations();
-    Assert.assertEquals(1, activeFilesToLocation.size());
-    verifyFileOutput(activeFilesToLocation, 5);
+    Map<LocationIdentifier, LocationOutputStream> activeFiles = rollingAppender.getLocationManager()
+      .getActiveLocations();
+    Assert.assertEquals(1, activeFiles.size());
+    verifyFileOutput(activeFiles, 5);
 
     // different program should go to different directory
     addTagsToMdc("testNs", "testApp1");
     ingestLogs(logger, 5);
-    activeFilesToLocation = rollingAppender.getLocationManager().getActiveFilesLocations();
-    Assert.assertEquals(2, activeFilesToLocation.size());
-    verifyFileOutput(activeFilesToLocation, 5);
+    activeFiles = rollingAppender.getLocationManager().getActiveLocations();
+    Assert.assertEquals(2, activeFiles.size());
+    verifyFileOutput(activeFiles, 5);
 
     // different program should go to different directory because namespace is different
     addTagsToMdc("testNs1", "testApp1");
     ingestLogs(logger, 5);
-    activeFilesToLocation = rollingAppender.getLocationManager().getActiveFilesLocations();
-    Assert.assertEquals(3, activeFilesToLocation.size());
-    verifyFileOutput(activeFilesToLocation, 5);
+    activeFiles = rollingAppender.getLocationManager().getActiveLocations();
+    Assert.assertEquals(3, activeFiles.size());
+    verifyFileOutput(activeFiles, 5);
   }
 
   @Test
@@ -175,27 +176,30 @@ public class RollingLocationLogAppenderTest {
 
     addTagsToMdc("testNs", "testApp");
     Logger logger = LoggerFactory.getLogger(RollingLocationLogAppenderTest.class);
-    ingestLogs(logger, 10000);
-    Map<LocationIdentifier, Location> activeFilesToLocation = rollingAppender.getLocationManager()
-      .getActiveFilesLocations();
-    Assert.assertEquals(1, activeFilesToLocation.size());
-    Location parentDir = rollingAppender.getLocationManager().getLogDirLocation().append("testNs").append("testApp");
+    ingestLogs(logger, 20000);
+    Map<LocationIdentifier, LocationOutputStream> activeFiles = rollingAppender.getLocationManager()
+      .getActiveLocations();
+    Assert.assertEquals(1, activeFiles.size());
+    LocationOutputStream locationOutputStream = activeFiles.get(new LocationIdentifier("testNs", "testApp"));
+    Location parentDir = Locations.getParent(locationOutputStream.getLocation());
     Assert.assertEquals(10, parentDir.list().size());
 
     // different program should go to different directory
     addTagsToMdc("testNs", "testApp1");
-    ingestLogs(logger, 10000);
-    activeFilesToLocation = rollingAppender.getLocationManager().getActiveFilesLocations();
-    Assert.assertEquals(2, activeFilesToLocation.size());
-    parentDir = rollingAppender.getLocationManager().getLogDirLocation().append("testNs").append("testApp1");
+    ingestLogs(logger, 20000);
+    activeFiles = rollingAppender.getLocationManager().getActiveLocations();
+    Assert.assertEquals(2, activeFiles.size());
+    locationOutputStream = activeFiles.get(new LocationIdentifier("testNs", "testApp1"));
+    parentDir = Locations.getParent(locationOutputStream.getLocation());
     Assert.assertEquals(10, parentDir.list().size());
 
     // different program should go to different directory because namespace is different
     addTagsToMdc("testNs1", "testApp1");
-    ingestLogs(logger, 10000);
-    activeFilesToLocation = rollingAppender.getLocationManager().getActiveFilesLocations();
-    Assert.assertEquals(3, activeFilesToLocation.size());
-    parentDir = rollingAppender.getLocationManager().getLogDirLocation().append("testNs1").append("testApp1");
+    ingestLogs(logger, 20000);
+    activeFiles = rollingAppender.getLocationManager().getActiveLocations();
+    Assert.assertEquals(3, activeFiles.size());
+    locationOutputStream = activeFiles.get(new LocationIdentifier("testNs1", "testApp1"));
+    parentDir = Locations.getParent(locationOutputStream.getLocation());
     Assert.assertEquals(10, parentDir.list().size());
   }
 
@@ -205,10 +209,11 @@ public class RollingLocationLogAppenderTest {
     }
   }
 
-  private void verifyFileOutput(Map<LocationIdentifier, Location> activeFilesToLocation, int entries) throws
+  private void verifyFileOutput(Map<LocationIdentifier, LocationOutputStream> activeFilesToLocation, int entries) throws
     IOException {
-    for (Location location : activeFilesToLocation.values()) {
-      BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(location.getInputStream(), "UTF-8"));
+    for (LocationOutputStream locationOutputStream : activeFilesToLocation.values()) {
+      BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
+        locationOutputStream.getLocation().getInputStream(), "UTF-8"));
 
       int count = 0;
       while ((bufferedReader.readLine()) != null) {

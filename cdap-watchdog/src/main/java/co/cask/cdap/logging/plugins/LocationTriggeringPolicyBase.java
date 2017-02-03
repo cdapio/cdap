@@ -16,8 +16,12 @@
 
 package co.cask.cdap.logging.plugins;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.LogbackException;
 import ch.qos.logback.core.spi.ContextAwareBase;
 import org.apache.twill.filesystem.Location;
+
+import java.io.File;
 
 /**
  * Location triggering policy base class
@@ -41,5 +45,9 @@ public abstract class LocationTriggeringPolicyBase extends ContextAwareBase impl
 
   public void setLocation(Location location) {
     activeLocation = location;
+  }
+
+  public boolean isTriggeringEvent(final File activeFile, final ILoggingEvent event) throws LogbackException {
+   return isTriggeringEvent(event);
   }
 }

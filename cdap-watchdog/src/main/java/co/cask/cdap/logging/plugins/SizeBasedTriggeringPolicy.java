@@ -21,7 +21,6 @@ import ch.qos.logback.core.LogbackException;
 import ch.qos.logback.core.util.FileSize;
 import ch.qos.logback.core.util.InvocationGate;
 
-import java.io.File;
 import java.io.IOException;
 
 /**
@@ -30,7 +29,6 @@ import java.io.IOException;
  * SizeBasedTriggeringPolicy rolls the file and creates a new one.
  */
 public class SizeBasedTriggeringPolicy extends LocationTriggeringPolicyBase {
-  public static final String SEE_SIZE_FORMAT = "http://logback.qos.ch/codes.html#sbtp_size_format";
   /**
    * The default maximum file size.
    */
@@ -48,8 +46,7 @@ public class SizeBasedTriggeringPolicy extends LocationTriggeringPolicyBase {
 
   private InvocationGate invocationGate = new InvocationGate();
 
-  @Override
-  public boolean isTriggeringEvent(final File activeFile, final ILoggingEvent event) throws LogbackException {
+  public boolean isTriggeringEvent(final ILoggingEvent event) throws LogbackException {
     if (invocationGate.skipFurtherWork()) {
       return false;
     }
@@ -71,37 +68,6 @@ public class SizeBasedTriggeringPolicy extends LocationTriggeringPolicyBase {
   public void setMaxFileSize(String maxFileSize) {
     this.maxFileSizeAsString = maxFileSize;
     this.maxFileSize = FileSize.valueOf(maxFileSize);
-  }
-
-  long toFileSize(String value) {
-    if (value == null) {
-      return DEFAULT_MAX_FILE_SIZE;
-    }
-
-    String s = value.trim().toUpperCase();
-    long multiplier = 1;
-    int index;
-
-    if ((index = s.indexOf("KB")) != -1) {
-      multiplier = 1024;
-      s = s.substring(0, index);
-    } else if ((index = s.indexOf("MB")) != -1) {
-      multiplier = 1024 * 1024;
-      s = s.substring(0, index);
-    } else if ((index = s.indexOf("GB")) != -1) {
-      multiplier = 1024 * 1024 * 1024;
-      s = s.substring(0, index);
-    }
-    if (s != null) {
-      try {
-        return Long.valueOf(s).longValue() * multiplier;
-      } catch (NumberFormatException e) {
-        addError("[" + s + "] is not in proper int format. Please refer to "
-                   + SEE_SIZE_FORMAT);
-        addError("[" + value + "] not in expected format.", e);
-      }
-    }
-    return DEFAULT_MAX_FILE_SIZE;
   }
 
 }

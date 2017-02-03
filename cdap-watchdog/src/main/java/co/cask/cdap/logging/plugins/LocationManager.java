@@ -16,12 +16,18 @@
 
 package co.cask.cdap.logging.plugins;
 
+import co.cask.cdap.common.io.Locations;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
+import java.io.BufferedReader;
+import java.io.Closeable;
+import java.io.Flushable;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,23 +37,22 @@ import java.util.Map;
 /**
  * Manage locations for {@link RollingLocationLogAppender}
  */
-public class LocationManager {
+public class LocationManager implements Flushable, Closeable {
   protected static final String TAG_NAMESPACE_ID = ".namespaceId";
   protected static final String TAG_APPLICATION_ID = ".applicationId";
 
-  private Location logDirLocation;
+  private Location logBaseDir;
+  private Map<LocationIdentifier, LocationOutputStream> activeLocations;
+  private String filePermissions;
 
-  private Map<LocationIdentifier, OutputStream> activeFiles;
-  private Map<LocationIdentifier, Location> activeFilesToLocation;
-
-  public LocationManager(LocationFactory locationFactory) {
-    this.logDirLocation = locationFactory.create("plugins/logs");
-    this.activeFiles = new HashMap<>();
-    this.activeFilesToLocation = new HashMap<>();
+  public LocationManager(LocationFactory locationFactory, String basePath, String filePermissions)
+    throws IOException {
+    this.logBaseDir = locationFactory.create(basePath);
+    this.activeLocations = new HashMap<>();
+    this.filePermissions = filePermissions;
   }
 
-
-  protected LocationIdentifier getLocationIdentifier(Map<String, String> propertyMap) throws IllegalArgumentException,
+  LocationIdentifier getLocationIdentifier(Map<String, String> propertyMap) throws IllegalArgumentException,
     IOException {
 
     String namespaceId = propertyMap.get(TAG_NAMESPACE_ID);
@@ -59,60 +64,86 @@ public class LocationManager {
     return new LocationIdentifier(namespaceId, application);
   }
 
-  protected OutputStream getLocationOutputStream(LocationIdentifier locationIdentifier, String fileName)
+  OutputStream getLocationOutputStream(final LocationIdentifier locationIdentifier, String fileName)
     throws IOException {
-    if (activeFiles.containsKey(locationIdentifier)) {
-      return activeFiles.get(locationIdentifier);
+    if (activeLocations.containsKey(locationIdentifier)) {
+      return activeLocations.get(locationIdentifier).getOutputStream();
     }
 
-    ensureDirectoryCheck(logDirLocation);
-    Location contextLocation = getLogLocation(locationIdentifier);
-    ensureDirectoryCheck(contextLocation);
+    Location logFile = getLogLocation(locationIdentifier).append(fileName);
+    Location logDir = Locations.getParent(logFile);
+    // check if parent directories exist
+    Locations.mkdirsIfNotExists(logDir);
 
-    Location location = contextLocation.append(fileName);
-    activeFiles.put(locationIdentifier, location.getOutputStream());
-    activeFilesToLocation.put(locationIdentifier, location);
-    return activeFiles.get(locationIdentifier);
-  }
-
-  protected Location getLogLocation(LocationIdentifier locationIdentifier) throws IOException {
-    return logDirLocation.append(locationIdentifier.getNamespaceId()).append(locationIdentifier.getApplicationId());
-  }
-
-  protected void ensureDirectoryCheck(Location location) throws IOException {
-    if (!location.exists()) {
-      location.mkdirs();
-    } else {
-      if (!location.isDirectory()) {
-        throw new IOException(
-          String.format("File Exists at the logging location %s, Expected to be a directory", location));
+    if (logFile.exists()) {
+      // The file name for a given application exists if the appender was stopped and then started again but file was
+      // not rolled over. In this case, since the roll over size is typically small, we can rename the old file and
+      // copy its contents to new file and delete old file
+      long now = System.currentTimeMillis();
+      // rename existing file to temp file
+      if (logDir == null) {
+        // this should never happen
+        throw new IOException(String.format("Parent Directory for %s is null", logFile.toURI().toString()));
       }
+      Location tempLocation = logFile.renameTo(logDir.append(Long.toString(now)));
+      logFile.createNew(filePermissions);
+
+      if (tempLocation == null) {
+        throw new IOException(String.format("Can not rename file %s", logFile.toURI().toString()));
+      }
+
+      OutputStream outputStream = logFile.getOutputStream();
+      try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(tempLocation.getInputStream()))) {
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
+          outputStream.write(line.getBytes());
+        }
+      }
+      // delete temporary file
+      tempLocation.delete();
+      activeLocations.put(locationIdentifier, new LocationOutputStream(logFile, outputStream));
+    } else {
+      // create file with correct permissions
+      logFile.createNew(filePermissions);
+      activeLocations.put(locationIdentifier, new LocationOutputStream(logFile, logFile.getOutputStream()));
     }
+
+    return activeLocations.get(locationIdentifier).getOutputStream();
   }
 
+  /**
+   * Closes all open output streams and clears cache
+   */
   public void close() {
-    Collection<OutputStream> locations = new ArrayList<>(activeFiles.values());
-    activeFiles.clear();
-    activeFilesToLocation.clear();
+    Collection<LocationOutputStream> locations = new ArrayList<>(activeLocations.values());
+    activeLocations.clear();
 
-    for (OutputStream outputStream : locations) {
-      closeOutputStream(outputStream);
+    for (LocationOutputStream locationOutputStream : locations) {
+      // we do not want to throw any exception rather close all the open output streams. so close quietly
+      Closeables.closeQuietly(locationOutputStream);
     }
   }
 
-  protected void closeOutputStream(OutputStream outputStream) {
-    Closeables.closeQuietly(outputStream);
+  /**
+   * Flushes all the open output streams
+   */
+  @Override
+  public void flush() throws IOException {
+    Collection<LocationOutputStream> locations = new ArrayList<>(activeLocations.values());
+    for (LocationOutputStream locationOutputStream : locations) {
+      locationOutputStream.flush();
+    }
   }
 
-  public Location getLogDirLocation() {
-    return logDirLocation;
+  /**
+   * Appends information from location identifier to logBaseDir
+   */
+  Location getLogLocation(LocationIdentifier locationIdentifier) throws IOException {
+    return logBaseDir.append(locationIdentifier.getNamespaceId()).append(locationIdentifier.getApplicationId());
   }
 
-  public Map<LocationIdentifier, OutputStream> getActiveFiles() {
-    return activeFiles;
-  }
-
-  public Map<LocationIdentifier, Location> getActiveFilesLocations() {
-    return activeFilesToLocation;
+  @VisibleForTesting
+  Map<LocationIdentifier, LocationOutputStream> getActiveLocations() {
+    return activeLocations;
   }
 }

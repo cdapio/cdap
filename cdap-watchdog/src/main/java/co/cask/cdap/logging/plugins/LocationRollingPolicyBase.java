@@ -22,6 +22,8 @@ import ch.qos.logback.core.rolling.helper.FileNamePattern;
 import ch.qos.logback.core.spi.ContextAwareBase;
 import org.apache.twill.filesystem.Location;
 
+import java.io.Closeable;
+
 
 /**
  * Location rolling policy base which provides
@@ -33,31 +35,11 @@ public abstract class LocationRollingPolicyBase extends ContextAwareBase impleme
   // fileNamePatternStr is always slashified, see setter
   protected String fileNamePatternStr;
   private FileAppender parent;
-  // use to name files within zip file, i.e. the zipEntry
-  FileNamePattern zipEntryFileNamePattern;
 
-  protected Location activeParentLocation;
+
   protected Location activeFileLocation;
+  protected Closeable closeable;
   private boolean started;
-
-  /**
-   * Given the FileNamePattern string, this method determines the compression
-   * mode depending on last letters of the fileNamePatternStr. Patterns ending
-   * with .gz imply GZIP compression, endings with '.zip' imply ZIP compression.
-   * Otherwise and by default, there is no compression.
-   */
-  protected void determineCompressionMode() {
-    if (fileNamePatternStr.endsWith(".gz")) {
-      addInfo("Will use gz compression");
-      compressionMode = CompressionMode.GZ;
-    } else if (fileNamePatternStr.endsWith(".zip")) {
-      addInfo("Will use zip compression");
-      compressionMode = CompressionMode.ZIP;
-    } else {
-      addInfo("No compression will be used");
-      compressionMode = CompressionMode.NONE;
-    }
-  }
 
   public void setFileNamePattern(String fnp) {
     fileNamePatternStr = fnp;
@@ -67,6 +49,10 @@ public abstract class LocationRollingPolicyBase extends ContextAwareBase impleme
     return fileNamePatternStr;
   }
 
+  /**
+   * This interface is part of {@link ch.qos.logback.core.rolling.RollingPolicy}
+   * @return
+   */
   public CompressionMode getCompressionMode() {
     return compressionMode;
   }
@@ -87,8 +73,8 @@ public abstract class LocationRollingPolicyBase extends ContextAwareBase impleme
     this.parent = appender;
   }
 
-  public void setLocation(Location parentDirLocation, Location activeFileLocation) {
-    this.activeParentLocation = parentDirLocation;
+  public void setLocation(Location activeFileLocation, Closeable closeable) {
     this.activeFileLocation = activeFileLocation;
+    this.closeable = closeable;
   }
 }

@@ -23,19 +23,26 @@
     </encoder>
   </appender>
 
-  logFile.log
-  logFile.log.1
-  logFile.log.2
+  <!--TODO CDAP-8196 Instance Id is provided by logging framework. Remove it after Logging framework is in place-->
+  <property name="cdap.log.saver.instance.id" value="0"/>
 
   <appender name="rollingAppender" class="co.cask.cdap.logging.plugins.RollingLocationLogAppender">
-    <path>/att/%date/%appId/logFile-%instanceId.log</path>
+    <timestamp> testTimestamp</timestamp>
+    <!--log file path will be created by appender as: <basePath>/namespaceId/applicationId/<filePath>-->
+    <basePath>plugins/applogs</basePath>
+    <!--filePath uses instanceId which is a property set by LogFramework. We use it to avoid multiple log saver
+    instances writing to same file in case of kafka partition key reconfiguration supported by CDAP-8104-->
+    <filePath>securityLogs/logFile-${cdap.log.saver.instance.id}.log</filePath>
+    <!--cdap is the owner of log files, so cdap will get read/write permissions.
+    Log files will be read-only for others-->
+    <filePermissions>644</filePermissions>
     <rollingPolicy class="co.cask.cdap.logging.plugins.FixedWindowRollingPolicy">
-      <fileNamePattern>logFile-%instanceId.log.%i</fileNamePattern>
+      <fileNamePattern>logFile-${cdap.log.saver.instance.id}.log.%i</fileNamePattern>
       <minIndex>1</minIndex>
       <maxIndex>9</maxIndex>
     </rollingPolicy>
     <triggeringPolicy class="co.cask.cdap.logging.plugins.SizeBasedTriggeringPolicy">
-      <maxFileSize>50KB</maxFileSize>
+      <maxFileSize>5KB</maxFileSize>
     </triggeringPolicy>
     <encoder>
       <pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.logging.plugins;
 
+import java.util.Objects;
+
 /**
  * Identifier for location of logs
  */
@@ -47,16 +49,11 @@ public class LocationIdentifier {
 
     LocationIdentifier that = (LocationIdentifier) o;
 
-    if (!namespaceId.equals(that.namespaceId)) {
-      return false;
-    }
-    return applicationId.equals(that.applicationId);
+    return (Objects.equals(namespaceId, that.namespaceId) && Objects.equals(applicationId, that.applicationId));
   }
 
   @Override
   public int hashCode() {
-    int result = namespaceId.hashCode();
-    result = 31 * result + applicationId.hashCode();
-    return result;
+    return Objects.hash(namespaceId, applicationId);
   }
 }
