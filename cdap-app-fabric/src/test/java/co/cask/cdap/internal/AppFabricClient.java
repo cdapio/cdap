@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,8 +26,8 @@ import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
-import co.cask.cdap.gateway.handlers.SecureStoreHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
+import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
@@ -46,6 +46,7 @@ import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -94,7 +95,6 @@ public class AppFabricClient {
   private final WorkflowHttpHandler workflowHttpHandler;
   private final NamespaceHttpHandler namespaceHttpHandler;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
-  private final SecureStoreHandler secureStoreHandler;
 
   @Inject
   public AppFabricClient(LocationFactory locationFactory,
@@ -102,15 +102,13 @@ public class AppFabricClient {
                          ProgramLifecycleHttpHandler programLifecycleHttpHandler,
                          NamespaceHttpHandler namespaceHttpHandler,
                          NamespaceQueryAdmin namespaceQueryAdmin,
-                         WorkflowHttpHandler workflowHttpHandler,
-                         SecureStoreHandler secureStoreHandler) {
+                         WorkflowHttpHandler workflowHttpHandler) {
     this.locationFactory = locationFactory;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.namespaceHttpHandler = namespaceHttpHandler;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.workflowHttpHandler = workflowHttpHandler;
-    this.secureStoreHandler = secureStoreHandler;
   }
 
   private String getNamespacePath(String namespaceId) {
@@ -408,8 +406,9 @@ public class AppFabricClient {
     }
   }
 
-  public Location deployApplication(Id.Namespace namespace, Class<?> applicationClz,
-                                    String config, File...bundleEmbeddedJars) throws Exception {
+  public Location deployApplication(Id.Namespace namespace, Class<?> applicationClz, String config,
+                                    @Nullable KerberosPrincipalId ownerPrincipal,
+                                    File...bundleEmbeddedJars) throws Exception {
 
     Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
@@ -420,13 +419,18 @@ public class AppFabricClient {
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
                                                         String.format("/v3/namespaces/%s/apps", namespace.getId()));
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    request.setHeader("X-Archive-Name", archiveName);
+    request.setHeader(AbstractAppFabricHttpHandler.ARCHIVE_NAME_HEADER, archiveName);
     if (config != null) {
-      request.setHeader("X-App-Config", config);
+      request.setHeader(AbstractAppFabricHttpHandler.APP_CONFIG_HEADER, config);
+    }
+    String owner = null;
+    if (ownerPrincipal != null) {
+      owner = GSON.toJson(ownerPrincipal, KerberosPrincipalId.class);
+      request.setHeader(AbstractAppFabricHttpHandler.OWNER_PRINCIPAL_HEADER, owner);
     }
     MockResponder mockResponder = new MockResponder();
     BodyConsumer bodyConsumer = appLifecycleHttpHandler.deploy(request, mockResponder, namespace.getId(), archiveName,
-                                                               config);
+                                                               config, owner);
     Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from deploy call should not be null");
 
     try (BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024)) {

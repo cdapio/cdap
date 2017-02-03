@@ -53,6 +53,13 @@ public class DefaultOwnerAdmin implements OwnerAdmin {
 
   @Nullable
   @Override
+  public String getOwnerPrincipal(NamespacedEntityId entityId) throws IOException {
+    KerberosPrincipalId owner = getOwner(entityId);
+    return owner == null ? null : owner.getPrincipal();
+  }
+
+  @Nullable
+  @Override
   public KerberosPrincipalId getEffectiveOwner(NamespacedEntityId entityId) throws IOException {
     KerberosPrincipalId effectiveOwner = ownerStore.getOwner(entityId);
     if (effectiveOwner != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,8 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
+import com.google.gson.annotations.SerializedName;
 import org.apache.twill.filesystem.Location;
 
 import javax.annotation.Nullable;
@@ -34,17 +36,28 @@ public class ApplicationDeployable {
   private final ApplicationSpecification specification;
   private final ApplicationSpecification existingAppSpec;
   private final ApplicationDeployScope applicationDeployScope;
+  @SerializedName("owner.principal")
+  private final KerberosPrincipalId ownerPrincipal;
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
                                ApplicationId applicationId, ApplicationSpecification specification,
                                @Nullable ApplicationSpecification existingAppSpec,
                                ApplicationDeployScope applicationDeployScope) {
+    this(artifactId, artifactLocation, applicationId, specification, existingAppSpec, applicationDeployScope, null);
+  }
+
+  public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
+                               ApplicationId applicationId, ApplicationSpecification specification,
+                               @Nullable ApplicationSpecification existingAppSpec,
+                               ApplicationDeployScope applicationDeployScope,
+                               @Nullable KerberosPrincipalId ownerPrincipal) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.applicationId = applicationId;
     this.specification = specification;
     this.existingAppSpec = existingAppSpec;
     this.applicationDeployScope = applicationDeployScope;
+    this.ownerPrincipal = ownerPrincipal;
   }
 
   /**
@@ -89,5 +102,13 @@ public class ApplicationDeployable {
    */
   public ApplicationDeployScope getApplicationDeployScope() {
     return applicationDeployScope;
+  }
+
+  /**
+   * @return the {@link KerberosPrincipalId} of the application owner
+   */
+  @Nullable
+  public KerberosPrincipalId getOwnerPrincipal() {
+    return ownerPrincipal;
   }
 }

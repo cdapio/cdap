@@ -33,7 +33,6 @@ import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.proto.StreamProperties;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.http.HttpRequest;
@@ -158,14 +157,14 @@ public class StreamHandlerTest extends GatewayTestBase {
   public void testOwner() throws Exception {
     // Should not be able to create a stream with invalid principal format
     createStreamWithOwner("streams/ownedStream", HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                          new KerberosPrincipalId("alice/bob/somehost@SOMEKDC.NET"));
+                          "alice/bob/somehost@SOMEKDC.NET");
     // The above failure to store the owner must have failed the stream creation and stream meta should not exists
     HttpURLConnection urlConn = openURL(createStreamInfoURL("ownedStream"), HttpMethod.GET);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // Should be able to create a stream with valid principal format
-    KerberosPrincipalId alicePrincipal = new KerberosPrincipalId("alice/somehost@SOMEKDC.NET");
+    String alicePrincipal = "alice/somehost@SOMEKDC.NET";
     createStreamWithOwner("streams/ownedStream", HttpResponseStatus.OK,
                           alicePrincipal);
 
@@ -173,7 +172,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     Assert.assertEquals(alicePrincipal, getOwner("ownedStream"));
 
     // Updating owner information should fail
-    verifyUpdateOwnerFailure("ownedStream", new KerberosPrincipalId("bob@SOMEKDC.NET"));
+    verifyUpdateOwnerFailure("ownedStream", "bob@SOMEKDC.NET");
 
     // Trying to set owner to null should fail too
     verifyUpdateOwnerFailure("ownedStream", null);
@@ -187,7 +186,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     Assert.assertNull(getOwner("noOwner"));
 
     // although updating owner for a stream which have no previous owner should fail too
-    verifyUpdateOwnerFailure("noOwner", new KerberosPrincipalId("bob@SOMEKDC.NET"));
+    verifyUpdateOwnerFailure("noOwner", "bob@SOMEKDC.NET");
   }
 
   @Test
@@ -530,7 +529,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     return series[0].getData()[0].getValue();
   }
 
-  private KerberosPrincipalId getOwner(String streamName) throws IOException, URISyntaxException {
+  private String getOwner(String streamName) throws IOException, URISyntaxException {
     HttpURLConnection urlConn = openURL(createStreamInfoURL(streamName), HttpMethod.GET);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     StreamProperties properties = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
@@ -540,7 +539,7 @@ public class StreamHandlerTest extends GatewayTestBase {
   }
 
   private void createStreamWithOwner(String streamUrl, HttpResponseStatus responseStatus,
-                                     @Nullable KerberosPrincipalId owner) throws IOException, URISyntaxException {
+                                     @Nullable String owner) throws IOException, URISyntaxException {
     HttpURLConnection urlConn = openURL(createURL(streamUrl), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     StreamProperties properties = new StreamProperties(1L, null, 128, null, owner);
@@ -549,7 +548,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     urlConn.disconnect();
   }
 
-  private void verifyUpdateOwnerFailure(String streamName, @Nullable KerberosPrincipalId ownerPrincipal)
+  private void verifyUpdateOwnerFailure(String streamName, @Nullable String ownerPrincipal)
     throws IOException, URISyntaxException {
     StreamProperties newProps = new StreamProperties(1L, null, null, null, ownerPrincipal);
     HttpURLConnection urlConn = openURL(createPropertiesURL(streamName), HttpMethod.PUT);

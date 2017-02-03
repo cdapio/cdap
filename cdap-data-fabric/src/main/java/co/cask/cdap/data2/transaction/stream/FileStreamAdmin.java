@@ -336,7 +336,7 @@ public class FileStreamAdmin implements StreamAdmin {
   public StreamProperties getProperties(StreamId streamId) throws Exception {
     // User should have any access on the stream to read its properties
     ensureAccess(streamId);
-    KerberosPrincipalId ownerPrincipal = ownerAdmin.getOwner(streamId);
+    String ownerPrincipal = ownerAdmin.getOwnerPrincipal(streamId);
     StreamConfig config = getConfig(streamId);
     StreamSpecification spec = streamMetaStore.getStream(streamId);
     return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB(),
@@ -356,9 +356,7 @@ public class FileStreamAdmin implements StreamAdmin {
     });
 
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamId);
-    boolean equals = Objects.equals(properties.getOwnerPrincipal(), ownerAdmin.getOwner(streamId));
-    Preconditions.checkArgument(equals,
-                                String.format("Updating %s is not supported.", Constants.Security.OWNER_PRINCIPAL));
+    verifyOwner(streamId, properties.getOwnerPrincipal());
 
     streamCoordinatorClient.updateProperties(
       streamId, new Callable<CoordinatorStreamProperties>() {
@@ -424,14 +422,17 @@ public class FileStreamAdmin implements StreamAdmin {
       // Grant All access to the stream created to the User
       privilegesManager.grant(streamId, authenticationContext.getPrincipal(), EnumSet.allOf(Action.class));
 
-      KerberosPrincipalId ownerPrincipal = null;
-      if (properties.containsKey(Constants.Security.OWNER_PRINCIPAL)) {
-        ownerPrincipal = GSON.fromJson(properties.getProperty(Constants.Security.OWNER_PRINCIPAL),
-                                       KerberosPrincipalId.class);
-      }
-      // If an owner was provided then store it in owner store first so that we can use it for impersonation below
-      if (ownerPrincipal != null) {
-        ownerAdmin.add(streamId, ownerPrincipal);
+      String ownerPrincipal = properties.containsKey(Constants.Security.OWNER_PRINCIPAL) ?
+        properties.getProperty(Constants.Security.OWNER_PRINCIPAL) : null;
+
+      if (exists(streamId)) {
+        // if stream exists then make sure owner for this create request is same
+        verifyOwner(streamId, ownerPrincipal);
+      } else {
+        // if the stream didn't exist then add the owner information
+        if (ownerPrincipal != null) {
+          ownerAdmin.add(streamId, new KerberosPrincipalId(ownerPrincipal));
+        }
       }
 
       final UserGroupInformation ugi = impersonator.getUGI(streamNamespace);
@@ -840,5 +841,11 @@ public class FileStreamAdmin implements StreamAdmin {
     if (!filter.apply(entityId)) {
       throw new UnauthorizedException(principal, entityId);
     }
+  }
+
+  private void verifyOwner(StreamId streamId, @Nullable String specifiedOwnerPrincipal) throws IOException {
+    boolean equals = Objects.equals(specifiedOwnerPrincipal, ownerAdmin.getOwnerPrincipal(streamId));
+    Preconditions.checkArgument(equals,
+                                String.format("Updating %s is not supported.", Constants.Security.OWNER_PRINCIPAL));
   }
 }
