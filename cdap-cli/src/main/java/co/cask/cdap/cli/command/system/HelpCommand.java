@@ -225,25 +225,42 @@ public class HelpCommand implements Command {
     }
 
     int beginIdx = 0;
-    int returnIdx = 0;
+    int lineBreakIdx = 0;
 
     while (beginIdx < str.length()) {
       int idx;
       if (beginIdx + colWidth >= str.length()) {
         idx = str.length();
       } else {
-        idx = str.lastIndexOf(" ", beginIdx + colWidth);
-        returnIdx = str.indexOf("\n", beginIdx);
-      }
-      if (idx > 0 && returnIdx > 0 && returnIdx < idx) {
-        idx = returnIdx;
-      }
+        // Find two indexes:
+        // the next line break
+        // the last space before the column edge
+        lineBreakIdx = str.indexOf("\n", beginIdx);
+        idx = str.lastIndexOf(' ', beginIdx + colWidth);
 
-      // Cannot break line if no space found between beginIdx and (beginIdx + colWidth)
-      // The best we can do is to look further.
-      // The line will be longer than colWidth though.
-      if (idx < 0 || idx < beginIdx) {
-        idx = str.indexOf(' ', beginIdx + colWidth);
+        // If the next line break occurs before the line would break based on the space index,
+        // break the line at the next line break instead; or,
+        // if the next line break occurs before the column edge (and no space was found)
+        // break the line at the next line break
+        if ((idx > 0 && lineBreakIdx > 0 && lineBreakIdx < idx) ||
+            (idx < 0 && lineBreakIdx > 0 && lineBreakIdx < (beginIdx + colWidth))) {
+          idx = lineBreakIdx;
+        }
+
+        // Cannot break line if no space or line break found between beginIdx and (beginIdx + colWidth)
+        // The best we can do is to look further.
+        // The line will be longer than colWidth though.
+        if (idx < 0 || idx < beginIdx) {
+          idx = str.indexOf(' ', beginIdx + colWidth);
+          // If the next line break occurs the first space, break there even though it is past the column edge; or,
+          // if there is no space found but there is a line break, break there
+          if ((idx > 0 && lineBreakIdx > 0 && lineBreakIdx < idx) ||
+              (idx < 0 && lineBreakIdx > 0)) {
+            idx = lineBreakIdx;
+          }
+        }
+        
+        // If no other breaks, use the rest of the line. (An alternative would be to wrap the line at column edge.)
         if (idx < 0) {
           idx = str.length();
         }
