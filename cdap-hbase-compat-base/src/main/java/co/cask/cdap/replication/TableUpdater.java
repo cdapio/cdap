@@ -94,6 +94,8 @@ public abstract class TableUpdater {
           if (!cachedUpdates.isEmpty()) {
             LOG.debug("Update Replication State table now. {} entries.", cachedUpdates.size());
             writeState(cachedUpdates);
+            // Clear the Map so stale updates are never written
+            cachedUpdates.clear();
           }
         } catch (IOException ioe) {
           LOG.error("Put to Replication State Table failed.", ioe);
