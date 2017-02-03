@@ -29,6 +29,8 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
+import co.cask.cdap.api.dataset.table.TableProperties;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.test.SlowTests;
@@ -38,6 +40,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionExecutor;
@@ -46,6 +49,7 @@ import org.apache.twill.filesystem.Location;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -54,6 +58,7 @@ import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
@@ -102,7 +107,29 @@ public class PartitionedFileSetTest {
   private static final DatasetId pfsExternalInstance = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("ext");
   private static Location pfsBaseLocation;
 
+  private static Map<String, String> tablePermissions;
+  private static String fsPermissions;
+  private static String group;
+
   private InMemoryTxSystemClient txClient;
+
+  @BeforeClass
+  public static void setupPermissions() throws IOException {
+    group = UserGroupInformation.getCurrentUser().getPrimaryGroupName();
+    tablePermissions = ImmutableMap.of("@" + group, "RWX");
+    // determine the default permissions of created directories (we want to test with different perms)
+    Location loc = dsFrameworkUtil.getInjector().getInstance(NamespacedLocationFactory.class)
+      .get(DatasetFrameworkTestUtil.NAMESPACE2_ID.toId());
+    loc.mkdirs();
+    loc = loc.append("permcheckfile");
+    loc.createNew();
+    String defaultPermissions = loc.getPermissions();
+    fsPermissions = "rwxrwx--x";
+     if (fsPermissions.equals(defaultPermissions)) {
+      // swap the permissions so we can test with different file set permissions than the default
+      fsPermissions = "rwx--x--x";
+    }
+  }
 
   @Before
   public void before() throws Exception {
@@ -110,7 +137,10 @@ public class PartitionedFileSetTest {
 
     dsFrameworkUtil.createInstance("partitionedFileSet", pfsInstance, PartitionedFileSetProperties.builder()
       .setPartitioning(PARTITIONING_1)
+      .setTablePermissions(tablePermissions)
       .setBasePath("testDir")
+      .setFilePermissions(fsPermissions)
+      .setFileGroup(group)
       .build());
     pfsBaseLocation = ((PartitionedFileSet) dsFrameworkUtil.getInstance(pfsInstance))
       .getEmbeddedFileSet().getBaseLocation();
@@ -166,6 +196,18 @@ public class PartitionedFileSetTest {
     } finally {
       txContext.abort();
     }
+  }
+
+  @Test
+  public void testPermissions() throws Exception {
+    // validate that the fileset permissions and group were applied to the embedded fileset (just sanity test)
+    PartitionedFileSet pfs = dsFrameworkUtil.getInstance(pfsInstance);
+    Location loc = pfs.getEmbeddedFileSet().getLocation("some/random/path");
+    loc.getOutputStream().close();
+    Assert.assertEquals(fsPermissions, loc.getPermissions());
+    Assert.assertEquals(group, loc.getGroup());
+    Map<String, String> props = dsFrameworkUtil.getSpec(pfsInstance).getSpecification("partitions").getProperties();
+    Assert.assertEquals(tablePermissions, TableProperties.getTablePermissions(props));
   }
 
   @Test
