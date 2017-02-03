@@ -52,7 +52,7 @@ import java.util.List;
  * TestBase for testing {@link co.cask.cdap.metrics.collect.MessagingMetricsCollectionService} 
  * and {@link co.cask.cdap.metrics.process.MessagingMetricsProcessorService}
  */
-public abstract class MessagingMetricsTestBase {
+public abstract class MetricsTestBase {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
