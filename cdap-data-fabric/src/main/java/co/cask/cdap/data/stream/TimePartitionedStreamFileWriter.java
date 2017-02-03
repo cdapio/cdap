@@ -17,11 +17,11 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.file.PartitionedFileWriter;
 import co.cask.cdap.data.stream.TimePartitionedStreamFileWriter.TimePartition;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.io.OutputSupplier;
 import com.google.common.primitives.Longs;
 import org.apache.twill.filesystem.Location;

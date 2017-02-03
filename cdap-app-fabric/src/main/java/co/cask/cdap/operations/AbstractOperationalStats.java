@@ -18,8 +18,6 @@ package co.cask.cdap.operations;
 
 import com.google.inject.Injector;
 
-import java.io.IOException;
-
 /**
  * A base class to provide default implementations for {@link OperationalStats} extensions
  */

@@ -20,17 +20,13 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.DatasetAlreadyExistsException;
 import co.cask.cdap.common.DatasetNotFoundException;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
-import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
@@ -82,7 +78,6 @@ import javax.annotation.Nullable;
 public class DatasetInstanceService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceService.class);
 
-  private final CConfiguration cConf;
   private final DatasetTypeService typeService;
   private final DatasetInstanceManager instanceManager;
   private final DatasetOpExecutor opExecutorClient;
@@ -98,12 +93,11 @@ public class DatasetInstanceService {
 
   @VisibleForTesting
   @Inject
-  public DatasetInstanceService(CConfiguration cConf, DatasetTypeService typeService,
-                                DatasetInstanceManager instanceManager, DatasetOpExecutor opExecutorClient,
-                                ExploreFacade exploreFacade, NamespaceQueryAdmin namespaceQueryAdmin,
-                                OwnerAdmin ownerAdmin, AuthorizationEnforcer authorizationEnforcer,
-                                PrivilegesManager privilegesManager, AuthenticationContext authenticationContext) {
-    this.cConf = cConf;
+  public DatasetInstanceService(DatasetTypeService typeService, DatasetInstanceManager instanceManager,
+                                DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade,
+                                NamespaceQueryAdmin namespaceQueryAdmin, OwnerAdmin ownerAdmin,
+                                AuthorizationEnforcer authorizationEnforcer, PrivilegesManager privilegesManager,
+                                AuthenticationContext authenticationContext) {
     this.opExecutorClient = opExecutorClient;
     this.typeService = typeService;
     this.instanceManager = instanceManager;
@@ -247,14 +241,6 @@ public class DatasetInstanceService {
     ensureNamespaceExists(namespace);
 
     DatasetId datasetId = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
-
-    // If owner principal was specified then check if kerberos is enabled as the first thing
-    if (props.getOwnerPrincipal() != null && !SecurityUtil.isKerberosEnabled(cConf)) {
-      throw new BadRequestException(String.format("Kerberos is not enabled to create %s with principal %s. " +
-                                                    "Please enable kerberos or try again without principal.",
-                                                  datasetId, props.getOwnerPrincipal()));
-    }
-
     DatasetSpecification existing = instanceManager.get(datasetId);
     if (existing != null) {
       throw new DatasetAlreadyExistsException(datasetId);

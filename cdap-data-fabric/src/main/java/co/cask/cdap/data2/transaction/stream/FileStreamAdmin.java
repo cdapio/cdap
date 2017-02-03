@@ -19,17 +19,13 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
-import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.security.ImpersonationUtils;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.stream.CoordinatorStreamProperties;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
@@ -64,6 +60,7 @@ import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.notification.NotificationFeedInfo;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
@@ -80,7 +77,6 @@ import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -183,8 +179,7 @@ public class FileStreamAdmin implements StreamAdmin {
   public void dropAllInNamespace(final NamespaceId namespace) throws Exception {
     // To delete all streams in a namespace, one should have admin privileges on that namespace
     ensureAccess(namespace, Action.ADMIN);
-    UserGroupInformation ugi = impersonator.getUGI(namespace);
-    Iterable<Location> locations = ImpersonationUtils.doAs(ugi, new Callable<Iterable<Location>>() {
+    Iterable<Location> locations = impersonator.doAs(namespace, new Callable<Iterable<Location>>() {
       @Override
       public Iterable<Location> call() throws Exception {
         try {
@@ -197,11 +192,11 @@ public class FileStreamAdmin implements StreamAdmin {
     });
 
     for (final Location location : locations) {
-      doDrop(namespace.stream(StreamUtils.getStreamNameFromLocation(location)), location, ugi);
+      doDrop(namespace.stream(StreamUtils.getStreamNameFromLocation(location)), location);
     }
 
     // Also drop the state table
-    ImpersonationUtils.doAs(ugi, new Callable<Void>() {
+    impersonator.doAs(namespace, new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         stateStoreFactory.dropAllInNamespace(namespace);
@@ -305,8 +300,7 @@ public class FileStreamAdmin implements StreamAdmin {
   public StreamConfig getConfig(final StreamId streamId) throws IOException {
     try {
       // No Authorization check performed in this method. If required, it should be added before this method is invoked
-      UserGroupInformation ugi = impersonator.getUGI(streamId.getParent());
-      return ImpersonationUtils.doAs(ugi, new Callable<StreamConfig>() {
+      return impersonator.doAs(streamId, new Callable<StreamConfig>() {
         @Override
         public StreamConfig call() throws IOException {
           Location configLocation = getConfigLocation(streamId);
@@ -350,15 +344,6 @@ public class FileStreamAdmin implements StreamAdmin {
     Location streamLocation;
     // User should have admin access on the stream to update its configuration
     ensureAccess(streamId, Action.ADMIN);
-
-    // if an owner principal was provided make sure kerberos is enabled
-    if (properties.getOwnerPrincipal() != null && !SecurityUtil.isKerberosEnabled(cConf)) {
-      throw new BadRequestException(String.format("Kerberos is not enabled and a principal %s was given. " +
-                                                    "Please try again without a principal.",
-                                                  properties.getOwnerPrincipal()));
-    }
-    verifyOwner(streamId, properties.getOwnerPrincipal());
-
     streamLocation = impersonator.doAs(streamId.getParent(), new Callable<Location>() {
       @Override
       public Location call() throws Exception {
@@ -367,6 +352,7 @@ public class FileStreamAdmin implements StreamAdmin {
     });
 
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamId);
+    verifyOwner(streamId, properties.getOwnerPrincipal());
 
     streamCoordinatorClient.updateProperties(
       streamId, new Callable<CoordinatorStreamProperties>() {
@@ -402,8 +388,7 @@ public class FileStreamAdmin implements StreamAdmin {
       if (!metaExists) {
         return false;
       }
-      UserGroupInformation ugi = impersonator.getUGI(streamId.getParent());
-      return ImpersonationUtils.doAs(ugi, new Callable<Boolean>() {
+      return impersonator.doAs(streamId, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
           return getConfigLocation(streamId).exists();
@@ -429,20 +414,14 @@ public class FileStreamAdmin implements StreamAdmin {
     privilegesManager.revoke(streamId);
     final Properties properties = (props == null) ? new Properties() : props;
     try {
-      // If owner principal was specified then check if kerberos is enabled as the first thing
-      String ownerPrincipal = properties.containsKey(Constants.Security.PRINCIPAL) ?
-        properties.getProperty(Constants.Security.PRINCIPAL) : null;
-      if (ownerPrincipal != null && !SecurityUtil.isKerberosEnabled(cConf)) {
-        throw new BadRequestException(String.format("Kerberos is not enabled to create %s with principal %s. " +
-                                                      "Please enable kerberos or try again without principal.",
-                                                    streamId, ownerPrincipal));
-      }
-
       // Grant All access to the stream created to the User
       privilegesManager.grant(streamId, authenticationContext.getPrincipal(), EnumSet.allOf(Action.class));
 
+      String ownerPrincipal = properties.containsKey(Constants.Security.PRINCIPAL) ?
+        properties.getProperty(Constants.Security.PRINCIPAL) : null;
+
       if (exists(streamId)) {
-        // if stream exists then make sure owner for this create request is same.
+        // if stream exists then make sure owner for this create request is same
         verifyOwner(streamId, ownerPrincipal);
       } else {
         // if the stream didn't exist then add the owner information
@@ -451,8 +430,7 @@ public class FileStreamAdmin implements StreamAdmin {
         }
       }
 
-      final UserGroupInformation ugi = impersonator.getUGI(streamNamespace);
-      final Location streamLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
+      final Location streamLocation = impersonator.doAs(streamId, new Callable<Location>() {
         @Override
         public Location call() throws Exception {
           assertNamespaceHomeExists(streamId.getParent());
@@ -487,7 +465,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
           final StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
                                                        ttl, streamLocation, formatSpec, threshold);
-          ImpersonationUtils.doAs(ugi, new Callable<Void>() {
+          impersonator.doAs(streamId, new Callable<Void>() {
             @Override
             public Void call() throws Exception {
               writeConfig(config);
@@ -542,7 +520,7 @@ public class FileStreamAdmin implements StreamAdmin {
   public void truncate(final StreamId streamId) throws Exception {
     // User should have ADMIN access to truncate the stream
     ensureAccess(streamId, Action.ADMIN);
-    impersonator.doAs(streamId.getParent(), new Callable<Void>() {
+    impersonator.doAs(streamId, new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         doTruncate(streamId, getStreamLocation(streamId));
@@ -555,14 +533,13 @@ public class FileStreamAdmin implements StreamAdmin {
   public void drop(final StreamId streamId) throws Exception {
     // User should have ADMIN access to drop the stream
     ensureAccess(streamId, Action.ADMIN);
-    UserGroupInformation ugi = impersonator.getUGI(streamId.getParent());
-    Location streamLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
+    Location streamLocation = impersonator.doAs(streamId, new Callable<Location>() {
       @Override
       public Location call() throws Exception {
         return getStreamLocation(streamId);
       }
     });
-    doDrop(streamId, streamLocation, ugi);
+    doDrop(streamId, streamLocation);
   }
 
   @Override
@@ -666,15 +643,14 @@ public class FileStreamAdmin implements StreamAdmin {
     });
   }
 
-  private void doDrop(final StreamId streamId, final Location streamLocation,
-                      final UserGroupInformation ugi) throws Exception {
+  private void doDrop(final StreamId streamId, final Location streamLocation) throws Exception {
     // Delete the stream config so that calls that try to access the stream will fail after this call returns.
     // The stream coordinator client will notify all clients that stream has been deleted.
     streamCoordinatorClient.deleteStream(streamId, new Runnable() {
       @Override
       public void run() {
         try {
-          final Location configLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
+          final Location configLocation = impersonator.doAs(streamId, new Callable<Location>() {
             @Override
             public Location call() throws Exception {
               Location configLocation = getConfigLocation(streamId);
@@ -695,7 +671,7 @@ public class FileStreamAdmin implements StreamAdmin {
           }
 
 
-          ImpersonationUtils.doAs(ugi, new Callable<Void>() {
+          impersonator.doAs(streamId, new Callable<Void>() {
             @Override
             public Void call() throws Exception {
               if (!configLocation.delete()) {
@@ -747,8 +723,7 @@ public class FileStreamAdmin implements StreamAdmin {
     }
 
     final StreamConfig newConfig = builder.build();
-    UserGroupInformation ugi = impersonator.getUGI(streamId.getParent());
-    ImpersonationUtils.doAs(ugi, new Callable<Void>() {
+    impersonator.doAs(streamId, new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         writeConfig(newConfig);

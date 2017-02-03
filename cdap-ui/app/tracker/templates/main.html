@@ -82,7 +82,7 @@
                 <td class="text-left">
 
                   <a ng-if="metric.entityType === 'dataset'"
-                    ui-sref="tracker.detail.entity.metadata({entityType: 'datasets', entityId: metric.entityName})">
+                    ui-sref="tracker.detail.entity.metadata({entityType: 'datasets', datasetId: metric.entityName})">
                     <span uib-tooltip="{{ ::metric.entityName }}"
                       tooltip-ellipsis="{{ ::metric.entityName }}"
                       tooltip-enable="metric.entityName.length > 15"
@@ -94,7 +94,7 @@
                     </span>
                   </a>
                   <a ng-if="metric.entityType === 'stream'"
-                    ui-sref="tracker.detail.entity.metadata({entityType: 'streams', entityId: metric.entityName})">
+                    ui-sref="tracker.detail.entity.metadata({entityType: 'streams', datasetId: metric.entityName})">
                     <span uib-tooltip="{{ ::metric.entityName }}"
                       tooltip-ellipsis="{{ ::metric.entityName }}"
                       tooltip-enable="metric.entityName.length > 15"

@@ -54,6 +54,9 @@ public final class Constants {
   public static final String TEZ_HOME = "TEZ_HOME";
 
   public static final String CLUSTER_NAME = "cluster.name";
+  /* Used by the user to specify what part of a path should be replaced by the current user's name. */
+  public static final String USER_NAME_SPECIFIER = "${name}";
+
 
   /**
    * Configuration for Master startup.
@@ -755,6 +758,9 @@ public final class Constants {
     /** Key to mark a discoverable which supports ssl */
     public static final String SSL_URI_SCHEME = "https://";
     public static final String URI_SCHEME = "http://";
+    /** Configuration for specifying keytab location. The location will contain ${name} which will be replaced
+     * by the user/owner of the entities name. */
+    public static final String KEYTAB_PATH = "security.keytab.path";
 
     /** Key to specify the kerberos principal of the entity owner **/
     public static final String PRINCIPAL = "principal";
