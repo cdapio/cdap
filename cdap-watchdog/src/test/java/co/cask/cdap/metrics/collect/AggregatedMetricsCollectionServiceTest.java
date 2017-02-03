@@ -47,6 +47,7 @@ public class AggregatedMetricsCollectionServiceTest {
   private static final String FLOWLET = "testflowlet";
   private static final String INSTANCE = "testInstance";
   private static final String METRIC = "metric";
+  private static final String GAUGE_METRIC = "gaugeMetric";
 
   private long getMetricValue(Collection<MetricValue> metrics, String metricName) {
     Iterator<MetricValue> metricsItor = metrics.iterator();
@@ -105,14 +106,14 @@ public class AggregatedMetricsCollectionServiceTest {
       Assert.assertNotNull(published.poll(3, TimeUnit.SECONDS));
 
       //update the metrics multiple times with gauge.
-      service.getContext(EMPTY_TAGS).gauge(METRIC, 1);
-      service.getContext(EMPTY_TAGS).gauge(METRIC, 2);
-      service.getContext(EMPTY_TAGS).gauge(METRIC, 3);
+      service.getContext(EMPTY_TAGS).gauge(GAUGE_METRIC, 1);
+      service.getContext(EMPTY_TAGS).gauge(GAUGE_METRIC, 2);
+      service.getContext(EMPTY_TAGS).gauge(GAUGE_METRIC, 3);
 
       // gauge just updates the value, so polling should return the most recent value written
       record = published.poll(3, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
-      Assert.assertEquals(3, getMetricValue(record.getMetrics(), METRIC));
+      Assert.assertEquals(3, getMetricValue(record.getMetrics(), GAUGE_METRIC));
 
       // define collectors for non-empty tags
       MetricsContext baseCollector = service.getContext(baseTags);
@@ -137,19 +138,19 @@ public class AggregatedMetricsCollectionServiceTest {
       Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
 
       // gauge metrics for various collectors
-      baseCollector.gauge(METRIC, Integer.MAX_VALUE);
-      baseCollector.gauge(METRIC, 3);
-      flowletInstanceCollector.gauge(METRIC, 6);
-      flowletInstanceCollector.gauge(METRIC, 2);
-      baseCollector.gauge(METRIC, 1);
-      flowletInstanceCollector.gauge(METRIC, Integer.MAX_VALUE);
+      baseCollector.gauge(GAUGE_METRIC, Integer.MAX_VALUE);
+      baseCollector.gauge(GAUGE_METRIC, 3);
+      flowletInstanceCollector.gauge(GAUGE_METRIC, 6);
+      flowletInstanceCollector.gauge(GAUGE_METRIC, 2);
+      baseCollector.gauge(GAUGE_METRIC, 1);
+      flowletInstanceCollector.gauge(GAUGE_METRIC, Integer.MAX_VALUE);
 
       // gauge just updates the value, so polling should return the most recent value written
       verifyGaugeMetricsValue(published.poll(10, TimeUnit.SECONDS));
       verifyGaugeMetricsValue(published.poll(10, TimeUnit.SECONDS));
 
-      flowletInstanceCollector.gauge(METRIC, 0);
-      verifyMetricsValue(published.poll(10, TimeUnit.SECONDS), 0L);
+      flowletInstanceCollector.gauge(GAUGE_METRIC, 0);
+      verifyMetricsValue(published.poll(10, TimeUnit.SECONDS), 0L, GAUGE_METRIC);
     } finally {
       service.stopAndWait();
     }
@@ -174,17 +175,17 @@ public class AggregatedMetricsCollectionServiceTest {
     Map<String, String> tags = metricValues.getTags();
     if (tags.size() == 4) {
       // base collector
-      Assert.assertEquals(1L, getMetricValue(metricValues.getMetrics(), METRIC));
+      Assert.assertEquals(1L, getMetricValue(metricValues.getMetrics(), GAUGE_METRIC));
     } else if (tags.size() == 6) {
       // flowlet collector
-      Assert.assertEquals((long) Integer.MAX_VALUE, getMetricValue(metricValues.getMetrics(), METRIC));
+      Assert.assertEquals((long) Integer.MAX_VALUE, getMetricValue(metricValues.getMetrics(), GAUGE_METRIC));
     } else {
       Assert.fail("Unexpected number of tags while verifying gauge metrics value - " + tags.size());
     }
   }
 
-  private void verifyMetricsValue(MetricValues metricValues, long expected) {
+  private void verifyMetricsValue(MetricValues metricValues, long expected, String metricName) {
     Assert.assertNotNull(metricValues);
-    Assert.assertEquals(expected, getMetricValue(metricValues.getMetrics(), METRIC));
+    Assert.assertEquals(expected, getMetricValue(metricValues.getMetrics(), metricName));
   }
 }
