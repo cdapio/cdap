@@ -27,8 +27,6 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.common.security.DefaultImpersonator;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -63,6 +61,8 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.impersonation.DefaultImpersonator;
+import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
@@ -181,10 +181,9 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                                             DEFAULT_MODULES);
     DatasetOpExecutor opExecutor = new LocalDatasetOpExecutor(cConf, discoveryServiceClient, opExecutorService,
                                                               authenticationContext);
-    DatasetInstanceService instanceService = new DatasetInstanceService(cConf, typeService, instanceManager,
-                                                                        opExecutor, exploreFacade, namespaceQueryAdmin,
-                                                                        ownerAdmin, authorizationEnforcer,
-                                                                        privilegesManager, authenticationContext);
+    DatasetInstanceService instanceService = new DatasetInstanceService(
+      typeService, instanceManager, opExecutor, exploreFacade, namespaceQueryAdmin, ownerAdmin, authorizationEnforcer,
+      privilegesManager, authenticationContext);
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,

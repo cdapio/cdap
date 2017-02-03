@@ -35,8 +35,6 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
-import co.cask.cdap.common.security.DefaultImpersonator;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
@@ -69,6 +67,8 @@ import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.impersonation.DefaultImpersonator;
+import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
@@ -242,7 +242,7 @@ public abstract class DatasetServiceTestBase {
       typeManager, namespaceAdmin, namespacedLocationFactory, authEnforcer, privilegesManager, authenticationContext,
       cConf, impersonator, txSystemClientService, inMemoryDatasetFramework, txExecutorFactory, defaultModules);
 
-    instanceService = new DatasetInstanceService(cConf, typeService, instanceManager, opExecutor, exploreFacade,
+    instanceService = new DatasetInstanceService(typeService, instanceManager, opExecutor, exploreFacade,
                                                  namespaceQueryAdmin, ownerAdmin, authEnforcer, privilegesManager,
                                                  authenticationContext);
 

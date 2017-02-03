@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,13 +19,12 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.TimePartitionedStreamFileWriter;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
@@ -59,7 +58,7 @@ public final class LocationStreamFileWriterFactory implements StreamFileWriterFa
     try {
       Preconditions.checkNotNull(config.getLocation(), "Location for stream %s is unknown.", config.getStreamId());
 
-      Location baseLocation = impersonator.doAs(new NamespaceId(config.getStreamId().getNamespace()),
+      Location baseLocation = impersonator.doAs(config.getStreamId(),
                                                 new Callable<Location>() {
         @Override
         public Location call() throws Exception {

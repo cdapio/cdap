@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,10 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.internal.app.runtime.distributed.AbstractProgramTwillApplication;
 import co.cask.cdap.internal.app.runtime.distributed.TwillAppNames;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
@@ -162,7 +162,7 @@ final class ImpersonatedTwillRunnerService implements TwillRunnerService {
           return updater.update(application, runId);
         }
         try {
-          return impersonator.doAs(programId.getNamespaceId(), new Callable<SecureStore>() {
+          return impersonator.doAs(programId, new Callable<SecureStore>() {
             @Override
             public SecureStore call() throws Exception {
               return updater.update(application, runId);

@@ -14,11 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.common.security;
+package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.inject.ImplementedBy;
 import org.apache.hadoop.security.UserGroupInformation;
 
@@ -26,9 +26,9 @@ import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
- * Responsible for executing code for a user, configurable at the namespace level.
+ * Responsible for executing code for a user.
  *
- * TODO: CDAP-1698. Ideally there should be an explicit binding in some Module. However, adding that is too complicate
+ * TODO: CDAP-1698. Ideally there should be an explicit binding in some Module. However, adding that is too complicated
  * now, due to the poor organization of Guice usage in CDAP.
  */
 @ImplementedBy(DefaultImpersonator.class)
@@ -36,35 +36,22 @@ public interface Impersonator {
   /**
    * Executes a callable as the user, configurable at a namespace level
    *
-   * @param namespaceId the namespace to use to lookup the user
-   * @param callable the callable to execute
-   * @param <T> return type of the callable
-   *
-   * @return the return value of the callable
-   * @throws NamespaceNotFoundException if the namespace does not exist
-   * @throws Exception if the callable throws any exception
-   */
-  <T> T doAs(NamespaceId namespaceId, Callable<T> callable) throws Exception;
-
-  /**
-   * Executes a callable as the user, configurable at a namespace level
-   *
-   * @param namespaceMeta the metadata of the namespace to use to lookup the user
+   * @param entityId the entity to use to lookup the user to impersonate
    * @param callable the callable to execute
    * @param <T> return type of the callable
    *
    * @return the return value of the callable
    * @throws Exception if the callable throws any exception
    */
-  <T> T doAs(NamespaceMeta namespaceMeta, Callable<T> callable) throws Exception;
+  <T> T doAs(final NamespacedEntityId entityId, final Callable<T> callable) throws Exception;
 
   /**
    * Retrieve the {@link UserGroupInformation} for the given {@link NamespaceId}
    *
-   * @param namespaceId namespace to lookup the user
+   * @param entityId Entity whose effective owner's UGI will be returned
    * @return {@link UserGroupInformation}
    * @throws IOException if there was any error fetching the {@link UserGroupInformation}
    * @throws NamespaceNotFoundException if namespaceId does not exist
    */
-  UserGroupInformation getUGI(NamespaceId namespaceId) throws IOException, NamespaceNotFoundException;
+  UserGroupInformation getUGI(final NamespacedEntityId entityId) throws IOException, NamespaceNotFoundException;
 }

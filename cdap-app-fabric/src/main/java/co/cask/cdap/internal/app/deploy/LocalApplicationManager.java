@@ -21,7 +21,6 @@ import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -45,6 +44,7 @@ import co.cask.cdap.pipeline.Context;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.pipeline.Stage;
+import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -119,7 +119,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository, impersonator));
-    pipeline.addLast(new ApplicationVerificationStage(configuration, store, datasetFramework, ownerAdmin));
+    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin));
     pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework));
     pipeline.addLast(new CreateStreamsStage(streamAdmin));

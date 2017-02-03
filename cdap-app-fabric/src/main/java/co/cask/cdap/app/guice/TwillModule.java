@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@ package co.cask.cdap.app.guice;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.Impersonator;
+import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
@@ -32,7 +32,7 @@ import org.apache.twill.yarn.YarnTwillRunnerService;
 
 /**
  * Guice module for providing bindings for Twill. This module requires accessible bindings to
- * {@link CConfiguration}, {@link YarnConfiguration} and {@link LocationFactory}.
+ * {@link CConfiguration}, {@link YarnConfiguration}, {@link LocationFactory}, and {@link Impersonator}
  */
 public class TwillModule extends PrivateModule {
 
