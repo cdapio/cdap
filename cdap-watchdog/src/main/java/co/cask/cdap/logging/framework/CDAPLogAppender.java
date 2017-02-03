@@ -82,7 +82,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     Preconditions.checkState(context instanceof AppenderContext,
                              "The context object is not an instance of %s", AppenderContext.class);
 
-    AppenderContext context = (AppenderContext) getContext();
+    AppenderContext context = (AppenderContext) this.context;
     logFileManager = new LogFileManager(maxFileLifetimeMs, syncIntervalBytes, LogSchema.LoggingEvent.SCHEMA,
                                         new FileMetaDataWriter(context.getDatasetManager(), context),
                                         context.getLocationFactory());

@@ -14,9 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.logging.framework;
+package co.cask.cdap.logging.framework.distributed;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.logging.framework.AbstractAppenderContext;
+import co.cask.cdap.logging.framework.AppenderContext;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.filesystem.LocationFactory;
@@ -31,8 +34,9 @@ public class DistributedAppenderContext extends AbstractAppenderContext {
   public DistributedAppenderContext(DatasetFramework datasetFramework,
                                     TransactionSystemClient txClient,
                                     LocationFactory locationFactory,
+                                    MetricsCollectionService metricsCollectionService,
                                     TwillContext twillContext) {
-    super(datasetFramework, txClient, locationFactory);
+    super(datasetFramework, txClient, locationFactory, metricsCollectionService);
     this.twillContext = twillContext;
   }
 

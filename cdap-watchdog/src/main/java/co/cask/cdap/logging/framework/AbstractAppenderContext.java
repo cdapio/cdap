@@ -19,6 +19,8 @@ package co.cask.cdap.logging.framework;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.dataset.DatasetManager;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DefaultDatasetManager;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -31,6 +33,8 @@ import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.filesystem.LocationFactory;
 
+import java.util.Collections;
+
 /**
  * The base implementation of {@link AppenderContext} that provides integration with CDAP system.
  */
@@ -39,10 +43,12 @@ public abstract class AbstractAppenderContext extends AppenderContext {
   private final Transactional transactional;
   private final LocationFactory locationFactory;
   private final DatasetManager datasetManager;
+  private final MetricsContext metricsContext;
 
   protected AbstractAppenderContext(DatasetFramework datasetFramework,
                                     TransactionSystemClient txClient,
-                                    LocationFactory locationFactory) {
+                                    LocationFactory locationFactory,
+                                    MetricsCollectionService metricsCollectionService) {
     this.locationFactory = locationFactory;
     // No need to have retry for dataset admin operations
     // The log framework itself will perform retries and state management
@@ -54,6 +60,7 @@ public abstract class AbstractAppenderContext extends AppenderContext {
         NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
+    this.metricsContext = metricsCollectionService.getContext(Collections.<String, String>emptyMap());
   }
 
   @Override
@@ -74,5 +81,10 @@ public abstract class AbstractAppenderContext extends AppenderContext {
   @Override
   public final void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
     transactional.execute(timeoutInSeconds, runnable);
+  }
+
+  @Override
+  public MetricsContext getMetricsContext() {
+    return metricsContext;
   }
 }

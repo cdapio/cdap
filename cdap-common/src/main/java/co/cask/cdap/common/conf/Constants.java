@@ -698,14 +698,16 @@ public final class Constants {
    */
   public static final class Logging {
     public static final String COMPONENT_NAME = "services";
+
+    // Configuration keys
     public static final String KAFKA_TOPIC = "log.kafka.topic";
     public static final String NUM_PARTITIONS = "log.publish.num.partitions";
+    public static final String PIPELINE_CONFIG_DIR = "log.process.pipeline.config.dir";
+    public static final String PIPELINE_LIBRARY_DIR = "log.process.pipeline.lib.dir";
 
     // Constants
     // Table used to store log metadata
     public static final String META_TABLE = "log.meta";
-
-
   }
 
   /**

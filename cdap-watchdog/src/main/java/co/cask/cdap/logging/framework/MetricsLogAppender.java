@@ -16,26 +16,30 @@
 
 package co.cask.cdap.logging.framework;
 
-import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.Context;
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.dataset.DatasetManager;
+import ch.qos.logback.core.AppenderBase;
 import co.cask.cdap.api.metrics.MetricsContext;
-import org.apache.twill.filesystem.LocationFactory;
+import com.google.common.base.Preconditions;
 
 /**
- * Context provided to {@link Appender} via the {@link Appender#setContext(Context)} method.
+ * An {@link Appender} that emits metrics about the logging events.
  */
-public abstract class AppenderContext extends LoggerContext implements Transactional {
+public class MetricsLogAppender extends AppenderBase<ILoggingEvent> {
 
-  public abstract int getInstanceId();
+  private MetricsContext metricsContext;
 
-  public abstract int getInstanceCount();
+  @Override
+  public void start() {
+    super.start();
+    // This shouldn't happen
+    Preconditions.checkState(context instanceof AppenderContext,
+                             "The context object is not an instance of %s", AppenderContext.class);
+    this.metricsContext = ((AppenderContext) context).getMetricsContext();
+  }
 
-  public abstract DatasetManager getDatasetManager();
+  @Override
+  protected void append(ILoggingEvent eventObject) {
 
-  public abstract LocationFactory getLocationFactory();
-
-  public abstract MetricsContext getMetricsContext();
+  }
 }

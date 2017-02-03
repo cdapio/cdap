@@ -56,7 +56,7 @@ import javax.annotation.Nullable;
 /**
  * A log processing pipeline for a {@link Appender}.
  */
-final class KafkaLogProcessorPipeline extends AbstractExecutionThreadService {
+public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(KafkaLogProcessorPipeline.class);
   private static final int KAFKA_SO_TIMEOUT = 3000;
@@ -78,8 +78,8 @@ final class KafkaLogProcessorPipeline extends AbstractExecutionThreadService {
   private long lastCheckpointTime;
   private int unFlushedEvents;
 
-  KafkaLogProcessorPipeline(PipelineContext context, CheckpointManager checkpointManager,
-                            BrokerService brokerService, KafkaPipelineConfig config) {
+  public KafkaLogProcessorPipeline(PipelineContext context, CheckpointManager checkpointManager,
+                                   BrokerService brokerService, KafkaPipelineConfig config) {
     this.name = context.getName();
     this.context = context;
     this.checkpointManager = checkpointManager;
