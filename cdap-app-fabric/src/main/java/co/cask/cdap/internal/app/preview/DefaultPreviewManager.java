@@ -234,8 +234,6 @@ public class DefaultPreviewManager implements PreviewManager {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(OwnerStore.class).to(DefaultOwnerStore.class);
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         }
 
         @Provides

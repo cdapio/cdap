@@ -86,7 +86,6 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
           bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
           bind(Store.class).to(DefaultStore.class);
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
         }
