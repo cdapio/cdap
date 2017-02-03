@@ -18,6 +18,7 @@ package co.cask.cdap.examples.sparkstreaming;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
@@ -126,7 +127,7 @@ public class SpamClassifierTest extends TestBase {
 
     // stop spark program
     sparkManager.stop();
-    sparkManager.waitForFinish(10, TimeUnit.SECONDS);
+    sparkManager.waitForRun(ProgramRunStatus.KILLED, 1, TimeUnit.MINUTES);
 
     appManager.stopAll();
   }

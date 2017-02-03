@@ -18,6 +18,7 @@ package co.cask.cdap.mapreduce;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.StreamManager;
@@ -57,7 +58,7 @@ public class MapReduceStreamInputTestRun extends TestFrameworkTestBase {
     float aaplTotal = 5 * 300.0f + 3 * 298.34f + 50 * 305.23f + 1000 * 284.13f;
 
     MapReduceManager mrManager = applicationManager.getMapReduceManager("BodyTracker").start();
-    mrManager.waitForFinish(180, TimeUnit.SECONDS);
+    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 180, TimeUnit.SECONDS);
 
     KeyValueTable pricesDS = (KeyValueTable) getDataset("prices").get();
     float yhooVal = Bytes.toFloat(pricesDS.read(Bytes.toBytes("YHOO")));

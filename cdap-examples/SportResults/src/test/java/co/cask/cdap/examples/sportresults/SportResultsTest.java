@@ -19,6 +19,7 @@ package co.cask.cdap.examples.sportresults;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -71,7 +72,7 @@ public class SportResultsTest extends TestBase {
     // start a map/reduce that counts all seasons for the fantasy league
     MapReduceManager mrManager =
       appManager.getMapReduceManager("ScoreCounter").start(ImmutableMap.of("league", "fantasy"));
-    mrManager.waitForFinish(5, TimeUnit.MINUTES); // should be much faster, though
+    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES); // should be much faster, though
 
     // validate the output by reading directly from the file set
     DataSetManager<PartitionedFileSet> dataSetManager = getDataset("totals");

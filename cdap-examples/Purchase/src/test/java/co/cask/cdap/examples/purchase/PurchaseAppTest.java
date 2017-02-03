@@ -18,6 +18,7 @@ package co.cask.cdap.examples.purchase;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -106,7 +107,7 @@ public class PurchaseAppTest extends TestBase {
     // Run PurchaseHistoryWorkflow which will process the data
     MapReduceManager mapReduceManager =
       appManager.getMapReduceManager(PurchaseHistoryBuilder.class.getSimpleName()).start();
-    mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
+    mapReduceManager.waitForRun(ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
 
     // Start PurchaseHistoryService
     ServiceManager purchaseHistoryServiceManager =

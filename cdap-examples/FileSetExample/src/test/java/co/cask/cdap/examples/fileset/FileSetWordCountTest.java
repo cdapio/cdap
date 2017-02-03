@@ -21,6 +21,7 @@ import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -89,7 +90,7 @@ public class FileSetWordCountTest extends TestBase {
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "counts", outputArgs));
 
     MapReduceManager mapReduceManager = applicationManager.getMapReduceManager("WordCount").start(runtimeArguments);
-    mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
+    mapReduceManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     // retrieve the counts through the service and verify
     Map<String, Integer> counts = Maps.newHashMap();
@@ -123,7 +124,7 @@ public class FileSetWordCountTest extends TestBase {
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "counts", outputArgs));
 
     mapReduceManager = applicationManager.getMapReduceManager("WordCount").start(runtimeArguments);
-    mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
+    mapReduceManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 5, TimeUnit.MINUTES);
 
     // retrieve the counts through the dataset API and verify
     // write a file to the file set using the dataset directly

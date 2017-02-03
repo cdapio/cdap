@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.lib.TimeseriesTable;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.kafka.KafkaTester;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.spark.app.KafkaSparkStreaming;
 import co.cask.cdap.spark.app.TestSparkApp;
 import co.cask.cdap.test.ApplicationManager;
@@ -102,7 +103,7 @@ public class SparkStreamingTestRun extends TestFrameworkTestBase {
     }
 
     manager.stop();
-    manager.waitForFinish(10, TimeUnit.SECONDS);
+    manager.waitForRun(ProgramRunStatus.KILLED, 60, TimeUnit.SECONDS);
 
     // Send 100 more messages without pause
     for (int i = 100; i < 200; i++) {
@@ -134,7 +135,7 @@ public class SparkStreamingTestRun extends TestFrameworkTestBase {
     }
 
     manager.stop();
-    manager.waitForFinish(10, TimeUnit.SECONDS);
+    manager.waitForRuns(ProgramRunStatus.KILLED, 2, 60, TimeUnit.SECONDS);
   }
 
   private long getCounts(String word, TimeseriesTable tsTable) {
