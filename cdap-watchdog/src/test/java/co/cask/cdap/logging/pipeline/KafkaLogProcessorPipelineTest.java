@@ -22,13 +22,14 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.AppenderBase;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.kafka.KafkaTester;
+import co.cask.cdap.logging.appender.ForwardingAppender;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.GenericLoggingContext;
-import co.cask.cdap.logging.framework.AppenderManager;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManager;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -77,15 +78,15 @@ public class KafkaLogProcessorPipelineTest {
     String topic = "testPipeline";
     LoggerContext loggerContext = createLoggerContext("WARN", ImmutableMap.of("test.logger", "INFO"),
                                                       TestAppender.class.getName());
-    final TestAppender appender = (TestAppender) loggerContext.getLogger(Logger.ROOT_LOGGER_NAME).getAppender("Test");
+    final TestAppender appender = getAppender(loggerContext.getLogger(Logger.ROOT_LOGGER_NAME),
+                                              "Test", TestAppender.class);
     TestCheckpointManager checkpointManager = new TestCheckpointManager();
     KafkaPipelineConfig config = new KafkaPipelineConfig(topic, Collections.singleton(0), 1024, 300, 1048576, 500);
     KAFKA_TESTER.createTopic(topic, 1);
 
-    AppenderManager appenderManager = new AppenderManager(loggerContext);
-
+    loggerContext.start();
     KafkaLogProcessorPipeline pipeline = new KafkaLogProcessorPipeline(
-      appender, appenderManager.createLogEventFilter(appender), checkpointManager,
+      new PipelineContext("test", loggerContext), checkpointManager,
       KAFKA_TESTER.getBrokerService(), config);
 
     // Publish some log messages to Kafka
@@ -140,6 +141,21 @@ public class KafkaLogProcessorPipelineTest {
     }
 
     pipeline.stopAndWait();
+    loggerContext.stop();
+
+    Assert.assertNull(appender.getEvents());
+  }
+
+  private <T extends Appender<ILoggingEvent>> T getAppender(Logger logger, String name, Class<T> cls) {
+    Appender<ILoggingEvent> appender = logger.getAppender(name);
+    while (!cls.isAssignableFrom(appender.getClass())) {
+      if (appender instanceof ForwardingAppender) {
+        appender = ((ForwardingAppender<ILoggingEvent>) appender).getDelegate();
+      } else {
+        throw new RuntimeException("Failed to find appender " + name + " of type " + cls.getName());
+      }
+    }
+    return cls.cast(appender);
   }
 
   /**
@@ -203,7 +219,7 @@ public class KafkaLogProcessorPipelineTest {
     transformer.transform(new DOMSource(doc), new StreamResult(writer));
 
     LoggerContext context = new LoggerContext();
-    JoranConfigurator configurator = new JoranConfigurator();
+    JoranConfigurator configurator = new PipelineConfigurator();
     configurator.setContext(context);
     configurator.doConfigure(new InputSource(new StringReader(writer.toString())));
 
@@ -215,8 +231,8 @@ public class KafkaLogProcessorPipelineTest {
    */
   public static final class TestAppender extends AppenderBase<ILoggingEvent> implements Flushable {
 
-    private final Queue<ILoggingEvent> events = new ConcurrentLinkedQueue<>();
-    private final Queue<ILoggingEvent> pending = new LinkedList<>();
+    private Queue<ILoggingEvent> events;
+    private Queue<ILoggingEvent> pending;
 
     @Override
     protected void append(ILoggingEvent event) {
@@ -231,6 +247,20 @@ public class KafkaLogProcessorPipelineTest {
     public void flush() throws IOException {
       events.addAll(pending);
       pending.clear();
+    }
+
+    @Override
+    public void start() {
+      events = new ConcurrentLinkedQueue<>();
+      pending = new LinkedList<>();
+      super.start();
+    }
+
+    @Override
+    public void stop() {
+      events = null;
+      pending = null;
+      super.stop();
     }
   }
 
