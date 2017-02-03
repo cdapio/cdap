@@ -335,7 +335,7 @@ if version_tuple:
 """ % version_tuple
 
 if release:
-    # Create release range, such as [4.0.0-SNAPSHOT,4.1.0):
+    # Create release range, such as [4.2.0-SNAPSHOT,4.3.0):
     version_list = version.split('.')
     version_list[1] = str(int(version_list[1])+1)
     release_range = "[%s,%s)" % (release, '.'.join(version_list))

@@ -128,7 +128,7 @@
     "redux": "https://registry.npmjs.org/redux/-/redux-3.5.2.tgz",
     "redux-thunk": "2.0.1",
     "request": "2.69.0",
-    "rx": "4.1.0",
+    "rx": "4.2.0",
     "rx-dom": "7.0.3",
     "serve-favicon": "2.3.0",
     "shortid": "2.2.6",
