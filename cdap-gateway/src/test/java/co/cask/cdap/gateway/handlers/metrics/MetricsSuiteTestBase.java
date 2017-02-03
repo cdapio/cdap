@@ -162,7 +162,6 @@ public abstract class MetricsSuiteTestBase {
       protected void configure() {
         bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
         bind(Store.class).to(DefaultStore.class);
-        bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
         bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
       }

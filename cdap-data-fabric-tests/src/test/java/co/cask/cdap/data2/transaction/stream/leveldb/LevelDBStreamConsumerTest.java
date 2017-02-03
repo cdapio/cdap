@@ -96,7 +96,6 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
           protected void configure() {
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
-            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
             bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
             bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
           }

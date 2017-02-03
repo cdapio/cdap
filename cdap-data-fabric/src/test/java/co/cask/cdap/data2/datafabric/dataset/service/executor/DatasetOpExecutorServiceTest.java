@@ -134,7 +134,6 @@ public class DatasetOpExecutorServiceTest {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         }
