@@ -16,7 +16,6 @@
 
 package co.cask.cdap.proto;
 
-import co.cask.cdap.proto.id.KerberosPrincipalId;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Collections;
@@ -30,15 +29,15 @@ public final class DatasetInstanceConfiguration {
   private final String typeName;
   private final Map<String, String> properties;
   private final String description;
-  @SerializedName("owner.principal")
-  private final KerberosPrincipalId ownerPrincipal;
+  @SerializedName("principal")
+  private final String ownerPrincipal;
 
   public DatasetInstanceConfiguration(String typeName, Map<String, String> properties) {
     this(typeName, properties, null, null);
   }
 
   public DatasetInstanceConfiguration(String typeName, Map<String, String> properties, @Nullable String description,
-                                      @Nullable KerberosPrincipalId ownerPrincipal) {
+                                      @Nullable String ownerPrincipal) {
     this.typeName = typeName;
     this.properties = properties;
     this.description = description;
@@ -59,7 +58,7 @@ public final class DatasetInstanceConfiguration {
   }
 
   @Nullable
-  public KerberosPrincipalId getOwnerPrincipal() {
+  public String getOwnerPrincipal() {
     return ownerPrincipal;
   }
 }

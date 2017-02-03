@@ -198,4 +198,11 @@ public final class SecurityUtil {
   public static void validateKerberosPrincipal(KerberosPrincipalId principalId) {
     getKerberosName(principalId);
   }
+
+  /**
+   * Wrapper around {@link #validateKerberosPrincipal(KerberosPrincipalId)} to validate a principal in string format
+   */
+  public static void validateKerberosPrincipal(String principal) {
+    validateKerberosPrincipal(new KerberosPrincipalId(principal));
+  }
 }

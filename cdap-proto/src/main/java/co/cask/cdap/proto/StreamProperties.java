@@ -29,8 +29,8 @@ public class StreamProperties {
 
   private final Long ttl;
   private final FormatSpecification format;
-  @SerializedName("owner.principal")
-  private final KerberosPrincipalId ownerPrincipal;
+  @SerializedName("principal")
+  private final String ownerPrincipal;
 
   @SerializedName("notification.threshold.mb")
   private final Integer notificationThresholdMB;
@@ -46,7 +46,7 @@ public class StreamProperties {
   }
 
   public StreamProperties(Long ttl, FormatSpecification format, Integer notificationThresholdMB,
-                          @Nullable String description, @Nullable KerberosPrincipalId ownerPrincipal) {
+                          @Nullable String description, @Nullable String ownerPrincipal) {
     this.ttl = ttl;
     this.format = format;
     this.notificationThresholdMB = notificationThresholdMB;
@@ -88,7 +88,7 @@ public class StreamProperties {
    * @return The {@link KerberosPrincipalId} of the stream owner
    */
   @Nullable
-  public KerberosPrincipalId getOwnerPrincipal() {
+  public String getOwnerPrincipal() {
     return ownerPrincipal;
   }
 
