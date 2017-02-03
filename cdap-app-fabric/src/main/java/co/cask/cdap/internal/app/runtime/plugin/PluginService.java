@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,9 +23,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.app.deploy.pipeline.NamespacedImpersonator;
 import co.cask.cdap.internal.app.runtime.DefaultEndpointPluginContext;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
@@ -34,6 +32,8 @@ import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.impersonation.EntityImpersonator;
+import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -180,9 +180,9 @@ public class PluginService extends AbstractIdleService {
       // todo : shouldn't pass null, should use ArtifactId instead of ArtifactDescriptor so we have namespace.
       this.parentClassLoader =
         artifactRepository.createArtifactClassLoader(
-          // todo : should not pass null to namespaceId, (Temporary)
+          // todo : should not pass null, (Temporary)
           // change Instantiators to accept ArtifactId instead of ArtifactDescriptor
-          parentArtifactDescriptor.getLocation(), new NamespacedImpersonator(null, impersonator));
+          parentArtifactDescriptor.getLocation(), new EntityImpersonator(null, impersonator));
       this.instantiatorInfoMap = new ConcurrentHashMap<>();
       this.pluginDir = DirUtils.createTempDir(stageDir);
     }

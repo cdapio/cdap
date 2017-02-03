@@ -139,7 +139,7 @@
            ng-repeat="entity in ResultsController.searchResults | orderBy: ResultsController.sortBy.sort | myPaginate: ResultsController.currentPage">
         <div class="col-xs-12">
           <h4>
-            <a ui-sref="tracker.detail.entity.metadata({ entityType: entity.entityTypeState, entityId: entity.name, searchTerm: $state.params.searchQuery })">{{ entity.name }}</a>
+            <a ui-sref="tracker.detail.entity.metadata({ entityType: entity.entityTypeState, datasetId: entity.name, searchTerm: $state.params.searchQuery })">{{ entity.name }}</a>
           </h4>
         </div>
         <div class="col-xs-6">

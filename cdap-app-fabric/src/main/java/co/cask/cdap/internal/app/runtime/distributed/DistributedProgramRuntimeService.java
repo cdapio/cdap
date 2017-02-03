@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,6 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
@@ -45,6 +44,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
@@ -121,7 +121,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   protected void copyArtifact(ArtifactId artifactId,
                               final ArtifactDetail artifactDetail, final File targetFile) throws IOException {
     try {
-      impersonator.doAs(artifactId.getParent(), new Callable<Void>() {
+      impersonator.doAs(artifactId, new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           Locations.linkOrCopy(artifactDetail.getDescriptor().getLocation(), targetFile);

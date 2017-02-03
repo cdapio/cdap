@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,9 +24,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.app.deploy.pipeline.NamespacedImpersonator;
 import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.security.impersonation.EntityImpersonator;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
@@ -112,9 +112,9 @@ final class ArtifactClassLoaderFactory {
    * @see #createClassLoader(File)
    */
   CloseableClassLoader createClassLoader(final Location artifactLocation,
-                                         NamespacedImpersonator namespacedImpersonator) throws IOException {
+                                         EntityImpersonator entityImpersonator) throws IOException {
     try {
-      final File unpackDir = namespacedImpersonator.impersonate(new Callable<File>() {
+      final File unpackDir = entityImpersonator.impersonate(new Callable<File>() {
         @Override
         public File call() throws IOException {
           return BundleJarUtil.unJar(artifactLocation, DirUtils.createTempDir(tmpDir));
