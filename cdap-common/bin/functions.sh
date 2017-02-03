@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright © 2016 Cask Data, Inc.
+# Copyright © 2016-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -667,6 +667,8 @@ cdap_start_java() {
   JAVA_HEAPMAX=${JAVA_HEAPMAX:-${!JAVA_HEAP_VAR}}
   export JAVA_HEAPMAX
   local __defines="-Dcdap.service=${CDAP_SERVICE} ${JAVA_HEAPMAX} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR}"
+  logecho "$(date) Starting CDAP ${__name} service on ${HOSTNAME}"
+  echo
   if [[ ${CDAP_SERVICE} == master ]]; then
     # Determine SPARK_HOME
     cdap_set_spark || logecho "Could not determine SPARK_HOME! Spark support unavailable!"
@@ -682,12 +684,31 @@ cdap_start_java() {
     if [[ -n ${JAVA_LIBRARY_PATH} ]]; then
       __defines+=" -Djava.library.path=${JAVA_LIBRARY_PATH}"
     fi
-    __startup_checks=${CDAP_STARTUP_CHECKS:-$(cdap_get_conf "master.startup.checks.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
+    # Check for HDP 2.2+ or IOP, otherwise do nothing and leave up to the user to configure
+    for __dist in hdp iop; do
+      if [[ $(which ${__dist}-select 2>/dev/null) ]]; then
+        local __auto_version=$(${__dist}-select status hadoop-client | awk '{print $3}')
+        # Check for version configured in OPTS
+        if [[ ${OPTS} =~ -D${__dist}.version ]]; then
+          local __conf_version=$(echo ${OPTS} | grep -oP "\-D${__dist}.version=\d+\.\d+\.\d+\.\d+-\d+" | cut -d= -f2)
+          if [[ ${__conf_version} != ${__auto_version} ]]; then
+            local __caps=$(echo ${__dist} | awk 'BEGIN { getline; print toupper($0) }')
+            logecho "[WARN] ${__caps} version mismatch! Detected: ${__auto_version}, Configured: ${__conf_version}"
+            logecho "[WARN] Using configured ${__caps} version: ${__conf_version}"
+          fi
+        else
+          # No version specified in OPTS or incorrect format, appending ours
+          __defines+=" -D${__dist}.version=${__auto_version}"
+          logecho "Detected ${__dist} version ${__auto_version} and adding to CDAP Master command line"
+        fi
+      fi
+    done
 
     # Build and upload coprocessor jars
     logecho "$(date) Ensuring required HBase coprocessors are on HDFS"
     cdap_setup_coprocessors </dev/null >>${__logfile} 2>&1 || die "Could not setup coprocessors. Please check ${__logfile} for more information."
 
+    __startup_checks=${CDAP_STARTUP_CHECKS:-$(cdap_get_conf "master.startup.checks.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
     if [[ ${__startup_checks} == true ]]; then
       logecho "$(date) Running CDAP Master startup checks -- this may take a few minutes"
       "${JAVA}" ${JAVA_HEAPMAX} ${__explore} ${OPTS} -cp ${CLASSPATH} co.cask.cdap.master.startup.MasterStartupTool </dev/null >>${__logfile} 2>&1
@@ -696,7 +717,6 @@ cdap_start_java() {
       fi
     fi
   fi
-  logecho "$(date) Starting CDAP ${__name} service on ${HOSTNAME}"
   "${JAVA}" -version 2>>${__logfile}
   ulimit -a >>${__logfile}
   __defines+=" ${OPTS}"
