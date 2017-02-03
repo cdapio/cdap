@@ -44,7 +44,7 @@ TARGET_DIR=${DOCS_HOME}/target
 
 S3_BUCKET=${S3_BUCKET:-docs.cask.co}
 S3_REPO_PATH=${S3_REPO_PATH:-cdap} # No leading or trailing slashes
-VERSION=${VERSION:-4.1.0-SNAPSHOT}
+VERSION=${VERSION:-4.2.0-SNAPSHOT}
 
 source ${REPO_HOME}/cdap-common/bin/functions.sh
 
