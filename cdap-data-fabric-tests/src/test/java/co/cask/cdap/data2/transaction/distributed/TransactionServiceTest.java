@@ -213,6 +213,7 @@ public class TransactionServiceTest {
               Integer.toString(txServicePort));
     // we want persisting for this test
     cConf.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, true);
+    cConf.setBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE, false);
 
     final Injector injector =
       Guice.createInjector(new ConfigModule(cConf, hConf),

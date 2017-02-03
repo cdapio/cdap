@@ -74,7 +74,7 @@ public class ConsumerConfigCache {
   private long lastUpdated;
   private volatile Map<byte[], QueueConsumerConfig> configCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
   private long configCacheUpdateFrequency = QueueConstants.DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY;
-  private CConfiguration conf;
+  private volatile CConfiguration conf;
   // timestamp of the last update from the configuration table
   private long lastConfigUpdate;
 
@@ -105,6 +105,11 @@ public class ConsumerConfigCache {
   }
 
   @Nullable
+  public CConfiguration getCConf() {
+    return (conf != null) ? CConfiguration.copy(conf) : null;
+  }
+
+  @Nullable
   public QueueConsumerConfig getConsumerConfig(byte[] queueName) {
     return configCache.get(queueName);
   }
@@ -113,8 +118,9 @@ public class ConsumerConfigCache {
     long now = System.currentTimeMillis();
     if (this.conf == null || now > (lastConfigUpdate + CONFIG_UPDATE_FREQUENCY)) {
       try {
-        this.conf = cConfReader.read();
-        if (this.conf != null) {
+        CConfiguration conf = cConfReader.read();
+        if (conf != null) {
+          this.conf = conf;
           LOG.info("Reloaded CConfiguration at {}", now);
           this.lastConfigUpdate = now;
           long configUpdateFrequency = conf.getLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY,

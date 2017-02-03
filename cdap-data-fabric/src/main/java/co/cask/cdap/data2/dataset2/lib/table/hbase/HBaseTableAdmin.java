@@ -207,6 +207,10 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
                                                             boolean supportsReadlessIncrement) throws IOException {
     Class<? extends Coprocessor> dataJanitorClass = tableUtil.getTransactionDataJanitorClassForVersion();
     Class<? extends Coprocessor> incrementClass = tableUtil.getIncrementHandlerClassForVersion();
+
+    // The ordering of coprocessors is important here. DataJanitor Coprocessor should get higher priority than
+    // IncrementHandler coprocessor. This is because, we have a check in prePutOp, preDeleteOp in DataJanitor
+    // to make sure the operation is within the tx max lifetime.
     ImmutableList.Builder<Class<? extends Coprocessor>> coprocessors = ImmutableList.builder();
     if (transactional) {
       // tx janitor

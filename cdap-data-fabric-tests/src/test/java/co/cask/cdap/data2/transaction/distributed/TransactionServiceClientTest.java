@@ -99,6 +99,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    cConf.setBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE, false);
     // we want persisting for this test
     cConf.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, true);
 
