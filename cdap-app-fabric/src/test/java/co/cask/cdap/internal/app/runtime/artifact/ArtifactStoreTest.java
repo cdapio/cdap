@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,9 +25,7 @@ import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.security.DefaultImpersonator;
 import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.app.deploy.pipeline.NamespacedImpersonator;
 import co.cask.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
@@ -37,6 +35,8 @@ import co.cask.cdap.proto.artifact.ArtifactClasses;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.impersonation.DefaultImpersonator;
+import co.cask.cdap.security.impersonation.EntityImpersonator;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -1048,7 +1048,7 @@ public class ArtifactStoreTest {
     Id.Artifact artifactId, ArtifactMeta meta,
     String contents) throws ArtifactAlreadyExistsException, IOException, WriteConflictException {
     artifactStore.write(artifactId, meta, ByteStreams.newInputStreamSupplier(Bytes.toBytes(contents)),
-                        new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
-                                                   new DefaultImpersonator(CConfiguration.create(), null, null)));
+                        new EntityImpersonator(artifactId.toEntityId(),
+                                               new DefaultImpersonator(CConfiguration.create(), null, null)));
   }
 }

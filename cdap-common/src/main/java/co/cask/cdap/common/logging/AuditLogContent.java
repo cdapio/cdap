@@ -66,7 +66,24 @@ public class AuditLogContent {
     }
 
     AuditLogContent other = (AuditLogContent) o;
-    return Objects.equals(httpMethod, other.getHttpMethod()) && logRequestBody == other.isLogRequestBody()
-      && logResponsebody == other.isLogResponsebody() && Objects.equals(headerNames, other.getHeaderNames());
+    return Objects.equals(httpMethod, other.getHttpMethod()) &&
+      logRequestBody == other.isLogRequestBody() &&
+      logResponsebody == other.isLogResponsebody() &&
+      Objects.equals(headerNames, other.getHeaderNames());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(httpMethod, logRequestBody, logResponsebody, headerNames);
+  }
+
+  @Override
+  public String toString() {
+    return "AuditLogContent{" +
+      "httpMethod=" + httpMethod +
+      ", logRequestBody=" + logRequestBody +
+      ", logResponsebody=" + logResponsebody +
+      ", headerNames=" + headerNames +
+      '}';
   }
 }

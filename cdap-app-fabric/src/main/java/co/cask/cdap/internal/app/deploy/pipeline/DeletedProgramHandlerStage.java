@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,6 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -35,6 +34,7 @@ import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
@@ -115,7 +115,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
         final String namespace = String.format("%s.%s", programId.getApplication(), programId.getProgram());
 
         final NamespaceId namespaceId = appSpec.getApplicationId().getParent();
-        impersonator.doAs(namespaceId, new Callable<Void>() {
+        impersonator.doAs(appSpec.getApplicationId(), new Callable<Void>() {
 
           @Override
           public Void call() throws Exception {

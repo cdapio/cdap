@@ -21,12 +21,12 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -67,7 +67,7 @@ public final class StreamFileJanitor {
   public void cleanAll() throws Exception {
     List<NamespaceMeta> namespaces = namespaceQueryAdmin.list();
     for (final NamespaceMeta namespace : namespaces) {
-      final Location streamBaseLocation = impersonator.doAs(namespace, new Callable<Location>() {
+      final Location streamBaseLocation = impersonator.doAs(namespace.getNamespaceId(), new Callable<Location>() {
         @Override
         public Location call() throws Exception {
           return namespacedLocationFactory.get(Id.Namespace.from(namespace.getName())).append(streamBaseDirPath);
@@ -90,12 +90,19 @@ public final class StreamFileJanitor {
       Iterable<Location> streamLocations = StreamUtils.listAllStreams(streamBaseLocation);
 
       for (final Location streamLocation : streamLocations) {
-        StreamId streamId = namespace.getNamespaceId().stream(StreamUtils.getStreamNameFromLocation(streamLocation));
+        final StreamId streamId = namespace.getNamespaceId().stream(StreamUtils
+                                                                      .getStreamNameFromLocation(streamLocation));
         final AtomicLong ttl = new AtomicLong(0);
-        if (isStreamExists(streamId)) {
-          ttl.set(streamAdmin.getConfig(streamId).getTTL());
-        }
-        clean(streamLocation, ttl.get(), System.currentTimeMillis());
+        impersonator.doAs(streamId, new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            if (isStreamExists(streamId)) {
+              ttl.set(streamAdmin.getConfig(streamId).getTTL());
+            }
+            clean(streamLocation, ttl.get(), System.currentTimeMillis());
+            return null;
+          }
+        });
       }
     }
   }

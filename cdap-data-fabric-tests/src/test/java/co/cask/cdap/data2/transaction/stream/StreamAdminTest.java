@@ -37,7 +37,6 @@ import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -269,8 +268,8 @@ public abstract class StreamAdminTest {
     grantAndAssertSuccess(FOO_NAMESPACE, USER, ImmutableSet.of(Action.WRITE));
     StreamId stream = FOO_NAMESPACE.stream("stream");
     Properties properties = new Properties();
-    KerberosPrincipalId ownerPrincipal = new KerberosPrincipalId("user/somehost@somekdc.net");
-    properties.put(Constants.Security.OWNER_PRINCIPAL, GSON.toJson(ownerPrincipal));
+    String ownerPrincipal = "user/somehost@somekdc.net";
+    properties.put(Constants.Security.PRINCIPAL, ownerPrincipal);
     streamAdmin.create(stream, properties);
     Assert.assertTrue(streamAdmin.exists(stream));
 
@@ -282,8 +281,7 @@ public abstract class StreamAdminTest {
 
     // updating stream owner should fail
     try {
-      streamAdmin.updateConfig(stream, new StreamProperties(1L, null, null, null,
-                                                            new KerberosPrincipalId("user/somekdc.net")));
+      streamAdmin.updateConfig(stream, new StreamProperties(1L, null, null, null, "user/somekdc.net"));
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected

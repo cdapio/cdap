@@ -17,8 +17,8 @@
 package co.cask.cdap.data2.datafabric.dataset.service.executor;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.common.security.Impersonator;
-import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,12 +35,12 @@ class ImpersonatingDatasetAdmin implements DatasetAdmin {
 
   private final DatasetAdmin delegate;
   private final Impersonator impersonator;
-  private final NamespaceId namespaceId;
+  private final DatasetId datasetId;
 
-  ImpersonatingDatasetAdmin(DatasetAdmin delegate, Impersonator impersonator, NamespaceId namespaceId) {
+  ImpersonatingDatasetAdmin(DatasetAdmin delegate, Impersonator impersonator, DatasetId datasetId) {
     this.delegate = delegate;
     this.impersonator = impersonator;
-    this.namespaceId = namespaceId;
+    this.datasetId = datasetId;
   }
 
   @Override
@@ -111,7 +111,7 @@ class ImpersonatingDatasetAdmin implements DatasetAdmin {
   // helper method to execute a callable, while declaring only IOException as being thrown
   private <T> T execute(final Callable<T> callable) throws IOException {
     try {
-      return impersonator.doAs(namespaceId, callable);
+      return impersonator.doAs(datasetId, callable);
     } catch (IOException ioe) {
       throw ioe;
     } catch (Exception t) {
@@ -119,7 +119,7 @@ class ImpersonatingDatasetAdmin implements DatasetAdmin {
 
       // since the callables we execute only throw IOException (besides unchecked exceptions),
       // this should never happen
-      LOG.warn("Unexpected exception while executing dataset admin operation in namespace {}.", namespaceId,  t);
+      LOG.warn("Unexpected exception while executing dataset admin operation in namespace {}.", datasetId, t);
       // the only checked exception that the Callables in this class is IOException, and we handle that in the previous
       // catch statement. So, no checked exceptions should be wrapped by the following statement. However, we need it
       // because ImpersonationUtils#doAs declares 'throws Exception', because it can throw other checked exceptions

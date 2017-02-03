@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,14 +17,13 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.security.ImpersonationInfo;
-import co.cask.cdap.common.security.ImpersonationUtils;
-import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
+import co.cask.cdap.security.impersonation.ImpersonationInfo;
+import co.cask.cdap.security.impersonation.ImpersonationUtils;
+import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.Credentials;
@@ -76,7 +75,7 @@ public class ImpersonationHandler extends AbstractHttpHandler {
       throw new BadRequestException("Request body is empty.");
     }
     ImpersonationInfo impersonationInfo = GSON.fromJson(requestContent, ImpersonationInfo.class);
-
+    LOG.info("Credentials for {}", impersonationInfo);
     UserGroupInformation ugi = ugiProvider.getConfiguredUGI(impersonationInfo);
     Credentials credentials = ImpersonationUtils.doAs(ugi, new Callable<Credentials>() {
       @Override
@@ -88,17 +87,21 @@ public class ImpersonationHandler extends AbstractHttpHandler {
 
     // example: hdfs:///cdap/credentials
     Location credentialsDir = locationFactory.create("credentials");
-    Preconditions.checkState(credentialsDir.mkdirs());
+    if (credentialsDir.isDirectory() || credentialsDir.mkdirs() || credentialsDir.isDirectory()) {
 
-    // the getTempFile() doesn't create the file within the directory that you call it on. It simply appends the path
-    // without a separator, which is why we manually append the "tmp"
-    // example: hdfs:///cdap/credentials/tmp.5960fe60-6fd8-4f3e-8e92-3fb6d4726006.credentials
-    Location credentialsFile = credentialsDir.append("tmp").getTempFile(".credentials");
-    // 600 is owner-only READ_WRITE
-    try (DataOutputStream os = new DataOutputStream(new BufferedOutputStream(credentialsFile.getOutputStream("600")))) {
-      credentials.writeTokenStorageToStream(os);
+      // the getTempFile() doesn't create the file within the directory that you call it on. It simply appends the path
+      // without a separator, which is why we manually append the "tmp"
+      // example: hdfs:///cdap/credentials/tmp.5960fe60-6fd8-4f3e-8e92-3fb6d4726006.credentials
+      Location credentialsFile = credentialsDir.append("tmp").getTempFile(".credentials");
+      // 600 is owner-only READ_WRITE
+      try (DataOutputStream os = new DataOutputStream(new BufferedOutputStream(
+        credentialsFile.getOutputStream("600")))) {
+        credentials.writeTokenStorageToStream(os);
+      }
+      LOG.debug("Wrote credentials for user {} to {}", ugi.getUserName(), credentialsFile);
+      responder.sendString(HttpResponseStatus.OK, credentialsFile.toURI().toString());
+    } else {
+      throw new IllegalStateException("Unable to create credentails directory.");
     }
-    LOG.debug("Wrote credentials for user {} to {}", ugi.getUserName(), credentialsFile);
-    responder.sendString(HttpResponseStatus.OK, credentialsFile.toURI().toString());
   }
 }

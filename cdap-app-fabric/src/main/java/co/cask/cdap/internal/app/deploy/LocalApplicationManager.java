@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,7 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.security.Impersonator;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -44,6 +44,7 @@ import co.cask.cdap.pipeline.Context;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.pipeline.Stage;
+import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -68,6 +69,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final PipelineFactory pipelineFactory;
   private final CConfiguration configuration;
   private final Store store;
+  private final OwnerAdmin ownerAdmin;
   private final StreamConsumerFactory streamConsumerFactory;
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
@@ -85,7 +87,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
 
   @Inject
   LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
-                          Store store, StreamConsumerFactory streamConsumerFactory,
+                          Store store, OwnerAdmin ownerAdmin, StreamConsumerFactory streamConsumerFactory,
                           QueueAdmin queueAdmin, DatasetFramework datasetFramework,
                           @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                           StreamAdmin streamAdmin, Scheduler scheduler,
@@ -96,6 +98,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.store = store;
+    this.ownerAdmin = ownerAdmin;
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
     this.programTerminator = programTerminator;
@@ -116,14 +119,14 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository, impersonator));
-    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework));
+    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin));
     pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework));
     pipeline.addLast(new CreateStreamsStage(streamAdmin));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory, queueAdmin,
                                                     metricStore, metadataStore, privilegesManager, impersonator));
     pipeline.addLast(new ProgramGenerationStage(privilegesManager, authenticationContext));
-    pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry));
+    pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
     pipeline.addLast(new CreateSchedulesStage(scheduler));
     pipeline.addLast(new SystemMetadataWriterStage(metadataStore));
     pipeline.setFinally(new DeploymentCleanupStage());
