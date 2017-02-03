@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,8 +53,7 @@ public final class SimpleKafkaProducer {
                        LoggingConfiguration.DEFAULT_KAFKA_PRODUCER_TYPE));
     props.setProperty("queue.buffering.max.ms", cConf.get(LoggingConfiguration.KAFKA_PROCUDER_BUFFER_MS,
                       Long.toString(LoggingConfiguration.DEFAULT_KAFKA_PROCUDER_BUFFER_MS)));
-    props.setProperty(LoggingConfiguration.NUM_PARTITIONS, cConf.get(LoggingConfiguration.NUM_PARTITIONS,
-                      LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
+    props.setProperty(Constants.Logging.NUM_PARTITIONS, cConf.get(Constants.Logging.NUM_PARTITIONS));
 
     ProducerConfig config = new ProducerConfig(props);
     kafkaTopic = cConf.get(Constants.Logging.KAFKA_TOPIC);

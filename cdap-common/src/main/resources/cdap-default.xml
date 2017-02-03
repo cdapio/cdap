@@ -1068,6 +1068,14 @@
   </property>
 
   <property>
+    <name>log.saver.checkpoint.interval.ms</name>
+    <value>60000</value>
+    <description>
+      The time between log saver checkpoints in milliseconds
+    </description>
+  </property>
+
+  <property>
     <name>log.saver.container.memory.mb</name>
     <value>1024</value>
     <description>

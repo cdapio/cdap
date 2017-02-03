@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 package co.cask.cdap.logging.appender.kafka;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.logging.LoggingConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
@@ -32,14 +32,14 @@ public final class StringPartitioner implements Partitioner {
   private final int numPartitions;
 
   public StringPartitioner(VerifiableProperties props) {
-    this.numPartitions = Integer.parseInt(props.getProperty(LoggingConfiguration.NUM_PARTITIONS));
+    this.numPartitions = Integer.parseInt(props.getProperty(Constants.Logging.NUM_PARTITIONS));
     Preconditions.checkArgument(this.numPartitions > 0,
                                 "numPartitions should be at least 1. Got %s", this.numPartitions);
   }
 
   @Inject
   public StringPartitioner(CConfiguration cConf) {
-    this.numPartitions = cConf.getInt(LoggingConfiguration.NUM_PARTITIONS, -1);
+    this.numPartitions = cConf.getInt(Constants.Logging.NUM_PARTITIONS);
     Preconditions.checkArgument(this.numPartitions > 0,
                                 "numPartitions should be greater than 0. Got numPartitions=%s", this.numPartitions);
   }
