@@ -28,6 +28,7 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.GenericLoggingContext;
+import co.cask.cdap.logging.framework.AppenderManager;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManager;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -81,9 +82,12 @@ public class KafkaLogProcessorPipelineTest {
     KafkaPipelineConfig config = new KafkaPipelineConfig(topic, Collections.singleton(0), 1024, 300, 1048576, 500);
     KAFKA_TESTER.createTopic(topic, 1);
 
-    KafkaLogProcessorPipeline pipeline = new KafkaLogProcessorPipeline(new EffectiveLevelProvider(loggerContext, 10),
-                                                                       appender, checkpointManager,
-                                                                       KAFKA_TESTER.getBrokerService(), config);
+    AppenderManager appenderManager = new AppenderManager(loggerContext);
+
+    KafkaLogProcessorPipeline pipeline = new KafkaLogProcessorPipeline(
+      appender, appenderManager.createLogEventFilter(appender), checkpointManager,
+      KAFKA_TESTER.getBrokerService(), config);
+
     // Publish some log messages to Kafka
     pipeline.startAndWait();
 

@@ -16,12 +16,12 @@
 
 package co.cask.cdap.logging.pipeline;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.LogbackException;
 import co.cask.cdap.logging.appender.ForwardingAppender;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
+import co.cask.cdap.logging.framework.LogEventFilter;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManager;
 import com.google.common.collect.ImmutableMap;
@@ -66,8 +66,8 @@ final class KafkaLogProcessorPipeline extends AbstractExecutionThreadService {
   private static final int KAFKA_SO_TIMEOUT = 3000;
   private static final double MIN_FREE_FACTOR = 0.5d;
 
-  private final EffectiveLevelProvider effectiveLevelProvider;
   private final EventAppender appender;
+  private final LogEventFilter logEventFilter;
   private final CheckpointManager checkpointManager;
   private final BrokerService brokerService;
   private final Map<Integer, MutableCheckpoint> checkpoints;
@@ -82,11 +82,11 @@ final class KafkaLogProcessorPipeline extends AbstractExecutionThreadService {
   private long lastCheckpointTime;
   private int unFlushedEvents;
 
-  KafkaLogProcessorPipeline(EffectiveLevelProvider effectiveLevelProvider, Appender<ILoggingEvent> appender,
+  KafkaLogProcessorPipeline(Appender<ILoggingEvent> appender, LogEventFilter logEventFilter,
                             CheckpointManager checkpointManager, BrokerService brokerService,
                             KafkaPipelineConfig config) {
-    this.effectiveLevelProvider = effectiveLevelProvider;
     this.appender = new EventAppender(appender);
+    this.logEventFilter = logEventFilter;
     this.checkpointManager = checkpointManager;
     this.brokerService = brokerService;
     this.config = config;
@@ -209,14 +209,6 @@ final class KafkaLogProcessorPipeline extends AbstractExecutionThreadService {
   }
 
   /**
-   * Returns if the given {@link ILoggingEvent} needs to be appended to the {@link Appender} based on the
-   * log {@link Level}.
-   */
-  private boolean needAppend(ILoggingEvent event) {
-    return event.getLevel().isGreaterOrEqual(effectiveLevelProvider.getEffectiveLevel(event));
-  }
-
-  /**
    * Initialize offsets for all partitions consumed by this pipeline.
    *
    * @param offsets the map for storing the offsets for each partition
@@ -292,7 +284,7 @@ final class KafkaLogProcessorPipeline extends AbstractExecutionThreadService {
 
       try {
         ILoggingEvent loggingEvent = serializer.fromBytes(message.message().payload());
-        if (needAppend(loggingEvent)) {
+        if (logEventFilter.apply(loggingEvent)) {
           // Use the message payload size as the size estimate of the logging event
           // Although it's not the same as the in memory object size, it should be just a constant factor, hence
           // it is proportional to the actual object size.

@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Log Appender implementation for CDAP Log framework
@@ -54,8 +55,8 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
 
   private LogFileManager logFileManager;
 
-  private int syncIntervalBytes;
-  private long maxFileLifetimeMs;
+  private int syncIntervalBytes = 10 * 1024 * 1024;             // Default to 10M, can be set in logback
+  private long maxFileLifetimeMs = TimeUnit.HOURS.toMillis(6);  // Default to 6 hourse, can be set in logback
 
   /**
    * TODO: start a separate cleanup thread to remove files that has passed the TTL
