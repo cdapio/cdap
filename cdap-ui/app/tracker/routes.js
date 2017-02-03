@@ -38,7 +38,7 @@ angular.module(PKG.name + '.feature.tracker')
         }
       })
       .state('tracker-enable', {
-        url: '/enable-tracker',
+        url: '/enable-tracker?iframe&sourceUrl',
         parent: 'ns',
         templateUrl: '/assets/features/tracker/templates/tracker-enable.html',
         controller: 'TrackerEnableController',
@@ -107,7 +107,7 @@ angular.module(PKG.name + '.feature.tracker')
         }
       })
       .state('tracker', {
-        url: '',
+        url: '?iframe&sourceUrl',
         abstract: true,
         parent: 'ns',
         template: '<ui-view/>',

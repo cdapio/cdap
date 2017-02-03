@@ -34,6 +34,8 @@ import FastActionToMessage from 'services/fast-action-message-helper';
 import capitalize from 'lodash/capitalize';
 import Redirect from 'react-router/Redirect';
 
+require('./StreamDetailedView.scss');
+
 export default class StreamDetailedView extends Component {
   constructor(props) {
     super(props);
