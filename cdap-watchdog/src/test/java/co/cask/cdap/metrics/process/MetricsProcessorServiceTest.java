@@ -45,6 +45,7 @@ import org.apache.twill.kafka.client.KafkaPublisher;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
@@ -75,6 +76,8 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
 
   private InMemoryZKServer zkServer;
 
+  // TODO  CDAP-8336 flaky test due to test design, remove after improving the test.
+  @Ignore
   @Test
   public void testMetricsProcessor() throws Exception {
     injector.getInstance(TransactionManager.class).startAndWait();
