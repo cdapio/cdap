@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,7 +40,6 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -84,6 +83,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -175,16 +175,26 @@ public class HBaseQueueDebugger extends AbstractIdleService {
 
     List<NamespaceMeta> namespaceMetas = namespaceQueryAdmin.list();
     for (final NamespaceMeta namespaceMeta : namespaceMetas) {
-      final Collection<ApplicationSpecification> apps = store.getAllApplications(namespaceMeta.getNamespaceId());
-      impersonator.doAs(namespaceMeta, new Callable<Void>() {
+      final Collection<ApplicationSpecification> apps = impersonator.doAs(
+        namespaceMeta.getNamespaceId(), new Callable<Collection<ApplicationSpecification>>() {
         @Override
-        public Void call() throws Exception {
-          for (ApplicationSpecification app : apps) {
-            ApplicationId appId = new ApplicationId(namespaceMeta.getName(), app.getName(), app.getAppVersion());
-
-            for (FlowSpecification flow : app.getFlows().values()) {
-              ProgramId flowId = appId.program(ProgramType.FLOW, flow.getName());
-
+        public Collection<ApplicationSpecification> call() throws Exception {
+          return store.getAllApplications(namespaceMeta.getNamespaceId());
+        }
+      });
+      for (final ApplicationSpecification app : apps) {
+        ApplicationId appId = new ApplicationId(namespaceMeta.getName(), app.getName(), app.getAppVersion());
+        Collection<FlowSpecification> flows = impersonator.doAs(appId, new Callable<Collection<FlowSpecification>>() {
+          @Override
+          public Collection<FlowSpecification> call() throws Exception {
+            return app.getFlows().values();
+          }
+        });
+        for (final FlowSpecification flow : flows) {
+          final ProgramId flowId = appId.program(ProgramType.FLOW, flow.getName());
+          impersonator.doAs(flowId, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
               SimpleQueueSpecificationGenerator queueSpecGenerator =
                 new SimpleQueueSpecificationGenerator(flowId.getParent());
 
@@ -199,12 +209,11 @@ public class HBaseQueueDebugger extends AbstractIdleService {
                   }
                 }
               }
+              return null;
             }
-          }
-          return null;
+          });
         }
-      });
-
+      }
     }
 
     System.out.printf("Total results for all queues: %s\n", totalStats.getReport(showTxTimestampOnly()));

@@ -554,7 +554,7 @@ Entities that match the specified query and entity type are returned in the body
     "total": 2,
     "results": [
         {
-            "entityId": {
+            "datasetId": {
                 "id": {
                     "application": {
                         "applicationId": "WordCount",
@@ -583,7 +583,7 @@ Entities that match the specified query and entity type are returned in the body
             }
         },
         {
-            "entityId": {
+            "datasetId": {
                 "id": {
                     "application": {
                         "applicationId": "WordCount",
@@ -780,7 +780,7 @@ Here is an example, pretty-printed::
       ],
       "data": {
           "dataset.default.purchases": {
-              "entityId": {
+              "datasetId": {
                   "id": {
                       "instanceId": "purchases",
                       "namespace": {
@@ -791,7 +791,7 @@ Here is an example, pretty-printed::
               }
           },
           "stream.default.purchaseStream": {
-              "entityId": {
+              "datasetId": {
                   "id": {
                       "namespace": {
                           "id": "default"
@@ -804,7 +804,7 @@ Here is an example, pretty-printed::
       },
       "programs": {
           "flows.default.PurchaseHistory.PurchaseFlow": {
-              "entityId": {
+              "datasetId": {
                   "id": {
                       "application": {
                           "applicationId": "PurchaseHistory",
@@ -1120,7 +1120,7 @@ Consider these relations from the output of a lineage API request::
     ],
     "data": {
       "dataset.default.purchases": {
-        "entityId": {
+        "datasetId": {
           "id": {
             "instanceId": "purchases",
             "namespace": {
@@ -1133,7 +1133,7 @@ Consider these relations from the output of a lineage API request::
     },
     "programs": {
       "mapreduce.default.PurchaseHistory.phase-1": {
-        "entityId": {
+        "datasetId": {
           "id": {
             "application": {
               "applicationId": "PurchaseHistory",
@@ -1148,7 +1148,7 @@ Consider these relations from the output of a lineage API request::
         }
       },
       "mapreduce.default.PurchaseHistory.phase-2": {
-        "entityId": {
+        "datasetId": {
           "id": {
             "application": {
               "applicationId": "PurchaseHistory",
@@ -1188,7 +1188,7 @@ Rolling up the above using ``rollup=workflow`` would group the programs together
     ],
     "data": {
       "dataset.default.purchases": {
-        "entityId": {
+        "datasetId": {
           "id": {
             "instanceId": "purchases",
             "namespace": {
@@ -1201,7 +1201,7 @@ Rolling up the above using ``rollup=workflow`` would group the programs together
     },
     "programs": {
       "workflows.default.PurchaseHistory.DataPipelineWorkflow": {
-        "entityId": {
+        "datasetId": {
           "id": {
             "application": {
               "applicationId": "PurchaseHistory",
@@ -1231,7 +1231,7 @@ with the metadata returned as a JSON string in the return body::
 
   [
       {
-          "entityId": {
+          "datasetId": {
               "id": {
                   "namespace": {
                       "id": "default"
@@ -1245,7 +1245,7 @@ with the metadata returned as a JSON string in the return body::
           "tags": []
       },
       {
-          "entityId": {
+          "datasetId": {
               "id": {
                   "application": {
                       "applicationId": "PurchaseHistory",
@@ -1265,7 +1265,7 @@ with the metadata returned as a JSON string in the return body::
           ]
       },
       {
-          "entityId": {
+          "datasetId": {
               "id": {
                   "instanceId": "purchases",
                   "namespace": {
@@ -1279,7 +1279,7 @@ with the metadata returned as a JSON string in the return body::
           "tags": []
       },
       {
-          "entityId": {
+          "datasetId": {
               "id": {
                   "applicationId": "PurchaseHistory",
                   "namespace": {

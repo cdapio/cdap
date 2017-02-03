@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,8 +25,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.security.ImpersonationUtils;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.view.ViewAdmin;
@@ -53,9 +51,9 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
+import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.Inject;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,7 +147,6 @@ class ExistingEntitySystemMetadataWriter {
     SystemDatasetInstantiatorFactory systemDatasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
     try (SystemDatasetInstantiator systemDatasetInstantiator = systemDatasetInstantiatorFactory.create()) {
-      UserGroupInformation ugi = impersonator.getUGI(namespace);
 
       for (DatasetSpecificationSummary summary : dsFramework.getInstances(namespace)) {
         final DatasetId dsInstance = namespace.dataset(summary.getName());
@@ -158,7 +155,7 @@ class ExistingEntitySystemMetadataWriter {
         Dataset dataset = null;
         try {
           try {
-            dataset = ImpersonationUtils.doAs(ugi, new Callable<Dataset>() {
+            dataset = impersonator.doAs(dsInstance, new Callable<Dataset>() {
               @Override
               public Dataset call() throws Exception {
                 return systemDatasetInstantiator.getDataset(dsInstance);

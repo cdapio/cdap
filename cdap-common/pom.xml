@@ -168,14 +168,6 @@
       <artifactId>hadoop-minicluster</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-minikdc</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.directory.jdbm</groupId>
-      <artifactId>apacheds-jdbm1</artifactId>
-    </dependency>
-    <dependency>
       <groupId>co.cask.common</groupId>
       <artifactId>common-http</artifactId>
     </dependency>

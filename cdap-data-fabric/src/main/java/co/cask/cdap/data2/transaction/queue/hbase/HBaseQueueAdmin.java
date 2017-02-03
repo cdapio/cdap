@@ -27,7 +27,6 @@ import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
@@ -50,6 +49,7 @@ import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
@@ -236,7 +236,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   public void upgrade() throws Exception {
     // For each queue config table and queue data table in each namespace, perform an upgrade
     for (final NamespaceMeta namespaceMeta : namespaceQueryAdmin.list()) {
-      impersonator.doAs(namespaceMeta, new Callable<Void>() {
+      impersonator.doAs(namespaceMeta.getNamespaceId(), new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           upgradeQueues(namespaceMeta);

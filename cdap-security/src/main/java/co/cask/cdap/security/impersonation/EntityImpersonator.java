@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,22 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.deploy.pipeline;
+package co.cask.cdap.security.impersonation;
 
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /**
  * Delegates to impersonator's doAs, but uses the namespace passed during initialization.
  */
-public class NamespacedImpersonator {
-  private final NamespaceId namespaceId;
+public class EntityImpersonator {
+  private final NamespacedEntityId entityId;
   private final Impersonator impersonator;
 
-  public NamespacedImpersonator(NamespaceId namespaceId, Impersonator impersonator) {
-    this.namespaceId = namespaceId;
+  public EntityImpersonator(@Nullable NamespacedEntityId entityId, Impersonator impersonator) {
+    this.entityId = entityId;
     this.impersonator = impersonator;
   }
 
@@ -39,15 +40,14 @@ public class NamespacedImpersonator {
    * @param callable callable
    * @param <T> callable return type
    * @return result of callable
-   * @throws Exception
    */
   public <T> T impersonate(final Callable<T> callable) throws Exception {
-    // todo namespaceId shouldn't be null, it's passed null only from PluginService. which needs to be updated.
-    if (namespaceId == null || namespaceId.equals(NamespaceId.SYSTEM)) {
+    // todo entityId shouldn't be null, it's passed null only from PluginService. which needs to be updated.
+    if (entityId == null || entityId.getNamespaceId().equals(NamespaceId.SYSTEM)) {
       // do not impersonate for system namespace
       return callable.call();
     }
-    return impersonator.doAs(namespaceId, new Callable<T>() {
+    return impersonator.doAs(entityId, new Callable<T>() {
       @Override
       public T call() throws Exception {
         return callable.call();
