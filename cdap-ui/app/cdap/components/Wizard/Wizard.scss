@@ -62,7 +62,6 @@
         border-top-color: gray;
       }
     }
-    .done-button { margin-top: 25px; }
     &.success {
       width: 100%;
       position: relative;
@@ -72,13 +71,33 @@
       background: rgba(0, 0, 0, 0.8);
       color: white;
 
+      .close-section {
+        cursor: pointer;
+        height: 40px;
+
+        .fa-times {
+          padding: 15px 20px;
+        }
+      }
+
       .result-container {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-40%, -60%);
-        width: 60%;
-        height: 40%;
+        top: 35%;
+        left: 10%;
+        font-size: 18px;
+
+        .clearfix {
+          margin-top: 25px;
+
+          .call-to-action {
+            font-size: 18px;
+          }
+
+          .secondary-call-to-action {
+            margin-left: 50px;
+            font-size: 14px;
+          }
+        }
 
         ul {
           list-style: none;

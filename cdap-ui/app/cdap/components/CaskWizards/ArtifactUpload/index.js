@@ -21,6 +21,7 @@ import MarketArtifactUploadWizardConfig from 'services/WizardConfigs/MarketArtif
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
 import ArtifactUploadActionCreator from 'services/WizardStores/ArtifactUpload/ActionCreator';
+import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 
 require('./ArtifactUpload.scss');
@@ -31,16 +32,17 @@ export default class ArtifactUploadWizard extends Component {
     this.state = {
       showWizard: this.props.isOpen
     };
-  }
-  getChildContext() {
-    return {
-      isMarket: this.props.isMarket
-    };
+    this.successInfo = {};
   }
   componentWillUnmount() {
     ArtifactUploadStore.dispatch({
       type: ArtifactUploadActions.onReset
     });
+  }
+
+  onSubmit() {
+    this.buildSuccessInfo();
+    return ArtifactUploadActionCreator.uploadArtifact();
   }
 
   toggleWizard(returnResult) {
@@ -51,12 +53,26 @@ export default class ArtifactUploadWizard extends Component {
       showWizard: !this.state.showWizard
     });
   }
-
-  onSubmit() {
-    return ArtifactUploadActionCreator.uploadArtifact();
+  getChildContext() {
+    return {
+      isMarket: this.props.isMarket
+    };
   }
-
-
+  buildSuccessInfo() {
+    let state = ArtifactUploadStore.getState();
+    let name = state.configure.name;
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    let defaultSuccessMessage = T.translate('features.Wizard.ArtifactUpload.success');
+    let subtitle = T.translate('features.Wizard.ArtifactUpload.subtitle');
+    let buttonLabel = T.translate('features.Wizard.ArtifactUpload.callToAction');
+    let linkLabel = T.translate('features.Wizard.GoToHomePage');
+    this.successInfo.message = `${defaultSuccessMessage} "${name}".`;
+    this.successInfo.subtitle = subtitle;
+    this.successInfo.buttonLabel = buttonLabel;
+    this.successInfo.buttonUrl = `/hydrator/ns/${namespace}/studio`;
+    this.successInfo.linkLabel = linkLabel;
+    this.successInfo.linkUrl = `/cdap/ns/${namespace}`;
+  }
   render() {
     let input = this.props.input;
     let pkg = input.package || {};
@@ -75,7 +91,9 @@ export default class ArtifactUploadWizard extends Component {
           wizardType="ArtifactUpload"
           store={ArtifactUploadStore}
           onSubmit={this.onSubmit.bind(this)}
-          onClose={this.toggleWizard.bind(this)}/>
+          successInfo={this.successInfo}
+          onClose={this.toggleWizard.bind(this)}
+        />
       </WizardModal>
     );
   }
