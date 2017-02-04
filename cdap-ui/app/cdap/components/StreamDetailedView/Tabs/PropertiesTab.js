@@ -14,19 +14,27 @@
  * the License.
  */
 
-.app-detailed-view {
-  .iframe-container {
-    height: calc(100% - 26px);
-  }
+import React, { PropTypes } from 'react';
+import PropertiesEditor from 'components/PropertiesEditor';
+import T from 'i18n-react';
 
-  .properties-container {
-    height: calc(100% - 55px);
-    padding: 15px 10px;
-    overflow: auto;
+export default function PropertiesTab({entity}) {
+  return (
+    <div className="properties-container">
+      <div className="message-section">
+        <strong>
+          {T.translate('features.DetailView.PropertiesTab.title', { entityId: entity.id })}
+        </strong>
+      </div>
 
-    .message-section {
-      padding: 0 10px;
-      margin-bottom: 15px;
-    }
-  }
+      <PropertiesEditor
+        entityType="streams"
+        entityId={entity.id}
+      />
+    </div>
+  );
 }
+
+PropertiesTab.propTypes = {
+  entity: PropTypes.object
+};

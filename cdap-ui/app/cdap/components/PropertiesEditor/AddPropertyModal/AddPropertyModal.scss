@@ -14,19 +14,40 @@
  * the License.
  */
 
-.app-detailed-view {
-  .iframe-container {
-    height: calc(100% - 26px);
+.add-property-modal {
+  &.modal-dialog { margin-top: 100px; }
+
+  .modal-header {
+    padding: 0;
+    background: #464a57;
+    color: white;
+    border: 0;
+    height: 40px;
+
+    h4 {
+      font-weight: normal;
+      font-size: 14px;
+
+      span {
+        line-height: 40px;
+        padding: 5px 10px;
+      }
+      .close-section {
+        span { padding: 0 20px; }
+        cursor: pointer;
+      }
+    }
   }
 
-  .properties-container {
-    height: calc(100% - 55px);
-    padding: 15px 10px;
-    overflow: auto;
-
-    .message-section {
-      padding: 0 10px;
+  .modal-body {
+    .input-properties {
       margin-bottom: 15px;
     }
+  }
+
+  .modal-footer {
+    padding: 0;
+    text-align: left;
+    border-top: 0;
   }
 }

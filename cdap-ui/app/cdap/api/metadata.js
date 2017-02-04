@@ -22,4 +22,6 @@ let basepath = '/namespaces/:namespace/:entityType/:entityId/metadata';
 export const MyMetadataApi = {
   getMetadata: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
   getProperties: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/properties`),
+  addProperties: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/properties`),
+  deleteProperty: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/properties/:key`)
 };
