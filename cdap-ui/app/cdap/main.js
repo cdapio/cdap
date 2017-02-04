@@ -26,13 +26,12 @@ require('./styles/main.scss');
 import Management from 'components/Management';
 import Dashboard from 'components/Dashboard';
 import Home from 'components/Home';
-import CdapHeader from 'components/CdapHeader';
+import Header from 'components/Header';
 import Footer from 'components/Footer';
 import SplashScreen from 'components/SplashScreen';
 import ConnectionExample from 'components/ConnectionExample';
 import Experimental from 'components/Experimental';
 import cookie from 'react-cookie';
-import {MyNamespaceApi} from 'api/namespace';
 import Router from 'react-router/BrowserRouter';
 import T from 'i18n-react';
 import Match from 'react-router/Match';
@@ -69,22 +68,6 @@ class CDAP extends Component {
         }
       });
     }
-    // Polls for namespace data
-    MyNamespaceApi.pollList()
-      .subscribe(
-        (res) => {
-          if (res.length > 0) {
-            NamespaceStore.dispatch({
-              type: NamespaceActions.updateNamespaces,
-              payload: {
-                namespaces : res
-              }
-            });
-          } else {
-            // To-Do: No namespaces returned ; throw error / redirect
-          }
-        }
-      );
 
     StatusFactory.startPolling();
 
@@ -110,7 +93,7 @@ class CDAP extends Component {
           <Helmet
             title={T.translate('features.EntityListView.Title')}
           />
-          <CdapHeader />
+          <Header />
           <SplashScreen openVideo={this.openCaskVideo}/>
           <LoadingIndicator />
           <StatusAlertMessage />
