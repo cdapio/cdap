@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _test-cdap:
 
@@ -342,7 +342,7 @@ important to include all classes in your plugin packages, even if they are not u
 your test case. This is to ensure that the JAR can trace all required dependencies to
 correctly build the JAR.
 
-The examples are taken from the ``DataPipelineTest`` and ``HydratorTestBase`` classes of Cask Hydrator.
+The examples are taken from the ``DataPipelineTest`` and ``HydratorTestBase`` classes of CDAP pipelines.
 
 .. _test-framework-validating-sql:
 

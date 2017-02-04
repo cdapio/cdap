@@ -118,8 +118,8 @@ Glossary
       
    CDAP UI
       The CDAP UI is a web-based application used to deploy CDAP applications, create 
-      :term:`ETL applications <ETL Application>`, and query and manage the Cask Data Application 
-      Platform instance.
+      :term:`pipelines <pipelines>` using the :term:`CDAP Pipeline Studio`, and query and
+      manage the Cask Data Application Platform instance.
 
    CDAP Console
       See :term:`CDAP UI`.
@@ -211,13 +211,19 @@ Glossary
       formats consist of a :ref:`schema <stream-exploration-stream-schema>` and a :ref:`format
       <stream-exploration-stream-format>` (such as CSV, TSV, or Avro, amongst others).
       
-   Cask Hydrator
-      Cask Hydrator provides an easy method of configuring
-      pipelines using a visual editor. You drag and drop sources, transformations, and
-      sinks, configuring an :term:`ETL` pipeline within minutes. It provides an
-      operational view of the resulting ETL pipeline that allows for monitoring of
+   Pipeline
+      CDAP provides an easy method of configuring
+      pipelines using a visual editor, called :term:`CDAP Pipeline Studio`. You click and
+      drag sources, transformations, and sinks, configuring an pipeline within minutes. It
+      provides an operational view of the resulting pipeline that allows for monitoring of
       metrics, logs, and other run-time information.
 
+   CDAP Pipeline Studio
+      A visual editor, part of the :term:`CDAP UI`, for creating and configuring
+      pipelines. You click and drag sources, transformations, and sinks, configuring an
+      pipeline within minutes. It provides an operational view of the resulting pipeline
+      that allows for monitoring of metrics, logs, and other run-time information.
+      
    Storage Provider
       For :term:`datasets <dataset>` and :term:`streams <stream>`, a storage provider is the underlying
       system that CDAP uses for persistence. Examples include HDFS, HBase, and Hive.

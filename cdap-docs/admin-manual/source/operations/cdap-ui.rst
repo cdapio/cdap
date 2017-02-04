@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _cdap-console:
 .. _cdap-ui:
@@ -43,8 +43,7 @@ feature parity with the original UI, and is still under development.
 
 It includes access to: the Cask Market, with use cases, pipelines, applications, plugins,
 datapacks, and drivers; the Resource Centre, which provides wizards for adding streams,
-drivers, applications, Hydrator pipelines, and plugins; and access to CDAP extensions
-including Cask Hydrator, Cask Tracker, and Cask Wrangler.
+drivers, applications, pipelines, and plugins; and access to CDAP extensions.
 
 Here are screen-captures of the new CDAP Beta UI running on a Distributed CDAP:
 

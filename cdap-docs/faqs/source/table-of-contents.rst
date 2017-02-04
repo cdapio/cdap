@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 ======================
 FAQs Table of Contents
@@ -13,7 +13,7 @@ FAQs Table of Contents
     General Questions<general>
     CDAP <cdap>
     Cloudera Manager <cloudera-manager>
-    Hydrator <hydrator>
+    Pipelines <pipelines>
 ..     Applications <applications>
 ..     User Interface <user-interface>
 ..     Databases and Transactions <databases-transactions>
