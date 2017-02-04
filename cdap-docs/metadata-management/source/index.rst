@@ -12,9 +12,9 @@
 
 .. _cask-tracker-index:
 
-============
-Cask Tracker
-============   
+========================
+CDAP Metadata Management
+========================
 
 Introduction
 ============

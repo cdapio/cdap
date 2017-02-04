@@ -33,7 +33,7 @@ Start Hydrator
 ==============
 
 - To start Hydrator, either select *Cask Hydrator* from the pull-down menu in the upper
-  left, or go to the :cask-hydrator:`Cask Hydrator URL <>`.
+  left, or go to the :cdap-pipeline-studio:`Cask Hydrator URL <>`.
 
   This will take you to a list of pipelines, which will most likely be empty:
 
@@ -54,7 +54,7 @@ Start Hydrator Studio
 
   - Click the *+* button to add a new pipeline;
   - Click the tool bar label *Studio* (to the left of the label *Pipelines*); or
-  - Go to the :cask-hydrator-studio-artifact:`Cask Hydrator Studio URL <cdap-data-pipeline>`
+  - Go to the :cdap-pipeline-studio-artifact:`Cask Hydrator Studio URL <cdap-data-pipeline>`
   
   Studio will start and you will be creating a new pipeline, by default the first
   pipeline type in the menu, a *Data Pipeline - Batch*, which is a batch-type pipeline:

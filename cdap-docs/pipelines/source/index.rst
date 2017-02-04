@@ -7,9 +7,9 @@
 .. _cask-hydrator:
 .. _hydrator:
 
-=============
-Cask Hydrator
-=============
+==============
+CDAP Pipelines
+==============
 
 ..  youtube::  JeqJrBW1UCU
    :align: center

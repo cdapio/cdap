@@ -16,8 +16,8 @@ DOCS="docs"
 DOCS_LOCAL="docs-local"
 DOCS_OUTER="docs-outer"
 
-CDAP_MANUALS="introduction developers-manual admin-manual integrations examples-manual reference-manual faqs"
-EXTENSION_MANUALS="hydrator-manual tracker-manual"
+CDAP_MANUALS="introduction developers-manual pipelines metadata-management admin-manual integrations examples-manual reference-manual faqs"
+EXTENSION_MANUALS=""
 MANUALS="${CDAP_MANUALS} ${EXTENSION_MANUALS}"
 
 # Used to monitor any changes in scripts or commands for the building of Javadocs

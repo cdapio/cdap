@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Introduction to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 :hide-relations: true
 
@@ -96,6 +96,18 @@ CDAP extensions provide additional capabilities, such as *Cask Hydrator* and *Ca
   - |dev-man-at-black|_ Adding a custom logback, best practices for CDAP development,
     class loading in CDAP, configuring program resources
 
+.. |pipelines-black| replace:: **Pipelines:**
+.. _pipelines-black: pipelines/index.html
+
+- |pipelines-black|_ Creating data pipelines without writing code, including details on
+  developing and packaging custom plugins
+
+.. |metadata-management-black| replace:: **Metadata Management:**
+.. _metadata-management-black: metadata-management/index.html
+
+- |metadata-management-black|_ A CDAP capability that captures metadata for datasets, streams, and
+  stream views
+
 
 .. |admin-manual| replace:: **Administration Manual:**
 .. _admin-manual: admin-manual/index.html
@@ -148,6 +160,7 @@ CDAP extensions provide additional capabilities, such as *Cask Hydrator* and *Ca
 
 .. |integ-man-sq-black| replace:: `Squirrel:`
 .. _integ-man-sq-black: integrations/squirrel.html
+
 
 - |integrations|_ 
 
@@ -263,24 +276,3 @@ CDAP extensions provide additional capabilities, such as *Cask Hydrator* and *Ca
 .. _search: search.html
 
 - |search|_ Search this documentation using *Quick Search*
-
-
-.. |cdap-extensions-black| replace:: `CDAP Extensions:`
-.. _cdap-extensions-black: index.html#cdap-extensions
-
-.. |cask-hydrator| replace:: **Cask Hydrator:**
-.. _cask-hydrator: hydrator-manual/index.html
-
-.. |cask-tracker| replace:: **Cask Tracker:**
-.. _cask-tracker: tracker-manual/index.html
-
-.. _cdap-extensions:
-
-- |cdap-extensions-black|_
-
-  - |cask-hydrator|_ Creating data pipelines without writing code, including details on
-    developing and packaging custom plugins
-
-  - |cask-tracker|_ A CDAP extension that captures metadata for datasets, streams, and
-    stream views
-

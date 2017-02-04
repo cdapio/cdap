@@ -141,20 +141,19 @@ _intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
 
 # Mapping keys must be alpha-numeric only
 intersphinx_mapping_cdap_manuals = {
-  'introduction': ('../../introduction/',      os.path.abspath(_intersphinx_mapping % 'introduction')),
-  'developers':   ('../../developers-manual/', os.path.abspath(_intersphinx_mapping % 'developers-manual')),
-#   'cdapapps':     ('../../cdap-apps',          os.path.abspath(_intersphinx_mapping % 'cdap-apps')),
-  'admin':        ('../../admin-manual/',      os.path.abspath(_intersphinx_mapping % 'admin-manual')),
-#   'cdapadmin':    ('../../admin-manual/',      os.path.abspath(_intersphinx_mapping % 'admin-manual')),
-  'integrations': ('../../integrations/',      os.path.abspath(_intersphinx_mapping % 'integrations')),
-  'examples':     ('../../examples-manual',    os.path.abspath(_intersphinx_mapping % 'examples-manual')),
-  'reference':    ('../../reference-manual',   os.path.abspath(_intersphinx_mapping % 'reference-manual')),
-  'faqs':         ('../../faqs',               os.path.abspath(_intersphinx_mapping % 'faqs')),
+  'introduction': ('../../introduction/',        os.path.abspath(_intersphinx_mapping % 'introduction')),
+  'developers':   ('../../developers-manual/',   os.path.abspath(_intersphinx_mapping % 'developers-manual')),
+  'admin':        ('../../admin-manual/',        os.path.abspath(_intersphinx_mapping % 'admin-manual')),
+  'pipelines':    ('../../pipelines/',           os.path.abspath(_intersphinx_mapping % 'pipelines')),
+  'metadata':     ('../../metadata-management/', os.path.abspath(_intersphinx_mapping % 'metadata-management')),
+  'integrations': ('../../integrations/',        os.path.abspath(_intersphinx_mapping % 'integrations')),
+  'examples':     ('../../examples-manual',      os.path.abspath(_intersphinx_mapping % 'examples-manual')),
+  'reference':    ('../../reference-manual',     os.path.abspath(_intersphinx_mapping % 'reference-manual')),
+  'faqs':         ('../../faqs',                 os.path.abspath(_intersphinx_mapping % 'faqs')),
 }
 
 intersphinx_mapping_cdap_extensions = {
-  'hydrator':     ('../../hydrator-manual/',   os.path.abspath(_intersphinx_mapping % 'hydrator-manual')),
-  'tracker':      ('../../tracker-manual/',   os.path.abspath(_intersphinx_mapping % 'tracker-manual')),
+# If a section of "CDAP Extensions" is desired, add them here
 }
 
 # Merge dictionaries
@@ -237,9 +236,9 @@ extlinks = {
     'cdap-ui-data': ("%s/data/%%s" % _cdap_ui_base, None),
     'cdap-ui-datasets': ("%s/datasets/%%s" % _cdap_ui_base, None),
     'cdap-ui-datasets-explore': ("%s/datasets/%%s/overview/explore" % _cdap_ui_base, None),
-    'cask-hydrator': ("%s/%%s" % _cdap_ui_base, None),
-    'cask-hydrator-studio': ("%s/hydrator/%%s" % _cdap_ui_base, None),
-    'cask-hydrator-studio-artifact': ("%s/hydrator/studio?artifactType=%%s" % _cdap_ui_base, None),
+    'cask-pipelines': ("%s/%%s" % _cdap_ui_base, None),
+    'cdap-pipeline-studio': ("%s/pipelines/%%s" % _cdap_ui_base, None),
+    'cdap-pipeline-studio-artifact': ("%s/pipelines/studio?artifactType=%%s" % _cdap_ui_base, None),
     'cdap-java-source-github': (cdap_java_source_github_pattern , None),
     'cdap-security-extn-source-github': (cdap_security_extn_github_pattern, None),
     'cask-issue': ('https://issues.cask.co/browse/%s', ''),
@@ -466,19 +465,18 @@ html_theme = 'cdap'
 # icon: "" for none, "new-icon" for the ico_new.png
 
 cdap_manuals_list = [
-    ['introduction',      'introduction', 'Introduction to CDAP',            '',],
-    ['developers-manual', 'developers',  u'Developers’ Manual',              '',],
-    ['admin-manual',      'admin',        'Administration Manual',           '',],
-    ['integrations',      'integrations', 'Integrations',                    '',],
-    ['examples-manual',   'examples',     'Examples, Guides, and Tutorials', '',],
-    ['reference-manual',  'reference',    'Reference Manual',                '',],
-    ['faqs',              'faqs',         'FAQs',                            '',],
+    ['introduction',        'introduction', 'Introduction to CDAP',            '',],
+    ['developers-manual',   'developers',  u'Developers’ Manual',              '',],
+    ['pipelines',           'pipelines',    'Pipelines',                       '',],
+    ['metadata-management', 'metadata',     'Metadata Management',             '',],
+    ['admin-manual',        'admin',        'Administration Manual',           '',],
+    ['integrations',        'integrations', 'Integrations',                    '',],
+    ['examples-manual',     'examples',     'Examples, Guides, and Tutorials', '',],
+    ['reference-manual',    'reference',    'Reference Manual',                '',],
+    ['faqs',                'faqs',         'FAQs',                            '',],
 ]
-#     ['cdap-apps',         'cdapapps',     'CDAP Applications',               '',],
 
 cdap_extension_manuals_list = [
-    ['hydrator-manual',   'hydrator',     'Cask Hydrator',                   '',],
-    ['tracker-manual',    'tracker',      'Cask Tracker',                    '',],
 ]
 
 manuals_list = cdap_manuals_list + cdap_extension_manuals_list
