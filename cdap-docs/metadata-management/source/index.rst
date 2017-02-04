@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Tracker
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 .. |tracker-sdk-url| replace:: http://localhost:11011/tracker/ns/default
 .. |literal-tracker-sdk-url| replace:: ``http://localhost:11011/tracker/ns/default``
@@ -251,7 +251,7 @@ Each entry in the list provides a summery of information about the entity, and i
 a hyperlink to further details: metadata, lineage, and audit log.
 
 The **Jump** button provides three actions: go to the selected entity in CDAP, or add it
-to a new Cask Hydrator pipeline as a source or as a sink. Datasets can be added as sources or
+to a new CDAP pipeline as a source or as a sink. Datasets can be added as sources or
 sinks to batch pipelines, while streams can be sources in batch pipelines or sinks in
 real-time pipelines.
 
