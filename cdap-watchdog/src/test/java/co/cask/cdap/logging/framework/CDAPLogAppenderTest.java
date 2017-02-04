@@ -125,7 +125,8 @@ public class CDAPLogAppenderTest {
     cdapLogAppender.setMaxFileLifetimeMs(TimeUnit.DAYS.toMillis(1));
     AppenderContext context = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
                                                        injector.getInstance(TransactionSystemClient.class),
-                                                       injector.getInstance(LocationFactory.class));
+                                                       injector.getInstance(LocationFactory.class),
+                                                       injector.getInstance(MetricsCollectionService.class));
     context.start();
     cdapLogAppender.setContext(context);
     cdapLogAppender.start();
@@ -183,7 +184,8 @@ public class CDAPLogAppenderTest {
     CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
     AppenderContext context = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
                                                        injector.getInstance(TransactionSystemClient.class),
-                                                       injector.getInstance(LocationFactory.class));
+                                                       injector.getInstance(LocationFactory.class),
+                                                       injector.getInstance(MetricsCollectionService.class));
     context.start();
 
     cdapLogAppender.setSyncIntervalBytes(syncInterval);
