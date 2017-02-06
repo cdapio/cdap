@@ -83,7 +83,7 @@ features:
   AppDetailedView:
     Title: Application - {appId}
     History:
-      emptyMessage: No Runs
+      emptyMessage: No Runs found.
   ConfirmationModal:
     confirmDefaultText: OK
     cancelDefaultText: Cancel
@@ -135,6 +135,7 @@ features:
     deleteFailed: Failed to delete {entityId}.
     truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
     truncateLabel: Truncate
+    truncateSuccess: Truncated Successfully
     truncateFailed: Failed to truncate {entityId}.
     sendEventsLabel: Send Events
     setPreferencesModalLabel: Preferences
@@ -154,10 +155,7 @@ features:
     setPreferencesReset: Reset
     setPreferencesFailed: Error - Set Preferences Failed.
     setPreferencesSuccess:
-      default: Preferences Saved
-      system: CDAP Preferences Saved
-      application: Application Preferences Saved
-      program: Program Preferences Saved
+      default: "{entityType} Preferences Saved"
     start: Start
     stop: Stop
     sendEventsButtonLabel: Send
@@ -382,10 +380,10 @@ features:
   Overview:
     ProgramTab:
       emptyMessage: No Programs found.
-      title: "Programs in {appId}:"
+      title: "Programs in \"{appId}\""
       runningProgramLabel: "Number of programs running: {programCount}"
     DatasetTab:
-      title: "Dataset Used by {appId}:"
+      title: "Dataset Used by \"{appId}\""
     SchemaTab:
       emptyMessage: No Schema found.
       title: Schema of each record in the {entityType} "{entityId}"
@@ -393,6 +391,9 @@ features:
     Metadata:
       ttl: "Time To Live (TTL): "
       type: "Type: "
+    deployedLabel:
+      data: Created
+      app: Deployed
   Pagination:
     dropdown-label: Page
   Resource-Center:
@@ -511,8 +512,8 @@ features:
         shorttitle: General Information
         title: General
         description: Provide information about the stream you want to create.
-        ttllabel: Event Life Time
-        ttl-placeholder: Specify time-to-live events in seconds
+        ttllabel: TTL
+        ttl-placeholder: Specify the time-to-live for events in seconds
       Step2:
         shorttitle: Setup Format and Schema
         title: Set Format and Schema

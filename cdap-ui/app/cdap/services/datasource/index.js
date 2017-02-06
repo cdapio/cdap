@@ -53,7 +53,7 @@ export default class Datasource {
   request(resource = {}) {
     let generatedResource = {
       id: uuid.v4(),
-      json: resource.json || true,
+      json: resource.json === false ? false : true,
       method: resource.method || 'GET',
       suppressErrors: resource.suppressErrors || false
     };

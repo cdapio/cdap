@@ -14,7 +14,15 @@
  * the License.
  */
 
+@import '../../styles/variables.scss';
+
 .program-table {
+  table {
+    tr th,
+    tr td {
+      border-color: $custom_table-border-color;
+    }
+  }
   padding-top: 10px;
   .fast-actions-container .btn-link {
     color: #4f5050;

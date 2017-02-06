@@ -97,6 +97,7 @@ export default class HomeListView extends Component {
             key={entity.uniqueId}
             onClick={this.onClick.bind(this, entity)}
             entity={entity}
+            onFastActionSuccess={this.props.onFastActionSuccess}
             onUpdate={this.props.onUpdate}
           />
         );
@@ -124,6 +125,7 @@ HomeListView.propTypes = {
   loading: PropTypes.bool,
   onEntityClick: PropTypes.func,
   onUpdate: PropTypes.func,
+  onFastActionSuccess: PropTypes.func,
   errorMessage: PropTypes.string,
   errorStatusCode: PropTypes.number,
   className: PropTypes.string,
