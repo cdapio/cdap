@@ -412,8 +412,8 @@ features:
       description: A stream view is non-materialized view over a stream with schema-on-read capability. Creates a view over an existing stream.
       actionbtn0: Create
     HydratorPipeline:
-      label: Hydrator Pipeline
-      description: A Hydrator pipeline allows you to ingest, egress, and process data either to, from, or within Hadoop.
+      label: Pipeline
+      description: A pipeline allows you to ingest, egress, and process data either to, from, or within Hadoop.
       actionbtn0: Create
     Artifact:
       label: Driver
