@@ -253,6 +253,15 @@ let hasValidInstance = (importConfig, GLOBALS) => {
   let isRealtimePipeline = importConfig.artifact.name === GLOBALS.etlRealtime;
   return !isRealtimePipeline? true: importConfig.config.instances;
 };
+let hasValidConnections = (importConfig) => {
+  return importConfig.connections && !importConfig.config.connections? false: true;
+};
+let hasStages = (importConfig) => {
+  return importConfig.config.stages;
+};
+let hasValidStages = (importConfig) => {
+  return !importConfig.stages;
+};
 let hasValidNodesConnections = (importConfig) => {
   if (!importConfig.config.connections) {
     return true;
@@ -308,7 +317,10 @@ let validateImportJSON = (myHelpers, GLOBALS, config) => {
     { fn: hasValidConfig, messagePath: errorPath.concat(['INVALID-CONFIG']) },
     { fn: hasValidSchedule, messagePath: errorPath.concat(['INVALID-SCHEDULE']) },
     { fn: hasValidInstance, messagePath: errorPath.concat(['INVALID-INSTANCE']) },
-    { fn: hasValidNodesConnections, messagePath: errorPath.concat(['INVALID-NODES-CONNECTIONS']) }
+    { fn: hasValidNodesConnections, messagePath: errorPath.concat(['INVALID-NODES-CONNECTIONS']) },
+    { fn: hasValidConnections, messagePath: errorPath.concat(['INVALID-CONNECTIONS']) },
+    { fn: hasStages, messagePath: errorPath.concat(['NO-STAGES']) },
+    { fn: hasValidStages, messagePath: errorPath.concat(['INVALID-STAGES']) }
   ];
   let i;
   for(i=0; i<validations.length; i++) {
