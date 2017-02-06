@@ -34,8 +34,6 @@ import java.util.Map;
  * An {@link Appender} that emits metrics about the logging events.
  */
 public class MetricsLogAppender extends AppenderBase<ILoggingEvent> {
-  private static final Logger LOG = LoggerFactory.getLogger(MetricsLogAppender.class);
-
   private static final Map<String, String> EMPTY_MAP = new HashMap<>();
   private static final String SYSTEM_METRIC_PREFIX = "services.log";
   private static final String APP_METRIC_PREFIX = "app.log";
@@ -82,8 +80,6 @@ public class MetricsLogAppender extends AppenderBase<ILoggingEvent> {
         metricsTags.get(Constants.Metrics.Tag.COMPONENT).equals(Constants.Service.METRICS_PROCESSOR))) {
         // todo this is inefficient as childContext implementation creates new map should use metricsCollectionService
         MetricsContext childContext = metricsContext.childContext(metricsTags);
-        LOG.info("+++ Emitting metrics in the context {} with metricName {} for message {}",
-                 childContext.getTags(), metricName, eventObject.getMessage());
         childContext.increment(metricName, 1);
       }
     }
