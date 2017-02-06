@@ -2,7 +2,7 @@
     "artifact": {
         "name": "cdap-etl-batch",
         "scope": "SYSTEM",
-        "version": "3.5.3"
+        "version": "3.5.4-SNAPSHOT"
     },
     "description": "Periodically ingest from a stream into an HBase table",
     "name": "StreamToHBase",
