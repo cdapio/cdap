@@ -726,8 +726,6 @@ public final class Constants {
     public static final String TAG_WORKFLOW_MAP_REDUCE_ID = ".workflowMapReduceId";
     public static final String TAG_WORKFLOW_SPARK_ID = ".workflowSparkId";
     public static final String TAG_WORKFLOW_PROGRAM_RUN_ID = ".workflowProgramRunId";
-
-
   }
 
   /**

@@ -468,7 +468,6 @@ public class KafkaLogProcessorPipelineTest {
       preparer.add(ByteBuffer.wrap(serializer.toBytes(event, context)), context.getLogPartition());
     }
     preparer.send();
-
   }
 
   private LoggerContext createLoggerContext(String rootLevel,
