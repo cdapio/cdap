@@ -219,7 +219,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                                     props.setTableProperty("avro.schema.literal", K_SCHEMA.toString()).build());
 
     // verify that we can query the key-values in the file with Hive
-    runCommand(NAMESPACE_ID, "SELECT * FROM " + queryTableName, true,
+    runCommand(NAMESPACE_ID, "SELECT * FROM " + queryTableName + " ORDER BY key", true,
                Lists.newArrayList(
                  new ColumnDesc(hiveTableName + ".key", "STRING", 1, null)),
                Lists.newArrayList(
