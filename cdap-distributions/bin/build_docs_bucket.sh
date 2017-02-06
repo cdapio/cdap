@@ -49,12 +49,12 @@ VERSION=${VERSION:-4.1.0-SNAPSHOT}
 source ${REPO_HOME}/cdap-common/bin/functions.sh
 
 function get_repo_version() {
-  s3cmd get s3://${S3_BUCKET}/${S3_REPO_PATH}/version
+  s3cmd get --force s3://${S3_BUCKET}/${S3_REPO_PATH}/version repo_version
   __ret=$?
   if [[ ${__ret} -ne 0 ]]; then
     return ${__ret}
   fi
-  echo $(<version)
+  echo $(<repo_version)
 }
 
 function sync_from_s3() {
