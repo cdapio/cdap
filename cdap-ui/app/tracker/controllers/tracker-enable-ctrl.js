@@ -169,7 +169,12 @@ class TrackerEnableController{
       return;
     }
 
-    this.$state.go('tracker.home');
+    if (this.$state.params.sourceUrl) {
+      window.location.href = decodeURIComponent(this.$state.params.sourceUrl);
+    } else {
+      this.$state.go('tracker.home');
+    }
+
     this.enableTrackerLoading = false;
   }
 

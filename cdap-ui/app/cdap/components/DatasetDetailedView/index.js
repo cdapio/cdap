@@ -35,6 +35,8 @@ import Redirect from 'react-router/Redirect';
 import capitalize from 'lodash/capitalize';
 
 
+require('./DatasetDetailedView.scss');
+
 export default class DatasetDetailedView extends Component {
   constructor(props) {
     super(props);

@@ -29,14 +29,16 @@
     <link rel="stylesheet" type="text/css" href="/assets/bundle/app.css" />
 </head>
 <body ng-class="bodyClass" ng-controller="BodyCtrl" ng-keyup="onSearch($event)">
-  <my-global-navbar></my-global-navbar>
-  <main class="container" id="app-container">
+  <my-global-navbar ng-if="!$state.params.iframe"></my-global-navbar>
+  <main class="container"
+        id="app-container"
+        ng-class="{'iframe': $state.params.iframe}">
     <div ui-view></div>
   </main>
 
   <div class="alerts" id="alerts"></div>
-  <loading-icon></loading-icon>
-  <footer>
+  <loading-icon ng-if="!$state.params.iframe"></loading-icon>
+  <footer ng-if="!$state.params.iframe">
     <div class="container">
       <div class="row text-muted" ng-cloak>
         <div class="text-uppercase">
