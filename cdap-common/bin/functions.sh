@@ -878,7 +878,6 @@ cdap_sdk_start() {
       </dev/null >>"${LOG_DIR}"/cdap.log 2>&1 &
     __ret=${?}
     __pid=${!}
-    echo ${__pid} > ${__pidfile}
     sleep 2 # wait for JVM spin up
     while kill -0 ${__pid} >/dev/null 2>&1; do
       if grep '..* started successfully' "${LOG_DIR}"/cdap.log >/dev/null 2>&1; then
@@ -902,6 +901,7 @@ cdap_sdk_start() {
     if ! kill -0 ${__pid} >/dev/null 2>&1; then
       die "Failed to start, please check logs at ${LOG_DIR} for more information"
     fi
+    echo ${__pid} > ${__pidfile}
   fi
   return ${__ret}
 }
