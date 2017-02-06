@@ -26,8 +26,8 @@
   <name>CDAP Examples</name>
 
   <modules>
-    <module>CountRandom</module>
     <module>ClicksAndViews</module>
+    <module>CountRandom</module>
     <module>CubeService</module>
     <module>DataCleansing</module>
     <module>FileSetExample</module>
