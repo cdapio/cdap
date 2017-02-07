@@ -84,13 +84,6 @@ class LogFileManager implements Flushable {
   private LogFileOutputStream createOutputStream(final LogPathIdentifier identifier,
                                                  long timestamp) throws IOException {
     TimeStampLocation location = createLocation(identifier);
-    try {
-      fileMetaDataManager.writeMetaData(identifier, timestamp, location.getTimeStamp(), location.getLocation());
-    } catch (Throwable e) {
-      // delete created file as there was exception while writing meta data
-      Locations.deleteQuietly(location.getLocation());
-      throw new IOException(e);
-    }
 
     LOG.info("Created Avro file at {}", location);
     LogFileOutputStream logFileOutputStream = new LogFileOutputStream(
@@ -100,8 +93,22 @@ class LogFileManager implements Flushable {
         outputStreamMap.remove(identifier);
       }
     });
-
     outputStreamMap.put(identifier, logFileOutputStream);
+
+    // we write meta data after creating output stream, as we want to avoid having meta data for zero-length avro file.
+    // LogFileOutputStream creation writes the schema to the avro file. if meta data write fails,
+    // we then close output stream and delete the file
+    try {
+      logFileOutputStream.flush();
+      fileMetaDataManager.writeMetaData(identifier, timestamp, location.getTimeStamp(), location.getLocation());
+    } catch (Throwable e) {
+      // close the output stream
+      Closeables.closeQuietly(logFileOutputStream);
+      // delete created file as there was exception while writing meta data
+      Locations.deleteQuietly(location.getLocation());
+      throw new IOException(e);
+    }
+
     return logFileOutputStream;
   }
 
