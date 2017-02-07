@@ -111,7 +111,8 @@ Filing Issues: Bug Reports & Feature Requests
 ---------------------------------------------
 Bugs and suggestions should be made by `filing an issue <https://issues.cask.co/browse/cdap>`__.
 
-Existing issues can be browsed at `the CDAP project issues <https://issues.cask.co/browse/cdap>`__.
+Existing issues can be browsed at `the CDAP project issues 
+<https://issues.cask.co/browse/CDAP-8373?jql=project%20%3D%20CDAP>`__.
 
 Pull Requests
 -------------
