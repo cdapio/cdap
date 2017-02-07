@@ -1,13 +1,13 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-===============================
-Cask Tracker: Table of Contents
-===============================
+===========================================
+CDAP Metadata Management: Table of Contents
+===========================================
 
 .. toctree::
    :maxdepth: 3
 
-    Cask Tracker <index>
+    CDAP Metadata Management <index>
     HTTP RESTful API <http-restful-api>

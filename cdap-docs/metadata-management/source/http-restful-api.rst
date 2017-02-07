@@ -1,17 +1,17 @@
 .. meta::
     :author: Cask Data, Inc.
-    :description: Cask Tracker
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :description: CDAP Metadata Management HTTP RESTful API
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cask-tracker-http-restful-api:
+.. _cdap-metadata-management-http-restful-api:
 
-=============================
-Cask Tracker HTTP RESTful API
-=============================
+=========================================
+CDAP Metadata Management HTTP RESTful API
+=========================================
 
 .. highlight:: console  
 
-All Cask Tracker features are available via HTTP RESTful endpoints. It supports searching
+All CDAP Metadata Management features are available via HTTP RESTful endpoints. It supports searching
 of the *_auditLog* dataset, managing preferred tags, querying metrics, managing the data dictionary,
 and updating configurations, all using a set of HTTP RESTful APIs. (See the :ref:`Reference Manual: HTTP RESTful API
 <http-restful-api-introduction>` for details on the conventions used for these HTTP RESTful APIs.)
@@ -157,7 +157,7 @@ Results (reformatted for display)::
 
 Managing Preferred Tags
 =======================
-You can use the Cask Tracker HTTP Restful APIs for managing *preferred tags*: you can add,
+You can use the CDAP Metadata Management HTTP Restful APIs for managing *preferred tags*: you can add,
 remove, promote, and demote *user tags* as needed.
 
 Retrieve Tags
@@ -762,7 +762,7 @@ where:
      - A JSON map of string to array where the keys are either ``streams`` or
        ``datasets`` and the values are arrays of the names of each type
 
-A successful query will return a 200 response with a body containing the Tracker scores
+A successful query will return a 200 response with a body containing the metadata management scores
 for each entity requested.
 
 Example:
@@ -1059,7 +1059,7 @@ Configuration API
 
 Retrieve All Configuration Settings for a Namespace
 ---------------------------------------------------
-Returns the entire Tracker configuration as a key-value map::
+Returns the entire metadata management configuration as a key-value map::
 
   GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/config
 

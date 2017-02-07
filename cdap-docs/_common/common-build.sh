@@ -367,10 +367,10 @@ function set_version() {
   
   if [[ ${GIT_BRANCH_TYPE:0:7} == "develop" ]]; then
     GIT_BRANCH_CDAP_PIPELINES="develop"
-    GIT_BRANCH_CASK_TRACKER="develop"
+    GIT_BRANCH_CDAP_METADATA_MANAGEMENT="develop"
   fi
   get_cdap_pipelines_version ${GIT_BRANCH_CDAP_PIPELINES}
-  get_cask_tracker_version ${GIT_BRANCH_CASK_TRACKER}
+  get_cdap_metadata_management_version ${GIT_BRANCH_CDAP_METADATA_MANAGEMENT}
 }
 
 function display_version() {
@@ -393,9 +393,9 @@ function display_version() {
   echo "CDAP Pipelines:"
   echo "  GIT_BRANCH_CDAP_PIPELINES: ${GIT_BRANCH_CDAP_PIPELINES}"
   echo "  CDAP_PIPELINES_VERSION: ${CDAP_PIPELINES_VERSION}"
-  echo "Tracker:"
-  echo "  GIT_BRANCH_CASK_TRACKER: ${GIT_BRANCH_CASK_TRACKER}"
-  echo "  CASK_TRACKER_VERSION: ${CASK_TRACKER_VERSION}"
+  echo "CDAP Metadata Management:"
+  echo "  GIT_BRANCH_CDAP_METADATA_MANAGEMENT: ${GIT_BRANCH_CDAP_METADATA_MANAGEMENT}"
+  echo "  CDAP_METADATA_MANAGEMENT_VERSION: ${CDAP_METADATA_MANAGEMENT_VERSION}"
 }
 
 function get_cdap_pipelines_version() {
@@ -406,16 +406,16 @@ function get_cdap_pipelines_version() {
   export CDAP_PIPELINES_VERSION
 }
 
-function get_cask_tracker_version() {
+function get_cdap_metadata_management_version() {
   # $1 Branch of Tracker to use
-  CASK_TRACKER_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/cask-tracker/${1}/pom.xml" | grep "<version>")
-  CASK_TRACKER_VERSION=${CASK_TRACKER_VERSION#*<version>}
-  CASK_TRACKER_VERSION=${CASK_TRACKER_VERSION%%</version>*}
-  if [[ -z ${CASK_TRACKER_VERSION} ]]; then
-    CASK_TRACKER_VERSION="0.2.0-SNAPSHOT"
-    echo "Using default CASK_TRACKER_VERSION ${CASK_TRACKER_VERSION}"
+  CDAP_METADATA_MANAGEMENT_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/cask-tracker/${1}/pom.xml" | grep "<version>")
+  CDAP_METADATA_MANAGEMENT_VERSION=${CDAP_METADATA_MANAGEMENT_VERSION#*<version>}
+  CDAP_METADATA_MANAGEMENT_VERSION=${CDAP_METADATA_MANAGEMENT_VERSION%%</version>*}
+  if [[ -z ${CDAP_METADATA_MANAGEMENT_VERSION} ]]; then
+    CDAP_METADATA_MANAGEMENT_VERSION="0.2.0-SNAPSHOT"
+    echo "Using default CDAP_METADATA_MANAGEMENT_VERSION ${CDAP_METADATA_MANAGEMENT_VERSION}"
   fi
-  export CASK_TRACKER_VERSION
+  export CDAP_METADATA_MANAGEMENT_VERSION 
 }
 
 function clear_messages_file() {

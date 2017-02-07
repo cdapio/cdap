@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :description: Cask Tracker
+    :description: CDAP Metadata Management
     :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 .. |tracker-sdk-url| replace:: http://localhost:11011/tracker/ns/default
@@ -10,7 +10,7 @@
 .. |literal-tracker-distributed-cdap-url| replace:: ``http://<host>:<dashboard-bind-port>/tracker/ns/default``
 
 
-.. _cask-tracker-index:
+.. _metadata-management-index:
 
 ========================
 CDAP Metadata Management
@@ -19,33 +19,33 @@ CDAP Metadata Management
 Introduction
 ============
 
-Cask Tracker ("Tracker") is a self-service CDAP extension that automatically captures
+CDAP Metadata Management ("metadata management") is a CDAP capability that automatically captures
 :ref:`metadata <metadata-lineage>` and lets you see how data is flowing into and out 
 of datasets, streams, and stream views.
 
 It allows you to perform impact and root-cause analysis, delivers an audit-trail for
-auditability and compliance, and allows you to preview data. Tracker furnishes access to
+auditability and compliance, and allows you to preview data. Metadata management furnishes access to
 structured information that describes, explains, and locates data, making it easier to
 retrieve, use, and manage datasets.
 
-Tracker also allows users to update metadata for datasets and streams. Users can add,
+Metadata management also allows users to update metadata for datasets and streams. Users can add,
 remove, and update tags and user properties directly in the UI. It allows users to set
 a preferred dictionary of tags so that teams can use the same lexicon when updating metadata.
 
-Tracker's UI shows a graphical visualization of the :ref:`lineage
+Metadata management's UI shows a graphical visualization of the :ref:`lineage
 <metadata-lineage-lineage>` of an entity. A lineage shows |---| for a specified time range
 |---| all data access of the entity, and details of where that access originated from.
 
-Tracker also captures activity metrics for datasets. You can see the datasets that are
+Metadata management also captures activity metrics for datasets. You can see the datasets that are
 being used the most and view usage metrics for each dataset. This allows teams to easily
-determine the appropriate dataset to use for an analysis. The Tracker Meter (currently in beta)
+determine the appropriate dataset to use for an analysis. The metadata management meter (currently in beta)
 rates each dataset on a scale that shows how active a dataset is in the system. Users can see the
 datasets that are being used the most and view usage metrics for each dataset. This
-allows teams to easily find the right dataset to use for analysis. The Tracker Meter
+allows teams to easily find the right dataset to use for analysis. The metadata management meter
 also rates each dataset on a scale to quickly show you how active a dataset is in the
 system.
 
-Tracker provides users with the ability to define a Data Dictionary that can be applied across
+Metadata management provides users with the ability to define a Data Dictionary that can be applied across
 all datasets in a namespace. The Data Dictionary allows users to standarize column names, types,
 if the column contains Personally Identifiable Information (PII) data, and a description of the column.
 This can be useful for new team members, allowing them to understand the data stored in datasets quickly.
@@ -74,7 +74,7 @@ This can be useful for new team members, allowing them to understand the data st
 - Provide IT with the traceability needed in governing datasets and in applying compliance
   rules through seamless integration with other extensions.
 
-- Tracker has consistent definitions of metadata-containing information about the data to
+- Metadata management has consistent definitions of metadata-containing information about the data to
   reconcile differences in terminologies.
 
 - It helps you in the understanding of the lineage of your business-critical data.
@@ -93,16 +93,16 @@ This can be useful for new team members, allowing them to understand the data st
 
 Example Use Case
 ----------------
-An example use case describes how Tracker was employed in the `data cleansing and validating of
+An example use case describes how metadata management was employed in the `data cleansing and validating of
 three billion records <http://customers.cask.co/rs/882-OYR-915/images/tracker-casestudy1.pdf>`__.
 
 
-Tracker Application
-===================
-Cask Tracker consists of an application in CDAP with two programs and six datasets:
+Metadata Management Application
+===============================
+CDAP metadata management consists of an application in CDAP with two programs and six datasets:
 
 - ``_Tracker`` application: names begins with an underscore
-- ``TrackerService``: Service exposing the Tracker API endpoints
+- ``TrackerService``: Service exposing the metadata management API endpoints
 - ``AuditLogFlow``: Flow that subscribes to Kafka audit messages and stores them in the
   ``_auditLog`` dataset
 - ``_auditLog``: Custom dataset for storing audit messages
@@ -111,9 +111,9 @@ Cask Tracker consists of an application in CDAP with two programs and six datase
 - ``_timeSinceTable``: Custom dataset for storing the last time a specific audit
   message was received
 - ``_dataDictionary``: A Table dataset containing the columns and definitions of the Data Dictionary
-- ``_configurationTable``: A Key-value table containing Tracker config options
+- ``_configurationTable``: A Key-value table containing metadata management configuration options
 
-The Tracker UI is shipped with CDAP, started automatically in standalone CDAP as part of the
+The metadata management UI is shipped with CDAP, started automatically in standalone CDAP as part of the
 CDAP UI. It is available at:
  
   |literal-tracker-sdk-url|
@@ -122,27 +122,27 @@ or (Distributed CDAP):
   
   |literal-tracker-distributed-cdap-url|
 
-Tracker is built from a system artifact included with CDAP, |literal-cask-tracker-version-jar|.
+The application is built from a system artifact included with CDAP, |literal-cask-tracker-version-jar|.
 
 
 .. highlight:: xml  
 
 Installation
 ============
-Cask Tracker is deployed from its system artifact included with CDAP. A CDAP administrator
-does not need to build anything to add Cask Tracker to CDAP; they merely need to enable
-the application after starting CDAP.
+The CDAP Metadata Management Application is deployed from its system artifact included
+with CDAP. A CDAP administrator does not need to build anything to add metadata management
+to CDAP; they merely need to enable the application after starting CDAP.
 
-Enabling Tracker
-----------------
-Tracker is enabled automatically in Standalone CDAP and the UI is available at |tracker-sdk-url|.
-In the Distributed version of CDAP, you must manually enable Tracker by visiting
-|literal-tracker-distributed-cdap-url| and pressing the ``"Enable Tracker"`` button.
+Enabling Metadata Management
+----------------------------
+Metadata management is enabled automatically in Standalone CDAP and the UI is available at |tracker-sdk-url|.
+In the Distributed version of CDAP, you must manually enable metadata management in each namespace by visiting
+|literal-tracker-distributed-cdap-url| and pressing the ``"Enable"`` button.
 
 Once pressed, the application will be deployed, the datasets created (if necessary), the
 flow and service started, and search and audit logging will become available.
 
-If you are enabling Tracker from outside the UI, you will need to follow these steps:
+If you are enabling metadata management from outside the UI, you will need to follow these steps:
 
 - Using the CDAP CLI, load the artifact (|literal-cask-tracker-version-jar|):
 
@@ -178,31 +178,32 @@ If you are enabling Tracker from outside the UI, you will need to follow these s
 
 Restarting CDAP
 ---------------
-As Tracker is an application running inside CDAP, it does not start up automatically when
-CDAP is restarted. Each time that you start CDAP, you will need to re-enable Tracker.
-Re-enabling Tracker does not recreate the datasets; instead, the same datasets as were
+As metadata management is an application running inside CDAP, it does not start up automatically when
+CDAP is restarted. Each time that you start CDAP, you will need to re-enable metadata management.
+Re-enabling metadata management does not recreate the datasets; instead, the same datasets as were
 used in previous runs are used.
 
-If you are using the audit log feature of Tracker, it is best that Tracker be enabled
+If you are using the audit log feature of metadata management, it is best that metadata management be enabled
 **before** you begin any other applications.
 
 If the installation of CDAP is an upgrade from a previous version, all activity and
-datasets prior to the enabling of Tracker will not be available or seen in the Tracker UI.
+datasets prior to the enabling of metadata management will not be available or seen in the CDAP UI.
 
-Disabling and Removing Tracker
-------------------------------
-If for some reason you need to disable or remove Tracker, you would need to:
+Disabling and Removing Metadata Management
+------------------------------------------
+If for some reason you need to disable or remove metadata management, you would need to:
 
-- stop all ``_Tracker`` programs
-- delete the Tracker application
-- delete the Tracker datasets
+- stop all programs of the ``_Tracker`` application
+- delete the metadata management application
+- delete the metadata management datasets
 
-Tracker and its UI
-==================
+
+Metadata Management and its UI
+==============================
 
 Search
 ------
-Searching in Tracker is provided by an interface similar to that of a popular search engine:
+Searching in metadata management is provided by an interface similar to that of a popular search engine:
 
 .. figure:: /_images/tracker-home-search.png
   :figwidth: 100%
@@ -217,9 +218,9 @@ In the text box, you enter your search terms:
 - Search the metadata of entities by using either a complete or partial name followed by
   an asterisk ``*``, as described in the :ref:`Metadata HTTP RESTful API
   <http-restful-api-metadata-query-terms>`.
-- Tracker searches tags, properties, and schema of CDAP datasets, streams, and stream views.
+- Metadata management searches tags, properties, and schema of CDAP datasets, streams, and stream views.
 
-For example, if you have just started CDAP and enabled Tracker, you could enter a search
+For example, if you have just started CDAP and enabled metadata management, you could enter a search
 term such as ``a* k*``, which will find all entities that begin with the letter ``a`` or
 ``k``.
 
@@ -231,7 +232,7 @@ The results would appear similar to this:
   :align: center
   :class: bordered-image
 
-In this example, Tracker has found two datasets that satisfied the condition. The search
+In this example, metadata management has found two datasets that satisfied the condition. The search
 used is shown in the upper-left, and the results show the datasets found with
 information and links for each.
 
@@ -245,7 +246,7 @@ selection must be made in each of *entities* and *metadata* for there to be any 
 that appear.
 
 **On the right side** is a sortable list of results. It is sortable by one of *Create Date*, the entity
-ID (name), or the Tracker Score.
+ID (name), or the metadata management score.
 
 Each entry in the list provides a summery of information about the entity, and its name is
 a hyperlink to further details: metadata, lineage, and audit log.
@@ -382,8 +383,7 @@ For example, any dataset containing the column ``customerId`` will have the same
 
 Integrations
 ------------
-
-Tracker allows for an easy integration with `Cloudera Navigator
+Metadata management allows for an easy integration with `Cloudera Navigator
 <https://www.cloudera.com/products/cloudera-navigator.html>`__  by providing a UI to
 connecting to a Navigator instance:
 

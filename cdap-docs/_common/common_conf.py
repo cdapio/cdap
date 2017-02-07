@@ -378,17 +378,17 @@ if cdap_apps_version and cdap_apps_compatibile_version:
 else:
     print 'Unable to find cdap_apps_version and cdap_apps_compatibile_version'    
 
-cask_tracker_version = os.environ.get('CASK_TRACKER_VERSION')
-if cask_tracker_version:
+cdap_metadata_management_version = os.environ.get('CDAP_METADATA_MANAGEMENT_VERSION')
+if cdap_metadata_management_version:
     rst_epilog += """
-.. |cask-tracker-version| replace:: %(cask-tracker-version)s
-.. |cask-tracker-version-jar| replace:: tracker-%(cask-tracker-version)s.jar
-.. |literal-cask-tracker-version| replace:: ``%(cask-tracker-version)s``
-.. |literal-cask-tracker-version-jar| replace:: ``tracker-%(cask-tracker-version)s.jar``
+.. |cdap-metadata-management-version| replace:: %(cdap-metadata-management-version)s
+.. |cdap-metadata-management-version-jar| replace:: tracker-%(cdap-metadata-management-version)s.jar
+.. |literal-cdap-metadata-management-version| replace:: ``%(cdap-metadata-management-version)s``
+.. |literal-cdap-metadata-management-version-jar| replace:: ``tracker-%(cdap-metadata-management-version)s.jar``
 
-""" % {'cask-tracker-version': cask_tracker_version}
+""" % {'cdap-metadata-management-version': cdap_metadata_management_version}
 else:
-    print 'Unable to find CASK_TRACKER_VERSION'    
+    print 'Unable to find CDAP_METADATA_MANAGEMENT_VERSION'    
 
 cdap_pipelines_version = os.environ.get('CDAP_PIPELINES_VERSION')
 if cdap_pipelines_version:

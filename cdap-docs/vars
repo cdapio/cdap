@@ -57,8 +57,8 @@ GIT_VERSION_NAVIGATOR="0.1.0"
 # Used for Pipelines documentation
 GIT_BRANCH_CDAP_PIPELINES="develop"
 
-# Used for Tracker documentation
-GIT_BRANCH_CASK_TRACKER="develop"
+# Used for Metadata Management documentation
+GIT_BRANCH_CDAP_METADATA_MANAGEMENT="develop"
 
 # Google Analytics Code
 GOOGLE_TAG_MANAGER_CODE="GTM-KWLFGH"

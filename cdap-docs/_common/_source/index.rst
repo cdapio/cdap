@@ -43,7 +43,7 @@ how to develop and test CDAP applications.
 
 It includes the CDAP programming APIs and client interfaces, with instructions
 on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoop cluster.
-CDAP extensions provide additional capabilities, such as *Cask Hydrator* and *Cask Tracker*.
+CDAP capabilities include *CDAP Pipelines* and *Metadata Management*.
 
 .. role:: link-black
 
@@ -275,4 +275,4 @@ CDAP extensions provide additional capabilities, such as *Cask Hydrator* and *Ca
 .. |search| replace:: **Search:**
 .. _search: search.html
 
-- |search|_ Search this documentation using *Quick Search*
+- |search|_ Search this documentation
