@@ -16,7 +16,7 @@ FAQs
     General Questions <general>
     CDAP <cdap>
     Cloudera Manager <cloudera-manager>
-    Pipelines <pipelines>
+    Pipelines <cdap-pipelines>
 
 Additional Resources
 ====================

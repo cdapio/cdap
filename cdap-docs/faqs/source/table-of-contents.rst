@@ -13,7 +13,4 @@ FAQs Table of Contents
     General Questions<general>
     CDAP <cdap>
     Cloudera Manager <cloudera-manager>
-    Pipelines <pipelines>
-..     Applications <applications>
-..     User Interface <user-interface>
-..     Databases and Transactions <databases-transactions>
+    CDAP Pipelines <cdap-pipelines>

@@ -2,13 +2,13 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cask-hydrator-plugins-analytics:
+.. _cdap-pipelines-plugins-analytics:
 
 ================
 Analytic Plugins
 ================
 
-Hydrator Version |cask-hydrator-version|
+CDAP Pipelines Version |cdap-pipelines-version|
 
 These plugins work with:
 

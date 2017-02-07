@@ -1,8 +1,8 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cask-hydrator-creating-pipelines:
+.. _cdap-pipelines-creating-pipelines:
 
 ==================
 Creating Pipelines
@@ -21,7 +21,7 @@ The sources, transformations, and sinks are packaged as extensions to CDAP known
 of the run, and after the run has been completed. The plugins can be either those that are
 packaged as part of CDAP or ones that have been installed separately.
 
-The configuration can either be written as a JSON file or, in the case of the Hydrator
+The configuration can either be written as a JSON file or, in the case of the CDAP Application
 Studio, specified in-memory.
 
 CDAP currently provides two artifacts (referred to as *system artifacts*):
@@ -34,7 +34,7 @@ which are used to create the different kinds of data pipeline applications.
 **Note:** *Two system artifacts,* ``cdap-etl-batch`` *and* ``cdap-etl-realtime``, *have
 been deprecated and replaced by the above artifacts, as of CDAP 3.5.0.*
 
-Pipelines can be created using Cask Hydrator's included visual editor (*Cask Hydrator
+Pipelines can be created using CDAP's included visual editor (the *CDAP Application
 Studio*), using command-line tools such the CDAP CLI and ``curl``, or programmatically
 with scripts or Java programs.
 
@@ -43,30 +43,30 @@ Methods for Creating Pipelines
 ==============================
 There are two different methods for creating pipelines:
 
-1. Using Hydrator Studio
+1. Using the *CDAP Application Studio*
 #. Using command line tools (such as ``curl``, the CDAP CLI, or the CDAP UI)
 
-Using **Hydrator Studio,** the basic operations are:
+Using the **CDAP Application Studio**, the basic operations are:
 
   1. **Create** a new pipeline, either by starting from a :ref:`blank canvas 
-     <cask-hydrator-getting-started-hydrator-studio>`, starting from a
-     :ref:`template <cask-hydrator-creating-pipelines-pipeline-templates>`, or by 
-     :ref:`cloning <cask-hydrator-creating-pipelines-cloning>` an already-published pipeline.
+     <cdap_pipelines-getting-started-cdap-application-studio>`, starting from a
+     :ref:`template <cdap-pipelines-creating-pipelines-pipeline-templates>`, or by 
+     :ref:`cloning <cdap-pipelines-creating-pipelines-cloning>` an already-published pipeline.
 
-  #. **Edit** the pipeline in Hydrator Studio, setting appropriate configurations and
+  #. **Edit** the pipeline in the CDAP Application Studio, setting appropriate configurations and
      settings.
 
   #. **Save** the pipeline as you are working on it, as a draft pipeline, using a unique name.
 
-  #. **Validate** the pipeline from within Hydrator Studio, to check that basic settings and
+  #. **Validate** the pipeline from within the CDAP Application Studio, to check that basic settings and
      naming are correct.
 
-  #. **Publish** the pipeline from within Hydrator Studio, which will translate the virtual
+  #. **Publish** the pipeline from within the CDAP Application Studio, which will translate the virtual
      pipeline of the configuration into a physical pipeline with the specified name.
   
-  At this point, the pipeline can be run, either from within Hydrator or CDAP.
+  At this point, the pipeline can be run.
 
-  **Note:** Unlike many editors, Hydrator Studio does not allow draft pipelines to be
+  **Note:** Unlike many editors, the CDAP Application Studio does not allow draft pipelines to be
   published "on top of" existing, published pipelines, as this would invalidate existing
   logs, metrics, and datasets. Instead, it requires you to create a new name for any
   newly-published pipelines.
@@ -74,7 +74,7 @@ Using **Hydrator Studio,** the basic operations are:
 Using **command line tools,** the basic operations are:
 
   1. **Create** a new pipeline by writing a configuration file, in JSON format following the
-     :ref:`Hydrator configuration specification <hydrator-developing-pipelines-configuration-file-format>`, 
+     :ref:`CDAP Pipeline configuration specification <cdap-pipelines-developing-pipelines-configuration-file-format>`, 
      either from an empty configuration, starting with an example or template, or re-using an
      existing configuration file.
 
@@ -85,8 +85,8 @@ Using **command line tools,** the basic operations are:
      will translate the virtual pipeline of the configuration file into a physical pipeline
      with the specified name.
    
-  Pipelines published using command line tools are visible within both CDAP and Hydrator, and
-  can be cloned and edited using Hydrator Studio.
+  Pipelines published using command line tools are visible within the CDAP UI, and
+  can be cloned and edited using the CDAP Application Studio.
 
 
 Batch Pipelines
@@ -106,15 +106,15 @@ Types of Plugins
 ----------------
 Batch pipelines, based on the ``cdap-data-pipeline`` application template, can include these plugins:
 
-- :ref:`Actions <cask-hydrator-plugins-actions>`
+- :ref:`Actions <cdap-pipelines-plugins-actions>`
 
-- :ref:`Batch Source Plugins <cask-hydrator-plugins-batch-sources>`
+- :ref:`Batch Source Plugins <cdap-pipelines-plugins-batch-sources>`
 
-- :ref:`Transformation Plugins <cask-hydrator-plugins-transformations>`
+- :ref:`Transformation Plugins <cdap-pipelines-plugins-transformations>`
 
-- :ref:`Analytics Plugins <cask-hydrator-plugins-analytics>`
+- :ref:`Analytics Plugins <cdap-pipelines-plugins-analytics>`
 
-- :ref:`Batch Sink Plugins <cask-hydrator-plugins-batch-sinks>`
+- :ref:`Batch Sink Plugins <cdap-pipelines-plugins-batch-sinks>`
 
 How Does It Work?
 -----------------
@@ -128,19 +128,19 @@ work with the *Data Pipeline* (the ``cdap-data-pipeline`` artifact), as listed a
 
 Building a Pipeline
 -------------------
-To create a batch pipeline, you can use either command line tools or Hydrator Studio.
+To create a batch pipeline, you can use either command line tools or the CDAP Application Studio.
 
-To use Hydrator Studio to create a batch pipeline:
+To use the CDAP Application Studio to create a batch pipeline:
 
 - Specify *Data Pipeline* (the ``cdap-data-pipeline`` artifact) as the application
   template for your pipeline.
 
 - Click the icons in the left-sidebar to select the plugins you would like included in
-  your pipeline. In addition to the :ref:`action plugins <cask-hydrator-plugins-actions>`,
-  the :ref:`transform plugins <cask-hydrator-plugins-transformations>`, and certain of
-  the :ref:`analytics plugins <cask-hydrator-plugins-analytics>`, you can use
-  any of the :ref:`batch source plugins <cask-hydrator-plugins-batch-sources>` or the
-  :ref:`batch sink plugins <cask-hydrator-plugins-batch-sinks>`.
+  your pipeline. In addition to the :ref:`action plugins <cdap-pipelines-plugins-actions>`,
+  the :ref:`transform plugins <cdap-pipelines-plugins-transformations>`, and certain of
+  the :ref:`analytics plugins <cdap-pipelines-plugins-analytics>`, you can use
+  any of the :ref:`batch source plugins <cdap-pipelines-plugins-batch-sources>` or the
+  :ref:`batch sink plugins <cdap-pipelines-plugins-batch-sinks>`.
 
 - Typically, you will need at a minimum a source, a sink, and any optional transformations or analytics
   that are required between the source and sink stages.
@@ -154,7 +154,7 @@ To use Hydrator Studio to create a batch pipeline:
 - Specify a schedule for the batch pipeline, using either the *basic* or *advanced* specification.
   The schedule uses the underlying operating system's ``cron`` application.
 
-- :ref:`Post-run actions <cask-hydrator-plugins-post-run-plugins>` can be specified, and
+- :ref:`Post-run actions <cdap-pipelines-plugins-post-run-plugins>` can be specified, and
   these will be run depending on the configuration; they can run even if the pipeline fails,
   as they can be specified to run on one of *completion*, *success*, or *failure*. You can
   have any number of post-run actions, and additional ones are added by clicking the *+*
@@ -175,17 +175,18 @@ To use Hydrator Studio to create a batch pipeline:
 Note that publishing a pipeline can reveal errors that the validation step doesn't catch, as
 validation is not an exhaustive test.
 
-At this point you can run your pipeline, either from within Hydrator or from within CDAP.
+At this point you can run your pipeline.
 
 Details and an example of using command line tools to create a batch pipeline are in the
 section on :ref:`developing pipelines: creating a batch pipeline
-<hydrator-developing-pipelines-creating-batch>`.
+<cdap-pipelines-developing-pipelines-creating-batch>`.
 
 Scheduling
 ----------
-From with Hydrator Studio, you can set a schedule for a batch pipeline that will be used to run it. Note that as
-a schedule is set as part of the pipeline configuration, a physical pipeline's schedule cannot be altered except by
-creating a new pipeline with a new schedule.
+From with the CDAP Application Studio, you can set a schedule for a batch pipeline that
+will be used to run it. Note that as a schedule is set as part of the pipeline
+configuration, a physical pipeline's schedule cannot be altered except by creating a new
+pipeline with a new schedule.
 
 Two interfaces are available: 
 
@@ -218,7 +219,7 @@ Engine
 You can specify the engine being used for a batch pipeline, either "MapReduce" (``mapreduce``)
 or "Spark" (``spark``).
 
-You set this either by selecting your choice using the *Settings* tool of Hydrator Studio,
+You set this either by selecting your choice using the *Settings* tool of the CDAP Application Studio,
 or by setting the engine property in the configuration file for the pipeline::
 
     "engine": "mapreduce",
@@ -226,11 +227,11 @@ or by setting the engine property in the configuration file for the pipeline::
 This determines the particular engine that will be used when the physical pipeline is
 created.
 
-.. _cask-hydrator-creating-pipelines-actions:
+.. _cdap-pipelines-creating-pipelines-actions:
 
 Actions
 -------
-Actions can be configured for a batch pipeline, either by using the Hydrator Studio or by
+Actions can be configured for a batch pipeline, either by using the CDAP Application Studio or by
 including a stage of type ``action`` in the configuration JSON file. The available actions
 are determined by those available to the application template being used to create the
 pipeline.
@@ -241,20 +242,20 @@ stages, and all other stages will complete before any of the actions at the end 
 
 Actions at the end will only run if the pipeline successfully completes. If you need an
 action to run irregardless of completion, use a :ref:`post-run action
-<cask-hydrator-creating-pipelines-post-run-actions>` instead.
+<cdap-pipelines-creating-pipelines-post-run-actions>` instead.
 
 Currently, action plugins are only available when using the ``cdap-data-pipeline``
 application template. Available action plugins are documented in the :ref:`Plugin
-Reference <cask-hydrator-plugins-actions>`, with this action available:
+Reference <cdap-pipelines-plugins-actions>`, with this action available:
 
 - *SSH Action*, which establishes an SSH connection with a remote machine to execute a
   command on that machine.
 
-.. _cask-hydrator-creating-pipelines-post-run-actions:
+.. _cdap-pipelines-creating-pipelines-post-run-actions:
 
 Post-run Actions
 ----------------
-Post-run actions can be configured for a batch pipeline, either by using the Hydrator Studio or
+Post-run actions can be configured for a batch pipeline, either by using the CDAP Application Studio or
 by setting the "postActions" property of the configuration JSON file. The available
 actions are determined by the post-run plugins that are available to the application
 template being used to create the pipeline.
@@ -268,7 +269,7 @@ and can happen depending of the status of the run. One of three conditions must 
 
 Currently, post-run plugins are only available when using the ``cdap-data-pipeline``
 application template. Available post-run plugins are documented in the :ref:`Plugin Reference
-<cask-hydrator-plugins-post-run-plugins>`, with these actions currently available:
+<cdap-pipelines-plugins-post-run-plugins>`, with these actions currently available:
 
 - sending an email
 - running a database query
@@ -289,13 +290,13 @@ Types of Plugins
 ----------------
 Real-time pipelines, based on the ``cdap-data-streams`` application template, can include these plugins:
 
-- :ref:`Streaming Source Plugins <cask-hydrator-plugins-real-time-sources>`
+- :ref:`Streaming Source Plugins <cdap-pipelines-plugins-real-time-sources>`
 
-- :ref:`Transformation Plugins <cask-hydrator-plugins-transformations>`
+- :ref:`Transformation Plugins <cdap-pipelines-plugins-transformations>`
 
-- :ref:`Analytics Plugins <cask-hydrator-plugins-analytics>`
+- :ref:`Analytics Plugins <cdap-pipelines-plugins-analytics>`
 
-- :ref:`Batch Sink Plugins <cask-hydrator-plugins-batch-sinks>`
+- :ref:`Batch Sink Plugins <cdap-pipelines-plugins-batch-sinks>`
 
 Despite the name, batch sink plugins are not limited to just batch pipelines.
 The real-time pipeline artifact generates micro batches that can then be written to a batch sink.
@@ -311,18 +312,18 @@ The application created will consist of a Spark Streaming program.
 
 Building a Pipeline
 -------------------
-To create a real-time pipeline, you can use either Hydrator Studio or command line tools.
+To create a real-time pipeline, you can use either the CDAP Application Studio or command line tools.
 
-To use Hydrator Studio to create a real-time pipeline:
+To use the CDAP Application Studio to create a real-time pipeline:
 
 - Specify *Data Pipeline - Realtime* (the ``cdap-data-streams`` artifact) as the application
   template for your pipeline.
 
 - Click the icons in the left-sidebar to select the plugins you would like included in
-  your pipeline. In addition to the :ref:`transform plugins <cask-hydrator-plugins-transformations>`
-  and certain of the :ref:`analytics plugins <cask-hydrator-plugins-analytics>`,
-  you can use any of the :ref:`streaming source plugins <cask-hydrator-plugins-real-time-sources>` or the
-  :ref:`batch sink plugins <cask-hydrator-plugins-batch-sinks>`.
+  your pipeline. In addition to the :ref:`transform plugins <cdap-pipelines-plugins-transformations>`
+  and certain of the :ref:`analytics plugins <cdap-pipelines-plugins-analytics>`,
+  you can use any of the :ref:`streaming source plugins <cdap-pipelines-plugins-real-time-sources>` or the
+  :ref:`batch sink plugins <cdap-pipelines-plugins-batch-sinks>`.
 
 - You will need at a minimum a source, a sink, and any optional transformations or analytics
   that are needed between the source and sink stages.
@@ -346,11 +347,11 @@ To use Hydrator Studio to create a real-time pipeline:
 Note that publishing a pipeline can reveal errors that the validation step doesn't catch, as
 validation is not an exhaustive test.
 
-At this point you can run your pipeline, either from within Hydrator or from within CDAP.
+At this point you can run your pipeline.
 
 Details and an example of using command line tools to create a real-time pipeline are in the
 section on :ref:`developing pipelines: creating a real-time pipeline
-<hydrator-developing-pipelines-creating-real-time>`.
+<cdap-pipelines-developing-pipelines-creating-real-time>`.
 
 
 Field Configuration Settings
@@ -360,13 +361,13 @@ These settings can be used in both batch and real-time pipelines.
 Required Fields
 ---------------
 Certain fields are required to be configured in order for the plugin to work. These are
-identified in the Hydrator Studio configuration panel by a red dot, and are described in
-the :ref:`Hydrator Plugin Reference <cask-hydrator-plugins>` documentation as *required*.
+identified in the CDAP Application Studio configuration panel by a red dot, and are described in
+the :ref:`CDAP Pipelines Plugin Reference <cdap-pipelines-plugins>` documentation as *required*.
 
 .. Configuring Resources
 .. ---------------------
 
-.. _cask-hydrator-runtime-arguments-macros:
+.. _cdap-pipelines-runtime-arguments-macros:
 
 Field Macro Substitution
 ========================
@@ -375,13 +376,13 @@ that are unknown at configure time but are known and provided at runtime.
 
 There are two types of macros supported in CDAP:
 
-- :ref:`Property Lookups <cask-hydrator-macros-property-lookups>`
-- :ref:`Macro Functions <cask-hydrator-macros-macro-functions>`
+- :ref:`Property Lookups <cdap-pipelines-macros-property-lookups>`
+- :ref:`Macro Functions <cdap-pipelines-macros-macro-functions>`
 
-Fields that are macro-enabled are identified in the Hydrator Studio UI and documented in
-the :ref:`Hydrator Plugin Reference <cask-hydrator-plugins>`.
+Fields that are macro-enabled are identified in the CDAP Application Studio UI and documented in
+the :ref:`CDAP Pipelines Plugin Reference <cdap-pipelines-plugins>`.
 
-.. _cask-hydrator-macros-property-lookups:
+.. _cdap-pipelines-macros-property-lookups:
 
 Property Lookups
 ----------------
@@ -406,8 +407,8 @@ and in the runtime arguments set a key-value pair such as::
 
   stream-name: myDemoStream
 
-In the Cask Hydrator UI, macro property look-ups are determined from the configuration and are set as runtime arguments.
-After providing values for these arguments, the Hydrator pipeline can be started:
+In the CDAP Pipelines UI, macro property look-ups are determined from the configuration and are set as runtime arguments.
+After providing values for these arguments, the CDAP pipeline can be started:
 
   .. figure:: /_images/stream-table-macro-runtime.png
      :figwidth: 100%
@@ -422,10 +423,10 @@ After providing values for these arguments, the Hydrator pipeline can be started
   :ref:`Lifecycle <http-restful-api-lifecycle-start>` and :ref:`Preferences
   <http-restful-api-preferences>` HTTP RESTful APIs.
 
-- To set values for macro keys through a Hydrator pipeline's preferences, see the
+- To set values for macro keys through a CDAP pipeline's preferences, see the
   :ref:`Preferences HTTP RESTful API <http-restful-api-preferences>`.
 
-.. _cask-hydrator-macros-macro-functions:
+.. _cdap-pipelines-macros-macro-functions:
 
 Macro Functions
 ---------------
@@ -517,24 +518,25 @@ the macro syntax.
 
 Validation
 ==========
-From within Hydrator Studio, the validation button will check the pipeline from within
-Hydrator Studio, to check that basic settings and naming are correct. Messages of any
-errors found will be shown in Studio. Note that this step is not exhaustive, and errors
-may still be found when the pipeline is actually published.
+From within the CDAP Application Studio, the validation button will examine the pipeline
+to check that basic settings and naming are correct. Messages of any errors found will be
+shown in the Studio. Note that this step is not exhaustive, and errors may still be found
+when the pipeline is actually published.
 
 
 Publishing
 ==========
-Publishing a pipeline takes a *virtual* pipeline (such as a draft in Hydrator Studio, or a
-configuration JSON file) and creates a *physical* pipeline (a CDAP application) using the
-configuration file, plugin artifacts, and application template artifacts.
+Publishing a pipeline takes a *virtual* pipeline (such as a draft in the CDAP Application
+Studio, or a configuration JSON file) and creates a *physical* pipeline (a CDAP
+application) using the configuration file, plugin artifacts, and application template
+artifacts.
 
-Publishing can happen either from with Hydrator Studio or by using command line tools, 
-such as the ``curl`` command with the Lifecycle RESTful API, or the CDAP CLI tool with its
-``create app`` command.
+Publishing can happen either from with the CDAP Application Studio or by using command
+line tools, such as the ``curl`` command with the Lifecycle RESTful API, or the CDAP CLI
+tool with its ``create app`` command.
 
-Using either method, published pipelines are visible within both CDAP and Hydrator, and
-can be cloned and edited using Hydrator Studio.
+Using either method, published pipelines are visible within the CDAP UI, and
+can be cloned and edited using the CDAP Application Studio.
 
 
 Templates and Re-using Pipelines
@@ -545,21 +547,21 @@ Existing pipelines can be used to create new pipelines by:
 - **Cloning** an already-published pipeline and saving the resulting draft with a new name
 - **Exporting** a configuration file, editing it, and then **importing** the revised file
 
-.. _cask-hydrator-creating-pipelines-pipeline-templates:
+.. _cdap-pipelines-creating-pipelines-pipeline-templates:
 
 Pipeline Templates
 ------------------
-A collection of predefined and preconfigured pipelines are available from within Hydrator
+A collection of predefined and preconfigured pipelines are available from within the CDAP Application
 Studio through the controls at the top of the left side-bar. These templates can be used
 as the starting point for either your own pipelines or your own pipeline templates.
 
-.. figure:: /_images/hydrator-studio-annotated.png
+.. figure:: /_images/cdap-application-studio-annotated.png
    :figwidth: 100%
    :width: 6in
    :align: center
    :class: bordered-image
 
-   **Cask Hydrator Studio:** Annotations showing components
+   **CDAP Application Studio:** Annotations showing components
 
 First, select which application template you wish to use, either *Data Pipeline* or 
 *ETL Real-time*.
@@ -598,15 +600,15 @@ These are the available templates:
 
   - **Stream to HBase:** Periodically ingest from a stream into an HBase table
 
-.. _cask-hydrator-creating-pipelines-cloning:
+.. _cdap-pipelines-creating-pipelines-cloning:
 
 Cloning
 -------
 Any existing pipeline that has been published, can be *cloned.* This creates an in-memory
-copy of the pipeline with the same name and opens it within Hydrator Studio.
+copy of the pipeline with the same name and opens it within the CDAP Application Studio.
 
 At this point, you can rename the pipeline to a unique name and then either save it as a
-:ref:`draft <cask-hydrator-studio-pipeline-drafts>` or publish it as a new pipeline. As
+:ref:`draft <cdap-application-studio-pipeline-drafts>` or publish it as a new pipeline. As
 you cannot save over an existing pipeline, all new pipelines need a unique name; a common
 practice is to increment the names, from *Demo-1* to *Demo-2* with each new clone. 
 
@@ -614,51 +616,51 @@ Exporting
 ---------
 There are two ways you can export a pipeline configuration file:
 
-1. From within Hydrator Studio; and
-#. From within a Hydrator pipeline configuration page.
+1. From within the CDAP Application Studio; and
+#. From within a CDAP pipeline configuration page.
 
-1. From **within Hydrator Studio**, you can export a pipeline configuration JSON file using
+1. From **within the CDAP Application Studio**, you can export a pipeline configuration JSON file using
    the *Export...* button:
 
-   .. figure:: /_images/hydrator-gs-1-5-buttons.png
+   .. figure:: /_images/cdap-pipelines-gs-1-5-buttons.png
       :figwidth: 100%
       :width: 6in
       :align: center
       :class: bordered-image
  
-      **Cask Hydrator Studio:** Button labels, upper-right toolbar
+      **CDAP Application Studio:** Button labels, upper-right toolbar
     
    Clicking the "Export..." button will bring up the export dialog:
  
-   .. figure:: /_images/hydrator-studio-export.png
+   .. figure:: /_images/cdap-application-studio-export.png
       :figwidth: 100%
       :width: 6in
       :align: center
       :class: bordered-image
  
-      **Cask Hydrator Studio:** Export dialog, with display of configuration file
+      **CDAP Application Studio:** Export dialog, with display of configuration file
     
    There are two similar actions you take. If you copy the text in the dialog and then
    paste it into a text editor, you will have a JSON file that is the configuration of the
-   pipeline, but without the Hydrator Studio UI information, such as the icon locations.
+   pipeline, but without the CDAP Application Studio UI information, such as the icon locations.
 
    If you use the "Export" button, it will prompt for a file location before saving a
-   complete file with all the information required to recreate the pipeline in Hydrator
+   complete file with all the information required to recreate the pipeline in the CDAP Application
    Studio, including details such as icon location. Otherwise, the two exports are
    similar. The UI information is added in the ``"__ui__"`` object in the JSON configuration
    file.
 
-#. From **within a Hydrator pipeline configuration** page, there is an *Export* button:
+#. From **within a CDAP pipeline configuration** page, there is an *Export* button:
 
-   .. figure:: /_images/hydrator-pipeline-detail-configuration.png
+   .. figure:: /_images/cdap-pipelines-detail-configuration.png
       :figwidth: 100%
       :width: 6in
       :align: center
       :class: bordered-image
  
-      **Cask Hydrator:** Configuration page, pipeline detail, showing *Export* button on right
+      **CDAP Pipelines:** Configuration page, pipeline detail, showing *Export* button on right
       
-   Similar to exporting from with Hydrator Studio, exporting using the button will
+   Similar to exporting from with the CDAP Application Studio, exporting using the button will
    produce a configuration with UI information, and copying the configuration visible
    in the lower portion of the page will produce a configuration that does not include
    the ``"__ui__"`` object in the JSON.
@@ -667,22 +669,22 @@ Files created by exporting can be edited in a text editor and then imported to c
 
 Importing
 ---------
-From within Hydrator Studio, you can import a pipeline configuration JSON file to create a
+From within the CDAP Application Studio, you can import a pipeline configuration JSON file to create a
 new pipeline using the *Import Pipeline* button:
 
-.. figure:: /_images/hydrator-gs-1-5-buttons.png
+.. figure:: /_images/cdap-pipelines-gs-1-5-buttons.png
    :figwidth: 100%
    :width: 6in
    :align: center
    :class: bordered-image
 
-   **Cask Hydrator Studio:** Button labels, upper-right toolbar
+   **CDAP Application Studio:** Button labels, upper-right toolbar
 
 
 As determined by the configuration file, the application template will be set
 appropriately, and may change from the current one.
 
-A valid configuration file that meets the :ref:`Hydrator configuration file specification 
-<hydrator-developing-pipelines-configuration-file-format>` is
+A valid configuration file that meets the :ref:`CDAP pipeline configuration file specification 
+<cdap-pipelines-developing-pipelines-configuration-file-format>` is
 required. It may be created from an existing pipeline by exporting its configuration file.
 

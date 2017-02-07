@@ -1,11 +1,10 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 .. :titles-only-global-toc: true
 
-.. _cask-hydrator:
-.. _hydrator:
+.. _cdap-pipelines:
 
 ==============
 CDAP Pipelines
@@ -17,7 +16,7 @@ CDAP Pipelines
 
 ..   :height: 100%
 
-Cask Hydrator is an extension of CDAP that combines a user interface with back-end services
+CDAP Pileines are a capability of CDAP that combines a user interface with back-end services
 to enable the building, deploying, and managing of data pipelines.
 
 **Introduction**
@@ -28,14 +27,14 @@ to enable the building, deploying, and managing of data pipelines.
 .. |getting-started| replace:: **Getting Started:**
 .. _getting-started: getting-started.html
 
-.. |studio| replace:: **Hydrator Studio:**
+.. |studio| replace:: **CDAP Application Studio:**
 .. _studio: studio.html
 
-- |concepts-design|_ **Pipelines**, **plugins**, and **Cask Hydrator Studio**
+- |concepts-design|_ **Pipelines**, **plugins**, and the **CDAP Application Studio**
 
 - |getting-started|_ A **tutorial** demonstrating the basics of building and running a pipeline
 
-- |studio|_ The **UI of Hydrator** for creating pipelines
+- |studio|_ The **UI of CDAP** for creating pipelines
 
 
 **For users and creators of pipelines**
@@ -69,24 +68,11 @@ to enable the building, deploying, and managing of data pipelines.
 .. |developing-plugins| replace:: **Developing Plugins:**
 .. _developing-plugins: developing-plugins/index.html
 
-.. |how-hydrator-works| replace:: **How Hydrator Works:**
-.. _how-hydrator-works: how-hydrator-works.html
+.. |how-cdap-pipelines-work| replace:: **How CDAP Pipelines Work:**
+.. _how-cdap-pipelines-work: how-cdap-pipelines-work.html
 
-- |developing-pipelines|_ Using tools outside of Hydrator Studio to **create pipelines**
+- |developing-pipelines|_ Using tools outside of CDAP Application Studio to **create pipelines**
 
 - |developing-plugins|_ Developing custom plugins and using the **test framework** for plugins
 
-- |how-hydrator-works|_ A **"behind-the-scenes"** of how it works
-    
-  
-**FAQs and Glossary**
-  
-.. |faqs| replace:: **FAQs:**
-.. _faqs: faqs.html
-
-.. |glossary| replace:: **Glossary:**
-.. _glossary: glossary.html
-
-- |faqs|_ **Frequently-asked-questions** relevant to Cask Hydrator and pipelines
-
-- |glossary|_ **Terms** particular to Cask Hydrator and pipelines
+- |how-cdap-pipelines-work|_ A **"behind-the-scenes"** of how it works

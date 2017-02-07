@@ -1,8 +1,8 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cask-hydrator-developing-pipelines:
+.. _cdap-pipelines-developing-pipelines:
 
 ====================
 Developing Pipelines
@@ -12,12 +12,12 @@ Developing Pipelines
 
 This section is intended for developers creating pipelines using command line tools. Users of
 pipelines should refer to the documentation on :ref:`creating pipelines
-<cask-hydrator-creating-pipelines>`.
+<cdap-pipelines-creating-pipelines>`.
 
-As mentioned in :ref:`creating pipelines <cask-hydrator-creating-pipelines>`, there are two
+As mentioned in :ref:`creating pipelines <cdap-pipelines-creating-pipelines>`, there are two
 different methods for creating pipeline applications:
 
-1. Using Hydrator Studio
+1. Using the CDAP Application Studio
 #. Using command line tools (such as ``curl``, the CDAP CLI, or the CDAP UI)
 
 Using comamnd line tools, pipelines can be created using the :ref:`Lifecycle RESTful API
@@ -26,13 +26,13 @@ Using comamnd line tools, pipelines can be created using the :ref:`Lifecycle RES
 
 In order to create a pipeline application, a pipeline configuration (either as a file or
 in-memory) is required that specifies the configuration of plugins to be used along with
-their properties. (In Hydrator Studio, the user interface prompts you for the required
+their properties. (In the CDAP Application Studio, the user interface prompts you for the required
 information.)
 
 This section describes how to create such a configuration, and various aspects to be
 considered in the design of pipelines.
 
-.. _hydrator-developing-pipelines-configuration-file-format:
+.. _cdap-pipelines-developing-pipelines-configuration-file-format:
 
 Pipeline Configuration File Format
 ==================================
@@ -58,9 +58,9 @@ The configuration file format is JSON, containing these objects at the top level
      - ``Object``
      - Specifies the UI display of the pipeline
 
-The first three are required, while the ``__ui__`` is optional. It is added by Hydrator
+The first three are required, while the ``__ui__`` is optional. It is added by the CDAP Application
 Studio to store the display of the pipeline in the UI. The format of the ``__ui__`` object
-is not described here, as it is internal to the Hydrator UI and subject to change.
+is not described here, as it is internal to the CDAP Application Studio UI and subject to change.
 
 Example (in JSON format):
 
@@ -173,7 +173,7 @@ The format of ``stage`` and ``postaction`` objects:
      - Plugin object
    * - ``errorDatasetName``
      - Name of a dataset that any error messages will be written to; used by
-       :ref:`validating transform <cask-hydrator-running-pipelines-error-record-handling>`
+       :ref:`validating transform <cdap-pipelines-running-pipelines-error-record-handling>`
        stages
 
 The format of a ``plugin`` object:
@@ -194,11 +194,11 @@ The format of a ``plugin`` object:
      - Map of properties, contents of which are determined by the particular plugin used
 
 
-.. _hydrator-developing-pipelines-creating-batch:
+.. _cdap-pipelines-developing-pipelines-creating-batch:
 
 Creating a Batch Pipeline
 =========================
-With a Hydrator batch pipeline, a ``schedule`` property is required with a ``cron`` entry
+With a CDAP batch pipeline, a ``schedule`` property is required with a ``cron`` entry
 specifying the frequency of the batch job run, such as every day or every hour.
 
 For example, this JSON (when in a file such as ``config.json``) provides a
@@ -228,7 +228,7 @@ when the run completes, a post-run action send an email indicating that the run 
               "type": "postaction",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -250,7 +250,7 @@ when the run completes, a post-run action send an email indicating that the run 
               "type": "batchsource",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "system"
               },
               "properties": {
@@ -268,7 +268,7 @@ when the run completes, a post-run action send an email indicating that the run 
               "type": "batchsink",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "system"
               },              
               "properties": {
@@ -326,11 +326,11 @@ the CDAP CLI.
 
 where, in both cases, ``config.json`` is the file that contains the pipeline configuration shown above.
 
-.. _hydrator-developing-pipelines-creating-real-time:
+.. _cdap-pipelines-developing-pipelines-creating-real-time:
 
 Creating a Real-Time Pipeline
 =============================
-With a Hydrator real-time pipeline, a ``batchInterval`` property is required
+With a CDAP real-time pipeline, a ``batchInterval`` property is required
 specifying the frequency at which the sources will create new micro batches of data.
 The ``batchInterval`` must be a number followed by a time unit, with 's' for seconds,
 'm' for minutes, and 'h' for hours. For example, a value of '10s' will be interpreted
@@ -360,7 +360,7 @@ CDAP Table after performing a projection transformation, you can use a configura
               "type": "streamingsource",
               "artifact": {
                 "name": "spark-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "system"
               },
               "properties": {
@@ -379,7 +379,7 @@ CDAP Table after performing a projection transformation, you can use a configura
               "type": "transform",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "system"
               },
               "properties": {
@@ -395,7 +395,7 @@ CDAP Table after performing a projection transformation, you can use a configura
               "type": "batchsink",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "system"
               },              
               "properties": {
@@ -426,7 +426,7 @@ writing the data to a CDAP Table.
 
 Non-linear Executions in Pipelines
 ==================================
-Hydrator supports directed acyclic graphs in pipelines, which allows for the non-linear
+CDAP pipelines supports directed acyclic graphs in pipelines, which allows for the non-linear
 execution of pipeline stages.
 
 Fork in Pipeline
@@ -464,7 +464,7 @@ filtering logic is applied by using an included script in the step
               "type": "batchsource",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -482,7 +482,7 @@ filtering logic is applied by using an included script in the step
               "type": "batchsink",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -499,7 +499,7 @@ filtering logic is applied by using an included script in the step
               "type": "batchsink",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -516,7 +516,7 @@ filtering logic is applied by using an included script in the step
               "type": "transform",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -598,7 +598,7 @@ of received records will vary.
               "type": "batchstream",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -625,7 +625,7 @@ of received records will vary.
               "type": "transform",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -658,7 +658,7 @@ of received records will vary.
               "type": "transform",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -687,7 +687,7 @@ of received records will vary.
               "type": "batchsink",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -752,7 +752,7 @@ Sample configuration for using a *Database Source* and a *Database Sink*:
               "type": "batchsource",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -774,7 +774,7 @@ Sample configuration for using a *Database Source* and a *Database Sink*:
               "type": "batchsink",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -831,7 +831,7 @@ creating the source:
               "type": "streamingsource",
               "artifact": {
                 "name": "spark-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -850,7 +850,7 @@ creating the source:
               "type": "batchsink",
               "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "system"
               },              
               "properties": {
@@ -869,4 +869,4 @@ Prebuilt JARs
 -------------
 In a case where you'd like to use prebuilt third-party JARs (such as a JDBC driver) as a
 plugin, please refer to the section on :ref:`Deploying Third-Party Jars
-<cask-hydrator-plugin-management-third-party-plugins>`. 
+<cdap-pipelines-plugin-management-third-party-plugins>`. 

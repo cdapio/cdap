@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright © 2014-2016 Cask Data, Inc.
+# Copyright © 2014-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -236,9 +236,9 @@ extlinks = {
     'cdap-ui-data': ("%s/data/%%s" % _cdap_ui_base, None),
     'cdap-ui-datasets': ("%s/datasets/%%s" % _cdap_ui_base, None),
     'cdap-ui-datasets-explore': ("%s/datasets/%%s/overview/explore" % _cdap_ui_base, None),
-    'cask-pipelines': ("%s/%%s" % _cdap_ui_base, None),
-    'cdap-pipeline-studio': ("%s/pipelines/%%s" % _cdap_ui_base, None),
-    'cdap-pipeline-studio-artifact': ("%s/pipelines/studio?artifactType=%%s" % _cdap_ui_base, None),
+    'cdap-pipelines': ("%s/%%s" % _cdap_ui_base, None),
+    'cdap-application-studio': ("%s/pipelines/%%s" % _cdap_ui_base, None),
+    'cdap-application-studio-artifact': ("%s/pipelines/studio?artifactType=%%s" % _cdap_ui_base, None),
     'cdap-java-source-github': (cdap_java_source_github_pattern , None),
     'cdap-security-extn-source-github': (cdap_security_extn_github_pattern, None),
     'cask-issue': ('https://issues.cask.co/browse/%s', ''),
@@ -390,16 +390,16 @@ if cask_tracker_version:
 else:
     print 'Unable to find CASK_TRACKER_VERSION'    
 
-cask_hydrator_version = os.environ.get('CASK_HYDRATOR_VERSION')
-if cask_hydrator_version:
+cdap_pipelines_version = os.environ.get('CDAP_PIPELINES_VERSION')
+if cdap_pipelines_version:
     rst_epilog += """
-.. |cask-hydrator-version| replace:: %(cask-hydrator-version)s
+.. |cdap-pipelines-version| replace:: %(cdap-pipelines-version)s
 
-.. |literal-cask-hydrator-version| replace:: ``%(cask-hydrator-version)s``
+.. |literal-cdap-pipelines-version| replace:: ``%(cdap-pipelines-version)s``
 
-""" % {'cask-hydrator-version': cask_hydrator_version}
+""" % {'cdap-pipelines-version': cdap_pipelines_version}
 else:
-    print 'Unable to find CASK_HYDRATOR_VERSION'
+    print 'Unable to find CDAP_PIPELINES_VERSION'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:

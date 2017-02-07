@@ -54,8 +54,8 @@ GIT_BRANCH_CDAP_GUIDES="develop"
 GIT_BRANCH_CDAP_PACKS="develop"
 GIT_VERSION_NAVIGATOR="0.1.0"
 
-# Used for Hydrator documentation
-GIT_BRANCH_CASK_HYDRATOR="develop"
+# Used for Pipelines documentation
+GIT_BRANCH_CDAP_PIPELINES="develop"
 
 # Used for Tracker documentation
 GIT_BRANCH_CASK_TRACKER="develop"

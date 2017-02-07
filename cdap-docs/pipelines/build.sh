@@ -37,19 +37,19 @@ RULE="${SINGLE_RETURN_STRING}---${DOUBLE_RETURN_STRING}"
 # PRE_POST_RUN="pre-post-run"
 PRE_POST_RUN="post-run-plugin"
 NON_TRANSFORM_TYPES="analytic action source sink ${PRE_POST_RUN}"
-PLUGIN_TYPE_STRING="Hydrator Plugin Type:"
-VERSION_STRING="Hydrator Version:"
+PLUGIN_TYPE_STRING="CDAP Pipelines Plugin Type:"
+VERSION_STRING="CDAP Pipelines Version:"
 
-function get_hydrator_version() {
+function get_pipelines_version() {
   local base_target="${1}"
   local base_source="${2}"
   local source_url="${base_source}/pom.xml"
   local target="${base_target}/pom.xml"
   curl --silent ${source_url} --output ${target}
-  HYDRATOR_VERSION=$(grep "<version>" ${target})
-  HYDRATOR_VERSION=${HYDRATOR_VERSION#*<version>}
-  HYDRATOR_VERSION=${HYDRATOR_VERSION%%</version>*}
-  export HYDRATOR_VERSION
+  CDAP_PIPELINES_VERSION=$(grep "<version>" ${target})
+  CDAP_PIPELINES_VERSION=${CDAP_PIPELINES_VERSION#*<version>}
+  CDAP_PIPELINES_VERSION=${CDAP_PIPELINES_VERSION%%</version>*}
+  export CDAP_PIPELINES_VERSION
 }
 
 function download_md_file() {
@@ -59,7 +59,7 @@ function download_md_file() {
   local plugin_type="${4}" # NOTE: singular types: "sink", not "sinks"
   local target_file_name="${5}"
   
-  local source_url="${HYDRATOR_SOURCE}/${source_dir}/docs/${source_file_name}"
+  local source_url="${CDAP_PIPELINES_SOURCE}/${source_dir}/docs/${source_file_name}"
 
   local source_name="${source_file_name%-*}"
   local type=$(echo "${source_file_name#*-}" | tr [:upper:] [:lower:]) # batchsink
@@ -127,7 +127,6 @@ function download_md_file() {
         local m="Markdown file missing initial title: ${source_file_name}: ${source_name} ${type_capital}"
         echo_red_bold "${m}"
         set_message "${m}"
-#         echo "# ${source_name} ${type_capital}${DOUBLE_RETURN_STRING}$(cat ${target})" > ${target}
         echo "# ${source_name}${DOUBLE_RETURN_STRING}$(cat ${target})" > ${target}
       else
         # Remove title suffixes
@@ -150,7 +149,7 @@ function download_md_file() {
         echo "  Appending ${append_file} to ${target_file_name}"
         cat ${BASE_TARGET}/${append_file} >> ${target}
       fi
-      echo "${DOUBLE_RETURN_STRING}${RULE}- ${PLUGIN_TYPE_STRING} ${type}${DOUBLE_RETURN_STRING}- ${VERSION_STRING} ${HYDRATOR_VERSION}" >> ${target}
+      echo "${DOUBLE_RETURN_STRING}${RULE}- ${PLUGIN_TYPE_STRING} ${type}${DOUBLE_RETURN_STRING}- ${VERSION_STRING} ${CDAP_PIPELINES_VERSION}" >> ${target}
     else
       local m="File does not exist for ${target}"
       echo_red_bold "From ${source_url}"
@@ -190,11 +189,9 @@ function download_includes() {
   test_an_include 3fba43f907e701b1bb72efad2496d7b6 ../../${cdap_app_templates}/WordCountCompute.java
   test_an_include 9f4d179eb127337e352f2b0a814b57b0 ../../${cdap_app_templates}/WordCountSink.java
   test_an_include 54e652348b15068b7de10e3f05fde1e5 ../../${cdap_app_templates}/StringCaseTransform.java
-  
-  
 
-  echo_red_bold "Checking Plugin Documentation"
-  local hydrator_plugins="hydrator-plugins"
+  echo_red_bold "Checking CDAP Pipeline Plugin Documentation"
+  local pipelines_plugins="hydrator-plugins"
   local plugins="plugins"
   local current_directory=$(pwd)
 
@@ -202,27 +199,27 @@ function download_includes() {
 
   if [ "x${LOCAL_INCLUDES}" == "x${TRUE}" ]; then
     echo_red_bold "Copying local copies of Markdown doc file includes..."
-    local base_source="file://${PROJECT_PATH}/../${hydrator_plugins}"
-    HYDRATOR_SOURCE="${base_source}"
+    local base_source="file://${PROJECT_PATH}/../${pipelines_plugins}"
+    CDAP_PIPELINES_SOURCE="${base_source}"
   else
-    echo_red_bold "Downloading Markdown doc file includes from GitHub repo caskdata/hydrator-plugins..."
-    local base_source="https://raw.githubusercontent.com/caskdata/${hydrator_plugins}"
+    echo_red_bold "Downloading Markdown doc file includes from GitHub repo caskdata/${pipelines_plugins}..."
+    local base_source="https://raw.githubusercontent.com/caskdata/${pipelines_plugins}"
     if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
-      local hydrator_branch="develop"
+      local pipelines_branch="develop"
     else
-      local hydrator_branch="${GIT_BRANCH_CASK_HYDRATOR}"
+      local pipelines_branch="${GIT_BRANCH_CASK_CDAP_PIPELINES}"
     fi
-    HYDRATOR_SOURCE="${base_source}/${hydrator_branch}"
+    CDAP_PIPELINES_SOURCE="${base_source}/${pipelines_branch}"
   fi
 
   # Copy the source _includes files so they can be populated with the markdown files
   BASE_TARGET="${1}/${plugins}"
   cp -R "${SCRIPT_PATH}/source/_includes/${plugins}" "${1}"
   
-  echo_red_bold "Using ${HYDRATOR_SOURCE}"
-  get_hydrator_version ${BASE_TARGET} ${HYDRATOR_SOURCE}
+  echo_red_bold "Using ${CDAP_PIPELINES_SOURCE}"
+  get_pipelines_version ${BASE_TARGET} ${CDAP_PIPELINES_SOURCE}
   
-  # Uses: $BASE_TARGET  $HYDRATOR_SOURCE
+  # Uses: $BASE_TARGET  $CDAP_PIPELINES_SOURCE
   # Parameter      1                 2                         3 (optional)  4 (optional)  5 (optional)
   # Definition     source_dir        source_file_name          append_file   target_file   target_dir
   

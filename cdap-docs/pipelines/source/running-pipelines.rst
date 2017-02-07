@@ -1,8 +1,8 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cask-hydrator-running-pipelines:
+.. _cdap-pipelines-running-pipelines:
 
 =================
 Running Pipelines
@@ -10,17 +10,17 @@ Running Pipelines
 
 Pipeline can be started, stopped, and controlled using:
 
-- :ref:`Cask Hydrator UI <cask-hydrator-running-pipelines-within-hydrator>`
+- :ref:`CDAP Pipelines UI <cdap-pipelines-running-pipelines-within-cdap-pipelines-ui>`
 - :ref:`CDAP UI <cdap-ui>`
 - :ref:`CDAP CLI <cdap-cli>`
 - Command line tools, using the :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle-start>`
 
 
-.. _cask-hydrator-running-pipelines-within-hydrator:
+.. _cdap-pipelines-running-pipelines-within-cdap-pipelines-ui:
 
-Running a Pipeline within Hydrator
-==================================
-From within Hydrator, you can start and stop pipelines. 
+Running a Pipeline within the CDAP Pipelines UI
+===============================================
+From within the CDAP Pipelines UI, you can start and stop pipelines. 
 
 For a **batch pipeline,** you can start or stop ("suspend") its schedule. It will then begin
 at the next scheduled time. (To change the schedule requires creating a new pipeline with
@@ -48,10 +48,10 @@ The action could, based on some logic, provide the name of the database to use a
 and the name of the table to write as a sink. The next stage in the pipeline might use
 this information to read and write from appropriate sources and sinks.
 
-To do this, Hydrator supports the use of macros that will, at runtime, will be evaluated
+To do this, CDAP supports the use of macros that will, at runtime, will be evaluated
 and substituted for. The macros support recursive (nested) expansion and use a simple
 syntax. These macros are :ref:`defined in the pipeline configuration  
-<cask-hydrator-runtime-arguments-macros>` and in the runtime arguments.
+<cdap-pipelines-runtime-arguments-macros>` and in the runtime arguments.
 
 Runtime arguments are resolved by sourcing them from the application preferences, the
 runtime arguments, and the workflow token. Precedence is with the workflow token having
@@ -62,7 +62,7 @@ These arguments and preferences can be set with the CDAP UI, the CDAP CLI or the
 <http-restful-api-preferences>` HTTP RESTful APIs.
 
 Details of usage and examples are explained in the section on :ref:`runtime arguments and
-macros <cask-hydrator-runtime-arguments-macros>`.
+macros <cdap-pipelines-runtime-arguments-macros>`.
 
 
 Re-running a Pipeline
@@ -76,9 +76,9 @@ Notifications
 =============
 When a pipeline is completed, notifications can be sent by using one or more *post-run
 actions*. These are :ref:`set in the pipeline configuration 
-<cask-hydrator-creating-pipelines-post-run-actions>`.
+<cdap-pipelines-creating-pipelines-post-run-actions>`.
 
-These :ref:`post-run plugins <cask-hydrator-plugins-post-run-plugins>` allow for emails,
+These :ref:`post-run plugins <cdap-pipelines-plugins-post-run-plugins>` allow for emails,
 database queries, and a general HTTP callback action.
 
 
@@ -92,7 +92,7 @@ program, and are described in the :ref:`Administration manual, Logging and Monit
 
 Script transform steps can write to logs, as described in the section in developing
 plugins on :ref:`script transformations
-<cask-hydrator-creating-a-plugin-script-transformations>`.
+<cdap-pipelines-creating-a-plugin-script-transformations>`.
 
 
 Metrics
@@ -105,7 +105,7 @@ application and program, and are described in the :ref:`Administration manual, m
 
 Script transform steps can create metrics, as described in the section in developing
 plugins on :ref:`script transformations
-<cask-hydrator-creating-a-plugin-script-transformations>`.
+<cdap-pipelines-creating-a-plugin-script-transformations>`.
 
 For instance, if you have a real-time pipeline named "demoPipeline" with three stages
 (*DataGenerator*, *JavaScript*, and *Table*), then you can discover the available metrics
@@ -151,7 +151,7 @@ Using the CDAP CLI, you can retrieve the value with:
     | 0         | 170   |
     +===================+
 
-.. _cask-hydrator-running-pipelines-error-record-handling:
+.. _cdap-pipelines-running-pipelines-error-record-handling:
 
 Error Record Handling
 =====================
@@ -167,7 +167,7 @@ These transform plugins support error record handling:
 - `Validator <plugins/transforms/validator-transform.html>`__
 - `XML Parser <plugins/transforms/xmlparser-transform.html>`__
 
-See the :ref:`Core Validator <cask-hydrator-plugins-shared-core-validator>` for examples
+See the :ref:`Core Validator <cdap-pipelines-plugins-shared-core-validator>` for examples
 and additional information.
 
 
@@ -179,7 +179,7 @@ See the Administration Manual sections on :ref:`Scaling Instances <admin:scaling
 :ref:`Resource Guarantees for CDAP Programs in YARN <admin:resource-guarantees>`.
 
 
-.. _cask-hydrator-operating-upgrading-pipeline:
+.. _cdap-pipelines-operating-upgrading-pipeline:
 
 Upgrading a Pipeline
 ====================
@@ -187,7 +187,7 @@ If you wish to upgrade pipelines created using the |previous-short-version|\.x v
 of ``cdap-etl-batch`` or ``cdap-etl-realtime``, you can use the ETL upgrade tool packaged
 with the distributed version of CDAP. You would want to run this tool to upgrade
 applications that were created with earlier versions of the artifacts, that you would
-like to open in the |version| version of Cask Hydrator Studio.
+like to open in the |version| version of CDAP Application Studio.
 
 The tool will connect to an instance of CDAP, look for any applications that use |previous-short-version|\.x
 versions of the ``cdap-etl-batch`` or ``cdap-etl-realtime`` artifacts, and then update the

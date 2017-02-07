@@ -1,8 +1,8 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cask-hydrator-developing-plugin-basics:
+.. _cdap-pipelines-developing-plugin-basics:
 
 =============
 Plugin Basics
@@ -10,7 +10,7 @@ Plugin Basics
 
 Plugin Types
 ============
-In Cask Hydrator, these plugin types are presently used:
+In CDAP pipelines, these plugin types are presently used:
 
 - Action (*action*, restricted to batch pipelines)
 - Batch Source (*batchsource*, restricted to batch pipelines)
@@ -26,11 +26,11 @@ In Cask Hydrator, these plugin types are presently used:
 - Real-time Source (*realtimesource*, deprecated)
 - Real-time Sink (*realtimesink*, deprecated)
 
-In the Cask Hydrator UI, all Batch Aggregator, Batch Joiner, Spark Compute, and Spark Sink
+In the CDAP Pipelines UI, all Batch Aggregator, Batch Joiner, Spark Compute, and Spark Sink
 plugins are grouped under the Analytics section. All Transformation and Windower plugins
 are grouped under the Transforms section. 
 
-.. _cask-hydrator-developing-plugin-basics-maven-archetypes:
+.. _cdap-pipelines-developing-plugin-basics-maven-archetypes:
 
 Maven Archetypes
 ================
@@ -53,13 +53,14 @@ This command will create a project from an archetype:
           
 where ``<archetype>`` is one of the archetypes listed above.
 
-**Note:** Replace the *groupId* parameter (``org.example.plugin``) with your own organization, but it must not be replaced with ``co.cask.cdap``.
+**Note:** Replace the *groupId* parameter (``org.example.plugin``) with your own
+organization, but it must not be replaced with ``co.cask.cdap``.
 
 Complete examples for each archetype:
 
 .. tabbed-parsed-literal::
   :tabs: cdap-data-pipeline-plugins,cdap-etl-transform
-  :dependent: hydrator-archetype
+  :dependent: cdap-pipeline-archetype
 
   .. cdap-data-pipeline-plugins
 
@@ -69,7 +70,8 @@ Complete examples for each archetype:
   
   $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-etl-transform-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.plugin
 
-Maven supplies a guide to the naming convention used above at https://maven.apache.org/guides/mini/guide-naming-conventions.html.
+Maven supplies a guide to the naming convention used above at
+https://maven.apache.org/guides/mini/guide-naming-conventions.html.
 
 Class Annotations
 =================

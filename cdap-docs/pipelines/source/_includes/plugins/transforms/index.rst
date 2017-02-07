@@ -1,14 +1,14 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cask-hydrator-plugins-transformations:
+.. _cdap-pipelines-plugins-transformations:
 
 ======================
 Transformation Plugins
 ======================
 
-Hydrator Version |cask-hydrator-version|
+CDAP Pipelines Version |cdap-pipelines-version|
 
 These plugins work with:
 

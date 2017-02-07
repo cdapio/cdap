@@ -1,25 +1,25 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cask-hydrator-concepts-design:
+.. _cdap-pipelines-concepts-design:
 
-========================
-Introduction to Hydrator
-========================
+==============================
+Introduction to CDAP Pipelines
+==============================
 
-Cask Hydrator (called *Hydrator* for short) is a self-service, reconfigurable, extendable
-framework to develop, run, automate, and operate **data pipelines** on Hadoop. Completely
-open source, it is licensed under the Apache 2.0 license.
+CDAP Pipelines is a self-service, reconfigurable, extendable framework to develop, run,
+automate, and operate **data pipelines** on Hadoop. Completely open source, it is licensed
+under the Apache 2.0 license.
 
-Hydrator is an extension to CDAP and includes the *Cask Hydrator Studio*, a visual
-drag-and-drop interface for building data pipelines from an included library of pre-built
+Pipelines are a capability of CDAP and includes the *CDAP Application Studio*, a visual
+click-and-drag interface for building data pipelines from an included library of pre-built
 plugins.
 
-Hydrator provides an operational view of the resulting pipeline that allows for lifecycle
+CDAP provides an operational view of the resulting pipeline that allows for lifecycle
 control and monitoring of the metrics, logs, and other runtime information. The pipeline
-can also be run directly in CDAP with tools such as the CDAP UI, the CDAP CLI, or command
-line tools.
+can be run directly in CDAP with tools such as the CDAP UI, the CDAP CLI, or command line
+tools.
 
 Pipelines
 =========
@@ -40,7 +40,7 @@ A stage's configuration properties describes what that plugin is to do (read fro
 stream, write to a table, run a script), and is dependent on the particular plugin used.
 
 All stages are connected together in a directed acyclic graph (or *DAG*), which is
-shown in *Hydrator Studio* and in CDAP as a connected series of icons:
+shown in the *CDAP Application Studio* and in CDAP as a connected series of icons:
 
 .. image:: /_images/fork-in-pipeline.png
    :width: 6in
@@ -78,7 +78,7 @@ Logical and Physical Pipelines
 ------------------------------
 Within CDAP, there is the concept of *logical* and *physical* pipelines.
 
-A **logical pipeline** is the view as seen in Hydrator Studio and the Cask Hydrator UI.
+A **logical pipeline** is the view as seen in the CDAP Application Studio.
 It shows the stages, but not the underlying technology used to actually manifest and run the pipeline.
 
 A **physical pipeline** is the manifestation of a logical pipeline as a CDAP application,
@@ -102,17 +102,17 @@ perform any optional transformations required, and then write to one or more rea
 sinks.
 
 The pipelines are created from artifacts, either system artifacts (supplied as part of
-Hydrator) or user artifacts, :ref:`created by a developer <developers:artifacts>`.
+CDAP) or user artifacts, :ref:`created by a developer <developers:artifacts>`.
 
 Pipeline Lifecycle
 ------------------
 Similar to other CDAP applications, pipelines have a lifecycle, and can be managed and
 controlled using the tools supplied by CDAP, such as the
-:ref:`Cask Hydrator UI <cask-hydrator-running-pipelines-within-hydrator>`,
+:ref:`CDAP Pipelines UI <cdap-pipelines-running-pipelines-within-cdap-pipelines-ui>`,
 the :ref:`CDAP UI <cdap-ui>`, the :ref:`CDAP CLI <cdap-cli>`, and command line tools,
 using the :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle-start>`.
 
-.. _cask-hydrator-introduction-what-is-a-plugin:
+.. _cdap-pipelines-introduction-what-is-a-plugin:
 
 Plugins
 =======
@@ -121,7 +121,7 @@ generically referred to as a *plugin*. Plugins provide a way to extend the funct
 of existing artifacts. An application can be created with the existing plugins included
 with CDAP or, if a user wishes, they can write a plugin to add their own capability.
 
-See the :ref:`reference section <cask-hydrator-plugins>` for details on the capabilities
+See the :ref:`reference section <cdap-pipelines-plugins>` for details on the capabilities
 and behavior of each plugin.
 
 Properties
@@ -131,14 +131,14 @@ configuration usually requires that certain properties be specified. At a minimu
 unique name for the stage and the plugin being used is required, with any additional
 properties required dependent on the particular plugin used.
 
-See the :ref:`reference section <cask-hydrator-plugins>` for details on the properties
+See the :ref:`reference section <cdap-pipelines-plugins>` for details on the properties
 required and supported for each plugin.
 
 Schema
 ======
 Each stage of a pipeline that emits data (basically, all stages except for *pre-run
 operations* and *data publishing*) emits data with a schema that is set for that stage.
-Schemas need to match appropriately from stage to stage, and controls within *Hydrator
+Schemas need to match appropriately from stage to stage, and controls within the *CDAP Application
 Studio* allow the propagation of a schema to subsequent stages.
 
 The schema allows you to control which fields and their types are used in all stages of

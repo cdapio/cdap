@@ -1,8 +1,8 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cask-hydrator-plugins-shared-core-validator:
+.. _cdap-pipelines-plugins-shared-core-validator:
 
 =============
 CoreValidator
@@ -30,4 +30,4 @@ This table lists the methods available in ``CoreValidator`` that can be called f
 
 .. include:: /../target/_includes/plugins/_includes/validator-extract.txt
 
-Hydrator Version |cask-hydrator-version|
+CDAP Pipelines Version |cdap-pipelines-version|

@@ -1,43 +1,43 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cask-hydrator-studio:
+.. _cdap-application-studio:
 
-===============
-Hydrator Studio
-===============
+=======================
+CDAP Application Studio
+=======================
 
-Hydrator supports end-users with self-service batch and real-time data ingestion combined
+CDAP supports end-users with self-service batch and real-time data ingestion combined
 with ETL (extract-transform-load), expressly designed for the building of Hadoop data
-lakes and data pipelines. Called *Cask Hydrator Studio*, it provides for CDAP users a
+lakes and data pipelines. Called the *CDAP Application Studio*, it provides for CDAP users a
 seamless and easy method to configure and operate pipelines from different types of
 sources and data using a visual editor.
 
-You drag and drop *actions*, *sources*, *transforms*, *sinks*, and other plugins to
+You click and drag *actions*, *sources*, *transforms*, *sinks*, and other plugins to
 configure a pipeline:
 
-.. figure:: _images/hydrator-studio.png
+.. figure:: _images/cdap-application-studio.png
    :figwidth: 100%
    :width: 6in
    :align: center
    :class: bordered-image-top-margin
 
-   **Cask Hydrator Studio:** Visual editor showing the creation of a pipeline
+   **CDAP Application Studio:** Visual editor showing the creation of a pipeline
 
-Once completed, Hydrator provides an operational view of the resulting pipeline that allows for
+Once completed, CDAP provides an operational view of the resulting pipeline that allows for
 monitoring of metrics, logs, and other runtime information:
 
-.. figure:: _images/hydrator-pipelines.png
+.. figure:: _images/cdap-pipelines.png
    :figwidth: 100%
    :width: 6in
    :align: center
    :class: bordered-image
 
-   **Cask Hydrator:** Administration of created pipelines showing their current status
+   **CDAP Pipelines:** Administration of created pipelines showing their current status
 
-Hydrator Studio Tips
-====================
+CDAP Application Studio Tips
+============================
 - Once you have **specified an application template** for your pipeline and have started
   adding stages, it cannot be changed for that pipeline. This is because the selection of
   the application template determines which plugins are available for the pipeline.
@@ -56,25 +56,26 @@ Hydrator Studio Tips
   each new cloning of a pipeline.
 
 
-.. _cask-hydrator-studio-pipeline-drafts:
+.. _cdap-application-studio-pipeline-drafts:
 
 Pipeline Drafts
 ===============
-From within *Hydrator Studio*, you can save a pipeline you are working on at any time as
-a *draft*. The pipeline configuration is saved, and you can resume editing later.
+From within the *CDAP Application Studio*, you can save a pipeline you are working on at
+any time as a *draft*. The pipeline configuration is saved, and you can resume editing
+later.
 
 To create a draft, give your pipeline a unique name, and then click the *Save* button:
 
-.. figure:: /_images/hydrator-gs-1-5-buttons.png
+.. figure:: /_images/cdap-pipelines-gs-1-5-buttons.png
   :figwidth: 100%
   :width: 6in
   :align: center
   :class: bordered-image
 
-  **Cask Hydrator Studio:** Button labels, upper-right toolbar
+  **CDAP Application Studio:** Button labels, upper-right toolbar
 
 The draft will be created, and will show in your list of pipelines as a draft. 
-Clicking on it in the list of pipelines will re-open it in *Hydrator Studio* so that 
+Clicking on it in the list of pipelines will re-open it in the *CDAP Application Studio* so that 
 you can continue working on it.
 
 Note that **if you change the name of draft, it doesn't create a new draft** with the new
@@ -85,11 +86,11 @@ published pipeline.
 To successfully publish such a draft (one whose name matches an existing pipeline), you
 will need to re-name it to a unique name.
 
-.. _cask-hydrator-studio-plugin-templates:
+.. _cdap-application-studio-plugin-templates:
 
 Plugin Templates
 ================
-Within Hydrator Studio, you can create *plugin templates:* customized versions of a plugin
+Within the CDAP Application Studio, you can create *plugin templates:* customized versions of a plugin
 that are reusable, and can contain pre-configured settings.
 
 Setting can be locked so that they cannot be altered when they are eventually used.
@@ -100,19 +101,19 @@ Changes to a plugin template do not affect any pipelines created using that temp
 those pipelines are created from the artifacts as specified in the plugin template at the
 time of creation of the pipeline.
 
-.. figure:: /_images/hydrator-studio-plugin-template.png
+.. figure:: /_images/cdap-application-studio-plugin-template.png
   :figwidth: 100%
   :width: 6in
   :align: center
   :class: bordered-image
 
-  **Cask Hydrator Studio:** Creating a plugin template from the Stream source plugin
+  **CDAP Application Studio:** Creating a plugin template from the Stream source plugin
 
 Creating a Plugin Template
 --------------------------
 To create a plugin-template:
 
-- From within Hydrator Studio, hover your mouse over the plugin you would like to use
+- From within the CDAP Application Studio, hover your mouse over the plugin you would like to use
   for your template, such as the *Stream* source plugin.
 
 - In the on-hover menu that appears, click the *+ Template* button.

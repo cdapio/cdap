@@ -1,10 +1,10 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 :hide-toc: true
 
-.. _cask-hydrator-developing-plugins:
+.. _cdap-pipelines-developing-plugins:
 
 ==================
 Developing Plugins
@@ -20,7 +20,7 @@ Developing Plugins
 
 This section is intended for developers writing custom plugins. Users of plugins and
 pipelines should refer to the documentation on :ref:`using plugins
-<cask-hydrator-introduction-what-is-a-plugin>`.
+<cdap-pipelines-introduction-what-is-a-plugin>`.
 
 CDAP provides for the creation of custom plugins to extend the existing
 ``cdap-data-pipeline`` and ``cdap-data-streams`` system artifacts.
@@ -30,7 +30,7 @@ CDAP provides for the creation of custom plugins to extend the existing
 ``cdap-data-streams``, *artifact.*
 
 Deploying plugins is covered under :ref:`Plugin Management: Plugin Deployment
-<cask-hydrator-plugin-management-deployment>`, for deploying as either a system or user
+<cdap-pipelines-plugin-management-deployment>`, for deploying as either a system or user
 artifact.
 
 
@@ -50,8 +50,8 @@ artifact.
 
 - |creating-a-plugin|_ The Java methods that need to be implemented for each plugin type
 
-- |testing-plugins|_ Using CDAP testing facilities and the Hydrator test module
+- |testing-plugins|_ Using CDAP testing facilities and the CDAP Pipelines test module
 
-- |packaging-plugins|_ Packaging a :ref:`plugin in a JAR <cask-hydrator-packaging-plugins>`, 
-  and controlling how your plugin :ref:`appears in the Hydrator Studio 
-  <cask-hydrator-packaging-plugins-presentation>`.
+- |packaging-plugins|_ Packaging a :ref:`plugin in a JAR <cdap-pipelines-packaging-plugins>`, 
+  and controlling how your plugin :ref:`appears in the CDAP Application Studio 
+  <cdap-pipelines-packaging-plugins-presentation>`.

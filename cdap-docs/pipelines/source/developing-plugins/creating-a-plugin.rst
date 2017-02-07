@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cask-hydrator-creating-a-plugin:
+.. _cdap-pipelines-creating-a-plugin:
 
 =================
 Creating a Plugin
@@ -186,7 +186,7 @@ number of fields changed. The user metrics can be queried by using the CDAP
   }
 
 
-.. _cask-hydrator-creating-a-plugin-script-transformations:
+.. _cdap-pipelines-creating-a-plugin-script-transformations:
 
 .. highlight:: java
 
@@ -274,7 +274,7 @@ It is used in both batch and real-time data pipelines.
 An aggregation takes place in two steps: *groupBy* and then *aggregate*.
 
 - In the *groupBy* step, the aggregator creates zero or more group keys for each input
-  record. Before the *aggregate* step occurs, Hydrator will take all records that have the
+  record. Before the *aggregate* step occurs, the CDAP pipeline will take all records that have the
   same group key, and collect them into a group. If a record does not have any of the
   group keys, it is filtered out. If a record has multiple group keys, it will belong to
   multiple groups.
@@ -323,7 +323,7 @@ It can be used in both batch and real-time data pipelines.
 A join takes place in two steps: a *joinOn* step followed by a *merge* step.
 
 #. In the *joinOn* step, the joiner creates a join key for each input record.
-   Hydrator will then take all records that have the same join key and collect them into a group.
+   the CDAP pipeline will then take all records that have the same join key and collect them into a group.
 
 #. The *merge* step is then called. In this step, the plugin receives a list of all the
    records with same join key based on the type of join (either an *inner* or *outer* join).
@@ -351,7 +351,7 @@ which operates on a single record at a time, a ``BatchJoiner`` operates on a col
 - ``joinOn()``: This method will be called for every object that is received from the
   previous stage. This method returns a join key for each object it recieves.
   Objects with the same join key will be grouped together for the ``merge`` method.
-- ``getJoinConfig()``: This method will be called by Hydrator to find out the type of join to be performed.
+- ``getJoinConfig()``: This method will be called by the CDAP Pipeline to find out the type of join to be performed.
   The config specifies which input stages are ``requiredInputs``.  Records from a required input
   will always be present in the ``merge()`` method.  Records from a non-required input will
   only be present in the ``merge()`` method if they meet the join criteria. In other words,

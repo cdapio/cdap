@@ -1,8 +1,8 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cask-hydrator-testing-plugins:
+.. _cdap-pipelines-testing-plugins:
 
 ===============
 Testing Plugins
@@ -17,8 +17,8 @@ Test Framework for Plugins
    :start-after: .. _test-framework-strategies-artifacts:
    :end-before:  .. _test-framework-validating-sql:
 
-Hydrator Test Module
-====================
+CDAP Pipelines Test Module
+==========================
 Additional information on unit testing with CDAP is in the Developers’ Manual section
 on :ref:`Testing a CDAP Application <test-framework>`.
 

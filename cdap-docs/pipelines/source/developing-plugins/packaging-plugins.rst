@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cask-hydrator-packaging-plugins:
+.. _cdap-pipelines-packaging-plugins:
 
 =================
 Packaging Plugins
@@ -16,12 +16,12 @@ Packaging Plugins
 
 To **package, present,** and **deploy** your plugin, see these instructions:
 
-- :ref:`Plugin Packaging: <cask-hydrator-packaging-plugins-packaging>` packaging in a JAR
-- :ref:`Plugin Presentation: <cask-hydrator-packaging-plugins-presentation>` controlling
-  how your plugin appears in the Hydrator Studio
+- :ref:`Plugin Packaging: <cdap-pipelines-packaging-plugins-packaging>` packaging in a JAR
+- :ref:`Plugin Presentation: <cdap-pipelines-packaging-plugins-presentation>` controlling
+  how your plugin appears in the CDAP Application Studio
 
 If you are installing a **third-party JAR** (such as a **JDBC driver**) to make it accessible to other
-plugins or applications, see :ref:`these instructions <cask-hydrator-plugin-management-third-party-plugins>`.
+plugins or applications, see :ref:`these instructions <cdap-pipelines-plugin-management-third-party-plugins>`.
 
 ..   - UI
 ..   - REST
@@ -29,14 +29,14 @@ plugins or applications, see :ref:`these instructions <cask-hydrator-plugin-mana
 
 .. Plugin Packaging
 .. ----------------
-.. _cask-hydrator-packaging-plugins-packaging:
+.. _cdap-pipelines-packaging-plugins-packaging:
 
 .. include:: /../../developers-manual/source/building-blocks/plugins.rst
    :start-after: .. _plugins-deployment-packaging:
    :end-before:  .. _plugins-deployment-system:
    
 By using one of the available :ref:`Maven archetypes
-<cask-hydrator-developing-plugin-basics-maven-archetypes>`, your project will be set up to
+<cdap-pipelines-developing-plugin-basics-maven-archetypes>`, your project will be set up to
 generate the required JAR manifest. If you move the plugin class to a different Java
 package after the project is created, you will need to modify the configuration of the
 ``maven-bundle-plugin`` in the ``pom.xml`` file to reflect the package name changes.
@@ -49,16 +49,16 @@ visible to the Hadoop MapReduce framework during the plugin execution. Otherwise
 execution will typically fail with a ``ClassNotFoundException``.
 
 
-.. _cask-hydrator-packaging-plugins-presentation:
+.. _cdap-pipelines-packaging-plugins-presentation:
 
 Plugin Presentation
 -------------------
 When a plugin is displayed in the CDAP UI, its properties are represented by widgets in
-the Cask Hydrator Studio. Each property of a plugin is represented by default as a
+the CDAP Application Studio. Each property of a plugin is represented by default as a
 textbox in the user interface. By including an appropriate plugin widget JSON file, you
 can customize that presentation to use a different interface, if desired.
 
-.. _cask-hydrator-creating-custom-plugins-widget-json:
+.. _cdap-pipelines-creating-custom-plugins-widget-json:
 
 Plugin Widget JSON
 ------------------
@@ -122,14 +122,14 @@ represented in the CDAP UI.
 
 The configuration of each property of the plugin is composed of:
 
-- :ref:`widget-type: <cask-hydrator-creating-custom-plugins-custom-widgets>` The type of
+- :ref:`widget-type: <cdap-pipelines-creating-custom-plugins-custom-widgets>` The type of
   widget needed to represent this property.
 - **label:** Label to be used in the CDAP UI for the property.
 - **name:** Name of the field (as supplied by the CDAP UI backend).
 - **widget-attributes:** A map of attributes that the widget type requires be defined in
   order to render the property in the CDAP UI. The attributes vary depending on the
   widget type.
-- :ref:`plugin-function: <cask-hydrator-creating-custom-plugins-custom-plugin-function>`
+- :ref:`plugin-function: <cdap-pipelines-creating-custom-plugins-custom-plugin-function>`
   An optional map of plugin method and its widget attributes that can be applied to a
   particular plugin property.
 
@@ -183,7 +183,7 @@ represented by::
     ]
   }
   
-.. _cask-hydrator-creating-custom-plugins-custom-widgets:
+.. _cdap-pipelines-creating-custom-plugins-custom-widgets:
 
 Widgets
 .......
@@ -191,7 +191,7 @@ Widgets
 A widget in the CDAP UI represents a component that will be rendered and used to set a
 value of a property of a plugin. These are the different widgets |---| their type, a
 description, their attributes (if any), and their output data type |---| that we support in
-Cask Hydrator as of version |version|:
+CDAP pipelines as of version |version|:
 
 .. list-table::
    :widths: 20 25 25 25
@@ -296,7 +296,7 @@ Cask Hydrator as of version |version|:
      - ``string``
      
 
-.. _cask-hydrator-creating-custom-plugins-custom-plugin-function:
+.. _cdap-pipelines-creating-custom-plugins-custom-plugin-function:
 
 Plugin Functions
 ................

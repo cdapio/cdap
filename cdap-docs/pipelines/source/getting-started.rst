@@ -1,25 +1,25 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cask-hydrator-getting-started:
+.. _cdap-pipelines-getting-started:
 
 ===============
 Getting Started
 ===============
 
-This is a quick tutorial, covering the basics of Hydrator. It assumes that you are familiar with
+This is a quick tutorial, covering the basics of CDAP pipelines. It assumes that you are familiar with
 CDAP, the concepts of streams, datasets, and applications in CDAP and basic operations
 in the CDAP UI, such as entering events into a stream and exploring a dataset:
 
   1. `Install CDAP`_
-  #. `Start Hydrator`_
-  #. `Start Hydrator Studio`_
-  #. `Quick Tour of Hydrator Studio`_
+  #. `Start CDAP Pipelines`_
+  #. `Start CDAP Application Studio`_
+  #. `Quick Tour of CDAP Application Studio`_
   #. `Creating a Simple Pipeline`_
 
 
-.. _cask-hydrator-getting-started-install:
+.. _cdap_pipelines-getting-started-install:
 
 Install CDAP
 ============
@@ -27,61 +27,61 @@ Install CDAP
 - If you haven't already, :ref:`download and install the CDAP SDK <standalone-index>`.
 - :ref:`Start CDAP <start-stop-cdap>`, open up a web browser, and go to the :cdap-ui:`CDAP UI <>`.
 
-.. _cask-hydrator-getting-started-hydrator:
+.. _cdap_pipelines-getting-started:
 
-Start Hydrator
-==============
+Start CDAP Pipelines
+====================
 
-- To start Hydrator, either select *Cask Hydrator* from the pull-down menu in the upper
-  left, or go to the :cdap-pipeline-studio:`Cask Hydrator URL <>`.
+- To start creating a CDAP pipeline, either select *Pipelines* from the pull-down menu in the upper
+  left, or go to the :cdap-application-studio:`CDAP Pipelines URL <>`.
 
   This will take you to a list of pipelines, which will most likely be empty:
 
-  .. figure:: /_images/hydrator-no-pipelines.png
+  .. figure:: /_images/cdap-pipelines-no-pipelines.png
      :figwidth: 100%
      :width: 6in
      :align: center
      :class: bordered-image
 
-     **Cask Hydrator:** List of pipelines
+     **CDAP Pipelines:** List of pipelines
 
-.. _cask-hydrator-getting-started-hydrator-studio:
+.. _cdap_pipelines-getting-started-cdap-application-studio:
 
-Start Hydrator Studio
-=====================
+Start CDAP Application Studio
+=============================
 
-- To start *Hydrator Studio* and start creating a pipeline, do any of these:
+- To start *CDAP Application Studio* and start creating a pipeline, do any of these:
 
   - Click the *+* button to add a new pipeline;
   - Click the tool bar label *Studio* (to the left of the label *Pipelines*); or
-  - Go to the :cdap-pipeline-studio-artifact:`Cask Hydrator Studio URL <cdap-data-pipeline>`
+  - Go to the :cdap-application-studio-artifact:`CDAP Application Studio URL <cdap-data-pipeline>`
   
   Studio will start and you will be creating a new pipeline, by default the first
   pipeline type in the menu, a *Data Pipeline - Batch*, which is a batch-type pipeline:
   
-  .. figure:: /_images/hydrator-studio-empty.png
+  .. figure:: /_images/cdap-application-studio-empty.png
      :figwidth: 100%
      :width: 6in
      :align: center
      :class: bordered-image
 
-     **Cask Hydrator Studio:** Empty canvas for creating pipelines
+     **CDAP Application Studio:** Empty canvas for creating pipelines
 
 
-.. _cask-hydrator-getting-started-studio:
+.. _cdap_pipelines-getting-started-studio:
 
-Quick Tour of Hydrator Studio
-=============================
+Quick Tour of CDAP Application Studio
+=====================================
 
 Before we begin an example, let's look at Studio and its different components:
 
-.. figure:: /_images/hydrator-studio-annotated.png
+.. figure:: /_images/cdap-application-studio-annotated.png
    :figwidth: 100%
    :width: 6in
    :align: center
    :class: bordered-image
 
-   **Cask Hydrator Studio:** Annotations showing components
+   **CDAP Application Studio:** Annotations showing components
 
 In the upper-left is a menu that specifies which **application template artifact** you are
 currently using for your pipeline. For now, we'll leave it with the default, *Data
@@ -92,7 +92,7 @@ with the current application template. They are grouped into different categorie
 revealed by clicking the disclosure triangles to the left of each category label
 (*Source, Transform, Analytics, Sink, Action*).
 
-In the middle is the grey, gridded **Hydrator canvas**, used to create the pipeline on by
+In the middle is the grey, gridded **application studio canvas**, used to create the pipeline on by
 clicking an available plugin in the left sidebar to add the plugin's icon to the canvas, and
 then by dragging the icon into position.
 
@@ -124,7 +124,7 @@ control flow.
 Now, let's create a pipeline!
 
 
-.. _cask-hydrator-getting-started-simple:
+.. _cdap_pipelines-getting-started-simple:
 
 Creating a Simple Pipeline
 ==========================
@@ -141,38 +141,38 @@ parses them into separate fields, and writes them as individual records to a tab
 
    Your canvas should look like this:
  
-   .. figure:: /_images/hydrator-gs-1-1-icons.png
+   .. figure:: /_images/cdap-pipelines-gs-1-1-icons.png
       :figwidth: 100%
       :width: 6in
       :align: center
       :class: bordered-image
  
-      **Cask Hydrator Studio:** Showing icons
+      **CDAP Application Studio:** Showing icons
 
 
 #. Connect the *Stream* to the *LogParser* by clicking on the green connection on the
    right-hand side of the *Stream* and dragging out to the left-side connection of the
    *LogParser* and lifting the mouse-button when you reach it. Your canvas should now look like this:
 
-   .. figure:: /_images/hydrator-gs-1-2-connected.png
+   .. figure:: /_images/cdap-pipelines-gs-1-2-connected.png
       :figwidth: 100%
       :width: 6in
       :align: center
       :class: bordered-image
  
-      **Cask Hydrator Studio:** Showing a connection
+      **CDAP Application Studio:** Showing a connection
       
 #. Similarly, connect the *LogParser* to the *Table* to complete the connections. Your
    canvas should now look like this, showing that there are a number of properties to
    be completed on each plugin:
 
-   .. figure:: /_images/hydrator-gs-1-3-connected.png
+   .. figure:: /_images/cdap-pipelines-gs-1-3-connected.png
       :figwidth: 100%
       :width: 6in
       :align: center
       :class: bordered-image
  
-      **Cask Hydrator Studio:** Showing connections
+      **CDAP Application Studio:** Showing connections
       
    (If you make a mistake or need to remove a connection, click and drag on the white
    circle just to the right of the connection arrow you'd like to disconnect. When you
@@ -185,13 +185,13 @@ parses them into separate fields, and writes them as individual records to a tab
    been clicked, and the *Label*, *Stream Name*, and *Duration* are showing as required
    properties:
 
-   .. figure:: /_images/hydrator-gs-1-4-stream.png
+   .. figure:: /_images/cdap-pipelines-gs-1-4-stream.png
       :figwidth: 100%
       :width: 6in
       :align: center
       :class: bordered-image
  
-      **Cask Hydrator Studio:** Showing editing of the Stream plugin properties
+      **CDAP Application Studio:** Showing editing of the Stream plugin properties
       
    Enter a stream name, such as *demoStream*, and a duration, such as *1d*. As the changes
    are automatically saved, you can just close the dialog by either hitting the close button (an *X* in 
@@ -216,13 +216,13 @@ parses them into separate fields, and writes them as individual records to a tab
    To check that everything is complete, click the *Validate* button, located in the buttons
    above the canvas area. These controls are available in the upper-right:
 
-   .. figure:: /_images/hydrator-gs-1-5-buttons.png
+   .. figure:: /_images/cdap-pipelines-gs-1-5-buttons.png
      :figwidth: 100%
      :width: 6in
      :align: center
      :class: bordered-image
 
-     **Cask Hydrator Studio:** Button labels, upper-right toolbar
+     **CDAP Application Studio:** Button labels, upper-right toolbar
       
    Clicking the *Validate* button should produce a banner message similar to::
    
@@ -239,13 +239,13 @@ parses them into separate fields, and writes them as individual records to a tab
    
    The view changes to show the completed application:
    
-   .. figure:: /_images/hydrator-gs-1-6-pipeline.png
+   .. figure:: /_images/cdap-pipelines-gs-1-6-pipeline.png
      :figwidth: 100%
      :width: 6in
      :align: center
      :class: bordered-image
   
-     **Cask Hydrator:** Demo pipeline
+     **CDAP Pipelines:** Demo pipeline
 
    Though this pipeline view is not editable, clicking the icons will bring up the same dialogs
    as before, showing which values have been configured for each stage of the pipeline.
@@ -254,19 +254,19 @@ parses them into separate fields, and writes them as individual records to a tab
    application; important buttons to note are *Run* (on the left) and *View in
    CDAP* (on the right):
 
-   .. figure:: /_images/hydrator-gs-1-8-pipeline-annotated.png
+   .. figure:: /_images/cdap-pipelines-gs-1-8-pipeline-annotated.png
      :figwidth: 100%
      :width: 6in
      :align: center
      :class: bordered-image
   
-     **Cask Hydrator:** Control buttons, pipeline view
+     **CDAP Pipelines:** Control buttons, pipeline view
 
 #. Before we can run the pipeline, we need to put data into the stream for the application to
    act on. Navigate to the stream by clicking on the *View in CDAP* button, then the
    *Datasets* button, and then the *demoStream* button:
    
-    .. figure:: /_images/hydrator-gs-1-7-stream.png
+    .. figure:: /_images/cdap-pipelines-gs-1-7-stream.png
       :figwidth: 100%
       :width: 6in
       :align: center
@@ -282,7 +282,7 @@ parses them into separate fields, and writes them as individual records to a tab
    Once the file has been uploaded successfully by CDAP, you should see the *Total Events*
    for the stream change by 10,000.
 
-   Return to *Hydrator* by clicking your browser back-button.
+   Return to *CDAP Pipelines* by clicking your browser back-button.
   
 #. You can now run the pipeline. Click the *Run* button, located in the upper-left. (No
    runtime arguments are required; you can click *Start Now* in the dialog that appears.)
@@ -290,25 +290,25 @@ parses them into separate fields, and writes them as individual records to a tab
    The pipeline should start running, as indicated by the green *Running* text indicating
    the status:
    
-   .. figure:: /_images/hydrator-gs-1-9-pipeline-running.png
+   .. figure:: /_images/cdap-pipelines-gs-1-9-pipeline-running.png
      :figwidth: 100%
      :width: 6in
      :align: center
      :class: bordered-image
   
-     **Cask Hydrator:** A *Running* pipeline
+     **CDAP Pipelines:** A *Running* pipeline
 
 #. The number of records processed will, in time, change from zero to 10,000.
    When the run completes, the status icon will change to *Completed*. A start time and
    duration should appear in the status panel:
 
-   .. figure:: /_images/hydrator-gs-1-10-completed.png
+   .. figure:: /_images/cdap-pipelines-gs-1-10-completed.png
      :figwidth: 100%
      :width: 6in
      :align: center
      :class: bordered-image
   
-     **Cask Hydrator:** Completed run of *demoPipeline*
+     **CDAP Pipelines:** Completed run of *demoPipeline*
       
 #. You can now check the results by looking at the contents of the *demoTable*. Rather
    than using the *View in CDAP* button, we'll use a faster method to find the dataset.
@@ -317,13 +317,13 @@ parses them into separate fields, and writes them as individual records to a tab
    it. The first one takes you directly to the table in CDAP. (The second takes you to the
    table in :ref:`Cask Tracker <cask-tracker-index>`.)
 
-   .. figure:: /_images/hydrator-gs-1-11-jump-button.png
+   .. figure:: /_images/cdap-pipelines-gs-1-11-jump-button.png
      :figwidth: 100%
      :width: 6in
      :align: center
      :class: bordered-image
   
-     **Cask Hydrator:** *Jump* button in the pipeline configuration dialog
+     **CDAP Pipelines:** *Jump* button in the pipeline configuration dialog
 
    Navigate to the *demoTable* dataset, and run a default *Explore* query that selects the first
    five records, by:
@@ -331,16 +331,16 @@ parses them into separate fields, and writes them as individual records to a tab
    - clicking *Explore* and then
    - clicking *Execute SQL*:
 
-   .. figure:: /_images/hydrator-gs-1-12-demotable.png
+   .. figure:: /_images/cdap-pipelines-gs-1-12-demotable.png
      :figwidth: 100%
      :width: 6in
      :align: center
      :class: bordered-image
   
-     **Cask Hydrator:** Results of exploring the *demoTable*
+     **CDAP Pipelines:** Results of exploring the *demoTable*
          
    Here you can see that the log records have been successfully loaded into the stream,
    parsed by the log parser, and then saved as parsed records to the table. This data is
    now available for further analysis, such looking for unique records, sorting, etc.
       
-This completes the *Getting Started* for Cask Hydrator. 
+This completes the *Getting Started* for CDAP Pipelines. 

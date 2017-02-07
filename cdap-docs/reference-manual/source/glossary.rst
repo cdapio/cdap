@@ -1,5 +1,5 @@
 .. :author: Cask Data, Inc.
-   :copyright: Copyright © 2014-2016 Cask Data, Inc.
+   :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 :hide-nav: true
 :orphan:
@@ -17,10 +17,27 @@ Glossary
       A collection of programs and services that read and write through the data
       abstraction layer in CDAP.
 
+   Application Template
+      An artifact, that with the addition of a configuration file, can be used to create
+      manifestations of applications.
+
    Artifact
       A JAR file containing Java classes and resources required to create and run an
       :term:`Application`. Multiple applications can be created from the same artifact.
 
+   Batch Pipeline
+      A type of :term:`CDAP Pipeline` that runs on a schedule, performing actions on
+      a distinct set of data.
+
+   CDAP Application
+      See :term:`Application`.
+
+   CDAP Application Studio
+      A visual editor, part of the :term:`CDAP UI`, for creating and configuring
+      pipelines. You click and drag sources, transformations, and sinks, and can name and
+      configure the pipelines. It provides an operational view of the resulting pipeline
+      that allows for monitoring of metrics, logs, and other run-time information.      
+      
    Stream
       The primary means of bringing data from external systems into CDAP in real time; an
       ordered, time-partitioned sequences of data, usable for real-time collection and
@@ -81,6 +98,15 @@ Glossary
 
    Data Abstraction
       Abstraction of the actual representation of data in storage.
+
+   Data Pipeline
+      A type of :term:`pipeline`, often not linear in nature and require the performing of
+      complex transformations including forks and joins at the record and feed level. They
+      can be configured to perform various functions at different times, including
+      machine-learning algorithms and custom processing.
+
+   ETL
+      Abbreviation for *extract,* *transform,* and *loading* of data.
       
    Application Abstraction
       Application abstraction allows the same application to run in multiple environments
@@ -118,7 +144,7 @@ Glossary
       
    CDAP UI
       The CDAP UI is a web-based application used to deploy CDAP applications, create 
-      :term:`pipelines <pipelines>` using the :term:`CDAP Pipeline Studio`, and query and
+      :term:`pipelines <pipeline>` using the :term:`CDAP Application Studio`, and query and
       manage the Cask Data Application Platform instance.
 
    CDAP Console
@@ -213,17 +239,11 @@ Glossary
       
    Pipeline
       CDAP provides an easy method of configuring
-      pipelines using a visual editor, called :term:`CDAP Pipeline Studio`. You click and
+      pipelines using a visual editor, called :term:`CDAP Application Studio`. You click and
       drag sources, transformations, and sinks, configuring an pipeline within minutes. It
       provides an operational view of the resulting pipeline that allows for monitoring of
       metrics, logs, and other run-time information.
 
-   CDAP Pipeline Studio
-      A visual editor, part of the :term:`CDAP UI`, for creating and configuring
-      pipelines. You click and drag sources, transformations, and sinks, configuring an
-      pipeline within minutes. It provides an operational view of the resulting pipeline
-      that allows for monitoring of metrics, logs, and other run-time information.
-      
    Storage Provider
       For :term:`datasets <dataset>` and :term:`streams <stream>`, a storage provider is the underlying
       system that CDAP uses for persistence. Examples include HDFS, HBase, and Hive.
@@ -234,3 +254,44 @@ Glossary
 
    Route Config
       See :term:`route configuration`.
+
+   CDAP Pipeline
+      A CDAP application; created from an application template, generally one
+      of the system artifacts shipped with CDAP; defines a source to read from, zero or more
+      transformations or other steps to perform on the data that was read from the source, and
+      one or more sinks to write the transformed data to.
+
+   CDAP Pipeline Plugin
+      A plugin of type BatchSource, RealtimeSource, BatchSink, RealtimeSink, or
+      Transformation, packaged in a JAR file format, for use as a plugin in a
+      CDAP pipeline.
+
+   Logical Pipeline
+      A view of a :term:`pipeline` composed of sources, sinks, and other plugins, and does
+      not show the underlying technology used to actually manifest and run the pipeline.
+
+   Physical Pipeline
+      A physical pipeline is the manifestation of a :term:`logical pipeline` as a CDAP
+      application, which is a collection of programs and services that read and write
+      through the data abstraction layer in CDAP.
+
+   Pipeline
+      A pipeline is a series of stages |---| linked usages of individual programs |---|
+      configured together into an application.
+
+   Plugin
+      A plugin extends an application template by implementing an interface expected by
+      the application template. Plugins are packaged in an artifact.
+
+   Real-time Pipeline
+      A type of :term:`CDAP Pipeline` that runs continuously, performing actions on
+      a distinct set of data.
+
+   Structured Record
+      A data format, defined in CDAP, that can be used to exchange events
+      between plugins. Used by many of the Hydrator Plugins included in CDAP.
+
+   System Artifact
+      An application template, shipped with CDAP, that with the addition of a
+      configuration file, can be used to create manifestations of applications.
+

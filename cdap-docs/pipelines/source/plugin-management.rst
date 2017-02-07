@@ -1,8 +1,8 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cask-hydrator-plugin-management:
+.. _cdap-pipelines-plugin-management:
 
 =================
 Plugin Management
@@ -10,40 +10,40 @@ Plugin Management
 
 This section covers how to mange the deployment of plugins on your system:
 
-- :ref:`Plugin Deployment: <cask-hydrator-plugin-management-deployment>` deploying as
+- :ref:`Plugin Deployment: <cdap-pipelines-plugin-management-deployment>` deploying as
   either a system or user *artifact*
 
 - :ref:`Deployment Verification: <plugins-deployment-verification>` verifying that an
   artifact was deployed successfully
 
-- :ref:`Deploying Third-party JARs: <cask-hydrator-plugin-management-third-party-plugins>`
+- :ref:`Deploying Third-party JARs: <cdap-pipelines-plugin-management-third-party-plugins>`
   making JDBC drivers and other artifacts available to applications 
 
-- :ref:`Managing Multiple Version: <cask-hydrator-plugin-management-multiple-versions>` 
+- :ref:`Managing Multiple Version: <cdap-pipelines-plugin-management-multiple-versions>` 
   different versions can co-exist and be available at the same time
 
-- :ref:`Deleting Plugins: <cask-hydrator-plugin-management-deleting-plugins>` removing
+- :ref:`Deleting Plugins: <cdap-pipelines-plugin-management-deleting-plugins>` removing
   deployed artifacts from CDAP
 
 If you are creating your own plugins, see the section on :ref:`developing plugins
-<cask-hydrator-developing-plugins>` for information on writing plugins, including
-:ref:`packaging plugins in a JAR <cask-hydrator-packaging-plugins-packaging>` and
-their :ref:`presentation in a UI <cask-hydrator-packaging-plugins-presentation>`
-such as Hydrator Studio.
+<cdap-pipelines-developing-plugins>` for information on writing plugins, including
+:ref:`packaging plugins in a JAR <cdap-pipelines-packaging-plugins-packaging>` and
+their :ref:`presentation in a UI <cdap-pipelines-packaging-plugins-presentation>`
+such as the CDAP Application Studio.
 
 If you are installing a **third-party JAR** (such as a **JDBC driver**) to make it
 accessible to other plugins or applications, see :ref:`these instructions
-<cask-hydrator-plugin-management-third-party-plugins>`.
+<cdap-pipelines-plugin-management-third-party-plugins>`.
 
 
 Available Plugins
 =================
-Plugins available with CDAP are listed beginning on a :ref:`separate reference page <cask-hydrator-plugins>`.
+Plugins available with CDAP are listed beginning on a :ref:`separate reference page <cdap-pipelines-plugins>`.
 User-installed plugins are not listed there, but if they are installed correctly, the reference
-documentation for the plugin will be available through the :ref:`Hydrator Studio <cask-hydrator-studio>`.
+documentation for the plugin will be available through the :ref:`CDAP Application Studio <cdap-application-studio>`.
 
 
-.. _cask-hydrator-plugin-management-deployment:
+.. _cdap-pipelines-plugin-management-deployment:
 
 Deploying Plugins
 =================
@@ -57,7 +57,7 @@ Deploying Plugins
    :end-before:  .. _plugins-use-case:
 
 
-.. _cask-hydrator-plugin-management-third-party-plugins:
+.. _cdap-pipelines-plugin-management-third-party-plugins:
 
 Deploying Third-Party JARs
 ==========================
@@ -95,20 +95,20 @@ A sample JDBC Driver Plugin configuration:
     }
 
 
-.. _cask-hydrator-plugin-management-multiple-versions:
+.. _cdap-pipelines-plugin-management-multiple-versions:
 
 Managing Multiple Versions
 ==========================
 Different versions of the same plugin (or artifact) can be loaded and available at the
-same time. These will appear in the :ref:`Hydrator Studio <cask-hydrator-studio>` as
+same time. These will appear in the :ref:`CDAP Application Studio <cdap-application-studio>` as
 possible choices when selecting a plugin or creating a :ref:`plugin template
-<cask-hydrator-studio-plugin-templates>`. If no version is specified for a plugin in the
-:ref:`configuration file <hydrator-developing-pipelines-configuration-file-format>` used
+<cdap-application-studio-plugin-templates>`. If no version is specified for a plugin in the
+:ref:`configuration file <cdap-pipelines-developing-pipelines-configuration-file-format>` used
 to create an application, the highest version currently available in the system will be
 used.
 
 
-.. _cask-hydrator-plugin-management-deleting-plugins:
+.. _cdap-pipelines-plugin-management-deleting-plugins:
 
 Deleting Plugins
 ================

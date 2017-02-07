@@ -366,10 +366,10 @@ function set_version() {
   IFS="${OIFS}"
   
   if [[ ${GIT_BRANCH_TYPE:0:7} == "develop" ]]; then
-    GIT_BRANCH_CASK_HYDRATOR="develop"
+    GIT_BRANCH_CDAP_PIPELINES="develop"
     GIT_BRANCH_CASK_TRACKER="develop"
   fi
-  get_cask_hydrator_version ${GIT_BRANCH_CASK_HYDRATOR}
+  get_cdap_pipelines_version ${GIT_BRANCH_CDAP_PIPELINES}
   get_cask_tracker_version ${GIT_BRANCH_CASK_TRACKER}
 }
 
@@ -390,20 +390,20 @@ function display_version() {
   echo "CDAP Apps:"
   echo "  GIT_BRANCH_CDAP_APPS: ${GIT_BRANCH_CDAP_APPS}"
   echo "  GIT_VERSION_CDAP_APPS: ${GIT_VERSION_CDAP_APPS}"
-  echo "Hydrator:"
-  echo "  GIT_BRANCH_CASK_HYDRATOR: ${GIT_BRANCH_CASK_HYDRATOR}"
-  echo "  CASK_HYDRATOR_VERSION: ${CASK_HYDRATOR_VERSION}"
+  echo "CDAP Pipelines:"
+  echo "  GIT_BRANCH_CDAP_PIPELINES: ${GIT_BRANCH_CDAP_PIPELINES}"
+  echo "  CDAP_PIPELINES_VERSION: ${CDAP_PIPELINES_VERSION}"
   echo "Tracker:"
   echo "  GIT_BRANCH_CASK_TRACKER: ${GIT_BRANCH_CASK_TRACKER}"
   echo "  CASK_TRACKER_VERSION: ${CASK_TRACKER_VERSION}"
 }
 
-function get_cask_hydrator_version() {
+function get_cdap_pipelines_version() {
   # $1 Branch of Hydrator to use
-  CASK_HYDRATOR_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/hydrator-plugins/${1}/pom.xml" | grep "<version>")
-  CASK_HYDRATOR_VERSION=${CASK_HYDRATOR_VERSION#*<version>}
-  CASK_HYDRATOR_VERSION=${CASK_HYDRATOR_VERSION%%</version>*}
-  export CASK_HYDRATOR_VERSION
+  CDAP_PIPELINES_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/hydrator-plugins/${1}/pom.xml" | grep "<version>")
+  CDAP_PIPELINES_VERSION=${CDAP_PIPELINES_VERSION#*<version>}
+  CDAP_PIPELINES_VERSION=${CDAP_PIPELINES_VERSION%%</version>*}
+  export CDAP_PIPELINES_VERSION
 }
 
 function get_cask_tracker_version() {

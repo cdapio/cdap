@@ -1,10 +1,10 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 :hide-toc: true
 
-.. _cask-hydrator-plugins:
+.. _cdap-pipelines-plugins:
 
 ================
 Plugin Reference
@@ -22,7 +22,7 @@ Plugin Reference
     Post-run Plugins <post-run-plugins/index>
 
 
-These plugins (from Hydrator Version |cask-hydrator-version|) are shipped with CDAP, both in the
+These plugins (from CDAP Pipelines Version |cdap-pipelines-version|) are shipped with CDAP, both in the
 SDK and Distributed CDAP:
 
 - :doc:`Action Plugins <actions/index>`
@@ -38,7 +38,7 @@ SDK and Distributed CDAP:
 
 .. rubric:: Plugin Notes
 
-- Plugins are grouped here based on how they are displayed in the Hydrator Studio UI.
+- Plugins are grouped here based on how they are displayed in the CDAP Application Studio UI.
   Each plugin is of a particular type, and all plugins that are not sources, sinks, or
   actions are grouped in *transform* plugins. Each page describing a plugin shows its type
   and version at the bottom of the page.
@@ -55,7 +55,7 @@ SDK and Distributed CDAP:
 
 - Certain plugins |---| such as the *JavaScript*, *Python Evaluator*, and *Validator*
   transforms |---| are designed to be customized by end-users with their own code, either
-  from within Hydrator Studio or in a configuration file. For instance, you can create your
+  from within CDAP Application Studio or in a configuration file. For instance, you can create your
   own data validators either by using the functions supplied in the *CoreValidator* plugin
   or by implementing and supplying your own custom validation function.
 
@@ -72,7 +72,7 @@ Details on the available plugins and the required properties for sources, analyt
 transformations (transforms), sinks, and other plugin types can be obtained and explored
 using:
 
-- :ref:`Hydrator Studio <cask-hydrator-studio>`
+- :ref:`CDAP Application Studio <cdap-application-studio>`
 - :ref:`CDAP CLI <cli>`
 - :ref:`Artifact HTTP RESTful API <http-restful-api-artifact>`
 - Individual plugin documentation for
@@ -87,9 +87,9 @@ using:
 .. rubric:: Creating Custom Plugins
 
 If these plugins don't meet your requirements, you can :ref:`create a custom
-plugin <cask-hydrator-developing-plugins>`.
+plugin <cdap-pipelines-developing-plugins>`.
 
 If you are creating a custom plugin that extends the **existing system artifacts,** its
-name should not collide with existing names, for ease-of-use in the CDAP UI and Cask
-Hydrator Studio. You are free to create your own plugin and plugin-type, depending on the
+name should not collide with existing names, for ease-of-use in the CDAP UI and CDAP Application
+Studio. You are free to create your own plugin and plugin-type, depending on the
 functionality you are adding or requiring.

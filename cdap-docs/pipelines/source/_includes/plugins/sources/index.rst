@@ -1,16 +1,16 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cask-hydrator-plugins-sources:
+.. _cdap-pipelines-plugins-sources:
 
 ==============
 Source Plugins
 ==============
 
-Hydrator Version |cask-hydrator-version|
+CDAP Pipelines Version |cdap-pipelines-version|
 
-.. _cask-hydrator-plugins-batch-sources:
+.. _cdap-pipelines-plugins-batch-sources:
 
 **Batch Plugins**
 
@@ -26,7 +26,7 @@ These plugins work with:
     *batch*
 
 
-.. _cask-hydrator-plugins-real-time-sources:
+.. _cdap-pipelines-plugins-real-time-sources:
 
 **Real-time Plugins**
 
