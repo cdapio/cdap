@@ -725,6 +725,24 @@ public final class Constants {
     // Constants
     // Table used to store log metadata
     public static final String META_TABLE = "log.meta";
+    // key constants
+    public static final String TAG_NAMESPACE_ID = ".namespaceId";
+    public static final String TAG_APPLICATION_ID = ".applicationId";
+    public static final String TAG_RUN_ID = ".runId";
+    public static final String TAG_INSTANCE_ID = ".instanceId";
+
+    public static final String TAG_FLOW_ID = ".flowId";
+    public static final String TAG_FLOWLET_ID = ".flowletId";
+    public static final String TAG_SERVICE_ID = ".serviceId";
+    public static final String TAG_MAP_REDUCE_JOB_ID = ".mapReduceId";
+    public static final String TAG_SPARK_JOB_ID = ".sparkId";
+    public static final String TAG_USER_SERVICE_ID = ".userserviceid";
+    public static final String TAG_HANDLER_ID = ".userhandlerid";
+    public static final String TAG_WORKER_ID = ".workerid";
+    public static final String TAG_WORKFLOW_ID = ".workflowId";
+    public static final String TAG_WORKFLOW_MAP_REDUCE_ID = ".workflowMapReduceId";
+    public static final String TAG_WORKFLOW_SPARK_ID = ".workflowSparkId";
+    public static final String TAG_WORKFLOW_PROGRAM_RUN_ID = ".workflowProgramRunId";
   }
 
   /**
