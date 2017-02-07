@@ -29,12 +29,14 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.MethodNotAllowedException;
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.NotImplementedException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.common.service.ServiceDiscoverable;
@@ -73,6 +75,7 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -150,6 +153,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final PreferencesStore preferencesStore;
   private final MetricStore metricStore;
   private final MRJobInfoFetcher mrJobInfoFetcher;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   /**
    * Store manages non-runtime lifecycle.
@@ -168,7 +172,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               QueueAdmin queueAdmin,
                               PreferencesStore preferencesStore,
                               MRJobInfoFetcher mrJobInfoFetcher,
-                              MetricStore metricStore) {
+                              MetricStore metricStore,
+                              NamespaceQueryAdmin namespaceQueryAdmin) {
     this.store = store;
     this.runtimeService = runtimeService;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -177,6 +182,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.queueAdmin = queueAdmin;
     this.preferencesStore = preferencesStore;
     this.mrJobInfoFetcher = mrJobInfoFetcher;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
@@ -878,7 +884,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/flows")
   public void getAllFlows(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(new NamespaceId(namespaceId), ProgramType.FLOW));
+    responder.sendJson(HttpResponseStatus.OK,
+                       lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.FLOW));
   }
 
   /**
@@ -889,7 +896,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllMapReduce(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-                       lifecycleService.list(new NamespaceId(namespaceId), ProgramType.MAPREDUCE));
+                       lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.MAPREDUCE));
   }
 
   /**
@@ -899,7 +906,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/spark")
   public void getAllSpark(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(new NamespaceId(namespaceId), ProgramType.SPARK));
+    responder.sendJson(HttpResponseStatus.OK,
+                       lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.SPARK));
   }
 
   /**
@@ -910,7 +918,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllWorkflows(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-                       lifecycleService.list(new NamespaceId(namespaceId), ProgramType.WORKFLOW));
+                       lifecycleService.list(validateAndGetNamespace(namespaceId),
+                                             ProgramType.WORKFLOW));
   }
 
   /**
@@ -920,14 +929,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/services")
   public void getAllServices(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(new NamespaceId(namespaceId), ProgramType.SERVICE));
+    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(validateAndGetNamespace(namespaceId),
+                                                                    ProgramType.SERVICE));
   }
 
   @GET
   @Path("/workers")
   public void getAllWorkers(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(new NamespaceId(namespaceId), ProgramType.WORKER));
+    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(validateAndGetNamespace(namespaceId),
+                                                                    ProgramType.WORKER));
   }
 
   /**
@@ -938,9 +949,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getWorkerInstances(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("app-id") String appId,
-                                 @PathParam("worker-id") String workerId) {
+                                 @PathParam("worker-id") String workerId) throws Exception {
     try {
-      int count = store.getWorkerInstances(new NamespaceId(namespaceId).app(appId).worker(workerId));
+      int count = store.getWorkerInstances(validateAndGetNamespace(namespaceId).app(appId).worker(workerId));
       responder.sendJson(HttpResponseStatus.OK, new Instances(count));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1248,7 +1259,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/queues")
   public synchronized void deleteQueues(HttpRequest request, HttpResponder responder,
-                                        @PathParam("namespace-id") String namespaceId) {
+                                        @PathParam("namespace-id") String namespaceId)
+    throws NamespaceNotFoundException {
     // synchronized to avoid a potential race condition here:
     // 1. the check for state returns that all flows are STOPPED
     // 2. The API deletes queues because
@@ -1257,9 +1269,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // runtimeService. This should work because the method that is used to start a flow - startStopProgram - is also
     // synchronized on this.
     // This synchronization works in HA mode because even in HA mode there is only one leader at a time.
-    NamespaceId namespace = new NamespaceId(namespaceId);
+    NamespaceId namespace = validateAndGetNamespace(namespaceId);
     try {
-      List<ProgramRecord> flows = lifecycleService.list(new NamespaceId(namespaceId), ProgramType.FLOW);
+      List<ProgramRecord> flows = lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.FLOW);
       for (ProgramRecord flow : flows) {
         String appId = flow.getApp();
         String flowId = flow.getName();
@@ -1478,5 +1490,20 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
     }
     return result;
+  }
+
+  private NamespaceId validateAndGetNamespace(String namespace) throws NamespaceNotFoundException {
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    try {
+      namespaceQueryAdmin.get(namespaceId);
+    } catch (NamespaceNotFoundException e) {
+      throw e;
+    } catch (Exception e) {
+      // This can only happen when NamespaceAdmin uses HTTP to interact with namespaces.
+      // Within AppFabric, NamespaceAdmin is bound to DefaultNamespaceAdmin which directly interacts with MDS.
+      // Hence, this should never happen.
+      throw Throwables.propagate(e);
+    }
+    return namespaceId;
   }
 }

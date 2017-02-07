@@ -48,7 +48,11 @@ public class DefaultWorkerManager extends AbstractProgramManager<WorkerManager> 
 
   @Override
   public int getInstances() {
-    return appFabricClient.getWorkerInstances(programId.getNamespace(), programId.getApplication(),
-                                              programId.getProgram()).getInstances();
+    try {
+      return appFabricClient.getWorkerInstances(programId.getNamespace(), programId.getApplication(),
+                                                programId.getProgram()).getInstances();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 }
