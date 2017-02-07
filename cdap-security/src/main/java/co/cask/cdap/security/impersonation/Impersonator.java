@@ -43,7 +43,7 @@ public interface Impersonator {
    * @return the return value of the callable
    * @throws Exception if the callable throws any exception
    */
-  <T> T doAs(final NamespacedEntityId entityId, final Callable<T> callable) throws Exception;
+  <T> T doAs(NamespacedEntityId entityId, Callable<T> callable) throws Exception;
 
   /**
    * Retrieve the {@link UserGroupInformation} for the given {@link NamespaceId}
@@ -53,5 +53,5 @@ public interface Impersonator {
    * @throws IOException if there was any error fetching the {@link UserGroupInformation}
    * @throws NamespaceNotFoundException if namespaceId does not exist
    */
-  UserGroupInformation getUGI(final NamespacedEntityId entityId) throws IOException, NamespaceNotFoundException;
+  UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException, NamespaceNotFoundException;
 }

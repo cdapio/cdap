@@ -16,9 +16,13 @@
 
 package co.cask.cdap.logging.meta;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetManager;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -35,6 +39,9 @@ import javax.annotation.Nullable;
  * Utility class for helper functions to setup meta data table used by the logging system.
  */
 public final class LoggingStoreTableUtil {
+
+  // The row key prefix for rows that stores CDAP log files metadata.
+  public static final byte[] FILE_META_ROW_KEY_PREFIX = Bytes.toBytes(200);
 
   private static final DatasetId META_TABLE_DATASET_ID = NamespaceId.SYSTEM.dataset(Constants.Logging.META_TABLE);
   private static DatasetId alternateMetaTableId;
@@ -53,6 +60,24 @@ public final class LoggingStoreTableUtil {
                                        DatasetContext context) throws IOException, DatasetManagementException {
     return DatasetsUtil.getOrCreateDataset(context, datasetFramework, getMetaTableDatasetId(),
                                            Table.class.getName(), DatasetProperties.EMPTY);
+  }
+
+  /**
+   * Returns the {@link Table} for storing metadata.
+   */
+  public static Table getMetadataTable(DatasetContext context,
+                                       DatasetManager manager) throws DatasetManagementException {
+    DatasetId datasetId = getMetaTableDatasetId();
+    try {
+      return context.getDataset(datasetId.getNamespace(), datasetId.getDataset());
+    } catch (DatasetInstantiationException e) {
+      try {
+        manager.createDataset(datasetId.getDataset(), Table.class.getName(), DatasetProperties.EMPTY);
+      } catch (InstanceConflictException ie) {
+        // This is ok if the dataset already exists
+      }
+      return context.getDataset(datasetId.getNamespace(), datasetId.getDataset());
+    }
   }
 
   /**

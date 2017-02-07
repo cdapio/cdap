@@ -685,8 +685,6 @@ public final class Constants {
 
     public static final String SERVICE_DESCRIPTION = "Service to collect and store logs.";
     public static final String MESSAGE_PROCESSOR_FACTORIES =  "log.saver.message.processor.factories";
-
-    public static final String PERMISSION = "log.saver.permission";
   }
 
   /**
@@ -703,8 +701,26 @@ public final class Constants {
    */
   public static final class Logging {
     public static final String COMPONENT_NAME = "services";
+
+    // Configuration keys
     public static final String KAFKA_TOPIC = "log.kafka.topic";
     public static final String NUM_PARTITIONS = "log.publish.num.partitions";
+
+    public static final String PIPELINE_CONFIG_DIR = "log.process.pipeline.config.dir";
+    public static final String PIPELINE_LIBRARY_DIR = "log.process.pipeline.lib.dir";
+    public static final String PIPELINE_AUTO_BUFFER_RATIO = "log.process.pipeline.auto.buffer.ratio";
+
+    // The following properties can be defined in cdap-site and overridden in individual pipeline config xml
+    public static final String PIPELINE_BUFFER_SIZE = "log.process.pipeline.buffer.size";
+    public static final String PIPELINE_EVENT_DELAY_MS = "log.process.pipeline.event.delay.ms";
+    public static final String PIPELINE_KAFKA_FETCH_SIZE = "log.process.pipeline.kafka.fetch.size";
+    public static final String PIPELINE_CHECKPOINT_INTERVAL_MS = "log.process.pipeline.checkpoint.interval.ms";
+    public static final String PIPELINE_LOGGER_CACHE_SIZE = "log.process.pipeline.logger.cache.size";
+    public static final String PIPELINE_LOGGER_CACHE_EXPIRATION_MS = "log.process.pipeline.logger.cache.expiration.ms";
+
+    // This is a pipeline property only for backward compatibility purpose in 4.1, due to prior to 4.1,
+    // the kafka offset prefix is hardcoded to Bytes.toBytes(100)
+    public static final String PIPELINE_CHECKPOINT_PREFIX_NUM = "log.process.pipeline.checkpoint.prefix.num";
 
     // Constants
     // Table used to store log metadata

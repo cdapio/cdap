@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +76,7 @@ public class FileMetaDataManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileMetaDataManager.class);
 
   private static final byte[] COLUMN_PREFIX_VERSION = new byte[] {1};
-  private static final byte[] ROW_KEY_PREFIX = Bytes.toBytes(200);
+  private static final byte[] ROW_KEY_PREFIX = LoggingStoreTableUtil.FILE_META_ROW_KEY_PREFIX;
   private static final byte[] ROW_KEY_PREFIX_END = Bytes.stopKeyForPrefix(ROW_KEY_PREFIX);
   private static final NavigableMap<?, ?> EMPTY_MAP = Maps.unmodifiableNavigableMap(new TreeMap());
 
@@ -124,31 +125,6 @@ public class FileMetaDataManager {
                             final long startTimeMs,
                             final Location location) throws Exception {
     writeMetaData(loggingContext.getLogPartition(), startTimeMs, location);
-  }
-
-  /**
-   * Persists meta data associated with a log file.
-   *
-   * @param identifier logging context identifier.
-   * @param eventTimeMs start log time associated with the file.
-   * @param currentTimeMs current time during file creation.
-   * @param location log file location.
-   */
-  public void writeMetaData(final LogPathIdentifier identifier,
-                            final long eventTimeMs,
-                            final long currentTimeMs,
-                            final Location location) throws Exception {
-    LOG.debug("Writing meta data for logging context {} with startTimeMs {} sequence Id {} and location {}",
-               identifier.getRowKey(), eventTimeMs, currentTimeMs, location);
-
-    transactional.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        // add column version prefix for new format
-        byte[] columnKey = Bytes.add(COLUMN_PREFIX_VERSION, Bytes.toBytes(eventTimeMs), Bytes.toBytes(currentTimeMs));
-        getMetaTable(context).put(getRowKey(identifier), columnKey, Bytes.toBytes(location.toURI().getPath()));
-      }
-    });
   }
 
   /**
@@ -242,7 +218,7 @@ public class FileMetaDataManager {
                                       0,
                                       Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath),
                                       logPathIdentifier.getNamespaceId(), impersonator));
-          } else if  (entry.getKey().length == 17) {
+          } else if (entry.getKey().length == 17) {
             // new format
             files.add(new LogLocation(LogLocation.VERSION_1,
                                       // skip the first (version) byte
@@ -453,7 +429,7 @@ public class FileMetaDataManager {
   }
 
   private byte[] getRowKey(LogPathIdentifier logPathIdentifier) {
-    return Bytes.add(ROW_KEY_PREFIX, logPathIdentifier.getRowKey().getBytes());
+    return Bytes.add(ROW_KEY_PREFIX, logPathIdentifier.getRowKey().getBytes(StandardCharsets.UTF_8));
   }
 
   private byte [] getMaxKey(Map<byte[], byte[]> map) {

@@ -34,6 +34,7 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
@@ -53,8 +54,10 @@ import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -115,16 +118,18 @@ public class CDAPLogAppenderTest {
 
   @Test
   public void testCDAPLogAppender() throws Exception {
-    int syncInterval =
-      injector.getInstance(CConfiguration.class).getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES,
-                                                        2 * 1024 * 1024);
+    int syncInterval = 1024 * 1024;
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
     CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
-    injector.injectMembers(cdapLogAppender);
-    CConfiguration cConfiguration = injector.getInstance(CConfiguration.class);
-    cConfiguration.set(Constants.LogSaver.PERMISSION, "700");
     cdapLogAppender.setSyncIntervalBytes(syncInterval);
     cdapLogAppender.setMaxFileLifetimeMs(TimeUnit.DAYS.toMillis(1));
+    cdapLogAppender.setLocationPermissions("700");
+    AppenderContext context = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
+                                                       injector.getInstance(TransactionSystemClient.class),
+                                                       injector.getInstance(LocationFactory.class),
+                                                       new NoOpMetricsCollectionService());
+    context.start();
+    cdapLogAppender.setContext(context);
     cdapLogAppender.start();
 
     LoggingEvent event =
@@ -135,12 +140,13 @@ public class CDAPLogAppenderTest {
     properties.put(NamespaceLoggingContext.TAG_NAMESPACE_ID, "default");
     properties.put(ApplicationLoggingContext.TAG_APPLICATION_ID, "testApp");
     properties.put(FlowletLoggingContext.TAG_FLOW_ID, "testFlow");
-    properties.put(FlowletLoggingContext.TAG_FLOWLET_ID, "testFlowet");
+    properties.put(FlowletLoggingContext.TAG_FLOWLET_ID, "testFlowlet");
 
     event.setMDCPropertyMap(properties);
 
     cdapLogAppender.doAppend(event);
     cdapLogAppender.stop();
+    context.stop();
 
     try {
       List<LogLocation> files = fileMetaDataManager.listFiles(cdapLogAppender.getLoggingPath(properties));
@@ -164,7 +170,6 @@ public class CDAPLogAppenderTest {
         Location location = file.getLocation();
         Assert.assertEquals(expectedPermissions, location.getPermissions());
       }
-      cConfiguration.unset(Constants.LogSaver.PERMISSION);
     } catch (Exception e) {
       Assert.fail();
     } finally {
@@ -179,23 +184,26 @@ public class CDAPLogAppenderTest {
 
   @Test
   public void testCDAPLogAppenderRotation() throws Exception {
-    CConfiguration cConfiguration = injector.getInstance(CConfiguration.class);
-    cConfiguration.set(Constants.LogSaver.PERMISSION, "740");
-    int syncInterval =
-      injector.getInstance(CConfiguration.class).getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES,
-                                                        2 * 1024 * 1024);
+    int syncInterval = 1024 * 1024;
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
     CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
-    injector.injectMembers(cdapLogAppender);
+    AppenderContext context = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
+                                                       injector.getInstance(TransactionSystemClient.class),
+                                                       injector.getInstance(LocationFactory.class),
+                                                       new NoOpMetricsCollectionService());
+    context.start();
+
     cdapLogAppender.setSyncIntervalBytes(syncInterval);
     cdapLogAppender.setMaxFileLifetimeMs(500);
+    cdapLogAppender.setLocationPermissions("740");
+    cdapLogAppender.setContext(context);
     cdapLogAppender.start();
 
     Map<String, String> properties = new HashMap<>();
     properties.put(NamespaceLoggingContext.TAG_NAMESPACE_ID, "testRotation");
     properties.put(ApplicationLoggingContext.TAG_APPLICATION_ID, "testApp");
     properties.put(FlowletLoggingContext.TAG_FLOW_ID, "testFlow");
-    properties.put(FlowletLoggingContext.TAG_FLOWLET_ID, "testFlowet");
+    properties.put(FlowletLoggingContext.TAG_FLOWLET_ID, "testFlowlet");
 
     long currentTimeMillisEvent1 = System.currentTimeMillis();
 
@@ -207,7 +215,9 @@ public class CDAPLogAppenderTest {
     event1.setTimeStamp(currentTimeMillisEvent1);
     cdapLogAppender.doAppend(event1);
 
-    TimeUnit.MILLISECONDS.sleep(10);
+    // Pause pass the max file lifetime ms
+    TimeUnit.MILLISECONDS.sleep(500);
+
     long currentTimeMillisEvent2 = System.currentTimeMillis();
 
     LoggingEvent event2 = getLoggingEvent("co.cask.Test2",
@@ -216,6 +226,7 @@ public class CDAPLogAppenderTest {
     event2.setTimeStamp(currentTimeMillisEvent1 + 1000);
     cdapLogAppender.doAppend(event2);
     cdapLogAppender.stop();
+    context.stop();
 
     try {
       List<LogLocation> files = fileMetaDataManager.listFiles(cdapLogAppender.getLoggingPath(properties));
@@ -233,7 +244,6 @@ public class CDAPLogAppenderTest {
         Location location = file.getLocation();
         Assert.assertEquals(expectedPermissions, location.getPermissions());
       }
-      cConfiguration.unset(Constants.LogSaver.PERMISSION);
     } catch (Exception e) {
       Assert.fail();
     } finally {

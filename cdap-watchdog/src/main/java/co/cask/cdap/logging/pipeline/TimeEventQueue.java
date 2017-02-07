@@ -31,13 +31,13 @@ import javax.annotation.concurrent.NotThreadSafe;
  * @param <Offset> Type of event offset associated with the event.
  */
 @NotThreadSafe
-final class TimeEventQueue<Event, Offset extends Comparable<Offset>> implements Iterable<Event> {
+public final class TimeEventQueue<Event, Offset extends Comparable<Offset>> implements Iterable<Event> {
 
   private final SortedSet<TimeEvent<Event, Offset>> events;
   private final Int2ObjectMap<SortedSet<Offset>> partitionOffsets;
   private long totalSize;
 
-  TimeEventQueue(Iterable<Integer> partitions) {
+  public TimeEventQueue(Iterable<Integer> partitions) {
     this.events = new TreeSet<>();
     this.partitionOffsets = new Int2ObjectArrayMap<>();
 
@@ -46,7 +46,7 @@ final class TimeEventQueue<Event, Offset extends Comparable<Offset>> implements 
     }
   }
 
-  void add(Event event, long eventTimestamp, int eventSize, int partition, Offset offset) {
+  public void add(Event event, long eventTimestamp, int eventSize, int partition, Offset offset) {
     SortedSet<Offset> offsets = getOffsets(partition);
     TimeEvent<Event, Offset> timeEvent = new TimeEvent<>(eventTimestamp, partition, offset, event, eventSize);
     if (events.add(timeEvent)) {
@@ -63,35 +63,35 @@ final class TimeEventQueue<Event, Offset extends Comparable<Offset>> implements 
   /**
    * Returns the event in the queue with the smallest timestamp.
    */
-  Event first() {
+  public Event first() {
     return events.first().getEvent();
   }
 
   /**
    * Returns {@code true} if there is no event in the queue.
    */
-  boolean isEmpty() {
+  public boolean isEmpty() {
     return events.isEmpty();
   }
 
   /**
    * Returns the number of events in the queue.
    */
-  int size() {
+  public int size() {
     return events.size();
   }
 
   /**
    * Returns the size of all events in the queue.
    */
-  long getEventSize() {
+  public long getEventSize() {
     return totalSize;
   }
 
   /**
    * Returns the smallest offset stored for the given partition.
    */
-  Offset getSmallestOffset(int partition) {
+  public Offset getSmallestOffset(int partition) {
     SortedSet<Offset> offsets = getOffsets(partition);
     if (offsets.isEmpty()) {
       throw new IllegalStateException("Queue is empty");
@@ -159,6 +159,7 @@ final class TimeEventQueue<Event, Offset extends Comparable<Offset>> implements 
    * An {@link Iterator} for iterating over events inserted to the {@link TimeEventQueue}.
    *
    * @param <Event> type of element
+   * @param <Offset> Type of event offset associated with the event.
    */
   public interface EventIterator<Event, Offset> extends Iterator<Event> {
 
