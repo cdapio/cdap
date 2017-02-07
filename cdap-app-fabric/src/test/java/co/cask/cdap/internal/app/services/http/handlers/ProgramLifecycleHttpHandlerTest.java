@@ -465,6 +465,20 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                       historyStatus == 404 && deleteStatus == 200);
   }
 
+  /**
+   * Tests getting a non-existent namespace
+   */
+  @Test
+  public void testNonExistentNamespace() throws Exception {
+    String[] endpoints = {"flows", "spark", "services", "workers", "mapreduce", "workflows"};
+
+    for (String endpoint : endpoints) {
+      HttpResponse response = doGet("/v3/namespaces/default/" + endpoint);
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      response = doGet("/v3/namespaces/garbage/" + endpoint);
+      Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+    }
+  }
 
   /**
    * Tests history of a workflow.
