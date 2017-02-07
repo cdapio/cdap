@@ -26,7 +26,7 @@ export default class HomeListView extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      loading: false,
+      loading: this.props.loading || false,
       list: [],
       selectedEntity: {}
     };

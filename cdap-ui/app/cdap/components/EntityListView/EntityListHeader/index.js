@@ -84,8 +84,11 @@ export default class EntityListHeader extends Component {
   }
   render() {
     let tooltipId = 'filter-tooltip-target-id';
-    const placeholder = T.translate('features.EntityListView.Header.search-placeholder');
-
+    const placeholder = this.props.isSearchDisabled ?
+      T.translate('features.EntityListView.Header.search-disabled-placeholder')
+    :
+      T.translate('features.EntityListView.Header.search-placeholder')
+    ;
     const sortDropdown = (
       <Dropdown
         disabled={this.props.isSortDisabled}

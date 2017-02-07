@@ -130,6 +130,10 @@ features:
           displayName: Newest
         creationTimeAsc:
           displayName: Oldest
+    NamespaceNotFound:
+      createMessage: Would like to
+      createLinkLabel: create a new one?
+      switchMessage: Or select a different namespace from the namespace dropdown.
   Dashboard:
     Title: Dashboard
 
@@ -761,4 +765,12 @@ features:
     ProgramTable:
       lastStartedLabel: Last Started
       statusLabel: Status
+  Page404:
+    genericMessage: Sorry, we are are not able to find the page you are looking for.
+    entityMessage: Sorry, we are not able to find {entityType}
+    subtitleMessage1: Here are some options on where to go next
+    subtitleMessage2: View all your entities in the
+    overviewLabel: Overview
+    manageLabel: Manage
+    pipelinesMessage: Pipelines
 ...
