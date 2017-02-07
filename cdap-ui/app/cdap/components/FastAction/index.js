@@ -57,6 +57,7 @@ export default class FastAction extends Component {
         return (
           <ExploreAction
             entity={this.props.entity}
+            opened={this.props.opened}
           />
         );
       case 'sendEvents':
@@ -64,6 +65,7 @@ export default class FastAction extends Component {
           <SendEventAction
             entity={this.props.entity}
             onSuccess={this.props.onSuccess}
+            opened={this.props.opened}
           />
         );
       case 'setPreferences':
@@ -84,5 +86,6 @@ export default class FastAction extends Component {
 FastAction.propTypes = {
   type: PropTypes.oneOf(['delete', 'truncate', 'startStop', 'sendEvents', 'explore', 'setPreferences']),
   entity: PropTypes.object,
-  onSuccess: PropTypes.func
+  onSuccess: PropTypes.func,
+  opened: PropTypes.bool
 };

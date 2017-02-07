@@ -41,6 +41,11 @@ export default class ExploreAction extends Component {
   toggleTooltip() {
     this.setState({ tooltipOpen : !this.state.tooltipOpen });
   }
+  componentWillMount() {
+    if (this.props.opened) {
+      this.setState({showModal: true});
+    }
+  }
   componentDidMount() {
     const updateDisabledProp = () => {
       let {tables: explorableTables} = ExploreTablesStore.getState();
@@ -99,6 +104,7 @@ ExploreAction.propTypes = {
     version: PropTypes.string,
     uniqueId: PropTypes.string,
     scope: PropTypes.oneOf(['SYSTEM', 'USER']),
-    type: PropTypes.oneOf(['application', 'artifact', 'datasetinstance', 'stream']).isRequired
-  })
+    type: PropTypes.oneOf(['application', 'artifact', 'datasetinstance', 'stream']).isRequired,
+  }),
+  opened: PropTypes.bool
 };
