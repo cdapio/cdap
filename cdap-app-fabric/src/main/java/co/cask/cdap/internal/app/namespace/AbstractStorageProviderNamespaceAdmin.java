@@ -22,12 +22,12 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -129,6 +129,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
   }
 
   private void createLocation(NamespaceMeta namespaceMeta) throws IOException {
+    NamespaceId namespaceId = namespaceMeta.getNamespaceId();
     boolean createdHome = false;
     Location namespaceHome;
     if (hasCustomLocation(namespaceMeta)) {
@@ -139,54 +140,96 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
       if (namespaceHome.exists()) {
         throw new FileAlreadyExistsException(namespaceHome.toString());
       }
-      // create namespace home dir
-      if (!namespaceHome.mkdirs()) {
-        throw new IOException(String.format("Error while creating home directory '%s' for namespace '%s'",
-                                            namespaceHome, namespaceMeta.getNamespaceId()));
-      }
-      createdHome = true;
+      createdHome = createNamespaceDir(namespaceHome, "home", namespaceId);
     }
-    Location namespaceData = namespaceHome.append(Constants.Dataset.DEFAULT_DATA_DIR);
+    Location dataLoc = namespaceHome.append(Constants.Dataset.DEFAULT_DATA_DIR); // data/
+    Location tempLoc = namespaceHome.append(cConf.get(Constants.AppFabric.TEMP_DIR)); // tmp/
+    Location streamsLoc = namespaceHome.append(cConf.get(Constants.Stream.BASE_DIR)); // streams/
+    Location deletedLoc = streamsLoc.append(StreamUtils.DELETED); // streams/.deleted/
     String configuredGroupName = namespaceMeta.getConfig().getGroupName();
     boolean createdData = false;
+    boolean createdTemp = false;
+    boolean createdStreams = false;
     try {
       if (createdHome && SecurityUtil.isKerberosEnabled(cConf)) {
         // set the group id of the namespace home if configured, or the current user's primary group
-        String groupName = configuredGroupName != null
-          ? configuredGroupName : UserGroupInformation.getCurrentUser().getPrimaryGroupName();
-        namespaceHome.setGroup(groupName);
+        String groupToSet = configuredGroupName;
+        if (groupToSet == null) {
+          // attempt to determine the current user's primary group. Note that we cannot use ugi.getPrimaryGroup()
+          // because that is not implemented at least in Hadoop 2.0 and 2.2, possibly other versions. Also note
+          // that there is no guarantee that getGroupNames() returns anything.
+          String[] groups = UserGroupInformation.getCurrentUser().getGroupNames();
+          if (groups != null && groups.length > 0) {
+            groupToSet = groups[0];
+          }
+        }
+        // if this is still null at this point, then the directory will have whatever HDFS assigned at creation
+        if (groupToSet != null) {
+          namespaceHome.setGroup(groupToSet);
+        }
       }
-      // create the data directory with the default permissions; then add group privileges to rwx
-      // so that all users in this group, when impersonated, can create subdirectories for their datasets
-      if (!namespaceData.mkdirs()) {
-        throw new IOException(String.format("Error while creating data directory '%s' for namespace '%s'",
-                                            namespaceData, namespaceMeta.getNamespaceId()));
-      }
-      createdData = true;
+      // create all the directories with default permissions
+      createdData = createNamespaceDir(dataLoc, "data", namespaceId);
+      createdTemp = createNamespaceDir(tempLoc, "temp", namespaceId);
+      createdStreams = createNamespaceDir(streamsLoc, "streams", namespaceId);
+      createNamespaceDir(deletedLoc, "deleted streams", namespaceId);
+
+      // then set all these directories to be owned and group writable by the namespace group as follows:
+      // if a group name is configured, then that group; otherwise the same group as the namespace home dir
       if (SecurityUtil.isKerberosEnabled(cConf)) {
-        // the data dir should have the group from the namespace config if present, or the same group as the home dir
-        String dataGroup = configuredGroupName != null ? configuredGroupName : namespaceHome.getGroup();
-        namespaceData.setGroup(dataGroup);
-        // set the permissions to rwx for group, if a group name was configured for the namespace
-        if (configuredGroupName != null) {
-          String permissions = namespaceData.getPermissions();
-          namespaceData.setPermissions(permissions.substring(0, 3) + "rwx" + permissions.substring(6));
+        String groupToSet = configuredGroupName != null ? configuredGroupName : namespaceHome.getGroup();
+        for (Location loc : new Location[] { dataLoc, tempLoc, streamsLoc, deletedLoc }) {
+          loc.setGroup(groupToSet);
+          // set the permissions to rwx for group, if a group name was configured for the namespace
+          if (configuredGroupName != null) {
+            String permissions = loc.getPermissions();
+            loc.setPermissions(permissions.substring(0, 3) + "rwx" + permissions.substring(6));
+          }
         }
       }
     } catch (Throwable t) {
-      try {
-        if (createdHome) {
-          namespaceHome.delete(true);
-        } else if (createdData) {
-          namespaceData.delete(true);
+      if (createdHome) {
+        deleteDirSilently(namespaceHome, t, "home", namespaceMeta.getNamespaceId());
+      } else {
+        if (createdData) {
+          deleteDirSilently(dataLoc, t, "data", namespaceMeta.getNamespaceId());
         }
-      } catch (Throwable t1) {
-        LOG.warn("Error while cleaning up home directory '%s' for namespace '%s'",
-                 namespaceHome, namespaceMeta.getNamespaceId());
-        t.addSuppressed(t1);
+        if (createdTemp) {
+          deleteDirSilently(tempLoc, t, "temp", namespaceMeta.getNamespaceId());
+        }
+        if (createdStreams) {
+          deleteDirSilently(streamsLoc, t, "streams", namespaceMeta.getNamespaceId());
+        }
       }
-      Throwables.propagateIfInstanceOf(t, IOException.class);
-      throw Throwables.propagate(t);
+      throw t;
+    }
+  }
+
+  // create the location and return true; throw IOException if the location could not be created
+  private boolean createNamespaceDir(Location location, String what, NamespaceId namespace) throws IOException {
+    try {
+      if (location.mkdirs()) {
+        return true;
+      }
+      // mkdirs() is documented to return whether it was successful, and not throw IOException,
+      // but it turns out it does throw IOException, for example if access is denied.
+    } catch (IOException e) {
+      throw new IOException(String.format("Error while creating %s directory '%s' for namespace '%s': %s",
+                                          what, location, namespace, e.getMessage()), e);
+    }
+    // if we came here, then mkdirs() returned false: The directory could not be created but we do not know why
+    throw new IOException(String.format("Error while creating %s directory '%s' for namespace '%s': %s",
+                                        what, location, namespace, "mkdirs() returned false"));
+  }
+
+  // remove a directory, catching any exception and adding it to the exsting throwable
+  private void deleteDirSilently(Location location, Throwable existingThrowable, String what, NamespaceId namespace) {
+    try {
+      location.delete(true);
+    } catch (Throwable t) {
+      LOG.warn("Error while cleaning up {} directory '{}' for namespace '{}': {}",
+               what, location, namespace, t.getMessage());
+      existingThrowable.addSuppressed(t);
     }
   }
 
