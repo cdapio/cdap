@@ -140,7 +140,7 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
 
   @Override
   public List<RunRecord> getHistory(ProgramRunStatus status) {
-    return applicationManager.getHistory(programId.toId(), status);
+    return applicationManager.getHistory(programId, status);
   }
 
   @Override
