@@ -103,9 +103,10 @@ public final class DefaultCheckpointManager implements CheckpointManager {
     return Transactions.execute(transactional, new TxCallable<Map<Integer, Checkpoint>>() {
       @Override
       public Map<Integer, Checkpoint> call(DatasetContext context) throws Exception {
+        Table table = getCheckpointTable(context);
         Map<Integer, Checkpoint> checkpoints = new HashMap<>();
         for (final int partition : partitions) {
-          Row result = getCheckpointTable(context).get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)));
+          Row result = table.get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)));
           checkpoints.put(partition, new Checkpoint(result.getLong(OFFSET_COL_NAME, -1),
                                                     result.getLong(MAX_TIME_COL_NAME, -1)));
         }
