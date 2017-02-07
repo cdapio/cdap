@@ -29,7 +29,6 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.MethodNotAllowedException;
-import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.NotImplementedException;
 import co.cask.cdap.common.conf.Constants;
@@ -67,7 +66,6 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowId;
-import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -76,7 +74,6 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -1261,7 +1258,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/queues")
   public synchronized void deleteQueues(HttpRequest request, HttpResponder responder,
                                         @PathParam("namespace-id") String namespaceId)
-    throws NamespaceNotFoundException {
+    throws Exception {
     // synchronized to avoid a potential race condition here:
     // 1. the check for state returns that all flows are STOPPED
     // 2. The API deletes queues because
@@ -1493,15 +1490,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return result;
   }
 
-  private NamespaceId validateAndGetNamespace(String namespace) throws NamespaceNotFoundException {
-    NamespaceId namespaceId = Ids.namespace(namespace);
-    try {
-      namespaceQueryAdmin.get(namespaceId);
-    } catch (NamespaceNotFoundException e) {
-      throw e;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+  private NamespaceId validateAndGetNamespace(String namespace) throws Exception {
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    namespaceQueryAdmin.get(namespaceId);
     return namespaceId;
   }
 }
