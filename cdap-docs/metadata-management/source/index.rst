@@ -122,7 +122,7 @@ or (Distributed CDAP):
   
   |literal-tracker-distributed-cdap-url|
 
-The application is built from a system artifact included with CDAP, |literal-cask-tracker-version-jar|.
+The application is built from a system artifact included with CDAP, |literal-cdap-metadata-management-version-jar|.
 
 
 .. highlight:: xml  
@@ -144,13 +144,13 @@ flow and service started, and search and audit logging will become available.
 
 If you are enabling metadata management from outside the UI, you will need to follow these steps:
 
-- Using the CDAP CLI, load the artifact (|literal-cask-tracker-version-jar|):
+- Using the CDAP CLI, load the artifact (|literal-cdap-metadata-management-version-jar|):
 
   .. container:: highlight
 
     .. parsed-literal::
 
-      |cdap >| load artifact target/|cask-tracker-version-jar|
+      |cdap >| load artifact target/|cdap-metadata-management-version-jar|
 
 .. highlight:: json  
 
@@ -174,7 +174,7 @@ If you are enabling metadata management from outside the UI, you will need to fo
 
     .. parsed-literal::
 
-      |cdap >| create app TrackerApp tracker |cask-tracker-version| USER
+      |cdap >| create app TrackerApp tracker |cdap-metadata-management-version| USER
 
 Restarting CDAP
 ---------------
