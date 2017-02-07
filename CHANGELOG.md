@@ -1,6 +1,11 @@
 cdap CHANGELOG
 ==============
 
+v2.28.2 (Feb 2, 2017)
+---------------------
+- Install rkerberos gem during init ( Issue: #201 )
+- Move HBase grant commands to init ( Issue: #202 )
+
 v2.28.1 (Jan 26, 2017)
 ----------------------
 - Properly constrain version of base package installed with CLI ( Issue: #198 )
