@@ -19,12 +19,10 @@
 /* Animation - Slide in direction of Next */
 .entity-animation--next-enter {
   &:not(h3) {
-    transform: translate(500%, 0);
     opacity: 0.1;
     &.entity-animation--next-enter-active {
-      transform: translate(0, 0);
       opacity: 1;
-      transition: transform 1000ms, opacity 1000ms;
+      transition: opacity 1000ms;
     }
   }
 }
@@ -48,11 +46,9 @@
 /* Animation - Slide in direction of Prev */
 .entity-animation--prev-enter {
   &:not(h3) {
-    transform: translate(-500%, 0);
     opacity: 0.1;
     &.entity-animation--prev-enter-active {
-      transform: translate(0, 0);
-      transition: transform 1000ms, opacity 1000ms;
+      transition: opacity 1000ms;
       opacity: 1;
     }
   }
