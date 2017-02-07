@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline;
+package co.cask.cdap.logging.pipeline.kafka;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -22,14 +22,19 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.AppenderBase;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.kafka.KafkaTester;
+import co.cask.cdap.logging.appender.ForwardingAppender;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManager;
+import co.cask.cdap.logging.pipeline.LogPipelineConfigurator;
+import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -38,16 +43,22 @@ import org.apache.twill.kafka.client.KafkaPublisher;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 
+import java.io.File;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.net.URL;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -69,6 +80,9 @@ import javax.xml.transform.stream.StreamResult;
 public class KafkaLogProcessorPipelineTest {
 
   @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
+  @ClassRule
   public static final KafkaTester KAFKA_TESTER = new KafkaTester();
 
   @Test
@@ -76,17 +90,20 @@ public class KafkaLogProcessorPipelineTest {
     String topic = "testPipeline";
     LoggerContext loggerContext = createLoggerContext("WARN", ImmutableMap.of("test.logger", "INFO"),
                                                       TestAppender.class.getName());
-    final TestAppender appender = (TestAppender) loggerContext.getLogger(Logger.ROOT_LOGGER_NAME).getAppender("Test");
+    final TestAppender appender = getAppender(loggerContext.getLogger(Logger.ROOT_LOGGER_NAME),
+                                              "Test", TestAppender.class);
     TestCheckpointManager checkpointManager = new TestCheckpointManager();
     KafkaPipelineConfig config = new KafkaPipelineConfig(topic, Collections.singleton(0), 1024, 300, 1048576, 500);
     KAFKA_TESTER.createTopic(topic, 1);
 
-    KafkaLogProcessorPipeline pipeline = new KafkaLogProcessorPipeline(new EffectiveLevelProvider(loggerContext, 10),
-                                                                       appender, checkpointManager,
-                                                                       KAFKA_TESTER.getBrokerService(), config);
-    // Publish some log messages to Kafka
+    loggerContext.start();
+    KafkaLogProcessorPipeline pipeline = new KafkaLogProcessorPipeline(
+      new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext), checkpointManager,
+      KAFKA_TESTER.getBrokerService(), config);
+
     pipeline.startAndWait();
 
+    // Publish some log messages to Kafka
     long now = System.currentTimeMillis();
     publishLog(topic, ImmutableList.of(
       createLoggingEvent("test.logger", Level.INFO, "0", now - 1000),
@@ -136,6 +153,116 @@ public class KafkaLogProcessorPipelineTest {
     }
 
     pipeline.stopAndWait();
+    loggerContext.stop();
+
+    Assert.assertNull(appender.getEvents());
+  }
+
+  @Test
+  public void testMultiAppenders() throws Exception {
+    final File logDir = TEMP_FOLDER.newFolder();
+    LoggerContext loggerContext = new LoggerContext();
+    loggerContext.putProperty("logDirectory", logDir.getAbsolutePath());
+
+    LogPipelineConfigurator configurator = new LogPipelineConfigurator(CConfiguration.create());
+    configurator.setContext(loggerContext);
+    URL configURL = getClass().getClassLoader().getResource("pipeline-multi-appenders.xml");
+    Assert.assertNotNull(configURL);
+    configurator.doConfigure(configURL);
+
+    String topic = "testMultiAppenders";
+    TestCheckpointManager checkpointManager = new TestCheckpointManager();
+    KafkaPipelineConfig config = new KafkaPipelineConfig(topic, Collections.singleton(0), 1024, 100, 1048576, 200);
+    KAFKA_TESTER.createTopic(topic, 1);
+
+    loggerContext.start();
+    KafkaLogProcessorPipeline pipeline = new KafkaLogProcessorPipeline(
+      new LogProcessorPipelineContext(CConfiguration.create(), "testMultiAppenders", loggerContext), checkpointManager,
+      KAFKA_TESTER.getBrokerService(), config);
+
+    pipeline.startAndWait();
+
+    // Publish some log messages to Kafka using a non-specific logger
+    long now = System.currentTimeMillis();
+    publishLog(topic, ImmutableList.of(
+      createLoggingEvent("logger.trace", Level.TRACE, "TRACE", now - 1000),
+      createLoggingEvent("logger.debug", Level.DEBUG, "DEBUG", now - 900),
+      createLoggingEvent("logger.info", Level.INFO, "INFO", now - 800),
+      createLoggingEvent("logger.warn", Level.WARN, "WARN", now - 700),
+      createLoggingEvent("logger.error", Level.ERROR, "ERROR", now - 600)
+    ));
+
+    // All logs should get logged to the default.log file
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        File logFile = new File(logDir, "default.log");
+        List<String> lines = Files.readAllLines(logFile.toPath(), StandardCharsets.UTF_8);
+        return Arrays.asList("TRACE", "DEBUG", "INFO", "WARN", "ERROR").equals(lines);
+      }
+    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+    // Publish some more log messages via the non-additive "test.info" logger.
+    now = System.currentTimeMillis();
+    publishLog(topic, ImmutableList.of(
+      createLoggingEvent("test.info.trace", Level.TRACE, "TRACE", now - 1000),
+      createLoggingEvent("test.info.debug", Level.DEBUG, "DEBUG", now - 900),
+      createLoggingEvent("test.info", Level.INFO, "INFO", now - 800),
+      createLoggingEvent("test.info.warn", Level.WARN, "WARN", now - 700),
+      createLoggingEvent("test.info.error", Level.ERROR, "ERROR", now - 600)
+    ));
+
+    // Only logs with INFO or above level should get written to the info.log file
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        File logFile = new File(logDir, "info.log");
+        List<String> lines = Files.readAllLines(logFile.toPath(), StandardCharsets.UTF_8);
+        return Arrays.asList("INFO", "WARN", "ERROR").equals(lines);
+      }
+    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+    // The default.log file shouldn't be changed, because the test.info logger is non additive
+    File defaultLogFile = new File(logDir, "default.log");
+    List<String> lines = Files.readAllLines(defaultLogFile.toPath(), StandardCharsets.UTF_8);
+    Assert.assertEquals(Arrays.asList("TRACE", "DEBUG", "INFO", "WARN", "ERROR"), lines);
+
+    // Publish a log messages via the additive "test.error" logger.
+    now = System.currentTimeMillis();
+    publishLog(topic, ImmutableList.of(
+      createLoggingEvent("test.error.1.2", Level.ERROR, "ERROR", now - 1000)
+    ));
+
+    // Expect the log get appended to both the error.log file as well as the default.log file
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        File logFile = new File(logDir, "error.log");
+        List<String> lines = Files.readAllLines(logFile.toPath(), StandardCharsets.UTF_8);
+        if (!Collections.singletonList("ERROR").equals(lines)) {
+          return false;
+        }
+
+        logFile = new File(logDir, "default.log");
+        lines = Files.readAllLines(logFile.toPath(), StandardCharsets.UTF_8);
+        return Arrays.asList("TRACE", "DEBUG", "INFO", "WARN", "ERROR", "ERROR").equals(lines);
+      }
+    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+    pipeline.stopAndWait();
+    loggerContext.stop();
+  }
+
+  private <T extends Appender<ILoggingEvent>> T getAppender(Logger logger, String name, Class<T> cls) {
+    Appender<ILoggingEvent> appender = logger.getAppender(name);
+    while (!cls.isAssignableFrom(appender.getClass())) {
+      if (appender instanceof ForwardingAppender) {
+        appender = ((ForwardingAppender<ILoggingEvent>) appender).getDelegate();
+      } else {
+        throw new RuntimeException("Failed to find appender " + name + " of type " + cls.getName());
+      }
+    }
+    return cls.cast(appender);
   }
 
   /**
@@ -199,7 +326,7 @@ public class KafkaLogProcessorPipelineTest {
     transformer.transform(new DOMSource(doc), new StreamResult(writer));
 
     LoggerContext context = new LoggerContext();
-    JoranConfigurator configurator = new JoranConfigurator();
+    JoranConfigurator configurator = new LogPipelineConfigurator(CConfiguration.create());
     configurator.setContext(context);
     configurator.doConfigure(new InputSource(new StringReader(writer.toString())));
 
@@ -211,8 +338,8 @@ public class KafkaLogProcessorPipelineTest {
    */
   public static final class TestAppender extends AppenderBase<ILoggingEvent> implements Flushable {
 
-    private final Queue<ILoggingEvent> events = new ConcurrentLinkedQueue<>();
-    private final Queue<ILoggingEvent> pending = new LinkedList<>();
+    private Queue<ILoggingEvent> events;
+    private Queue<ILoggingEvent> pending;
 
     @Override
     protected void append(ILoggingEvent event) {
@@ -227,6 +354,20 @@ public class KafkaLogProcessorPipelineTest {
     public void flush() throws IOException {
       events.addAll(pending);
       pending.clear();
+    }
+
+    @Override
+    public void start() {
+      events = new ConcurrentLinkedQueue<>();
+      pending = new LinkedList<>();
+      super.start();
+    }
+
+    @Override
+    public void stop() {
+      events = null;
+      pending = null;
+      super.stop();
     }
   }
 

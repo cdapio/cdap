@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.save;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -49,7 +50,7 @@ import java.util.concurrent.TimeUnit;
 public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
 
   private static final Logger LOG = LoggerFactory.getLogger(LogMetricsPlugin.class);
-  private static final int ROW_KEY_PREFIX = 101;
+  private static final byte[] ROW_KEY_PREFIX = Bytes.toBytes(101);
   private static final String SYSTEM_METRIC_PREFIX = "services.log";
   private static final String APP_METRIC_PREFIX = "app.log";
 

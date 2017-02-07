@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.save;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.RootLocationFactory;
@@ -62,7 +63,7 @@ import java.util.concurrent.TimeUnit;
 public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaLogWriterPlugin.class);
 
-  public static final int CHECKPOINT_ROW_KEY_PREFIX = 100;
+  public static final byte[] CHECKPOINT_ROW_KEY_PREFIX = Bytes.toBytes(100);
 
   private static final long SLEEP_TIME_MS = 100;
 

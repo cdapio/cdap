@@ -31,13 +31,16 @@ public final class LoggingConfiguration {
   // Common between Distributed and Single Node
   public static final String LOG_PATTERN = "log.pattern";
   public static final String LOG_BASE_DIR = "log.base.dir";
+  @Deprecated
   public static final String LOG_FILE_SYNC_INTERVAL_BYTES = "log.file.sync.interval.bytes";
 
   public static final String KAFKA_SEED_BROKERS = "kafka.seed.brokers";
   public static final String LOG_SAVER_EVENT_BUCKET_INTERVAL_MS = "log.saver.event.bucket.interval.ms";
   public static final String LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS = "log.saver.event.max.inmemory.buckets";
   public static final String LOG_SAVER_INACTIVE_FILE_INTERVAL_MS = "log.saver.inactive.file.interval.ms";
+  @Deprecated
   public static final String LOG_SAVER_MAX_FILE_LIFETIME = "log.saver.max.file.lifetime.ms";
+  @Deprecated
   public static final String LOG_SAVER_CHECKPOINT_INTERVAL_MS = "log.saver.checkpoint.interval.ms";
   public static final String LOG_SAVER_TOPIC_WAIT_SLEEP_MS = "log.saver.topic.wait.sleep.ms";
   public static final String LOG_RETENTION_DURATION_DAYS = "log.retention.duration.days";

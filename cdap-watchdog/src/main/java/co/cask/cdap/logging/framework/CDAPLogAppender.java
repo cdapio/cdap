@@ -22,13 +22,11 @@ import ch.qos.logback.core.LogbackException;
 import ch.qos.logback.core.spi.FilterReply;
 import ch.qos.logback.core.status.WarnStatus;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.logging.meta.FileMetaDataWriter;
 import co.cask.cdap.logging.serialize.LogSchema;
-import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,14 +54,8 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
 
   private LogFileManager logFileManager;
 
-  @Inject
-  private FileMetaDataManager fileMetaDataManager;
-  @Inject
-  private LocationFactory locationFactory;
-
   private int syncIntervalBytes;
   private long maxFileLifetimeMs;
-
 
   /**
    * TODO: start a separate cleanup thread to remove files that has passed the TTL
@@ -72,19 +64,33 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     setName(getClass().getName());
   }
 
+  /**
+   * Sets the avro file sync interval. This is called by the logback framework.
+   */
   public void setSyncIntervalBytes(int syncIntervalBytes) {
     this.syncIntervalBytes = syncIntervalBytes;
   }
 
+  /**
+   * Sets the maximum lifetime of a file. This is called by the logback framework.
+   */
   public void setMaxFileLifetimeMs(long maxFileLifetimeMs) {
     this.maxFileLifetimeMs = maxFileLifetimeMs;
   }
 
   @Override
   public void start() {
+    // These should all passed. The settings are from the cdap-log-pipeline.xml and the context must be AppenderContext
+    Preconditions.checkState(syncIntervalBytes > 0, "Property syncIntervalBytes must be > 0.");
+    Preconditions.checkState(maxFileLifetimeMs > 0, "Property maxFileLifetimeMs must be > 0");
+    Preconditions.checkState(context instanceof AppenderContext,
+                             "The context object is not an instance of %s", AppenderContext.class);
+
+    AppenderContext context = (AppenderContext) this.context;
+    logFileManager = new LogFileManager(maxFileLifetimeMs, syncIntervalBytes, LogSchema.LoggingEvent.SCHEMA,
+                                        new FileMetaDataWriter(context.getDatasetManager(), context),
+                                        context.getLocationFactory());
     super.start();
-    this.logFileManager = new LogFileManager(maxFileLifetimeMs, syncIntervalBytes, LogSchema.LoggingEvent.SCHEMA,
-                                             fileMetaDataManager, locationFactory);
   }
 
   @Override
@@ -143,7 +149,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
 
     String namespaceId = propertyMap.get(TAG_NAMESPACE_ID);
 
-    if (namespaceId.equals(NamespaceId.SYSTEM)) {
+    if (NamespaceId.SYSTEM.getNamespace().equals(namespaceId)) {
       Preconditions.checkArgument(propertyMap.containsKey(TAG_SERVICE_ID),
                                   String.format("%s is expected but not found in the context %s",
                                                 TAG_SERVICE_ID, propertyMap));

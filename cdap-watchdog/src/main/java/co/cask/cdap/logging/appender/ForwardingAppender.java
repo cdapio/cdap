@@ -133,7 +133,7 @@ public abstract class ForwardingAppender<E> implements Appender<E> {
     return delegate.getFilterChainDecision(event);
   }
 
-  protected Appender<E> getDelegate() {
+  public Appender<E> getDelegate() {
     return delegate;
   }
 }

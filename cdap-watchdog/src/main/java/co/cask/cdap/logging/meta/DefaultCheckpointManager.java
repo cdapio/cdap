@@ -58,8 +58,8 @@ public final class DefaultCheckpointManager implements CheckpointManager {
 
   @Inject
   DefaultCheckpointManager(DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                           String topic, int prefix) {
-    this.rowKeyPrefix = Bytes.add(Bytes.toBytes(prefix), Bytes.toBytes(topic));
+                           String topic, byte[] prefix) {
+    this.rowKeyPrefix = Bytes.add(prefix, Bytes.toBytes(topic));
     this.lastCheckpoint = new HashMap<>();
     this.datasetFramework = datasetFramework;
     this.transactional = Transactions.createTransactionalWithRetry(
