@@ -96,45 +96,26 @@ public class MasterTwillApplication implements TwillApplication {
   private TwillSpecification.Builder.RunnableSetter addLogSaverService(TwillSpecification.Builder.MoreRunnable
                                                                          builder) {
 
-    int numInstances = instanceCountMap.get(Constants.Service.LOGSAVER);
-    Preconditions.checkArgument(numInstances > 0, "log saver num instances should be at least 1, got %s",
-                                numInstances);
+    ResourceSpecification resourceSpec = createResourceSpecification(Constants.LogSaver.NUM_CORES,
+                                                                     Constants.LogSaver.MEMORY_MB,
+                                                                     Constants.Service.LOGSAVER);
 
-    int memory = cConf.getInt(Constants.LogSaver.MEMORY_MB);
-    Preconditions.checkArgument(memory > 0, "Got invalid memory value for log saver %s", memory);
-    int cores = cConf.getInt(Constants.LogSaver.NUM_CORES);
-    Preconditions.checkArgument(cores > 0, "Got invalid num cores value for log saver %s", cores);
-
-    ResourceSpecification spec = ResourceSpecification.Builder
-      .with()
-      .setVirtualCores(cores)
-      .setMemory(memory, ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(numInstances)
-      .build();
-
-    return builder.add(new LogSaverTwillRunnable(Constants.Service.LOGSAVER, "hConf.xml", "cConf.xml"), spec)
+    return builder.add(new LogSaverTwillRunnable(Constants.Service.LOGSAVER, "cConf.xml", "hConf.xml"), resourceSpec)
       .withLocalFiles()
       .add("hConf.xml", hConfFile.toURI())
       .add("cConf.xml", cConfFile.toURI())
       .apply();
   }
 
-  private TwillSpecification.Builder.RunnableSetter addMetricsProcessor(TwillSpecification.Builder.MoreRunnable
-                                                                          builder) {
+  private TwillSpecification.Builder.RunnableSetter addMetricsProcessor(
+    TwillSpecification.Builder.MoreRunnable builder) {
 
-    int numCores = cConf.getInt(Constants.MetricsProcessor.NUM_CORES);
-    int memoryMB = cConf.getInt(Constants.MetricsProcessor.MEMORY_MB);
-    int instances = instanceCountMap.get(Constants.Service.METRICS_PROCESSOR);
-
-    ResourceSpecification metricsProcessorSpec = ResourceSpecification.Builder
-      .with()
-      .setVirtualCores(numCores)
-      .setMemory(memoryMB, ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(instances)
-      .build();
+    ResourceSpecification resourceSpec = createResourceSpecification(Constants.MetricsProcessor.NUM_CORES,
+                                                                     Constants.MetricsProcessor.MEMORY_MB,
+                                                                     Constants.Service.METRICS_PROCESSOR);
 
     return builder.add(new MetricsProcessorTwillRunnable(Constants.Service.METRICS_PROCESSOR, "cConf.xml", "hConf.xml"),
-                       metricsProcessorSpec)
+                       resourceSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())
@@ -143,18 +124,11 @@ public class MasterTwillApplication implements TwillApplication {
 
   private TwillSpecification.Builder.RunnableSetter addMetricsService(TwillSpecification.Builder.MoreRunnable
                                                                         builder) {
-    int metricsNumCores = cConf.getInt(Constants.Metrics.NUM_CORES);
-    int metricsMemoryMb = cConf.getInt(Constants.Metrics.MEMORY_MB);
-    int metricsInstances = instanceCountMap.get(Constants.Service.METRICS);
+    ResourceSpecification resourceSpec = createResourceSpecification(Constants.Metrics.NUM_CORES,
+                                                                     Constants.Metrics.MEMORY_MB,
+                                                                     Constants.Service.METRICS);
 
-    ResourceSpecification metricsSpec = ResourceSpecification.Builder
-      .with()
-      .setVirtualCores(metricsNumCores)
-      .setMemory(metricsMemoryMb, ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(metricsInstances)
-      .build();
-
-    return builder.add(new MetricsTwillRunnable(Constants.Service.METRICS, "cConf.xml", "hConf.xml"), metricsSpec)
+    return builder.add(new MetricsTwillRunnable(Constants.Service.METRICS, "cConf.xml", "hConf.xml"), resourceSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())
@@ -162,21 +136,15 @@ public class MasterTwillApplication implements TwillApplication {
 
   }
 
-  private TwillSpecification.Builder.RunnableSetter addTransactionService(TwillSpecification.Builder.MoreRunnable
-                                                                            builder) {
-    int txNumCores = cConf.getInt(Constants.Transaction.Container.NUM_CORES);
-    int txMemoryMb = cConf.getInt(Constants.Transaction.Container.MEMORY_MB);
-    int txInstances = instanceCountMap.get(Constants.Service.TRANSACTION);
+  private TwillSpecification.Builder.RunnableSetter addTransactionService(
+    TwillSpecification.Builder.MoreRunnable builder) {
 
-    ResourceSpecification transactionSpec = ResourceSpecification.Builder
-      .with()
-      .setVirtualCores(txNumCores)
-      .setMemory(txMemoryMb, ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(txInstances)
-      .build();
+    ResourceSpecification resourceSpec = createResourceSpecification(Constants.Transaction.Container.NUM_CORES,
+                                                                     Constants.Transaction.Container.MEMORY_MB,
+                                                                     Constants.Service.TRANSACTION);
 
     return builder.add(new TransactionServiceTwillRunnable(Constants.Service.TRANSACTION, "cConf.xml", "hConf.xml"),
-                       transactionSpec)
+                       resourceSpec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())
@@ -184,13 +152,9 @@ public class MasterTwillApplication implements TwillApplication {
   }
 
   private TwillSpecification.Builder.RunnableSetter addStreamService(TwillSpecification.Builder.MoreRunnable builder) {
-    int instances = instanceCountMap.get(Constants.Service.STREAMS);
-
-    ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-      .setVirtualCores(cConf.getInt(Constants.Stream.CONTAINER_VIRTUAL_CORES))
-      .setMemory(cConf.getInt(Constants.Stream.CONTAINER_MEMORY_MB), ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(instances)
-      .build();
+    ResourceSpecification resourceSpec = createResourceSpecification(Constants.Stream.CONTAINER_VIRTUAL_CORES,
+                                                                     Constants.Stream.CONTAINER_MEMORY_MB,
+                                                                     Constants.Service.STREAMS);
 
     return builder.add(new StreamHandlerRunnable(Constants.Service.STREAMS, "cConf.xml", "hConf.xml"), resourceSpec)
       .withLocalFiles()
@@ -201,14 +165,10 @@ public class MasterTwillApplication implements TwillApplication {
 
   private TwillSpecification.Builder.RunnableSetter addDatasetOpExecutor(
     TwillSpecification.Builder.MoreRunnable builder) {
-    int instances = instanceCountMap.get(Constants.Service.DATASET_EXECUTOR);
 
-    ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-      .setVirtualCores(cConf.getInt(Constants.Dataset.Executor.CONTAINER_VIRTUAL_CORES))
-      .setMemory(cConf.getInt(Constants.Dataset.Executor.CONTAINER_MEMORY_MB), ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(instances)
-      .build();
-
+    ResourceSpecification resourceSpec = createResourceSpecification(Constants.Dataset.Executor.CONTAINER_VIRTUAL_CORES,
+                                                                     Constants.Dataset.Executor.CONTAINER_MEMORY_MB,
+                                                                     Constants.Service.DATASET_EXECUTOR);
     return builder.add(
       new DatasetOpExecutorServerTwillRunnable(Constants.Service.DATASET_EXECUTOR, "cConf.xml", "hConf.xml"),
       resourceSpec)
@@ -219,14 +179,9 @@ public class MasterTwillApplication implements TwillApplication {
   }
 
   private TwillSpecification.Builder.RunnableSetter addExploreService(TwillSpecification.Builder.MoreRunnable builder) {
-    int instances = instanceCountMap.get(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
-
-    ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-      .setVirtualCores(cConf.getInt(Constants.Explore.CONTAINER_VIRTUAL_CORES))
-      .setMemory(cConf.getInt(Constants.Explore.CONTAINER_MEMORY_MB), ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(instances)
-      .build();
-
+    ResourceSpecification resourceSpec = createResourceSpecification(Constants.Explore.CONTAINER_VIRTUAL_CORES,
+                                                                     Constants.Explore.CONTAINER_MEMORY_MB,
+                                                                     Constants.Service.EXPLORE_HTTP_USER_SERVICE);
     TwillSpecification.Builder.MoreFile twillSpecs =
       builder.add(
         new ExploreCustomClassLoaderTwillRunnable(
@@ -247,13 +202,9 @@ public class MasterTwillApplication implements TwillApplication {
   }
 
   private TwillSpecification.Builder.RunnableSetter addMessaging(TwillSpecification.Builder.MoreRunnable builder) {
-    int instances = instanceCountMap.get(Constants.Service.MESSAGING_SERVICE);
-
-    ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-      .setVirtualCores(cConf.getInt(Constants.MessagingSystem.CONTAINER_VIRTUAL_CORES))
-      .setMemory(cConf.getInt(Constants.MessagingSystem.CONTAINER_MEMORY_MB), ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(instances)
-      .build();
+    ResourceSpecification resourceSpec = createResourceSpecification(Constants.MessagingSystem.CONTAINER_VIRTUAL_CORES,
+                                                                     Constants.MessagingSystem.CONTAINER_MEMORY_MB,
+                                                                     Constants.Service.MESSAGING_SERVICE);
 
     return builder.add(new MessagingServiceTwillRunnable(Constants.Service.MESSAGING_SERVICE, "cConf.xml", "hConf.xml"),
                        resourceSpec)
@@ -262,5 +213,21 @@ public class MasterTwillApplication implements TwillApplication {
       .add("hConf.xml", hConfFile.toURI())
       .apply();
 
+  }
+
+  private ResourceSpecification createResourceSpecification(String vCoresKey, String memoryKey, String instancesKey) {
+    int vCores = cConf.getInt(vCoresKey);
+    int memory = cConf.getInt(memoryKey);
+    int instances = instanceCountMap.get(instancesKey);
+
+    Preconditions.checkArgument(vCores > 0, "Number of virtual cores must be > 0 for property %s", vCoresKey);
+    Preconditions.checkArgument(memory > 0, "Memory size must be > 0 for property %s", memoryKey);
+    Preconditions.checkArgument(instances > 0, "Number of instances must be > 0 for property %s", instancesKey);
+
+    return ResourceSpecification.Builder.with()
+      .setVirtualCores(vCores)
+      .setMemory(memory, ResourceSpecification.SizeUnit.MEGA)
+      .setInstances(instances)
+      .build();
   }
 }

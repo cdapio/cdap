@@ -170,7 +170,7 @@ public class MasterServiceMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(MasterServiceMain.class);
 
   private static final long MAX_BACKOFF_TIME_MS = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
-  private static final long SUCCESSFUL_RUN_DURATON_MS = TimeUnit.MILLISECONDS.convert(20, TimeUnit.MINUTES);
+  private static final long SUCCESSFUL_RUN_DURATION_MS = TimeUnit.MILLISECONDS.convert(20, TimeUnit.MINUTES);
 
   // Maximum time to try looking up the existing twill application
   private static final long LOOKUP_ATTEMPT_TIMEOUT_MS = 2000;
@@ -404,7 +404,7 @@ public class MasterServiceMain extends DaemonMain {
 
 
   /**
-   * Creates an unstarted {@link LeaderElection} for the master service.
+   * Creates an not started {@link LeaderElection} for the master service.
    */
   private LeaderElection createLeaderElection() {
     String electionPath = "/election/" + Constants.Service.MASTER_SERVICES;
@@ -442,7 +442,7 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   /**
-   * Performs kerbose login if security is enabled.
+   * Performs Kerberos login if security is enabled.
    */
   private void login(CConfiguration cConf) {
     try {
@@ -486,7 +486,6 @@ public class MasterServiceMain extends DaemonMain {
     try (BufferedWriter bw = new BufferedWriter(new FileWriter(shutdownTimeFile))) {
       //Write shutdown time
       bw.write(timestamp.toString());
-      bw.close();
       LOG.info("Saved CDAP shutdown time {} at file {}", timestamp, shutdownTimeFile.getAbsolutePath());
     } catch (IOException e) {
       LOG.error("Failed to save CDAP shutdown time", e);
@@ -646,7 +645,7 @@ public class MasterServiceMain extends DaemonMain {
         } catch (Throwable t) {
           // shut down the executor and stop the twill app,
           // then throw an exception to cause the leader election service to stop
-          // leaderelection's listener will then shutdown the master
+          // leader election's listener will then shutdown the master
           stop(true);
           throw new RuntimeException(String.format("Unable to start service %s: %s", service, t.getMessage()));
         }
@@ -669,7 +668,7 @@ public class MasterServiceMain extends DaemonMain {
       if (secureStoreUpdateCancellable != null) {
         secureStoreUpdateCancellable.cancel();
       }
-      // If the master process has been explcitly stopped, stop the twill application as well.
+      // If the master process has been explicitly stopped, stop the twill application as well.
       if (shouldTerminateApp) {
         LOG.info("Stopping master twill application");
         TwillController twillController = controller.get();
@@ -733,7 +732,7 @@ public class MasterServiceMain extends DaemonMain {
         }
 
         private void backoffRun() {
-          if (System.currentTimeMillis() - startTime > SUCCESSFUL_RUN_DURATON_MS) {
+          if (System.currentTimeMillis() - startTime > SUCCESSFUL_RUN_DURATION_MS) {
             // Restart immediately
             executor.execute(new Runnable() {
               @Override
