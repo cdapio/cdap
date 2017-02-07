@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2014-2016 Cask Data, Inc.
+# Copyright © 2014-2017 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
 # the License.
   
 # Build script for docs
-
+#
 # Builds all manuals
 # Builds each of these individually, and then packages them into a single zip file for distribution.
 # _common directory holds common files and scripts.
@@ -25,6 +25,7 @@
 # COLOR_LOGS: Set it for color output by Sphinx and these scripts
 # NO_JAVADOCS: Set it to not build Javadocs, no matter which actions are used (for testing)
 
+cd $(cd $(dirname ${BASH_SOURCE[0]}); pwd -P)
 source ./vars
 source _common/common-build.sh
 
@@ -148,10 +149,7 @@ function build_all() {
   clear_messages_set_messages_file
   run_command javadocs
   run_command docs-cli
-  run_command docs-github-part ${ARG_2} 
-  stash_github_zip 
   run_command docs-web-part ${ARG_2} 
-  restore_github_zip
   display_version
   display_messages_file
   warnings=$?
@@ -364,8 +362,7 @@ function _build_docs() {
   build_docs_inner_level ${doc_target}
   build_docs_outer_level ${google_analytics_code}
   copy_docs_inner_level
-  build_zip ${zip_target}
-  zip_extras ${zip_extras}
+  build_docs_package
   echo
   echo "--------------------------------------------------------"
   echo "Building target \"${doc_target}\" completed."
@@ -458,6 +455,60 @@ function zip_extras() {
   rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/${HTACCESS} ${TARGET_PATH}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
   cd ${TARGET_PATH}
   zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
+}
+
+function build_docs_package() {
+  echo "========================================================"
+  echo "Packaging docs..."
+  echo "--------------------------------------------------------"
+  echo
+  set_project_path
+  set_version
+  echo "Set project path and version"
+  local zip_dir_name="${PROJECT}-docs-${PROJECT_VERSION}-web"
+  cd ${TARGET_PATH}
+  docs_change_py="${SCRIPT_PATH}/tools/docs-change.py"
+  echo "Removing old directories and zips"
+  rm -rf ${PROJECT_VERSION} *.zip
+  echo "Creating ${PROJECT_VERSION}"
+  mkdir ${PROJECT_VERSION} && cp -r html ${PROJECT_VERSION}/en
+  errors=$?
+  if [[ ${errors} -ne 0 ]]; then
+      echo "Could not create ${PROJECT_VERSION}"
+      return ${errors}   
+  fi
+  echo "Adding a redirect index.html file"
+  cp ${SCRIPT_PATH}/${COMMON_SOURCE}/redirect.html ${PROJECT_VERSION}/index.html
+  errors=$?
+  if [[ ${errors} -ne 0 ]]; then
+      echo "Could not add redirect file"
+      return ${errors}   
+  fi
+  echo "Canonical numbered version ${zip_dir_name}"
+  python ${docs_change_py} ${TARGET_PATH}/${PROJECT_VERSION}
+  errors=$?
+  if [[ ${errors} -ne 0 ]]; then
+      echo "Could not change doc set ${TARGET_PATH}/${PROJECT_VERSION}"
+      return ${errors}   
+  fi
+  echo "Creating zip ${zip_dir_name}"
+  zip -qr ${zip_dir_name}.zip ${PROJECT_VERSION}/* ${PROJECT_VERSION}/.htaccess --exclude *.DS_Store* *.buildinfo*
+  errors=$?
+  if [[ ${errors} -ne 0 ]]; then
+      echo "Could not create zipped doc set ${TARGET_PATH}/${PROJECT_VERSION}"
+      return ${errors}   
+  fi
+  echo "Copying zip ${zip_dir_name}"
+  cp ${zip_dir_name}.zip ${TARGET_PATH}/${PROJECT_VERSION}
+  errors=$?
+  if [[ ${errors} -ne 0 ]]; then
+      echo "Could not copy zipped doc set into ${TARGET_PATH}/${PROJECT_VERSION}"
+      return ${errors}   
+  fi
+  echo "========================================================"
+  echo "Completed Packaging docs..."
+  echo "--------------------------------------------------------"
+  echo
 }
 
 function clean_targets() {
