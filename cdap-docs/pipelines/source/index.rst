@@ -10,13 +10,13 @@
 CDAP Pipelines
 ==============
 
-..  youtube::  JeqJrBW1UCU
-   :align: center
-   :width: 500px
+..    youtube::  JeqJrBW1UCU
+..      :align: center
+..      :width: 500px
+.. 
+..     :height: 100%
 
-..   :height: 100%
-
-CDAP Pileines are a capability of CDAP that combines a user interface with back-end services
+CDAP Pipelines are a capability of CDAP that combines a user interface with back-end services
 to enable the building, deploying, and managing of data pipelines.
 
 **Introduction**
