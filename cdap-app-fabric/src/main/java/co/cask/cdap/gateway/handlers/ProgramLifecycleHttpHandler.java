@@ -29,6 +29,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.MethodNotAllowedException;
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.NotImplementedException;
 import co.cask.cdap.common.conf.Constants;
@@ -74,6 +75,7 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -1258,7 +1260,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/queues")
   public synchronized void deleteQueues(HttpRequest request, HttpResponder responder,
                                         @PathParam("namespace-id") String namespaceId)
-    throws Exception {
+    throws NamespaceNotFoundException {
     // synchronized to avoid a potential race condition here:
     // 1. the check for state returns that all flows are STOPPED
     // 2. The API deletes queues because
@@ -1490,9 +1492,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return result;
   }
 
-  private NamespaceId validateAndGetNamespace(String namespace) throws Exception {
+  private NamespaceId validateAndGetNamespace(String namespace) throws NamespaceNotFoundException {
     NamespaceId namespaceId = new NamespaceId(namespace);
-    namespaceQueryAdmin.get(namespaceId);
+    try {
+      namespaceQueryAdmin.get(namespaceId);
+    } catch (NamespaceNotFoundException e) {
+      throw e;
+    } catch (Exception e) {
+      // This can only happen when NamespaceAdmin uses HTTP to interact with namespaces.
+      // Within AppFabric, NamespaceAdmin is bound to DefaultNamespaceAdmin which directly interacts with MDS.
+      // Hence, this should never happen.
+      throw Throwables.propagate(e);
+    }
     return namespaceId;
   }
 }
