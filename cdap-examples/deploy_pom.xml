@@ -26,14 +26,15 @@
   <name>CDAP Examples</name>
 
   <modules>
-    <module>CountRandom</module>
     <module>ClicksAndViews</module>
+    <module>CountRandom</module>
     <module>CubeService</module>
     <module>DataCleansing</module>
     <module>FileSetExample</module>
     <module>HelloWorld</module>
     <module>LogAnalysis</module>
     <module>Purchase</module>
+    <module>SpamClassifier</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
     <module>SportResults</module>
@@ -282,6 +283,12 @@
             <artifactId>asm</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-streaming_2.10</artifactId>
+        <version>${spark.version}</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
