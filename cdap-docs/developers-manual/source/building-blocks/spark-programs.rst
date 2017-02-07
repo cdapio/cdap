@@ -37,6 +37,8 @@ You can extend from the abstract class ``AbstractSpark`` to simplify the impleme
         .setMainClassName("com.example.WordCounter")
         .build();
     }
+    ...
+  }
 
 The configure method is similar to the one found in flows and MapReduce programs. It
 defines the name, description, and the class containing the Spark program to be executed
@@ -46,6 +48,17 @@ The ``initialize()`` method is invoked at runtime, before the
 Spark program is executed. Because many Spark programs do not
 need this method, the ``AbstractSpark`` class provides a default
 implementation that does nothing.
+
+However, if your program requires it, you can override this method to obtain access to the
+``SparkConf`` configuration and use it to set the :spark-docs:`Spark properties
+<configuration.html>` for the program::
+
+    import org.apache.spark.SparkConf;
+    . . .
+    @Override
+    protected void initialize() throws Exception {
+      getContext().setSparkConf(new SparkConf().set("spark.driver.extraJavaOptions", "-XX:MaxDirectMemorySize=1024m"));
+    }
 
 The ``destroy()`` method is invoked after the Spark program has
 finished. You could perform cleanup or send a notification of program
@@ -224,7 +237,7 @@ In Scala, custom object conversion is done through an implicit conversion functi
 .. highlight:: java
 
 In Java, you can read custom objects from a stream by providing a ``decoderType`` extended from
-`StreamEventDecoder <../../reference-manual/javadocs/co/cask/cdap/api/stream/StreamEventDecoder.html>`__::
+:javadoc:`StreamEventDecoder <co/cask/cdap/api/stream/StreamEventDecoder>`::
 
     sec.fromStream(streamName, startTime, endTime, decoderType, keyType, valueType);
 
@@ -302,8 +315,8 @@ Transactions and Spark
 ======================
 When a Spark program interacts with datasets, CDAP will automatically create a
 long-running transaction that covers the Spark job execution. A Spark job refers to a
-Spark action and any tasks that need to be executed to evaluate the action (see `Spark Job
-Scheduling <http://spark.apache.org/docs/1.6.1/job-scheduling.html#scheduling-within-an-application>`__
+Spark action and any tasks that need to be executed to evaluate the action (see
+:spark-docs:`Spark Job Scheduling <job-scheduling.html#scheduling-within-an-application>`
 for details). 
 
 You can also control the transaction scope yourself explicitly. It's useful when you want
@@ -383,12 +396,12 @@ Here is an example of using an explicit transaction in Spark:
 
 Spark Program Examples
 ======================
-- For examples of **Spark programs,** see the :ref:`Spam Classifier
-  <examples-spam-classifier>`, :ref:`Spark K-Means <examples-spark-k-means>`, and
-  :ref:`Spark Page Rank <examples-spark-page-rank>` examples.
+- For examples of **Spark programs,** see the :ref:`Log Analysis <examples-log-analysis>`,
+  :ref:`Spam Classifier <examples-spam-classifier>`, :ref:`Spark K-Means <examples-spark-k-means>`,
+  :ref:`Spark Page Rank <examples-spark-page-rank>`, and :ref:`Wikipedia Pipeline
+  <examples-wikipedia-data-pipeline>` examples.
 
 - For a longer example, the how-to guide :ref:`cdap-spark-guide` gives another demonstration.
 
 - If you have problems with resolving methods when developing Spark problems in an IDE 
   or running Spark programs, see :ref:`these hints <development-troubleshooting-spark>`.
-  
