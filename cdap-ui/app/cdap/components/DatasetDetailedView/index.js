@@ -30,6 +30,12 @@ import T from 'i18n-react';
 import DatasetDetaildViewTab from 'components/DatasetDetailedView/Tabs';
 import {MySearchApi} from 'api/search';
 import {parseMetadata} from 'services/metadata-parser';
+import FastActionToMessage from 'services/fast-action-message-helper';
+import Redirect from 'react-router/Redirect';
+import capitalize from 'lodash/capitalize';
+
+
+require('./DatasetDetailedView.scss');
 
 export default class DatasetDetailedView extends Component {
   constructor(props) {
@@ -42,7 +48,9 @@ export default class DatasetDetailedView extends Component {
       },
       loading: true,
       entityMetadata: objectQuery(this.props, 'location', 'state', 'entityMetadata') || {},
-      isInvalid: false
+      isInvalid: false,
+      routeToHome: false,
+      successMessage: null
     };
   }
 
@@ -134,6 +142,31 @@ export default class DatasetDetailedView extends Component {
 
   }
 
+  goToHome(action) {
+    if (action === 'delete') {
+      let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+      this.setState({
+        selectedNamespace,
+        routeToHome: true
+      });
+    }
+    let successMessage;
+    if (action === 'setPreferences') {
+      successMessage = FastActionToMessage(action, {entityType: capitalize(this.state.entityMetadata.type)});
+    } else {
+      successMessage = FastActionToMessage(action);
+    }
+    this.setState({
+      successMessage
+    }, () => {
+      setTimeout(() => {
+        this.setState({
+          successMessage: null
+        });
+      }, 3000);
+    });
+  }
+
   render() {
     if (this.state.loading) {
       return (
@@ -150,13 +183,24 @@ export default class DatasetDetailedView extends Component {
         <OverviewHeader
           icon="icon-datasets"
           title={title}
+          successMessage={this.state.successMessage}
         />
-        <OverviewMetaSection entity={this.state.entityMetadata} />
+        <OverviewMetaSection
+          entity={this.state.entityMetadata}
+          onFastActionSuccess={this.goToHome.bind(this)}
+          onFastActionUpdate={this.goToHome.bind(this)}
+        />
         <DatasetDetaildViewTab
           params={this.props.params}
           pathname={this.props.location.pathname}
           entity={this.state.entityDetail}
         />
+        {
+          this.state.routeToHome ?
+            <Redirect to={`/ns/${this.state.selectedNamespace}`} />
+          :
+            null
+        }
       </div>
     );
   }

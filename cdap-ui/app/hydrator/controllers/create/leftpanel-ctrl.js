@@ -158,9 +158,10 @@ class HydratorPlusPlusLeftPanelCtrl {
       return;
     }
     let generateLinearConnections = (config) => {
-      let nodes = [config.source].concat(config.transforms || []).concat(config.sinks);
+      let nodes = config.stages;
       let connections = [];
       let i;
+
       for (i=0; i<nodes.length - 1 ; i++) {
         connections.push({ from: nodes[i].name, to: nodes[i+1].name });
       }
@@ -195,17 +196,19 @@ class HydratorPlusPlusLeftPanelCtrl {
         });
         return;
       }
-      if (!jsonData.config.connections) {
-        jsonData.config.connections = generateLinearConnections(jsonData.config);
-      }
 
       let isNotValid = this.NonStorePipelineErrorFactory.validateImportJSON(jsonData);
+
       if (isNotValid) {
         this.myAlertOnValium.show({
           type: 'danger',
           content: isNotValid
         });
         return;
+      }
+
+      if (!jsonData.config.connections) {
+        jsonData.config.connections = generateLinearConnections(jsonData.config);
       }
 
       let validArtifact = isValidArtifact(jsonData.artifact);

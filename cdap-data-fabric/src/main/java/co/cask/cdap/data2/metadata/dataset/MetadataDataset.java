@@ -689,7 +689,7 @@ public class MetadataDataset extends AbstractDataset {
    *
    * @param namespaceId the namespaceId to search in
    * @param searchQuery the user specified search query. If {@code *}, returns a singleton list containing
-   *                    {code *} which matches everything.
+   *                    {@code *} which matches everything.
    * @return formatted search query which is namespaced
    */
   private Iterable<String> getSearchTerms(String namespaceId, String searchQuery) {

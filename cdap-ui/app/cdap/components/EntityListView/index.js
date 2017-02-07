@@ -140,7 +140,8 @@ class EntityListView extends Component {
 
   refreshSearchByCreationTime() {
     this.setState({
-      sortObj: this.sortOptions[4]
+      sortObj: this.sortOptions[4],
+      selectedEntity: null
     }, this.search.bind(this));
   }
 
@@ -319,7 +320,8 @@ class EntityListView extends Component {
     let offset = (currentPage - 1) * this.pageSize;
 
     this.setState({
-      loading : true
+      loading : true,
+      selectedEntity: null
     });
 
     let params = {
@@ -396,7 +398,8 @@ class EntityListView extends Component {
     }
 
     this.setState({
-      filter : filters
+      filter : filters,
+      selectedEntity: null
     }, () => {
       this.search(this.state.query, filters, this.state.sortObj);
     });
@@ -411,7 +414,8 @@ class EntityListView extends Component {
 
     this.setState({
       currentPage : pageNumber,
-      animationDirection : direction
+      animationDirection : direction,
+      selectedEntity: null
     }, () => this.search());
   }
 
@@ -419,7 +423,8 @@ class EntityListView extends Component {
     let isSearchDisabled = option.fullSort === 'none' ? false : true;
     this.setState({
       sortObj : option,
-      isSearchDisabled
+      isSearchDisabled,
+      selectedEntity: null
     }, () => {
       this.search(this.state.query, this.state.filter, option);
     });
@@ -430,7 +435,8 @@ class EntityListView extends Component {
     this.setState({
       query,
       isSortDisabled,
-      sortObj: this.sortOptions[0]
+      sortObj: this.sortOptions[0],
+      selectedEntity: null
     }, () => {
       this.search(query, this.state.filter, this.state.sortObj);
     });
@@ -490,7 +496,8 @@ class EntityListView extends Component {
 
   setAnimationDirection(direction) {
     this.setState({
-      animationDirection : direction
+      animationDirection : direction,
+      selectedEntity: null
     });
   }
 
@@ -513,6 +520,18 @@ class EntityListView extends Component {
         modalState: true
       }
     });
+  }
+
+  onOverviewCloseAndRefresh() {
+    this.setState({selectedEntity: null}, this.search.bind(this));
+  }
+
+  onFastActionSuccess() {
+    if (this.state.selectedEntity) {
+      this.onOverviewCloseAndRefresh();
+      return;
+    }
+    this.search();
   }
 
   render() {
@@ -556,7 +575,7 @@ class EntityListView extends Component {
               list={this.state.entities}
               loading={this.state.loading}
               onEntityClick={this.handleEntityClick.bind(this)}
-              onUpdate={this.search.bind(this)}
+              onFastActionSuccess={this.onFastActionSuccess.bind(this)}
               errorMessage={this.state.entityErr}
               errorStatusCode={this.state.errStatusCode}
               animationDirection={this.state.animationDirection}
@@ -567,6 +586,7 @@ class EntityListView extends Component {
               toggleOverview={!isNil(this.state.selectedEntity)}
               entity={this.state.selectedEntity}
               onClose={this.handleEntityClick.bind(this)}
+              onCloseAndRefresh={this.onOverviewCloseAndRefresh.bind(this)}
             />
           </div>
         </Pagination>

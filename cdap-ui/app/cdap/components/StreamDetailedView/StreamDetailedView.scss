@@ -14,21 +14,8 @@
  * the License.
  */
 
-@import '../../styles/variables.scss';
-
-.dataentity-table {
-  padding-top: 10px;
-  .fast-actions-container .btn-link {
-    color: #4f5050;
-  }
-  .table {
-    [class^="icon-"].fa,
-    [class*=" icon-"].fa {
-      margin-right: 5px;
-    }
-    tr th,
-    tr td {
-      border-color: $custom_table-border-color;
-    }
+.app-detailed-view {
+  .iframe-container {
+    height: calc(100% - 26px);
   }
 }

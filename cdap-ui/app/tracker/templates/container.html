@@ -15,7 +15,8 @@
 -->
 
 <!-- NAVBAR ACROSS TRACKER -->
-<div class="tracker-top-search">
+<div class="tracker-top-search"
+     ng-if="!$state.params.iframe">
   <div class="tracker-search-bar">
     <div class="form-group has-feedback" ng-keypress="ContainerController.search($event)">
       <input type="text"

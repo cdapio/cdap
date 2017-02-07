@@ -17,8 +17,7 @@
 .namespace-preferences {
   width: 100%;
   padding-right: 20px;
-  height: 100%;
-  max-height: 250px;
+  height: calc(100% - 32px);
   overflow-y: auto;
   overflow-x: hidden;
 }

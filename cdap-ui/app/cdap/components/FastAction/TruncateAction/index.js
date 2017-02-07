@@ -22,6 +22,7 @@ import FastActionButton from '../FastActionButton';
 import ConfirmationModal from 'components/ConfirmationModal';
 import {Tooltip} from 'reactstrap';
 import T from 'i18n-react';
+import classnames from 'classnames';
 
 export default class TruncateAction extends Component {
   constructor(props) {
@@ -34,6 +35,7 @@ export default class TruncateAction extends Component {
       modal: false,
       loading: false,
       errorMessage: '',
+      success: false,
       extendedMessage: '',
       tooltipOpen: false
     };
@@ -49,6 +51,20 @@ export default class TruncateAction extends Component {
   }
   toggleTooltip() {
     this.setState({ tooltipOpen : !this.state.tooltipOpen });
+  }
+  onSuccess(res) {
+    this.setState({
+      success: true
+    }, () => {
+      if (this.props.onSuccess) {
+        this.props.onSuccess(res);
+      }
+      setTimeout(() => {
+        this.setState({
+          success: false
+        });
+      }, 3000);
+    });
   }
   action() {
     this.setState({loading: true});
@@ -69,7 +85,7 @@ export default class TruncateAction extends Component {
 
     api(params)
       .subscribe((res) => {
-        this.props.onSuccess(res);
+        this.onSuccess(res);
         this.setState({
           loading: false,
           modal: false
@@ -87,10 +103,11 @@ export default class TruncateAction extends Component {
     const actionLabel = T.translate('features.FastAction.truncateLabel');
     const headerTitle = `${actionLabel} ${this.props.entity.type}`;
     const tooltipID = `${this.props.entity.uniqueId}-truncate`;
+    let truncateActionClassNames = 'fa fa-scissors';
     return (
       <span>
         <FastActionButton
-          icon="fa fa-scissors"
+          icon={classnames(truncateActionClassNames, {'text-success': this.state.success})}
           action={this.toggleModal}
           id={tooltipID}
         />

@@ -14,7 +14,7 @@
   the License.
 -->
 <div class="cask-header">
-  <div class="navbar navbar-fixed-top">
+  <div class="navbar navbar-fixed-top" ng-class="{'non-iframe': !$state.params.iframe}">
     <nav class="navbar {{Navbar.activeProduct}}">
       <cask-header-brand></cask-header-brand>
       <!-- HYDRATOR -->

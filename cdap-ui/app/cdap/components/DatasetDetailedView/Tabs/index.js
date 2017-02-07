@@ -21,6 +21,9 @@ import Match from 'react-router/Match';
 import Link from 'react-router/Link';
 import ProgramTab from 'components/Overview/Tabs/ProgramTab';
 import SchemaTab from 'components/Overview/Tabs/SchemaTab';
+import UsageTab from 'components/DatasetDetailedView/Tabs/UsageTab';
+import AuditTab from 'components/DatasetDetailedView/Tabs/AuditTab';
+import LineageTab from 'components/DatasetDetailedView/Tabs/LineageTab';
 
 export default class DatasetDetailedViewTabs extends Component {
   constructor(props) {
@@ -48,14 +51,14 @@ export default class DatasetDetailedViewTabs extends Component {
           <NavItem>
             <NavLink>
               <Link
-                to={`${baseLinkPath}/programs`}
+                to={`${baseLinkPath}/usage`}
                 activeClassName="active"
                 isActive={(location) => {
-                  let basepath = `^${baseLinkPath}(/programs)?$`;
+                  let basepath = `^${baseLinkPath}(/usage)?$`;
                    return location.pathname.match(basepath);
                 }}
               >
-                Programs ({this.state.entity.programs.length})
+                Usage
               </Link>
             </NavLink>
           </NavItem>
@@ -70,11 +73,58 @@ export default class DatasetDetailedViewTabs extends Component {
               </Link>
             </NavLink>
           </NavItem>
+
+          <NavItem>
+            <NavLink>
+              <Link
+                to={`${baseLinkPath}/programs`}
+                activeClassName="active"
+              >
+                Programs ({this.state.entity.programs.length})
+              </Link>
+            </NavLink>
+          </NavItem>
+
+          <NavItem>
+            <NavLink>
+              <Link
+                to={`${baseLinkPath}/lineage`}
+                activeClassName="active"
+              >
+                Lineage
+              </Link>
+            </NavLink>
+          </NavItem>
+
+          <NavItem>
+            <NavLink>
+              <Link
+                to={`${baseLinkPath}/audit`}
+                activeClassName="active"
+              >
+                Audit Log
+              </Link>
+            </NavLink>
+          </NavItem>
         </Nav>
         <Match pattern={`${baseMatchPath}/`} render={
           () => {
             return (
-              <ProgramTab entity={this.state.entity} />
+              <UsageTab entity={this.state.entity} />
+            );
+          }}
+        />
+        <Match pattern={`${baseMatchPath}/usage`} render={
+          () => {
+            return (
+              <UsageTab entity={this.state.entity} />
+            );
+          }}
+        />
+        <Match pattern={`${baseMatchPath}/schema`} render={
+          () => {
+            return (
+              <SchemaTab entity={this.state.entity} />
             );
           }}
         />
@@ -85,10 +135,17 @@ export default class DatasetDetailedViewTabs extends Component {
             );
           }}
         />
-        <Match pattern={`${baseMatchPath}/schema`} render={
+        <Match pattern={`${baseMatchPath}/lineage`} render={
           () => {
             return (
-              <SchemaTab entity={this.state.entity} />
+              <LineageTab entity={this.state.entity} />
+            );
+          }}
+        />
+        <Match pattern={`${baseMatchPath}/audit`} render={
+          () => {
+            return (
+              <AuditTab entity={this.state.entity} />
             );
           }}
         />

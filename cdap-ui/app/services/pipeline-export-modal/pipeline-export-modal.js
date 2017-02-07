@@ -20,7 +20,7 @@ angular.module(PKG.name + '.services')
       if (!config || !exportConfig) {
         return;
       }
-      $uibModal.open({
+      var modalInstance = $uibModal.open({
         templateUrl: 'pipeline-export-modal/pipeline-export-modal-template.html',
         size: 'lg',
         keyboard: true,
@@ -41,6 +41,7 @@ angular.module(PKG.name + '.services')
             $timeout.cancel(exportTimeout);
             exportTimeout = $timeout(function() {
               document.getElementById('pipeline-export-config-link').click();
+              modalInstance.dismiss();
             });
           };
 

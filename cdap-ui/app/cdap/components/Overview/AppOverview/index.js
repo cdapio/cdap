@@ -24,7 +24,9 @@ import NamespaceStore from 'services/NamespaceStore';
 import {objectQuery} from 'services/helpers';
 import shortid from 'shortid';
 import T from 'i18n-react';
+import FastActionToMessage from 'services/fast-action-message-helper';
 require('./AppOverview.scss');
+import capitalize from 'lodash/capitalize';
 
 export default class AppOverview extends Component {
   constructor(props) {
@@ -33,7 +35,8 @@ export default class AppOverview extends Component {
       entity: this.props.entity,
       activeTab: '1',
       entityDetail: null,
-      loading: false
+      loading: false,
+      successMessage: null
     };
   }
   componentWillMount() {
@@ -99,6 +102,23 @@ export default class AppOverview extends Component {
         });
     }
   }
+  onFastActionSuccess(action) {
+    this.onFastActionUpdate(action);
+    if (this.props.onCloseAndRefresh) {
+      this.props.onCloseAndRefresh(action);
+    }
+  }
+  onFastActionUpdate(action) {
+    let successMessage;
+    if (action === 'setPreferences') {
+      successMessage = FastActionToMessage(action, {entityType: capitalize(this.props.entity.type)});
+    } else {
+      successMessage = FastActionToMessage(action);
+    }
+    this.setState({
+      successMessage
+    });
+  }
   render() {
     if (this.state.loading) {
       return (
@@ -122,9 +142,14 @@ export default class AppOverview extends Component {
               entityDetail: this.state.entityDetail
             }
           }}
+          successMessage={this.state.successMessage}
           onClose={this.props.onClose}
         />
-        <OverviewMetaSection entity={this.state.entity} />
+        <OverviewMetaSection
+          entity={this.state.entity}
+          onFastActionSuccess={this.onFastActionSuccess.bind(this)}
+          onFastActionUpdate={this.onFastActionUpdate.bind(this)}
+        />
         <AppOverviewTab entity={this.state.entityDetail} />
       </div>
     );
@@ -134,5 +159,6 @@ export default class AppOverview extends Component {
 AppOverview.propTypes = {
   toggleOverview: PropTypes.bool,
   entity: PropTypes.object,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
+  onCloseAndRefresh: PropTypes.func
 };

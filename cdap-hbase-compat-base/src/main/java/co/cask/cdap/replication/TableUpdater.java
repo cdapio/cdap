@@ -18,17 +18,15 @@ package co.cask.cdap.replication;
 
 import co.cask.cdap.api.common.Bytes;
 import org.apache.hadoop.conf.Configuration;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Utility class for Replication Status Tool
@@ -36,7 +34,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class TableUpdater {
 
   private static final Logger LOG = LoggerFactory.getLogger(TableUpdater.class);
-  private ConcurrentHashMap<String, Long> cachedUpdates;
+  private HashMap<String, Long> cachedUpdates;
+  private final Object cachedUpdatesLock = new Object();
   private Timer updateTimer;
 
   public final UUID rsID;
@@ -60,7 +59,7 @@ public abstract class TableUpdater {
       ? new Long(configuredPeriod)
       : ReplicationConstants.ReplicationStatusTool.REPLICATION_PERIOD_DEFAULT;
 
-    cachedUpdates = new ConcurrentHashMap<>();
+    cachedUpdates = new HashMap<>();
     setupTimer(delay, period);
   }
 
@@ -70,9 +69,11 @@ public abstract class TableUpdater {
    * @param regionName is the key for the Map
    * @param time is the value for the Map
    */
-  public synchronized void updateTime(String regionName, long time) throws IOException {
-    if (!cachedUpdates.containsKey(regionName) || time > cachedUpdates.get(regionName)) {
-      cachedUpdates.put(regionName, time);
+  public void updateTime(String regionName, long time) throws IOException {
+    synchronized (cachedUpdatesLock) {
+      if (!cachedUpdates.containsKey(regionName) || time > cachedUpdates.get(regionName)) {
+        cachedUpdates.put(regionName, time);
+      }
     }
   }
 
@@ -91,9 +92,16 @@ public abstract class TableUpdater {
             createTableIfNotExists(conf);
             tableExists = true;
           }
-          if (!cachedUpdates.isEmpty()) {
-            LOG.debug("Update Replication State table now. {} entries.", cachedUpdates.size());
-            writeState(cachedUpdates);
+          HashMap<String, Long> updatesToWrite;
+          synchronized (cachedUpdatesLock) {
+            // Make a copy so HBase write can happen outside of the synchronized block
+            updatesToWrite = cachedUpdates;
+            // Remove stale updates
+            cachedUpdates = new HashMap<>();
+          }
+          if (!updatesToWrite.isEmpty()) {
+            LOG.debug("Update Replication State table now. {} entries.", updatesToWrite.size());
+            writeState(updatesToWrite);
           }
         } catch (IOException ioe) {
           LOG.error("Put to Replication State Table failed.", ioe);
@@ -105,7 +113,9 @@ public abstract class TableUpdater {
 
   public void cancelTimer() throws IOException {
     LOG.info("Cancelling Update Timer now.");
-    writeState(cachedUpdates);
+    synchronized (cachedUpdatesLock) {
+      writeState(cachedUpdates);
+    }
     updateTimer.cancel();
   }
 

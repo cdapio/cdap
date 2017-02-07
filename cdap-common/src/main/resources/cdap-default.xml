@@ -658,7 +658,7 @@
     <name>data.tx.prune.enable</name>
     <value>true</value>
     <description>
-      Enable invalid transaction list pruning.
+      Enable invalid transaction list pruning
     </description>
   </property>
 
@@ -666,8 +666,8 @@
     <name>data.tx.prune.plugins</name>
     <value>data.tx.DefaultHBaseTransactionPruningPlugin</value>
     <description>
-      List of Transaction Pruning Plugins for CDAP HBase Tables that use transaction functionality
-      to skip or clean invalid data.
+      List of transaction pruning plugins; for CDAP HBase tables that use transaction
+      functionality to skip or clean invalid data
     </description>
   </property>
 
@@ -675,7 +675,7 @@
     <name>data.tx.DefaultHBaseTransactionPruningPlugin.class</name>
     <value>co.cask.data2.txprune.DefaultHBaseTransactionPruningPlugin</value>
     <description>
-      Class name for the TransactionPruningPlugin.
+      Class name for the default transaction pruning plugin
     </description>
   </property>
 

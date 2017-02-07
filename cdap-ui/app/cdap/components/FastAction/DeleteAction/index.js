@@ -44,7 +44,11 @@ export default class DeleteAction extends Component {
   }
 
   toggleModal(event) {
-    this.setState({modal: !this.state.modal});
+    this.setState({
+      modal: !this.state.modal,
+      errorMessage: '',
+      extendedMessage: '',
+    });
     if (event) {
       event.stopPropagation();
       event.nativeEvent.stopImmediatePropagation();
