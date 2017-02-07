@@ -38,11 +38,12 @@ public class HBaseVersion {
   private static final String HBASE_10_VERSION = "1.0";
   private static final String HBASE_11_VERSION = "1.1";
   private static final String HBASE_12_VERSION = "1.2";
-  private static final String CDH55_CLASSIFIER = "cdh5.5";
-  private static final String CDH56_CLASSIFIER = "cdh5.6";
-  private static final String CDH57_CLASSIFIER = "cdh5.7";
-  private static final String CDH58_CLASSIFIER = "cdh5.8";
-  private static final String CDH59_CLASSIFIER = "cdh5.9";
+  private static final String CDH55_CLASSIFIER = "cdh5.5.";
+  private static final String CDH56_CLASSIFIER = "cdh5.6.";
+  private static final String CDH57_CLASSIFIER = "cdh5.7.";
+  private static final String CDH58_CLASSIFIER = "cdh5.8.";
+  private static final String CDH59_CLASSIFIER = "cdh5.9.";
+  private static final String CDH510_CLASSIFIER = "cdh5.10.";
   private static final String CDH_CLASSIFIER = "cdh";
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseVersion.class);
@@ -253,9 +254,10 @@ public class HBaseVersion {
       VersionNumber ver = VersionNumber.create(versionString);
       if (ver.getClassifier() != null &&
         (ver.getClassifier().startsWith(CDH57_CLASSIFIER) ||
-          // CDH 5.7 compat module can be re-used with CDH 5.8 and CDH 5.9
+          // CDH 5.7 compat module can be re-used with CDH 5.8.x, CDH 5.9.x, CDH 5.10.x
           ver.getClassifier().startsWith(CDH58_CLASSIFIER) ||
-          ver.getClassifier().startsWith(CDH59_CLASSIFIER))) {
+          ver.getClassifier().startsWith(CDH59_CLASSIFIER) ||
+          ver.getClassifier().startsWith(CDH510_CLASSIFIER))) {
         return Version.HBASE_12_CDH57;
       } else {
         // HBase-11 compat module can be re-used for HBASE-12 as there is no change needed in compat source.
