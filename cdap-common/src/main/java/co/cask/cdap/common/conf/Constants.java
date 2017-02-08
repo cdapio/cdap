@@ -685,8 +685,6 @@ public final class Constants {
 
     public static final String SERVICE_DESCRIPTION = "Service to collect and store logs.";
     public static final String MESSAGE_PROCESSOR_FACTORIES =  "log.saver.message.processor.factories";
-
-    public static final String PERMISSION = "log.saver.permission";
   }
 
   /**
@@ -703,8 +701,51 @@ public final class Constants {
    */
   public static final class Logging {
     public static final String COMPONENT_NAME = "services";
+
+    // Configuration keys
     public static final String KAFKA_TOPIC = "log.kafka.topic";
     public static final String NUM_PARTITIONS = "log.publish.num.partitions";
+
+    public static final String PIPELINE_CONFIG_DIR = "log.process.pipeline.config.dir";
+    public static final String PIPELINE_LIBRARY_DIR = "log.process.pipeline.lib.dir";
+    public static final String PIPELINE_AUTO_BUFFER_RATIO = "log.process.pipeline.auto.buffer.ratio";
+
+    // The following properties can be defined in cdap-site and overridden in individual pipeline config xml
+    public static final String PIPELINE_BUFFER_SIZE = "log.process.pipeline.buffer.size";
+    public static final String PIPELINE_EVENT_DELAY_MS = "log.process.pipeline.event.delay.ms";
+    public static final String PIPELINE_KAFKA_FETCH_SIZE = "log.process.pipeline.kafka.fetch.size";
+    public static final String PIPELINE_CHECKPOINT_INTERVAL_MS = "log.process.pipeline.checkpoint.interval.ms";
+    public static final String PIPELINE_LOGGER_CACHE_SIZE = "log.process.pipeline.logger.cache.size";
+    public static final String PIPELINE_LOGGER_CACHE_EXPIRATION_MS = "log.process.pipeline.logger.cache.expiration.ms";
+
+    // This is a pipeline property only for backward compatibility purpose in 4.1, due to prior to 4.1,
+    // the kafka offset prefix is hardcoded to Bytes.toBytes(100)
+    public static final String PIPELINE_CHECKPOINT_PREFIX_NUM = "log.process.pipeline.checkpoint.prefix.num";
+
+    // Property key in the logger context to indicate it is performing pipeline validation
+    public static final String PIPELINE_VALIDATION = "log.pipeline.validation";
+
+    // Constants
+    // Table used to store log metadata
+    public static final String META_TABLE = "log.meta";
+    // key constants
+    public static final String TAG_NAMESPACE_ID = ".namespaceId";
+    public static final String TAG_APPLICATION_ID = ".applicationId";
+    public static final String TAG_RUN_ID = ".runId";
+    public static final String TAG_INSTANCE_ID = ".instanceId";
+
+    public static final String TAG_FLOW_ID = ".flowId";
+    public static final String TAG_FLOWLET_ID = ".flowletId";
+    public static final String TAG_SERVICE_ID = ".serviceId";
+    public static final String TAG_MAP_REDUCE_JOB_ID = ".mapReduceId";
+    public static final String TAG_SPARK_JOB_ID = ".sparkId";
+    public static final String TAG_USER_SERVICE_ID = ".userserviceid";
+    public static final String TAG_HANDLER_ID = ".userhandlerid";
+    public static final String TAG_WORKER_ID = ".workerid";
+    public static final String TAG_WORKFLOW_ID = ".workflowId";
+    public static final String TAG_WORKFLOW_MAP_REDUCE_ID = ".workflowMapReduceId";
+    public static final String TAG_WORKFLOW_SPARK_ID = ".workflowSparkId";
+    public static final String TAG_WORKFLOW_PROGRAM_RUN_ID = ".workflowProgramRunId";
   }
 
   /**

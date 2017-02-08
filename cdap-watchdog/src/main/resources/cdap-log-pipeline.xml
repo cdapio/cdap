@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright © 2017 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+  -->
+
+<configuration>
+
+  <!-- Shouldn't change -->
+  <contextName>cdap</contextName>
+
+  <!-- This is for backward compatibility for <= 4.0, since it was hardcoded to Bytes.toBytes(100). Don't modify. -->
+  <property name="log.process.pipeline.checkpoint.prefix.num" value="100"/>
+
+  <appender name="CDAP" class="co.cask.cdap.logging.framework.CDAPLogAppender">
+    <dirPermissions>${dir.permissions}</dirPermissions>
+    <filePermissions>${file.permissions}</filePermissions>
+    <syncIntervalBytes>${file.sync.interval.bytes}</syncIntervalBytes>
+    <maxFileLifetimeMs>${file.max.lifetime.ms}</maxFileLifetimeMs>
+  </appender>
+
+  <appender name="METRICS" class="co.cask.cdap.logging.framework.MetricsLogAppender"/>
+
+  <root level="ALL">
+    <appender-ref ref="CDAP"/>
+    <appender-ref ref="METRICS"/>
+  </root>
+
+</configuration>

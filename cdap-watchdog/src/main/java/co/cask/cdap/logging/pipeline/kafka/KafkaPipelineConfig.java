@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline;
+package co.cask.cdap.logging.pipeline.kafka;
 
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;
 
@@ -27,18 +27,18 @@ public final class KafkaPipelineConfig {
 
   private final String topic;
   private final Set<Integer> partitions;
-  private final long maxQueueSize;
-  private final long bufferMillis;
-  private final int kafkaBufferSize;
+  private final long maxBufferSize;
+  private final long eventDelayMillis;
+  private final int kafkaFetchBufferSize;
   private final long checkpointIntervalMillis;
 
-  public KafkaPipelineConfig(String topic, Iterable<Integer> partitions, long maxQueueSize,
-                             long bufferMillis, int kafkaBufferSize, long checkpointIntervalMillis) {
+  public KafkaPipelineConfig(String topic, Set<Integer> partitions, long maxBufferSize,
+                             long eventDelayMillis, int kafkaFetchBufferSize, long checkpointIntervalMillis) {
     this.topic = topic;
-    this.partitions = Sets.newHashSet(partitions);
-    this.maxQueueSize = maxQueueSize;
-    this.bufferMillis = bufferMillis;
-    this.kafkaBufferSize = kafkaBufferSize;
+    this.partitions = ImmutableSet.copyOf(partitions);
+    this.maxBufferSize = maxBufferSize;
+    this.eventDelayMillis = eventDelayMillis;
+    this.kafkaFetchBufferSize = kafkaFetchBufferSize;
     this.checkpointIntervalMillis = checkpointIntervalMillis;
   }
 
@@ -50,16 +50,16 @@ public final class KafkaPipelineConfig {
     return partitions;
   }
 
-  long getMaxQueueSize() {
-    return maxQueueSize;
+  long getMaxBufferSize() {
+    return maxBufferSize;
   }
 
-  long getBufferMillis() {
-    return bufferMillis;
+  long getEventDelayMillis() {
+    return eventDelayMillis;
   }
 
-  int getKafkaBufferSize() {
-    return kafkaBufferSize;
+  int getKafkaFetchBufferSize() {
+    return kafkaFetchBufferSize;
   }
 
   long getCheckpointIntervalMillis() {
@@ -71,9 +71,9 @@ public final class KafkaPipelineConfig {
     return "KafkaPipelineConfig{" +
       "topic='" + topic + '\'' +
       ", partitions=" + partitions +
-      ", maxQueueSize=" + maxQueueSize +
-      ", bufferMillis=" + bufferMillis +
-      ", kafkaBufferSize=" + kafkaBufferSize +
+      ", maxBufferSize=" + maxBufferSize +
+      ", eventDelayMillis=" + eventDelayMillis +
+      ", kafkaFetchBufferSize=" + kafkaFetchBufferSize +
       ", checkpointIntervalMillis=" + checkpointIntervalMillis +
       '}';
   }

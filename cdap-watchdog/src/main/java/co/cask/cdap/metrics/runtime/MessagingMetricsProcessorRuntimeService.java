@@ -25,7 +25,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClient;
 
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -45,7 +45,7 @@ public final class MessagingMetricsProcessorRuntimeService extends ResourceBalan
 
   @Inject
   public MessagingMetricsProcessorRuntimeService(CConfiguration conf,
-                                                 ZKClientService zkClient,
+                                                 ZKClient zkClient,
                                                  DiscoveryService discoveryService,
                                                  DiscoveryServiceClient discoveryServiceClient,
                                                  MessagingMetricsProcessorServiceFactory

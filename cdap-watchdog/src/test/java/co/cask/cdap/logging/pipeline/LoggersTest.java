@@ -16,9 +16,10 @@
 
 package co.cask.cdap.logging.pipeline;
 
-import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
+import co.cask.cdap.logging.framework.Loggers;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
@@ -36,9 +37,9 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 /**
- * Unit-test for {@link EffectiveLevelProvider}.
+ * Unit-test for {@link Loggers} util class.
  */
-public class EffectiveLevelProviderTest {
+public class LoggersTest {
 
   @Test
   public void testEffectiveLevel() throws Exception {
@@ -52,17 +53,19 @@ public class EffectiveLevelProviderTest {
       "test.a.X$1", "OFF"
     )))));
 
-    EffectiveLevelProvider cache = new EffectiveLevelProvider(context, 10);
+    Assert.assertSame(context.getLogger("test"), Loggers.getEffectiveLogger(context, "test"));
+    Assert.assertSame(context.getLogger("test.a"), Loggers.getEffectiveLogger(context, "test.a"));
+    Assert.assertSame(context.getLogger("test.a.X"), Loggers.getEffectiveLogger(context, "test.a.X"));
+    Assert.assertSame(context.getLogger("test.a.X$1"), Loggers.getEffectiveLogger(context, "test.a.X$1"));
 
-    Assert.assertEquals(Level.INFO, cache.getEffectiveLevel("test"));
-    Assert.assertEquals(Level.ERROR, cache.getEffectiveLevel("test.a"));
-    Assert.assertEquals(Level.DEBUG, cache.getEffectiveLevel("test.a.X"));
-    Assert.assertEquals(Level.OFF, cache.getEffectiveLevel("test.a.X$1"));
-
-    Assert.assertEquals(Level.WARN, cache.getEffectiveLevel("defaultToRoot"));
-    Assert.assertEquals(Level.INFO, cache.getEffectiveLevel("test.defaultToTest"));
-    Assert.assertEquals(Level.ERROR, cache.getEffectiveLevel("test.a.defaultToTestDotA"));
-    Assert.assertEquals(Level.DEBUG, cache.getEffectiveLevel("test.a.X.defaultToTestDotADotX"));
+    Assert.assertSame(context.getLogger(Logger.ROOT_LOGGER_NAME),
+                      Loggers.getEffectiveLogger(context, "defaultToRoot"));
+    Assert.assertSame(context.getLogger("test"),
+                      Loggers.getEffectiveLogger(context, "test.defaultToTest"));
+    Assert.assertSame(context.getLogger("test.a"),
+                      Loggers.getEffectiveLogger(context, "test.a.defaultToTestDotA"));
+    Assert.assertSame(context.getLogger("test.a.X"),
+                      Loggers.getEffectiveLogger(context, "test.a.X.defaultToTestDotADotX"));
   }
 
   private String generateLogback(String rootLevel, Map<String, String> loggerLevels) throws Exception {
