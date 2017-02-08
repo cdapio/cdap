@@ -123,7 +123,8 @@ public class CDAPLogAppenderTest {
     CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
     cdapLogAppender.setSyncIntervalBytes(syncInterval);
     cdapLogAppender.setMaxFileLifetimeMs(TimeUnit.DAYS.toMillis(1));
-    cdapLogAppender.setLocationPermissions("700");
+    cdapLogAppender.setDirPermissions("700");
+    cdapLogAppender.setFilePermissions("600");
     AppenderContext context = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
                                                        injector.getInstance(TransactionSystemClient.class),
                                                        injector.getInstance(LocationFactory.class),
@@ -165,7 +166,7 @@ public class CDAPLogAppenderTest {
       logEventCloseableIterator.close();
       Assert.assertEquals(1, logCount);
       // checking permission
-      String expectedPermissions = "rwx------";
+      String expectedPermissions = "rw-------";
       for (LogLocation file : files) {
         Location location = file.getLocation();
         Assert.assertEquals(expectedPermissions, location.getPermissions());
@@ -195,7 +196,8 @@ public class CDAPLogAppenderTest {
 
     cdapLogAppender.setSyncIntervalBytes(syncInterval);
     cdapLogAppender.setMaxFileLifetimeMs(500);
-    cdapLogAppender.setLocationPermissions("740");
+    cdapLogAppender.setDirPermissions("750");
+    cdapLogAppender.setFilePermissions("640");
     cdapLogAppender.setContext(context);
     cdapLogAppender.start();
 
@@ -239,7 +241,7 @@ public class CDAPLogAppenderTest {
       Assert.assertTrue(files.get(1).getFileCreationTimeMs() >= currentTimeMillisEvent2);
 
       // checking permission
-      String expectedPermissions = "rwxr-----";
+      String expectedPermissions = "rw-r-----";
       for (LogLocation file : files) {
         Location location = file.getLocation();
         Assert.assertEquals(expectedPermissions, location.getPermissions());

@@ -50,15 +50,30 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
                                                                      Constants.Logging.TAG_WORKFLOW_ID);
   private LogFileManager logFileManager;
 
+  private String dirPermissions;
+  private String filePermissions;
   private int syncIntervalBytes;
   private long maxFileLifetimeMs;
-  private String locationPermissions;
 
   /**
    * TODO: start a separate cleanup thread to remove files that has passed the TTL
    */
   public CDAPLogAppender() {
     setName(getClass().getName());
+  }
+
+  /**
+   * Sets the permissions for directory created by this appender. This is called by the logback framework.
+   */
+  public void setDirPermissions(String dirPermissions) {
+    this.dirPermissions = dirPermissions;
+  }
+
+  /**
+   * Sets the permissions for locations created by this appender. This is called by the logback framework.
+   */
+  public void setFilePermissions(String filePermissions) {
+    this.filePermissions = filePermissions;
   }
 
   /**
@@ -75,22 +90,17 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     this.maxFileLifetimeMs = maxFileLifetimeMs;
   }
 
-  /**
-   * Sets the permissions for locations created by this appender. This is called by the logback framework.
-   */
-  public void setLocationPermissions(String locationPermissions) {
-    this.locationPermissions = locationPermissions;
-  }
-
   @Override
   public void start() {
     // These should all passed. The settings are from the cdap-log-pipeline.xml and the context must be AppenderContext
+    Preconditions.checkState(dirPermissions != null, "Property dirPermissions cannot be null");
+    Preconditions.checkState(filePermissions != null, "Property filePermissions cannot be null");
     Preconditions.checkState(syncIntervalBytes > 0, "Property syncIntervalBytes must be > 0.");
     Preconditions.checkState(maxFileLifetimeMs > 0, "Property maxFileLifetimeMs must be > 0");
 
     if (context instanceof AppenderContext) {
       AppenderContext context = (AppenderContext) this.context;
-      logFileManager = new LogFileManager(maxFileLifetimeMs, syncIntervalBytes, locationPermissions,
+      logFileManager = new LogFileManager(dirPermissions, filePermissions, maxFileLifetimeMs, syncIntervalBytes,
                                           LogSchema.LoggingEvent.SCHEMA,
                                           new FileMetaDataWriter(context.getDatasetManager(), context),
                                           context.getLocationFactory());

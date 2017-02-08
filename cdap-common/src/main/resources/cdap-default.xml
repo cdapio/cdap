@@ -1044,10 +1044,10 @@
   </property>
 
   <property>
-    <name>log.pipeline.cdap.file.sync.interval.bytes</name>
-    <value>10485760</value>
+    <name>log.pipeline.cdap.dir.permissions</name>
+    <value>700</value>
     <description>
-      Number of bytes for the sync interval setting of the avro file written by the system log appender
+      Permissions to use for directories created by the system log appender
     </description>
   </property>
 
@@ -1060,12 +1060,21 @@
   </property>
 
   <property>
-    <name>log.pipeline.cdap.file.location.permissions</name>
+    <name>log.pipeline.cdap.file.permissions</name>
     <value>600</value>
     <description>
-      Permissions to use for locations created by the system log appender
+      Permissions to use for files created by the system log appender
     </description>
   </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.sync.interval.bytes</name>
+    <value>10485760</value>
+    <description>
+      Number of bytes for the sync interval setting of the avro file written by the system log appender
+    </description>
+  </property>
+
 
   <property>
     <name>log.process.pipeline.auto.buffer.ratio</name>

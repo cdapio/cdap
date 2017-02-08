@@ -43,19 +43,22 @@ import java.util.concurrent.TimeUnit;
 final class LogFileManager implements Flushable {
   private static final Logger LOG = LoggerFactory.getLogger(LogFileManager.class);
 
+  private final String dirPermissions;
+  private final String filePermissions;
+  private final int syncIntervalBytes;
   private final long maxLifetimeMillis;
   private final Map<LogPathIdentifier, LogFileOutputStream> outputStreamMap;
   private final Location logsDirectoryLocation;
   private final FileMetaDataWriter fileMetaDataWriter;
-  private final int syncIntervalBytes;
   private final Schema schema;
-  private final String permissions;
 
-  LogFileManager(long maxFileLifetimeMs, int syncIntervalBytes, String permissions,
+  LogFileManager(String dirPermissions, String filePermissions,
+                 long maxFileLifetimeMs, int syncIntervalBytes,
                  Schema schema, FileMetaDataWriter fileMetaDataWriter, LocationFactory locationFactory) {
+    this.dirPermissions = dirPermissions;
+    this.filePermissions = filePermissions;
     this.maxLifetimeMillis = maxFileLifetimeMs;
     this.syncIntervalBytes = syncIntervalBytes;
-    this.permissions = permissions;
     this.schema = schema;
     this.fileMetaDataWriter = fileMetaDataWriter;
     this.logsDirectoryLocation = locationFactory.create("logs");
@@ -122,7 +125,7 @@ final class LogFileManager implements Flushable {
     // however there is a possibility for the log.saver could crash after file was created
     // but before meta data was written, log clean up should handle this scenario.
     // log cleanup shouldn't rely on metadata table for cleaning up old files.
-    while (!location.getLocation().createNew(permissions)) {
+    while (!location.getLocation().createNew(filePermissions)) {
       Uninterruptibles.sleepUninterruptibly(1L, TimeUnit.MILLISECONDS);
       location = getLocation(logPathIdentifier);
     }
@@ -168,7 +171,7 @@ final class LogFileManager implements Flushable {
   }
 
   private void ensureDirectoryCheck(Location location) throws IOException {
-    if (!location.isDirectory() && !location.mkdirs(permissions) && !location.isDirectory()) {
+    if (!location.isDirectory() && !location.mkdirs(dirPermissions) && !location.isDirectory()) {
       throw new IOException(
         String.format("File Exists at the logging location %s, Expected to be a directory", location));
     }
