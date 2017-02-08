@@ -42,10 +42,11 @@ installed.
 
 .. rubric:: Hadoop/HBase Environment
 
-For a Distributed CDAP cluster, version |release|, you **must** install these Hadoop components:
+For a Distributed CDAP cluster, version |release|, you **must** install these Hadoop components
+(see notes following the tables):
 
-.. |cdh-version|       replace:: 5.1 through 5.9
-.. |hdp-version|       replace:: 2.0 through 2.5
+.. |cdh-version|       replace:: 5.1 through 5.9 :ref:`(Note 4) <admin-manual-hadoop-compatibility-matrix-note-4>`
+.. |hdp-version|       replace:: 2.0 through 2.5 :ref:`(Note 4) <admin-manual-hadoop-compatibility-matrix-note-4>`
 .. |mapr-version|      replace:: 4.1 through 5.2
 .. |emr-version|       replace:: 4.6 through 4.8
 
@@ -122,11 +123,16 @@ Hadoop components, as required:
 |                | Amazon Hadoop (EMR)             | |emr-version|                         |
 +----------------+---------------------------------+---------------------------------------+
 
-**Note:** Component versions shown in these tables are those that we have tested and are
+**Note 1:** Component versions shown in these tables are those that we have tested and are
 confident of their suitability and compatibility. Later versions of components may work,
 but have not necessarily been either tested or confirmed compatible.
 
-**Note:** Certain CDAP components need to reference your *Hadoop*, *YARN*, *HBase*, and
+**Note 2:** Certain CDAP components need to reference your *Hadoop*, *YARN*, *HBase*, and
 *Hive* cluster configurations by adding those configurations to their class paths.
 
-**Note:** *Hive 0.12* is not supported for :ref:`secure cluster configurations <admin-security>`.
+**Note 3:** *Hive 0.12* is not supported for :ref:`secure cluster configurations <admin-security>`.
+
+.. _admin-manual-hadoop-compatibility-matrix-note-4:
+
+**Note 4:** An upcoming release of CDAP will drop support for all versions
+older than *CDH 5.4.11* or *HDP 2.5.0.0*.
