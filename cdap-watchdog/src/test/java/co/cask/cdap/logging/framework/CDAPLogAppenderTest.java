@@ -41,7 +41,6 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.logging.write.LogLocation;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -167,13 +166,6 @@ public class CDAPLogAppenderTest {
       cConfiguration.unset(Constants.LogSaver.PERMISSION);
     } catch (Exception e) {
       Assert.fail();
-    } finally {
-      fileMetaDataManager.cleanMetaData(Long.MAX_VALUE, new FileMetaDataManager.DeleteCallback() {
-        @Override
-        public void handle(NamespaceId namespaceId, Location location, String namespacedLogBaseDir) {
-          // no-op
-        }
-      });
     }
   }
 
@@ -236,13 +228,6 @@ public class CDAPLogAppenderTest {
       cConfiguration.unset(Constants.LogSaver.PERMISSION);
     } catch (Exception e) {
       Assert.fail();
-    } finally {
-      fileMetaDataManager.cleanMetaData(Long.MAX_VALUE, new FileMetaDataManager.DeleteCallback() {
-        @Override
-        public void handle(NamespaceId namespaceId, Location location, String namespacedLogBaseDir) {
-          // no-op
-        }
-      });
     }
   }
 
