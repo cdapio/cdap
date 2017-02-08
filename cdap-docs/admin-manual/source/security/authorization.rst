@@ -84,7 +84,7 @@ In general, this summarizes the authorization policies in CDAP:
   application, artifact, or dataset, or creating a stream requires a *WRITE* on the
   namespace.
 - A **read** operation (such as reading from a dataset or a stream) on an entity requires
-  *READ* on the entity.
+  *READ* on the entity **and** *READ* on the parent.
 - A **write** operation (such as writing to a dataset or a stream) on an entity requires
   *WRITE* on the entity.
 - An **admin** operation (such as setting properties) on an entity requires *ADMIN* on
@@ -99,7 +99,7 @@ In general, this summarizes the authorization policies in CDAP:
 Additionally:
 
 - Upon successful creation of an entity, the logged-in user receives all privileges
-  (*READ*, *WRITE*, *ADMIN*, and *EXECUTE*) on that entity.
+  *(READ*, *WRITE*, *ADMIN*, and *EXECUTE)* on that entity.
 - Upon successful deletion of an entity, all privileges on that entity for all users are revoked.
 
 CDAP supports hierarchical authorization enforcement, which means that an operation that
@@ -168,7 +168,7 @@ Applications
    * - Operation
      - Privileges Required
    * - Add
-     - *WRITE* (on the namespace)
+     - *WRITE* (on the namespace) and *READ* (on the artifact if deployed from an artifact)
    * - Delete
      - *ADMIN*
    * - List
@@ -188,7 +188,7 @@ Programs
    * - Operation
      - Privileges Required
    * - Start, Stop, or Debug
-     - *EXECUTE*
+     - *EXECUTE* (on the program) and *READ* (on the namespace)
    * - Set instances
      - *ADMIN*
    * - Set runtime arguments
@@ -216,11 +216,11 @@ Datasets
    * - Create
      - *WRITE* (on the namespace)
    * - Read
-     - *READ*
+     - *READ* (on the dataset and the namespace)
    * - Write
      - *WRITE*
    * - Update
-     - *ADMIN*
+     - *ADMIN* (on the dataset) and *READ* (on the namespace)
    * - Upgrade
      - *ADMIN*
    * - Truncate
@@ -304,11 +304,11 @@ Streams
    * - Create
      - *WRITE* (on the namespace)
    * - Retrieving events
-     - *READ*
+     - *READ* (on the stream and the namespace)
    * - Retrieving properties
      - At least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
    * - Sending events to a stream (sync, async, or batch)
-     - *WRITE*
+     - *WRITE* (on the stream) and *READ* (on the namespace)
    * - Drop
      - *ADMIN*
    * - Drop-all in the namespace
