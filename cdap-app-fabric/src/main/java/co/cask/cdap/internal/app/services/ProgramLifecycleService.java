@@ -1175,12 +1175,12 @@ public class ProgramLifecycleService extends AbstractIdleService {
     @Override
     public void run() {
       try {
-        RunRecordsCorrectorRunnable.LOG.debug("Start correcting invalid run records ...");
+        RunRecordsCorrectorRunnable.LOG.trace("Start correcting invalid run records ...");
 
         // Lets update the running programs run records
         programLifecycleService.validateAndCorrectRunningRunRecords();
 
-        RunRecordsCorrectorRunnable.LOG.debug("End correcting invalid run records.");
+        RunRecordsCorrectorRunnable.LOG.trace("End correcting invalid run records.");
       } catch (Throwable t) {
         // Ignore any exception thrown since this behaves like daemon thread.
         //noinspection ThrowableResultOfMethodCallIgnored
