@@ -19,6 +19,7 @@ package co.cask.cdap.etl.planner;
 import co.cask.cdap.api.data.schema.Schema;
 import com.google.common.collect.ImmutableSet;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,7 +32,8 @@ import javax.annotation.Nullable;
 /**
  * Class to encapsulate information needed about a plugin at runtime.
  */
-public class StageInfo {
+public class StageInfo implements Serializable {
+  private static final long serialVersionUID = 8512654022528299831L;
   private final String name;
   private final String pluginType;
   private final Set<String> inputs;

@@ -70,10 +70,9 @@ public abstract class TransformExecutorFactory<T> {
     this.isMapPhase = hadoopContext instanceof Mapper.Context;
   }
 
-  protected abstract BatchRuntimeContext createRuntimeContext(String stageName);
+  protected abstract BatchRuntimeContext createRuntimeContext(StageInfo stageInfo);
 
-  protected abstract TrackedTransform getTransformation(String pluginType, String stageName)
-    throws Exception;
+  protected abstract TrackedTransform getTransformation(StageInfo stageInfo) throws Exception;
 
   /**
    * Create a transform executor for the specified pipeline. Will instantiate and initialize all sources,
@@ -117,14 +116,15 @@ public abstract class TransformExecutorFactory<T> {
                                                            transformErrorSinkMap,
                                                          OutputWriter<KEY_OUT, VAL_OUT> outputWriter)
     throws Exception {
+    StageInfo stageInfo = pipeline.getStage(stageName);
     if (pipeline.getSinks().contains(stageName)) {
       // If there is a connector sink/ joiner at the end of pipeline, do not remove stage name. This is needed to save
       // stageName along with the record in connector sink and joiner takes input along with stageName
-      String pluginType = pipeline.getStage(stageName).getPluginType();
+      String pluginType = stageInfo.getPluginType();
       boolean removeStageName = !(pluginType.equals(Constants.CONNECTOR_TYPE) ||
         pluginType.equals(BatchJoiner.PLUGIN_TYPE));
       transformations.put(stageName, new PipeTransformDetail(stageName, removeStageName,
-                                                             getTransformation(pluginType, stageName),
+                                                             getTransformation(stageInfo),
                                                              new SinkEmitter<>(stageName, outputWriter)));
       return;
     }
@@ -141,7 +141,8 @@ public abstract class TransformExecutorFactory<T> {
                                  Map<String, PipeTransformDetail> transformations,
                                  Map<String, ErrorOutputWriter<Object, Object>> transformErrorSinkMap)
     throws Exception {
-    String pluginType = pipeline.getStage(stageName).getPluginType();
+    StageInfo stageInfo = pipeline.getStage(stageName);
+    String pluginType = stageInfo.getPluginType();
     ErrorOutputWriter<Object, Object> errorOutputWriter = transformErrorSinkMap.containsKey(stageName) ?
       transformErrorSinkMap.get(stageName) : null;
 
@@ -149,18 +150,18 @@ public abstract class TransformExecutorFactory<T> {
     if (pipeline.getSources().contains(stageName) && pluginType.equals(Constants.CONNECTOR_TYPE)) {
       transformations.put(stageName,
                           new PipeTransformDetail(stageName, true,
-                                                  getTransformation(pluginType, stageName),
+                                                  getTransformation(stageInfo),
                                                   new ConnectorSourceEmitter(stageName)));
     } else if (pluginType.equals(BatchJoiner.PLUGIN_TYPE) && isMapPhase) {
       // Do not remove stageName only for Map phase of BatchJoiner
       transformations.put(stageName,
                           new PipeTransformDetail(stageName, false,
-                                                  getTransformation(pluginType, stageName),
+                                                  getTransformation(stageInfo),
                                                   new TransformEmitter(stageName, errorOutputWriter)));
     } else {
       transformations.put(stageName,
                           new PipeTransformDetail(stageName, true,
-                                                  getTransformation(pluginType, stageName),
+                                                  getTransformation(stageInfo),
                                                   new TransformEmitter(stageName, errorOutputWriter)));
     }
   }
@@ -168,15 +169,15 @@ public abstract class TransformExecutorFactory<T> {
   /**
    * Instantiates and initializes the plugin for the stage.
    *
-   * @param stageName the stage name.
+   * @param stageInfo the stage info
    * @return the initialized Transformation
    * @throws InstantiationException if the plugin for the stage could not be instantiated
    * @throws Exception              if there was a problem initializing the plugin
    */
   protected <T extends Transformation & StageLifecycle<BatchRuntimeContext>> Transformation
-  getInitializedTransformation(String stageName) throws Exception {
-    BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
-    T plugin = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+  getInitializedTransformation(StageInfo stageInfo) throws Exception {
+    BatchRuntimeContext runtimeContext = createRuntimeContext(stageInfo);
+    T plugin = pluginInstantiator.newPluginInstance(stageInfo.getName(), macroEvaluator);
     plugin.initialize(runtimeContext);
     return plugin;
   }

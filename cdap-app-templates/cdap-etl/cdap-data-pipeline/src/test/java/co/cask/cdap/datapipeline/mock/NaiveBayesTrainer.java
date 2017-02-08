@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -62,6 +63,7 @@ public final class NaiveBayesTrainer extends SparkSink<StructuredRecord> {
   public static final String CLASSIFIED_TEXTS = "classifiedTexts";
 
   private final Config config;
+  private Schema inputSchema;
 
   /**
    * Configuration for the NaiveBayesTrainer.
@@ -105,6 +107,7 @@ public final class NaiveBayesTrainer extends SparkSink<StructuredRecord> {
   @Override
   public void prepareRun(SparkPluginContext context) throws Exception {
     // no-op; no need to do anything
+    inputSchema = context.getInputSchema();
   }
 
   @Override
@@ -115,6 +118,10 @@ public final class NaiveBayesTrainer extends SparkSink<StructuredRecord> {
     JavaRDD<LabeledPoint> trainingData = input.map(new Function<StructuredRecord, LabeledPoint>() {
       @Override
       public LabeledPoint call(StructuredRecord record) throws Exception {
+        // should never happen, here to test app correctness in unit tests
+        if (inputSchema != null && !inputSchema.equals(record.getSchema())) {
+          throw new IllegalStateException("runtime schema does not match what was set at configure time.");
+        }
         String text = record.get(config.fieldToClassify);
         return new LabeledPoint((Double) record.get(config.predictionField),
                                 tf.transform(Lists.newArrayList(text.split(" "))));

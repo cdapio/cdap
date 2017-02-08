@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.mock.realtime;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.StageMetrics;
@@ -23,7 +24,9 @@ import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.etl.mock.common.NoopMetrics;
 import com.google.common.collect.Maps;
 
+import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Mock RealtimeContext for tests.
@@ -76,6 +79,23 @@ public class MockRealtimeContext implements RealtimeContext {
 
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Schema getInputSchema() {
+    return null;
+  }
+
+  @Override
+  public Map<String, Schema> getInputSchemas() {
+    return Collections.emptyMap();
+  }
+
+  @Nullable
+  @Override
+  public Schema getOutputSchema() {
     return null;
   }
 

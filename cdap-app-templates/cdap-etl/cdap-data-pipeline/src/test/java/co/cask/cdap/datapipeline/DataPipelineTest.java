@@ -235,6 +235,10 @@ public class DataPipelineTest extends HydratorTestBase {
     String sinkName = "actionSink-" + engine;
     String sourceTableName = "actionSourceTable-" + engine;
     String sinkTableName = "actionSinkTable-" + engine;
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .addStage(new ETLStage("action1", MockAction.getPlugin(actionTable, action1RowKey, action1ColumnKey,
                                                              action1Value)))
@@ -242,7 +246,7 @@ public class DataPipelineTest extends HydratorTestBase {
                                                              action2Value)))
       .addStage(new ETLStage("action3", MockAction.getPlugin(actionTable, action3RowKey, action3ColumnKey,
                                                              action3Value)))
-      .addStage(new ETLStage(sourceName, MockSource.getPlugin(sourceTableName)))
+      .addStage(new ETLStage(sourceName, MockSource.getPlugin(sourceTableName, schema)))
       .addStage(new ETLStage(sinkName, MockSink.getPlugin(sinkTableName)))
       .addConnection(sourceName, sinkName)
       .addConnection("action1", "action2")
@@ -256,10 +260,6 @@ public class DataPipelineTest extends HydratorTestBase {
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
 
-    Schema schema = Schema.recordOf(
-      "testRecord",
-      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
-    );
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
 
@@ -409,15 +409,19 @@ public class DataPipelineTest extends HydratorTestBase {
      *                                     |
      * source3 ----------------------------|
      */
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
     String source1Name = String.format("msInput1-%s", engine);
     String source2Name = String.format("msInput2-%s", engine);
     String source3Name = String.format("msInput3-%s", engine);
     String sink1Name = String.format("msOutput1-%s", engine);
     String sink2Name = String.format("msOutput2-%s", engine);
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source1", MockSource.getPlugin(source1Name)))
-      .addStage(new ETLStage("source2", MockSource.getPlugin(source2Name)))
-      .addStage(new ETLStage("source3", MockSource.getPlugin(source3Name)))
+      .addStage(new ETLStage("source1", MockSource.getPlugin(source1Name, schema)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(source2Name, schema)))
+      .addStage(new ETLStage("source3", MockSource.getPlugin(source3Name, schema)))
       .addStage(new ETLStage("transform1", IdentityTransform.getPlugin()))
       .addStage(new ETLStage("transform2", IdentityTransform.getPlugin()))
       .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
@@ -437,10 +441,6 @@ public class DataPipelineTest extends HydratorTestBase {
 
     // there should be only two programs - one workflow and one mapreduce/spark
     Assert.assertEquals(2, appManager.getInfo().getPrograms().size());
-    Schema schema = Schema.recordOf(
-      "testRecord",
-      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
-    );
 
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
@@ -566,6 +566,11 @@ public class DataPipelineTest extends HydratorTestBase {
     String source2Name = "pAggInput2-" + engine.name();
     String sink1Name = "pAggOutput1-" + engine.name();
     String sink2Name = "pAggOutput2-" + engine.name();
+    Schema inputSchema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("user", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("item", Schema.of(Schema.Type.LONG))
+    );
     /*
        source1 --|--> agg1 --> sink1
                  |
@@ -573,8 +578,8 @@ public class DataPipelineTest extends HydratorTestBase {
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .setEngine(engine)
-      .addStage(new ETLStage("source1", MockSource.getPlugin(source1Name)))
-      .addStage(new ETLStage("source2", MockSource.getPlugin(source2Name)))
+      .addStage(new ETLStage("source1", MockSource.getPlugin(source1Name, inputSchema)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(source2Name, inputSchema)))
       .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
       .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
       .addStage(new ETLStage("agg1", FieldCountAggregator.getPlugin("user", "string")))
@@ -590,11 +595,6 @@ public class DataPipelineTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("ParallelAggApp-" + engine);
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
-    Schema inputSchema = Schema.recordOf(
-      "testRecord",
-      Schema.Field.of("user", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("item", Schema.of(Schema.Type.LONG))
-    );
 
     // write few records to each source
     DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(source1Name));
@@ -707,8 +707,8 @@ public class DataPipelineTest extends HydratorTestBase {
      * source2 ---|
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source1", MockSource.getPlugin("messages1")))
-      .addStage(new ETLStage("source2", MockSource.getPlugin("messages2")))
+      .addStage(new ETLStage("source1", MockSource.getPlugin("messages1", SpamMessage.SCHEMA)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin("messages2", SpamMessage.SCHEMA)))
       .addStage(new ETLStage("customsink",
                              new ETLPlugin(NaiveBayesTrainer.PLUGIN_NAME, SparkSink.PLUGIN_TYPE,
                                            ImmutableMap.of("fileSetName", "modelFileSet",
@@ -780,7 +780,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String classifiedTextsTable = "classifiedTextTable";
 
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source", MockSource.getPlugin(NaiveBayesTrainer.TEXTS_TO_CLASSIFY)))
+      .addStage(new ETLStage("source", MockSource.getPlugin(NaiveBayesTrainer.TEXTS_TO_CLASSIFY, SpamMessage.SCHEMA)))
       .addStage(new ETLStage("sparkcompute",
                              new ETLPlugin(NaiveBayesClassifier.PLUGIN_NAME, SparkCompute.PLUGIN_TYPE,
                                            ImmutableMap.of("fileSetName", "modelFileSet",

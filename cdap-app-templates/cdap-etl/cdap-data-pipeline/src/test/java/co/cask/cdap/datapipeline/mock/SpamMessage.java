@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
 public class SpamMessage {
   public static final String SPAM_PREDICTION_FIELD = "isSpam";
   public static final String TEXT_FIELD = "text";
-  static final Schema SCHEMA = Schema.recordOf(
+  public static final Schema SCHEMA = Schema.recordOf(
     "simpleMessage",
     Schema.Field.of(SPAM_PREDICTION_FIELD, Schema.nullableOf(Schema.of(Schema.Type.DOUBLE))),
     Schema.Field.of(TEXT_FIELD, Schema.of(Schema.Type.STRING))

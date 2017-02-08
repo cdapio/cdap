@@ -20,6 +20,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.batch.AbstractAggregatorContext;
+import co.cask.cdap.etl.planner.StageInfo;
 
 import java.util.Map;
 
@@ -30,9 +31,9 @@ public class MapReduceAggregatorContext extends AbstractAggregatorContext {
   private final MapReduceContext mrContext;
 
   public MapReduceAggregatorContext(MapReduceContext context, Metrics metrics, LookupProvider lookup,
-                                    String stageName,
-                                    Map<String, String> runtimeArgs) {
-    super(context, context, metrics, lookup, stageName, context.getLogicalStartTime(), runtimeArgs, context.getAdmin());
+                                    Map<String, String> runtimeArgs, StageInfo stageInfo) {
+    super(context, context, metrics, lookup, context.getLogicalStartTime(),
+          runtimeArgs, context.getAdmin(), stageInfo);
     this.mrContext = context;
   }
 

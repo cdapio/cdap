@@ -19,12 +19,14 @@ package co.cask.cdap.etl.mock.transform;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
@@ -42,6 +44,15 @@ public class IdentityTransform extends Transform<StructuredRecord, StructuredRec
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
+  }
+
+  @Override
+  public void initialize(TransformContext context) throws Exception {
+    // should never happen, here to test app correctness in unit tests
+    Schema inputSchema = context.getInputSchema();
+    if (inputSchema != null && !inputSchema.equals(context.getOutputSchema())) {
+      throw new IllegalStateException("runtime schema does not match what was set at configure time.");
+    }
   }
 
   @Override

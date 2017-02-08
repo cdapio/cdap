@@ -37,7 +37,7 @@ import java.util.Map;
  */
 public class DynamicDriverContext implements Externalizable {
   private String serializationVersion;
-  private String stageName;
+  private StageInfo stageInfo;
   private Map<String, Schema> inputSchemas;
   private Schema outputSchema;
   private JavaSparkExecutionContext sec;
@@ -48,23 +48,23 @@ public class DynamicDriverContext implements Externalizable {
   }
 
   public DynamicDriverContext(StageInfo stageInfo, JavaSparkExecutionContext sec) {
-    this(stageInfo.getName(), stageInfo.getInputSchemas(), stageInfo.getOutputSchema(), sec);
+    this(stageInfo, stageInfo.getInputSchemas(), stageInfo.getOutputSchema(), sec);
   }
 
-  public DynamicDriverContext(String stageName, Map<String, Schema> inputSchemas,
+  public DynamicDriverContext(StageInfo stageInfo, Map<String, Schema> inputSchemas,
                               Schema outputSchema, JavaSparkExecutionContext sec) {
     this.serializationVersion = "4.0";
-    this.stageName = stageName;
+    this.stageInfo = stageInfo;
     this.inputSchemas = inputSchemas;
     this.outputSchema = outputSchema;
     this.sec = sec;
-    this.pluginFunctionContext = new PluginFunctionContext(stageName, sec, inputSchemas, outputSchema);
+    this.pluginFunctionContext = new PluginFunctionContext(stageInfo, sec, inputSchemas, outputSchema);
   }
 
   @Override
   public void writeExternal(ObjectOutput out) throws IOException {
     out.writeUTF(serializationVersion);
-    out.writeUTF(stageName);
+    out.writeObject(stageInfo);
     out.writeObject(inputSchemas);
     out.writeObject(outputSchema);
     out.writeObject(sec);
@@ -73,7 +73,7 @@ public class DynamicDriverContext implements Externalizable {
   @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     serializationVersion = in.readUTF();
-    stageName = in.readUTF();
+    stageInfo = (StageInfo) in.readObject();
     inputSchemas = (Map<String, Schema>) in.readObject();
     outputSchema = (Schema) in.readObject();
     sec = (JavaSparkExecutionContext) in.readObject();
@@ -82,7 +82,7 @@ public class DynamicDriverContext implements Externalizable {
     // and logical start time are picked up from the JavaSparkExecutionContext. If we serialized it,
     // the arguments and start time of the very first pipeline run would get serialized, then
     // used for every subsequent run that loads from the checkpoint.
-    pluginFunctionContext = new PluginFunctionContext(stageName, sec, inputSchemas, outputSchema);
+    pluginFunctionContext = new PluginFunctionContext(stageInfo, sec, inputSchemas, outputSchema);
   }
 
   public JavaSparkExecutionContext getSparkExecutionContext() {

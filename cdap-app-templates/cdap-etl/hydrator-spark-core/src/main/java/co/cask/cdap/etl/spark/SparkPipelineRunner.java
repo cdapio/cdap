@@ -136,7 +136,7 @@ public abstract class SparkPipelineRunner {
 
         BatchJoiner<Object, Object, Object> joiner =
           sec.getPluginContext().newPluginInstance(stageName, macroEvaluator);
-        BatchJoinerRuntimeContext joinerRuntimeContext = pluginFunctionContext.createJoinerRuntimeContext();
+        BatchJoinerRuntimeContext joinerRuntimeContext = pluginFunctionContext.createBatchRuntimeContext();
         joiner.initialize(joinerRuntimeContext);
 
         Map<String, SparkPairCollection<Object, Object>> preJoinStreams = new HashMap<>();

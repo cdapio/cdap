@@ -97,6 +97,10 @@ public class FieldCountAggregator extends BatchAggregator<Object, StructuredReco
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
     schema = config.getSchema();
+    // should never happen, just done to test App correctness in unit tests
+    if (context.getOutputSchema() != null && !schema.equals(context.getOutputSchema())) {
+      throw new IllegalStateException("Output schema does not match what was set at configure time.");
+    }
   }
 
   /**

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.mock.transform;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.LookupProvider;
@@ -24,8 +25,10 @@ import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.mock.common.MockLookupProvider;
 import co.cask.cdap.etl.mock.common.MockStageMetrics;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Mock context for unit tests
@@ -81,6 +84,23 @@ public class MockTransformContext implements TransformContext {
 
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Schema getInputSchema() {
+    return null;
+  }
+
+  @Override
+  public Map<String, Schema> getInputSchemas() {
+    return Collections.emptyMap();
+  }
+
+  @Nullable
+  @Override
+  public Schema getOutputSchema() {
     return null;
   }
 

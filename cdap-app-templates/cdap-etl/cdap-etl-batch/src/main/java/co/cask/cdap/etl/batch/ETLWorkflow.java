@@ -27,6 +27,7 @@ import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.spark.batch.ETLSpark;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -107,8 +108,9 @@ public class ETLWorkflow extends AbstractWorkflow {
     for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
       String name = endingActionEntry.getKey();
       PostAction action = endingActionEntry.getValue();
+      StageInfo stageInfo = StageInfo.builder(name, PostAction.PLUGIN_TYPE).build();
       BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics, lookupProvider,
-                                                                   name, logicalStartTime, runtimeArgs);
+                                                                   logicalStartTime, runtimeArgs, stageInfo);
       try {
         action.run(context);
       } catch (Throwable t) {

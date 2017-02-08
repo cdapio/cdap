@@ -108,7 +108,7 @@ public class RDDCollection<T> implements SparkCollection<T> {
   public <U> SparkCollection<U> compute(StageInfo stageInfo, SparkCompute<T, U> compute) throws Exception {
     String stageName = stageInfo.getName();
     SparkExecutionPluginContext sparkPluginContext =
-      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageName);
+      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageInfo);
     compute.initialize(sparkPluginContext);
 
     JavaRDD<T> countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
@@ -128,7 +128,7 @@ public class RDDCollection<T> implements SparkCollection<T> {
   public void store(StageInfo stageInfo, SparkSink<T> sink) throws Exception {
     String stageName = stageInfo.getName();
     SparkExecutionPluginContext sparkPluginContext =
-      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageName);
+      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageInfo);
 
     JavaRDD<T> countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
     sink.run(sparkPluginContext, countedRDD);

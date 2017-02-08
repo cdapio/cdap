@@ -24,6 +24,7 @@ import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.common.ExternalDatasets;
+import co.cask.cdap.etl.planner.StageInfo;
 
 import java.util.Collections;
 import java.util.Map;
@@ -36,14 +37,14 @@ public class SparkBatchSinkContext extends AbstractSparkBatchContext implements 
   private final SparkBatchSinkFactory sinkFactory;
 
   public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, SparkClientContext sparkContext,
-                               LookupProvider lookupProvider, String stageId) {
-    super(sparkContext, lookupProvider, stageId);
+                               LookupProvider lookupProvider, StageInfo stageInfo) {
+    super(sparkContext, lookupProvider, stageInfo);
     this.sinkFactory = sinkFactory;
   }
 
   public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, JavaSparkExecutionContext sec,
-                               DatasetContext datasetContext, String stageName, long logicalStartTime) {
-    super(sec, datasetContext, stageName, logicalStartTime);
+                               DatasetContext datasetContext, long logicalStartTime, StageInfo stageInfo) {
+    super(sec, datasetContext, logicalStartTime, stageInfo);
     this.sinkFactory = sinkFactory;
   }
 

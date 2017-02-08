@@ -50,7 +50,7 @@ public class JoinMergeFunction<JOIN_KEY, INPUT_RECORD, OUT>
   public Iterable<OUT> call(Tuple2<JOIN_KEY, List<JoinElement<INPUT_RECORD>>> input) throws Exception {
     if (joinFunction == null) {
       BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> joiner = pluginFunctionContext.createPlugin();
-      BatchJoinerRuntimeContext context = pluginFunctionContext.createJoinerRuntimeContext();
+      BatchJoinerRuntimeContext context = pluginFunctionContext.createBatchRuntimeContext();
       joiner.initialize(context);
       joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner),
                                             pluginFunctionContext.createStageMetrics(),

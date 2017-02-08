@@ -40,6 +40,7 @@ import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.mapreduce.MapReduceSourceContext;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
+import co.cask.cdap.etl.planner.StageInfo;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -183,9 +184,10 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
       job.setReducerClass(AggregationReducer.class);
       BatchSource batchSource = context.newPluginInstance(PLUGIN_ID);
       // Constructs a BatchSourceContext. The stageId needs to match the format expected by PluginID
+      String sourceName = "batchsource:" + context.getSpecification().getProperty("sourceName") + ":0";
+      StageInfo stageInfo = StageInfo.builder(sourceName, BatchSource.PLUGIN_TYPE).build();
       BatchSourceContext sourceContext = new MapReduceSourceContext(
-        context, metrics, new DatasetContextLookupProvider(context),
-        "batchsource:" + context.getSpecification().getProperty("sourceName") + ":0", context.getRuntimeArguments());
+        context, metrics, new DatasetContextLookupProvider(context), context.getRuntimeArguments(), stageInfo);
       batchSource.prepareRun(sourceContext);
       context.addOutput(Output.ofDataset(context.getSpecification().getProperty("datasetName")));
     }
