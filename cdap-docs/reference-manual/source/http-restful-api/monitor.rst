@@ -73,6 +73,7 @@ To check the status of all the CDAP system services, use::
    * - ``200 OK``
      - The event successfully called the method, and the body contains the results
 
+.. _checking-the-status-of-a-system-service:
 
 Checking the Status of a System Service
 =======================================

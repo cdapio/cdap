@@ -81,31 +81,58 @@ Command Line Interface. See :ref:`reference:cli` in the
 
 .. highlight:: console
 
-Administrators can check the health of various services in the system.
-(In these examples, substitute for ``<host>`` the host name or IP address of the CDAP server.)
+Administrators can check the health of various services in the system. (In these examples,
+substitute for ``<host>`` the host name or IP address of the CDAP server. Substitute the
+correct ports if they have been changed from the default values shown.) On success, these
+calls return a valid HTTP response with a 200 code.
 
-- To retrieve the **health check of the CDAP UI**, make a GET request to the URI::
+- To retrieve the **health check of the CDAP UI**, make a GET request to the URI (at the
+  ``dashboard.bind.port``)::
 
     http://<host>:9999/status
+  
+  Such as (for the Standalone CDAP):
+   
+  .. tabbed-parsed-literal::
 
-- To retrieve the **health check of the CDAP Router**, make a GET request to the URI::
+    $ curl -w"\n" -X GET "http://localhost:9999/status"
+
+
+- To retrieve the **health check of the CDAP Router**, make a GET request to the URI (at
+  the ``router.bind.port``)::
 
     http://<host>:10000/status
 
+  Such as (for the Standalone CDAP):
+   
+  .. tabbed-parsed-literal::
+
+    $ curl -w"\n" -X GET "http://localhost:10000/status"
+
 - To retrieve the **health check of the CDAP Authentication Server**, make a GET request to
-  the URI::
+  the URI (at the ``security.auth.server.bind.port``)::
   
     http://<host>:10009/status
 
-On success, the calls return a valid HTTP response with a 200 code.
+  Such as (for the Standalone CDAP):
+   
+  .. tabbed-parsed-literal::
 
-- To retrieve the **health check of all the services running in YARN**, make a GET request
-  to the URI::
+    $ curl -w"\n" -X GET "http://localhost:10009/status"
+
+- To retrieve a **list of health checks of all the CDAP system services running in YARN**, make a GET request
+  to the URI (at the ``router.bind.port``)::
   
     http://<host>:10000/v3/system/services
 
-  On success, the call returns a JSON string with component names and their corresponding 
-  statuses (reformatted to fit)::
+  Such as (for the Standalone CDAP):
+   
+  .. tabbed-parsed-literal::
+
+    $ curl -w"\n" -X GET "http://localhost:10000/v3/system/services"
+
+  On success, the call returns a JSON string with component names, their corresponding 
+  statuses, and details of the services (reformatted to fit)::
   
     [{"name":"appfabric","description":"Service for managing application
       lifecycle.","status":"OK","logs":"OK","min":1,"max":1,"requested":1,"provisioned":1},
@@ -123,3 +150,28 @@ On success, the calls return a valid HTTP response with a 200 code.
       ingestion.","status":"OK","logs":"OK","min":1,"max":1,"requested":1,"provisioned":1},
      {"name":"transaction","description":"Service that maintains transaction
       states.","status":"OK","logs":"NOTOK","min":1,"max":1,"requested":1,"provisioned":1}]
+
+- To retrieve a **health check of all the CDAP system services running in YARN**, make a GET request
+  to the URI (at the ``router.bind.port``)::
+  
+    http://<host>:10000/v3/system/services/status
+
+  Such as (for the Standalone CDAP):
+   
+  .. tabbed-parsed-literal::
+
+    $ curl -w"\n" -X GET "http://localhost:10000/v3/system/services/status"
+
+- To retrieve a **health check of a particular CDAP system service running in YARN**, make a GET request
+  to the URI (at the ``router.bind.port``), substituting for ``<service-id>``, as 
+  shown in the :ref:`Monitor HTTP RESTful API <checking-the-status-of-a-system-service>`::
+  
+    http://<host>:10000/v3/system/services/<service-id>/status
+
+  Such as (for the metrics service of the Standalone CDAP):
+   
+  .. tabbed-parsed-literal::
+
+    $ curl -w"\n" -X GET "http://localhost:10000/v3/system/services/metrics/status"
+
+
