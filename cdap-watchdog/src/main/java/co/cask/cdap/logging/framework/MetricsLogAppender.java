@@ -20,9 +20,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.AppenderBase;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.NamespaceId;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.HashMap;
@@ -59,10 +59,16 @@ public class MetricsLogAppender extends AppenderBase<ILoggingEvent> {
   @Override
   public void start() {
     super.start();
-    // This shouldn't happen
-    Preconditions.checkState(context instanceof AppenderContext,
-                             "The context object is not an instance of %s", AppenderContext.class);
-    this.metricsContext = ((AppenderContext) context).getMetricsContext();
+
+    if (context instanceof AppenderContext) {
+      this.metricsContext = ((AppenderContext) context).getMetricsContext();
+    } else if (Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {
+      // It is performing pipeline validation
+      this.metricsContext = new NoopMetricsContext();
+    } else {
+      throw new IllegalStateException("Expected logger context instance of " + AppenderContext.class.getName() +
+                                        " but get " + context.getClass().getName());
+    }
   }
 
   @Override

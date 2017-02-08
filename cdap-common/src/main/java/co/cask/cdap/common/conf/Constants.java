@@ -722,6 +722,9 @@ public final class Constants {
     // the kafka offset prefix is hardcoded to Bytes.toBytes(100)
     public static final String PIPELINE_CHECKPOINT_PREFIX_NUM = "log.process.pipeline.checkpoint.prefix.num";
 
+    // Property key in the logger context to indicate it is performing pipeline validation
+    public static final String PIPELINE_VALIDATION = "log.pipeline.validation";
+
     // Constants
     // Table used to store log metadata
     public static final String META_TABLE = "log.meta";
