@@ -89,6 +89,14 @@ features:
     cancelDefaultText: Cancel
   EntityListView:
     Title: CDAP - Home
+    Info:
+      title: Entities in Namespace
+      subtitle:
+        search: Search Results for
+        filteredBy: filtered by
+        sortedBy: sorted by
+        displayAll: Displaying All Entities
+        displaySome: Displaying
     emptyMessage: No entities found in the system.
     Cards:
       type: "Type: "
@@ -106,8 +114,8 @@ features:
       gotoLabel: Go to CDAP
       disclaimerMessage: For full feature parity, switch to original UI by clicking "VIEW ORIGINAL UI" in top navigation bar.
     Header:
-      filters: Filters
-      search-placeholder: Search entities...
+      filterBy: Filter by
+      search-placeholder: Search
       sortdropdown-tooltip: Clear Search to enable Sort
       search-disabled-placeholder: Sort by Relevance to Search
       sort: Sort

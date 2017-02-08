@@ -29,13 +29,14 @@ import PlusButtonStore from 'services/PlusButtonStore';
 import globalEvents from 'services/global-events';
 import isNil from 'lodash/isNil';
 import Overview from 'components/Overview';
-import WelcomeScreen from 'components/EntityListView/WelcomeScreen';
-import HomeListView from 'components/EntityListView/ListView';
+import WelcomeScreen from './WelcomeScreen';
+import HomeListView from './ListView';
+import EntityListInfo from './EntityListInfo';
 
 require('./EntityListView.scss');
 import ee from 'event-emitter';
 
-const defaultFilter = ['app', 'dataset', 'stream'];
+const defaultFilter = [];
 
 // 312 = cardWith (300) + (5 x 2 side margins) + ( 1 x 2 border widths)
 const cardWidthWithMarginAndBorder = 312;
@@ -57,10 +58,6 @@ class EntityListView extends Component {
       {
         displayName: T.translate('commons.entity.dataset.plural'),
         id: 'dataset'
-      },
-      {
-        displayName: T.translate('commons.entity.program.plural'),
-        id: 'program'
       },
       {
         displayName: T.translate('commons.entity.stream.plural'),
@@ -319,6 +316,12 @@ class EntityListView extends Component {
   ) {
     let offset = (currentPage - 1) * this.pageSize;
 
+    // TODO/FIXME: hack to not display programs when filter is empty (which means all
+    // entities should be displayed). Maybe this should be a backend change?
+    if (filter.length === 0) {
+      filter = ['app', 'artifact', 'dataset', 'stream'];
+    }
+
     this.setState({
       loading : true,
       selectedEntity: null
@@ -357,6 +360,7 @@ class EntityListView extends Component {
           isSortDisabled,
           isSearchDisabled,
           entities: res,
+          total: total,
           loading: false,
           entityErr: false,
           errStatusCode: null,
@@ -399,7 +403,8 @@ class EntityListView extends Component {
 
     this.setState({
       filter : filters,
-      selectedEntity: null
+      selectedEntity: null,
+      currentPage: 1
     }, () => {
       this.search(this.state.query, filters, this.state.sortObj);
     });
@@ -424,7 +429,8 @@ class EntityListView extends Component {
     this.setState({
       sortObj : option,
       isSearchDisabled,
-      selectedEntity: null
+      selectedEntity: null,
+      currentPage: 1
     }, () => {
       this.search(this.state.query, this.state.filter, option);
     });
@@ -436,7 +442,8 @@ class EntityListView extends Component {
       query,
       isSortDisabled,
       sortObj: this.sortOptions[0],
-      selectedEntity: null
+      selectedEntity: null,
+      currentPage: 1
     }, () => {
       this.search(query, this.state.filter, this.state.sortObj);
     });
@@ -558,8 +565,6 @@ class EntityListView extends Component {
           onSearch={this.handleSearch.bind(this)}
           isSearchDisabled={this.state.isSearchDisabled}
           searchText={this.state.query}
-          numberOfPages={this.state.numPages}
-          currentPage={this.state.currentPage}
           onPageChange={this.handlePageChange}
         />
         <Pagination
@@ -569,6 +574,18 @@ class EntityListView extends Component {
           currentPage={this.state.currentPage}
           setDirection={this.setAnimationDirection}
         >
+          <EntityListInfo
+            className="entity-list-info"
+            namespace={this.props.params.namespace}
+            numberOfEntities={this.state.total}
+            numberOfPages={this.state.numPages}
+            currentPage={this.state.currentPage}
+            onPageChange={this.handlePageChange}
+            activeFilter={this.state.filter}
+            filterOptions={this.filterOptions}
+            activeSort={this.state.sortObj}
+            searchText={this.state.query}
+          />
           <div className={classNames("entities-container")}>
             <HomeListView
               className={classNames("home-list-view-container", {"show-overview-main-container": !isNil(this.state.selectedEntity)})}
