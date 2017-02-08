@@ -20,6 +20,11 @@ package co.cask.cdap.cli;
  * Argument names.
  */
 public enum ArgumentName {
+  /**
+   * Commons
+   */
+  DESCRIPTION("description"),
+
   PROGRAM("app-id.program-id"),
   STREAM("stream-id"),
   WORKER("app-id.worker-id"),
@@ -79,8 +84,6 @@ public enum ArgumentName {
   FREQUENCY("frequency"),
 
   NAMESPACE_NAME("namespace-name"),
-  NAMESPACE_DESCRIPTION("description"),
-  NAMESPACE_PRINCIPAL("principal"),
   NAMESPACE_GROUP_NAME("group-name"),
   NAMESPACE_KEYTAB_PATH("keytab-URI"),
   NAMESPACE_HBASE_NAMESPACE("hbase-namespace"),
@@ -124,7 +127,8 @@ public enum ArgumentName {
    */
   PRINCIPAL_TYPE("principal-type"),
   PRINCIPAL_NAME("principal-name"),
-  ROLE_NAME("role-name");
+  ROLE_NAME("role-name"),
+  PRINCIPAL("principal");
 
   private final String name;
 

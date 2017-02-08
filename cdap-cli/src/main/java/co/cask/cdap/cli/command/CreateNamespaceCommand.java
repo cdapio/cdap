@@ -46,8 +46,8 @@ public class CreateNamespaceCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String name = arguments.get(ArgumentName.NAMESPACE_NAME.toString());
 
-    String description = arguments.getOptional(ArgumentName.NAMESPACE_DESCRIPTION.toString(), null);
-    String principal = arguments.getOptional(ArgumentName.NAMESPACE_PRINCIPAL.toString(), null);
+    String description = arguments.getOptional(ArgumentName.DESCRIPTION.toString(), null);
+    String principal = arguments.getOptional(ArgumentName.PRINCIPAL.toString(), null);
     String groupName = arguments.getOptional(ArgumentName.NAMESPACE_GROUP_NAME.toString(), null);
     String keytabPath = arguments.getOptional(ArgumentName.NAMESPACE_KEYTAB_PATH.toString(), null);
     String hbaseNamespace = arguments.getOptional(ArgumentName.NAMESPACE_HBASE_NAMESPACE.toString(), null);
@@ -67,8 +67,8 @@ public class CreateNamespaceCommand extends AbstractCommand {
   public String getPattern() {
     return String.format("create namespace <%s> [%s <%s>] [%s <%s>] [%s <%s>] " +
                            "[%s <%s>] [%s <%s>] [%s <%s>] [%s <%s>] [%s <%s>]", ArgumentName.NAMESPACE_NAME,
-                         ArgumentName.NAMESPACE_DESCRIPTION, ArgumentName.NAMESPACE_DESCRIPTION,
-                         ArgumentName.NAMESPACE_PRINCIPAL, ArgumentName.NAMESPACE_PRINCIPAL,
+                         ArgumentName.DESCRIPTION, ArgumentName.DESCRIPTION,
+                         ArgumentName.PRINCIPAL, ArgumentName.PRINCIPAL,
                          ArgumentName.NAMESPACE_GROUP_NAME, ArgumentName.NAMESPACE_GROUP_NAME,
                          ArgumentName.NAMESPACE_KEYTAB_PATH, ArgumentName.NAMESPACE_KEYTAB_PATH,
                          ArgumentName.NAMESPACE_HBASE_NAMESPACE, ArgumentName.NAMESPACE_HBASE_NAMESPACE,
