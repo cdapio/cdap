@@ -31,6 +31,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.inject.Provider;
 import org.slf4j.Logger;
@@ -45,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import javax.annotation.Nullable;
 
 /**
@@ -55,6 +57,10 @@ public class LogPipelineLoader {
   private static final Logger LOG = LoggerFactory.getLogger(LogPipelineLoader.class);
   private static final String CDAP_LOG_PIPELINE_CONFIG = "cdap-log-pipeline.xml";
   private static final String CDAP_LOG_PIPELINE_NAME = "cdap";
+  private static final Set<byte[]> RESERVED_CHECKPOINT_PREFIX = ImmutableSortedSet.orderedBy(Bytes.BYTES_COMPARATOR)
+    .add(Bytes.toBytes(101))    // This is used by the old metrics log plugin
+    .add(Bytes.toBytes(200))    // This is used by the file meta data
+    .build();
 
   private final CConfiguration cConf;
 
@@ -76,7 +82,7 @@ public class LogPipelineLoader {
         return context;
       }
     };
-    load(contextProvider, false);
+    doLoad(contextProvider, false);
   }
 
   /**
@@ -88,7 +94,7 @@ public class LogPipelineLoader {
    */
   public <T extends LoggerContext> Map<String, LogPipelineSpecification<T>> load(Provider<T> contextProvider) {
     try {
-      return load(contextProvider, true);
+      return doLoad(contextProvider, true);
     } catch (InvalidPipelineException e) {
       // Since we called with ignoreOnError, the method should never throw this exception, hence should never reach here
       LOG.warn("Invalid pipeline configuration", e);
@@ -105,10 +111,12 @@ public class LogPipelineLoader {
    * @return a map from pipeline name to the {@link LogPipelineSpecification}
    * @throws InvalidPipelineException if any of the pipeline configuration is invalid.
    */
-  private <T extends LoggerContext> Map<String, LogPipelineSpecification<T>> load(
+  private <T extends LoggerContext> Map<String, LogPipelineSpecification<T>> doLoad(
     Provider<T> contextProvider, boolean ignoreOnError) throws InvalidPipelineException {
 
     Map<String, LogPipelineSpecification<T>> result = new HashMap<>();
+    Set<byte[]> checkpointPrefixes = new TreeSet<>(Bytes.BYTES_COMPARATOR);
+    checkpointPrefixes.addAll(RESERVED_CHECKPOINT_PREFIX);
 
     for (URL configURL : getPipelineConfigURLs()) {
       try {
@@ -119,16 +127,27 @@ public class LogPipelineLoader {
             throw new InvalidPipelineException("Duplicate pipeline with name " + spec.getName() + " at " + configURL +
                                                  ". It was already defined at " + existingSpec.getSource());
           }
-          LOG.warn("Pipeline {} already defined in {}. Ignore the duplicated one from {}",
+          LOG.warn("Pipeline {} already defined in {}. Ignoring the duplicated one from {}.",
                    spec.getName(), existingSpec.getSource(), configURL);
           continue;
         }
+
+        if (!checkpointPrefixes.add(spec.getCheckpointPrefix())) {
+          // Checkpoint prefix can't be the same, otherwise pipeline checkpoints will be overwriting each other.
+          throw new InvalidPipelineException(
+            "Checkpoint prefix " + Bytes.toStringBinary(spec.getCheckpointPrefix()) + " already exists. " +
+              "Please either remove the property " + Constants.Logging.PIPELINE_CHECKPOINT_PREFIX_NUM +
+              " or use a different value."
+          );
+        }
+
         result.put(spec.getName(), spec);
       } catch (JoranException e) {
         if (!ignoreOnError) {
           throw new InvalidPipelineException("Failed to process log processing pipeline config at " + configURL, e);
         }
-        LOG.warn("Ignore invalid log processing pipeline configuration in {} due to\n  {}", configURL, e.getMessage());
+        LOG.warn("Ignoring invalid log processing pipeline configuration in {} due to\n  {}",
+                 configURL, e.getMessage());
       }
     }
 
@@ -156,7 +175,7 @@ public class LogPipelineLoader {
           return file.toURI().toURL();
         } catch (MalformedURLException e) {
           // This shouldn't happen
-          LOG.warn("Ignore log pipeline config file {} due to {}", file, e.getMessage());
+          LOG.warn("Ignoring log pipeline config file {} due to {}", file, e.getMessage());
           return null;
         }
       }
@@ -201,19 +220,19 @@ public class LogPipelineLoader {
       try {
         checkpointPrefix = Bytes.toBytes(Integer.parseInt(prefixNum));
       } catch (NumberFormatException e) {
-        LOG.warn("Ignore invalid {} setting for pipeline in {}",
+        LOG.warn("Ignoring invalid {} setting for pipeline in {}",
                  Constants.Logging.PIPELINE_CHECKPOINT_PREFIX_NUM, configURL);
       }
     }
 
     return new LogPipelineSpecification<>(configURL, context,
-                                          setupConfig(configurator, pipelineCConf), checkpointPrefix);
+                                          setupPipelineCConf(configurator, pipelineCConf), checkpointPrefix);
   }
 
   /**
    * Copies overridable configurations from the pipeline configuration into the given {@link CConfiguration}.
    */
-  private CConfiguration setupConfig(JoranConfigurator configurator, CConfiguration cConf) {
+  private CConfiguration setupPipelineCConf(JoranConfigurator configurator, CConfiguration cConf) {
     Context context = configurator.getContext();
 
     // The list of properties that can be overridden per pipeline configuration
@@ -226,6 +245,11 @@ public class LogPipelineLoader {
       Constants.Logging.PIPELINE_LOGGER_CACHE_EXPIRATION_MS
     );
 
+    // For each of the allowed key, try to resolves through the configurator execution context.
+    // If in the logback xml has that <property>, the one form the execution context would have higher precedence
+    // than the one in the context when the subst() is called.
+    // We cannot put the properties in the context before calling doConfigure as logback won't pickup the one
+    // defined in the logback xml.
     for (String key : keys) {
       context.putProperty(key, cConf.get(key));
       cConf.set(key, configurator.getExecutionContext().subst("${" + key + "}"));
