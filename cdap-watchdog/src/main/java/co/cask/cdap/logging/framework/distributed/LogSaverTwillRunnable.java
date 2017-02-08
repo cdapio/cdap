@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.run;
+package co.cask.cdap.logging.framework.distributed;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -31,9 +31,8 @@ import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
-import co.cask.cdap.logging.guice.LogSaverServiceModule;
+import co.cask.cdap.logging.guice.DistributedLogFrameworkModule;
 import co.cask.cdap.logging.guice.LoggingModules;
-import co.cask.cdap.logging.save.KafkaLogSaverService;
 import co.cask.cdap.logging.service.LogSaverStatusService;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -74,7 +73,7 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
   @Override
   protected void doInit(TwillContext context) {
     name = context.getSpecification().getName();
-    injector = createGuiceInjector(getCConfiguration(), getConfiguration());
+    injector = createGuiceInjector(getCConfiguration(), getConfiguration(), context);
 
     // Register shutdown hook to stop Log Saver before Hadoop Filesystem shuts down
     ShutdownHookManager.get().addShutdownHook(new Runnable() {
@@ -92,12 +91,12 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
     services.add(injector.getInstance(KafkaClientService.class));
     services.add(injector.getInstance(BrokerService.class));
     services.add(injector.getInstance(MetricsCollectionService.class));
-    services.add(injector.getInstance(KafkaLogSaverService.class));
+    services.add(injector.getInstance(DistributedLogFramework.class));
     services.add(injector.getInstance(LogSaverStatusService.class));
   }
 
   @VisibleForTesting
-  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
+  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf, TwillContext twillContext) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
@@ -109,7 +108,7 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
       new NamespaceClientRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
-      new LogSaverServiceModule(),
+      new DistributedLogFrameworkModule(twillContext),
       new LoggingModules().getDistributedModules(),
       new AuditModule().getDistributedModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),

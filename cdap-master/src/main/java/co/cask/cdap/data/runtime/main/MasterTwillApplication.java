@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,11 +20,12 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
-import co.cask.cdap.logging.run.LogSaverTwillRunnable;
+import co.cask.cdap.logging.framework.distributed.LogSaverTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsProcessorTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsTwillRunnable;
 import com.google.common.base.Charsets;
@@ -49,12 +50,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.zip.ZipEntry;
 
 /**
  * TwillApplication wrapper for Master Services running in YARN.
@@ -64,6 +70,12 @@ public class MasterTwillApplication implements TwillApplication {
   private static final String NAME = Constants.Service.MASTER_SERVICES;
   private static final String CCONF_NAME = "cConf.xml";
   private static final String HCONF_NAME = "hConf.xml";
+  private static final Comparator<File> FILE_NAME_COMPARATOR = new Comparator<File>() {
+    @Override
+    public int compare(File o1, File o2) {
+      return o1.getName().compareTo(o2.getName());
+    }
+  };
   private static final Set<String> ALL_SERVICES = ImmutableSet.of(
     Constants.Service.MESSAGING_SERVICE,
     Constants.Service.TRANSACTION,
@@ -105,6 +117,8 @@ public class MasterTwillApplication implements TwillApplication {
 
     List<String> extraClassPath = new ArrayList<>();
 
+    prepareLogSaverResources(tempDir, containerCConf,
+                             runnableLocalizeResources.get(Constants.Service.LOGSAVER), extraClassPath);
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       prepareExploreResources(tempDir, hConf,
                               runnableLocalizeResources.get(Constants.Service.EXPLORE_HTTP_USER_SERVICE),
@@ -289,6 +303,60 @@ public class MasterTwillApplication implements TwillApplication {
       conf.writeXml(writer);
     }
     return file;
+  }
+
+  /**
+   * Prepares resources that need to be localized to the log saver container.
+   */
+  private void prepareLogSaverResources(Path tempDir, CConfiguration containerCConf,
+                                        Map<String, LocalizeResource> localizeResources,
+                                        Collection<String> extraClassPath) throws IOException {
+    String configJarName = "log.config.jar";
+    String libJarName = "log.lib.jar";
+
+    // Localize log config files
+    List<File> configFiles = DirUtils.listFiles(new File(cConf.get(Constants.Logging.PIPELINE_CONFIG_DIR)), "xml");
+    if (!configFiles.isEmpty()) {
+      Path configJar = Files.createTempFile(tempDir, "log.config", ".jar");
+      try (JarOutputStream jarOutput = new JarOutputStream(Files.newOutputStream(configJar))) {
+        for (File configFile : configFiles) {
+          jarOutput.putNextEntry(new JarEntry(configFile.getName()));
+          Files.copy(configFile.toPath(), jarOutput);
+          jarOutput.closeEntry();
+        }
+      }
+      localizeResources.put(configJarName, new LocalizeResource(configJar.toUri(), true));
+    }
+    // It's ok to set to a non-existing directory in case there is no config files
+    containerCConf.set(Constants.Logging.PIPELINE_CONFIG_DIR, configJarName);
+
+    // Localize log lib jars
+    // First collect jars under each of the configured lib directory
+    List<File> libJars = new ArrayList<>();
+    for (String libDir : cConf.getTrimmedStringCollection(Constants.Logging.PIPELINE_LIBRARY_DIR)) {
+      List<File> files = new ArrayList<>(DirUtils.listFiles(new File(libDir), "jar"));
+      Collections.sort(files, FILE_NAME_COMPARATOR);
+      libJars.addAll(files);
+    }
+    if (!libJars.isEmpty()) {
+      Path libJar = Files.createTempFile("log.lib", ".jar");
+      try (JarOutputStream jarOutput = new JarOutputStream(Files.newOutputStream(libJar))) {
+        for (File jarFile : libJars) {
+          JarEntry jarEntry = new JarEntry(jarFile.getName());
+          jarEntry.setMethod(ZipEntry.STORED);
+          jarOutput.putNextEntry(jarEntry);
+          Files.copy(jarFile.toPath(), jarOutput);
+          jarOutput.closeEntry();
+
+          // Add the log lib jar to the container classpath
+          extraClassPath.add(libJarName + File.separator + jarFile.getName());
+        }
+      }
+      localizeResources.put(libJarName, new LocalizeResource(libJar.toUri(), true));
+    }
+    // Set it to empty value since we don't use this in the container.
+    // All jars are already added as part of container classpath.
+    containerCConf.set(Constants.Logging.PIPELINE_LIBRARY_DIR, "");
   }
 
   /**

@@ -21,7 +21,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -53,19 +52,12 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.security.impersonation.CurrentUGIProvider;
 import co.cask.cdap.security.impersonation.UGIProvider;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionModules;
-import org.apache.twill.api.ElectionHandler;
-import org.apache.twill.api.RunId;
-import org.apache.twill.api.TwillContext;
-import org.apache.twill.api.TwillRunnableSpecification;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.kafka.client.BrokerService;
 import org.apache.twill.kafka.client.Compression;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -79,13 +71,10 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Unit-test for {@link DistributedLogFramework}.
@@ -247,91 +236,4 @@ public class DistributedLogFrameworkTest {
     preparer.send();
   }
 
-  /**
-   * A mock {@link TwillContext} for unit-test.
-   */
-  private static final class MockTwillContext implements TwillContext {
-
-    private final RunId runId = RunIds.generate();
-    private final RunId appRunId = RunIds.generate();
-
-    @Override
-    public RunId getRunId() {
-      return runId;
-    }
-
-    @Override
-    public RunId getApplicationRunId() {
-      return appRunId;
-    }
-
-    @Override
-    public int getInstanceCount() {
-      return 1;
-    }
-
-    @Override
-    public InetAddress getHost() {
-      try {
-        return InetAddress.getLocalHost();
-      } catch (UnknownHostException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-
-    @Override
-    public String[] getArguments() {
-      return new String[0];
-    }
-
-    @Override
-    public String[] getApplicationArguments() {
-      return new String[0];
-    }
-
-    @Override
-    public TwillRunnableSpecification getSpecification() {
-      return null;
-    }
-
-    @Override
-    public int getInstanceId() {
-      return 0;
-    }
-
-    @Override
-    public int getVirtualCores() {
-      return 0;
-    }
-
-    @Override
-    public int getMaxMemoryMB() {
-      return 0;
-    }
-
-    @Override
-    public ServiceDiscovered discover(String name) {
-      return null;
-    }
-
-    @Override
-    public Cancellable electLeader(String name, ElectionHandler participantHandler) {
-      return null;
-    }
-
-    @Override
-    public Lock createLock(String name) {
-      return null;
-    }
-
-    @Override
-    public Cancellable announce(String serviceName, int port) {
-      return null;
-    }
-
-    @Override
-    public Cancellable announce(String serviceName, int port, byte[] payload) {
-      return null;
-    }
-  }
 }
