@@ -108,6 +108,10 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
     if (e instanceof RegionCoprocessorEnvironment) {
       getTopicMetadataCache((RegionCoprocessorEnvironment) e).stop();
     }
+
+    if (compactionState != null) {
+      compactionState.stop();
+    }
   }
 
   @Override

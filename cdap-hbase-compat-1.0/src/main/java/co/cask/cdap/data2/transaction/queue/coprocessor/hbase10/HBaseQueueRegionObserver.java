@@ -123,6 +123,13 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       configCache = createConfigCache(env);
     }
   }
+  
+  @Override
+  public void stop(CoprocessorEnvironment e) throws IOException {
+    if (compactionState != null) {
+      compactionState.stop();
+    }
+  }
 
   @Override
   public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> e,
