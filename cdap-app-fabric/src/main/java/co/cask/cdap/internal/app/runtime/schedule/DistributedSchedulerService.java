@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
 import com.google.common.base.Supplier;
@@ -49,6 +50,10 @@ public final class DistributedSchedulerService extends AbstractSchedulerService 
             try {
               startSchedulers();
               notifyStarted();
+            } catch (ServiceUnavailableException e) {
+              // This is expected during startup. Log with a debug without the stacktrace
+              LOG.debug("Service not available for schedule to start due to {}", e.getMessage());
+              notifyFailed(e);
             } catch (SchedulerException e) {
               LOG.warn("Scheduler Exception thrown ", e);
               notifyFailed(e);
