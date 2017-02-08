@@ -335,7 +335,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
         outputStream.hflush();
       } catch (Exception e) {
         close();
-        throw new IOException("Exception while flushing file " + location, e);
+        throw new IOException("Exception while flushing file {}" + location, e);
       }
     }
 
@@ -345,7 +345,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
         outputStream.hsync();
       } catch (Exception e) {
         close();
-        throw new IOException("Exception while syncing file " + location, e);
+        throw new IOException("Exception while syncing file {}" + location, e);
       }
     }
 

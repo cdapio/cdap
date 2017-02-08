@@ -153,7 +153,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
     this.logFileWriter = new CheckpointingLogFileWriter(avroFileWriter, checkpointManager, checkpointIntervalMs);
     long retentionDurationMs = TimeUnit.MILLISECONDS.convert(retentionDurationDays, TimeUnit.DAYS);
     this.logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, namespaceQueryAdmin,
-                                     namespacedLocationFactory, logBaseDir, retentionDurationMs, impersonator);
+                                     namespacedLocationFactory, logBaseDir, retentionDurationMs, cConf, impersonator);
   }
 
   @Override

@@ -69,7 +69,11 @@ const entityDetail2 = {
   "org": "Cask Data, Inc.",
   "created": 1473901763,
   "categories": ["datapack"],
+<<<<<<< HEAD
   "cdapVersion": "[4.1.0-SNAPSHOT,4.2.0)",
+=======
+  "cdapVersion": "[4.0.0,4.1.0)",
+>>>>>>> v4.0.1
   "actions": [{
       "type": "load_datapack",
       "label": "Access Logs",

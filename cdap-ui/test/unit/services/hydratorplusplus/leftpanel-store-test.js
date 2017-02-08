@@ -35,7 +35,7 @@ describe('Hydrator++ - Left Panel Store tests', function() {
       pluginToVersionMap = {
         'Stream-batchsource-core-plugins': {
           name: 'core-plugins',
-          version: '1.5.0',
+          version: '1.5.1',
           scope: 'SYSTEM'
         }
       },
@@ -43,6 +43,7 @@ describe('Hydrator++ - Left Panel Store tests', function() {
         { name: 'Stream', artifact: { name: 'core-plugins', version: '1.3.0', scope: 'SYSTEM' } },
         { name: 'Stream', artifact: { name: 'core-plugins', version: '1.4.0', scope: 'SYSTEM' } },
         { name: 'Stream', artifact: { name: 'core-plugins', version: '1.5.0', scope: 'SYSTEM' } },
+        { name: 'Stream', artifact: { name: 'core-plugins', version: '1.5.1', scope: 'SYSTEM' } },
         { name: 'Cassandra', artifact: { name: 'cassandra-plugins', version: '1.3.0', scope: 'SYSTEM' } }
       ],
       batchSinkPlugins = [
@@ -224,7 +225,7 @@ describe('Hydrator++ - Left Panel Store tests', function() {
       expect(_plugins.length).toBe(3);
       var streamPlugin = _plugins.filter( plug => plug.name === 'Stream');
       if (streamPlugin.length) {
-        expect(streamPlugin[0].defaultArtifact.version).toBe('1.5.0');
+        expect(streamPlugin[0].defaultArtifact.version).toBe('1.5.1');
       }
     });
     _HydratorPlusPlusLeftPanelStore.dispatch({

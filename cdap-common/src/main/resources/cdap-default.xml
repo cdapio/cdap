@@ -1030,6 +1030,14 @@
   </property>
 
   <property>
+    <name>log.cleanup.max.num.files</name>
+    <value>1000</value>
+    <description>
+      Max number of files scanned in one iteration
+    </description>
+  </property>
+
+  <property>
     <name>log.collection.root</name>
     <value>${local.data.dir}/logs</value>
     <description>
@@ -2167,7 +2175,7 @@
     <name>router.ssl.server.port</name>
     <value>${router.ssl.bind.port}</value>
     <description>
-      CDAP Router service port for HTTPS, for clients and webapps
+      CDAP Router service bind port for HTTPS, for clients and webapps
     </description>
   </property>
 
