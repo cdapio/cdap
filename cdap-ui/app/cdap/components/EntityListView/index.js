@@ -29,10 +29,11 @@ import PlusButtonStore from 'services/PlusButtonStore';
 import globalEvents from 'services/global-events';
 import isNil from 'lodash/isNil';
 import Overview from 'components/Overview';
-import WelcomeScreen from './WelcomeScreen';
-import HomeListView from './ListView';
 import EntityListInfo from './EntityListInfo';
-
+import WelcomeScreen from 'components/EntityListView/WelcomeScreen';
+import HomeListView from 'components/EntityListView/ListView';
+import NamespaceStore from 'services/NamespaceStore';
+import Page404 from 'components/404';
 require('./EntityListView.scss');
 import ee from 'event-emitter';
 
@@ -115,7 +116,8 @@ class EntityListView extends Component {
       currentPage: 1,
       animationDirection: 'next',
       showSplash: true,
-      userStoreObj : ''
+      userStoreObj : '',
+      notFound: false
     };
 
     this.retryCounter = 0; // being used for search API retry
@@ -193,7 +195,6 @@ class EntityListView extends Component {
 
     // Process and return valid query parameters
     let queryObject = this.getQueryObject(this.props.location.query);
-
     this.setState({
       filter: queryObject.filter,
       sortObj: queryObject.sort,
@@ -232,8 +233,38 @@ class EntityListView extends Component {
   }
   // Retrieve entities for rendering
   componentDidMount() {
-    this.calculatePageSize();
-    this.updateData();
+    let namespaces = NamespaceStore.getState().namespaces.map(ns => ns.name);
+    if (namespaces.length) {
+      let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+      if (namespaces.indexOf(selectedNamespace) === -1) {
+        this.setState({
+          notFound: true,
+          loading: false
+        });
+      } else {
+        this.calculatePageSize();
+        this.updateData();
+      }
+    } else {
+      const namespaceSubcriber = () => {
+        let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+        let namespaces = NamespaceStore.getState().namespaces.map(ns => ns.name);
+        if (namespaces.length && namespaces.indexOf(selectedNamespace) === -1) {
+          this.setState({
+            notFound:true
+          });
+        } else {
+          this.setState({
+            notFound: false
+          }, () => {
+            this.calculatePageSize();
+            this.updateData();
+            this.namespaceStoreSubscription();
+          });
+        }
+      };
+      this.namespaceStoreSubscription = NamespaceStore.subscribe(namespaceSubcriber.bind(this));
+    }
   }
 
   // Construct and return query object from query parameters
@@ -543,6 +574,37 @@ class EntityListView extends Component {
 
   render() {
 
+    if (this.state.notFound) {
+      return (
+        <div className="entity-list-view">
+          <Page404
+            entityType="Namespace"
+            entityName={this.props.params.namespace}
+          >
+            <div className="namespace-not-found text-xs-center">
+              <h4>
+                <strong>
+                  {T.translate('features.EntityListView.NamespaceNotFound.createMessage')}
+                  <span
+                    className="open-namespace-wizard-link"
+                    onClick={() => {
+                      this.eventEmitter.emit(globalEvents.CREATENAMESPACE);
+                    }}
+                  >
+                    {T.translate('features.EntityListView.NamespaceNotFound.createLinkLabel')}
+                  </span>
+                </strong>
+              </h4>
+              <h4>
+                <strong>
+                  {T.translate('features.EntityListView.NamespaceNotFound.switchMessage')}
+                </strong>
+              </h4>
+            </div>
+          </Page404>
+        </div>
+      );
+    }
     if (!this.state.showSplash) {
       return (
         <WelcomeScreen

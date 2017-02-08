@@ -75,6 +75,13 @@
   height: calc(100vh - 132px);
   align-items: flex-start;
 
+  .namespace-not-found {
+    .open-namespace-wizard-link {
+      color: $cdap_orange;
+      cursor: pointer;
+      margin: 0 5px;
+    }
+  }
   .entities-container {
     display: flex;
     flex-wrap: wrap;
