@@ -54,28 +54,41 @@ public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
     String datasetDescription = arguments.getOptional(ArgumentName.DATASET_DESCRIPTON.toString(), null);
     Map<String, String> datasetProperties = ArgumentParser.parseMap(datasetPropertiesString,
                                                                     ArgumentName.DATASET_PROPERTIES.toString());
+    String datasetOwner = arguments.getOptional(ArgumentName.PRINCIPAL.toString(), null);
+
     // TODO: CDAP-8110 (Rohit) Support owner principal in CLI by deprecating this command and introducing a more user
     // friendly create dataset instance command
     DatasetInstanceConfiguration datasetConfig =
-      new DatasetInstanceConfiguration(datasetType, datasetProperties, datasetDescription, null);
+      new DatasetInstanceConfiguration(datasetType, datasetProperties, datasetDescription, datasetOwner);
 
     datasetClient.create(cliConfig.getCurrentNamespace().dataset(datasetName), datasetConfig);
-    output.printf("Successfully created dataset named '%s' with type '%s' and properties '%s'",
-                  datasetName, datasetType, GSON.toJson(datasetProperties));
+
+    StringBuilder builder = new StringBuilder(String.format("Successfully created dataset named '%s' with type " +
+                                                              "'%s', properties '%s'", datasetName, datasetType,
+                                                            GSON.toJson(datasetProperties)));
+    if (datasetDescription != null) {
+      builder.append(String.format(", description '%s'", datasetDescription));
+    }
+    if (datasetOwner != null) {
+      builder.append(String.format(", owner principal '%s'", datasetOwner));
+    }
+    output.printf(builder.toString());
     output.println();
   }
 
   @Override
   public String getPattern() {
-    return String.format("create dataset instance <%s> <%s> [<%s>] [<%s>]",
+    return String.format("create dataset instance <%s> <%s> [<%s>] [<%s>] [%s <%s>]",
                          ArgumentName.DATASET_TYPE, ArgumentName.NEW_DATASET, ArgumentName.DATASET_PROPERTIES,
-                         ArgumentName.DATASET_DESCRIPTON);
+                         ArgumentName.DATASET_DESCRIPTON, ArgumentName.PRINCIPAL, ArgumentName.PRINCIPAL);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Creates %s. '<%s>' is in the format 'key1=val1 key2=val2'.",
-                         Fragment.of(Article.A, ElementType.DATASET.getName()),
-                         ArgumentName.DATASET_PROPERTIES);
+    return String.format("Creates %s instance of the specified %s. Can optionally take %s, %s, or %s where '<%s>' " +
+                           "is in the format 'key1=val1 key2=val2' and '<%s>' is the Kerberos principal of the owner " +
+                           "of the dataset.", Fragment.of(Article.A, ElementType.DATASET.getName()),
+                         ArgumentName.DATASET_TYPE, ArgumentName.DATASET_PROPERTIES, ArgumentName.DATASET_DESCRIPTON,
+                         ArgumentName.PRINCIPAL, ArgumentName.DATASET_PROPERTIES, ArgumentName.PRINCIPAL);
   }
 }
