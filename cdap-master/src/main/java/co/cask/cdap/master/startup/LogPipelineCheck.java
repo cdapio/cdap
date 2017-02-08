@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,30 +14,30 @@
  * the License.
  */
 
-package co.cask.cdap.logging;
+package co.cask.cdap.master.startup;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.logging.save.LogSaverTableUtil;
+import co.cask.cdap.logging.framework.LogPipelineLoader;
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Test utility used to change log meta table.
+ * Checks for log appender configurations. This class will be automatically picked up by the MasterStartupTool.
  */
-public class LogSaverTableUtilOverride extends LogSaverTableUtil {
-  private static String logMetaTableName = "log.meta";
+@SuppressWarnings("unused")
+class LogPipelineCheck extends AbstractMasterCheck {
+
+  private static final Logger LOG = LoggerFactory.getLogger(LogPipelineCheck.class);
 
   @Inject
-  public LogSaverTableUtilOverride(DatasetFramework framework, CConfiguration conf) {
-    super(framework, conf);
+  LogPipelineCheck(CConfiguration cConf) {
+    super(cConf);
   }
 
   @Override
-  public String getMetaTableName() {
-    return logMetaTableName;
-  }
-
-  public static void setLogMetaTableName(String tableName) {
-    logMetaTableName = tableName;
+  public void run() throws Exception {
+    new LogPipelineLoader(cConf).validate();
+    LOG.info("Log pipeline configurations verified.");
   }
 }

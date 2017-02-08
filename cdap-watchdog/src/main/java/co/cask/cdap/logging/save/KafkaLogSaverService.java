@@ -22,7 +22,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClient;
 
 import java.util.Set;
 
@@ -37,7 +37,7 @@ public final class KafkaLogSaverService extends ResourceBalancerService {
 
   @Inject
   public KafkaLogSaverService(CConfiguration conf,
-                              ZKClientService zkClient,
+                              ZKClient zkClient,
                               DiscoveryService discoveryService,
                               DiscoveryServiceClient discoveryServiceClient,
                               LogSaverFactory logSaverFactory) {
