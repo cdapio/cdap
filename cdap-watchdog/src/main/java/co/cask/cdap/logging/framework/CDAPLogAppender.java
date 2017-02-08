@@ -87,19 +87,26 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     // These should all passed. The settings are from the cdap-log-pipeline.xml and the context must be AppenderContext
     Preconditions.checkState(syncIntervalBytes > 0, "Property syncIntervalBytes must be > 0.");
     Preconditions.checkState(maxFileLifetimeMs > 0, "Property maxFileLifetimeMs must be > 0");
-    Preconditions.checkState(context instanceof AppenderContext,
-                             "The context object is not an instance of %s", AppenderContext.class);
 
-    AppenderContext context = (AppenderContext) this.context;
-    logFileManager = new LogFileManager(maxFileLifetimeMs, syncIntervalBytes, locationPermissions,
-                                        LogSchema.LoggingEvent.SCHEMA,
-                                        new FileMetaDataWriter(context.getDatasetManager(), context),
-                                        context.getLocationFactory());
+    if (context instanceof AppenderContext) {
+      AppenderContext context = (AppenderContext) this.context;
+      logFileManager = new LogFileManager(maxFileLifetimeMs, syncIntervalBytes, locationPermissions,
+                                          LogSchema.LoggingEvent.SCHEMA,
+                                          new FileMetaDataWriter(context.getDatasetManager(), context),
+                                          context.getLocationFactory());
+    } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {
+      throw new IllegalStateException("Expected logger context instance of " + AppenderContext.class.getName() +
+                                        " but get " + context.getClass().getName());
+    }
     super.start();
   }
 
   @Override
   public void doAppend(ILoggingEvent eventObject) throws LogbackException {
+    if (logFileManager == null) {
+      return;
+    }
+
     long timestamp = eventObject.getTimeStamp();
     try {
       // logic from AppenderBase
@@ -134,13 +141,17 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
 
   @Override
   public void flush() throws IOException {
-    logFileManager.flush();
+    if (logFileManager != null) {
+      logFileManager.flush();
+    }
   }
 
   @Override
   public void stop() {
     try {
-      logFileManager.close();
+      if (logFileManager != null) {
+        logFileManager.close();
+      }
     } finally {
       super.stop();
     }

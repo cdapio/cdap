@@ -71,7 +71,9 @@ public class LogPipelineLoader {
     Provider<LoggerContext> contextProvider = new Provider<LoggerContext>() {
       @Override
       public LoggerContext get() {
-        return new LoggerContext();
+        LoggerContext context = new LoggerContext();
+        context.putObject(Constants.Logging.PIPELINE_VALIDATION, Boolean.TRUE);
+        return context;
       }
     };
     load(contextProvider, false);
@@ -124,7 +126,7 @@ public class LogPipelineLoader {
         result.put(spec.getName(), spec);
       } catch (JoranException e) {
         if (!ignoreOnError) {
-          throw new InvalidPipelineException("Failed to parse log processing pipeline config at " + configURL, e);
+          throw new InvalidPipelineException("Failed to process log processing pipeline config at " + configURL, e);
         }
         LOG.warn("Ignore invalid log processing pipeline configuration in {} due to\n  {}", configURL, e.getMessage());
       }
