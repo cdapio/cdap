@@ -1116,7 +1116,7 @@
 
   <property>
     <name>log.process.pipeline.config.dir</name>
-    <value>/opt/cdap/master/ext/loggings/config</value>
+    <value>/opt/cdap/master/ext/logging/config</value>
     <description>
       A local directory on the CDAP Master that is scanned for log processing pipeline
       configurations. Each pipeline is defined by a file in the logback XML format, with
@@ -1161,7 +1161,7 @@
 
   <property>
     <name>log.process.pipeline.lib.dir</name>
-    <value>/opt/cdap/master/ext/loggings/lib</value>
+    <value>/opt/cdap/master/ext/logging/lib</value>
     <description>
       Semicolon-separated list of local directories on the CDAP Master scanned
       for additional library JAR files to be included for log processing
