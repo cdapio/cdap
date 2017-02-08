@@ -42,6 +42,11 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   }
 
   @Override
+  public JavaSparkExecutionContext getSparkExecutionContext() {
+    return sec;
+  }
+
+  @Override
   public void execute(TxRunnable runnable) throws TransactionFailureException {
     sec.execute(runnable);
   }
