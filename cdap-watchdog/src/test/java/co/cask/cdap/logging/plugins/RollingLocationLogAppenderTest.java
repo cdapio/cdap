@@ -25,6 +25,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.kerberos.NoOpOwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -100,6 +102,7 @@ public class RollingLocationLogAppenderTest {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+          bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
         }
       }
     );

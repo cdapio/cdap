@@ -21,23 +21,21 @@ import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
-import java.io.Flushable;
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
 /**
  * Location outputstream used by {@link LocationManager}
  */
-public class LocationOutputStream implements Flushable, Closeable {
+public class LocationOutputStream extends FilterOutputStream {
   private static final Logger LOG = LoggerFactory.getLogger(LocationOutputStream.class);
 
   private Location location;
-  private OutputStream outputStream;
 
   public LocationOutputStream(Location location, OutputStream outputStream) {
+    super(outputStream);
     this.location = location;
-    this.outputStream = outputStream;
   }
 
   public Location getLocation() {
@@ -45,7 +43,7 @@ public class LocationOutputStream implements Flushable, Closeable {
   }
 
   public OutputStream getOutputStream() {
-    return outputStream;
+    return out;
   }
 
   public void setLocation(Location location) {
@@ -53,21 +51,20 @@ public class LocationOutputStream implements Flushable, Closeable {
   }
 
   public void setOutputStream(OutputStream outputStream) {
-    this.outputStream = outputStream;
+    this.out = outputStream;
   }
 
   @Override
   public void flush() throws IOException {
-    outputStream.flush();
-    if (outputStream instanceof Syncable) {
-      ((Syncable) outputStream).hsync();
+    out.flush();
+    if (out instanceof Syncable) {
+      ((Syncable) out).hsync();
     }
   }
 
   @Override
   public void close() throws IOException {
     LOG.trace("Closing file {}", location);
-    this.flush();
-    outputStream.close();
+    out.close();
   }
 }

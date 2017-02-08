@@ -19,6 +19,7 @@ package co.cask.cdap.logging.plugins;
 import co.cask.cdap.common.io.Locations;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -41,7 +42,7 @@ public class LocationManager implements Flushable, Closeable {
   protected static final String TAG_NAMESPACE_ID = ".namespaceId";
   protected static final String TAG_APPLICATION_ID = ".applicationId";
 
-  private Location logBaseDir;
+  private final Location logBaseDir;
   private Map<LocationIdentifier, LocationOutputStream> activeLocations;
   private String filePermissions;
 
@@ -52,56 +53,74 @@ public class LocationManager implements Flushable, Closeable {
     this.filePermissions = filePermissions;
   }
 
-  LocationIdentifier getLocationIdentifier(Map<String, String> propertyMap) throws IllegalArgumentException,
-    IOException {
+  /**
+   * creates {@link LocationIdentifier} from propertymap
+   * @param propertyMap MDC property map which contains namespace id and application id
+   * @return returns {@link LocationIdentifier}
+   * @throws IllegalArgumentException application id is not present in the property map
+   */
+  LocationIdentifier getLocationIdentifier(Map<String, String> propertyMap) {
 
     String namespaceId = propertyMap.get(TAG_NAMESPACE_ID);
-    Preconditions.checkArgument(propertyMap.containsKey(TAG_APPLICATION_ID),
+    String applicationId = propertyMap.get(TAG_APPLICATION_ID);
+
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(applicationId),
                                 String.format("%s is expected but not found in the context %s",
                                               TAG_APPLICATION_ID, propertyMap));
-    String application = propertyMap.get(TAG_APPLICATION_ID);
 
-    return new LocationIdentifier(namespaceId, application);
+    return new LocationIdentifier(namespaceId, applicationId);
   }
 
-  OutputStream getLocationOutputStream(final LocationIdentifier locationIdentifier, String fileName)
-    throws IOException {
+  /**
+   * log file path will be created by this appender as: basePath/namespaceId/applicationId/filePath
+   * @param locationIdentifier location identifier for this event
+   * @param filePath filePath for this event
+   * @return returns {@link LocationOutputStream} for an event
+   * @throws IOException throws exception while creating a file
+   */
+  OutputStream getLocationOutputStream(LocationIdentifier locationIdentifier, String filePath) throws IOException {
     if (activeLocations.containsKey(locationIdentifier)) {
       return activeLocations.get(locationIdentifier).getOutputStream();
     }
 
-    Location logFile = getLogLocation(locationIdentifier).append(fileName);
+    Location logFile = getLogLocation(locationIdentifier).append(filePath);
     Location logDir = Locations.getParent(logFile);
     // check if parent directories exist
     Locations.mkdirsIfNotExists(logDir);
 
+    if (logDir == null) {
+      // this should never happen
+      throw new IOException(String.format("Parent Directory for %s is null", logFile.toURI().toString()));
+    }
+
     if (logFile.exists()) {
       // The file name for a given application exists if the appender was stopped and then started again but file was
       // not rolled over. In this case, since the roll over size is typically small, we can rename the old file and
-      // copy its contents to new file and delete old file
+      // copy its contents to new file and delete old file.
       long now = System.currentTimeMillis();
-      // rename existing file to temp file
-      if (logDir == null) {
-        // this should never happen
-        throw new IOException(String.format("Parent Directory for %s is null", logFile.toURI().toString()));
-      }
-      Location tempLocation = logFile.renameTo(logDir.append(Long.toString(now)));
-      logFile.createNew(filePermissions);
 
+      // rename existing file to temp file
+      Location tempLocation = logFile.renameTo(logDir.append(Long.toString(now)));
       if (tempLocation == null) {
         throw new IOException(String.format("Can not rename file %s", logFile.toURI().toString()));
       }
 
+      // create new file and open outputstream on it
+      logFile.createNew(filePermissions);
+      // TODO: Handle existing file in a better way rather than copying it over
       OutputStream outputStream = logFile.getOutputStream();
       try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(tempLocation.getInputStream()))) {
         String line;
+        // copy contents of existing file to new file
         while ((line = bufferedReader.readLine()) != null) {
           outputStream.write(line.getBytes());
         }
       }
+
+      activeLocations.put(locationIdentifier, new LocationOutputStream(logFile, outputStream));
+
       // delete temporary file
       tempLocation.delete();
-      activeLocations.put(locationIdentifier, new LocationOutputStream(logFile, outputStream));
     } else {
       // create file with correct permissions
       logFile.createNew(filePermissions);

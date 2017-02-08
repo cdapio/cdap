@@ -53,8 +53,13 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
   private LocationFactory locationFactory;
 
   private TriggeringPolicy<ILoggingEvent> triggeringPolicy;
+  // used as cache to avoid type casting of triggeringPolicy on every event
+  private LocationTriggeringPolicy locationTriggeringPolicy;
   private RollingPolicy rollingPolicy;
+  // used as cache to avoid type casting of triggeringPolicy on every event
+  private LocationRollingPolicy locationRollingPolicy;
 
+  // log file path will be created by this appender as: <basePath>/namespaceId/applicationId/<filePath>
   private String basePath;
   private String filePath;
   private String filePermissions;
@@ -125,25 +130,33 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
 
     final LocationOutputStream locationOutputStream = locationManager.getActiveLocations().get(logLocationIdentifier);
     final Location logFileLocation = locationOutputStream.getLocation();
+
     if (triggeringPolicy instanceof LocationTriggeringPolicy) {
-      ((LocationTriggeringPolicy) triggeringPolicy).setLocation(logFileLocation);
-      if (((LocationTriggeringPolicy) triggeringPolicy).isTriggeringEvent(eventObject)) {
+      if (locationTriggeringPolicy == null) {
+        locationTriggeringPolicy = ((LocationTriggeringPolicy) triggeringPolicy);
+      }
+      locationTriggeringPolicy.setLocation(logFileLocation);
+      if (locationTriggeringPolicy.isTriggeringEvent(eventObject)) {
         try {
           if (rollingPolicy instanceof LocationRollingPolicy) {
-            ((LocationRollingPolicy) rollingPolicy).setLocation(logFileLocation, new Closeable() {
+
+            if (locationRollingPolicy == null) {
+              locationRollingPolicy = ((LocationRollingPolicy) rollingPolicy);
+            }
+
+            locationRollingPolicy.setLocation(logFileLocation, new Closeable() {
               @Override
               public void close() throws IOException {
                 locationOutputStream.getOutputStream().close();
                 locationManager.getActiveLocations().remove(logLocationIdentifier);
               }
             });
-
-            ((LocationRollingPolicy) rollingPolicy).rollover();
+            locationRollingPolicy.rollover();
           }
         } catch (RolloverFailure e) {
           // we do not want to stop processing because roll over failed. so catch it and process the event
           addStatus(new WarnStatus("Attempt to rollover failed for appender [" + name + "].", this));
-          LOG.info("Attempt to rollover failed fro appender [" + name + "].", this);
+          LOG.warn("Attempt to rollover failed for appender [" + name + "].", this);
         }
       }
     }

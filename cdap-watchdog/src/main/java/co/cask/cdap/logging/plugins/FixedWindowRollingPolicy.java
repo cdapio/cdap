@@ -22,6 +22,8 @@ import ch.qos.logback.core.rolling.helper.FileNamePattern;
 import ch.qos.logback.core.rolling.helper.IntegerTokenConverter;
 import co.cask.cdap.common.io.Locations;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -29,16 +31,18 @@ import java.io.IOException;
  * When rolling over, renames files according to a fixed window algorithm.
  */
 public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
-  // TODO Support compression
-  private int minIndex;
+  private static final Logger LOG = LoggerFactory.getLogger(FixedWindowRollingPolicy.class);
   private static final String FNP_NOT_SET =
     "The \"FileNamePattern\" property must be set before using FixedWindowRollingPolicy. ";
+
+  // TODO CDAP-8369 - Support compression
+  private int minIndex;
   private int maxIndex;
 
   /**
    * It's almost always a bad idea to have a large window size, say over 12.
    */
-  private static final int MAX_WINDOW_SIZE = 12;
+  private static final int MAX_WINDOW_SIZE = 20;
 
   public FixedWindowRollingPolicy() {
     minIndex = 1;
@@ -96,7 +100,11 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
         String fileName = fileNamePattern.convertInt(maxIndex);
         Location deleteLocation = parentLocation.append(fileName);
         if (deleteLocation.exists()) {
-          deleteLocation.delete();
+          LOG.debug("Deleting oldest file {} as part of rollover", deleteLocation.toURI().toString());
+          if (!deleteLocation.delete()) {
+            LOG.warn("Failed to delete location: {}", deleteLocation.toURI().toString());
+            throw new RolloverFailure(String.format("Not able to delete file: %s", deleteLocation.toURI().toString()));
+          }
         }
 
         // Map {(maxIndex - 1), ..., minIndex} to {maxIndex, ..., minIndex+1}
@@ -106,19 +114,28 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
           // no point in trying to rename an non existent file
           if (toRename.exists()) {
             Location newName = parentLocation.append(fileNamePattern.convertInt(i + 1));
-            toRename.renameTo(newName);
+            if (toRename.renameTo(newName) == null) {
+              LOG.warn("Failed to rename location: {}", toRename.toURI().toString());
+              throw new RolloverFailure(String.format("Not able to rename file: %s", toRename.toURI().toString()));
+            }
           } else {
             addInfo("Skipping roll-over for inexistent file " + toRenameStr);
           }
         }
       } catch (IOException e) {
-        throw new RolloverFailure(e.getMessage());
+        RolloverFailure f = new RolloverFailure(e.getMessage());
+        f.addSuppressed(e);
+        throw f;
       }
 
       try {
         // close outputstream of active location before renaming it
         closeable.close();
-        activeFileLocation.renameTo(parentLocation.append(fileNamePattern.convertInt(minIndex)));
+        if (activeFileLocation.renameTo(parentLocation.append(fileNamePattern.convertInt(minIndex))) == null) {
+          LOG.warn("Failed to rename location: {}", activeFileLocation.toURI().toString());
+          throw new RolloverFailure(String.format("Not able to rename file: %s",
+                                                  activeFileLocation.toURI().toString()));
+        }
       } catch (IOException e) {
         throw new RolloverFailure(String.format("Exception while renaming file: %s, %s",
                                                 activeFileLocation.getName(), e.getMessage()));

@@ -27,7 +27,6 @@
   <property name="cdap.log.saver.instance.id" value="0"/>
 
   <appender name="rollingAppender" class="co.cask.cdap.logging.plugins.RollingLocationLogAppender">
-    <timestamp> testTimestamp</timestamp>
     <!--log file path will be created by appender as: <basePath>/namespaceId/applicationId/<filePath>-->
     <basePath>plugins/applogs</basePath>
     <!--filePath uses instanceId which is a property set by LogFramework. We use it to avoid multiple log saver
