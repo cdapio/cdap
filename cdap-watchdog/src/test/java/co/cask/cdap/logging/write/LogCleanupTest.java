@@ -35,7 +35,7 @@ import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
-import co.cask.cdap.logging.read.FileMetadataReader;
+import co.cask.cdap.logging.meta.FileMetaDataReader;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -161,7 +161,7 @@ public class LogCleanupTest {
   public void testCleanup() throws Exception {
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
     NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
-    FileMetadataReader fileMetadataReader = injector.getInstance(FileMetadataReader.class);
+    FileMetaDataReader fileMetadataReader = injector.getInstance(FileMetaDataReader.class);
 
     // Deletion boundary
     long deletionBoundary = System.currentTimeMillis() - RETENTION_DURATION_MS;
@@ -405,7 +405,7 @@ public class LogCleanupTest {
     }
 
     // Assert metadata for all deleted files is deleted
-    FileMetadataReader fileMetadataReader = injector.getInstance(FileMetadataReader.class);
+    FileMetaDataReader fileMetadataReader = injector.getInstance(FileMetaDataReader.class);
     List<LogLocation> remainingFilesList =
       fileMetadataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(dummyContext), 0, Long.MAX_VALUE);
     Set<Location> remainingFilesSet = new HashSet<>();

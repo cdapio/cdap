@@ -16,6 +16,8 @@
 
 package co.cask.cdap.logging.read;
 
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.dataset.DatasetManager;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -26,13 +28,19 @@ import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data2.datafabric.dataset.DefaultDatasetManager;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.framework.CDAPLogAppender;
 import co.cask.cdap.logging.framework.LogPathIdentifier;
 import co.cask.cdap.logging.guice.LoggingModules;
-import co.cask.cdap.logging.write.FileMetaDataWriter;
+import co.cask.cdap.logging.meta.FileMetaDataReader;
+import co.cask.cdap.logging.meta.FileMetaDataWriter;
 import co.cask.cdap.logging.write.LogLocation;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -40,12 +48,15 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -105,7 +116,17 @@ public class FileMetadataTest {
 
   @Test
   public void testFileMetadataReadWrite() throws Exception {
-    FileMetaDataWriter fileMetaDataWriter = injector.getInstance(FileMetaDataWriter.class);
+    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
+    DatasetManager datasetManager = new DefaultDatasetManager(datasetFramework, NamespaceId.SYSTEM,
+                                                              co.cask.cdap.common.service.RetryStrategies.noRetry());
+    Transactional transactional = Transactions.createTransactionalWithRetry(
+      Transactions.createTransactional(new MultiThreadDatasetCache(
+        new SystemDatasetInstantiator(datasetFramework), injector.getInstance(TransactionSystemClient.class),
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
+      RetryStrategies.retryOnConflict(20, 100)
+    );
+
+    FileMetaDataWriter fileMetaDataWriter = new FileMetaDataWriter(datasetManager, transactional);
     LogPathIdentifier logPathIdentifier =
       new LogPathIdentifier(NamespaceId.DEFAULT.getNamespace(), "testApp", "testFlow");
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
@@ -126,8 +147,7 @@ public class FileMetadataTest {
                                      location.append("82"));
 
     // reader test
-
-    FileMetadataReader fileMetadataReader = injector.getInstance(FileMetadataReader.class);
+    FileMetaDataReader fileMetadataReader = injector.getInstance(FileMetaDataReader.class);
 
     Assert.assertEquals(12, fileMetadataReader.listFiles(logPathIdentifier, 0, 100).size());
     Assert.assertEquals(5, fileMetadataReader.listFiles(logPathIdentifier, 20, 50).size());

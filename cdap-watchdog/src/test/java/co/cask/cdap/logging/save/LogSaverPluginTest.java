@@ -28,7 +28,6 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.ComponentLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -36,7 +35,6 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.logging.KafkaTestBase;
 import co.cask.cdap.logging.LoggingConfiguration;
@@ -48,12 +46,11 @@ import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManager;
+import co.cask.cdap.logging.meta.FileMetaDataReader;
 import co.cask.cdap.logging.meta.LoggingStoreTableUtil;
 import co.cask.cdap.logging.read.FileLogReader;
-import co.cask.cdap.logging.read.FileMetadataReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.write.LogLocation;
-import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;
@@ -74,7 +71,6 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 import org.apache.tephra.TransactionManager;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -173,14 +169,13 @@ public class LogSaverPluginTest extends KafkaTestBase {
 
       String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
 
-      FileMetadataReader fileMetadataReader =
-        new FileMetadataReader(injector.getInstance(DatasetFramework.class),
-                               injector.getInstance(TransactionSystemClient.class),
-                               injector.getInstance(RootLocationFactory.class),
-                               injector.getInstance(Impersonator.class),
-                               "log.meta");
+      LoggingStoreTableUtil.setMetaTableName("log.meta");
+      FileMetaDataReader fileMetadataReader = injector.getInstance(FileMetaDataReader.class);
 
-      waitTillLogSaverDone(fileMetadataReader, loggingContext, "Test log message 59 arg1 arg2");
+      // Read the logs back. They should be sorted by timestamp order.
+      final FileMetaDataReader fileMetaDataReader = injector.getInstance(FileMetaDataReader.class);
+
+      waitTillLogSaverDone(fileMetaDataReader, loggingContext, "Test log message 59 arg1 arg2");
 
       testLogRead(loggingContext, logBaseDir);
 
@@ -199,12 +194,6 @@ public class LogSaverPluginTest extends KafkaTestBase {
       // Change the log meta table so that checkpoints are new, and old log files are not read during read later
 
       LoggingStoreTableUtil.setMetaTableName("log.meta1");
-      fileMetadataReader =
-        new FileMetadataReader(injector.getInstance(DatasetFramework.class),
-                               injector.getInstance(TransactionSystemClient.class),
-                               injector.getInstance(RootLocationFactory.class),
-                               injector.getInstance(Impersonator.class),
-                               "log.meta1");
 
       // Reset checkpoint for log saver plugin
       resetLogSaverPluginCheckpoint(10);
@@ -218,12 +207,12 @@ public class LogSaverPluginTest extends KafkaTestBase {
       // Reset the log base dir back to original value
       cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
 
-      waitTillLogSaverDone(fileMetadataReader, loggingContext, "Test log message 59 arg1 arg2");
+      waitTillLogSaverDone(fileMetaDataReader, loggingContext, "Test log message 59 arg1 arg2");
       stopLogSaver();
 
 
       //Verify that more records are processed by LogWriter plugin
-      fileLogReader = new FileLogReader(fileMetadataReader);
+      fileLogReader = new FileLogReader(fileMetaDataReader);
       events =
         Lists.newArrayList(fileLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "",
                                                                           null, "INSTANCE"),
@@ -494,7 +483,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
     }
   }
 
-  private static void waitTillLogSaverDone(FileMetadataReader fileMetadataReader, LoggingContext loggingContext,
+  private static void waitTillLogSaverDone(FileMetaDataReader fileMetadataReader, LoggingContext loggingContext,
                                            String logLine) throws Exception {
     long start = System.currentTimeMillis();
 

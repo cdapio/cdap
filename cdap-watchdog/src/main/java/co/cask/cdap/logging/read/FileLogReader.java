@@ -27,6 +27,7 @@ import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.AndFilter;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.framework.LogPathIdentifier;
+import co.cask.cdap.logging.meta.FileMetaDataReader;
 import co.cask.cdap.logging.write.LogLocation;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -50,10 +51,10 @@ import java.util.NoSuchElementException;
 public class FileLogReader implements LogReader {
   private static final Logger LOG = LoggerFactory.getLogger(FileLogReader.class);
 
-  private final FileMetadataReader fileMetadataReader;
+  private final FileMetaDataReader fileMetadataReader;
 
   @Inject
-  public FileLogReader(FileMetadataReader fileMetadataReader) {
+  public FileLogReader(FileMetaDataReader fileMetadataReader) {
     this.fileMetadataReader = fileMetadataReader;
   }
 

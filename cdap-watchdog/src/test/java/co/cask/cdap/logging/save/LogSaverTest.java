@@ -39,8 +39,8 @@ import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.meta.CheckpointManager;
+import co.cask.cdap.logging.meta.FileMetaDataReader;
 import co.cask.cdap.logging.read.FileLogReader;
-import co.cask.cdap.logging.read.FileMetadataReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.write.LogLocation;
 import co.cask.cdap.test.SlowTests;
@@ -119,7 +119,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     publishLogs();
 
-    FileMetadataReader fileMetadataReader = injector.getInstance(FileMetadataReader.class);
+    FileMetaDataReader fileMetadataReader = injector.getInstance(FileMetaDataReader.class);
 
     waitTillLogSaverDone(fileMetadataReader,
                          new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
@@ -426,7 +426,7 @@ public class LogSaverTest extends KafkaTestBase {
     }
   }
 
-  private static void waitTillLogSaverDone(FileMetadataReader fileMetadataReader, LoggingContext loggingContext,
+  private static void waitTillLogSaverDone(FileMetaDataReader fileMetadataReader, LoggingContext loggingContext,
                                            String logLine) throws Exception {
     long start = System.currentTimeMillis();
 
