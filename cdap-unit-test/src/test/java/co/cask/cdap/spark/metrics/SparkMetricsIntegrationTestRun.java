@@ -53,7 +53,7 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
     ApplicationManager applicationManager = deployApplication(TestSparkMetricsIntegrationApp.class);
     SparkManager sparkManager =
       applicationManager.getSparkManager(TestSparkMetricsIntegrationApp.APP_SPARK_NAME).start();
-    sparkManager.waitForFinish(120, TimeUnit.SECONDS);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 120, TimeUnit.SECONDS);
     List<RunRecord> history = sparkManager.getHistory(ProgramRunStatus.COMPLETED);
     Assert.assertEquals(1, history.size());
 

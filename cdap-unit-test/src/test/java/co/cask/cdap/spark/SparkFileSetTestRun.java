@@ -117,8 +117,7 @@ public class SparkFileSetTestRun extends TestFrameworkTestBase {
     args.put("output", "fs");
 
     SparkManager sparkManager = applicationManager.getSparkManager(sparkProgram).start(args);
-    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
-    Assert.assertEquals(1, sparkManager.getHistory(ProgramRunStatus.COMPLETED).size());
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
 
     validateFileOutput(fileset.getLocation("xx"), "custom:");
 
@@ -148,7 +147,7 @@ public class SparkFileSetTestRun extends TestFrameworkTestBase {
     args.put("output", "myfs");
 
     SparkManager sparkManager = applicationManager.getSparkManager(sparkProgram).start(args);
-    sparkManager.waitForFinish(2, TimeUnit.MINUTES);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
     Assert.assertEquals(1, sparkManager.getHistory(ProgramRunStatus.COMPLETED).size());
 
     validateFileOutput(fileset.getLocation("xx"));
@@ -160,8 +159,7 @@ public class SparkFileSetTestRun extends TestFrameworkTestBase {
 
     // run the program again. It should fail due to existing output.
     sparkManager = applicationManager.getSparkManager(sparkProgram).start(args);
-    sparkManager.waitForFinish(2, TimeUnit.MINUTES);
-    Assert.assertEquals(1, sparkManager.getHistory(ProgramRunStatus.FAILED).size());
+    sparkManager.waitForRun(ProgramRunStatus.FAILED, 2, TimeUnit.MINUTES);
 
     // Then we can verify that onFailure() was called.
     Assert.assertFalse(myfileset.getSuccessLocation().exists());
@@ -200,8 +198,7 @@ public class SparkFileSetTestRun extends TestFrameworkTestBase {
     args.put("inputKey", String.valueOf(customInputPartitionKey));
 
     SparkManager sparkManager = applicationManager.getSparkManager(sparkProgram).start(args);
-    sparkManager.waitForFinish(10, TimeUnit.MINUTES);
-    Assert.assertEquals(1, sparkManager.getHistory(ProgramRunStatus.COMPLETED).size());
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 10, TimeUnit.MINUTES);
 
     tpfsManager.flush();
     TimePartitionedFileSet tpfs = tpfsManager.get();
@@ -253,8 +250,7 @@ public class SparkFileSetTestRun extends TestFrameworkTestBase {
     args.put("output", "pfs");
 
     SparkManager sparkManager = applicationManager.getSparkManager(sparkProgram).start(args);
-    sparkManager.waitForFinish(10, TimeUnit.MINUTES);
-    Assert.assertEquals(1, sparkManager.getHistory(ProgramRunStatus.COMPLETED).size());
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 10, TimeUnit.MINUTES);
 
     pfsManager.flush();
     PartitionDetail partition = pfs.getPartition(outputKey);

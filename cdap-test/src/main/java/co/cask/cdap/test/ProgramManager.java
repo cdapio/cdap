@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
@@ -62,7 +63,11 @@ public interface ProgramManager<T extends ProgramManager> {
    * @param timeoutUnit time unit type
    * @throws java.util.concurrent.TimeoutException if timeout reached
    * @throws InterruptedException if execution is interrupted
+   *
+   * This method is deprecated as of 4.1. Please use {@link #waitForRun} or
+   * {@link #waitForRuns} instead.
    */
+  @Deprecated
   void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException;
 
   /**
@@ -82,6 +87,7 @@ public interface ProgramManager<T extends ProgramManager> {
    * @throws TimeoutException if timeout reached
    * @throws ExecutionException if error getting runs
    */
+  @Beta
   void waitForRun(ProgramRunStatus status, long timeout, TimeUnit timeoutUnit)
     throws InterruptedException, ExecutionException, TimeoutException;
 
@@ -96,6 +102,7 @@ public interface ProgramManager<T extends ProgramManager> {
    * @throws TimeoutException if timeout reached
    * @throws ExecutionException if error getting runs
    */
+  @Beta
   void waitForRuns(ProgramRunStatus status, int runCount, long timeout, TimeUnit timeoutUnit)
     throws InterruptedException, ExecutionException, TimeoutException;
 
