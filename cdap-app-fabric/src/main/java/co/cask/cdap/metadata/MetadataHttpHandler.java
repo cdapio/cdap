@@ -875,7 +875,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     } catch (Exception e) {
       // if MetadataDataset throws an exception, it gets wrapped
       if (Throwables.getRootCause(e) instanceof IllegalArgumentException) {
-        throw new BadRequestException(e);
+        throw new BadRequestException(e.getMessage(), e);
       }
       throw e;
     }
