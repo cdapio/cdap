@@ -18,6 +18,7 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.ExploreProperties;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
@@ -62,6 +63,7 @@ import java.sql.ResultSet;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 import static co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition.KeyValue;
 
@@ -119,6 +121,44 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     datasetFramework.deleteModule(KEY_STRUCT_VALUE);
     datasetFramework.deleteModule(OTHER_KEY_STRUCT_VALUE);
   }
+
+  @Test
+  public void testCustomDatabaseAndTableName() throws Exception {
+    DatasetId datasetId = NAMESPACE_ID.dataset("xyzTable");
+    exploreClient.addNamespace(new NamespaceMeta.Builder().setName("abc").build()).get();
+    try {
+      testTableInfo(datasetId, null, null);
+      testTableInfo(datasetId, null, "xyz");
+      testTableInfo(datasetId, "cdap_abc", null);
+      testTableInfo(datasetId, "cdap_abc", "xyz");
+    } finally {
+      exploreClient.removeNamespace(new NamespaceId("abc"));
+    }
+  }
+
+  private void testTableInfo(DatasetId datasetId, @Nullable String customDatabase, @Nullable String customTable)
+    throws Exception {
+    ExploreProperties.Builder builder  = ExploreProperties.builder();
+    if (customDatabase != null) {
+      builder.setExploreDatabaseName(customDatabase);
+    }
+    if (customTable != null) {
+      builder.setExploreTableName(customTable);
+    }
+    datasetFramework.addInstance("keyStructValueTable", datasetId, builder.build());
+    String tableName = customTable != null ? customTable : "dataset_" + datasetId.getDataset().toLowerCase();
+    String databaseName = customDatabase != null ? customDatabase : "cdap_" + datasetId.getNamespace().toLowerCase();
+    try {
+      TableInfo info = exploreService.getTableInfo(datasetId.getNamespace(), customDatabase, tableName);
+      TableInfo clientInfo = exploreClient.getTableInfo(datasetId.getNamespace(), customDatabase, tableName);
+      Assert.assertEquals(databaseName, info.getDbName());
+      Assert.assertEquals(tableName, info.getTableName());
+      Assert.assertEquals(info, clientInfo);
+    } finally {
+      datasetFramework.deleteInstance(datasetId);
+    }
+  }
+
 
   @Test
   public void testDeployNotRecordScannable() throws Exception {
