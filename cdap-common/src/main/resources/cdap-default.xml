@@ -71,7 +71,7 @@
     <name>local.data.dir</name>
     <value>data</value>
     <description>
-      Data directory for Standalone CDAP and the master process in
+      Data directory for Standalone CDAP and the CDAP Master process in
       Distributed CDAP
     </description>
   </property>
@@ -99,7 +99,7 @@
     <name>master.manage.hbase.coprocessors</name>
     <value>true</value>
     <description>
-      Whether CDAP master should manage HBase coprocessors. This should only
+      Whether CDAP Master should manage HBase coprocessors. This should only
       be set to false if you are managing coprocessors yourself in order to
       support rolling HBase upgrades.
     </description>
@@ -136,7 +136,7 @@
       Comma-separated list of packages containing checks that will be run
       before the CDAP Master starts up. If any of the checks fails, the CDAP
       Master will not start up. Checks will only be run if
-      master.startup.checks.enabled is set to true.
+      ${master.startup.checks.enabled} is set to true.
     </description>
   </property>
 
@@ -181,9 +181,9 @@
     <name>twill.location.cache.dir</name>
     <value>.cache</value>
     <description>
-      The relative directory name on the distributed file system for twill to cache generated files
-      to speed up application launch. The directory set here is relative to ${root.namespace}/twill
-      on the file system.
+      The relative directory name on the distributed file system for Apache Twill to cache
+      generated files, to speed up launching applications. This directory is relative to
+      ${root.namespace}/twill on the file system.
     </description>
   </property>
 
@@ -630,7 +630,7 @@
     <name>data.tx.thrift.max.read.buffer</name>
     <value>${thrift.max.read.buffer}</value>
     <description>
-      Maximum read buffer size (in bytes) used by the transaction service;
+      Maximum read buffer size in bytes used by the transaction service;
       the value should be set to something greater than the maximum frame
       sent on the RPC channel
     </description>
@@ -801,7 +801,7 @@
     <description>
       Memory in megabytes for each CDAP Explore executor instance.
       This is explicitly set differently than ${master.service.memory.mb} as
-      Explore requires more memory to run than the Master service.
+      Explore requires more memory to run than the CDAP Master service.
     </description>
   </property>
 
@@ -1091,7 +1091,7 @@
     <description>
       Memory in megabytes for each log saver instance to run in YARN.
       This is explicitly set differently than ${master.service.memory.mb} as
-      Log saver requires more memory to run than the Master service.
+      Log saver requires more memory to run than the CDAP Master service.
     </description>
   </property>
 
@@ -1540,7 +1540,7 @@
     <name>metrics.kafka.partition.size</name>
     <value>10</value>
     <description>
-      Number of partitions for Kafka metrics topic
+      Number of partitions for the Kafka metrics topic
     </description>
   </property>
 
@@ -1572,9 +1572,9 @@
     <name>metrics.messaging.fetcher.limit</name>
     <value>200</value>
     <description>
-      Maximum number of metrics messages to be fetched from the messaging fetcher at once.
-      It is also the maximum number of metric values to be persisted in the metrics store after the
-      number of fetched messages reaches the limit.
+      Maximum number of metrics messages to be fetched from the messaging fetcher at a
+      time. It is also the maximum number of metric values to be persisted in the metrics
+      store after the number of fetched messages reaches the limit.
     </description>
   </property>
   
