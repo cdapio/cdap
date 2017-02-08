@@ -920,6 +920,7 @@ public final class Constants {
     public static final String CLEANUP_JOB_SCHEDULE_SECS = "explore.cleanup.job.schedule.secs";
 
     public static final String SERVICE_DESCRIPTION = "Service to run ad-hoc queries.";
+    public static final String HTTP_TIMEOUT = "explore.http.timeout";
 
     /**
      * Explore JDBC constants.

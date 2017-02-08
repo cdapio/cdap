@@ -809,7 +809,17 @@
     <name>explore.executor.container.num.cores</name>
     <value>1</value>
     <description>
-      Number of virtual cores for each explore executor instance
+      Number of virtual cores for each CDAP Explore executor instance
+    </description>
+  </property>
+
+  <property>
+    <name>explore.http.timeout</name>
+    <value>20</value>
+    <description>
+      The timeout in seconds for HTTP requests to the CDAP Explore service. Because requests
+      may happen within a transaction, it is recommended to keep this timeout noticeably
+      shorter than the default transaction timeout, ${data.tx.timeout}.
     </description>
   </property>
 
@@ -826,7 +836,15 @@
     <name>explore.local.data.dir</name>
     <value>${local.data.dir}/explore</value>
     <description>
-      Data directory for CDAP Explore Service when in Standalone CDAP
+      Data directory for the CDAP Explore service when in Standalone CDAP
+    </description>
+  </property>
+
+  <property>
+    <name>explore.service.bind.port</name>
+    <value>0</value>
+    <description>
+      CDAP Explore service bind port
     </description>
   </property>
 
@@ -834,9 +852,9 @@
     <name>explore.start.on.demand</name>
     <value>false</value>
     <description>
-      Determines the start-up of the CDAP Explore Service (ad-hoc SQL
-      queries); if false, the explore service starts up when CDAP is
-      started; if true, the CDAP Explore Service will start upon the first
+      Determines the start-up of the CDAP Explore service (ad-hoc SQL
+      queries); if false, the Explore service starts up when CDAP is
+      started; if true, the Explore service will start upon the first
       query it receives
     </description>
   </property>
@@ -845,16 +863,8 @@
     <name>explore.writes.enabled</name>
     <value>true</value>
     <description>
-      Determines if writing to a table through the CDAP Explore Service (ad-
+      Determines if writing to a table through the CDAP Explore service (ad-
       hoc SQL queries) is enabled
-    </description>
-  </property>
-
-  <property>
-    <name>explore.service.bind.port</name>
-    <value>0</value>
-    <description>
-      Explore service bind port
     </description>
   </property>
 
