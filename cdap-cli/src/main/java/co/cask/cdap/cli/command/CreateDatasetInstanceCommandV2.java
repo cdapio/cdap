@@ -34,16 +34,14 @@ import java.util.Map;
 
 /**
  * Creates a dataset.
- * @deprecated Since 4.1.0 Please use {@link CreateDatasetInstanceCommandV2}
  */
-@Deprecated
-public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
+public class CreateDatasetInstanceCommandV2 extends AbstractAuthCommand {
 
   private static final Gson GSON = new Gson();
   private final DatasetClient datasetClient;
 
   @Inject
-  public CreateDatasetInstanceCommand(DatasetClient datasetClient, CLIConfig cliConfig) {
+  public CreateDatasetInstanceCommandV2(DatasetClient datasetClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.datasetClient = datasetClient;
   }
@@ -54,27 +52,41 @@ public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
     String datasetName = arguments.get(ArgumentName.NEW_DATASET.toString());
     String datasetPropertiesString = arguments.getOptional(ArgumentName.DATASET_PROPERTIES.toString(), "");
     String datasetDescription = arguments.getOptional(ArgumentName.DATASET_DESCRIPTON.toString(), null);
+    String datasetOwner = arguments.getOptional(ArgumentName.PRINCIPAL.toString(), null);
+
     Map<String, String> datasetProperties = ArgumentParser.parseMap(datasetPropertiesString);
     DatasetInstanceConfiguration datasetConfig =
-      new DatasetInstanceConfiguration(datasetType, datasetProperties, datasetDescription, null);
+      new DatasetInstanceConfiguration(datasetType, datasetProperties, datasetDescription, datasetOwner);
 
     datasetClient.create(cliConfig.getCurrentNamespace().dataset(datasetName), datasetConfig);
-    output.printf("Successfully created dataset named '%s' with type '%s' and properties '%s'",
-                  datasetName, datasetType, GSON.toJson(datasetProperties));
+    StringBuilder builder = new StringBuilder(String.format("Successfully created dataset named '%s' with type " +
+                                                              "'%s', properties '%s'", datasetName, datasetType,
+                                                            GSON.toJson(datasetProperties)));
+    if (datasetDescription != null) {
+      builder.append(String.format(", description '%s'", datasetDescription));
+    }
+    if (datasetOwner != null) {
+      builder.append(String.format(", owner principal '%s'", datasetOwner));
+    }
+    output.printf(builder.toString());
     output.println();
   }
 
   @Override
   public String getPattern() {
-    return String.format("create dataset instance <%s> <%s> [<%s>] [<%s>]",
-                         ArgumentName.DATASET_TYPE, ArgumentName.NEW_DATASET, ArgumentName.DATASET_PROPERTIES,
-                         ArgumentName.DATASET_DESCRIPTON);
+    return String.format("v2 create dataset instance <%s> of type <%s> [with properties <%s>] [%s <%s>] " +
+                           "[%s <%s>]", ArgumentName.NEW_DATASET, ArgumentName.DATASET_TYPE,
+                         ArgumentName.DATASET_PROPERTIES, ArgumentName.DESCRIPTION, ArgumentName.DATASET_DESCRIPTON,
+                         ArgumentName.PRINCIPAL, ArgumentName.PRINCIPAL);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Creates %s. '<%s>' is in the format 'key1=val1 key2=val2'.",
-                         Fragment.of(Article.A, ElementType.DATASET.getName()),
-                         ArgumentName.DATASET_PROPERTIES);
+    return String.format("Creates %s instance of the specified %s. Can optionally take %s, %s, or %s where '<%s>' " +
+                           "is in the format 'key1=val1 key2=val2' and '<%s>' is the Kerberos principal of the owner " +
+                           "of the dataset.",
+                         Fragment.of(Article.A, ElementType.DATASET.getName()), ArgumentName.DATASET_TYPE,
+                         ArgumentName.DATASET_PROPERTIES, ArgumentName.DATASET_DESCRIPTON,
+                         ArgumentName.PRINCIPAL, ArgumentName.DATASET_PROPERTIES, ArgumentName.PRINCIPAL);
   }
 }

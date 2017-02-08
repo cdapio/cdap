@@ -339,9 +339,12 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, "get workflow schedules " + workflowId, FakeApp.SCHEDULE_NAME);
   }
 
+  /**
+   * Tests the deprecated {@link co.cask.cdap.cli.command.CreateDatasetInstanceCommand}.
+   */
   @Test
-  public void testDataset() throws Exception {
-    String datasetName = PREFIX + "sdf123lkj";
+  public void testDeprecatedCreateDataset() throws Exception {
+    String datasetName = PREFIX + "deprecated";
 
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
     DatasetTypeMeta datasetType = datasetTypeClient.list(NamespaceId.DEFAULT).get(0);
@@ -349,6 +352,28 @@ public class CLIMainTest extends CLITestBase {
                               "Successfully created dataset");
     testCommandOutputContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
     testCommandOutputContains(cli, "get dataset instance properties " + datasetName, "\"a\":\"1\"");
+    testCommandOutputContains(cli, "delete dataset instance " + datasetName, "Successfully deleted");
+  }
+
+  @Test
+  public void testDataset() throws Exception {
+    String datasetName = PREFIX + "sdf123lkj";
+    String ownedDatasetName = PREFIX + "owned";
+
+    DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
+    DatasetTypeMeta datasetType = datasetTypeClient.list(NamespaceId.DEFAULT).get(0);
+    testCommandOutputContains(cli, "v2 create dataset instance " + datasetName + " of type " + datasetType.getName() +
+                                " with properties" + " \"a=1\"",
+                              "Successfully created dataset");
+    testCommandOutputContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
+    testCommandOutputContains(cli, "get dataset instance properties " + datasetName, "\"a\":\"1\"");
+
+    testCommandOutputContains(cli, "v2 create dataset instance " + ownedDatasetName + " of type " +
+                                datasetType.getName() + " " + ArgumentName.PRINCIPAL + " " +
+                                "alice/somehost.net@somekdc.net", "Successfully created dataset");
+
+    // test describing the table returns the given owner information
+    testCommandOutputContains(cli, "describe dataset instance " + ownedDatasetName, "alice/somehost.net@somekdc.net");
 
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
     NamespaceId barspace = new NamespaceId("bar");
@@ -359,7 +384,7 @@ public class CLIMainTest extends CLITestBase {
 
     // also can not create dataset instances if the type it depends on exists only in a different namespace.
     DatasetTypeId datasetType1 = barspace.datasetType(datasetType.getName());
-    testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName,
+    testCommandOutputContains(cli, "v2 create dataset instance " + datasetName + " of type " + datasetType.getName(),
                               new DatasetTypeNotFoundException(datasetType1).getMessage());
 
     testCommandOutputContains(cli, "use namespace default", "Now using namespace 'default'");
@@ -371,11 +396,12 @@ public class CLIMainTest extends CLITestBase {
 
     String datasetName2 = PREFIX + "asoijm39485";
     String description = "test-description-for-" + datasetName2;
-    testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName2 +
-                                " \"a=1\"" + " " + description,
+    testCommandOutputContains(cli, "v2 create dataset instance " + datasetName2 + " of type " + datasetType.getName() +
+                                " with properties \"a=1\"" + " description " + description,
                               "Successfully created dataset");
     testCommandOutputContains(cli, "list dataset instances", description);
     testCommandOutputContains(cli, "delete dataset instance " + datasetName2, "Successfully deleted");
+    testCommandOutputContains(cli, "delete dataset instance " + ownedDatasetName, "Successfully deleted");
   }
 
   @Test
