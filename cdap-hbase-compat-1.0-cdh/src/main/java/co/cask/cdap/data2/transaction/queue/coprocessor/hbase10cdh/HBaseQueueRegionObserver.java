@@ -125,6 +125,13 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   }
 
   @Override
+  public void stop(CoprocessorEnvironment e) throws IOException {
+    if (compactionState != null) {
+      compactionState.stop();
+    }
+  }
+
+  @Override
   public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> e,
                                   Store store, InternalScanner scanner) throws IOException {
     if (!e.getEnvironment().getRegion().isAvailable()) {
