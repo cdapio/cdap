@@ -21,6 +21,7 @@ import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.core.LogbackException;
 import ch.qos.logback.core.spi.FilterReply;
 import ch.qos.logback.core.status.WarnStatus;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.write.FileMetaDataManager;
@@ -61,6 +62,9 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   @Inject
   private LocationFactory locationFactory;
 
+  @Inject
+  private CConfiguration cConfiguration;
+
   private int syncIntervalBytes;
   private long maxFileLifetimeMs;
 
@@ -84,7 +88,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   public void start() {
     super.start();
     this.logFileManager = new LogFileManager(maxFileLifetimeMs, syncIntervalBytes, LogSchema.LoggingEvent.SCHEMA,
-                                             fileMetaDataManager, locationFactory);
+                                             fileMetaDataManager, locationFactory, cConfiguration);
   }
 
   @Override
@@ -143,7 +147,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
 
     String namespaceId = propertyMap.get(TAG_NAMESPACE_ID);
 
-    if (namespaceId.equals(NamespaceId.SYSTEM)) {
+    if (namespaceId.equals(NamespaceId.SYSTEM.getNamespace())) {
       Preconditions.checkArgument(propertyMap.containsKey(TAG_SERVICE_ID),
                                   String.format("%s is expected but not found in the context %s",
                                                 TAG_SERVICE_ID, propertyMap));

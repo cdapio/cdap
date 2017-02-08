@@ -83,7 +83,6 @@ public class CDAPLogAppenderTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR) + "/" + CDAPLogAppender.class.getSimpleName();
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
-
     injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new NonCustomLocationUnitTestModule().getModule(),
@@ -122,6 +121,8 @@ public class CDAPLogAppenderTest {
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
     CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
     injector.injectMembers(cdapLogAppender);
+    CConfiguration cConfiguration = injector.getInstance(CConfiguration.class);
+    cConfiguration.set(Constants.LogSaver.PERMISSION, "700");
     cdapLogAppender.setSyncIntervalBytes(syncInterval);
     cdapLogAppender.setMaxFileLifetimeMs(TimeUnit.DAYS.toMillis(1));
     cdapLogAppender.start();
@@ -157,6 +158,13 @@ public class CDAPLogAppenderTest {
       }
       logEventCloseableIterator.close();
       Assert.assertEquals(1, logCount);
+      // checking permission
+      String expectedPermissions = "rwx------";
+      for (LogLocation file : files) {
+        Location location = file.getLocation();
+        Assert.assertEquals(expectedPermissions, location.getPermissions());
+      }
+      cConfiguration.unset(Constants.LogSaver.PERMISSION);
     } catch (Exception e) {
       Assert.fail();
     } finally {
@@ -171,6 +179,8 @@ public class CDAPLogAppenderTest {
 
   @Test
   public void testCDAPLogAppenderRotation() throws Exception {
+    CConfiguration cConfiguration = injector.getInstance(CConfiguration.class);
+    cConfiguration.set(Constants.LogSaver.PERMISSION, "740");
     int syncInterval =
       injector.getInstance(CConfiguration.class).getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES,
                                                         2 * 1024 * 1024);
@@ -216,6 +226,14 @@ public class CDAPLogAppenderTest {
       Assert.assertEquals(files.get(1).getEventTimeMs(), currentTimeMillisEvent1 + 1000);
       Assert.assertTrue(files.get(0).getFileCreationTimeMs() >= currentTimeMillisEvent1);
       Assert.assertTrue(files.get(1).getFileCreationTimeMs() >= currentTimeMillisEvent2);
+
+      // checking permission
+      String expectedPermissions = "rwxr-----";
+      for (LogLocation file : files) {
+        Location location = file.getLocation();
+        Assert.assertEquals(expectedPermissions, location.getPermissions());
+      }
+      cConfiguration.unset(Constants.LogSaver.PERMISSION);
     } catch (Exception e) {
       Assert.fail();
     } finally {
