@@ -162,6 +162,7 @@ export default class SendEventModal extends Component {
         toggle={this.props.onClose}
         className="confirmation-modal stream-send-events"
         size="lg"
+        backdrop='static'
       >
         <ModalHeader>
           <div className="float-xs-left">

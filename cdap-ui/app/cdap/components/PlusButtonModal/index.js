@@ -70,6 +70,7 @@ export default class PlusButtonModal extends Component {
         toggle={this.closeHandler.bind(this)}
         className="plus-button-modal"
         size="lg"
+        backdrop='static'
       >
         <ModalHeader>
           <span className="float-xs-left">

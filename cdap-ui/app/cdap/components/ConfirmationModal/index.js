@@ -107,6 +107,7 @@ export default class ConfirmationModal extends Component {
         isOpen={this.props.isOpen}
         toggle={this.props.toggleModal}
         className="confirmation-modal"
+        backdrop='static'
       >
         <ModalHeader>
           {this.props.headerTitle}

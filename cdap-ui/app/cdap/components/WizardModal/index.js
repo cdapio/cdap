@@ -27,6 +27,7 @@ export default function WizardModal({children, title, isOpen, toggle, className}
       toggle={toggle}
       className={classnames("wizard-modal", className)}
       size="lg"
+      backdrop='static'
     >
       <ModalHeader>
         <span className="float-xs-left">
@@ -58,8 +59,7 @@ export default function WizardModal({children, title, isOpen, toggle, className}
 WizardModal.defaultProps = {
   title: 'Wizard',
   isOpen: false,
-  closeHandler: () => {},
-  backdrop: false
+  closeHandler: () => {}
 };
 
 WizardModal.propTypes = {

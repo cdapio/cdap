@@ -21,8 +21,14 @@ import head from 'lodash/head';
 var shortid = require('shortid');
 
 // Defaults
-const defaultState = {
-  __complete: false,
+const skippableDefaultState = {
+  __complete: true,
+  __skipped: true,
+  __error: false
+};
+
+const nonSkippableDefaultState = {
+  __skipped: false,
   __error: false
 };
 
@@ -30,20 +36,20 @@ const defaultGeneralState = Object.assign({
   name: '',
   description: '',
   schedulerQueue: ''
-}, defaultState);
+}, nonSkippableDefaultState);
 
 const defaultMappingState = Object.assign({
   hdfsDirectory: '',
   hiveDatabaseName: '',
   hbaseNamespace: ''
-}, defaultState);
+}, skippableDefaultState);
 
 const defaultSecurityState = Object.assign({
   principal: '',
   keyTab: ''
-}, defaultState);
+}, skippableDefaultState);
 
-const defaultPreferences = {
+const defaultPreferencesState = Object.assign({
   keyValues : {
     pairs : [{
       key : '',
@@ -51,7 +57,7 @@ const defaultPreferences = {
       uniqueId : shortid.generate()
     }]
   }
-};
+}, skippableDefaultState);
 
 const defaultAction = {
   type: '',
@@ -62,7 +68,8 @@ const defaultAction = {
 const defaultInitialState = {
   general: defaultGeneralState,
   mapping: defaultMappingState,
-  security: defaultSecurityState
+  security: defaultSecurityState,
+  preferences: defaultPreferencesState
 };
 
 // Utilities. FIXME: Move to a common place?
@@ -96,7 +103,7 @@ const onSuccessHandler = (reducerId, stateCopy, action) => {
   return stateCopy;
 };
 
-const general = (state = null, action = defaultAction) => {
+const general = (state = defaultGeneralState, action = defaultAction) => {
   let stateCopy;
   switch (action.type) {
     case AddNamespaceActions.setName:
@@ -129,7 +136,7 @@ const general = (state = null, action = defaultAction) => {
   });
 };
 
-const mapping = (state = null, action = defaultAction) => {
+const mapping = (state = defaultMappingState, action = defaultAction) => {
   let stateCopy;
   switch (action.type) {
     case AddNamespaceActions.setHDFSDirectory:
@@ -157,11 +164,12 @@ const mapping = (state = null, action = defaultAction) => {
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: true
+    __skipped: false,
+    __error: action.payload.error || false
   });
 };
 
-const security = (state = null, action = defaultAction) => {
+const security = (state = defaultSecurityState, action = defaultAction) => {
   let stateCopy;
   switch (action.type) {
     case AddNamespaceActions.setPrincipal:
@@ -184,32 +192,28 @@ const security = (state = null, action = defaultAction) => {
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: true,
+    __skipped: false,
     __error: action.payload.error || false
   });
 };
 
-const preferences = (state = defaultPreferences, action = defaultAction) => {
+const preferences = (state = defaultPreferencesState, action = defaultAction) => {
   let stateCopy;
   switch (action.type) {
     case AddNamespaceActions.setPreferences :
       stateCopy = Object.assign({}, state, {
         keyValues : action.payload.keyValues
       });
-      return stateCopy;
+      break;
     case AddNamespaceActions.onReset:
-      return {
-        keyValues : {
-          pairs: [{
-            key : '',
-            value : '',
-            uniqueId : shortid.generate()
-          }]
-        }
-      };
+      return defaultPreferencesState;
     default:
       return state;
   }
+  return Object.assign({}, stateCopy, {
+    __skipped: false,
+    __error: action.payload.error || false
+  });
 };
 
 // Store

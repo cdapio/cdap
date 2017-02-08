@@ -305,6 +305,7 @@ export default class ExploreModal extends Component {
         className="explore-modal confirmation-modal"
         toggle={this.props.onClose}
         isOpen={this.props.isOpen}
+        backdrop='static'
       >
         <ModalHeader>
           Explore Dataset
