@@ -20,11 +20,7 @@ Supported Browsers and Components
 +===================+================================+=====================+
 | Chrome            | Apple OS X, Microsoft Windows  | 55.0 and higher     |
 +-------------------+--------------------------------+---------------------+
-| Edge              | Microsoft Windows              | *Not supported*     |
-+-------------------+--------------------------------+---------------------+
 | Firefox           | Apple OS X, Microsoft Windows  | 50.0 and higher     |
-+-------------------+--------------------------------+---------------------+
-| Internet Explorer | Microsoft Windows              | *Not supported*     |
 +-------------------+--------------------------------+---------------------+
 | Safari            | Apple OS X, Microsoft Windows  | 10 and higher       |
 +-------------------+--------------------------------+---------------------+
