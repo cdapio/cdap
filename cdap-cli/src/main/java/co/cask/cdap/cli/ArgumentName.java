@@ -141,10 +141,12 @@ public enum ArgumentName {
     return name;
   }
 
-  public static final String ENTITY_DESCRIPTION_STRING = String.format("'<%s>' " +
+  public static final String ENTITY_DESCRIPTION_TEMPLATE_STRING = "'<%s>' " +
     "is of the form '<entity-type>:<entity-id>', where '<entity-type>' is one of " +
+    "%s" +
     "'artifact', 'app', 'dataset', 'program', 'stream', or 'view'.\n" +
     "\n" +
+    "%s" +
     "For artifacts and apps, " +
     "'<entity-id>' is composed of the namespace, entity name, and version, such as " +
     "'<namespace-name>.<artifact-name>.<artifact-version>' or " +
@@ -160,5 +162,14 @@ public enum ArgumentName {
     "or '<namespace-name>.<stream-name>'.\n" +
     "\n" +
     "For (stream) views, '<entity-id>' includes the stream " +
-    "that they were created from: '<namespace-name>.<stream-name>.<view-name>'.", ENTITY);
+    "that they were created from: '<namespace-name>.<stream-name>.<view-name>'.";
+
+  public static final String ENTITY_DESCRIPTION_STRING = String.format(ENTITY_DESCRIPTION_TEMPLATE_STRING,
+    ENTITY, "", "");
+
+  public static final String ENTITY_DESCRIPTION_ALL_STRING = String.format(ENTITY_DESCRIPTION_TEMPLATE_STRING,
+    ENTITY, "'namespace', ", "For namespaces, '<entity-id>' is composed from the namespace, such as " +
+    "'namespace:<namespace-name>'.\n" +
+    "\n");
 }
+

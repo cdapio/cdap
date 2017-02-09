@@ -69,6 +69,6 @@ public class GrantActionCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return "Grants a principal permission to perform certain actions on an entity. " +
-      "'<actions>' is a comma-separated list. " + ArgumentName.ENTITY_DESCRIPTION_STRING;
+      "'<actions>' is a comma-separated list. " + ArgumentName.ENTITY_DESCRIPTION_ALL_STRING;
   }
 }
