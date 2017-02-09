@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security.impersonation;
 
+import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;
