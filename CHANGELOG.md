@@ -1,6 +1,10 @@
 cdap CHANGELOG
 ==============
 
+v2.28.3 (Feb 9, 2017)
+---------------------
+- Add guard to prevent error on insecure clusters ( Issue #205 )
+
 v2.28.2 (Feb 2, 2017)
 ---------------------
 - Install rkerberos gem during init ( Issue: #201 )
