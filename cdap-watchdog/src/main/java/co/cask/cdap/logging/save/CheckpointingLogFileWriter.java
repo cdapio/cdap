@@ -61,11 +61,12 @@ public class CheckpointingLogFileWriter implements LogFileWriter<KafkaLogEvent> 
     KafkaLogEvent event = events.get(0);
     int partition = event.getPartition();
     Checkpoint maxCheckpoint = partitionCheckpointMap.get(partition);
-    maxCheckpoint = maxCheckpoint == null ? new Checkpoint(-1, -1) : maxCheckpoint;
+    maxCheckpoint = maxCheckpoint == null ? new Checkpoint(-1, -1, -1) : maxCheckpoint;
 
     for (KafkaLogEvent e : events) {
       if (e.getNextOffset() > maxCheckpoint.getNextOffset()) {
-        maxCheckpoint = new Checkpoint(e.getNextOffset(), e.getLogEvent().getTimeStamp());
+        maxCheckpoint = new Checkpoint(e.getNextOffset(), e.getLogEvent().getTimeStamp(),
+                                       e.getLogEvent().getTimeStamp());
       }
     }
 
