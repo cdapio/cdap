@@ -140,6 +140,9 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
             startTime = System.currentTimeMillis();
           }
           long retryMillis = retryStrategy.nextRetry(++failureCount, startTime);
+          if (retryMillis < 0) {
+            throw new IOException("Failed to publish messages to TMS and exceeded retry limit.", e);
+          }
           LOG.debug("Failed to publish messages to TMS due to {}. Will be retried in {} ms.",
                     e.getMessage(), retryMillis);
           try {

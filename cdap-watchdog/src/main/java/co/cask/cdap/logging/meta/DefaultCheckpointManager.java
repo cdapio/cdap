@@ -23,6 +23,7 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
@@ -32,6 +33,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,18 +83,22 @@ public final class DefaultCheckpointManager implements CheckpointManager {
       return;
     }
 
-    transactional.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        Table table = getCheckpointTable(context);
-        for (Map.Entry<Integer, ? extends Checkpoint> entry : checkpoints.entrySet()) {
-          byte[] key = Bytes.add(rowKeyPrefix, Bytes.toBytes(entry.getKey()));
-          Checkpoint checkpoint = entry.getValue();
-          table.put(key, OFFSET_COL_NAME, Bytes.toBytes(checkpoint.getNextOffset()));
-          table.put(key, MAX_TIME_COL_NAME, Bytes.toBytes(checkpoint.getMaxEventTime()));
+    try {
+      transactional.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          Table table = getCheckpointTable(context);
+          for (Map.Entry<Integer, ? extends Checkpoint> entry : checkpoints.entrySet()) {
+            byte[] key = Bytes.add(rowKeyPrefix, Bytes.toBytes(entry.getKey()));
+            Checkpoint checkpoint = entry.getValue();
+            table.put(key, OFFSET_COL_NAME, Bytes.toBytes(checkpoint.getNextOffset()));
+            table.put(key, MAX_TIME_COL_NAME, Bytes.toBytes(checkpoint.getMaxEventTime()));
+          }
         }
-      }
-    });
+      });
+    } catch (TransactionFailureException e) {
+      throw Transactions.propagate(e, ServiceUnavailableException.class);
+    }
 
     lastCheckpoint = ImmutableMap.copyOf(checkpoints);
     LOG.trace("Saving checkpoints for partitions {}", checkpoints);
@@ -100,31 +106,39 @@ public final class DefaultCheckpointManager implements CheckpointManager {
 
   @Override
   public Map<Integer, Checkpoint> getCheckpoint(final Set<Integer> partitions) throws Exception {
-    return Transactions.execute(transactional, new TxCallable<Map<Integer, Checkpoint>>() {
-      @Override
-      public Map<Integer, Checkpoint> call(DatasetContext context) throws Exception {
-        Table table = getCheckpointTable(context);
-        Map<Integer, Checkpoint> checkpoints = new HashMap<>();
-        for (final int partition : partitions) {
-          Row result = table.get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)));
-          checkpoints.put(partition, new Checkpoint(result.getLong(OFFSET_COL_NAME, -1),
-                                                    result.getLong(MAX_TIME_COL_NAME, -1)));
+    try {
+      return Transactions.execute(transactional, new TxCallable<Map<Integer, Checkpoint>>() {
+        @Override
+        public Map<Integer, Checkpoint> call(DatasetContext context) throws Exception {
+          Table table = getCheckpointTable(context);
+          Map<Integer, Checkpoint> checkpoints = new HashMap<>();
+          for (final int partition : partitions) {
+            Row result = table.get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)));
+            checkpoints.put(partition, new Checkpoint(result.getLong(OFFSET_COL_NAME, -1),
+                                                      result.getLong(MAX_TIME_COL_NAME, -1)));
+          }
+          return checkpoints;
         }
-        return checkpoints;
-      }
-    });
+      });
+    } catch (TransactionFailureException e) {
+      throw Transactions.propagate(e, ServiceUnavailableException.class);
+    }
   }
 
   @Override
   public Checkpoint getCheckpoint(final int partition) throws Exception {
-    Checkpoint checkpoint = Transactions.execute(transactional, new TxCallable<Checkpoint>() {
-      @Override
-      public Checkpoint call(DatasetContext context) throws Exception {
-        Row result = getCheckpointTable(context).get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)));
-        return new Checkpoint(result.getLong(OFFSET_COL_NAME, -1), result.getLong(MAX_TIME_COL_NAME, -1));
-      }
-    });
-    LOG.trace("Read checkpoint {} for partition {}", checkpoint, partition);
-    return checkpoint;
+    try {
+      Checkpoint checkpoint = Transactions.execute(transactional, new TxCallable<Checkpoint>() {
+        @Override
+        public Checkpoint call(DatasetContext context) throws Exception {
+          Row result = getCheckpointTable(context).get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)));
+          return new Checkpoint(result.getLong(OFFSET_COL_NAME, -1), result.getLong(MAX_TIME_COL_NAME, -1));
+        }
+      });
+      LOG.trace("Read checkpoint {} for partition {}", checkpoint, partition);
+      return checkpoint;
+    } catch (TransactionFailureException e) {
+      throw Transactions.propagate(e, ServiceUnavailableException.class);
+    }
   }
 }
