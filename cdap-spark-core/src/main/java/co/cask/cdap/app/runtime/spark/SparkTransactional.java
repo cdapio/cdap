@@ -22,8 +22,10 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.spark.SparkExecutionContext;
+import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.transaction.RetryingLongTransactionSystemClient;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
@@ -112,8 +114,8 @@ final class SparkTransactional implements Transactional {
   private final DynamicDatasetCache datasetCache;
   private final Map<String, TransactionalDatasetContext> transactionInfos;
 
-  SparkTransactional(TransactionSystemClient txClient, DynamicDatasetCache datasetCache) {
-    this.txClient = txClient;
+  SparkTransactional(TransactionSystemClient txClient, DynamicDatasetCache datasetCache, RetryStrategy retryStrategy) {
+    this.txClient = new RetryingLongTransactionSystemClient(txClient, retryStrategy);
     this.datasetCache = datasetCache;
     this.transactionInfos = new ConcurrentHashMap<>();
   }

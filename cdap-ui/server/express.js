@@ -538,7 +538,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   ]);
 
   // any other path, serve index.html
-  app.all(['/hydrator', '/hydrator*'], [
+  app.all(['/pipelines', '/pipelines*'], [
     function (req, res) {
       // BCookie is the browser cookie, that is generated and will live for a year.
       // This cookie is always generated to provide unique id for the browser that
@@ -553,7 +553,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
      res.sendFile(DIST_PATH + '/hydrator.html');
     }
   ]);
-  app.all(['/tracker', '/tracker*'], [
+  app.all(['/metadata', '/metadata*'], [
     function (req, res) {
       // BCookie is the browser cookie, that is generated and will live for a year.
       // This cookie is always generated to provide unique id for the browser that

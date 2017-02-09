@@ -217,7 +217,7 @@ export default class NamespaceDropdown extends Component {
       </div>
     );
     return (
-      <div>
+      <div className="namespace-dropdown">
         <Dropdown
           isOpen={this.state.openDropdown}
           toggle={this.toggle}
@@ -227,9 +227,10 @@ export default class NamespaceDropdown extends Component {
             onClick={this.toggle}
           >
             <div className="namespace-text">
-              {currentNamespace}
+              <small>{T.translate('features.Navbar.NamespaceDropdown.namespaceLabel')}</small>
+              <span>{currentNamespace}</span>
             </div>
-            <span className="fa fa-angle-down float-xs-right" />
+            <span className="fa fa-caret-down float-xs-right" />
           </div>
           <DropdownMenu>
             {

@@ -15,10 +15,11 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-import PlusButtonModal from '../PlusButtonModal';
+import PlusButtonModal from 'components/PlusButtonModal';
 import PlusButtonStore from 'services/PlusButtonStore';
+import classnames from 'classnames';
 
-export default class PlusButton extends Component {
+export default class CaskMarketButton extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -43,23 +44,20 @@ export default class PlusButton extends Component {
   }
   render() {
     return (
-      <div
-        className={this.props.className}
+      <span
+        className={classnames("cask-market-button", this.props.className)}
         onClick={this.onClickHandler.bind(this)}
       >
-        <span
-          className="fa fa-plus-circle plus-button"
-          onClick={this.onClickHandler.bind(this)}
-        >
-        </span>
+        {this.props.children}
         <PlusButtonModal
           isOpen={this.state.showMarketPlace}
           onCloseHandler={this.onClickHandler.bind(this)}
         />
-      </div>
+    </span>
     );
   }
 }
-PlusButton.propTypes = {
-  className: PropTypes.string
+CaskMarketButton.propTypes = {
+  className: PropTypes.string,
+  children: PropTypes.node.isRequired
 };
