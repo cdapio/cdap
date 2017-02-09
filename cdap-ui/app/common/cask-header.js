@@ -18,6 +18,7 @@
  T.setTexts(require('../cdap/text/text-en.yaml'));
  var Store = require('../cdap/services/NamespaceStore').default;
  var Header = require('../cdap/components/Header').default;
+ var ResourceCenterButton = require('../cdap/components/ResourceCenterButton').default;
  var Wrangler = require('../wrangler/components/Wrangler').default;
  var globalEvents = require('../cdap/services/global-events').default;
  var ee = require('event-emitter');
@@ -32,5 +33,6 @@
   ee,
   VersionStore,
   VersionActions,
-  Version
+  Version,
+  ResourceCenterButton
 };

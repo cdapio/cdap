@@ -72,13 +72,17 @@ commons:
     keyPlaceholder: key
     valuePlaceholder: value
   market: Cask Market
-  resource-center: Resource Center
+  resource-center: Add Entity
   tracker: Cask Tracker
   nameLabel: Name
   descriptionLabel: Description
   formatLabel: Format
   schemaLabel: Schema
   wrangler: Cask Wrangler
+  back: Back
+  application: Application
+  stream: Stream
+  dataset: Dataset
 features:
   AppDetailedView:
     Title: Application - {appId}
@@ -489,6 +493,10 @@ features:
     Labels:
       fieldName: Field Name
       symbolName: Symbol Name
+  StreamDetailedView:
+    Title: Stream - {streamId}
+  DatasetDetailedView:
+    Title: Dataset - {datasetId}
   Wizard:
     ApplicationUpload:
       headerlabel: Upload Application

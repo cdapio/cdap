@@ -15,16 +15,19 @@
 -->
 
 <div class="tracker-content">
-  <div class="tracker-banner">
-    <div class="tracker-title"></div>
+  <div ng-if="!$state.params.iframe">
+    <cask-resource-center-button></cask-resource-center-button>
   </div>
-
-  <div class="tracker-search">
-    <div class="form-group has-feedback" ng-keypress="MainController.search($event)">
-      <input type="text"
-             class="form-control"
-             ng-model="MainController.searchQuery">
-      <span class="fa fa-search form-control-feedback"></span>
+  <div class="tracker-top-search"
+       ng-if="!$state.params.iframe">
+    <div class="tracker-search-bar">
+      <div class="form-group has-feedback" ng-keypress="MainController.search($event)">
+        <input type="text"
+               class="form-control"
+               placeholder="Search datasets"
+               ng-model="MainController.searchQuery">
+        <span class="fa fa-search form-control-feedback"></span>
+      </div>
     </div>
   </div>
 

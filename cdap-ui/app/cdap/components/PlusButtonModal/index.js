@@ -30,7 +30,7 @@ export default class PlusButtonModal extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      viewMode: 'marketplace'
+      viewMode: this.props.mode
     };
 
     this.closeHandler = this.closeHandler.bind(this);
@@ -45,7 +45,7 @@ export default class PlusButtonModal extends Component {
   }
   closeHandler() {
     this.setState({
-      viewMode: 'marketplace'
+      viewMode: this.props.mode
     });
     this.props.onCloseHandler();
   }

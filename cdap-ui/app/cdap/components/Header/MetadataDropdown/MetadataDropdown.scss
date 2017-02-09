@@ -47,6 +47,13 @@
       &:focus {
         outline: none;
       }
+      &.active {
+        &:hover,
+        &:focus,
+        &:active {
+          color: $cdap-orange;
+        }
+      }
       &:after {
         margin-left: 1rem;
         display: inline-block;

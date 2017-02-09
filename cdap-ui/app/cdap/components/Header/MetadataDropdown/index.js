@@ -87,23 +87,33 @@ export default class MetadataDropdown extends Component {
         </DropdownToggle>
         <CustomDropdownMenu>
           <DropdownItem tag="li">
-            <a href={searchHomeUrl}>
+            {/* FIXME: Error prone. This active class check is to see if its a sub path of search.*/}
+            <a
+              className={classnames({'active': searchHomeUrl === location.href || location.href.indexOf('search') !== -1 })}
+              href={searchHomeUrl}>
               {T.translate('features.Navbar.Metadata.searchLabel')}
             </a>
           </DropdownItem>
           <DropdownItem tag="li">
-            <a href={tagsHomeUrl}>
+            <a
+              className={classnames({'active': tagsHomeUrl === location.href})}
+              href={tagsHomeUrl}>
               {T.translate('features.Navbar.Metadata.tagsLabel')}
             </a>
           </DropdownItem>
           <DropdownItem tag="li">
-            <a href={dictionaryHomeUrl}>
+            <a
+              className={classnames({'active': location.href === dictionaryHomeUrl})}
+              href={dictionaryHomeUrl}>
               {T.translate('features.Navbar.Metadata.dictionaryLabel')}
             </a>
           </DropdownItem>
           <DropdownItem tag="ul" divider />
           <DropdownItem tag="li">
-            <a href={integrationsHomeUrl}>
+            <a
+              className={classnames({'active': integrationsHomeUrl === location.href})}
+              href={integrationsHomeUrl}
+            >
               {T.translate('features.Navbar.Metadata.integrationsLabel')}
             </a>
           </DropdownItem>

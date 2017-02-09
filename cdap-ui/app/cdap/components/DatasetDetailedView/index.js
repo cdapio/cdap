@@ -34,6 +34,9 @@ import FastActionToMessage from 'services/fast-action-message-helper';
 import Redirect from 'react-router/Redirect';
 import capitalize from 'lodash/capitalize';
 import Page404 from 'components/404';
+import BreadCrumb from 'components/BreadCrumb';
+import ResourceCenterButton from 'components/ResourceCenterButton';
+import Helmet from 'react-helmet';
 
 require('./DatasetDetailedView.scss');
 
@@ -204,9 +207,23 @@ export default class DatasetDetailedView extends Component {
         />
       );
     }
-
+    let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+    let previousPathname = objectQuery(this.props, 'location', 'state', 'previousPathname')  || `/ns/${selectedNamespace}`;
+    let previousPaths = [{
+      pathname: previousPathname,
+      label: T.translate('commons.back')
+    }];
     return (
       <div className="app-detailed-view">
+        <Helmet
+          title={T.translate('features.DatasetDetailedView.Title', {datasetId: this.props.params.datasetId})}
+        />
+        <ResourceCenterButton />
+        <BreadCrumb
+          previousPaths={previousPaths}
+          currentStateIcon="icon-streams"
+          currentStateLabel={T.translate('commons.dataset')}
+        />
         <OverviewHeader
           icon="icon-datasets"
           title={title}

@@ -15,6 +15,9 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
+  .directive('caskResourceCenterButton', function(reactDirective) {
+    return reactDirective(window.CaskCommon.ResourceCenterButton);
+  })
   .controller('HydratorHomeController', function ($state, $stateParams, rNsList, mySessionStorage, myLoadingService) {
 
     if (!rNsList.length) {

@@ -13,21 +13,30 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+.bread-crumb {
+  padding: 5px;
+  border: 1px solid #dbdbdb;
+  color: #666666;
+  height: 38px;
+  display: flex;
+  align-items: center;
 
-.schema-tab {
-  padding: 10px 10px 0 10px;
-  height: calc(100% - 26px);
+  a {
+    color: #ff6600;
+    margin: 0 5px;
 
-  .empty-schema { margin-top: 10px; }
-
-  .disable-schema {
-    .fa-trash,
-    .fa-plus {
-      display: none;
+    &:hover {
+      color: #ff6600;
+    }
+    &:before {
+      content: '< ';
     }
   }
-
-  .schema-body .schema-row.nested > .field-name:before {
-    background-color: rgba(238, 238, 238, 1);
+  > span.fa {
+    border-left: 1px solid darkgray;
+    padding-left: 5px;
+  }
+  span {
+    padding: 0 2px;
   }
 }

@@ -81,12 +81,19 @@ export default class Header extends Component {
       namespace: this.state.currentNamespace
     });
     let overviewUrl = `${baseCDAPURL}/ns/${this.state.currentNamespace}`;
-    let pipelinesUrl =  window.getHydratorUrl({
+    let pipelinesListUrl =  window.getHydratorUrl({
       stateName: 'hydrator.list',
       stateParams: {
         namespace: this.state.currentNamespace
       }
+    }),
+    pipelinesStudioUrl =  window.getHydratorUrl({
+      stateName: 'hydrator.create',
+      stateParams: {
+        namespace: this.state.currentNamespace
+      }
     });
+    let isPipelinesViewActive = pipelinesListUrl.indexOf(location.pathname)  !== -1 || pipelinesStudioUrl.indexOf(location.pathname) !== -1;
     let oldUIUrl = `/oldcdap/ns/${this.state.currentNamespace}`;
     return (
       <div className="global-navbar">
@@ -122,8 +129,8 @@ export default class Header extends Component {
           </li>
           <li>
             <a
-              href={pipelinesUrl}
-              className={classnames({'active': pipelinesUrl.indexOf(location.pathname) !== -1})}
+              href={pipelinesListUrl}
+              className={classnames({'active': isPipelinesViewActive})}
             >
               {T.translate('features.Navbar.pipelinesLabel')}
             </a>
