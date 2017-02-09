@@ -121,7 +121,7 @@ features:
       sort: Sort
       sortLabel: "Sort by "
       sortOptions:
-        none: Relevance
+        none: ''
         entityNameAsc:
           displayName: A - Z
         entityNameDesc:
