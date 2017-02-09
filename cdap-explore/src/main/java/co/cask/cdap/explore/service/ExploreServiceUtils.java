@@ -34,9 +34,11 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.VersionInfo;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tez.dag.api.TezConfiguration;
@@ -582,6 +584,11 @@ public class ExploreServiceUtils {
     // YARN_APPLICATION_CLASSPATH before job.jar for container's classpath.
     conf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, false);
     conf.setBoolean(MRJobConfig.MAPREDUCE_JOB_CLASSLOADER, false);
+
+    // We override this param due to the change in HIVE-14383. Otherwise, the hive job will be launched as the
+    // 'hive' user (or fail to even launch, if on ClouderaManager). See CDAP-8367 for more details.
+    conf.set(CommonConfigurationKeysPublic.HADOOP_SECURITY_AUTHENTICATION,
+             UserGroupInformation.AuthenticationMethod.SIMPLE.name());
 
     String sparkHome = System.getenv(Constants.SPARK_HOME);
     if (sparkHome != null) {
