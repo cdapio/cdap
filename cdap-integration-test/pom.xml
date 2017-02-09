@@ -28,6 +28,14 @@
   <name>CDAP Integration Test Framework</name>
 
   <dependencies>
+    <!--
+      Add a direct dependency on guava to make sure it comes before the hive-exec
+      brings in by cdap-standalone as transitive dependency
+    -->
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api</artifactId>

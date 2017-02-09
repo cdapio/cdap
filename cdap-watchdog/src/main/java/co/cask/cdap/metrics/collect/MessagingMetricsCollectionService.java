@@ -84,7 +84,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
   @Override
   protected void publish(Iterator<MetricValues> metrics) throws Exception {
     int size = topicPayloads.size();
-    while (metrics.hasNext()) {
+    while (metrics.hasNext() && isRunning()) {
       encoderOutputStream.reset();
       MetricValues metricValues = metrics.next();
       // Encode MetricValues into bytes
@@ -106,7 +106,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
   /**
    * Private to carry payloads to be published to a topic.
    */
-  private static final class TopicPayload {
+  private final class TopicPayload {
     private final TopicId topicId;
     private final List<byte[]> payloads;
     private final RetryStrategy retryStrategy;
@@ -129,7 +129,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
       int failureCount = 0;
       long startTime = -1L;
       boolean done = false;
-      while (!done) {
+      while (!done && isRunning()) {
         try {
           messagingService.publish(StoreRequestBuilder.of(topicId).addPayloads(payloads.iterator()).build());
           payloads.clear();
@@ -143,7 +143,9 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
           LOG.debug("Failed to publish messages to TMS due to {}. Will be retried in {} ms.",
                     e.getMessage(), retryMillis);
           try {
-            TimeUnit.MILLISECONDS.sleep(retryMillis);
+            if (isRunning()) {
+              TimeUnit.MILLISECONDS.sleep(retryMillis);
+            }
           } catch (InterruptedException e1) {
             // Something explicitly stopping this thread. Simply just break and reset the interrupt flag.
             Thread.currentThread().interrupt();

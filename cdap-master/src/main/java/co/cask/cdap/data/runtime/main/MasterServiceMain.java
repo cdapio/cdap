@@ -70,8 +70,8 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.operations.OperationalStatsLoader;
 import co.cask.cdap.operations.OperationalStatsService;
+import co.cask.cdap.operations.guice.OperationalStatsModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
@@ -97,8 +97,6 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileAlreadyExistsException;
 import org.apache.hadoop.fs.FileContext;
@@ -547,14 +545,7 @@ public class MasterServiceMain extends DaemonMain {
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SecureStoreModules().getDistributedModules(),
-      new PrivateModule() {
-        @Override
-        protected void configure() {
-          bind(OperationalStatsLoader.class).in(Scopes.SINGLETON);
-          bind(OperationalStatsService.class).in(Scopes.SINGLETON);
-          expose(OperationalStatsService.class);
-        }
-      }
+      new OperationalStatsModule()
     );
   }
 
