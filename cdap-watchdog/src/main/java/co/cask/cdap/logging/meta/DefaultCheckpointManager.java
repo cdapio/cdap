@@ -49,6 +49,7 @@ public final class DefaultCheckpointManager implements CheckpointManager {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultCheckpointManager.class);
 
   private static final byte [] OFFSET_COL_NAME = Bytes.toBytes("nextOffset");
+  private static final byte [] NEXT_TIME_COL_NAME = Bytes.toBytes("nextEventTime");
   private static final byte [] MAX_TIME_COL_NAME = Bytes.toBytes("maxEventTime");
 
   private final byte [] rowKeyPrefix;
@@ -93,8 +94,10 @@ public final class DefaultCheckpointManager implements CheckpointManager {
             byte[] key = Bytes.add(rowKeyPrefix, Bytes.toBytes(entry.getKey()));
             Checkpoint checkpoint = entry.getValue();
             table.put(key, OFFSET_COL_NAME, Bytes.toBytes(checkpoint.getNextOffset()));
+            table.put(key, NEXT_TIME_COL_NAME, Bytes.toBytes(checkpoint.getNextEventTime()));
             table.put(key, MAX_TIME_COL_NAME, Bytes.toBytes(checkpoint.getMaxEventTime()));
-            result.put(entry.getKey(), new Checkpoint(checkpoint.getNextOffset(), checkpoint.getMaxEventTime()));
+            result.put(entry.getKey(), new Checkpoint(checkpoint.getNextOffset(), checkpoint.getNextEventTime(),
+                                                      checkpoint.getMaxEventTime()));
           }
           return result;
         }
@@ -116,8 +119,7 @@ public final class DefaultCheckpointManager implements CheckpointManager {
           Map<Integer, Checkpoint> checkpoints = new HashMap<>();
           for (final int partition : partitions) {
             Row result = table.get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)));
-            checkpoints.put(partition, new Checkpoint(result.getLong(OFFSET_COL_NAME, -1),
-                                                      result.getLong(MAX_TIME_COL_NAME, -1)));
+            checkpoints.put(partition, createFromRow(result));
           }
           return checkpoints;
         }
@@ -134,7 +136,7 @@ public final class DefaultCheckpointManager implements CheckpointManager {
         @Override
         public Checkpoint call(DatasetContext context) throws Exception {
           Row result = getCheckpointTable(context).get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)));
-          return new Checkpoint(result.getLong(OFFSET_COL_NAME, -1), result.getLong(MAX_TIME_COL_NAME, -1));
+          return createFromRow(result);
         }
       });
       LOG.trace("Read checkpoint {} for partition {}", checkpoint, partition);
@@ -142,5 +144,18 @@ public final class DefaultCheckpointManager implements CheckpointManager {
     } catch (TransactionFailureException e) {
       throw Transactions.propagate(e, ServiceUnavailableException.class);
     }
+  }
+
+  /**
+   * Create a {@link Checkpoint} from a {@link Row} with backward compatibility
+   */
+  private Checkpoint createFromRow(Row row) {
+    long maxEventTime = row.getLong(MAX_TIME_COL_NAME, -1);
+    // If CDAP is upgraded from an older version with no NEXT_TIME_COL_NAME, use maxEventTime as default, since
+    // in both older and current CDAP versions, OFFSET_COL_NAME is the offset to restart consuming from.
+    // In older CDAP version MAX_TIME_COL_NAME used to be the log event time of the message fetched by the previous
+    // offset of OFFSET_COL_NAME, which is the same as NEXT_TIME_COL_NAME in current version.
+    return new Checkpoint(row.getLong(OFFSET_COL_NAME, -1), row.getLong(NEXT_TIME_COL_NAME, maxEventTime),
+                          maxEventTime);
   }
 }
