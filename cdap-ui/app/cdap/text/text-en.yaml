@@ -370,6 +370,8 @@ features:
       company: Company
       created: Created
       cdapversion: CDAP Version
+    doneLabel: Done
+    closeLabel: Close
   MarketEntityModal:
     version: "Version :"
   Navbar:
