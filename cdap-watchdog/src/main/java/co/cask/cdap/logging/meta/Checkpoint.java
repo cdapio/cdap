@@ -23,15 +23,21 @@ import com.google.common.base.Objects;
  */
 public class Checkpoint {
   private final long nextOffset;
+  private final long nextEventTime;
   private final long maxEventTime;
 
-  public Checkpoint(long nextOffset, long maxEventTime) {
+  public Checkpoint(long nextOffset, long nextEventTime, long maxEventTime) {
     this.nextOffset = nextOffset;
+    this.nextEventTime = nextEventTime;
     this.maxEventTime = maxEventTime;
   }
 
   public long getNextOffset() {
     return nextOffset;
+  }
+
+  public long getNextEventTime() {
+    return nextEventTime;
   }
 
   public long getMaxEventTime() {

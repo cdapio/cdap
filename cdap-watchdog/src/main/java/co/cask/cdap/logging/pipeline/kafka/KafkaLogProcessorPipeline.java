@@ -71,7 +71,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
   private final Map<Integer, MutableCheckpoint> checkpoints;
   private final LoggingEventSerializer serializer;
   private final KafkaPipelineConfig config;
-  private final TimeEventQueue<ILoggingEvent, Long> eventQueue;
+  private final TimeEventQueue<ILoggingEvent, OffsetTime> eventQueue;
   private final Map<BrokerInfo, KafkaSimpleConsumer> kafkaConsumers;
 
   private ExecutorService fetchExecutor;
@@ -102,7 +102,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     for (Map.Entry<Integer, Checkpoint> entry : checkpointManager.getCheckpoint(partitions).entrySet()) {
       Checkpoint checkpoint = entry.getValue();
       // Skip the partition that doesn't have previous checkpoint.
-      if (checkpoint.getNextOffset() >= 0 && checkpoint.getMaxEventTime() >= 0) {
+      if (checkpoint.getNextOffset() >= 0 && checkpoint.getNextEventTime() >= 0 && checkpoint.getMaxEventTime() >= 0) {
         checkpoints.put(entry.getKey(), new MutableCheckpoint(checkpoint));
       }
     }
@@ -282,8 +282,8 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
         // Use the message payload size as the size estimate of the logging event
         // Although it's not the same as the in memory object size, it should be just a constant factor, hence
         // it is proportional to the actual object size.
-        eventQueue.add(loggingEvent, loggingEvent.getTimeStamp(),
-                       message.message().payloadSize(), partition, message.offset());
+        eventQueue.add(loggingEvent, loggingEvent.getTimeStamp(), message.message().payloadSize(),
+                       partition, new OffsetTime(message.nextOffset(), loggingEvent.getTimeStamp()));
       } catch (IOException e) {
         // This should happen. In case it happens (e.g. someone published some garbage), just skip the message.
         LOG.warn("Fail to decode logging event from {}:{} at offset {}. Skipping it.",
@@ -327,7 +327,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     long minEventTime = currentTimeMillis - config.getEventDelayMillis();
     long maxRetainSize = forced ? (long) (config.getMaxBufferSize() * MIN_FREE_FACTOR) : Long.MAX_VALUE;
 
-    TimeEventQueue.EventIterator<ILoggingEvent, Long> iterator = eventQueue.iterator();
+    TimeEventQueue.EventIterator<ILoggingEvent, OffsetTime> iterator = eventQueue.iterator();
 
     int eventsAppended = 0;
     while (iterator.hasNext()) {
@@ -354,12 +354,15 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       // Updates the Kafka offset before removing the current event
       int partition = iterator.getPartition();
       MutableCheckpoint checkpoint = checkpoints.get(partition);
+      // Get the smallest offset and corresponding timestamp from the event queue
+      OffsetTime offsetTime = eventQueue.getSmallestOffset(partition);
       if (checkpoint == null) {
-        checkpoint = new MutableCheckpoint(eventQueue.getSmallestOffset(partition), event.getTimeStamp());
+        checkpoint = new MutableCheckpoint(offsetTime.getOffset(), offsetTime.getEventTime(), event.getTimeStamp());
         checkpoints.put(partition, checkpoint);
       } else {
         checkpoint
-          .setNextOffset(eventQueue.getSmallestOffset(partition))
+          .setNextOffset(offsetTime.getOffset())
+          .setNextEvenTime(offsetTime.getEventTime())
           .setMaxEventTime(event.getTimeStamp());
       }
 
@@ -524,21 +527,46 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     }
   }
 
+  private static final class OffsetTime implements Comparable<OffsetTime> {
+    private final long offset;
+    private final long eventTime;
+
+    OffsetTime(long offset, long eventTime) {
+      this.offset = offset;
+      this.eventTime = eventTime;
+    }
+
+    @Override
+    public int compareTo(OffsetTime o) {
+      return Long.compare(this.offset, o.offset);
+    }
+
+    long getOffset() {
+      return offset;
+    }
+
+    long getEventTime() {
+      return eventTime;
+    }
+  }
+
   /**
    * A mutable implementation of {@link Checkpoint}.
    */
   private static final class MutableCheckpoint extends Checkpoint {
 
     private long nextOffset;
+    private long nextEventTime;
     private long maxEventTime;
 
     MutableCheckpoint(Checkpoint other) {
-      this(other.getNextOffset(), other.getMaxEventTime());
+      this(other.getNextOffset(), other.getNextEventTime(), other.getMaxEventTime());
     }
 
-    MutableCheckpoint(long nextOffset, long maxEventTime) {
-      super(nextOffset, maxEventTime);
+    MutableCheckpoint(long nextOffset, long nextEventTime, long maxEventTime) {
+      super(nextOffset, nextEventTime, maxEventTime);
       this.nextOffset = nextOffset;
+      this.nextEventTime = nextEventTime;
       this.maxEventTime = maxEventTime;
     }
 
@@ -549,6 +577,16 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
 
     MutableCheckpoint setNextOffset(long nextOffset) {
       this.nextOffset = nextOffset;
+      return this;
+    }
+
+    @Override
+    public long getNextEventTime() {
+      return nextEventTime;
+    }
+
+    MutableCheckpoint setNextEvenTime(long nextEventTime) {
+      this.nextEventTime = nextEventTime;
       return this;
     }
 

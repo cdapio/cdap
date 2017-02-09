@@ -564,7 +564,7 @@ public class KafkaLogProcessorPipelineTest {
 
     @Override
     public Checkpoint getCheckpoint(int partition) throws Exception {
-      return new Checkpoint(-1, -1);
+      return new Checkpoint(-1, -1, -1);
     }
   }
 }
