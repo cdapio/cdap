@@ -40,7 +40,6 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.impersonation.ImpersonationInfo;
 import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -170,7 +169,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     if (SecurityUtil.isKerberosEnabled(cConf) && !NamespaceId.SYSTEM.equals(namespace)) {
       String namespacePrincipal = metadata.getConfig().getPrincipal();
       if (Strings.isNullOrEmpty(namespacePrincipal)) {
-        executionUserName = ImpersonationInfo.getMasterImpersonationInfo(cConf).getPrincipal();
+        executionUserName = SecurityUtil.getMasterPrincipal(cConf);
       } else {
         executionUserName = new KerberosName(namespacePrincipal).getShortName();
       }

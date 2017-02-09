@@ -18,6 +18,7 @@ package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;

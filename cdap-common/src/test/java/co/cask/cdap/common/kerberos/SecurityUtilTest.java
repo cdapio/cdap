@@ -24,8 +24,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.InetAddress;
 
-import static co.cask.cdap.common.kerberos.SecurityUtil.getKeytabURIforPrincipal;
-
 /**
  * Tests for {@link SecurityUtil}
  */
@@ -72,7 +70,7 @@ public class SecurityUtilTest {
     cConf.set(Constants.Security.KEYTAB_PATH, confPath);
     cConf.set("user", "blah blah");
 
-    String path = getKeytabURIforPrincipal(user, cConf);
+    String path = SecurityUtil.getKeytabURIforPrincipal(user, cConf);
     Assert.assertEquals(expectedPath, path);
   }
 }
