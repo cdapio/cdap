@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright © 2016 Cask Data, Inc.
+# Copyright © 2016-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -852,7 +852,7 @@ cdap_sdk_start() {
     else
       echo "[WARN] Docker detected, but running in the background! This may fail!"
     fi
-    ROUTER_OPTS="-Drouter.address=$(hostname -i)" # -i is safe here since we know we're on Linux
+    ROUTER_OPTS="-Drouter.address=$(hostname -I | awk '{print $1}')" # -I is safe since we know we're Linux
   fi
 
   cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
