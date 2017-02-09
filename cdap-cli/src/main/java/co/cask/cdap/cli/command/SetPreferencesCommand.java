@@ -48,7 +48,7 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
   @Override
   public void perform(Arguments arguments, PrintStream printStream) throws Exception {
     String runtimeArgs = arguments.get(ArgumentName.RUNTIME_ARGS.toString());
-    Map<String, String> args = ArgumentParser.parseMap(runtimeArgs);
+    Map<String, String> args = ArgumentParser.parseMap(runtimeArgs, ArgumentName.RUNTIME_ARGS.toString());
     setPreferences(arguments, printStream, args);
   }
 

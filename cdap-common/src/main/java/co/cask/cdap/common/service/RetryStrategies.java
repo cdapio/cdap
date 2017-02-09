@@ -16,6 +16,8 @@
 
 package co.cask.cdap.common.service;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Preconditions;
 
 import java.util.concurrent.TimeUnit;
@@ -109,6 +111,46 @@ public final class RetryStrategies {
         return elapseTime <= maxElapseMs ? strategy.nextRetry(failureCount, startTime) : -1L;
       }
     };
+  }
+
+  /**
+   * Creates {@link RetryStrategy} based on the given {@link CConfiguration}.
+   *
+   * @param cConf for looking up retry strategy properties
+   * @param keyPrefix the prefix of the keys for looking up retry strategy properties
+   */
+  public static RetryStrategy fromConfiguration(CConfiguration cConf, String keyPrefix) {
+    String typeKey = keyPrefix + Constants.Retry.TYPE;
+    String maxRetriesKey = keyPrefix + Constants.Retry.MAX_RETRIES;
+    String maxTimeKey = keyPrefix + Constants.Retry.MAX_TIME_SECS;
+    String baseDelayKey = keyPrefix + Constants.Retry.DELAY_BASE_MS;
+    String maxDelayKey = keyPrefix + Constants.Retry.DELAY_MAX_MS;
+
+    RetryStrategyType type = RetryStrategyType.from(cConf.get(typeKey));
+
+    if (type == RetryStrategyType.NONE) {
+      return RetryStrategies.noRetry();
+    }
+
+    int maxRetries = cConf.getInt(maxRetriesKey);
+    long maxTimeSecs = cConf.getLong(maxTimeKey);
+    long baseDelay = cConf.getLong(baseDelayKey);
+
+    RetryStrategy baseStrategy;
+    switch (type) {
+      case FIXED_DELAY:
+        baseStrategy = RetryStrategies.fixDelay(baseDelay, TimeUnit.MILLISECONDS);
+        break;
+      case EXPONENTIAL_BACKOFF:
+        long maxDelay = cConf.getLong(maxDelayKey);
+        baseStrategy = RetryStrategies.exponentialDelay(baseDelay, maxDelay, TimeUnit.MILLISECONDS);
+        break;
+      default:
+        // not possible
+        throw new IllegalStateException("Unknown retry type " + type);
+    }
+
+    return RetryStrategies.limit(maxRetries, RetryStrategies.timeLimit(maxTimeSecs, TimeUnit.SECONDS, baseStrategy));
   }
 
   private RetryStrategies() {

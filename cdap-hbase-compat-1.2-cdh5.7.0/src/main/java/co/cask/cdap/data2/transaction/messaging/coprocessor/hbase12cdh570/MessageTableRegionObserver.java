@@ -86,7 +86,7 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
   private Boolean pruneEnable;
 
   @Override
-  public void start(CoprocessorEnvironment env) throws IOException {
+  public void start(CoprocessorEnvironment env) {
     if (env instanceof RegionCoprocessorEnvironment) {
       HTableDescriptor tableDesc = ((RegionCoprocessorEnvironment) env).getRegion().getTableDesc();
       metadataTableNamespace = tableDesc.getValue(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE);
@@ -108,6 +108,10 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
   public void stop(CoprocessorEnvironment e) throws IOException {
     if (e instanceof RegionCoprocessorEnvironment) {
       getTopicMetadataCache((RegionCoprocessorEnvironment) e).stop();
+    }
+
+    if (compactionState != null) {
+      compactionState.stop();
     }
   }
 

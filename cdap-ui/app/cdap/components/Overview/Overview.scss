@@ -32,6 +32,11 @@
     opacity: 1;
     margin-top: 5px;
 
+    @media (min-width: 700px) and (max-width: 900px) {
+      position: absolute;
+      right: 630px;
+    }
+
     .overview-wrapper {
       position: fixed;
       width: $overview-width;

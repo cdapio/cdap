@@ -67,8 +67,8 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       timeScheduler.init();
       timeScheduler.start();
       LOG.info("Started time scheduler");
-    } catch (Throwable t) {
-      Throwables.propagateIfInstanceOf(t, SchedulerException.class);
+    } catch (SchedulerException t) {
+      Throwables.propagateIfPossible(t, SchedulerException.class);
       throw new SchedulerException(t);
     }
 
@@ -77,7 +77,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       streamSizeScheduler.start();
       LOG.info("Started stream size scheduler");
     } catch (Throwable t) {
-      Throwables.propagateIfInstanceOf(t, SchedulerException.class);
+      Throwables.propagateIfPossible(t, SchedulerException.class);
       throw new SchedulerException(t);
     }
   }
@@ -91,7 +91,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       LOG.info("Stopped stream size scheduler");
     } catch (Throwable t) {
       LOG.error("Error stopping stream size scheduler", t);
-      Throwables.propagateIfInstanceOf(t, SchedulerException.class);
+      Throwables.propagateIfPossible(t, SchedulerException.class);
       throw new SchedulerException(t);
     } finally {
       try {
@@ -99,7 +99,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
         LOG.info("Stopped time scheduler");
       } catch (Throwable t) {
         LOG.error("Error stopping time scheduler", t);
-        Throwables.propagateIfInstanceOf(t, SchedulerException.class);
+        Throwables.propagateIfPossible(t, SchedulerException.class);
         throw new SchedulerException(t);
       }
     }

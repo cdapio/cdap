@@ -24,6 +24,7 @@ html {
 
 body {
   background-color: white;
+  min-width: $cdap_body_min_width;
 
   #app-container {
     margin-top: 50px;

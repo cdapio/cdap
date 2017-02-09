@@ -15,50 +15,18 @@
  */
 
 angular.module(PKG.name+'.commons')
-  .directive('caskHeaderActions', function(reactDirective) {
-    return reactDirective(window.CaskCommon.HeaderActions);
-  })
-  .directive('caskHeaderBrand', function(reactDirective) {
-    return reactDirective(window.CaskCommon.HeaderBrand);
+  .directive('caskHeader', function(reactDirective) {
+    return reactDirective(window.CaskCommon.Header);
   })
   .directive('myGlobalNavbar', () => {
     return {
       restrict: 'E',
       templateUrl: 'my-global-navbar/my-global-navbar.html',
       controller: function($scope, $state, myNamespace, EventPipe, myAuth) {
-        var vm = this;
-        function findActiveProduct() {
-          var baseTag, baseUrl;
-          if ($state.is('userprofile')) {
-            baseTag = document.getElementsByTagName('base');
-            baseUrl = baseTag[0].getAttribute('href');
-            if (baseUrl.indexOf('hydrator') !== -1) {
-              return 'hydrator';
-            } else if (baseUrl.indexOf('tracker') !== -1) {
-              return 'tracker';
-            } else {
-              return 'cdap';
-            }
-          }
-          if ($state.includes('hydrator.**')) {
-            return 'hydrator';
-          } else if ($state.includes('tracker.**') || $state.is('tracker-enable')) {
-            return 'tracker';
-          } else {
-            return 'cdap';
-          }
-        }
-        if (window.CDAP_CONFIG.securityEnabled && myAuth.isAuthenticated()) {
-          window.CaskCommon.Store.dispatch({
-            type: 'UPDATE_USERNAME',
-            payload: {
-              username: myAuth.getUsername()
-            }
-          });
-          vm.currentUser = myAuth.getUsername();
-        }
-        $scope.$on('$stateChangeSuccess', function(event, toState) {
-          vm.highlightTab = toState.data && toState.data.highlightTab;
+        $scope.params = {
+          nativeLink: true
+        };
+        $scope.$on('$stateChangeSuccess', function() {
           if (!$state.params.namespace) {
             return;
           }
@@ -72,27 +40,33 @@ angular.module(PKG.name+'.commons')
             window.CaskCommon.Store.dispatch({
               type: 'UPDATE_NAMESPACES',
               payload: {
-                namespaces: vm.namespaces
+                namespaces: $scope.namespaces
               }
             });
           }
-          vm.activeProduct = findActiveProduct();
         });
-        vm.namespaces = [];
+        if (window.CDAP_CONFIG.securityEnabled && myAuth.isAuthenticated()) {
+          window.CaskCommon.Store.dispatch({
+            type: 'UPDATE_USERNAME',
+            payload: {
+              username: myAuth.getUsername()
+            }
+          });
+        }
+        $scope.namespaces = [];
         function updateNamespaceList() {
           myNamespace.getList(true)
             .then(function(list) {
-              vm.namespaces = list;
+              $scope.namespaces = list;
               window.CaskCommon.Store.dispatch({
                 type: 'UPDATE_NAMESPACES',
                 payload: {
-                  namespaces: vm.namespaces
+                  namespaces: $scope.namespaces
                 }
               });
             });
         }
         EventPipe.on('namespace.update', updateNamespaceList);
-      },
-      controllerAs: 'Navbar'
+      }
     };
   });

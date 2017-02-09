@@ -24,6 +24,7 @@ import SchemaTab from 'components/Overview/Tabs/SchemaTab';
 import UsageTab from 'components/DatasetDetailedView/Tabs/UsageTab';
 import AuditTab from 'components/DatasetDetailedView/Tabs/AuditTab';
 import LineageTab from 'components/DatasetDetailedView/Tabs/LineageTab';
+import PropertiesTab from 'components/DatasetDetailedView/Tabs/PropertiesTab';
 
 export default class DatasetDetailedViewTabs extends Component {
   constructor(props) {
@@ -106,6 +107,17 @@ export default class DatasetDetailedViewTabs extends Component {
               </Link>
             </NavLink>
           </NavItem>
+
+          <NavItem>
+            <NavLink>
+              <Link
+                to={`${baseLinkPath}/properties`}
+                activeClassName="active"
+              >
+                Properties
+              </Link>
+            </NavLink>
+          </NavItem>
         </Nav>
         <Match pattern={`${baseMatchPath}/`} render={
           () => {
@@ -146,6 +158,13 @@ export default class DatasetDetailedViewTabs extends Component {
           () => {
             return (
               <AuditTab entity={this.state.entity} />
+            );
+          }}
+        />
+        <Match pattern={`${baseMatchPath}/properties`} render={
+          () => {
+            return (
+              <PropertiesTab entity={this.state.entity} />
             );
           }}
         />

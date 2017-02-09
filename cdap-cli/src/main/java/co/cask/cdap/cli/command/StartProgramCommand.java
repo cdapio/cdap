@@ -70,7 +70,8 @@ public class StartProgramCommand extends AbstractAuthCommand {
                     elementType.getName(), programName, appName, appVersion, runtimeArgsString);
     } else {
       // run with user-provided runtime args
-      Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString);
+      Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString,
+                                                                ArgumentName.RUNTIME_ARGS.toString());
       programClient.start(programId, isDebug, runtimeArgs);
       output.printf("Successfully started %s '%s' of application '%s.%s' with provided runtime arguments '%s'\n",
                     elementType.getName(), programName, appName, appVersion, runtimeArgsString);

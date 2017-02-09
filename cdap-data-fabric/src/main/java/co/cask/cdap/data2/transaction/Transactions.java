@@ -87,25 +87,18 @@ public final class Transactions {
     return new TransactionFailureException(message, t);
   }
 
-
-  private static Supplier<TransactionContext>
-  constantContextSupplier(final TransactionSystemClient txClient,
-                          final Iterable<? extends TransactionAware> txAwares) {
-    return new Supplier<TransactionContext>() {
-      @Override
-      public TransactionContext get() {
-        return new TransactionContext(txClient, Iterables.transform(txAwares, Functions.<TransactionAware>identity()));
-      }
-    };
-  }
-
   /**
    * Handy method to create {@link TransactionExecutor} (See TEPHRA-71).
    */
   public static TransactionExecutor createTransactionExecutor(TransactionExecutorFactory factory,
                                                               final TransactionSystemClient txClient,
                                                               final Iterable<? extends TransactionAware> txAwares) {
-    return factory.createExecutor(constantContextSupplier(txClient, txAwares));
+    return factory.createExecutor(new Supplier<TransactionContext>() {
+      @Override
+      public TransactionContext get() {
+        return new TransactionContext(txClient, Iterables.transform(txAwares, Functions.<TransactionAware>identity()));
+      }
+    });
   }
 
   /**
@@ -272,7 +265,7 @@ public final class Transactions {
     return result.get();
   }
 
-  /*
+  /**
    * Creates a new {@link Transactional} that will automatically retry upon transaction failure.
    *
    * @param transactional The {@link Transactional} to delegate the transaction execution to

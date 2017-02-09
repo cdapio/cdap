@@ -17,6 +17,8 @@
 
 package co.cask.cdap.logging.save;
 
+import co.cask.cdap.logging.meta.Checkpoint;
+import co.cask.cdap.logging.meta.CheckpointManager;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
