@@ -238,15 +238,15 @@ public class HelpCommand implements Command {
    */
   private void format(String line, PrintStream output, int colWidth, String prefixSpaces) {
     output.printf(prefixSpaces);
-    int widthLeft = colWidth - prefixSpaces.length();
+    int widthRemaining = colWidth - prefixSpaces.length();
 
-    if (line.length() <= widthLeft) {
+    if (line.length() <= widthRemaining) {
       output.println(line);
       return;
     }
 
-    // Find last space that is before colWidth
-    int idx = line.lastIndexOf(' ', widthLeft);
+    // Find last space that is before widthRemaining
+    int idx = line.lastIndexOf(' ', widthRemaining);
     if (idx < 0) {
       output.println(line);
       return;
