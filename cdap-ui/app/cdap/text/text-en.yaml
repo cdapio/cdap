@@ -373,23 +373,25 @@ features:
   MarketEntityModal:
     version: "Version :"
   Navbar:
-    CDAP:
-      dashboard: Dashboard
-      home: Home
-      management: Management
-      olduilink: VIEW ORIGINAL UI
-    HeaderActions:
-      caskHome: Cask Home
-      documentation: Documentation
+    overviewLabel: Overview
+    pipelinesLabel: Pipelines
+    metadataLabel: Metadata
+    ProductDropdown:
       logout: Logout
-      signedInAs: Signed in as
-      support: Support
-      standalonelabel: Standalone
-      distributelabel: Distributed
-    Sidebar:
-      extension: "Extensions:"
+      prodWebsiteLabel: Product Website
+      supportLabel: Support
+      documentationLabel: Documentation
+      aboutLabel: About CDAP
+    Metadata:
+      searchLabel: Search
+      integrationsLabel: Integrations
+      tagsLabel: Tags
+      dictionaryLabel: Dictionary
+    RightSection:
+      olduilink: View Original UI
     NamespaceDropdown:
       applications: Applications
+      namespaceLabel: Namespace
       datasets: Datasets
       streams: Streams
       addNS: "Add Namespace"
@@ -480,13 +482,6 @@ features:
     registration-one: would like to receive product updates and
     registration-two: newsletters from Cask at this email address
     getUpdates: Get Updates
-
-  SpotlightSearch:
-    noResult: No results found
-    showAll: Show all {num} results
-    SpotlightModal:
-      headerSearchResults: "Search results for: {query}"
-      numResults: "{total} results found"
 
   SchemaEditor:
     Labels:

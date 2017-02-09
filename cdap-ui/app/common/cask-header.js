@@ -16,9 +16,8 @@
 
  import T from 'i18n-react';
  T.setTexts(require('../cdap/text/text-en.yaml'));
- var HeaderActions = require('../cdap/components/HeaderActions').default;
- var HeaderBrand = require('../cdap/components/HeaderBrand').default;
  var Store = require('../cdap/services/NamespaceStore').default;
+ var Header = require('../cdap/components/Header').default;
  var Wrangler = require('../wrangler/components/Wrangler').default;
  var globalEvents = require('../cdap/services/global-events').default;
  var ee = require('event-emitter');
@@ -26,8 +25,7 @@
  var VersionActions = require('../cdap/services/VersionStore/VersionActions').default;
  export {
   Store,
-  HeaderBrand,
-  HeaderActions,
+  Header,
   Wrangler,
   globalEvents,
   ee,

@@ -44,9 +44,9 @@ $star-color: #373a3c;
 
   .dropdown-toggle { height: 50px; }
 
-  .fa.fa-angle-down {
+  .fa.fa-caret-down {
     line-height: 50px;
-    font-size: 17px;
+    font-size: 13px;
   }
 
   .namespace-display {
@@ -71,7 +71,19 @@ $star-color: #373a3c;
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
-      display: inline-block;
+      display: inline-flex;
+      flex-direction: column;
+      float: left;
+
+      small {
+        line-height: 0.5;
+        padding-top: 9px;
+        color: gray;
+        font-size: 10px;
+      }
+      span {
+        line-height: 1.5;
+      }
     }
   }
   .dropdown-menu {

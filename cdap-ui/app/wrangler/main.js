@@ -17,7 +17,7 @@
 import Footer from 'components/Footer';
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
-import WranglerHeader from 'wrangler/components/WranglerHeader';
+import Header from 'components/Header';
 import {MyNamespaceApi} from 'api/namespace';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
@@ -73,7 +73,7 @@ class WranglerParent extends Component {
       <Router basename="/wrangler" history={history}>
         <div className="cdap-container">
 
-          <WranglerHeader />
+          <Header />
 
           <div className="container-fluid">
             <Match exactly pattern="/" component={RouteToNamespace} />
