@@ -25,11 +25,13 @@ import java.util.List;
 public class SearchResults {
   private final List<MetadataEntry> results;
   private final List<String> cursors;
+  private final List<MetadataEntry> allResults;
 
 
-  SearchResults(List<MetadataEntry> results, List<String> cursors) {
+  SearchResults(List<MetadataEntry> results, List<String> cursors, List<MetadataEntry> allResults) {
     this.results = results;
     this.cursors = cursors;
+    this.allResults = allResults;
   }
 
   public List<MetadataEntry> getResults() {
@@ -38,5 +40,9 @@ public class SearchResults {
 
   public List<String> getCursors() {
     return cursors;
+  }
+
+  public List<MetadataEntry> getAllResults() {
+    return allResults;
   }
 }
