@@ -39,11 +39,6 @@ import ee from 'event-emitter';
 
 const defaultFilter = [];
 
-// 312 = cardWith (300) + (5 x 2 side margins) + ( 1 x 2 border widths)
-const cardWidthWithMarginAndBorder = 312;
-// 140 = cardHeight (128) + (5 x 2 top bottom margins) + (1 x 2 border widths)
-const cardHeightWithMarginAndBorder = 140;
-
 class EntityListView extends Component {
   constructor(props) {
     super(props);
@@ -203,34 +198,55 @@ class EntityListView extends Component {
     });
   }
 
+  // Performs calculations to determine number of entities to render per page
   calculatePageSize() {
+    // different screen sizes
+    // consistent with media queries in style sheet
+    const sevenColumnWidth = 1701;
+    const sixColumnWidth = 1601;
+    const fiveColumnWidth = 1201;
+    const fourColumnWidth = 993;
+    const threeColumnWidth = 768;
+
+    // 140 = cardHeight (128) + (5 x 2 top bottom margins) + (1 x 2 border widths)
+    const cardHeightWithMarginAndBorder = 140;
+
     let entityListViewEle = document.getElementsByClassName('entity-list-view');
 
     if (!entityListViewEle.length) {
       return;
     }
-    // Performs calculations to determine number of entities to render per page
-    // minus 60px of padding in entity-list-view (30px each side)
-    let containerWidth = entityListViewEle[0].offsetWidth - 60;
 
-    // Subtract 55px to account for entity-list-header's height (30px) and container's top margin (25px)
-    // minus 20px of padding from top and bottom (10px each)
-    let containerHeight = document.getElementsByClassName('entity-list-view')[0].offsetHeight - 55 - 20;
+    // Subtract 65px to account for entity-list-info's height (45px) and paddings (20px)
+    // minus 10px of padding from top and bottom (10px each)
+    let containerHeight = entityListViewEle[0].offsetHeight - 65 - 10;
+    let containerWidth = entityListViewEle[0].offsetWidth;
+    let numColumns = 1;
 
-    let numColumns = Math.floor(containerWidth / cardWidthWithMarginAndBorder);
+    // different screen sizes
+    // consistent with media queries in style sheet
+    if (containerWidth >= sevenColumnWidth) {
+      numColumns = 7;
+    } else if (containerWidth >= sixColumnWidth && containerWidth < sevenColumnWidth) {
+      numColumns = 6;
+    } else if (containerWidth >= fiveColumnWidth && containerWidth < sixColumnWidth) {
+      numColumns = 5;
+    } else if (containerWidth >= fourColumnWidth && containerWidth < fiveColumnWidth) {
+      numColumns = 4;
+    } else if (containerWidth >= threeColumnWidth && containerWidth < fourColumnWidth) {
+      numColumns = 3;
+    }
+
     let numRows = Math.floor(containerHeight / cardHeightWithMarginAndBorder);
 
     // We must have one column and one row at the very least
-    if (numColumns === 0) {
-      numColumns = 1;
-    }
-
     if (numRows === 0) {
       numRows = 1;
     }
 
     this.pageSize = numColumns * numRows;
   }
+
   // Retrieve entities for rendering
   componentDidMount() {
     let namespaces = NamespaceStore.getState().namespaces.map(ns => ns.name);
