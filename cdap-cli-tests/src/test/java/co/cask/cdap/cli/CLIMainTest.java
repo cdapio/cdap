@@ -349,7 +349,7 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName + " \"a=1\"",
                               "Successfully created dataset");
     testCommandOutputContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
-    testCommandOutputContains(cli, "get dataset instance properties " + datasetName, "\"a\":\"1\"");
+    testCommandOutputContains(cli, "get dataset instance properties " + datasetName, "a,1");
 
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
     NamespaceId barspace = new NamespaceId("bar");
