@@ -265,7 +265,7 @@ public final class Transactions {
     return result.get();
   }
 
-  /*
+  /**
    * Creates a new {@link Transactional} that will automatically retry upon transaction failure.
    *
    * @param transactional The {@link Transactional} to delegate the transaction execution to

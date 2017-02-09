@@ -75,7 +75,8 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
   private val taskLocalizationContext = new DefaultTaskLocalizationContext(localizeResources)
   private val transactional = new SparkTransactional(runtimeContext.getTransactionSystemClient,
-                                                     runtimeContext.getDatasetCache)
+                                                     runtimeContext.getDatasetCache,
+                                                     runtimeContext.getRetryStrategy)
   private val workflowInfo = Option(runtimeContext.getWorkflowInfo)
   private val sparkTxService = new SparkTransactionService(runtimeContext.getTransactionSystemClient,
                                                            runtimeContext.getHostname, runtimeContext.getProgramName)
