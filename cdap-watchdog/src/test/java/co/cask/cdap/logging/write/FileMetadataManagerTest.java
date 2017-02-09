@@ -156,7 +156,7 @@ public class FileMetadataManagerTest {
     LoggingContext workerContext1 = new WorkerLoggingContext("ns1", "app1", "worker1", "run1", "instance1");
     Location ns1WorkerContextDir = nsContextDir1.append("app1").append("worker1");
 
-    List<URI> collectedMetaFiles = Lists.newArrayList();
+    List<String> collectedMetaFiles = Lists.newArrayList();
 
     // generate files for ns
     generateFiles(fileMetaDataManager, flowletContext, nsFlowletContextDir, collectedMetaFiles);
@@ -176,7 +176,7 @@ public class FileMetadataManagerTest {
 
   }
 
-  private void verifyCollectedFiles(FileMetaDataManager fileMetaDataManager, List<URI> collectedMetaFiles,
+  private void verifyCollectedFiles(FileMetaDataManager fileMetaDataManager, List<String> collectedMetaFiles,
                                     final String namespace, int expectedFiles) throws Exception {
     int count = 0;
     FileMetaDataManager.TableKey tableKey;
@@ -203,7 +203,7 @@ public class FileMetadataManagerTest {
       // create location from scanned uris and remove all the metadata files that has corresponding disk file available
       for (final URI uri : metaFileCollector.getCollectedEntries()) {
         count++;
-        collectedMetaFiles.remove(uri);
+        collectedMetaFiles.remove(uri.getPath());
         LOG.info("count: {}, Removing file {} from deleted list of metaFiles", count, uri);
       }
     } while (tableKey != null);
@@ -226,7 +226,7 @@ public class FileMetadataManagerTest {
   }
 
   private void generateFiles(FileMetaDataManager fileMetaDataManager, LoggingContext dummyContext,
-                             Location contextDir, List<URI> files) throws Exception {
+                             Location contextDir, List<String> files) throws Exception {
     for (int i = 0; i < 5; i++) {
       generateFile(fileMetaDataManager, dummyContext, contextDir, files, i, 1);
       generateFile(fileMetaDataManager, dummyContext, contextDir, files, i, 2);
@@ -236,8 +236,8 @@ public class FileMetadataManagerTest {
   }
 
   private void generateFile(FileMetaDataManager fileMetaDataManager, LoggingContext dummyContext,
-                            Location contextDir, List<URI> files, int i, int fileNumber) throws Exception {
-    files.add(contextDir.append("2012-12-1" + i + "/del-" + fileNumber).toURI());
+                            Location contextDir, List<String> files, int i, int fileNumber) throws Exception {
+    files.add(contextDir.append("2012-12-1" + i + "/del-" + fileNumber).toURI().getPath());
     Location location = contextDir.append("2012-12-1" + i + "/del-" + fileNumber);
     long deletionBoundary = System.currentTimeMillis() - RETENTION_DURATION_MS;
     long modTime = deletionBoundary - fileNumber - 10000;
