@@ -41,6 +41,7 @@ import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.StreamProperties;
@@ -667,7 +668,15 @@ public class CLIMainTest extends CLITestBase {
     String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
     testCommandOutputContains(cli, "start workflow " + workflow + " '" + runtimeArgsKV + "'",
                               "Successfully started workflow");
-    assertProgramStatus(programClient, fakeWorkflowId, "STOPPED");
+
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return programClient.getProgramRuns(fakeWorkflowId, ProgramRunStatus.COMPLETED.name(), 0, Long.MAX_VALUE,
+                                            Integer.MAX_VALUE).size();
+      }
+    }, 180, TimeUnit.SECONDS);
+
     testCommandOutputContains(cli, "cli render as csv", "Now rendering as CSV");
     String commandOutput = getCommandOutput(cli, "get workflow runs " + workflow);
     String[] lines = commandOutput.split("\\r?\\n");
