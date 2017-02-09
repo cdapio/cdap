@@ -167,6 +167,16 @@ public class KeyValueTable extends AbstractDataset implements
    * @param key the key to delete
    */
   @WriteOnly
+  public void delete(String key) {
+    delete(Bytes.toBytes(key));
+  }
+
+  /**
+   * Delete a key.
+   *
+   * @param key the key to delete
+   */
+  @WriteOnly
   public void delete(byte[] key) {
     this.table.delete(key, KEY_COLUMN);
   }
