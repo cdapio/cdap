@@ -102,6 +102,7 @@ template "#{Chef::Config[:file_cache_path]}/hbase-grant.hbase" do
   owner 'hbase'
   group 'hadoop'
   action :create
+  only_if { hadoop_kerberos? }
 end
 
 hbkt = "#{node['krb5']['keytabs_dir']}/hbase.service.keytab"
