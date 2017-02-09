@@ -274,7 +274,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
       if (processor instanceof  KafkaLogWriterPlugin) {
         KafkaLogWriterPlugin plugin = (KafkaLogWriterPlugin) processor;
         CheckpointManager manager = plugin.getCheckPointManager();
-        manager.saveCheckpoints(ImmutableMap.of(0, new Checkpoint(offset, -1)));
+        manager.saveCheckpoints(ImmutableMap.of(0, new Checkpoint(offset, -1, -1)));
       }
     }
   }

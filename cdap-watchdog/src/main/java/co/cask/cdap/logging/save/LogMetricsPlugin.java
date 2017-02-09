@@ -111,7 +111,8 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
       }
 
       partitionCheckpoints.put(event.getPartition(),
-                               new Checkpoint(event.getNextOffset(), event.getLogEvent().getTimeStamp()));
+                               new Checkpoint(event.getNextOffset(), event.getLogEvent().getTimeStamp(),
+                                              event.getLogEvent().getTimeStamp()));
     }
   }
 
