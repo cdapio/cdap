@@ -12,6 +12,24 @@ Installation using Cloudera Manager
 
 .. include:: ../_includes/installation/installation-steps-images.txt
 
+.. rubric:: Notes
+
+This section describes installing CDAP on Hadoop clusters managed by Cloudera Manager.
+
+The CDAP integration with Cloudera Manager is provided in the form of a Custom Service
+Descriptor (CSD), which must be installed into Cloudera Manager prior to installation.  The CSD
+contains service definitions and configurations to make Cloudera Manager "CDAP aware."
+
+After the CDAP CSD has :ref:`been installed <cloudera-installation-download>`, the CDAP service
+can then be installed via the usual CM methods. CDAP parcels will be available from the
+preconfigured CDAP parcel repository, and the CDAP service can be added to a cluster via the
+"Add Service" wizard.
+
+A new CDAP CSD is released with each CDAP minor version, for example 4.0, 4.1, etc, with patch
+releases as needed. The installed CSD version should always match the major.minor version of the
+CDAP Parcel.  For example, the |short-version| CSD can be used with CDAP |short-version-x|.
+
+
 Preparing the Cluster
 =====================
 
