@@ -91,8 +91,8 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
     services.add(injector.getInstance(KafkaClientService.class));
     services.add(injector.getInstance(BrokerService.class));
     services.add(injector.getInstance(MetricsCollectionService.class));
-    services.add(injector.getInstance(DistributedLogFramework.class));
     services.add(injector.getInstance(LogSaverStatusService.class));
+    services.add(injector.getInstance(DistributedLogFramework.class));
   }
 
   @VisibleForTesting

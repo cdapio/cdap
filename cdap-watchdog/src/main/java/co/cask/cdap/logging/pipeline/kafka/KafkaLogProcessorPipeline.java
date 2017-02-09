@@ -107,10 +107,12 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       }
     }
 
+    context.start();
+
     fetchExecutor = Executors.newFixedThreadPool(
       partitions.size(), Threads.createDaemonThreadFactory("fetcher-" + name + "-%d"));
 
-    LOG.info("Log processor pipeline for {} started", name);
+    LOG.info("Log processor pipeline for {} started with checkpoint {}", name, checkpoints);
   }
 
   @Override
@@ -160,7 +162,6 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       }
     } catch (InterruptedException e) {
       // Interruption means stopping the service.
-      Thread.currentThread().interrupt();
     }
   }
 
@@ -178,8 +179,8 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     fetchExecutor.shutdownNow();
 
     try {
-      context.flush();
-      // Persist the checkpoints. It can only be done after successfully flushing the appenders.
+      context.stop();
+      // Persist the checkpoints. It can only be done after successfully stopping the appenders.
       // Since persistCheckpoint never throw, putting it inside try is ok.
       persistCheckpoints();
     } catch (Exception e) {
@@ -560,6 +561,14 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     MutableCheckpoint setMaxEventTime(long maxEventTime) {
       this.maxEventTime = maxEventTime;
       return this;
+    }
+
+    @Override
+    public String toString() {
+      return "Checkpoint{" +
+        "nextOffset=" + nextOffset +
+        ", maxEventTime=" + maxEventTime +
+        '}';
     }
   }
 }

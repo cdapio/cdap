@@ -40,11 +40,13 @@ import java.util.concurrent.TimeUnit;
 public class LogProcessorPipelineContext implements Flushable {
 
   private final String name;
+  private final LoggerContext loggerContext;
   private final LoadingCache<String, Logger> effectiveLoggerCache;
   private final Set<Flushable> flushables;
 
   public LogProcessorPipelineContext(CConfiguration cConf, String name, final LoggerContext context) {
     this.name = name;
+    this.loggerContext = context;
     this.effectiveLoggerCache = CacheBuilder.newBuilder()
       .maximumSize(cConf.getInt(Constants.Logging.PIPELINE_LOGGER_CACHE_SIZE))
       .expireAfterAccess(cConf.getInt(Constants.Logging.PIPELINE_LOGGER_CACHE_EXPIRATION_MS), TimeUnit.MILLISECONDS)
@@ -93,5 +95,19 @@ public class LogProcessorPipelineContext implements Flushable {
     for (Flushable flushable : flushables) {
       flushable.flush();
     }
+  }
+
+  /**
+   * Starts this context.
+   */
+  public void start() {
+    loggerContext.start();
+  }
+
+  /**
+   * Stops this context.
+   */
+  public void stop() {
+    loggerContext.stop();
   }
 }
