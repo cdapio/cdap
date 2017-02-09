@@ -283,7 +283,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
         // Although it's not the same as the in memory object size, it should be just a constant factor, hence
         // it is proportional to the actual object size.
         eventQueue.add(loggingEvent, loggingEvent.getTimeStamp(), message.message().payloadSize(),
-                       partition, new OffsetTime(message.offset(), loggingEvent.getTimeStamp()));
+                       partition, new OffsetTime(message.nextOffset(), loggingEvent.getTimeStamp()));
       } catch (IOException e) {
         // This should happen. In case it happens (e.g. someone published some garbage), just skip the message.
         LOG.warn("Fail to decode logging event from {}:{} at offset {}. Skipping it.",
