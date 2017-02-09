@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,10 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -104,10 +107,15 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
     }
     metadataStore.removeTags(MetadataScope.SYSTEM, entityId);
 
-    // Now add the new metadata
-    Map<String, String> properties = getSystemPropertiesToAdd();
-    if (properties.size() > 0) {
-      metadataStore.setProperties(MetadataScope.SYSTEM, entityId, properties);
+    // Now add the new metadata. The properties that were preserved need to be provided to setProperties() so that
+    // they also get indexed. 
+    // First add any preserved properties that were not removed
+    Map<String, String> allProperties =
+      getPreserverdProperties(metadataStore.getProperties(MetadataScope.SYSTEM, entityId));
+    // Add all the properties that need to be added
+    allProperties.putAll(getSystemPropertiesToAdd());
+    if (allProperties.size() > 0) {
+      metadataStore.setProperties(MetadataScope.SYSTEM, entityId, allProperties);
     }
     String[] tags = getSystemTagsToAdd();
     if (tags.length > 0) {
@@ -119,6 +127,16 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
     if (!Strings.isNullOrEmpty(schema)) {
       metadataStore.setProperty(MetadataScope.SYSTEM, entityId, SCHEMA_KEY, schema);
     }
+  }
+
+  private Map<String, String> getPreserverdProperties(Map<String, String> existingProperties) {
+    Map<String, String> allProperties = new HashMap<>();
+    for (String preservedProperty : PRESERVE_PROPERTIES) {
+      if (existingProperties.get(preservedProperty) != null) {
+        allProperties.put(preservedProperty, existingProperties.get(preservedProperty));
+      }
+    }
+    return allProperties;
   }
 
   void addPlugin(PluginClass pluginClass, @Nullable String version,

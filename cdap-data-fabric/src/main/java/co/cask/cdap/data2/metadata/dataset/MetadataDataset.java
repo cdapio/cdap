@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Cask Data, Inc.
+ * Copyright 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -127,15 +127,6 @@ public class MetadataDataset extends AbstractDataset {
   static final String INVERTED_ENTITY_NAME_INDEX_COLUMN = "in";    // column for entity name indexes in reverse order
   static final String CREATION_TIME_INDEX_COLUMN = "c";     // column for creation-time indexes
   static final String INVERTED_CREATION_TIME_INDEX_COLUMN = "ic"; // column for inverted creation-time based index
-
-  // TODO: CDAP-7835: This is required to be public only for UpgradeTool
-  public static final String COLUMNS_TO_INDEX = Joiner.on(",").join(
-    DEFAULT_INDEX_COLUMN,
-    ENTITY_NAME_INDEX_COLUMN,
-    INVERTED_ENTITY_NAME_INDEX_COLUMN,
-    CREATION_TIME_INDEX_COLUMN,
-    INVERTED_CREATION_TIME_INDEX_COLUMN
-  );
 
   public static final String TAGS_KEY = "tags";
   public static final String KEYVALUE_SEPARATOR = ":";

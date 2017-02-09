@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Cask Data, Inc.
+ * Copyright 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,9 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategy;
+import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.audit.payload.builder.MetadataPayloadBuilder;
@@ -76,9 +79,12 @@ public class DefaultMetadataStore implements MetadataStore {
   private static final Set<String> EMPTY_TAGS = ImmutableSet.of();
   private static final int BATCH_SIZE = 1000;
 
-  // TODO: Can be made private after CDAP-7835 is fixed
-  public static final DatasetId BUSINESS_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("business.metadata");
-  public static final DatasetId SYSTEM_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("system.metadata");
+  private static final DatasetId BUSINESS_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("business.metadata");
+  private static final DatasetId SYSTEM_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("system.metadata");
+
+  //Special tag in the Metadata Dataset to mark Upgrade Status
+  private static final String NEEDS_UPGRADE_TAG = "cdap.metadatadataset.needs_upgrade";
+  private static final String VERSION_TAG_PREFIX = "cdap.version:";
 
   private static final Comparator<Map.Entry<NamespacedEntityId, Integer>> SEARCH_RESULT_DESC_SCORE_COMPARATOR =
     new Comparator<Map.Entry<NamespacedEntityId, Integer>>() {
@@ -576,23 +582,36 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   @Override
-  public void rebuildIndexes() {
+  public void rebuildIndexes(MetadataScope scope,
+                             RetryStrategy retryStrategy) {
     byte[] row = null;
-    while ((row = rebuildIndex(row, MetadataScope.SYSTEM)) != null) {
-      LOG.debug("Completed a batch for rebuilding system metadata indexes.");
-    }
-    while ((row = rebuildIndex(row, MetadataScope.USER)) != null) {
-      LOG.debug("Completed a batch for rebuilding business metadata indexes.");
+    while ((row = rebuildIndexesWithRetries(scope, row, retryStrategy)) != null) {
+      LOG.debug("Completed a batch for rebuilding {} metadata indexes.", scope);
     }
   }
 
-  @Override
-  public void deleteAllIndexes() {
-    while (deleteBatch(MetadataScope.SYSTEM) != 0) {
-      LOG.debug("Deleted a batch of system metadata indexes.");
+  private byte[] rebuildIndexesWithRetries(final MetadataScope scope,
+                             final byte[] row, RetryStrategy retryStrategy) {
+    byte[] returnRow;
+    try {
+      returnRow = Retries.callWithRetries(new Retries.Callable<byte[], Exception>() {
+        @Override
+        public byte[] call() throws Exception {
+          // Run data migration
+          return rebuildIndex(row, scope);
+        }
+      }, retryStrategy);
+    } catch (Exception e) {
+      LOG.error("Failed to reIndex while Upgrading Metadata Dataset.", e);
+      throw new RuntimeException(e);
     }
-    while (deleteBatch(MetadataScope.USER) != 0) {
-      LOG.debug("Deleted a batch of business metadata indexes.");
+    return returnRow;
+  }
+
+  @Override
+  public void deleteAllIndexes(MetadataScope scope) {
+    while (deleteBatch(scope) != 0) {
+      LOG.debug("Deleted a batch of {} metadata indexes.", scope);
     }
   }
 
@@ -645,6 +664,23 @@ public class DefaultMetadataStore implements MetadataStore {
     }
   }
 
+  public void createOrUpgrade(MetadataScope scope) throws DatasetManagementException, IOException {
+    DatasetId metadataDatasetInstance = getMetadataDatasetInstance(scope);
+    if (dsFramework.hasInstance(metadataDatasetInstance)) {
+      if (isUpgradeRequired(scope)) {
+        dsFramework.updateInstance(
+          metadataDatasetInstance,
+          DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build()
+        );
+      }
+    } else {
+      DatasetsUtil.createIfNotExists(
+        dsFramework, metadataDatasetInstance, MetadataDataset.class.getName(),
+        DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build());
+      markUpgradeComplete(scope);
+    }
+  }
+
   private DatasetId getMetadataDatasetInstance(MetadataScope scope) {
     return MetadataScope.USER == scope ? BUSINESS_METADATA_INSTANCE_ID : SYSTEM_METADATA_INSTANCE_ID;
   }
@@ -658,5 +694,51 @@ public class DefaultMetadataStore implements MetadataStore {
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
     framework.addInstance(MetadataDataset.class.getName(), BUSINESS_METADATA_INSTANCE_ID, DatasetProperties.EMPTY);
     framework.addInstance(MetadataDataset.class.getName(), SYSTEM_METADATA_INSTANCE_ID, DatasetProperties.EMPTY);
+  }
+
+  @Override
+  public void markUpgradeComplete(MetadataScope scope) throws DatasetManagementException, IOException {
+    DatasetId datasetId = getMetadataDatasetInstance(scope);
+    LOG.info("Add Upgrade tag with version {} to {}", ProjectInfo.getVersion().toString(), datasetId);
+    addTags(scope, datasetId, getTagWithVersion(ProjectInfo.getVersion().toString()));
+    removeTags(scope, datasetId, NEEDS_UPGRADE_TAG);
+  }
+
+  @Override
+  public boolean isUpgradeRequired(MetadataScope scope) throws DatasetManagementException {
+    DatasetId datasetId = getMetadataDatasetInstance(scope);
+    Set<String> tags = getTags(scope, datasetId);
+    // Check if you are in the process of an Upgrade
+    if (tags.contains(NEEDS_UPGRADE_TAG)) {
+      LOG.debug("NEEDS_UPGRADE_TAG found on Metadata Dataset. Upgrade is required.");
+      return true;
+    }
+    // If no tag was found or Version tag does not match current version
+    boolean versionTagFound = false;
+    for (String tag: tags) {
+      if (tag.startsWith(VERSION_TAG_PREFIX)) {
+        versionTagFound = true;
+        String datasetVersion = getVersionFromVersionTag(tag);
+        if (!datasetVersion.equals(ProjectInfo.getVersion().toString())) {
+          LOG.debug("Metadata Dataset version mismatch. Needs Upgrade");
+          removeTags(scope, datasetId, tag);
+          addTags(scope, datasetId, NEEDS_UPGRADE_TAG);
+          return true;
+        }
+      }
+    }
+    if (!versionTagFound) {
+      addTags(scope, datasetId, NEEDS_UPGRADE_TAG);
+      return true;
+    }
+    return false;
+  }
+
+  private String getVersionFromVersionTag(String tag) {
+    return tag.substring(VERSION_TAG_PREFIX.length());
+  }
+
+  private String getTagWithVersion(String version) {
+    return new String (VERSION_TAG_PREFIX + version);
   }
 }
