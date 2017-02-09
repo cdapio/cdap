@@ -22,7 +22,8 @@ import ServiceStatusPanel from '../ServiceStatusPanel';
 import AdminDetailPanel from '../AdminDetailPanel';
 import AdminConfigurePane from '../AdminConfigurePane';
 import AdminOverviewPane from '../AdminOverviewPane';
-import AbstractWizard from 'components/AbstractWizard';
+import AbstractWizard from '../AbstractWizard';
+import SetPreferenceModal from '../FastAction/SetPreferenceAction/SetPreferenceModal';
 import Helmet from 'react-helmet';
 import NamespaceStore from 'services/NamespaceStore';
 import VersionStore from 'services/VersionStore';
@@ -52,6 +53,7 @@ class Management extends Component {
         actionIndex : null,
         actionType : null
       },
+      preferenceModal: false,
       serviceProviders: [],
       serviceData: {}
     };
@@ -110,6 +112,52 @@ class Management extends Component {
     this.clickRight = this.clickRight.bind(this);
     this.setToContext = this.setToContext.bind(this);
     this.openNamespaceWizard = this.openNamespaceWizard.bind(this, 0, 'add_namespace');
+    this.togglePreferenceModal = this.togglePreferenceModal.bind(this);
+    this.onSystemPreferencesSaved = this.onSystemPreferencesSaved.bind(this);
+    this.closePreferencesSavedMessage = this.closePreferencesSavedMessage.bind(this);
+  }
+
+  componentDidMount() {
+    if (!VersionStore.getState().version) {
+      MyCDAPVersionApi.get().subscribe((res) => {
+        this.setState({ version : res.version });
+        VersionStore.dispatch({
+          type: VersionActions.updateVersion,
+          payload: {
+            version: res.version
+          }
+        });
+      });
+    } else {
+      this.setState({ version : VersionStore.getState().version });
+    }
+
+    document.querySelector('#header-namespace-dropdown').style.display = 'none';
+    this.lastAccessedNamespace = NamespaceStore.getState().selectedNamespace;
+    Mousetrap.bind('left', this.clickLeft);
+    Mousetrap.bind('right', this.clickRight);
+  }
+
+  componentWillUnmount() {
+    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
+    clearInterval(this.updatingInterval);
+  }
+
+  onSystemPreferencesSaved() {
+    this.setState({
+      preferencesSaved: true
+    });
+    setTimeout(() => {
+      this.setState({
+        preferencesSaved: false
+      });
+    }, 3000);
+  }
+
+  closePreferencesSavedMessage() {
+    this.setState({
+      preferencesSaved: false
+    });
   }
 
   // Retrieve the data for each service
@@ -140,30 +188,7 @@ class Management extends Component {
     });
   }
 
-  componentDidMount() {
-    if (!VersionStore.getState().version) {
-      MyCDAPVersionApi.get().subscribe((res) => {
-        this.setState({ version : res.version });
-        VersionStore.dispatch({
-          type: VersionActions.updateVersion,
-          payload: {
-            version: res.version
-          }
-        });
-      });
-    } else {
-      this.setState({ version : VersionStore.getState().version });
-    }
 
-    document.querySelector('#header-namespace-dropdown').style.display = 'none';
-    this.lastAccessedNamespace = NamespaceStore.getState().selectedNamespace;
-    Mousetrap.bind('left', this.clickLeft);
-    Mousetrap.bind('right', this.clickRight);
-  }
-  componentWillUnmount() {
-    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
-    clearInterval(this.updatingInterval);
-  }
   clickLeft() {
     var index = this.state.applications.indexOf(this.state.application);
     if (index === -1 || index === 0) {
@@ -205,6 +230,12 @@ class Management extends Component {
         actionIndex: index,
         actionType: type
       }
+    });
+  }
+
+  togglePreferenceModal() {
+    this.setState({
+      preferenceModal: !this.state.preferenceModal
     });
   }
 
@@ -264,7 +295,12 @@ class Management extends Component {
         </div>
         <hr className="admin-horizontal-line" />
         <div className="admin-bottom-panel">
-          <AdminConfigurePane openNamespaceWizard={this.openNamespaceWizard}/>
+          <AdminConfigurePane
+            openNamespaceWizard={this.openNamespaceWizard}
+            openPreferenceModal={this.togglePreferenceModal}
+            preferencesSavedState={this.state.preferencesSaved}
+            closePreferencesSavedMessage={this.closePreferencesSavedMessage}
+          />
           <AdminOverviewPane
             isLoading={this.state.loading}
             services={this.state.services}
@@ -275,6 +311,12 @@ class Management extends Component {
           onClose={this.closeWizard.bind(this)}
           wizardType={this.state.wizard.actionType}
           backdrop={true}
+        />
+        <SetPreferenceModal
+          isOpen={this.state.preferenceModal}
+          toggleModal={this.togglePreferenceModal}
+          onSuccess={this.onSystemPreferencesSaved}
+          setAtSystemLevel={true}
         />
       </div>
     );

@@ -190,31 +190,32 @@ cdap_stop_pidfile() {
         echo -n .
         sleep 1
       done
+      rm -f ${__pidfile}
       echo
       __ret=0
     else
       __ret=${?}
     fi
-    rm -f ${__pidfile}
     echo
   fi
   return ${__ret}
 }
 
 #
-# cdap_check_pidfile <pidfile>
-# returns: 1 if running, 0 otherwise
+# cdap_check_pidfile <pidfile> [label]
+# returns: 1 on error, 0 otherwise
 #
 cdap_check_pidfile() {
   local readonly __pidfile=${1} __label=${2:-Process}
-  if [[ -f ${__pidfile} ]]; then
-    local readonly __pid=$(<${__pidfile})
-    if [[ $(cdap_status_pidfile ${__pidfile} ${__label} >/dev/null) ]]; then
-      echo "${__label} running as PID ${__pid}. Stop it first."
-      return 1
-    fi
-  fi
-  return 0
+  local readonly __ret
+  cdap_status_pidfile ${__pidfile} ${__label}
+  __ret=$?
+  case ${__ret} in
+    3) echo "Please delete ${__pidfile} and try again" ;;
+    0) echo "Please stop ${__label}, first" ;;
+    *) return 0 ;;
+  esac
+  return 1
 }
 
 ###
@@ -595,7 +596,7 @@ cdap_start_bin() {
   local readonly __svc=${CDAP_SERVICE/-server/}
   local readonly __ret __pid
   local readonly __name=$(if [[ ${__svc} == ui ]]; then echo UI ; else echo ${__svc/-/ } | awk '{for(i=1;i<=NF;i++){ $i=toupper(substr($i,1,1)) substr($i,2) }}1' ; fi)
-  cdap_check_pidfile ${__pidfile} || exit 0 # Error output is done in function
+  cdap_check_pidfile ${__pidfile} ${__name} || exit 0 # Error output is done in function
   cdap_create_pid_dir || die "Could not create PID dir: ${PID_DIR}"
   logecho "$(date) Starting CDAP ${__name} service on ${HOSTNAME}"
   ulimit -a >>${__logfile} 2>&1
@@ -615,7 +616,7 @@ cdap_start_bin() {
 #
 cdap_start_java() {
   local readonly __name=$(echo ${CDAP_SERVICE/-/ } | awk '{for(i=1;i<=NF;i++){ $i=toupper(substr($i,1,1)) substr($i,2) }}1')
-  cdap_check_pidfile ${__pidfile} || exit 0 # Error output is done in function
+  cdap_check_pidfile ${__pidfile} ${__name} || exit 0 # Error output is done in function
   cdap_create_pid_dir || die "Could not create PID dir: ${PID_DIR}"
   # Check and set classpath if in development environment.
   cdap_check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
@@ -806,7 +807,7 @@ cdap_sdk_stop() { cdap_stop_pidfile ${__pidfile} "CDAP Standalone (SDK)"; };
 # cdap_sdk_check_before_start
 #
 cdap_sdk_check_before_start() {
-  cdap_check_pidfile ${__pidfile} || return ${?}
+  cdap_check_pidfile ${__pidfile} Standalone || return ${?}
   cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v4.5.0} || return ${?}
   local __node_pid=$(ps | grep ${CDAP_UI_PATH:-ui/server.js} | grep -v grep | awk '{ print $1 }')
   if [[ -z ${__node_pid} ]]; then
@@ -835,14 +836,8 @@ cdap_sdk_start() {
   fi
 
   eval split_jvm_opts ${CDAP_SDK_DEFAULT_JVM_OPTS} ${CDAP_SDK_OPTS} ${JAVA_OPTS}
-  if [[ -f ${__pidfile} ]]; then
-    __pid=$(<${__pidfile})
-    if kill -0 ${__pid} >/dev/null 2>&1; then
-      echo "Standalone process with process id ${__pid} is already running."
-      return 0
-    fi
-  fi
 
+  cdap_sdk_check_before_start || return 1
   cdap_create_local_dir || die "Failed to create LOCAL_DIR: ${LOCAL_DIR}"
   cdap_create_log_dir || die "Failed to create LOG_DIR: ${LOG_DIR}"
   cdap_create_pid_dir || die "Failed to create PID_DIR: ${PID_DIR}"
@@ -883,7 +878,6 @@ cdap_sdk_start() {
       </dev/null >>"${LOG_DIR}"/cdap.log 2>&1 &
     __ret=${?}
     __pid=${!}
-    echo ${__pid} > ${__pidfile}
     sleep 2 # wait for JVM spin up
     while kill -0 ${__pid} >/dev/null 2>&1; do
       if grep '..* started successfully' "${LOG_DIR}"/cdap.log >/dev/null 2>&1; then
@@ -907,6 +901,7 @@ cdap_sdk_start() {
     if ! kill -0 ${__pid} >/dev/null 2>&1; then
       die "Failed to start, please check logs at ${LOG_DIR} for more information"
     fi
+    echo ${__pid} > ${__pidfile}
   fi
   return ${__ret}
 }
@@ -1107,7 +1102,7 @@ cdap_setup() {
 cdap_setup_coprocessors() {
   local readonly __ret __class=co.cask.cdap.data.tools.CoprocessorBuildTool
 
-  cdap_run_class ${__class} ${@}
+  cdap_run_class ${__class} check ${@}
   __ret=${?}
   return ${__ret}
 }

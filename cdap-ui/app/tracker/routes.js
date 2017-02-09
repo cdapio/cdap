@@ -38,7 +38,7 @@ angular.module(PKG.name + '.feature.tracker')
         }
       })
       .state('tracker-enable', {
-        url: '/enable-tracker',
+        url: '/enable-tracker?iframe&sourceUrl',
         parent: 'ns',
         templateUrl: '/assets/features/tracker/templates/tracker-enable.html',
         controller: 'TrackerEnableController',
@@ -107,7 +107,7 @@ angular.module(PKG.name + '.feature.tracker')
         }
       })
       .state('tracker', {
-        url: '',
+        url: '?iframe&sourceUrl',
         abstract: true,
         parent: 'ns',
         template: '<ui-view/>',
@@ -364,6 +364,19 @@ angular.module(PKG.name + '.feature.tracker')
             controllerAs: 'PreviewController',
             onEnter: function($stateParams) {
               document.title = 'Tracker - ' + $stateParams.entityId + ' preview';
+            },
+            data: {
+              authorizedRoles: MYAUTH_ROLE.all,
+              highlightTab: 'search'
+            }
+          })
+          .state('tracker.detail.entity.compliance', {
+            url: '/compliance',
+            templateUrl: '/assets/features/tracker/templates/compliance.html',
+            controller: 'TrackerComplianceController',
+            controllerAs: 'ComplianceController',
+            onEnter: function($stateParams) {
+              document.title = 'Tracker - ' + $stateParams.entityId + ' Compliance view';
             },
             data: {
               authorizedRoles: MYAUTH_ROLE.all,

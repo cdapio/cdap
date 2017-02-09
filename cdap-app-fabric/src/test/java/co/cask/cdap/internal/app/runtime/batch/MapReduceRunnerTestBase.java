@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.metrics.MetricStore;
@@ -174,6 +175,10 @@ public class MapReduceRunnerTestBase {
 
   protected ApplicationWithPrograms deployApp(Class<?> appClass) throws Exception {
     return AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
+  }
+
+  protected ApplicationWithPrograms deployApp(Class<?> appClass, Config config) throws Exception {
+    return AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER, config);
   }
 
   protected ApplicationWithPrograms deployApp(Id.Namespace namespace, Class<?> appClass) throws Exception {

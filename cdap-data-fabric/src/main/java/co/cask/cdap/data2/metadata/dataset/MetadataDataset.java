@@ -36,6 +36,7 @@ import co.cask.cdap.data2.metadata.indexer.SchemaIndexer;
 import co.cask.cdap.data2.metadata.indexer.ValueOnlyIndexer;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
+import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -43,7 +44,6 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.MetadataScope;
-import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
@@ -537,12 +537,12 @@ public class MetadataDataset extends AbstractDataset {
 
   /**
    * Searches entities that match the specified search query in the specified namespace and {@link NamespaceId#SYSTEM}
-   * for the specified {@link MetadataSearchTargetType}.
+   * for the specified {@link EntityTypeSimpleName}.
    *
    * @param namespaceId the namespace to search in
    * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value] and can have '*'
    *                    at the end for a prefix search
-   * @param types the {@link MetadataSearchTargetType} to restrict the search to, if empty all types are searched
+   * @param types the {@link EntityTypeSimpleName} to restrict the search to, if empty all types are searched
    * @param sortInfo the {@link SortInfo} to sort the results by
    * @param offset index to start with in the search results. To return results from the beginning, pass {@code 0}.
    *               Only applies when #sortInfo is not {@link SortInfo#DEFAULT}
@@ -560,7 +560,7 @@ public class MetadataDataset extends AbstractDataset {
    *         {@link NamespacedEntityId} with its associated metadata. It also optionally contains a list of cursors
    *         for subsequent queries to start with, if the specified #sortInfo is not {@link SortInfo#DEFAULT}.
    */
-  public SearchResults search(String namespaceId, String searchQuery, Set<MetadataSearchTargetType> types,
+  public SearchResults search(String namespaceId, String searchQuery, Set<EntityTypeSimpleName> types,
                               SortInfo sortInfo, int offset, int limit, int numCursors,
                               @Nullable String cursor, boolean showHidden) {
     if (SortInfo.DEFAULT.equals(sortInfo)) {
@@ -570,7 +570,7 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   private SearchResults searchByDefaultIndex(String namespaceId, String searchQuery,
-                                             Set<MetadataSearchTargetType> types, boolean showHidden) {
+                                             Set<EntityTypeSimpleName> types, boolean showHidden) {
     List<MetadataEntry> results = new ArrayList<>();
     for (String searchTerm : getSearchTerms(namespaceId, searchQuery)) {
       Scanner scanner;
@@ -599,7 +599,7 @@ public class MetadataDataset extends AbstractDataset {
     return new SearchResults(results, Collections.<String>emptyList());
   }
 
-  private SearchResults searchByCustomIndex(String namespaceId, Set<MetadataSearchTargetType> types,
+  private SearchResults searchByCustomIndex(String namespaceId, Set<EntityTypeSimpleName> types,
                                             SortInfo sortInfo, int offset, int limit, int numCursors,
                                             @Nullable String cursor, boolean showHidden) {
     List<MetadataEntry> results = new ArrayList<>();
@@ -652,7 +652,7 @@ public class MetadataDataset extends AbstractDataset {
   // there may not be a MetadataEntry in the row or it may for a different targetType (entityFilter),
   // so return an Optional
   private Optional<MetadataEntry> parseRow(Row rowToProcess, String indexColumn,
-                                           Set<MetadataSearchTargetType> entityFilter, boolean showHidden) {
+                                           Set<EntityTypeSimpleName> entityFilter, boolean showHidden) {
     String rowValue = rowToProcess.getString(indexColumn);
     if (rowValue == null) {
       return Optional.absent();
@@ -662,8 +662,8 @@ public class MetadataDataset extends AbstractDataset {
     String targetType = MdsKey.getTargetType(rowKey);
 
     // Filter on target type if not set to include all types
-    boolean includeAllTypes = entityFilter.isEmpty() || entityFilter.contains(MetadataSearchTargetType.ALL);
-    if (!includeAllTypes && !entityFilter.contains(MetadataSearchTargetType.valueOfSerializedForm(targetType))) {
+    boolean includeAllTypes = entityFilter.isEmpty() || entityFilter.contains(EntityTypeSimpleName.ALL);
+    if (!includeAllTypes && !entityFilter.contains(EntityTypeSimpleName.valueOfSerializedForm(targetType))) {
       return Optional.absent();
     }
 
@@ -689,7 +689,7 @@ public class MetadataDataset extends AbstractDataset {
    *
    * @param namespaceId the namespaceId to search in
    * @param searchQuery the user specified search query. If {@code *}, returns a singleton list containing
-   *                    {code *} which matches everything.
+   *                    {@code *} which matches everything.
    * @return formatted search query which is namespaced
    */
   private Iterable<String> getSearchTerms(String namespaceId, String searchQuery) {

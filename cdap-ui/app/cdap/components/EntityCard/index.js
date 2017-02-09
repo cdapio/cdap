@@ -25,6 +25,9 @@ import StreamMetrics from './StreamMetrics';
 import classnames from 'classnames';
 import FastActions from 'components/EntityCard/FastActions';
 import JumpButton from 'components/JumpButton';
+import FastActionToMessage from 'services/fast-action-message-helper';
+import isNil from 'lodash/isNil';
+import capitalize from 'lodash/capitalize';
 
 require('./EntityCard.scss');
 
@@ -32,7 +35,7 @@ export default class EntityCard extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      successMessage: false
+      successMessage: null
     };
     this.cardRef = null;
     this.onSuccess = this.onSuccess.bind(this);
@@ -46,10 +49,10 @@ export default class EntityCard extends Component {
     }
   }
 
-  onSuccess() {
-    this.setState({successMessage: true});
+  onSuccess(successMessage) {
+    this.setState({successMessage});
     setTimeout(() => {
-      this.setState({successMessage: false});
+      this.setState({successMessage: null});
     }, 3000);
   }
 
@@ -86,11 +89,27 @@ export default class EntityCard extends Component {
   }
 
   onClick() {
-    if (this.props.entity.type !== 'application') {
+    if (this.props.entity.type === 'artifact' || this.props.entity.type === 'program') {
       return;
     }
+
     if (this.props.onClick) {
       this.props.onClick();
+    }
+  }
+
+  onFastActionUpdate(action) {
+    let successMessage;
+    if (action === 'setPreferences') {
+      successMessage = FastActionToMessage(action, {entityType: capitalize(this.props.entity.type)});
+    } else {
+      successMessage = FastActionToMessage(action);
+    }
+    if (!isNil(successMessage)) {
+      this.onSuccess(successMessage);
+    }
+    if (this.props.onUpdate) {
+      this.props.onUpdate();
     }
   }
 
@@ -149,8 +168,8 @@ export default class EntityCard extends Component {
           <div className="fast-actions-container">
             <FastActions
               entity={this.props.entity}
-              onUpdate={this.props.onUpdate}
-              onSuccess={this.onSuccess}
+              onUpdate={this.onFastActionUpdate.bind(this)}
+              onSuccess={this.props.onFastActionSuccess}
             />
           </div>
         </Card>
@@ -167,7 +186,8 @@ EntityCard.defaultProps = {
 EntityCard.propTypes = {
   entity: PropTypes.object,
   poll: PropTypes.bool,
-  onUpdate: PropTypes.func,
+  onUpdate: PropTypes.func, // FIXME: Remove??
+  onFastActionSuccess: PropTypes.func,
   className: PropTypes.string,
   onClick: PropTypes.func,
   activeEntity: PropTypes.string

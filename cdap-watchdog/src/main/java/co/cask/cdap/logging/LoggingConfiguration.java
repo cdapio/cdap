@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,15 +31,16 @@ public final class LoggingConfiguration {
   // Common between Distributed and Single Node
   public static final String LOG_PATTERN = "log.pattern";
   public static final String LOG_BASE_DIR = "log.base.dir";
+  @Deprecated
   public static final String LOG_FILE_SYNC_INTERVAL_BYTES = "log.file.sync.interval.bytes";
 
-  // Used only in Distributed mode
-  public static final String NUM_PARTITIONS = "log.publish.num.partitions";
   public static final String KAFKA_SEED_BROKERS = "kafka.seed.brokers";
   public static final String LOG_SAVER_EVENT_BUCKET_INTERVAL_MS = "log.saver.event.bucket.interval.ms";
   public static final String LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS = "log.saver.event.max.inmemory.buckets";
   public static final String LOG_SAVER_INACTIVE_FILE_INTERVAL_MS = "log.saver.inactive.file.interval.ms";
+  @Deprecated
   public static final String LOG_SAVER_MAX_FILE_LIFETIME = "log.saver.max.file.lifetime.ms";
+  @Deprecated
   public static final String LOG_SAVER_CHECKPOINT_INTERVAL_MS = "log.saver.checkpoint.interval.ms";
   public static final String LOG_SAVER_TOPIC_WAIT_SLEEP_MS = "log.saver.topic.wait.sleep.ms";
   public static final String LOG_RETENTION_DURATION_DAYS = "log.retention.duration.days";
@@ -48,14 +49,10 @@ public final class LoggingConfiguration {
   public static final String KAFKA_PROCUDER_BUFFER_MS = "kafka.producer.buffer.ms";
   public static final String LOG_CLEANUP_RUN_INTERVAL_MINS = "log.cleanup.run.interval.mins";
 
-  // Constants
-  // Table used to store log metadata
-  public static final String LOG_META_DATA_TABLE = "log.meta";
   // Defaults
   public static final String DEFAULT_LOG_PATTERN = "%d{ISO8601} - %-5p [%t:%c{1}@%L] - %m%n";
   public static final String DEFAULT_KAFKA_PRODUCER_TYPE = "async";
   public static final long DEFAULT_KAFKA_PROCUDER_BUFFER_MS = 1000;
-  public static final String DEFAULT_NUM_PARTITIONS = "10";
   public static final int DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS = 24 * 60;
 
   public static final long DEFAULT_LOG_SAVER_EVENT_BUCKET_INTERVAL_MS = 1 * 1000;

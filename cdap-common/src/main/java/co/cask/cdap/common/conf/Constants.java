@@ -54,6 +54,9 @@ public final class Constants {
   public static final String TEZ_HOME = "TEZ_HOME";
 
   public static final String CLUSTER_NAME = "cluster.name";
+  /* Used by the user to specify what part of a path should be replaced by the current user's name. */
+  public static final String USER_NAME_SPECIFIER = "${name}";
+
 
   /**
    * Configuration for Master startup.
@@ -110,6 +113,7 @@ public final class Constants {
    */
   public static final class HBase {
     public static final String AUTH_KEY_UPDATE_INTERVAL = "hbase.auth.key.update.interval";
+    public static final String MANAGE_COPROCESSORS = "master.manage.hbase.coprocessors";
   }
 
   /**
@@ -512,13 +516,11 @@ public final class Constants {
     public static final String SERVER_ADDRESS = "metrics.query.bind.address";
     public static final String SERVER_PORT = "metrics.query.bind.port";
 
+    public static final String TOPIC_PREFIX = "metrics.topic.prefix";
     public static final String KAFKA_TOPIC_PREFIX = "metrics.kafka.topic.prefix";
     public static final String KAFKA_PARTITION_SIZE = "metrics.kafka.partition.size";
     public static final String KAFKA_CONSUMER_PERSIST_THRESHOLD = "metrics.kafka.consumer.persist.threshold";
     public static final String KAFKA_META_TABLE = "metrics.kafka.meta.table";
-
-    public static final String DEFAULT_KAFKA_META_TABLE = "metrics.kafka.meta";
-    public static final String DEFAULT_KAFKA_TOPIC_PREFIX = "metrics";
 
     // NOTE: "v2" to avoid conflict with data of older metrics system
     public static final String DEFAULT_ENTITY_TABLE_NAME = "metrics.v2.entity";
@@ -527,7 +529,9 @@ public final class Constants {
     public static final long DEFAULT_RETENTION_HOURS = 2;
 
     public static final int DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD = 100;
-    public static final int DEFAULT_KAFKA_PARTITION_SIZE = 1;
+
+    public static final String MESSAGING_TOPIC_NUM = "metrics.messaging.topic.num";
+    public static final String MESSAGING_FETCHER_LIMIT = "metrics.messaging.fetcher.limit";
 
     /**
      * Metric's dataset related constants.
@@ -697,7 +701,51 @@ public final class Constants {
    */
   public static final class Logging {
     public static final String COMPONENT_NAME = "services";
+
+    // Configuration keys
     public static final String KAFKA_TOPIC = "log.kafka.topic";
+    public static final String NUM_PARTITIONS = "log.publish.num.partitions";
+
+    public static final String PIPELINE_CONFIG_DIR = "log.process.pipeline.config.dir";
+    public static final String PIPELINE_LIBRARY_DIR = "log.process.pipeline.lib.dir";
+    public static final String PIPELINE_AUTO_BUFFER_RATIO = "log.process.pipeline.auto.buffer.ratio";
+
+    // The following properties can be defined in cdap-site and overridden in individual pipeline config xml
+    public static final String PIPELINE_BUFFER_SIZE = "log.process.pipeline.buffer.size";
+    public static final String PIPELINE_EVENT_DELAY_MS = "log.process.pipeline.event.delay.ms";
+    public static final String PIPELINE_KAFKA_FETCH_SIZE = "log.process.pipeline.kafka.fetch.size";
+    public static final String PIPELINE_CHECKPOINT_INTERVAL_MS = "log.process.pipeline.checkpoint.interval.ms";
+    public static final String PIPELINE_LOGGER_CACHE_SIZE = "log.process.pipeline.logger.cache.size";
+    public static final String PIPELINE_LOGGER_CACHE_EXPIRATION_MS = "log.process.pipeline.logger.cache.expiration.ms";
+
+    // This is a pipeline property only for backward compatibility purpose in 4.1, due to prior to 4.1,
+    // the kafka offset prefix is hardcoded to Bytes.toBytes(100)
+    public static final String PIPELINE_CHECKPOINT_PREFIX_NUM = "log.process.pipeline.checkpoint.prefix.num";
+
+    // Property key in the logger context to indicate it is performing pipeline validation
+    public static final String PIPELINE_VALIDATION = "log.pipeline.validation";
+
+    // Constants
+    // Table used to store log metadata
+    public static final String META_TABLE = "log.meta";
+    // key constants
+    public static final String TAG_NAMESPACE_ID = ".namespaceId";
+    public static final String TAG_APPLICATION_ID = ".applicationId";
+    public static final String TAG_RUN_ID = ".runId";
+    public static final String TAG_INSTANCE_ID = ".instanceId";
+
+    public static final String TAG_FLOW_ID = ".flowId";
+    public static final String TAG_FLOWLET_ID = ".flowletId";
+    public static final String TAG_SERVICE_ID = ".serviceId";
+    public static final String TAG_MAP_REDUCE_JOB_ID = ".mapReduceId";
+    public static final String TAG_SPARK_JOB_ID = ".sparkId";
+    public static final String TAG_USER_SERVICE_ID = ".userserviceid";
+    public static final String TAG_HANDLER_ID = ".userhandlerid";
+    public static final String TAG_WORKER_ID = ".workerid";
+    public static final String TAG_WORKFLOW_ID = ".workflowId";
+    public static final String TAG_WORKFLOW_MAP_REDUCE_ID = ".workflowMapReduceId";
+    public static final String TAG_WORKFLOW_SPARK_ID = ".workflowSparkId";
+    public static final String TAG_WORKFLOW_PROGRAM_RUN_ID = ".workflowProgramRunId";
   }
 
   /**
@@ -753,9 +801,12 @@ public final class Constants {
     /** Key to mark a discoverable which supports ssl */
     public static final String SSL_URI_SCHEME = "https://";
     public static final String URI_SCHEME = "http://";
+    /** Configuration for specifying keytab location. The location will contain ${name} which will be replaced
+     * by the user/owner of the entities name. */
+    public static final String KEYTAB_PATH = "security.keytab.path";
 
     /** Key to specify the kerberos principal of the entity owner **/
-    public static final String OWNER_PRINCIPAL = "owner.principal";
+    public static final String PRINCIPAL = "principal";
 
     /**
      * App Fabric
@@ -910,6 +961,7 @@ public final class Constants {
     public static final String CLEANUP_JOB_SCHEDULE_SECS = "explore.cleanup.job.schedule.secs";
 
     public static final String SERVICE_DESCRIPTION = "Service to run ad-hoc queries.";
+    public static final String HTTP_TIMEOUT = "explore.http.timeout";
 
     /**
      * Explore JDBC constants.

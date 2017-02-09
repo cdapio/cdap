@@ -252,6 +252,15 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
           new DeprecatedKeyInfo(Constants.LogSaver.NUM_CORES));
       put(Constants.Security.SSL_ENABLED_DEPRECATED,
           new DeprecatedKeyInfo(Constants.Security.SSL.EXTERNAL_ENABLED));
+
+      // The old key is defined in LoggingConfigurations class, which is in cdap-watchdog, hence can't use in here
+      put("log.saver.checkpoint.interval.ms",
+          new DeprecatedKeyInfo(Constants.Logging.PIPELINE_CHECKPOINT_INTERVAL_MS));
+      // The following keys are log appender specific keys and they are not defined in Constants.
+      put("log.file.sync.interval.bytes",
+          new DeprecatedKeyInfo("log.pipeline.cdap.file.sync.interval.bytes"));
+      put("log.saver.max.file.lifetime.ms",
+          new DeprecatedKeyInfo("log.pipeline.cdap.file.max.lifetime.ms"));
     }
   };
 
@@ -274,6 +283,9 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
       put(Constants.Service.MASTER_SERVICES_BIND_ADDRESS,
           new String[]{Constants.AppFabric.SERVER_ADDRESS_DEPRECATED, Constants.Dataset.Manager.ADDRESS_DEPRECATED});
       put(Constants.Security.SSL.EXTERNAL_ENABLED, new String[] { Constants.Security.SSL_ENABLED_DEPRECATED });
+      put(Constants.Logging.PIPELINE_CHECKPOINT_INTERVAL_MS, new String[] { "log.saver.checkpoint.interval.ms" });
+      put("log.pipeline.cdap.file.sync.interval.bytes", new String[] { "log.file.sync.interval.bytes" });
+      put("log.pipeline.cdap.file.max.lifetime.ms", new String[] { "log.saver.max.file.lifetime.ms" });
     }
   };
 
@@ -2083,5 +2095,25 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
       // prevent duplicate calls
       currentName = null;
     }
-  };
+  }
+
+  /**
+   * Get {@link Map} of properties prefixed with the string provided as an input.
+   * Property names in the mapping are trimmed to remove the prefix.
+   *
+   * @param prefix the prefix for the config
+   * @return mapping of configuration properties with prefix stripped
+   */
+  public Map<String, String> getPropsWithPrefix(String prefix) {
+    Map<String, String> prefixedProperties = new HashMap<>();
+    for (Map.Entry<String, String> entry : this) {
+      String name = entry.getKey();
+      if (name.startsWith(prefix)) {
+        String value = get(name);
+        name = name.substring(prefix.length());
+        prefixedProperties.put(name, value);
+      }
+    }
+    return prefixedProperties;
+  }
 }

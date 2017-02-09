@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,6 +45,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.PrivilegedExceptionAction;
@@ -341,32 +342,19 @@ public final class Locations {
   }
 
   /**
-   * Returns the relative path for a given location
-   * @param location
-   * @return
+   * Get a Location using a specified location factory and absolute path
+   * @param locationFactory locationFactory to create Location from given Path
+   * @param absolutePath Path to be used for Location
+   * @return Location resulting from absolute locationPath
    */
-  public static String getRelativePath(Location location) {
-    URI baseURI = location.getLocationFactory().create("").toURI();
-    URI locationURI = location.toURI();
-    URI relativeURI = baseURI.relativize(locationURI);
-    return relativeURI.getPath();
-  }
-
-
-  /**
-   * For backward compatibility with URIs, this method creates a location based on uri or path
-   * one of them should be non-null
-   * @param locationFactory corresponding to the uri and path
-   * @param path if path is available
-   * @param uri if uri is available
-   * @return
-   */
-  public static Location getCompatibleLocation(LocationFactory locationFactory,
-                                               @Nullable String path, @Nullable URI uri) {
-    Location artifactLocation = uri != null
-      ? locationFactory.create(Locations.getRelativePath(locationFactory.create(uri)))
-      : locationFactory.create(path);
-    return artifactLocation;
+  public static Location getLocationFromAbsolutePath(LocationFactory locationFactory, String absolutePath) {
+    URI homeURI = locationFactory.getHomeLocation().toURI();
+    try {
+      return locationFactory.create(new URI(homeURI.getScheme(), homeURI.getAuthority(), absolutePath, null, null));
+    } catch (URISyntaxException e) {
+      // Should not happen.
+      throw Throwables.propagate(e);
+    }
   }
 
   /**

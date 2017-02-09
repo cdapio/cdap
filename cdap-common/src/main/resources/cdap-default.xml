@@ -96,6 +96,16 @@
   </property>
 
   <property>
+    <name>master.manage.hbase.coprocessors</name>
+    <value>true</value>
+    <description>
+      Whether CDAP master should manage HBase coprocessors. This should only
+      be set to false if you are managing coprocessors yourself in order to
+      support rolling HBase upgrades.
+    </description>
+  </property>
+
+  <property>
     <name>master.startup.checks.classes</name>
     <value></value>
     <description>
@@ -237,7 +247,7 @@
     <name>dataset.unchecked.upgrade</name>
     <value>false</value>
     <description>
-      By default, any changes made to existing datasets are not deployed
+      If false, any changes made to existing datasets are not deployed
       when an app is redeployed; setting this value to true allows the
       dataset changes to be deployed upon app redeployment
     </description>
@@ -476,7 +486,7 @@
     <name>data.tx.bind.port</name>
     <value>0</value>
     <description>
-      Transaction service bind port; binds to a random port by default
+      Transaction service bind port; if 0 binds to a random port
     </description>
   </property>
 
@@ -574,8 +584,6 @@
   <property>
     <name>data.tx.snapshot.codecs</name>
     <value>
-      co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1,
-      co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2,
       org.apache.tephra.snapshot.SnapshotCodecV3,
       org.apache.tephra.snapshot.SnapshotCodecV4
     </value>
@@ -643,6 +651,31 @@
     <description>
       The limit for the allowed transaction timeout, in seconds. Attempts to
       start a transaction with a longer timeout will fail.
+    </description>
+  </property>
+
+  <property>
+    <name>data.tx.prune.enable</name>
+    <value>true</value>
+    <description>
+      Enable invalid transaction list pruning
+    </description>
+  </property>
+
+  <property>
+    <name>data.tx.prune.plugins</name>
+    <value>data.tx.DefaultHBaseTransactionPruningPlugin</value>
+    <description>
+      List of transaction pruning plugins; for CDAP HBase tables that use transaction
+      functionality to skip or clean invalid data
+    </description>
+  </property>
+
+  <property>
+    <name>data.tx.DefaultHBaseTransactionPruningPlugin.class</name>
+    <value>co.cask.data2.txprune.DefaultHBaseTransactionPruningPlugin</value>
+    <description>
+      Class name for the default transaction pruning plugin
     </description>
   </property>
 
@@ -776,7 +809,17 @@
     <name>explore.executor.container.num.cores</name>
     <value>1</value>
     <description>
-      Number of virtual cores for each explore executor instance
+      Number of virtual cores for each CDAP Explore executor instance
+    </description>
+  </property>
+
+  <property>
+    <name>explore.http.timeout</name>
+    <value>20</value>
+    <description>
+      The timeout in seconds for HTTP requests to the CDAP Explore service. Because requests
+      may happen within a transaction, it is recommended to keep this timeout noticeably
+      shorter than the default transaction timeout, ${data.tx.timeout}.
     </description>
   </property>
 
@@ -793,7 +836,15 @@
     <name>explore.local.data.dir</name>
     <value>${local.data.dir}/explore</value>
     <description>
-      Data directory for CDAP Explore Service when in Standalone CDAP
+      Data directory for the CDAP Explore service when in Standalone CDAP
+    </description>
+  </property>
+
+  <property>
+    <name>explore.service.bind.port</name>
+    <value>0</value>
+    <description>
+      CDAP Explore service bind port
     </description>
   </property>
 
@@ -801,9 +852,9 @@
     <name>explore.start.on.demand</name>
     <value>false</value>
     <description>
-      Determines the start-up of the CDAP Explore Service (ad-hoc SQL
-      queries); if false, the explore service starts up when CDAP is
-      started; if true, the CDAP Explore Service will start upon the first
+      Determines the start-up of the CDAP Explore service (ad-hoc SQL
+      queries); if false, the Explore service starts up when CDAP is
+      started; if true, the Explore service will start upon the first
       query it receives
     </description>
   </property>
@@ -812,16 +863,8 @@
     <name>explore.writes.enabled</name>
     <value>true</value>
     <description>
-      Determines if writing to a table through the CDAP Explore Service (ad-
+      Determines if writing to a table through the CDAP Explore service (ad-
       hoc SQL queries) is enabled
-    </description>
-  </property>
-
-  <property>
-    <name>explore.service.bind.port</name>
-    <value>0</value>
-    <description>
-      Explore service bind port
     </description>
   </property>
 
@@ -905,8 +948,8 @@
     <name>kafka.server.log.flush.interval.messages</name>
     <value>10000</value>
     <description>
-      The interval length (in number of messages) at which to force an fsync of data
-      written to the log
+      The interval length (in number of messages in the CDAP Kafka service) at which to
+      force an fsync of data written to the log 
     </description>
   </property>
 
@@ -914,7 +957,9 @@
     <name>kafka.server.log.retention.hours</name>
     <value>24</value>
     <description>
-      The number of hours to keep a log file before deleting it
+      The number of hours to keep a log file before deleting it; this is the time-to-live
+      in the CDAP Kafka service, while a log is in-flight between the container and the
+      CDAP log saver
     </description>
   </property>
 
@@ -922,7 +967,7 @@
     <name>kafka.server.num.partitions</name>
     <value>10</value>
     <description>
-      Default number of partitions for a topic
+      Default number of partitions for a topic in the CDAP Kafka service
     </description>
   </property>
 
@@ -938,7 +983,7 @@
     <name>kafka.server.zookeeper.connection.timeout.ms</name>
     <value>1000000</value>
     <description>
-      Maximum time in milliseconds that the client will wait to
+      Maximum time in milliseconds that the CDAP Kafka service will wait to
       establish a connection to ZooKeeper
     </description>
   </property>
@@ -961,7 +1006,7 @@
       the Kafka service used by CDAP. If the same Kafka service ZooKeeper quorum
       and namespace are shared by multiple CDAP instances, each CDAP instance
       needs to distinguish its Kafka topics from those of other CDAP instances
-      with unique values for ${log.kafka.topic} and ${metrics.kafka.topic.prefix}.
+      with unique values for ${log.kafka.topic} and ${metrics.topic.prefix}.
     </description>
   </property>
 
@@ -1009,10 +1054,125 @@
   </property>
 
   <property>
+    <name>log.pipeline.cdap.dir.permissions</name>
+    <value>700</value>
+    <description>
+      Permissions to use for directories created by the system log appender
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.max.lifetime.ms</name>
+    <value>21600000</value>
+    <description>
+      Maximum time in milliseconds a file is kept opened by the system log appender
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.permissions</name>
+    <value>600</value>
+    <description>
+      Permissions to use for files created by the system log appender
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.sync.interval.bytes</name>
+    <value>10485760</value>
+    <description>
+      Number of bytes for the sync interval setting of the avro file written by the system log appender
+    </description>
+  </property>
+
+
+  <property>
+    <name>log.process.pipeline.auto.buffer.ratio</name>
+    <value>0.7</value>
+    <description>
+      The ratio of total memory used for determining processing pipeline buffer size.
+      This property is only used if ${log.process.pipeline.buffer.size}
+      is set to zero and the value should be greater than zero and less than one.
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.buffer.size</name>
+    <value>0</value>
+    <description>
+      The internal buffer size in bytes for each log processing pipeline.
+      Setting it to zero means the system will determine it dynamically based
+      on the container size as given by ${log.saver.container.memory.mb}.
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.checkpoint.interval.ms</name>
+    <value>60000</value>
+    <description>
+      The time between log processing pipeline checkpoints in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.config.dir</name>
+    <value>/opt/cdap/master/ext/loggings/config</value>
+    <description>
+      A local directory on the CDAP Master that is scanned for log processing pipeline
+      configurations. Each pipeline is defined by a file in the logback XML format, with
+      ".xml" as the file name extension.
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.event.delay.ms</name>
+    <value>2000</value>
+    <description>
+      The time a log event stays in the log processing pipeline buffer before
+      writing out to log appenders in milliseconds. A longer delay will result
+      in better time ordering of log events before presenting to log appenders
+      but will consume more memory.
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.logger.cache.size</name>
+    <value>1000</value>
+    <description>
+      The number of loggers that each log processing pipeline will cache.
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.logger.cache.expiration.ms</name>
+    <value>300000</value>
+    <description>
+      Logger cache entry expiration time in milliseconds.
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.kafka.fetch.size</name>
+    <value>1048576</value>
+    <description>
+      The size of the buffer for fetching log events from Kafka per topic partition in bytes
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.lib.dir</name>
+    <value>/opt/cdap/master/ext/loggings/lib</value>
+    <description>
+      Semicolon-separated list of local directories on the CDAP Master scanned
+      for additional library JAR files to be included for log processing
+    </description>
+  </property>
+
+  <property>
     <name>log.retention.duration.days</name>
     <value>7</value>
     <description>
-      Duration in days of log file HDFS retention
+      Duration (the time-to-live) in days of saved log files in HDFS retention
     </description>
   </property>
 
@@ -1098,8 +1258,8 @@
     <value>ERROR</value>
     <description>
       The log level of application container logs that are streamed back to
-      the CDAP Master process log. The levels supported are [ ALL, TRACE,
-      DEBUG, INFO, WARN, ERROR, OFF ].
+      the CDAP Master process log. The levels supported are "ALL", "TRACE",
+      "DEBUG", "INFO", "WARN", "ERROR", and "OFF".
     </description>
   </property>
 
@@ -1200,7 +1360,8 @@
     <name>messaging.local.data.cleanup.frequency.secs</name>
     <value>3600</value>
     <description>
-      Scheduling frequency of TTL cleanup thread in seconds (only used in Standalone CDAP)
+      Scheduling frequency of time-to-live cleanup thread in seconds (only used in
+      Standalone CDAP)
     </description>
   </property>
 
@@ -1304,9 +1465,13 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${notification.topic}</value>
+    <value>${audit.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic}</value>
     <description>
-      A comma-separated list of topics that is always available in the system namespace
+      A comma-separated list of topics that is always available in the system namespace.
+      Multiple topics sharing the same prefix and distinguished by different numerical suffices
+      can be specified with the syntax &lt;common.prefix&gt;:&lt;total.topic.number&gt;,
+      where the &lt;total.topic.number&gt; is the total number of topics sharing the &lt;common.prefix&gt;,
+      and the numerical suffices will range from 0 to (&lt;total.topic.number&gt; - 1).
     </description>
   </property>
 
@@ -1330,7 +1495,7 @@
     <name>messaging.coprocessor.metadata.cache.expiration.seconds</name>
     <value>120</value>
     <description>
-      The default value of expiration time in seconds for metadata cache in hbase data tables coprocessors
+      Number of seconds after which the metadata cache in HBase data table coprocessors will expire
     </description>
   </property>
 
@@ -1471,10 +1636,26 @@
   </property>
 
   <property>
+    <name>metrics.kafka.meta.table</name>
+    <value>metrics.kafka.meta</value>
+    <description>
+      Name of the Kafka metrics meta table
+    </description>
+  </property>
+
+  <property>
     <name>metrics.kafka.partition.size</name>
     <value>10</value>
     <description>
-      Number of partitions for metrics topic
+      Number of partitions for Kafka metrics topic
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.kafka.topic.prefix</name>
+    <value>metrics</value>
+    <description>
+      Topic prefix used to publish metrics in Kafka
     </description>
   </property>
 
@@ -1491,6 +1672,36 @@
     <value>${master.service.memory.mb}</value>
     <description>
       Memory in megabytes for each metrics service instance
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.messaging.fetcher.limit</name>
+    <value>200</value>
+    <description>
+      Maximum number of metrics messages to be fetched from the messaging fetcher at once.
+      It is also the maximum number of metric values to be persisted in the metrics store after the
+      number of fetched messages reaches the limit.
+    </description>
+  </property>
+  
+  <property>
+    <name>metrics.messaging.meta.table</name>
+    <value>metrics.messaging.meta</value>
+    <description>
+      Name of the messaging metrics meta table
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.messaging.topic.num</name>
+    <value>10</value>
+    <description>
+      Number of topics for metrics messages. This property also sets the number of threads
+      used to fetch and process metrics in parallel from the messaging service. For a
+      value of N, topics will be created for metrics with names beginning at
+      ${metrics.topic.prefix}0, ${metrics.topic.prefix}1, up to
+      ${metrics.topic.prefix}(N-1).
     </description>
   </property>
 
@@ -1566,6 +1777,14 @@
     <value>45005</value>
     <description>
       Metrics Query service bind port
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.topic.prefix</name>
+    <value>metrics</value>
+    <description>
+      Topic prefix used to publish metrics in messaging
     </description>
   </property>
 
@@ -1795,7 +2014,7 @@
     <name>mapreduce.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for mapreduce
+      The type of retry policy for MapReduce programs
     </description>
   </property>
 
@@ -1875,7 +2094,39 @@
     <name>spark.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for spark
+      The type of retry policy for Spark programs
+    </description>
+  </property>
+
+  <property>
+    <name>system.metrics.retry.policy.base.delay.ms</name>
+    <value>1000</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.metrics.retry.policy.max.retries</name>
+    <value>600</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>system.metrics.retry.policy.max.time.secs</name>
+    <value>600</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>system.metrics.retry.policy.type</name>
+    <value>fixed.delay</value>
+    <description>
+      The type of retry policy for metrics publishing
     </description>
   </property>
 
@@ -2188,10 +2439,10 @@
     <description>
       A comma-separated list of users for whom admin privileges are to be granted on the
       CDAP instance during CDAP startup, so that these users can create namespaces. These
-      users are also granted admin privileges on the default namespace, so that they can
-      manage privileges on the default namespace. This provides a method to bootstrap CDAP on
-      an authorization-enabled cluster. The default is empty, in which case no users have
-      access to creating namespaces or to managing privileges on the default namespace.
+      users are also granted admin privileges on the 'default' namespace, so that they can
+      manage privileges on the 'default' namespace. This provides a method to bootstrap CDAP on
+      an authorization-enabled cluster. The default value is empty, in which case no users have
+      access to creating namespaces or to managing privileges on the 'default' namespace.
       In that scenario, authorization in CDAP has to be bootstrapped externally using interfaces
       provided by the configured authorization extension.
     </description>

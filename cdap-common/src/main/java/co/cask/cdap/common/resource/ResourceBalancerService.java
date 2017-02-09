@@ -36,7 +36,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.Services;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.zookeeper.ZKClient;
-import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +47,7 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- * A services that automatically balances resource assignments between its instances.
+ * A service that automatically balances resource assignments between its instances.
  */
 public abstract class ResourceBalancerService extends AbstractIdleService {
 
@@ -75,7 +74,7 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
    */
   protected ResourceBalancerService(String serviceName,
                                     int partitionCount,
-                                    ZKClientService zkClient,
+                                    ZKClient zkClient,
                                     DiscoveryService discoveryService,
                                     final DiscoveryServiceClient discoveryServiceClient) {
     this.serviceName = serviceName;

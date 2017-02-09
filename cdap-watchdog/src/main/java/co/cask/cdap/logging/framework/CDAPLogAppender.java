@@ -22,21 +22,19 @@ import ch.qos.logback.core.LogbackException;
 import ch.qos.logback.core.spi.FilterReply;
 import ch.qos.logback.core.status.WarnStatus;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.logging.meta.FileMetaDataWriter;
 import co.cask.cdap.logging.serialize.LogSchema;
-import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
-import org.apache.twill.filesystem.LocationFactory;
+import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Flushable;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Log Appender implementation for CDAP Log framework
@@ -44,26 +42,18 @@ import java.util.Map;
  */
 public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flushable {
   private static final Logger LOG = LoggerFactory.getLogger(CDAPLogAppender.class);
-  public static final String TAG_NAMESPACE_ID = ".namespaceId";
-  public static final String TAG_APPLICATION_ID = ".applicationId";
-  public static final String TAG_FLOW_ID = ".flowId";
-  public static final String TAG_SERVICE_ID = ".serviceId";
-  public static final String TAG_MAP_REDUCE_JOB_ID = ".mapReduceId";
-  public static final String TAG_SPARK_JOB_ID = ".sparkId";
-  public static final String TAG_USER_SERVICE_ID = ".userserviceid";
-  public static final String TAG_WORKER_ID = ".workerid";
-  public static final String TAG_WORKFLOW_ID = ".workflowId";
-
+  private static final Set<String> PROGRAM_ID_KEYS = ImmutableSet.of(Constants.Logging.TAG_FLOW_ID,
+                                                                     Constants.Logging.TAG_MAP_REDUCE_JOB_ID,
+                                                                     Constants.Logging.TAG_SPARK_JOB_ID,
+                                                                     Constants.Logging.TAG_USER_SERVICE_ID,
+                                                                     Constants.Logging.TAG_WORKER_ID,
+                                                                     Constants.Logging.TAG_WORKFLOW_ID);
   private LogFileManager logFileManager;
 
-  @Inject
-  private FileMetaDataManager fileMetaDataManager;
-  @Inject
-  private LocationFactory locationFactory;
-
+  private String dirPermissions;
+  private String filePermissions;
   private int syncIntervalBytes;
   private long maxFileLifetimeMs;
-
 
   /**
    * TODO: start a separate cleanup thread to remove files that has passed the TTL
@@ -72,23 +62,61 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     setName(getClass().getName());
   }
 
+  /**
+   * Sets the permissions for directory created by this appender. This is called by the logback framework.
+   */
+  public void setDirPermissions(String dirPermissions) {
+    this.dirPermissions = dirPermissions;
+  }
+
+  /**
+   * Sets the permissions for locations created by this appender. This is called by the logback framework.
+   */
+  public void setFilePermissions(String filePermissions) {
+    this.filePermissions = filePermissions;
+  }
+
+  /**
+   * Sets the avro file sync interval. This is called by the logback framework.
+   */
   public void setSyncIntervalBytes(int syncIntervalBytes) {
     this.syncIntervalBytes = syncIntervalBytes;
   }
 
+  /**
+   * Sets the maximum lifetime of a file. This is called by the logback framework.
+   */
   public void setMaxFileLifetimeMs(long maxFileLifetimeMs) {
     this.maxFileLifetimeMs = maxFileLifetimeMs;
   }
 
   @Override
   public void start() {
+    // These should all passed. The settings are from the cdap-log-pipeline.xml and the context must be AppenderContext
+    Preconditions.checkState(dirPermissions != null, "Property dirPermissions cannot be null");
+    Preconditions.checkState(filePermissions != null, "Property filePermissions cannot be null");
+    Preconditions.checkState(syncIntervalBytes > 0, "Property syncIntervalBytes must be > 0.");
+    Preconditions.checkState(maxFileLifetimeMs > 0, "Property maxFileLifetimeMs must be > 0");
+
+    if (context instanceof AppenderContext) {
+      AppenderContext context = (AppenderContext) this.context;
+      logFileManager = new LogFileManager(dirPermissions, filePermissions, maxFileLifetimeMs, syncIntervalBytes,
+                                          LogSchema.LoggingEvent.SCHEMA,
+                                          new FileMetaDataWriter(context.getDatasetManager(), context),
+                                          context.getLocationFactory());
+    } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {
+      throw new IllegalStateException("Expected logger context instance of " + AppenderContext.class.getName() +
+                                        " but get " + context.getClass().getName());
+    }
     super.start();
-    this.logFileManager = new LogFileManager(maxFileLifetimeMs, syncIntervalBytes, LogSchema.LoggingEvent.SCHEMA,
-                                             fileMetaDataManager, locationFactory);
   }
 
   @Override
   public void doAppend(ILoggingEvent eventObject) throws LogbackException {
+    if (logFileManager == null) {
+      return;
+    }
+
     long timestamp = eventObject.getTimeStamp();
     try {
       // logic from AppenderBase
@@ -123,13 +151,17 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
 
   @Override
   public void flush() throws IOException {
-    logFileManager.flush();
+    if (logFileManager != null) {
+      logFileManager.flush();
+    }
   }
 
   @Override
   public void stop() {
     try {
-      logFileManager.close();
+      if (logFileManager != null) {
+        logFileManager.close();
+      }
     } finally {
       super.stop();
     }
@@ -141,24 +173,23 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     // if the namespace is system : get component-id and return that as path
     // if the namespace is non-system : get "app" and "program-name" and return that as path
 
-    String namespaceId = propertyMap.get(TAG_NAMESPACE_ID);
+    String namespaceId = propertyMap.get(Constants.Logging.TAG_NAMESPACE_ID);
 
-    if (namespaceId.equals(NamespaceId.SYSTEM)) {
-      Preconditions.checkArgument(propertyMap.containsKey(TAG_SERVICE_ID),
-                                  String.format("%s is expected but not found in the context %s",
-                                                TAG_SERVICE_ID, propertyMap));
+    if (NamespaceId.SYSTEM.getNamespace().equals(namespaceId)) {
+      Preconditions.checkArgument(propertyMap.containsKey(Constants.Logging.TAG_SERVICE_ID),
+                                  "%s is expected but not found in the context %s",
+                                  Constants.Logging.TAG_SERVICE_ID, propertyMap);
       // adding services to be consistent with the old format
-      return new LogPathIdentifier(namespaceId, Constants.Logging.COMPONENT_NAME, propertyMap.get(TAG_SERVICE_ID));
+      return new LogPathIdentifier(namespaceId, Constants.Logging.COMPONENT_NAME,
+                                   propertyMap.get(Constants.Logging.TAG_SERVICE_ID));
     } else {
-      Preconditions.checkArgument(propertyMap.containsKey(TAG_APPLICATION_ID),
-                                  String.format("%s is expected but not found in the context %s",
-                                                TAG_APPLICATION_ID, propertyMap));
-      String application = propertyMap.get(TAG_APPLICATION_ID);
+      Preconditions.checkArgument(propertyMap.containsKey(Constants.Logging.TAG_APPLICATION_ID),
+                                  "%s is expected but not found in the context %s",
+                                  Constants.Logging.TAG_APPLICATION_ID, propertyMap);
+      String application = propertyMap.get(Constants.Logging.TAG_APPLICATION_ID);
 
-      List<String> programIdKeys = Arrays.asList(TAG_FLOW_ID, TAG_MAP_REDUCE_JOB_ID, TAG_SPARK_JOB_ID,
-                                                 TAG_USER_SERVICE_ID, TAG_WORKER_ID, TAG_WORKFLOW_ID);
       String program = null;
-      for (String programId : programIdKeys) {
+      for (String programId : PROGRAM_ID_KEYS) {
         if (propertyMap.containsKey(programId)) {
           program = propertyMap.get(programId);
           break;

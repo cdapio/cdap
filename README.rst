@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 =====================================
 Cask Data Application Platform - CDAP
@@ -25,15 +25,17 @@ essential capabilities:
 - Abstraction of data in the Hadoop environment through logical representations of underlying data;
 - Portability of applications through decoupling underlying infrastructures;
 - Services and tools that enable faster application creation in development;
-- Integration of the components of the Hadoop ecosystem into a single platform; and
-- Higher degrees of operational control in production through enterprise best practices.
+- Integration of the components of the Hadoop ecosystem into a single platform;
+- Metadata management that automatically captures metadata and lineage;
+- CDAP pipelines with an integrated UI for click-and-drag development; and
+- Higher degrees of operational control in production through enterprise best-practices.
 
 CDAP exposes developer APIs (Application Programming Interfaces) for creating applications
 and accessing core CDAP services. CDAP defines and implements a diverse collection of
 services that land applications and data on existing Hadoop infrastructure such as HBase,
 HDFS, YARN, MapReduce, Hive, and Spark.
 
-You can run applications ranging from simple MapReduce Jobs through complete ETL (extract,
+You can run applications ranging from simple MapReduce Jobs and complete ETL (extract,
 transform, and load) pipelines all the way up to complex, enterprise-scale data-intensive
 applications.
 
@@ -54,7 +56,7 @@ Prerequisites
 To install and use CDAP and its included examples, there are a few simple prerequisites:
 
 1. JDK 7+ (required to run CDAP; note that $JAVA_HOME should be set)
-#. `Node.js <https://nodejs.org/>`__ (required to run the CDAP UI; we recommend any version greater than v0.10.0)
+#. `Node.js <https://nodejs.org/>`__ (required to run the CDAP UI; we recommend any version greater than v4.5.0)
 #. Apache Maven 3.0+ (required to build the example applications; 3.1+ to build CDAP itself)
 
 Build
@@ -66,12 +68,12 @@ You can get started with CDAP by building directly from the latest source code::
   cd cdap
   mvn clean package
 
-After the build completes, you will have a distribution of the CDAP standalone under the
-``cdap-distribution/target/`` directory.  
-
-Take the ``cdap-<version>.tar.gz`` file and unzip it into a suitable location.
+After the build completes, you will have built all modules for CDAP.
 
 For more build options, please refer to the `build instructions <BUILD.rst>`__.
+
+.. image:: https://travis-ci.org/caskdata/cdap.svg?branch=release/4.1
+    :target: https://travis-ci.org/caskdata/cdap
 
 
 Introductory Tutorial
@@ -92,6 +94,7 @@ Now that you've had a look at the CDAP SDK, take a look at:
   (demonstrating basic features of the CDAP) are located on-line; and
 - Developers' Manual, located in the source distribution in ``cdap-docs/developers-manual/source``
   or `online <http://docs.cask.co/cdap/current/en/developers-manual/index.html>`__.
+- `CDAP Releases and timeline <http://docs.cask.co/cdap/index.html>`__
 
 
 How to Contribute
@@ -106,7 +109,10 @@ For quick guide to getting your system setup to contribute to CDAP, take a look 
 
 Filing Issues: Bug Reports & Feature Requests
 ---------------------------------------------
-Bugs and suggestions should be made by `filing an Issue <https://issues.cask.co/browse/cdap>`__.
+Bugs and suggestions should be made by `filing an issue <https://issues.cask.co/browse/cdap>`__.
+
+Existing issues can be browsed at `the CDAP project issues 
+<https://issues.cask.co/browse/CDAP-8373?jql=project%20%3D%20CDAP>`__.
 
 Pull Requests
 -------------
@@ -145,15 +151,11 @@ on the product, and should be used for all our design, architecture and technica
 discussions moving forward. This mailing list will also receive all JIRA and GitHub
 notifications.
 
-IRC Channel
------------
-CDAP IRC Channel: #cdap on irc.freenode.net
-
 
 License and Trademarks
 ======================
 
-Copyright © 2014-2015 Cask Data, Inc.
+Copyright © 2014-2017 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 in compliance with the License. You may obtain a copy of the License at

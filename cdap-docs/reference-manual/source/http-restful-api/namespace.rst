@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _http-restful-api-namespace:
 .. _http-restful-api-v3-namespace:
@@ -241,6 +241,9 @@ the exception of the property ``scheduler.queue.name``.
      - The URI of the Kerberos keytab file for the namespace
    * - ``principal``
      - The Kerberos principal for the namespace
+   * - ``groupName``
+     - The group name for the namespace. If present, the namespace's data directory is created with this group name,
+       and read, write, and execute permissions are given to the group.
    * - ``root.directory``
      - The pre-existing file-system directory to be used for the namespace
    * - ``scheduler.queue.name``

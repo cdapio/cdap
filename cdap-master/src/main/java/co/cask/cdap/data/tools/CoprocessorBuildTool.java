@@ -30,6 +30,13 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -48,7 +55,28 @@ import java.io.IOException;
 public class CoprocessorBuildTool {
   private static final Logger LOG = LoggerFactory.getLogger(CoprocessorBuildTool.class);
 
-  public static void main(final String[] args) {
+  public static void main(final String[] args) throws ParseException {
+
+    Options options = new Options()
+      .addOption(new Option("h", "help", false, "Print this usage message."))
+      .addOption(new Option("f", "force", false, "Overwrites any coprocessors that already exist."));
+
+    CommandLineParser parser = new BasicParser();
+    CommandLine commandLine = parser.parse(options, args);
+    String[] commandArgs = commandLine.getArgs();
+
+    // if help is an option, or if there isn't a single 'ensure' command, print usage and exit.
+    if (commandLine.hasOption("h") || commandArgs.length != 1 || !"check".equalsIgnoreCase(commandArgs[0])) {
+      HelpFormatter helpFormatter = new HelpFormatter();
+      helpFormatter.printHelp(
+        CoprocessorBuildTool.class.getName() + " check",
+        "Checks that HBase coprocessors required by CDAP are loaded onto HDFS. " +
+          "If not, the coprocessors are built and placed on HDFS.", options, "");
+      System.exit(0);
+    }
+
+    boolean overwrite = commandLine.hasOption("f");
+
     CConfiguration cConf = CConfiguration.create();
     Configuration hConf = HBaseConfiguration.create();
 
@@ -83,10 +111,8 @@ public class CoprocessorBuildTool {
     CoprocessorManager coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
 
     try {
-      for (CoprocessorManager.Type type : CoprocessorManager.Type.values()) {
-        Location location = coprocessorManager.ensureCoprocessorExists(type);
-        LOG.info("{} coprocessor exists at {}.", type, location);
-      }
+      Location location = coprocessorManager.ensureCoprocessorExists(overwrite);
+      LOG.info("coprocessor exists at {}.", location);
     } catch (IOException e) {
       LOG.error("Unable to build and upload coprocessor jars.", e);
       System.exit(1);

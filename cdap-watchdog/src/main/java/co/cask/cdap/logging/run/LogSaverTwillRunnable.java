@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,13 +25,12 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
-import co.cask.cdap.common.security.RemoteUGIProvider;
-import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
-import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.guice.LogSaverServiceModule;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.save.KafkaLogSaverService;
@@ -40,6 +39,8 @@ import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.impersonation.RemoteUGIProvider;
+import co.cask.cdap.security.impersonation.UGIProvider;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -132,11 +133,6 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       zkClientService = injector.getInstance(ZKClientService.class);
       kafkaClientService = injector.getInstance(KafkaClientService.class);
       logSaverService = injector.getInstance(KafkaLogSaverService.class);
-
-      int numPartitions = Integer.parseInt(cConf.get(LoggingConfiguration.NUM_PARTITIONS,
-                                                     LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
-      LOG.info("Num partitions = {}", numPartitions);
-
       logSaverStatusService = injector.getInstance(LogSaverStatusService.class);
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
       LOG.info("Runnable initialized: " + name);
@@ -209,6 +205,7 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       new AbstractModule() {
         @Override
         protected void configure() {
+          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
           bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
         }
       }

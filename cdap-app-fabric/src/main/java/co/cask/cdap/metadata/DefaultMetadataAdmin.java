@@ -25,13 +25,13 @@ import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
-import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -164,7 +164,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
 
   @Override
   public MetadataSearchResponse search(String namespaceId, String searchQuery,
-                                       Set<MetadataSearchTargetType> types,
+                                       Set<EntityTypeSimpleName> types,
                                        SortInfo sortInfo, int offset, int limit,
                                        int numCursors, String cursor, boolean showHidden) throws Exception {
     return filterAuthorizedSearchResult(

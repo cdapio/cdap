@@ -210,8 +210,8 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   protected QueryHandle doEnableExploreDataset(DatasetId datasetInstance,
-                                               DatasetSpecification spec) throws ExploreException {
-    String body = spec == null ? null : GSON.toJson(new EnableExploreParameters(spec));
+                                               DatasetSpecification spec, boolean truncating) throws ExploreException {
+    String body = spec == null ? null : GSON.toJson(new EnableExploreParameters(spec, truncating));
     String endpoint = spec == null ? "enable" : "enable-internal";
     HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/%s",
                                                  datasetInstance.getNamespace(),

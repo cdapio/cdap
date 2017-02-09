@@ -133,7 +133,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doEnableExploreDataset(datasetInstance, null);
+        return doEnableExploreDataset(datasetInstance, null, false);
       }
     });
 
@@ -143,11 +143,12 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
   @Override
   public ListenableFuture<Void> enableExploreDataset(final DatasetId datasetInstance,
-                                                     final DatasetSpecification spec) {
+                                                     final DatasetSpecification spec,
+                                                     final boolean truncating) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doEnableExploreDataset(datasetInstance, spec);
+        return doEnableExploreDataset(datasetInstance, spec, truncating);
       }
     });
 

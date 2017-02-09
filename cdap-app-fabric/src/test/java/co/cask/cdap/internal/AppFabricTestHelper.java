@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
@@ -57,12 +58,14 @@ import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -169,9 +172,15 @@ public class AppFabricTestHelper {
 
   public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
                                        @Nullable String config, CConfiguration cConf) throws Exception {
+    deployApplication(namespace, applicationClz, config, null, cConf);
+  }
+
+  public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
+                                       @Nullable String config, @Nullable KerberosPrincipalId ownerPrincipal,
+                                       CConfiguration cConf) throws Exception {
     ensureNamespaceExists(namespace.toEntityId(), cConf);
     AppFabricClient appFabricClient = getInjector(cConf).getInstance(AppFabricClient.class);
-    Location deployedJar = appFabricClient.deployApplication(namespace, applicationClz, config);
+    Location deployedJar = appFabricClient.deployApplication(namespace, applicationClz, config, ownerPrincipal);
     deployedJar.delete(true);
   }
 
@@ -181,8 +190,20 @@ public class AppFabricTestHelper {
     return deployApplicationWithManager(Id.Namespace.DEFAULT, appClass, folderSupplier);
   }
 
+  public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,
+                                                                     Supplier<File> folderSupplier,
+                                                                     Config config) throws Exception {
+    return deployApplicationWithManager(Id.Namespace.DEFAULT, appClass, folderSupplier, config);
+  }
+
   public static ApplicationWithPrograms deployApplicationWithManager(Id.Namespace namespace, Class<?> appClass,
                                                                      Supplier<File> folderSupplier) throws Exception {
+    return deployApplicationWithManager(namespace, appClass, folderSupplier, null);
+  }
+
+  public static ApplicationWithPrograms deployApplicationWithManager(Id.Namespace namespace, Class<?> appClass,
+                                                                     Supplier<File> folderSupplier,
+                                                                     Config config) throws Exception  {
     ensureNamespaceExists(namespace.toEntityId());
     Location deployedJar = createAppJar(appClass, folderSupplier);
     ArtifactVersion artifactVersion = new ArtifactVersion(String.format("1.0.%d", System.currentTimeMillis()));
@@ -193,7 +214,8 @@ public class AppFabricTestHelper {
                                    new File(deployedJar.toURI()));
 
     AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, namespace.toEntityId(),
-                                                   appClass.getName(), null, null, null);
+                                                   appClass.getName(), null, null,
+                                                   config == null ? null : new Gson().toJson(config));
     return getLocalManager().deploy(info).get();
   }
 

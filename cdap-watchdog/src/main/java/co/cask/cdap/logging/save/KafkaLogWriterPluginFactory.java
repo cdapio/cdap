@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.security.Impersonator;
+import co.cask.cdap.logging.meta.CheckpointManagerFactory;
 import co.cask.cdap.logging.write.FileMetaDataManager;
+import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.inject.Inject;
 
 /**

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.ExploreProperties;
 
 import java.util.Collections;
@@ -36,6 +37,21 @@ public class FileSetProperties {
    * Whether the files in the dataset are "external", that is, managed by an external process.
    */
   public static final String DATA_EXTERNAL = "data.external";
+
+  /**
+   * If true, the file set will use an existing directory as its base path and an existing Explore table.
+   * When the file set is deleted or truncated, the directory and its contents as well as the Explore table
+   * will not be deleted.
+   */
+  public static final String DATA_USE_EXISTING = "data.use.existing";
+
+  /**
+   * If true, the file set will use an existing directory as its base path and an existing Explore table,
+   * and it will take possession of them.
+   * When the file set is deleted or truncated, the directory and its contents as well as the Explore table
+   * will be deleted, just as if they had been created by this file set.
+   */
+  public static final String DATA_POSSESS_EXISTING = "data.possess.existing";
 
   /**
    * The name of the input format class.
@@ -94,54 +110,85 @@ public class FileSetProperties {
    */
   public static final String PROPERTY_EXPLORE_TABLE_PROPERTY_PREFIX = "explore.table.property.";
 
+  /**
+   * The permissions for the dataset. The value for this property must be given either as a
+   * 9-character String such as "rwxr-x---" or as an octal-base number such as 750. Permissions
+   * will be applied by each dataset depending on the access control paradigm of the storage
+   * engine.
+   */
+  @Beta
+  public static final String PROPERTY_FILES_PERMISSIONS = "dataset.files.permissions";
+
+  /**
+   * The group name that the permission are assigned to. For file-based datasets, this group
+   * name is used as the group for created files and directories; for table-based datasets,
+   * group privileges will be granted to this group.
+   */
+  @Beta
+  public static final String PROPERTY_FILES_GROUP = "dataset.files.group";
+
   public static Builder builder() {
     return new Builder();
   }
 
   /**
-   * @return the base path configured in the properties.
+   * @return the base path configured in the properties
    */
   public static String getBasePath(Map<String, String> properties) {
     return properties.get(BASE_PATH);
   }
 
   /**
-   * @return the input format configured in the properties.
+   * @return the input format configured in the properties
    */
   public static String getInputFormat(Map<String, String> properties) {
     return properties.get(INPUT_FORMAT);
   }
 
   /**
-   * @return whether the data (the files) in this dataset are considered external.
+   * @return whether the data (the files) in this dataset are considered external
    */
   public static boolean isDataExternal(Map<String, String> properties) {
     return Boolean.valueOf(properties.get(DATA_EXTERNAL));
   }
 
   /**
-   * @return the output format configured in the properties.
+   * @return whether the file set is using a pre-existing base location
+   */
+  public static boolean isUseExisting(Map<String, String> properties) {
+    return Boolean.valueOf(properties.get(DATA_USE_EXISTING));
+  }
+
+  /**
+   * @return whether the file set is taking possession of a pre-existing base location
+   */
+  public static boolean isPossessExisting(Map<String, String> properties) {
+    return Boolean.valueOf(properties.get(DATA_POSSESS_EXISTING));
+  }
+
+  /**
+   * @return the output format configured in the properties
    */
   public static String getOutputFormat(Map<String, String> properties) {
     return properties.get(OUTPUT_FORMAT);
   }
 
   /**
-   * @return the input format properties configured in the properties.
+   * @return the input format properties configured in the properties
    */
   public static Map<String, String> getInputProperties(Map<String, String> properties) {
     return propertiesWithPrefix(properties, INPUT_PROPERTIES_PREFIX);
   }
 
   /**
-   * @return the output format properties configured in the properties.
+   * @return the output format properties configured in the properties
    */
   public static Map<String, String> getOutputProperties(Map<String, String> properties) {
     return propertiesWithPrefix(properties, OUTPUT_PROPERTIES_PREFIX);
   }
 
   /**
-   * @return whether explore is enabled by the properties.
+   * @return whether explore is enabled by the properties
    */
   public static boolean isExploreEnabled(Map<String, String> properties) {
     // Boolean.valueOf returns false if the value is null
@@ -149,14 +196,14 @@ public class FileSetProperties {
   }
 
   /**
-   * @return the format of the explore table.
+   * @return the format of the explore table
    */
   public static String getExploreFormat(Map<String, String> properties) {
     return properties.get(PROPERTY_EXPLORE_FORMAT);
   }
 
   /**
-   * @return the schema of the explore table.
+   * @return the schema of the explore table
    */
   public static String getExploreSchema(Map<String, String> properties) {
     return properties.get(PROPERTY_EXPLORE_SCHEMA);
@@ -174,7 +221,7 @@ public class FileSetProperties {
   }
 
   /**
-   * @return the class name of the serde configured in the properties.
+   * @return the class name of the serde configured in the properties
    */
   public static String getSerDe(Map<String, String> properties) {
     return properties.get(PROPERTY_EXPLORE_SERDE);
@@ -199,14 +246,30 @@ public class FileSetProperties {
   }
 
   /**
-   * @return the Hive table properties configured in the properties.
+   * @return the default permissions for files and directories
+   */
+  @Beta
+  public static String getFilePermissions(Map<String, String> properties) {
+    return properties.get(PROPERTY_FILES_PERMISSIONS);
+  }
+
+  /**
+   * @return the name of the group for files and directories
+   */
+  @Beta
+  public static String getFileGroup(Map<String, String> properties) {
+    return properties.get(PROPERTY_FILES_GROUP);
+  }
+
+  /**
+   * @return the Hive table properties configured in the properties
    */
   public static Map<String, String> getTableProperties(Map<String, String> properties) {
     return propertiesWithPrefix(properties, PROPERTY_EXPLORE_TABLE_PROPERTY_PREFIX);
   }
 
   /**
-   * @return a map of all properties whose key begins with the given prefix, without that prefix.
+   * @return a map of all properties whose key begins with the given prefix, without that prefix
    */
   public static Map<String, String> propertiesWithPrefix(Map<String, String> properties, String prefix) {
     Map<String, String> result = new HashMap<>();
@@ -243,6 +306,22 @@ public class FileSetProperties {
      */
     public Builder setDataExternal(boolean isExternal) {
       add(DATA_EXTERNAL, Boolean.toString(isExternal));
+      return this;
+    }
+
+    /**
+     * Configures whether the file set should use an existing base location.
+     */
+    public Builder setUseExisting(boolean useExisting) {
+      add(DATA_USE_EXISTING, Boolean.toString(useExisting));
+      return this;
+    }
+
+    /**
+     * Configures whether the file set should take possession of an existing base location.
+     */
+    public Builder setPossessExisting(boolean possessExisting) {
+      add(DATA_POSSESS_EXISTING, Boolean.toString(possessExisting));
       return this;
     }
 
@@ -391,6 +470,24 @@ public class FileSetProperties {
      */
     public Builder setTableProperty(String name, String value) {
       add(PROPERTY_EXPLORE_TABLE_PROPERTY_PREFIX + name, value);
+      return this;
+    }
+
+    /**
+     * Set the default permissions for files and directories
+     */
+    @Beta
+    public Builder setFilePermissions(String permissions) {
+      add(PROPERTY_FILES_PERMISSIONS, permissions);
+      return this;
+    }
+
+    /**
+     * Set the name of the group for files and directories
+     */
+    @Beta
+    public Builder setFileGroup(String group) {
+      add(PROPERTY_FILES_GROUP, group);
       return this;
     }
   }

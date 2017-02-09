@@ -83,12 +83,20 @@ features:
   AppDetailedView:
     Title: Application - {appId}
     History:
-      emptyMessage: No Runs
+      emptyMessage: No Runs found.
   ConfirmationModal:
     confirmDefaultText: OK
     cancelDefaultText: Cancel
   EntityListView:
     Title: CDAP - Home
+    Info:
+      title: Entities in Namespace
+      subtitle:
+        search: Search Results for
+        filteredBy: filtered by
+        sortedBy: sorted by
+        displayAll: Displaying All Entities
+        displaySome: Displaying
     emptyMessage: No entities found in the system.
     Cards:
       type: "Type: "
@@ -106,8 +114,8 @@ features:
       gotoLabel: Go to CDAP
       disclaimerMessage: For full feature parity, switch to original UI by clicking "VIEW ORIGINAL UI" in top navigation bar.
     Header:
-      filters: Filters
-      search-placeholder: Search entities...
+      filterBy: Filter by
+      search-placeholder: Search
       sortdropdown-tooltip: Clear Search to enable Sort
       search-disabled-placeholder: Sort by Relevance to Search
       sort: Sort
@@ -122,8 +130,16 @@ features:
           displayName: Newest
         creationTimeAsc:
           displayName: Oldest
+    NamespaceNotFound:
+      createMessage: Would like to
+      createLinkLabel: create a new one?
+      switchMessage: Or select a different namespace from the namespace dropdown.
   Dashboard:
     Title: Dashboard
+
+  DetailView:
+    PropertiesTab:
+      title: "{entityId} Properties"
 
   FileDnD:
     uploadLabel: Drag-and-drop the file to be uploaded
@@ -135,11 +151,13 @@ features:
     deleteFailed: Failed to delete {entityId}.
     truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
     truncateLabel: Truncate
+    truncateSuccess: Truncated Successfully
     truncateFailed: Failed to truncate {entityId}.
     sendEventsLabel: Send Events
     setPreferencesModalLabel: Preferences
     setPreferencesActionLabel: Set Preferences
     setPreferencesDescriptionLabel:
+      system: Specify new or edit existing system preferences. These preferences will be accessible in all namespaces, applications, and programs.
       namespace: Specify new or override existing system preferences. These preferences will be accessible in all applications within this namespace.
       app: Specify new or override existing system or namespace preferences. These preferences will be accessible in all programs within this application.
       program: Specify new or override existing system, namespace, or application preferences. These preferences will only be accessible within this program.
@@ -150,13 +168,10 @@ features:
     setPreferencesColumnLabel:
       key: KEY
       value: VALUE
-      origin: ORIGIN
     setPreferencesReset: Reset
     setPreferencesFailed: Error - Set Preferences Failed.
     setPreferencesSuccess:
-      default: Preferences Saved
-      application: Application Preferences Saved
-      program: Program Preferences Saved
+      default: "{entityType} Preferences Saved"
     start: Start
     stop: Stop
     sendEventsButtonLabel: Send
@@ -212,6 +227,7 @@ features:
       title: Configure
       buttons:
         add-ns: Add Namespace
+        set-system-preferences: Set System Preferences
         view-config: View Configurations
         manage-ns: Manage Namespaces
         delete-ns: Delete Namespace
@@ -380,12 +396,46 @@ features:
   Overview:
     ProgramTab:
       emptyMessage: No Programs found.
-      title: "Programs in {appId}:"
+      title: "Programs in \"{appId}\""
       runningProgramLabel: "Number of programs running: {programCount}"
     DatasetTab:
-      title: "Dataset Used by {appId}:"
+      title: "Dataset Used by \"{appId}\""
+    SchemaTab:
+      emptyMessage: No Schema found.
+      title: Schema of each record in the {entityType} "{entityId}"
+      tooltip: Schema defines the structure of each record in the dataset. A schema is a collection of fields, where each field has a name and a data type.
+    Metadata:
+      ttl: "Time To Live (TTL): "
+      type: "Type: "
+    deployedLabel:
+      data: Created
+      app: Deployed
   Pagination:
     dropdown-label: Page
+  PropertiesEditor:
+    AddProperty:
+      button: Add Property
+      modalHeader: Add Property for {entityId}
+      keyPlaceholder: Enter name
+      valuePlaceholder: Enter value
+      shortError: Failed to add property
+      propertyExistError: Property {key} already exists
+    DeleteConfirmation:
+      shortError: Failed to delete property
+      headerTitle: Delete Confirmation
+      confirmationText: "Are you sure you want to delete \"{key}\" property?"
+      confirmButton: Delete
+    EditProperty:
+      shortError: Failed to save property
+      modalHeader: "Edit property: {key}"
+      valuePlaceholder: Enter new value
+      button: Save
+    system: System
+    user: Business
+    name: Name
+    value: Value
+    scope: Scope
+
   Resource-Center:
     Stream:
       label: Stream
@@ -402,8 +452,8 @@ features:
       description: A stream view is non-materialized view over a stream with schema-on-read capability. Creates a view over an existing stream.
       actionbtn0: Create
     HydratorPipeline:
-      label: Hydrator Pipeline
-      description: A Hydrator pipeline allows you to ingest, egress, and process data either to, from, or within Hadoop.
+      label: Pipeline
+      description: A pipeline allows you to ingest, egress, and process data either to, from, or within Hadoop.
       actionbtn0: Create
     Artifact:
       label: Driver
@@ -451,6 +501,8 @@ features:
         title: Upload JAR
         uploadHelperText: Upload the JAR for your application that you wish to deploy
         filePathLabel: Choose file
+      success: You have successfully deployed the application
+      callToAction: View Application Details
     ArtifactUpload:
       headerlabel: Add Third party Driver
       Step1:
@@ -472,7 +524,11 @@ features:
         typePlaceholder: Driver Type
         classnameLabel: Class Name
         classnamePlaceholder: Driver Class Name
+      success: You have successfully uploaded the driver
+      subtitle: You can now create a pipeline to extract data from Database using the driver.
+      callToAction: Create a Pipeline
     Done: Done
+    GoToHomePage: Go to Home Page
     Informational:
       termsandconditions: Terms and Conditions
       Step1:
@@ -496,8 +552,8 @@ features:
         shorttitle: General Information
         title: General
         description: Provide information about the stream you want to create.
-        ttllabel: Event Life Time
-        ttl-placeholder: Specify time-to-live events in seconds
+        ttllabel: TTL
+        ttl-placeholder: Specify the time-to-live for events in seconds
       Step2:
         shorttitle: Setup Format and Schema
         title: Set Format and Schema
@@ -513,6 +569,8 @@ features:
         title: Upload Data
         description: Upload data to the stream you created.
       headerlabel: Create Stream
+      success: You have successfully created the stream
+      callToAction: View Stream Details
     UploadData:
       Step1:
         shorttitle: View Data
@@ -526,6 +584,9 @@ features:
         destinationtype: Destination Type
         destinationname: Destination Name
       headerlabel: Upload Data
+      success: You have successfully uploaded the datapack
+      subtitle: to the stream
+      callToAction: View Stream Details
     PublishPipeline:
       Step1:
         shorttitle: Configure Pipeline
@@ -533,6 +594,8 @@ features:
         description: Specify the name of the pipeline.
       pipelinenameplaceholder: Pipeline Name
       headerlabel: Publish Pipeline
+      success: You have successfully created the pipeline
+      callToAction: Customize Pipeline
     HydratorPipeline:
       title: Create a Data Pipeline
       message: Choose the pipeline type you would like to create.
@@ -551,6 +614,9 @@ features:
         description: Upload the plugin configuration JSON.
         errorMessage: Invalid plugin JSON. Plugin configuration should be in JSON format.
         errorMessageParentArtifacts: Invalid plugin JSON. Please specify parent artifacts.
+      success: You have successfully uploaded the plugin
+      subtitle: Start creating a pipeline with the plugin.
+      callToAction: Create a Pipeline
     Add-Namespace:
        Step1:
          ssd-label: "General Information"
@@ -715,4 +781,24 @@ features:
   Description:
     label: Description
     nodescription: No Description available
+  ViewSwitch:
+    nameLabel: Name
+    typeLabel: Type
+    actionsLabel: Actions
+    DatasetStreamTable:
+      readsLabel: Reads
+      writesLabel: Writes
+      eventsLabel: Events
+      sizeLabel: Size
+    ProgramTable:
+      lastStartedLabel: Last Started
+      statusLabel: Status
+  Page404:
+    genericMessage: Sorry, we are are not able to find the page you are looking for.
+    entityMessage: Sorry, we are not able to find {entityType}
+    subtitleMessage1: Here are some options on where to go next
+    subtitleMessage2: View all your entities in the
+    overviewLabel: Overview
+    manageLabel: Manage
+    pipelinesMessage: Pipelines
 ...

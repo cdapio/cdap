@@ -19,11 +19,21 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.spi.hbase.TableDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.security.access.Permission;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of the {@link HBaseDDLExecutor} for HBase 0.98
  */
 public class DefaultHBase98DDLExecutor extends DefaultHBaseDDLExecutor {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultHBase98DDLExecutor.class);
+
   @Override
   public HTableDescriptor getHTableDescriptor(TableDescriptor descriptor) {
     return HBase98TableDescriptorUtil.getHTableDescriptor(descriptor);
@@ -32,5 +42,32 @@ public class DefaultHBase98DDLExecutor extends DefaultHBaseDDLExecutor {
   @Override
   public TableDescriptor getTableDescriptor(HTableDescriptor descriptor) {
     return HBase98TableDescriptorUtil.getTableDescriptor(descriptor);
+  }
+
+  @Override
+  protected void doGrantPermissions(String namespace, @Nullable String table,
+                                    Map<String, Permission.Action[]> permissions) {
+    // no-op, not called
+  }
+
+  @Override
+  public void grantPermissions(String namespace, @Nullable String table, Map<String, String> permissions)
+    throws IOException {
+    StringBuilder statements = new StringBuilder();
+    for (Map.Entry<String, String> entry : permissions.entrySet()) {
+      String user = entry.getKey();
+      String actions = entry.getValue();
+      try {
+        toActions(actions);
+      } catch (IllegalArgumentException e) {
+        String entity = table == null ? "namespace " + namespace : "table " + namespace + ":" + table;
+        String userOrGroup = user.startsWith("@") ? "group " + user.substring(1) : "user " + user;
+        throw new IOException(String.format("Invalid permissions '%s' for %s and %s: %s",
+                                            actions, entity, userOrGroup, e.getMessage()));
+      }
+      statements.append(String.format("\ngrant '%s', '%s', '%s:%s'", user, actions.toUpperCase(), namespace, table));
+    }
+    LOG.warn("Granting permissions is not implemented for HBase 0.98. " +
+               "Please grant these permissions manually in the hbase shell: {}", statements);
   }
 }

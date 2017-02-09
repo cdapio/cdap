@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableSet;
@@ -40,6 +41,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
+import org.jboss.resteasy.util.HttpResponseCodes;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -130,6 +132,93 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     Assert.assertEquals(200,
       doDelete(getVersionedAPIPath("apps/" + appId.getId(), appId.getNamespaceId())).getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testOwnerUsingArtifact() throws Exception {
+    ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "wordCountArtifact", "1.0.0");
+    addAppArtifact(artifactId.toId(), WordCountApp.class);
+    ApplicationId applicationId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "WordCountApp");
+    // deploy an app with a owner
+    String ownerPrincipal = "alice/somehost.net@somekdc.net";
+    AppRequest<ConfigTestApp.ConfigClass> appRequest = new AppRequest<>(
+      new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()), null, ownerPrincipal);
+    Assert.assertEquals(HttpResponseCodes.SC_OK, deploy(applicationId, appRequest).getStatusLine().getStatusCode());
+
+    // should be able to retrieve the owner information of the app
+    JsonObject appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), applicationId.getApplication());
+    Assert.assertEquals(ownerPrincipal, appDetails.get(Constants.Security.PRINCIPAL).getAsString());
+
+    // the stream created by the app should have the app owner too
+    Assert.assertEquals(ownerPrincipal,
+                        getStreamConfig(applicationId.getNamespaceId().stream("text")).getOwnerPrincipal());
+
+    // the dataset created by the app should have the app owner too
+    Assert.assertEquals(ownerPrincipal,
+                        getDatasetMeta(applicationId.getNamespaceId().dataset("mydataset")).getOwnerPrincipal());
+
+    // trying to deploy the same app with another owner should fail
+    String bobPrincipal = "bob/somehost.net@somekdc.net";
+    appRequest = new AppRequest<>(
+      new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()), null, bobPrincipal);
+    Assert.assertEquals(HttpResponseCodes.SC_BAD_REQUEST,
+                        deploy(applicationId, appRequest).getStatusLine().getStatusCode());
+
+    // trying to deploy the same app with different version and another owner should fail too
+    appRequest = new AppRequest<>(
+      new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()), null, bobPrincipal);
+    Assert.assertEquals(HttpResponseCodes.SC_BAD_REQUEST,
+                        deploy(new ApplicationId(applicationId.getNamespace(), applicationId.getApplication(), "1.0"),
+                               appRequest).getStatusLine().getStatusCode());
+
+    // trying to re-deploy the same app with same owner should pass
+    appRequest = new AppRequest<>(
+      new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()), null, ownerPrincipal);
+    Assert.assertEquals(HttpResponseCodes.SC_OK,
+                        deploy(applicationId, appRequest).getStatusLine().getStatusCode());
+
+    // trying to re-deploy the same app with different version but same owner should pass
+    appRequest = new AppRequest<>(
+      new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()), null, ownerPrincipal);
+    Assert.assertEquals(HttpResponseCodes.SC_OK,
+                        deploy(new ApplicationId(applicationId.getNamespace(), applicationId.getApplication(), "1.0"),
+                               appRequest).getStatusLine().getStatusCode());
+
+    // clean up the app
+    Assert.assertEquals(200,
+                        doDelete(getVersionedAPIPath("apps/" + applicationId.getApplication(),
+                                                     applicationId.getNamespace())).getStatusLine().getStatusCode());
+
+    // deletion of app should delete the stream/dataset owner information as they themselves are not deleted
+    Assert.assertEquals(ownerPrincipal,
+                        getStreamConfig(applicationId.getNamespaceId().stream("text")).getOwnerPrincipal());
+    Assert.assertEquals(ownerPrincipal,
+                        getDatasetMeta(applicationId.getNamespaceId().dataset("mydataset")).getOwnerPrincipal());
+
+    // cleanup
+    deleteNamespace(NamespaceId.DEFAULT.getNamespace());
+  }
+
+  @Test
+  public void testOwnerInHeaders() throws Exception {
+    String ownerPrincipal = "bob/somehost.net@somekdc.net";
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN,
+                                   NamespaceId.DEFAULT.getNamespace(), ownerPrincipal);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    ApplicationId applicationId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "WordCountApp");
+
+    // should be able to retrieve the owner information of the app
+    JsonObject appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), applicationId.getApplication());
+    Assert.assertEquals(ownerPrincipal, appDetails.get(Constants.Security.PRINCIPAL).getAsString());
+
+    // cleanup app
+    Assert.assertEquals(200,
+                        doDelete(getVersionedAPIPath("apps/" + applicationId.getApplication(),
+                                                     applicationId.getNamespace())).getStatusLine().getStatusCode());
+
+    // cleanup
+    deleteNamespace(NamespaceId.DEFAULT.getNamespace());
   }
 
   @Test
@@ -450,6 +539,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     List<ArtifactSummary> summaries = readResponse(response, new TypeToken<List<ArtifactSummary>>() {
     }.getType());
     Assert.assertFalse(summaries.isEmpty());
+
+    // cleanup
+    deleteNamespace(NamespaceId.DEFAULT.getNamespace());
   }
 
   private static class ExtraConfig extends Config {

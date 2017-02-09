@@ -21,7 +21,7 @@ import orderBy from 'lodash/orderBy';
 import isEmpty from 'lodash/isEmpty';
 import T from 'i18n-react';
 import shortid from 'shortid';
-import { Modal, ModalHeader, ModalBody } from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, Tooltip } from 'reactstrap';
 import myPreferenceApi from 'api/preference';
 import {convertProgramToApi} from 'services/program-api-converter';
 import KeyValuePairs from 'components/KeyValuePairs';
@@ -34,43 +34,52 @@ export default class SetPreferenceModal extends Component {
     this.state = {
       saving: false,
       fieldsResetted: false,
+      showResetMessage: false,
       keyValues: {},
       inheritedPreferences: [],
       sortByAttribute: 'key',
       sortOrder: 'asc'
     };
 
-    this.params = {
-      namespace: NamespaceStore.getState().selectedNamespace
-    };
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
-    this.getSpecifiedPreferencesApi = myPreferenceApi.getNamespacePreferences;
-    this.getInheritedPreferencesApi = myPreferenceApi.getSystemPreferences;
-    this.setPreferencesApi = myPreferenceApi.setNamespacePreferences;
+    this.params = {};
+    this.setAtSystemLevel = this.props.setAtSystemLevel;
 
-    if (this.props.entity) {
-      if (this.props.entity.type === 'application') {
-        this.params.appId = this.props.entity.id;
-        this.getSpecifiedPreferencesApi = myPreferenceApi.getAppPreferences;
-        this.getInheritedPreferencesApi = myPreferenceApi.getNamespacePreferencesResolved;
-        this.setPreferencesApi = myPreferenceApi.setAppPreferences;
-      } else {
-        this.params.appId = this.props.entity.applicationId;
-        this.params.programId = this.props.entity.id;
-        this.params.programType = convertProgramToApi(this.props.entity.programType);
-        this.getSpecifiedPreferencesApi = myPreferenceApi.getProgramPreferences;
-        this.getInheritedPreferencesApi = myPreferenceApi.getAppPreferencesResolved;
-        this.setPreferencesApi = myPreferenceApi.setProgramPreferences;
+    if (this.setAtSystemLevel) {
+      this.getSpecifiedPreferencesApi = myPreferenceApi.getSystemPreferences;
+      this.setPreferencesApi = myPreferenceApi.setSystemPreferences;
+    } else {
+      this.params.namespace = namespace;
+      this.getSpecifiedPreferencesApi = myPreferenceApi.getNamespacePreferences;
+      this.getInheritedPreferencesApi = myPreferenceApi.getSystemPreferences;
+      this.setPreferencesApi = myPreferenceApi.setNamespacePreferences;
+
+      if (this.props.entity) {
+        if (this.props.entity.type === 'application') {
+          this.params.appId = this.props.entity.id;
+          this.getSpecifiedPreferencesApi = myPreferenceApi.getAppPreferences;
+          this.getInheritedPreferencesApi = myPreferenceApi.getNamespacePreferencesResolved;
+          this.setPreferencesApi = myPreferenceApi.setAppPreferences;
+        } else {
+          this.params.appId = this.props.entity.applicationId;
+          this.params.programId = this.props.entity.id;
+          this.params.programType = convertProgramToApi(this.props.entity.programType);
+          this.getSpecifiedPreferencesApi = myPreferenceApi.getProgramPreferences;
+          this.getInheritedPreferencesApi = myPreferenceApi.getAppPreferencesResolved;
+          this.setPreferencesApi = myPreferenceApi.setProgramPreferences;
+        }
       }
+
+      this.subscription = NamespaceStore.subscribe(() => {
+        this.params.namespace = NamespaceStore.getState().selectedNamespace;
+        this.getSpecifiedPreferences();
+        this.getInheritedPreferences();
+      });
     }
 
-    this.subscription = NamespaceStore.subscribe(() => {
-      this.params.namespace = NamespaceStore.getState().selectedNamespace;
-      this.getSpecifiedPreferences();
-      this.getInheritedPreferences();
-    });
-
     this.apiSubscriptions = [];
+    this.toggleTooltip = this.toggleTooltip.bind(this);
     this.onKeyValueChange = this.onKeyValueChange.bind(this);
     this.preventPropagation = this.preventPropagation.bind(this);
     this.setPreferences = this.setPreferences.bind(this);
@@ -83,7 +92,9 @@ export default class SetPreferenceModal extends Component {
   }
 
   componentWillUnmount() {
-    this.subscription();
+    if (this.subscription) {
+      this.subscription();
+    }
     this.apiSubscriptions.forEach(apiSubscription => apiSubscription.dispose());
   }
 
@@ -101,22 +112,22 @@ export default class SetPreferenceModal extends Component {
       this.getSpecifiedPreferencesApi(this.params)
         .subscribe(
           (res) => {
+            let keyValues;
             if (isEmpty(res)) {
-              this.setState({
-                keyValues: {
-                  'pairs': [{
+              keyValues = {
+                'pairs': [{
                     'key':'',
                     'value':'',
                     'uniqueId': shortid.generate()
                   }]
-                }
-              });
+              };
             } else {
-              this.setState({
-                keyValues: {'pairs': this.getKeyValPair(res)},
-                fieldsResetted: true
-              });
+              keyValues = {'pairs': this.getKeyValPair(res)};
             }
+            this.setState({
+              keyValues,
+              fieldsResetted: true
+            });
           },
           (error) => {
             this.setState({
@@ -128,6 +139,9 @@ export default class SetPreferenceModal extends Component {
   }
 
   getInheritedPreferences() {
+    if (!this.getInheritedPreferencesApi) {
+      return;
+    }
     this.apiSubscriptions.push(
       this.getInheritedPreferencesApi(this.params)
         .subscribe(
@@ -153,8 +167,11 @@ export default class SetPreferenceModal extends Component {
       this.setPreferencesApi(this.params, this.getKeyValObject())
         .subscribe(
           () => {
-            this.props.onPreferencesSaved();
+            if (this.props.onSuccess) {
+              this.props.onSuccess();
+            }
             this.props.toggleModal();
+            this.setState({saving: false});
           },
           (error) => {
             this.setState({
@@ -190,6 +207,10 @@ export default class SetPreferenceModal extends Component {
     return keyValObj;
   }
 
+  toggleTooltip() {
+    this.setState({ tooltipOpen : !this.state.tooltipOpen });
+  }
+
   toggleSorted(attribute) {
     let sortOrder = 'asc';
     if (this.state.sortByAttribute != attribute) {
@@ -205,18 +226,36 @@ export default class SetPreferenceModal extends Component {
     this.setState({inheritedPreferences: newInheritedPreferences});
   }
 
-  allFieldsFilled() {
+  oneFieldMissing() {
     if (this.state.keyValues.pairs) {
-      return this.state.keyValues.pairs.every((keyValuePair) => {
-        return (keyValuePair.key.length > 0 && keyValuePair.value.length > 0);
+      return this.state.keyValues.pairs.some((keyValuePair) => {
+        let emptyKeyField = (keyValuePair.key.length === 0);
+        let emptyValueField = (keyValuePair.value.length === 0);
+        return (emptyKeyField && !emptyValueField) || (!emptyKeyField && emptyValueField);
       });
     }
-    return true;
+    return false;
+  }
+
+  isTitleOverflowing() {
+    let modalTitle = document.querySelector(".specify-preferences-description h4");
+    if (modalTitle) {
+      return (modalTitle.offsetWidth < modalTitle.scrollWidth);
+    }
+    return false;
   }
 
   resetFields(event) {
     event.preventDefault();
+    this.setState({
+      showResetMessage: true
+    });
     this.getSpecifiedPreferences();
+    setTimeout(() => {
+      this.setState({
+        showResetMessage: false
+      });
+    }, 3000);
   }
 
   preventPropagation(event) {
@@ -226,33 +265,59 @@ export default class SetPreferenceModal extends Component {
 
   renderSpecifyPreferences() {
     const actionLabel = T.translate('features.FastAction.setPreferencesActionLabel');
-    let entity = "Namespace " + this.params.namespace;
-    if (this.props.entity) {
-      entity = upperFirst(this.props.entity.type) + " " + this.props.entity.id;
-    }
-    const title = `${actionLabel} for ${entity}`;
-    const keyLabel = T.translate('features.FastAction.setPreferencesColumnLabel.key');
-    const valueLabel = T.translate('features.FastAction.setPreferencesColumnLabel.value');
-    let description = T.translate('features.FastAction.setPreferencesDescriptionLabel.namespace');
-    if (this.props.entity) {
-      if (this.props.entity.type === 'application') {
-        description = T.translate('features.FastAction.setPreferencesDescriptionLabel.app');
-      } else {
-        description = T.translate('features.FastAction.setPreferencesDescriptionLabel.program');
+    let entity, entityWithType, description, tooltipID;
+    if (this.setAtSystemLevel) {
+      entityWithType = 'CDAP';
+      description = T.translate('features.FastAction.setPreferencesDescriptionLabel.system');
+      tooltipID = `${entityWithType}-title`;
+    } else {
+      entity = this.params.namespace;
+      entityWithType = `Namespace "${entity}"`;
+      description = T.translate('features.FastAction.setPreferencesDescriptionLabel.namespace');
+      tooltipID = `${entity}-title`;
+      if (this.props.entity) {
+        entity = this.props.entity.id;
+        entityWithType = `${upperFirst(this.props.entity.type)} "${entity}"`;
+        tooltipID = `${this.props.entity.uniqueId}-title`;
+        if (this.props.entity.type === 'application') {
+          description = T.translate('features.FastAction.setPreferencesDescriptionLabel.app');
+        } else {
+          description = T.translate('features.FastAction.setPreferencesDescriptionLabel.program');
+        }
       }
     }
+    const title = `${actionLabel} for ${entityWithType}`;
+    const keyLabel = T.translate('features.FastAction.setPreferencesColumnLabel.key');
+    const valueLabel = T.translate('features.FastAction.setPreferencesColumnLabel.value');
     return (
       <div>
+        {
+          this.isTitleOverflowing() ?
+            (
+              <Tooltip
+                placement="top"
+                isOpen={this.state.tooltipOpen}
+                target={tooltipID}
+                toggle={this.toggleTooltip}
+                className="entity-preferences-modal"
+                delay={0}
+              >
+                {entity}
+              </Tooltip>
+            )
+          :
+            null
+        }
         <div className='specify-preferences-description'>
-          <h4>{title}</h4>
+          <h4 id={tooltipID}>{title}</h4>
           <p>{description}</p>
         </div>
-        <div className='specify-preferences-list'>
-          <div className='specify-preferences-labels'>
-            <span className='key-label'>{keyLabel}</span>
-            <span className='value-label'>{valueLabel}</span>
+        <div className="specify-preferences-list">
+          <div className="specify-preferences-labels">
+            <span className="key-label">{keyLabel}</span>
+            <span className="value-label">{valueLabel}</span>
           </div>
-          <div className='specify-preferences-values'>
+          <div className="specify-preferences-values">
             {
               !isEmpty(this.state.keyValues) ?
                 (
@@ -268,7 +333,6 @@ export default class SetPreferenceModal extends Component {
                 )
             }
           </div>
-
         </div>
       </div>
     );
@@ -279,19 +343,19 @@ export default class SetPreferenceModal extends Component {
     return (
       <th>
         <span
-          className='toggleable-columns'
+          className="toggleable-columns"
           onClick={this.toggleSorted.bind(this, columnToAttribute)}
         >
           {
             this.state.sortByAttribute === columnToAttribute ?
               <span>
-                <span className='text-underline'>{column}</span>
+                <span className="text-underline">{column}</span>
                 <span>
                   {
                     this.state.sortOrder === 'asc' ?
-                      <i className='fa fa-caret-down fa-lg'></i>
+                      <i className="fa fa-caret-down fa-lg"></i>
                     :
-                      <i className='fa fa-caret-up fa-lg'></i>
+                      <i className="fa fa-caret-up fa-lg"></i>
                   }
                 </span>
               </span>
@@ -304,17 +368,19 @@ export default class SetPreferenceModal extends Component {
   }
 
   renderInheritedPreferences() {
+    if (!this.getInheritedPreferencesApi) {
+      return null;
+    }
     const titleLabel = T.translate('features.FastAction.setPreferencesInheritedPrefsLabel');
     const keyLabel = T.translate('features.FastAction.setPreferencesColumnLabel.key');
     const valueLabel = T.translate('features.FastAction.setPreferencesColumnLabel.value');
-    const originLabel = T.translate('features.FastAction.setPreferencesColumnLabel.origin');
     let numInheritedPreferences = this.state.inheritedPreferences.length;
     return (
       <div>
-        <div className='inherited-preferences-label'>
+        <div className="inherited-preferences-label">
           <h4>{titleLabel} ({numInheritedPreferences})</h4>
         </div>
-        <div className='inherited-preferences-list'>
+        <div className="inherited-preferences-list">
         {
            numInheritedPreferences ?
             <div>
@@ -323,7 +389,6 @@ export default class SetPreferenceModal extends Component {
                   <tr>
                     {this.renderInheritedPreferencesColumnHeader(keyLabel)}
                     {this.renderInheritedPreferencesColumnHeader(valueLabel)}
-                    <th>{originLabel}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -335,7 +400,6 @@ export default class SetPreferenceModal extends Component {
                           <tr className="inherited-preference" key={index}>
                             <td>{inheritedPreference.key}</td>
                             <td>{inheritedPreference.value}</td>
-                            <td>N/A</td>
                           </tr>
                         );
                       })
@@ -395,7 +459,7 @@ export default class SetPreferenceModal extends Component {
                 {
                   this.state.saving ?
                     <button
-                      className="btn btn-primary float-xs-left"
+                      className="btn btn-primary float-xs-left saving"
                       disabled="disabled"
                     >
                       <span className="fa fa-spinner fa-spin" />
@@ -403,9 +467,9 @@ export default class SetPreferenceModal extends Component {
                     </button>
                   :
                     <button
-                      className="btn btn-primary float-xs-left"
+                      className="btn btn-primary float-xs-left not-saving"
                       onClick={this.setPreferences}
-                      disabled={(!this.allFieldsFilled() || this.state.error) ? 'disabled' : null}
+                      disabled={(this.oneFieldMissing() || this.state.error) ? 'disabled' : null}
                     >
                       <span>{saveAndCloseLabel}</span>
                     </button>
@@ -413,6 +477,32 @@ export default class SetPreferenceModal extends Component {
                 <span className="float-xs-left reset">
                   <a onClick = {this.resetFields}>{resetLink}</a>
                 </span>
+                {
+                  this.state.showResetMessage ?
+                    (
+                      <span className="float-xs-left text-success reset-success">
+                        Reset Successful
+                      </span>
+                    )
+                  :
+                    null
+                }
+                {
+                  this.state.keyValues.pairs ?
+                    (
+                      <span className="float-xs-right num-rows">
+                        {
+                          this.state.keyValues.pairs.length === 1 ?
+                            <span>{this.state.keyValues.pairs.length} row</span>
+                          :
+                            <span>{this.state.keyValues.pairs.length} rows</span>
+                        }
+                      </span>
+                    )
+                  :
+                    null
+
+                }
               </div>
               <div className="preferences-error">
                 {
@@ -423,7 +513,12 @@ export default class SetPreferenceModal extends Component {
                 }
               </div>
             </div>
-            <hr />
+            {
+              !this.setAtSystemLevel ?
+                <hr />
+              :
+                null
+            }
             <div className="inherited-preferences-container">
               {this.renderInheritedPreferences()}
             </div>
@@ -445,10 +540,12 @@ SetPreferenceModal.propTypes = {
   isOpen: PropTypes.func.isRequired,
   toggleModal: PropTypes.func.isRequired,
   setAtNamespaceLevel: PropTypes.bool,
-  onPreferencesSaved: PropTypes.func
+  setAtSystemLevel: PropTypes.bool,
+  onSuccess: PropTypes.func
 };
 
 SetPreferenceModal.defaultProps = {
   setAtNamespaceLevel: false,
-  onPreferencesSaved: () => {}
+  setAtSystemLevel: false,
+  onSuccess: () => {}
 };

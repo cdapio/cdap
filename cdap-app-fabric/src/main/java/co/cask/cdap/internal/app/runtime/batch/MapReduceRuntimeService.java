@@ -38,6 +38,7 @@ import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -46,6 +47,7 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
@@ -68,6 +70,7 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.store.SecureStoreUtils;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -955,16 +958,24 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       classes.add(SecureStoreUtils.getKMSSecureStore());
     }
 
+    Class<? extends HBaseDDLExecutor> ddlExecutorClass = new HBaseDDLExecutorFactory(cConf, hConf)
+      .get().getClass();
     try {
       Class<?> hbaseTableUtilClass = HBaseTableUtilFactory.getHBaseTableUtilClass();
       classes.add(hbaseTableUtilClass);
+      classes.add(ddlExecutorClass);
     } catch (ProvisionException e) {
       LOG.warn("Not including HBaseTableUtil classes in submitted Job Jar since they are not available");
     }
 
-    ClassLoader oldCLassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
-    appBundler.createBundle(Locations.toLocation(jobJar), classes);
-    ClassLoaders.setContextClassLoader(oldCLassLoader);
+    ClassLoader oldCLassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
+      job.getConfiguration().getClassLoader(), Collections.singleton(ddlExecutorClass.getClassLoader())));
+
+    try {
+      appBundler.createBundle(Locations.toLocation(jobJar), classes);
+    } finally {
+      ClassLoaders.setContextClassLoader(oldCLassLoader);
+    }
 
     LOG.info("Built MapReduce Job Jar at {}", jobJar.toURI());
     return jobJar;

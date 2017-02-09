@@ -59,7 +59,7 @@ public class PartitionedFileSetAdmin extends CompositeDatasetAdmin {
         DatasetId instanceId = new DatasetId(context.getNamespaceId(), spec.getName());
         try {
           exploreFacade.disableExploreDataset(instanceId, spec);
-          exploreFacade.enableExploreDataset(instanceId, spec);
+          exploreFacade.enableExploreDataset(instanceId, spec, true);
         } catch (Exception e) {
           throw new DataSetException(String.format(
               "Unable to reset explore on dataset %s", instanceId), e);

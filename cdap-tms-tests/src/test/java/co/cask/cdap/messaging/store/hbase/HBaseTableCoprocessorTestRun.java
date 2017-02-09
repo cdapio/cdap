@@ -30,9 +30,7 @@ import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.TopicMetadata;
-import co.cask.cdap.messaging.TopicMetadataCache;
 import co.cask.cdap.messaging.store.DataCleanupTest;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.messaging.store.MetadataTable;
@@ -65,11 +63,9 @@ import org.junit.Test;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
@@ -205,7 +201,7 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
 
   @AfterClass
   public static void teardownAfterClass() throws Exception {
-    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
+    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM), hConf);
     ddlExecutor.deleteNamespaceIfExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
     ddlExecutor.close();
     hBaseAdmin.close();

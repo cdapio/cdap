@@ -18,6 +18,7 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutorContext;
 import co.cask.cdap.spi.hbase.TableDescriptor;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -30,12 +31,15 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotDisabledException;
 import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.security.access.Permission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -43,24 +47,19 @@ import javax.annotation.Nullable;
  * Default implementation of the {@link HBaseDDLExecutor}.
  */
 public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
-  public static final Logger LOG = LoggerFactory.getLogger(DefaultHBaseDDLExecutor.class);
-  public static final long MAX_CREATE_TABLE_WAIT = 5000L;    // Maximum wait of 5 seconds for table creation.
-  private HBaseAdmin admin;
 
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultHBaseDDLExecutor.class);
+  private static final long MAX_CREATE_TABLE_WAIT = 5000L;    // Maximum wait of 5 seconds for table creation.
+
+  protected HBaseAdmin admin;
 
   @Override
-  public <T> void initialize(T conf) {
+  public void initialize(HBaseDDLExecutorContext context) {
     try {
-      this.admin = new HBaseAdmin((Configuration) conf);
+      this.admin = new HBaseAdmin((Configuration) context.getConfiguration());
     } catch (Exception e) {
       throw new RuntimeException("Failed to create HBaseAdmin.", e);
     }
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <T> T getConf() {
-    return (T) admin.getConfiguration();
   }
 
   /**
@@ -90,13 +89,15 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
   }
 
   @Override
-  public void createNamespaceIfNotExists(String name) throws IOException {
+  public boolean createNamespaceIfNotExists(String name) throws IOException {
     Preconditions.checkArgument(name != null, "Namespace should not be null.");
-    if (!hasNamespace(name)) {
-      NamespaceDescriptor namespaceDescriptor =
-        NamespaceDescriptor.create(encodeHBaseEntity(name)).build();
-      admin.createNamespace(namespaceDescriptor);
+    if (hasNamespace(name)) {
+      return false;
     }
+    NamespaceDescriptor namespaceDescriptor =
+      NamespaceDescriptor.create(encodeHBaseEntity(name)).build();
+    admin.createNamespace(namespaceDescriptor);
+    return true;
   }
 
   @Override
@@ -119,14 +120,15 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
       return;
     }
 
+    boolean tableExistsFailure = false;
     try {
       LOG.debug("Attempting to create table '{}' if it does not exist", Bytes.toString(htd.getName()));
       admin.createTable(htd, splitKeys);
-      LOG.info("Table created '{}'", Bytes.toString(htd.getName()));
     } catch (TableExistsException e) {
       // table may exist because someone else is creating it at the same
       // time. But it may not be available yet, and opening it might fail.
       LOG.debug("Table '{}' already exists.", Bytes.toString(htd.getName()), e);
+      tableExistsFailure = true;
     }
 
     // Wait for table to materialize
@@ -137,8 +139,12 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
       sleepTime = sleepTime <= 0 ? 1 : sleepTime;
       do {
         if (admin.tableExists(htd.getName())) {
-          LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.",
-                   Bytes.toString(htd.getName()));
+          if (tableExistsFailure) {
+            LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.",
+                     Bytes.toString(htd.getName()));
+          } else {
+            LOG.info("Table '{}' created.", Bytes.toString(htd.getName()));
+          }
           return;
         } else {
           TimeUnit.NANOSECONDS.sleep(sleepTime);
@@ -209,6 +215,52 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
   public void close() throws IOException {
     if (admin != null) {
       admin.close();
+    }
+  }
+
+  protected abstract void doGrantPermissions(String namespace, @Nullable String table,
+                                             Map<String, Permission.Action[]> permissions) throws IOException;
+
+  @Override
+  public void grantPermissions(String namespace, String table, Map<String, String> permissions) throws IOException {
+    Map<String, Permission.Action[]> privilegesToGrant = new HashMap<>(permissions.size());
+    for (Map.Entry<String, String> entry : permissions.entrySet()) {
+      String user = entry.getKey();
+      String actionsForUser = entry.getValue();
+      try {
+        privilegesToGrant.put(user, toActions(actionsForUser));
+      } catch (IllegalArgumentException e) {
+        String entity = table == null ? "namespace " + namespace : "table " + namespace + ":" + table;
+        String userOrGroup = user.startsWith("@") ? "group " + user.substring(1) : "user " + user;
+        throw new IOException(String.format("Error granting permissions '%s' for %s to %s: %s",
+                                            actionsForUser, entity, userOrGroup, e.getMessage()));
+      }
+    }
+    doGrantPermissions(namespace, table, privilegesToGrant);
+  }
+
+  protected Permission.Action[] toActions(String permissions) {
+    Permission.Action[] actions = new Permission.Action[permissions.length()];
+    for (int i = 0; i < actions.length; i++) {
+      actions[i] = toAction(permissions.charAt(i));
+    }
+    return actions;
+  }
+
+  private Permission.Action toAction(char c) {
+    switch (Character.toLowerCase(c)) {
+      case 'a':
+        return Permission.Action.ADMIN;
+      case 'c':
+        return Permission.Action.CREATE;
+      case 'r':
+        return Permission.Action.READ;
+      case 'w':
+        return Permission.Action.WRITE;
+      case 'x':
+        return Permission.Action.EXEC;
+      default:
+        throw new IllegalArgumentException(String.format("Unknown Action '%s'", c));
     }
   }
 }

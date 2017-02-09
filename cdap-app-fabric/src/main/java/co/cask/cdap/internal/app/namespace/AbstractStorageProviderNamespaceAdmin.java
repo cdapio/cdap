@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,13 +19,16 @@ package co.cask.cdap.internal.app.namespace;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Strings;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,20 +129,107 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
   }
 
   private void createLocation(NamespaceMeta namespaceMeta) throws IOException {
+    NamespaceId namespaceId = namespaceMeta.getNamespaceId();
+    boolean createdHome = false;
     Location namespaceHome;
     if (hasCustomLocation(namespaceMeta)) {
-      validateCustomLocation(namespaceMeta);
-      return;
+      namespaceHome = validateCustomLocation(namespaceMeta);
+    } else {
+      // no namespace custom location was provided one must be created by cdap
+      namespaceHome = namespacedLocationFactory.get(namespaceMeta);
+      if (namespaceHome.exists()) {
+        throw new FileAlreadyExistsException(namespaceHome.toString());
+      }
+      createdHome = createNamespaceDir(namespaceHome, "home", namespaceId);
     }
-    // no namespace custom location was provided one must be created by cdap
-    namespaceHome = namespacedLocationFactory.get(namespaceMeta);
-    if (namespaceHome.exists()) {
-      throw new FileAlreadyExistsException(namespaceHome.toString());
+    Location dataLoc = namespaceHome.append(Constants.Dataset.DEFAULT_DATA_DIR); // data/
+    Location tempLoc = namespaceHome.append(cConf.get(Constants.AppFabric.TEMP_DIR)); // tmp/
+    Location streamsLoc = namespaceHome.append(cConf.get(Constants.Stream.BASE_DIR)); // streams/
+    Location deletedLoc = streamsLoc.append(StreamUtils.DELETED); // streams/.deleted/
+    String configuredGroupName = namespaceMeta.getConfig().getGroupName();
+    boolean createdData = false;
+    boolean createdTemp = false;
+    boolean createdStreams = false;
+    try {
+      if (createdHome && SecurityUtil.isKerberosEnabled(cConf)) {
+        // set the group id of the namespace home if configured, or the current user's primary group
+        String groupToSet = configuredGroupName;
+        if (groupToSet == null) {
+          // attempt to determine the current user's primary group. Note that we cannot use ugi.getPrimaryGroup()
+          // because that is not implemented at least in Hadoop 2.0 and 2.2, possibly other versions. Also note
+          // that there is no guarantee that getGroupNames() returns anything.
+          String[] groups = UserGroupInformation.getCurrentUser().getGroupNames();
+          if (groups != null && groups.length > 0) {
+            groupToSet = groups[0];
+          }
+        }
+        // if this is still null at this point, then the directory will have whatever HDFS assigned at creation
+        if (groupToSet != null) {
+          namespaceHome.setGroup(groupToSet);
+        }
+      }
+      // create all the directories with default permissions
+      createdData = createNamespaceDir(dataLoc, "data", namespaceId);
+      createdTemp = createNamespaceDir(tempLoc, "temp", namespaceId);
+      createdStreams = createNamespaceDir(streamsLoc, "streams", namespaceId);
+      createNamespaceDir(deletedLoc, "deleted streams", namespaceId);
+
+      // then set all these directories to be owned and group writable by the namespace group as follows:
+      // if a group name is configured, then that group; otherwise the same group as the namespace home dir
+      if (SecurityUtil.isKerberosEnabled(cConf)) {
+        String groupToSet = configuredGroupName != null ? configuredGroupName : namespaceHome.getGroup();
+        for (Location loc : new Location[] { dataLoc, tempLoc, streamsLoc, deletedLoc }) {
+          loc.setGroup(groupToSet);
+          // set the permissions to rwx for group, if a group name was configured for the namespace
+          if (configuredGroupName != null) {
+            String permissions = loc.getPermissions();
+            loc.setPermissions(permissions.substring(0, 3) + "rwx" + permissions.substring(6));
+          }
+        }
+      }
+    } catch (Throwable t) {
+      if (createdHome) {
+        deleteDirSilently(namespaceHome, t, "home", namespaceMeta.getNamespaceId());
+      } else {
+        if (createdData) {
+          deleteDirSilently(dataLoc, t, "data", namespaceMeta.getNamespaceId());
+        }
+        if (createdTemp) {
+          deleteDirSilently(tempLoc, t, "temp", namespaceMeta.getNamespaceId());
+        }
+        if (createdStreams) {
+          deleteDirSilently(streamsLoc, t, "streams", namespaceMeta.getNamespaceId());
+        }
+      }
+      throw t;
     }
-    // create namespace home dir
-    if (!namespaceHome.mkdirs()) {
-      throw new IOException(String.format("Error while creating home directory '%s' for namespace '%s'",
-                                          namespaceHome, namespaceMeta.getNamespaceId()));
+  }
+
+  // create the location and return true; throw IOException if the location could not be created
+  private boolean createNamespaceDir(Location location, String what, NamespaceId namespace) throws IOException {
+    try {
+      if (location.mkdirs()) {
+        return true;
+      }
+      // mkdirs() is documented to return whether it was successful, and not throw IOException,
+      // but it turns out it does throw IOException, for example if access is denied.
+    } catch (IOException e) {
+      throw new IOException(String.format("Error while creating %s directory '%s' for namespace '%s': %s",
+                                          what, location, namespace, e.getMessage()), e);
+    }
+    // if we came here, then mkdirs() returned false: The directory could not be created but we do not know why
+    throw new IOException(String.format("Error while creating %s directory '%s' for namespace '%s': %s",
+                                        what, location, namespace, "mkdirs() returned false"));
+  }
+
+  // remove a directory, catching any exception and adding it to the exsting throwable
+  private void deleteDirSilently(Location location, Throwable existingThrowable, String what, NamespaceId namespace) {
+    try {
+      location.delete(true);
+    } catch (Throwable t) {
+      LOG.warn("Error while cleaning up {} directory '{}' for namespace '{}': {}",
+               what, location, namespace, t.getMessage());
+      existingThrowable.addSuppressed(t);
     }
   }
 
@@ -147,7 +237,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
     return !Strings.isNullOrEmpty(namespaceMeta.getConfig().getRootDirectory());
   }
 
-  private void validateCustomLocation(NamespaceMeta namespaceMeta) throws IOException {
+  private Location validateCustomLocation(NamespaceMeta namespaceMeta) throws IOException {
     // since this is a custom location we expect it to exist. Get the custom location for the namespace from
     // namespaceLocationFactory since the location needs to be aware of local/distributed fs.
     Location customNamespacedLocation = namespacedLocationFactory.get(namespaceMeta);
@@ -173,5 +263,21 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
         customNamespacedLocation.toString(), namespaceMeta.getNamespaceId(),
         namespaceMeta.getConfig().getPrincipal()));
     }
+    // if a group name was configured in the namespace meta, validate the home location's group and permissions
+    if (namespaceMeta.getConfig().getGroupName() != null) {
+      String groupName = customNamespacedLocation.getGroup();
+      String permissions = customNamespacedLocation.getPermissions().substring(3, 6);
+      if (!groupName.equals(namespaceMeta.getConfig().getGroupName())) {
+        LOG.warn("The provided home directory '%s' for namespace '%s' has group '%s', which is different from " +
+                   "the configured group '%s' of the namespace.", customNamespacedLocation.toString(),
+                 namespaceMeta.getNamespaceId(), groupName, namespaceMeta.getConfig().getGroupName());
+      }
+      if (!"rwx".equals(permissions)) {
+        LOG.warn("The provided home directory '%s' for namespace '%s' has group permissions of '%s'. It is " +
+                   "recommended to set the group permissions to 'rwx'",
+                 customNamespacedLocation.toString(), namespaceMeta.getNamespaceId(), permissions);
+      }
+    }
+    return customNamespacedLocation;
   }
 }

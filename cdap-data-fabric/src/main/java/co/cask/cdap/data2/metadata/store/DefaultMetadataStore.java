@@ -33,6 +33,7 @@ import co.cask.cdap.data2.metadata.dataset.SearchResults;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.audit.AuditType;
+import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
@@ -40,7 +41,6 @@ import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
-import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -373,7 +373,7 @@ public class DefaultMetadataStore implements MetadataStore {
 
   @Override
   public MetadataSearchResponse search(String namespaceId, String searchQuery,
-                                       Set<MetadataSearchTargetType> types,
+                                       Set<EntityTypeSimpleName> types,
                                        SortInfo sortInfo, int offset, int limit,
                                        int numCursors, String cursor, boolean showHidden) throws BadRequestException {
     Set<MetadataScope> searchScopes = EnumSet.allOf(MetadataScope.class);
@@ -395,7 +395,7 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   private MetadataSearchResponse search(Set<MetadataScope> scopes, String namespaceId,
-                                        String searchQuery, Set<MetadataSearchTargetType> types,
+                                        String searchQuery, Set<EntityTypeSimpleName> types,
                                         SortInfo sortInfo, int offset, int limit,
                                         int numCursors, String cursor, boolean showHidden) throws BadRequestException {
     List<MetadataEntry> results = new ArrayList<>();
@@ -450,7 +450,7 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   private SearchResults getSearchResults(final MetadataScope scope, final String namespaceId,
-                                         final String searchQuery, final Set<MetadataSearchTargetType> types,
+                                         final String searchQuery, final Set<EntityTypeSimpleName> types,
                                          final SortInfo sortInfo, final int offset,
                                          final int limit, final int numCursors,
                                          final String cursor, final boolean showHidden) throws BadRequestException {

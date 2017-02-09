@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,9 +23,11 @@ import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.client.StreamViewClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.StreamNotFoundException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
@@ -40,17 +42,25 @@ import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
+import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.security.impersonation.CurrentUGIProvider;
+import co.cask.cdap.security.impersonation.UGIProvider;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -62,8 +72,10 @@ import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -155,7 +167,6 @@ public abstract class AppFabricTestBase {
   private static MetadataService metadataService;
   private static LocationFactory locationFactory;
   private static StreamClient streamClient;
-  private static StreamViewClient streamViewClient;
   private static DatasetClient datasetClient;
 
   @ClassRule
@@ -168,7 +179,14 @@ public abstract class AppFabricTestBase {
 
   protected static void initializeAndStartServices(CConfiguration cConf,
                                                    @Nullable SConfiguration sConf) throws Exception {
-    injector = Guice.createInjector(new AppFabricTestModule(cConf, sConf));
+    injector = Guice.createInjector(
+      Modules.override(new AppFabricTestModule(cConf, sConf)).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          // needed because we set Kerberos to true in DefaultNamespaceAdminTest
+          bind(UGIProvider.class).to(CurrentUGIProvider.class);
+        }
+      }));
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
@@ -197,7 +215,6 @@ public abstract class AppFabricTestBase {
     metadataService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     streamClient = new StreamClient(getClientConfig(discoveryClient, Constants.Service.STREAMS));
-    streamViewClient = new StreamViewClient(getClientConfig(discoveryClient, Constants.Service.STREAMS));
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     createNamespaces();
   }
@@ -401,7 +418,13 @@ public abstract class AppFabricTestBase {
 
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion,
                                 @Nullable String namespace) throws Exception {
-    return deploy(application, apiVersion, namespace, null, null);
+    return deploy(application, apiVersion, namespace, null, null, null);
+  }
+
+  protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion,
+                                @Nullable String namespace,
+                                @Nullable String ownerPrincipal) throws Exception {
+    return deploy(application, apiVersion, namespace, null, null, ownerPrincipal);
   }
 
   protected HttpResponse deploy(Id.Application appId,
@@ -431,7 +454,8 @@ public abstract class AppFabricTestBase {
    * Deploys an application with (optionally) a defined app name and app version
    */
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
-                                @Nullable String artifactVersion, @Nullable Config appConfig) throws Exception {
+                                @Nullable String artifactVersion, @Nullable Config appConfig,
+                                @Nullable String ownerPrincipal) throws Exception {
     namespace = namespace == null ? Id.Namespace.DEFAULT.getId() : namespace;
     apiVersion = apiVersion == null ? Constants.Gateway.API_VERSION_3_TOKEN : apiVersion;
     artifactVersion = artifactVersion == null ? String.format("1.0.%d", System.currentTimeMillis()) : artifactVersion;
@@ -453,9 +477,13 @@ public abstract class AppFabricTestBase {
     String versionedApiPath = getVersionedAPIPath("apps/", apiVersion, namespace);
     request = getPost(versionedApiPath);
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    request.setHeader("X-Archive-Name", String.format("%s-%s.jar", application.getSimpleName(), artifactVersion));
+    request.setHeader(AbstractAppFabricHttpHandler.ARCHIVE_NAME_HEADER,
+                      String.format("%s-%s.jar", application.getSimpleName(), artifactVersion));
     if (appConfig != null) {
-      request.setHeader("X-App-Config", GSON.toJson(appConfig));
+      request.setHeader(AbstractAppFabricHttpHandler.APP_CONFIG_HEADER, GSON.toJson(appConfig));
+    }
+    if (ownerPrincipal != null) {
+      request.setHeader(AbstractAppFabricHttpHandler.PRINCIPAL_HEADER, ownerPrincipal);
     }
     request.setEntity(new FileEntity(artifactJar));
     return execute(request);
@@ -908,6 +936,16 @@ public abstract class AppFabricTestBase {
     File destination = new File(tmpFolder.newFolder(), name);
     Files.copy(Locations.newInputSupplier(appJar), destination);
     return destination;
+  }
+
+  protected DatasetMeta getDatasetMeta (DatasetId datasetId)
+    throws UnauthorizedException, UnauthenticatedException, NotFoundException, IOException {
+    return datasetClient.get(datasetId);
+  }
+
+  protected StreamProperties getStreamConfig(StreamId streamId)
+    throws StreamNotFoundException, UnauthenticatedException, UnauthorizedException, IOException {
+    return streamClient.getConfig(streamId);
   }
 
   private static ClientConfig getClientConfig(DiscoveryServiceClient discoveryClient, String service) {

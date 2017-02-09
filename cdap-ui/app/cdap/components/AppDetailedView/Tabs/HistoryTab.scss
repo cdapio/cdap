@@ -14,9 +14,22 @@
  * the License.
  */
 
-.app-detailed-view-history {
+@import '../../../styles/variables.scss';
+
+.history-tab {
+  padding: 10px 20px;
+  height: calc(100% - 40px);
+  overflow-y: auto;
+
   &.table-bordered {
     width: calc(100% - 20px);
     margin: 10px;
+  }
+
+  table {
+    tr th,
+    tr td {
+      border-color: $custom_table-border-color;
+    }
   }
 }

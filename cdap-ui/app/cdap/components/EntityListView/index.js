@@ -18,9 +18,7 @@ import React, {Component, PropTypes} from 'react';
 import {MySearchApi} from 'api/search';
 import {parseMetadata} from 'services/metadata-parser';
 import EntityListHeader from './EntityListHeader';
-import EntityCard from '../EntityCard';
 import Pagination from 'components/Pagination';
-import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import T from 'i18n-react';
 const shortid = require('shortid');
 const classNames = require('classnames');
@@ -29,15 +27,17 @@ import {fetchTables} from 'services/ExploreTables/ActionCreator';
 import MyUserStoreApi from 'api/userstore';
 import PlusButtonStore from 'services/PlusButtonStore';
 import globalEvents from 'services/global-events';
-import Timer from 'components/Timer';
 import isNil from 'lodash/isNil';
 import Overview from 'components/Overview';
-import {objectQuery} from 'services/helpers';
-
+import EntityListInfo from './EntityListInfo';
+import WelcomeScreen from 'components/EntityListView/WelcomeScreen';
+import HomeListView from 'components/EntityListView/ListView';
+import NamespaceStore from 'services/NamespaceStore';
+import Page404 from 'components/404';
 require('./EntityListView.scss');
 import ee from 'event-emitter';
 
-const defaultFilter = ['app', 'dataset', 'stream'];
+const defaultFilter = [];
 
 // 312 = cardWith (300) + (5 x 2 side margins) + ( 1 x 2 border widths)
 const cardWidthWithMarginAndBorder = 312;
@@ -59,10 +59,6 @@ class EntityListView extends Component {
       {
         displayName: T.translate('commons.entity.dataset.plural'),
         id: 'dataset'
-      },
-      {
-        displayName: T.translate('commons.entity.program.plural'),
-        id: 'program'
       },
       {
         displayName: T.translate('commons.entity.stream.plural'),
@@ -120,7 +116,8 @@ class EntityListView extends Component {
       currentPage: 1,
       animationDirection: 'next',
       showSplash: true,
-      userStoreObj : ''
+      userStoreObj : '',
+      notFound: false
     };
 
     this.retryCounter = 0; // being used for search API retry
@@ -133,7 +130,6 @@ class EntityListView extends Component {
     this.getQueryObject = this.getQueryObject.bind(this);
     this.handlePageChange = this.handlePageChange.bind(this);
     this.setAnimationDirection = this.setAnimationDirection.bind(this);
-    this.retryNow = this.retryNow.bind(this);
     this.eventEmitter = ee(ee);
     this.refreshSearchByCreationTime = this.refreshSearchByCreationTime.bind(this);
     this.eventEmitter.on(globalEvents.APPUPLOAD, this.refreshSearchByCreationTime);
@@ -143,7 +139,8 @@ class EntityListView extends Component {
 
   refreshSearchByCreationTime() {
     this.setState({
-      sortObj: this.sortOptions[4]
+      sortObj: this.sortOptions[4],
+      selectedEntity: null
     }, this.search.bind(this));
   }
 
@@ -198,7 +195,6 @@ class EntityListView extends Component {
 
     // Process and return valid query parameters
     let queryObject = this.getQueryObject(this.props.location.query);
-
     this.setState({
       filter: queryObject.filter,
       sortObj: queryObject.sort,
@@ -237,8 +233,38 @@ class EntityListView extends Component {
   }
   // Retrieve entities for rendering
   componentDidMount() {
-    this.calculatePageSize();
-    this.updateData();
+    let namespaces = NamespaceStore.getState().namespaces.map(ns => ns.name);
+    if (namespaces.length) {
+      let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+      if (namespaces.indexOf(selectedNamespace) === -1) {
+        this.setState({
+          notFound: true,
+          loading: false
+        });
+      } else {
+        this.calculatePageSize();
+        this.updateData();
+      }
+    } else {
+      const namespaceSubcriber = () => {
+        let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+        let namespaces = NamespaceStore.getState().namespaces.map(ns => ns.name);
+        if (namespaces.length && namespaces.indexOf(selectedNamespace) === -1) {
+          this.setState({
+            notFound:true
+          });
+        } else {
+          this.setState({
+            notFound: false
+          }, () => {
+            this.calculatePageSize();
+            this.updateData();
+            this.namespaceStoreSubscription();
+          });
+        }
+      };
+      this.namespaceStoreSubscription = NamespaceStore.subscribe(namespaceSubcriber.bind(this));
+    }
   }
 
   // Construct and return query object from query parameters
@@ -321,8 +347,15 @@ class EntityListView extends Component {
   ) {
     let offset = (currentPage - 1) * this.pageSize;
 
+    // TODO/FIXME: hack to not display programs when filter is empty (which means all
+    // entities should be displayed). Maybe this should be a backend change?
+    if (filter.length === 0) {
+      filter = ['app', 'artifact', 'dataset', 'stream'];
+    }
+
     this.setState({
-      loading : true
+      loading : true,
+      selectedEntity: null
     });
 
     let params = {
@@ -358,6 +391,7 @@ class EntityListView extends Component {
           isSortDisabled,
           isSearchDisabled,
           entities: res,
+          total: total,
           loading: false,
           entityErr: false,
           errStatusCode: null,
@@ -399,7 +433,9 @@ class EntityListView extends Component {
     }
 
     this.setState({
-      filter : filters
+      filter : filters,
+      selectedEntity: null,
+      currentPage: 1
     }, () => {
       this.search(this.state.query, filters, this.state.sortObj);
     });
@@ -414,7 +450,8 @@ class EntityListView extends Component {
 
     this.setState({
       currentPage : pageNumber,
-      animationDirection : direction
+      animationDirection : direction,
+      selectedEntity: null
     }, () => this.search());
   }
 
@@ -422,7 +459,9 @@ class EntityListView extends Component {
     let isSearchDisabled = option.fullSort === 'none' ? false : true;
     this.setState({
       sortObj : option,
-      isSearchDisabled
+      isSearchDisabled,
+      selectedEntity: null,
+      currentPage: 1
     }, () => {
       this.search(this.state.query, this.state.filter, option);
     });
@@ -433,7 +472,9 @@ class EntityListView extends Component {
     this.setState({
       query,
       isSortDisabled,
-      sortObj: this.sortOptions[0]
+      sortObj: this.sortOptions[0],
+      selectedEntity: null,
+      currentPage: 1
     }, () => {
       this.search(query, this.state.filter, this.state.sortObj);
     });
@@ -493,7 +534,8 @@ class EntityListView extends Component {
 
   setAnimationDirection(direction) {
     this.setState({
-      animationDirection : direction
+      animationDirection : direction,
+      selectedEntity: null
     });
   }
 
@@ -518,160 +560,57 @@ class EntityListView extends Component {
     });
   }
 
-  retryNow() {
-    this.retryCounter = 0;
-    this.updateData();
+  onOverviewCloseAndRefresh() {
+    this.setState({selectedEntity: null}, this.search.bind(this));
   }
 
-  renderError() {
-    const retryMap = {
-      1: 10,
-      2: 60,
-      3: 120,
-      4: 300,
-      5: 600
-    };
-
-    const normalError = (
-      <h3 className="text-xs-center empty-message text-danger">
-        <span className="fa fa-exclamation-triangle"></span>
-        <span>{this.state.entityErr}</span>
-      </h3>
-    );
-
-    const retryNow = (
-      <button
-        className="btn btn-primary retry-now"
-        onClick={this.retryNow}
-      >
-        {T.translate('features.EntityListView.Errors.retryNow')}
-      </button>
-    );
-
-    const tryAgainError = (
-      <h3 className="text-xs-center empty-message text-danger">
-        <span className="fa fa-exclamation-triangle"></span>
-        <span>
-          {T.translate('features.EntityListView.Errors.tryAgain')}
-          <Timer
-            time={retryMap[this.retryCounter]}
-            onDone={this.updateData.bind(this)}
-          />
-          {T.translate('features.EntityListView.Errors.secondsLabel')}
-          <br/>
-          {retryNow}
-        </span>
-      </h3>
-    );
-
-    const timeOut = (
-      <h3 className="text-xs-center empty-message text-danger">
-        <span className="fa fa-exclamation-triangle"></span>
-        <span>
-          {T.translate('features.EntityListView.Errors.timeOut')}
-        </span>
-      </h3>
-    );
-
-    const CHECK_ERROR_CODE = 500;
-
-    if (this.retryCounter > 5 && this.state.errStatusCode >= CHECK_ERROR_CODE) {
-      return timeOut;
-    } else if (this.state.errStatusCode >= CHECK_ERROR_CODE) {
-      return tryAgainError;
-    } else {
-      return normalError;
+  onFastActionSuccess() {
+    if (this.state.selectedEntity) {
+      this.onOverviewCloseAndRefresh();
+      return;
     }
+    this.search();
   }
 
   render() {
 
-    if (!this.state.showSplash) {
+    if (this.state.notFound) {
       return (
-        <div className="splash-screen-container">
-          <div className="splash-screen-first-time">
-            <h2 className="welcome-message">
-              {T.translate('features.EntityListView.SplashScreen.welcomeMessage')}
-            </h2>
-            <div className="beta-notice">
-              {T.translate('features.EntityListView.SplashScreen.welcomeMessage1')}*
+        <div className="entity-list-view">
+          <Page404
+            entityType="Namespace"
+            entityName={this.props.params.namespace}
+          >
+            <div className="namespace-not-found text-xs-center">
+              <h4>
+                <strong>
+                  {T.translate('features.EntityListView.NamespaceNotFound.createMessage')}
+                  <span
+                    className="open-namespace-wizard-link"
+                    onClick={() => {
+                      this.eventEmitter.emit(globalEvents.CREATENAMESPACE);
+                    }}
+                  >
+                    {T.translate('features.EntityListView.NamespaceNotFound.createLinkLabel')}
+                  </span>
+                </strong>
+              </h4>
+              <h4>
+                <strong>
+                  {T.translate('features.EntityListView.NamespaceNotFound.switchMessage')}
+                </strong>
+              </h4>
             </div>
-            <div className="cdap-fist-icon">
-              <span className="icon-fist" />
-            </div>
-            <div className="introducing">
-              {T.translate('features.EntityListView.SplashScreen.introText')}
-            </div>
-            <div className="app-store-bd">
-              {T.translate('features.EntityListView.SplashScreen.introText1')}
-            </div>
-            <div
-              className="splash-screen-first-time-btn"
-              onClick={this.openMarketModal.bind(this)}
-            >
-              <span className="icon-CaskMarket" />
-              {T.translate('features.EntityListView.SplashScreen.caskmarket')}
-            </div>
-            <div
-              className="go-to-cdap"
-              onClick={this.dismissSplash.bind(this)}
-            >
-              {T.translate('features.EntityListView.SplashScreen.gotoLabel')}
-            </div>
-            <div className="splash-screen-disclaimer">
-              <p>
-                * {T.translate('features.EntityListView.SplashScreen.disclaimerMessage')}
-              </p>
-            </div>
-          </div>
+          </Page404>
         </div>
       );
     }
-
-    const empty = (
-      <h3 className="text-xs-center empty-message">
-        {T.translate('features.EntityListView.emptyMessage')}
-      </h3>
-    );
-
-    const loading = (
-      <h3 className="text-xs-center">
-        <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
-      </h3>
-    );
-
-    let entitiesToBeRendered;
-    let bodyContent;
-
-    if (this.state.loading) {
-      bodyContent = loading;
-    } else if (this.state.entities.length === 0) {
-      entitiesToBeRendered = this.state.entityErr ? this.renderError() : empty;
-
-      bodyContent = (
-        <div className="entities-container">
-          {entitiesToBeRendered}
-        </div>
-      );
-
-    } else {
-      bodyContent = this.state.entities.map(
-        (entity) => {
-          return (
-            <EntityCard
-              className={
-                classNames('entity-card-container',
-                  { active: entity.uniqueId === objectQuery(this.state, 'selectedEntity', 'uniqueId') }
-                )
-              }
-              activeEntity={this.state.selectedEntity}
-              key={entity.uniqueId}
-              onClick={this.handleEntityClick.bind(this, entity)}
-              entity={entity}
-              onUpdate={this.search.bind(this)}
-            />
-          );
-        }
+    if (!this.state.showSplash) {
+      return (
+        <WelcomeScreen
+          onClose={this.dismissSplash.bind(this)}
+          onMarketOpen={this.openMarketModal.bind(this)}
+        />
       );
     }
 
@@ -688,8 +627,6 @@ class EntityListView extends Component {
           onSearch={this.handleSearch.bind(this)}
           isSearchDisabled={this.state.isSearchDisabled}
           searchText={this.state.query}
-          numberOfPages={this.state.numPages}
-          currentPage={this.state.currentPage}
           onPageChange={this.handlePageChange}
         />
         <Pagination
@@ -699,20 +636,36 @@ class EntityListView extends Component {
           currentPage={this.state.currentPage}
           setDirection={this.setAnimationDirection}
         >
+          <EntityListInfo
+            className="entity-list-info"
+            namespace={this.props.params.namespace}
+            numberOfEntities={this.state.total}
+            numberOfPages={this.state.numPages}
+            currentPage={this.state.currentPage}
+            onPageChange={this.handlePageChange}
+            activeFilter={this.state.filter}
+            filterOptions={this.filterOptions}
+            activeSort={this.state.sortObj}
+            searchText={this.state.query}
+          />
           <div className={classNames("entities-container")}>
-            <ReactCSSTransitionGroup
-              className={classNames({"show-overview-main-container": !isNil(this.state.selectedEntity)})}
-              component="div"
-              transitionName={"entity-animation--" + this.state.animationDirection}
-              transitionEnterTimeout={1000}
-              transitionLeaveTimeout={1000}
-            >
-              {bodyContent}
-            </ReactCSSTransitionGroup>
+            <HomeListView
+              className={classNames("home-list-view-container", {"show-overview-main-container": !isNil(this.state.selectedEntity)})}
+              list={this.state.entities}
+              loading={this.state.loading}
+              onEntityClick={this.handleEntityClick.bind(this)}
+              onFastActionSuccess={this.onFastActionSuccess.bind(this)}
+              errorMessage={this.state.entityErr}
+              errorStatusCode={this.state.errStatusCode}
+              animationDirection={this.state.animationDirection}
+              activeEntity={this.state.selectedEntity}
+              retryCounter={this.retryCounter}
+            />
             <Overview
               toggleOverview={!isNil(this.state.selectedEntity)}
               entity={this.state.selectedEntity}
               onClose={this.handleEntityClick.bind(this)}
+              onCloseAndRefresh={this.onOverviewCloseAndRefresh.bind(this)}
             />
           </div>
         </Pagination>

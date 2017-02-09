@@ -148,7 +148,10 @@ angular.module(PKG.name + '.services')
               'INVALID-SINKS': 'Pipeline configuration should have a valid sink specification.',
               'INVALID-SCHEDULE': 'Batch pipeline should have a valid schedule specification.',
               'INVALID-INSTANCE': 'Realtime pipeline should have a valid instance specification.',
-              'INVALID-NODES-CONNECTIONS': 'Unknown node(s) in \'connections\' property in pipeline specification.'
+              'INVALID-NODES-CONNECTIONS': 'Unknown node(s) in \'connections\' property in pipeline specification.',
+              'NO-STAGES':  'Missing \'stages\' property in config specification.',
+              'INVALID-STAGES':  'Found \'stages\' property outside of config specification.',
+              'INVALID-CONNECTIONS': 'Found \'connections\' property outside of config specification.'
             },
             'PREVIEW': {
               'NO-SOURCE-SINK': 'Please add a source and sink to the pipeline'

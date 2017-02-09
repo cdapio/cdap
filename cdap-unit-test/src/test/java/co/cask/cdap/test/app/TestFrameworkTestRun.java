@@ -201,7 +201,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     final WorkerManager workerManager = appManager.getWorkerManager(AppWithExceptionThrowingWorker.WORKER_NAME);
 
     // Only one instance of the worker and it throws an exception. ProgramRunStatus should go to FAILED state.
-    testExceptionWorker(workerManager);
+    testExceptionWorker(workerManager, 0);
     Tasks.waitFor(3, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
@@ -211,24 +211,19 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // Test a case where worker completes without an exception.
     workerManager.start();
-    workerManager.waitForFinish(3, TimeUnit.SECONDS);
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return workerManager.getHistory(ProgramRunStatus.COMPLETED).size();
-      }
-    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+    workerManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.SECONDS);
 
     // Few of the instances of the worker will throw an exception, while others complete normally. Still the
     // ProgramRunStatus should go to FAILED state.
     workerManager.setInstances(9);
-    testExceptionWorker(workerManager);
+    testExceptionWorker(workerManager, 3);
     Tasks.waitFor(6, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
         return workerManager.getHistory(ProgramRunStatus.FAILED).size();
       }
     }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+
     Tasks.waitFor(7, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
@@ -238,22 +233,16 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // Test a case where worker completes without an exception.
     workerManager.start();
-    workerManager.waitForFinish(3, TimeUnit.SECONDS);
-    Tasks.waitFor(2, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return workerManager.getHistory(ProgramRunStatus.COMPLETED).size();
-      }
-    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+    workerManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 10, TimeUnit.SECONDS);
   }
 
-  private void testExceptionWorker(WorkerManager workerManager) throws Exception {
+  private void testExceptionWorker(WorkerManager workerManager, int failedCountSoFar) throws Exception {
     workerManager.start(ImmutableMap.of(AppWithExceptionThrowingWorker.INITIALIZE, ""));
-    workerManager.waitForFinish(3, TimeUnit.SECONDS);
+    workerManager.waitForRuns(ProgramRunStatus.FAILED, 1 + failedCountSoFar, 3, TimeUnit.SECONDS);
     workerManager.start(ImmutableMap.of(AppWithExceptionThrowingWorker.RUN, ""));
-    workerManager.waitForFinish(3, TimeUnit.SECONDS);
+    workerManager.waitForRuns(ProgramRunStatus.FAILED, 2 + failedCountSoFar, 3, TimeUnit.SECONDS);
     workerManager.start(ImmutableMap.of(AppWithExceptionThrowingWorker.DESTROY, ""));
-    workerManager.waitForFinish(3, TimeUnit.SECONDS);
+    workerManager.waitForRuns(ProgramRunStatus.FAILED, 3 + failedCountSoFar, 3, TimeUnit.SECONDS);
   }
 
   @Test
@@ -356,7 +345,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(AppWithPlugin.WORKFLOW);
     workflowManager.start();
-    workflowManager.waitForFinish(10, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
     List<RunRecord> runRecords = workflowManager.getHistory();
     Assert.assertNotEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
     DataSetManager<KeyValueTable> workflowTableManager = getDataset(AppWithPlugin.WORKFLOW_TABLE);
@@ -370,7 +359,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
 
     SparkManager sparkManager = appManager.getSparkManager(AppWithPlugin.SPARK).start();
-    sparkManager.waitForFinish(2, TimeUnit.MINUTES);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
 
     // Verify the Spark result.
     DataSetManager<Table> dataSetManager = getDataset(AppWithPlugin.SPARK_TABLE);
@@ -465,7 +454,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Map<String, String> argsForMR = ImmutableMap.of(DatasetWithMRApp.INPUT_KEY, "table1",
                                                     DatasetWithMRApp.OUTPUT_KEY, "table2");
     MapReduceManager mrManager = appManager.getMapReduceManager(DatasetWithMRApp.MAPREDUCE_PROGRAM).start(argsForMR);
-    mrManager.waitForFinish(5, TimeUnit.MINUTES);
+    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
     appManager.stopAll();
 
     DataSetManager<KeyValueTable> outTableManager = getDataset("table2");
@@ -495,7 +484,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       DatasetCrossNSAccessWithMAPApp.OUTPUT_DATASET_NAME, "table2");
     MapReduceManager mrManager = appManager.getMapReduceManager(DatasetCrossNSAccessWithMAPApp.MAPREDUCE_PROGRAM)
       .start(argsForMR);
-    mrManager.waitForFinish(5, TimeUnit.MINUTES);
+    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
     appManager.stopAll();
 
     DataSetManager<KeyValueTable> outTableManager = getDataset(outputNS.getNamespaceId().dataset("table2"));
@@ -557,7 +546,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workflowManager.start(ImmutableMap.of("workflow.success.file", workflowSuccess.getAbsolutePath(),
                                           "action.success.file", actionSuccess.getAbsolutePath(),
                                           "throw.exception", "true"));
-    workflowManager.waitForFinish(1, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.FAILED, 1, TimeUnit.MINUTES);
 
     // Since action and workflow failed the files should not exist
     Assert.assertFalse(workflowSuccess.exists());
@@ -565,7 +554,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     workflowManager.start(ImmutableMap.of("workflow.success.file", workflowSuccess.getAbsolutePath(),
                                           "action.success.file", actionSuccess.getAbsolutePath()));
-    workflowManager.waitForFinish(1, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
     Assert.assertTrue(workflowSuccess.exists());
     Assert.assertTrue(actionSuccess.exists());
 
@@ -576,7 +565,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
                                           "test.killed", "true"));
     verifyFileExists(Lists.newArrayList(firstFile));
     workflowManager.stop();
-    workflowManager.waitForStatus(false);
+    workflowManager.waitForRun(ProgramRunStatus.KILLED, 1, TimeUnit.MINUTES);
     Assert.assertTrue(workflowKilled.exists());
   }
 
@@ -591,7 +580,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.waitForStatus(true);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(DatasetWithCustomActionApp.CUSTOM_WORKFLOW).start();
-    workflowManager.waitForFinish(2, TimeUnit.MINUTES);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
     appManager.stopAll();
 
     DataSetManager<KeyValueTable> outTableManager = getDataset(DatasetWithCustomActionApp.CUSTOM_TABLE);
@@ -615,22 +604,22 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // Execute Workflow without keeping the local datasets after run
     Map<String, String> additionalParams = new HashMap<>();
-    String runId = executeWorkflow(applicationManager, additionalParams);
+    String runId = executeWorkflow(applicationManager, additionalParams, 1);
     verifyWorkflowRun(runId, false, false, "COMPLETED");
 
     additionalParams.put("dataset.wordcount.keep.local", "true");
-    runId = executeWorkflow(applicationManager, additionalParams);
+    runId = executeWorkflow(applicationManager, additionalParams, 2);
     verifyWorkflowRun(runId, true, false, "COMPLETED");
 
     additionalParams.clear();
     additionalParams.put("dataset.*.keep.local", "true");
-    runId = executeWorkflow(applicationManager, additionalParams);
+    runId = executeWorkflow(applicationManager, additionalParams, 3);
     verifyWorkflowRun(runId, true, true, "COMPLETED");
 
     additionalParams.clear();
     additionalParams.put("dataset.*.keep.local", "true");
     additionalParams.put("destroy.throw.exception", "true");
-    runId = executeWorkflow(applicationManager, additionalParams);
+    runId = executeWorkflow(applicationManager, additionalParams, 4);
     verifyWorkflowRun(runId, true, true, "STARTED");
 
     WorkflowManager wfManager = applicationManager.getWorkflowManager(WorkflowAppWithLocalDatasets.WORKFLOW_NAME);
@@ -694,8 +683,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(expectedRunStatus, Bytes.toString(workflowRuns.get().read(runId)));
   }
 
-  private String executeWorkflow(ApplicationManager applicationManager, Map<String, String> additionalParams)
-    throws Exception {
+  private String executeWorkflow(ApplicationManager applicationManager, Map<String, String> additionalParams,
+                                 int expectedComplete) throws Exception {
     WorkflowManager wfManager = applicationManager.getWorkflowManager(WorkflowAppWithLocalDatasets.WORKFLOW_NAME);
     Map<String, String> runtimeArgs = new HashMap<>();
     File waitFile = new File(TMP_FOLDER.newFolder(), "/wait.file");
@@ -742,7 +731,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     doneFile.createNewFile();
 
     // Wait for workflow to finish
-    wfManager.waitForFinish(1, TimeUnit.MINUTES);
+    wfManager.waitForRuns(ProgramRunStatus.COMPLETED, expectedComplete, 1, TimeUnit.MINUTES);
     Map<String, WorkflowNodeStateDetail> nodeStateDetailMap = wfManager.getWorkflowNodeStates(runId);
     Map<String, String> workflowMetricsContext = new HashMap<>();
     workflowMetricsContext.put(Constants.Metrics.Tag.NAMESPACE, testSpace.getNamespace());
@@ -788,9 +777,15 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
                             nodeStateDetailMap.get("WordCount").getRunId());
     Assert.assertEquals(7, getMetricsManager().getTotalMetric(mrMetricsContext, "user.num.words"));
 
-    Map<String, String> readerContext = new HashMap<>(workflowMetricsContext);
+    final Map<String, String> readerContext = new HashMap<>(workflowMetricsContext);
     readerContext.put(Constants.Metrics.Tag.NODE, "readerAction");
-    Assert.assertEquals(6, getMetricsManager().getTotalMetric(readerContext, "user.unique.words"));
+
+    Tasks.waitFor(6L, new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        return getMetricsManager().getTotalMetric(readerContext, "user.unique.words");
+      }
+    }, 60, TimeUnit.SECONDS);
     return runId;
   }
 
@@ -1227,14 +1222,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       serviceManager.stop();
       serviceManager.waitForStatus(false);
 
-      txMRManager.waitForFinish(10L, TimeUnit.SECONDS);
-      notxMRManager.waitForFinish(10L, TimeUnit.SECONDS);
-      txSparkManager.waitForFinish(10L, TimeUnit.SECONDS);
-      notxSparkManager.waitForFinish(10L, TimeUnit.SECONDS);
-      notxWorkerManager.waitForFinish(10L, TimeUnit.SECONDS);
-      txWorkerManager.waitForFinish(10L, TimeUnit.SECONDS);
-      txWFManager.waitForFinish(10L, TimeUnit.SECONDS);
-      notxWFManager.waitForFinish(10L, TimeUnit.SECONDS);
+      txMRManager.waitForRun(ProgramRunStatus.COMPLETED, 10L, TimeUnit.SECONDS);
+      notxMRManager.waitForRun(ProgramRunStatus.COMPLETED, 10L, TimeUnit.SECONDS);
+      txSparkManager.waitForRun(ProgramRunStatus.COMPLETED, 10L, TimeUnit.SECONDS);
+      notxSparkManager.waitForRun(ProgramRunStatus.COMPLETED, 10L, TimeUnit.SECONDS);
+      notxWorkerManager.waitForRun(ProgramRunStatus.COMPLETED, 10L, TimeUnit.SECONDS);
+      txWorkerManager.waitForRun(ProgramRunStatus.COMPLETED, 10L, TimeUnit.SECONDS);
+      txWFManager.waitForRun(ProgramRunStatus.COMPLETED, 10L, TimeUnit.SECONDS);
+      notxWFManager.waitForRun(ProgramRunStatus.COMPLETED, 10L, TimeUnit.SECONDS);
 
       DataSetManager<TransactionCapturingTable> dataset = getDataset(testSpace.dataset(AppWithCustomTx.CAPTURE));
       Table t = dataset.get().getTable();
@@ -1657,7 +1652,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // Run mapreduce job
     MapReduceManager mrManager = applicationManager.getMapReduceManager("countTotal").start();
-    mrManager.waitForFinish(1800L, TimeUnit.SECONDS);
+    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 1800L, TimeUnit.SECONDS);
 
     long totalCount = Long.valueOf(callServiceGet(serviceManager.getServiceURL(), "total"));
     // every event has 5 tokens
@@ -1665,7 +1660,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // Run mapreduce from stream
     mrManager = applicationManager.getMapReduceManager("countFromStream").start();
-    mrManager.waitForFinish(120L, TimeUnit.SECONDS);
+    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 120L, TimeUnit.SECONDS);
 
     totalCount = Long.valueOf(callServiceGet(serviceManager.getServiceURL(), "stream_total"));
     // The stream MR only consume the body, not the header.
@@ -1722,7 +1717,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // Batch sink only get the 99 batch events
     batchSinkMetrics.waitForProcessed(99, 5, TimeUnit.SECONDS);
     flowManager.stop();
-    flowManager.waitForFinish(10, TimeUnit.SECONDS);
+    flowManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
 
     try (CloseableIterator<KeyValue<byte[], byte[]>> itor = table.get().scan(null, null)) {
       // Should only see batch size of 1.
@@ -1898,7 +1893,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     key.set("worker.cluster.name");
     Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     // The worker will stop by itself. No need to call stop
-    workerManager.waitForFinish(10, TimeUnit.SECONDS);
+    workerManager.waitForRun(ProgramRunStatus.COMPLETED, 10, TimeUnit.SECONDS);
 
     // Flow
     FlowManager flowManager = appManager.getFlowManager(
@@ -1934,14 +1929,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     key.set("reducer.cluster.name");
     Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    mrManager.waitForFinish(60, TimeUnit.SECONDS);
+    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 60, TimeUnit.SECONDS);
 
     // Spark
     SparkManager sparkManager = appManager.getSparkManager(
       ClusterNameTestApp.ClusterNameSpark.class.getSimpleName()).start();
     key.set("spark.cluster.name");
     Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    sparkManager.waitForFinish(60, TimeUnit.SECONDS);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 60, TimeUnit.SECONDS);
 
     // Workflow
     // Cleanup the output path for the MR job in the workflow first
@@ -1963,7 +1958,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     key.set(prefix + "action.cluster.name");
     Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-    workerManager.waitForFinish(120, TimeUnit.SECONDS);
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 120, TimeUnit.SECONDS);
   }
 
   private void testAppWithDataset(Class<? extends Application> app, String serviceName) throws Exception {

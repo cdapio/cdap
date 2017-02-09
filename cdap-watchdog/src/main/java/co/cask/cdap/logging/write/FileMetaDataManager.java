@@ -16,36 +16,49 @@
 
 package co.cask.cdap.logging.write;
 
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.io.Processor;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.security.Impersonator;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.framework.LogPathIdentifier;
-import co.cask.cdap.logging.save.LogSaverTableUtil;
+import co.cask.cdap.logging.meta.LoggingStoreTableUtil;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.impersonation.Impersonator;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-import org.apache.tephra.TransactionAware;
-import org.apache.tephra.TransactionExecutor;
-import org.apache.tephra.TransactionExecutorFactory;
+import org.apache.tephra.RetryStrategies;
+import org.apache.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -59,34 +72,45 @@ import javax.annotation.Nullable;
 /**
  * Handles reading/writing of file metadata.
  */
-public final class FileMetaDataManager {
+public class FileMetaDataManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileMetaDataManager.class);
-  private static final byte[] COLUMN_PREFIX_VERSION = new byte[] {1};
-  private static final byte[] ROW_KEY_PREFIX = Bytes.toBytes(200);
-  private static final byte[] ROW_KEY_PREFIX_END = Bytes.toBytes(201);
+
+  private static final byte[] ROW_KEY_PREFIX = LoggingStoreTableUtil.FILE_META_ROW_KEY_PREFIX;
+  private static final byte[] ROW_KEY_PREFIX_END = Bytes.stopKeyForPrefix(ROW_KEY_PREFIX);
   private static final NavigableMap<?, ?> EMPTY_MAP = Maps.unmodifiableNavigableMap(new TreeMap());
 
   private final RootLocationFactory rootLocationFactory;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final String logBaseDir;
-  private final LogSaverTableUtil tableUtil;
-  private final TransactionExecutorFactory transactionExecutorFactory;
   private final Impersonator impersonator;
+  private final DatasetFramework datasetFramework;
+  private final Transactional transactional;
 
-  /// Note: The FileMetaDataManager needs to have a RootLocationFactory because for custom mapped namespaces the
+  // Note: The FileMetaDataManager needs to have a RootLocationFactory because for custom mapped namespaces the
   // location mapped to a namespace are from root of the filesystem. The FileMetaDataManager stores a location in
   // bytes to a hbase table and to construct it back to a Location it needs to work with a root based location factory.
   @Inject
-  public FileMetaDataManager(final LogSaverTableUtil tableUtil, TransactionExecutorFactory txExecutorFactory,
-                             RootLocationFactory rootLocationFactory,
-                             NamespacedLocationFactory namespacedLocationFactory, CConfiguration cConf,
-                             Impersonator impersonator) {
-    this.tableUtil = tableUtil;
-    this.transactionExecutorFactory = txExecutorFactory;
+  FileMetaDataManager(CConfiguration cConf, RootLocationFactory rootLocationFactory,
+                      NamespacedLocationFactory namespacedLocationFactory, Impersonator impersonator,
+                      DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     this.rootLocationFactory = rootLocationFactory;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
     this.impersonator = impersonator;
+    this.datasetFramework = datasetFramework;
+    this.transactional = Transactions.createTransactionalWithRetry(
+      Transactions.createTransactional(new MultiThreadDatasetCache(
+        new SystemDatasetInstantiator(datasetFramework), txClient,
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
+      RetryStrategies.retryOnConflict(20, 100)
+    );
+  }
+
+  /**
+   * Returns the {@link Table} for storing metadata.
+   */
+  private Table getMetaTable(DatasetContext context) throws IOException, DatasetManagementException {
+    return LoggingStoreTableUtil.getMetadataTable(datasetFramework, context);
   }
 
   /**
@@ -105,31 +129,6 @@ public final class FileMetaDataManager {
   /**
    * Persists meta data associated with a log file.
    *
-   * @param identifier logging context identifier.
-   * @param eventTimeMs start log time associated with the file.
-   * @param currentTimeMs current time during file creation.
-   * @param location log file location.
-   */
-  public void writeMetaData(final LogPathIdentifier identifier,
-                            final long eventTimeMs,
-                            final long currentTimeMs,
-                            final Location location) throws Exception {
-    LOG.debug("Writing meta data for logging context {} with startTimeMs {} sequence Id {} and location {}",
-               identifier.getRowKey(), eventTimeMs, currentTimeMs, location);
-
-    execute(new TransactionExecutor.Procedure<Table>() {
-      @Override
-      public void apply(Table table) throws Exception {
-        // add column version prefix for new format
-        byte[] columnKey = Bytes.add(COLUMN_PREFIX_VERSION, Bytes.toBytes(eventTimeMs), Bytes.toBytes(currentTimeMs));
-        table.put(getRowKey(identifier), columnKey, Bytes.toBytes(location.toURI().toString()));
-      }
-    });
-  }
-
-  /**
-   * Persists meta data associated with a log file.
-   *
    * @param logPartition partition name that is used to group log messages
    * @param startTimeMs start log time associated with the file.
    * @param location log file.
@@ -140,12 +139,12 @@ public final class FileMetaDataManager {
     LOG.debug("Writing meta data for logging context {} as startTimeMs {} and location {}",
               logPartition, startTimeMs, location);
 
-    execute(new TransactionExecutor.Procedure<Table>() {
+    transactional.execute(new TxRunnable() {
       @Override
-      public void apply(Table table) throws Exception {
-        table.put(getRowKey(logPartition),
-                  Bytes.toBytes(startTimeMs),
-                  Bytes.toBytes(location.toURI().toString()));
+      public void run(DatasetContext context) throws Exception {
+        getMetaTable(context).put(getRowKey(logPartition),
+                                  Bytes.toBytes(startTimeMs),
+                                  Bytes.toBytes(location.toURI().getPath()));
       }
     });
   }
@@ -157,11 +156,11 @@ public final class FileMetaDataManager {
    * @return Sorted map containing key as start time, and value as log file.
    */
   public NavigableMap<Long, Location> listFiles(final LoggingContext loggingContext) throws Exception {
-    return execute(new TransactionExecutor.Function<Table, NavigableMap<Long, Location>>() {
+    return Transactions.execute(transactional, new TxCallable<NavigableMap<Long, Location>>() {
       @Override
-      public NavigableMap<Long, Location> apply(Table table) throws Exception {
+      public NavigableMap<Long, Location> call(DatasetContext context) throws Exception {
         NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
-        final Row cols = table.get(getRowKey(loggingContext));
+        final Row cols = getMetaTable(context).get(getRowKey(loggingContext));
 
         if (cols.isEmpty()) {
           //noinspection unchecked
@@ -173,9 +172,10 @@ public final class FileMetaDataManager {
           @Override
           public Void call() throws Exception {
             for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
+              String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
               // the location can be any location from on the filesystem for custom mapped namespaces
               files.put(Bytes.toLong(entry.getKey()),
-                        rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))));
+                        Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath));
             }
             return null;
           }
@@ -193,10 +193,11 @@ public final class FileMetaDataManager {
    * @return List of {@link LogLocation}
    */
   public List<LogLocation> listFiles(final LogPathIdentifier logPathIdentifier) throws Exception {
-    return execute(new TransactionExecutor.Function<Table, List<LogLocation>>() {
+    return Transactions.execute(transactional, new TxCallable<List<LogLocation>>() {
+
       @Override
-      public List<LogLocation> apply(Table table) throws Exception {
-        final Row cols = table.get(getRowKey(logPathIdentifier));
+      public List<LogLocation> call(DatasetContext context) throws Exception {
+        final Row cols = getMetaTable(context).get(getRowKey(logPathIdentifier));
 
         if (cols.isEmpty()) {
           //noinspection unchecked
@@ -206,6 +207,7 @@ public final class FileMetaDataManager {
         final List<LogLocation> files = new ArrayList<>();
 
         for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
+          String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
           // the location can be any location from on the filesystem for custom mapped namespaces
           if (entry.getKey().length == 8) {
             // old format
@@ -213,15 +215,15 @@ public final class FileMetaDataManager {
                                       Bytes.toLong(entry.getKey()),
                                       // use 0 as sequence id for the old format
                                       0,
-                                      rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))),
+                                      Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath),
                                       logPathIdentifier.getNamespaceId(), impersonator));
-          } else if  (entry.getKey().length == 17) {
+          } else if (entry.getKey().length == 17) {
             // new format
             files.add(new LogLocation(LogLocation.VERSION_1,
                                       // skip the first (version) byte
                                       Bytes.toLong(entry.getKey(), 1, Bytes.SIZEOF_LONG),
                                       Bytes.toLong(entry.getKey(), 9, Bytes.SIZEOF_LONG),
-                                      rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))),
+                                      Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath),
                                       logPathIdentifier.getNamespaceId(), impersonator));
           }
         }
@@ -241,49 +243,54 @@ public final class FileMetaDataManager {
   @Nullable
   public TableKey scanFiles(final TableKey startTableKey, final int limit,
                             final Processor<URI, Set<URI>> processor) {
-    return execute(new TransactionExecutor.Function<Table, TableKey>() {
-      @Override
-      public TableKey apply(Table table) throws Exception {
-        byte[] startKey = getRowKey(startTableKey.getRowKey());
-        byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
-        byte[] startColumn = startTableKey.getStartColumn();
+    try {
+      return Transactions.execute(transactional, new TxCallable<TableKey>() {
+        @Override
+        public TableKey call(DatasetContext context) throws Exception {
+          byte[] startKey = getRowKey(startTableKey.getRowKey());
+          byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
+          byte[] startColumn = startTableKey.getStartColumn();
 
-        try (Scanner scanner = table.scan(startKey, stopKey)) {
-          Row row;
-          int colCount = 0;
+          try (Scanner scanner = getMetaTable(context).scan(startKey, stopKey)) {
+            Row row;
+            int colCount = 0;
 
-          while ((row = scanner.next()) != null) {
-            // Get the next logging context
-            byte[] rowKey = row.getRow();
-            byte[] stopCol = null;
+            while ((row = scanner.next()) != null) {
+              // Get the next logging context
+              byte[] rowKey = row.getRow();
+              byte[] stopCol = null;
 
-            // Go through files for a logging context
-            for (final Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
-              byte[] colName = entry.getKey();
-              byte[] colValue = entry.getValue();
+              // Go through files for a logging context
+              for (final Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
+                byte[] colName = entry.getKey();
+                byte[] colValue = entry.getValue();
 
-              // while processing a row key, if start column is present, then it should be considered only for the
-              // first time. Skip any column less/equal to start column
-              if (startColumn != null && Bytes.compareTo(startColumn, colName) >= 0) {
-                continue;
+                // while processing a row key, if start column is present, then it should be considered only for the
+                // first time. Skip any column less/equal to start column
+                if (startColumn != null && Bytes.compareTo(startColumn, colName) >= 0) {
+                  continue;
+                }
+
+                // Stop if we exceeded the limit
+                if (colCount >= limit) {
+                  //  return current row key if we exceeded the limit
+                  return new TableKey(getLogPartition(rowKey), stopCol);
+                }
+
+                stopCol = colName;
+                colCount++;
+                String absolutePath = URI.create(Bytes.toString(colValue)).getPath();
+                processor.process(Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath).toURI());
               }
-
-              // Stop if we exceeded the limit
-              if (colCount >= limit) {
-                //  return current row key if we exceeded the limit
-                return new TableKey(getLogPartition(rowKey), stopCol);
-              }
-
-              stopCol = colName;
-              colCount++;
-              processor.process(new URI(Bytes.toString(colValue)));
+              startColumn = null;
             }
-            startColumn = null;
           }
+          return null;
         }
-        return null;
-      }
-    });
+      });
+    } catch (TransactionFailureException e) {
+      throw new RuntimeException(Objects.firstNonNull(e.getCause(), e));
+    }
   }
 
   /**
@@ -315,9 +322,10 @@ public final class FileMetaDataManager {
    * @return total number of columns deleted.
    */
   public int cleanMetaData(final long untilTime, final DeleteCallback callback) throws Exception {
-    return execute(new TransactionExecutor.Function<Table, Integer>() {
+    return Transactions.execute(transactional, new TxCallable<Integer>() {
       @Override
-      public Integer apply(Table table) throws Exception {
+      public Integer call(DatasetContext context) throws Exception {
+        Table table = getMetaTable(context);
         int deletedColumns = 0;
         try (Scanner scanner = table.scan(ROW_KEY_PREFIX, ROW_KEY_PREFIX_END)) {
           Row row;
@@ -347,7 +355,8 @@ public final class FileMetaDataManager {
             for (final Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
               try {
                 byte[] colName = entry.getKey();
-                URI file = new URI(Bytes.toString(entry.getValue()));
+                String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
+                URI file = Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath).toURI();
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("Got file {} with start time {}", file, Bytes.toLong(colName));
                 }
@@ -363,7 +372,8 @@ public final class FileMetaDataManager {
                 Location fileLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
                   @Override
                   public Location call() throws Exception {
-                    return rootLocationFactory.create(new URI(Bytes.toString(entry.getValue())));
+                    String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
+                    return Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath);
                   }
                 });
 
@@ -393,40 +403,6 @@ public final class FileMetaDataManager {
     });
   }
 
-  private void execute(TransactionExecutor.Procedure<Table> func) {
-    try {
-      Table table = tableUtil.getMetaTable();
-      if (table instanceof TransactionAware) {
-        TransactionExecutor txExecutor = Transactions.createTransactionExecutor(transactionExecutorFactory,
-                                                                                (TransactionAware) table);
-        txExecutor.execute(func, table);
-      } else {
-        throw new RuntimeException(String.format("Table %s is not TransactionAware, " +
-                                                   "Exception while trying to cast it to TransactionAware. " +
-                                                   "Please check why the table is not TransactionAware", table));
-      }
-    } catch (Exception e) {
-      throw new RuntimeException(String.format("Error accessing %s table", tableUtil.getMetaTableName()), e);
-    }
-  }
-
-  private <T> T execute(TransactionExecutor.Function<Table, T> func) {
-    try {
-      Table table = tableUtil.getMetaTable();
-      if (table instanceof TransactionAware) {
-        TransactionExecutor txExecutor = Transactions.createTransactionExecutor(transactionExecutorFactory,
-                                                                                (TransactionAware) table);
-        return txExecutor.execute(func, table);
-      } else {
-        throw new RuntimeException(String.format("Table %s is not TransactionAware, " +
-                                                   "Exception while trying to cast it to TransactionAware. " +
-                                                   "Please check why the table is not TransactionAware", table));
-      }
-    } catch (Exception e) {
-      throw new RuntimeException(String.format("Error accessing %s table", tableUtil.getMetaTableName()), e);
-    }
-  }
-
   private String getLogPartition(byte[] rowKey) {
     int offset = ROW_KEY_PREFIX_END.length;
     int length = rowKey.length - offset;
@@ -452,7 +428,7 @@ public final class FileMetaDataManager {
   }
 
   private byte[] getRowKey(LogPathIdentifier logPathIdentifier) {
-    return Bytes.add(ROW_KEY_PREFIX, logPathIdentifier.getRowKey().getBytes());
+    return Bytes.add(ROW_KEY_PREFIX, logPathIdentifier.getRowKey().getBytes(StandardCharsets.UTF_8));
   }
 
   private byte [] getMaxKey(Map<byte[], byte[]> map) {

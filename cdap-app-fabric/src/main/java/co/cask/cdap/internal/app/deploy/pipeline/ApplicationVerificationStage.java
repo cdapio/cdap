@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,6 +35,9 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.verification.Verifier;
 import co.cask.cdap.app.verification.VerifyResult;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.verification.ApplicationVerification;
 import co.cask.cdap.internal.app.verification.DatasetCreationSpecVerifier;
@@ -46,6 +49,8 @@ import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -53,10 +58,14 @@ import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * This {@link co.cask.cdap.pipeline.Stage} is responsible for verifying
@@ -69,13 +78,14 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   private final Map<Class<?>, Verifier<?>> verifiers = Maps.newIdentityHashMap();
   private final DatasetFramework dsFramework;
   private final Store store;
+  private final OwnerAdmin ownerAdmin;
 
-  public ApplicationVerificationStage(Store store, DatasetFramework dsFramework) {
+  public ApplicationVerificationStage(Store store, DatasetFramework dsFramework, OwnerAdmin ownerAdmin) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.dsFramework = dsFramework;
+    this.ownerAdmin = ownerAdmin;
   }
-
 
   /**
    * Receives an input containing application specification and location
@@ -90,8 +100,23 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
     ApplicationSpecification specification = input.getSpecification();
     ApplicationId appId = input.getApplicationId();
 
+    // verify that the owner principal is valid if one was given
+    if (input.getOwnerPrincipal() != null) {
+      SecurityUtil.validateKerberosPrincipal(input.getOwnerPrincipal());
+    }
+
+    Collection<ApplicationId> allAppVersionsAppIds = store.getAllAppVersionsAppIds(appId);
+    // if allAppVersionsAppIds.isEmpty() is false that means some version of this app already exists so we should
+    // verify that the owner is same
+    if (!allAppVersionsAppIds.isEmpty()) {
+      verifyOwner(appId, input.getOwnerPrincipal());
+    }
+
     verifySpec(appId, specification);
-    verifyData(appId, specification);
+    // We are verifying owner of dataset/stream at this stage itself even though the creation will fail in later
+    // stage if the owner is different because we don't want to end up in scenario where we created few dataset/streams
+    // and the failed because some dataset/stream already exists and have different owner
+    verifyData(appId, specification, input.getOwnerPrincipal());
     verifyPrograms(appId, specification);
 
     // Emit the input to next stage.
@@ -107,7 +132,8 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   }
 
   protected void verifyData(ApplicationId appId,
-                            ApplicationSpecification specification) throws DatasetManagementException {
+                            ApplicationSpecification specification,
+                            @Nullable KerberosPrincipalId specifiedOwnerPrincipal) throws DatasetManagementException {
     // NOTE: no special restrictions on dataset module names, etc
     VerifyResult result;
     for (DatasetCreationSpec dataSetCreateSpec : specification.getDatasets().values()) {
@@ -124,6 +150,11 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
           (String.format("Cannot Deploy Dataset : %s with Type : %s : Dataset with different Type Already Exists",
                          dsName, dataSetCreateSpec.getTypeName()));
       }
+
+      // if the dataset existed verify its owner is same.
+      if (existingSpec != null) {
+        verifyOwner(datasetInstanceId, specifiedOwnerPrincipal);
+      }
     }
 
     for (StreamSpecification spec : specification.getStreams().values()) {
@@ -131,6 +162,27 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
       if (!result.isSuccess()) {
         throw new RuntimeException(result.getMessage());
       }
+      // if the stream existed verify the owner to be the same
+      if (store.getStream(appId.getNamespaceId(), spec.getName()) != null) {
+        verifyOwner(appId.getParent().stream(spec.getName()), specifiedOwnerPrincipal);
+      }
+    }
+  }
+
+  private void verifyOwner(NamespacedEntityId entityId,
+                           @Nullable KerberosPrincipalId specifiedOwnerPrincipal) throws DatasetManagementException {
+    KerberosPrincipalId existingOwnerPrincipal;
+    try {
+      existingOwnerPrincipal = ownerAdmin.getOwner(entityId);
+      boolean equals = Objects.equals(existingOwnerPrincipal, specifiedOwnerPrincipal);
+      // Not giving existing owner information as it might be unacceptable under some security scenarios
+      Preconditions.checkArgument(equals, String.format("'%s' already exists and the specified '%s' : '%s' is " +
+                                                          "not same as existing one. '%s' of an entity cannot " +
+                                                          "be updated.", entityId,
+                                                        Constants.Security.PRINCIPAL, specifiedOwnerPrincipal,
+                                                        Constants.Security.PRINCIPAL));
+    } catch (IOException e) {
+      throw new DatasetManagementException(e.getMessage(), e);
     }
   }
 

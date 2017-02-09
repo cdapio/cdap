@@ -18,6 +18,7 @@ import React, {Component, PropTypes} from 'react';
 import T from 'i18n-react';
 require('./EntityCardHeader.scss');
 import classnames from 'classnames';
+import isEmpty from 'lodash/isEmpty';
 
 const classNames = require('classnames');
 
@@ -46,16 +47,13 @@ export default class EntityCardHeader extends Component {
     return (
       <div className="card-header-wrapper">
         {
-          this.props.successMessage ?
+          !isEmpty(this.props.successMessage) ?
             (
               <div className="entity-card-header success-message">
                 <h4>
                   <span>
                     {
-                      this.props.entity.type === 'program' ?
-                        T.translate(`features.FastAction.setPreferencesSuccess.program`)
-                      :
-                        T.translate(`features.FastAction.setPreferencesSuccess.application`)
+                      this.props.successMessage
                     }
                   </span>
                 </h4>
@@ -90,5 +88,5 @@ EntityCardHeader.propTypes = {
   systemTags: PropTypes.array,
   className: PropTypes.string,
   onClick: PropTypes.func,
-  successMessage: PropTypes.bool
+  successMessage: PropTypes.string
 };

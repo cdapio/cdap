@@ -28,7 +28,6 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.hbase.ColumnFamilyDescriptor;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
-import co.cask.cdap.spi.hbase.TableDescriptor;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
@@ -434,15 +433,17 @@ public abstract class HBaseTableUtil {
    *
    * @param ddlExecutor the {@link HBaseAdmin} to use to communicate with HBase
    * @param namespaceId namespace for which the tables are being deleted
+   * @param hConf The {@link Configuration} instance
    * @param predicate The {@link Predicate} to decide whether to drop a table or not
    * @throws IOException
    */
   public void deleteAllInNamespace(HBaseDDLExecutor ddlExecutor, String namespaceId,
-                                   Predicate<TableId> predicate) throws IOException {
-    HBaseAdmin admin = new HBaseAdmin((Configuration) ddlExecutor.getConf());
-    for (TableId tableId : listTablesInNamespace(admin, namespaceId)) {
-      if (predicate.apply(tableId)) {
-        dropTable(ddlExecutor, tableId);
+                                   Configuration hConf, Predicate<TableId> predicate) throws IOException {
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      for (TableId tableId : listTablesInNamespace(admin, namespaceId)) {
+        if (predicate.apply(tableId)) {
+          dropTable(ddlExecutor, tableId);
+        }
       }
     }
   }
@@ -452,10 +453,12 @@ public abstract class HBaseTableUtil {
    *
    * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
    * @param namespaceId namespace for which the tables are being deleted
+   * @param hConf The {@link Configuration} instance
    * @throws IOException
    */
-  public void deleteAllInNamespace(HBaseDDLExecutor ddlExecutor, String namespaceId) throws IOException {
-    deleteAllInNamespace(ddlExecutor, namespaceId, Predicates.<TableId>alwaysTrue());
+  public void deleteAllInNamespace(HBaseDDLExecutor ddlExecutor, String namespaceId, Configuration hConf)
+    throws IOException {
+    deleteAllInNamespace(ddlExecutor, namespaceId, hConf, Predicates.<TableId>alwaysTrue());
   }
 
   /**
@@ -485,7 +488,7 @@ public abstract class HBaseTableUtil {
   }
 
   /**
-   * Truncates a table
+   * Truncates a table.
    * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
    * @param tableId  {@link TableId} for the specified table
    * @throws IOException
@@ -493,6 +496,21 @@ public abstract class HBaseTableUtil {
   public void truncateTable(HBaseDDLExecutor ddlExecutor, TableId tableId) throws IOException {
     TableName tableName = HTableNameConverter.toTableName(getTablePrefix(cConf), tableId);
     ddlExecutor.truncateTable(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
+  }
+
+  /**
+   * Grants permissions on a table.
+   * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
+   * @param tableId  {@link TableId} for the specified table
+   * @param permissions A map from user or group name to the permissions for that user or group, given as a string
+   *                    containing only characters 'a'(Admin), 'c'(Create), 'r'(Read), 'w'(Write), and 'x'(Execute).
+   *                    Group names must be prefixed with the character '@'.
+   * @throws IOException
+   */
+  public void grantPermissions(HBaseDDLExecutor ddlExecutor, TableId tableId,
+                               Map<String, String> permissions) throws IOException {
+    TableName tableName = HTableNameConverter.toTableName(getTablePrefix(cConf), tableId);
+    ddlExecutor.grantPermissions(tableName.getNamespaceAsString(), tableName.getQualifierAsString(), permissions);
   }
 
   /**

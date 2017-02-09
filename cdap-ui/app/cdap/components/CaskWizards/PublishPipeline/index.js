@@ -38,6 +38,7 @@ export default class PublishPipelineWizard extends Component {
       pipelineNameIsEmpty: false
     };
 
+    this.successInfo = {};
     this.setDefaultConfig();
 
     PublishPipelineWizardStore.subscribe(() => {
@@ -52,7 +53,26 @@ export default class PublishPipelineWizard extends Component {
     });
     this.eventEmitter = ee(ee);
   }
-
+  componentWillMount() {
+    let action = this.props.input.action;
+    let filename = head(action.arguments.filter(arg => arg.name === 'config')).value;
+    PublishPipelineActionCreator
+      .fetchPipelineConfig({
+        entityName: this.props.input.package.name,
+        entityVersion: this.props.input.package.version,
+        filename
+      });
+  }
+  componentWillReceiveProps({isOpen}) {
+    this.setState({
+      showWizard: isOpen
+    });
+  }
+  componentWillUnmount() {
+    PublishPipelineWizardStore.dispatch({
+      type: PublishPipelineAction.onReset
+    });
+  }
   setDefaultConfig() {
     const args = this.props.input.action.arguments || [];
 
@@ -67,15 +87,15 @@ export default class PublishPipelineWizard extends Component {
       }
     });
   }
-  componentWillMount() {
-    let action = this.props.input.action;
-    let filename = head(action.arguments.filter(arg => arg.name === 'config')).value;
-    PublishPipelineActionCreator
-      .fetchPipelineConfig({
-        entityName: this.props.input.package.name,
-        entityVersion: this.props.input.package.version,
-        filename
-      });
+  buildSuccessInfo(name, draftId, namespace) {
+    let defaultSuccessMessage = T.translate('features.Wizard.PublishPipeline.success');
+    let buttonLabel = T.translate('features.Wizard.PublishPipeline.callToAction');
+    let linkLabel = T.translate('features.Wizard.GoToHomePage');
+    this.successInfo.message = `${defaultSuccessMessage} "${name}".`;
+    this.successInfo.buttonLabel = buttonLabel;
+    this.successInfo.buttonUrl = `/hydrator/ns/${namespace}/studio?draftId=${draftId}`;
+    this.successInfo.linkLabel = linkLabel;
+    this.successInfo.linkUrl = `/cdap/ns/${namespace}`;
   }
   toggleWizard(returnResult) {
     if (this.state.showWizard) {
@@ -83,16 +103,6 @@ export default class PublishPipelineWizard extends Component {
     }
     this.setState({
       showWizard: !this.state.showWizard
-    });
-  }
-  componentWillReceiveProps({isOpen}) {
-    this.setState({
-      showWizard: isOpen
-    });
-  }
-  componentWillUnmount() {
-    PublishPipelineWizardStore.dispatch({
-      type: PublishPipelineAction.onReset
     });
   }
   publishPipeline() {
@@ -106,11 +116,12 @@ export default class PublishPipelineWizard extends Component {
       __ui__: {}
     };
     let currentNamespace = NamespaceStore.getState().selectedNamespace;
+    let draftId;
     if (this.props.input.action.type === 'create_pipeline_draft') {
       return MyUserStoreApi
         .get()
         .flatMap((res) => {
-          let draftId = shortid.generate();
+          draftId = shortid.generate();
           draftConfig.__ui__.draftId = draftId;
           res = res || {};
           res.property = res.property || {};
@@ -120,6 +131,7 @@ export default class PublishPipelineWizard extends Component {
           return MyUserStoreApi.set({}, res.property);
         })
         .map((res) => {
+          this.buildSuccessInfo(name, draftId, currentNamespace);
           this.eventEmitter.emit(globalEvents.PUBLISHPIPELINE);
           return res;
         });
@@ -159,6 +171,7 @@ export default class PublishPipelineWizard extends Component {
                 wizardConfig={PublishPipelineWizardConfig}
                 wizardType="PublishPipeline"
                 onSubmit={this.publishPipeline.bind(this)}
+                successInfo={this.successInfo}
                 onClose={this.toggleWizard.bind(this)}
                 store={PublishPipelineWizardStore}
                 finishButtonDisabled={this.state.pipelineNameIsEmpty}

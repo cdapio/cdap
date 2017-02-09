@@ -31,6 +31,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
+import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -41,7 +42,6 @@ import co.cask.cdap.proto.metadata.Metadata;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
-import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -428,7 +428,7 @@ public class MetadataStoreTest {
                                         int offset, int limit, int numCursors, boolean showHidden)
     throws BadRequestException {
     return store.search(
-      ns, searchQuery, EnumSet.allOf(MetadataSearchTargetType.class),
+      ns, searchQuery, EnumSet.allOf(EntityTypeSimpleName.class),
       SortInfo.DEFAULT, offset, limit, numCursors, null, showHidden);
   }
 

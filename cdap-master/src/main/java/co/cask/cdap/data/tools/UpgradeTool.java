@@ -69,7 +69,7 @@ import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedStreamSizeSc
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
-import co.cask.cdap.logging.save.LogSaverTableUtil;
+import co.cask.cdap.logging.meta.LoggingStoreTableUtil;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
@@ -314,9 +314,7 @@ public class UpgradeTool {
     LOG.info("Initializing Dataset Framework...");
     initializeDSFramework(cConf, dsFramework, includeNewDatasets);
     LOG.info("Building and uploading new HBase coprocessors...");
-    for (CoprocessorManager.Type type : CoprocessorManager.Type.values()) {
-      coprocessorManager.ensureCoprocessorExists(type);
-    }
+    coprocessorManager.ensureCoprocessorExists();
   }
 
   /**
@@ -577,7 +575,7 @@ public class UpgradeTool {
     // config store
     DefaultConfigStore.setupDatasets(datasetFramework);
     // logs metadata
-    LogSaverTableUtil.setupDatasets(datasetFramework);
+    LoggingStoreTableUtil.setupDatasets(datasetFramework);
     // scheduler metadata
     ScheduleStoreTableUtil.setupDatasets(datasetFramework);
 

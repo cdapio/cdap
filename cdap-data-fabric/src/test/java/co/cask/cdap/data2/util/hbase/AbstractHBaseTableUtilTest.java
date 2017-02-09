@@ -102,6 +102,42 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   @Test
+  public void testGrant() throws Exception {
+    String namespace = "perm";
+    TableId tableId = TableId.from("perm", "priv");
+
+    // create a namespace and table
+    if (namespacesSupported()) {
+      createNamespace(namespace);
+    }
+    create(tableId);
+    Assert.assertTrue(exists(tableId));
+
+    // attempt to assign invalid permissions to the namespace or the table
+    try {
+      ddlExecutor.grantPermissions(tableId.getNamespace(), null, ImmutableMap.of("joe", "iii"));
+      Assert.fail("Grant should have failed with invalid permissions");
+    } catch (IOException e) {
+      Assert.assertTrue(e.getMessage().contains("Unknown Action"));
+    }
+    try {
+      getTableUtil().grantPermissions(ddlExecutor, tableId, ImmutableMap.of("@readers", "RXT"));
+      Assert.fail("Grant should have failed with invalid permissions");
+    } catch (IOException e) {
+      Assert.assertTrue(e.getMessage().contains("Unknown Action"));
+    }
+
+    // assign some privileges to the namespace
+    ddlExecutor.grantPermissions(tableId.getNamespace(), null, ImmutableMap.of("joe", "RX", "@readers", "CA"));
+    // assign some privileges to the table
+    getTableUtil().grantPermissions(ddlExecutor, tableId, ImmutableMap.of("joe", "RWX", "@readers", "RX"));
+
+    // clean up
+    drop(tableId);
+    deleteNamespace(namespace);
+  }
+
+  @Test
   public void testTableSizeMetrics() throws Exception {
     HBaseTableUtil tableUtil = getTableUtil();
     // namespace should not exist
@@ -318,7 +354,8 @@ public abstract class AbstractHBaseTableUtilTest {
     Assert.assertEquals(allTableIds, ImmutableSet.copyOf(tableUtil.listTables(hAdmin)));
 
     Assert.assertEquals(4, hAdmin.listTables().length);
-    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(new NamespaceId("foo")));
+    tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(new NamespaceId("foo")),
+                                   hAdmin.getConfiguration());
     Assert.assertEquals(1, hAdmin.listTables().length);
 
     drop(tableIdInOtherNamespace);
@@ -341,7 +378,7 @@ public abstract class AbstractHBaseTableUtilTest {
     ).get(60, TimeUnit.SECONDS);
 
     Assert.assertEquals(4, hAdmin.listTables().length);
-    tableUtil.deleteAllInNamespace(ddlExecutor, NamespaceId.DEFAULT.getEntityName());
+    tableUtil.deleteAllInNamespace(ddlExecutor, NamespaceId.DEFAULT.getEntityName(), hAdmin.getConfiguration());
     Assert.assertEquals(1, hAdmin.listTables().length);
 
     drop(tableIdInOtherNamespace);
@@ -363,7 +400,7 @@ public abstract class AbstractHBaseTableUtilTest {
     List<TableId> actualTableIds = getTableUtil().listTablesInNamespace(hAdmin, HBASE_NS);
     Assert.assertEquals(1, actualTableIds.size());
 
-    getTableUtil().deleteAllInNamespace(ddlExecutor, HBASE_NS);
+    getTableUtil().deleteAllInNamespace(ddlExecutor, HBASE_NS, hAdmin.getConfiguration());
     actualTableIds = getTableUtil().listTablesInNamespace(hAdmin, HBASE_NS);
     Assert.assertTrue(actualTableIds.isEmpty());
     deleteNamespace(CDAP_NS);
@@ -388,6 +425,7 @@ public abstract class AbstractHBaseTableUtilTest {
 
     Assert.assertEquals(4, hAdmin.listTables().length);
     tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(new NamespaceId("foonamespace")),
+                                   hAdmin.getConfiguration(),
                                    new Predicate<TableId>() {
       @Override
       public boolean apply(TableId input) {

@@ -19,7 +19,6 @@ $entity-card-border: 1px solid #cccccc;
 $jump-button-container-size: 80px;
 
 @mixin selected-card($color) {
-  border: 3px solid $color;
   .card-body {
     background: $color;
     color: white;
@@ -61,11 +60,19 @@ $jump-button-container-size: 80px;
     &.application {
       @include selected-card($application-entity-header-bg);
     }
+    &.datasetinstance {
+      @include selected-card($datasetinstance-entity-header-bg);
+    }
+    &.stream {
+      @include selected-card($stream-entity-header-bg);
+    }
   }
 
-  // FIXME: This will be eventually removed when all the entities are clickable.
+  // FIXME: Right now only programs and artifacts will not be clickable.
   &.datapipeline,
-  &.application {
+  &.application,
+  &.datasetinstance,
+  &.stream {
     .cask-card {
       .card-header { cursor: pointer; }
     }
@@ -83,7 +90,6 @@ $jump-button-container-size: 80px;
     }
     .card-body {
       padding: 0;
-      border-bottom: 3px solid transparent;
     }
   }
   .entity-information {

@@ -325,8 +325,10 @@ public class ProgramLifecycleService extends AbstractIdleService {
     final ProgramController controller = runtimeInfo.getController();
     final String runId = controller.getRunId().getId();
     final String twillRunId = runtimeInfo.getTwillRunId() == null ? null : runtimeInfo.getTwillRunId().getId();
-    if (programId.getType() != ProgramType.MAPREDUCE && programId.getType() != ProgramType.SPARK) {
-      // MapReduce/Spark state recording is done by the MapReduceProgramRunner/SparkProgramRunner
+    if (programId.getType() != ProgramType.MAPREDUCE && programId.getType() != ProgramType.SPARK
+      && programId.getType() != ProgramType.WORKFLOW) {
+      // MapReduce state recording is done by the MapReduceProgramRunner, Spark state recording
+      // is done by SparkProgramRunner, and Workflow state recording is done by WorkflowProgramRunner.
       // TODO [JIRA: CDAP-2013] Same needs to be done for other programs as well
       controller.addListener(new AbstractListener() {
         @Override
@@ -1173,12 +1175,12 @@ public class ProgramLifecycleService extends AbstractIdleService {
     @Override
     public void run() {
       try {
-        RunRecordsCorrectorRunnable.LOG.debug("Start correcting invalid run records ...");
+        RunRecordsCorrectorRunnable.LOG.trace("Start correcting invalid run records ...");
 
         // Lets update the running programs run records
         programLifecycleService.validateAndCorrectRunningRunRecords();
 
-        RunRecordsCorrectorRunnable.LOG.debug("End correcting invalid run records.");
+        RunRecordsCorrectorRunnable.LOG.trace("End correcting invalid run records.");
       } catch (Throwable t) {
         // Ignore any exception thrown since this behaves like daemon thread.
         //noinspection ThrowableResultOfMethodCallIgnored

@@ -15,18 +15,78 @@
  */
 
 import React, {PropTypes} from 'react';
-import isObject from 'lodash/isObject';
+import Link from 'react-router/Link';
+import NamespaceStore from 'services/NamespaceStore';
+import isEmpty from 'lodash/isEmpty';
+import T from 'i18n-react';
+require('./404.scss');
 
-export default function Page404({location}) {
-  if (isObject(location)) {
-    return (
-      <h1> Page: {location.pathname} not found </h1>
-    );
-  }
+export default function Page404({entityName, entityType, children}) {
+  let namespace = NamespaceStore.getState().selectedNamespace;
   return (
-    <h1> Page not found </h1>
+    <div className="page-not-found">
+      <img src="/cdap_assets/img/404.png" />
+      <h1>
+        <strong>
+          {
+            isEmpty(entityType) || isEmpty(entityName) ?
+              T.translate('features.Page404.genericMessage')
+            :
+              (
+                <span>
+                  {T.translate('features.Page404.entityMessage', {entityType})}
+                  <i> {entityName} </i>
+                </span>
+              )
+          }
+        </strong>
+      </h1>
+      {
+        children ?
+          children
+        :
+          <div className="message-section">
+            <h4>
+              <strong>
+                {T.translate('features.Page404.subtitleMessage1')}
+              </strong>
+            </h4>
+            <div className="navigation-section text-xs-center">
+              <div>
+                {T.translate('features.Page404.subtitleMessage2')}
+                <Link to={`/ns/${namespace}/`}>
+                  {T.translate('features.Page404.overviewLabel')}
+                </Link>
+              </div>
+              <div>
+                {T.translate('features.Page404.manageLabel')}
+                <a
+                  href={
+                    window.getHydratorUrl({
+                      stateName: 'hydrator.list',
+                      stateParams: {
+                        namespace
+                      }
+                    })
+                  }
+                >
+                  {T.translate('features.Page404.pipelinesMessage')}
+                </a>
+              </div>
+            </div>
+          </div>
+      }
+    </div>
   );
 }
+Page404.defaultProps = {
+  entityType: '',
+  entityName: ''
+};
+
 Page404.propTypes = {
-  location: PropTypes.object
+  location: PropTypes.object,
+  entityType: PropTypes.string,
+  entityName: PropTypes.string,
+  children: PropTypes.node
 };

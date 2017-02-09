@@ -22,9 +22,9 @@ import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.MetadataClient;
+import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
-import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
@@ -42,11 +42,11 @@ import java.util.Set;
  */
 public class SearchMetadataCommand extends AbstractCommand {
 
-  private static final Function<String, MetadataSearchTargetType> STRING_TO_TARGET_TYPE =
-    new Function<String, MetadataSearchTargetType>() {
+  private static final Function<String, EntityTypeSimpleName> STRING_TO_TARGET_TYPE =
+    new Function<String, EntityTypeSimpleName>() {
       @Override
-      public MetadataSearchTargetType apply(String input) {
-        return MetadataSearchTargetType.valueOf(input.toUpperCase());
+      public EntityTypeSimpleName apply(String input) {
+        return EntityTypeSimpleName.valueOf(input.toUpperCase());
       }
     };
 
@@ -89,7 +89,7 @@ public class SearchMetadataCommand extends AbstractCommand {
       "'artifact', 'app', 'dataset', 'program', 'stream', or 'view'.";
   }
 
-  private Set<MetadataSearchTargetType> parseTargetType(String typeString) {
+  private Set<EntityTypeSimpleName> parseTargetType(String typeString) {
     if (typeString == null) {
       return ImmutableSet.of();
     }

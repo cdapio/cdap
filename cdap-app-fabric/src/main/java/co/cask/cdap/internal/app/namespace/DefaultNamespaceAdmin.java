@@ -30,8 +30,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.security.AuthEnforce;
-import co.cask.cdap.common.security.ImpersonationInfo;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
@@ -42,6 +40,9 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.impersonation.ImpersonationInfo;
+import co.cask.cdap.security.impersonation.ImpersonationUtils;
+import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
@@ -155,20 +156,24 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       throw new NamespaceAlreadyExistsException(namespace);
     }
 
-    // if this namespace has custom mapping then validate the given custom mapping
+    // If this namespace has custom mapping then validate the given custom mapping
     if (hasCustomMapping(metadata)) {
       validateCustomMapping(metadata);
     }
 
-    // Namespace can be created. Check if the user is authorized now.
+    // Namespace can be created. Grant all the permissions to the user.
     Principal principal = authenticationContext.getPrincipal();
     privilegesManager.grant(namespace, principal, EnumSet.allOf(Action.class));
+
     // Also grant the user who will execute programs in this namespace all privileges on the namespace
     String executionUserName;
-    if (SecurityUtil.isKerberosEnabled(cConf)) {
-      ImpersonationInfo impersonationInfo = new ImpersonationInfo(metadata, cConf);
-      String namespacePrincipal = impersonationInfo.getPrincipal();
-      executionUserName = new KerberosName(namespacePrincipal).getShortName();
+    if (SecurityUtil.isKerberosEnabled(cConf) && !NamespaceId.SYSTEM.equals(namespace)) {
+      String namespacePrincipal = metadata.getConfig().getPrincipal();
+      if (Strings.isNullOrEmpty(namespacePrincipal)) {
+        executionUserName = ImpersonationInfo.getMasterImpersonationInfo(cConf).getPrincipal();
+      } else {
+        executionUserName = new KerberosName(namespacePrincipal).getShortName();
+      }
     } else {
       executionUserName = UserGroupInformation.getCurrentUser().getShortUserName();
     }
@@ -178,9 +183,14 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     // store the meta first in the namespace store because namespacedLocationFactory needs to look up location
     // mapping from namespace config
     nsStore.create(metadata);
-
+    UserGroupInformation ugi;
+    if (NamespaceId.DEFAULT.equals(namespace)) {
+      ugi = UserGroupInformation.getCurrentUser();
+    } else {
+      ugi = impersonator.getUGI(namespace);
+    }
     try {
-      impersonator.doAs(metadata, new Callable<Void>() {
+      ImpersonationUtils.doAs(ugi, new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           storageProviderNamespaceAdmin.get().create(metadata);
@@ -193,6 +203,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       privilegesManager.revoke(namespace);
       throw new NamespaceCannotBeCreatedException(namespace, t);
     }
+    LOG.info("Namespace {} created.", metadata.getNamespaceId());
   }
 
   private void validateCustomMapping(NamespaceMeta metadata) throws Exception {

@@ -22,6 +22,8 @@ import Description from 'components/Description';
 import TimeAgo from 'react-timeago';
 import VersionsDropdown from 'components/VersionsDropdown';
 import Tags from 'components/Tags';
+import moment from 'moment';
+import T from 'i18n-react';
 
 require('./OverviewMetaSection.scss');
 
@@ -43,7 +45,55 @@ export default class OverviewMetaSection extends Component {
       });
     }
   }
-  onFastActionsUpdate() {}
+
+  renderStreamInfo() {
+    if (this.props.entity.type !== 'stream') { return null; }
+
+    const TWENTY_YEARS = 20 * 365 * 24 * 60 * 60;
+
+    let ttl = objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'ttl');
+    ttl = parseInt(ttl, 10);
+    ttl = ttl < TWENTY_YEARS ? moment.duration(ttl).humanize() : 'Forever';
+
+    return (
+      <div className="entity-info">
+        <strong>
+          {T.translate('features.Overview.Metadata.ttl')}
+        </strong>
+        <span>{ttl}</span>
+      </div>
+    );
+  }
+
+  renderDatasetInfo() {
+    if (this.props.entity.type !== 'datasetinstance') { return null; }
+
+    let type = objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'type');
+    type = type.split('.');
+    type = type[type.length - 1];
+
+    return (
+      <div className="entity-info">
+        <strong>
+          {T.translate('features.Overview.Metadata.type')}
+        </strong>
+        <span>{type}</span>
+      </div>
+    );
+  }
+
+  onFastActionSuccess(action) {
+    if (this.props.onFastActionSuccess) {
+      this.props.onFastActionSuccess(action);
+    }
+  }
+
+  onFastActionUpdate(action) {
+    if (this.props.onFastActionUpdate) {
+      this.props.onFastActionUpdate(action);
+    }
+  }
+
   render() {
     let creationTime = objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'creation-time');
     let description =  objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'description');
@@ -59,16 +109,30 @@ export default class OverviewMetaSection extends Component {
                 null
             }
             <small>
-              <TimeAgo date={parseInt(creationTime, 10)} />
+              {
+                ['datasetinstance', 'stream'].indexOf(this.props.entity.type) !== -1 ?
+                  T.translate('features.Overview.deployedLabel.data')
+                :
+                  T.translate('features.Overview.deployedLabel.app')
+              }
+              {
+                creationTime ?
+                  <TimeAgo date={parseInt(creationTime, 10)} />
+                :
+                  null
+              }
             </small>
           </div>
           <FastActions
             className="overview-fast-actions"
             entity={this.props.entity}
-            onUpdate={this.onFastActionsUpdate.bind(this)}
+            onSuccess={this.onFastActionSuccess.bind(this)}
+            onUpdate={this.onFastActionUpdate.bind(this)}
           />
         </div>
         <Description description={description} />
+        {this.renderDatasetInfo()}
+        {this.renderStreamInfo()}
         <Tags entity={this.props.entity} />
       </div>
     );
@@ -76,5 +140,7 @@ export default class OverviewMetaSection extends Component {
 }
 
 OverviewMetaSection.propTypes = {
-  entity: PropTypes.object
+  entity: PropTypes.object,
+  onFastActionSuccess: PropTypes.func,
+  onFastActionUpdate: PropTypes.func
 };

@@ -18,8 +18,10 @@ package co.cask.cdap.common.kerberos;
 
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.inject.Inject;
 
 import java.io.IOException;
@@ -53,7 +55,19 @@ public class DefaultOwnerAdmin implements OwnerAdmin {
 
   @Nullable
   @Override
+  public String getOwnerPrincipal(NamespacedEntityId entityId) throws IOException {
+    KerberosPrincipalId owner = getOwner(entityId);
+    return owner == null ? null : owner.getPrincipal();
+  }
+
+  @Nullable
+  @Override
   public KerberosPrincipalId getEffectiveOwner(NamespacedEntityId entityId) throws IOException {
+    // For program we look for application owner. In future we might want to support lookup parent owner
+    // recursively once we have a use-case for it.
+    if (entityId.getEntityType().equals(EntityType.PROGRAM)) {
+      entityId = ((ProgramId) entityId).getParent();
+    }
     KerberosPrincipalId effectiveOwner = ownerStore.getOwner(entityId);
     if (effectiveOwner != null) {
       return effectiveOwner;

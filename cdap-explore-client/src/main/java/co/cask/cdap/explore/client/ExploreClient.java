@@ -62,11 +62,13 @@ public interface ExploreClient extends Closeable {
    *
    * @param datasetInstance dataset instance id
    * @param spec the dataset specification of the dataset
+   * @param truncating whether this call to create() is part of a truncate() operation, which is in some
+   *                   case implemented using disableExplore() followed by enableExplore()
    *
    * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
    *         the success of the enable operation.
    */
-  ListenableFuture<Void> enableExploreDataset(DatasetId datasetInstance, DatasetSpecification spec);
+  ListenableFuture<Void> enableExploreDataset(DatasetId datasetInstance, DatasetSpecification spec, boolean truncating);
 
   /**
    * Updates ad-hoc exploration of the given dataset.

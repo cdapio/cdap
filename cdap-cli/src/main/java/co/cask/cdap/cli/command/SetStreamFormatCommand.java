@@ -63,7 +63,8 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
     Schema schema = getSchema(arguments);
     Map<String, String> settings = Collections.emptyMap();
     if (arguments.hasArgument(ArgumentName.SETTINGS.toString())) {
-      settings = ArgumentParser.parseMap(arguments.get(ArgumentName.SETTINGS.toString()));
+      settings = ArgumentParser.parseMap(arguments.get(ArgumentName.SETTINGS.toString()),
+                                         ArgumentName.SETTINGS.toString());
     }
     FormatSpecification formatSpecification = new FormatSpecification(formatName, schema, settings);
     StreamProperties streamProperties = new StreamProperties(currentProperties.getTTL(),

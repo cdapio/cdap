@@ -33,7 +33,6 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.transaction.Transactions;
@@ -112,44 +111,17 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
   @Test
   public void testMapreduceWithFileSet() throws Exception {
-    // test reading and writing distinct datasets, reading more than one path
-    // hack to use different datasets at each invocation of this test
-    System.setProperty("INPUT_DATASET_NAME", "numbers");
-    System.setProperty("OUTPUT_DATASET_NAME", "sums");
-
-    Map<String, String> runtimeArguments = Maps.newHashMap();
-    Map<String, String> inputArgs = Maps.newHashMap();
-    FileSetArguments.setInputPaths(inputArgs, "abc, xyz");
-    Map<String, String> outputArgs = Maps.newHashMap();
-    FileSetArguments.setOutputPath(outputArgs, "a001");
-    runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "numbers", inputArgs));
-    runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "sums", outputArgs));
     testMapreduceWithFile("numbers", "abc, xyz", "sums", "a001",
                           AppWithMapReduceUsingFileSet.class,
                           AppWithMapReduceUsingFileSet.ComputeSum.class,
-                          new BasicArguments(runtimeArguments),
-                          null,
-                          null);
+                          null, null, null);
 
     // test reading and writing same dataset
-    // hack to use different datasets at each invocation of this test
-    System.setProperty("INPUT_DATASET_NAME", "boogie");
-    System.setProperty("OUTPUT_DATASET_NAME", "boogie");
-    runtimeArguments = Maps.newHashMap();
-    inputArgs = Maps.newHashMap();
-    FileSetArguments.setInputPaths(inputArgs, "zzz");
-    outputArgs = Maps.newHashMap();
-    FileSetArguments.setOutputPath(outputArgs, "f123");
     // this time configure the output format to use # as the separator, overriding the dataset properties
-    outputArgs.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + TextOutputFormat.SEPERATOR, "#");
-    runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "boogie", inputArgs));
-    runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "boogie", outputArgs));
     testMapreduceWithFile("boogie", "zzz", "boogie", "f123",
                           AppWithMapReduceUsingFileSet.class,
                           AppWithMapReduceUsingFileSet.ComputeSum.class,
-                          new BasicArguments(runtimeArguments),
-                          null,
-                          "#"); // and also use # as the separator for validation
+                          null, null, "#"); // and also use # as the separator for validation
   }
 
   @Test
@@ -184,7 +156,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     testMapreduceWithFile("rtInput1", "abc, xyz", "rtOutput1", "a001",
                           AppWithMapReduceUsingRuntimeDatasets.class,
                           AppWithMapReduceUsingRuntimeDatasets.ComputeSum.class,
-                          new BasicArguments(runtimeArguments),
+                          runtimeArguments,
                           AppWithMapReduceUsingRuntimeDatasets.COUNTERS,
                           null);
 
@@ -221,7 +193,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     testMapreduceWithFile("rtInput2", "zzz", "rtInput2", "f123",
                           AppWithMapReduceUsingRuntimeDatasets.class,
                           AppWithMapReduceUsingRuntimeDatasets.ComputeSum.class,
-                          new BasicArguments(runtimeArguments),
+                          runtimeArguments,
                           AppWithMapReduceUsingRuntimeDatasets.COUNTERS,
                           null);
   }
@@ -229,16 +201,26 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
   private void testMapreduceWithFile(String inputDatasetName, String inputPaths,
                                      String outputDatasetName, String outputPath,
                                      Class appClass, Class mrClass,
-                                     Arguments runtimeArgs,
+                                     Map<String, String> extraRuntimeArgs,
                                      @Nullable final String counterTableName,
                                      @Nullable final String outputSeparator) throws Exception {
 
-    final ApplicationWithPrograms app = deployApp(appClass);
+    final ApplicationWithPrograms app = deployApp(
+      appClass, new AppWithMapReduceUsingFileSet.AppConfig(inputDatasetName, outputDatasetName));
 
+    Map<String, String> runtimeArguments = Maps.newHashMap();
     Map<String, String> inputArgs = Maps.newHashMap();
     Map<String, String> outputArgs = Maps.newHashMap();
     FileSetArguments.setInputPaths(inputArgs, inputPaths);
     FileSetArguments.setOutputPath(outputArgs, outputPath);
+    if (outputSeparator != null) {
+      outputArgs.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + TextOutputFormat.SEPERATOR, "#");
+    }
+    runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, inputDatasetName, inputArgs));
+    runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, outputDatasetName, outputArgs));
+    if (extraRuntimeArgs != null) {
+      runtimeArguments.putAll(extraRuntimeArgs);
+    }
 
     // clear the counters in case a previous test case left behind some values
     if (counterTableName != null) {
@@ -269,7 +251,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
       count++;
     }
 
-    runProgram(app, mrClass, runtimeArgs);
+    runProgram(app, mrClass, new BasicArguments(runtimeArguments));
 
     // output location in file system is a directory that contains a part file, a _SUCCESS file, and checksums
     // (.<filename>.crc) for these files. Find the actual part file. Its name begins with "part". In this case,

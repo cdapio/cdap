@@ -17,36 +17,32 @@
 package co.cask.cdap.spi.hbase;
 
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
  * Interface providing the HBase DDL operations.
  */
+@Beta
 public interface HBaseDDLExecutor extends Closeable {
-
   /**
-   * Initialize the {@link HBaseDDLExecutor} with the configuration object provided
-   * @param conf the configurations with which to initialize
-   * @param <T>
+   * Initialize the {@link HBaseDDLExecutor}.
+   * @param context the context for the executor
    */
-  <T> void initialize(T conf);
-
-  /**
-   * Returns the conf with which the {@link HBaseDDLExecutor} was initialized.
-   * @param <T>
-   * @return the conf
-   */
-  <T> T getConf();
+  void initialize(HBaseDDLExecutorContext context);
 
   /**
    * Create the specified namespace if it does not exist.
    *
    * @param name the namespace to create
+   * @return whether the namespace was created
    * @throws IOException if a remote or network exception occurs
    */
-  void createNamespaceIfNotExists(String name) throws IOException;
+  boolean createNamespaceIfNotExists(String name) throws IOException;
 
   /**
    * Delete the specified namespace if it exists.
@@ -115,4 +111,16 @@ public interface HBaseDDLExecutor extends Closeable {
    * @throws IllegalStateException if the specified table is not disabled
    */
   void deleteTableIfExists(String namespace, String name) throws IOException;
+
+  /**
+   * Grant permissions on a table or namespace to users or groups.
+   *
+   * @param namespace the namespace of the table
+   * @param table the name of the. If null, then the permissions are applied to the namespace
+   * @param permissions A map from user or group name to the permissions for that user or group, given as a string
+   *                    containing only characters 'a'(Admin), 'c'(Create), 'r'(Read), 'w'(Write), and 'x'(Execute).
+   *                    Group names must be prefixed with the character '@'.
+   * @throws IOException if anything goes wrong
+   */
+  void grantPermissions(String namespace, @Nullable String table, Map<String, String> permissions) throws IOException;
 }

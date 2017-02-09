@@ -27,9 +27,9 @@ import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.ForwardingLocation;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.common.utils.FileUtils;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -73,6 +73,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
   private final Location outputLocation;
   private final String inputFormatClassName;
   private final String outputFormatClassName;
+  private final String permissions;
 
   /**
    * Constructor.
@@ -82,6 +83,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
    * @param namespacedLocationFactory a factory for namespaced {@link Location}
    * @param runtimeArguments the runtime arguments
    */
+  @SuppressWarnings("WeakerAccess")
   public FileSetDataset(DatasetContext datasetContext, CConfiguration cConf,
                         DatasetSpecification spec,
                         LocationFactory absoluteLocationFactory,
@@ -103,6 +105,11 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     this.inputLocations = determineInputLocations();
     this.inputFormatClassName = FileSetProperties.getInputFormat(spec.getProperties());
     this.outputFormatClassName = FileSetProperties.getOutputFormat(spec.getProperties());
+
+    // runtime arguments can override permissions
+    this.permissions = FileSetProperties.getFilePermissions(runtimeArguments) != null
+      ? FileSetProperties.getFilePermissions(runtimeArguments)
+      : FileSetProperties.getFilePermissions(spec.getProperties());
   }
 
   /**
@@ -145,9 +152,9 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
         return baseLocation;
       }
     }
-    Id.Namespace namespaceId = Id.Namespace.from(datasetContext.getNamespaceId());
+    NamespaceId namespaceId = new NamespaceId(datasetContext.getNamespaceId());
     String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
-    return namespacedLocationFactory.get(namespaceId).append(dataDir).append(basePath);
+    return namespacedLocationFactory.get(namespaceId.toId()).append(dataDir).append(basePath);
   }
 
   private Location determineOutputLocation() {
@@ -250,11 +257,19 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     }
     Map<String, String> config = new HashMap<>();
     config.putAll(FileSetProperties.getOutputProperties(spec.getProperties()));
-    // runtime arguments may override the output properties
-    config.putAll(FileSetProperties.getOutputProperties(runtimeArguments));
     if (outputLocation != null) {
       config.put(FileOutputFormat.OUTDIR, getFileSystemPath(outputLocation));
     }
+    // runtime arguments may override the permissions property
+    Map<String, String> outputArguments = FileSetProperties.getOutputProperties(runtimeArguments);
+    String outputPermissions = FileSetProperties.getFilePermissions(outputArguments);
+    if (outputPermissions == null) {
+      outputPermissions = this.permissions;
+    }
+    if (outputPermissions != null) {
+      config.put("fs.permissions.umask-mode", FileUtils.permissionsToUmask(outputPermissions));
+    }
+    config.putAll(outputArguments);
     return config;
   }
 
@@ -298,6 +313,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
   }
 
   // Following are the set of private functions for the FileSetLocation to call
+  // These are required for read/write access enforcement
 
   @ReadOnly
   private InputStream getInputStream(Location location) throws IOException {
@@ -322,6 +338,11 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
   @WriteOnly
   private boolean createNew(Location location) throws IOException {
     return location.createNew();
+  }
+
+  @WriteOnly
+  private boolean createNew(Location location, String permissions) throws IOException {
+    return location.createNew(permissions);
   }
 
   @WriteOnly
@@ -359,45 +380,93 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     return location.isDirectory();
   }
 
+  @ReadOnly
+  private String getPermissions(Location delegate) throws IOException {
+    return delegate.getPermissions();
+  }
 
-  private final class FileSetLocation extends ForwardingLocation {
+  @WriteOnly
+  private void setPermissions(Location delegate, String permission) throws IOException {
+    delegate.setPermissions(permission);
+  }
 
+  @WriteOnly
+  private void setGroup(Location delegate, String group) throws IOException {
+    delegate.setGroup(group);
+  }
+
+  @ReadOnly
+  private String getGroup(Location delegate) throws IOException {
+    return delegate.getGroup();
+  }
+
+  @ReadOnly
+  private String getOwner(Location delegate) throws IOException {
+    return delegate.getOwner();
+  }
+
+  // Note that access annotations (@ReadOnly etc.) are only enforced for methods of classes that
+  // extend Dataset. Therefore we delegate all Location methods to a method of the FileDetDataset.
+  // If a new method is added to Location in Apache Twill, then this code will fail to compile.
+  // If FileSetLocation extended a ForwardingLocation, then this change would go unnoticed and
+  // access control would not be applied to the new method.
+  private final class FileSetLocation implements Location {
+
+    private final Location delegate;
     private final LocationFactory locationFactory;
 
     FileSetLocation(Location delegate, LocationFactory locationFactory) {
-      super(delegate);
+      this.delegate = delegate;
       this.locationFactory = locationFactory;
     }
 
     @Override
+    public URI toURI() {
+      return delegate.toURI();
+    }
+
+    @Override
+    public String getName() {
+      return delegate.getName();
+    }
+
+    @Override
     public InputStream getInputStream() throws IOException {
-      return FileSetDataset.this.getInputStream(getDelegate());
+      return FileSetDataset.this.getInputStream(delegate);
     }
 
     @Override
     public OutputStream getOutputStream() throws IOException {
-      return FileSetDataset.this.getOutputStream(getDelegate());
+      if (FileSetDataset.this.permissions != null) {
+        return getOutputStream(FileSetDataset.this.permissions);
+      }
+      return FileSetDataset.this.getOutputStream(delegate);
+    }
+
+    @Override
+    public OutputStream getOutputStream(String permission) throws IOException {
+      return FileSetDataset.this.getOutputStream(delegate, permission);
     }
 
     @Override
     public Location append(String child) throws IOException {
-      return new FileSetLocation(super.append(child), locationFactory);
+      return new FileSetLocation(delegate.append(child), locationFactory);
     }
 
     @Override
     public Location getTempFile(String suffix) throws IOException {
-      return new FileSetLocation(super.getTempFile(suffix), locationFactory);
+      return new FileSetLocation(delegate.getTempFile(suffix), locationFactory);
     }
 
     @Nullable
     @Override
     public Location renameTo(Location destination) throws IOException {
-      return new FileSetLocation(super.renameTo(getOriginal(destination)), locationFactory);
+      return new FileSetLocation(delegate.renameTo(getOriginal(destination)), locationFactory);
     }
 
     @Override
     public List<Location> list() throws IOException {
-      List<Location> locations = super.list();
+      List<Location> locations = delegate.list();
       List<Location> result = new ArrayList<>(locations.size());
       for (Location location : locations) {
         result.add(new FileSetLocation(location, locationFactory));
@@ -407,52 +476,83 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
 
     @Override
     public boolean exists() throws IOException {
-      return FileSetDataset.this.exists(getDelegate());
+      return FileSetDataset.this.exists(delegate);
     }
 
     @Override
     public boolean createNew() throws IOException {
-      return FileSetDataset.this.createNew(getDelegate());
+      if (FileSetDataset.this.permissions != null) {
+        return createNew(FileSetDataset.this.permissions);
+      }
+      return FileSetDataset.this.createNew(delegate);
     }
 
     @Override
-    public OutputStream getOutputStream(String permission) throws IOException {
-      return FileSetDataset.this.getOutputStream(getDelegate(), permission);
+    public boolean createNew(String permission) throws IOException {
+      return FileSetDataset.this.createNew(delegate, permission);
+    }
+
+    @Override
+    public String getPermissions() throws IOException {
+      return FileSetDataset.this.getPermissions(delegate);
+    }
+
+    @Override
+    public void setPermissions(String permission) throws IOException {
+      FileSetDataset.this.setPermissions(delegate, permission);
+    }
+
+    @Override
+    public String getOwner() throws IOException {
+      return FileSetDataset.this.getOwner(delegate);
+    }
+
+    @Override
+    public String getGroup() throws IOException {
+      return FileSetDataset.this.getGroup(delegate);
+    }
+
+    @Override
+    public void setGroup(String group) throws IOException {
+      FileSetDataset.this.setGroup(delegate, group);
     }
 
     @Override
     public boolean delete() throws IOException {
-      return FileSetDataset.this.delete(getDelegate());
+      return FileSetDataset.this.delete(delegate);
     }
 
     @Override
     public boolean delete(boolean recursive) throws IOException {
-      return FileSetDataset.this.delete(getDelegate(), recursive);
+      return FileSetDataset.this.delete(delegate, recursive);
     }
 
     @Override
     public boolean mkdirs() throws IOException {
-      return FileSetDataset.this.mkdirs(getDelegate());
+      if (FileSetDataset.this.permissions != null) {
+        return mkdirs(FileSetDataset.this.permissions);
+      }
+      return FileSetDataset.this.mkdirs(delegate);
     }
 
     @Override
     public boolean mkdirs(String permissions) throws IOException {
-      return FileSetDataset.this.mkdirs(getDelegate(), permissions);
+      return FileSetDataset.this.mkdirs(delegate, permissions);
     }
 
     @Override
     public long length() throws IOException {
-      return FileSetDataset.this.length(getDelegate());
+      return FileSetDataset.this.length(delegate);
     }
 
     @Override
     public long lastModified() throws IOException {
-      return FileSetDataset.this.lastModified(getDelegate());
+      return FileSetDataset.this.lastModified(delegate);
     }
 
     @Override
     public boolean isDirectory() throws IOException {
-      return FileSetDataset.this.isDirectory(getDelegate());
+      return FileSetDataset.this.isDirectory(delegate);
     }
 
     @Override
@@ -461,13 +561,13 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     }
 
     /**
-     * Finds the original {@link Location} recursively from the given location if it is a {@link ForwardingLocation}.
+     * Finds the original {@link Location} recursively from the given location if it is a {@link FileSetLocation}.
      */
     private Location getOriginal(Location location) {
-      if (!(location instanceof ForwardingLocation)) {
+      if (!(location instanceof FileSetLocation)) {
         return location;
       }
-      return getOriginal(((ForwardingLocation) location).getDelegate());
+      return getOriginal(((FileSetLocation) location).delegate);
     }
 
     @Override
@@ -479,12 +579,17 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
         return false;
       }
       Location that = (Location) o;
-      return Objects.equals(getOriginal(getDelegate()), getOriginal(that));
+      return Objects.equals(getOriginal(delegate), getOriginal(that));
     }
 
     @Override
     public int hashCode() {
-      return getDelegate().hashCode();
+      return delegate.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return delegate.toString();
     }
   }
 

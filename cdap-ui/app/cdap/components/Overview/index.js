@@ -16,6 +16,8 @@
 
 import React, {PropTypes, Component} from 'react';
 import AppOverview from 'components/Overview/AppOverview';
+import DatasetOverview from 'components/Overview/DatasetOverview';
+import StreamOverview from 'components/Overview/StreamOverview';
 import {objectQuery} from 'services/helpers';
 import isNil from 'lodash/isNil';
 import classnames from 'classnames';
@@ -30,7 +32,9 @@ export default class Overview extends Component {
       tag: null
     };
     this.typeToComponentMap = {
-      'application': AppOverview
+      'application': AppOverview,
+      'datasetinstance': DatasetOverview,
+      'stream': StreamOverview
     };
   }
   componentWillReceiveProps(nextProps) {
@@ -49,12 +53,15 @@ export default class Overview extends Component {
     }
   }
   hideOverview() {
-    this.setState({
-      toggleOverview: false,
-      entity: null
-    });
     if (this.props.onClose) {
       this.props.onClose();
+    }
+  }
+  closeAndRefresh(action) {
+    if (action === 'delete') {
+      if (this.props.onCloseAndRefresh) {
+        this.props.onCloseAndRefresh();
+      }
     }
   }
   render() {
@@ -67,7 +74,8 @@ export default class Overview extends Component {
               Tag,
               {
                 entity: this.state.entity,
-                onClose: this.hideOverview.bind(this)
+                onClose: this.hideOverview.bind(this),
+                onCloseAndRefresh: this.closeAndRefresh.bind(this)
               }
             )
           }
@@ -80,5 +88,6 @@ export default class Overview extends Component {
 Overview.propTypes = {
   toggleOverview: PropTypes.bool,
   entity: PropTypes.object,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
+  onCloseAndRefresh: PropTypes.func
 };

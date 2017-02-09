@@ -38,6 +38,9 @@
       &:not(:only-child) {
         margin-left: 10px;
       }
+      time {
+        margin-left: 5px;
+      }
       font-size: 10px;
       color: rgba(102, 102, 102, 1);
     }
@@ -67,6 +70,12 @@
           padding: 8px 19px;
         }
       }
+    }
+  }
+  .entity-info {
+    span {
+      font-weight: bold;
+      color: rgba(102, 102, 102, 1);
     }
   }
   .description-holder {

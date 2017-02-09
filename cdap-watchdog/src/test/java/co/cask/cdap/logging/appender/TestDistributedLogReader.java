@@ -28,14 +28,14 @@ import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
 import co.cask.cdap.logging.appender.kafka.StringPartitioner;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
+import co.cask.cdap.logging.meta.Checkpoint;
+import co.cask.cdap.logging.meta.CheckpointManager;
+import co.cask.cdap.logging.meta.CheckpointManagerFactory;
 import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.ReadRange;
-import co.cask.cdap.logging.save.Checkpoint;
-import co.cask.cdap.logging.save.CheckpointManager;
-import co.cask.cdap.logging.save.CheckpointManagerFactory;
 import co.cask.cdap.logging.save.KafkaLogWriterPlugin;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableMap;
@@ -77,7 +77,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
   public static void setUpContext() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
-    cConf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
+    cConf.set(Constants.Logging.NUM_PARTITIONS, "2");
     cConf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync");
     String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR) + "/" +
       TestDistributedLogReader.class.getSimpleName();

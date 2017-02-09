@@ -15,71 +15,128 @@
  */
 
 import React, {PropTypes, Component} from 'react';
-import EntityCard from 'components/EntityCard';
-import {parseMetadata} from 'services/metadata-parser';
 import {objectQuery} from 'services/helpers';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';
+import {MyProgramApi} from 'api/program';
+import NamespaceStore from 'services/NamespaceStore';
+import {convertProgramToApi} from 'services/program-api-converter';
+import ViewSwitch from 'components/ViewSwitch';
+import ProgramCards from 'components/ProgramCards';
+import ProgramTable from 'components/ProgramTable';
+import isEmpty from 'lodash/isEmpty';
 require('./ProgramTab.scss');
 
 export default class ProgramsTab extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      entity: this.props.entity
+      entity: this.props.entity,
+      runningPrograms: []
     };
+    this.statusSubscriptions = [];
+    if (
+      !isNil(this.props.entity) &&
+      !isEmpty(this.props.entity)
+    ) {
+      this.setRunninPrograms();
+    }
   }
   componentWillReceiveProps(nextProps) {
     let entitiesMatch = objectQuery(nextProps, 'entity', 'name') === objectQuery(this.props, 'entity', 'name');
     if (!entitiesMatch) {
       this.setState({
-        entity: nextProps.entity
+        entity: nextProps.entity,
+        runningPrograms: []
       });
+      this.statusSubscriptions.forEach(sub => sub.dispose());
+      this.setRunninPrograms();
     }
   }
+  setRunninPrograms() {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    this.state
+        .entity
+        .programs
+        .forEach(program => {
+          let subscription =  MyProgramApi
+            .pollRuns({
+              namespace,
+              appId: this.state.entity.name,
+              programType: convertProgramToApi(program.type),
+              programId: program.id
+            })
+            .combineLatest(
+              MyProgramApi
+                .pollStatus({
+                  namespace,
+                  appId: this.state.entity.name,
+                  programType: convertProgramToApi(program.type),
+                  programId: program.id
+                })
+            )
+            .subscribe(res => {
+              let runningPrograms = this.state.runningPrograms;
+              let programState = runningPrograms.filter(prog => prog.name === program.id);
+              if (programState.length) {
+                runningPrograms = runningPrograms.filter(prog => prog.name !== program.id);
+              }
+              runningPrograms.push(Object.assign({}, !isEmpty(programState) ? programState[0] : {}, {
+                latestRun: objectQuery(res, 0, 0) || {},
+                status: res[1].status === 'RUNNING' ? 1 : 0,
+                backendStatus: res[1].status,
+                name: program.id
+              }));
+              this.setState({
+                runningPrograms
+              });
+            });
+          this.statusSubscriptions.push(subscription);
+        });
+  }
+  componentWillUnmount() {
+    this.statusSubscriptions.forEach(sub => sub.dispose());
+  }
   render() {
+    let runningProgramsCount = 0;
+    let programsForTable = this.state.entity.programs;
+    if (this.state.runningPrograms.length) {
+      runningProgramsCount = this.state
+        .runningPrograms
+        .map(runningProgram => runningProgram.status)
+        .reduce((prev, curr) => prev + curr);
+      programsForTable = this.state.entity.programs.map(program => {
+        let matchedProg = this.state.runningPrograms.find(prog => prog.name === program.id) || null;
+        return !matchedProg ?
+          program
+        :
+          Object.assign({}, program, {
+            status: matchedProg.backendStatus,
+            latestRun: matchedProg.latestRun
+          });
+      });
+    }
     if (!isNil(this.state.entity)) {
-      return (
-        <div className="program-tab">
-          <div className="message-section">
-            <strong> {T.translate('features.Overview.ProgramTab.title', {appId: this.state.entity.name})} </strong>
-            <div>{T.translate('features.Overview.ProgramTab.runningProgramLabel', {programCount: this.state.entity.programs.length})}</div>
+      if (this.state.entity.programs.length) {
+        return (
+          <div className="program-tab clearfix">
+            <div className="message-section float-xs-left">
+              <strong> {T.translate('features.Overview.ProgramTab.title', {appId: this.state.entity.name})} </strong>
+              <div>{T.translate('features.Overview.ProgramTab.runningProgramLabel', {programCount: runningProgramsCount})}</div>
+            </div>
+            <ViewSwitch>
+              <ProgramCards programs={this.state.entity.programs} />
+              <ProgramTable programs={programsForTable} />
+            </ViewSwitch>
           </div>
-          {
-            this.state.entity.programs.length ?
-              this.state
-                  .entity
-                  .programs
-                  .map( program => {
-                    let entity = {
-                      entityId: {
-                        id: {
-                          id: program.id,
-                          application: {
-                            applicationId: program.app
-                          },
-                          type: program.type
-                        },
-                        type: 'program',
-                      },
-                      metadata: {
-                        SYSTEM: {}
-                      }
-                    };
-                    entity = parseMetadata(entity);
-                    return (
-                      <EntityCard
-                        className="entity-card-container"
-                        entity={entity}
-                        key={program.uniqueId}
-                      />
-                    );
-                  })
-            :
-              <i>{T.translate('features.Overview.ProgramTab.emptyMessage')}</i>
-          }
-        </div>
-      );
+        );
+      } else {
+        return (
+          <div className="program-tab clearfix">
+            <i>{T.translate('features.Overview.ProgramTab.emptyMessage')}</i>
+          </div>
+        );
+      }
     }
     return null;
   }

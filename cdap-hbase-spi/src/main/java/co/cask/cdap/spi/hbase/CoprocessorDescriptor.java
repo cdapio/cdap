@@ -16,21 +16,24 @@
 
 package co.cask.cdap.spi.hbase;
 
-import java.net.URI;
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Describes HBase coprocessor.
  */
+@Beta
 public final class CoprocessorDescriptor {
 
   private final String className;
-  private final URI path;
+  private final String path;
   private final int priority;
   private final Map<String, String> properties;
 
-  public CoprocessorDescriptor(String className, URI path, int priority, Map<String, String> properties) {
+  public CoprocessorDescriptor(String className, @Nullable String path, int priority, Map<String, String> properties) {
     this.className = className;
     this.path = path;
     this.priority = priority;
@@ -42,7 +45,8 @@ public final class CoprocessorDescriptor {
     return className;
   }
 
-  public URI getPath() {
+  @Nullable
+  public String getPath() {
     return path;
   }
 

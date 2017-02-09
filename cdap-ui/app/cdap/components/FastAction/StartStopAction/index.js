@@ -123,7 +123,6 @@ export default class StartStopAction extends Component {
     let confirmBtnText;
     let headerText;
     let confirmationText;
-    let tooltipID = `${this.props.entity.uniqueId}-${this.startStop}`;
 
     if (this.state.status === 'RUNNING' || this.state.status === 'STARTING') {
       this.startStop = 'stop';
@@ -138,6 +137,7 @@ export default class StartStopAction extends Component {
       headerText = T.translate('features.FastAction.startProgramHeader');
       confirmationText = T.translate('features.FastAction.startConfirmation', {entityId: this.props.entity.id});
     }
+    let tooltipID = `${this.props.entity.uniqueId}-${this.startStop}`;
 
     return (
       <span>

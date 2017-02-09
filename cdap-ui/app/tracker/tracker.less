@@ -53,6 +53,8 @@ body[class*='state-tracker'] {
     h4,
     h5,
     h6 { font-weight: 500; }
+
+    &.iframe { margin-top: 0; }
   }
 
   .alerts { top: 50px; }
@@ -904,6 +906,39 @@ body.state-tracker-detail-entity-preview {
         word-break: normal;
       }
     }
+  }
+}
+
+body.state-tracker-detail-entity-compliance {
+  .passed-compliance {
+    margin-top: 150px;
+    font-size: 18px;
+    color: #666666;
+  }
+  .check {
+    background-color: @tracker-green;
+    padding: 5px;
+    border-radius: 15px;
+    color: black;
+    i {
+      font-size: 25px;
+      color: #000;
+      vertical-align: top;
+    }
+  }
+  .not-exist {
+    color: @tracker-green;
+  }
+  .not-matched {
+    color: #fa4347;
+  }
+  .table th {
+    background-color: white;
+    color: black;
+  }
+  .alert a {
+    color: white;
+    text-decoration: underline;
   }
 }
 

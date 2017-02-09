@@ -21,6 +21,7 @@ import PluginArtifactUploadWizardConfig from 'services/WizardConfigs/PluginArtif
 import PluginArtifactUploadStore from 'services/WizardStores/PluginArtifactUpload/PluginArtifactUploadStore';
 import PluginArtifactUploadActions from 'services/WizardStores/PluginArtifactUpload/PluginArtifactUploadActions';
 import ArtifactUploadActionCreator from 'services/WizardStores/PluginArtifactUpload/ActionCreator';
+import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 
 require('./PluginArtifactUpload.scss');
@@ -31,13 +32,19 @@ export default class PluginArtifactUploadWizard extends Component {
     this.state = {
       showWizard: this.props.isOpen
     };
+    this.successInfo = {};
   }
   componentWillUnmount() {
     PluginArtifactUploadStore.dispatch({
       type: PluginArtifactUploadActions.onReset
     });
   }
-
+  onSubmit() {
+    this.buildSuccessInfo();
+    return ArtifactUploadActionCreator
+      .uploadArtifact()
+      .flatMap(() => ArtifactUploadActionCreator.uploadConfigurationJson());
+  }
   toggleWizard(returnResult) {
     if (this.state.showWizard) {
       this.props.onClose(returnResult);
@@ -46,14 +53,21 @@ export default class PluginArtifactUploadWizard extends Component {
       showWizard: !this.state.showWizard
     });
   }
-
-  onSubmit() {
-    return ArtifactUploadActionCreator
-      .uploadArtifact()
-      .flatMap(() => ArtifactUploadActionCreator.uploadConfigurationJson());
+  buildSuccessInfo() {
+    let state = PluginArtifactUploadStore.getState();
+    let name = state.upload.jar.fileMetadataObj.name;
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    let defaultSuccessMessage = T.translate('features.Wizard.PluginArtifact.success');
+    let subtitle = T.translate('features.Wizard.PluginArtifact.subtitle');
+    let buttonLabel = T.translate('features.Wizard.PluginArtifact.callToAction');
+    let linkLabel = T.translate('features.Wizard.GoToHomePage');
+    this.successInfo.message = `${defaultSuccessMessage} "${name}".`;
+    this.successInfo.subtitle = subtitle;
+    this.successInfo.buttonLabel = buttonLabel;
+    this.successInfo.buttonUrl = `/hydrator/ns/${namespace}/studio`;
+    this.successInfo.linkLabel = linkLabel;
+    this.successInfo.linkUrl = `/cdap/ns/${namespace}`;
   }
-
-
   render() {
     let input = this.props.input;
     let pkg = input.package || {};
@@ -72,6 +86,7 @@ export default class PluginArtifactUploadWizard extends Component {
           wizardType="ArtifactUpload"
           store={PluginArtifactUploadStore}
           onSubmit={this.onSubmit.bind(this)}
+          successInfo={this.successInfo}
           onClose={this.toggleWizard.bind(this)}/>
       </WizardModal>
     );

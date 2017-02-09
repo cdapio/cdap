@@ -27,7 +27,6 @@ import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
@@ -39,7 +38,6 @@ import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.ColumnFamilyDescriptorBuilder;
-import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.TableDescriptorBuilder;
@@ -51,6 +49,7 @@ import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
@@ -103,18 +102,18 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   private final DatasetFramework datasetFramework;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final Impersonator impersonator;
-  private final CoprocessorManager coprocessorManager;
   private final HBaseDDLExecutorFactory ddlExecutorFactory;
+  private final LocationFactory locationFactory;
 
   @Inject
   HBaseQueueAdmin(Configuration hConf,
-                         CConfiguration cConf,
-                         LocationFactory locationFactory,
-                         HBaseTableUtil tableUtil,
-                         DatasetFramework datasetFramework,
-                         TransactionExecutorFactory txExecutorFactory,
-                         NamespaceQueryAdmin namespaceQueryAdmin,
-                         Impersonator impersonator) {
+                  CConfiguration cConf,
+                  LocationFactory locationFactory,
+                  HBaseTableUtil tableUtil,
+                  DatasetFramework datasetFramework,
+                  TransactionExecutorFactory txExecutorFactory,
+                  NamespaceQueryAdmin namespaceQueryAdmin,
+                  Impersonator impersonator) {
 
     this(hConf, cConf, locationFactory, tableUtil, datasetFramework, txExecutorFactory,
          QueueConstants.QueueType.SHARDED_QUEUE, namespaceQueryAdmin, impersonator);
@@ -138,7 +137,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     this.type = type;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.impersonator = impersonator;
-    this.coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
+    this.locationFactory = locationFactory;
     this.ddlExecutorFactory = new HBaseDDLExecutorFactory(cConf, hConf);
   }
 
@@ -237,7 +236,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   public void upgrade() throws Exception {
     // For each queue config table and queue data table in each namespace, perform an upgrade
     for (final NamespaceMeta namespaceMeta : namespaceQueryAdmin.list()) {
-      impersonator.doAs(namespaceMeta, new Callable<Void>() {
+      impersonator.doAs(namespaceMeta.getNamespaceId(), new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           upgradeQueues(namespaceMeta);
@@ -412,7 +411,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
         final String queueTableNamePrefix = String.format("%s.%s.", NamespaceId.SYSTEM.getNamespace(), queueType);
         final String hbaseNamespace = tableUtil.getHBaseNamespace(namespaceId);
         final TableId configTableId = TableId.from(hbaseNamespace, getConfigTableName());
-        tableUtil.deleteAllInNamespace(ddlExecutor, hbaseNamespace, new Predicate<TableId>() {
+        tableUtil.deleteAllInNamespace(ddlExecutor, hbaseNamespace, hConf, new Predicate<TableId>() {
           @Override
           public boolean apply(TableId tableId) {
             // It's a bit hacky here since we know how the Dataset System names tables
@@ -492,7 +491,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
 
     private QueueDatasetAdmin(TableId tableId, Configuration hConf, CConfiguration cConf,
                               HBaseTableUtil tableUtil, Properties properties) {
-      super(tableId, hConf, cConf, tableUtil);
+      super(tableId, hConf, cConf, tableUtil, locationFactory);
       this.properties = properties;
     }
 
@@ -503,7 +502,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
         return CoprocessorJar.EMPTY;
       }
 
-      Location jarFile = coprocessorManager.ensureCoprocessorExists(CoprocessorManager.Type.QUEUE);
+      Location jarFile = coprocessorManager.ensureCoprocessorExists();
       return new CoprocessorJar(coprocessors, jarFile);
     }
 
@@ -542,8 +541,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
       // Add coprocessors
       CoprocessorJar coprocessorJar = createCoprocessorJar();
       for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
-        tdBuilder.addCoprocessor(getCoprocessorDescriptor(coprocessor, coprocessorJar.getJarLocation(),
-                                                          coprocessorJar.getPriority(coprocessor)));
+        tdBuilder.addCoprocessor(
+          coprocessorManager.getCoprocessorDescriptor(coprocessor, coprocessorJar.getPriority(coprocessor)));
       }
 
       // Create queue table with splits. The distributor bucket size is the same as splits.
@@ -553,11 +552,10 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
 
       byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits, splits, distributor);
       tdBuilder.addProperty(QueueConstants.DISTRIBUTOR_BUCKETS, Integer.toString(splits));
-      createQueueTable(tableId, tdBuilder, splitKeys);
+      createQueueTable(tdBuilder, splitKeys);
     }
 
-    private void createQueueTable(TableId tableId, TableDescriptorBuilder tdBuilder, byte[][] splitKeys)
-      throws IOException {
+    private void createQueueTable(TableDescriptorBuilder tdBuilder, byte[][] splitKeys) throws IOException {
       int prefixBytes = (type == QueueConstants.QueueType.SHARDED_QUEUE) ? ShardedHBaseQueueStrategy.PREFIX_BYTES
                                                                          : SaltedHBaseQueueStrategy.SALT_BYTES;
       String prefix = Integer.toString(prefixBytes);

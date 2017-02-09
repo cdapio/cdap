@@ -16,10 +16,13 @@
 
 package co.cask.cdap.api.dataset.table;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.ExploreProperties;
+import co.cask.cdap.internal.guava.reflect.TypeToken;
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.Map;
@@ -31,7 +34,18 @@ import javax.annotation.Nullable;
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class TableProperties {
 
+  private static final Gson GSON = new Gson();
   private static final byte[] DEFAULT_COLUMN_FAMILY_BYTES = Bytes.toBytes(Table.DEFAULT_COLUMN_FAMILY);
+
+  /**
+   * Set the ACLs that should be granted for this table. The value must be a map from user name to
+   * a permission string that consists of the letters 'r', 'w', 'c', 'x', and 'a'. To grant a privilege
+   * to a group, prefix the group name with the character '@'. For example, the mapping
+   * "{ 'joe': 'RW', '@admins': 'RWCXA' }" grants only read and write privileges to the user joe, but
+   * grants all privileges to members of the admins group.
+   */
+  @Beta
+  public static final String PROPERTY_TABLE_PERMISSIONS = "dataset.table.permissions.grants";
 
   /**
    * Set a conflict detection level in dataset properties.
@@ -222,6 +236,28 @@ public class TableProperties {
     return props.get(Table.PROPERTY_SCHEMA_ROW_FIELD);
   }
 
+
+  /**
+   * @return the table permissions as a map from user name to a permission string
+   */
+  @Beta
+  @Nullable
+  public static Map<String, String> getTablePermissions(Map<String, String> properties) {
+    String propertyValue = properties.get(PROPERTY_TABLE_PERMISSIONS);
+    if (propertyValue == null) {
+      return null;
+    }
+    return GSON.fromJson(propertyValue, new TypeToken<Map<String, String>>() { }.getType());
+  }
+
+  /**
+   * Set the table permissions as a map from user name to a permission string.
+   */
+  @Beta
+  public static void setTablePermissions(DatasetProperties.Builder builder, Map<String, String> permissions) {
+    builder.add(PROPERTY_TABLE_PERMISSIONS, GSON.toJson(permissions));
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -299,6 +335,16 @@ public class TableProperties {
     @SuppressWarnings("unchecked")
     public B setRowFieldName(String name) {
       TableProperties.setRowFieldName(this, name);
+      return (B) this;
+    }
+
+    /**
+     * Set the table permissions as a map from user name to a permission string.
+     */
+    @SuppressWarnings("unchecked")
+    @Beta
+    public B setTablePermissions(Map<String, String> permissions) {
+      TableProperties.setTablePermissions(this, permissions);
       return (B) this;
     }
   }

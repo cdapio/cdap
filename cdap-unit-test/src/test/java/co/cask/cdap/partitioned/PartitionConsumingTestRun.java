@@ -95,7 +95,7 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
     createPartition(serviceURL, LINE1, "1");
 
     ProgramManager programManager = runProgram.apply(applicationManager);
-    programManager.waitForFinish(5, TimeUnit.MINUTES);
+    programManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     Assert.assertEquals(new Long(2), getCount(serviceURL, "a"));
     Assert.assertEquals(new Long(1), getCount(serviceURL, "b"));
@@ -108,7 +108,7 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
     // running the program job now processes these two new partitions (LINE2 and LINE3) and updates the counts
     // dataset accordingly
     programManager = runProgram.apply(applicationManager);
-    programManager.waitForFinish(5, TimeUnit.MINUTES);
+    programManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 5, TimeUnit.MINUTES);
 
     Assert.assertEquals(new Long(3), getCount(serviceURL, "a"));
     Assert.assertEquals(new Long(3), getCount(serviceURL, "b"));
@@ -116,13 +116,7 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
 
     // running the program without adding new partitions does not affect the counts dataset
     programManager = runProgram.apply(applicationManager);
-    programManager.waitForFinish(5, TimeUnit.MINUTES);
-
-    List<RunRecord> runs = programManager.getHistory();
-    Assert.assertEquals(3, runs.size());
-    for (RunRecord run : runs) {
-      Assert.assertEquals(ProgramRunStatus.COMPLETED, run.getStatus());
-    }
+    programManager.waitForRuns(ProgramRunStatus.COMPLETED, 3, 5, TimeUnit.MINUTES);
 
     Assert.assertEquals(new Long(3), getCount(serviceURL, "a"));
     Assert.assertEquals(new Long(3), getCount(serviceURL, "b"));

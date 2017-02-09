@@ -80,7 +80,7 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
         MetricValues metricValues = recordReader.read(new BinaryDecoder(is.reset(input.getPayload())), recordSchema);
         records.add(metricValues);
       } catch (IOException e) {
-        LOG.info("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
+        LOG.warn("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
       }
     }
 
@@ -89,8 +89,9 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
       return nextOffset;
     }
 
+    long now = System.currentTimeMillis();
     try {
-      addProcessingStats(records);
+      addProcessingStats(records, now);
       metricStore.add(records);
     } catch (Exception e) {
       // SimpleKafkaConsumer will log the error, and continue on past these messages
@@ -99,20 +100,19 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
 
     recordsProcessed += records.size();
     // avoid logging more than once a minute
-    if (System.currentTimeMillis() > lastLoggedMillis + TimeUnit.MINUTES.toMillis(1)) {
-      lastLoggedMillis = System.currentTimeMillis();
-      LOG.info("{} metrics records processed. Last record time: {}.",
+    if (now > lastLoggedMillis + TimeUnit.MINUTES.toMillis(1)) {
+      lastLoggedMillis = now;
+      LOG.debug("{} metrics records processed. Last record time: {}.",
                recordsProcessed, records.get(records.size() - 1).getTimestamp());
     }
     return nextOffset;
   }
 
-  private void addProcessingStats(List<MetricValues> records) {
+  private void addProcessingStats(List<MetricValues> records, long now) {
     if (records.isEmpty()) {
       return;
     }
     int count = records.size();
-    long now = System.currentTimeMillis();
     long delay = now - TimeUnit.SECONDS.toMillis(records.get(records.size() - 1).getTimestamp());
     records.add(
       new MetricValues(metricsContext, TimeUnit.MILLISECONDS.toSeconds(now),

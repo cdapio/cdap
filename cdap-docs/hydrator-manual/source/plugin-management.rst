@@ -102,7 +102,7 @@ Managing Multiple Versions
 Different versions of the same plugin (or artifact) can be loaded and available at the
 same time. These will appear in the :ref:`Hydrator Studio <cask-hydrator-studio>` as
 possible choices when selecting a plugin or creating a :ref:`plugin template
-<cask-hydrator-studio-plugin-templates>`. If no version is specified for a plugin the
+<cask-hydrator-studio-plugin-templates>`. If no version is specified for a plugin in the
 :ref:`configuration file <hydrator-developing-pipelines-configuration-file-format>` used
 to create an application, the highest version currently available in the system will be
 used.

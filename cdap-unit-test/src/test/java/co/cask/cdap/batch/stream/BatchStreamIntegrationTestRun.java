@@ -19,6 +19,7 @@ package co.cask.cdap.batch.stream;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -101,7 +102,7 @@ public class BatchStreamIntegrationTestRun extends TestFrameworkTestBase {
     }
 
     MapReduceManager mapReduceManager = applicationManager.getMapReduceManager(mapReduceName).start();
-    mapReduceManager.waitForFinish(timeout, TimeUnit.SECONDS);
+    mapReduceManager.waitForRun(ProgramRunStatus.COMPLETED, timeout, TimeUnit.SECONDS);
 
     // The MR job simply turns every stream event body into key/value pairs, with key==value.
     DataSetManager<KeyValueTable> datasetManager = getDataset("results");

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,6 +37,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.twill.filesystem.Location;
@@ -135,6 +136,26 @@ public interface DatasetFramework {
    */
   void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException;
+
+  /**
+   * Adds information about dataset instance to the system.
+   *
+   * This uses
+   * {@link DatasetDefinition#configure(String, DatasetProperties)}
+   * method to build {@link DatasetSpecification} which describes dataset instance
+   * and later used to initialize {@link DatasetAdmin} and {@link Dataset} for the dataset instance.
+   *
+   * @param datasetTypeName dataset instance type name
+   * @param datasetInstanceId dataset instance name
+   * @param props dataset instance properties
+   * @param ownerPrincipal principal of the dataset owner
+   * @throws InstanceConflictException if dataset instance with this name already exists
+   * @throws IOException when creation of dataset instance using its admin fails
+   * @throws DatasetManagementException
+   * @throws ServiceUnavailableException when the dataset service is not running
+   */
+  void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props,
+                   @Nullable KerberosPrincipalId ownerPrincipal) throws DatasetManagementException, IOException;
 
   /**
    * Updates the existing dataset instance in the system.

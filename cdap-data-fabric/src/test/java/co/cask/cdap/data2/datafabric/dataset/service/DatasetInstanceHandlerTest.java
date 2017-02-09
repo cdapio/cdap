@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -186,6 +186,37 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   }
 
   @Test
+  public void testOwner() throws Exception {
+    // deploy modules
+    deployModule("module1", TestModule1.class);
+
+    // should not be able to create a dataset with invalid kerberos principal format
+    HttpResponse response = createInstance(NamespaceId.DEFAULT.dataset("ownedDataset"), "datasetType1", null,
+                                           DatasetProperties.EMPTY, "alice/bob/somehost.net@somekdc.net");
+    Assert.assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getResponseCode());
+
+    // should be able to create a dataset with valid kerberos principal format
+    String alicePrincipal = "alice/somehost.net@somekdc.net";
+    response = createInstance(NamespaceId.DEFAULT.dataset("ownedDataset"), "datasetType1", null,
+                              DatasetProperties.EMPTY,
+                              alicePrincipal);
+    Assert.assertEquals(HttpStatus.SC_OK, response.getResponseCode());
+
+    // owner information should have stored
+    Assert.assertEquals(alicePrincipal, ownerAdmin.getOwnerPrincipal(NamespaceId.DEFAULT.dataset("ownedDataset")));
+
+    // should be able to retrieve owner information back
+    DatasetMeta meta = getInstanceObject("ownedDataset").getResponseObject();
+    Assert.assertEquals(alicePrincipal, meta.getOwnerPrincipal());
+
+
+    // deleting the dataset should delete the owner information
+    response = deleteInstance(NamespaceId.DEFAULT.dataset("ownedDataset"));
+    Assert.assertEquals(HttpStatus.SC_OK, response.getResponseCode());
+    Assert.assertEquals(null, ownerAdmin.getOwner(NamespaceId.DEFAULT.dataset("ownedDataset")));
+  }
+
+  @Test
   public void testUpdateInstance() throws Exception {
     // nothing has been created, modules and types list is empty
     List<DatasetSpecificationSummary> instances = getInstances().getResponseObject();
@@ -368,7 +399,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   private HttpResponse createInstance(String instanceName, String typeName, String description,
                                       DatasetProperties props) throws IOException {
-    return createInstance(NamespaceId.DEFAULT.dataset(instanceName), typeName, description, props);
+    return createInstance(NamespaceId.DEFAULT.dataset(instanceName), typeName, description, props, null);
   }
 
   private HttpResponse createInstance(String instanceName, String typeName) throws IOException {
@@ -377,16 +408,18 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   private HttpResponse createInstance(DatasetId instance, String typeName,
                                       @Nullable DatasetProperties props) throws IOException {
-    return createInstance(instance, typeName, null, props);
+    return createInstance(instance, typeName, null, props, null);
   }
 
   private HttpResponse createInstance(DatasetId instance, String typeName, @Nullable String description,
-                                      @Nullable DatasetProperties props) throws IOException {
+                                      @Nullable DatasetProperties props,
+                                      @Nullable String ownerPrincipal) throws IOException {
     DatasetInstanceConfiguration creationProperties;
     if (props != null) {
-      creationProperties = new DatasetInstanceConfiguration(typeName, props.getProperties(), description);
+      creationProperties = new DatasetInstanceConfiguration(typeName, props.getProperties(), description,
+                                                            ownerPrincipal);
     } else {
-      creationProperties = new DatasetInstanceConfiguration(typeName, null, description);
+      creationProperties = new DatasetInstanceConfiguration(typeName, null, description, ownerPrincipal);
     }
     HttpRequest request = HttpRequest.put(getUrl(instance.getNamespace(), "/data/datasets/" + instance.getEntityName()))
       .withBody(GSON.toJson(creationProperties)).build();

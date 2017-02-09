@@ -14,7 +14,8 @@
   the License.
 -->
 
-<div class="tracker-entity-top-bar">
+<div class="tracker-entity-top-bar"
+     ng-if="!$state.params.iframe">
   <div class="back-button text-center"
        ng-click="EntityController.goBack()"
        ng-if="$state.params.searchTerm"
@@ -61,6 +62,9 @@
       </li>
       <li ng-class="{'active': $state.is('tracker.detail.entity.usage')}">
         <a ui-sref="tracker.detail.entity.usage">Usage</a>
+      </li>
+      <li ng-class="{'active': $state.is('tracker.detail.entity.compliance')}">
+        <a ui-sref="tracker.detail.entity.compliance">Compliance</a>
       </li>
     </ul>
   </div>

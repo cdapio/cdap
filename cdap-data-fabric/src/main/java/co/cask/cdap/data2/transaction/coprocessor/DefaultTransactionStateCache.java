@@ -18,8 +18,6 @@ package co.cask.cdap.data2.transaction.coprocessor;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
-import co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1;
-import co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -37,8 +35,7 @@ import java.io.IOException;
 public class DefaultTransactionStateCache extends TransactionStateCache {
   // CDAP versions of coprocessors must reference snapshot classes so they get included in generated jar file
   // DO NOT REMOVE
-  private static final SnapshotCodecV1 codecV1 = null;
-  private static final SnapshotCodecV2 codecV2 = null;
+  @SuppressWarnings("unused")
   private static final SnapshotCodecV3 codecV3 = null;
 
   private String sysConfigTablePrefix;

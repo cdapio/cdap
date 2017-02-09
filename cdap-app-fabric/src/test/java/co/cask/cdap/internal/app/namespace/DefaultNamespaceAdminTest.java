@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,25 +20,46 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
-import org.apache.avro.reflect.Nullable;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
+import javax.annotation.Nullable;
 
 /**
  * Tests for {@link DefaultNamespaceAdmin}
  */
 public class DefaultNamespaceAdminTest extends AppFabricTestBase {
-  private static final NamespaceAdmin namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
-  private static final NamespacedLocationFactory namespacedLocationFactory =
-    getInjector().getInstance(NamespacedLocationFactory.class);
+  private static CConfiguration cConf;
+  private static NamespaceAdmin namespaceAdmin;
+  private static LocationFactory baseLocationFactory;
+  private static NamespacedLocationFactory namespacedLocationFactory;
+
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    cConf = createBasicCConf();
+    // we enable Kerberos for these unit tests, so we can test namespace group permissions (see testDataDirCreation).
+    cConf.set(Constants.Security.KERBEROS_ENABLED, Boolean.toString(true));
+    cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, "cdap");
+    initializeAndStartServices(cConf, null);
+
+    namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
+    baseLocationFactory = getInjector().getInstance(LocationFactory.class);
+    namespacedLocationFactory =
+      getInjector().getInstance(NamespacedLocationFactory.class);
+  }
 
   @Test
   public void testNamespaces() throws Exception {
@@ -135,10 +156,11 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     NamespaceId namespaceId = new NamespaceId(namespace);
     // check that root directory for a namespace cannot be updated
     // create the custom directory since the namespace is being created with custom root directory it needs to exist
-    Location customlocation = namespacedLocationFactory.get(namespaceId.toId());
+    String customRoot = "/some/custom/dir";
+    Location customlocation = baseLocationFactory.create(customRoot);
     Assert.assertTrue(customlocation.mkdirs());
     NamespaceMeta nsMeta = new NamespaceMeta.Builder().setName(namespaceId)
-      .setRootDirectory(customlocation.toString()).build();
+      .setRootDirectory(customRoot).build();
     namespaceAdmin.create(nsMeta);
     Assert.assertTrue(namespaceAdmin.exists(namespaceId));
 
@@ -205,37 +227,35 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
   public void testSameCustomMapping() throws Exception {
 
     String namespace = "custompaceNamespace";
-    Id.Namespace namespaceId = Id.Namespace.from(namespace);
-    // check that root directory for a namespace cannot be updated
+    NamespaceId namespaceId = new NamespaceId(namespace);
     // create the custom directory since the namespace is being created with custom root directory it needs to exist
-    Location customlocation = namespacedLocationFactory.get(namespaceId);
+    String parentPath = "/custom/root";
+    String customRootPath = parentPath + "/path";
+    Location customlocation = baseLocationFactory.create(customRootPath);
     Assert.assertTrue(customlocation.mkdirs());
     NamespaceMeta nsMeta = new NamespaceMeta.Builder().setName(namespaceId)
-      .setRootDirectory(customlocation.toString()).setHBaseNamespace("hbasens").setHiveDatabase("hivedb").build();
+      .setRootDirectory(customRootPath).setHBaseNamespace("hbasens").setHiveDatabase("hivedb").build();
     namespaceAdmin.create(nsMeta);
-
 
     // creating a new namespace with same location should fail
     verifyAlreadyExist(new NamespaceMeta.Builder(nsMeta).setName("otherNamespace").build(), namespaceId);
 
     // creating a new namespace with subdir should fail.
     // subdirLocation here looks like: ..../junit/custompaceNamespace/subdir
-    Location subdirLocation = customlocation.append("subdir");
     verifyAlreadyExist(new NamespaceMeta.Builder().setName("otherNamespace")
-                         .setRootDirectory(subdirLocation.toString()).build(), namespaceId);
+                         .setRootDirectory(customRootPath + "/subdir").build(), namespaceId);
 
     // trying to create a namespace one level up should fail
-    // parentCustomLocation here looks like: ..../junit
-    Location parentCustomLocation = Locations.getParent(customlocation);
     verifyAlreadyExist(new NamespaceMeta.Builder().setName("otherNamespace")
-                         .setRootDirectory(parentCustomLocation.toString()).build(), namespaceId);
+                         .setRootDirectory(parentPath).build(), namespaceId);
 
     // but we should be able to create namespace in a different directory under same path
     // otherNamespace here looks like: ..../junit/otherNamespace
-    Location otherNamespace = parentCustomLocation.append("otherNamespace");
+    String otherRoot = parentPath + "/otherpath";
+    Location otherNamespace = baseLocationFactory.create(otherRoot);
     Assert.assertTrue(otherNamespace.mkdirs());
     namespaceAdmin.create(new NamespaceMeta.Builder().setName("otherNamespace")
-                            .setRootDirectory(otherNamespace.toString()).build());
+                            .setRootDirectory(otherRoot).build());
     namespaceAdmin.delete(new NamespaceId("otherNamespace"));
 
     // creating a new namespace with same hive database should fails
@@ -247,18 +267,100 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
                        namespaceId);
   }
 
+  @Test
+  public void testDataDirCreation() throws Exception {
+    // create a namespace with default settings, validate that data dir exists and has
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName("dd1").build());
+
+    Location homeDir = namespacedLocationFactory.get(new NamespaceId("dd1").toId());
+    Location dataDir = homeDir.append(Constants.Dataset.DEFAULT_DATA_DIR);
+    Location tempDir = homeDir.append(cConf.get(Constants.AppFabric.TEMP_DIR));
+    Location streamsDir = homeDir.append(cConf.get(Constants.Stream.BASE_DIR));
+    Location deletedDir = streamsDir.append(StreamUtils.DELETED);
+
+    for (Location loc : new Location[] { homeDir, dataDir, tempDir, streamsDir, deletedDir }) {
+      Assert.assertTrue(loc.exists());
+      Assert.assertEquals(UserGroupInformation.getCurrentUser().getPrimaryGroupName(), loc.getGroup());
+    }
+
+    // Determine a group other than the current user's primary group to use for testing
+    // Note: this is only meaningful if the user running this test is in at least 2 groups
+    String[] groups = UserGroupInformation.getCurrentUser().getGroupNames();
+    Assert.assertTrue(groups.length > 0);
+    String nsGroup = groups[groups.length - 1];
+
+    // create and validate a namespace with a default settings except that a group is configured
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName("dd2").setGroupName(nsGroup).build());
+
+    homeDir = namespacedLocationFactory.get(new NamespaceId("dd2").toId());
+    dataDir = homeDir.append(Constants.Dataset.DEFAULT_DATA_DIR);
+    tempDir = homeDir.append(cConf.get(Constants.AppFabric.TEMP_DIR));
+    streamsDir = homeDir.append(cConf.get(Constants.Stream.BASE_DIR));
+    deletedDir = streamsDir.append(StreamUtils.DELETED);
+
+    Assert.assertTrue(homeDir.exists());
+    Assert.assertEquals(nsGroup, homeDir.getGroup());
+    for (Location loc : new Location[] { dataDir, tempDir, streamsDir, deletedDir }) {
+      Assert.assertTrue(loc.exists());
+      Assert.assertEquals(nsGroup, loc.getGroup());
+      Assert.assertEquals("rwx", loc.getPermissions().substring(3, 6));
+    }
+
+    // for a custom root, but no group configured, the data dir inherits the group from the root
+    String basePath = "/custom/dd3";
+    homeDir = baseLocationFactory.create(basePath);
+    Assert.assertTrue(homeDir.mkdirs());
+    String homeGroup = homeDir.getGroup();
+
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName("dd3").setRootDirectory(basePath).build());
+
+    dataDir = homeDir.append(Constants.Dataset.DEFAULT_DATA_DIR);
+    tempDir = homeDir.append(cConf.get(Constants.AppFabric.TEMP_DIR));
+    streamsDir = homeDir.append(cConf.get(Constants.Stream.BASE_DIR));
+    deletedDir = streamsDir.append(StreamUtils.DELETED);
+
+    for (Location loc : new Location[] { homeDir, dataDir, tempDir, streamsDir, deletedDir }) {
+      Assert.assertTrue(loc.exists());
+      Assert.assertEquals(homeGroup, loc.getGroup());
+    }
+
+    // for a custom root and a group configured, the data dir gets the custom group and group 'rwx'
+    basePath = "/custom/dd4";
+    homeDir = baseLocationFactory.create(basePath);
+    Assert.assertTrue(homeDir.mkdirs());
+    String homePermissions = homeDir.getPermissions();
+
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName("dd4")
+                            .setGroupName(nsGroup).setRootDirectory(basePath).build());
+
+    dataDir = homeDir.append(Constants.Dataset.DEFAULT_DATA_DIR);
+    tempDir = homeDir.append(cConf.get(Constants.AppFabric.TEMP_DIR));
+    streamsDir = homeDir.append(cConf.get(Constants.Stream.BASE_DIR));
+    deletedDir = streamsDir.append(StreamUtils.DELETED);
+
+    // home dir should have existing group and permissions
+    Assert.assertTrue(homeDir.exists());
+    Assert.assertEquals(homeGroup, homeDir.getGroup());
+    Assert.assertEquals(homePermissions, homeDir.getPermissions());
+    for (Location loc : new Location[] { dataDir, tempDir, streamsDir, deletedDir }) {
+      Assert.assertTrue(loc.exists());
+      Assert.assertEquals(nsGroup, loc.getGroup());
+      Assert.assertEquals("rwx", loc.getPermissions().substring(3, 6));
+    }
+  }
+
   @Nullable
   private NamespaceMeta getFromCache(NamespaceId namespaceId) {
     return ((DefaultNamespaceAdmin) namespaceAdmin).getCache().get(namespaceId);
   }
 
-  private static void verifyAlreadyExist(NamespaceMeta namespaceMeta, Id.Namespace existingNamespace)
+  private static void verifyAlreadyExist(NamespaceMeta namespaceMeta, NamespaceId existingNamespace)
     throws Exception {
     try {
       namespaceAdmin.create(namespaceMeta);
       Assert.fail(String.format("Namespace '%s' should not have been created", namespaceMeta.getName()));
     } catch (BadRequestException e) {
-      Assert.assertTrue(e.getMessage().contains(existingNamespace.getId()));
+      Assert.assertTrue(e.getMessage().contains(existingNamespace.getNamespace()));
     }
   }
 

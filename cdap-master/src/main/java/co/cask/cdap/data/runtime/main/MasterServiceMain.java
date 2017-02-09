@@ -37,6 +37,7 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
@@ -82,6 +83,7 @@ import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -104,7 +106,6 @@ import org.apache.hadoop.fs.ParentNotDirectoryException;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -855,6 +856,11 @@ public class MasterServiceMain extends DaemonMain {
           // Add HBase dependencies
           preparer.withDependencies(injector.getInstance(HBaseTableUtil.class).getClass());
 
+          // Add HBase DDL executor dependency
+          Class<? extends HBaseDDLExecutor> ddlExecutorClass = new HBaseDDLExecutorFactory(cConf, hConf)
+            .get().getClass();
+          preparer.withDependencies(ddlExecutorClass);
+
           // Add secure tokens
           if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
             preparer.addSecureStore(secureStoreUpdater.update());
@@ -873,9 +879,21 @@ public class MasterServiceMain extends DaemonMain {
             prepareExploreContainer(preparer, exploreExtraClassPaths, yarnAppClassPath);
           }
 
+          // We need to ship the extension jar to the system service containers. In order to do this we add it
+          // in the classpath by creating CombineClassLoader.
+          ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
+            Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader()),
+            Collections.singleton(ddlExecutorClass.getClassLoader())
+          ));
+          TwillController controller;
+          try {
+            controller = preparer.start(
+              cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS), TimeUnit.SECONDS);
+          } finally {
+            ClassLoaders.setContextClassLoader(oldClassLoader);
+          }
+
           // Add a listener to delete temp files when application started/terminated.
-          TwillController controller = preparer.start(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
-                                                      TimeUnit.SECONDS);
           Runnable cleanup = new Runnable() {
             @Override
             public void run() {

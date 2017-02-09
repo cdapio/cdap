@@ -832,11 +832,11 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return runtimeArguments;
   }
 
-  private void enableExplore() {
+  private void enableExplore(boolean truncating) {
     ExploreFacade exploreFacade = exploreFacadeProvider.get();
     if (exploreFacade != null) {
       try {
-        exploreFacade.enableExploreDataset(datasetInstanceId, spec);
+        exploreFacade.enableExploreDataset(datasetInstanceId, spec, truncating);
       } catch (Exception e) {
         throw new DataSetException("Unable to enable explore", e);
       }
@@ -877,7 +877,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
           public void run(co.cask.cdap.api.data.DatasetContext context) throws Exception {
             PartitionedFileSetDataset pfs = context.getDataset(datasetName);
             pfs.disableExplore();
-            pfs.enableExplore();
+            pfs.enableExplore(true); // truncating = true, because this is like truncating
           }
         });
       } catch (TransactionFailureException e) {

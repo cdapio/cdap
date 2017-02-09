@@ -15,44 +15,43 @@
  */
 
 import React, {PropTypes} from 'react';
-require('./AdminConfigurePane.scss');
-import ConfigureButton from '../ConfigureButton/index.js';
-var shortid = require('shortid');
+import ConfigureButton from '../ConfigureButton';
+import shortid from 'shortid';
+import classnames from 'classnames';
 import T from 'i18n-react';
+require('./AdminConfigurePane.scss');
 
-var configButtons = [
-  T.translate('features.Management.Configure.buttons.add-ns')
-];
-
-export default function AdminConfigurePane({ openNamespaceWizard }) {
-
-  var buttons = [];
-  for (var i = 0; i < configButtons.length; i++) {
-    if (i === 0) {
-      buttons.push(
-        <ConfigureButton
-          key={shortid.generate()}
-          label={configButtons[i]}
-          onClick={openNamespaceWizard}
-        />
-      );
-    } else {
-      buttons.push(
-        <ConfigureButton
-          key={shortid.generate()}
-          label={configButtons[i]}
-        />
-      );
-    }
-  }
+export default function AdminConfigurePane({ openNamespaceWizard, openPreferenceModal, preferencesSavedState, closePreferencesSavedMessage }) {
+  let setPreferencesLabel = T.translate('features.Management.Configure.buttons.set-system-preferences');
+  let setPreferenceSuccessLabel = T.translate('features.FastAction.setPreferencesSuccess.default', {entityType: 'CDAP'});
+  let addNSLabel = T.translate('features.Management.Configure.buttons.add-ns');
+  let wrenchClasses = classnames('fa fa-wrench', {'preferences-saved-wrench': preferencesSavedState});
 
   return (
     <div className="configure-pane">
       <span>Configure</span>
       <div className="configure-pane-container">
+        {
+          preferencesSavedState ?
+            <div className="preferences-saved-message text-white">
+              <span>{setPreferenceSuccessLabel}</span>
+              <span
+                className='fa fa-times'
+                onClick={closePreferencesSavedMessage}
+              />
+            </div>
+          :
+            null
+        }
         <ConfigureButton
           key={shortid.generate()}
-          label={configButtons[0]}
+          label={setPreferencesLabel}
+          onClick={openPreferenceModal}
+          iconClass={wrenchClasses}
+        />
+        <ConfigureButton
+          key={shortid.generate()}
+          label={addNSLabel}
           onClick={openNamespaceWizard}
           iconClass="icon-addnamespaces"
         />
@@ -62,5 +61,8 @@ export default function AdminConfigurePane({ openNamespaceWizard }) {
 }
 
 AdminConfigurePane.propTypes = {
-  openNamespaceWizard : PropTypes.func
+  openNamespaceWizard : PropTypes.func,
+  openPreferenceModal : PropTypes.func,
+  preferencesSavedState: PropTypes.bool,
+  closePreferencesSavedMessage: PropTypes.func
 };

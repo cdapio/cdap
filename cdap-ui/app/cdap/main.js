@@ -48,6 +48,7 @@ import VersionActions from 'services/VersionStore/VersionActions';
 import StatusFactory from 'services/StatusFactory';
 import LoadingIndicator from 'components/LoadingIndicator';
 import StatusAlertMessage from 'components/StatusAlertMessage';
+import Page404 from 'components/404';
 
 class CDAP extends Component {
   constructor(props) {
@@ -115,7 +116,7 @@ class CDAP extends Component {
           <StatusAlertMessage />
           <div className="container-fluid">
             <Match exactly pattern="/" component={RouteToNamespace} />
-            <Match exactly pattern="/notfound" component={Missed} />
+            <Match exactly pattern="/notfound" component={Page404} />
             <Match exactly pattern="/management" component={Management} />
             <Match exactly pattern="/ns" component={RouteToNamespace} />
             <Match pattern="/ns/:namespace" history={history} component={Home} />
@@ -123,7 +124,7 @@ class CDAP extends Component {
             <Match pattern="/Experimental" component={Experimental} />
             <Match pattern="/socket-example" component={ConnectionExample} />
             <Match pattern="/schemaeditor" component={SchemaEditor} />
-            <Miss component={Missed} />
+            <Miss component={Page404} />
           </div>
           <Footer version={this.state.version} />
         </div>
@@ -135,19 +136,6 @@ class CDAP extends Component {
 CDAP.propTypes = {
   children: React.PropTypes.node,
   params: PropTypes.object
-};
-
-function Missed({ location }) {
-  return (
-    <div>
-      <h2>404 - Page Not Found</h2>
-      <p>Page {location.pathname} not found</p>
-    </div>
-  );
-}
-
-Missed.propTypes = {
-  location : PropTypes.object
 };
 
 ReactDOM.render(

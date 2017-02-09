@@ -26,6 +26,7 @@ import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
@@ -42,6 +43,7 @@ import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -81,6 +83,7 @@ public class DatasetInstanceService {
   private final DatasetOpExecutor opExecutorClient;
   private final ExploreFacade exploreFacade;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final OwnerAdmin ownerAdmin;
   private final LoadingCache<DatasetId, DatasetMeta> metaCache;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final PrivilegesManager privilegesManager;
@@ -92,7 +95,7 @@ public class DatasetInstanceService {
   @Inject
   public DatasetInstanceService(DatasetTypeService typeService, DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade,
-                                NamespaceQueryAdmin namespaceQueryAdmin,
+                                NamespaceQueryAdmin namespaceQueryAdmin, OwnerAdmin ownerAdmin,
                                 AuthorizationEnforcer authorizationEnforcer, PrivilegesManager privilegesManager,
                                 AuthenticationContext authenticationContext) {
     this.opExecutorClient = opExecutorClient;
@@ -100,6 +103,7 @@ public class DatasetInstanceService {
     this.instanceManager = instanceManager;
     this.exploreFacade = exploreFacade;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.ownerAdmin = ownerAdmin;
     this.metaCache = CacheBuilder.newBuilder().build(
       new CacheLoader<DatasetId, DatasetMeta>() {
         @Override
@@ -188,7 +192,14 @@ public class DatasetInstanceService {
       // TODO: This shouldn't happen unless CDAP is in an invalid state - maybe give different error
       throw new NotFoundException(datasetTypeId);
     }
-    return new DatasetMeta(spec, typeMeta, null);
+    // for system dataset do not look up owner information in store as we know that it will be null.
+    // Also, this is required for CDAP to start, because initially we don't want to look up owner admin
+    // (causing its own lookup) as the SystemDatasetInitiator.getDataset is called when CDAP starts
+    String ownerPrincipal = null;
+    if (!NamespaceId.SYSTEM.equals(instance.getNamespaceId())) {
+      ownerPrincipal = ownerAdmin.getOwnerPrincipal(instance);
+    }
+    return new DatasetMeta(spec, typeMeta, null, ownerPrincipal);
   }
 
   /**
@@ -229,10 +240,10 @@ public class DatasetInstanceService {
 
     ensureNamespaceExists(namespace);
 
-    DatasetId newInstance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
-    DatasetSpecification existing = instanceManager.get(newInstance);
+    DatasetId datasetId = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
+    DatasetSpecification existing = instanceManager.get(datasetId);
     if (existing != null) {
-      throw new DatasetAlreadyExistsException(newInstance);
+      throw new DatasetAlreadyExistsException(datasetId);
     }
 
     DatasetTypeMeta typeMeta = getTypeInfo(namespace, props.getTypeName());
@@ -246,29 +257,42 @@ public class DatasetInstanceService {
     // privileges in rare scenarios, but there can never be orphaned datasets.
     // If the dataset previously existed and was deleted, but revoking privileges somehow failed, there may be orphaned
     // privileges for the dataset. Revoke them first, so no users unintentionally get privileges on the dataset.
-    privilegesManager.revoke(newInstance);
+    privilegesManager.revoke(datasetId);
     // grant all privileges on the dataset to be created
-    privilegesManager.grant(newInstance, principal, EnumSet.allOf(Action.class));
+    privilegesManager.grant(datasetId, principal, EnumSet.allOf(Action.class));
 
     LOG.info("Creating dataset {}.{}, type name: {}, properties: {}",
              namespaceId, name, props.getTypeName(), props.getProperties());
 
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     try {
-      DatasetSpecification spec = opExecutorClient.create(newInstance, typeMeta,
-                                                          DatasetProperties.builder()
-                                                            .addAll(props.getProperties())
-                                                            .setDescription(props.getDescription())
-                                                            .build());
-      instanceManager.add(namespace, spec);
-      metaCache.invalidate(newInstance);
-      publishAudit(newInstance, AuditType.CREATE);
+      String ownerPrincipal = props.getOwnerPrincipal();
+      // Store the owner principal first if one was provided since it will be used to impersonate while creating
+      // dataset's files/tables in the underlying storage
+      if (ownerPrincipal != null) {
+        KerberosPrincipalId owner = new KerberosPrincipalId(ownerPrincipal);
+        ownerAdmin.add(datasetId, owner);
+      }
+      try {
+        DatasetSpecification spec = opExecutorClient.create(datasetId, typeMeta,
+                                                            DatasetProperties.builder()
+                                                              .addAll(props.getProperties())
+                                                              .setDescription(props.getDescription())
+                                                              .build());
+        instanceManager.add(namespace, spec);
+        metaCache.invalidate(datasetId);
+        publishAudit(datasetId, AuditType.CREATE);
 
-      // Enable explore
-      enableExplore(newInstance, spec, props);
+        // Enable explore
+        enableExplore(datasetId, spec, props);
+      } catch (Exception e) {
+        // there was a problem in creating the dataset instance so delete the owner if it got added earlier
+        ownerAdmin.delete(datasetId); // safe to call for entities which does not have an owner too
+        throw e;
+      }
     } catch (Exception e) {
-      // there was a problem in creating the dataset instance. so revoke the privileges.
-      privilegesManager.revoke(newInstance);
+      // there was a problem in creating the dataset instance so revoke the privileges
+      privilegesManager.revoke(datasetId);
       throw e;
     }
   }
@@ -303,14 +327,12 @@ public class DatasetInstanceService {
     }
 
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
-    DatasetSpecification spec = opExecutorClient.update(instance, typeMeta, DatasetProperties.of(properties), existing);
+    DatasetProperties datasetProperties = DatasetProperties.of(properties);
+    DatasetSpecification spec = opExecutorClient.update(instance, typeMeta, datasetProperties, existing);
     instanceManager.add(instance.getParent(), spec);
     metaCache.invalidate(instance);
 
-    DatasetInstanceConfiguration creationProperties =
-      new DatasetInstanceConfiguration(existing.getType(), properties, null);
-
-    updateExplore(instance, creationProperties, existing, spec);
+    updateExplore(instance, datasetProperties, existing, spec);
     publishAudit(instance, AuditType.UPDATE);
   }
 
@@ -468,6 +490,8 @@ public class DatasetInstanceService {
     // can clean up. This may result in orphaned privileges, which will be cleaned up by the create API if the same
     // dataset is successfully re-created.
     privilegesManager.revoke(instance);
+    // deletes the owner principal for the entity if one was stored during creation
+    ownerAdmin.delete(instance);
   }
 
   private void disableExplore(DatasetId datasetInstance, DatasetSpecification spec) {
@@ -484,9 +508,9 @@ public class DatasetInstanceService {
   private void enableExplore(DatasetId datasetInstance, DatasetSpecification spec,
                              DatasetInstanceConfiguration creationProperties) {
     // Enable ad-hoc exploration of dataset
-    // Note: today explore enable is not transactional with dataset create - CDAP-13933
+    // Note: today explore enable is not transactional with dataset create - CDAP-1393
     try {
-      exploreFacade.enableExploreDataset(datasetInstance, spec);
+      exploreFacade.enableExploreDataset(datasetInstance, spec, false);
     } catch (Exception e) {
       LOG.error("Cannot enable Explore for dataset instance {} of type {} with properties {}",
                 datasetInstance, creationProperties.getTypeName(), creationProperties.getProperties(), e);
@@ -494,7 +518,7 @@ public class DatasetInstanceService {
     }
   }
 
-  private void updateExplore(DatasetId datasetInstance, DatasetInstanceConfiguration creationProperties,
+  private void updateExplore(DatasetId datasetInstance, DatasetProperties creationProperties,
                              DatasetSpecification oldSpec, DatasetSpecification newSpec) {
     // Enable ad-hoc exploration of dataset
     // Note: today explore enable is not transactional with dataset create - CDAP-1393

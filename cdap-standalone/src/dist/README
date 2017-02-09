@@ -34,12 +34,12 @@ You are now ready to start CDAP. Do so by running the 'cdap'
 script in the $CDAP/bin folder:
 
   %> cd <path to SDK>/cdap-sdk-${project.version}
-  %> ./bin/cdap.sh start
+  %> ./bin/cdap sdk start
   
 or on Windows:
   
   > cd <path to SDK>\cdap-sdk-${project.version}
-  > bin\cdap.bat start
+  > bin\cdap.bat sdk start
   
 
 Using CDAP

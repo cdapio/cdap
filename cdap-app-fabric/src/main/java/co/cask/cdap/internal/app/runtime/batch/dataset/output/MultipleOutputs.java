@@ -36,6 +36,8 @@ import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.hadoop.mapreduce.task.JobContextImpl;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 import org.apache.hadoop.util.ReflectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -52,6 +54,8 @@ import java.util.Set;
  * It has been adapted from org.apache.hadoop.mapreduce.lib.output.MultipleOutputs.
  */
 public class MultipleOutputs implements Closeable {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MultipleOutputs.class);
 
   private static final String MULTIPLE_OUTPUTS = "hconf.mapreduce.multipleoutputs";
   private static final String PREFIXED_CONF_PREFIX = "hconf.named.";
@@ -246,6 +250,7 @@ public class MultipleOutputs implements Closeable {
     Configuration conf = job.getConfiguration();
     Map<String, String> namedConfigurations = ConfigurationUtil.getNamedConfigurations(context.getConfiguration(),
                                                                                        computePrefixName(namedOutput));
+    LOG.trace("Setting config for named output {}: {}", namedOutput, namedConfigurations);
     ConfigurationUtil.setAll(namedConfigurations, conf);
     return job;
   }

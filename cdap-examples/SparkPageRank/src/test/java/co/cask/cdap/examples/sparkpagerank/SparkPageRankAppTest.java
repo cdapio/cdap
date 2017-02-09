@@ -17,6 +17,7 @@
 package co.cask.cdap.examples.sparkpagerank;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
@@ -70,12 +71,12 @@ public class SparkPageRankAppTest extends TestBase {
     // Start the SparkPageRankProgram
     SparkManager sparkManager = appManager.getSparkManager(SparkPageRankApp.PageRankSpark.class.getSimpleName())
       .start();
-    sparkManager.waitForFinish(60, TimeUnit.SECONDS);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 60, TimeUnit.SECONDS);
 
     // Run RanksCounter which will count the number of pages for a pr
     MapReduceManager mapReduceManager = appManager.getMapReduceManager(SparkPageRankApp.RanksCounter.class
                                                                          .getSimpleName()).start();
-    mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
+    mapReduceManager.waitForRun(ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
 
     //Query for rank
     URL url = new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS),

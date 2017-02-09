@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,9 +22,13 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.Updatable;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -33,8 +37,12 @@ import java.io.IOException;
  */
 public class FileSetAdmin implements DatasetAdmin, Updatable {
 
-  private final String name;
+  private static final Logger LOG = LoggerFactory.getLogger(FileSetAdmin.class);
+
+  private final DatasetSpecification spec;
   private final boolean isExternal;
+  private final boolean useExisting;
+  private final boolean possessExisting;
   private final Location baseLocation;
   private final CConfiguration cConf;
   private final DatasetContext datasetContext;
@@ -46,8 +54,10 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
                NamespacedLocationFactory namespacedLocationFactory,
                DatasetSpecification spec) throws IOException {
 
-    this.name = spec.getName();
+    this.spec = spec;
     this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
+    this.useExisting = FileSetProperties.isUseExisting(spec.getProperties());
+    this.possessExisting = FileSetProperties.isPossessExisting(spec.getProperties());
     this.baseLocation = FileSetDataset.determineBaseLocation(datasetContext, cConf, spec,
                                                              absoluteLocationFactory, namespacedLocationFactory);
     this.datasetContext = datasetContext;
@@ -63,21 +73,79 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
 
   @Override
   public void create() throws IOException {
-    if (!isExternal) {
+    create(false);
+  }
+
+  /**
+   * @param truncating whether this call to create() is part of a truncate() operation. The effect is:
+   *                   If possessExisting is true, then the truncate() has just dropped this
+   *                   dataset and that deleted the base directory: we must recreate it.
+   */
+  private void create(boolean truncating) throws IOException {
+    if (isExternal) {
+      validateExists(FileSetProperties.DATA_EXTERNAL);
+    } else if (useExisting) {
+      validateExists(FileSetProperties.DATA_USE_EXISTING);
+    } else if (!truncating && possessExisting) {
+      validateExists(FileSetProperties.DATA_POSSESS_EXISTING);
+    } else {
       if (exists()) {
         throw new IOException(String.format(
-          "Base location for file set '%s' at %s already exists", name, baseLocation));
+          "Base location for file set '%s' at %s already exists", spec.getName(), baseLocation));
       }
-      baseLocation.mkdirs();
-    } else if (!exists()) {
-        throw new IOException(String.format(
-          "Base location for external file set '%s' at %s does not exist", name, baseLocation));
+      String permissions = FileSetProperties.getFilePermissions(spec.getProperties());
+      String group = FileSetProperties.getFileGroup(spec.getProperties());
+      if (group == null) {
+        String[] groups = UserGroupInformation.getCurrentUser().getGroupNames();
+        if (groups.length > 0) {
+          group = groups[0];
+        }
+      }
+
+      // we can't simply mkdirs() the base location, because we need to set the group id on
+      // every directory we create. Thus find the first ancestor of the base that does not exist:
+      Location ancestor = baseLocation;
+      Location firstDirToCreate = null;
+      while (ancestor != null && !ancestor.exists()) {
+        firstDirToCreate = ancestor;
+        ancestor = Locations.getParent(ancestor);
+      }
+      // it is unlikely to be null: only if it was created after the exists() call above
+      if (firstDirToCreate != null) {
+        if (null == permissions) {
+          firstDirToCreate.mkdirs();
+        } else {
+          firstDirToCreate.mkdirs(permissions);
+        }
+        if (group != null) {
+          try {
+            firstDirToCreate.setGroup(group);
+          } catch (Exception e) {
+            LOG.warn("Failed to set group {} for base location {} of file set {}: {}. Please set it manually.",
+                     group, firstDirToCreate.toURI().toString(), spec.getName(), e.getMessage());
+          }
+        }
+        // all following directories are created with the same group id as their parent
+        if (null == permissions) {
+          baseLocation.mkdirs();
+        } else {
+          baseLocation.mkdirs(permissions);
+        }
+      }
+    }
+  }
+
+  private void validateExists(String property) throws IOException {
+    if (!exists()) {
+      throw new IOException(String.format(
+        "Property '%s' for file set '%s' is true, but base location at %s does not exist",
+        property, spec.getName(), baseLocation));
     }
   }
 
   @Override
   public void drop() throws IOException {
-    if (!isExternal) {
+    if (!isExternal && !useExisting) {
       baseLocation.delete(true);
     }
   }
@@ -85,7 +153,7 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
   @Override
   public void truncate() throws IOException {
     drop();
-    create();
+    create(true);
   }
 
   @Override

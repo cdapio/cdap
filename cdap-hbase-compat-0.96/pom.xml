@@ -195,8 +195,68 @@
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>hbase-compat-fat-jar</id>
+                <phase>package</phase>
+                <configuration>
+                  <createDependencyReducedPom>false</createDependencyReducedPom>
+                  <minimizeJar>true</minimizeJar>
+                  <shadedArtifactAttached>true</shadedArtifactAttached>
+                  <shadedClassifierName>fat</shadedClassifierName>
+                  <artifactSet>
+                    <includes>
+                      <!-- mirrors the includes in CoprocessorManager's ensureCoprocessorExists method -->
+                      <include>co.cask.*:*</include>
+                      <include>org.apache.tephra:*</include>
+                      <include>it.unimi.dsi:fastutil</include>
+                      <include>com.google.code.gson:gson</include>
+                    </includes>
+                  </artifactSet>
+                  <filters>
+                    <filter>
+                      <artifact>*:*</artifact>
+                      <excludes>
+                        <exclude>META-INF/*.SF</exclude>
+                        <exclude>META-INF/*.DSA</exclude>
+                        <exclude>META-INF/*.RSA</exclude>
+                      </excludes>
+                    </filter>
+                  </filters>
+                </configuration>
+                <goals>
+                  <goal>shade</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
-            <version>2.6</version>
+            <executions>
+              <execution>
+                <id>copy-opt</id>
+              </execution>
+              <execution>
+                <id>copy-hbase-compat-fat</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${stage.coprocessor.dir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>${project.build.directory}</directory>
+                      <includes>
+                        <include>${project.artifactId}-${project.version}-fat.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>

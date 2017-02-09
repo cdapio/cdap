@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -82,7 +83,7 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     FlowManager flowManager = appManager.getFlowManager(AdminApp.FLOW_NAME).start();
 
     try {
-      flowManager.waitForStatus(true, 5, 5);
+      flowManager.waitForRun(ProgramRunStatus.RUNNING, 5, TimeUnit.MINUTES);
 
       // send some events to the stream
       StreamManager streamManager = getStreamManager("events");
@@ -110,7 +111,7 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     } finally {
       flowManager.stop();
     }
-    flowManager.waitForFinish(30, TimeUnit.SECONDS);
+    flowManager.waitForRun(ProgramRunStatus.KILLED, 30, TimeUnit.SECONDS);
 
     // flowlet destroy() deletes all the tables - validate
     Assert.assertNull(getDataset("counters_a").get());
@@ -152,8 +153,8 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     // start the worker and wait for it to finish
     File newBasePath = new File(TMP_FOLDER.newFolder(), "extra");
     Assert.assertFalse(newBasePath.exists());
-    manager = manager.start(ImmutableMap.of("new.base.path", newBasePath.getPath()));
-    manager.waitForFinish(30, TimeUnit.SECONDS);
+    manager.start(ImmutableMap.of("new.base.path", newBasePath.getPath()));
+    manager.waitForRun(ProgramRunStatus.COMPLETED, 30, TimeUnit.SECONDS);
 
     // validate that worker created dataset a
     DataSetManager<Table> aManager = getDataset("a");
@@ -177,8 +178,8 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     Assert.assertNull(getDataset("d").get());
 
     // run the worker again to drop all datasets
-    manager = manager.start(ImmutableMap.of("dropAll", "true"));
-    manager.waitForFinish(30, TimeUnit.SECONDS);
+    manager.start(ImmutableMap.of("dropAll", "true"));
+    manager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 30, TimeUnit.SECONDS);
 
     Assert.assertNull(getDataset("a").get());
     Assert.assertNull(getDataset("b").get());
@@ -325,7 +326,7 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     countsManager.flush();
 
     manager = manager.start();
-    manager.waitForFinish(60, TimeUnit.SECONDS);
+    manager.waitForRun(ProgramRunStatus.COMPLETED, 180, TimeUnit.SECONDS);
 
     // validate that there are no counts for "you" and "me", and the the other counts are accurate
     countsManager.flush(); // need to start a new tx to see the output of MR

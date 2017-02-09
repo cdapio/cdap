@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,6 +35,7 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.common.http.HttpMethod;
@@ -182,10 +183,17 @@ class DatasetServiceClient {
     return GSON.fromJson(response.getResponseBodyAsString(), DatasetTypeMeta.class);
   }
 
-  public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
+  public void addInstance(String datasetInstanceName, String datasetType,
+                          DatasetProperties props) throws DatasetManagementException {
+    addInstance(datasetInstanceName, datasetType, props, null);
+  }
+
+  public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props,
+                          @Nullable KerberosPrincipalId owner)
     throws DatasetManagementException {
+    String ownerPrincipal = owner == null ? null : owner.getPrincipal();
     DatasetInstanceConfiguration creationProperties =
-      new DatasetInstanceConfiguration(datasetType, props.getProperties(), props.getDescription());
+      new DatasetInstanceConfiguration(datasetType, props.getProperties(), props.getDescription(), ownerPrincipal);
 
     HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(creationProperties));
 

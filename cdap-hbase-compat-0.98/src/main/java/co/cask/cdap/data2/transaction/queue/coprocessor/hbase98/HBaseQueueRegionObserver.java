@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.queue.coprocessor.hbase98;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
@@ -45,14 +46,19 @@ import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.hadoop.hbase.regionserver.Store;
+import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.tephra.TxConstants;
 import org.apache.tephra.coprocessor.TransactionStateCache;
+import org.apache.tephra.hbase.txprune.CompactionState;
 import org.apache.tephra.persist.TransactionVisibilityState;
 
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * RegionObserver for queue table. This class should only have JSE and HBase classes dependencies only.
@@ -68,9 +74,11 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
   private TableName configTableName;
   private CConfigurationReader cConfReader;
-  TransactionStateCache txStateCache;
   private Supplier<TransactionVisibilityState> txSnapshotSupplier;
+  private TransactionStateCache txStateCache;
   private ConsumerConfigCache configCache;
+  private CompactionState compactionState;
+  private Boolean pruneEnable;
 
   private int prefixBytes;
   private String namespaceId;
@@ -115,6 +123,13 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       configCache = createConfigCache(env);
     }
   }
+  
+  @Override
+  public void stop(CoprocessorEnvironment e) {
+    if (compactionState != null) {
+      compactionState.stop();
+    }
+  }
 
   @Override
   public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> e,
@@ -124,7 +139,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     }
 
     LOG.info("preFlush, creates EvictionInternalScanner");
-    return new EvictionInternalScanner("flush", e.getEnvironment(), scanner);
+    return new EvictionInternalScanner("flush", e.getEnvironment(), scanner, null);
   }
 
   @Override
@@ -136,7 +151,42 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     }
 
     LOG.info("preCompact, creates EvictionInternalScanner");
-    return new EvictionInternalScanner("compaction", e.getEnvironment(), scanner);
+    ConsumerConfigCache consumerConfigCache = getConfigCache(e.getEnvironment());
+    TransactionVisibilityState txVisibilityState = txStateCache.getLatestState();
+
+    if (pruneEnable == null) {
+      CConfiguration cConf = consumerConfigCache.getCConf();
+      if (cConf != null) {
+        pruneEnable = cConf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE,
+                                       TxConstants.TransactionPruning.DEFAULT_PRUNE_ENABLE);
+        if (Boolean.TRUE.equals(pruneEnable)) {
+          String pruneTable = cConf.get(TxConstants.TransactionPruning.PRUNE_STATE_TABLE,
+                                        TxConstants.TransactionPruning.DEFAULT_PRUNE_STATE_TABLE);
+          long pruneFlushInterval = TimeUnit.SECONDS.toMillis(
+            cConf.getLong(TxConstants.TransactionPruning.PRUNE_FLUSH_INTERVAL,
+                          TxConstants.TransactionPruning.DEFAULT_PRUNE_FLUSH_INTERVAL));
+          compactionState = new CompactionState(e.getEnvironment(), TableName.valueOf(pruneTable), pruneFlushInterval);
+          LOG.debug("Automatic invalid list pruning is enabled. Compaction state will be recorded in table " +
+                      pruneTable);
+        }
+      }
+    }
+
+    if (Boolean.TRUE.equals(pruneEnable)) {
+      // Record tx state before the compaction
+      compactionState.record(request, txVisibilityState);
+    }
+
+    return new EvictionInternalScanner("compaction", e.getEnvironment(), scanner, txVisibilityState);
+  }
+
+  @Override
+  public void postCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store, StoreFile resultFile,
+                          CompactionRequest request) throws IOException {
+    // Persist the compaction state after a successful compaction
+    if (this.compactionState != null) {
+      this.compactionState.persist();
+    }
   }
 
   // needed for queue unit-test
@@ -158,11 +208,11 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   private ConsumerConfigCache createConfigCache(final CoprocessorEnvironment env) {
     return ConsumerConfigCache.getInstance(configTableName, cConfReader,
                                            txSnapshotSupplier, new InputSupplier<HTableInterface>() {
-      @Override
-      public HTableInterface getInput() throws IOException {
-        return env.getTable(configTableName);
-      }
-    });
+        @Override
+        public HTableInterface getInput() throws IOException {
+          return env.getTable(configTableName);
+        }
+      });
   }
 
   // need for queue unit-test
@@ -178,6 +228,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     private final String triggeringAction;
     private final RegionCoprocessorEnvironment env;
     private final InternalScanner scanner;
+    private final TransactionVisibilityState state;
     // This is just for object reused to reduce objects creation.
     private final ConsumerInstance consumerInstance;
     private byte[] currentQueue;
@@ -187,11 +238,14 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     private long rowsEvicted = 0;
     // couldn't be evicted due to incomplete view of row
     private long skippedIncomplete = 0;
+    private boolean invalidTxData;
 
-    private EvictionInternalScanner(String action, RegionCoprocessorEnvironment env, InternalScanner scanner) {
+    private EvictionInternalScanner(String action, RegionCoprocessorEnvironment env, InternalScanner scanner,
+                                    @Nullable TransactionVisibilityState state) {
       this.triggeringAction = action;
       this.env = env;
       this.scanner = scanner;
+      this.state = state;
       this.consumerInstance = new ConsumerInstance(0, 0);
     }
 
@@ -233,7 +287,15 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
           return hasNext;
         }
 
-        if (canEvict(consumerConfig, results)) {
+        invalidTxData = false;
+        if (state != null) {
+          long txId = QueueEntryRow.getWritePointer(cell.getRowArray(), currentQueueRowPrefix.length);
+          if (txId > 0 && state.getInvalid().contains(txId)) {
+            invalidTxData = true;
+          }
+        }
+
+        if (invalidTxData || canEvict(consumerConfig, results)) {
           rowsEvicted++;
           results.clear();
           hasNext = scanner.next(results, limit);

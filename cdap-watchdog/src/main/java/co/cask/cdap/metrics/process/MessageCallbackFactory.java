@@ -24,5 +24,5 @@ import org.apache.twill.kafka.client.KafkaConsumer;
  */
 public interface MessageCallbackFactory {
 
-  KafkaConsumer.MessageCallback create(KafkaConsumerMetaTable metaTable, MetricsContext metricsContext);
+  KafkaConsumer.MessageCallback create(MetricsConsumerMetaTable metaTable, MetricsContext metricsContext);
 }

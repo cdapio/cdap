@@ -19,6 +19,7 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutorContext;
 import org.apache.hadoop.conf.Configuration;
 
 import java.util.Map;
@@ -29,11 +30,11 @@ import java.util.Map;
 public class HBaseDDLExecutorFactory extends HBaseVersionSpecificFactory<HBaseDDLExecutor> {
 
   private final HBaseDDLExecutorLoader hBaseDDLExecutorLoader;
-  private final Configuration hConf;
+  private final HBaseDDLExecutorContext context;
 
   public HBaseDDLExecutorFactory(CConfiguration cConf, Configuration hConf) {
     this.hBaseDDLExecutorLoader = new HBaseDDLExecutorLoader(cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, ""));
-    this.hConf = hConf;
+    this.context = new BasicHBaseDDLExecutorContext(cConf, hConf);
   }
 
   @Override
@@ -48,7 +49,8 @@ public class HBaseDDLExecutorFactory extends HBaseVersionSpecificFactory<HBaseDD
       // HBase DDL executor extension is not provided. Return the version specific executor instance.
       executor = super.get();
     }
-    executor.initialize(hConf);
+
+    executor.initialize(context);
     return executor;
   }
 

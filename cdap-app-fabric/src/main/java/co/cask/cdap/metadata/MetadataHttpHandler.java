@@ -24,6 +24,7 @@ import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
+import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -34,7 +35,6 @@ import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
-import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -80,11 +80,11 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private static final Type LIST_STRING_TYPE = new TypeToken<List<String>>() { }.getType();
   private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
 
-  private static final Function<String, MetadataSearchTargetType> STRING_TO_TARGET_TYPE =
-    new Function<String, MetadataSearchTargetType>() {
+  private static final Function<String, EntityTypeSimpleName> STRING_TO_TARGET_TYPE =
+    new Function<String, EntityTypeSimpleName>() {
       @Override
-      public MetadataSearchTargetType apply(String input) {
-        return MetadataSearchTargetType.valueOf(input.toUpperCase());
+      public EntityTypeSimpleName apply(String input) {
+        return EntityTypeSimpleName.valueOf(input.toUpperCase());
       }
     };
 
@@ -856,7 +856,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @QueryParam("numCursors") @DefaultValue("0") int numCursors,
                              @QueryParam("cursor") @DefaultValue("") String cursor,
                              @QueryParam("showHidden") @DefaultValue("false") boolean showHidden) throws Exception {
-    Set<MetadataSearchTargetType> types = Collections.emptySet();
+    Set<EntityTypeSimpleName> types = Collections.emptySet();
     if (targets != null) {
       types = ImmutableSet.copyOf(Iterables.transform(targets, STRING_TO_TARGET_TYPE));
     }

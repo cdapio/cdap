@@ -44,6 +44,7 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -58,8 +59,6 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
   // todo: datasets should not depend on cdap configuration!
   private final CConfiguration conf;
 
-  private final CoprocessorManager coprocessorManager;
-
   public HBaseTableAdmin(DatasetContext datasetContext,
                          DatasetSpecification spec,
                          Configuration hConf,
@@ -67,10 +66,9 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
                          CConfiguration conf,
                          LocationFactory locationFactory) throws IOException {
     super(tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName()),
-          hConf, conf, tableUtil);
+          hConf, conf, tableUtil, locationFactory);
     this.spec = spec;
     this.conf = conf;
-    this.coprocessorManager = new CoprocessorManager(conf, locationFactory, tableUtil);
   }
 
   @Override
@@ -116,10 +114,9 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     tdBuilder.addColumnFamily(cfdBuilder.build());
 
     CoprocessorJar coprocessorJar = createCoprocessorJar();
-
     for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
-      tdBuilder.addCoprocessor(getCoprocessorDescriptor(coprocessor, coprocessorJar.getJarLocation(),
-                                                        coprocessorJar.getPriority(coprocessor)));
+      tdBuilder.addCoprocessor(
+        coprocessorManager.getCoprocessorDescriptor(coprocessor, coprocessorJar.getPriority(coprocessor)));
     }
 
     byte[][] splits = null;
@@ -130,6 +127,19 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
 
     try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
       ddlExecutor.createTableIfNotExists(tdBuilder.build(), splits);
+      try {
+        Map<String, String> permissions = TableProperties.getTablePermissions(spec.getProperties());
+        if (permissions != null && !permissions.isEmpty()) {
+          tableUtil.grantPermissions(ddlExecutor, tableId, permissions);
+        }
+      } catch (IOException | RuntimeException e) {
+        try {
+          drop();
+        } catch (Throwable t) {
+          e.addSuppressed(t);
+        }
+        throw e;
+      }
     }
   }
 
@@ -197,6 +207,10 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
                                                             boolean supportsReadlessIncrement) throws IOException {
     Class<? extends Coprocessor> dataJanitorClass = tableUtil.getTransactionDataJanitorClassForVersion();
     Class<? extends Coprocessor> incrementClass = tableUtil.getIncrementHandlerClassForVersion();
+
+    // The ordering of coprocessors is important here. DataJanitor Coprocessor should get higher priority than
+    // IncrementHandler coprocessor. This is because, we have a check in prePutOp, preDeleteOp in DataJanitor
+    // to make sure the operation is within the tx max lifetime.
     ImmutableList.Builder<Class<? extends Coprocessor>> coprocessors = ImmutableList.builder();
     if (transactional) {
       // tx janitor
@@ -214,7 +228,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     if (coprocessorList.isEmpty()) {
       return CoprocessorJar.EMPTY;
     }
-    Location jarFile = coprocessorManager.ensureCoprocessorExists(CoprocessorManager.Type.TABLE);
+    Location jarFile = coprocessorManager.ensureCoprocessorExists();
     return new CoprocessorJar(coprocessorList, jarFile);
   }
 

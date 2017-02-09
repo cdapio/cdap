@@ -179,6 +179,21 @@ function extract_table() {
 }
 
 function download_includes() {
+  echo_red_bold "Checking Plugin Archetypes"
+  local cdap_app_templates="cdap-app-templates/cdap-etl/cdap-etl-archetypes/cdap-data-pipeline-plugins-archetype/src/main/resources/archetype-resources/src/main/java"
+  
+  test_an_include 88ef4c43707322f700ccd7a1b445100f ../../${cdap_app_templates}/FilesetMoveAction.java
+  test_an_include 83c6e8e47dff67a8fd5d744ac81f4ee3 ../../${cdap_app_templates}/FilesetDeletePostAction.java
+  test_an_include 4b1ec5f3df66e8242bffe5ca13d55668 ../../${cdap_app_templates}/TextFileSetSource.java
+  test_an_include 26cb2a53c3ec41ec81591d381b5fa758 ../../${cdap_app_templates}/TextFileSetSink.java
+  test_an_include 00778d7ba7bfb16c9ad97fac20b6d327 ../../${cdap_app_templates}/WordCountAggregator.java
+  test_an_include 3fba43f907e701b1bb72efad2496d7b6 ../../${cdap_app_templates}/WordCountCompute.java
+  test_an_include 9f4d179eb127337e352f2b0a814b57b0 ../../${cdap_app_templates}/WordCountSink.java
+  test_an_include 54e652348b15068b7de10e3f05fde1e5 ../../${cdap_app_templates}/StringCaseTransform.java
+  
+  
+
+  echo_red_bold "Checking Plugin Documentation"
   local hydrator_plugins="hydrator-plugins"
   local plugins="plugins"
   local current_directory=$(pwd)

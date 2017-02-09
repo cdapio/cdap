@@ -37,6 +37,7 @@ export default class StreamCreateWizard extends Component {
     };
 
     this.setDefaultConfig();
+    this.successInfo = {};
   }
   setDefaultConfig() {
     const args = this.props.input.action.arguments;
@@ -80,6 +81,7 @@ export default class StreamCreateWizard extends Component {
   }
   createStream() {
     let state = CreateStreamStore.getState();
+    let name = state.general.name;
     let currentNamespace = NamespaceStore.getState().selectedNamespace;
     // FIXME: How to handle empty error messages???
     return PublishStream()
@@ -102,13 +104,24 @@ export default class StreamCreateWizard extends Component {
                 }
               });
           }
-          return Promise.resolve(state.general.name);
+          return Promise.resolve(name);
         }
       )
       .map((res) => {
+        this.buildSuccessInfo(name, currentNamespace);
         this.eventEmitter.emit(globalEvents.STREAMCREATE);
         return res;
       });
+  }
+  buildSuccessInfo(streamId, namespace) {
+    let defaultSuccessMessage = T.translate('features.Wizard.StreamCreate.success');
+    let buttonLabel = T.translate('features.Wizard.StreamCreate.callToAction');
+    let linkLabel = T.translate('features.Wizard.GoToHomePage');
+    this.successInfo.message = `${defaultSuccessMessage} "${streamId}".`;
+    this.successInfo.buttonLabel = buttonLabel;
+    this.successInfo.buttonUrl = `/cdap/ns/${namespace}/streams/${streamId}`;
+    this.successInfo.linkLabel = linkLabel;
+    this.successInfo.linkUrl = `/cdap/ns/${namespace}`;
   }
   render() {
     let input = this.props.input || {};
@@ -133,6 +146,7 @@ export default class StreamCreateWizard extends Component {
                   }
                 wizardType="StreamCreate"
                 onSubmit={this.createStream.bind(this)}
+                successInfo={this.successInfo}
                 onClose={this.toggleWizard.bind(this)}
                 store={CreateStreamStore}/>
             </WizardModal>

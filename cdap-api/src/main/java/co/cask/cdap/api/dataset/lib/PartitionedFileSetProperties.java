@@ -17,6 +17,7 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.dataset.table.TableProperties;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -101,6 +102,15 @@ public class PartitionedFileSetProperties extends FileSetProperties {
       for (Map.Entry<String, Partitioning.FieldType> entry : partitioning.getFields().entrySet()) {
         add(PARTITIONING_FIELD_PREFIX + entry.getKey(), entry.getValue().name());
       }
+      return this;
+    }
+
+    /**
+     * Set the table permissions as a map from user name to a permission string.
+     */
+    @Beta
+    public Builder setTablePermissions(Map<String, String> permissions) {
+      TableProperties.setTablePermissions(this, permissions);
       return this;
     }
   }

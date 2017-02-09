@@ -97,6 +97,14 @@ public class KafkaClientModule extends PrivateModule {
         // If there is no separate zookeeper quorum, use the shared ZKClientService.
         zkClientService = injector.getInstance(ZKClientService.class);
 
+        String kafkaNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
+        if (kafkaNamespace != null) {
+          if (!kafkaNamespace.startsWith("/")) {
+            kafkaNamespace = "/" + kafkaNamespace;
+          }
+          zkClientService = ZKClientServices.delegate(ZKClients.namespace(zkClientService, kafkaNamespace));
+        }
+
         // Since it is the shared ZKClientService, we don't want the KafkaClientService or BrokerService to
         // start/stop it, hence having the startedCount set to 1
         startedCount.set(1);

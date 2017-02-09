@@ -32,7 +32,6 @@ var plugins = [
     manifest: require(path.join(__dirname, 'dll') + "/wrangler-vendor-manifest.json")
   }),
   new LodashModuleReplacementPlugin,
-  new LiveReloadPlugin(),
   new webpack.optimize.DedupePlugin(),
   new CopyWebpackPlugin([
     {
@@ -165,7 +164,12 @@ if (mode === 'production') {
 }
 if (mode !== 'production') {
   webpackConfig = Object.assign({}, webpackConfig, {
-    devtool: 'source-map'
+    devtool: 'source-map',
+    plugins: plugins.concat([
+      new LiveReloadPlugin({
+        appendScriptTag: true
+      })
+    ])
   });
 }
 

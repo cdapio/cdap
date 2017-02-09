@@ -46,6 +46,7 @@ public class ExploreFacade {
 
   private final ExploreClient exploreClient;
   private final boolean exploreEnabled;
+  private final int httpTimeout;
 
   @Inject
   public ExploreFacade(ExploreClient exploreClient, CConfiguration cConf) {
@@ -54,6 +55,7 @@ public class ExploreFacade {
     if (!exploreEnabled) {
       LOG.warn("Explore functionality for datasets is disabled. All calls to enable explore will be no-ops");
     }
+    this.httpTimeout = cConf.getInt(Constants.Explore.HTTP_TIMEOUT);
   }
 
   /**
@@ -107,14 +109,17 @@ public class ExploreFacade {
    *
    * @param datasetInstance dataset instance id.
    * @param spec the dataset specification of the dataset
+   * @param truncating whether this call to create() is part of a truncate() operation, which is in some
+   *                   case implemented using disableExplore() followed by enableExplore()
    */
   public void enableExploreDataset(DatasetId datasetInstance,
-                                   DatasetSpecification spec) throws ExploreException, SQLException {
+                                   DatasetSpecification spec,
+                                   boolean truncating) throws ExploreException, SQLException {
     if (!(exploreEnabled && isDatasetExplorable(datasetInstance))) {
       return;
     }
 
-    ListenableFuture<Void> futureSuccess = exploreClient.enableExploreDataset(datasetInstance, spec);
+    ListenableFuture<Void> futureSuccess = exploreClient.enableExploreDataset(datasetInstance, spec, truncating);
     handleExploreFuture(futureSuccess, "enable", "dataset", datasetInstance.getDataset());
   }
 
@@ -217,7 +222,7 @@ public class ExploreFacade {
   private void handleExploreFuture(ListenableFuture future, String operation, String type, String name)
     throws ExploreException, SQLException {
     try {
-      future.get(20, TimeUnit.SECONDS);
+      future.get(httpTimeout, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       LOG.error("Future interrupted", e);
       Thread.currentThread().interrupt();

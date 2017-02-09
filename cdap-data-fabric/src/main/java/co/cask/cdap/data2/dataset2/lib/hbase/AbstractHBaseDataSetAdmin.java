@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
@@ -41,6 +42,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,15 +77,17 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
   protected final HBaseTableUtil tableUtil;
   protected final HBaseDDLExecutorFactory ddlExecutorFactory;
   protected final String tablePrefix;
+  protected final CoprocessorManager coprocessorManager;
 
   protected AbstractHBaseDataSetAdmin(TableId tableId, Configuration hConf, CConfiguration cConf,
-                                      HBaseTableUtil tableUtil) {
+                                      HBaseTableUtil tableUtil, LocationFactory locationFactory) {
     this.tableId = tableId;
     this.hConf = hConf;
     this.cConf = cConf;
     this.tableUtil = tableUtil;
     this.tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     this.ddlExecutorFactory = new HBaseDDLExecutorFactory(cConf, hConf);
+    this.coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
   }
 
   @Override
@@ -160,15 +164,15 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
       for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
         HBaseTableUtil.CoprocessorInfo info = coprocessorInfo.get(coprocessor.getName());
         if (info != null) {
-          // The same coprocessor has been configured, check by the file name hash to see if they are the same.
+          // The same coprocessor has been configured, check by the file name to see if they are the same.
           if (!jarLocation.getName().equals(info.getPath().getName())) {
             // Remove old one and add the new one.
             newDescriptor.removeCoprocessor(info.getClassName());
-            addCoprocessor(newDescriptor, coprocessor, jarLocation, coprocessorJar.getPriority(coprocessor));
+            addCoprocessor(newDescriptor, coprocessor, coprocessorJar.getPriority(coprocessor));
           }
         } else {
           // The coprocessor is missing from the table, add it.
-          addCoprocessor(newDescriptor, coprocessor, jarLocation, coprocessorJar.getPriority(coprocessor));
+          addCoprocessor(newDescriptor, coprocessor, coprocessorJar.getPriority(coprocessor));
         }
       }
 
@@ -215,20 +219,11 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
   }
 
   protected void addCoprocessor(HTableDescriptorBuilder tableDescriptor, Class<? extends Coprocessor> coprocessor,
-                                Location jarFile, Integer priority) throws IOException {
-    if (priority == null) {
-      priority = Coprocessor.PRIORITY_USER;
-    }
-    tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI().getPath()), priority, null);
-  }
-
-  protected CoprocessorDescriptor getCoprocessorDescriptor(Class<? extends  Coprocessor> coprocessor, Location jarFile,
-                                                           Integer priority) throws IOException {
-    if (priority == null) {
-      priority = Coprocessor.PRIORITY_USER;
-    }
-
-    return new CoprocessorDescriptor(coprocessor.getName(), jarFile.toURI(), priority, null);
+                                Integer priority) throws IOException {
+    CoprocessorDescriptor descriptor = coprocessorManager.getCoprocessorDescriptor(coprocessor, priority);
+    Path path = descriptor.getPath() == null ? null : new Path(descriptor.getPath());
+    tableDescriptor.addCoprocessor(descriptor.getClassName(), path, descriptor.getPriority(),
+                                   descriptor.getProperties());
   }
 
   protected abstract CoprocessorJar createCoprocessorJar() throws IOException;
