@@ -19,6 +19,7 @@ package co.cask.cdap.cli;
 import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.cli.command.system.RenderAsCommand;
+import co.cask.cdap.cli.completer.FileNameCompleterWithEscapedSpace;
 import co.cask.cdap.cli.completer.StringsCompleter;
 import co.cask.cdap.cli.completer.element.AppIdCompleter;
 import co.cask.cdap.cli.completer.element.ArtifactNameCompleter;
@@ -39,7 +40,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import jline.console.completer.Completer;
 import jline.console.completer.EnumCompleter;
-import jline.console.completer.FileNameCompleter;
 
 import java.util.Map;
 import javax.inject.Inject;
@@ -60,11 +60,11 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
         .put(ArgumentName.DATASET.getName(), injector.getInstance(DatasetNameCompleter.class))
         .put(ArgumentName.DATASET_TYPE.getName(), injector.getInstance(DatasetTypeNameCompleter.class))
         .put(ArgumentName.STREAM.getName(), injector.getInstance(StreamIdCompleter.class))
-        .put(ArgumentName.LOCAL_FILE_PATH.getName(), new FileNameCompleter())
-        .put(ArgumentName.APP_JAR_FILE.getName(), new FileNameCompleter())
-        .put(ArgumentName.DATASET_MODULE_JAR_FILE.getName(), new FileNameCompleter())
-        .put(ArgumentName.ARTIFACT_CONFIG_FILE.getName(), new FileNameCompleter())
-        .put(ArgumentName.APP_CONFIG_FILE.getName(), new FileNameCompleter())
+        .put(ArgumentName.LOCAL_FILE_PATH.getName(), new FileNameCompleterWithEscapedSpace())
+        .put(ArgumentName.APP_JAR_FILE.getName(), new FileNameCompleterWithEscapedSpace())
+        .put(ArgumentName.DATASET_MODULE_JAR_FILE.getName(), new FileNameCompleterWithEscapedSpace())
+        .put(ArgumentName.ARTIFACT_CONFIG_FILE.getName(), new FileNameCompleterWithEscapedSpace())
+        .put(ArgumentName.APP_CONFIG_FILE.getName(), new FileNameCompleterWithEscapedSpace())
         .put(ArgumentName.HTTP_METHOD.getName(), new EndpointCompleter())
         .put(ArgumentName.ENDPOINT.getName(), new EndpointCompleter())
         .put(ArgumentName.RUN_STATUS.getName(), new EnumCompleter(ProgramRunStatus.class))
