@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -545,10 +545,10 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       // is being used to interact with the CDAP backend.
       var date = new Date();
       date.setDate(date.getDate() + 365); // Expires after a year.
-      if(! req.cookies.bcookie) {
-        res.cookie('bcookie', uuid.v4(), { expires: date});
+      if(!req.cookies.bcookie) {
+        res.cookie('bcookie', uuid.v4(), { expires: date });
       } else {
-        res.cookie('bcookie', req.cookies.bcookie, { expires: date});
+        res.cookie('bcookie', req.cookies.bcookie, { expires: date });
       }
      res.sendFile(DIST_PATH + '/hydrator.html');
     }
@@ -560,12 +560,28 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       // is being used to interact with the CDAP backend.
       var date = new Date();
       date.setDate(date.getDate() + 365); // Expires after a year.
-      if(! req.cookies.bcookie) {
-        res.cookie('bcookie', uuid.v4(), { expires: date});
+      if(!req.cookies.bcookie) {
+        res.cookie('bcookie', uuid.v4(), { expires: date });
       } else {
-        res.cookie('bcookie', req.cookies.bcookie, { expires: date});
+        res.cookie('bcookie', req.cookies.bcookie, { expires: date });
       }
      res.sendFile(DIST_PATH + '/tracker.html');
+    }
+  ]);
+
+  app.all(['/logviewer', '/logviewer*'], [
+    function (req, res) {
+      // BCookie is the browser cookie, that is generated and will live for a year.
+      // This cookie is always generated to provide unique id for the browser that
+      // is being used to interact with the CDAP backend.
+      var date = new Date();
+      date.setDate(date.getDate() + 365); // Expires after a year.
+      if(!req.cookies.bcookie) {
+        res.cookie('bcookie', uuid.v4(), { expires: date });
+      } else {
+        res.cookie('bcookie', req.cookies.bcookie, { expires: date });
+      }
+     res.sendFile(DIST_PATH + '/logviewer.html');
     }
   ]);
 

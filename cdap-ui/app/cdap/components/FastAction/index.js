@@ -21,6 +21,7 @@ import StartStopAction from 'components/FastAction/StartStopAction';
 import ExploreAction from 'components/FastAction/ExploreAction';
 import SendEventAction from 'components/FastAction/SendEventAction';
 import SetPreferenceAction from 'components/FastAction/SetPreferenceAction';
+import LogAction from 'components/FastAction/LogAction';
 
 export default class FastAction extends Component {
   constructor(props) {
@@ -75,6 +76,12 @@ export default class FastAction extends Component {
             onSuccess={this.props.onSuccess}
           />
         );
+      case 'log':
+        return (
+          <LogAction
+            entity={this.props.entity}
+          />
+        );
     }
   }
 
@@ -84,7 +91,7 @@ export default class FastAction extends Component {
 }
 
 FastAction.propTypes = {
-  type: PropTypes.oneOf(['delete', 'truncate', 'startStop', 'sendEvents', 'explore', 'setPreferences']),
+  type: PropTypes.oneOf(['delete', 'truncate', 'startStop', 'sendEvents', 'explore', 'setPreferences', 'log']),
   entity: PropTypes.object,
   onSuccess: PropTypes.func,
   opened: PropTypes.bool
