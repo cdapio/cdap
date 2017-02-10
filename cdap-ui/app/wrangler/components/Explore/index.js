@@ -15,8 +15,7 @@
  */
 
 import React, { Component, PropTypes } from 'react';
-import NamespaceStore from 'services/NamespaceStore';
-import myExploreApi from 'api/explore';
+import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import shortid from 'shortid';
 import sortBy from 'lodash/sortBy';
 import TableItem from 'wrangler/components/Explore/TableItem';
@@ -38,16 +37,28 @@ export default class Explore extends Component {
   }
 
   componentWillMount() {
-    myExploreApi.fetchTables({
-      namespace: NamespaceStore.getState().selectedNamespace
-    }).subscribe((res) => {
-      let list = res.map((exploreTable) => {
-        let table = exploreTable.table.split('_');
-        return {
-          id: shortid.generate(),
-          type: table[0],
-          name: table.slice(1).join('_')
-        };
+    const ExploreTableSubscriber = () => {
+      let {tables: explorableTables} = ExploreTablesStore.getState();
+      let list = explorableTables.map((exploreTable) => {
+        let table;
+        if (exploreTable.table.indexOf('_') !== -1) {
+          table = exploreTable.table.split('_');
+          return {
+            id: shortid.generate(),
+            type: table[0],
+            name: table.slice(1).join('_'),
+            databaseName: exploreTable.database,
+            tableName: exploreTable.table
+          };
+        } else {
+          return {
+            id: shortid.generate(),
+            type: 'dataset',
+            name: exploreTable.table,
+            databaseName: exploreTable.database,
+            tableName: exploreTable.table
+          };
+        }
       }).filter((exploreTable) => {
         return exploreTable.name.charAt(0) !== '_';
       });
@@ -55,7 +66,13 @@ export default class Explore extends Component {
       this.setState({
         list: sortBy(list, ['name'])
       });
-    });
+    };
+    this.exploreTableSubscription = ExploreTablesStore.subscribe(ExploreTableSubscriber);
+    ExploreTableSubscriber();
+  }
+
+  componentWillUnmount() {
+    this.exploreTableSubscription();
   }
 
   toggleExpanded() {

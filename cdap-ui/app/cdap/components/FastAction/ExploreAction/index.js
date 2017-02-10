@@ -27,7 +27,8 @@ export default class ExploreAction extends Component {
     this.state = {
       disabled: true,
       showModal: false,
-      tooltipOpen: false
+      tooltipOpen: false,
+      entity: this.props.entity || {}
     };
     this.subscription = null;
     this.toggleTooltip = this.toggleTooltip.bind(this);
@@ -51,9 +52,15 @@ export default class ExploreAction extends Component {
       let {tables: explorableTables} = ExploreTablesStore.getState();
       let entityId = this.props.entity.id.replace(/[\.\-]/g, '_');
       let type = this.props.entity.type === 'datasetinstance' ? 'dataset' : this.props.entity.type;
-      let match = explorableTables.filter(db => db.table === `${type}_${entityId.toLowerCase()}`);
+      let match = explorableTables.filter(db => {
+        return db.table === `${type}_${entityId.toLowerCase()}` || db.table === entityId.toLowerCase();
+      });
       if (match.length) {
         this.setState({
+          entity: Object.assign({}, this.props.entity, {
+            tableName: match[0].table,
+            databaseName: match[0].database
+          }),
           disabled: false
         });
       }
@@ -89,7 +96,7 @@ export default class ExploreAction extends Component {
             <ExploreModal
               isOpen={this.state.showModal}
               onClose={this.toggleModal}
-              entity={this.props.entity}
+              entity={this.state.entity}
             />
           :
             null
