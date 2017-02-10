@@ -49,7 +49,7 @@ installation and its security configuration.
     .. |cloudera| replace:: **Cloudera Manager:**
     .. _cloudera: installation/cloudera.html
 
-    - |cloudera|_ Installing on `CDH (Cloudera Data Hub) <http://www.cloudera.com/>`__ 
+    - |cloudera|_ Installing on `CDH (Cloudera Distribution of Apache Hadoop) <http://www.cloudera.com/>`__ 
       clusters managed with `Cloudera Manager
       <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__.
 

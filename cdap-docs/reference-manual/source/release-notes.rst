@@ -2218,7 +2218,7 @@ Bug Fixes
 - `CDAP-5019 <https://issues.cask.co/browse/CDAP-5019>`__ - Worked around two issues
   (`SPARK-13441 <https://issues.apache.org/jira/browse/SPARK-13441>`__
   and `YARN-4727 <https://issues.apache.org/jira/browse/YARN-4727>`__) that prevented
-  launching Spark jobs on Cloudera Data Hub clusters managed with Cloudera Manager 
+  launching Spark jobs on CDH (Cloudera Data Hub) clusters managed with Cloudera Manager 
   when using Spark 1.4 or greater.
 
 - `CDAP-5063 <https://issues.cask.co/browse/CDAP-5063>`__ - Fixed a problem with 
