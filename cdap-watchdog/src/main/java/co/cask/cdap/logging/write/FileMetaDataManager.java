@@ -41,7 +41,6 @@ import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionFailureException;
@@ -55,8 +54,6 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
-import java.util.TreeMap;
 import javax.annotation.Nullable;
 
 /**

@@ -515,6 +515,7 @@ public class LogCleanupTest {
   public void testCleanupLogFiles() throws Exception {
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
     NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    FileMetaDataReader fileMetadataReader = injector.getInstance(FileMetaDataReader.class);
 
     // Deletion boundary
     long deletionBoundary = System.currentTimeMillis() - RETENTION_DURATION_MS;
@@ -560,7 +561,9 @@ public class LogCleanupTest {
     }
 
     Assert.assertEquals(locationListsToString(toDelete, notDelete),
-                        toDelete.size() + notDelete.size(), fileMetaDataManager.listFiles(dummyContext).size());
+                        toDelete.size() + notDelete.size(), fileMetadataReader
+                          .listFiles(LoggingContextHelper.getLogPathIdentifier(dummyContext), 0,
+                                     Long.MAX_VALUE).size());
 
     LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, namespaceQueryAdmin,
                                            namespacedLocationFactory, logBaseDir, RETENTION_DURATION_MS, cConf,
@@ -580,9 +583,20 @@ public class LogCleanupTest {
     }
 
     // Assert metadata for all deleted files is gone
-    NavigableMap<Long, Location> remainingFilesMap = fileMetaDataManager.listFiles(dummyContext);
+    List<LogLocation> remainingFiles = fileMetadataReader
+      .listFiles(LoggingContextHelper.getLogPathIdentifier(dummyContext), 0, Long.MAX_VALUE);
+
+    Assert.assertEquals(notDelete.size(), remainingFiles.size());
+
+
+    List<Location> remainingLocations = new ArrayList<>();
+    for (LogLocation logLocation : remainingFiles) {
+      remainingLocations.add(logLocation.getLocation());
+    }
+
     Set<Location> metadataForDeletedFiles =
-      Sets.intersection(new HashSet<>(remainingFilesMap.values()), new HashSet<>(toDelete)).immutableCopy();
+      Sets.intersection(new HashSet<>(remainingLocations), new HashSet<>(toDelete)).immutableCopy();
+
     Assert.assertEquals(ImmutableSet.of(), metadataForDeletedFiles);
     cleanupMetadata(fileMetaDataManager);
   }
