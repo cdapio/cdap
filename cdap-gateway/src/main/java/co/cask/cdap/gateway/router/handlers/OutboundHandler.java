@@ -28,6 +28,8 @@ import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.channels.ClosedChannelException;
+
 /**
  * Handles requests to and from a discoverable endpoint.
  */
@@ -69,7 +71,12 @@ public class OutboundHandler extends SimpleChannelUpstreamHandler {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-    LOG.error("Got exception {}", ctx.getChannel(), e.getCause());
-    HttpRequestHandler.closeOnFlush(e.getChannel());
+    Throwable cause = e.getCause();
+    if (cause instanceof ClosedChannelException) {
+      LOG.trace("Unexpected connection close");
+    } else {
+      LOG.error("Got exception {}", ctx.getChannel(), cause);
+      HttpRequestHandler.closeOnFlush(e.getChannel());
+    }
   }
 }
