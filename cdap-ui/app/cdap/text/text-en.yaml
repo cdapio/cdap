@@ -138,6 +138,8 @@ features:
       createMessage: Would like to
       createLinkLabel: create a new one?
       switchMessage: Or select a different namespace from the namespace dropdown.
+    JustAddedSection:
+      subtitle: Just added
   Dashboard:
     Title: Dashboard
 

@@ -28,14 +28,7 @@ export default class EntityListInfo extends Component {
     let clickedIndex = data.selected+1;
     this.props.onPageChange(clickedIndex);
   }
-  getActiveFilterStrings() {
-    return this.props.activeFilter.map(filter => {
-      if (filter === 'app') {
-        filter = 'application';
-      }
-      return T.translate(`commons.entity.${filter}.plural`);
-    });
-  }
+
   showPagination() {
     return (
       <span className="pagination">
@@ -69,39 +62,12 @@ export default class EntityListInfo extends Component {
     );
   }
   render() {
-    let activeFilters = this.getActiveFilterStrings();
-    let allFiltersSelected = (activeFilters.length === 0 || activeFilters.length === this.props.filterOptions.length);
-    let activeFilterString = activeFilters.join(', ');
-    let activeSort = this.props.activeSort;
-    let searchText = this.props.searchText;
-    let subtitle;
-    let text = {
-      title: T.translate('features.EntityListView.Info.title'),
-      search: T.translate('features.EntityListView.Info.subtitle.search'),
-      filteredBy: T.translate('features.EntityListView.Info.subtitle.filteredBy'),
-      sortedBy: T.translate('features.EntityListView.Info.subtitle.sortedBy'),
-      displayAll: T.translate('features.EntityListView.Info.subtitle.displayAll'),
-      displaySome: T.translate('features.EntityListView.Info.subtitle.displaySome'),
-    };
-
-    if (searchText) {
-      subtitle = `${text.search} "${searchText}"`;
-      if (!allFiltersSelected) {
-        subtitle += `, ${text.filteredBy} ${activeFilterString}`;
-      }
-    } else {
-      if (allFiltersSelected) {
-        subtitle = `${text.displayAll}`;
-      } else {
-        subtitle = `${text.displaySome} ${activeFilterString}`;
-      }
-      subtitle += `, ${text.sortedBy} ${activeSort.displayName}`;
-    }
+    let title = T.translate('features.EntityListView.Info.title');
 
     return (
       <div className={this.props.className}>
         <span className="title">
-          <h3>{text.title} "{this.props.namespace}"</h3>
+          <h3>{title} "{this.props.namespace}"</h3>
         </span>
         {
           this.props.numberOfEntities ?
@@ -109,11 +75,6 @@ export default class EntityListInfo extends Component {
           :
             null
         }
-        <div className="subtitle">
-          <span>
-            {subtitle}
-          </span>
-        </div>
       </div>
     );
   }
@@ -122,10 +83,6 @@ export default class EntityListInfo extends Component {
 EntityListInfo.propTypes = {
   className: PropTypes.string,
   namespace: PropTypes.string,
-  activeFilter: PropTypes.array,
-  filterOptions: PropTypes.array,
-  activeSort: PropTypes.obj,
-  searchText: PropTypes.string,
   numberOfPages: PropTypes.number,
   numberOfEntities: PropTypes.number,
   currentPage: PropTypes.number,
@@ -135,10 +92,6 @@ EntityListInfo.propTypes = {
 EntityListInfo.defaultProps = {
   className: '',
   namespace: '',
-  activeFilter: [],
-  filterOptions: [],
-  activeSort: {},
-  searchText: '',
   numberOfPages: 1,
   numberOfEntities: 0,
   currentPage: 1,
