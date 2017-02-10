@@ -497,6 +497,11 @@ features:
     registration-two: newsletters from Cask at this email address
     getUpdates: Get Updates
 
+  SpotlightSearch:
+    SpotlightModal:
+      headerTagResults: Entities with the tag "{tag}"
+      numResults: "{total} results"
+
   SchemaEditor:
     Labels:
       fieldName: Field Name
@@ -793,7 +798,7 @@ features:
     message: 'Services are back online'
   Tags:
     label: Tags
-    notags: No Tags added
+    notags: No tags found. Click to add a new business tag.
   Description:
     label: Description
     nodescription: No Description available

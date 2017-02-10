@@ -14,23 +14,25 @@
  * the License.
  */
 
+$system-tags-color: #979fbb;
+$user-tags-color: #bac1d8;
+
 .tags-holder {
   .btn {
-    padding: 3px 5px;
-    font-size: 12px;
+    &.btn-secondary {
+      margin: 3px;
 
-    &.plus-button-container {
-      margin-left: 5px;
+      .fa.fa-times {
+        margin-left: 5px;
+      }
+
+      &.system-tags {
+        background-color: $system-tags-color;
+      }
+
+      &.user-tags {
+        background-color: $user-tags-color;
+      }
     }
-  }
-
-  .tag-input {
-    height: 21px;
-    width: 120px;
-    display: inline-block;
-    padding: 3px 5px;
-    transform: translateY(1px);
-    margin-left: 5px;
-    margin-right: 3px;
   }
 }

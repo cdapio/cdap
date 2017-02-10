@@ -43,9 +43,8 @@ require('./SpotlightModal.scss');
        <ModalHeader>
          <span className="float-xs-left">
            {
-
-             T.translate('features.SpotlightSearch.SpotlightModal.headerSearchResults', {
-               query: this.props.query
+             T.translate('features.SpotlightSearch.SpotlightModal.headerTagResults', {
+               tag: this.props.tag
              })
            }
          </span>
@@ -81,7 +80,7 @@ require('./SpotlightModal.scss');
    toggle: PropTypes.func,
    handleSearch: PropTypes.func,
    currentPage: PropTypes.number,
-   query: PropTypes.string,
+   tag: PropTypes.string,
    numPages: PropTypes.number,
    total: PropTypes.number
  };
