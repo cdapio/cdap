@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2015 Cask Data, Inc.
+ * Copyright © 2012-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -89,10 +89,10 @@ public class CreateAppCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return String.format("Creates %s from an artifact, optionally with a version. If the version is not given, " +
-                           "a default version %s will be used. A configuration is also optional. If a configuration " +
-                           "is needed, it must be given as a file whose contents are a JSON object containing the" +
-                           " application config. For example, the file contents could contain:" +
-                           " '{ \"config\": { \"stream\": \"purchases\" } }'. In this case, the application would " +
+                           "a default version '%s' will be used. A configuration is also optional. If a " +
+                           "configuration is needed, it must be given as a file whose contents are a JSON object " +
+                           "containing the application config. For example, the file contents could contain: " +
+                           "'{ \"config\": { \"stream\": \"purchases\" } }'. In this case, the application would " +
                            "receive '{ \"stream\": \"purchases\" }' as its config object.",
       Fragment.of(Article.A, ElementType.APP.getName()), ApplicationId.DEFAULT_VERSION);
   }

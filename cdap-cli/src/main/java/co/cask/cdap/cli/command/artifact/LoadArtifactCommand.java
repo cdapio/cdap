@@ -103,8 +103,10 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
       "If the artifact contains plugins that extend another artifact, or if it contains " +
       "third-party plugins, a config file must be provided. " +
       "The config file must contain a JSON object that specifies the parent artifacts " +
-      "and any third-party plugins in the JAR. " +
+      "and any third-party plugins in the JAR.\n" +
+      "\n" +
       "For example, if there is a config file with these contents:\n" +
+      "\n" +
       "    {\n" +
       "      \"parents\":[ \"app1[1.0.0,2.0.0)\", \"app2[1.2.0,1.3.0] ],\n" +
       "      \"plugins\":[\n" +
@@ -117,6 +119,7 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
       "        \"prop1\": \"val1\"\n" +
       "      }\n" +
       "    }\n" +
+      "\n" +
       "This config specifies that the artifact contains one JDBC third-party plugin that should be " +
       "available to the 'app1' artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and 'app2' artifact " +
       "(versions 1.2.0 inclusive to 1.3.0 inclusive). The config may also include a 'properties' field specifying " +
