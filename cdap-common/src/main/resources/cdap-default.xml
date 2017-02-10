@@ -1180,8 +1180,11 @@
     <name>log.publish.partition.key</name>
     <value>program</value>
     <description>
-      Publish logs from a program or an app to same partition. Valid values are "application" and "program".
-      Changes to this property requires restart of all cdap applications.
+      Publish logs from an application or a program to the same partition. Valid values
+      are "application" or "program". If set to "application", logs from all the programs
+      of an application go to the same partition. If set to "program", logs from the same
+      program go to the same partition. Changes to this property requires restarting of
+      all CDAP applications.
     </description>
   </property>
 
