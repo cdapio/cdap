@@ -87,8 +87,6 @@ public abstract class KafkaTestBase {
           install(new FactoryModuleBuilder().build(LogSaverFactory.class));
         }
       }
-    ),
-    2,
-    LoggingConfiguration.KAFKA_SEED_BROKERS
+    ), 2
   );
 }

@@ -114,6 +114,18 @@
   </property>
 
   <property>
+    <name>kafka.seed.brokers</name>
+    <value>127.0.0.1:9092</value>
+    <description>
+      Comma-separated list of CDAP Kafka service brokers; for distributed
+      CDAP, replace with list of FQDN:port brokers
+      (deprecate; no direct replacement. All kafka brokers are discover via
+      Zookeeper with ${kafka.zookeeper.quorum}
+      or ${zookeeper.quorum}/${kafka.zookeeper.namespace})
+    </description>
+  </property>
+
+  <property>
     <name>kafka.zookeeper.connection.timeout.ms</name>
     <value>${kafka.server.zookeeper.connection.timeout.ms}</value>
     <description>

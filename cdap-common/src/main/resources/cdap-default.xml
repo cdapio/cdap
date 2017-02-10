@@ -907,15 +907,6 @@
   <!-- Kafka Server Configuration -->
 
   <property>
-    <name>kafka.seed.brokers</name>
-    <value>127.0.0.1:9092</value>
-    <description>
-      Comma-separated list of CDAP Kafka service brokers; for distributed
-      CDAP, replace with list of FQDN:port brokers
-    </description>
-  </property>
-
-  <property>
     <name>kafka.server.default.replication.factor</name>
     <value>1</value>
     <description>
