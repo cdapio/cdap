@@ -30,7 +30,6 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.save.KafkaLogProcessorFactory;
 import co.cask.cdap.logging.save.KafkaLogWriterPluginFactory;
 import co.cask.cdap.logging.save.LogMetricsPluginFactory;
-import co.cask.cdap.logging.save.LogSaverFactory;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -40,7 +39,6 @@ import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import org.apache.tephra.runtime.TransactionModules;
@@ -84,7 +82,6 @@ public abstract class KafkaTestBase {
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
           bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
-          install(new FactoryModuleBuilder().build(LogSaverFactory.class));
         }
       }
     ), 2

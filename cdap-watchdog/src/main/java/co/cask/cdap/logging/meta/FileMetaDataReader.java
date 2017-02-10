@@ -73,6 +73,10 @@ public class FileMetaDataReader {
   private final RootLocationFactory rootLocationFactory;
   private final Impersonator impersonator;
 
+  // Note: For the old log files reading.
+  // The FileMetaDataReader needs to have a RootLocationFactory because for custom mapped namespaces the
+  // location mapped to a namespace are from root of the filesystem. The FileMetaDataReader stores a location in
+  // bytes to a hbase table and to construct it back to a Location it needs to work with a root based location factory.
   @Inject
   FileMetaDataReader(final DatasetFramework datasetFramework,
                      final TransactionSystemClient transactionSystemClient,
