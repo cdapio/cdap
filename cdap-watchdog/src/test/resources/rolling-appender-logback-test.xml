@@ -23,19 +23,20 @@
     </encoder>
   </appender>
 
-  <!--TODO CDAP-8196 Instance Id is provided by logging framework. Remove it after Logging framework is in place-->
-  <property name="cdap.log.saver.instance.id" value="0"/>
+  <property name="cdap.log.saver.instance.id" value="instanceId"/>
 
   <appender name="rollingAppender" class="co.cask.cdap.logging.plugins.RollingLocationLogAppender">
     <!--log file path will be created by appender as: <basePath>/namespaceId/applicationId/<filePath>-->
     <basePath>/tmp/plugins/applogs</basePath>
-    <!--filePath uses instanceId which is a property set by LogFramework. We use it to avoid multiple log saver
-    instances writing to same file in case of kafka partition key reconfiguration supported by CDAP-8104-->
     <filePath>securityLogs/logFile-${cdap.log.saver.instance.id}.log</filePath>
+    <!--cdap is the owner of log files, so cdap will get read/write permissions.
+    Log files will be read-only for others-->
+    <dirPermissions>744</dirPermissions>
     <!--cdap is the owner of log files, so cdap will get read/write permissions.
     Log files will be read-only for others-->
     <filePermissions>644</filePermissions>
     <rollingPolicy class="co.cask.cdap.logging.plugins.FixedWindowRollingPolicy">
+      <!--Only specify file name without directory, appender will use appropriate directory specified in filePath-->
       <fileNamePattern>logFile-${cdap.log.saver.instance.id}.log.%i</fileNamePattern>
       <minIndex>1</minIndex>
       <maxIndex>9</maxIndex>

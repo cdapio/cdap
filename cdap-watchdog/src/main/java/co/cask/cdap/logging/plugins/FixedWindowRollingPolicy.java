@@ -20,7 +20,9 @@ import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.rolling.RolloverFailure;
 import ch.qos.logback.core.rolling.helper.FileNamePattern;
 import ch.qos.logback.core.rolling.helper.IntegerTokenConverter;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.logging.framework.AppenderContext;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +55,14 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
   @Override
   public void start() {
     if (fileNamePatternStr != null) {
+      if (context instanceof AppenderContext) {
+        AppenderContext context = (AppenderContext) this.context;
+        fileNamePatternStr = fileNamePatternStr.replace("instanceId", Integer.toString(context.getInstanceId()));
+      } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {
+        throw new IllegalStateException("Expected logger context instance of " + AppenderContext.class.getName() +
+                                          " but got " + context.getClass().getName());
+      }
+
       fileNamePattern = new FileNamePattern(fileNamePatternStr, this.context);
     } else {
       addError(FNP_NOT_SET);

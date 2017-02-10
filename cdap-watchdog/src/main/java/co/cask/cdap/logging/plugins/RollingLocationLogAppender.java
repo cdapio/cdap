@@ -25,11 +25,12 @@ import ch.qos.logback.core.rolling.TriggeringPolicy;
 import ch.qos.logback.core.spi.FilterReply;
 import ch.qos.logback.core.status.ErrorStatus;
 import ch.qos.logback.core.status.WarnStatus;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.logging.framework.AppenderContext;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
+import com.google.common.base.Preconditions;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,14 +45,11 @@ import java.io.OutputStream;
 public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> implements Flushable {
   private static final Logger LOG = LoggerFactory.getLogger(RollingLocationLogAppender.class);
 
-  // TODO CDAP-8196 LocationFactory should be passed from Log framework
-  @Inject
-  private LocationFactory locationFactory;
-
   private TriggeringPolicy<ILoggingEvent> triggeringPolicy;
+  private RollingPolicy rollingPolicy;
+
   // used as cache to avoid type casting of triggeringPolicy on every event
   private LocationTriggeringPolicy locationTriggeringPolicy;
-  private RollingPolicy rollingPolicy;
   // used as cache to avoid type casting of triggeringPolicy on every event
   private LocationRollingPolicy locationRollingPolicy;
 
@@ -59,6 +57,7 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
   private String basePath;
   private String filePath;
   private String filePermissions;
+  private String dirPermissions;
   private LocationManager locationManager;
 
   public RollingLocationLogAppender() {
@@ -67,30 +66,31 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
 
   @Override
   public void start() {
-    if (validateAppenderProperties()) {
-      return;
+    // These should all passed. The settings are from the custom-log-pipeline.xml and
+    // the context must be AppenderContext
+    Preconditions.checkState(basePath != null, "Property basePath must be base directory.");
+    Preconditions.checkState(filePath != null, "Property filePath must be filePath along with filename.");
+    Preconditions.checkState(triggeringPolicy != null, "Property triggeringPolicy must be specified.");
+    Preconditions.checkState(rollingPolicy != null, "Property rollingPolicy must be specified");
+    Preconditions.checkState(encoder != null, "Property encoder must be specified.");
+    Preconditions.checkState(dirPermissions != null, "Property dirPermissions cannot be null");
+    Preconditions.checkState(filePermissions != null, "Property filePermissions cannot be null");
+
+    if (context instanceof AppenderContext) {
+      AppenderContext context = (AppenderContext) this.context;
+      locationManager = new LocationManager(context.getLocationFactory(), basePath, dirPermissions, filePermissions);
+      filePath = filePath.replace("instanceId", Integer.toString(context.getInstanceId()));
+    } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {
+      throw new IllegalStateException("Expected logger context instance of " + AppenderContext.class.getName() +
+                                        " but got " + context.getClass().getName());
     }
 
-    // TODO remove if condition after removing Guice injection
-    if (locationFactory != null) {
-      try {
-        this.locationManager = new LocationManager(locationFactory, basePath, filePermissions);
-        started = true;
-      } catch (IOException e) {
-        // not handling it since we will remove this if condition after log framework is in place
-      }
-    }
+    started = true;
   }
 
   @Override
   public void doAppend(ILoggingEvent eventObject) throws LogbackException {
     try {
-      // TODO Remove 'if' after removing Guice injection
-      if (locationFactory != null && this.locationManager == null) {
-        this.locationManager = new LocationManager(locationFactory, basePath, filePermissions);
-        started = true;
-      }
-
       // logic from AppenderBase
       if (!this.started) {
         addStatus(new WarnStatus("Attempted to append to non started appender [" + name + "].", this));
@@ -204,35 +204,6 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
     this.encoder.doEncode(event);
   }
 
-  private boolean validateAppenderProperties() {
-    if (basePath == null) {
-      addWarn("No basePath was set for the RollingFileAppender named " + getName());
-      return true;
-    }
-
-    if (filePath == null) {
-      addWarn("No filePath was set for the RollingFileAppender named " + getName());
-      return true;
-    }
-
-    if (triggeringPolicy == null) {
-      addWarn("No TriggeringPolicy was set for the RollingFileAppender named " + getName());
-      return true;
-    }
-
-    if (rollingPolicy == null) {
-      addError("No RollingPolicy was set for the RollingFileAppender named " + getName());
-      return true;
-    }
-
-    // logic from OutputStreamAppender
-    if (this.encoder == null) {
-      addStatus(new ErrorStatus("No encoder set for the appender named \"" + name + "\".", this));
-      return true;
-    }
-    return false;
-  }
-
   @VisibleForTesting
   LocationManager getLocationManager() {
     return locationManager;
@@ -268,5 +239,13 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
 
   public void setFilePath(String filePath) {
     this.filePath = filePath;
+  }
+
+  public String getDirPermissions() {
+    return dirPermissions;
+  }
+
+  public void setDirPermissions(String dirPermissions) {
+    this.dirPermissions = dirPermissions;
   }
 }

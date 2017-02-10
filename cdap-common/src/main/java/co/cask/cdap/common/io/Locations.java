@@ -370,6 +370,19 @@ public final class Locations {
     }
   }
 
+  /**
+   * Create the directory represented by the location with provided permissions if not exists.
+   * @param location the location for the directory.
+   * @param permissions permissions on directory
+   * @throws IOException If the location cannot be created
+   */
+  public static void mkdirsIfNotExists(Location location, String permissions) throws IOException {
+    // Need to check && mkdir && check to deal with race condition
+    if (!location.isDirectory() && !location.mkdirs(permissions) && !location.isDirectory()) {
+      throw new IOException("Failed to create directory at " + location);
+    }
+  }
+
   public static void deleteQuietly(Location location) {
     deleteQuietly(location, false);
   }

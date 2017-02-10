@@ -47,11 +47,13 @@ public class LocationManager implements Flushable, Closeable {
   private final Location logBaseDir;
   private Map<LocationIdentifier, LocationOutputStream> activeLocations;
   private String filePermissions;
+  private String dirPermissions;
 
-  public LocationManager(LocationFactory locationFactory, String basePath, String filePermissions)
-    throws IOException {
+  public LocationManager(LocationFactory locationFactory, String basePath, String dirPermissions,
+                         String filePermissions) {
     this.logBaseDir = locationFactory.create(basePath);
     this.activeLocations = new HashMap<>();
+    this.dirPermissions = dirPermissions;
     this.filePermissions = filePermissions;
   }
 
@@ -90,7 +92,7 @@ public class LocationManager implements Flushable, Closeable {
     Location logFile = getLogLocation(locationIdentifier).append(filePath);
     Location logDir = Locations.getParent(logFile);
     // check if parent directories exist
-    Locations.mkdirsIfNotExists(logDir);
+    Locations.mkdirsIfNotExists(logDir, dirPermissions);
 
     if (logDir == null) {
       // this should never happen

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.logging.plugins;
 
-import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
@@ -34,9 +33,12 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
+import co.cask.cdap.logging.framework.AppenderContext;
+import co.cask.cdap.logging.framework.LocalAppenderContext;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -49,8 +51,10 @@ import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -58,7 +62,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.io.BufferedReader;
@@ -119,24 +122,26 @@ public class RollingLocationLogAppenderTest {
   @Test
   public void testRollingLocationLogAppender() throws Exception {
     // assume SLF4J is bound to logback in the current environment
-    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+    AppenderContext appenderContext = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
+                                                               injector.getInstance(TransactionSystemClient.class),
+                                                               injector.getInstance(LocationFactory.class),
+                                                               new NoOpMetricsCollectionService());
 
     JoranConfigurator configurator = new JoranConfigurator();
-    configurator.setContext(context);
+    configurator.setContext(appenderContext);
     // Call context.reset() to clear any previous configuration, e.g. default
     // configuration. For multi-step configuration, omit calling context.reset().
-    context.reset();
+    appenderContext.reset();
 
     configurator.doConfigure(getClass().getResourceAsStream("/rolling-appender-logback-test.xml"));
-    StatusPrinter.printInCaseOfErrorsOrWarnings(context);
+    StatusPrinter.printInCaseOfErrorsOrWarnings(appenderContext);
 
     RollingLocationLogAppender rollingAppender =
-      (RollingLocationLogAppender) context.getLogger(RollingLocationLogAppenderTest.class)
+      (RollingLocationLogAppender) appenderContext.getLogger(RollingLocationLogAppenderTest.class)
         .getAppender("rollingAppender");
-    injector.injectMembers(rollingAppender);
 
     addTagsToMdc("testNamespace", "testApp");
-    Logger logger = LoggerFactory.getLogger(RollingLocationLogAppenderTest.class);
+    Logger logger = appenderContext.getLogger(RollingLocationLogAppenderTest.class);
     ingestLogs(logger, 5);
     Map<LocationIdentifier, LocationOutputStream> activeFiles = rollingAppender.getLocationManager()
       .getActiveLocations();
@@ -161,24 +166,26 @@ public class RollingLocationLogAppenderTest {
   @Test
   public void testRollOver() throws Exception {
     // assume SLF4J is bound to logback in the current environment
-    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+    AppenderContext appenderContext = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
+                                                               injector.getInstance(TransactionSystemClient.class),
+                                                               injector.getInstance(LocationFactory.class),
+                                                               new NoOpMetricsCollectionService());
 
     JoranConfigurator configurator = new JoranConfigurator();
-    configurator.setContext(context);
+    configurator.setContext(appenderContext);
     // Call context.reset() to clear any previous configuration, e.g. default
     // configuration. For multi-step configuration, omit calling context.reset().
-    context.reset();
+    appenderContext.reset();
 
     configurator.doConfigure(getClass().getResourceAsStream("/rolling-appender-logback-test.xml"));
-    StatusPrinter.printInCaseOfErrorsOrWarnings(context);
+    StatusPrinter.printInCaseOfErrorsOrWarnings(appenderContext);
 
     RollingLocationLogAppender rollingAppender =
-      (RollingLocationLogAppender) context.getLogger(RollingLocationLogAppenderTest.class)
+      (RollingLocationLogAppender) appenderContext.getLogger(RollingLocationLogAppenderTest.class)
         .getAppender("rollingAppender");
-    injector.injectMembers(rollingAppender);
 
     addTagsToMdc("testNs", "testApp");
-    Logger logger = LoggerFactory.getLogger(RollingLocationLogAppenderTest.class);
+    Logger logger = appenderContext.getLogger(RollingLocationLogAppenderTest.class);
     ingestLogs(logger, 20000);
     Map<LocationIdentifier, LocationOutputStream> activeFiles = rollingAppender.getLocationManager()
       .getActiveLocations();
