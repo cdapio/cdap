@@ -46,6 +46,7 @@ import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -80,6 +81,7 @@ import javax.annotation.Nullable;
  * which implement ExploreClient.
  */
 abstract class ExploreHttpClient implements Explore {
+  public static final String PROGRAM_ID_HEADER = "X-Program-Id";
   private static final Logger LOG = LoggerFactory.getLogger(ExploreHttpClient.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
@@ -162,9 +164,10 @@ abstract class ExploreHttpClient implements Explore {
     if (databaseName != null) {
       args.put(ExploreProperties.PROPERTY_EXPLORE_DATABASE_NAME, databaseName);
     }
+    Map<String, String> headers = getHeaders();
     HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/partitions",
                                                  datasetInstance.getNamespace(), datasetInstance.getDataset()),
-                                   GSON.toJson(args), null);
+                                   GSON.toJson(args), headers);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -185,9 +188,10 @@ abstract class ExploreHttpClient implements Explore {
     if (databaseName != null) {
       args.put(ExploreProperties.PROPERTY_EXPLORE_DATABASE_NAME, databaseName);
     }
+    Map<String, String> headers = getHeaders();
     HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/deletePartition",
                                                  datasetInstance.getNamespace(), datasetInstance.getEntityName()),
-                                   GSON.toJson(args), null);
+                                   GSON.toJson(args), headers);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -474,6 +478,17 @@ abstract class ExploreHttpClient implements Explore {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
     throw new ExploreException("Cannot remove a namespace. Reason: " + response);
+  }
+
+  private Map<String, String> getHeaders() {
+    Map<String, String> headers = new HashMap<>();
+    if (System.getenv().containsKey(ProgramId.class.getSimpleName())) {
+      String programId = System.getenv().get(ProgramId.class.getSimpleName());
+      headers.put(PROGRAM_ID_HEADER, programId);
+      LOG.trace("Found '{}' set as environment variable. Added it to header with name '{}' and value '{}'",
+                ProgramId.class.getSimpleName(), PROGRAM_ID_HEADER, programId);
+    }
+    return headers;
   }
 
   private String parseResponseAsMap(HttpResponse response, String key) throws ExploreException {

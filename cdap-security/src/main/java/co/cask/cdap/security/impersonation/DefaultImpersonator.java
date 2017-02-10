@@ -63,7 +63,7 @@ public class DefaultImpersonator implements Impersonator {
   }
 
   @Override
-  public UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException, NamespaceNotFoundException {
+  public UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException {
     // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(entityId.getNamespaceId())) {
       return UserGroupInformation.getCurrentUser();

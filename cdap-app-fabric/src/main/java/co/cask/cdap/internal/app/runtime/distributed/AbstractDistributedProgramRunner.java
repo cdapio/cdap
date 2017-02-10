@@ -42,6 +42,7 @@ import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.store.SecureStoreUtils;
@@ -299,6 +300,11 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
               Map<String, String> env = new LinkedHashMap<>(this.env);
               // This is for logback xml
               env.put("CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+              // Add the programId as an environment variable so that it can be later retrieved in the program
+              // container. Currently, this programId is sent in the headers from the explore client when the program
+              // tries to add/drop a partition in hive because we want to impersonate the principal with which program
+              // is running as and not the dataset or namespace principal (See CDAP-8342)
+              env.put(ProgramId.class.getSimpleName(), program.getId().toString());
 
               URL sparkAssemblyJar = null;
               try {
