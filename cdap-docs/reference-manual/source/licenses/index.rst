@@ -55,6 +55,8 @@ This product includes software developed by the Apache Software Foundation (http
 Apache®, `Apache Hadoop <https://hadoop.apache.org>`__, `Hadoop®
 <https://hadoop.apache.org>`__, Avro, `Apache Avro <http://avro.apache.org/>`__,
 `Apache Tephra <http://tephra.incubator.apache.org>`__,
+Spark, `Apache Spark <http://spark.apache.org>`__,
+Twill, `Apache Twill <http://tephra.incubator.apache.org>`__,
 and `Apache ZooKeeper <https://zookeeper.apache.org/>`__, 
 are either registered trademarks or trademarks of the
 `Apache Software Foundation <https://www.apache.org>`__ in the United States and/or other

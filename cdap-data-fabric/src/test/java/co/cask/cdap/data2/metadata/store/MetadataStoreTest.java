@@ -427,9 +427,15 @@ public class MetadataStoreTest {
   private MetadataSearchResponse search(String ns, String searchQuery,
                                         int offset, int limit, int numCursors, boolean showHidden)
     throws BadRequestException {
+    return search(ns, searchQuery, offset, limit, numCursors, showHidden, SortInfo.DEFAULT);
+  }
+
+  private MetadataSearchResponse search(String ns, String searchQuery,
+                                        int offset, int limit, int numCursors, boolean showHidden, SortInfo sortInfo)
+    throws BadRequestException {
     return store.search(
       ns, searchQuery, EnumSet.allOf(EntityTypeSimpleName.class),
-      SortInfo.DEFAULT, offset, limit, numCursors, null, showHidden);
+      sortInfo, offset, limit, numCursors, "", showHidden);
   }
 
   private void generateMetadataUpdates() {

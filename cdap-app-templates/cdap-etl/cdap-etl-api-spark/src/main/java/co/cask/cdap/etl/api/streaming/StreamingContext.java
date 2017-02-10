@@ -18,6 +18,7 @@ package co.cask.cdap.etl.api.streaming;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.StageContext;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 
@@ -32,4 +33,8 @@ public interface StreamingContext extends StageContext, Transactional {
    */
   JavaStreamingContext getSparkStreamingContext();
 
+  /**
+   * @return CDAP JavaSparkExecutionContext for the pipeline.
+   */
+  JavaSparkExecutionContext getSparkExecutionContext();
 }

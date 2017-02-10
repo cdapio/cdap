@@ -32,6 +32,7 @@ import shortid from 'shortid';
 import Redirect from 'react-router/Redirect';
 import FastActionToMessage from 'services/fast-action-message-helper';
 import capitalize from 'lodash/capitalize';
+import Page404 from 'components/404';
 require('./AppDetailedView.scss');
 
 export default class AppDetailedView extends Component {
@@ -44,7 +45,8 @@ export default class AppDetailedView extends Component {
         streams: [],
         routeToHome: false,
         selectedNamespace: null,
-        successMessage: null
+        successMessage: null,
+        notFound: false
       },
       loading: true,
       entityMetadata: objectQuery(this.props, 'location', 'state', 'entityMetadata') || {},
@@ -66,38 +68,53 @@ export default class AppDetailedView extends Component {
           namespace,
           appId
         })
-        .subscribe(entityDetail => {
-          let programs = entityDetail.programs.map(prog => {
-            prog.uniqueId = shortid.generate();
-            return prog;
-          });
-          let datasets = entityDetail.datasets.map(dataset => {
-            dataset.entityId = {
-              id: {
-                instanceId: dataset.name
-              },
-              type: 'datasetinstance'
-            };
-            dataset.uniqueId = shortid.generate();
-            return dataset;
-          });
-          let streams = entityDetail.streams.map(stream => {
-            stream.entityId = {
-              id: {
-                streamName: stream.name
-              },
-              type: 'stream'
-            };
-            stream.uniqueId = shortid.generate();
-            return stream;
-          });
-          entityDetail.streams = streams;
-          entityDetail.datasets = datasets;
-          entityDetail.programs = programs;
-          this.setState({
-            entityDetail
-          });
-        });
+        .subscribe(
+          entityDetail => {
+            if (isEmpty(entityDetail)) {
+              this.setState({
+                notFound: true,
+                loading: false
+              });
+            }
+            let programs = entityDetail.programs.map(prog => {
+              prog.uniqueId = shortid.generate();
+              return prog;
+            });
+            let datasets = entityDetail.datasets.map(dataset => {
+              dataset.entityId = {
+                id: {
+                  instanceId: dataset.name
+                },
+                type: 'datasetinstance'
+              };
+              dataset.uniqueId = shortid.generate();
+              return dataset;
+            });
+            let streams = entityDetail.streams.map(stream => {
+              stream.entityId = {
+                id: {
+                  streamName: stream.name
+                },
+                type: 'stream'
+              };
+              stream.uniqueId = shortid.generate();
+              return stream;
+            });
+            entityDetail.streams = streams;
+            entityDetail.datasets = datasets;
+            entityDetail.programs = programs;
+            this.setState({
+              entityDetail
+            });
+          },
+          err => {
+            if (err.statusCode === 404) {
+              this.setState({
+                notFound: true
+              });
+            }
+          }
+      );
     }
     if (
       isNil(this.state.entityMetadata) ||
@@ -111,6 +128,12 @@ export default class AppDetailedView extends Component {
         })
         .map(res => res.results.map(parseMetadata))
         .subscribe(entityMetadata => {
+          if (!entityMetadata.length) {
+            this.setState({
+              notFound: true,
+              loading: false
+            });
+          }
           this.setState({
             entityMetadata: entityMetadata[0],
             loading: false
@@ -159,6 +182,14 @@ export default class AppDetailedView extends Component {
     :
       T.translate('commons.entity.application.singular');
 
+    if (this.state.notFound) {
+      return (
+        <Page404
+          entityType="Application"
+          entityName={this.props.params.appId}
+        />
+      );
+    }
     if (this.state.loading) {
       return (
         <div className="app-detailed-view">

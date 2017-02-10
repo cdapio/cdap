@@ -30,7 +30,8 @@ export default class MarketPlaceEntity extends Component {
     this.state = {
       expandedMode: false,
       entityDetail: {},
-      performSingleAction: false
+      performSingleAction: false,
+      actionsComplete: false
     };
     this.unsub = MarketStore.subscribe(() => {
       let marketState = MarketStore.getState();
@@ -68,12 +69,20 @@ export default class MarketPlaceEntity extends Component {
     this.fetchEntityDetail();
   }
   toggleDetailedMode() {
-    this.setState({expandedMode: !this.state.expandedMode});
+    this.setState({
+      expandedMode: !this.state.expandedMode,
+      actionsComplete: false
+    });
     MarketStore.dispatch({
       type: 'SET_ACTIVE_ENTITY',
       payload: {
         entityId: this.props.entityId
       }
+    });
+  }
+  switchCloseBtn() {
+    this.setState({
+      actionsComplete: true
     });
   }
   render() {
@@ -117,13 +126,19 @@ export default class MarketPlaceEntity extends Component {
             <div>
               <MarketActionsContainer
                 actions={this.state.entityDetail.actions}
+                onActionsComplete={this.switchCloseBtn.bind(this)}
               />
               <div className="text-xs-right">
                 <button
                   className="btn btn-secondary"
                   onClick={this.toggleDetailedMode}
                 >
-                  Cancel
+                  {
+                    this.state.actionsComplete ?
+                      T.translate('features.MarketPlaceEntity.doneLabel')
+                    :
+                      T.translate('features.MarketPlaceEntity.closeLabel')
+                  }
                 </button>
               </div>
             </div>
@@ -147,7 +162,7 @@ export default class MarketPlaceEntity extends Component {
                 className="btn btn-secondary"
                 onClick={this.toggleDetailedMode}
               >
-                Cancel
+                {T.translate('features.MarketPlaceEntity.closeLabel')}
               </button>
             </div>
           );

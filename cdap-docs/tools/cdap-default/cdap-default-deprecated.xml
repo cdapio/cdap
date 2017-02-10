@@ -124,6 +124,15 @@
   </property>
 
   <property>
+    <name>log.saver.checkpoint.interval.ms</name>
+    <value>60000</value>
+    <description>
+      The time between log saver checkpoints in milliseconds
+      (deprecated: use ${log.process.pipeline.checkpoint.interval.ms} instead)
+    </description>
+  </property>
+
+  <property>
     <name>log.saver.run.memory.megs</name>
     <value>1024</value>
     <description>

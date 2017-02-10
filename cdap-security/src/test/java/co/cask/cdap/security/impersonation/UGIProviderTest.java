@@ -19,6 +19,7 @@ package co.cask.cdap.security.impersonation;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;

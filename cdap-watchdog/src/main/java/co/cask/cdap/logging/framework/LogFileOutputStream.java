@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.framework;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import co.cask.cdap.logging.serialize.LoggingEvent;
 import com.google.common.io.Closeables;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
@@ -73,7 +74,7 @@ class LogFileOutputStream implements Closeable, Flushable {
   }
 
   void append(ILoggingEvent event) throws IOException {
-    dataFileWriter.append(co.cask.cdap.logging.serialize.LoggingEvent.encode(schema, event));
+    dataFileWriter.append(LoggingEvent.encode(schema, event));
   }
 
   /**

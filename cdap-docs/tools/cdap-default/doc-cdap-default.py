@@ -767,6 +767,8 @@ def compare_items(items_list, other_items_list, update=False, compare_values=Fal
         else:
             only_in_source.append(item.name)
     print "  Only in '%s': %d" % (items_source_title, len(only_in_source))
+    for name in only_in_source:
+        print "    %s" % name
             
     print "Looking in '%s' for each item in '%s'" % (items_source_title, other_items_source_title)
     only_in_other_source = []

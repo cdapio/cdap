@@ -81,28 +81,6 @@ export default class PlusButtonModal extends Component {
             </span>
           </span>
           <div className="float-xs-right">
-            <div className="btn-group">
-              <button
-                className={classNames("btn btn-sm navigation-button", {
-                  'active': this.state.viewMode === 'marketplace'
-                })}
-                onClick={this.toggleView.bind(this, 'marketplace')}
-              >
-                <span className="plus-button-modal-toggle-text">
-                  {market}
-                </span>
-              </button>
-              <button
-                className={classNames("btn btn-sm navigation-button resource-center", {
-                  'active': this.state.viewMode === 'resourcecenter'
-                })}
-                onClick={this.toggleView.bind(this, 'resourcecenter')}
-              >
-                <span className="plus-button-modal-toggle-text">
-                  {resourceCenter}
-                </span>
-              </button>
-            </div>
             <div
               className="modal-close-btn"
               onClick={this.closeHandler}
@@ -127,7 +105,12 @@ export default class PlusButtonModal extends Component {
   }
 }
 
+PlusButtonModal.defaultProps = {
+  mode: 'marketplace'
+};
+
 PlusButtonModal.propTypes = {
   onCloseHandler: PropTypes.func,
-  isOpen: PropTypes.bool
+  isOpen: PropTypes.bool,
+  mode: PropTypes.oneOf(['marketplace', 'resourcecenter'])
 };

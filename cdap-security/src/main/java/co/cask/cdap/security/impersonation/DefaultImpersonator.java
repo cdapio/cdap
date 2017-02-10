@@ -18,10 +18,9 @@ package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.kerberos.SecurityUtil;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.annotations.VisibleForTesting;
@@ -69,17 +68,11 @@ public class DefaultImpersonator implements Impersonator {
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(entityId.getNamespaceId())) {
       return UserGroupInformation.getCurrentUser();
     }
-    String principal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
-    String keytabURI = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
     try {
-      KerberosPrincipalId principalId = ownerAdmin.getEffectiveOwner(entityId);
-      // If an effective owner was not found then the operation will be performed as the configured master user
-      if (principalId != null) {
-        principal = principalId.getPrincipal();
-        keytabURI = SecurityUtil.getKeytabURIforPrincipal(principal, cConf);
-      }
-      LOG.debug("Impersonating principal {} for entity {}, keytab path is {}", principal, entityId, keytabURI);
-      return getUGI(new ImpersonationInfo(principal, keytabURI));
+      ImpersonationInfo info = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, entityId);
+      LOG.debug("Impersonating principal {} for entity {}, keytab path is {}",
+                info.getPrincipal(), entityId, info.getKeytabURI());
+      return getUGI(info);
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, IOException.class);
       throw Throwables.propagate(e);

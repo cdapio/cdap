@@ -19,7 +19,15 @@ import NamespaceStore from 'services/NamespaceStore';
 
 export default function UsageTab({entity}) {
   let namespace = NamespaceStore.getState().selectedNamespace;
-  let url = `/tracker/ns/${namespace}/entity/datasets/${entity.id}/usage?iframe=true`;
+  let url = window.getTrackerUrl({
+    stateName: 'tracker.detail.entity.usage',
+    stateParams: {
+      namespace,
+      entityType: 'datasets',
+      entityId: entity.id,
+      iframe: true
+    }
+  });
   let encodedSource = encodeURIComponent(url);
   url += `&sourceUrl=${encodedSource}`;
 

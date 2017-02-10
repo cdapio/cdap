@@ -49,7 +49,7 @@ public class GetMetricCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String metric = arguments.get("metric-name");
-    Map<String, String> tags = ArgumentParser.parseMap(arguments.getOptional("tags", ""));
+    Map<String, String> tags = ArgumentParser.parseMap(arguments.getOptional("tags", ""), "<tags>");
     String start = arguments.getOptional("start", "");
     String end = arguments.getOptional("end", "");
 

@@ -17,6 +17,8 @@
 package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.module.DatasetType;
@@ -45,6 +47,7 @@ import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.id.DatasetModuleId;
@@ -70,8 +73,6 @@ import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.tephra.TransactionExecutor;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -79,6 +80,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -450,25 +452,36 @@ public class DatasetTypeService extends AbstractIdleService {
     };
   }
 
-  private void deleteSystemModules() throws InterruptedException, TransactionFailureException {
-    final DatasetTypeMDS datasetTypeMDS = datasetCache.getDataset(DatasetMetaTableUtil.META_TABLE_NAME);
-    txExecutorFactory.createExecutor(datasetCache).execute(new TransactionExecutor.Subroutine() {
+  private void deleteSystemModules() throws Exception {
+    final List<DatasetModuleMeta> toRevoke = new ArrayList<>();
+    Transactions.createTransactional(datasetCache).execute(60, new TxRunnable() {
       @Override
-      public void apply() throws Exception {
+      public void run(DatasetContext context) throws Exception {
+        DatasetTypeMDS datasetTypeMDS = datasetCache.getDataset(DatasetMetaTableUtil.META_TABLE_NAME);
         Collection<DatasetModuleMeta> allDatasets = datasetTypeMDS.getModules(NamespaceId.SYSTEM);
         for (DatasetModuleMeta ds : allDatasets) {
           if (ds.getJarLocationPath() == null) {
             LOG.debug("Deleting system dataset module: {}", ds.toString());
             DatasetModuleId moduleId = NamespaceId.SYSTEM.datasetModule(ds.getName());
             datasetTypeMDS.deleteModule(moduleId);
-            revokeAllPrivilegesOnModule(moduleId, ds);
+            toRevoke.add(ds);
           }
         }
       }
     });
+    long startTime = System.currentTimeMillis();
+    LOG.trace("Revoking all privileges for {} system dataset modules. ", toRevoke.size());
+    for (DatasetModuleMeta ds : toRevoke) {
+      revokeAllPrivilegesOnModule(NamespaceId.SYSTEM.datasetModule(ds.getName()), ds);
+    }
+    long doneTime = System.currentTimeMillis();
+    float elapsedSeconds = doneTime == startTime ? 0.0F : ((float) doneTime - startTime) / 1000;
+    LOG.debug("Revoking all privileges for {} system dataset modules took {} seconds.",
+              toRevoke.size(), elapsedSeconds);
   }
 
-  private void deployDefaultModules() {
+  private void deployDefaultModules() throws Exception {
+    List<DatasetModuleId> toGrant = new ArrayList<>();
     // adding default modules to be available in dataset manager service
     for (Map.Entry<String, DatasetModule> module : defaultModules.entrySet()) {
       try {
@@ -476,7 +489,7 @@ public class DatasetTypeService extends AbstractIdleService {
         // NOTE: we add default modules in the system namespace
         DatasetModuleId defaultModule = NamespaceId.SYSTEM.datasetModule(module.getKey());
         typeManager.addModule(defaultModule, module.getValue().getClass().getName(), null, false);
-        grantAllPrivilegesOnModule(defaultModule, authenticationContext.getPrincipal());
+        toGrant.add(defaultModule);
       } catch (DatasetModuleConflictException e) {
         // perfectly fine: we need to add default modules only the very first time service is started
         LOG.debug("Not adding {} module: it already exists", module.getKey());
@@ -485,6 +498,15 @@ public class DatasetTypeService extends AbstractIdleService {
         throw Throwables.propagate(th);
       }
     }
+    long startTime = System.currentTimeMillis();
+    LOG.trace("Granting all privileges for {} default dataset modules. ", toGrant.size());
+    for (DatasetModuleId defaultModule : toGrant) {
+      grantAllPrivilegesOnModule(defaultModule, authenticationContext.getPrincipal());
+    }
+    long doneTime = System.currentTimeMillis();
+    float elapsedSeconds = doneTime == startTime ? 0.0F : ((float) doneTime - startTime) / 1000;
+    LOG.debug("Granting all privileges for {} default dataset modules took {} seconds.",
+              toGrant.size(), elapsedSeconds);
   }
 
   private Map<String, DatasetModule> getExtensionModules(CConfiguration cConf) {

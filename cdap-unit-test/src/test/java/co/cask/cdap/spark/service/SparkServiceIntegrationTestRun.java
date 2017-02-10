@@ -18,6 +18,7 @@ package co.cask.cdap.spark.service;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.ServiceManager;
@@ -49,7 +50,7 @@ public class SparkServiceIntegrationTestRun extends TestFrameworkTestBase {
 
     SparkManager sparkManager = applicationManager.getSparkManager(
       TestSparkServiceIntegrationApp.SparkServiceProgram.class.getSimpleName()).start();
-    sparkManager.waitForFinish(120, TimeUnit.SECONDS);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 120, TimeUnit.SECONDS);
 
     DataSetManager<KeyValueTable> datasetManager = getDataset("result");
     KeyValueTable results = datasetManager.get();

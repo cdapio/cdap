@@ -29,18 +29,15 @@ import PlusButtonStore from 'services/PlusButtonStore';
 import globalEvents from 'services/global-events';
 import isNil from 'lodash/isNil';
 import Overview from 'components/Overview';
+import EntityListInfo from './EntityListInfo';
 import WelcomeScreen from 'components/EntityListView/WelcomeScreen';
 import HomeListView from 'components/EntityListView/ListView';
-
+import NamespaceStore from 'services/NamespaceStore';
+import Page404 from 'components/404';
 require('./EntityListView.scss');
 import ee from 'event-emitter';
 
-const defaultFilter = ['app', 'dataset', 'stream'];
-
-// 312 = cardWith (300) + (5 x 2 side margins) + ( 1 x 2 border widths)
-const cardWidthWithMarginAndBorder = 312;
-// 140 = cardHeight (128) + (5 x 2 top bottom margins) + (1 x 2 border widths)
-const cardHeightWithMarginAndBorder = 140;
+const defaultFilter = [];
 
 class EntityListView extends Component {
   constructor(props) {
@@ -57,10 +54,6 @@ class EntityListView extends Component {
       {
         displayName: T.translate('commons.entity.dataset.plural'),
         id: 'dataset'
-      },
-      {
-        displayName: T.translate('commons.entity.program.plural'),
-        id: 'program'
       },
       {
         displayName: T.translate('commons.entity.stream.plural'),
@@ -118,7 +111,8 @@ class EntityListView extends Component {
       currentPage: 1,
       animationDirection: 'next',
       showSplash: true,
-      userStoreObj : ''
+      userStoreObj : '',
+      notFound: false
     };
 
     this.retryCounter = 0; // being used for search API retry
@@ -196,7 +190,6 @@ class EntityListView extends Component {
 
     // Process and return valid query parameters
     let queryObject = this.getQueryObject(this.props.location.query);
-
     this.setState({
       filter: queryObject.filter,
       sortObj: queryObject.sort,
@@ -205,38 +198,89 @@ class EntityListView extends Component {
     });
   }
 
+  // Performs calculations to determine number of entities to render per page
   calculatePageSize() {
+    // different screen sizes
+    // consistent with media queries in style sheet
+    const sevenColumnWidth = 1701;
+    const sixColumnWidth = 1601;
+    const fiveColumnWidth = 1201;
+    const fourColumnWidth = 993;
+    const threeColumnWidth = 768;
+
+    // 140 = cardHeight (128) + (5 x 2 top bottom margins) + (1 x 2 border widths)
+    const cardHeightWithMarginAndBorder = 140;
+
     let entityListViewEle = document.getElementsByClassName('entity-list-view');
 
     if (!entityListViewEle.length) {
       return;
     }
-    // Performs calculations to determine number of entities to render per page
-    // minus 60px of padding in entity-list-view (30px each side)
-    let containerWidth = entityListViewEle[0].offsetWidth - 60;
 
-    // Subtract 55px to account for entity-list-header's height (30px) and container's top margin (25px)
-    // minus 20px of padding from top and bottom (10px each)
-    let containerHeight = document.getElementsByClassName('entity-list-view')[0].offsetHeight - 55 - 20;
+    // Subtract 65px to account for entity-list-info's height (45px) and paddings (20px)
+    // minus 10px of padding from top and bottom (10px each)
+    let containerHeight = entityListViewEle[0].offsetHeight - 65 - 10;
+    let containerWidth = entityListViewEle[0].offsetWidth;
+    let numColumns = 1;
 
-    let numColumns = Math.floor(containerWidth / cardWidthWithMarginAndBorder);
+    // different screen sizes
+    // consistent with media queries in style sheet
+    if (containerWidth >= sevenColumnWidth) {
+      numColumns = 7;
+    } else if (containerWidth >= sixColumnWidth && containerWidth < sevenColumnWidth) {
+      numColumns = 6;
+    } else if (containerWidth >= fiveColumnWidth && containerWidth < sixColumnWidth) {
+      numColumns = 5;
+    } else if (containerWidth >= fourColumnWidth && containerWidth < fiveColumnWidth) {
+      numColumns = 4;
+    } else if (containerWidth >= threeColumnWidth && containerWidth < fourColumnWidth) {
+      numColumns = 3;
+    }
+
     let numRows = Math.floor(containerHeight / cardHeightWithMarginAndBorder);
 
     // We must have one column and one row at the very least
-    if (numColumns === 0) {
-      numColumns = 1;
-    }
-
     if (numRows === 0) {
       numRows = 1;
     }
 
     this.pageSize = numColumns * numRows;
   }
+
   // Retrieve entities for rendering
   componentDidMount() {
-    this.calculatePageSize();
-    this.updateData();
+    let namespaces = NamespaceStore.getState().namespaces.map(ns => ns.name);
+    if (namespaces.length) {
+      let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+      if (namespaces.indexOf(selectedNamespace) === -1) {
+        this.setState({
+          notFound: true,
+          loading: false
+        });
+      } else {
+        this.calculatePageSize();
+        this.updateData();
+      }
+    } else {
+      const namespaceSubcriber = () => {
+        let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+        let namespaces = NamespaceStore.getState().namespaces.map(ns => ns.name);
+        if (namespaces.length && namespaces.indexOf(selectedNamespace) === -1) {
+          this.setState({
+            notFound:true
+          });
+        } else {
+          this.setState({
+            notFound: false
+          }, () => {
+            this.calculatePageSize();
+            this.updateData();
+            this.namespaceStoreSubscription();
+          });
+        }
+      };
+      this.namespaceStoreSubscription = NamespaceStore.subscribe(namespaceSubcriber.bind(this));
+    }
   }
 
   // Construct and return query object from query parameters
@@ -319,6 +363,12 @@ class EntityListView extends Component {
   ) {
     let offset = (currentPage - 1) * this.pageSize;
 
+    // TODO/FIXME: hack to not display programs when filter is empty (which means all
+    // entities should be displayed). Maybe this should be a backend change?
+    if (filter.length === 0) {
+      filter = ['app', 'artifact', 'dataset', 'stream'];
+    }
+
     this.setState({
       loading : true,
       selectedEntity: null
@@ -357,6 +407,7 @@ class EntityListView extends Component {
           isSortDisabled,
           isSearchDisabled,
           entities: res,
+          total: total,
           loading: false,
           entityErr: false,
           errStatusCode: null,
@@ -399,7 +450,8 @@ class EntityListView extends Component {
 
     this.setState({
       filter : filters,
-      selectedEntity: null
+      selectedEntity: null,
+      currentPage: 1
     }, () => {
       this.search(this.state.query, filters, this.state.sortObj);
     });
@@ -424,7 +476,8 @@ class EntityListView extends Component {
     this.setState({
       sortObj : option,
       isSearchDisabled,
-      selectedEntity: null
+      selectedEntity: null,
+      currentPage: 1
     }, () => {
       this.search(this.state.query, this.state.filter, option);
     });
@@ -436,7 +489,8 @@ class EntityListView extends Component {
       query,
       isSortDisabled,
       sortObj: this.sortOptions[0],
-      selectedEntity: null
+      selectedEntity: null,
+      currentPage: 1
     }, () => {
       this.search(query, this.state.filter, this.state.sortObj);
     });
@@ -536,6 +590,37 @@ class EntityListView extends Component {
 
   render() {
 
+    if (this.state.notFound) {
+      return (
+        <div className="entity-list-view">
+          <Page404
+            entityType="Namespace"
+            entityName={this.props.params.namespace}
+          >
+            <div className="namespace-not-found text-xs-center">
+              <h4>
+                <strong>
+                  {T.translate('features.EntityListView.NamespaceNotFound.createMessage')}
+                  <span
+                    className="open-namespace-wizard-link"
+                    onClick={() => {
+                      this.eventEmitter.emit(globalEvents.CREATENAMESPACE);
+                    }}
+                  >
+                    {T.translate('features.EntityListView.NamespaceNotFound.createLinkLabel')}
+                  </span>
+                </strong>
+              </h4>
+              <h4>
+                <strong>
+                  {T.translate('features.EntityListView.NamespaceNotFound.switchMessage')}
+                </strong>
+              </h4>
+            </div>
+          </Page404>
+        </div>
+      );
+    }
     if (!this.state.showSplash) {
       return (
         <WelcomeScreen
@@ -558,8 +643,6 @@ class EntityListView extends Component {
           onSearch={this.handleSearch.bind(this)}
           isSearchDisabled={this.state.isSearchDisabled}
           searchText={this.state.query}
-          numberOfPages={this.state.numPages}
-          currentPage={this.state.currentPage}
           onPageChange={this.handlePageChange}
         />
         <Pagination
@@ -569,6 +652,18 @@ class EntityListView extends Component {
           currentPage={this.state.currentPage}
           setDirection={this.setAnimationDirection}
         >
+          <EntityListInfo
+            className="entity-list-info"
+            namespace={this.props.params.namespace}
+            numberOfEntities={this.state.total}
+            numberOfPages={this.state.numPages}
+            currentPage={this.state.currentPage}
+            onPageChange={this.handlePageChange}
+            activeFilter={this.state.filter}
+            filterOptions={this.filterOptions}
+            activeSort={this.state.sortObj}
+            searchText={this.state.query}
+          />
           <div className={classNames("entities-container")}>
             <HomeListView
               className={classNames("home-list-view-container", {"show-overview-main-container": !isNil(this.state.selectedEntity)})}

@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
+import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequestConfig;
 import co.cask.common.http.HttpRequests;

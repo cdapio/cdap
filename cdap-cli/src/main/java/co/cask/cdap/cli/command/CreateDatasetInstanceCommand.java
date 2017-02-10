@@ -52,7 +52,8 @@ public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
     String datasetName = arguments.get(ArgumentName.NEW_DATASET.toString());
     String datasetPropertiesString = arguments.getOptional(ArgumentName.DATASET_PROPERTIES.toString(), "");
     String datasetDescription = arguments.getOptional(ArgumentName.DATASET_DESCRIPTON.toString(), null);
-    Map<String, String> datasetProperties = ArgumentParser.parseMap(datasetPropertiesString);
+    Map<String, String> datasetProperties = ArgumentParser.parseMap(datasetPropertiesString,
+                                                                    ArgumentName.DATASET_PROPERTIES.toString());
     // TODO: CDAP-8110 (Rohit) Support owner principal in CLI by deprecating this command and introducing a more user
     // friendly create dataset instance command
     DatasetInstanceConfiguration datasetConfig =

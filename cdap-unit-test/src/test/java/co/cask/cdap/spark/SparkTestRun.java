@@ -138,7 +138,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
     tableManager.flush();
 
     SparkManager sparkManager = appManager.getSparkManager(DatasetSQLSpark.class.getSimpleName()).start();
-    sparkManager.waitForFinish(2, TimeUnit.MINUTES);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
 
     // The program executes "SELECT * FROM Person WHERE age > 10", hence expected two new entries for Bill and Berry.
     tableManager.flush();
@@ -161,14 +161,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
 
     for (Class<?> sparkClass : Arrays.asList(TestSparkApp.ClassicSpark.class, TestSparkApp.ScalaClassicSpark.class)) {
       final SparkManager sparkManager = appManager.getSparkManager(sparkClass.getSimpleName()).start();
-      sparkManager.waitForFinish(1, TimeUnit.MINUTES);
-
-      Tasks.waitFor(1, new Callable<Integer>() {
-        @Override
-        public Integer call() throws Exception {
-          return sparkManager.getHistory(ProgramRunStatus.COMPLETED).size();
-        }
-      }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
     }
 
     KeyValueTable resultTable = this.<KeyValueTable>getDataset("ResultTable").get();
@@ -209,7 +202,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
       SparkManager sparkManager = appManager.getSparkManager(sparkProgramName);
       sparkManager.start(runtimeArgs);
 
-      sparkManager.waitForFinish(100, TimeUnit.SECONDS);
+      sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 180, TimeUnit.SECONDS);
 
       // Find the output part file. There is only one because the program repartition to 1
       Location outputFile = Iterables.find(outputDir.list(), new Predicate<Location>() {
@@ -241,14 +234,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
       TestSparkApp.ForkSparkWorkflow.class.getSimpleName())
       .start(Collections.singletonMap("barrier.dir", barrierDir.getAbsolutePath()));
 
-    workflowManager.waitForFinish(2, TimeUnit.MINUTES);
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return workflowManager.getHistory(ProgramRunStatus.COMPLETED).size();
-      }
-    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
   }
 
   @Test
@@ -259,7 +245,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
     prepareInputData(keysManager);
 
     SparkManager sparkManager = applicationManager.getSparkManager(CharCountProgram.class.getSimpleName()).start();
-    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
 
     DataSetManager<KeyValueTable> countManager = getDataset("count");
     checkOutputData(countManager);
@@ -300,7 +286,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
     prepareInputData(keysManager);
 
     SparkManager sparkManager = applicationManager.getSparkManager(ScalaCharCountProgram.class.getSimpleName()).start();
-    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
 
     DataSetManager<KeyValueTable> countManager = getDataset("count");
     checkOutputData(countManager);
@@ -334,7 +320,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
                                                ScalaCrossNSProgram.DATASET_NAME(), "count");
     SparkManager sparkManager =
       applicationManager.getSparkManager(ScalaCrossNSProgram.class.getSimpleName()).start(args);
-    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
 
     // get the dataset from the other namespace where we expect it to exist and compare the data
     DataSetManager<KeyValueTable> countManager = getDataset(crossNSDatasetMeta.getNamespaceId().dataset("count"));
@@ -361,7 +347,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
     ApplicationManager applicationManager = deploy(SparkAppUsingObjectStore.class);
     SparkManager sparkManager =
       applicationManager.getSparkManager(ScalaCharCountProgram.class.getSimpleName()).start(args);
-    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
 
     DataSetManager<KeyValueTable> countManager = getDataset("count");
     checkOutputData(countManager);
@@ -414,7 +400,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
     }, 3, TimeUnit.MINUTES, 1, TimeUnit.SECONDS);
 
     sparkManager.stop();
-    sparkManager.waitForFinish(10, TimeUnit.SECONDS);
+    sparkManager.waitForRun(ProgramRunStatus.KILLED, 60, TimeUnit.SECONDS);
   }
 
   @Test
@@ -466,7 +452,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
     args.put("output", "logStats");
 
     SparkManager sparkManager = applicationManager.getSparkManager(sparkProgram).start(args);
-    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
 
     DataSetManager<KeyValueTable> logStatsManager = getDataset("logStats");
     KeyValueTable logStatsTable = logStatsManager.get();
@@ -490,7 +476,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
 
     SparkManager sparkManager = applicationManager.getSparkManager(sparkProgram)
       .start(Collections.singletonMap(SparkAppUsingLocalFiles.LOCAL_FILE_RUNTIME_ARG, localFile.toString()));
-    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
 
     DataSetManager<KeyValueTable> kvTableManager = getDataset(SparkAppUsingLocalFiles.OUTPUT_DATASET_NAME);
     KeyValueTable kvTable = kvTableManager.get();
