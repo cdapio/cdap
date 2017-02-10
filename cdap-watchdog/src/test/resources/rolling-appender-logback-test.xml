@@ -28,7 +28,7 @@
 
   <appender name="rollingAppender" class="co.cask.cdap.logging.plugins.RollingLocationLogAppender">
     <!--log file path will be created by appender as: <basePath>/namespaceId/applicationId/<filePath>-->
-    <basePath>plugins/applogs</basePath>
+    <basePath>/tmp/plugins/applogs</basePath>
     <!--filePath uses instanceId which is a property set by LogFramework. We use it to avoid multiple log saver
     instances writing to same file in case of kafka partition key reconfiguration supported by CDAP-8104-->
     <filePath>securityLogs/logFile-${cdap.log.saver.instance.id}.log</filePath>
@@ -40,13 +40,16 @@
       <minIndex>1</minIndex>
       <maxIndex>9</maxIndex>
     </rollingPolicy>
+
     <triggeringPolicy class="co.cask.cdap.logging.plugins.SizeBasedTriggeringPolicy">
       <maxFileSize>5KB</maxFileSize>
     </triggeringPolicy>
+
     <encoder>
       <pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
+      <!--Do not flush on every event-->
+      <immediateFlush>false</immediateFlush>
     </encoder>
-    <testProperty>1</testProperty>
   </appender>
 
   <logger name="co.cask.cdap.logging.plugins.RollingLocationLogAppenderTest" level="INFO">

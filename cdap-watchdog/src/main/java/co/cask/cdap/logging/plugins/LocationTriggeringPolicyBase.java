@@ -28,6 +28,7 @@ import java.io.File;
  */
 public abstract class LocationTriggeringPolicyBase extends ContextAwareBase implements LocationTriggeringPolicy {
   protected Location activeLocation;
+  protected long activeLocationSize;
 
   private boolean start;
 
@@ -49,5 +50,9 @@ public abstract class LocationTriggeringPolicyBase extends ContextAwareBase impl
 
   public boolean isTriggeringEvent(final File activeFile, final ILoggingEvent event) throws LogbackException {
    return isTriggeringEvent(event);
+  }
+
+  public void setActiveLocationSize(long size) {
+    activeLocationSize = size;
   }
 }

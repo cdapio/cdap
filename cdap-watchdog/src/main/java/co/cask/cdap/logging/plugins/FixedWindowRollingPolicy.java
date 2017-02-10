@@ -32,6 +32,7 @@ import java.io.IOException;
  */
 public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
   private static final Logger LOG = LoggerFactory.getLogger(FixedWindowRollingPolicy.class);
+
   private static final String FNP_NOT_SET =
     "The \"FileNamePattern\" property must be set before using FixedWindowRollingPolicy. ";
 
@@ -99,36 +100,30 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
         // Delete the oldest file, to keep Windows happy.
         String fileName = fileNamePattern.convertInt(maxIndex);
         Location deleteLocation = parentLocation.append(fileName);
-        if (deleteLocation.exists()) {
-          LOG.debug("Deleting oldest file {} as part of rollover", deleteLocation.toURI().toString());
-          if (!deleteLocation.delete()) {
-            LOG.warn("Failed to delete location: {}", deleteLocation.toURI().toString());
-            throw new RolloverFailure(String.format("Not able to delete file: %s", deleteLocation.toURI().toString()));
-          }
+        // no need to proceed further if we are not able to delete location so throw exception
+        if (deleteLocation.exists() && !deleteLocation.delete()) {
+          LOG.warn("Failed to delete location: {}", deleteLocation.toURI().toString());
+          throw new RolloverFailure(String.format("Not able to delete file: %s", deleteLocation.toURI().toString()));
         }
 
         // Map {(maxIndex - 1), ..., minIndex} to {maxIndex, ..., minIndex+1}
         for (int i = maxIndex - 1; i >= minIndex; i--) {
           String toRenameStr = fileNamePattern.convertInt(i);
           Location toRename = parentLocation.append(toRenameStr);
+
           // no point in trying to rename an non existent file
           if (toRename.exists()) {
             Location newName = parentLocation.append(fileNamePattern.convertInt(i + 1));
+            // throw exception if rename fails, so that in next interation of rollover, it will be retried
             if (toRename.renameTo(newName) == null) {
               LOG.warn("Failed to rename location: {}", toRename.toURI().toString());
               throw new RolloverFailure(String.format("Not able to rename file: %s", toRename.toURI().toString()));
             }
           } else {
-            addInfo("Skipping roll-over for inexistent file " + toRenameStr);
+            LOG.trace("Skipping roll-over for inexistent file {}", toRenameStr);
           }
         }
-      } catch (IOException e) {
-        RolloverFailure f = new RolloverFailure(e.getMessage());
-        f.addSuppressed(e);
-        throw f;
-      }
 
-      try {
         // close outputstream of active location before renaming it
         closeable.close();
         if (activeFileLocation.renameTo(parentLocation.append(fileNamePattern.convertInt(minIndex))) == null) {
@@ -137,8 +132,9 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
                                                   activeFileLocation.toURI().toString()));
         }
       } catch (IOException e) {
-        throw new RolloverFailure(String.format("Exception while renaming file: %s, %s",
-                                                activeFileLocation.getName(), e.getMessage()));
+        RolloverFailure f = new RolloverFailure(e.getMessage());
+        f.addSuppressed(e);
+        throw f;
       }
     }
   }

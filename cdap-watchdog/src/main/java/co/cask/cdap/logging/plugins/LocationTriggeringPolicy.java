@@ -38,4 +38,6 @@ public interface LocationTriggeringPolicy extends TriggeringPolicy<ILoggingEvent
    * @param location location which can trigger roll over
    */
   void setLocation(Location location);
+
+  void setActiveLocationSize(long size);
 }

@@ -20,20 +20,22 @@ import co.cask.cdap.common.io.Locations;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
-import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manage locations for {@link RollingLocationLogAppender}
@@ -54,7 +56,8 @@ public class LocationManager implements Flushable, Closeable {
   }
 
   /**
-   * creates {@link LocationIdentifier} from propertymap
+   * Creates {@link LocationIdentifier} from propertymap
+   *
    * @param propertyMap MDC property map which contains namespace id and application id
    * @return returns {@link LocationIdentifier}
    * @throws IllegalArgumentException application id is not present in the property map
@@ -72,15 +75,16 @@ public class LocationManager implements Flushable, Closeable {
   }
 
   /**
-   * log file path will be created by this appender as: basePath/namespaceId/applicationId/filePath
+   * Returns outpustream for log file created as: <basePath>/namespaceId/applicationId/<filePath>
+   *
    * @param locationIdentifier location identifier for this event
-   * @param filePath filePath for this event
+   * @param filePath           filePath for this event
    * @return returns {@link LocationOutputStream} for an event
    * @throws IOException throws exception while creating a file
    */
   OutputStream getLocationOutputStream(LocationIdentifier locationIdentifier, String filePath) throws IOException {
     if (activeLocations.containsKey(locationIdentifier)) {
-      return activeLocations.get(locationIdentifier).getOutputStream();
+      return activeLocations.get(locationIdentifier);
     }
 
     Location logFile = getLogLocation(locationIdentifier).append(filePath);
@@ -105,29 +109,35 @@ public class LocationManager implements Flushable, Closeable {
         throw new IOException(String.format("Can not rename file %s", logFile.toURI().toString()));
       }
 
-      // create new file and open outputstream on it
-      logFile.createNew(filePermissions);
-      // TODO: Handle existing file in a better way rather than copying it over
-      OutputStream outputStream = logFile.getOutputStream();
-      try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(tempLocation.getInputStream()))) {
-        String line;
-        // copy contents of existing file to new file
-        while ((line = bufferedReader.readLine()) != null) {
-          outputStream.write(line.getBytes());
-        }
+      try (InputStream inputStream = tempLocation.getInputStream()) {
+        // create new file and open outputstream on it
+        logFile.createNew(filePermissions);
+        // TODO: Handle existing file in a better way rather than copying it over
+        OutputStream outputStream = new LocationOutputStream(logFile, logFile.getOutputStream());
+        activeLocations.put(locationIdentifier, (LocationOutputStream) outputStream);
+        ByteStreams.copy(inputStream, outputStream);
+      } catch (IOException e) {
+        activeLocations.remove(locationIdentifier);
+        throw e;
       }
 
-      activeLocations.put(locationIdentifier, new LocationOutputStream(logFile, outputStream));
-
-      // delete temporary file
-      tempLocation.delete();
+      // delete temporary file, if it fails, retry 5 times, the file will be there on the disk after 5 retries
+      // TODO remove all the existing temp files
+      int retries = 5;
+      while (retries > 0) {
+        if (tempLocation.delete()) {
+          break;
+        }
+        retries--;
+        Uninterruptibles.sleepUninterruptibly(100L, TimeUnit.MILLISECONDS);
+      }
     } else {
       // create file with correct permissions
       logFile.createNew(filePermissions);
       activeLocations.put(locationIdentifier, new LocationOutputStream(logFile, logFile.getOutputStream()));
     }
 
-    return activeLocations.get(locationIdentifier).getOutputStream();
+    return activeLocations.get(locationIdentifier);
   }
 
   /**

@@ -26,12 +26,14 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * Location outputstream used by {@link LocationManager}
+ * Location outputstream used by {@link LocationManager} which holds location, number of bytes written to a location
+ * and its open outputstream
  */
 public class LocationOutputStream extends FilterOutputStream {
   private static final Logger LOG = LoggerFactory.getLogger(LocationOutputStream.class);
 
   private Location location;
+  private long numOfBytes;
 
   public LocationOutputStream(Location location, OutputStream outputStream) {
     super(outputStream);
@@ -46,12 +48,19 @@ public class LocationOutputStream extends FilterOutputStream {
     return out;
   }
 
-  public void setLocation(Location location) {
-    this.location = location;
+  public long getNumOfBytes() {
+    return numOfBytes;
   }
 
-  public void setOutputStream(OutputStream outputStream) {
-    this.out = outputStream;
+  @Override
+  public void write(byte[] b) throws IOException {
+    out.write(b);
+    long length = location.length();
+
+    if (numOfBytes < length) {
+      numOfBytes = length;
+    }
+    numOfBytes = numOfBytes + b.length;
   }
 
   @Override

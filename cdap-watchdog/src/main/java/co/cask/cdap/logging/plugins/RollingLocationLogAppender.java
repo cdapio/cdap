@@ -18,9 +18,7 @@ package co.cask.cdap.logging.plugins;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.FileAppender;
-import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.LogbackException;
-import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import ch.qos.logback.core.rolling.RollingPolicy;
 import ch.qos.logback.core.rolling.RolloverFailure;
 import ch.qos.logback.core.rolling.TriggeringPolicy;
@@ -39,8 +37,6 @@ import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStream;
-
-import static ch.qos.logback.core.CoreConstants.CODES_URL;
 
 /**
  * Rolling Appender for {@link Location}
@@ -79,10 +75,10 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
     if (locationFactory != null) {
       try {
         this.locationManager = new LocationManager(locationFactory, basePath, filePermissions);
+        started = true;
       } catch (IOException e) {
         // not handling it since we will remove this if condition after log framework is in place
       }
-      started = true;
     }
   }
 
@@ -119,44 +115,48 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
       // this shouldn't happen
       LOG.error("Unrecognized context ", iae);
     } catch (IOException ioe) {
-      throw new LogbackException("Exception during append", ioe);
+      throw new LogbackException("Exception while appending event. ", ioe);
     }
   }
 
-  private void rollover(final LocationIdentifier logLocationIdentifier, ILoggingEvent eventObject) {
+  private void rollover(final LocationIdentifier logLocationIdentifier, ILoggingEvent logEvent) {
     if (!locationManager.getActiveLocations().containsKey(logLocationIdentifier)) {
       return;
     }
-
     final LocationOutputStream locationOutputStream = locationManager.getActiveLocations().get(logLocationIdentifier);
-    final Location logFileLocation = locationOutputStream.getLocation();
 
     if (triggeringPolicy instanceof LocationTriggeringPolicy) {
+      // no need to type cast on every event
       if (locationTriggeringPolicy == null) {
         locationTriggeringPolicy = ((LocationTriggeringPolicy) triggeringPolicy);
       }
-      locationTriggeringPolicy.setLocation(logFileLocation);
-      if (locationTriggeringPolicy.isTriggeringEvent(eventObject)) {
+
+      locationTriggeringPolicy.setLocation(locationOutputStream.getLocation());
+      // set number of bytes written to locationOutputStream, we need to do this because HDFS does not provide
+      // correct size of the file
+      locationTriggeringPolicy.setActiveLocationSize(locationOutputStream.getNumOfBytes());
+
+      if (locationTriggeringPolicy.isTriggeringEvent(logEvent)) {
         try {
           if (rollingPolicy instanceof LocationRollingPolicy) {
-
+            // no need to type cast on every event
             if (locationRollingPolicy == null) {
               locationRollingPolicy = ((LocationRollingPolicy) rollingPolicy);
             }
 
-            locationRollingPolicy.setLocation(logFileLocation, new Closeable() {
+            locationRollingPolicy.setLocation(locationOutputStream.getLocation(), new Closeable() {
               @Override
               public void close() throws IOException {
-                locationOutputStream.getOutputStream().close();
+                locationOutputStream.close();
                 locationManager.getActiveLocations().remove(logLocationIdentifier);
               }
             });
+
             locationRollingPolicy.rollover();
           }
         } catch (RolloverFailure e) {
           // we do not want to stop processing because roll over failed. so catch it and process the event
-          addStatus(new WarnStatus("Attempt to rollover failed for appender [" + name + "].", this));
-          LOG.warn("Attempt to rollover failed for appender [" + name + "].", this);
+          LOG.warn("Attempt to rollover failed for appender {}.", name);
         }
       }
     }
@@ -194,23 +194,8 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
       encoder.init(outputStream);
     } catch (IOException ioe) {
       this.started = false;
-      addStatus(new ErrorStatus(
-        "Failed to initialize encoder for appender named [" + name + "].", this, ioe));
+      LOG.error("Failed to initialize encoder for appender named {}", name, ioe);
     }
-  }
-
-  // copied from OutputStreamAppender to override ImmediateFlush parameter to avoid flushing after each log event
-  @Override
-  public void setLayout(Layout<ILoggingEvent> layout) {
-    addWarn("This appender no longer admits a layout as a sub-component, set an encoder instead.");
-    addWarn("To ensure compatibility, wrapping your layout in LayoutWrappingEncoder.");
-    addWarn("See also " + CODES_URL + "#layoutInsteadOfEncoder for details");
-    LayoutWrappingEncoder<ILoggingEvent> lwe = new LayoutWrappingEncoder<>();
-    // Do not flush on every log event
-    lwe.setImmediateFlush(false);
-    lwe.setLayout(layout);
-    lwe.setContext(context);
-    this.encoder = lwe;
   }
 
   // Since this appender does not support prudent mode, we override writeOut method from FileAppender

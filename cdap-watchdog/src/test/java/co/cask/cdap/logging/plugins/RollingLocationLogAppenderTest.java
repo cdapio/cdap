@@ -135,7 +135,7 @@ public class RollingLocationLogAppenderTest {
         .getAppender("rollingAppender");
     injector.injectMembers(rollingAppender);
 
-    addTagsToMdc("test Ns", "testApp");
+    addTagsToMdc("testNamespace", "testApp");
     Logger logger = LoggerFactory.getLogger(RollingLocationLogAppenderTest.class);
     ingestLogs(logger, 5);
     Map<LocationIdentifier, LocationOutputStream> activeFiles = rollingAppender.getLocationManager()
@@ -144,14 +144,14 @@ public class RollingLocationLogAppenderTest {
     verifyFileOutput(activeFiles, 5);
 
     // different program should go to different directory
-    addTagsToMdc("testNs", "testApp1");
+    addTagsToMdc("testNamespace", "testApp1");
     ingestLogs(logger, 5);
     activeFiles = rollingAppender.getLocationManager().getActiveLocations();
     Assert.assertEquals(2, activeFiles.size());
     verifyFileOutput(activeFiles, 5);
 
     // different program should go to different directory because namespace is different
-    addTagsToMdc("testNs1", "testApp1");
+    addTagsToMdc("testNamespace1", "testApp1");
     ingestLogs(logger, 5);
     activeFiles = rollingAppender.getLocationManager().getActiveLocations();
     Assert.assertEquals(3, activeFiles.size());

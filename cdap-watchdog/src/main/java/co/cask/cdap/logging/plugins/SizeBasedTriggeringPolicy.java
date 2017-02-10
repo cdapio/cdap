@@ -21,8 +21,6 @@ import ch.qos.logback.core.LogbackException;
 import ch.qos.logback.core.util.FileSize;
 import ch.qos.logback.core.util.InvocationGate;
 
-import java.io.IOException;
-
 /**
  * SizeBasedTriggeringPolicy looks at size of the file being currently written
  * to. If it grows bigger than the specified size, the {@link RollingLocationLogAppender} using the
@@ -53,12 +51,7 @@ public class SizeBasedTriggeringPolicy extends LocationTriggeringPolicyBase {
 
     long now = System.currentTimeMillis();
     invocationGate.updateMaskIfNecessary(now);
-
-    try {
-      return (activeLocation.length() >= maxFileSize.getSize());
-    } catch (IOException e) {
-      throw new LogbackException("Exception while accessing length for triggering roll over", e);
-    }
+    return (activeLocationSize >= maxFileSize.getSize());
   }
 
   public String getMaxFileSize() {
@@ -69,5 +62,4 @@ public class SizeBasedTriggeringPolicy extends LocationTriggeringPolicyBase {
     this.maxFileSizeAsString = maxFileSize;
     this.maxFileSize = FileSize.valueOf(maxFileSize);
   }
-
 }
