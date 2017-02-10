@@ -64,6 +64,7 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nonnull;
 
 /**
@@ -98,10 +99,20 @@ public final class HBaseTableFactory implements TableFactory {
     this.coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
 
     RejectedExecutionHandler callerRunsPolicy = new RejectedExecutionHandler() {
+
+      private final AtomicInteger rejected = new AtomicInteger(0);
+      private int logFreq = 1;
+
       @Override
       public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-        LOG.info("No more threads in the HBase scan thread pool. Consider increase {}. Runnable from caller thread {}",
-                 Constants.MessagingSystem.HBASE_MAX_SCAN_THREADS, Thread.currentThread().getName());
+        // Exponentially log less
+        if (rejected.incrementAndGet() % logFreq == 0) {
+          LOG.info("No more threads in the HBase scan thread pool. Consider increase {}. Scan from caller thread {}",
+                   Constants.MessagingSystem.HBASE_MAX_SCAN_THREADS, Thread.currentThread().getName());
+          // Half the log frequency and max out at 1024
+          logFreq = Math.min(logFreq << 1, 1024);
+        }
+
         // Runs it from the caller thread
         if (!executor.isShutdown()) {
           r.run();

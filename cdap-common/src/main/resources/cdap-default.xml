@@ -1367,7 +1367,7 @@
 
   <property>
     <name>messaging.hbase.max.scan.threads</name>
-    <value>48</value>
+    <value>96</value>
     <description>
       Maximum number of threads used for scanning HBase tables
     </description>
