@@ -96,14 +96,28 @@ angular.module(`${PKG.name}.commons`)
       fetchApi(params).$promise
         .then(function (res) {
           vm.pluginVersions = res;
+          let latestArtifact, baseVersion = new window.CaskCommon.Version('0.0.0');
+          let availableArtifacts = _.pluck(res, 'artifact');
 
-          if (vm.isEdit) {
-            vm.plugin = res.filter(function (obj) {
+          angular.forEach(availableArtifacts, function (artifactObj) {
+            let availableversion = new window.CaskCommon.Version(artifactObj.version);
+            let compare = availableversion.compareTo(baseVersion);
+
+              if (compare > 0) {
+              latestArtifact = artifactObj;
+              baseVersion = availableversion;
+            }
+          });
+
+          vm.plugin = res.filter(function (obj) {
+            if (!vm.pluginConfig) {
+              return angular.equals(obj.artifact, latestArtifact);
+            } else {
               return angular.equals(obj.artifact, vm.pluginConfig.artifact);
-            })[0];
-            vm.onPluginVersionSelect();
-          }
-        });
+            }
+          })[0];
+          vm.onPluginVersionSelect();
+      });
     }
 
 
