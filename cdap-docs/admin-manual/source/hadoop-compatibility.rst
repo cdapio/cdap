@@ -44,6 +44,7 @@ installed.
 
 For a Distributed CDAP cluster, version |release|, you **must** install these Hadoop components:
 
+.. |cdh-title| replace:: Cloudera Distribution of Apache Hadoop (CDH)
 .. |cdh-version|       replace:: 5.1 through 5.9
 .. |hdp-version|       replace:: 2.0 through 2.5
 .. |mapr-version|      replace:: 4.1 through 5.2
@@ -56,7 +57,7 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 +----------------+---------------------------------+---------------------------------------+
 | **HBase**      | Apache                          | 0.98.x and 1.2                        |
 +                +---------------------------------+---------------------------------------+
-|                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
+|                | |cdh-title|                     | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
 |                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
@@ -66,7 +67,7 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 +----------------+---------------------------------+---------------------------------------+
 | **HDFS**       | Apache Hadoop                   | 2.0.2-alpha through 2.6               |
 +                +---------------------------------+---------------------------------------+
-|                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
+|                | |cdh-title|                     | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
 |                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
@@ -76,7 +77,7 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 +----------------+---------------------------------+---------------------------------------+
 | **YARN** and   | Apache Hadoop                   | 2.0.2-alpha through 2.7               |
 + **MapReduce2** +---------------------------------+---------------------------------------+
-|                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
+|                | |cdh-title|                     | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
 |                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
@@ -86,7 +87,7 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 +----------------+---------------------------------+---------------------------------------+
 | **ZooKeeper**  | Apache                          | Version 3.4.3 through 3.4             |
 +                +---------------------------------+---------------------------------------+
-|                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
+|                | |cdh-title|                     | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
 |                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
@@ -103,7 +104,7 @@ Hadoop components, as required:
 +================+=================================+=======================================+
 | **Hive**       | Apache                          | Version 0.12.0 through 1.2.x          |
 +                +---------------------------------+---------------------------------------+
-|                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
+|                | |cdh-title|                     | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
 |                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
@@ -113,7 +114,7 @@ Hadoop components, as required:
 +----------------+---------------------------------+---------------------------------------+
 | **Spark**      | Apache                          | Versions 1.2.x through 1.6.x          |
 +                +---------------------------------+---------------------------------------+
-|                | Cloudera Data Hub (CDH)         | |cdh-version|                         |
+|                | |cdh-title|                     | |cdh-version|                         |
 +                +---------------------------------+---------------------------------------+
 |                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
 +                +---------------------------------+---------------------------------------+
