@@ -97,8 +97,8 @@ def append_links(file_path, doc_set_path, doc_set, robots=False, version=None):
         dirty = True
     
     
-    # Set robots meta-tag no-index no-follow on "future" and SNAPSHOT pages, but only if there isn't one already
-    if (robots or (version and version.endswith("-SNAPSHOT"))) and file_string.lower().find('<meta name="robots"') == -1:
+    # Set robots meta-tag no-index no-follow only if flagged and if there isn't one already
+    if (robots) and file_string.lower().find('<meta name="robots"') == -1:
         meta_tag = '\n    <meta name=\"robots\" content=\"noindex, nofollow\">\n'
         open_head_tag = '<head>'
         open_head_tag_index = file_string.lower().find(open_head_tag)
