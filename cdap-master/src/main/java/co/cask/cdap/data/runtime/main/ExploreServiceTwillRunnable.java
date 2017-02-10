@@ -78,8 +78,6 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tez.dag.api.TezConfiguration;
 import org.apache.twill.api.TwillContext;
-import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,7 +122,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
   }
 
   @Override
-  protected void doInit(TwillContext context) {
+  protected Injector doInit(TwillContext context) {
     setupHive();
 
     CConfiguration cConf = getCConfiguration();
@@ -146,12 +144,11 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.EXPLORE_HTTP_USER_SERVICE));
+    return injector;
   }
 
   @Override
-  protected void getServices(List<? super Service> services) {
-    services.add(injector.getInstance(ZKClientService.class));
-    services.add(injector.getInstance(KafkaClientService.class));
+  protected void addServices(List<? super Service> services) {
     services.add(injector.getInstance(AuthorizationEnforcementService.class));
     services.add(injector.getInstance(ExploreExecutorService.class));
   }

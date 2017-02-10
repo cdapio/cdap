@@ -25,19 +25,17 @@ import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
-
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import org.apache.tephra.TransactionManager;
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -51,8 +49,6 @@ import java.util.concurrent.TimeUnit;
  * Testing possible race condition of the {@link MessagingMetricsProcessorService}
  */
 public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServiceTestBase {
-
-  private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsProcessorServiceTest.class);
 
   private static final int PARTITION_SIZE = 2;
 
@@ -86,7 +82,8 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
       // again after it's stopped
       MessagingMetricsProcessorService messagingMetricsProcessorService =
         new MessagingMetricsProcessorService(injector.getInstance(MetricDatasetFactory.class), TOPIC_PREFIX,
-                                             partitions, messagingService, injector.getInstance(SchemaGenerator.class),
+                                             partitions, new NoopMetricsContext(),
+                                             messagingService, injector.getInstance(SchemaGenerator.class),
                                              injector.getInstance(DatumReaderFactory.class), metricStore, 5, 50);
       messagingMetricsProcessorService.startAndWait();
 

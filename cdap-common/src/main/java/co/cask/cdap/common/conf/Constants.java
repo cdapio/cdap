@@ -16,6 +16,10 @@
 
 package co.cask.cdap.common.conf;
 
+import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.collect.ImmutableMap;
+
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -532,6 +536,10 @@ public final class Constants {
 
     public static final String MESSAGING_TOPIC_NUM = "metrics.messaging.topic.num";
     public static final String MESSAGING_FETCHER_LIMIT = "metrics.messaging.fetcher.limit";
+
+    public static final Map<String, String> METRICS_PROCESSOR_CONTEXT =
+      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
+                      Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
 
     /**
      * Metric's dataset related constants.

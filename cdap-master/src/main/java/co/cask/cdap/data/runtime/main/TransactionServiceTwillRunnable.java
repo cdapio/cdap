@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data.runtime.main;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -46,7 +45,6 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
-import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -61,8 +59,6 @@ import org.apache.tephra.distributed.TransactionService;
 import org.apache.tephra.persist.TransactionStateStorage;
 import org.apache.tephra.runtime.TransactionStateStorageProvider;
 import org.apache.twill.api.TwillContext;
-import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,30 +77,22 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
   }
 
   @Override
-  protected void doInit(TwillContext context) {
-    try {
-      getCConfiguration().set(Constants.Transaction.Container.ADDRESS, context.getHost().getCanonicalHostName());
+  protected Injector doInit(TwillContext context) {
+    getCConfiguration().set(Constants.Transaction.Container.ADDRESS, context.getHost().getCanonicalHostName());
+    // Set the hostname of the machine so that cConf can be used to start internal services
+    LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
 
-      injector = createGuiceInjector(getCConfiguration(), getConfiguration());
-      injector.getInstance(LogAppenderInitializer.class).initialize();
-      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                                                         Constants.Logging.COMPONENT_NAME,
-                                                                         Constants.Service.TRANSACTION));
-
-      // Set the hostname of the machine so that cConf can be used to start internal services
-      LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
-    } catch (Throwable t) {
-      LOG.error(t.getMessage(), t);
-      throw Throwables.propagate(t);
-    }
+    injector = createGuiceInjector(getCConfiguration(), getConfiguration());
+    injector.getInstance(LogAppenderInitializer.class).initialize();
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
+                                                                       Constants.Logging.COMPONENT_NAME,
+                                                                       Constants.Service.TRANSACTION));
+    return injector;
   }
 
   @Override
-  public void getServices(List<? super Service> services) {
-    services.add(injector.getInstance(ZKClientService.class));
-    services.add(injector.getInstance(KafkaClientService.class));
+  public void addServices(List<? super Service> services) {
     services.add(injector.getInstance(AuthorizationEnforcementService.class));
-    services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(TransactionService.class));
   }
 

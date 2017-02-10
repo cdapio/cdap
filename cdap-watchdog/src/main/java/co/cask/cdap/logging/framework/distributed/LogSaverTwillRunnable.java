@@ -16,7 +16,6 @@
 
 package co.cask.cdap.logging.framework.distributed;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
@@ -50,9 +49,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.util.ShutdownHookManager;
 import org.apache.twill.api.TwillContext;
-import org.apache.twill.kafka.client.BrokerService;
-import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +67,7 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
   }
 
   @Override
-  protected void doInit(TwillContext context) {
+  protected Injector doInit(TwillContext context) {
     name = context.getSpecification().getName();
     injector = createGuiceInjector(getCConfiguration(), getConfiguration(), context);
 
@@ -83,14 +79,12 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
         stop();
       }
     }, FileSystem.SHUTDOWN_HOOK_PRIORITY + 1);
+
+    return injector;
   }
 
   @Override
-  protected void getServices(List<? super Service> services) {
-    services.add(injector.getInstance(ZKClientService.class));
-    services.add(injector.getInstance(KafkaClientService.class));
-    services.add(injector.getInstance(BrokerService.class));
-    services.add(injector.getInstance(MetricsCollectionService.class));
+  protected void addServices(List<? super Service> services) {
     services.add(injector.getInstance(LogSaverStatusService.class));
     services.add(injector.getInstance(DistributedLogFramework.class));
   }
