@@ -45,7 +45,7 @@
   </modules>
 
   <properties>
-    <twitter4j.version>4.0.1</twitter4j.version>
+    <twitter4j.version>4.0.2-SNAPSHOT</twitter4j.version>
     <etl.avro.version>1.7.7</etl.avro.version>
     <hsqldb.version>2.3.1</hsqldb.version>
     <es.version>1.6.0</es.version>
