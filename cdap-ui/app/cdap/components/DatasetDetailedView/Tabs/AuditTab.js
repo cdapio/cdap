@@ -17,9 +17,17 @@
 import React, { PropTypes } from 'react';
 import NamespaceStore from 'services/NamespaceStore';
 
-export default function UsageTab({entity}) {
+export default function AuditTab({entity}) {
   let namespace = NamespaceStore.getState().selectedNamespace;
-  let url = `/tracker/ns/${namespace}/entity/datasets/${entity.id}/audit?iframe=true`;
+  let url = window.getTrackerUrl({
+    stateName: 'tracker.detail.entity.audit',
+    stateParams: {
+      namespace,
+      entityType: 'datasets',
+      entityId: entity.id,
+      iframe: true
+    }
+  });
   let encodedSource = encodeURIComponent(url);
   url += `&sourceUrl=${encodedSource}`;
 
@@ -36,6 +44,6 @@ export default function UsageTab({entity}) {
   );
 }
 
-UsageTab.propTypes = {
+AuditTab.propTypes = {
   entity: PropTypes.object
 };

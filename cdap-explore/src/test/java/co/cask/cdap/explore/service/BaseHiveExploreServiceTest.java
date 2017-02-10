@@ -46,6 +46,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
@@ -155,7 +156,7 @@ public class BaseHiveExploreServiceTest {
   protected static NotificationService notificationService;
   protected static StreamHttpService streamHttpService;
   protected static StreamService streamService;
-  protected static ExploreClient exploreClient;
+  protected static DiscoveryExploreClient exploreClient;
   protected static ExploreTableManager exploreTableManager;
   protected static NamespaceAdmin namespaceAdmin;
   private static StreamAdmin streamAdmin;
@@ -212,7 +213,7 @@ public class BaseHiveExploreServiceTest {
     exploreExecutorService.startAndWait();
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
-    exploreClient = injector.getInstance(ExploreClient.class);
+    exploreClient = injector.getInstance(DiscoveryExploreClient.class);
     exploreService = injector.getInstance(ExploreService.class);
     exploreClient.ping();
 

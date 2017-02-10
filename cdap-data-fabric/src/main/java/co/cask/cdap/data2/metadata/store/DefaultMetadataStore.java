@@ -60,6 +60,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -398,44 +399,44 @@ public class DefaultMetadataStore implements MetadataStore {
                                         String searchQuery, Set<EntityTypeSimpleName> types,
                                         SortInfo sortInfo, int offset, int limit,
                                         int numCursors, String cursor, boolean showHidden) throws BadRequestException {
-    List<MetadataEntry> results = new ArrayList<>();
-    List<String> cursors = new ArrayList<>();
+    if (offset < 0) {
+      throw new IllegalArgumentException("offset must not be negative");
+    }
+
+    if (limit < 0) {
+      throw new IllegalArgumentException("limit must not be negative");
+    }
+
+    List<MetadataEntry> results = new LinkedList<>();
+    List<String> cursors = new LinkedList<>();
+    List<MetadataEntry> allResults = new LinkedList<>();
     for (MetadataScope scope : scopes) {
       SearchResults searchResults =
         getSearchResults(scope, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor,
                          showHidden);
       results.addAll(searchResults.getResults());
       cursors.addAll(searchResults.getCursors());
+      allResults.addAll(searchResults.getAllResults());
     }
 
     // sort if required
     Set<NamespacedEntityId> sortedEntities = getSortedEntities(results, sortInfo);
+    int total = getSortedEntities(allResults, sortInfo).size();
 
     // pagination is not performed at the dataset level, because:
     // 1. scoring is needed for DEFAULT sort info. So perform it here for now.
     // 2. Even when using custom sorting, we still fetch extra results if numCursors > 1
     // TODO: Figure out how all of this can be done server (HBase) side
-    int startIndex = 0;
-    int maxEndIndex;
-    int total = sortedEntities.size();
     if (SortInfo.DEFAULT.equals(sortInfo)) {
-      // offset needs to be applied
-      if (offset > sortedEntities.size()) {
-        maxEndIndex = 0;
-      } else {
-        startIndex = offset;
-        // account for overflow
-        maxEndIndex = (int) Math.min(Integer.MAX_VALUE, (long) offset + limit);
-      }
-    } else {
-      // offset has already been applied, only apply limit, and update total count
-      maxEndIndex = limit;
-      total += offset;
+      int startIndex = Math.min(offset, sortedEntities.size());
+      int endIndex = (int) Math.min(Integer.MAX_VALUE, (long) offset + limit); // Account for overflow
+      endIndex = Math.min(endIndex, sortedEntities.size());
+
+      // add 1 to maxIndex because end index is exclusive
+      sortedEntities = new LinkedHashSet<>(
+        ImmutableList.copyOf(sortedEntities).subList(startIndex, endIndex)
+      );
     }
-    // add 1 to maxIndex because end index is exclusive
-    sortedEntities = new LinkedHashSet<>(
-      ImmutableList.copyOf(sortedEntities).subList(startIndex, Math.min(maxEndIndex, sortedEntities.size()))
-    );
 
     // Fetch metadata for entities in the result list
     // Note: since the fetch is happening in a different transaction, the metadata for entities may have been
@@ -483,7 +484,7 @@ public class DefaultMetadataStore implements MetadataStore {
       //TODO Remove this null check after CDAP-7228 resolved. Since previous CDAP version may have null value.
       if (metadataEntry != null) {
         Integer score = weightedResults.get(metadataEntry.getTargetId());
-        score = score == null ? 0 : score;
+        score = (score == null) ? 0 : score;
         weightedResults.put(metadataEntry.getTargetId(), score + 1);
       }
     }

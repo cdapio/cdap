@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,13 +14,8 @@
  * the License.
  */
 
-package co.cask.cdap.security.impersonation;
+package co.cask.cdap.common.kerberos;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.kerberos.SecurityUtil;
-
-import java.io.IOException;
 import java.util.Objects;
 
 /**
@@ -33,22 +28,9 @@ public final class ImpersonationInfo {
   /**
    * Creates {@link ImpersonationInfo} using the specified principal and keytab path.
    */
-  public ImpersonationInfo(String principal, CConfiguration cConf) throws IOException {
-    this.principal = principal;
-    this.keytabURI = SecurityUtil.getKeytabURIforPrincipal(principal, cConf);
-  }
-
-  /**
-   * Creates {@link ImpersonationInfo} using the specified principal and keytab path.
-   */
   public ImpersonationInfo(String principal, String keytabURI) {
     this.principal = principal;
     this.keytabURI = keytabURI;
-  }
-
-  public static ImpersonationInfo getMasterImpersonationInfo(CConfiguration cConf) {
-    return new ImpersonationInfo(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL),
-                                 cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH));
   }
 
   public String getPrincipal() {

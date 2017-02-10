@@ -19,6 +19,7 @@ package co.cask.cdap.common.kerberos;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
@@ -143,9 +144,17 @@ public final class SecurityUtil {
                             cConf.getBoolean(Constants.Security.ENABLED));
   }
 
+  public static String getMasterPrincipal(CConfiguration cConf) {
+    return cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
+  }
+
+  public static String getMasterKeytabURI(CConfiguration cConf) {
+    return cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
+  }
+
   public static void loginForMasterService(CConfiguration cConf) throws IOException, LoginException {
-    String principal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
-    String keytabPath = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
+    String principal = getMasterPrincipal(cConf);
+    String keytabPath = getMasterKeytabURI(cConf);
 
     if (UserGroupInformation.isSecurityEnabled()) {
       Path keytabFile = Paths.get(keytabPath);
@@ -185,7 +194,6 @@ public final class SecurityUtil {
     return new KerberosName(principalId.getPrincipal());
   }
 
-
   /**
    * Checks if the given {@link KerberosPrincipalId} is valid or not by calling
    * {@link #getKerberosName(KerberosPrincipalId)}. This is just a wrapper around
@@ -212,9 +220,31 @@ public final class SecurityUtil {
    * @return The location of the keytab
    * @throws IOException If the principal is not a valid kerberos principal
    */
-  public static String getKeytabURIforPrincipal(String principal, CConfiguration cConf) throws IOException {
+  static String getKeytabURIforPrincipal(String principal, CConfiguration cConf) throws IOException {
     String confPath = cConf.getRaw(Constants.Security.KEYTAB_PATH);
     String name = new KerberosName(principal).getShortName();
     return confPath.replace(Constants.USER_NAME_SPECIFIER, name);
+  }
+
+  /**
+   * This has the logic to construct an impersonation info as follows:
+   * <ul>
+   *   <li>If the ownerAdmin has an owner and a keytab URI, return this information</li>
+   *   <li>If the ownerAdmin has an owner, but no keytab, construct a keytab URI as configured in the cConf</li>
+   *   <li>Else the ownerAdmin does not have an owner for this entity.
+   *       Return the master impersonation info as found in the cConf</li>
+   * </ul>
+   */
+  public static ImpersonationInfo createImpersonationInfo(OwnerAdmin ownerAdmin, CConfiguration cConf,
+                                                          NamespacedEntityId entityId) throws IOException {
+    ImpersonationInfo impersonationInfo = ownerAdmin.getImpersonationInfo(entityId);
+    if (impersonationInfo == null) {
+      return new ImpersonationInfo(getMasterPrincipal(cConf), getMasterKeytabURI(cConf));
+    }
+    if (impersonationInfo.getKeytabURI() == null) {
+      return new ImpersonationInfo(impersonationInfo.getPrincipal(),
+                                   getKeytabURIforPrincipal(impersonationInfo.getPrincipal(), cConf));
+    }
+    return impersonationInfo;
   }
 }

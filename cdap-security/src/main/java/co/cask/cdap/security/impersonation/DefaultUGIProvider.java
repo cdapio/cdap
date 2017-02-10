@@ -18,6 +18,7 @@ package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.FileUtils;

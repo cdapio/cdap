@@ -116,17 +116,18 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
 
     LOG.info("Runnable started {}", name);
 
-
     try {
       // exit as soon as any service completes
       completionFuture.get();
     } catch (InterruptedException e) {
       LOG.debug("Waiting on latch interrupted {}", name);
-      Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
       throw Throwables.propagate(e.getCause());
     }
+  }
 
+  @Override
+  public void destroy() {
     List<Service> reverse = Lists.reverse(services);
     Futures.getUnchecked(
       Services.chainStop(reverse.get(0), reverse.subList(1, reverse.size()).toArray(new Service[0])));

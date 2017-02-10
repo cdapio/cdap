@@ -24,7 +24,6 @@ import ProgramMetrics from './ProgramMetrics';
 import StreamMetrics from './StreamMetrics';
 import classnames from 'classnames';
 import FastActions from 'components/EntityCard/FastActions';
-import JumpButton from 'components/JumpButton';
 import FastActionToMessage from 'services/fast-action-message-helper';
 import isNil from 'lodash/isNil';
 import capitalize from 'lodash/capitalize';
@@ -71,21 +70,6 @@ export default class EntityCard extends Component {
       case 'view':
         return null;
     }
-  }
-
-  renderJumpButton() {
-    const entity = this.props.entity;
-    if (['datasetinstance', 'stream'].indexOf(entity.type) === -1 && !entity.isHydrator) {
-      return null;
-    }
-
-    return (
-      <div className="jump-button-container text-xs-center float-xs-right">
-        <JumpButton
-          entity={this.props.entity}
-        />
-      </div>
-    );
   }
 
   onClick() {
@@ -147,7 +131,7 @@ export default class EntityCard extends Component {
           }
         >
           <div className="entity-information clearfix">
-            <div className="entity-id-container">
+            <div className={classnames("entity-id-container", {'with-version': this.props.entity.version})}>
               <h4
                 className={classnames({'with-version': this.props.entity.version})}
               >
@@ -157,10 +141,9 @@ export default class EntityCard extends Component {
                   this.props.entity.version ?
                     this.props.entity.version
                   :
-                    '1.0.0'
+                    ''
                 }</small>
             </div>
-            {this.renderJumpButton()}
           </div>
 
           {this.renderEntityStatus()}

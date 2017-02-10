@@ -25,7 +25,6 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -36,7 +35,6 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
-import co.cask.cdap.logging.framework.LogPathIdentifier;
 import co.cask.cdap.logging.meta.LoggingStoreTableUtil;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.Impersonator;
@@ -46,7 +44,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.filesystem.Location;
@@ -55,15 +52,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -74,7 +67,6 @@ public class FileMetaDataManager {
 
   private static final byte[] ROW_KEY_PREFIX = LoggingStoreTableUtil.FILE_META_ROW_KEY_PREFIX;
   private static final byte[] ROW_KEY_PREFIX_END = Bytes.stopKeyForPrefix(ROW_KEY_PREFIX);
-  private static final NavigableMap<?, ?> EMPTY_MAP = Maps.unmodifiableNavigableMap(new TreeMap());
 
   private final RootLocationFactory rootLocationFactory;
 
@@ -123,7 +115,6 @@ public class FileMetaDataManager {
 
   /**
    * Persists meta data associated with a log file.
-   *
    * @param logPartition partition name that is used to group log messages
    * @param startTimeMs  start log time associated with the file.
    * @param location     log file.
@@ -143,90 +134,6 @@ public class FileMetaDataManager {
       }
     });
   }
-
-  /**
-   * Returns a list of log files for a logging context.
-   *
-   * @param loggingContext logging context.
-   * @return Sorted map containing key as start time, and value as log file.
-   */
-  public NavigableMap<Long, Location> listFiles(final LoggingContext loggingContext) throws Exception {
-    return Transactions.execute(transactional, new TxCallable<NavigableMap<Long, Location>>() {
-      @Override
-      public NavigableMap<Long, Location> call(DatasetContext context) throws Exception {
-        NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
-        final Row cols = getMetaTable(context).get(getRowKey(loggingContext));
-
-        if (cols.isEmpty()) {
-          //noinspection unchecked
-          return (NavigableMap<Long, Location>) EMPTY_MAP;
-        }
-
-        final NavigableMap<Long, Location> files = new TreeMap<>();
-        impersonator.doAs(namespaceId, new Callable<Void>() {
-          @Override
-          public Void call() throws Exception {
-            for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
-              String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
-              // the location can be any location from on the filesystem for custom mapped namespaces
-              files.put(Bytes.toLong(entry.getKey()),
-                        Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath));
-            }
-            return null;
-          }
-        });
-        return files;
-      }
-    });
-  }
-
-  /**
-   * // TODO refactor this with the above method after Log handler changes.
-   * Returns a list of log files for a logging context.
-   *
-   * @param logPathIdentifier logging context identifier.
-   * @return List of {@link LogLocation}
-   */
-  public List<LogLocation> listFiles(final LogPathIdentifier logPathIdentifier) throws Exception {
-    return Transactions.execute(transactional, new TxCallable<List<LogLocation>>() {
-
-      @Override
-      public List<LogLocation> call(DatasetContext context) throws Exception {
-        final Row cols = getMetaTable(context).get(getRowKey(logPathIdentifier));
-
-        if (cols.isEmpty()) {
-          //noinspection unchecked
-          return new ArrayList<>();
-        }
-
-        final List<LogLocation> files = new ArrayList<>();
-
-        for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
-          String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
-          // the location can be any location from on the filesystem for custom mapped namespaces
-          if (entry.getKey().length == 8) {
-            // old format
-            files.add(new LogLocation(LogLocation.VERSION_0,
-                                      Bytes.toLong(entry.getKey()),
-                                      // use 0 as sequence id for the old format
-                                      0,
-                                      Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath),
-                                      logPathIdentifier.getNamespaceId(), impersonator));
-          } else if (entry.getKey().length == 17) {
-            // new format
-            files.add(new LogLocation(LogLocation.VERSION_1,
-                                      // skip the first (version) byte
-                                      Bytes.toLong(entry.getKey(), 1, Bytes.SIZEOF_LONG),
-                                      Bytes.toLong(entry.getKey(), 9, Bytes.SIZEOF_LONG),
-                                      Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath),
-                                      logPathIdentifier.getNamespaceId(), impersonator));
-          }
-        }
-        return files;
-      }
-    });
-  }
-
 
   /**
    * Scans meta data and gathers the metadata files in batches of configurable batch size
@@ -411,34 +318,12 @@ public class FileMetaDataManager {
     return LoggingContextHelper.getNamespaceId(new GenericLoggingContext(partitions[0], partitions[1], partitions[2]));
   }
 
-  private byte[] getRowKey(LoggingContext loggingContext) {
-    return getRowKey(loggingContext.getLogPartition());
-  }
-
   private byte[] getRowKey(String logPartition) {
     return Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(logPartition));
   }
 
-  private byte[] getRowKey(LogPathIdentifier logPathIdentifier) {
-    return Bytes.add(ROW_KEY_PREFIX, logPathIdentifier.getRowKey().getBytes(StandardCharsets.UTF_8));
-  }
-
   private byte[] getRowKey(byte[] logPartition) {
     return Bytes.add(ROW_KEY_PREFIX, logPartition);
-  }
-
-  private byte[] getMaxKey(Map<byte[], byte[]> map) {
-    if (map instanceof SortedMap) {
-      return ((SortedMap<byte[], byte[]>) map).lastKey();
-    }
-
-    byte[] max = Bytes.EMPTY_BYTE_ARRAY;
-    for (byte[] elem : map.keySet()) {
-      if (Bytes.compareTo(max, elem) < 0) {
-        max = elem;
-      }
-    }
-    return max;
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,20 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.security.impersonation;
+package co.cask.cdap.logging.framework.distributed;
 
-import co.cask.cdap.common.kerberos.ImpersonationInfo;
-import org.apache.hadoop.security.UserGroupInformation;
-
-import java.io.IOException;
+import co.cask.cdap.common.conf.CConfiguration;
+import org.apache.hadoop.conf.Configuration;
+import org.junit.Test;
 
 /**
- * A UGIProvider that always returns the current user.
+ * Tests for {@link LogSaverTwillRunnable}.
  */
-public class CurrentUGIProvider implements UGIProvider {
+public class LogSaverTwillRunnableTest {
 
-  @Override
-  public UserGroupInformation getConfiguredUGI(ImpersonationInfo impersonationInfo) throws IOException {
-    return UserGroupInformation.getCurrentUser();
+  @Test
+  public void testLogSaverInjector() {
+    LogSaverTwillRunnable.createGuiceInjector(CConfiguration.create(), new Configuration(), new MockTwillContext());
   }
 }

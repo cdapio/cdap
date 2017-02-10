@@ -19,6 +19,9 @@ package co.cask.cdap.logging.framework.distributed;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.resource.ResourceBalancerService;
+import co.cask.cdap.common.service.RetryOnStartFailureService;
+import co.cask.cdap.common.service.RetryStrategies;
+import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.logging.framework.AppenderContext;
 import co.cask.cdap.logging.framework.LogPipelineLoader;
 import co.cask.cdap.logging.framework.LogPipelineSpecification;
@@ -28,6 +31,7 @@ import co.cask.cdap.logging.pipeline.kafka.KafkaLogProcessorPipeline;
 import co.cask.cdap.logging.pipeline.kafka.KafkaPipelineConfig;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
@@ -81,23 +85,29 @@ public class DistributedLogFramework extends ResourceBalancerService {
 
     // Create one KafkaLogProcessorPipeline per spec
     final List<Service> pipelines = new ArrayList<>();
-    for (LogPipelineSpecification<AppenderContext> pipelineSpec : specs.values()) {
-      CConfiguration cConf = pipelineSpec.getConf();
-      AppenderContext context = pipelineSpec.getContext();
+    for (final LogPipelineSpecification<AppenderContext> pipelineSpec : specs.values()) {
+      final CConfiguration cConf = pipelineSpec.getConf();
+      final AppenderContext context = pipelineSpec.getContext();
 
       long bufferSize = getBufferSize(pipelineCount, cConf, partitions.size());
-      String topic = cConf.get(Constants.Logging.KAFKA_TOPIC);
+      final String topic = cConf.get(Constants.Logging.KAFKA_TOPIC);
 
-      KafkaPipelineConfig config = new KafkaPipelineConfig(
+      final KafkaPipelineConfig config = new KafkaPipelineConfig(
         topic, partitions, bufferSize,
         cConf.getLong(Constants.Logging.PIPELINE_EVENT_DELAY_MS),
         cConf.getInt(Constants.Logging.PIPELINE_KAFKA_FETCH_SIZE),
         cConf.getLong(Constants.Logging.PIPELINE_CHECKPOINT_INTERVAL_MS)
       );
 
-      pipelines.add(new KafkaLogProcessorPipeline(
-        new LogProcessorPipelineContext(cConf, context.getName(), context),
-        checkpointManagerFactory.create(topic, pipelineSpec.getCheckpointPrefix()), brokerService, config));
+      RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.log.process.");
+      pipelines.add(new RetryOnStartFailureService(new Supplier<Service>() {
+        @Override
+        public Service get() {
+          return new KafkaLogProcessorPipeline(
+            new LogProcessorPipelineContext(cConf, context.getName(), context),
+            checkpointManagerFactory.create(topic, pipelineSpec.getCheckpointPrefix()), brokerService, config);
+        }
+      }, retryStrategy));
     }
 
     // Returns a Service that start/stop all pipelines.

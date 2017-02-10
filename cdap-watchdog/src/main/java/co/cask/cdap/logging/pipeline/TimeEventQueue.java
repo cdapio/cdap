@@ -75,6 +75,13 @@ public final class TimeEventQueue<Event, Offset extends Comparable<Offset>> impl
   }
 
   /**
+   * Returns {@code true} if there is no event for the given partition in the queue.
+   */
+  public boolean isEmpty(int partition) {
+    return getOffsets(partition).isEmpty();
+  }
+
+  /**
    * Returns the number of events in the queue.
    */
   public int size() {
