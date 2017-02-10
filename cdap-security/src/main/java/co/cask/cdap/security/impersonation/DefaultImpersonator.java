@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.kerberos.SecurityUtil;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.annotations.VisibleForTesting;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link Impersonator} that impersonate using {@link UGIProvider}.
@@ -63,7 +65,16 @@ public class DefaultImpersonator implements Impersonator {
   }
 
   @Override
-  public UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException, NamespaceNotFoundException {
+  public <T> T doAs(KerberosPrincipalId principalId, Callable<T> callable) throws Exception {
+    UserGroupInformation ugi =
+      getUGI(new ImpersonationInfo(principalId.getPrincipal(),
+                                   SecurityUtil.getKeytabURIforPrincipal(principalId.getPrincipal(), cConf)));
+    LOG.info("#### ugi is: ", ugi);
+    return  ImpersonationUtils.doAs(ugi, callable);
+  }
+
+  @Override
+  public UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException {
     // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(entityId.getNamespaceId())) {
       return UserGroupInformation.getCurrentUser();
@@ -73,6 +84,23 @@ public class DefaultImpersonator implements Impersonator {
       LOG.debug("Impersonating principal {} for entity {}, keytab path is {}",
                 info.getPrincipal(), entityId, info.getKeytabURI());
       return getUGI(info);
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, IOException.class);
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  @Nullable
+  public String getPrincipal(NamespacedEntityId entityId) throws Exception {
+    if (!kerberosEnabled || NamespaceId.SYSTEM.equals(entityId.getNamespaceId())) {
+      return null;
+    }
+    try {
+      ImpersonationInfo info = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, entityId);
+      LOG.debug("Impersonating principal {} for entity {}, keytab path is {}",
+                info.getPrincipal(), entityId, info.getKeytabURI());
+      return info.getPrincipal();
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, IOException.class);
       throw Throwables.propagate(e);

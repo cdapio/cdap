@@ -299,6 +299,11 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
               Map<String, String> env = new LinkedHashMap<>(this.env);
               // This is for logback xml
               env.put("CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+              try {
+                env.put(Constants.Security.PRINCIPAL, impersonator.getPrincipal(program.getId()));
+              } catch (Exception e) {
+                Throwables.propagate(e);
+              }
 
               URL sparkAssemblyJar = null;
               try {

@@ -28,6 +28,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -42,6 +43,7 @@ import co.cask.cdap.explore.service.ExploreTableManager;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.impersonation.Impersonator;
@@ -68,6 +70,7 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -81,6 +84,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
+
+  public static final String PRINCIPAL_HEADER = "X-Principal";
 
   private final ExploreTableManager exploreTableManager;
   private final DatasetFramework datasetFramework;
@@ -179,7 +184,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("datasets/{dataset}/enable")
   public void enableDataset(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespace, @PathParam("dataset") String datasetName) {
+                            @PathParam("namespace-id") String namespace,
+                            @PathParam("dataset") String datasetName) {
     DatasetId datasetId = new DatasetId(namespace, datasetName);
     DatasetSpecification datasetSpec = retrieveDatasetSpec(responder, datasetId);
     if (datasetSpec == null) {
@@ -354,10 +360,12 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @Path("datasets/{dataset}/partitions")
   public void addPartition(final HttpRequest request, final HttpResponder responder,
                            @PathParam("namespace-id") String namespace,
-                           @PathParam("dataset") String datasetName) throws Exception {
+                           @PathParam("dataset") String datasetName,
+                           @HeaderParam(PRINCIPAL_HEADER) String principal) throws Exception {
     final DatasetId datasetId = new DatasetId(namespace, datasetName);
     propagateUserId(request);
-    impersonator.doAs(datasetId, new Callable<Void>() {
+    LOG.info("### Principal in add patiin is {}", principal);
+    impersonator.doAs(getKerberosPrincipalId(principal), new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         doAddPartition(request, responder, datasetId);
@@ -434,10 +442,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @Path("datasets/{dataset}/deletePartition")
   public void dropPartition(final HttpRequest request, final HttpResponder responder,
                             @PathParam("namespace-id") String namespace,
-                            @PathParam("dataset") String datasetName) throws Exception {
+                            @PathParam("dataset") String datasetName,
+                            @HeaderParam(PRINCIPAL_HEADER) String principal) throws Exception {
     final DatasetId datasetId = new DatasetId(namespace, datasetName);
     propagateUserId(request);
-    impersonator.doAs(datasetId, new Callable<Void>() {
+    impersonator.doAs(getKerberosPrincipalId(principal), new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         doDropPartition(request, responder, datasetId);
@@ -509,6 +518,13 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       return isClassNotFoundException(e.getCause());
     }
     return null;
+  }
+
+
+  private KerberosPrincipalId getKerberosPrincipalId(String principal) {
+    KerberosPrincipalId kerberosPrincipalId = new KerberosPrincipalId(principal);
+    SecurityUtil.validateKerberosPrincipal(kerberosPrincipalId);
+    return kerberosPrincipalId;
   }
 
   // propagate userid from the HTTP Request in the current thread

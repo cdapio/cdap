@@ -17,6 +17,7 @@
 package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.inject.ImplementedBy;
@@ -45,13 +46,17 @@ public interface Impersonator {
    */
   <T> T doAs(NamespacedEntityId entityId, Callable<T> callable) throws Exception;
 
+
+  <T> T doAs(KerberosPrincipalId principalId, Callable<T> callable) throws Exception;
+
   /**
    * Retrieve the {@link UserGroupInformation} for the given {@link NamespaceId}
    *
    * @param entityId Entity whose effective owner's UGI will be returned
    * @return {@link UserGroupInformation}
    * @throws IOException if there was any error fetching the {@link UserGroupInformation}
-   * @throws NamespaceNotFoundException if namespaceId does not exist
    */
-  UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException, NamespaceNotFoundException;
+  UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException;
+
+  String getPrincipal(NamespacedEntityId entityId) throws Exception;
 }

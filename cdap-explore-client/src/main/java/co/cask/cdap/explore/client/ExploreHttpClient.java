@@ -80,6 +80,7 @@ import javax.annotation.Nullable;
  * which implement ExploreClient.
  */
 abstract class ExploreHttpClient implements Explore {
+  public static final String PRINCIPAL_HEADER = "X-Principal";
   private static final Logger LOG = LoggerFactory.getLogger(ExploreHttpClient.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
@@ -162,9 +163,16 @@ abstract class ExploreHttpClient implements Explore {
     if (databaseName != null) {
       args.put(ExploreProperties.PROPERTY_EXPLORE_DATABASE_NAME, databaseName);
     }
+    Map<String, String> headers = new HashMap<>();
+    LOG.info("### Checking for principal");
+    if (System.getenv().containsKey(Constants.Security.PRINCIPAL)) {
+      LOG.info("### Checking for principal is true");
+      headers.put(PRINCIPAL_HEADER, System.getenv().get(Constants.Security.PRINCIPAL));
+      LOG.info("### Checking for principal {}", System.getenv().get(Constants.Security.PRINCIPAL));
+    }
     HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/partitions",
                                                  datasetInstance.getNamespace(), datasetInstance.getDataset()),
-                                   GSON.toJson(args), null);
+                                   GSON.toJson(args), headers);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -185,9 +193,16 @@ abstract class ExploreHttpClient implements Explore {
     if (databaseName != null) {
       args.put(ExploreProperties.PROPERTY_EXPLORE_DATABASE_NAME, databaseName);
     }
+    Map<String, String> headers = new HashMap<>();
+    LOG.info("### Checking for principal");
+    if (System.getenv().containsKey(Constants.Security.PRINCIPAL)) {
+      LOG.info("### Checking for principal is true");
+      headers.put(PRINCIPAL_HEADER, System.getenv().get(Constants.Security.PRINCIPAL));
+      LOG.info("### Checking for principal {}", System.getenv().get(Constants.Security.PRINCIPAL));
+    }
     HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/deletePartition",
                                                  datasetInstance.getNamespace(), datasetInstance.getEntityName()),
-                                   GSON.toJson(args), null);
+                                   GSON.toJson(args), headers);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
