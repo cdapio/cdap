@@ -310,7 +310,6 @@ class Management extends Component {
           isOpen={this.state.wizard.actionIndex !== null && this.state.wizard.actionType !== null}
           onClose={this.closeWizard.bind(this)}
           wizardType={this.state.wizard.actionType}
-          backdrop={true}
         />
         <SetPreferenceModal
           isOpen={this.state.preferenceModal}

@@ -344,7 +344,6 @@ export default class NamespaceDropdown extends Component {
           isOpen={this.state.openWizard}
           onClose={this.hideNamespaceWizard}
           wizardType='add_namespace'
-          backdrop={true}
         />
     </div>
     );
