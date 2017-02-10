@@ -25,6 +25,10 @@ import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
 import co.cask.cdap.logging.pipeline.TimeEventQueue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import it.unimi.dsi.fastutil.ints.Int2LongMap;
+import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import kafka.api.FetchRequest;
 import kafka.api.FetchRequestBuilder;
 import kafka.api.OffsetRequest$;
@@ -68,7 +72,8 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
   private final LogProcessorPipelineContext context;
   private final CheckpointManager checkpointManager;
   private final BrokerService brokerService;
-  private final Map<Integer, MutableCheckpoint> checkpoints;
+  private final Int2LongMap offsets;
+  private final Int2ObjectMap<MutableCheckpoint> checkpoints;
   private final LoggingEventSerializer serializer;
   private final KafkaPipelineConfig config;
   private final TimeEventQueue<ILoggingEvent, Long> eventQueue;
@@ -87,7 +92,8 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     this.checkpointManager = checkpointManager;
     this.brokerService = brokerService;
     this.config = config;
-    this.checkpoints = new HashMap<>();
+    this.offsets = new Int2LongOpenHashMap();
+    this.checkpoints = new Int2ObjectOpenHashMap<>();
     this.eventQueue = new TimeEventQueue<>(config.getPartitions());
     this.serializer = new LoggingEventSerializer();
     this.kafkaConsumers = new HashMap<>();
@@ -107,10 +113,12 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       }
     }
 
+    context.start();
+
     fetchExecutor = Executors.newFixedThreadPool(
       partitions.size(), Threads.createDaemonThreadFactory("fetcher-" + name + "-%d"));
 
-    LOG.info("Log processor pipeline for {} started", name);
+    LOG.info("Log processor pipeline for {} started with checkpoint {}", name, checkpoints);
   }
 
   @Override
@@ -118,7 +126,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     runThread = Thread.currentThread();
 
     try {
-      Map<Integer, Long> offsets = initializeOffsets(new HashMap<Integer, Long>());
+      initializeOffsets();
       Map<Integer, Future<Iterable<MessageAndOffset>>> futures = new HashMap<>();
       String topic = config.getTopic();
 
@@ -130,10 +138,8 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
         for (Map.Entry<Integer, Future<Iterable<MessageAndOffset>>> entry : fetchAll(offsets, futures).entrySet()) {
           int partition = entry.getKey();
           try {
-            long offset = processMessages(topic, partition, entry.getValue());
-            if (offset >= 0) {
+            if (processMessages(topic, partition, entry.getValue())) {
               hasMessageProcessed = true;
-              offsets.put(partition, offset);
             }
           } catch (IOException e) {
             LOG.warn("Failed to process messages fetched from {}:{} due to {}. Will be retried in next iteration.",
@@ -160,7 +166,6 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       }
     } catch (InterruptedException e) {
       // Interruption means stopping the service.
-      Thread.currentThread().interrupt();
     }
   }
 
@@ -178,8 +183,8 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     fetchExecutor.shutdownNow();
 
     try {
-      context.flush();
-      // Persist the checkpoints. It can only be done after successfully flushing the appenders.
+      context.stop();
+      // Persist the checkpoints. It can only be done after successfully stopping the appenders.
       // Since persistCheckpoint never throw, putting it inside try is ok.
       persistCheckpoints();
     } catch (Exception e) {
@@ -195,7 +200,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
         LOG.warn("Exception raised when closing Kafka consumer.", e);
       }
     }
-    LOG.info("Log processor pipeline for {} stopped", name);
+    LOG.info("Log processor pipeline for {} stopped with latest checkpoints {}", name, checkpoints);
   }
 
   @Override
@@ -206,11 +211,9 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
   /**
    * Initialize offsets for all partitions consumed by this pipeline.
    *
-   * @param offsets the map for storing the offsets for each partition
-   * @return the same Map passed to this method
    * @throws InterruptedException if there is an interruption
    */
-  private Map<Integer, Long> initializeOffsets(Map<Integer, Long> offsets) throws InterruptedException {
+  private void initializeOffsets() throws InterruptedException {
     // Setup initial offsets
     Set<Integer> partitions = config.getPartitions();
     while (offsets.size() != partitions.size() && !stopped) {
@@ -235,15 +238,13 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
         }
       }
     }
-
-    return offsets;
   }
 
   /**
    * Process messages fetched from a given partition.
    */
-  private long processMessages(String topic, int partition,
-                               Future<Iterable<MessageAndOffset>> future) throws InterruptedException, IOException {
+  private boolean processMessages(String topic, int partition,
+                                  Future<Iterable<MessageAndOffset>> future) throws InterruptedException, IOException {
     Iterable<MessageAndOffset> messages;
     try {
       messages = future.get();
@@ -254,7 +255,8 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
         // This shouldn't happen under normal situation.
         // If happened, usually is caused by race between kafka log rotation and fetching in here,
         // hence just fetching from the beginning should be fine
-        return getLastOffset(partition, kafka.api.OffsetRequest.EarliestTime());
+        offsets.put(partition, getLastOffset(partition, kafka.api.OffsetRequest.EarliestTime()));
+        return false;
       } catch (IOException cause) {
         throw cause;
       } catch (Throwable t) {
@@ -263,7 +265,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       }
     }
 
-    long offset = -1L;
+    boolean processed = false;
     for (MessageAndOffset message : messages) {
       if (eventQueue.getEventSize() >= config.getMaxBufferSize()) {
         // Log a message. If this happen too often, it indicates that more memory is needed for the log processing
@@ -283,23 +285,23 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
         // Although it's not the same as the in memory object size, it should be just a constant factor, hence
         // it is proportional to the actual object size.
         eventQueue.add(loggingEvent, loggingEvent.getTimeStamp(),
-                       message.message().payloadSize(), partition, message.offset());
+                       message.message().payloadSize(), partition, message.nextOffset());
       } catch (IOException e) {
         // This should happen. In case it happens (e.g. someone published some garbage), just skip the message.
         LOG.warn("Fail to decode logging event from {}:{} at offset {}. Skipping it.",
                  topic, partition, message.offset(), e);
       }
-
-      offset = message.nextOffset();
+      processed = true;
+      offsets.put(partition, message.nextOffset());
     }
 
-    return offset;
+    return processed;
   }
 
   /**
    * Fetches messages from Kafka across all partitions simultaneously.
    */
-  private <T extends Map<Integer, Future<Iterable<MessageAndOffset>>>> T fetchAll(Map<Integer, Long> offsets,
+  private <T extends Map<Integer, Future<Iterable<MessageAndOffset>>>> T fetchAll(Int2LongMap offsets,
                                                                                   T fetchFutures) {
     for (final int partition : config.getPartitions()) {
       final long offset = offsets.get(partition);
@@ -367,6 +369,20 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       eventsAppended++;
     }
 
+    // For each partition, if there is no more event in the event queue, update the checkpoint nextOffset
+    for (Int2LongMap.Entry entry : offsets.int2LongEntrySet()) {
+      int partition = entry.getIntKey();
+      if (eventQueue.isEmpty(partition)) {
+        MutableCheckpoint checkpoint = checkpoints.get(partition);
+        long offset = entry.getLongValue();
+        // If the process offset is larger than the offset in the checkpoint and the queue is empty for that partition,
+        // it means everything before the process offset must had been written to the appender.
+        if (checkpoint != null && offset > checkpoint.getNextOffset()) {
+          checkpoint.setNextOffset(offset);
+        }
+      }
+    }
+
     return eventsAppended;
   }
 
@@ -401,6 +417,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
   private void persistCheckpoints() {
     try {
       checkpointManager.saveCheckpoints(checkpoints);
+      LOG.debug("Checkpoint persisted for {} with {}", name, checkpoints);
     } catch (Exception e) {
       // Just log as it is non-fatal if failed to save checkpoints
       LOG.warn("Non-fatal failure when persist checkpoints for appender {}.", name, e);
@@ -560,6 +577,14 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     MutableCheckpoint setMaxEventTime(long maxEventTime) {
       this.maxEventTime = maxEventTime;
       return this;
+    }
+
+    @Override
+    public String toString() {
+      return "Checkpoint{" +
+        "nextOffset=" + nextOffset +
+        ", maxEventTime=" + maxEventTime +
+        '}';
     }
   }
 }

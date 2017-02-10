@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.run;
+package co.cask.cdap.logging.framework.distributed;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import org.apache.hadoop.conf.Configuration;
@@ -27,6 +27,6 @@ public class LogSaverTwillRunnableTest {
 
   @Test
   public void testLogSaverInjector() {
-    LogSaverTwillRunnable.createGuiceInjector(CConfiguration.create(), new Configuration());
+    LogSaverTwillRunnable.createGuiceInjector(CConfiguration.create(), new Configuration(), new MockTwillContext());
   }
 }

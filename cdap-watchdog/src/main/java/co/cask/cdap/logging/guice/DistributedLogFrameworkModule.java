@@ -16,11 +16,17 @@
 
 package co.cask.cdap.logging.guice;
 
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.logging.framework.AppenderContext;
 import co.cask.cdap.logging.framework.distributed.DistributedAppenderContext;
 import co.cask.cdap.logging.framework.distributed.DistributedLogFramework;
+import co.cask.cdap.logging.service.LogSaverStatusService;
+import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Names;
 import org.apache.twill.api.TwillContext;
 
 /**
@@ -38,6 +44,13 @@ public class DistributedLogFrameworkModule extends PrivateModule {
   protected void configure() {
     bind(TwillContext.class).toInstance(twillContext);
     bind(AppenderContext.class).to(DistributedAppenderContext.class);
+
+    // Bind the status service
+    Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder
+      (binder(), HttpHandler.class, Names.named(Constants.LogSaver.LOG_SAVER_STATUS_HANDLER));
+    CommonHandlers.add(handlerBinder);
+    bind(LogSaverStatusService.class).in(Scopes.SINGLETON);
+    expose(LogSaverStatusService.class);
 
     bind(DistributedLogFramework.class).in(Scopes.SINGLETON);
     expose(DistributedLogFramework.class);

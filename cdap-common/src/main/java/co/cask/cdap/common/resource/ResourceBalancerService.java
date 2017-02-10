@@ -147,6 +147,7 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
     }
     try {
       cancelResourceHandler.cancel();
+      completion.get();
     } catch (Throwable th) {
       throwable = th;
       LOG.error("Exception while shutting down {}.", serviceName, th);
@@ -193,9 +194,19 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
 
         @Override
         public void finished(Throwable failureCause) {
-          if (service != null) {
-            service.stopAndWait();
-            service = null;
+          try {
+            if (service != null) {
+              service.stopAndWait();
+              service = null;
+            }
+            completion.set(null);
+          } catch (Throwable t) {
+            LOG.error("Exception when stopping service {}", service, t);
+            Throwable cause = failureCause == null ? t : failureCause;
+            if (cause != t) {
+              cause.addSuppressed(t);
+            }
+            completion.setException(t);
           }
         }
       };

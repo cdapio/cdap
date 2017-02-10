@@ -133,12 +133,17 @@ public class LogPipelineLoader {
         }
 
         if (!checkpointPrefixes.add(spec.getCheckpointPrefix())) {
-          // Checkpoint prefix can't be the same, otherwise pipeline checkpoints will be overwriting each other.
-          throw new InvalidPipelineException(
-            "Checkpoint prefix " + Bytes.toStringBinary(spec.getCheckpointPrefix()) + " already exists. " +
-              "Please either remove the property " + Constants.Logging.PIPELINE_CHECKPOINT_PREFIX_NUM +
-              " or use a different value."
-          );
+          if (!ignoreOnError) {
+            // Checkpoint prefix can't be the same, otherwise pipeline checkpoints will be overwriting each other.
+            throw new InvalidPipelineException(
+              "Checkpoint prefix " + Bytes.toStringBinary(spec.getCheckpointPrefix()) + " already exists. " +
+                "Please either remove the property " + Constants.Logging.PIPELINE_CHECKPOINT_PREFIX_NUM +
+                " or use a different value."
+            );
+          }
+          LOG.warn("Pipeline {} has checkpoint prefix {} already defined by other pipeline. Ignoring one from {}.",
+                   spec.getName(), Bytes.toStringBinary(spec.getCheckpointPrefix()), spec.getSource());
+          continue;
         }
 
         result.put(spec.getName(), spec);
@@ -207,11 +212,14 @@ public class LogPipelineLoader {
       throw new JoranException("Configuration failed " + errors);
     }
 
-    // Default the pipeline name to the config file name if it is not set
+    // Default the pipeline name to the config file name (without extension) if it is not set
     if (context.getName() == null) {
       String path = configURL.getPath();
       int idx = path.lastIndexOf("/");
-      context.setName(idx < 0 ? path : path.substring(idx + 1));
+      int dotIdx = path.lastIndexOf('.');
+      int startIdx = idx < 0 ? 0 : idx + 1;
+      int endIdx = dotIdx > idx ? dotIdx : path.length();
+      context.setName(path.substring(startIdx, endIdx));
     }
 
     byte[] checkpointPrefix = Bytes.toBytes(context.getName());
