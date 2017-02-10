@@ -69,8 +69,8 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.operations.OperationalStatsLoader;
 import co.cask.cdap.operations.OperationalStatsService;
+import co.cask.cdap.operations.guice.OperationalStatsModule;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
@@ -87,8 +87,6 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
 import org.apache.tephra.inmemory.InMemoryTransactionService;
@@ -494,14 +492,7 @@ public class StandaloneMain {
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new PreviewHttpModule(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
-      new PrivateModule() {
-        @Override
-        protected void configure() {
-          bind(OperationalStatsLoader.class).in(Scopes.SINGLETON);
-          bind(OperationalStatsService.class).in(Scopes.SINGLETON);
-          expose(OperationalStatsService.class);
-        }
-      }
+      new OperationalStatsModule()
     );
   }
 }

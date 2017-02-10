@@ -19,7 +19,6 @@ package co.cask.cdap.operations;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.extension.AbstractExtensionLoader;
-import com.google.inject.Inject;
 
 import java.util.Collections;
 import java.util.ServiceLoader;
@@ -31,9 +30,8 @@ import javax.management.MXBean;
  * class that implements an {@link MXBean} should also additionally implement {@link OperationalStats}. This class loads
  * implementations of {@link OperationalStats} using the Java {@link ServiceLoader} architecture.
  */
-public class OperationalStatsLoader extends AbstractExtensionLoader<OperationalExtensionId, OperationalStats> {
+final class OperationalStatsLoader extends AbstractExtensionLoader<OperationalExtensionId, OperationalStats> {
 
-  @Inject
   OperationalStatsLoader(CConfiguration cConf) {
     super(cConf.get(Constants.OperationalStats.EXTENSIONS_DIR, ""));
   }
