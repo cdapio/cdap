@@ -41,7 +41,6 @@ import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.meta.FileMetaDataReader;
 import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.logging.write.LogLocation;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -119,7 +118,6 @@ public class CDAPLogAppenderTest {
   @Test
   public void testCDAPLogAppender() throws Exception {
     int syncInterval = 1024 * 1024;
-    FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
     CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
 
     cdapLogAppender.setSyncIntervalBytes(syncInterval);
@@ -183,7 +181,6 @@ public class CDAPLogAppenderTest {
   @Test
   public void testCDAPLogAppenderRotation() throws Exception {
     int syncInterval = 1024 * 1024;
-    FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
     FileMetaDataReader fileMetaDataReader = injector.getInstance(FileMetaDataReader.class);
     CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
     AppenderContext context = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),

@@ -97,12 +97,12 @@ class LogFileOutputStream implements Closeable, Flushable, Syncable {
 
   @Override
   public void flush() throws IOException {
-    dataFileWriter.flush();
+    fileSize = dataFileWriter.sync();
   }
 
   @Override
   public void sync() throws IOException {
-    fileSize = dataFileWriter.sync();
+    flush();
     if (outputStream instanceof org.apache.hadoop.fs.Syncable) {
       ((org.apache.hadoop.fs.Syncable) outputStream).hsync();
     } else {

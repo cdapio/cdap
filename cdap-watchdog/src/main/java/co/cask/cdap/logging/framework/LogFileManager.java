@@ -19,6 +19,7 @@ package co.cask.cdap.logging.framework;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.io.Syncable;
 import co.cask.cdap.logging.meta.FileMetaDataWriter;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.avro.Schema;
@@ -35,8 +36,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Class including logic for getting log file to write to. Used by {@link CDAPLogAppender}
@@ -168,8 +171,18 @@ final class LogFileManager implements Flushable, Syncable {
   @Override
   public void flush() throws IOException {
     // perform flush on all the files in the outputStreamMap
-    for (LogFileOutputStream file : outputStreamMap.values()) {
-      file.flush();
+    long currentTs = System.currentTimeMillis();
+    Iterator<LogFileOutputStream> itor = outputStreamMap.values().iterator();
+    while (itor.hasNext()) {
+      LogFileOutputStream stream = itor.next();
+      stream.flush();
+      long timeSinceFileCreated = currentTs - stream.getCreateTime();
+      if (timeSinceFileCreated > maxLifetimeMillis) {
+        // Remove it from the map first.
+        // This also make sure even if the close failed, the stream won't stay in the map
+        itor.remove();
+        stream.close();
+      }
     }
   }
 
@@ -186,6 +199,13 @@ final class LogFileManager implements Flushable, Syncable {
       throw new IOException(
         String.format("File Exists at the logging location %s, Expected to be a directory", location));
     }
+  }
+
+  // only used by tests
+  @VisibleForTesting
+  @Nullable
+  LogFileOutputStream getActiveOutputStream(LogPathIdentifier logPathIdentifier) {
+    return outputStreamMap.get(logPathIdentifier);
   }
 
   private TimeStampLocation getLocation(LogPathIdentifier logPathIdentifier) throws IOException {
