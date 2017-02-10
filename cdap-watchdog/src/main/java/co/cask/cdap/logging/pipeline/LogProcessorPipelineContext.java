@@ -22,27 +22,29 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Syncable;
 import co.cask.cdap.logging.framework.Loggers;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
 
 import java.io.Flushable;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * A context object provide to log processor pipeline.
  */
-public class LogProcessorPipelineContext implements Flushable {
+public class LogProcessorPipelineContext implements Flushable, Syncable {
 
   private final String name;
   private final LoggerContext loggerContext;
   private final LoadingCache<String, Logger> effectiveLoggerCache;
-  private final Set<Flushable> flushables;
+  private final Set<Appender<ILoggingEvent>> appenders;
 
   public LogProcessorPipelineContext(CConfiguration cConf, String name, final LoggerContext context) {
     this.name = name;
@@ -57,17 +59,12 @@ public class LogProcessorPipelineContext implements Flushable {
         }
       });
 
-    Set<Flushable> flushables = Sets.newIdentityHashSet();
+    // Grab all the appender instances in the context
+    Set<Appender<ILoggingEvent>> appenders = Sets.newIdentityHashSet();
     for (Logger logger : context.getLoggerList()) {
-      Iterator<Appender<ILoggingEvent>> iterator = logger.iteratorForAppenders();
-      while (iterator.hasNext()) {
-        Appender<ILoggingEvent> appender = iterator.next();
-        if (appender instanceof Flushable) {
-          flushables.add((Flushable) appender);
-        }
-      }
+      Iterators.addAll(appenders, logger.iteratorForAppenders());
     }
-    this.flushables = flushables;
+    this.appenders = appenders;
   }
 
   /**
@@ -86,14 +83,51 @@ public class LogProcessorPipelineContext implements Flushable {
   }
 
   /**
-   * Flushes all appenders in this context.
+   * Flushes all appenders in this context. It will always try to flush all appenders even some might failed in between.
    *
-   * @throws IOException if flushing of any underlying appender failed.
+   * @throws IOException if flushing of any appender failed. If more than one appender flush failed,
+   *         the exception from the first appender failure will be thrown, with the subsequent failures
+   *         added as suppressed exception
    */
   @Override
   public void flush() throws IOException {
-    for (Flushable flushable : flushables) {
-      flushable.flush();
+    IOException failure = null;
+    for (Appender<ILoggingEvent> appender : appenders) {
+      if (appender instanceof Flushable) {
+        try {
+          ((Flushable) appender).flush();
+        } catch (IOException e) {
+          failure = addException(failure, e);
+        }
+      }
+    }
+    if (failure != null) {
+      throw failure;
+    }
+  }
+
+  /**
+   * Calls {@link Syncable#sync()} on all appenders in this context. It will always try to call sync on all
+   * appenders event some might failed in between.
+   *
+   * @throws IOException if any appender failed to perform sync. If more than one appender sync failed,
+   *         the exception from the first appender failure will be thrown, with the subsequent failures
+   *         added as suppressed exception
+   */
+  @Override
+  public void sync() throws IOException {
+    IOException failure = null;
+    for (Appender<ILoggingEvent> appender : appenders) {
+      if (appender instanceof Syncable) {
+        try {
+          ((Syncable) appender).sync();
+        } catch (IOException e) {
+          failure = addException(failure, e);
+        }
+      }
+    }
+    if (failure != null) {
+      throw failure;
     }
   }
 
@@ -109,5 +143,17 @@ public class LogProcessorPipelineContext implements Flushable {
    */
   public void stop() {
     loggerContext.stop();
+  }
+
+  /**
+   * Adds the new exception to an existing exception. If there is no existing exception, simply return the
+   * new exception.
+   */
+  private <E extends Exception> E addException(@Nullable E exception, E newException) {
+    if (exception == null) {
+      return newException;
+    }
+    exception.addSuppressed(newException);
+    return exception;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,15 +20,15 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 
-import static co.cask.cdap.logging.serialize.Util.stringOrNull;
+import static co.cask.cdap.logging.serialize.LogSerializerUtil.stringOrNull;
 
 /**
  * Serializer for StackTraceElement.
  */
-public class StackTraceElementSerializer {
+class StackTraceElementSerializer {
   private StackTraceElementSerializer() {}
 
-  public static GenericRecord encode(Schema schema, StackTraceElement stackTraceElement) {
+  static GenericRecord encode(Schema schema, StackTraceElement stackTraceElement) {
     if (stackTraceElement != null) {
       Schema steSchema = schema.getTypes().get(1);
       GenericRecord datum = new GenericData.Record(steSchema);
@@ -41,7 +41,7 @@ public class StackTraceElementSerializer {
     return null;
   }
 
-  public static StackTraceElement decode(GenericRecord datum) {
+  static StackTraceElement decode(GenericRecord datum) {
     if (datum != null) {
       String declaringClass =  stringOrNull(datum.get("declaringClass"));
       String methodName = stringOrNull(datum.get("methodName"));

@@ -17,13 +17,13 @@
 package co.cask.cdap.logging.framework;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import co.cask.cdap.common.io.Syncable;
 import co.cask.cdap.logging.serialize.LoggingEvent;
 import com.google.common.io.Closeables;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.hadoop.fs.Syncable;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +40,7 @@ import java.io.OutputStream;
  * all methods of this class assume that the file state is bad on any exception and close the file.
  */
 
-class LogFileOutputStream implements Closeable, Flushable {
+class LogFileOutputStream implements Closeable, Flushable, Syncable {
   private static final Logger LOG = LoggerFactory.getLogger(LogFileOutputStream.class);
 
   private final Location location;
@@ -88,13 +88,17 @@ class LogFileOutputStream implements Closeable, Flushable {
   @Override
   public void flush() throws IOException {
     dataFileWriter.flush();
-    if (outputStream instanceof Syncable) {
-      ((Syncable) outputStream).hsync();
+  }
+
+  @Override
+  public void sync() throws IOException {
+    flush();
+    if (outputStream instanceof org.apache.hadoop.fs.Syncable) {
+      ((org.apache.hadoop.fs.Syncable) outputStream).hsync();
     } else {
       outputStream.flush();
     }
   }
-
 
   @Override
   public void close() throws IOException {

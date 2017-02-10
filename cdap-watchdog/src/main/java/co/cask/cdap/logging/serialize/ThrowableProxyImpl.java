@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@ import java.util.Arrays;
 /**
  * Class used as helper during serialization of IThrowableProxy.
  */
-public final class ThrowableProxyImpl implements IThrowableProxy {
+final class ThrowableProxyImpl implements IThrowableProxy {
   private final IThrowableProxy cause;
   private final String className;
   private final int commonFrames;
@@ -32,8 +32,8 @@ public final class ThrowableProxyImpl implements IThrowableProxy {
   private final StackTraceElementProxy[] stackTraceElementProxyArray;
   private final IThrowableProxy[] suppressed;
 
-  public ThrowableProxyImpl(IThrowableProxy cause, String className, int commonFrames, String message,
-                            StackTraceElementProxy[] stackTraceElementProxyArray, IThrowableProxy[] suppressed) {
+  ThrowableProxyImpl(IThrowableProxy cause, String className, int commonFrames, String message,
+                     StackTraceElementProxy[] stackTraceElementProxyArray, IThrowableProxy[] suppressed) {
     this.cause = cause;
     this.className = className;
     this.commonFrames = commonFrames;

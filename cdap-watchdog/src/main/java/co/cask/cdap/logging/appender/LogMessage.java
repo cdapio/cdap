@@ -30,16 +30,15 @@ import java.util.Map;
  * Represents an event to be logged along with the context.
  */
 public class LogMessage implements ILoggingEvent {
+
   private final ILoggingEvent loggingEvent;
   private final LoggingContext loggingContext;
+  private final Map<String, String> mdc;
 
   public LogMessage(ILoggingEvent loggingEvent, LoggingContext loggingContext) {
     this.loggingEvent = loggingEvent;
     this.loggingContext = loggingContext;
-  }
-
-  public ILoggingEvent getLoggingEvent() {
-    return loggingEvent;
+    this.mdc = new LoggingContextMDC(loggingContext, loggingEvent.getMDCPropertyMap());
   }
 
   public LoggingContext getLoggingContext() {
@@ -103,12 +102,12 @@ public class LogMessage implements ILoggingEvent {
 
   @Override
   public Map<String, String> getMDCPropertyMap() {
-    return loggingEvent.getMDCPropertyMap();
+    return mdc;
   }
 
   @Override
   public Map<String, String> getMdc() {
-    return loggingEvent.getMdc();
+    return getMDCPropertyMap();
   }
 
   @Override

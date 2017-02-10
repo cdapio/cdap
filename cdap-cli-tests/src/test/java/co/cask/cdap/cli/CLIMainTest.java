@@ -34,6 +34,7 @@ import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PingService;
 import co.cask.cdap.client.app.PrefixedEchoHandler;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.Tasks;
@@ -100,7 +101,10 @@ import javax.annotation.Nullable;
 public class CLIMainTest extends CLITestBase {
 
   @ClassRule
-  public static final StandaloneTester STANDALONE = new StandaloneTester();
+  public static final StandaloneTester STANDALONE = new StandaloneTester(
+    // Turn off the log event delay to make log event flush on every write to eliminate race condition.
+    Constants.Logging.PIPELINE_EVENT_DELAY_MS, 0
+  );
 
   @ClassRule
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();

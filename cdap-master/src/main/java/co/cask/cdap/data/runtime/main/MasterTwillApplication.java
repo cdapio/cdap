@@ -60,7 +60,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
-import java.util.zip.ZipEntry;
 
 /**
  * TwillApplication wrapper for Master Services running in YARN.
@@ -342,9 +341,7 @@ public class MasterTwillApplication implements TwillApplication {
       Path libJar = Files.createTempFile("log.lib", ".jar");
       try (JarOutputStream jarOutput = new JarOutputStream(Files.newOutputStream(libJar))) {
         for (File jarFile : libJars) {
-          JarEntry jarEntry = new JarEntry(jarFile.getName());
-          jarEntry.setMethod(ZipEntry.STORED);
-          jarOutput.putNextEntry(jarEntry);
+          jarOutput.putNextEntry(new JarEntry(jarFile.getName()));
           Files.copy(jarFile.toPath(), jarOutput);
           jarOutput.closeEntry();
 

@@ -25,9 +25,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
@@ -37,7 +35,6 @@ import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.meta.LoggingStoreTableUtil;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -65,10 +62,6 @@ public class FileMetaDataManager {
   private static final byte[] ROW_KEY_PREFIX = LoggingStoreTableUtil.FILE_META_ROW_KEY_PREFIX;
   private static final byte[] ROW_KEY_PREFIX_END = Bytes.stopKeyForPrefix(ROW_KEY_PREFIX);
 
-  private final RootLocationFactory rootLocationFactory;
-
-
-  private final Impersonator impersonator;
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
 
@@ -76,11 +69,7 @@ public class FileMetaDataManager {
   // location mapped to a namespace are from root of the filesystem. The FileMetaDataManager stores a location in
   // bytes to a hbase table and to construct it back to a Location it needs to work with a root based location factory.
   @Inject
-  FileMetaDataManager(CConfiguration cConf, RootLocationFactory rootLocationFactory,
-                      NamespacedLocationFactory namespacedLocationFactory, Impersonator impersonator,
-                      DatasetFramework datasetFramework, TransactionSystemClient txClient) {
-    this.rootLocationFactory = rootLocationFactory;
-    this.impersonator = impersonator;
+  FileMetaDataManager(CConfiguration cConf, DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     this.datasetFramework = datasetFramework;
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(

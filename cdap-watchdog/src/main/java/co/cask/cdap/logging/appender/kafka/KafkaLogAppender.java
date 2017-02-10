@@ -58,16 +58,16 @@ public final class KafkaLogAppender extends LogAppender {
   }
 
   @Override
-  protected void append(LogMessage logMessage) {
+  protected void appendEvent(LogMessage logMessage) {
     try {
       String partitionKey = getPartitionKey(logMessage.getLoggingContext());
       // publish only if its a valid type of partition key
       if (!Strings.isNullOrEmpty(partitionKey)) {
-        byte [] bytes = loggingEventSerializer.toBytes(logMessage.getLoggingEvent(), logMessage.getLoggingContext());
+        byte [] bytes = loggingEventSerializer.toBytes(logMessage);
         producer.publish(partitionKey, bytes);
       }
     } catch (Throwable t) {
-      LOG.error("Got exception while serializing log event {}.", logMessage.getLoggingEvent(), t);
+      LOG.error("Got exception while serializing log event {}.", logMessage, t);
     }
   }
 

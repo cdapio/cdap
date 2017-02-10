@@ -17,7 +17,6 @@
 package co.cask.cdap.logging.pipeline.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManager;
@@ -40,6 +39,7 @@ import kafka.javaapi.FetchResponse;
 import kafka.javaapi.OffsetRequest;
 import kafka.javaapi.OffsetResponse;
 import kafka.javaapi.consumer.SimpleConsumer;
+import kafka.javaapi.message.ByteBufferMessageSet;
 import kafka.message.MessageAndOffset;
 import org.apache.twill.common.Threads;
 import org.apache.twill.kafka.client.BrokerInfo;
@@ -60,7 +60,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * A log processing pipeline for a {@link Appender}.
+ * A log processing pipeline that reads from Kafka and writes to configured logger context.
  */
 public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadService {
 
@@ -83,7 +83,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
   private volatile Thread runThread;
   private volatile boolean stopped;
   private long lastCheckpointTime;
-  private int unFlushedEvents;
+  private int unSyncedEvents;
 
   public KafkaLogProcessorPipeline(LogProcessorPipelineContext context, CheckpointManager checkpointManager,
                                    BrokerService brokerService, KafkaPipelineConfig config) {
@@ -127,6 +127,8 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
 
     try {
       initializeOffsets();
+      LOG.info("Kafka offsets initialize for pipeline {} as {}", name, offsets);
+
       Map<Integer, Future<Iterable<MessageAndOffset>>> futures = new HashMap<>();
       String topic = config.getTopic();
 
@@ -149,8 +151,8 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
         }
 
         long now = System.currentTimeMillis();
-        unFlushedEvents += appendEvents(now, false);
-        long nextCheckpointDelay = tryFlushAndPersistCheckpoints(now);
+        unSyncedEvents += appendEvents(now, false);
+        long nextCheckpointDelay = trySyncAndPersistCheckpoints(now);
 
         // If nothing has been processed (e.g. empty fetch from Kafka, fail to append anything to appender),
         // Sleep until the earliest event in the buffer is time to be written out.
@@ -189,7 +191,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       persistCheckpoints();
     } catch (Exception e) {
       // Just log, not to fail the shutdown
-      LOG.warn("Exception raised when stopping appender {}", name, e);
+      LOG.warn("Exception raised when stopping pipeline {}", name, e);
     }
 
     for (SimpleConsumer consumer : kafkaConsumers.values()) {
@@ -229,9 +231,9 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
           // If no checkpoint, fetch from the beginning.
           offsets.put(partition, getLastOffset(partition, kafka.api.OffsetRequest.EarliestTime()));
         } catch (Exception e) {
-          LOG.info("Failed to get Kafka earliest offset in {}:{} for appender {}. Will be retried",
+          LOG.info("Failed to get Kafka earliest offset in {}:{} for pipeline {}. Will be retried",
                    config.getTopic(), partition, name);
-          LOG.debug("Failed to get Kafka earliest offset in {}:{} for appender {}.",
+          LOG.debug("Failed to get Kafka earliest offset in {}:{} for pipeline {}.",
                     config.getTopic(), partition, name, e);
           TimeUnit.SECONDS.sleep(1);
           break;
@@ -269,14 +271,14 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     for (MessageAndOffset message : messages) {
       if (eventQueue.getEventSize() >= config.getMaxBufferSize()) {
         // Log a message. If this happen too often, it indicates that more memory is needed for the log processing
-        LOG.info("Maximum queue size {} reached for appender {}.", config.getMaxBufferSize(), name);
+        LOG.info("Maximum queue size {} reached for pipeline {}.", config.getMaxBufferSize(), name);
         // If nothing has been appended (due to error), we break the loop so that no need event will be appended
         // Since the offset is not updated, the same set of messages will be fetched again in next iteration.
         int eventsAppended = appendEvents(System.currentTimeMillis(), true);
         if (eventsAppended <= 0) {
           break;
         }
-        unFlushedEvents += eventsAppended;
+        unSyncedEvents += eventsAppended;
       }
 
       try {
@@ -348,8 +350,8 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
           effectiveLogger.callAppenders(event);
         }
       } catch (Exception e) {
-        LOG.warn("Failed to append log event to appender {} due to {}. Will be retried.", name, e.getMessage());
-        LOG.debug("Failed to append log event to appender {}.", name, e);
+        LOG.warn("Failed to append log event in pipeline {} due to {}. Will be retried.", name, e.getMessage());
+        LOG.debug("Failed to append log event in pipeline {}.", name, e);
         break;
       }
 
@@ -383,30 +385,40 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       }
     }
 
+    // Always try to call flush, even there was no event written. This is needed so that appender get called
+    // periodically even there is no new events being appended to perform housekeeping work.
+    // Failure to flush is ok and it will be retried by the wrapped appender
+    try {
+      context.flush();
+    } catch (IOException e) {
+      LOG.warn("Failed to flush in pipeline {} due to {}. Will be retried.", name, e.getMessage());
+      LOG.debug("Failed to flush in pipeline {}.", name, e);
+    }
+
     return eventsAppended;
   }
 
   /**
-   * Flushes the appender and persists checkpoints if it is time.
+   * Sync the appender and persists checkpoints if it is time.
    *
-   * @return delay in millisecond till the next flush time.
+   * @return delay in millisecond till the next sync time.
    */
-  private long tryFlushAndPersistCheckpoints(long currentTimeMillis) {
-    if (currentTimeMillis - config.getCheckpointIntervalMillis() < lastCheckpointTime || unFlushedEvents <= 0) {
+  private long trySyncAndPersistCheckpoints(long currentTimeMillis) {
+    if (currentTimeMillis - config.getCheckpointIntervalMillis() < lastCheckpointTime || unSyncedEvents <= 0) {
       return config.getCheckpointIntervalMillis() - currentTimeMillis + lastCheckpointTime;
     }
 
-    // Flush the appender and persists checkpoints
+    // Sync the appender and persists checkpoints
     try {
-      context.flush();
-      // Only persist if flush succeeded. Since persistCheckpoints never throw, it's ok to be inside the try.
+      context.sync();
+      // Only persist if sync succeeded. Since persistCheckpoints never throw, it's ok to be inside the try.
       persistCheckpoints();
       lastCheckpointTime = currentTimeMillis;
-      unFlushedEvents = 0;
-      LOG.debug("Events flushed and checkpoint persisted for {}", name);
+      unSyncedEvents = 0;
+      LOG.debug("Events synced and checkpoint persisted for {}", name);
     } catch (Exception e) {
-      LOG.warn("Failed to flush appender {} due to {}. Will be retried.", name, e.getMessage());
-      LOG.debug("Failed to flush appender {}.", name, e);
+      LOG.warn("Failed to sync in pipeline {} due to {}. Will be retried.", name, e.getMessage());
+      LOG.debug("Failed to sync in pipeline {}.", name, e);
     }
     return config.getCheckpointIntervalMillis();
   }
@@ -420,7 +432,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       LOG.debug("Checkpoint persisted for {} with {}", name, checkpoints);
     } catch (Exception e) {
       // Just log as it is non-fatal if failed to save checkpoints
-      LOG.warn("Non-fatal failure when persist checkpoints for appender {}.", name, e);
+      LOG.warn("Non-fatal failure when persist checkpoints for pipeline {}.", name, e);
     }
   }
 
@@ -501,6 +513,8 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       throw new IOException("No broker to fetch messages for " + topic + ":" + partition);
     }
 
+    LOG.trace("Fetching messages from Kafka on {}:{} for pipeline {} with offset {}", topic, partition, name, offset);
+
     FetchRequest request = new FetchRequestBuilder()
       .clientId(consumer.clientId())
       .addFetch(topic, partition, offset, config.getKafkaFetchBufferSize())
@@ -521,7 +535,10 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
                                           topic, partition, consumer.getBrokerInfo()));
     }
 
-    return response.messageSet(topic, partition);
+    ByteBufferMessageSet result = response.messageSet(topic, partition);
+    LOG.trace("Fetched {} bytes from Kafka on {}:{} for pipeline {}", result.sizeInBytes(), topic, partition, name);
+
+    return result;
   }
 
   /**

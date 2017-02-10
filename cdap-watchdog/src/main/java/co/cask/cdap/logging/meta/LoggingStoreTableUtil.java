@@ -29,11 +29,8 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
 
 import java.io.IOException;
-import javax.annotation.Nullable;
 
 /**
  * Utility class for helper functions to setup meta data table used by the logging system.
@@ -44,13 +41,12 @@ public final class LoggingStoreTableUtil {
   public static final byte[] FILE_META_ROW_KEY_PREFIX = Bytes.toBytes(200);
 
   private static final DatasetId META_TABLE_DATASET_ID = NamespaceId.SYSTEM.dataset(Constants.Logging.META_TABLE);
-  private static DatasetId alternateMetaTableId;
 
   /**
    * Setups the checkpoint data table dataset. This method should only be called from UpgradeTool.
    */
   public static void setupDatasets(DatasetFramework dsFramework) throws DatasetManagementException, IOException {
-    dsFramework.addInstance(Table.class.getName(), getMetaTableDatasetId(), DatasetProperties.EMPTY);
+    dsFramework.addInstance(Table.class.getName(), META_TABLE_DATASET_ID, DatasetProperties.EMPTY);
   }
 
   /**
@@ -58,7 +54,7 @@ public final class LoggingStoreTableUtil {
    */
   public static Table getMetadataTable(DatasetFramework datasetFramework,
                                        DatasetContext context) throws IOException, DatasetManagementException {
-    return DatasetsUtil.getOrCreateDataset(context, datasetFramework, getMetaTableDatasetId(),
+    return DatasetsUtil.getOrCreateDataset(context, datasetFramework, META_TABLE_DATASET_ID,
                                            Table.class.getName(), DatasetProperties.EMPTY);
   }
 
@@ -67,7 +63,7 @@ public final class LoggingStoreTableUtil {
    */
   public static Table getMetadataTable(DatasetContext context,
                                        DatasetManager manager) throws DatasetManagementException {
-    DatasetId datasetId = getMetaTableDatasetId();
+    DatasetId datasetId = META_TABLE_DATASET_ID;
     try {
       return context.getDataset(datasetId.getNamespace(), datasetId.getDataset());
     } catch (DatasetInstantiationException e) {
@@ -78,18 +74,6 @@ public final class LoggingStoreTableUtil {
       }
       return context.getDataset(datasetId.getNamespace(), datasetId.getDataset());
     }
-  }
-
-  /**
-   * Changes the name of the meta table used by the logging system. Pass in {@code null} to reset.
-   */
-  @VisibleForTesting
-  public static void setMetaTableName(@Nullable String name) {
-    alternateMetaTableId = name == null ? null : NamespaceId.SYSTEM.dataset(name);
-  }
-
-  private static DatasetId getMetaTableDatasetId() {
-    return Objects.firstNonNull(alternateMetaTableId, META_TABLE_DATASET_ID);
   }
 
   private LoggingStoreTableUtil() {

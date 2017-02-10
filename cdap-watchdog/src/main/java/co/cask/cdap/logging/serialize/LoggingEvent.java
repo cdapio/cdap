@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,8 +21,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import ch.qos.logback.classic.spi.ThrowableProxyVO;
-import co.cask.cdap.common.logging.LoggingContext;
-import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
@@ -34,15 +32,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
-import static co.cask.cdap.common.logging.LoggingContext.SystemTag;
-import static co.cask.cdap.logging.serialize.Util.stringOrNull;
-
 /**
 * Class used to serialize/de-serialize ILoggingEvent.
 */
 public final class LoggingEvent implements ILoggingEvent {
-  private static final int MAX_MDC_TAGS = 12;
-  private static final String MDC_NULL_KEY = ".null";
 
   private String threadName;
   private int level;
@@ -169,41 +162,6 @@ public final class LoggingEvent implements ILoggingEvent {
     // Nothing to do!
   }
 
-  public static GenericRecord encode(Schema schema, ILoggingEvent event, LoggingContext loggingContext) {
-    event.prepareForDeferredProcessing();
-
-    LoggingEvent loggingEvent = new LoggingEvent(event);
-    GenericRecord datum = new GenericData.Record(schema);
-    datum.put("threadName", loggingEvent.threadName);
-    datum.put("level", loggingEvent.level);
-    datum.put("message", loggingEvent.message);
-
-    if (loggingEvent.argumentArray != null) {
-    GenericArray<String> argArray =
-      new GenericData.Array<>(loggingEvent.argumentArray.length,
-                                    schema.getField("argumentArray").schema().getTypes().get(1));
-      Collections.addAll(argArray, loggingEvent.argumentArray);
-      datum.put("argumentArray", argArray);
-    }
-
-    datum.put("formattedMessage", loggingEvent.formattedMessage);
-    datum.put("loggerName", loggingEvent.loggerName);
-    datum.put("loggerContextVO", LoggerContextSerializer.encode(schema.getField("loggerContextVO").schema(),
-                                                                loggingEvent.loggerContextVO));
-    datum.put("throwableProxy", ThrowableProxySerializer.encode(schema.getField("throwableProxy").schema(),
-                                                                loggingEvent.throwableProxy));
-    if (loggingEvent.hasCallerData) {
-      datum.put("callerData", CallerDataSerializer.encode(schema.getField("callerData").schema(),
-                                                                 loggingEvent.callerData));
-    }
-    datum.put("hasCallerData", loggingEvent.hasCallerData);
-    //datum.put("marker", marker);
-    datum.put("mdc", generateContextMdc(loggingContext, loggingEvent.getMDCPropertyMap()));
-    datum.put("timestamp", loggingEvent.timestamp);
-    return datum;
-  }
-
-  // TODO : the above "encode" method with logging context can be removed once we have log framework in place
   public static GenericRecord encode(Schema schema, ILoggingEvent event) {
     event.prepareForDeferredProcessing();
 
@@ -233,47 +191,17 @@ public final class LoggingEvent implements ILoggingEvent {
     }
     datum.put("hasCallerData", loggingEvent.hasCallerData);
     //datum.put("marker", marker);
-    datum.put("mdc", loggingEvent.getMDCPropertyMap());
+    datum.put("mdc", LogSerializerUtil.encodeMDC(loggingEvent.getMDCPropertyMap()));
     datum.put("timestamp", loggingEvent.timestamp);
     return datum;
-  }
-
-  static Map<String, String> generateContextMdc(LoggingContext loggingContext, Map<String, String> mdc) {
-    if (loggingContext == null) {
-      throw new IllegalStateException(String.format("Logging context not setup correctly for MDC %s", mdc));
-    }
-
-    Map<String, String> contextMdcMap = encodeMdcMap(mdc);
-
-    Map<String, SystemTag> systemTagMap = loggingContext.getSystemTagsMap();
-    for (Map.Entry<String, SystemTag> entry : systemTagMap.entrySet()) {
-      contextMdcMap.put(entry.getKey(), entry.getValue().getValue());
-    }
-    return contextMdcMap;
-  }
-
-  static Map<String, String> encodeMdcMap(Map<String, String> mdc) {
-    Map<String, String> encodeMap = Maps.newHashMapWithExpectedSize(MAX_MDC_TAGS * 2);
-    int i = 0;
-    for (Map.Entry<String, String> entry : mdc.entrySet()) {
-      if (i++ > MAX_MDC_TAGS) {
-        break;
-      }
-      // Any tag beginning with . is reserved
-      if (entry.getKey() == null || !entry.getKey().startsWith(".")) {
-        // AVRO does not allow null map keys.
-        encodeMap.put(entry.getKey() == null ? MDC_NULL_KEY : entry.getKey(), entry.getValue());
-      }
-    }
-    return encodeMap;
   }
 
   @SuppressWarnings("unchecked")
   public static ILoggingEvent decode(GenericRecord datum) {
     LoggingEvent loggingEvent = new LoggingEvent();
-    loggingEvent.threadName = stringOrNull(datum.get("threadName"));
+    loggingEvent.threadName = LogSerializerUtil.stringOrNull(datum.get("threadName"));
     loggingEvent.level = (Integer) datum.get("level");
-    loggingEvent.message = stringOrNull(datum.get("message"));
+    loggingEvent.message = LogSerializerUtil.stringOrNull(datum.get("message"));
 
     GenericArray<?> argArray = (GenericArray<?>) datum.get("argumentArray");
     if (argArray != null) {
@@ -282,30 +210,15 @@ public final class LoggingEvent implements ILoggingEvent {
         loggingEvent.argumentArray[i] = argArray.get(i) == null ? null : argArray.get(i).toString();
       }
     }
-    loggingEvent.formattedMessage = stringOrNull(datum.get("formattedMessage"));
-    loggingEvent.loggerName = stringOrNull(datum.get("loggerName"));
+    loggingEvent.formattedMessage = LogSerializerUtil.stringOrNull(datum.get("formattedMessage"));
+    loggingEvent.loggerName = LogSerializerUtil.stringOrNull(datum.get("loggerName"));
     loggingEvent.loggerContextVO = LoggerContextSerializer.decode((GenericRecord) datum.get("loggerContextVO"));
     loggingEvent.throwableProxy = ThrowableProxySerializer.decode((GenericRecord) datum.get("throwableProxy"));
     loggingEvent.callerData = CallerDataSerializer.decode((GenericArray<GenericRecord>) datum.get("callerData"));
     loggingEvent.hasCallerData = (Boolean) datum.get("hasCallerData");
-    loggingEvent.mdc = decodeMdcMap((Map<?, ?>) datum.get("mdc"));
+    loggingEvent.mdc = LogSerializerUtil.decodeMDC((Map<?, ?>) datum.get("mdc"));
     loggingEvent.timestamp = (Long) datum.get("timestamp");
     return loggingEvent;
-  }
-
-  static Map<String, String> decodeMdcMap(Map<?, ?> map) {
-    if (map == null) {
-      return null;
-    }
-
-    Map<String, String> stringMap = Maps.newHashMapWithExpectedSize(map.size());
-    for (Map.Entry<?, ?> entry : map.entrySet()) {
-      // AVRO does not allow null map keys.
-      stringMap.put(entry.getKey() == null || entry.getKey().toString().equals(MDC_NULL_KEY) ?
-                      null : entry.getKey().toString(),
-                    entry.getValue() == null ? null : entry.getValue().toString());
-    }
-    return stringMap;
   }
 
   @Override

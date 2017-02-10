@@ -16,6 +16,8 @@
 
 package co.cask.cdap.common.logging;
 
+import org.slf4j.MDC;
+
 /**
  * Allows to store and access the logging context.
  * <p>
@@ -39,6 +41,13 @@ public class LoggingContextAccessor {
    */
   public static void setLoggingContext(LoggingContext context) {
     loggingContext.set(context);
+    try {
+      // Also copy context tags to MDC
+      MDC.setContextMap(context.getSystemTagsAsString());
+    } catch (IllegalStateException e) {
+      // MDC will throw this if there is no valid binding. Normally this should happen, but in case it does,
+      // we'll just ignore it as it doesn't affect platform logic at all as we always use loggingContext.
+    }
   }
 
   /**

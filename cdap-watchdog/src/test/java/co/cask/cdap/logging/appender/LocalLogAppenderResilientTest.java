@@ -17,7 +17,9 @@
 package co.cask.cdap.logging.appender;
 
 import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.core.util.StatusPrinter;
+import ch.qos.logback.core.status.Status;
+import ch.qos.logback.core.status.StatusListener;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -40,9 +42,9 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.logging.LoggingConfiguration;
-import co.cask.cdap.logging.appender.file.FileLogAppender;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
+import co.cask.cdap.logging.framework.local.LocalLogAppender;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
@@ -52,6 +54,7 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -69,9 +72,7 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.PrintStream;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -80,7 +81,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class TestResilientLogging {
+public class LocalLogAppenderResilientTest {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -140,20 +141,41 @@ public class TestResilientLogging {
 
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
-    LogAppender appender = new AsyncLogAppender(injector.getInstance(FileLogAppender.class));
+    final LogAppender appender = injector.getInstance(LocalLogAppender.class);
     new LogAppenderInitializer(appender).initialize("TestResilientLogging");
 
+    int failureMsgCount = 3;
+    final CountDownLatch failureLatch = new CountDownLatch(failureMsgCount);
+    LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+    loggerContext.getStatusManager().add(new StatusListener() {
+      @Override
+      public void addStatusEvent(Status status) {
+        if (status.getLevel() != Status.ERROR || status.getOrigin() != appender) {
+          return;
+        }
+        Throwable cause = status.getThrowable();
+        if (cause != null) {
+          Throwable rootCause = Throwables.getRootCause(cause);
+          if (rootCause instanceof ServiceUnavailableException) {
+            String serviceName = ((ServiceUnavailableException) rootCause).getServiceName();
+            if (Constants.Service.DATASET_MANAGER.equals(serviceName)) {
+              failureLatch.countDown();
+            }
+          }
+        }
+      }
+    });
+
     Logger logger = LoggerFactory.getLogger("TestResilientLogging");
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < failureMsgCount; ++i) {
       Exception e1 = new Exception("Test Exception1");
       Exception e2 = new Exception("Test Exception2", e1);
       logger.warn("Test log message " + i + " {} {}", "arg1", "arg2", e2);
     }
 
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    StatusPrinter.setPrintStream(new PrintStream(bos));
-    StatusPrinter.print((LoggerContext) LoggerFactory.getILoggerFactory());
-    System.out.println(bos.toString());
+    // Wait for the three failure to append to happen
+    // The wait time has to be > 3 seconds because DatasetServiceClient has 1 second timeout on discovery
+    failureLatch.await(5, TimeUnit.SECONDS);
 
     // Start dataset service, wait for it to be discoverable
     DatasetService dsService = injector.getInstance(DatasetService.class);
