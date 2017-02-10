@@ -563,9 +563,13 @@ public class MetadataDataset extends AbstractDataset {
   public SearchResults search(String namespaceId, String searchQuery, Set<EntityTypeSimpleName> types,
                               SortInfo sortInfo, int offset, int limit, int numCursors,
                               @Nullable String cursor, boolean showHidden) {
-    return SortInfo.DEFAULT.equals(sortInfo) ?
-      searchByDefaultIndex(namespaceId, searchQuery, types, showHidden) :
-      searchByCustomIndex(namespaceId, types, sortInfo, offset, limit, numCursors, cursor, showHidden);
+    if (!SortInfo.DEFAULT.equals(sortInfo)) {
+      if (!"*".equals(searchQuery)) {
+        throw new IllegalArgumentException("Cannot search with non-default sort with any query other than '*'");
+      }
+      return searchByCustomIndex(namespaceId, types, sortInfo, offset, limit, numCursors, cursor, showHidden);
+    }
+    return searchByDefaultIndex(namespaceId, searchQuery, types, showHidden);
   }
 
   private SearchResults searchByDefaultIndex(String namespaceId, String searchQuery,

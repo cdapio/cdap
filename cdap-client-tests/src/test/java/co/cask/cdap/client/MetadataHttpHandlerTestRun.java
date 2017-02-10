@@ -1192,6 +1192,19 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   }
 
   @Test
+  public void testInvalidParams() throws Exception {
+    NamespaceId namespace = new NamespaceId("testInvalidParams");
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
+    try {
+      EnumSet<EntityTypeSimpleName> targets = EnumSet.allOf(EntityTypeSimpleName.class);
+      searchMetadata(namespace, "text", targets, AbstractSystemMetadataWriter.CREATION_TIME_KEY + " desc");
+      Assert.fail("Expected not to be able to specify 'query' and 'sort' parameters.");
+    } catch (BadRequestException expected) {
+      // expected
+    }
+  }
+
+  @Test
   public void testSearchResultSorting() throws Exception {
     NamespaceId namespace = new NamespaceId("sorting");
     namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
