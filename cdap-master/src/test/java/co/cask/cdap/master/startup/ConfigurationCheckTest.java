@@ -36,6 +36,13 @@ public class ConfigurationCheckTest {
     configurationCheck.run();
   }
 
+  @Test
+  public void testConfigurationCheck() {
+    Injector injector = Guice.createInjector(new ConfigModule());
+    ConfigurationCheck configurationCheck = injector.getInstance(ConfigurationCheck.class);
+    configurationCheck.run();
+  }
+
   @Test (expected = RuntimeException.class)
   public void invalidLoggingKafkaTopicTest() {
     runConfigurationCheck(Constants.Logging.KAFKA_TOPIC, "invalid:topic");

@@ -136,7 +136,7 @@ class ConfigurationCheck extends AbstractMasterCheck {
   }
 
   private void checkLogPartitionKey(Set<String> problemKeys) {
-    if (!isValidPartitionKey(cConf.get(Constants.Logging.LOG_PUBLISH_PARTITION_KEY))) {
+    if (!isValidPartitionKey(cConf.get(Constants.Logging.LOG_PUBLISH_PARTITION_KEY).toUpperCase())) {
       problemKeys.add(Constants.Logging.LOG_PUBLISH_PARTITION_KEY);
     }
   }
