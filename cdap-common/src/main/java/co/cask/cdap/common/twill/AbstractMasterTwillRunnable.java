@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.twill;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -24,6 +25,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.AbstractTwillRunnable;
@@ -32,6 +34,9 @@ import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.apache.twill.internal.Services;
+import org.apache.twill.kafka.client.BrokerService;
+import org.apache.twill.kafka.client.KafkaClientService;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,10 +94,17 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
       LOG.debug("{} cConf {}", name, cConf);
       LOG.debug("{} HBase conf {}", name, hConf);
 
-      doInit(context);
+      Injector injector = doInit(context);
 
       services = Lists.newArrayList();
-      getServices(services);
+
+      // Add common base services
+      services.add(injector.getInstance(ZKClientService.class));
+      services.add(injector.getInstance(KafkaClientService.class));
+      services.add(injector.getInstance(BrokerService.class));
+      services.add(injector.getInstance(MetricsCollectionService.class));
+
+      addServices(services);
       Preconditions.checkArgument(!services.isEmpty(), "Should have at least one service");
       LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {
@@ -171,10 +183,12 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
    * with a list of Services which will be started in increasing order of index.
    * The services will be stopped in the reverse order.
    */
-  protected abstract void getServices(List<? super Service> services);
+  protected abstract void addServices(List<? super Service> services);
 
   /**
    * Performs initialization task.
+   *
+   * @return a guice {@link Injector} for this service.
    */
-  protected abstract void doInit(TwillContext context);
+  protected abstract Injector doInit(TwillContext context);
 }

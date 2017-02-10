@@ -52,7 +52,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -79,6 +78,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   private final DatumReader<MetricValues> recordReader;
   private final Schema recordSchema;
   private final MetricStore metricStore;
+  private final Map<String, String> metricsContextMap;
   private final int fetcherLimit;
   private final ConcurrentLinkedDeque<MetricValues> records;
   private final ConcurrentMap<TopicIdMetaKey, byte[]> topicMessageIds;
@@ -89,7 +89,6 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   private long lastLoggedMillis;
   private long recordsProcessed;
 
-  private Map<String, String> metricsContextMap;
   private MetricsConsumerMetaTable metaTable;
 
   private volatile boolean stopping;
@@ -97,20 +96,22 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   @Inject
   public MessagingMetricsProcessorService(MetricDatasetFactory metricDatasetFactory,
                                           @Named(Constants.Metrics.TOPIC_PREFIX) String topicPrefix,
-                                          @Assisted Set<Integer> topicNumbers,
                                           MessagingService messagingService,
                                           SchemaGenerator schemaGenerator,
                                           DatumReaderFactory readerFactory,
                                           MetricStore metricStore,
-                                          @Named(Constants.Metrics.MESSAGING_FETCHER_LIMIT) int fetcherLimit) {
-    this(metricDatasetFactory, topicPrefix, topicNumbers, messagingService,
+                                          @Named(Constants.Metrics.MESSAGING_FETCHER_LIMIT) int fetcherLimit,
+                                          @Assisted Set<Integer> topicNumbers,
+                                          @Assisted MetricsContext metricsContext) {
+    this(metricDatasetFactory, topicPrefix, topicNumbers, metricsContext, messagingService,
          schemaGenerator, readerFactory, metricStore, fetcherLimit, 1000);
   }
 
   @VisibleForTesting
   MessagingMetricsProcessorService(MetricDatasetFactory metricDatasetFactory,
                                    @Named(Constants.Metrics.TOPIC_PREFIX) String topicPrefix,
-                                   @Assisted Set<Integer> topicNumbers,
+                                   Set<Integer> topicNumbers,
+                                   MetricsContext metricsContext,
                                    MessagingService messagingService,
                                    SchemaGenerator schemaGenerator,
                                    DatumReaderFactory readerFactory,
@@ -131,18 +132,14 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
       throw Throwables.propagate(e);
     }
     this.metricStore = metricStore;
+    this.metricStore.setMetricsContext(metricsContext);
     this.fetcherLimit = fetcherLimit;
-    this.metricsContextMap = Collections.emptyMap();
+    this.metricsContextMap = metricsContext.getTags();
     this.processMetricsThreads = new ArrayList<>();
     this.records = new ConcurrentLinkedDeque<>();
     this.topicMessageIds = new ConcurrentHashMap<>();
     this.persistingFlag = new AtomicBoolean();
     this.metricsProcessIntervalMillis = metricsProcessIntervalMillis;
-  }
-
-  public void setMetricsContext(MetricsContext metricsContext) {
-    this.metricsContextMap = metricsContext.getTags();
-    metricStore.setMetricsContext(metricsContext);
   }
 
   private MetricsConsumerMetaTable getMetaTable() {
@@ -286,8 +283,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         fetcher.setLimit(fetcherLimit);
         byte[] lastMessageId = topicMessageIds.get(topicIdMetaKey);
         if (lastMessageId != null) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Start fetching from lastMessageId = {}", Bytes.toStringBinary(lastMessageId));
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("Start fetching from lastMessageId = {}", Bytes.toStringBinary(lastMessageId));
           }
           fetcher.setStartMessage(lastMessageId, false);
         } else {

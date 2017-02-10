@@ -16,12 +16,6 @@
 
 package co.cask.cdap.logging;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
-
-import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -65,49 +59,4 @@ public final class LoggingConfiguration {
   public static final long DEFAULT_LOG_SAVER_TOPIC_WAIT_SLEEP_MS = TimeUnit.MILLISECONDS.convert(10, TimeUnit.SECONDS);
 
   private LoggingConfiguration() {}
-
-  /**
-   * Given a string of format "host1:port1,host2:port2", the function returns a list of Kafka hosts.
-   * @param seedBrokers String to parse the host/port list from.
-   * @return list of Kafka hosts.
-   */
-  public static List<KafkaHost> getKafkaSeedBrokers(String seedBrokers) {
-    List<KafkaHost> kafkaHosts = Lists.newArrayList();
-    for (String hostPort : Splitter.on(",").trimResults().split(seedBrokers)) {
-      Iterable<String> hostPortList = Splitter.on(":").trimResults().split(hostPort);
-
-      Iterator<String> it = hostPortList.iterator();
-      kafkaHosts.add(new KafkaHost(it.next(), Integer.parseInt(it.next())));
-    }
-    return kafkaHosts;
-  }
-
-  /**
-   * Represents a Kafka host with hostname and port.
-   */
-  public static class KafkaHost {
-    private final String hostname;
-    private final int port;
-
-    public KafkaHost(String hostname, int port) {
-      this.hostname = hostname;
-      this.port = port;
-    }
-
-    public String getHostname() {
-      return hostname;
-    }
-
-    public int getPort() {
-      return port;
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("hostname", hostname)
-        .add("port", port)
-        .toString();
-    }
-  }
 }

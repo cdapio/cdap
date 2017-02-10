@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.metrics.process;
 
+import co.cask.cdap.api.metrics.MetricsContext;
+
 import java.util.Set;
 
 /**
@@ -22,5 +24,5 @@ import java.util.Set;
  */
 public interface MessagingMetricsProcessorServiceFactory {
 
-  MessagingMetricsProcessorService create(Set<Integer> topicNumbers);
+  MessagingMetricsProcessorService create(Set<Integer> topicNumbers, MetricsContext metricsContext);
 }

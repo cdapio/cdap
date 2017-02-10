@@ -24,6 +24,7 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -122,17 +123,18 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
                                        injector.getInstance(MetricDatasetFactory.class),
                                        new MetricsMessageCallbackFactory(injector.getInstance(SchemaGenerator.class),
                                                                          injector.getInstance(DatumReaderFactory.class),
-                                                                         metricStore, 4), TOPIC_PREFIX, partitions);
+                                                                         metricStore, 4), TOPIC_PREFIX, partitions,
+                                       new NoopMetricsContext());
     kafkaMetricsProcessorService.startAndWait();
 
     // Intentionally set fetcher persist threshold to a small value, so that MessagingMetricsProcessorService
     // internally can persist metrics when more messages are to be fetched
     MessagingMetricsProcessorService messagingMetricsProcessorService =
       new MessagingMetricsProcessorService(injector.getInstance(MetricDatasetFactory.class), TOPIC_PREFIX,
-                                           partitions, messagingService, injector.getInstance(SchemaGenerator.class),
+                                           messagingService, injector.getInstance(SchemaGenerator.class),
                                            injector.getInstance(DatumReaderFactory.class),
                                            metricStore,
-                                           1);
+                                           1, partitions, new NoopMetricsContext());
     messagingMetricsProcessorService.startAndWait();
 
     // Publish metrics with messaging service and record expected metrics
@@ -147,10 +149,10 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
     // internally only persists metrics during terminating.
     messagingMetricsProcessorService =
       new MessagingMetricsProcessorService(injector.getInstance(MetricDatasetFactory.class), TOPIC_PREFIX,
-                                           partitions, messagingService, injector.getInstance(SchemaGenerator.class),
+                                           messagingService, injector.getInstance(SchemaGenerator.class),
                                            injector.getInstance(DatumReaderFactory.class),
                                            metricStore,
-                                           100);
+                                           100, partitions, new NoopMetricsContext());
     messagingMetricsProcessorService.startAndWait();
 
     // Publish metrics after MessagingMetricsProcessorService restarts and record expected metrics

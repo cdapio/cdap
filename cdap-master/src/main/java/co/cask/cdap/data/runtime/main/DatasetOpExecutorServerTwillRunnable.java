@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data.runtime.main;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.EntityVerifierModule;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -68,8 +67,6 @@ import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
-import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.List;
 
@@ -85,7 +82,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
   }
 
   @Override
-  protected void doInit(TwillContext context) {
+  protected Injector doInit(TwillContext context) {
     CConfiguration cConf = getCConfiguration();
     Configuration hConf = getConfiguration();
 
@@ -98,6 +95,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.DATASET_EXECUTOR));
+    return injector;
   }
 
   @VisibleForTesting
@@ -139,11 +137,8 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
   }
 
   @Override
-  protected void getServices(List<? super Service> services) {
-    services.add(injector.getInstance(ZKClientService.class));
-    services.add(injector.getInstance(KafkaClientService.class));
+  protected void addServices(List<? super Service> services) {
     services.add(injector.getInstance(AuthorizationEnforcementService.class));
-    services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(DatasetOpExecutorService.class));
     services.add(injector.getInstance(MetadataService.class));
     services.add(injector.getInstance(RemoteSystemOperationsService.class));
