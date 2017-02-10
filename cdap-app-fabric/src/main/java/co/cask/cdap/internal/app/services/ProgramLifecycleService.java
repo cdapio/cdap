@@ -425,8 +425,12 @@ public class ProgramLifecycleService extends AbstractIdleService {
       }
     }
     if (!causes.isEmpty()) {
-      throw new Exception(String.format("%d out of %d runs of the program %s failed to stop",
-                                        causes.size(), futures.size(), programId));
+      Exception exception = new Exception(String.format("%d out of %d runs of the program %s failed to stop",
+                                                        causes.size(), futures.size(), programId));
+      for (Throwable cause : causes) {
+        exception.addSuppressed(cause);
+      }
+      throw exception;
     }
   }
 
