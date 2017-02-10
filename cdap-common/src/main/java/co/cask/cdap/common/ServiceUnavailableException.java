@@ -27,12 +27,20 @@ public class ServiceUnavailableException extends RetryableException implements H
   private final String serviceName;
 
   public ServiceUnavailableException(String serviceName) {
-    super("Service '" + serviceName + "' is not available. Please wait until it is up and running.");
+    this(serviceName, "Service '" + serviceName + "' is not available. Please wait until it is up and running.");
+  }
+
+  public ServiceUnavailableException(String serviceName, String message) {
+    super(message);
     this.serviceName = serviceName;
   }
 
   public ServiceUnavailableException(String serviceName, Throwable cause) {
-    super("Service '" + serviceName + "' is not available. Please wait until it is up and running.", cause);
+    this(serviceName, "Service '" + serviceName + "' is not available. Please wait until it is up and running.", cause);
+  }
+
+  public ServiceUnavailableException(String serviceName, String message, Throwable cause) {
+    super(message, cause);
     this.serviceName = serviceName;
   }
 

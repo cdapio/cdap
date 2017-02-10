@@ -16,71 +16,44 @@
 
 package co.cask.cdap.common.namespace;
 
-import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
+import co.cask.cdap.common.internal.remote.RemoteClient;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import co.cask.http.HttpHandler;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.inject.Inject;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of {@link NamespaceQueryAdmin} that pings the internal endpoints in a {@link HttpHandler} in remote
  * system service.
  */
 public class RemoteNamespaceQueryClient extends AbstractNamespaceQueryClient {
-  private final Supplier<EndpointStrategy> endpointStrategySupplier;
+  private final RemoteClient remoteClient;
   private final AuthenticationContext authenticationContext;
 
   @Inject
   RemoteNamespaceQueryClient(final DiscoveryServiceClient discoveryClient, CConfiguration cConf,
                              AuthenticationContext authenticationContext) {
-    this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
-      @Override
-      public EndpointStrategy get() {
-        return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
-      }
-    });
+    this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP,
+                                         new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
     this.authenticationContext = authenticationContext;
   }
 
   @Override
   protected HttpResponse execute(HttpRequest request) throws IOException {
-    return HttpRequests.execute(addUserIdHeader(request), new DefaultHttpRequestConfig(false));
+    return remoteClient.execute(addUserIdHeader(request));
   }
 
   @Override
   protected URL resolve(String resource) throws IOException {
-    Discoverable discoverable = getNamespaceService();
-    InetSocketAddress addr = discoverable.getSocketAddress();
-    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
-      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
-    String url = String.format("%s%s:%d/%s/%s", scheme, addr.getHostName(), addr.getPort(),
-                               Constants.Gateway.API_VERSION_3_TOKEN, resource);
-    return new URL(url);
-  }
-
-  private Discoverable getNamespaceService() {
-    Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
-    if (discoverable != null) {
-      return discoverable;
-    }
-    throw new ServiceUnavailableException(Constants.Service.APP_FABRIC_HTTP);
+    return remoteClient.resolve(resource);
   }
 
   private HttpRequest addUserIdHeader(HttpRequest request) throws IOException {

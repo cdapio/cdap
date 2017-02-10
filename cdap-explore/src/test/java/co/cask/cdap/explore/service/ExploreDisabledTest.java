@@ -19,6 +19,7 @@ package co.cask.cdap.explore.service;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -103,9 +104,8 @@ public class ExploreDisabledTest {
     try {
       exploreClient.ping();
       Assert.fail("Expected not to be able to ping explore client.");
-    } catch (Exception e) {
-      Assert.assertTrue(e.getMessage().contains("Cannot discover service " +
-                                                  Constants.Service.EXPLORE_HTTP_USER_SERVICE));
+    } catch (ServiceUnavailableException e) {
+      // expected
     }
 
     datasetFramework = injector.getInstance(DatasetFramework.class);

@@ -138,7 +138,7 @@ public final class Retries {
       try {
         V v = callable.call();
         if (failures > 0) {
-          LOG.debug("Retry succeeded after {} retries and %d ms.", failures, System.currentTimeMillis() - startTime);
+          LOG.debug("Retry succeeded after {} retries and {} ms.", failures, System.currentTimeMillis() - startTime);
         }
         return v;
       } catch (Throwable t) {
