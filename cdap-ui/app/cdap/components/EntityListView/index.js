@@ -37,7 +37,7 @@ import Page404 from 'components/404';
 require('./EntityListView.scss');
 import ee from 'event-emitter';
 
-const defaultFilter = [];
+const defaultFilter = ['app', 'artifact', 'dataset', 'stream'];
 
 class EntityListView extends Component {
   constructor(props) {
@@ -101,9 +101,7 @@ class EntityListView extends Component {
     this.state = {
       filter: defaultFilter,
       sortObj: this.sortOptions[4],
-      isSortDisabled: false,
       query: '',
-      isSearchDisabled: false,
       entities: [],
       selectedEntity: null,
       numPages: 1,
@@ -161,12 +159,12 @@ class EntityListView extends Component {
       queryObject.query !== this.state.query &&
       queryObject.page !== this.state.currentPage
     ) {
-      this.updateData(queryObject.query, queryObject.filter, queryObject.sort, nextProps.params.namespace, queryObject.page);
+      this.updateData(queryObject.query, queryObject.filter, queryObject.sort, nextProps.params.namespace, 1);
       this.setState({
         filter: queryObject.filter,
         sortObj: queryObject.sort,
         query: queryObject.query,
-        currentPage: queryObject.page,
+        currentPage: 1,
         loading: true,
       });
     }
@@ -267,11 +265,12 @@ class EntityListView extends Component {
         let namespaces = NamespaceStore.getState().namespaces.map(ns => ns.name);
         if (namespaces.length && namespaces.indexOf(selectedNamespace) === -1) {
           this.setState({
-            notFound:true
+            notFound: true
           });
         } else {
           this.setState({
-            notFound: false
+            notFound: false,
+            currentPage: 1
           }, () => {
             this.calculatePageSize();
             this.updateData();
@@ -381,8 +380,6 @@ class EntityListView extends Component {
       offset: offset
     };
 
-    let isSortDisabled = typeof query === 'string' && query.length ? true : false;
-    let isSearchDisabled = sortObj.fullSort === 'none' ? false : true;
     if (typeof query === 'string' && query.length) {
       params.query = `${query}*`;
     } else {
@@ -404,8 +401,6 @@ class EntityListView extends Component {
       })
       .subscribe((res) => {
         this.setState({
-          isSortDisabled,
-          isSearchDisabled,
           entities: res,
           total: total,
           loading: false,
@@ -420,8 +415,6 @@ class EntityListView extends Component {
 
         // On Error: render page as if there are no results found
         this.setState({
-          isSortDisabled,
-          isSearchDisabled,
           loading: false,
           entityErr: typeof err === 'object' ? err.response : err,
           errStatusCode: err.statusCode
@@ -472,10 +465,9 @@ class EntityListView extends Component {
   }
 
   handleSortClick(option) {
-    let isSearchDisabled = option.fullSort === 'none' ? false : true;
     this.setState({
       sortObj : option,
-      isSearchDisabled,
+      query: '',
       selectedEntity: null,
       currentPage: 1
     }, () => {
@@ -484,11 +476,13 @@ class EntityListView extends Component {
   }
 
   handleSearch(query) {
-    let isSortDisabled = typeof query === 'string' && query.length ? true : false;
+    let sortObj = this.sortOptions[0];
+    if (query.length === 0) {
+      sortObj = this.sortOptions[4]; // search text is empty, revert to default ('Newest')
+    }
     this.setState({
       query,
-      isSortDisabled,
-      sortObj: this.sortOptions[0],
+      sortObj,
       selectedEntity: null,
       currentPage: 1
     }, () => {
@@ -589,7 +583,6 @@ class EntityListView extends Component {
   }
 
   render() {
-
     if (this.state.notFound) {
       return (
         <div className="entity-list-view">
@@ -637,11 +630,9 @@ class EntityListView extends Component {
           onFilterClick={this.handleFilterClick.bind(this)}
           activeFilter={this.state.filter}
           sortOptions={this.sortOptions}
-          isSortDisabled={this.state.isSortDisabled}
           activeSort={this.state.sortObj}
           onSortClick={this.handleSortClick.bind(this)}
           onSearch={this.handleSearch.bind(this)}
-          isSearchDisabled={this.state.isSearchDisabled}
           searchText={this.state.query}
           onPageChange={this.handlePageChange}
         />

@@ -95,9 +95,7 @@ export default class EntityListInfo extends Component {
       } else {
         subtitle = `${text.displaySome} ${activeFilterString}`;
       }
-      if (activeSort) {
-        subtitle += `, ${text.sortedBy} ${activeSort.displayName}`;
-      }
+      subtitle += `, ${text.sortedBy} ${activeSort.displayName}`;
     }
 
     return (

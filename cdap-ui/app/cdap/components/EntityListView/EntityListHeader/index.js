@@ -84,14 +84,9 @@ export default class EntityListHeader extends Component {
   }
   render() {
     let tooltipId = 'filter-tooltip-target-id';
-    const placeholder = this.props.isSearchDisabled ?
-      T.translate('features.EntityListView.Header.search-disabled-placeholder')
-    :
-      T.translate('features.EntityListView.Header.search-placeholder')
-    ;
+    const placeholder = T.translate('features.EntityListView.Header.search-placeholder');
     const sortDropdown = (
       <Dropdown
-        disabled={this.props.isSortDisabled}
         isOpen={this.state.isSortExpanded}
         toggle={this.handleSortToggle.bind(this)}
         id={tooltipId}
@@ -100,17 +95,12 @@ export default class EntityListHeader extends Component {
           tag='div'
           className="sort-toggle"
         >
-          {
-            this.state.activeSort ?
-              <span>{this.state.activeSort.displayName}</span>
-            :
-              'Relevance'
-          }
+          <span>{this.state.activeSort.displayName}</span>
           <span className="fa fa-angle-down float-xs-right"></span>
         </DropdownToggle>
         <DropdownMenu>
           {
-            this.state.sortOptions.map((option, index) => {
+            this.state.sortOptions.slice(1).map((option, index) => {
               return (
                 <DropdownItem
                   key={index}
@@ -228,6 +218,5 @@ EntityListHeader.propTypes = {
   isSortDisabled: PropTypes.bool,
   onSortClick: PropTypes.func,
   onSearch: PropTypes.func,
-  isSearchDisabled: PropTypes.bool,
   searchText: PropTypes.string,
 };
