@@ -15,7 +15,9 @@
 -->
 <fieldset ng-disabled="MyDataStreamsPipelineSettingsCtrl._isDisabled">
   <div class="pipeline-settings-content">
-    <my-card title="Batch Interval" class="batch-interval">
+    <my-card title="Batch Interval"
+             class="batch-interval"
+             tooltip="'Batch Interval specifies the frequency at which the sources will create new micro batches of data. It must be a number followed by a time unit, with \'s\' for seconds, \'m\' for minutes, and \'h\' for hours. e.g. \'10s\' will be interpreted as ten seconds. This means that every ten seconds, a new micro batch of data will be generated.'">
       <div class="batchinterval-wrapper">
         <input type="text"
                ng-model="MyDataStreamsPipelineSettingsCtrl.batchInterval"

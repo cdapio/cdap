@@ -24,10 +24,7 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.io.Processor;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -36,7 +33,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
-import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.meta.LoggingStoreTableUtil;
@@ -44,9 +40,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionFailureException;
@@ -57,11 +51,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -72,11 +64,10 @@ public class FileMetaDataManager {
 
   private static final byte[] ROW_KEY_PREFIX = LoggingStoreTableUtil.FILE_META_ROW_KEY_PREFIX;
   private static final byte[] ROW_KEY_PREFIX_END = Bytes.stopKeyForPrefix(ROW_KEY_PREFIX);
-  private static final NavigableMap<?, ?> EMPTY_MAP = Maps.unmodifiableNavigableMap(new TreeMap());
 
   private final RootLocationFactory rootLocationFactory;
-  private final NamespacedLocationFactory namespacedLocationFactory;
-  private final String logBaseDir;
+
+
   private final Impersonator impersonator;
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
@@ -89,8 +80,6 @@ public class FileMetaDataManager {
                       NamespacedLocationFactory namespacedLocationFactory, Impersonator impersonator,
                       DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     this.rootLocationFactory = rootLocationFactory;
-    this.namespacedLocationFactory = namespacedLocationFactory;
-    this.logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
     this.impersonator = impersonator;
     this.datasetFramework = datasetFramework;
     this.transactional = Transactions.createTransactionalWithRetry(
@@ -112,8 +101,8 @@ public class FileMetaDataManager {
    * Persists meta data associated with a log file.
    *
    * @param loggingContext logging context containing the meta data.
-   * @param startTimeMs start log time associated with the file.
-   * @param location log file.
+   * @param startTimeMs    start log time associated with the file.
+   * @param location       log file.
    */
   public void writeMetaData(final LoggingContext loggingContext,
                             final long startTimeMs,
@@ -124,8 +113,8 @@ public class FileMetaDataManager {
   /**
    * Persists meta data associated with a log file.
    * @param logPartition partition name that is used to group log messages
-   * @param startTimeMs start log time associated with the file.
-   * @param location log file.
+   * @param startTimeMs  start log time associated with the file.
+   * @param location     log file.
    */
   private void writeMetaData(final String logPartition,
                              final long startTimeMs,
@@ -144,27 +133,28 @@ public class FileMetaDataManager {
   }
 
   /**
-   * Scans meta data and gathers all the files up to a limited number of records.
+   * Scans meta data and gathers the metadata files in batches of configurable batch size
    *
-   * @param startTableKey row key for the scan and column from where scan will be started
-   * @param limit batch size for number of columns to be read
-   * @param processor processor to process files
-   * @return next row key + start column for next iteration, returns null if end of table
+   * @param tableKey           table key with start and stop key for row and column from where scan will be started
+   * @param batchSize          batch size for number of columns to be read
+   * @param metaEntryProcessor Collects metadata files
+   * @return next start and stop key + start column for next iteration, returns null if end of table
    */
   @Nullable
-  public TableKey scanFiles(final TableKey startTableKey, final int limit,
-                            final Processor<URI, Set<URI>> processor) {
+  public TableKey scanFiles(@Nullable final TableKey tableKey,
+                            final long batchSize, final MetaEntryProcessor metaEntryProcessor) {
     try {
       return Transactions.execute(transactional, new TxCallable<TableKey>() {
         @Override
         public TableKey call(DatasetContext context) throws Exception {
-          byte[] startKey = getRowKey(startTableKey.getRowKey());
-          byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
-          byte[] startColumn = startTableKey.getStartColumn();
+          Table table = getMetaTable(context);
+          byte[] startKey = tableKey == null ? ROW_KEY_PREFIX : getRowKey(tableKey.getStartKey());
+          byte[] startColumn = tableKey == null ? null : tableKey.getStartColumn();
+          byte[] stopKey = getStopKey(tableKey);
 
-          try (Scanner scanner = getMetaTable(context).scan(startKey, stopKey)) {
+          try (Scanner scanner = table.scan(startKey, stopKey)) {
             Row row;
-            int colCount = 0;
+            long colCount = 0;
 
             while ((row = scanner.next()) != null) {
               // Get the next logging context
@@ -174,7 +164,6 @@ public class FileMetaDataManager {
               // Go through files for a logging context
               for (final Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
                 byte[] colName = entry.getKey();
-                byte[] colValue = entry.getValue();
 
                 // while processing a row key, if start column is present, then it should be considered only for the
                 // first time. Skip any column less/equal to start column
@@ -182,16 +171,18 @@ public class FileMetaDataManager {
                   continue;
                 }
 
-                // Stop if we exceeded the limit
-                if (colCount >= limit) {
-                  //  return current row key if we exceeded the limit
-                  return new TableKey(getLogPartition(rowKey), stopCol);
+                // Stop if we exceeded the batchSize
+                if (colCount >= batchSize) {
+                  byte[] key = tableKey == null ? ROW_KEY_PREFIX_END : tableKey.getStopKey();
+                  //  return current row key if we exceeded the batchSize
+                  return new TableKey(getLogPartition(rowKey).getBytes(), key, stopCol);
                 }
 
                 stopCol = colName;
                 colCount++;
-                String absolutePath = URI.create(Bytes.toString(colValue)).getPath();
-                processor.process(Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath).toURI());
+
+                metaEntryProcessor.process(new ScannedEntryInfo(rowKey, colName, getNamespaceId(rowKey),
+                                                                new URI(Bytes.toString(entry.getValue()))));
               }
               startColumn = null;
             }
@@ -204,114 +195,108 @@ public class FileMetaDataManager {
     }
   }
 
+  private byte[] getStopKey(@Nullable TableKey tableKey) {
+    byte[] stopKey;
+    if (tableKey == null) {
+      stopKey = ROW_KEY_PREFIX_END;
+    } else if (Arrays.equals(tableKey.getStopKey(), ROW_KEY_PREFIX_END)) {
+      stopKey = tableKey.getStopKey();
+    } else {
+      stopKey = getRowKey(tableKey.getStopKey());
+    }
+    return stopKey;
+  }
+
   /**
-   * Class which holds table key (row key + column) for log meta
+   * Remove metadata for provided list of log files
+   *
+   * @param entriesToRemove List of {@link ScannedEntryInfo} of files to be removed to namespace
+   * @return count of removed meta files
+   */
+  public long cleanMetadata(final List<ScannedEntryInfo> entriesToRemove) {
+    try {
+      return Transactions.execute(transactional, new TxCallable<Long>() {
+
+        @Override
+        public Long call(DatasetContext context) throws Exception {
+          Table table = getMetaTable(context);
+          long count = 0;
+
+          for (ScannedEntryInfo entryInfo : entriesToRemove) {
+            table.delete(entryInfo.getRowKey(), entryInfo.getColumn());
+            count++;
+          }
+
+          LOG.debug("Total deleted metadata entries {}", count);
+          return count;
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw new RuntimeException(Objects.firstNonNull(e.getCause(), e));
+    }
+  }
+
+  /**
+   * Class which holds table key (start and stop key + column) for log meta
    */
   public static final class TableKey {
-    private final String rowKey;
+    private final byte[] startKey;
+    private final byte[] stopKey;
+    @Nullable
     private final byte[] startColumn;
 
-    public TableKey(String rowKey, @Nullable byte[] startColumn) {
-      this.rowKey = rowKey;
+    public TableKey(byte[] startKey, byte[] stopKey, @Nullable byte[] startColumn) {
+      this.startKey = startKey;
+      this.stopKey = stopKey;
       this.startColumn = startColumn;
     }
 
-    public String getRowKey() {
-      return rowKey;
+    public byte[] getStartKey() {
+      return startKey;
     }
 
+    public byte[] getStopKey() {
+      return stopKey;
+    }
+
+    @Nullable
     public byte[] getStartColumn() {
       return startColumn;
     }
   }
 
   /**
-   * Deletes meta data until a given time, while keeping the latest meta data even if less than the given time.
-   *
-   * @param untilTime time until the meta data will be deleted.
-   * @param callback callback called before deleting a meta data column.
-   * @return total number of columns deleted.
+   * Class which holds information about scanned meta entries
    */
-  public int cleanMetaData(final long untilTime, final DeleteCallback callback) throws Exception {
-    return Transactions.execute(transactional, new TxCallable<Integer>() {
-      @Override
-      public Integer call(DatasetContext context) throws Exception {
-        Table table = getMetaTable(context);
-        int deletedColumns = 0;
-        try (Scanner scanner = table.scan(ROW_KEY_PREFIX, ROW_KEY_PREFIX_END)) {
-          Row row;
-          while ((row = scanner.next()) != null) {
-            byte[] rowKey = row.getRow();
-            final NamespaceId namespaceId = getNamespaceId(rowKey);
-            String namespacedLogDir = null;
-            try {
-              namespacedLogDir = impersonator.doAs(namespaceId, new Callable<String>() {
-                @Override
-                public String call() throws Exception {
-                  return LoggingContextHelper.getNamespacedBaseDirLocation(namespacedLocationFactory,
-                                                                           logBaseDir, namespaceId,
-                                                                           impersonator).toString();
-                }
-              });
-            } catch (Exception e) {
-              if (e instanceof NamespaceNotFoundException) {
-                LOG.warn("Namespace {} does not exist. Only delete metadata for it", namespaceId.getEntityName(), e);
-              } else {
-                LOG.warn("Error while accessing namespace {} for log cleanup, skipping it",
-                         namespaceId.getEntityName(), e);
-                continue;
-              }
-            }
 
-            for (final Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
-              try {
-                byte[] colName = entry.getKey();
-                String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
-                URI file = Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath).toURI();
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug("Got file {} with start time {}", file, Bytes.toLong(colName));
-                }
+  public static final class ScannedEntryInfo {
+    private final byte[] rowKey;
+    private final byte[] column;
+    private final NamespaceId namespace;
+    private final URI uri;
 
-                if (Strings.isNullOrEmpty(namespacedLogDir)) {
-                  LOG.warn("File {} is not present and will be deleted from metadata because namespace {} " +
-                             "does not exist", Bytes.toString(entry.getValue()), namespaceId.getEntityName());
-                  table.delete(rowKey, colName);
-                  deletedColumns++;
-                  continue;
-                }
+    public ScannedEntryInfo(byte[] rowKey, byte[] column, NamespaceId namespace, URI uri) {
+      this.rowKey = rowKey;
+      this.column = column;
+      this.namespace = namespace;
+      this.uri = uri;
+    }
 
-                Location fileLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
-                  @Override
-                  public Location call() throws Exception {
-                    String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
-                    return Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath);
-                  }
-                });
+    public byte[] getRowKey() {
+      return rowKey;
+    }
 
-                if (!fileLocation.exists()) {
-                  LOG.warn("Log file {} does not exist, but metadata is present", file);
-                  table.delete(rowKey, colName);
-                  deletedColumns++;
-                } else if (fileLocation.lastModified() < untilTime) {
-                  // Delete if file last modified time is less than untilTime
-                  callback.handle(namespaceId, fileLocation, namespacedLogDir);
-                  table.delete(rowKey, colName);
-                  deletedColumns++;
-                }
-              } catch (Exception e) {
-                if (e instanceof NamespaceNotFoundException) {
-                  LOG.warn("File {} is not present because namespace {} does not exist",
-                           Bytes.toString(entry.getValue()), namespaceId.getEntityName());
-                } else {
-                  LOG.error("Got exception deleting file {}", Bytes.toString(entry.getValue()), e);
-                }
-              }
-            }
-          }
-        }
-        return deletedColumns;
-      }
-    });
+    public byte[] getColumn() {
+      return column;
+    }
+
+    public NamespaceId getNamespace() {
+      return namespace;
+    }
+
+    public URI getUri() {
+      return uri;
+    }
   }
 
   private String getLogPartition(byte[] rowKey) {
@@ -323,7 +308,7 @@ public class FileMetaDataManager {
   private NamespaceId getNamespaceId(byte[] rowKey) {
     String logPartition = getLogPartition(rowKey);
     Preconditions.checkArgument(logPartition != null, "Log partition cannot be null");
-    String [] partitions = logPartition.split(":");
+    String[] partitions = logPartition.split(":");
     Preconditions.checkArgument(partitions.length == 3,
                                 "Expected log partition to be in the format <ns>:<entity>:<sub-entity>");
     // don't care about the app or the program, only need the namespace
@@ -334,10 +319,18 @@ public class FileMetaDataManager {
     return Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(logPartition));
   }
 
+  private byte[] getRowKey(byte[] logPartition) {
+    return Bytes.add(ROW_KEY_PREFIX, logPartition);
+  }
+
   /**
-   * Implement to receive a location before its meta data is removed.
+   * Meta entry processor
+   *
+   * @param <T> Type of the result of processing all the inputs
    */
-  public interface DeleteCallback {
-    void handle(NamespaceId namespaceId, Location location, String namespacedLogBaseDir);
+  public interface MetaEntryProcessor<T> {
+    void process(ScannedEntryInfo info);
+
+    T getCollectedEntries();
   }
 }

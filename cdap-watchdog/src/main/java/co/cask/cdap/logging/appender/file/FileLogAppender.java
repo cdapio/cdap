@@ -57,6 +57,7 @@ public class FileLogAppender extends LogAppender {
 
   private static final String APPENDER_NAME = "FileLogAppender";
 
+  private final CConfiguration cConf;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final RootLocationFactory rootLocationFactory;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
@@ -82,6 +83,7 @@ public class FileLogAppender extends LogAppender {
                   NamespacedLocationFactory namespacedLocationFactory, Impersonator impersonator,
                   FileMetaDataManager fileMetaDataManager) {
     setName(APPENDER_NAME);
+    this.cConf = cConf;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.rootLocationFactory = rootLocationFactory;
     this.impersonator = impersonator;
@@ -143,7 +145,8 @@ public class FileLogAppender extends LogAppender {
       logFileWriter = new SimpleLogFileWriter(avroFileWriter, checkpointIntervalMs);
 
       LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, namespaceQueryAdmin,
-                                             namespacedLocationFactory, logBaseDir, retentionDurationMs, impersonator);
+                                             namespacedLocationFactory, logBaseDir, retentionDurationMs, cConf,
+                                             impersonator);
       scheduledExecutor.scheduleAtFixedRate(logCleanup, 10, logCleanupIntervalMins, TimeUnit.MINUTES);
     } catch (Exception e) {
       close();

@@ -76,6 +76,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -103,13 +104,15 @@ public class LogCleanupTest {
   private static RootLocationFactory rootLocationFactory;
   private static Impersonator impersonator;
   private static NamespaceAdmin namespaceQueryAdmin;
+  private static CConfiguration cConf;
 
   @BeforeClass
   public static void init() throws Exception {
     Configuration hConf = HBaseConfiguration.create();
-    final CConfiguration cConf = CConfiguration.create();
+    cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.CFG_HDFS_NAMESPACE, cConf.get(Constants.CFG_LOCAL_DATA_DIR));
+    cConf.set(LoggingConfiguration.LOG_CLEANUP_MAX_NUM_FILES, "10");
     logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
     namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
     injector = Guice.createInjector(
@@ -170,6 +173,9 @@ public class LogCleanupTest {
     // Setup directories
     LoggingContext dummyContext = new FlowletLoggingContext("ns", "app", "flw", "flwt", "run", "instance");
 
+    NamespaceMeta finalMetadata = new NamespaceMeta.Builder().setName("ns").build();
+    namespaceQueryAdmin.create(finalMetadata);
+
     Location namespacedLogsDir = namespacedLocationFactory.get(Id.Namespace.from("ns")).append(logBaseDir);
     Location contextDir = namespacedLogsDir.append("app").append("flw");
     List<Location> toDelete = Lists.newArrayList();
@@ -223,7 +229,8 @@ public class LogCleanupTest {
     toDelete.get(index).delete();
 
     LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, namespaceQueryAdmin,
-                                           namespacedLocationFactory, logBaseDir, RETENTION_DURATION_MS, impersonator);
+                                           namespacedLocationFactory, logBaseDir, RETENTION_DURATION_MS, cConf,
+                                           impersonator);
     logCleanup.run();
     logCleanup.run();
 
@@ -296,7 +303,7 @@ public class LogCleanupTest {
     }
 
     LogCleanup logCleanup = new LogCleanup(null, rootLocationFactory, namespaceQueryAdmin, namespacedLocationFactory,
-                                           logBaseDir, RETENTION_DURATION_MS, impersonator);
+                                           logBaseDir, RETENTION_DURATION_MS, cConf, impersonator);
     for (Location location : Sets.newHashSet(Iterables.concat(nonEmptyDirs, emptyDirs))) {
       logCleanup.deleteEmptyDir(namespacedLogsDir1.toString(), location);
       logCleanup.deleteEmptyDir(namespacedLogsDir2.toString(), location);
@@ -326,7 +333,7 @@ public class LogCleanupTest {
     NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
 
     LogCleanup logCleanup = new LogCleanup(null, rootLocationFactory, namespaceQueryAdmin, namespacedLocationFactory,
-                                           logBaseDir, RETENTION_DURATION_MS, impersonator);
+                                           logBaseDir, RETENTION_DURATION_MS, cConf, impersonator);
 
     logCleanup.deleteEmptyDir(namespacesDir + "/ns/" + logBaseDir, baseDir);
     // Assert base dir exists
@@ -387,7 +394,8 @@ public class LogCleanupTest {
     generateFiles(fileMetaDataManager, deletionBoundary, dummyContext, contextDir, withMetaFiles, noMetaFiles);
 
     LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, namespaceQueryAdmin,
-                                           namespacedLocationFactory, logBaseDir, RETENTION_DURATION_MS, impersonator);
+                                           namespacedLocationFactory, logBaseDir, RETENTION_DURATION_MS, cConf,
+                                           impersonator);
     logCleanup.run();
 
     for (Location location : withMetaFiles) {
@@ -438,7 +446,8 @@ public class LogCleanupTest {
     addFilesModAfterRetention(fileMetaDataManager, deletionBoundary, dummyContext, nsContextDir, notToDelete);
 
     LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, namespaceQueryAdmin,
-                                           namespacedLocationFactory, logBaseDir, RETENTION_DURATION_MS, impersonator);
+                                           namespacedLocationFactory, logBaseDir, RETENTION_DURATION_MS, cConf,
+                                           impersonator);
     final SetMultimap<String, Location> parentDirs = HashMultimap.create();
     final Map<String, NamespaceId> namespaceIdMap = new HashMap<>();
 
@@ -491,14 +500,125 @@ public class LogCleanupTest {
     }
 
     LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, namespaceQueryAdmin,
-                                           namespacedLocationFactory, logBaseDir, RETENTION_DURATION_MS, impersonator);
+                                           namespacedLocationFactory, logBaseDir, RETENTION_DURATION_MS, cConf,
+                                           impersonator);
 
-    logCleanup.filterLocationsWithMeta(new NamespaceId("ns"), toDelete , 5);
+    logCleanup.filterLocationsWithMeta(new NamespaceId("ns"), toDelete, 5);
 
     // Assert files with metadata is not deleted
     Assert.assertEquals(0, toDelete.size());
     // delete these meta files
     logCleanup.run();
+  }
+
+  @Test
+  public void testCleanupLogFiles() throws Exception {
+    FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
+    NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    FileMetaDataReader fileMetadataReader = injector.getInstance(FileMetaDataReader.class);
+
+    // Deletion boundary
+    long deletionBoundary = System.currentTimeMillis() - RETENTION_DURATION_MS;
+    LOG.info("deletionBoundary = {}", deletionBoundary);
+
+    // Setup directories
+    LoggingContext dummyContext = new FlowletLoggingContext("ns", "app", "flw", "flwt", "run", "instance");
+
+    Location nsContextDir = createContextDir("ns", namespacedLocationFactory);
+
+    List<Location> toDelete = Lists.newArrayList();
+    for (int i = 0; i < 5; ++i) {
+      toDelete.add(nsContextDir.append("2012-12-1" + i + "/del-1"));
+      toDelete.add(nsContextDir.append("2012-12-1" + i + "/del-2"));
+      toDelete.add(nsContextDir.append("2012-12-1" + i + "/del-3"));
+      toDelete.add(nsContextDir.append("2012-12-1" + i + "/del-4"));
+    }
+
+    Assert.assertFalse(toDelete.isEmpty());
+
+    List<Location> notDelete = Lists.newArrayList();
+    for (int i = 0; i < 5; ++i) {
+      notDelete.add(nsContextDir.append("2012-12-2" + i + "/nodel-1"));
+      notDelete.add(nsContextDir.append("2012-12-2" + i + "/nodel-2"));
+      notDelete.add(nsContextDir.append("2012-12-2" + i + "/nodel-3"));
+    }
+
+    Assert.assertFalse(notDelete.isEmpty());
+
+    int counter = 0;
+    for (Location location : toDelete) {
+      long modTime = deletionBoundary - counter - 10000;
+      fileMetaDataManager.writeMetaData(dummyContext, modTime,
+                                        createFile(location, modTime));
+      counter++;
+    }
+
+    for (Location location : notDelete) {
+      long modTime = deletionBoundary + counter + 10000;
+      fileMetaDataManager.writeMetaData(dummyContext, modTime,
+                                        createFile(location, modTime));
+      counter++;
+    }
+
+    Assert.assertEquals(locationListsToString(toDelete, notDelete),
+                        toDelete.size() + notDelete.size(), fileMetadataReader
+                          .listFiles(LoggingContextHelper.getLogPathIdentifier(dummyContext), 0,
+                                     Long.MAX_VALUE).size());
+
+    LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, namespaceQueryAdmin,
+                                           namespacedLocationFactory, logBaseDir, RETENTION_DURATION_MS, cConf,
+                                           impersonator);
+    final SetMultimap<String, Location> parentDirs = HashMultimap.create();
+    final Map<String, NamespaceId> namespaceIdMap = new HashMap<>();
+
+    logCleanup.cleanupFiles(deletionBoundary, cConf.getLong(LoggingConfiguration.LOG_CLEANUP_MAX_NUM_FILES),
+                            namespaceIdMap, parentDirs);
+
+    for (Location location : toDelete) {
+      Assert.assertFalse("Location " + location + " is not deleted!", location.exists());
+    }
+
+    for (Location location : notDelete) {
+      Assert.assertTrue("Location " + location + " is deleted!", location.exists());
+    }
+
+    // Assert metadata for all deleted files is gone
+    List<LogLocation> remainingFiles = fileMetadataReader
+      .listFiles(LoggingContextHelper.getLogPathIdentifier(dummyContext), 0, Long.MAX_VALUE);
+
+    Assert.assertEquals(notDelete.size(), remainingFiles.size());
+
+
+    List<Location> remainingLocations = new ArrayList<>();
+    for (LogLocation logLocation : remainingFiles) {
+      remainingLocations.add(logLocation.getLocation());
+    }
+
+    Set<Location> metadataForDeletedFiles =
+      Sets.intersection(new HashSet<>(remainingLocations), new HashSet<>(toDelete)).immutableCopy();
+
+    Assert.assertEquals(ImmutableSet.of(), metadataForDeletedFiles);
+    cleanupMetadata(fileMetaDataManager);
+  }
+
+  private void cleanupMetadata(FileMetaDataManager fileMetaDataManager) {
+    FileMetaDataManager.MetaEntryProcessor<List<FileMetaDataManager.ScannedEntryInfo>> metaFileCollector =
+      new FileMetaDataManager.MetaEntryProcessor<List<FileMetaDataManager.ScannedEntryInfo>>() {
+        List<FileMetaDataManager.ScannedEntryInfo> scannedFiles = new ArrayList<>();
+
+        @Override
+        public void process(FileMetaDataManager.ScannedEntryInfo scannedFileInfo) {
+          scannedFiles.add(scannedFileInfo);
+        }
+
+        @Override
+        public List<FileMetaDataManager.ScannedEntryInfo> getCollectedEntries() {
+          return scannedFiles;
+        }
+      };
+
+    fileMetaDataManager.scanFiles(null, 200, metaFileCollector);
+    fileMetaDataManager.cleanMetadata(metaFileCollector.getCollectedEntries());
   }
 
   private Location createContextDir(String namespace, NamespacedLocationFactory namespacedLocationFactory)

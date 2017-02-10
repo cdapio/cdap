@@ -23,7 +23,11 @@ Flows and Flowlets
     Flowlets and Instances <flowlets-instances>
     Partitioning Strategies <partitioning-strategies>
 
+.. toctree::
+   :hidden:
 
+   flows
+   
 *Flows* are user-implemented real-time stream processors. They are comprised of one or
 more *Flowlets* that are wired together into a directed acyclic graph or DAG. Flowlets
 pass data between one another; each flowlet is able to perform custom logic and execute
