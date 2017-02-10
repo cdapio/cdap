@@ -20,9 +20,9 @@
 
 # CDAP config
 # The git branch to clone
-CDAP_BRANCH=${CDAP_BRANCH:-release/4.0}
+CDAP_BRANCH=${CDAP_BRANCH:-develop}
 # Optional tag to checkout - All released versions of this script should set this
-CDAP_TAG='v4.0.2'
+CDAP_TAG=''
 # The CDAP package version passed to Chef
 CDAP_VERSION=${CDAP_VERSION:-4.1.0-SNAPSHOT-1}
 # The version of Chef to install

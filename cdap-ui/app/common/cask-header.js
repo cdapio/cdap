@@ -32,4 +32,3 @@
   VersionStore,
   VersionActions
 };
-
