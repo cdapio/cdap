@@ -45,27 +45,43 @@ import java.util.Map;
 public class KafkaOffsetResolver {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaOffsetResolver.class);
 
-  // TODO determine the appropriate size
+  // TODO: (CDAP-8439) determine the appropriate size
   private static final int FETCH_SIZE = 1024 * 1024;        // Use a default fetch size.
   private static final int SO_TIMEOUT = 5 * 1000;           // 5 seconds.
   private static final long LATEST = kafka.api.OffsetRequest.LatestTime();
   private static final long EARLIEST = kafka.api.OffsetRequest.EarliestTime();
+  // A rough estimation of Kafka publishing delay of a message from the original cluster and the destination cluster
+  // during cross-cluster replication
   private static final long REPLICATION_DELAY = 5 * 60 * 1000;
-  private static final long MAX_TIME_GAP = 60 * 1000;
+  // The max mount of time that the log event time of a message with smaller offset
+  // can exceed a message with larger offset
+  private static final long MAX_TIME_GAP = 60 * 1000; // 1 min
 
   private final BrokerService brokerService;
   private final String topic;
   private final LoggingEventSerializer serializer;
 
-  public KafkaOffsetResolver(BrokerService brokerService, String topic) throws IOException {
+  public KafkaOffsetResolver(BrokerService brokerService, String topic) {
     this.brokerService = brokerService;
     this.topic = topic;
     this.serializer = new LoggingEventSerializer();
   }
 
+  /**
+   * Check whether the message fetched with the offset {@code checkpoint.getNextOffset() - 1} contains the
+   * same timestamp as in the given checkpoint. If they match, directly return {@code checkpoint.getNextOffset()}.
+   * If they don't, search for the smallest offset of the message with the same log event time
+   * as {@code checkpoint.getNextEventTime()}
+   *
+   * @param checkpoint A {@link Checkpoint} containing the next offset of a message and its log event timestamp.
+   * @param partition the partition in the topic for searching matching offset
+   * @return the next offset of the message with smallest offset and log event time equal to
+   *         {@code checkpoint.getNextEventTime()}.
+   *         {@code -1} if no such offset can be found or {@code checkpoint.getNextOffset()} is negative.
+   */
   public long getMatchingOffset(final Checkpoint checkpoint, final int partition) {
     if (checkpoint.getNextOffset() < 0) {
-      return checkpoint.getNextOffset();
+      return -1;
     }
 
     // Get BrokerInfo for constructing SimpleConsumer in OffsetFinderCallback
@@ -85,54 +101,77 @@ public class KafkaOffsetResolver {
       return checkpoint.getNextOffset();
     }
 
-    return findOffsetByTime(simpleConsumer, partition, clientId, checkpoint.getNextEventTime());
+    long smallestMatchingOffset = findOffsetByTime(simpleConsumer, partition, clientId, checkpoint.getNextEventTime());
+    if (smallestMatchingOffset >= 0) {
+      // Increment smallestMatchingOffset to get the next offset if it's a valid non-negative offset
+      smallestMatchingOffset++;
+    }
+    return smallestMatchingOffset;
   }
 
-  private long findOffsetByTime(SimpleConsumer consumer, int partition, String clientName, long targetTimestamp) {
+  /**
+   * Determine the lower-bound and upper-bound of offsets to search for the smallest offset of the message
+   * with log event time equal to {@code targetTime}, and then perform the search.
+   *
+   * @return the matching offset or {@code -1} if not found
+   */
+  private long findOffsetByTime(SimpleConsumer consumer, int partition, String clientName, long targetTime) {
     TopicAndPartition topicAndPartition = new TopicAndPartition(topic, partition);
     Map<TopicAndPartition, PartitionOffsetRequestInfo> requestInfo = new HashMap<>();
     long minOffset = fetchOffsetByTime(consumer, partition, EARLIEST); // the offset of the earliest message
     long maxOffset = fetchOffsetByTime(consumer, partition, LATEST); // the next offset after the latest message
     long endOffset = maxOffset - 1; // the offset of the latest message
     long prevOffset = Long.MAX_VALUE;
-    long requestTime = targetTimestamp + REPLICATION_DELAY;
+    // Start from (targetTime + REPLICATION_DELAY) to be safer
+    long requestTime = targetTime + REPLICATION_DELAY;
     while (true) {
       requestInfo.put(topicAndPartition, new PartitionOffsetRequestInfo(requestTime, 1));
       OffsetResponse response =
         consumer.getOffsetsBefore(new OffsetRequest(requestInfo, kafka.api.OffsetRequest.CurrentVersion(), clientName));
-      // Fetch the starting offset of the first segment whose latest message is received
-      // at the time earlier than requestTime
+      // Fetch the starting offset of the last segment whose latest latest message is published before requestTime
       long[] responseOffsets = response.offsets(topic, partition);
+      // If no offset is returned, the targetTime is earlier than all existing Kafka publishing time.
+      if (responseOffsets.length == 0) {
+        // Start searching from the earliest offset
+        return searchOffsetByTime(consumer, partition, clientName, targetTime, minOffset, endOffset);
+      }
       long offset = responseOffsets[0];
-      // If no message is received earlier than requestTime, start searching for the offset from the earliest offset
+      // If offset == maxOffset, no message is received earlier than requestTime
       if (offset == maxOffset) {
-        return searchOffsetByTime(consumer, partition, clientName, targetTimestamp, minOffset, endOffset);
+        // If requestTime is targetTime + REPLICATION_DELAY, probably REPLICATION_DELAY is overestimated.
+        // Start searching from targetTime instead;
+        if (requestTime == targetTime + REPLICATION_DELAY) {
+          requestTime = targetTime;
+          continue;
+        }
+        // If targetTime is already requested, start searching from the earliest offset
+        return searchOffsetByTime(consumer, partition, clientName, targetTime, minOffset, endOffset);
       }
       // Fetch the message with offset and get its event time
       long eventTime = getEventTimeByOffset(consumer, partition, clientName, offset);
 
       // If eventTime is smaller than 0, getting eventTime failed. Start searching from the earliest offset
       if (eventTime < 0) {
-        return searchOffsetByTime(consumer, partition, clientName, targetTimestamp, minOffset, endOffset);
+        return searchOffsetByTime(consumer, partition, clientName, targetTime, minOffset, endOffset);
       }
 
       // If the new offset is the same as the previous offset, we reach the earliest earliest message
       if (offset == prevOffset) {
-        if (eventTime > targetTimestamp + MAX_TIME_GAP) {
-          // If the event time of the earliest message is still later than targetTimestamp + MAX_TIME_GAP,
-          // probably no message in this topic-partition contains an event time equal to targetTimestamp.
+        if (eventTime > targetTime + MAX_TIME_GAP) {
+          // If the event time of the earliest message is still later than targetTime + MAX_TIME_GAP,
+          // probably no message in this topic-partition contains an event time equal to targetTime.
           // Search from minOffset for safety
-          return searchOffsetByTime(consumer, partition, clientName, targetTimestamp, minOffset, endOffset);
+          return searchOffsetByTime(consumer, partition, clientName, targetTime, minOffset, endOffset);
         } else {
-          return searchOffsetByTime(consumer, partition, clientName, targetTimestamp, offset, endOffset);
+          return searchOffsetByTime(consumer, partition, clientName, targetTime, offset, endOffset);
         }
       }
-      // If eventTime is earlier than targetTimestamp by more than MAX_TIME_GAP, start searching for the
-      // the offset corresponding the targetTimestamp should be with the range of [offset, endOffset]
-      if (eventTime < targetTimestamp - MAX_TIME_GAP) {
-        return searchOffsetByTime(consumer, partition, clientName, targetTimestamp, offset, endOffset);
-      } else if (eventTime > targetTimestamp + MAX_TIME_GAP) {
-        // if eventTime is later than targetTimestamp by more than MAX_TIME_GAP, update the endOffset to
+      // If eventTime is earlier than targetTime by more than MAX_TIME_GAP, start searching for the
+      // the offset corresponding the targetTime should be with the range of [offset, endOffset]
+      if (eventTime < targetTime - MAX_TIME_GAP) {
+        return searchOffsetByTime(consumer, partition, clientName, targetTime, offset, endOffset);
+      } else if (eventTime > targetTime + MAX_TIME_GAP) {
+        // if eventTime is later than targetTime by more than MAX_TIME_GAP, update the endOffset to
         // the current offset
         endOffset = offset;
       }
@@ -141,7 +180,13 @@ public class KafkaOffsetResolver {
     }
   }
 
-  private long searchOffsetByTime(SimpleConsumer consumer, int partition, String clientName, long targetTimestamp,
+  /**
+   * Performs a binary search to find the smallest offset of the message between {@code startOffset}
+   * and {@code endOffset} with log event time equal to {@code targetTime}.
+   *
+   * @return the matching offset or {@code -1} if not found
+   */
+  private long searchOffsetByTime(SimpleConsumer consumer, int partition, String clientName, long targetTime,
                                   long startOffset, long endOffset) {
     long minOffset = startOffset;
     long maxOffset = endOffset;
@@ -150,28 +195,35 @@ public class KafkaOffsetResolver {
     while (minOffset <= maxOffset) {
       offset = minOffset + (maxOffset - minOffset) / 2;
       long timeStamp = getEventTimeByOffset(consumer, partition, clientName, offset);
-      // if timeStamp is within the range of (targetTimestamp - MAX_TIME_GAP, targetTimestamp + MAX_TIME_GAP),
-      // targetTimestamp must be within the range of [timeStamp - MAX_TIME_GAP, timeStamp + MAX_TIME_GAP].
+      // if timeStamp is within the range of (targetTime - MAX_TIME_GAP, targetTime + MAX_TIME_GAP),
+      // targetTime must be within the range of [timeStamp - MAX_TIME_GAP, timeStamp + MAX_TIME_GAP].
       // Perform a linear search within this range.
-      if (Math.abs(timeStamp - targetTimestamp) < MAX_TIME_GAP) {
-        return linearSearchAroundOffset(consumer, partition, clientName, offset, targetTimestamp,
+      if (Math.abs(timeStamp - targetTime) < MAX_TIME_GAP) {
+        return linearSearchAroundOffset(consumer, partition, clientName, offset, targetTime,
                                         timeStamp - MAX_TIME_GAP, timeStamp + MAX_TIME_GAP);
       }
-      if (timeStamp > targetTimestamp) {
+      if (timeStamp > targetTime) {
         maxOffset = offset - 1;
       }
-      if (timeStamp < targetTimestamp) {
+      if (timeStamp < targetTime) {
         minOffset = offset + 1;
       }
     }
     return -1;
   }
 
+  /**
+   * Performs a linear search to find the smallest offset of the message with log event time
+   * equal to {@code targetTime}. Stop searching when the current message has log event time smaller than
+   * {@code minTime} or larger than {@code maxTime}
+   *
+   * @return the matching offset or {@code -1} if not found
+   */
   private long linearSearchAroundOffset(SimpleConsumer consumer, int partition, String clientName,
-                                        long offset, long targetTime, long minTime, long maxTime) {
+                                        long startOffset, long targetTime, long minTime, long maxTime) {
     long smallestMatchingOffset = -1;
-    // search backward first
-    long searchOffset = offset;
+    // search from startOffset and backward first
+    long searchOffset = startOffset;
     while (searchOffset >= 0) {
       long time = getEventTimeByOffset(consumer, partition, clientName, searchOffset);
       if (time < minTime) {
@@ -185,11 +237,10 @@ public class KafkaOffsetResolver {
     if (smallestMatchingOffset != -1) {
       return smallestMatchingOffset;
     }
-    // search forward if no matching offset found when searching backward
-    searchOffset = offset;
-
-    // The latest offset returned by consumer is 1 larger than the offset of the latest received message
+    searchOffset = startOffset;
+    // The latest offset returned by fetchOffsetByTime is 1 larger than the offset of the latest received message
     long maxOffset = fetchOffsetByTime(consumer, partition, LATEST);
+    // search forward from (startOffset + 1) if no matching offset found when searching backward
     while (++searchOffset < maxOffset) {
       long time = getEventTimeByOffset(consumer, partition, clientName, searchOffset);
       if (time == targetTime) {
@@ -213,6 +264,7 @@ public class KafkaOffsetResolver {
       if (code == ErrorMapping.OffsetOutOfRangeCode()) {
         // We asked for an invalid offset. For simple case ask for the last element to reset
         LOG.debug("FetchRequest offset: {} out of range.", requestOffset);
+        return -1;
       }
       LOG.error("Failed to fetch message for topic: {} partition: {} with error code {}.",
                 topic, partition, code);
@@ -236,7 +288,7 @@ public class KafkaOffsetResolver {
   }
 
   /**
-   * Gets earliest or latest message's offset
+   * Fetch the starting offset of the last segment whose latest message is published before the given {@code timeStamp}
    */
   private long fetchOffsetByTime(SimpleConsumer simpleConsumer, int partition, long timeStamp) {
     // If no broker, treat it as failure attempt.
@@ -256,7 +308,6 @@ public class KafkaOffsetResolver {
     long[] offsets = response.hasError() ? null : response.offsets(topic, partition);
     if (offsets == null || offsets.length <= 0) {
       short errorCode = response.errorCode(topic, partition);
-
       // If the topic partition doesn't exists, use offset 0 without logging error.
       if (errorCode != ErrorMapping.UnknownTopicOrPartitionCode()) {
         LOG.error("Failed to fetch offset for {}-{} with timestamp {}. Error: {}. Default offset to 0.",

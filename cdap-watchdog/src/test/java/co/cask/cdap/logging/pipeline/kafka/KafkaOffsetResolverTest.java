@@ -81,25 +81,41 @@ public class KafkaOffsetResolverTest {
                       }),
                     1);
 
+  // A rough estimation of Kafka publishing delay of a message from the original cluster and the destination cluster
+  // during cross-cluster replication
+  private static final long REPLICATION_DELAY = 5 * 60 * 1000;
+  // The max mount of time that the log event time of a message with smaller offset
+  // can exceed a message with larger offset
+  private static final long MAX_TIME_GAP = 60 * 1000; // 1 min
+  private static final long HALF_MAX_TIME_GAP = MAX_TIME_GAP / 2; // 30 sec
+
   @Test
-  public void testBasicSort() throws Exception {
-    String topic = "testPipeline";
+  public void testFindOffset() throws Exception {
+    String topic = "testOffsetResolver";
 
     KAFKA_TESTER.createTopic(topic, 1);
 
     // Publish some log messages to Kafka
-    long now = System.currentTimeMillis();
+    long baseTime = System.currentTimeMillis() - REPLICATION_DELAY;
     List<ILoggingEvent> events = ImmutableList.of(
-      createLoggingEvent("test.logger", Level.INFO, "0", now - 1000),
-      createLoggingEvent("test.logger", Level.INFO, "1", now - 700),
-      createLoggingEvent("test.logger", Level.INFO, "2", now - 900),
-      createLoggingEvent("test.logger", Level.INFO, "3", now - 500),
-      createLoggingEvent("test.logger", Level.INFO, "1", now - 900),
-      createLoggingEvent("test.logger", Level.INFO, "1", now - 600),
-      createLoggingEvent("test.logger", Level.INFO, "5", now - 1000),
-      createLoggingEvent("test.logger", Level.INFO, "6", now - 600),
-      createLoggingEvent("test.logger", Level.INFO, "6", now - 600),
-      createLoggingEvent("test.logger", Level.INFO, "4", now - 100));
+      createLoggingEvent("test.logger", Level.INFO, "0", baseTime - 20 * 1000 - MAX_TIME_GAP),
+      createLoggingEvent("test.logger", Level.INFO, "0", baseTime - 20 * 1000 - MAX_TIME_GAP),
+      createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 7 * 1000 - MAX_TIME_GAP),
+      createLoggingEvent("test.logger", Level.INFO, "2", baseTime - 9 * 100),
+      createLoggingEvent("test.logger", Level.INFO, "3", baseTime - 500),
+      createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 9 * 1000),
+      createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 9 * 1000 + HALF_MAX_TIME_GAP),
+      createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 9 * 1000),
+      createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 9 * 1000 - HALF_MAX_TIME_GAP),
+      createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 10 * 1000),
+      createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 600),
+      createLoggingEvent("test.logger", Level.INFO, "5", baseTime - 20 * 1000),
+      createLoggingEvent("test.logger", Level.INFO, "5", baseTime - 20 * 1000 + HALF_MAX_TIME_GAP),
+      createLoggingEvent("test.logger", Level.INFO, "6", baseTime - 600),
+      createLoggingEvent("test.logger", Level.INFO, "6", baseTime - 10 * 1000),
+      createLoggingEvent("test.logger", Level.INFO, "7", baseTime - 16 * 1000 + MAX_TIME_GAP),
+      createLoggingEvent("test.logger", Level.INFO, "8", baseTime - 7 * 1000 + MAX_TIME_GAP),
+      createLoggingEvent("test.logger", Level.INFO, "4", baseTime - 100 + MAX_TIME_GAP));
     publishLog(topic, events);
     KafkaOffsetResolver offsetResolver = new KafkaOffsetResolver(KAFKA_TESTER.getBrokerService(), topic);
 
@@ -134,9 +150,12 @@ public class KafkaOffsetResolverTest {
     for (int i = 0; i < events.size(); i++) {
       long targetTime = events.get(i).getTimeStamp();
       long offset = offsetResolver.getMatchingOffset(new Checkpoint(Long.MAX_VALUE, targetTime, 0), 0);
-      long expectedOffset = findSmallestOffsetByTime(events, targetTime);
+      // Increment the offset returned by findSmallestOffsetByTime to get the next offset
+      long expectedOffset = findSmallestOffsetByTime(events, targetTime) + 1;
       Assert.assertEquals(expectedOffset, offset);
     }
+    // Failed to find matching offset for timestamp returns -1
+    Assert.assertEquals(-1, offsetResolver.getMatchingOffset(new Checkpoint(Long.MAX_VALUE, Long.MAX_VALUE, 0), 0));
   }
 
   /**

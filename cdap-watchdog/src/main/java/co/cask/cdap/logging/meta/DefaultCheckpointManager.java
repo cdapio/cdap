@@ -145,7 +145,8 @@ public final class DefaultCheckpointManager implements CheckpointManager {
           // If CDAP is upgraded from an older version with no NEXT_TIME_COL_NAME, use maxEventTime as default, since
           // in older CDAP versions, maxEventTime is actually the timestamp of the last persisted message
           return new Checkpoint(result.getLong(OFFSET_COL_NAME, -1),
-                                result.getLong(NEXT_TIME_COL_NAME, maxEventTime), maxEventTime);
+                                result.getLong(NEXT_TIME_COL_NAME, maxEventTime),
+                                maxEventTime);
         }
       });
       LOG.trace("Read checkpoint {} for partition {}", checkpoint, partition);

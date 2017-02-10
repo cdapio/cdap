@@ -78,6 +78,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
   private final KafkaPipelineConfig config;
   private final TimeEventQueue<ILoggingEvent, OffsetTime> eventQueue;
   private final Map<BrokerInfo, KafkaSimpleConsumer> kafkaConsumers;
+  private final KafkaOffsetResolver offsetResolver;
 
   private ExecutorService fetchExecutor;
   private volatile Thread runThread;
@@ -97,6 +98,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     this.eventQueue = new TimeEventQueue<>(config.getPartitions());
     this.serializer = new LoggingEventSerializer();
     this.kafkaConsumers = new HashMap<>();
+    this.offsetResolver = new KafkaOffsetResolver(brokerService, config.getTopic());
   }
 
   @Override
@@ -220,9 +222,11 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       for (int partition : partitions) {
         Checkpoint checkpoint = checkpoints.get(partition);
         if (checkpoint != null) {
-          // TODO: (CDAP-7684) Deal with wrong offset issue
-          offsets.put(partition, checkpoint.getNextOffset());
-          continue;
+          long offset = offsetResolver.getMatchingOffset(checkpoint, partition);
+          if (offset > 0) {
+            offsets.put(partition, offset);
+            continue;
+          }
         }
 
         try {
