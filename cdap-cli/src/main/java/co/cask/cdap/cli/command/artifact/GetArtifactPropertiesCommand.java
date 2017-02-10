@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -90,7 +90,7 @@ public class GetArtifactPropertiesCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return String.format("Gets the properties of %s. If no scope is provided, properties are looked for first in " +
-                         "the SYSTEM and then in the USER scope.",
+                         "the 'SYSTEM' and then in the 'USER' scope.",
                          Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -76,7 +76,7 @@ public class ListArtifactVersionsCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return String.format("Lists all versions of a specific %s. If no scope is provided, %s are looked " +
-                           "for first in the SYSTEM and then in the USER scope.",
+                           "for first in the 'SYSTEM' and then in the 'USER' scope.",
                          ElementType.ARTIFACT.getName(), ElementType.ARTIFACT.getNamePlural());
   }
 }
