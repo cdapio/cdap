@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.master.startup;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.logging.appender.kafka.LogPartitionType;
 import co.cask.cdap.proto.id.EntityId;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
@@ -59,6 +60,7 @@ class ConfigurationCheck extends AbstractMasterCheck {
     checkPotentialPortConflicts();
     checkKafkaTopic(problemKeys);
     checkMessagingTopics(problemKeys);
+    checkLogPartitionKey(problemKeys);
 
     if (!problemKeys.isEmpty()) {
       throw new RuntimeException("Invalid configuration settings for keys: " + Joiner.on(',').join(problemKeys));
@@ -133,6 +135,12 @@ class ConfigurationCheck extends AbstractMasterCheck {
     }
   }
 
+  private void checkLogPartitionKey(Set<String> problemKeys) {
+    if (!isValidPartitionKey(cConf.get(Constants.Logging.LOG_PUBLISH_PARTITION_KEY))) {
+      problemKeys.add(Constants.Logging.LOG_PUBLISH_PARTITION_KEY);
+    }
+  }
+
   private void checkMessagingTopics(Set<String> problemKeys) {
     if (!EntityId.isValidId(cConf.get(Constants.Audit.TOPIC))) {
       problemKeys.add(Constants.Audit.TOPIC);
@@ -180,4 +188,15 @@ class ConfigurationCheck extends AbstractMasterCheck {
     }
     return true;
   }
+
+  private boolean isValidPartitionKey(String key) {
+    try {
+      LogPartitionType.valueOf(key);
+    } catch (IllegalArgumentException e) {
+      LOG.error("Invalid log partition type: {}. Only program/application types are allowed", key, e.getMessage());
+      return false;
+    }
+    return true;
+  }
+
 }
