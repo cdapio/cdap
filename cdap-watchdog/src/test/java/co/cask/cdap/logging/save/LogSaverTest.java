@@ -39,13 +39,10 @@ import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.meta.CheckpointManager;
-import co.cask.cdap.logging.read.AvroFileReader;
+import co.cask.cdap.logging.meta.FileMetaDataReader;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.serialize.LogSchema;
-import co.cask.cdap.logging.write.FileMetaDataManager;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.impersonation.Impersonator;
+import co.cask.cdap.logging.write.LogLocation;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;
@@ -64,7 +61,6 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 import org.apache.tephra.TransactionManager;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -82,7 +78,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -101,7 +96,6 @@ public class LogSaverTest extends KafkaTestBase {
   private static String logBaseDir;
   private static KafkaLogAppender appender;
   private static Gson gson;
-  private static Impersonator impersonator;
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
@@ -110,7 +104,6 @@ public class LogSaverTest extends KafkaTestBase {
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
 
     injector = KAFKA_TESTER.getInjector();
-    impersonator = injector.getInstance(Impersonator.class);
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 
@@ -126,14 +119,15 @@ public class LogSaverTest extends KafkaTestBase {
 
     publishLogs();
 
-    FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
-    waitTillLogSaverDone(fileMetaDataManager,
+    FileMetaDataReader fileMetadataReader = injector.getInstance(FileMetaDataReader.class);
+
+    waitTillLogSaverDone(fileMetadataReader,
                          new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
                          "Test log message 119 arg1 arg2");
-    waitTillLogSaverDone(fileMetaDataManager,
+    waitTillLogSaverDone(fileMetadataReader,
                          new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "", null, "INSTANCE"),
                          "Test log message 119 arg1 arg2");
-    waitTillLogSaverDone(fileMetaDataManager, new ServiceLoggingContext("system", "services", "metrics"),
+    waitTillLogSaverDone(fileMetadataReader, new ServiceLoggingContext("system", "services", "metrics"),
                          "Test log message 59 arg1 arg2");
 
     logSaver.stopAndWait();
@@ -432,21 +426,21 @@ public class LogSaverTest extends KafkaTestBase {
     }
   }
 
-  private static void waitTillLogSaverDone(FileMetaDataManager fileMetaDataManager, LoggingContext loggingContext,
+  private static void waitTillLogSaverDone(FileMetaDataReader fileMetadataReader, LoggingContext loggingContext,
                                            String logLine) throws Exception {
     long start = System.currentTimeMillis();
 
     while (true) {
-      NavigableMap<Long, Location> files = fileMetaDataManager.listFiles(loggingContext);
-      Map.Entry<Long, Location> lastEntry = files.lastEntry();
+      List<LogLocation> files =
+        fileMetadataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(loggingContext), 0, Long.MAX_VALUE);
+      if (files.isEmpty()) {
+        continue;
+      }
+      LogLocation lastEntry = files.get(files.size() - 1);
       if (lastEntry != null) {
-        Location latestFile = lastEntry.getValue();
-        AvroFileReader logReader = new AvroFileReader(LogSchema.LoggingEvent.SCHEMA);
         LogCallback logCallback = new LogCallback();
         logCallback.init();
-        NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
-        logReader.readLog(latestFile, Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, Integer.MAX_VALUE, logCallback,
-                          namespaceId, impersonator);
+        lastEntry.readLog(Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, Integer.MAX_VALUE, logCallback);
         logCallback.close();
         List<LogEvent> events = logCallback.getEvents();
         if (events.size() > 0) {
