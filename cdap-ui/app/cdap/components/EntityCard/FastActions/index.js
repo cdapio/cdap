@@ -72,14 +72,27 @@ export default class FastActions extends Component {
         <span>
           {
             fastActions.map((action) => {
-              return (
-                <FastAction
-                  key={action}
-                  type={action}
-                  entity={this.props.entity}
-                  onSuccess={this.onSuccess.bind(this, action)}
-                />
-              );
+              if (this.props.actionToOpen && this.props.actionToOpen === action) {
+                return (
+                  <FastAction
+                    key={action}
+                    type={action}
+                    entity={this.props.entity}
+                    opened={true}
+                    onSuccess={this.onSuccess.bind(this, action)}
+                  />
+                );
+              }
+              else {
+                return (
+                  <FastAction
+                    key={action}
+                    type={action}
+                    entity={this.props.entity}
+                    onSuccess={this.onSuccess.bind(this, action)}
+                  />
+                );
+              }
             })
           }
         </span>
@@ -92,5 +105,6 @@ FastActions.propTypes = {
   entity: PropTypes.object,
   onUpdate: PropTypes.func,
   className: PropTypes.string,
-  onSuccess: PropTypes.func
+  onSuccess: PropTypes.func,
+  actionToOpen: PropTypes.string
 };

@@ -71,7 +71,9 @@ export default class NamespaceDropdown extends Component {
   }
   componentWillUnmount() {
     this.subscription();
-    this.apiSubscription.dispose();
+    if (this.apiSubscription) {
+      this.apiSubscription.dispose();
+    }
   }
   toggle() {
     if (!this.state.openPreferenceWizard) {

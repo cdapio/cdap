@@ -568,6 +568,9 @@ features:
       headerlabel: Create Stream
       success: You have successfully created the stream
       callToAction: View Stream Details
+      secondaryCallToAction:
+        uploadData: Upload Data to Stream
+        queryStream: Query Stream
     UploadData:
       Step1:
         shorttitle: View Data
