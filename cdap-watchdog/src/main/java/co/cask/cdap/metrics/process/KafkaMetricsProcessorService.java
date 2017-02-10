@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * Process metrics by consuming metrics being published to kafka.
@@ -45,12 +44,10 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
   private final MessageCallbackFactory callbackFactory;
   private final String topicPrefix;
   private final Set<Integer> partitions;
-  private Cancellable unsubscribe;
   private final MetricDatasetFactory metricDatasetFactory;
+  private final MetricsContext metricsContext;
 
-  @Nullable
-  private MetricsContext metricsContext;
-
+  private Cancellable unsubscribe;
   private volatile boolean stopping;
 
   private MetricsConsumerMetaTable metaTable;
@@ -60,15 +57,13 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
                                       MetricDatasetFactory metricDatasetFactory,
                                       MessageCallbackFactory callbackFactory,
                                       @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX) String topicPrefix,
-                                      @Assisted Set<Integer> partitions) {
+                                      @Assisted Set<Integer> partitions,
+                                      @Assisted MetricsContext metricsContext) {
     this.kafkaClient = kafkaClient;
     this.callbackFactory = callbackFactory;
     this.topicPrefix = topicPrefix;
     this.partitions = partitions;
     this.metricDatasetFactory = metricDatasetFactory;
-  }
-
-  public void setMetricsContext(MetricsContext metricsContext) {
     this.metricsContext = metricsContext;
   }
 

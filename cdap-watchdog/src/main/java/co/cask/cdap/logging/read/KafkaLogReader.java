@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.appender.kafka.StringPartitioner;
 import co.cask.cdap.logging.context.LoggingContextHelper;
@@ -32,12 +31,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
+import org.apache.twill.kafka.client.BrokerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.List;
 
 /**
  * Reads log events stored in Kafka.
@@ -48,7 +47,7 @@ public class KafkaLogReader implements LogReader {
   // Maximum events to read from Kafka for any call
   private static final int MAX_READ_EVENTS_KAFKA = 10000;
 
-  private final List<LoggingConfiguration.KafkaHost> seedBrokers;
+  private final BrokerService brokerService;
   private final String topic;
   private final LoggingEventSerializer serializer;
   private final StringPartitioner partitioner;
@@ -58,21 +57,13 @@ public class KafkaLogReader implements LogReader {
    * @param cConf configuration object containing Kafka seed brokers and number of Kafka partitions for log topic.
    */
   @Inject
-  KafkaLogReader(CConfiguration cConf, StringPartitioner partitioner) {
-    try {
-      this.seedBrokers = LoggingConfiguration.getKafkaSeedBrokers(
-        cConf.get(LoggingConfiguration.KAFKA_SEED_BROKERS));
-      Preconditions.checkArgument(!this.seedBrokers.isEmpty(), "Kafka seed brokers list is empty!");
+  KafkaLogReader(CConfiguration cConf, StringPartitioner partitioner, BrokerService brokerService) {
+    this.brokerService = brokerService;
+    this.topic = cConf.get(Constants.Logging.KAFKA_TOPIC);
+    Preconditions.checkArgument(!this.topic.isEmpty(), "Kafka topic is empty!");
 
-      this.topic = cConf.get(Constants.Logging.KAFKA_TOPIC);
-      Preconditions.checkArgument(!this.topic.isEmpty(), "Kafka topic is emtpty!");
-
-      this.partitioner = partitioner;
-      this.serializer = new LoggingEventSerializer();
-
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    this.partitioner = partitioner;
+    this.serializer = new LoggingEventSerializer();
   }
 
   @Override
@@ -84,11 +75,11 @@ public class KafkaLogReader implements LogReader {
     }
 
     int partition = partitioner.partition(loggingContext.getLogPartition(), -1);
-    LOG.trace("Reading from kafka partiton {}", partition);
+    LOG.trace("Reading from kafka {}:{}", topic, partition);
 
     callback.init();
 
-    KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, KAFKA_FETCH_TIMEOUT_MS);
+    KafkaConsumer kafkaConsumer = new KafkaConsumer(brokerService, topic, partition, KAFKA_FETCH_TIMEOUT_MS);
     try {
       // If Kafka offset is not valid, then we might be rolling over from file while reading.
       // Try to get the offset corresponding to fromOffset.getTime()
@@ -100,7 +91,7 @@ public class KafkaLogReader implements LogReader {
       Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
                                                         filter));
 
-      long latestOffset = kafkaConsumer.fetchOffsetBefore(KafkaConsumer.LATEST_OFFSET);
+      long latestOffset = kafkaConsumer.fetchLatestOffset();
       long startOffset = readRange.getKafkaOffset() + 1;
 
       LOG.trace("Using startOffset={}, latestOffset={}, readRange={}", startOffset, latestOffset, readRange);
@@ -138,13 +129,13 @@ public class KafkaLogReader implements LogReader {
 
     callback.init();
 
-    KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, KAFKA_FETCH_TIMEOUT_MS);
+    KafkaConsumer kafkaConsumer = new KafkaConsumer(brokerService, topic, partition, KAFKA_FETCH_TIMEOUT_MS);
     try {
       Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
                                                         filter));
 
-      long latestOffset = kafkaConsumer.fetchOffsetBefore(KafkaConsumer.LATEST_OFFSET);
-      long earliestOffset = kafkaConsumer.fetchOffsetBefore(KafkaConsumer.EARLIEST_OFFSET);
+      long latestOffset = kafkaConsumer.fetchLatestOffset();
+      long earliestOffset = kafkaConsumer.fetchEarliestOffset();
       long stopOffset;
       long startOffset;
 
@@ -278,19 +269,19 @@ public class KafkaLogReader implements LogReader {
       lastOffset = logOffset;
     }
 
-    public LogOffset getFirstOffset() {
+    LogOffset getFirstOffset() {
       return firstOffset;
     }
 
-    public LogOffset getLastOffset() {
+    LogOffset getLastOffset() {
       return lastOffset;
     }
 
-    public int getEventsMatched() {
+    int getEventsMatched() {
       return eventsMatched;
     }
 
-    public int getEventsRead() {
+    int getEventsRead() {
       return eventsRead;
     }
   }
