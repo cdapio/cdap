@@ -15,9 +15,11 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import { Dropdown, DropdownToggle, DropdownItem } from 'reactstrap';
+import CustomDropdownMenu from 'components/CustomDropdownMenu';
 import T from 'i18n-react';
 import debounce from 'lodash/debounce';
+import ResourceCenterButton from 'components/ResourceCenterButton';
 
 require('./EntityListHeader.scss');
 
@@ -98,11 +100,12 @@ export default class EntityListHeader extends Component {
           <span>{this.state.activeSort.displayName}</span>
           <span className="fa fa-angle-down float-xs-right"></span>
         </DropdownToggle>
-        <DropdownMenu>
+        <CustomDropdownMenu>
           {
             this.state.sortOptions.slice(1).map((option, index) => {
               return (
                 <DropdownItem
+                  tag="li"
                   key={index}
                   onClick={this.props.onSortClick.bind(this, option)}
                 >
@@ -117,7 +120,7 @@ export default class EntityListHeader extends Component {
               );
             })
           }
-        </DropdownMenu>
+        </CustomDropdownMenu>
       </Dropdown>
     );
 
@@ -133,11 +136,12 @@ export default class EntityListHeader extends Component {
           <span>{T.translate('features.EntityListView.Header.filterBy')}</span>
           <span className="fa fa-angle-down float-xs-right"></span>
         </DropdownToggle>
-        <DropdownMenu onClick={e => e.stopPropagation()}>
+        <CustomDropdownMenu onClick={e => e.stopPropagation()}>
           {
             this.state.filterOptions.map((option) => {
               return (
                 <DropdownItem
+                  tag="li"
                   key={option.id}
                 >
                   <div className="form-check">
@@ -158,7 +162,7 @@ export default class EntityListHeader extends Component {
               );
             })
           }
-        </DropdownMenu>
+        </CustomDropdownMenu>
       </Dropdown>
     );
 
@@ -187,6 +191,7 @@ export default class EntityListHeader extends Component {
             {sortDropdown}
           </div>
         </div>
+        <ResourceCenterButton />
       </div>
     );
   }

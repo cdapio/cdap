@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,21 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+@import '../../styles/variables.scss';
 
-.schema-tab {
-  padding: 10px 10px 0 10px;
-  height: calc(100% - 26px);
+.cask-resourcecenter-button {
+  position: fixed;
+  top: 71px;
+  right: 20px;
+  cursor: pointer;
+  z-index: 998;
 
-  .empty-schema { margin-top: 10px; }
-
-  .disable-schema {
-    .fa-trash,
-    .fa-plus {
-      display: none;
-    }
-  }
-
-  .schema-body .schema-row.nested > .field-name:before {
-    background-color: rgba(238, 238, 238, 1);
+  .button-container {
+    height: 58px;
+    width: 58px;
+    background: $success-message-bg;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin: 0;
+    border-radius: 50%;
   }
 }

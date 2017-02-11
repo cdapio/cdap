@@ -15,11 +15,19 @@
 -->
 
 <div class="row">
-  <div class="col-xs-12">
-    <h2>Tags</h2>
-    <button class="btn btn-default add-tags"
-      ng-click="TagsController.showAddModal(key)">Add Preferred Tags</button>
+  <div class="tracker-top-search"
+       ng-if="!$state.params.iframe">
+    <div class="tracker-search-bar">
+      <div class="form-group has-feedback">
+        <h2>Tags</h2>
+        <button class="btn btn-default add-tags"
+          ng-click="TagsController.showAddModal(key)">Add Preferred Tags</button>
+      </div>
+    </div>
   </div>
+</div>
+<div ng-if="!$state.params.iframe">
+  <cask-resource-center-button></cask-resource-center-button>
 </div>
 <div class="row">
   <div class="col-sm-6 preferred-tags">

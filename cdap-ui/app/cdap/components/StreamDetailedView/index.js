@@ -34,6 +34,9 @@ import FastActionToMessage from 'services/fast-action-message-helper';
 import capitalize from 'lodash/capitalize';
 import Redirect from 'react-router/Redirect';
 import Page404 from 'components/404';
+import BreadCrumb from 'components/BreadCrumb';
+import ResourceCenterButton from 'components/ResourceCenterButton';
+import Helmet from 'react-helmet';
 
 require('./StreamDetailedView.scss');
 
@@ -205,9 +208,23 @@ export default class StreamDetailedView extends Component {
     }
 
     const title = T.translate('commons.entity.stream.singular');
-
+    let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+    let previousPathname = objectQuery(this.props, 'location', 'state', 'previousPathname')  || `/ns/${selectedNamespace}`;
+    let previousPaths = [{
+      pathname: previousPathname,
+      label: T.translate('commons.back')
+    }];
     return (
       <div className="app-detailed-view">
+        <Helmet
+          title={T.translate('features.StreamDetailedView.Title', {streamId: this.props.params.streamId})}
+        />
+        <ResourceCenterButton />
+        <BreadCrumb
+          previousPaths={previousPaths}
+          currentStateIcon="icon-streams"
+          currentStateLabel={T.translate('commons.stream')}
+        />
         <OverviewHeader
           icon="icon-streams"
           title={title}

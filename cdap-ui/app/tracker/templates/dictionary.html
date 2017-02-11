@@ -14,10 +14,21 @@
   the License.
 -->
 <div class="row">
-  <div class="col-xs-12">
-    <label class="heading">Data Dictionary</label>
+  <div class="tracker-top-search"
+       ng-if="!$state.params.iframe">
+    <div class="tracker-search-bar">
+      <div class="form-group has-feedback">
+        <label class="heading">Data Dictionary</label>
+      </div>
+    </div>
   </div>
 </div>
+
+<div ng-if="!$state.params.iframe">
+  <cask-resource-center-button></cask-resource-center-button>
+</div>
+
+
 <div class="row">
   <div class="col-sm-12">
     <div class="table-responsive">
@@ -35,8 +46,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="data in DictionaryController.dictionaryData 
-            | myPaginate:DictionaryController.currentPreferredPage" 
+          <tr ng-repeat="data in DictionaryController.dictionaryData
+            | myPaginate:DictionaryController.currentPreferredPage"
             ng-include="DictionaryController.getTemplate(data)">
           </tr>
           <tr ng-show="DictionaryController.loading">

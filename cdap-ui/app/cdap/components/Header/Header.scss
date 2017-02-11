@@ -35,10 +35,17 @@
   .dropdown-item {
     color: white;
     &:hover,
-    &:focus,
+    &:focus {
+      color: $cdap-light-orange;
+    }
     &:active,
     .active {
-      color: $cdap-light-orange;
+      color: $cdap-orange;
+      &:focus,
+      &:hover {
+        outline: none;
+        color: $cdap-orange;
+      }
     }
   }
 
@@ -109,6 +116,9 @@
         .namespace-dropdown {
           border: 0;
           .dropdown {
+            .dropdown-menu {
+              padding: 0;
+            }
             .current-namespace {
               background: transparent;
               &:hover {
@@ -127,6 +137,7 @@
       display: inline-block;
       margin: 0 15px;
       vertical-align: top;
+      line-height: 50px;
       &:focus {
         outline: none;
       }
@@ -144,11 +155,13 @@
     min-width: 300px;
     align-items: baseline;
     flex: 1;
+    align-items: flex-start;
   }
   .navbar-list-section,
   .navbar-right-section {
     .dropdown {
       .dropdown-menu {
+        padding-bottom: 10px;
         .dropdown-divider {
           height: 1px;
           margin: 0.5rem 0;
@@ -159,7 +172,7 @@
     .dropdown.open {
       .dropdown-toggle {
         background-color: transparent;
-        color: $cdap-light-orange;
+        color: $cdap-orange;
       }
     }
   }

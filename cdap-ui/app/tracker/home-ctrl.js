@@ -15,6 +15,9 @@
  */
 
 angular.module(PKG.name + '.feature.tracker')
+  .directive('caskResourceCenterButton', function(reactDirective) {
+    return reactDirective(window.CaskCommon.ResourceCenterButton);
+  })
   .controller('TrackerHomeController', function ($state, $stateParams, rNsList, mySessionStorage, myLoadingService) {
 
     if (!rNsList.length) {
