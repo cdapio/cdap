@@ -18,7 +18,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
       .state('hydratorplusplus', {
-        url: '/hydrator',
+        url: '/metadata',
         abstract: true,
         parent: 'ns',
         data: {

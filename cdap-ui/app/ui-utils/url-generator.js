@@ -147,7 +147,7 @@ window.getTrackerUrl = function(navigationObj) {
   var stateName, stateParams;
   stateName = navigationObj.stateName;
   stateParams = navigationObj.stateParams;
-  var uiApp = 'tracker';
+  var uiApp = 'metadata';
   var baseUrl = location.protocol + '//' + location.host + '/' + uiApp + '/ns/:namespace';
   var stateToUrlMap = {
     'tracker': '',
@@ -164,7 +164,7 @@ window.getHydratorUrl = function(navigationObj) {
   var stateName, stateParams;
   stateName = navigationObj.stateName;
   stateParams = navigationObj.stateParams;
-  var uiApp = 'hydrator';
+  var uiApp = 'pipelines';
   var baseUrl = location.protocol + '//' + location.host + '/' + uiApp + '/ns/:namespace';
   var stateToUrlMap = {
     'hydrator': '',

@@ -85,7 +85,7 @@ angular.module(PKG.name + '.feature.tracker')
         }
       })
       .state('tracker', {
-        url: '/tracker',
+        url: '/metadata',
         abstract: true,
         parent: 'ns',
         template: '<ui-view/>',
