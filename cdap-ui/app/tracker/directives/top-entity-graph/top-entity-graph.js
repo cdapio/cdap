@@ -196,7 +196,13 @@ angular.module(PKG.name + '.feature.tracker')
               sidebarElem.append(appElem);
             }
 
-            let link = angular.element('<a></a>')
+            let linkElem = '<a></a>';
+
+            if ($state.params.iframe) {
+              linkElem = '<span></span>';
+            }
+
+            let link = angular.element(linkElem)
               .attr('class', 'entity-link')
               .attr('href', scope.programsPath)
               .attr('uib-tooltip', tooltipContent)
