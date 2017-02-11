@@ -26,6 +26,7 @@ import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
+import org.apache.twill.kafka.client.BrokerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,12 +48,12 @@ public final class KafkaLogAppender extends LogAppender {
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
   @Inject
-  KafkaLogAppender(CConfiguration cConf) {
+  KafkaLogAppender(CConfiguration cConf, BrokerService brokerService) {
     setName(APPENDER_NAME);
     addInfo("Initializing KafkaLogAppender...");
 
     this.cConf = cConf;
-    this.producer = new SimpleKafkaProducer(cConf);
+    this.producer = new SimpleKafkaProducer(cConf, brokerService);
     this.loggingEventSerializer = new LoggingEventSerializer();
     addInfo("Successfully initialized KafkaLogAppender.");
   }

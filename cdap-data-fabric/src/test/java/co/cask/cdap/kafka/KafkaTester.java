@@ -57,7 +57,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -87,7 +86,6 @@ public class KafkaTester extends ExternalResource {
   private final Map<String, String> extraConfigs;
   private final Iterable<Module> extraModules;
   private final CConfiguration cConf;
-  private final String [] kafkaBrokerListParams;
   private final TemporaryFolder tmpFolder;
   private final int numPartitions;
 
@@ -108,14 +106,11 @@ public class KafkaTester extends ExternalResource {
    * @param extraModules the specified extra {@link Module Guice modules} to include in the
    * {@link Injector Guice injector}
    * @param numPartitions the specified number of Kafka partitions
-   * @param kafkaBrokerListParams a list of configuration parameters to which the kafka broker list should be set
    */
-  public KafkaTester(Map<String, String> extraConfigs, Iterable<Module> extraModules, int numPartitions,
-                     String ... kafkaBrokerListParams) {
+  public KafkaTester(Map<String, String> extraConfigs, Iterable<Module> extraModules, int numPartitions) {
     this.extraConfigs = extraConfigs;
     this.extraModules = extraModules;
     this.cConf = CConfiguration.create();
-    this.kafkaBrokerListParams = kafkaBrokerListParams;
     this.tmpFolder = new TemporaryFolder();
     this.numPartitions = numPartitions;
   }
@@ -133,7 +128,7 @@ public class KafkaTester extends ExternalResource {
 
     kafkaServer = new EmbeddedKafkaServer(generateKafkaConfig(kafkaPort));
     kafkaServer.startAndWait();
-    initializeCConf(kafkaPort);
+    initializeCConf();
     injector = createInjector();
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();
@@ -155,16 +150,12 @@ public class KafkaTester extends ExternalResource {
     zkServer.stopAndWait();
   }
 
-  private void initializeCConf(int kafkaPort) throws IOException {
+  private void initializeCConf() throws IOException {
     cConf.unset(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
     for (Map.Entry<String, String> entry : extraConfigs.entrySet()) {
       cConf.set(entry.getKey(), entry.getValue());
-    }
-    // Also set kafka broker list in the specified config parameters
-    for (String param : kafkaBrokerListParams) {
-      cConf.set(param, InetAddress.getLoopbackAddress().getHostAddress() + ":" + kafkaPort);
     }
   }
 

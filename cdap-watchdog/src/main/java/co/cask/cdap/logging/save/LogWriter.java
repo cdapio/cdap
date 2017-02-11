@@ -35,7 +35,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Persists bucketized logs stored by {@link KafkaMessageCallback}.
+ * Persists bucketized logs.
  */
 public class LogWriter implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogWriter.class);

@@ -26,6 +26,8 @@ import com.google.inject.Injector;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.kafka.client.BrokerService;
+import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.Assert;
 import org.junit.Test;
@@ -40,7 +42,9 @@ public class MasterServiceMainTest {
     Injector baseInjector = MasterServiceMain.createProcessInjector(CConfiguration.create(), new Configuration());
     Injector injector = MasterServiceMain.createLeaderInjector(baseInjector.getInstance(CConfiguration.class),
                                                                baseInjector.getInstance(Configuration.class),
-                                                               baseInjector.getInstance(ZKClientService.class));
+                                                               baseInjector.getInstance(ZKClientService.class),
+                                                               baseInjector.getInstance(KafkaClientService.class),
+                                                               baseInjector.getInstance(BrokerService.class));
 
     Assert.assertNotNull(injector.getInstance(AuthorizerInstantiator.class));
     Assert.assertNotNull(injector.getInstance(DatasetService.class));

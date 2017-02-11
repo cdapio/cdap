@@ -117,6 +117,8 @@ import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.apache.twill.internal.zookeeper.LeaderElection;
+import org.apache.twill.kafka.client.BrokerService;
+import org.apache.twill.kafka.client.KafkaClient;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -169,6 +171,8 @@ public class MasterServiceMain extends DaemonMain {
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final ZKClientService zkClient;
+  private final KafkaClientService kafkaClientService;
+  private final BrokerService brokerService;
   private final LeaderElection leaderElection;
   private final LogAppenderInitializer logAppenderInitializer;
 
@@ -211,6 +215,8 @@ public class MasterServiceMain extends DaemonMain {
     this.hConf = injector.getInstance(Configuration.class);
     this.logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     this.zkClient = injector.getInstance(ZKClientService.class);
+    this.kafkaClientService = injector.getInstance(KafkaClientService.class);
+    this.brokerService = injector.getInstance(BrokerService.class);
     this.leaderElection = createLeaderElection();
 
     // leader election will normally stay running. Will only stop if there was some issue starting up.
@@ -256,6 +262,8 @@ public class MasterServiceMain extends DaemonMain {
     Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
                                                   KeeperException.NodeExistsException.class, null));
 
+    kafkaClientService.startAndWait();
+    brokerService.startAndWait();
     leaderElection.startAndWait();
   }
 
@@ -319,6 +327,8 @@ public class MasterServiceMain extends DaemonMain {
     if (leaderElection.isRunning()) {
       stopQuietly(leaderElection);
     }
+    stopQuietly(brokerService);
+    stopQuietly(kafkaClientService);
     stopQuietly(zkClient);
   }
 
@@ -491,6 +501,7 @@ public class MasterServiceMain extends DaemonMain {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
+      new KafkaClientModule(),
       new LoggingModules().getDistributedModules()
     );
   }
@@ -500,7 +511,9 @@ public class MasterServiceMain extends DaemonMain {
    */
   @VisibleForTesting
   static Injector createLeaderInjector(CConfiguration cConf, Configuration hConf,
-                                       final ZKClientService zkClientService) {
+                                       final ZKClientService zkClientService,
+                                       final KafkaClientService kafkaClientService,
+                                       final BrokerService brokerService) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new AbstractModule() {
@@ -510,12 +523,17 @@ public class MasterServiceMain extends DaemonMain {
           // binding to reuse the same ZKClient used for leader election
           bind(ZKClient.class).toInstance(zkClientService);
           bind(ZKClientService.class).toInstance(zkClientService);
+
+          // Instead of using KafkaClientModule that will create new KafkaClient and Broker service,
+          // we just bind to reuse the same one created by the process injector
+          bind(KafkaClient.class).toInstance(kafkaClientService);
+          bind(KafkaClientService.class).toInstance(kafkaClientService);
+          bind(BrokerService.class).toInstance(brokerService);
         }
       },
       new LoggingModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new IOModule(),
-      new KafkaClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
@@ -574,7 +592,7 @@ public class MasterServiceMain extends DaemonMain {
 
       // We need to create a new injector each time becoming leader so that new instances of singleton Services
       // will be created
-      injector = createLeaderInjector(cConf, hConf, zkClient);
+      injector = createLeaderInjector(cConf, hConf, zkClient, kafkaClientService, brokerService);
 
       if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
         exploreClient = injector.getInstance(ExploreClient.class);
@@ -585,6 +603,7 @@ public class MasterServiceMain extends DaemonMain {
       // succeed on an authorization-enabled cluster
       injector.getInstance(AuthorizationBootstrapper.class).run();
       services.add(getAndStart(injector, KafkaClientService.class));
+      services.add(getAndStart(injector, BrokerService.class));
       services.add(getAndStart(injector, MetricsCollectionService.class));
       services.add(getAndStart(injector, AuthorizationEnforcementService.class));
       services.add(getAndStart(injector, OperationalStatsService.class));

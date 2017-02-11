@@ -84,8 +84,6 @@ public abstract class KafkaTestBase {
           bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
         }
       }
-    ),
-    2,
-    LoggingConfiguration.KAFKA_SEED_BROKERS
+    ), 2
   );
 }
