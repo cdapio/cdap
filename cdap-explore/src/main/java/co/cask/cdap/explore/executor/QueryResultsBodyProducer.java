@@ -79,7 +79,7 @@ final class QueryResultsBodyProducer extends BodyProducer {
     }
     writer.flush();
 
-    results = exploreService.nextResults(handle, AbstractQueryExecutorHttpHandler.DOWNLOAD_FETCH_CHUNK_SIZE);
+    results = exploreService.nextResults(handle, AbstractExploreQueryExecutorHttpHandler.DOWNLOAD_FETCH_CHUNK_SIZE);
     return buffer;
   }
 
@@ -88,7 +88,7 @@ final class QueryResultsBodyProducer extends BodyProducer {
 
     results = exploreService.previewResults(handle);
     if (results.isEmpty()) {
-      results = exploreService.nextResults(handle, AbstractQueryExecutorHttpHandler.DOWNLOAD_FETCH_CHUNK_SIZE);
+      results = exploreService.nextResults(handle, AbstractExploreQueryExecutorHttpHandler.DOWNLOAD_FETCH_CHUNK_SIZE);
     }
   }
 

@@ -22,10 +22,10 @@ import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.explore.executor.ExploreExecutorHttpHandler;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.executor.ExploreMetadataHttpHandler;
+import co.cask.cdap.explore.executor.ExploreQueryExecutorHttpHandler;
 import co.cask.cdap.explore.executor.ExploreStatusHandler;
 import co.cask.cdap.explore.executor.NamespacedExploreMetadataHttpHandler;
-import co.cask.cdap.explore.executor.NamespacedQueryExecutorHttpHandler;
-import co.cask.cdap.explore.executor.QueryExecutorHttpHandler;
+import co.cask.cdap.explore.executor.NamespacedExploreQueryExecutorHttpHandler;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.explore.service.hive.Hive14ExploreService;
@@ -88,8 +88,8 @@ public class ExploreRuntimeModule extends RuntimeModule {
       Named exploreSeriveName = Names.named(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
       Multibinder<HttpHandler> handlerBinder =
           Multibinder.newSetBinder(binder(), HttpHandler.class, exploreSeriveName);
-      handlerBinder.addBinding().to(NamespacedQueryExecutorHttpHandler.class);
-      handlerBinder.addBinding().to(QueryExecutorHttpHandler.class);
+      handlerBinder.addBinding().to(NamespacedExploreQueryExecutorHttpHandler.class);
+      handlerBinder.addBinding().to(ExploreQueryExecutorHttpHandler.class);
       handlerBinder.addBinding().to(NamespacedExploreMetadataHttpHandler.class);
       handlerBinder.addBinding().to(ExploreMetadataHttpHandler.class);
       handlerBinder.addBinding().to(ExploreExecutorHttpHandler.class);

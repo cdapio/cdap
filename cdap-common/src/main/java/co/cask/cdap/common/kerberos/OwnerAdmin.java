@@ -97,13 +97,14 @@ public interface OwnerAdmin {
    * </p>
    *
    * @param entityId the {@link EntityId} whose owner principal information needs to be retrieved
+   * @param impersonatedOpType the type of operation which is being impersonated
    * @return {@link ImpersonationInfo} of the effective owner for the given entity. Its keytab URI may be null.
-   *
    * @throws IOException if  failed to get the store
    * @throws IllegalArgumentException if the given entity is not of supported type.
    */
   @Nullable
-  ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) throws IOException;
+  ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId,
+                                         ImpersonatedOpType impersonatedOpType) throws IOException;
 
   /**
    * Checks if owner information exists or not

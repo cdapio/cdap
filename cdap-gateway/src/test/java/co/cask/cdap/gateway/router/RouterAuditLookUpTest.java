@@ -99,7 +99,7 @@ public class RouterAuditLookUpTest {
     // endpoints from NamespacedExploreMetadataHttpHandler
     assertContent("/v3/namespaces/default/data/explore/jdbc/tables",
                   new AuditLogContent(HttpMethod.POST, true, false, EMPTY_HEADERS));
-    // endpoints from NamespacedQueryExecutorHttpHandler
+    // endpoints from NamespacedExploreQueryExecutorHttpHandler
     assertContent("/v3/namespaces/default/data/explore/queries",
                   new AuditLogContent(HttpMethod.POST, true, false, EMPTY_HEADERS));
   }

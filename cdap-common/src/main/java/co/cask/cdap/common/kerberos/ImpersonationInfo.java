@@ -17,6 +17,7 @@
 package co.cask.cdap.common.kerberos;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Encapsulates information necessary to impersonate a user - principal and keytab path.
@@ -28,7 +29,7 @@ public final class ImpersonationInfo {
   /**
    * Creates {@link ImpersonationInfo} using the specified principal and keytab path.
    */
-  public ImpersonationInfo(String principal, String keytabURI) {
+  public ImpersonationInfo(String principal, @Nullable String keytabURI) {
     this.principal = principal;
     this.keytabURI = keytabURI;
   }
@@ -37,6 +38,7 @@ public final class ImpersonationInfo {
     return principal;
   }
 
+  @Nullable
   public String getKeytabURI() {
     return keytabURI;
   }

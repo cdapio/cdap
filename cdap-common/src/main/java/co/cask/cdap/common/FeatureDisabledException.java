@@ -28,23 +28,23 @@ public class FeatureDisabledException extends Exception implements HttpErrorStat
    */
   public enum Feature {
     AUTHENTICATION,
-    AUTHORIZATION
+    AUTHORIZATION,
+    EXPLORE
   }
 
   public static final String CDAP_SITE = "cdap-site.xml";
 
   private final Feature feature;
-  private final String configFile;
+  private final String configName;
   private final String enableConfigKey;
   private final String enableConfigValue;
 
-  public FeatureDisabledException(Feature feature, String configFile, String enableConfigKey,
+  public FeatureDisabledException(Feature feature, String configName, String enableConfigKey,
                                   String enableConfigValue) {
-    super(String.format("Feature '%s' is not enabled. Please set '%s' to '%s' in the config file '%s' to " +
-                          "enable this feature.", feature.name().toLowerCase(), enableConfigKey, enableConfigValue,
-                        configFile));
+    super(String.format("Feature '%s' is not enabled. Please set '%s' to '%s' in the '%s' to enable this feature.",
+                        feature.name().toLowerCase(), enableConfigKey, enableConfigValue, configName));
     this.feature = feature;
-    this.configFile = configFile;
+    this.configName = configName;
     this.enableConfigKey = enableConfigKey;
     this.enableConfigValue = enableConfigValue;
   }
@@ -53,8 +53,8 @@ public class FeatureDisabledException extends Exception implements HttpErrorStat
     return feature;
   }
 
-  public String getConfigFile() {
-    return configFile;
+  public String getConfigName() {
+    return configName;
   }
 
   public String getEnableConfigKey() {

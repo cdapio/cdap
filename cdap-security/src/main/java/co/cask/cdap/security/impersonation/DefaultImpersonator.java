@@ -18,6 +18,7 @@ package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.kerberos.ImpersonatedOpType;
 import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.kerberos.SecurityUtil;
@@ -58,18 +59,29 @@ public class DefaultImpersonator implements Impersonator {
 
   @Override
   public <T> T doAs(NamespacedEntityId entityId, final Callable<T> callable) throws Exception {
-    UserGroupInformation ugi = getUGI(entityId);
-    return  ImpersonationUtils.doAs(ugi, callable);
+    return doAs(entityId, callable, ImpersonatedOpType.OTHER);
+  }
+
+  @Override
+  public <T> T doAs(NamespacedEntityId entityId, Callable<T> callable,
+                    ImpersonatedOpType impersonatedOpType) throws Exception {
+    UserGroupInformation ugi = getUGI(entityId, impersonatedOpType);
+    return ImpersonationUtils.doAs(ugi, callable);
   }
 
   @Override
   public UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException, NamespaceNotFoundException {
+    return getUGI(entityId, ImpersonatedOpType.OTHER);
+  }
+
+  private UserGroupInformation getUGI(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType)
+    throws IOException, NamespaceNotFoundException {
     // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(entityId.getNamespaceId())) {
       return UserGroupInformation.getCurrentUser();
     }
     try {
-      ImpersonationInfo info = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, entityId);
+      ImpersonationInfo info = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, entityId, impersonatedOpType);
       LOG.debug("Impersonating principal {} for entity {}, keytab path is {}",
                 info.getPrincipal(), entityId, info.getKeytabURI());
       return getUGI(info);

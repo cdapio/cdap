@@ -32,6 +32,7 @@ public class NamespaceConfig {
   public static final String ROOT_DIRECTORY = "root.directory";
   public static final String HBASE_NAMESPACE = "hbase.namespace";
   public static final String HIVE_DATABASE = "hive.database";
+  public static final String EXPLORE_AS_PRINCIPAL = "explore.as.principal";
 
   @SerializedName(SCHEDULER_QUEUE_NAME)
   private final String schedulerQueueName;
@@ -45,6 +46,9 @@ public class NamespaceConfig {
   @SerializedName(HIVE_DATABASE)
   private final String hiveDatabase;
 
+  @SerializedName(EXPLORE_AS_PRINCIPAL)
+  private final Boolean exploreAsPrincipal;
+
   private final String principal;
   private final String groupName;
   private final String keytabURI;
@@ -54,6 +58,13 @@ public class NamespaceConfig {
   public NamespaceConfig(String schedulerQueueName, @Nullable String rootDirectory,
                          @Nullable String hbaseNamespace, @Nullable String hiveDatabase,
                          @Nullable String principal, @Nullable String groupName, @Nullable String keytabURI) {
+    this(schedulerQueueName, rootDirectory, hbaseNamespace, hiveDatabase, principal, groupName, keytabURI, true);
+  }
+
+  public NamespaceConfig(String schedulerQueueName, @Nullable String rootDirectory,
+                         @Nullable String hbaseNamespace, @Nullable String hiveDatabase,
+                         @Nullable String principal, @Nullable String groupName, @Nullable String keytabURI,
+                         boolean exploreAsPrincipal) {
     this.schedulerQueueName = schedulerQueueName;
     this.rootDirectory = rootDirectory;
     this.hbaseNamespace = hbaseNamespace;
@@ -61,6 +72,7 @@ public class NamespaceConfig {
     this.principal = principal;
     this.groupName = groupName;
     this.keytabURI = keytabURI;
+    this.exploreAsPrincipal = exploreAsPrincipal;
   }
 
   public String getSchedulerQueueName() {
@@ -94,6 +106,10 @@ public class NamespaceConfig {
   @Nullable
   public String getKeytabURI() {
     return keytabURI;
+  }
+
+  public Boolean isExploreAsPrincipal() {
+    return exploreAsPrincipal == null || exploreAsPrincipal;
   }
 
   public Set<String> getDifference(@Nullable NamespaceConfig other) {
@@ -144,13 +160,15 @@ public class NamespaceConfig {
       Objects.equals(hiveDatabase, other.hiveDatabase) &&
       Objects.equals(principal, other.principal) &&
       Objects.equals(groupName, other.groupName) &&
-      Objects.equals(keytabURI, other.keytabURI);
+      Objects.equals(keytabURI, other.keytabURI) &&
+      Objects.equals(exploreAsPrincipal, other.exploreAsPrincipal);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
-      schedulerQueueName, rootDirectory, hbaseNamespace, hiveDatabase, principal, groupName, keytabURI);
+      schedulerQueueName, rootDirectory, hbaseNamespace, hiveDatabase, principal, groupName, keytabURI,
+      exploreAsPrincipal);
   }
 
   @Override
@@ -163,6 +181,7 @@ public class NamespaceConfig {
       ", principal='" + principal + '\'' +
       ", groupName='" + groupName + '\'' +
       ", keytabURI='" + keytabURI + '\'' +
+      ", exploreAsPrincipal='" + exploreAsPrincipal + '\'' +
       '}';
   }
 }
