@@ -32,7 +32,7 @@ angular.module(PKG.name + '.feature.datasets')
         url: '/:datasetId',
         abstract: true,
         resolve: {
-          explorableDatasets: function explorableDatasets(myExploreApi, $stateParams, $q, $filter) {
+          explorableDatasets: function explorableDatasets(myExploreApi, $stateParams, $q, $filter, myDatasetApi) {
             var params = {
               namespace: $stateParams.namespace
             };
@@ -40,14 +40,48 @@ angular.module(PKG.name + '.feature.datasets')
                 filterFilter = $filter('filter');
 
             // Checking whether dataset is explorable
-            myExploreApi.list(params)
-              .$promise
+            $q.all([
+              myDatasetApi.list(params).$promise, myExploreApi.list(params).$promise
+            ])
               .then(
                 function success(res) {
+                  let datasetsSpec = res[0];
+                  let exploreTables = res[1];
+                  datasetsSpec = datasetsSpec
+                    .filter(dSpec => dSpec.properties['explore.database.name'] || dSpec.properties['explore.table.name'])
+                    .map(dSpec => {
+                      return {
+                        datasetName: dSpec.name,
+                        database: dSpec.properties['explore.database.name'] || 'default',
+                        table: dSpec.properties['explore.table.name'] || ''
+                      };
+                    });
+                  let tables = exploreTables.map(tb => {
+                    let tableIndex = tb.table.indexOf('_');
+                    let dbIndex = tb.database.indexOf('_');
+                    let matchingSpec = datasetsSpec.find(dspec => {
+                      let isSameTable = dspec.table === (tableIndex !== -1 ? tb.table.slice(tableIndex) : tb.table);
+                      let isSameDB = dspec.database === (dbIndex !== -1 ? tb.database.slice(dbIndex) : tb.table);
+                      return isSameTable || isSameDB;
+                    });
+                    if (matchingSpec) {
+                      let matchingSpecIndex = _.findIndex(datasetsSpec, matchingSpec);
+                      datasetsSpec.splice(matchingSpecIndex, 1);
+                      return {
+                        table: matchingSpec.table || tb.table,
+                        database: matchingSpec.database || tb.database
+                      };
+                    }
+                    return tb;
+                  });
+                  if (datasetsSpec.length) {
+                    tables = [...tables, ...datasetsSpec];
+                  }
+                  tables = [...tables || []];
                   var datasetId = $stateParams.datasetId;
                   datasetId = datasetId.replace(/[\.\-]/g, '_');
 
-                  var match = filterFilter(res, datasetId);
+                  var match = filterFilter(tables, datasetId);
 
                   if (match.length === 0) {
                     defer.resolve(false);

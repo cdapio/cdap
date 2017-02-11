@@ -28,20 +28,64 @@ angular.module(PKG.name + '.commons')
       controllerAs: 'MyExploreCtrl'
     };
 
-    function myExploreCtrl ($scope, myExploreApi, $http, $state, $uibModal, myCdapUrl, $timeout, myAlert, MY_CONFIG, Blob, FileSaver) {
+    function myExploreCtrl ($scope, myExploreApi, $http, $state, $uibModal, myCdapUrl, $timeout, myAlert, MY_CONFIG, Blob, FileSaver, myDatasetApi, myStreamApi, $q) {
 
         var vm = this;
 
         var queriesTimeout = null;
         vm.queries = [];
         vm.currentPage = 1;
+
         var params = {
           namespace: $state.params.namespace,
           scope: $scope
         };
+        vm.databaseName = 'default';
+        vm.tableName = $scope.type + '_' + $scope.name;
+
+        vm.setDbAndTableNames = function() {
+          let defer = $q.defer();
+          if (!$scope.type || !$scope.name) {
+            defer.reject();
+            return defer.promise;
+          }
+
+          if ($scope.type === 'stream') {
+            vm.databaseName = 'default';
+            vm.tableName = $scope.type + '_' + $scope.name;
+            defer.resolve();
+          } else {
+            myDatasetApi
+              .get( Object.assign({}, params, { datasetId: $scope.name }) )
+              .$promise
+              .then(datasetSpec => {
+                datasetSpec = datasetSpec.spec;
+                if (datasetSpec.properties['explore.database.name']) {
+                  vm.databaseName = datasetSpec.properties['explore.database.name'];
+                } else {
+                  vm.databaseName = 'default';
+                }
+                if (datasetSpec.properties['explore.table.name']) {
+                  vm.tableName = datasetSpec.properties['explore.table.name'];
+                } else {
+                  vm.tableName = $scope.type + '_' + $scope.name;
+                }
+                defer.resolve();
+              });
+          }
+          return defer.promise;
+        };
 
         $scope.$watch('name', function() {
-          vm.query = 'SELECT * FROM ' + $scope.type + '_' + $scope.name + ' LIMIT 5';
+          vm.setDbAndTableNames()
+            .then(
+              function success() {
+                vm.query = 'SELECT * FROM ' + vm.databaseName + '.' + vm.tableName + ' LIMIT 5';
+              },
+              function error() {
+                vm.query = 'SELECT * FROM ' + vm.databaseName + '.' + vm.tableName + ' LIMIT 5';
+              }
+            );
         });
 
         vm.execute = function() {
