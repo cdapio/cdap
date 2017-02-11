@@ -29,6 +29,7 @@
     <filePermissions>${file.permissions}</filePermissions>
     <syncIntervalBytes>${file.sync.interval.bytes}</syncIntervalBytes>
     <maxFileLifetimeMs>${file.max.lifetime.ms}</maxFileLifetimeMs>
+    <maxFileSizeInBytes>${file.max.size.bytes}</maxFileSizeInBytes>
   </appender>
 
   <appender name="METRICS" class="co.cask.cdap.logging.framework.MetricsLogAppender"/>

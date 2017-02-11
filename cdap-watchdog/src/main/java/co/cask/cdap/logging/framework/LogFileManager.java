@@ -48,17 +48,19 @@ final class LogFileManager implements Flushable, Syncable {
   private final String filePermissions;
   private final int syncIntervalBytes;
   private final long maxLifetimeMillis;
+  private final long maxFileSizeInBytes;
   private final Map<LogPathIdentifier, LogFileOutputStream> outputStreamMap;
   private final Location logsDirectoryLocation;
   private final FileMetaDataWriter fileMetaDataWriter;
   private final Schema schema;
 
   LogFileManager(String dirPermissions, String filePermissions,
-                 long maxFileLifetimeMs, int syncIntervalBytes,
+                 long maxFileLifetimeMs, long maxFileSizeInBytes, int syncIntervalBytes,
                  Schema schema, FileMetaDataWriter fileMetaDataWriter, LocationFactory locationFactory) {
     this.dirPermissions = dirPermissions;
     this.filePermissions = filePermissions;
     this.maxLifetimeMillis = maxFileLifetimeMs;
+    this.maxFileSizeInBytes = maxFileSizeInBytes;
     this.syncIntervalBytes = syncIntervalBytes;
     this.schema = schema;
     this.fileMetaDataWriter = fileMetaDataWriter;
@@ -138,7 +140,7 @@ final class LogFileManager implements Flushable, Syncable {
                                                  LogPathIdentifier identifier, long timestamp) throws IOException {
     long currentTs = System.currentTimeMillis();
     long timeSinceFileCreate = currentTs - logFileOutputStream.getCreateTime();
-    if (timeSinceFileCreate > maxLifetimeMillis) {
+    if (timeSinceFileCreate > maxLifetimeMillis || logFileOutputStream.getSize() > maxFileSizeInBytes) {
       logFileOutputStream.close();
       return createOutputStream(identifier, timestamp);
     }

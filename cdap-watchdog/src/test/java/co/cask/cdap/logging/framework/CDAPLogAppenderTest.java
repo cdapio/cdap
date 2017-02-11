@@ -124,6 +124,7 @@ public class CDAPLogAppenderTest {
 
     cdapLogAppender.setSyncIntervalBytes(syncInterval);
     cdapLogAppender.setMaxFileLifetimeMs(TimeUnit.DAYS.toMillis(1));
+    cdapLogAppender.setMaxFileSizeInBytes(104857600);
     cdapLogAppender.setDirPermissions("700");
     cdapLogAppender.setFilePermissions("600");
     AppenderContext context = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
@@ -193,6 +194,7 @@ public class CDAPLogAppenderTest {
 
     cdapLogAppender.setSyncIntervalBytes(syncInterval);
     cdapLogAppender.setMaxFileLifetimeMs(500);
+    cdapLogAppender.setMaxFileSizeInBytes(104857600);
     cdapLogAppender.setDirPermissions("750");
     cdapLogAppender.setFilePermissions("640");
     cdapLogAppender.setContext(context);

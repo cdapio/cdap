@@ -50,6 +50,7 @@ class LogFileOutputStream implements Closeable, Flushable, Syncable {
 
   private OutputStream outputStream;
   private DataFileWriter<GenericRecord> dataFileWriter;
+  private long fileSize;
 
   LogFileOutputStream(Location location, Schema schema, int syncIntervalBytes, long createTime,
                       Closeable closeable) throws IOException {
@@ -62,6 +63,7 @@ class LogFileOutputStream implements Closeable, Flushable, Syncable {
       this.dataFileWriter.create(schema, outputStream);
       this.dataFileWriter.setSyncInterval(syncIntervalBytes);
       this.createTime = createTime;
+      this.fileSize = 0;
     } catch (IOException e) {
       Closeables.closeQuietly(outputStream);
       Closeables.closeQuietly(dataFileWriter);
@@ -85,6 +87,14 @@ class LogFileOutputStream implements Closeable, Flushable, Syncable {
     return createTime;
   }
 
+  /**
+   * get the number of bytes written to output stream
+   * @return file size
+   */
+  long getSize() {
+    return fileSize;
+  }
+
   @Override
   public void flush() throws IOException {
     dataFileWriter.flush();
@@ -92,7 +102,7 @@ class LogFileOutputStream implements Closeable, Flushable, Syncable {
 
   @Override
   public void sync() throws IOException {
-    flush();
+    fileSize = dataFileWriter.sync();
     if (outputStream instanceof org.apache.hadoop.fs.Syncable) {
       ((org.apache.hadoop.fs.Syncable) outputStream).hsync();
     } else {
