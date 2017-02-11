@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -63,12 +64,14 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
   @Inject
   public MDSStreamMetaStore(DatasetFramework dsFramework, TransactionSystemClient txClient) {
     this.datasetFramework = dsFramework;
-    this.transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(
-        new SystemDatasetInstantiator(datasetFramework), txClient,
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
+    //noinspection unchecked
+    this.transactional = Transactions.unwrappedExceptionTransactional(
+      Transactions.createTransactionalWithRetry(
+        Transactions.createTransactional(new MultiThreadDatasetCache(
+          new SystemDatasetInstantiator(datasetFramework), txClient,
+          NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
+        RetryStrategies.retryOnConflict(20, 100)
+      ), ServiceUnavailableException.class);
   }
 
   private MetadataStoreDataset getMetadataStore(DatasetContext context) throws IOException, DatasetManagementException {

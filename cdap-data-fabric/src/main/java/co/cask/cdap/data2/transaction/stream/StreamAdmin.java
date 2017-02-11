@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
@@ -39,6 +40,8 @@ public interface StreamAdmin {
 
   /**
    * Deletes all entries for all streams within a namespace
+   *
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   void dropAllInNamespace(NamespaceId namespace) throws Exception;
 
@@ -47,6 +50,7 @@ public interface StreamAdmin {
    * @param streamId Id of the stream.
    * @param groupId The consumer group to alter.
    * @param instances Number of instances.
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   void configureInstances(StreamId streamId, long groupId, int instances) throws Exception;
 
@@ -54,11 +58,13 @@ public interface StreamAdmin {
    * Sets the consumer groups information for the given stream.
    * @param streamId Id of the stream.
    * @param groupInfo A map from groupId to number of instances of each group.
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   void configureGroups(StreamId streamId, Map<Long, Integer> groupInfo) throws Exception;
 
   /**
    * Performs upgrade action for all streams.
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   void upgrade() throws Exception;
 
@@ -66,6 +72,7 @@ public interface StreamAdmin {
    * List all the streams in a namespace.
    * @param namespaceId namespace id
    * @return a list of {@link StreamSpecification}
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   List<StreamSpecification> listStreams(NamespaceId namespaceId) throws Exception;
 
@@ -73,7 +80,8 @@ public interface StreamAdmin {
    * Returns the configuration of the given stream.
    * @param streamId Id of the stream.
    * @return A {@link StreamConfig} instance.
-   * @throws IOException If the stream doesn't exists.
+   * @throws IOException If the stream doesn't exists
+   * @throws ServiceUnavailableException if a dependent service is unavailable.
    */
   StreamConfig getConfig(StreamId streamId) throws IOException;
 
@@ -82,6 +90,7 @@ public interface StreamAdmin {
    * @param streamId Id of the stream.
    * @return {@link StreamProperties} instance.
    * @throws IOException If the stream doesn't exist.
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   StreamProperties getProperties(StreamId streamId) throws Exception;
 
@@ -90,6 +99,7 @@ public interface StreamAdmin {
    * @param streamId Id of the stream whose properties are being updated.
    * @param properties New configuration of the stream.
    * @throws Exception if the update of the stream configuration failed
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   void updateConfig(StreamId streamId, StreamProperties properties) throws Exception;
 
@@ -97,6 +107,7 @@ public interface StreamAdmin {
    * @param streamId Id of the stream.
    * @return true if stream with given Id exists, otherwise false
    * @throws Exception if check fails
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   boolean exists(StreamId streamId) throws Exception;
 
@@ -105,6 +116,7 @@ public interface StreamAdmin {
    * @param streamId Id of the stream to create
    * @return The {@link StreamConfig} associated with the new stream
    * @throws Exception if creation fails
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   StreamConfig create(StreamId streamId) throws Exception;
 
@@ -114,6 +126,7 @@ public interface StreamAdmin {
    * @param props additional properties
    * @return The {@link StreamConfig} associated with the new stream
    * @throws Exception if creation fails
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   StreamConfig create(StreamId streamId, @Nullable Properties props) throws Exception;
 
@@ -121,6 +134,7 @@ public interface StreamAdmin {
    * Wipes out stream data.
    * @param streamId Id of the stream to truncate
    * @throws Exception if cleanup fails
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   void truncate(StreamId streamId) throws Exception;
 
@@ -128,6 +142,7 @@ public interface StreamAdmin {
    * Deletes stream from the system completely.
    * @param streamId Id of the stream to delete
    * @throws Exception if deletion fails
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   void drop(StreamId streamId) throws Exception;
 
@@ -137,6 +152,7 @@ public interface StreamAdmin {
    * @param viewId the view
    * @param spec specification for the view
    * @return true if a stream view was created
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   boolean createOrUpdateView(StreamViewId viewId, ViewSpecification spec) throws Exception;
 
@@ -144,6 +160,7 @@ public interface StreamAdmin {
    * Deletes a stream view.
    *
    * @param viewId the view
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   void deleteView(StreamViewId viewId) throws Exception;
 
@@ -152,6 +169,7 @@ public interface StreamAdmin {
    *
    * @param streamId the stream
    * @return the associated views
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   List<StreamViewId> listViews(StreamId streamId) throws Exception;
 
@@ -160,6 +178,7 @@ public interface StreamAdmin {
    *
    * @param viewId the view
    * @return the details of the view
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   ViewSpecification getView(StreamViewId viewId) throws Exception;
 
@@ -168,6 +187,7 @@ public interface StreamAdmin {
    *
    * @param viewId the view
    * @return boolean which is true if view exists else false
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   boolean viewExists(StreamViewId viewId) throws Exception;
 
@@ -176,6 +196,7 @@ public interface StreamAdmin {
    *
    * @param owners the ids that are using the stream
    * @param streamId the stream being used
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   void register(Iterable<? extends EntityId> owners, StreamId streamId);
 
@@ -185,6 +206,7 @@ public interface StreamAdmin {
    * @param run program run
    * @param streamId stream being accessed
    * @param accessType type of access
+   * @throws ServiceUnavailableException if a dependent service is unavailable
    */
   void addAccess(ProgramRunId run, StreamId streamId, AccessType accessType);
 }

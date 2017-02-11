@@ -38,7 +38,6 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.net.HttpHeaders;
@@ -57,6 +56,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Default implementation of {@link StreamWriter}
@@ -106,16 +106,10 @@ public class DefaultStreamWriter implements StreamWriter {
   }
 
   private URL getStreamURL(String stream, boolean batch) throws IOException {
-    Discoverable discoverable = Retries.supplyWithRetries(new Supplier<Discoverable>() {
-      @Override
-      public Discoverable get() {
-        Discoverable discoverable = endpointStrategy.pick();
-        if (discoverable == null) {
-          throw new ServiceUnavailableException(Constants.Service.STREAMS);
-        }
-        return discoverable;
-      }
-    }, retryStrategy);
+    Discoverable discoverable = endpointStrategy.pick(1L, TimeUnit.SECONDS);
+    if (discoverable == null) {
+      throw new ServiceUnavailableException(Constants.Service.STREAMS);
+    }
 
     InetSocketAddress address = discoverable.getSocketAddress();
     String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
@@ -142,19 +136,29 @@ public class DefaultStreamWriter implements StreamWriter {
     // the worker intended to write to the stream
     registerStream(stream);
 
+    if (responseCode == 503) {
+      throw new ServiceUnavailableException(Constants.Service.STREAMS);
+    }
+
     if (responseCode < 200 || responseCode >= 300) {
       throw new IOException(String.format("Writing to Stream %s did not succeed. Stream Service ResponseCode : %d",
                                           stream, responseCode));
     }
   }
 
-  private void write(String stream, ByteBuffer data, Map<String, String> headers) throws IOException {
-    URL streamURL = getStreamURL(stream);
-    HttpRequest.Builder requestBuilder = HttpRequest.post(streamURL).withBody(data);
-    for (Map.Entry<String, String> header : headers.entrySet()) {
-      requestBuilder.addHeader(stream + "." + header.getKey(), header.getValue());
-    }
-    writeToStream(Id.Stream.from(namespace, stream), requestBuilder);
+  private void write(final String stream, final ByteBuffer data, final Map<String, String> headers) throws IOException {
+    Retries.callWithRetries(new Retries.Callable<Void, IOException>() {
+      @Override
+      public Void call() throws IOException {
+        URL streamURL = getStreamURL(stream);
+        HttpRequest.Builder requestBuilder = HttpRequest.post(streamURL).withBody(data);
+        for (Map.Entry<String, String> header : headers.entrySet()) {
+          requestBuilder.addHeader(stream + "." + header.getKey(), header.getValue());
+        }
+        writeToStream(Id.Stream.from(namespace, stream), requestBuilder);
+        return null;
+      }
+    }, retryStrategy);
   }
 
   @Override

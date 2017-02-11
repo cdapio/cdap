@@ -18,6 +18,7 @@ package co.cask.cdap.data.stream.service;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.Refreshable;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
@@ -277,7 +278,7 @@ public final class ConcurrentStreamWriter implements Closeable {
 
       return eventQueue;
 
-    } catch (NotFoundException | IOException e) {
+    } catch (ServiceUnavailableException | NotFoundException | IOException e) {
       throw e;
     } catch (Exception e) {
       throw new IOException(e);

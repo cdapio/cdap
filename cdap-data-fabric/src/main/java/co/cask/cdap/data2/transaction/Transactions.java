@@ -266,6 +266,43 @@ public final class Transactions {
   }
 
   /**
+   * Creates a new {@link Transactional} that will unwrap certain types of exceptions if they are the cause of
+   * a TransactionFailureException.
+   *
+   * @param transactional the Transactional to delegate the transaction execution to
+   * @param unwrappables runtime exceptions that should be unwrapped
+   * @return a new instance of Transactional
+   */
+  public static Transactional unwrappedExceptionTransactional(final Transactional transactional,
+                                                              final Class<? extends RuntimeException>... unwrappables) {
+    return new Transactional() {
+      @Override
+      public void execute(TxRunnable runnable) throws TransactionFailureException {
+        try {
+          transactional.execute(runnable);
+        } catch (TransactionFailureException e) {
+          for (Class<? extends RuntimeException> clazz : unwrappables) {
+            Throwables.propagateIfInstanceOf(e.getCause(), clazz);
+          }
+          throw e;
+        }
+      }
+
+      @Override
+      public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
+        try {
+          transactional.execute(timeoutInSeconds, runnable);
+        } catch (TransactionFailureException e) {
+          for (Class<? extends RuntimeException> clazz : unwrappables) {
+            Throwables.propagateIfInstanceOf(e.getCause(), clazz);
+          }
+          throw e;
+        }
+      }
+    };
+  }
+
+  /**
    * Creates a new {@link Transactional} that will automatically retry upon transaction failure.
    *
    * @param transactional The {@link Transactional} to delegate the transaction execution to
