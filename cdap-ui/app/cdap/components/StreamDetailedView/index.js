@@ -97,7 +97,7 @@ export default class StreamDetailedView extends Component {
               name: appId, // FIXME: Finalize on entity detail for fast action
               app: appId,
               id: streamId,
-              type: 'dataset'
+              type: 'stream'
             };
 
             this.setState({
