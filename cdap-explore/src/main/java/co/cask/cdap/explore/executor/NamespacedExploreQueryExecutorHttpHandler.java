@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.ImpersonatedOpType;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.explore.service.ExploreException;
@@ -49,14 +50,14 @@ import javax.ws.rs.QueryParam;
  * Provides REST endpoints for {@link ExploreService} operations.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
-public class NamespacedQueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(NamespacedQueryExecutorHttpHandler.class);
+public class NamespacedExploreQueryExecutorHttpHandler extends AbstractExploreQueryExecutorHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(NamespacedExploreQueryExecutorHttpHandler.class);
 
   private final ExploreService exploreService;
   private final Impersonator impersonator;
 
   @Inject
-  public NamespacedQueryExecutorHttpHandler(ExploreService exploreService, Impersonator impersonator) {
+  public NamespacedExploreQueryExecutorHttpHandler(ExploreService exploreService, Impersonator impersonator) {
     this.exploreService = exploreService;
     this.impersonator = impersonator;
   }
@@ -77,7 +78,7 @@ public class NamespacedQueryExecutorHttpHandler extends AbstractQueryExecutorHtt
         public QueryHandle call() throws Exception {
           return exploreService.execute(new NamespaceId(namespaceId), query, additionalSessionConf);
         }
-      });
+      }, ImpersonatedOpType.EXPLORE);
       responder.sendJson(HttpResponseStatus.OK, queryHandle);
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);

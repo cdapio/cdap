@@ -43,7 +43,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
@@ -173,25 +172,6 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertTrue(customLocation.exists());
     // delete it manually
     Assert.assertTrue(customLocation.delete(true));
-  }
-
-  @Test
-  public void testInvalidConfiguration() throws Exception {
-    // test that the namespace create handler doesn't allow configuring only one of the following two:
-    // principal, keytabURI
-    NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName("test_ns").setPrincipal("somePrincipal").build();
-    HttpResponse response = createNamespace(GSON.toJson(namespaceMeta), "test_ns");
-    assertResponseCode(400, response);
-    String responseMessage = EntityUtils.toString(response.getEntity());
-    Assert.assertTrue(
-      responseMessage.contains("Either neither or both of the following two configurations must be configured"));
-
-    namespaceMeta = new NamespaceMeta.Builder().setName("test_ns").setKeytabURI("/some/path").build();
-    response = createNamespace(GSON.toJson(namespaceMeta), "test_ns");
-    assertResponseCode(400, response);
-    responseMessage = EntityUtils.toString(response.getEntity());
-    Assert.assertTrue(
-      responseMessage.contains("Either neither or both of the following two configurations must be configured"));
   }
 
   @Test

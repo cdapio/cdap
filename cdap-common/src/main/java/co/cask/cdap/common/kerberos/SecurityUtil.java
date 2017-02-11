@@ -236,8 +236,9 @@ public final class SecurityUtil {
    * </ul>
    */
   public static ImpersonationInfo createImpersonationInfo(OwnerAdmin ownerAdmin, CConfiguration cConf,
-                                                          NamespacedEntityId entityId) throws IOException {
-    ImpersonationInfo impersonationInfo = ownerAdmin.getImpersonationInfo(entityId);
+                                                          NamespacedEntityId entityId,
+                                                          ImpersonatedOpType impersonatedOpType) throws IOException {
+    ImpersonationInfo impersonationInfo = ownerAdmin.getImpersonationInfo(entityId, impersonatedOpType);
     if (impersonationInfo == null) {
       return new ImpersonationInfo(getMasterPrincipal(cConf), getMasterKeytabURI(cConf));
     }

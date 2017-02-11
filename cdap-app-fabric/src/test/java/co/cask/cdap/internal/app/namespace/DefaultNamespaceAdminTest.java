@@ -151,7 +151,49 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testConfigUpdateFailures() throws Exception {
+  public void testKerberos() throws Exception {
+    // test that the namespace create handler doesn't allow configuring only one of the following two:
+    // principal, keytabURI
+    NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName("test_ns").setPrincipal("somePrincipal").build();
+    try {
+      namespaceAdmin.create(namespaceMeta);
+      Assert.fail();
+    } catch (BadRequestException bre) {
+      // expected
+    }
+
+    // now check with just key tab uri
+    namespaceMeta = new NamespaceMeta.Builder().setName("test_ns").setKeytabURI("/some/path").build();
+    try {
+      namespaceAdmin.create(namespaceMeta);
+      Assert.fail();
+    } catch (BadRequestException bre) {
+      // expected
+    }
+
+    // if set explore as principal is set to false it should be present with both keytab uri and principal
+    namespaceMeta = new NamespaceMeta.Builder().setName("test_ns").setKeytabURI("/some/path")
+      .setExploreAsPrincipal(false).build();
+    try {
+      namespaceAdmin.create(namespaceMeta);
+      Assert.fail();
+    } catch (BadRequestException bre) {
+      // expected
+    }
+
+    // if set explore as principal is set to false it shoule be present with both keytab uri and principal
+    namespaceMeta = new NamespaceMeta.Builder().setName("test_ns").setPrincipal("somePrincipal")
+      .setExploreAsPrincipal(false).build();
+    try {
+      namespaceAdmin.create(namespaceMeta);
+      Assert.fail();
+    } catch (BadRequestException bre) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testConfigUpdate() throws Exception {
     String namespace = "custompaceNamespace";
     NamespaceId namespaceId = new NamespaceId(namespace);
     // check that root directory for a namespace cannot be updated
@@ -218,6 +260,21 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       // expected
     }
 
+    // updating the groupname for an existing namespace should fail
+    try {
+      namespaceAdmin.updateProperties(nsMeta.getNamespaceId(),
+                                      new NamespaceMeta.Builder(nsMeta).setGroupName("anotherGroup").build());
+      Assert.fail();
+    } catch (BadRequestException e) {
+      // expected
+    }
+
+    // Although disabling explore impersonation should be allowed
+    Assert.assertTrue(namespaceAdmin.get(nsMeta.getNamespaceId()).getConfig().isExploreAsPrincipal());
+    namespaceAdmin.updateProperties(nsMeta.getNamespaceId(),
+                                    new NamespaceMeta.Builder(nsMeta).setExploreAsPrincipal(false).build());
+    Assert.assertFalse(namespaceAdmin.get(nsMeta.getNamespaceId()).getConfig().isExploreAsPrincipal());
+
     //clean up
     namespaceAdmin.delete(namespaceId);
     Locations.deleteQuietly(customlocation);
@@ -265,6 +322,10 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     // creating a new namespace with same hbase namespace should fail
     verifyAlreadyExist(new NamespaceMeta.Builder().setName("otherNamespace").setHBaseNamespace("hbasens").build(),
                        namespaceId);
+
+    //clean up
+    namespaceAdmin.delete(namespaceId);
+    Locations.deleteQuietly(customlocation);
   }
 
   @Test

@@ -63,6 +63,7 @@ public final class NamespaceMeta {
     private String principal;
     private String groupName;
     private String keytabURI;
+    private boolean exploreAsPrincipal = true;
 
     public Builder() {
       // No-Op
@@ -80,6 +81,7 @@ public final class NamespaceMeta {
         this.principal = config.getPrincipal();
         this.groupName = config.getGroupName();
         this.keytabURI = config.getKeytabURI();
+        this.exploreAsPrincipal = config.isExploreAsPrincipal();
       }
     }
 
@@ -138,6 +140,11 @@ public final class NamespaceMeta {
       return this;
     }
 
+    public Builder setExploreAsPrincipal(boolean exploreAsPrincipal) {
+      this.exploreAsPrincipal = exploreAsPrincipal;
+      return this;
+    }
+
     public NamespaceMeta build() {
       if (name == null) {
         throw new IllegalArgumentException("Namespace id cannot be null.");
@@ -154,7 +161,8 @@ public final class NamespaceMeta {
 
       return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName, rootDirectory,
                                                                       hbaseNamespace, hiveDatabase,
-                                                                      principal, groupName, keytabURI));
+                                                                      principal, groupName, keytabURI,
+                                                                      exploreAsPrincipal));
     }
   }
 

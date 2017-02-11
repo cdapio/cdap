@@ -90,6 +90,7 @@ public enum ArgumentName {
   NAMESPACE_HIVE_DATABASE("hive-database"),
   NAMESPACE_ROOT_DIR("root-directory"),
   NAMESPACE_SCHEDULER_QUEUENAME("scheduler-queue-name"),
+  NAMESPACE_EXPLORE_AS_PRINCIPAL("explore-as-principal"),
 
   INSTANCE("instance-id"),
   COMMAND_CATEGORY("command-category"),

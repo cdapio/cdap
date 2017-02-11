@@ -44,8 +44,8 @@ import java.util.Map;
 /**
  * An abstract class that provides common functionality for namespaced and non-namespaced ExploreQuery handlers.
  */
-public class AbstractQueryExecutorHttpHandler extends AbstractHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractQueryExecutorHttpHandler.class);
+public class AbstractExploreQueryExecutorHttpHandler extends AbstractHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractExploreQueryExecutorHttpHandler.class);
   private static final Gson GSON = new Gson();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 

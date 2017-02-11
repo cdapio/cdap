@@ -268,12 +268,12 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
       String groupName = customNamespacedLocation.getGroup();
       String permissions = customNamespacedLocation.getPermissions().substring(3, 6);
       if (!groupName.equals(namespaceMeta.getConfig().getGroupName())) {
-        LOG.warn("The provided home directory '%s' for namespace '%s' has group '%s', which is different from " +
-                   "the configured group '%s' of the namespace.", customNamespacedLocation.toString(),
+        LOG.warn("The provided home directory '{}' for namespace '{}' has group '{}', which is different from " +
+                   "the configured group '{}' of the namespace.", customNamespacedLocation.toString(),
                  namespaceMeta.getNamespaceId(), groupName, namespaceMeta.getConfig().getGroupName());
       }
       if (!"rwx".equals(permissions)) {
-        LOG.warn("The provided home directory '%s' for namespace '%s' has group permissions of '%s'. It is " +
+        LOG.warn("The provided home directory '{}' for namespace '{}' has group permissions of '{}'. It is " +
                    "recommended to set the group permissions to 'rwx'",
                  customNamespacedLocation.toString(), namespaceMeta.getNamespaceId(), permissions);
       }

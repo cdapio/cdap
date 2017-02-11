@@ -50,13 +50,13 @@ import javax.ws.rs.PathParam;
  *
  */
 @Path(Constants.Gateway.API_VERSION_3)
-public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(QueryExecutorHttpHandler.class);
+public class ExploreQueryExecutorHttpHandler extends AbstractExploreQueryExecutorHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(ExploreQueryExecutorHttpHandler.class);
 
   private final ExploreService exploreService;
 
   @Inject
-  QueryExecutorHttpHandler(ExploreService exploreService) {
+  ExploreQueryExecutorHttpHandler(ExploreService exploreService) {
     this.exploreService = exploreService;
   }
 
