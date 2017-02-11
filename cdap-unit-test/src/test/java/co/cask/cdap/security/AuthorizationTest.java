@@ -171,12 +171,12 @@ public class AuthorizationTest extends TestBase {
   public static void setup() {
     instance = new InstanceId(getConfiguration().get(Constants.INSTANCE_NAME));
     oldUser = SecurityRequestContext.getUserId();
-    SecurityRequestContext.setUserId(ALICE.getName());
   }
 
   @Before
   public void setupTest() throws Exception {
     Assert.assertEquals(ImmutableSet.<Privilege>of(), getAuthorizer().listPrivileges(ALICE));
+    SecurityRequestContext.setUserId(ALICE.getName());
   }
 
   @Test
