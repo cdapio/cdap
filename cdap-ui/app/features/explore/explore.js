@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.explore')
-  .controller('GlobalExploreController', function ($scope, $state, EventPipe, myExploreApi) {
+  .controller('GlobalExploreController', function ($scope, $state, EventPipe, myExploreApi, $q, myDatasetApi) {
 
     this.activeTab = 0;
 
@@ -31,18 +31,35 @@ angular.module(PKG.name + '.feature.explore')
       scope: $scope
     };
 
-    myExploreApi.list(params)
-      .$promise
+    $q.all([myDatasetApi.list(params).$promise, myExploreApi.list(params).$promise])
       .then(function (res) {
-        angular.forEach(res, function(v) {
-          var split = v.table.split('_');
-          v.type = split[0];
-          split.splice(0,1); // removing the data type from the array
-          v.name = split.join('_');
+        var exploreTables = res[1];
+        var datasetSpecs = res[0];
+        angular.forEach(exploreTables, function(v) {
+          if (v.table.indexOf('_') === -1) {
+            v.name = v.table;
+            v.type = 'dataset';
+          } else {
+            var split = v.table.split('_');
+            v.type = split[0];
+            split.splice(0,1); // removing the data type from the array
+            v.name = split.join('_');
+          }
         });
 
-        this.dataList = res;
-        this.selectTable(res[0]);
+        exploreTables = exploreTables.map(tb => {
+          var tablename = tb.name;
+          var match = datasetSpecs.find(dSpec => dSpec.name.toLowerCase() === tablename);
+          if (match) {
+            return Object.assign({}, tb, {
+              datasetName: match.name
+            });
+          }
+          return tb;
+        });
+
+        this.dataList = exploreTables;
+        this.selectTable(this.dataList[0]);
       }.bind(this));
 
     EventPipe.on('explore.newQuery', function() {
@@ -54,7 +71,7 @@ angular.module(PKG.name + '.feature.explore')
     this.selectTable = function (data) {
       // Passing this info to sql-query directive
       this.type = data.type;
-      this.name = data.name;
+      this.name = data.datasetName || data.name;
 
       params.table = data.table;
 
