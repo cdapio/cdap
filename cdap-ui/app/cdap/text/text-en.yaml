@@ -404,8 +404,9 @@ features:
   Overview:
     ProgramTab:
       emptyMessage: No Programs found.
-      title: "Programs in \"{appId}\""
+      title: "Programs in application \"{appId}\""
       runningProgramLabel: "Number of programs running: {programCount}"
+      altTitle: "Programs using {entityType} \"{entityId}\""
     DatasetTab:
       title: "Dataset Used by \"{appId}\""
     SchemaTab:
