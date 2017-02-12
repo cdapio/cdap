@@ -103,20 +103,20 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                                           @Named(Constants.Metrics.MESSAGING_FETCHER_LIMIT) int fetcherLimit,
                                           @Assisted Set<Integer> topicNumbers,
                                           @Assisted MetricsContext metricsContext) {
-    this(metricDatasetFactory, topicPrefix, topicNumbers, metricsContext, messagingService,
-         schemaGenerator, readerFactory, metricStore, fetcherLimit, 1000);
+    this(metricDatasetFactory, topicPrefix, messagingService,
+         schemaGenerator, readerFactory, metricStore, fetcherLimit, topicNumbers, metricsContext, 1000);
   }
 
   @VisibleForTesting
   MessagingMetricsProcessorService(MetricDatasetFactory metricDatasetFactory,
-                                   @Named(Constants.Metrics.TOPIC_PREFIX) String topicPrefix,
-                                   Set<Integer> topicNumbers,
-                                   MetricsContext metricsContext,
+                                   String topicPrefix,
                                    MessagingService messagingService,
                                    SchemaGenerator schemaGenerator,
                                    DatumReaderFactory readerFactory,
                                    MetricStore metricStore,
-                                   @Named(Constants.Metrics.MESSAGING_FETCHER_LIMIT) int fetcherLimit,
+                                   int fetcherLimit,
+                                   Set<Integer> topicNumbers,
+                                   MetricsContext metricsContext,
                                    int metricsProcessIntervalMillis) {
     this.metricDatasetFactory = metricDatasetFactory;
     this.metricsTopics = new ArrayList<>();
