@@ -437,7 +437,7 @@ events to the table ``replicaTable``, while at the same time it writes just the
 filtering logic is applied by using an included script in the step
 ``spendingUsersScript``:
 
-.. image:: /_images/fork-in-pipeline.png
+.. image:: _images/fork-in-pipeline.png
    :width: 6in
    :align: center
 
@@ -571,7 +571,7 @@ The rewards records are merged at the sink ``rewardsSink``; note that the incomi
 from the transforms ``userRewards`` and ``itemRewards`` are the same, and that the order
 of received records will vary.
 
-.. image:: /_images/merge-in-pipeline.png
+.. image:: _images/merge-in-pipeline.png
    :width: 8in
    :align: center
 

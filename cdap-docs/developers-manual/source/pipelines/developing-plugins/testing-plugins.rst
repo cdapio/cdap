@@ -13,7 +13,9 @@ Test Framework for Plugins
 
 .. highlight:: java
 
-.. include:: /../../developers-manual/source/testing/testing.rst
+.. .. include:: /../../developers-manual/source/testing/testing.rst
+
+.. include:: /testing/testing.rst
    :start-after: .. _test-framework-strategies-artifacts:
    :end-before:  .. _test-framework-validating-sql:
 

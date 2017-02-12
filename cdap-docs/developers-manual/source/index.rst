@@ -1,13 +1,13 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Introduction to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _developer-index:
 
-==================================================
+=======================
 CDAP Developers’ Manual
-==================================================
+=======================
 
 .. |getting-started| replace:: **Getting Started Developing:**
 .. _getting-started: getting-started/index.html
@@ -33,6 +33,12 @@ CDAP Developers’ Manual
   *datasets*, and *views*. *Application* abstraction is accomplished using *flows* and *flowlets*, *MapReduce*, *Spark*,
   *workers*, *workflows*, *schedules*, and *services*. Details are provided on working with these abstractions to
   build Big Data applications.
+
+
+.. |pipelines| replace:: **Pipelines:**
+.. _pipelines: pipelines/index.html
+
+- |pipelines|_ CDAP pipelines.
 
 
 .. |security| replace:: **Security:**

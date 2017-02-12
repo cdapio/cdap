@@ -48,12 +48,20 @@ documentation for the plugin will be available through the :ref:`CDAP Applicatio
 Deploying Plugins
 =================
 
-.. include:: /../../developers-manual/source/building-blocks/plugins.rst
+.. include:: /building-blocks/plugins.rst
    :start-after: .. _plugins-deployment-artifact:
    :end-before:  .. _plugins-deployment-packaging:
 
-.. include:: /../../developers-manual/source/building-blocks/plugins.rst
+.. include:: /building-blocks/plugins.rst
    :start-after: .. _plugins-deployment-system:
+   :end-before:  .. _plugins-deployment-user:
+
+.. include:: /building-blocks/plugins.rst
+   :start-after: .. _plugins-deployment-user:
+   :end-before:  .. _plugins-deployment-verification:
+
+.. include:: /building-blocks/plugins.rst
+   :start-after: .. _plugins-deployment-verification:
    :end-before:  .. _plugins-use-case:
 
 

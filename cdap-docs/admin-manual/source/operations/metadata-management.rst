@@ -205,7 +205,7 @@ Search
 ------
 Searching in metadata management is provided by an interface similar to that of a popular search engine:
 
-.. figure:: /_images/tracker-home-search.png
+.. figure:: /_images/metadata-management/tracker-home-search.png
   :figwidth: 100%
   :width: 800px
   :align: center
@@ -226,7 +226,7 @@ term such as ``a* k*``, which will find all entities that begin with the letter 
 
 The results would appear similar to this:
 
-.. figure:: /_images/tracker-first-search.png
+.. figure:: /_images/metadata-management/tracker-first-search.png
   :figwidth: 100%
   :width: 800px
   :align: center
@@ -269,7 +269,7 @@ Properties*, and *System Properties* that were found for the entity. The values 
 vary depending on the type of entity and each individual entity. For instance, a stream
 may have a schema attached, and if so, it will be displayed.
 
-.. figure:: /_images/tracker-metadata.png
+.. figure:: /_images/metadata-management/tracker-metadata.png
   :figwidth: 100%
   :width: 800px
   :align: center
@@ -292,7 +292,7 @@ A date menu in the left side of the diagram lets you control the time range that
 diagram displays. By default, the last seven days are used, though a custom range can be
 specified, in addition to common time ranges (two weeks to one year).
 
-.. figure:: /_images/tracker-lineage.png
+.. figure:: /_images/metadata-management/tracker-lineage.png
   :figwidth: 100%
   :width: 800px
   :align: center
@@ -310,7 +310,7 @@ A date menu in the left side of the diagram lets you control the time range that
 diagram displays. By default, the last seven days are used, though a custom range can be
 specified, in addition to common time ranges (two weeks to one year).
 
-.. figure:: /_images/tracker-audit-log.png
+.. figure:: /_images/metadata-management/tracker-audit-log.png
   :figwidth: 100%
   :width: 800px
   :align: center
@@ -322,7 +322,7 @@ The *Preview* tab (if available) shows a preview for the dataset. It is availabl
 explorable. You can scroll for up to 500 records. For additional analysis, use the *Jump*
 menu to go into CDAP and explore the dataset using a custom query.
 
-.. figure:: /_images/tracker-preview.png
+.. figure:: /_images/metadata-management/tracker-preview.png
   :figwidth: 100%
   :width: 800px
   :align: center
@@ -336,7 +336,7 @@ charts displaying the Applications and Programs that are accessing the dataset, 
 the last time a specific message was received about the dataset. Clicking the Application name or
 the Program name will take you to that entity in the main CDAP UI.
 
-.. figure:: /_images/tracker-usage.png
+.. figure:: /_images/metadata-management/tracker-usage.png
   :figwidth: 100%
   :width: 800px
   :align: center
@@ -350,7 +350,7 @@ use the same terminology. Any preferred tag that has not been attached to any en
 by clicking the red trashcan icon. If a preferred tag has been added to an entity, you cannot delete it,
 but you can demote it back to just being a user tag.
 
-.. figure:: /_images/tracker-tags.png
+.. figure:: /_images/metadata-management/tracker-tags.png
   :figwidth: 100%
   :width: 800px
   :align: center
@@ -361,7 +361,7 @@ list of tags that you would like to be "preferred". If the tag already exists in
 it will be promoted from being a user tag to being a preferred tag. If it is a new tag
 in CDAP, it will be added in the *Preferred Tags* list.
 
-.. figure:: /_images/tracker-tags-upload.png
+.. figure:: /_images/metadata-management/tracker-tags-upload.png
   :figwidth: 100%
   :width: 800px
   :align: center
@@ -375,7 +375,7 @@ columns as well as the preferred naming convention, type, and whether the column
 identifying information (PII) or not. These definitions will be applied to all datasets in the namespace.
 For example, any dataset containing the column ``customerId`` will have the same definition and type.
 
-.. figure:: /_images/tracker-dictionary.png
+.. figure:: /_images/metadata-management/tracker-dictionary.png
   :figwidth: 100%
   :width: 800px
   :align: center
@@ -387,7 +387,7 @@ Metadata management allows for an easy integration with `Cloudera Navigator
 <https://www.cloudera.com/products/cloudera-navigator.html>`__  by providing a UI to
 connecting to a Navigator instance:
 
-.. figure:: /_images/tracker-integration-configuration.png
+.. figure:: /_images/metadata-management/tracker-integration-configuration.png
   :figwidth: 100%
   :width: 800px
   :align: center

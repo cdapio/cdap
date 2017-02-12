@@ -30,7 +30,7 @@ repeatable, high-available and easily maintainable.
 Logical versus Physical Pipelines
 =================================
 
-.. figure:: /_images/logical-physical-pipelines.png
+.. figure:: _images/logical-physical-pipelines.png
  :figwidth: 50%
  :width: 3in
  :align: right
@@ -79,7 +79,7 @@ Functional Components
 =====================
 These are the different functional components that are utilized within CDAP pipelines:
 
-.. figure:: /_images/cdap-pipelines-architecture.png
+.. figure:: _images/cdap-pipelines-architecture.png
    :figwidth: 100%
    :width: 6in
    :align: center
@@ -181,7 +181,7 @@ public APIs exposed by the application templates. When an application template o
 is deployed within CDAP, it is referred to as an **artifact**. CDAP provides capabilities to
 manage the different versions of both the application templates and the plugins.
 
-.. figure:: /_images/cdap-pipelines-internals.png
+.. figure:: _images/cdap-pipelines-internals.png
    :figwidth: 100%
    :width: 6in
    :align: center
@@ -196,7 +196,7 @@ Here is how the CDAP Application Studio works with CDAP to build a pipeline, beg
 with a user creating a new pipeline in the CDAP Application Studio. First, the components
 of the CDAP Application Studio:
 
-.. figure:: /_images/cdap-application-studio-annotated.png
+.. figure:: _images/cdap-application-studio-annotated.png
    :figwidth: 100%
    :width: 6in
    :align: center

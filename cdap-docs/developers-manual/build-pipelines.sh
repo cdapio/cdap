@@ -16,8 +16,8 @@
   
 # Build script for docs
 
-source ../vars
-source ../_common/common-build.sh
+# source ../vars
+# source ../_common/common-build.sh
 
 CHECK_INCLUDES=${TRUE}
 
@@ -177,7 +177,7 @@ function extract_table() {
   python "${EXTRACT_TABLE_TOOL}" "${extract_table_input}" "${extract_table_output}"
 }
 
-function download_includes() {
+function pipelines_download_includes() {
   echo_red_bold "Checking Plugin Archetypes"
   local cdap_app_templates="cdap-app-templates/cdap-etl/cdap-etl-archetypes/cdap-data-pipeline-plugins-archetype/src/main/resources/archetype-resources/src/main/java"
   
@@ -215,6 +215,7 @@ function download_includes() {
   # Copy the source _includes files so they can be populated with the markdown files
   BASE_TARGET="${1}/${plugins}"
   cp -R "${SCRIPT_PATH}/source/_includes/${plugins}" "${1}"
+#   cp -R "${SCRIPT_PATH}/source/pipelines/_includes/${plugins}" "${1}"
   
   echo_red_bold "Using ${CDAP_PIPELINES_SOURCE}"
   get_pipelines_version ${BASE_TARGET} ${CDAP_PIPELINES_SOURCE}
@@ -317,4 +318,4 @@ function download_includes() {
   extract_table ${BASE_TARGET} "transforms/validator-transform.md" _includes/validator-extract.txt
 }
 
-run_command ${1}
+# run_command ${1}

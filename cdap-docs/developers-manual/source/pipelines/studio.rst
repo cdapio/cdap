@@ -66,7 +66,7 @@ later.
 
 To create a draft, give your pipeline a unique name, and then click the *Save* button:
 
-.. figure:: /_images/cdap-pipelines-gs-1-5-buttons.png
+.. figure:: _images/cdap-pipelines-gs-1-5-buttons.png
   :figwidth: 100%
   :width: 6in
   :align: center
@@ -101,7 +101,7 @@ Changes to a plugin template do not affect any pipelines created using that temp
 those pipelines are created from the artifacts as specified in the plugin template at the
 time of creation of the pipeline.
 
-.. figure:: /_images/cdap-application-studio-plugin-template.png
+.. figure:: _images/cdap-application-studio-plugin-template.png
   :figwidth: 100%
   :width: 6in
   :align: center

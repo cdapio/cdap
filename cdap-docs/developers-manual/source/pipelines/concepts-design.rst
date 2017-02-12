@@ -42,7 +42,7 @@ stream, write to a table, run a script), and is dependent on the particular plug
 All stages are connected together in a directed acyclic graph (or *DAG*), which is
 shown in the *CDAP Application Studio* and in CDAP as a connected series of icons:
 
-.. image:: /_images/fork-in-pipeline.png
+.. image:: _images/fork-in-pipeline.png
    :width: 6in
    :align: center
 
@@ -102,7 +102,7 @@ perform any optional transformations required, and then write to one or more rea
 sinks.
 
 The pipelines are created from artifacts, either system artifacts (supplied as part of
-CDAP) or user artifacts, :ref:`created by a developer <developers:artifacts>`.
+CDAP) or user artifacts, :ref:`created by a developer <artifacts>`.
 
 Pipeline Lifecycle
 ------------------

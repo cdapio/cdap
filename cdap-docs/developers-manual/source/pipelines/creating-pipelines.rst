@@ -410,7 +410,7 @@ and in the runtime arguments set a key-value pair such as::
 In the CDAP Pipelines UI, macro property look-ups are determined from the configuration and are set as runtime arguments.
 After providing values for these arguments, the CDAP pipeline can be started:
 
-  .. figure:: /_images/stream-table-macro-runtime.png
+  .. figure:: _images/stream-table-macro-runtime.png
      :figwidth: 100%
      :width: 6in
      :align: center
@@ -555,7 +555,7 @@ A collection of predefined and preconfigured pipelines are available from within
 Studio through the controls at the top of the left side-bar. These templates can be used
 as the starting point for either your own pipelines or your own pipeline templates.
 
-.. figure:: /_images/cdap-application-studio-annotated.png
+.. figure:: _images/cdap-application-studio-annotated.png
    :figwidth: 100%
    :width: 6in
    :align: center
@@ -622,7 +622,7 @@ There are two ways you can export a pipeline configuration file:
 1. From **within the CDAP Application Studio**, you can export a pipeline configuration JSON file using
    the *Export...* button:
 
-   .. figure:: /_images/cdap-pipelines-gs-1-5-buttons.png
+   .. figure:: _images/cdap-pipelines-gs-1-5-buttons.png
       :figwidth: 100%
       :width: 6in
       :align: center
@@ -632,7 +632,7 @@ There are two ways you can export a pipeline configuration file:
     
    Clicking the "Export..." button will bring up the export dialog:
  
-   .. figure:: /_images/cdap-application-studio-export.png
+   .. figure:: _images/cdap-application-studio-export.png
       :figwidth: 100%
       :width: 6in
       :align: center
@@ -652,7 +652,7 @@ There are two ways you can export a pipeline configuration file:
 
 #. From **within a CDAP pipeline configuration** page, there is an *Export* button:
 
-   .. figure:: /_images/cdap-pipelines-detail-configuration.png
+   .. figure:: _images/cdap-pipelines-detail-configuration.png
       :figwidth: 100%
       :width: 6in
       :align: center
@@ -672,7 +672,7 @@ Importing
 From within the CDAP Application Studio, you can import a pipeline configuration JSON file to create a
 new pipeline using the *Import Pipeline* button:
 
-.. figure:: /_images/cdap-pipelines-gs-1-5-buttons.png
+.. figure:: _images/cdap-pipelines-gs-1-5-buttons.png
    :figwidth: 100%
    :width: 6in
    :align: center

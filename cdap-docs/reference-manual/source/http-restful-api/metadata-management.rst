@@ -3,18 +3,22 @@
     :description: CDAP Metadata Management HTTP RESTful API
     :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cdap-metadata-management-http-restful-api:
+.. _http-restful-api-metadata-management-:
 
-=========================================
-CDAP Metadata Management HTTP RESTful API
-=========================================
+====================================
+Metadata Management HTTP RESTful API
+====================================
 
 .. highlight:: console  
 
-All CDAP Metadata Management features are available via HTTP RESTful endpoints. It supports searching
+All Metadata Management features are available via HTTP RESTful endpoints. It supports searching
 of the *_auditLog* dataset, managing preferred tags, querying metrics, managing the data dictionary,
-and updating configurations, all using a set of HTTP RESTful APIs. (See the :ref:`Reference Manual: HTTP RESTful API
-<http-restful-api-introduction>` for details on the conventions used for these HTTP RESTful APIs.)
+and updating configurations, all using a set of HTTP RESTful APIs.
+
+.. Base URL explanation
+.. --------------------
+.. include:: base-url.txt
+
 
 Searching the *_auditLog* Dataset
 =================================

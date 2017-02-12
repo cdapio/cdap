@@ -16,8 +16,6 @@ CDAP Documentation Table of Contents
     Introduction to CDAP </introduction/index>
     Developers’ Manual </developers-manual/index>
     Administration Manual </admin-manual/index>
-    Pipelines </pipelines/index>
-    Metadata Management </metadata-management/index>
     Integrations </integrations/index>
     Examples, Guides, and Tutorials </examples-manual/index>
     Reference Manual </reference-manual/index>

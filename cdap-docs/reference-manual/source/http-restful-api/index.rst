@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -22,6 +22,7 @@ CDAP HTTP RESTful API v3
     Lifecycle <lifecycle>
     Logging <logging>
     Metadata <metadata>
+    Metadata Management <metadata-management>
     Metrics <metrics>
     Monitor <monitor>
     Namespace <namespace>
@@ -53,6 +54,7 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 
 - :doc:`Namespace: <namespace>` creating and managing namespaces
 - :doc:`Metadata: <metadata>` setting, retrieving, and deleting user metadata annotations
+- :doc:`Metadata Management: <metadata-management>` metadata management
 - :doc:`Preferences: <preferences>` setting, retrieving, and deleting preferences
 - :doc:`Configuration: <configuration>` retrieving the CDAP and HBase configurations
 - :doc:`Security: <security>` granting, revoking and listing privileges on CDAP entities,
@@ -99,6 +101,7 @@ data isolation. This is an inital step towards introducing `multi-tenancy
   lifecycle of flows, MapReduce programs, Spark programs, workflows, and custom services
 - :doc:`Logging: <logging>` retrieving application logs
 - :doc:`Metadata: <metadata>` setting, retrieving, and deleting user metadata annotations
+- :doc:`Metadata Management: <metadata-management>` metadata management
 - :doc:`Metrics: <metrics>` retrieving metrics for system and user applications (user-defined metrics)
 - :doc:`Monitor: <monitor>` checking the status of various system and custom CDAP services
 - :doc:`Namespace: <namespace>` creating and managing namespaces

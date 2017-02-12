@@ -144,8 +144,6 @@ intersphinx_mapping_cdap_manuals = {
   'introduction': ('../../introduction/',        os.path.abspath(_intersphinx_mapping % 'introduction')),
   'developers':   ('../../developers-manual/',   os.path.abspath(_intersphinx_mapping % 'developers-manual')),
   'admin':        ('../../admin-manual/',        os.path.abspath(_intersphinx_mapping % 'admin-manual')),
-  'pipelines':    ('../../pipelines/',           os.path.abspath(_intersphinx_mapping % 'pipelines')),
-  'metadata':     ('../../metadata-management/', os.path.abspath(_intersphinx_mapping % 'metadata-management')),
   'integrations': ('../../integrations/',        os.path.abspath(_intersphinx_mapping % 'integrations')),
   'examples':     ('../../examples-manual',      os.path.abspath(_intersphinx_mapping % 'examples-manual')),
   'reference':    ('../../reference-manual',     os.path.abspath(_intersphinx_mapping % 'reference-manual')),

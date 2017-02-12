@@ -31,7 +31,9 @@ plugins or applications, see :ref:`these instructions <cdap-pipelines-plugin-man
 .. ----------------
 .. _cdap-pipelines-packaging-plugins-packaging:
 
-.. include:: /../../developers-manual/source/building-blocks/plugins.rst
+.. .. include:: /../../developers-manual/source/building-blocks/plugins.rst
+
+.. include:: /building-blocks/plugins.rst
    :start-after: .. _plugins-deployment-packaging:
    :end-before:  .. _plugins-deployment-system:
    

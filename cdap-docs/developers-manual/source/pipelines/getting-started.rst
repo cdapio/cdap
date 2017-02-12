@@ -37,7 +37,7 @@ Start CDAP Pipelines
 
   This will take you to a list of pipelines, which will most likely be empty:
 
-  .. figure:: /_images/cdap-pipelines-no-pipelines.png
+  .. figure:: _images/cdap-pipelines-no-pipelines.png
      :figwidth: 100%
      :width: 6in
      :align: center
@@ -59,7 +59,7 @@ Start CDAP Application Studio
   Studio will start and you will be creating a new pipeline, by default the first
   pipeline type in the menu, a *Data Pipeline - Batch*, which is a batch-type pipeline:
   
-  .. figure:: /_images/cdap-application-studio-empty.png
+  .. figure:: _images/cdap-application-studio-empty.png
      :figwidth: 100%
      :width: 6in
      :align: center
@@ -75,7 +75,7 @@ Quick Tour of CDAP Application Studio
 
 Before we begin an example, let's look at Studio and its different components:
 
-.. figure:: /_images/cdap-application-studio-annotated.png
+.. figure:: _images/cdap-application-studio-annotated.png
    :figwidth: 100%
    :width: 6in
    :align: center
@@ -141,7 +141,7 @@ parses them into separate fields, and writes them as individual records to a tab
 
    Your canvas should look like this:
  
-   .. figure:: /_images/cdap-pipelines-gs-1-1-icons.png
+   .. figure:: _images/cdap-pipelines-gs-1-1-icons.png
       :figwidth: 100%
       :width: 6in
       :align: center
@@ -154,7 +154,7 @@ parses them into separate fields, and writes them as individual records to a tab
    right-hand side of the *Stream* and dragging out to the left-side connection of the
    *LogParser* and lifting the mouse-button when you reach it. Your canvas should now look like this:
 
-   .. figure:: /_images/cdap-pipelines-gs-1-2-connected.png
+   .. figure:: _images/cdap-pipelines-gs-1-2-connected.png
       :figwidth: 100%
       :width: 6in
       :align: center
@@ -166,7 +166,7 @@ parses them into separate fields, and writes them as individual records to a tab
    canvas should now look like this, showing that there are a number of properties to
    be completed on each plugin:
 
-   .. figure:: /_images/cdap-pipelines-gs-1-3-connected.png
+   .. figure:: _images/cdap-pipelines-gs-1-3-connected.png
       :figwidth: 100%
       :width: 6in
       :align: center
@@ -185,7 +185,7 @@ parses them into separate fields, and writes them as individual records to a tab
    been clicked, and the *Label*, *Stream Name*, and *Duration* are showing as required
    properties:
 
-   .. figure:: /_images/cdap-pipelines-gs-1-4-stream.png
+   .. figure:: _images/cdap-pipelines-gs-1-4-stream.png
       :figwidth: 100%
       :width: 6in
       :align: center
@@ -216,7 +216,7 @@ parses them into separate fields, and writes them as individual records to a tab
    To check that everything is complete, click the *Validate* button, located in the buttons
    above the canvas area. These controls are available in the upper-right:
 
-   .. figure:: /_images/cdap-pipelines-gs-1-5-buttons.png
+   .. figure:: _images/cdap-pipelines-gs-1-5-buttons.png
      :figwidth: 100%
      :width: 6in
      :align: center
@@ -239,7 +239,7 @@ parses them into separate fields, and writes them as individual records to a tab
    
    The view changes to show the completed application:
    
-   .. figure:: /_images/cdap-pipelines-gs-1-6-pipeline.png
+   .. figure:: _images/cdap-pipelines-gs-1-6-pipeline.png
      :figwidth: 100%
      :width: 6in
      :align: center
@@ -254,7 +254,7 @@ parses them into separate fields, and writes them as individual records to a tab
    application; important buttons to note are *Run* (on the left) and *View in
    CDAP* (on the right):
 
-   .. figure:: /_images/cdap-pipelines-gs-1-8-pipeline-annotated.png
+   .. figure:: _images/cdap-pipelines-gs-1-8-pipeline-annotated.png
      :figwidth: 100%
      :width: 6in
      :align: center
@@ -266,7 +266,7 @@ parses them into separate fields, and writes them as individual records to a tab
    act on. Navigate to the stream by clicking on the *View in CDAP* button, then the
    *Datasets* button, and then the *demoStream* button:
    
-    .. figure:: /_images/cdap-pipelines-gs-1-7-stream.png
+    .. figure:: _images/cdap-pipelines-gs-1-7-stream.png
       :figwidth: 100%
       :width: 6in
       :align: center
@@ -290,7 +290,7 @@ parses them into separate fields, and writes them as individual records to a tab
    The pipeline should start running, as indicated by the green *Running* text indicating
    the status:
    
-   .. figure:: /_images/cdap-pipelines-gs-1-9-pipeline-running.png
+   .. figure:: _images/cdap-pipelines-gs-1-9-pipeline-running.png
      :figwidth: 100%
      :width: 6in
      :align: center
@@ -302,7 +302,7 @@ parses them into separate fields, and writes them as individual records to a tab
    When the run completes, the status icon will change to *Completed*. A start time and
    duration should appear in the status panel:
 
-   .. figure:: /_images/cdap-pipelines-gs-1-10-completed.png
+   .. figure:: _images/cdap-pipelines-gs-1-10-completed.png
      :figwidth: 100%
      :width: 6in
      :align: center
@@ -317,7 +317,7 @@ parses them into separate fields, and writes them as individual records to a tab
    it. The first one takes you directly to the table in CDAP. (The second takes you to the
    table in :ref:`CDAP Metadata Management <metadata-management-index>`.)
 
-   .. figure:: /_images/cdap-pipelines-gs-1-11-jump-button.png
+   .. figure:: _images/cdap-pipelines-gs-1-11-jump-button.png
      :figwidth: 100%
      :width: 6in
      :align: center
@@ -331,7 +331,7 @@ parses them into separate fields, and writes them as individual records to a tab
    - clicking *Explore* and then
    - clicking *Execute SQL*:
 
-   .. figure:: /_images/cdap-pipelines-gs-1-12-demotable.png
+   .. figure:: _images/cdap-pipelines-gs-1-12-demotable.png
      :figwidth: 100%
      :width: 6in
      :align: center

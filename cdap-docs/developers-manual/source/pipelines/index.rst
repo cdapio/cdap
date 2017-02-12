@@ -2,7 +2,9 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. :titles-only-global-toc: true
+.. .. :titles-only-global-toc: true
+
+:hide-toc: true
 
 .. _cdap-pipelines:
 
@@ -10,11 +12,24 @@
 CDAP Pipelines
 ==============
 
-..    youtube::  JeqJrBW1UCU
+.. toctree::
+   :maxdepth: 3
+
+    Concepts and Design <concepts-design>
+    Getting Started <getting-started>
+    CDAP Application Studio <studio>
+    Creating Pipelines <creating-pipelines>
+    Running Pipelines <running-pipelines>
+    Plugin Management <plugin-management>
+    Plugin Reference <plugins/index>
+    Developing Pipelines <developing-pipelines>
+    Developing Plugins <developing-plugins/index>
+    How CDAP Pipelines Work <how-cdap-pipelines-work>
+
+
+..  ..    youtube::  JeqJrBW1UCU
 ..      :align: center
 ..      :width: 500px
-.. 
-..     :height: 100%
 
 CDAP Pipelines are a capability of CDAP that combines a user interface with back-end services
 to enable the building, deploying, and managing of data pipelines.

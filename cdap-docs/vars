@@ -16,7 +16,7 @@ DOCS="docs"
 DOCS_LOCAL="docs-local"
 DOCS_OUTER="docs-outer"
 
-CDAP_MANUALS="introduction developers-manual pipelines metadata-management admin-manual integrations examples-manual reference-manual faqs"
+CDAP_MANUALS="introduction developers-manual admin-manual integrations examples-manual reference-manual faqs"
 EXTENSION_MANUALS=""
 MANUALS="${CDAP_MANUALS} ${EXTENSION_MANUALS}"
 
@@ -40,6 +40,9 @@ GIT_BRANCH_PARENT="develop"
 # Used by admin-manual
 GIT_BRANCH_CDAP_SECURITY_EXTN="develop"
 
+# Used for metadata management documentation in admin-manual
+GIT_BRANCH_CDAP_METADATA_MANAGEMENT="develop"
+
 # Used by developers-manual
 GIT_BRANCH_CDAP_CLIENTS="develop"
 GIT_BRANCH_CDAP_INGEST="develop"
@@ -47,18 +50,15 @@ GIT_BRANCH_CDAP_INGEST="develop"
 GIT_BRANCH_CDAP_APPS="develop"
 GIT_VERSION_CDAP_APPS="0.8.0"
 
+# Used for pipelines documentation in developers-manual
+GIT_BRANCH_CDAP_PIPELINES="develop"
+
 # Used by examples manual
 GIT_BRANCH_CDAP_GUIDES="develop"
 
 # Used by integrations-manual
 GIT_BRANCH_CDAP_PACKS="develop"
 GIT_VERSION_NAVIGATOR="0.1.0"
-
-# Used for Pipelines documentation
-GIT_BRANCH_CDAP_PIPELINES="develop"
-
-# Used for Metadata Management documentation
-GIT_BRANCH_CDAP_METADATA_MANAGEMENT="develop"
 
 # Google Analytics Code
 GOOGLE_TAG_MANAGER_CODE="GTM-KWLFGH"
