@@ -34,6 +34,9 @@ import WelcomeScreen from 'components/EntityListView/WelcomeScreen';
 import HomeListView from 'components/EntityListView/ListView';
 import NamespaceStore from 'services/NamespaceStore';
 import Page404 from 'components/404';
+import PageErrorMessage from 'components/EntityListView/ErrorMessage/PageErrorMessage';
+import HomeErrorMessage from 'components/EntityListView/ErrorMessage';
+import isEqual from 'lodash/isEqual';
 require('./EntityListView.scss');
 import ee from 'event-emitter';
 
@@ -155,18 +158,22 @@ class EntityListView extends Component {
     let queryObject = this.getQueryObject(nextProps.location.query);
     if (
       (nextProps.params.namespace !== this.props.params.namespace) ||
-      queryObject.filter !== this.state.filter &&
-      queryObject.sort.fullSort !== this.state.sortObj.fullSort &&
-      queryObject.query !== this.state.query &&
-      queryObject.page !== this.state.currentPage
+      (
+        !isEqual(queryObject.filter, this.state.filter) ||
+        queryObject.sort.fullSort !== this.state.sortObj.fullSort ||
+        queryObject.query !== this.state.query ||
+        queryObject.page !== this.state.currentPage
+      )
     ) {
-      this.updateData(queryObject.query, queryObject.filter, queryObject.sort, nextProps.params.namespace, 1);
+      this.updateData(queryObject.query, queryObject.filter, queryObject.sort, nextProps.params.namespace, queryObject.page);
       this.setState({
         filter: queryObject.filter,
         sortObj: queryObject.sort,
         query: queryObject.query,
-        currentPage: 1,
+        currentPage: queryObject.page,
         loading: true,
+        entityErr: false,
+        errStatusCode: null
       });
     }
   }
@@ -273,10 +280,10 @@ class EntityListView extends Component {
         } else {
           this.setState({
             notFound: false,
-            currentPage: 1
+            currentPage: this.state.currentPage
           }, () => {
             this.calculatePageSize();
-            this.updateData();
+            this.search();
             this.namespaceStoreSubscription();
           });
         }
@@ -391,10 +398,11 @@ class EntityListView extends Component {
       params.numCursors = 10;
     }
 
-    let total;
+    let total, limit;
     MySearchApi.search(params)
       .map((res) => {
         total = res.total;
+        limit = res.limit;
         return res.results
           .map(parseMetadata)
           .map((entity) => {
@@ -403,16 +411,24 @@ class EntityListView extends Component {
           });
       })
       .subscribe((res) => {
-        this.setState({
-          entities: res,
-          total: total,
-          loading: false,
-          entityErr: false,
-          errStatusCode: null,
-          numPages: Math.ceil(total / this.pageSize)
-        });
+        if (total > 0 && Math.ceil(total/limit) < this.state.currentPage) {
+          this.setState({
+            entityErr: true,
+            errStatusCode: 'PAGE_NOT_FOUND',
+            loading: false
+          });
+        } else {
+          this.setState({
+            entities: res,
+            total: total,
+            loading: false,
+            entityErr: false,
+            errStatusCode: null,
+            numPages: Math.ceil(total / this.pageSize)
+          });
 
-        this.retryCounter = 0;
+          this.retryCounter = 0;
+        }
       }, (err) => {
         this.retryCounter++;
 
@@ -487,7 +503,7 @@ class EntityListView extends Component {
       query,
       sortObj,
       selectedEntity: null,
-      currentPage: 1
+      currentPage: this.state.currentPage
     }, () => {
       this.search(query, this.state.filter, this.state.sortObj);
     });
@@ -626,6 +642,27 @@ class EntityListView extends Component {
       );
     }
 
+    let errorContent = null;
+    if (this.state.entityErr) {
+      if (this.state.errStatusCode === 'PAGE_NOT_FOUND') {
+        errorContent = (
+          <PageErrorMessage
+            pageNum={this.state.currentPage}
+            query={this.state.query}
+          />
+        );
+      } else {
+        errorContent = (
+          <HomeErrorMessage
+            errorMessage={this.state.entityErr}
+            errorStatusCode={this.state.errStatusCode}
+            onRetry={this.search.bind(this)}
+            retryCounter={this.retryCounter}
+          />
+        );
+      }
+    }
+
     return (
       <div>
         <EntityListHeader
@@ -655,24 +692,29 @@ class EntityListView extends Component {
             onPageChange={this.handlePageChange}
           />
           <div className={classNames("entities-container")}>
-            <HomeListView
-              className={classNames("home-list-view-container", {"show-overview-main-container": !isNil(this.state.selectedEntity)})}
-              list={this.state.entities}
-              loading={this.state.loading}
-              onEntityClick={this.handleEntityClick.bind(this)}
-              onFastActionSuccess={this.onFastActionSuccess.bind(this)}
-              errorMessage={this.state.entityErr}
-              errorStatusCode={this.state.errStatusCode}
-              animationDirection={this.state.animationDirection}
-              activeEntity={this.state.selectedEntity}
-              retryCounter={this.retryCounter}
-              currentPage={this.state.currentPage}
-              activeFilter={this.state.filter}
-              filterOptions={this.filterOptions}
-              activeSort={this.state.sortObj}
-              searchText={this.state.query}
-              numColumns={this.state.numColumns}
-            />
+            {
+              this.state.entityErr ?
+                errorContent
+              :
+                <HomeListView
+                  className={classNames("home-list-view-container", {"show-overview-main-container": !isNil(this.state.selectedEntity)})}
+                  list={this.state.entities}
+                  loading={this.state.loading}
+                  onEntityClick={this.handleEntityClick.bind(this)}
+                  onFastActionSuccess={this.onFastActionSuccess.bind(this)}
+                  errorMessage={this.state.entityErr}
+                  errorStatusCode={this.state.errStatusCode}
+                  animationDirection={this.state.animationDirection}
+                  activeEntity={this.state.selectedEntity}
+                  retryCounter={this.retryCounter}
+                  currentPage={this.state.currentPage}
+                  activeFilter={this.state.filter}
+                  filterOptions={this.filterOptions}
+                  activeSort={this.state.sortObj}
+                  searchText={this.state.query}
+                  numColumns={this.state.numColumns}
+                />
+            }
             <Overview
               toggleOverview={!isNil(this.state.selectedEntity)}
               entity={this.state.selectedEntity}

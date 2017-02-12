@@ -19,7 +19,6 @@ import EntityCard from 'components/EntityCard';
 import classnames from 'classnames';
 import {objectQuery} from 'services/helpers';
 import T from 'i18n-react';
-import HomeErrorMessage from 'components/EntityListView/ErrorMessage';
 import JustAddedSection from 'components/EntityListView/JustAddedSection';
 
 export default class HomeListView extends Component {
@@ -27,7 +26,7 @@ export default class HomeListView extends Component {
     super(props);
     this.state = {
       loading: this.props.loading || false,
-      list: [],
+      list: this.props.list || [],
       selectedEntity: {}
     };
   }
@@ -113,20 +112,10 @@ export default class HomeListView extends Component {
         {T.translate('features.EntityListView.emptyMessage')}
       </h3>
     );
-    let entitiesToBeRendered;
     if (!this.state.loading && !this.state.list.length) {
-      entitiesToBeRendered = this.state.errorMessage ?
-        <HomeErrorMessage
-          errorMessage={this.props.errorMessage}
-          errorStatusCode={this.props.errorStatusCode}
-          onRetry={this.props.onUpdate}
-          retryCounter={this.props.retryCounter}
-        />
-      :
-        empty;
       content = (
         <div className="entities-container">
-          {entitiesToBeRendered}
+          {empty}
         </div>
       );
     }

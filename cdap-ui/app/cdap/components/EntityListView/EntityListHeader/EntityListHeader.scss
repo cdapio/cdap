@@ -38,7 +38,6 @@ $margin-to-border: 0.5rem;
     .input-feedback {
       background-color: #ffffff;
       border: 1px solid $border-color;
-      padding: $margin-to-border;
       border-right: 0;
 
       .fa-search {
@@ -48,12 +47,6 @@ $margin-to-border: 0.5rem;
 
     .search-input {
       background-clip: border-box;
-      border-left: 0;
-      padding-left: 0;
-
-      &:focus {
-        border-color: $border-color;
-      }
     }
   }
 

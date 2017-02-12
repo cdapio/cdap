@@ -35,7 +35,6 @@ export default class EntityListHeader extends Component {
       activeFilter: props.activeFilter,
       activeSort: props.activeSort
     };
-
     this.debouncedHandleSearch = debounce(this.handleSearch.bind(this), 500);
   }
 
@@ -223,5 +222,5 @@ EntityListHeader.propTypes = {
   isSortDisabled: PropTypes.bool,
   onSortClick: PropTypes.func,
   onSearch: PropTypes.func,
-  searchText: PropTypes.string,
+  searchText: PropTypes.string
 };

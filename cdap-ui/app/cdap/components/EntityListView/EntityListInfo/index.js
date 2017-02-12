@@ -51,6 +51,7 @@ export default class EntityListInfo extends Component {
                 previousLabel={<span className="fa fa-angle-left"></span>}
                 nextLabel={<span className="fa fa-angle-right"></span>}
                 onPageChange={this.handlePageChange.bind(this)}
+                disableInitialCallback={true}
                 initialPage={this.props.currentPage-1}
                 forcePage={this.props.currentPage-1}
                 containerClassName={"page-list"}
