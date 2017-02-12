@@ -146,10 +146,11 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
 
   @Override
   protected Executor executor() {
+    final String name = getClass().getSimpleName();
     return new Executor() {
       @Override
       public void execute(Runnable command) {
-        Thread thread = new Thread(command, getServiceName());
+        Thread thread = new Thread(command, name);
         thread.setDaemon(true);
         thread.start();
       }
