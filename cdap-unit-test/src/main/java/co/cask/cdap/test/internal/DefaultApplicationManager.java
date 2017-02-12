@@ -16,10 +16,13 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PluginInstanceDetail;
+import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -37,24 +40,19 @@ import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * A default implementation of {@link ApplicationManager}.
  */
 public class DefaultApplicationManager extends AbstractApplicationManager {
-  private final Set<ProgramId> runningProcesses = Sets.newSetFromMap(Maps.<ProgramId, Boolean>newConcurrentMap());
+
   private final AppFabricClient appFabricClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final MetricsManager metricsManager;
@@ -118,14 +116,18 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public void stopAll() {
     try {
-      for (ProgramId programId : Iterables.consumingIterable(runningProcesses)) {
-        // have to do a check, since mapreduce jobs could stop by themselves earlier, and appFabricServer.stop will
-        // throw error when you stop something that is not running.
-        if (isRunning(programId)) {
-          appFabricClient.stopProgram(application.getNamespace(), programId.getApplication(),
-                                      programId.getProgram(), programId.getType());
+      ApplicationDetail appDetail = appFabricClient.getVersionedInfo(application);
+      for (ProgramRecord programRecord : appDetail.getPrograms()) {
+        try {
+          appFabricClient.stopProgram(application.getNamespace(), application.getApplication(),
+                                      appDetail.getAppVersion(), programRecord.getName(), programRecord.getType());
+        } catch (BadRequestException e) {
+          // Ignore this as this will be throw if the program is not running, which is fine as there could
+          // be programs in the application that are currently not running.
         }
       }
+    } catch (NamespaceNotFoundException e) {
+      // This can be safely ignore if the unit-test already deleted the namespace
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -135,10 +137,8 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   public void stopProgram(ProgramId programId) {
     String programName = programId.getProgram();
     try {
-      if (runningProcesses.remove(programId)) {
-        appFabricClient.stopProgram(application.getNamespace(), application.getApplication(), application.getVersion(),
-                                    programName, programId.getType());
-      }
+      appFabricClient.stopProgram(application.getNamespace(), application.getApplication(), application.getVersion(),
+                                  programName, programId.getType());
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -146,16 +146,10 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
 
   @Override
   public void startProgram(ProgramId programId, Map<String, String> arguments) {
-    if (!isRunning(programId)) {
-      runningProcesses.remove(programId);
-    }
-
-    Preconditions.checkState(runningProcesses.add(programId), "Program %s is already running", programId);
     try {
       appFabricClient.startProgram(application.getNamespace(), application.getApplication(),
                                    application.getVersion(), programId.getProgram(), programId.getType(), arguments);
     } catch (Exception e) {
-      runningProcesses.remove(programId);
       throw Throwables.propagate(e);
     }
   }
