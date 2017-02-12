@@ -24,7 +24,8 @@
        id="{{ node.dataId }}"
        ng-repeat="node in Lineage.nodes"
        ng-style="node._uiLocation"
-       ng-click="Lineage.nodeClick($event, node)">
+       ng-click="Lineage.nodeClick($event, node)"
+       ng-class="{ 'link-disabled': Lineage.linkDisabled }">
 
     <!-- Navigation -->
     <div class="navigation-control left"
@@ -36,8 +37,10 @@
       <span class="fa fa-caret-right" ng-click="Lineage.navigationClick($event, node)"></span>
     </div>
 
+
     <a class="entity-link" ui-sref="{{ Lineage.constructNodeLink(node) }}"
-       ng-if="Lineage.uniqueNodes[node.uniqueNodeId].nodeType === 'data'">
+       ng-if="Lineage.uniqueNodes[node.uniqueNodeId].nodeType === 'data'"
+       ng-class="{ 'link-disabled': Lineage.linkDisabled }">
       <h4 class="entity-name">{{ Lineage.uniqueNodes[node.uniqueNodeId].label }}</h4>
       <div class="entity-type">
         <span class="{{ Lineage.uniqueNodes[node.uniqueNodeId].icon }}"></span>

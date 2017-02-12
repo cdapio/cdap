@@ -18,6 +18,7 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
   'ngInject';
 
   var vm = this;
+  vm.linkDisabled = $state.params.iframe === 'true';
 
   function render() {
     jsPlumb.reset();
@@ -92,6 +93,8 @@ function LineageController ($scope, jsPlumb, $timeout, $state, LineageStore, myT
 
   // This function is to enable user to click open data nodes in new tab
   vm.constructNodeLink = (node) => {
+    if ($state.params.iframe) { return '-'; }
+
     let nodeInfo = vm.uniqueNodes[node.uniqueNodeId];
 
     if (nodeInfo.nodeType === 'data') {
