@@ -465,8 +465,6 @@ html_theme = 'cdap'
 cdap_manuals_list = [
     ['introduction',        'introduction', 'Introduction to CDAP',            '',],
     ['developers-manual',   'developers',  u'Developers’ Manual',              '',],
-    ['pipelines',           'pipelines',    'Pipelines',                       '',],
-    ['metadata-management', 'metadata',     'Metadata Management',             '',],
     ['admin-manual',        'admin',        'Administration Manual',           '',],
     ['integrations',        'integrations', 'Integrations',                    '',],
     ['examples-manual',     'examples',     'Examples, Guides, and Tutorials', '',],

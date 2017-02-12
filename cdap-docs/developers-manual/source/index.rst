@@ -38,7 +38,8 @@ CDAP Developers’ Manual
 .. |pipelines| replace:: **Pipelines:**
 .. _pipelines: pipelines/index.html
 
-- |pipelines|_ CDAP pipelines.
+- |pipelines|_ A capability of CDAP that combines a user interface with back-end services
+  to enable the **building, deploying, and managing of data pipelines.**
 
 
 .. |security| replace:: **Security:**
