@@ -110,7 +110,8 @@ class EntityListView extends Component {
       animationDirection: 'next',
       showSplash: true,
       userStoreObj : '',
-      notFound: false
+      notFound: false,
+      numColumns: null
     };
 
     this.retryCounter = 0; // being used for search API retry
@@ -234,6 +235,8 @@ class EntityListView extends Component {
     } else if (containerWidth >= threeColumnWidth && containerWidth < fourColumnWidth) {
       numColumns = 3;
     }
+
+    this.setState({numColumns});
 
     let numRows = Math.floor(containerHeight / cardHeightWithMarginAndBorder);
 
@@ -650,10 +653,6 @@ class EntityListView extends Component {
             numberOfPages={this.state.numPages}
             currentPage={this.state.currentPage}
             onPageChange={this.handlePageChange}
-            activeFilter={this.state.filter}
-            filterOptions={this.filterOptions}
-            activeSort={this.state.sortObj}
-            searchText={this.state.query}
           />
           <div className={classNames("entities-container")}>
             <HomeListView
@@ -667,6 +666,12 @@ class EntityListView extends Component {
               animationDirection={this.state.animationDirection}
               activeEntity={this.state.selectedEntity}
               retryCounter={this.retryCounter}
+              currentPage={this.state.currentPage}
+              activeFilter={this.state.filter}
+              filterOptions={this.filterOptions}
+              activeSort={this.state.sortObj}
+              searchText={this.state.query}
+              numColumns={this.state.numColumns}
             />
             <Overview
               toggleOverview={!isNil(this.state.selectedEntity)}
