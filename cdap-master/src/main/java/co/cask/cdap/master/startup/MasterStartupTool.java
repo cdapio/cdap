@@ -100,7 +100,9 @@ public class MasterStartupTool {
     List<CheckRunner.Failure> failures = checkRunner.runChecks();
     if (!failures.isEmpty()) {
       for (CheckRunner.Failure failure : failures) {
-        LOG.error("{} failed: {}", failure.getName(), failure.getException().getMessage());
+        LOG.error("{} failed with {}: {}", failure.getName(),
+                  failure.getException().getClass().getSimpleName(),
+                  failure.getException().getMessage());
         if (failure.getException().getCause() != null) {
           LOG.error("  Root cause: {}", ExceptionUtils.getRootCauseMessage(failure.getException().getCause()));
         }
