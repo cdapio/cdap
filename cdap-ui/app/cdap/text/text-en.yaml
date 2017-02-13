@@ -134,6 +134,10 @@ features:
           displayName: Newest
         creationTimeAsc:
           displayName: Oldest
+    PageErrorMessage:
+      errorMessage: Page {pageNum} not found
+      suggestionMessage1: "Go back to:"
+      suggestionMessage2: Page 1
     NamespaceNotFound:
       createMessage: Would like to
       createLinkLabel: create a new one?

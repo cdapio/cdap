@@ -36,7 +36,8 @@ const uploadFile = (state = defaultUploadFileState, action = defaultAction) => {
   switch (action.type) {
     case ApplicationUploadActions.UPLOAD_JAR:
       return Object.assign({}, state, {
-        file: action.payload.file
+        file: action.payload.file,
+        __complete: true
       });
     case ApplicationUploadActions.onReset:
       return defaultUploadFileState;
