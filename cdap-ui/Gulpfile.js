@@ -131,7 +131,8 @@ gulp.task('css:app', ['css:lint'], function() {
       './app/styles/themes/*.less',
       './app/directives/**/*.less',
       './app/hydrator/**/*.less',
-      './app/tracker/**/*.less'
+      './app/tracker/**/*.less',
+      './app/logviewer/**/*.less'
     ])
     .pipe(plug.less())
     .pipe(plug.concat('app.css'))
@@ -273,6 +274,10 @@ gulp.task('watch:js:app:tracker', function() {
   return getExtensionBuildPipeline('tracker')
     .pipe(plug.livereload({ port: 35728 }));
 });
+gulp.task('watch:js:app:logviewer', function() {
+  return getExtensionBuildPipeline('logviewer')
+    .pipe(plug.livereload({ port: 35728 }));
+});
 gulp.task('watch:js:app:babel', function() {
   return getBabelBuildPipeline()
     .pipe(plug.livereload({ port: 35728 }));
@@ -285,12 +290,15 @@ gulp.task('js:app:hydrator', function() {
 gulp.task('js:app:tracker', function() {
   return getExtensionBuildPipeline('tracker');
 });
+gulp.task('js:app:logviewer', function() {
+  return getExtensionBuildPipeline('logviewer');
+});
 gulp.task('js:app:babel', function() {
   return getBabelBuildPipeline();
 });
 
-gulp.task('js:app', ['js:app:babel', 'js:app:hydrator', 'js:app:tracker']);
-gulp.task('watch:js:app', ['watch:js:app:hydrator', 'watch:js:app:tracker']);
+gulp.task('js:app', ['js:app:babel', 'js:app:hydrator', 'js:app:tracker', 'js:app:logviewer']);
+gulp.task('watch:js:app', ['watch:js:app:hydrator', 'watch:js:app:tracker', 'watch:js:app:logviewer']);
 gulp.task('polyfill', function () {
   return gulp.src([
     './app/polyfill.js',
@@ -308,10 +316,11 @@ gulp.task('img', function() {
 
 gulp.task('html:partials', function() {
   return gulp.src([
-    './app/{hydrator,tracker}/**/*.html',
+    './app/{hydrator,tracker,logviewer}/**/*.html',
     './app/features/{userprofile,}/**/*.html',
     '!./app/tracker/tracker.html',
-    '!./app/hydrator/hydrator.html'
+    '!./app/hydrator/hydrator.html',
+    '!./app/logviewer/logviewer.html'
     ])
       .pipe(plug.htmlmin({ removeComments: true }))
       .pipe(gulp.dest('./dist/assets/features'))
@@ -321,6 +330,7 @@ gulp.task('html:main', function() {
   return gulp.src([
     './app/tracker/tracker.html',
     './app/hydrator/hydrator.html',
+    './app/logviewer/logviewer.html',
   ])
     .pipe(plug.htmlmin({ removeComments: true }))
     .pipe(gulp.dest('./dist'));
@@ -437,5 +447,6 @@ gulp.task('watch', ['jshint', 'build'], function() {
   gulp.watch([
     './app/hydrator/**/*.html',
     './app/tracker/**/*.html',
+    './app/logviewer/**/*.html'
   ], ['html:partials', 'html:main']);
 });

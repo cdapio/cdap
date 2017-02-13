@@ -39,7 +39,7 @@ export default class FastActions extends Component {
         fastActionTypes = ['truncate', 'delete', 'explore'];
         break;
       case 'program':
-        fastActionTypes = ['setPreferences', 'startStop'];
+        fastActionTypes = ['setPreferences', 'startStop', 'log'];
         break;
     }
 

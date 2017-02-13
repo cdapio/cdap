@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $q, moment) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $q, moment, myAlertOnValium) {
   'ngInject';
 
   var dataSrc = new MyCDAPDataSource($scope);
@@ -184,10 +184,25 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       runId : vm.runId
     }).$promise.then(
       (statusRes) => {
+        LogViewerStore.dispatch({
+          type: LOGVIEWERSTORE_ACTIONS.SET_STATUS,
+          payload: {
+            status: statusRes.status,
+            startTime: statusRes.start,
+            endTime: statusRes.end
+          }
+        });
         vm.setProgramMetadata(statusRes.status);
       },
       (statusErr) => {
         console.log('ERROR: ', statusErr);
+
+        if (statusErr.statusCode === 404) {
+          myAlertOnValium.show({
+            type: 'danger',
+            content: statusErr.data
+          });
+        }
       });
   }
 
@@ -354,6 +369,14 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       runId : vm.runId
     }).$promise.then(
       (statusRes) => {
+        LogViewerStore.dispatch({
+          type: LOGVIEWERSTORE_ACTIONS.SET_STATUS,
+          payload: {
+            status: statusRes.status,
+            startTime: statusRes.start,
+            endTime: statusRes.end
+          }
+        });
         vm.setProgramMetadata(statusRes.status);
         if(vm.statusType === 0){
           if (!pollPromise) {

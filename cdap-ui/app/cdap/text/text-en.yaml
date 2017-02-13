@@ -155,6 +155,7 @@ features:
     exploreLabel: Explore
     deleteLabel: Delete
     deleteFailed: Failed to delete {entityId}.
+    logLabel: Logs
     truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
     truncateLabel: Truncate
     truncateSuccess: Truncated Successfully
