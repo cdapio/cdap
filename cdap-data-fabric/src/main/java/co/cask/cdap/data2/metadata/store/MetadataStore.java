@@ -19,6 +19,7 @@ package co.cask.cdap.data2.metadata.store;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
@@ -177,12 +178,14 @@ public interface MetadataStore {
    *               the cursor. If {@code null}, the first row is used as the cursor
    * @param showHidden boolean which specifies whether to display hidden entities (entity whose name start with "_")
    *                    or not.
+   * @param entityScope a set which specifies which scope of entities to display.
    * @return the {@link MetadataSearchResponse} containing search results for the specified search query and filters
    */
   MetadataSearchResponse search(String namespaceId, String searchQuery,
                                 Set<EntityTypeSimpleName> types,
                                 SortInfo sortInfo, int offset, int limit,
-                                int numCursors, String cursor, boolean showHidden) throws BadRequestException;
+                                int numCursors, String cursor, boolean showHidden,
+                                Set<EntityScope> entityScope) throws BadRequestException;
 
   /**
    * Returns the snapshot of the metadata for entities on or before the given time in both {@link MetadataScope#USER}

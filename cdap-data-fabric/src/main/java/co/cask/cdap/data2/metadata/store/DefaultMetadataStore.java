@@ -32,6 +32,7 @@ import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.data2.metadata.dataset.SearchResults;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.DatasetId;
@@ -376,7 +377,8 @@ public class DefaultMetadataStore implements MetadataStore {
   public MetadataSearchResponse search(String namespaceId, String searchQuery,
                                        Set<EntityTypeSimpleName> types,
                                        SortInfo sortInfo, int offset, int limit,
-                                       int numCursors, String cursor, boolean showHidden) throws BadRequestException {
+                                       int numCursors, String cursor, boolean showHidden,
+                                       Set<EntityScope> entityScope) throws BadRequestException {
     Set<MetadataScope> searchScopes = EnumSet.allOf(MetadataScope.class);
     if ("*".equals(searchQuery)) {
       if (SortInfo.DEFAULT.equals(sortInfo)) {
@@ -392,13 +394,14 @@ public class DefaultMetadataStore implements MetadataStore {
       }
     }
     return search(searchScopes, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor,
-                  showHidden);
+                  showHidden, entityScope);
   }
 
   private MetadataSearchResponse search(Set<MetadataScope> scopes, String namespaceId,
                                         String searchQuery, Set<EntityTypeSimpleName> types,
                                         SortInfo sortInfo, int offset, int limit,
-                                        int numCursors, String cursor, boolean showHidden) throws BadRequestException {
+                                        int numCursors, String cursor, boolean showHidden,
+                                        Set<EntityScope> entityScope) throws BadRequestException {
     if (offset < 0) {
       throw new IllegalArgumentException("offset must not be negative");
     }
@@ -413,7 +416,7 @@ public class DefaultMetadataStore implements MetadataStore {
     for (MetadataScope scope : scopes) {
       SearchResults searchResults =
         getSearchResults(scope, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor,
-                         showHidden);
+                         showHidden, entityScope);
       results.addAll(searchResults.getResults());
       cursors.addAll(searchResults.getCursors());
       allResults.addAll(searchResults.getAllResults());
@@ -446,20 +449,22 @@ public class DefaultMetadataStore implements MetadataStore {
 
     return new MetadataSearchResponse(
       sortInfo.getSortBy() + " " + sortInfo.getSortOrder(), offset, limit, numCursors, total,
-      addMetadataToEntities(sortedEntities, systemMetadata, userMetadata), cursors, showHidden
-    );
+      addMetadataToEntities(sortedEntities, systemMetadata, userMetadata), cursors, showHidden,
+      entityScope);
   }
 
   private SearchResults getSearchResults(final MetadataScope scope, final String namespaceId,
                                          final String searchQuery, final Set<EntityTypeSimpleName> types,
                                          final SortInfo sortInfo, final int offset,
                                          final int limit, final int numCursors,
-                                         final String cursor, final boolean showHidden) throws BadRequestException {
+                                         final String cursor, final boolean showHidden,
+                                         final Set<EntityScope> entityScope) throws BadRequestException {
     return execute(
       new TransactionExecutor.Function<MetadataDataset, SearchResults>() {
         @Override
         public SearchResults apply(MetadataDataset input) throws Exception {
-          return input.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor, showHidden);
+          return input.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor, showHidden,
+                              entityScope);
         }
       }, scope);
   }

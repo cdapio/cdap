@@ -35,6 +35,7 @@ import co.cask.cdap.data2.metadata.indexer.InvertedValueIndexer;
 import co.cask.cdap.data2.metadata.indexer.SchemaIndexer;
 import co.cask.cdap.data2.metadata.indexer.ValueOnlyIndexer;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -556,26 +557,29 @@ public class MetadataDataset extends AbstractDataset {
    *               the cursor. If {@code null}, the first row is used as the cursor
    * @param showHidden boolean which specifies whether to display hidden entities (entity whose name start with "_")
    *                    or not.
+   * @param entityScope a set which specifies which scope of entities to display.
    * @return a {@link SearchResults} object containing a list of {@link MetadataEntry} containing each matching
    *         {@link NamespacedEntityId} with its associated metadata. It also optionally contains a list of cursors
    *         for subsequent queries to start with, if the specified #sortInfo is not {@link SortInfo#DEFAULT}.
    */
   public SearchResults search(String namespaceId, String searchQuery, Set<EntityTypeSimpleName> types,
                               SortInfo sortInfo, int offset, int limit, int numCursors,
-                              @Nullable String cursor, boolean showHidden) {
+                              @Nullable String cursor, boolean showHidden, Set<EntityScope> entityScope) {
     if (!SortInfo.DEFAULT.equals(sortInfo)) {
       if (!"*".equals(searchQuery)) {
         throw new IllegalArgumentException("Cannot search with non-default sort with any query other than '*'");
       }
-      return searchByCustomIndex(namespaceId, types, sortInfo, offset, limit, numCursors, cursor, showHidden);
+      return searchByCustomIndex(namespaceId, types, sortInfo, offset, limit, numCursors, cursor, showHidden,
+                                 entityScope);
     }
-    return searchByDefaultIndex(namespaceId, searchQuery, types, showHidden);
+    return searchByDefaultIndex(namespaceId, searchQuery, types, showHidden, entityScope);
   }
 
   private SearchResults searchByDefaultIndex(String namespaceId, String searchQuery,
-                                             Set<EntityTypeSimpleName> types, boolean showHidden) {
+                                             Set<EntityTypeSimpleName> types, boolean showHidden,
+                                             Set<EntityScope> entityScope) {
     List<MetadataEntry> results = new LinkedList<>();
-    for (String searchTerm : getSearchTerms(namespaceId, searchQuery)) {
+    for (String searchTerm : getSearchTerms(namespaceId, searchQuery, entityScope)) {
       Scanner scanner;
       if (searchTerm.endsWith("*")) {
         // if prefixed search get start and stop key
@@ -605,7 +609,8 @@ public class MetadataDataset extends AbstractDataset {
 
   private SearchResults searchByCustomIndex(String namespaceId, Set<EntityTypeSimpleName> types,
                                             SortInfo sortInfo, int offset, int limit, int numCursors,
-                                            @Nullable String cursor, boolean showHidden) {
+                                            @Nullable String cursor, boolean showHidden,
+                                            Set<EntityScope> entityScope) {
     List<MetadataEntry> returnedResults = new LinkedList<>();
     List<MetadataEntry> allResults = new LinkedList<>();
     String indexColumn = getIndexColumn(sortInfo.getSortBy(), sortInfo.getSortOrder());
@@ -613,7 +618,7 @@ public class MetadataDataset extends AbstractDataset {
     // in addition, we want to pre-fetch 'numCursors' chunks of size 'limit'
     int fetchSize = offset + ((numCursors + 1) * limit);
     List<String> cursors = new ArrayList<>(numCursors);
-    for (String searchTerm : getSearchTerms(namespaceId, "*")) {
+    for (String searchTerm : getSearchTerms(namespaceId, "*", entityScope)) {
       byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
       byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
       // if a cursor is provided, then start at the cursor
@@ -697,9 +702,10 @@ public class MetadataDataset extends AbstractDataset {
    * @param namespaceId the namespaceId to search in
    * @param searchQuery the user specified search query. If {@code *}, returns a singleton list containing
    *                    {@code *} which matches everything.
+   * @param entityScope a set which specifies which scope of entities to display.
    * @return formatted search query which is namespaced
    */
-  private Iterable<String> getSearchTerms(String namespaceId, String searchQuery) {
+  private Iterable<String> getSearchTerms(String namespaceId, String searchQuery, Set<EntityScope> entityScope) {
     List<String> searchTerms = new LinkedList<>();
     for (String term : Splitter.on(SPACE_SEPARATOR_PATTERN).omitEmptyStrings().trimResults().split(searchQuery)) {
       String formattedSearchTerm = term.toLowerCase();
@@ -709,10 +715,13 @@ public class MetadataDataset extends AbstractDataset {
         String[] split = formattedSearchTerm.split(KEYVALUE_SEPARATOR, 2);
         formattedSearchTerm = split[0].trim() + KEYVALUE_SEPARATOR + split[1].trim();
       }
-      searchTerms.add(namespaceId + KEYVALUE_SEPARATOR + formattedSearchTerm);
+      if (entityScope.size() == 2 || !entityScope.contains(EntityScope.SYSTEM)) {
+        searchTerms.add(namespaceId + KEYVALUE_SEPARATOR + formattedSearchTerm);
+      }
       // for non-system namespaces, also add the system namespace, so entities from system namespace are surfaced
       // in the search results as well
-      if (!NamespaceId.SYSTEM.getEntityName().equals(namespaceId)) {
+      if (!NamespaceId.SYSTEM.getEntityName().equals(namespaceId) &&
+        (entityScope.size() == 2 || !entityScope.contains(EntityScope.USER))) {
         searchTerms.add(NamespaceId.SYSTEM.getEntityName() + KEYVALUE_SEPARATOR + formattedSearchTerm);
       }
     }
