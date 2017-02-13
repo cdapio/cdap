@@ -136,7 +136,7 @@ class ConfigurationCheck extends AbstractMasterCheck {
   }
 
   private void checkLogPartitionKey(Set<String> problemKeys) {
-    if (!isValidPartitionKey(cConf.get(Constants.Logging.LOG_PUBLISH_PARTITION_KEY).toUpperCase())) {
+    if (!isValidPartitionKey(cConf.get(Constants.Logging.LOG_PUBLISH_PARTITION_KEY))) {
       problemKeys.add(Constants.Logging.LOG_PUBLISH_PARTITION_KEY);
     }
   }
@@ -191,8 +191,8 @@ class ConfigurationCheck extends AbstractMasterCheck {
 
   private boolean isValidPartitionKey(String key) {
     try {
-      LogPartitionType.valueOf(key);
-    } catch (IllegalArgumentException e) {
+      LogPartitionType.valueOf(key.toUpperCase());
+    } catch (IllegalArgumentException | NullPointerException e) {
       LOG.error("Invalid log partition type: {}. Only program/application types are allowed", key, e.getMessage());
       return false;
     }
