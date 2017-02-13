@@ -98,7 +98,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     this.eventQueue = new TimeEventQueue<>(config.getPartitions());
     this.serializer = new LoggingEventSerializer();
     this.kafkaConsumers = new HashMap<>();
-    this.offsetResolver = new KafkaOffsetResolver(brokerService, config.getTopic());
+    this.offsetResolver = new KafkaOffsetResolver(brokerService, config);
   }
 
   @Override
@@ -548,6 +548,9 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     }
   }
 
+  /**
+   * A class that stores a message's next offset and log event time. Implements {@link Comparable} by comparing offsets.
+   */
   private static final class OffsetTime implements Comparable<OffsetTime> {
     private final long offset;
     private final long eventTime;

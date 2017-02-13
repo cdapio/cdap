@@ -1144,6 +1144,26 @@
   </property>
 
   <property>
+    <name>log.process.pipeline.event.out.of.order.ms</name>
+    <value>60000</value>
+    <description>
+      An estimation of the max mount of time that the log event time of any message
+      with smaller offset can exceed a message with larger offset. A larger estimation
+      results in a slower but safer search for a correct offset when restarting a log
+      pipeline on a new slave cluster with mismatched offsets because of Kafka replication.
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.replication.delay.ms</name>
+    <value>120000</value>
+    <description>
+      A rough estimation of Kafka publishing time delay of the same message replicated from the
+      master cluster to the slave cluster during cross-cluster replication.
+    </description>
+  </property>
+
+  <property>
     <name>log.process.pipeline.logger.cache.size</name>
     <value>1000</value>
     <description>

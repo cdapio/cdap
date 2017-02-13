@@ -722,6 +722,8 @@ public final class Constants {
     // The following properties can be defined in cdap-site and overridden in individual pipeline config xml
     public static final String PIPELINE_BUFFER_SIZE = "log.process.pipeline.buffer.size";
     public static final String PIPELINE_EVENT_DELAY_MS = "log.process.pipeline.event.delay.ms";
+    public static final String PIPELINE_EVENT_OUT_OF_ORDER_MS = "log.process.pipeline.event.out.of.order.ms";
+    public static final String PIPELINE_REPLICATION_DELAY_MS = "log.process.pipeline.replication.delay.ms";
     public static final String PIPELINE_KAFKA_FETCH_SIZE = "log.process.pipeline.kafka.fetch.size";
     public static final String PIPELINE_CHECKPOINT_INTERVAL_MS = "log.process.pipeline.checkpoint.interval.ms";
     public static final String PIPELINE_LOGGER_CACHE_SIZE = "log.process.pipeline.logger.cache.size";

@@ -95,6 +95,8 @@ public class DistributedLogFramework extends ResourceBalancerService {
       final KafkaPipelineConfig config = new KafkaPipelineConfig(
         topic, partitions, bufferSize,
         cConf.getLong(Constants.Logging.PIPELINE_EVENT_DELAY_MS),
+        cConf.getLong(Constants.Logging.PIPELINE_EVENT_OUT_OF_ORDER_MS),
+        cConf.getLong(Constants.Logging.PIPELINE_REPLICATION_DELAY_MS),
         cConf.getInt(Constants.Logging.PIPELINE_KAFKA_FETCH_SIZE),
         cConf.getLong(Constants.Logging.PIPELINE_CHECKPOINT_INTERVAL_MS)
       );

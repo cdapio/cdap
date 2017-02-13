@@ -49,6 +49,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -81,43 +82,39 @@ public class KafkaOffsetResolverTest {
                       }),
                     1);
 
-  // A rough estimation of Kafka publishing delay of a message from the original cluster and the destination cluster
-  // during cross-cluster replication
-  private static final long REPLICATION_DELAY = 5 * 60 * 1000;
-  // The max mount of time that the log event time of a message with smaller offset
-  // can exceed a message with larger offset
-  private static final long MAX_TIME_GAP = 60 * 1000; // 1 min
-  private static final long HALF_MAX_TIME_GAP = MAX_TIME_GAP / 2; // 30 sec
-
   @Test
   public void testFindOffset() throws Exception {
     String topic = "testOffsetResolver";
-
+    long replicationDelayMillis = 60000L;
+    long eventOutOfOrderMillis = 120000L;
+    KafkaPipelineConfig config = new KafkaPipelineConfig(topic, Collections.singleton(0), 1024L, 100L,
+                                                         replicationDelayMillis, eventOutOfOrderMillis,
+                                                         1048576, 200L);
     KAFKA_TESTER.createTopic(topic, 1);
 
     // Publish some log messages to Kafka
-    long baseTime = System.currentTimeMillis() - REPLICATION_DELAY;
+    long baseTime = System.currentTimeMillis() - replicationDelayMillis;
     List<ILoggingEvent> events = ImmutableList.of(
-      createLoggingEvent("test.logger", Level.INFO, "0", baseTime - 20 * 1000 - MAX_TIME_GAP),
-      createLoggingEvent("test.logger", Level.INFO, "0", baseTime - 20 * 1000 - MAX_TIME_GAP),
-      createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 7 * 1000 - MAX_TIME_GAP),
+      createLoggingEvent("test.logger", Level.INFO, "0", baseTime - 20 * 1000 - eventOutOfOrderMillis),
+      createLoggingEvent("test.logger", Level.INFO, "0", baseTime - 20 * 1000 - eventOutOfOrderMillis),
+      createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 7 * 1000 - eventOutOfOrderMillis),
       createLoggingEvent("test.logger", Level.INFO, "2", baseTime - 9 * 100),
       createLoggingEvent("test.logger", Level.INFO, "3", baseTime - 500),
       createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 9 * 1000),
-      createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 9 * 1000 + HALF_MAX_TIME_GAP),
+      createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 9 * 1000 + eventOutOfOrderMillis / 2),
       createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 9 * 1000),
-      createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 9 * 1000 - HALF_MAX_TIME_GAP),
+      createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 9 * 1000 - eventOutOfOrderMillis / 2),
       createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 10 * 1000),
       createLoggingEvent("test.logger", Level.INFO, "1", baseTime - 600),
       createLoggingEvent("test.logger", Level.INFO, "5", baseTime - 20 * 1000),
-      createLoggingEvent("test.logger", Level.INFO, "5", baseTime - 20 * 1000 + HALF_MAX_TIME_GAP),
+      createLoggingEvent("test.logger", Level.INFO, "5", baseTime - 20 * 1000 + eventOutOfOrderMillis / 2),
       createLoggingEvent("test.logger", Level.INFO, "6", baseTime - 600),
       createLoggingEvent("test.logger", Level.INFO, "6", baseTime - 10 * 1000),
-      createLoggingEvent("test.logger", Level.INFO, "7", baseTime - 16 * 1000 + MAX_TIME_GAP),
-      createLoggingEvent("test.logger", Level.INFO, "8", baseTime - 7 * 1000 + MAX_TIME_GAP),
-      createLoggingEvent("test.logger", Level.INFO, "4", baseTime - 100 + MAX_TIME_GAP));
+      createLoggingEvent("test.logger", Level.INFO, "7", baseTime - 16 * 1000 + eventOutOfOrderMillis),
+      createLoggingEvent("test.logger", Level.INFO, "8", baseTime - 7 * 1000 + eventOutOfOrderMillis),
+      createLoggingEvent("test.logger", Level.INFO, "4", baseTime - 100 + eventOutOfOrderMillis));
     publishLog(topic, events);
-    KafkaOffsetResolver offsetResolver = new KafkaOffsetResolver(KAFKA_TESTER.getBrokerService(), topic);
+    KafkaOffsetResolver offsetResolver = new KafkaOffsetResolver(KAFKA_TESTER.getBrokerService(), config);
 
     final CountDownLatch latch = new CountDownLatch(events.size());
     final CountDownLatch stopLatch = new CountDownLatch(1);
