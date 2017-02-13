@@ -357,8 +357,8 @@ public class ReplicationStatusTool {
 
   private static Long getShutdownTime() throws IOException {
     Long shutdownTime = 0L;
-    File shutdownTimeFile = new File(System.getProperty("java.io.tmpdir"),
-                                     Constants.Replication.CDAP_SHUTDOWN_TIME_FILENAME);
+    File shutdownTimeFile = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                     Constants.Replication.CDAP_SHUTDOWN_TIME_FILENAME).getAbsoluteFile();
     try (BufferedReader br = new BufferedReader(new FileReader(shutdownTimeFile))) {
       //Read the shutdown Time
       shutdownTime = new Long(br.readLine());

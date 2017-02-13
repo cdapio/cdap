@@ -472,8 +472,8 @@ public class MasterServiceMain extends DaemonMain {
    * The replication Status tool will use CDAP shutdown time to determine last CDAP related writes to HBase.
    */
   private void saveShutdownTime(Long timestamp) {
-    File shutdownTimeFile = new File(System.getProperty("java.io.tmpdir"),
-                                     Constants.Replication.CDAP_SHUTDOWN_TIME_FILENAME);
+    File shutdownTimeFile = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                             Constants.Replication.CDAP_SHUTDOWN_TIME_FILENAME).getAbsoluteFile();
     try (BufferedWriter bw = new BufferedWriter(new FileWriter(shutdownTimeFile))) {
       //Write shutdown time
       bw.write(timestamp.toString());
