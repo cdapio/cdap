@@ -68,6 +68,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
@@ -243,6 +244,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     if (UserGroupInformation.isSecurityEnabled()) {
       conf.set(HIVE_METASTORE_TOKEN_KEY, HiveAuthFactory.HS2_CLIENT_TOKEN);
     }
+
+    // We override this param due to the change in HIVE-14383. Otherwise, the hive job will be launched as the
+    // 'hive' user (or fail to even launch, if on ClouderaManager). See CDAP-8367 for more details.
+    conf.set(CommonConfigurationKeysPublic.HADOOP_SECURITY_AUTHENTICATION,
+             UserGroupInformation.AuthenticationMethod.SIMPLE.name());
 
     // Since we use delegation token in HIVE, unset the SPNEGO authentication if it is
     // enabled. Please see CDAP-3452 for details.
@@ -1303,6 +1309,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // is enabled. However, in our case we don't have Kerberos credentials for Explore service.
       // Hence it will not be automatically added by Hive, instead we have to add it ourselves.
       sessionConf.put(MRJobConfig.MAPREDUCE_JOB_CREDENTIALS_BINARY, credentialsFilePath);
+
+      // CDAP-8367 We need to set this back to Kerberos if security is enabled. We override it in HiveConf.
+      sessionConf.put(CommonConfigurationKeysPublic.HADOOP_SECURITY_AUTHENTICATION,
+                      UserGroupInformation.AuthenticationMethod.KERBEROS.name());
 
       sessionConf.put("hive.exec.submit.local.task.via.child", Boolean.FALSE.toString());
       sessionConf.put("hive.exec.submitviachild", Boolean.FALSE.toString());
