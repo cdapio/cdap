@@ -21,37 +21,29 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.HandlerException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
+import co.cask.cdap.common.internal.remote.RemoteClient;
 import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequestConfig;
-import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
 import com.google.common.base.Charsets;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -67,8 +59,7 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
   private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
-  private final Supplier<EndpointStrategy> endpointStrategySupplier;
-  private final HttpRequestConfig httpRequestConfig;
+  private final RemoteClient remoteClient;
   private final AuthenticationContext authenticationContext;
 
   @Inject
@@ -76,13 +67,8 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
                           AuthenticationContext authenticationContext) {
     this.cConf = cConf;
     this.authenticationContext = authenticationContext;
-    this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
-      @Override
-      public EndpointStrategy get() {
-        return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_EXECUTOR));
-      }
-    });
-    this.httpRequestConfig = new DefaultHttpRequestConfig(false);
+    this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.DATASET_EXECUTOR,
+                                         new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
   }
 
   @Override
@@ -94,8 +80,13 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
       try {
         Tasks.waitFor(true, new Callable<Boolean>() {
           @Override
-          public Boolean call() throws Exception {
-            return endpointStrategySupplier.get().pick() != null;
+          public Boolean call() {
+            try {
+              remoteClient.resolve("");
+            } catch (ServiceUnavailableException e) {
+              return false;
+            }
+            return true;
           }
         }, timeout, TimeUnit.SECONDS, Math.min(timeout, Math.max(10, timeout / 10)), TimeUnit.SECONDS);
         LOG.info("DatasetOpExecutor started.");
@@ -161,7 +152,9 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
 
   private HttpResponse doRequest(DatasetId datasetInstanceId, String opName,
                                  @Nullable String body) throws IOException, ConflictException {
-    HttpRequest.Builder builder = HttpRequest.post(resolve(datasetInstanceId, opName));
+    String path = String.format("namespaces/%s/data/datasets/%s/admin/%s", datasetInstanceId.getNamespace(),
+                                datasetInstanceId.getEntityName(), opName);
+    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.POST, path);
     if (body != null) {
       builder.withBody(body);
     }
@@ -169,26 +162,9 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
     if (userId != null) {
       builder.addHeader(Constants.Security.Headers.USER_ID, userId);
     }
-    HttpResponse httpResponse = HttpRequests.execute(builder.build(), httpRequestConfig);
+    HttpResponse httpResponse = remoteClient.execute(builder.build());
     verifyResponse(httpResponse);
     return httpResponse;
-  }
-
-  private URL resolve(DatasetId datasetInstanceId, String opName) throws MalformedURLException {
-    return resolve(String.format("namespaces/%s/data/datasets/%s/admin/%s", datasetInstanceId.getNamespace(),
-                                 datasetInstanceId.getEntityName(), opName));
-  }
-
-  private URL resolve(String path) throws MalformedURLException {
-    Discoverable endpoint = endpointStrategySupplier.get().pick(2L, TimeUnit.SECONDS);
-    if (endpoint == null) {
-      throw new IllegalStateException("No endpoint for " + Constants.Service.DATASET_EXECUTOR);
-    }
-    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), endpoint.getPayload()) ?
-      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
-    InetSocketAddress address = endpoint.getSocketAddress();
-    return new URL(String.format("%s%s:%s%s/%s", scheme, address.getHostName(), address.getPort(),
-                                 Constants.Gateway.API_VERSION_3, path));
   }
 
   private void verifyResponse(HttpResponse httpResponse) throws ConflictException {

@@ -18,6 +18,7 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.retry.RetryableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
@@ -395,7 +396,7 @@ public class DistributedStreamService extends AbstractStreamService {
         feedManager.createFeed(streamHeartbeatsFeed);
         LOG.info("Stream HeartbeatsFeed created.");
         return;
-      } catch (NotificationFeedException e) {
+      } catch (NotificationFeedException | RetryableException e) {
         if (!isRetry) {
           LOG.warn("Could not ensure existence of HeartbeatsFeed. Will retry until successful. " +
                      "Retry failures will be logged at debug level.", e);

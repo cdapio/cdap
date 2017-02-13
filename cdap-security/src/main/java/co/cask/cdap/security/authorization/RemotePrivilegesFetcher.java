@@ -16,7 +16,6 @@
 
 package co.cask.cdap.security.authorization;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.internal.remote.RemoteOpsClient;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
@@ -50,8 +49,8 @@ class RemotePrivilegesFetcher extends RemoteOpsClient implements PrivilegesFetch
   private static final Type SET_PRIVILEGES_TYPE = new TypeToken<Set<Privilege>>() { }.getType();
 
   @Inject
-  RemotePrivilegesFetcher(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
-    super(cConf, discoveryClient, Constants.Service.APP_FABRIC_HTTP);
+  RemotePrivilegesFetcher(DiscoveryServiceClient discoveryClient) {
+    super(discoveryClient, Constants.Service.APP_FABRIC_HTTP);
   }
 
   @Override

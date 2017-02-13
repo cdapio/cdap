@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.client;
 
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
@@ -69,7 +70,7 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
     if (discoverable != null) {
       return discoverable.getSocketAddress();
     }
-    throw new RuntimeException(String.format("Cannot discover service %s", Service.EXPLORE_HTTP_USER_SERVICE));
+    throw new ServiceUnavailableException(Service.EXPLORE_HTTP_USER_SERVICE);
   }
 
   // This class is only used internally.

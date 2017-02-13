@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.store.remote;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.internal.remote.RemoteOpsClient;
 import co.cask.cdap.data2.registry.DatasetUsageKey;
@@ -40,8 +39,8 @@ public class RemoteRuntimeUsageRegistry extends RemoteOpsClient implements Runti
   private final ConcurrentMap<DatasetUsageKey, Boolean> registered = new ConcurrentHashMap<>();
 
   @Inject
-  RemoteRuntimeUsageRegistry(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
-    super(cConf, discoveryClient, Constants.Service.REMOTE_SYSTEM_OPERATION);
+  RemoteRuntimeUsageRegistry(DiscoveryServiceClient discoveryClient) {
+    super(discoveryClient, Constants.Service.REMOTE_SYSTEM_OPERATION);
   }
 
   @Override

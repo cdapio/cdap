@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.store.remote;
 
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.store.RuntimeStore;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.internal.remote.RemoteOpsClient;
 import co.cask.cdap.proto.BasicThrowable;
@@ -39,8 +38,8 @@ import javax.annotation.Nullable;
 public class RemoteRuntimeStore extends RemoteOpsClient implements RuntimeStore {
 
   @Inject
-  RemoteRuntimeStore(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
-    super(cConf, discoveryClient, Constants.Service.REMOTE_SYSTEM_OPERATION);
+  RemoteRuntimeStore(DiscoveryServiceClient discoveryClient) {
+    super(discoveryClient, Constants.Service.REMOTE_SYSTEM_OPERATION);
   }
 
   @Override
