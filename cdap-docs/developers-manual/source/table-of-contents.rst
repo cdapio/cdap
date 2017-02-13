@@ -13,6 +13,7 @@ CDAP Developers’ Manual Table of Contents
     Getting Started Developing <getting-started/index>
     Overview <overview/index>
     Building Blocks <building-blocks/index>
+    Metadata <metadata/index>
     Pipelines <pipelines/index>
     Security <security/index>
     Testing and Debugging <testing/index>

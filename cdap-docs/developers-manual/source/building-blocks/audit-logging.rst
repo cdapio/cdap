@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 .. _audit-logging:
 
@@ -14,11 +14,11 @@ Audit logging provides a chronological ledger containing evidence of operations 
 on CDAP entities. This information can be used to capture a trail of the activities that
 determined the state of an entity at a given point in time. These activities include the
 creation, modification, and deletion of an entity. It also includes modification of the
-entity's :ref:`metadata <metadata-lineage-metadata>`. For data entities (datasets and
+entity's :ref:`metadata <metadata>`. For data entities (datasets and
 streams), it includes access information used to generate the entity's :ref:`lineage
-<metadata-lineage-lineage>`. Audit logging is an especially important feature because it
+<metadata-lineage>`. Audit logging is an especially important feature because it
 enables users to integrate CDAP with external data governance systems such as
-:ref:`Cloudera Navigator <audit-logging-navigator-integration>`. 
+:ref:`Cloudera Navigator <navigator-integration>`.
 
 Please note that audit logs are not published during a CDAP upgrade, as CDAP services are
 not available. Hence, any application which uses CDAP audit logs to sync metadata will go 
@@ -181,15 +181,3 @@ Here are some example JSON messages, pretty-printed:
 CDAP also provides an `adapter class 
 <https://github.com/caskdata/cdap/blob/develop/cdap-proto/src/main/java/co/cask/cdap/proto/codec/AuditMessageTypeAdapter.java>`__
 to enable deserializing of the audit messages using the `GSON <https://github.com/google/gson>`__ library.
-
-.. _audit-logging-integrations:
-
-Integrations
-============
-
-.. _audit-logging-navigator-integration:
-
-Cloudera Navigator Integration
-------------------------------
-CDAP Metadata can be pushed to Cloudera Navigator for metadata discovery and search.
-Refer to :ref:`Cloudera Navigator Integration <navigator-integration>` for more information.

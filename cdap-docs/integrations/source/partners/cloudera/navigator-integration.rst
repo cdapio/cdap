@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 .. _navigator-integration:
 
@@ -18,7 +18,7 @@ that uses a real-time flow to fetch the CDAP Metadata and write it to Cloudera N
 
 Resources
 ---------
-- :ref:`Overview of CDAP Metadata <metadata-lineage-metadata>`
+- :ref:`Overview of CDAP Metadata <metadata-lineage>`
 - `Cloudera Navigator <http://www.cloudera.com/products/cloudera-navigator.html>`__
 - :ref:`Real-time processing using Flows <flows-flowlets-index>`
 - :cdap-kafka-flow:`Kafka Flowlet Library <>`

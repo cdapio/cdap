@@ -648,7 +648,7 @@ Search for properties and tags by specifying one of:
   either of the terms in their metadata.
 
 Since CDAP also annotates *system* metadata to entities by default as mentioned at
-:ref:`System Metadata <metadata-lineage-system-metadata>`, the following *special* search queries are also supported:
+:ref:`System Metadata <metadata-system-metadata>`, the following *special* search queries are also supported:
 
 - artifacts or applications containing a specific plugin: ``plugin:<plugin-name>``
 
@@ -736,7 +736,7 @@ For more information about collapsing lineage output, please refer to the sectio
 The lineage will be returned as a JSON string in the body of the response. The JSON describes lineage as a graph
 of connections between programs and datasets (or streams) in the specified time range. The number of
 levels of the request (``levels``) determines the depth of the graph. This impacts how far back the provenance of the
-data in the lineage chain is calculated, as described in the :ref:`Metadata and Lineage <metadata-lineage-lineage>`.
+data in the lineage chain is calculated, as described in the :ref:`Metadata and Lineage <metadata-lineage>`.
 
 Lineage JSON consists of three main sections:
 

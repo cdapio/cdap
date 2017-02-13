@@ -35,6 +35,14 @@ CDAP Developers’ Manual
   build Big Data applications.
 
 
+.. |metadata| replace:: **Metadata:**
+.. _metadata: metadata/index.html
+
+- |metadata|_ A CDAP capability that automatically captures :ref:`metadata
+  <metadata>` and lets you see **how data is flowing** into and out of datasets,
+  streams, and stream views.
+  
+
 .. |pipelines| replace:: **Pipelines:**
 .. _pipelines: pipelines/index.html
 

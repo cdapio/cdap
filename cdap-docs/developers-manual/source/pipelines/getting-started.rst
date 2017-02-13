@@ -315,7 +315,7 @@ parses them into separate fields, and writes them as individual records to a tab
    Click on the icon representing the table, to bring up the table configuration. In the
    upper-right of the dialog is a *Jump* button that brings down a menu with two items on
    it. The first one takes you directly to the table in CDAP. (The second takes you to the
-   table in :ref:`CDAP Metadata Management <metadata-management-index>`.)
+   table in the :ref:`CDAP Metadata UI <metadata-ui>`.)
 
    .. figure:: _images/cdap-pipelines-gs-1-11-jump-button.png
      :figwidth: 100%

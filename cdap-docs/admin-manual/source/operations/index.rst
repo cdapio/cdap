@@ -15,7 +15,6 @@ Operations
    
     Logging and Monitoring <logging>
     Metrics <metrics>
-    Metadata Management <metadata-management>
     Preferences and Runtime Arguments <preferences>
     Scaling Instances <scaling-instances>
     Resource Guarantees in YARN <resource-guarantees>
@@ -37,13 +36,6 @@ Operations
 
 - |metrics|_ CDAP collects **metrics about the application’s behavior and performance**.
 
-
-.. |metadata-management| replace:: **Metadata Management:**
-.. _metadata-management: Metadata Management.html
-
-- |metadata-management|_ A CDAP capability that automatically captures :ref:`metadata
-  <metadata-lineage>` and lets you see **how data is flowing** into and out of datasets,
-  streams, and stream views.
 
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: preferences.html

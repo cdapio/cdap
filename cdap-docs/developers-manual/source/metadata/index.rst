@@ -1,23 +1,31 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
-.. _metadata-lineage:
+:hide-toc: true
 
-====================
-Metadata and Lineage
-====================
+.. _metadata:
+
+========
+Metadata
+========
+
+.. toctree::
+   :maxdepth: 1
+   
+    CDAP Metadata UI <metadata-ui>
+
 
 Overview
 ========
-Metadata and Lineage are a new and important feature of CDAP. CDAP Metadata helps show how
-datasets and programs are related to each other and helps in understanding the impact of a
-change before the change is made. 
+*Metadata* (and with *lineage*, a closely-related feature) are important capabilites of
+CDAP. CDAP Metadata helps show how datasets and programs are related to each other and
+helps in understanding the impact of a change before the change is made.
 
-This feature provides full visibility into the impact of changes while providing an audit
-trail of access to datasets by programs and applications. It gives a clear view when
-identifying trusted data sources and enables the ability to track the trail of sensitive
-data.
+These features provide full visibility into the impact of changes while providing an audit
+trail of access to datasets by programs and applications. Together, they give a clear view
+when identifying trusted data sources and enable the ability to track the trail of
+sensitive data.
 
 CDAP captures metadata from many different sources |---| as well as those specified by a
 user |---| on different entities and objects. The container model of CDAP provides for the
@@ -26,11 +34,12 @@ associated with datasets. This gives developers and data scientists flexibility 
 innovating and building solutions on Hadoop, without the worry of maintaining compliance
 and governance for every application.
 
-.. _metadata-lineage-metadata:
+
+.. _metadata-cdap-metadata:
 
 Metadata
 ========
-Metadata |---| consisting of **properties** (a list of key-value pairs) or **tags** (a
+CDAP metadata |---| consisting of **properties** (a list of key-value pairs) or **tags** (a
 list of keys) |---| can be used to annotate artifacts, applications, programs, datasets,
 streams, and views.
 
@@ -41,20 +50,8 @@ Metadata keys, values, and tags must conform to the CDAP :ref:`supported charact
 <supported-characters>`, and are limited to 50 characters in length. The entire metadata
 object associated with a single entity is limited to 10K bytes in size.
 
-Discovery
-=========
-Metadata can be used to tag different CDAP components so that they are easily identifiable
-and managed. This helps in discovering CDAP components.
 
-For example, you can tag a dataset as *experimental* or an application as *production*. These
-entities can then be discovered by using the annotated metadata in **search queries**. Using search,
-users can discover entities:
-
-- that have a particular **value** for *any key* in their properties;
-- that have a particular **key** with a particular *value* in their properties; or
-- that have a particular **tag**.
-
-.. _metadata-lineage-system-metadata:
+.. _metadata-system-metadata:
 
 System Metadata
 ===============
@@ -102,15 +99,24 @@ This table lists the **system** metadata annotations of CDAP entities:
      - * Schema (field names and types)
      - * View name
 
-.. _metadata-navigator-integration:
 
-Cloudera Navigator Integration
-==============================
-CDAP Metadata can be pushed to Cloudera Navigator for metadata discovery and search. 
-Refer to :ref:`Cloudera Navigator Integration <navigator-integration>` for more information.
+.. _metadata-discovery:
+
+Discovery
+=========
+Metadata can be used to tag different CDAP components so that they are easily identifiable
+and managed. This helps in discovering CDAP components.
+
+For example, you can tag a dataset as *experimental* or an application as *production*. These
+entities can then be discovered by using the annotated metadata in **search queries**. Using search,
+users can discover entities:
+
+- that have a particular **value** for *any key* in their properties;
+- that have a particular **key** with a particular *value* in their properties; or
+- that have a particular **tag**.
 
 
-.. _metadata-lineage-lineage:
+.. _metadata-lineage:
 
 Lineage
 =======
@@ -132,3 +138,11 @@ writing, or both, if the methods in the dataset have appropriate :ref:`annotatio
 <custom-datasets-access-annotations>`. If annotations are absent, lineage can only
 indicate that a dataset access took place, and does not provide indication if that access
 was for reading or writing.
+
+
+.. _metadata-navigator-integration:
+
+Cloudera Navigator Integration
+==============================
+CDAP Metadata can be pushed to Cloudera Navigator for metadata discovery and search. 
+Refer to :ref:`Cloudera Navigator Integration <navigator-integration>` for more information.
