@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,10 @@ import co.cask.cdap.common.conf.Constants;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class HTable11NameConverterTest {
+/**
+ * Test for HTableNameConverter
+ */
+public class HTableNameConverterTest {
   @Test
   public void testGetSysConfigTablePrefix() throws Exception {
     CConfiguration cConf = CConfiguration.create();
