@@ -497,6 +497,21 @@ public class TransactionContextTest {
     Assert.assertEquals(txClient.state, DummyTxClient.CommitState.Aborted);
   }
 
+  @Test
+  public void testAbortFailureThrowsFailureException() throws TransactionFailureException {
+    TransactionContext context = new SimpleTransactionContext(new FailingTxClient(txManager));
+
+    context.start();
+    Assert.assertTrue(context.addTransactionAware(ds1));
+    ds1.addChange(A);
+    try {
+      context.finish();
+      Assert.fail("Finish should have failed - exception should be thrown");
+    } catch (TransactionFailureException e) {
+      // expected
+    }
+  }
+
   enum InduceFailure { NoFailure, ReturnFalse, ThrowException }
 
   static class DummyTxAware implements TransactionAware {
@@ -662,6 +677,26 @@ public class TransactionContextTest {
       state = CommitState.Invalidated;
       return super.invalidate(tx);
     }
+  }
+
+  // to simulate situations where the tx service is not available when finishing a transaction
+  private static final class FailingTxClient extends InMemoryTxSystemClient {
+
+    private FailingTxClient(TransactionManager txManager) {
+      super(txManager);
+    }
+
+    @Override
+    public boolean canCommit(Transaction transaction,
+                             Collection<byte[]> collection) throws TransactionNotInProgressException {
+      throw new RuntimeException();
+    }
+
+    @Override
+    public void abort(Transaction transaction) {
+      throw new RuntimeException();
+    }
+
   }
 
   /**
