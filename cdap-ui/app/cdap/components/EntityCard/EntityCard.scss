@@ -74,7 +74,7 @@ $jump-button-container-size: 80px;
   &.datasetinstance,
   &.stream {
     .cask-card {
-      .card-header { cursor: pointer; }
+      cursor: pointer;
     }
   }
   .cask-card {

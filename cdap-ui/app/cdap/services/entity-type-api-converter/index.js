@@ -14,12 +14,13 @@
  * the License.
  */
 
-$card-title-text-color: #373a5c;
+const apiEntityTypeConvert = {
+  application: 'apps',
+  dataset: 'datasets',
+  datasetinstance: 'datasets',
+  stream: 'streams'
+};
 
-.dataentity-cards {
-  padding-top: 10px;
-
-  .entity-information {
-    color: $card-title-text-color;
-  }
+export function convertEntityTypeToApi(entityType) {
+  return apiEntityTypeConvert[entityType.toLowerCase()];
 }
