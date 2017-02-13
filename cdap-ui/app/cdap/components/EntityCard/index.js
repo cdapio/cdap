@@ -103,7 +103,6 @@ export default class EntityCard extends Component {
     }
     const header = (
       <EntityCardHeader
-        onClick={this.onClick.bind(this)}
         className={this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type}
         entity={this.props.entity}
         systemTags={this.props.entity.metadata.metadata.SYSTEM.tags}
@@ -129,6 +128,7 @@ export default class EntityCard extends Component {
               `entity-cards-${this.props.entity.type}`
             )
           }
+          onClick={this.onClick.bind(this)}
         >
           <div className="entity-information clearfix">
             <div className={classnames("entity-id-container", {'with-version': this.props.entity.version})}>
