@@ -70,15 +70,23 @@ class KafkaOffsetResolver {
    * as {@code checkpoint.getNextEventTime()}
    *
    * @param checkpoint A {@link Checkpoint} containing the next offset of a message and its log event timestamp.
+   *                   {@link Checkpoint#getNextOffset()}, {@link Checkpoint#getNextEventTime()}
+   *                   and {@link Checkpoint#getMaxEventTime()} all must return a non-negative long
    * @param partition the partition in the topic for searching matching offset
    * @return the next offset of the message with smallest offset and log event time equal to
    *         {@code checkpoint.getNextEventTime()}.
    *         {@code -1} if no such offset can be found or {@code checkpoint.getNextOffset()} is negative.
    */
    long getMatchingOffset(final Checkpoint checkpoint, final int partition) {
+     // No message should have next offset 0.
+     if (checkpoint.getNextOffset() == 0) {
+       return -1;
+     }
     // Get BrokerInfo for constructing SimpleConsumer in OffsetFinderCallback
     BrokerInfo brokerInfo = brokerService.getLeader(topic, partition);
     if (brokerInfo == null) {
+      LOG.error("BrokerInfo from BrokerService is null for topic {} partition {}. Will retry in next run.",
+                topic, partition);
       return kafka.api.OffsetRequest.EarliestTime(); // Return earliest offset if brokerInfo is null
     }
     SimpleConsumer simpleConsumer
@@ -122,7 +130,7 @@ class KafkaOffsetResolver {
       requestInfo.put(topicAndPartition, new PartitionOffsetRequestInfo(requestTime, 1));
       OffsetResponse response =
         consumer.getOffsetsBefore(new OffsetRequest(requestInfo, kafka.api.OffsetRequest.CurrentVersion(), clientName));
-      // Fetch the starting offset of the last segment whose latest latest message is published before requestTime
+      // Fetch the starting offset of the last segment whose latest message is published before requestTime
       long[] responseOffsets = response.offsets(topic, partition);
       // If no offset is returned, the targetTime is earlier than all existing Kafka publishing time.
       if (responseOffsets.length == 0) {
@@ -271,10 +279,6 @@ class KafkaOffsetResolver {
     }
     for (MessageAndOffset messageAndOffset : fetchResponse.messageSet(topic, partition)) {
       long offset = messageAndOffset.offset();
-      if (offset < requestOffset) {
-        LOG.error("Found an old offset: {} Expecting: {}", offset, requestOffset);
-        continue;
-      }
       try {
         // TODO: [CDAP-8470] need a serializer for deserializing ILoggingEvent Kafka message to get time only
         ILoggingEvent event = serializer.fromBytes(messageAndOffset.message().payload());
@@ -303,7 +307,7 @@ class KafkaOffsetResolver {
     long[] offsets = response.hasError() ? null : response.offsets(topic, partition);
     if (offsets == null || offsets.length <= 0) {
       short errorCode = response.errorCode(topic, partition);
-      // If the topic partition doesn't exists, use offset 0 without logging error.
+      // If the topic partition doesn't exist, use offset 0 without logging error.
       if (errorCode != ErrorMapping.UnknownTopicOrPartitionCode()) {
         LOG.error("Failed to fetch offset for {}-{} with timestamp {}. Error: {}. Default offset to 0.",
                   topic, partition, timeStamp, errorCode);

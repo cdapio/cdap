@@ -221,7 +221,6 @@ public class KafkaLogProcessorPipelineTest {
     Assert.assertNotNull(configURL);
     configurator.doConfigure(configURL);
 
-
     String topic = "metricsPipeline";
     TestCheckpointManager checkpointManager = new TestCheckpointManager();
     KafkaPipelineConfig config = new KafkaPipelineConfig(topic, Collections.singleton(0), 1024L, 100L,
