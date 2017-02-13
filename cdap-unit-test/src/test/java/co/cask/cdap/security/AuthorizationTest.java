@@ -22,7 +22,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
@@ -280,12 +279,7 @@ public class AuthorizationTest extends TestBase {
     WorkerManager workerManager = appManager.getWorkerManager(StreamAuthApp.WORKER);
     workerManager.start();
     workerManager.waitForRun(ProgramRunStatus.COMPLETED, 60, TimeUnit.SECONDS);
-    try {
-      workerManager.stop();
-    } catch (Exception e) {
-      // workaround since we want worker job to be de-listed from the running processes to allow cleanup to happen
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
-    }
+
     StreamId streamId = AUTH_NAMESPACE.stream(StreamAuthApp.STREAM);
     StreamManager streamManager = getStreamManager(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM));
     Assert.assertEquals(5, streamManager.getEvents(0, Long.MAX_VALUE, Integer.MAX_VALUE).size());
@@ -295,12 +289,7 @@ public class AuthorizationTest extends TestBase {
     authorizer.grant(streamId, ALICE, EnumSet.of(Action.READ, Action.ADMIN, Action.EXECUTE));
     workerManager.start();
     workerManager.waitForRuns(ProgramRunStatus.FAILED, 1, 60, TimeUnit.SECONDS);
-    try {
-      workerManager.stop();
-    } catch (Exception e) {
-      // workaround since we want worker job to be de-listed from the running processes to allow cleanup to happen
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
-    }
+
     // Give permissions back so that we can fetch the stream events
     authorizer.grant(streamId, ALICE, EnumSet.allOf(Action.class));
     Assert.assertEquals(5, streamManager.getEvents(0, Long.MAX_VALUE, Integer.MAX_VALUE).size());
@@ -324,12 +313,7 @@ public class AuthorizationTest extends TestBase {
     final SparkManager sparkManager = appManager.getSparkManager(StreamAuthApp.SPARK);
     sparkManager.start();
     sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
-    try {
-      sparkManager.stop();
-    } catch (Exception e) {
-      // workaround since we want spark job to be de-listed from the running processes to allow cleanup to happen
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
-    }
+
     DataSetManager<KeyValueTable> kvManager = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
     try (KeyValueTable kvTable = kvManager.get()) {
       byte[] value = kvTable.read("Hello");
@@ -342,12 +326,6 @@ public class AuthorizationTest extends TestBase {
     authorizer.grant(streamId, ALICE, EnumSet.of(Action.WRITE, Action.ADMIN, Action.EXECUTE));
     sparkManager.start();
     sparkManager.waitForRun(ProgramRunStatus.FAILED, 1, TimeUnit.MINUTES);
-    try {
-      sparkManager.stop();
-    } catch (Exception e) {
-      // workaround since we want spark job to be de-listed from the running processes to allow cleanup to happen
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
-    }
 
     kvManager = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
     try (KeyValueTable kvTable = kvManager.get()) {
@@ -359,12 +337,6 @@ public class AuthorizationTest extends TestBase {
     authorizer.grant(streamId, ALICE, ImmutableSet.of(Action.READ));
     sparkManager.start();
     sparkManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 1, TimeUnit.MINUTES);
-    try {
-      sparkManager.stop();
-    } catch (Exception e) {
-      // workaround since we want spark job to be de-listed from the running processes to allow cleanup to happen
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
-    }
 
     kvManager = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
     try (KeyValueTable kvTable = kvManager.get()) {
@@ -391,12 +363,7 @@ public class AuthorizationTest extends TestBase {
     mrManager.start();
     // Since Alice had full permissions, she should be able to execute the MR job successfully
     mrManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
-    try {
-      mrManager.stop();
-    } catch (Exception e) {
-      // workaround since we want mr job to be de-listed from the running processes to allow cleanup to happen
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
-    }
+
     DataSetManager<KeyValueTable> kvManager = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
     try (KeyValueTable kvTable = kvManager.get()) {
       byte[] value = kvTable.read("Hello");
@@ -419,12 +386,6 @@ public class AuthorizationTest extends TestBase {
     SecurityRequestContext.setUserId(BOB.getName());
     mrManager.start();
     mrManager.waitForRun(ProgramRunStatus.FAILED, 1, TimeUnit.MINUTES);
-    try {
-      mrManager.stop();
-    } catch (Exception e) {
-      // workaround since we want mr job to be de-listed from the running processes to allow cleanup to happen
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
-    }
 
     kvManager = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
     try (KeyValueTable kvTable = kvManager.get()) {
@@ -436,12 +397,6 @@ public class AuthorizationTest extends TestBase {
     authorizer.grant(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM), BOB, ImmutableSet.of(Action.READ));
     mrManager.start();
     mrManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 1, TimeUnit.MINUTES);
-    try {
-      mrManager.stop();
-    } catch (Exception e) {
-      // workaround since we want mr job to be de-listed from the running processes to allow cleanup to happen
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
-    }
 
     kvManager = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
     try (KeyValueTable kvTable = kvManager.get()) {
@@ -779,8 +734,6 @@ public class AuthorizationTest extends TestBase {
 
     testSystemDatasetAccessFromFlowlet(flowManager);
     testCrossNSDatasetAccessFromFlowlet(flowManager);
-
-    appManager.stopAll();
   }
 
   private void testSystemDatasetAccessFromFlowlet(final FlowManager flowManager) throws Exception {
@@ -890,8 +843,6 @@ public class AuthorizationTest extends TestBase {
 
     testCrossNSSystemDatasetAccessWithAuthMapReduce(mrManager);
     testCrossNSDatasetAccessWithAuthMapReduce(mrManager);
-
-    appManager.stopAll();
   }
 
   private void testCrossNSSystemDatasetAccessWithAuthMapReduce(MapReduceManager mrManager) throws Exception {
@@ -1009,8 +960,6 @@ public class AuthorizationTest extends TestBase {
 
     testCrossNSSystemDatasetAccessWithAuthSpark(sparkManager);
     testCrossNSDatasetAccessWithAuthSpark(sparkManager);
-
-    appManager.stopAll();
   }
 
   @Test

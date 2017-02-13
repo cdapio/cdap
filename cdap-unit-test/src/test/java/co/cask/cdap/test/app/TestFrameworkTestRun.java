@@ -40,6 +40,7 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.DefaultId;
@@ -82,6 +83,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
@@ -114,6 +116,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -2001,6 +2004,40 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     DataSetManager<KeyValueTable> recordsManager = getDataset(testSpace.dataset("records"));
     KeyValueTable records = recordsManager.get();
     Assert.assertTrue(count == Bytes.toLong(records.read("PUBLIC")));
+  }
+
+  @Test
+  public void testConcurrentRuns() throws Exception {
+    ApplicationManager appManager = deployApplication(ConcurrentRunTestApp.class);
+    WorkerManager workerManager = appManager.getWorkerManager(ConcurrentRunTestApp.TestWorker.class.getSimpleName());
+    workerManager.start();
+    // Start another time should fail as worker doesn't support concurrent run.
+    try {
+      workerManager.start();
+      Assert.fail("Expected failure to start worker");
+    } catch (Exception e) {
+      Assert.assertTrue(Throwables.getRootCause(e) instanceof ConflictException);
+    }
+    workerManager.stop();
+
+    // Start the workflow
+    File tmpDir = TEMP_FOLDER.newFolder();
+    File actionFile = new File(tmpDir, "action.file");
+    Map<String, String> args = Collections.singletonMap("action.file", actionFile.getAbsolutePath());
+    WorkflowManager workflowManager = appManager.getWorkflowManager(
+      ConcurrentRunTestApp.TestWorkflow.class.getSimpleName());
+
+    // Starts two runs, both should succeed
+    workflowManager.start(args);
+    workflowManager.start(args);
+
+    // Should get two active runs
+    workflowManager.waitForRuns(ProgramRunStatus.RUNNING, 2, 10L, TimeUnit.SECONDS);
+
+    // Touch the file to complete the workflow runs
+    Files.touch(actionFile);
+
+    workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 10L, TimeUnit.SECONDS);
   }
 
   private String callServiceGet(URL serviceURL, String path) throws IOException {

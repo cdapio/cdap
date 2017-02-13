@@ -413,24 +413,30 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public void stop(ProgramId programId, @Nullable String runId) throws Exception {
     List<ListenableFuture<ProgramController>> futures = issueStop(programId, runId);
-    ListenableFuture<List<ProgramController>> future = Futures.successfulAsList(futures);
-    future.get();
 
-    List<Throwable> causes = new ArrayList<>();
+    // Block until all stop requests completed. This call never throw ExecutionException
+    Futures.successfulAsList(futures).get();
+
+    Throwable failureCause = null;
     for (ListenableFuture<ProgramController> f : futures) {
       try {
         f.get();
-      } catch (ExecutionException | InterruptedException e) {
-        causes.add(e.getCause());
+      } catch (ExecutionException e) {
+        // If the program is stopped in between the time listing runs and issuing stops of the program,
+        // an IllegalStateException will be throw, which we can safely ignore
+        if (!(e.getCause() instanceof IllegalStateException)) {
+          if (failureCause == null) {
+            failureCause = e.getCause();
+          } else {
+            failureCause.addSuppressed(e.getCause());
+          }
+        }
       }
     }
-    if (!causes.isEmpty()) {
-      Exception exception = new Exception(String.format("%d out of %d runs of the program %s failed to stop",
-                                                        causes.size(), futures.size(), programId));
-      for (Throwable cause : causes) {
-        exception.addSuppressed(cause);
-      }
-      throw exception;
+    if (failureCause != null) {
+      throw new ExecutionException(String.format("%d out of %d runs of the program %s failed to stop",
+                                                 failureCause.getSuppressed().length + 1, futures.size(), programId),
+                                   failureCause);
     }
   }
 

@@ -101,6 +101,7 @@ public class DataQualityAppTest extends TestBase {
 
   @Before
   public void beforeTest() throws Exception {
+    super.beforeTest();
     if (sentData) {
       return;
     }

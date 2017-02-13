@@ -66,6 +66,7 @@ public class MessagingAppTestRun extends TestFrameworkTestBase {
 
   @Before
   public void beforeTest() throws Exception {
+    super.beforeTest();
     getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(NAMESPACE).build());
     getMessagingAdmin(NAMESPACE).createTopic(MessagingApp.CONTROL_TOPIC);
   }
