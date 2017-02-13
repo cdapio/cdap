@@ -282,7 +282,7 @@ class DatasetServiceClient {
     try {
       return remoteClient.execute(request);
     } catch (IOException e) {
-      throw new DatasetManagementException(remoteClient.createErrorMessage(request, body));
+      throw new DatasetManagementException(remoteClient.createErrorMessage(request, body), e);
     }
   }
 
@@ -301,7 +301,7 @@ class DatasetServiceClient {
     } catch (ConnectException e) {
       throw new ServiceUnavailableException(Constants.Service.DATASET_MANAGER, e);
     } catch (IOException e) {
-      throw new DatasetManagementException(remoteClient.createErrorMessage(request, null));
+      throw new DatasetManagementException(remoteClient.createErrorMessage(request, null), e);
     }
   }
 

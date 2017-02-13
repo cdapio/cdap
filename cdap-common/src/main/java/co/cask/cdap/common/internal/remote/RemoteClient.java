@@ -50,8 +50,7 @@ public class RemoteClient {
   private final String discoverableServiceName;
   private final String basePath;
 
-  public RemoteClient(final DiscoveryServiceClient discoveryClient,
-                      final String discoverableServiceName,
+  public RemoteClient(final DiscoveryServiceClient discoveryClient, final String discoverableServiceName,
                       HttpRequestConfig httpRequestConfig, String basePath) {
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
@@ -67,12 +66,12 @@ public class RemoteClient {
   }
 
   /**
-   * Discover the service address and use it and the base path and specified resource to generate the URL
-   * to use when making a request to the service.
+   * Create a {@link HttpRequest.Builder} using the specified http method and resource. This client will
+   * discover the service address and combine the specified resource in order to set a URL for the builder.
    *
    * @param method the request method
    * @param resource the request resource
-   * @return a builder to create the http request
+   * @return a builder to create the http request, with method and URL already set
    */
   public HttpRequest.Builder requestBuilder(HttpMethod method, String resource) {
     return HttpRequest.builder(method, resolve(resource));

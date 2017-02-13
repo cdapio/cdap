@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common.internal.remote;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.WorkflowTokenDetail;
@@ -50,7 +49,7 @@ public class RemoteOpsClient {
 
   private final RemoteClient remoteClient;
 
-  protected RemoteOpsClient(CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
+  protected RemoteOpsClient(final DiscoveryServiceClient discoveryClient,
                             final String discoverableServiceName) {
     this.remoteClient = new RemoteClient(discoveryClient, discoverableServiceName,
                                          new DefaultHttpRequestConfig(false), "/v1/execute/");
