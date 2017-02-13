@@ -84,6 +84,28 @@ commons:
   stream: Stream
   dataset: Dataset
 features:
+  AboutPage:
+    version: Version {version}
+    mode: "Mode: "
+    security: "Security: "
+    copyright:
+      firstLine: The Cask Data Application Platform (CDAP) product is copyrighted
+      secondLine: Copyright © 2014-2017 Cask Data, Inc.
+      thirdLine:
+        view: "View "
+        termsAndConditions: Terms and Conditions
+        and: " and "
+        privacyPolicy: Privacy Policy
+  AccessTokenModal:
+    modalHeader: Access Token
+    login:
+      textContent: Please enter your username and password to generate a new access token
+      usernamePlaceholder: Username
+      passwordPlaceholder: Password
+      submit: Generate access token
+      error: Login failed. Please check your username and password and try again.
+    accessToken: "Access Token: "
+    close: Close
   AppDetailedView:
     Title: Application - {appId}
     History:
@@ -395,6 +417,7 @@ features:
       supportLabel: Support
       documentationLabel: Documentation
       aboutLabel: About CDAP
+      accessToken: Access Token
     Metadata:
       searchLabel: Search
       integrationsLabel: Integrations
