@@ -47,6 +47,11 @@ Metadata keys, values, and tags must conform to the CDAP :ref:`supported charact
 <supported-characters>`, and are limited to 50 characters in length. The entire metadata
 object associated with a single entity is limited to 10K bytes in size.
 
+.. rubric:: Audit Logging
+
+:ref:`Audit logging <audit-logging>` provides a chronological ledger containing evidence
+of operations or changes on CDAP entities.
+
 .. _metadata-navigator-integration:
 
 .. rubric:: Cloudera Navigator Integration

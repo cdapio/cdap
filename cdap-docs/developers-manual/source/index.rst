@@ -40,6 +40,8 @@ CDAP Developers’ Manual
 
 - |metadata|_ A CDAP capability that automatically captures *metadata* and lets you see
   **how data is flowing** into and out of datasets, streams, and stream views.
+  :ref:`Audit logging <audit-logging>` provides a chronological ledger containing evidence
+  of operations or changes on CDAP entities.
   
 
 .. |pipelines| replace:: **Pipelines:**
