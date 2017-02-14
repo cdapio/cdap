@@ -196,7 +196,7 @@ Here is how the CDAP Studio works with CDAP to build a pipeline, beginning
 with a user creating a new pipeline in the CDAP Studio. First, the components
 of the CDAP Studio:
 
-.. figure:: _images/cdap-application-studio-annotated.png
+.. figure:: _images/cdap-studio-annotated.png
    :figwidth: 100%
    :width: 6in
    :align: center

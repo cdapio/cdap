@@ -17,7 +17,7 @@ sources and data using a visual editor.
 You click and drag *actions*, *sources*, *transforms*, *sinks*, and other plugins to
 configure a pipeline:
 
-.. figure:: _images/cdap-application-studio.png
+.. figure:: _images/cdap-studio.png
    :figwidth: 100%
    :width: 6in
    :align: center
@@ -56,7 +56,7 @@ CDAP Studio Tips
   each new cloning of a pipeline.
 
 
-.. _cdap-application-studio-pipeline-drafts:
+.. _cdap-studio-pipeline-drafts:
 
 Pipeline Drafts
 ===============
@@ -86,7 +86,7 @@ published pipeline.
 To successfully publish such a draft (one whose name matches an existing pipeline), you
 will need to re-name it to a unique name.
 
-.. _cdap-application-studio-plugin-templates:
+.. _cdap-studio-plugin-templates:
 
 Plugin Templates
 ================
@@ -101,7 +101,7 @@ Changes to a plugin template do not affect any pipelines created using that temp
 those pipelines are created from the artifacts as specified in the plugin template at the
 time of creation of the pipeline.
 
-.. figure:: _images/cdap-application-studio-plugin-template.png
+.. figure:: _images/cdap-studio-plugin-template.png
   :figwidth: 100%
   :width: 6in
   :align: center

@@ -90,6 +90,6 @@ If these plugins don't meet your requirements, you can :ref:`create a custom
 plugin <cdap-pipelines-developing-plugins>`.
 
 If you are creating a custom plugin that extends the **existing system artifacts,** its
-name should not collide with existing names, for ease-of-use in the CDAP UI and CDAP Application
+name should not collide with existing names, for ease-of-use in the CDAP UI and CDAP
 Studio. You are free to create your own plugin and plugin-type, depending on the
 functionality you are adding or requiring.

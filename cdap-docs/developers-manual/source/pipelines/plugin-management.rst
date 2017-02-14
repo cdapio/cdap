@@ -110,7 +110,7 @@ Managing Multiple Versions
 Different versions of the same plugin (or artifact) can be loaded and available at the
 same time. These will appear in the :ref:`CDAP Studio <cdap-studio>` as
 possible choices when selecting a plugin or creating a :ref:`plugin template
-<cdap-application-studio-plugin-templates>`. If no version is specified for a plugin in the
+<cdap-studio-plugin-templates>`. If no version is specified for a plugin in the
 :ref:`configuration file <cdap-pipelines-developing-pipelines-configuration-file-format>` used
 to create an application, the highest version currently available in the system will be
 used.

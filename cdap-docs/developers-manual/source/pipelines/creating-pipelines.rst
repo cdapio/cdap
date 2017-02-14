@@ -21,8 +21,8 @@ The sources, transformations, and sinks are packaged as extensions to CDAP known
 of the run, and after the run has been completed. The plugins can be either those that are
 packaged as part of CDAP or ones that have been installed separately.
 
-The configuration can either be written as a JSON file or, in the case of the CDAP Application
-Studio, specified in-memory.
+The configuration can either be written as a JSON file or, in the case of the CDAP Studio,
+specified in-memory.
 
 CDAP currently provides two artifacts (referred to as *system artifacts*):
 
@@ -34,9 +34,9 @@ which are used to create the different kinds of data pipeline applications.
 **Note:** *Two system artifacts,* ``cdap-etl-batch`` *and* ``cdap-etl-realtime``, *have
 been deprecated and replaced by the above artifacts, as of CDAP 3.5.0.*
 
-Pipelines can be created using CDAP's included visual editor (the *CDAP Application
-Studio*), using command-line tools such the CDAP CLI and ``curl``, or programmatically
-with scripts or Java programs.
+Pipelines can be created using CDAP's included visual editor (the *CDAP Studio*), using
+command-line tools such the CDAP CLI and ``curl``, or programmatically with scripts or
+Java programs.
 
 
 Methods for Creating Pipelines
@@ -49,7 +49,7 @@ There are two different methods for creating pipelines:
 Using the **CDAP Studio**, the basic operations are:
 
   1. **Create** a new pipeline, either by starting from a :ref:`blank canvas 
-     <cdap_pipelines-getting-started-cdap-application-studio>`, starting from a
+     <cdap-pipelines-getting-started-cdap-studio>`, starting from a
      :ref:`template <cdap-pipelines-creating-pipelines-pipeline-templates>`, or by 
      :ref:`cloning <cdap-pipelines-creating-pipelines-cloning>` an already-published pipeline.
 
@@ -74,7 +74,8 @@ Using the **CDAP Studio**, the basic operations are:
 Using **command line tools,** the basic operations are:
 
   1. **Create** a new pipeline by writing a configuration file, in JSON format following the
-     :ref:`CDAP Pipeline configuration specification <cdap-pipelines-developing-pipelines-configuration-file-format>`, 
+     :ref:`CDAP Pipeline configuration specification 
+     <cdap-pipelines-developing-pipelines-configuration-file-format>`, 
      either from an empty configuration, starting with an example or template, or re-using an
      existing configuration file.
 
@@ -555,7 +556,7 @@ A collection of predefined and preconfigured pipelines are available from within
 Studio through the controls at the top of the left side-bar. These templates can be used
 as the starting point for either your own pipelines or your own pipeline templates.
 
-.. figure:: _images/cdap-application-studio-annotated.png
+.. figure:: _images/cdap-studio-annotated.png
    :figwidth: 100%
    :width: 6in
    :align: center
@@ -608,7 +609,7 @@ Any existing pipeline that has been published, can be *cloned.* This creates an 
 copy of the pipeline with the same name and opens it within the CDAP Studio.
 
 At this point, you can rename the pipeline to a unique name and then either save it as a
-:ref:`draft <cdap-application-studio-pipeline-drafts>` or publish it as a new pipeline. As
+:ref:`draft <cdap-studio-pipeline-drafts>` or publish it as a new pipeline. As
 you cannot save over an existing pipeline, all new pipelines need a unique name; a common
 practice is to increment the names, from *Demo-1* to *Demo-2* with each new clone. 
 
@@ -632,7 +633,7 @@ There are two ways you can export a pipeline configuration file:
     
    Clicking the "Export..." button will bring up the export dialog:
  
-   .. figure:: _images/cdap-application-studio-export.png
+   .. figure:: _images/cdap-studio-export.png
       :figwidth: 100%
       :width: 6in
       :align: center

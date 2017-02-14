@@ -19,7 +19,7 @@ in the CDAP UI, such as entering events into a stream and exploring a dataset:
   #. `Creating a Simple Pipeline`_
 
 
-.. _cdap_pipelines-getting-started-install:
+.. _cdap-pipelines-getting-started-install:
 
 Install CDAP
 ============
@@ -27,13 +27,13 @@ Install CDAP
 - If you haven't already, :ref:`download and install the CDAP SDK <standalone-index>`.
 - :ref:`Start CDAP <start-stop-cdap>`, open up a web browser, and go to the :cdap-ui:`CDAP UI <>`.
 
-.. _cdap_pipelines-getting-started:
+.. _cdap-pipelines-getting-started:
 
 Start CDAP Pipelines
 ====================
 
 - To start creating a CDAP pipeline, either select *Pipelines* from the pull-down menu in the upper
-  left, or go to the :cdap-application-studio:`CDAP Pipelines URL <>`.
+  left, or go to the :cdap-studio:`CDAP Pipelines URL <>`.
 
   This will take you to a list of pipelines, which will most likely be empty:
 
@@ -45,7 +45,7 @@ Start CDAP Pipelines
 
      **CDAP Pipelines:** List of pipelines
 
-.. _cdap_pipelines-getting-started-cdap-application-studio:
+.. _cdap-pipelines-getting-started-cdap-studio:
 
 Start CDAP Studio
 =================
@@ -54,12 +54,12 @@ Start CDAP Studio
 
   - Click the *+* button to add a new pipeline;
   - Click the tool bar label *Studio* (to the left of the label *Pipelines*); or
-  - Go to the :cdap-application-studio-artifact:`CDAP Studio URL <cdap-data-pipeline>`
+  - Go to the :cdap-studio-artifact:`CDAP Studio URL <cdap-data-pipeline>`
   
   Studio will start and you will be creating a new pipeline, by default the first
   pipeline type in the menu, a *Data Pipeline - Batch*, which is a batch-type pipeline:
   
-  .. figure:: _images/cdap-application-studio-empty.png
+  .. figure:: _images/cdap-studio-empty.png
      :figwidth: 100%
      :width: 6in
      :align: center
@@ -68,14 +68,14 @@ Start CDAP Studio
      **CDAP Studio:** Empty canvas for creating pipelines
 
 
-.. _cdap_pipelines-getting-started-studio:
+.. _cdap-pipelines-getting-started-studio:
 
 Quick Tour of CDAP Studio
 =========================
 
 Before we begin an example, let's look at Studio and its different components:
 
-.. figure:: _images/cdap-application-studio-annotated.png
+.. figure:: _images/cdap-studio-annotated.png
    :figwidth: 100%
    :width: 6in
    :align: center
@@ -124,7 +124,7 @@ control flow.
 Now, let's create a pipeline!
 
 
-.. _cdap_pipelines-getting-started-simple:
+.. _cdap-pipelines-getting-started-simple:
 
 Creating a Simple Pipeline
 ==========================
