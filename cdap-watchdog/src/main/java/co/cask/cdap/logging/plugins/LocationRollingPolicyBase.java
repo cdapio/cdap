@@ -30,7 +30,7 @@ import java.io.Closeable;
  */
 public abstract class LocationRollingPolicyBase extends ContextAwareBase implements LocationRollingPolicy {
 
-  protected CompressionMode compressionMode = CompressionMode.NONE;
+  private CompressionMode compressionMode = CompressionMode.NONE;
   protected FileNamePattern fileNamePattern;
   // fileNamePatternStr is always slashified, see setter
   protected String fileNamePatternStr;

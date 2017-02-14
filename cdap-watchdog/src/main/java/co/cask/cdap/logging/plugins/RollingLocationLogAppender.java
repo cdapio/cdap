@@ -23,8 +23,6 @@ import ch.qos.logback.core.rolling.RollingPolicy;
 import ch.qos.logback.core.rolling.RolloverFailure;
 import ch.qos.logback.core.rolling.TriggeringPolicy;
 import ch.qos.logback.core.spi.FilterReply;
-import ch.qos.logback.core.status.ErrorStatus;
-import ch.qos.logback.core.status.WarnStatus;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.logging.framework.AppenderContext;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -93,7 +91,7 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
     try {
       // logic from AppenderBase
       if (!this.started) {
-        addStatus(new WarnStatus("Attempted to append to non started appender [" + name + "].", this));
+        LOG.warn("Attempted to append to non started appender {}", this.getName());
         return;
       }
 
@@ -103,7 +101,8 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
       }
 
       String namespaceId = eventObject.getMDCPropertyMap().get(LocationManager.TAG_NAMESPACE_ID);
-      if (!namespaceId.equals(NamespaceId.SYSTEM.getEntityName())) {
+
+      if (namespaceId != null && !namespaceId.equals(NamespaceId.SYSTEM.getNamespace())) {
         LocationIdentifier logLocationIdentifier = locationManager.getLocationIdentifier(eventObject
                                                                                            .getMDCPropertyMap());
         rollover(logLocationIdentifier, eventObject);
@@ -121,6 +120,7 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
 
   private void rollover(final LocationIdentifier logLocationIdentifier, ILoggingEvent logEvent) {
     if (!locationManager.getActiveLocations().containsKey(logLocationIdentifier)) {
+      LOG.info("Decided not to roll over for first event");
       return;
     }
     final LocationOutputStream locationOutputStream = locationManager.getActiveLocations().get(logLocationIdentifier);
@@ -169,16 +169,16 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
 
   @Override
   public void stop() {
-    if (encoder != null) {
-      try {
-        LOG.info("Stopping appender {}", this.name);
+    try {
+      LOG.info("Stopping appender {}", this.name);
+      locationManager.close();
+      if (encoder != null) {
         encoder.close();
-        locationManager.close();
-      } catch (IOException ioe) {
-        addStatus(new ErrorStatus("Failed to write footer for appender named [" + name + "].", this, ioe));
-      } finally {
-        this.started = false;
       }
+    } catch (IOException ioe) {
+      LOG.error("Failed to write footer for appender named {}", this.getName(), ioe);
+    } finally {
+      this.started = false;
     }
   }
 
@@ -186,7 +186,7 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
   @Override
   public void setOutputStream(OutputStream outputStream) {
     if (encoder == null) {
-      addWarn("Encoder has not been set. Cannot invoke its init method.");
+      LOG.warn("Encoder has not been set. Cannot invoke its init method.");
       return;
     }
 

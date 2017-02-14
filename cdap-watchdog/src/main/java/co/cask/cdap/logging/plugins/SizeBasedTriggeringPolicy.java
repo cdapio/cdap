@@ -19,7 +19,6 @@ package co.cask.cdap.logging.plugins;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.LogbackException;
 import ch.qos.logback.core.util.FileSize;
-import ch.qos.logback.core.util.InvocationGate;
 
 /**
  * SizeBasedTriggeringPolicy looks at size of the file being currently written
@@ -30,7 +29,7 @@ public class SizeBasedTriggeringPolicy extends LocationTriggeringPolicyBase {
   /**
    * The default maximum file size.
    */
-  public static final long DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+  private static final long DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
   private String maxFileSizeAsString = Long.toString(DEFAULT_MAX_FILE_SIZE);
   private FileSize maxFileSize;
@@ -42,16 +41,8 @@ public class SizeBasedTriggeringPolicy extends LocationTriggeringPolicyBase {
     setMaxFileSize(maxFileSize);
   }
 
-  private InvocationGate invocationGate = new InvocationGate();
-
   public boolean isTriggeringEvent(final ILoggingEvent event) throws LogbackException {
-    if (invocationGate.skipFurtherWork()) {
-      return false;
-    }
-
-    long now = System.currentTimeMillis();
-    invocationGate.updateMaskIfNecessary(now);
-    return (activeLocationSize >= maxFileSize.getSize());
+    return (getActiveLocationSize() >= maxFileSize.getSize());
   }
 
   public String getMaxFileSize() {

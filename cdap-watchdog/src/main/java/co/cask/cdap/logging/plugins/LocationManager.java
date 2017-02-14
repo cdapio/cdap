@@ -16,33 +16,36 @@
 
 package co.cask.cdap.logging.plugins;
 
-import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.conf.Constants;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
-import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Manage locations for {@link RollingLocationLogAppender}
  */
 public class LocationManager implements Flushable, Closeable {
-  protected static final String TAG_NAMESPACE_ID = ".namespaceId";
-  protected static final String TAG_APPLICATION_ID = ".applicationId";
+  private static final Logger LOG = LoggerFactory.getLogger(LocationManager.class);
+  protected static final String TAG_NAMESPACE_ID = Constants.Logging.TAG_NAMESPACE_ID;
+  protected static final String TAG_APPLICATION_ID = Constants.Logging.TAG_APPLICATION_ID;
 
   private final Location logBaseDir;
   private Map<LocationIdentifier, LocationOutputStream> activeLocations;
@@ -90,15 +93,18 @@ public class LocationManager implements Flushable, Closeable {
     }
 
     Location logFile = getLogLocation(locationIdentifier).append(filePath);
-    Location logDir = Locations.getParent(logFile);
-    // check if parent directories exist
-    Locations.mkdirsIfNotExists(logDir, dirPermissions);
+    Location logDir = getParent(logFile);
 
     if (logDir == null) {
       // this should never happen
+      LOG.error("Log directories not created");
       throw new IOException(String.format("Parent Directory for %s is null", logFile.toURI().toString()));
     }
 
+    // check if parent directories exist
+    mkdirsIfNotExists(logDir, dirPermissions);
+
+    LOG.info("Created directory: {}", logDir.toURI().toString());
     if (logFile.exists()) {
       // The file name for a given application exists if the appender was stopped and then started again but file was
       // not rolled over. In this case, since the roll over size is typically small, we can rename the old file and
@@ -106,7 +112,8 @@ public class LocationManager implements Flushable, Closeable {
       long now = System.currentTimeMillis();
 
       // rename existing file to temp file
-      Location tempLocation = logFile.renameTo(logDir.append(Long.toString(now)));
+      Location tempLocation = logFile.renameTo(logDir.append("temp-" + Long.toString(now)));
+
       if (tempLocation == null) {
         throw new IOException(String.format("Can not rename file %s", logFile.toURI().toString()));
       }
@@ -123,16 +130,19 @@ public class LocationManager implements Flushable, Closeable {
         throw e;
       }
 
-      // delete temporary file, if it fails, retry 5 times, the file will be there on the disk after 5 retries
-      // TODO remove all the existing temp files
-      int retries = 5;
-      while (retries > 0) {
-        if (tempLocation.delete()) {
-          break;
+      try {
+        // clean up all the temp files which were failed
+        tempLocation.delete();
+        for (Location location : logDir.list()) {
+          if (location.toURI().toString().contains("temp-")) {
+            location.delete();
+          }
         }
-        retries--;
-        Uninterruptibles.sleepUninterruptibly(100L, TimeUnit.MILLISECONDS);
+      } catch (IOException e) {
+        // do not throw any exception while deleting temp directory
+        LOG.warn("Not able to delete temp location, will be retried later");
       }
+
     } else {
       // create file with correct permissions
       logFile.createNew(filePermissions);
@@ -176,5 +186,43 @@ public class LocationManager implements Flushable, Closeable {
   @VisibleForTesting
   Map<LocationIdentifier, LocationOutputStream> getActiveLocations() {
     return activeLocations;
+  }
+
+  /**
+   * Creates a {@link Location} instance which represents the parent of the given location.
+   *
+   * @param location location to extra parent from.
+   * @return an instance representing the parent location or {@code null} if there is no parent.
+   */
+  @Nullable
+  private static Location getParent(Location location) {
+    URI source = location.toURI();
+
+    // If it is root, return null
+    if ("/".equals(source.getPath())) {
+      return null;
+    }
+
+    URI resolvedParent = URI.create(source.toString() + "/..").normalize();
+    // NOTE: if there is a trailing slash at the end, rename(), getName() and other operations on file
+    // does not work in MapR. so we remove the trailing slash (if any) at the end.
+    if (resolvedParent.toString().endsWith("/")) {
+      String parent = resolvedParent.toString();
+      resolvedParent = URI.create(parent.substring(0, parent.length() - 1));
+    }
+    return location.getLocationFactory().create(resolvedParent);
+  }
+
+  /**
+   * Create the directory represented by the location with provided permissions if not exists.
+   * @param location the location for the directory.
+   * @param permissions permissions on directory
+   * @throws IOException If the location cannot be created
+   */
+  private static void mkdirsIfNotExists(Location location, String permissions) throws IOException {
+    // Need to check && mkdir && check to deal with race condition
+    if (!location.isDirectory() && !location.mkdirs(permissions) && !location.isDirectory()) {
+      throw new IOException("Failed to create directory at " + location);
+    }
   }
 }

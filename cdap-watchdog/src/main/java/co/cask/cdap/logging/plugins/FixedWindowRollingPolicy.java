@@ -21,13 +21,14 @@ import ch.qos.logback.core.rolling.RolloverFailure;
 import ch.qos.logback.core.rolling.helper.FileNamePattern;
 import ch.qos.logback.core.rolling.helper.IntegerTokenConverter;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.logging.framework.AppenderContext;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
+import javax.annotation.Nullable;
 
 /**
  * When rolling over, renames files according to a fixed window algorithm.
@@ -96,7 +97,7 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
 
   @Override
   public void rollover() throws RolloverFailure {
-    Location parentLocation = Locations.getParent(activeFileLocation);
+    Location parentLocation = getParent(activeFileLocation);
 
     if (parentLocation == null) {
       return;
@@ -126,11 +127,12 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
             Location newName = parentLocation.append(fileNamePattern.convertInt(i + 1));
             // throw exception if rename fails, so that in next interation of rollover, it will be retried
             if (toRename.renameTo(newName) == null) {
-              LOG.warn("Failed to rename location: {}", toRename.toURI().toString());
-              throw new RolloverFailure(String.format("Not able to rename file: %s", toRename.toURI().toString()));
+              LOG.warn("Failed to rename {} to {}", toRename.toURI().toString(), newName.toURI().toString());
+              throw new RolloverFailure(String.format("Failed to rename %s to %s", toRename.toURI().toString(),
+                                                      newName.toURI().toString()));
             }
           } else {
-            LOG.trace("Skipping roll-over for inexistent file {}", toRenameStr);
+            LOG.trace("Skipping roll-over for inexistent file {}", toRename.toURI().toString());
           }
         }
 
@@ -170,5 +172,30 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
 
   public void setMinIndex(int minIndex) {
     this.minIndex = minIndex;
+  }
+
+  /**
+   * Creates a {@link Location} instance which represents the parent of the given location.
+   *
+   * @param location location to extra parent from.
+   * @return an instance representing the parent location or {@code null} if there is no parent.
+   */
+  @Nullable
+  private static Location getParent(Location location) {
+    URI source = location.toURI();
+
+    // If it is root, return null
+    if ("/".equals(source.getPath())) {
+      return null;
+    }
+
+    URI resolvedParent = URI.create(source.toString() + "/..").normalize();
+    // NOTE: if there is a trailing slash at the end, rename(), getName() and other operations on file
+    // does not work in MapR. so we remove the trailing slash (if any) at the end.
+    if (resolvedParent.toString().endsWith("/")) {
+      String parent = resolvedParent.toString();
+      resolvedParent = URI.create(parent.substring(0, parent.length() - 1));
+    }
+    return location.getLocationFactory().create(resolvedParent);
   }
 }

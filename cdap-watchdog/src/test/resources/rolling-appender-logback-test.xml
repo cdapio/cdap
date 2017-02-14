@@ -27,7 +27,7 @@
 
   <appender name="rollingAppender" class="co.cask.cdap.logging.plugins.RollingLocationLogAppender">
     <!--log file path will be created by appender as: <basePath>/namespaceId/applicationId/<filePath>-->
-    <basePath>/tmp/plugins/applogs</basePath>
+    <basePath>plugins/applogs</basePath>
     <filePath>securityLogs/logFile-${cdap.log.saver.instance.id}.log</filePath>
     <!--cdap is the owner of log files, so cdap will get read/write permissions.
     Log files will be read-only for others-->
@@ -43,7 +43,7 @@
     </rollingPolicy>
 
     <triggeringPolicy class="co.cask.cdap.logging.plugins.SizeBasedTriggeringPolicy">
-      <maxFileSize>5KB</maxFileSize>
+      <maxFileSize>5kb</maxFileSize>
     </triggeringPolicy>
 
     <encoder>
@@ -52,6 +52,7 @@
       <immediateFlush>false</immediateFlush>
     </encoder>
   </appender>
+
 
   <logger name="co.cask.cdap.logging.plugins.RollingLocationLogAppenderTest" level="INFO">
     <appender-ref ref="rollingAppender"/>
