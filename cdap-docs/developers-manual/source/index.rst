@@ -38,9 +38,8 @@ CDAP Developers’ Manual
 .. |metadata| replace:: **Metadata:**
 .. _metadata: metadata/index.html
 
-- |metadata|_ A CDAP capability that automatically captures :ref:`metadata
-  <metadata>` and lets you see **how data is flowing** into and out of datasets,
-  streams, and stream views.
+- |metadata|_ A CDAP capability that automatically captures *metadata* and lets you see
+  **how data is flowing** into and out of datasets, streams, and stream views.
   
 
 .. |pipelines| replace:: **Pipelines:**
