@@ -27,7 +27,7 @@ Install CDAP
 - If you haven't already, :ref:`download and install the CDAP SDK <standalone-index>`.
 - :ref:`Start CDAP <start-stop-cdap>`, open up a web browser, and go to the :cdap-ui:`CDAP UI <>`.
 
-.. _cdap-pipelines-getting-started:
+.. _cdap-pipelines-getting-started-start:
 
 Start CDAP Pipelines
 ====================
@@ -68,7 +68,7 @@ Start CDAP Studio
      **CDAP Studio:** Empty canvas for creating pipelines
 
 
-.. _cdap-pipelines-getting-started-studio:
+.. _cdap-pipelines-getting-started-studio-tour:
 
 Quick Tour of CDAP Studio
 =========================
