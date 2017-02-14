@@ -102,7 +102,7 @@ public class MasterStartupTool {
       for (CheckRunner.Failure failure : failures) {
         LOG.error("{} failed with {}: {}", failure.getName(),
                   failure.getException().getClass().getSimpleName(),
-                  failure.getException().getMessage());
+                  failure.getException().getMessage(), failure.getException());
         if (failure.getException().getCause() != null) {
           LOG.error("  Root cause: {}", ExceptionUtils.getRootCauseMessage(failure.getException().getCause()));
         }
