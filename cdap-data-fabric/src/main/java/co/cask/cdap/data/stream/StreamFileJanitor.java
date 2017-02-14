@@ -90,19 +90,12 @@ public final class StreamFileJanitor {
       Iterable<Location> streamLocations = StreamUtils.listAllStreams(streamBaseLocation);
 
       for (final Location streamLocation : streamLocations) {
-        final StreamId streamId = namespace.getNamespaceId().stream(StreamUtils
-                                                                      .getStreamNameFromLocation(streamLocation));
+        StreamId streamId = namespace.getNamespaceId().stream(StreamUtils.getStreamNameFromLocation(streamLocation));
         final AtomicLong ttl = new AtomicLong(0);
-        impersonator.doAs(streamId, new Callable<Void>() {
-          @Override
-          public Void call() throws Exception {
-            if (isStreamExists(streamId)) {
-              ttl.set(streamAdmin.getConfig(streamId).getTTL());
-            }
-            clean(streamLocation, ttl.get(), System.currentTimeMillis());
-            return null;
-          }
-        });
+        if (isStreamExists(streamId)) {
+          ttl.set(streamAdmin.getConfig(streamId).getTTL());
+        }
+        clean(streamLocation, ttl.get(), System.currentTimeMillis());
       }
     }
   }
