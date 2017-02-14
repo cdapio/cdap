@@ -54,4 +54,11 @@ public interface KafkaLogProcessor {
    * @return checkpoint offset
    */
   Checkpoint getCheckpoint();
+
+  /**
+   * Reset the checkpoint for a given partition processed by this plugin.
+   *
+   * @param checkpoint new checkpoint to reset to
+   */
+   void resetCheckpoint(Checkpoint checkpoint);
 }

@@ -33,6 +33,7 @@ import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.PeekingIterator;
@@ -276,6 +277,15 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   public Checkpoint getCheckpoint() {
     try {
       return checkpointManager.getCheckpoint(partition);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void resetCheckpoint(Checkpoint checkpoint) {
+    try {
+      checkpointManager.saveCheckpoints(ImmutableMap.of(partition, checkpoint));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

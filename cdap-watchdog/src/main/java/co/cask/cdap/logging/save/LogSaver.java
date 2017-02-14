@@ -31,8 +31,11 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.internal.kafka.client.ZKBrokerService;
+import org.apache.twill.kafka.client.BrokerService;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.kafka.client.KafkaConsumer;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +56,8 @@ public final class LogSaver extends AbstractIdleService {
 
   private final String topic;
   private final KafkaClientService kafkaClient;
+  private final BrokerService brokerService;
+  private final KafkaOffsetFinder offsetFinder;
   private final Set<Integer> partitions;
 
   private final Map<Integer, Cancellable> kafkaCancelMap;
@@ -63,7 +68,8 @@ public final class LogSaver extends AbstractIdleService {
   private final MetricsContext metricsContext;
 
   @Inject
-  LogSaver(KafkaClientService kafkaClient,
+  LogSaver(ZKClientService zkClient,
+           KafkaClientService kafkaClient,
            CConfiguration cConf,
            @Named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES)
            Set<KafkaLogProcessorFactory> messageProcessorFactories,
@@ -77,6 +83,8 @@ public final class LogSaver extends AbstractIdleService {
     LOG.info(String.format("Kafka topic: %s, partitions: %s", this.topic, this.partitions));
 
     this.kafkaClient = kafkaClient;
+    this.brokerService = new ZKBrokerService(zkClient);
+    this.offsetFinder = new KafkaOffsetFinder(brokerService, kafkaClient.getConsumer(), topic);
     this.kafkaCancelMap = new HashMap<>();
     this.kafkaCancelCallbackLatchMap = new HashMap<>();
     this.messageProcessorFactories = messageProcessorFactories;
@@ -91,6 +99,7 @@ public final class LogSaver extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting LogSaver...");
+    brokerService.startAndWait();
     createProcessors(partitions);
     waitForDatasetAvailability();
     scheduleTasks(partitions);
@@ -101,6 +110,7 @@ public final class LogSaver extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.info("Stopping LogSaver...");
     unscheduleTasks();
+    brokerService.stopAndWait();
     LOG.info("Stopped LogSaver.");
   }
 
@@ -165,6 +175,14 @@ public final class LogSaver extends AbstractIdleService {
     for (int part : partitions) {
       Set<KafkaLogProcessor> kafkaLogProcessors = partitionProcessorsMap.get(part);
       for (KafkaLogProcessor kafkaLogProcessor : kafkaLogProcessors) {
+        try {
+          Checkpoint savedCheckpoint = kafkaLogProcessor.getCheckpoint();
+          long matchingOffset = offsetFinder.getMatchingOffset(savedCheckpoint, part);
+          kafkaLogProcessor.resetCheckpoint(new Checkpoint(matchingOffset, savedCheckpoint.getMaxEventTime()));
+        } catch (Exception e) {
+          LOG.warn("Failed to reset checkpoint for {} with topic {}, partition {}. Keep the original checkpoint.",
+                   kafkaLogProcessor.getClass().getSimpleName(), topic, part, e);
+        }
         kafkaLogProcessor.init(part);
       }
 

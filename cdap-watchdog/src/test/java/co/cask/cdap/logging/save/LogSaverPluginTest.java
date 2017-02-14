@@ -117,6 +117,8 @@ public class LogSaverPluginTest extends KafkaTestBase {
   private static CConfiguration cConf;
   private static Impersonator impersonator;
 
+  private static final long UNREACHABLE_TIME = Long.MAX_VALUE;
+
   @BeforeClass
   public static void initialize() throws IOException {
     cConf = KAFKA_TESTER.getCConf();
@@ -177,12 +179,15 @@ public class LogSaverPluginTest extends KafkaTestBase {
 
       LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
       String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
-      Location ns1LogBaseDir = locationFactory.create(namespaceDir).append("NS_1").append(logBaseDir);
+      locationFactory.create(namespaceDir).append("NS_1").append(logBaseDir);
 
       FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
       waitTillLogSaverDone(fileMetaDataManager, loggingContext, "Test log message 59 arg1 arg2");
 
-      testLogRead(loggingContext, logBaseDir);
+      FileLogReader distributedLogReader = injector.getInstance(FileLogReader.class);
+      List<LogEvent> allEvents =
+        Lists.newArrayList(distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER));
+      testLogRead(distributedLogReader, loggingContext, allEvents, logBaseDir);
 
       List<LogEvent> events = Lists.newArrayList(
         fileLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
@@ -195,40 +200,35 @@ public class LogSaverPluginTest extends KafkaTestBase {
       verifyCheckpoint();
       verifyMetricsPlugin(60L);
 
-      // Now reset the logsaver to start reading from reset offset
-      // Change the log meta table so that checkpoints are new, and old log files are not read during read later
-      LogSaverTableUtilOverride.setLogMetaTableName("log.meta1");
-
-      // Reset checkpoint for log saver plugin
-      resetLogSaverPluginCheckpoint(10);
-
-      // Change base dir so that new files get written and read from a different location (makes it easy for asserting)
-      String logBaseDir1 = logBaseDir + "1";
-      cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir1);
-      Location ns1LogBaseDir1 = locationFactory.create(namespaceDir).append("NS_1").append(logBaseDir1);
-
-      // Start log saver again
-      startLogSaver();
-      // Reset the log base dir back to original value
-      cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
-
-      fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
-      waitTillLogSaverDone(fileMetaDataManager, loggingContext, "Test log message 59 arg1 arg2");
-      stopLogSaver();
-
-
-      //Verify that more records are processed by LogWriter plugin
-      fileLogReader = injector.getInstance(FileLogReader.class);
-      events =
-        Lists.newArrayList(fileLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "",
-                                                                          null, "INSTANCE"),
-                                                0, Long.MAX_VALUE, Filter.EMPTY_FILTER));
-      // Since we started from offset 10, we should have only saved 50 messages this time
-      Assert.assertEquals(50, events.size());
-      // Checkpoint should read 60 for both processor
-      verifyCheckpoint();
+      long timestamp10 = events.get(10).getLoggingEvent().getTimeStamp();
+      // Since we started from event 10, we should have only saved 50 messages this time.
       // Metrics should be 60 for first run + 50 for second run
-      verifyMetricsPlugin(110L);
+      verifyLogSaverReset(locationFactory, loggingContext, logBaseDir, 1, new Checkpoint(0L, timestamp10), 50, 110L);
+
+      // Since we started from event 10, we should have only saved 50 messages this time.
+      // Metrics count should be 60 + 50 + 50 for three runs
+      verifyLogSaverReset(locationFactory, loggingContext, logBaseDir, 2, new Checkpoint(10L, timestamp10), 50, 160L);
+
+      // Since we started from event 10, we should have only saved 50 messages this time.
+      // Metrics count should be 60 + 50 + 50 + 50 for four runs
+      verifyLogSaverReset(locationFactory, loggingContext, logBaseDir, 3, new Checkpoint(40L, timestamp10), 50, 210L);
+
+      // Intentionally set the new checkpoint offset larger than the size of allEvents.
+      // Since we started from event 10, we should have only saved 50 messages this time.
+      // Metrics count should be 60 + 50 + 50 + 50 + 50 for five runs
+      verifyLogSaverReset(locationFactory, loggingContext, logBaseDir, 4, new Checkpoint(111L, timestamp10), 50, 260L);
+
+      // Intentionally set the new checkpoint timestamp to UNREACHABLE_TIME to cover the edge case
+      // that the target timestamp is larger than the timestamps of
+      // all existing messages. No additional message will be processed by LogSaver in this case.
+      verifyLogSaverReset(locationFactory, loggingContext, logBaseDir, 5,
+                          new Checkpoint(10L, UNREACHABLE_TIME), 0, 260L);
+
+      // Use 0 as the new checkpoint timestamp to cover the edge case that
+      // the new checkpoint timestamp is smaller than the timestamps of all existing messages.
+      // LogSaver will start processing from the beginning in this case, so we should have saved 60 messages this time.
+      // Metrics count should be 60 + 50 + 50 + 50 + 50 + 0 + 60 for seven runs
+      verifyLogSaverReset(locationFactory, loggingContext, logBaseDir, 6, new Checkpoint(10L, 0), 60, 320L);
     } catch (Throwable t) {
       try {
         final Multimap<String, String> contextMessages = getPublishedKafkaMessages();
@@ -238,6 +238,57 @@ public class LogSaverPluginTest extends KafkaTestBase {
       }
       throw t;
     }
+  }
+
+  /**
+   * Reset the logSaver to start reading from the log message with the same timestamp as in the given
+   * {@code newCheckpoint}. Also verify the saved logs and checkpoints.
+   */
+  private void verifyLogSaverReset(LocationFactory locationFactory, LoggingContext loggingContext, String logBaseDir,
+                                   int newSuffix, Checkpoint newCheckpoint, int expectedEventsSize,
+                                   long expectedMetricsCount) throws Exception {
+    // Change the log meta table so that checkpoints are new, and old log files are not read during read later
+    LogSaverTableUtilOverride.setLogMetaTableName("log.meta" + newSuffix);
+
+    // Reset checkpoint for log saver plugin to newCheckpoint
+    resetLogSaverPluginCheckpoint(newCheckpoint);
+
+    // Change base dir so that new files get written and read from a different location (makes it easy for asserting)
+    String newLogBaseDir = logBaseDir + newSuffix;
+    cConf.set(LoggingConfiguration.LOG_BASE_DIR, newLogBaseDir);
+    locationFactory.create(namespaceDir).append("NS_1").append(newLogBaseDir);
+
+    // Start log saver again
+    startLogSaver();
+
+    FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
+    // If newCheckpoint has timestamp UNREACHABLE_TIME, no log message will be saved by LogSaver,
+    // so waitTillLogSaverDone cannot be called
+    if (newCheckpoint.getMaxEventTime() == UNREACHABLE_TIME) {
+      // Sleep for 6 seconds to wait for LogSaver to start processing messages
+      Thread.sleep(6000);
+    } else {
+      waitTillLogSaverDone(fileMetaDataManager, loggingContext, "Test log message 59 arg1 arg2");
+    }
+    stopLogSaver();
+
+    //Verify that more records are processed by LogWriter plugin
+    FileLogReader fileLogReader = injector.getInstance(FileLogReader.class);
+    List<LogEvent> events =
+      Lists.newArrayList(fileLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "",
+                                                                        null, "INSTANCE"),
+                                              0, Long.MAX_VALUE, Filter.EMPTY_FILTER));
+    Assert.assertEquals(expectedEventsSize, events.size());
+    // If newCheckpoint has timestamp UNREACHABLE_TIME, no log message will be consumed by LogSaver, so the checkpoint
+    // in log metrics plugin still has the original offset -1, but checkpoint of kafka log writer plugin has offset 60.
+    // This is because checkpoint with negative offset is ignored by KafkaOffsetFinder, but checkpoint in
+    // kafka log writer plugin was set to a positive offset in resetLogSaverPluginCheckpoint, and its offset was updated
+    // to the latest offset returned by KafkaOffsetFinder
+    if (newCheckpoint.getMaxEventTime() != UNREACHABLE_TIME) {
+      // log processors should have next offset 60 in saved checkpoints
+      verifyCheckpoint();
+    }
+    verifyMetricsPlugin(expectedMetricsCount);
   }
 
   private void verifyMetricsPlugin(long count) throws Exception {
@@ -262,17 +313,18 @@ public class LogSaverPluginTest extends KafkaTestBase {
     }, 120, TimeUnit.SECONDS);
   }
 
-  private void resetLogSaverPluginCheckpoint(long offset) throws Exception {
+  private void resetLogSaverPluginCheckpoint(Checkpoint newCheckpoint)
+    throws Exception {
     TypeLiteral<Set<KafkaLogProcessorFactory>> type = new TypeLiteral<Set<KafkaLogProcessorFactory>>() { };
     Set<KafkaLogProcessorFactory> processorFactories =
       injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES)));
-
     for (KafkaLogProcessorFactory processorFactory : processorFactories) {
       KafkaLogProcessor processor = processorFactory.create();
       if (processor instanceof  KafkaLogWriterPlugin) {
         KafkaLogWriterPlugin plugin = (KafkaLogWriterPlugin) processor;
         CheckpointManager manager = plugin.getCheckPointManager();
-        manager.saveCheckpoints(ImmutableMap.of(0, new Checkpoint(offset, -1)));
+        manager.saveCheckpoints(ImmutableMap.of(0, newCheckpoint));
+        break;
       }
     }
   }
@@ -301,12 +353,9 @@ public class LogSaverPluginTest extends KafkaTestBase {
     throw new IllegalArgumentException("Invalid processor");
   }
 
-  private void testLogRead(LoggingContext loggingContext, String logBaseDir) throws Exception {
+  private void testLogRead(FileLogReader distributedLogReader, LoggingContext loggingContext, List<LogEvent> allEvents,
+                           String logBaseDir) throws Exception {
     LOG.info("Verifying logging context {}", loggingContext.getLogPathFragment(logBaseDir));
-    FileLogReader distributedLogReader = injector.getInstance(FileLogReader.class);
-
-    List<LogEvent> allEvents =
-      Lists.newArrayList(distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER));
 
     for (int i = 0; i < 60; ++i) {
       Assert.assertEquals("Assert failed: ", String.format("Test log message %d arg1 arg2", i),
