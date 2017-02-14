@@ -58,6 +58,9 @@ git clone --depth 1 --branch ${CDAP_BRANCH} https://github.com/caskdata/cdap.git
 
 # Check out to specific tag if specified
 if [ -n "${CDAP_TAG}" ]; then
+  # Ensure tags are fetched
+  git -C ${__gitdir} fetch --all --tags --prune
+  # Checks out tag to a detached head state
   git -C ${__gitdir} checkout tags/${CDAP_TAG}
 fi
 
