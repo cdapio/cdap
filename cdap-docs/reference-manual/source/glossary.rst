@@ -32,7 +32,7 @@ Glossary
    CDAP Application
       See :term:`Application`.
 
-   CDAP Application Studio
+   CDAP Studio
       A visual editor, part of the :term:`CDAP UI`, for creating and configuring
       pipelines. You click and drag sources, transformations, and sinks, and can name and
       configure the pipelines. It provides an operational view of the resulting pipeline
@@ -144,7 +144,7 @@ Glossary
       
    CDAP UI
       The CDAP UI is a web-based application used to deploy CDAP applications, create 
-      :term:`pipelines <pipeline>` using the :term:`CDAP Application Studio`, and query and
+      :term:`pipelines <pipeline>` using the :term:`CDAP Studio`, and query and
       manage the Cask Data Application Platform instance.
 
    CDAP Console
@@ -239,7 +239,7 @@ Glossary
       
    Pipeline
       CDAP provides an easy method of configuring
-      pipelines using a visual editor, called :term:`CDAP Application Studio`. You click and
+      pipelines using a visual editor, called :term:`CDAP Studio`. You click and
       drag sources, transformations, and sinks, configuring an pipeline within minutes. It
       provides an operational view of the resulting pipeline that allows for monitoring of
       metrics, logs, and other run-time information.

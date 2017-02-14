@@ -29,7 +29,6 @@ Building Blocks
     Workflows <workflows>
     Artifacts <artifacts>
     Program Lifecycle <program-lifecycle>
-    Audit Logging <audit-logging>
     Namespaces <namespaces>
     Transaction System <transaction-system>
 
@@ -69,7 +68,7 @@ write data through the data abstraction layer in CDAP.
   Access of these entities is tracked, and you can view the :ref:`lineage <metadata-lineage>` of datasets and streams.
   With a lineage diagram, you can then drill down into the metadata of its nodes. 
 
-- :doc:`Audit Logging <audit-logging>` provides a chronological ledger containing evidence of operations or
+- :ref:`Audit Logging <audit-logging>` provides a chronological ledger containing evidence of operations or
   changes on CDAP entities. This information can be used to capture a trail of the activities that 
   determined the state of an entity at a given point in time.
 

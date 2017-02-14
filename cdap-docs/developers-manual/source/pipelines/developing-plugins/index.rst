@@ -53,5 +53,5 @@ artifact.
 - |testing-plugins|_ Using CDAP testing facilities and the CDAP Pipelines test module
 
 - |packaging-plugins|_ Packaging a :ref:`plugin in a JAR <cdap-pipelines-packaging-plugins>`, 
-  and controlling how your plugin :ref:`appears in the CDAP Application Studio 
+  and controlling how your plugin :ref:`appears in the CDAP Studio 
   <cdap-pipelines-packaging-plugins-presentation>`.

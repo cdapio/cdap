@@ -43,30 +43,30 @@ Methods for Creating Pipelines
 ==============================
 There are two different methods for creating pipelines:
 
-1. Using the *CDAP Application Studio*
+1. Using the *CDAP Studio*
 #. Using command line tools (such as ``curl``, the CDAP CLI, or the CDAP UI)
 
-Using the **CDAP Application Studio**, the basic operations are:
+Using the **CDAP Studio**, the basic operations are:
 
   1. **Create** a new pipeline, either by starting from a :ref:`blank canvas 
      <cdap_pipelines-getting-started-cdap-application-studio>`, starting from a
      :ref:`template <cdap-pipelines-creating-pipelines-pipeline-templates>`, or by 
      :ref:`cloning <cdap-pipelines-creating-pipelines-cloning>` an already-published pipeline.
 
-  #. **Edit** the pipeline in the CDAP Application Studio, setting appropriate configurations and
+  #. **Edit** the pipeline in the CDAP Studio, setting appropriate configurations and
      settings.
 
   #. **Save** the pipeline as you are working on it, as a draft pipeline, using a unique name.
 
-  #. **Validate** the pipeline from within the CDAP Application Studio, to check that basic settings and
+  #. **Validate** the pipeline from within the CDAP Studio, to check that basic settings and
      naming are correct.
 
-  #. **Publish** the pipeline from within the CDAP Application Studio, which will translate the virtual
+  #. **Publish** the pipeline from within the CDAP Studio, which will translate the virtual
      pipeline of the configuration into a physical pipeline with the specified name.
   
   At this point, the pipeline can be run.
 
-  **Note:** Unlike many editors, the CDAP Application Studio does not allow draft pipelines to be
+  **Note:** Unlike many editors, the CDAP Studio does not allow draft pipelines to be
   published "on top of" existing, published pipelines, as this would invalidate existing
   logs, metrics, and datasets. Instead, it requires you to create a new name for any
   newly-published pipelines.
@@ -86,7 +86,7 @@ Using **command line tools,** the basic operations are:
      with the specified name.
    
   Pipelines published using command line tools are visible within the CDAP UI, and
-  can be cloned and edited using the CDAP Application Studio.
+  can be cloned and edited using the CDAP Studio.
 
 
 Batch Pipelines
@@ -128,9 +128,9 @@ work with the *Data Pipeline* (the ``cdap-data-pipeline`` artifact), as listed a
 
 Building a Pipeline
 -------------------
-To create a batch pipeline, you can use either command line tools or the CDAP Application Studio.
+To create a batch pipeline, you can use either command line tools or the CDAP Studio.
 
-To use the CDAP Application Studio to create a batch pipeline:
+To use the CDAP Studio to create a batch pipeline:
 
 - Specify *Data Pipeline* (the ``cdap-data-pipeline`` artifact) as the application
   template for your pipeline.
@@ -183,7 +183,7 @@ section on :ref:`developing pipelines: creating a batch pipeline
 
 Scheduling
 ----------
-From with the CDAP Application Studio, you can set a schedule for a batch pipeline that
+From with the CDAP Studio, you can set a schedule for a batch pipeline that
 will be used to run it. Note that as a schedule is set as part of the pipeline
 configuration, a physical pipeline's schedule cannot be altered except by creating a new
 pipeline with a new schedule.
@@ -219,7 +219,7 @@ Engine
 You can specify the engine being used for a batch pipeline, either "MapReduce" (``mapreduce``)
 or "Spark" (``spark``).
 
-You set this either by selecting your choice using the *Settings* tool of the CDAP Application Studio,
+You set this either by selecting your choice using the *Settings* tool of the CDAP Studio,
 or by setting the engine property in the configuration file for the pipeline::
 
     "engine": "mapreduce",
@@ -231,7 +231,7 @@ created.
 
 Actions
 -------
-Actions can be configured for a batch pipeline, either by using the CDAP Application Studio or by
+Actions can be configured for a batch pipeline, either by using the CDAP Studio or by
 including a stage of type ``action`` in the configuration JSON file. The available actions
 are determined by those available to the application template being used to create the
 pipeline.
@@ -255,7 +255,7 @@ Reference <cdap-pipelines-plugins-actions>`, with this action available:
 
 Post-run Actions
 ----------------
-Post-run actions can be configured for a batch pipeline, either by using the CDAP Application Studio or
+Post-run actions can be configured for a batch pipeline, either by using the CDAP Studio or
 by setting the "postActions" property of the configuration JSON file. The available
 actions are determined by the post-run plugins that are available to the application
 template being used to create the pipeline.
@@ -312,9 +312,9 @@ The application created will consist of a Spark Streaming program.
 
 Building a Pipeline
 -------------------
-To create a real-time pipeline, you can use either the CDAP Application Studio or command line tools.
+To create a real-time pipeline, you can use either the CDAP Studio or command line tools.
 
-To use the CDAP Application Studio to create a real-time pipeline:
+To use the CDAP Studio to create a real-time pipeline:
 
 - Specify *Data Pipeline - Realtime* (the ``cdap-data-streams`` artifact) as the application
   template for your pipeline.
@@ -361,7 +361,7 @@ These settings can be used in both batch and real-time pipelines.
 Required Fields
 ---------------
 Certain fields are required to be configured in order for the plugin to work. These are
-identified in the CDAP Application Studio configuration panel by a red dot, and are described in
+identified in the CDAP Studio configuration panel by a red dot, and are described in
 the :ref:`CDAP Pipelines Plugin Reference <cdap-pipelines-plugins>` documentation as *required*.
 
 .. Configuring Resources
@@ -379,7 +379,7 @@ There are two types of macros supported in CDAP:
 - :ref:`Property Lookups <cdap-pipelines-macros-property-lookups>`
 - :ref:`Macro Functions <cdap-pipelines-macros-macro-functions>`
 
-Fields that are macro-enabled are identified in the CDAP Application Studio UI and documented in
+Fields that are macro-enabled are identified in the CDAP Studio UI and documented in
 the :ref:`CDAP Pipelines Plugin Reference <cdap-pipelines-plugins>`.
 
 .. _cdap-pipelines-macros-property-lookups:
@@ -518,7 +518,7 @@ the macro syntax.
 
 Validation
 ==========
-From within the CDAP Application Studio, the validation button will examine the pipeline
+From within the CDAP Studio, the validation button will examine the pipeline
 to check that basic settings and naming are correct. Messages of any errors found will be
 shown in the Studio. Note that this step is not exhaustive, and errors may still be found
 when the pipeline is actually published.
@@ -531,12 +531,12 @@ Studio, or a configuration JSON file) and creates a *physical* pipeline (a CDAP
 application) using the configuration file, plugin artifacts, and application template
 artifacts.
 
-Publishing can happen either from with the CDAP Application Studio or by using command
+Publishing can happen either from with the CDAP Studio or by using command
 line tools, such as the ``curl`` command with the Lifecycle RESTful API, or the CDAP CLI
 tool with its ``create app`` command.
 
 Using either method, published pipelines are visible within the CDAP UI, and
-can be cloned and edited using the CDAP Application Studio.
+can be cloned and edited using the CDAP Studio.
 
 
 Templates and Re-using Pipelines
@@ -561,7 +561,7 @@ as the starting point for either your own pipelines or your own pipeline templat
    :align: center
    :class: bordered-image
 
-   **CDAP Application Studio:** Annotations showing components
+   **CDAP Studio:** Annotations showing components
 
 First, select which application template you wish to use, either *Data Pipeline* or 
 *ETL Real-time*.
@@ -605,7 +605,7 @@ These are the available templates:
 Cloning
 -------
 Any existing pipeline that has been published, can be *cloned.* This creates an in-memory
-copy of the pipeline with the same name and opens it within the CDAP Application Studio.
+copy of the pipeline with the same name and opens it within the CDAP Studio.
 
 At this point, you can rename the pipeline to a unique name and then either save it as a
 :ref:`draft <cdap-application-studio-pipeline-drafts>` or publish it as a new pipeline. As
@@ -616,10 +616,10 @@ Exporting
 ---------
 There are two ways you can export a pipeline configuration file:
 
-1. From within the CDAP Application Studio; and
+1. From within the CDAP Studio; and
 #. From within a CDAP pipeline configuration page.
 
-1. From **within the CDAP Application Studio**, you can export a pipeline configuration JSON file using
+1. From **within the CDAP Studio**, you can export a pipeline configuration JSON file using
    the *Export...* button:
 
    .. figure:: _images/cdap-pipelines-gs-1-5-buttons.png
@@ -628,7 +628,7 @@ There are two ways you can export a pipeline configuration file:
       :align: center
       :class: bordered-image
  
-      **CDAP Application Studio:** Button labels, upper-right toolbar
+      **CDAP Studio:** Button labels, upper-right toolbar
     
    Clicking the "Export..." button will bring up the export dialog:
  
@@ -638,11 +638,11 @@ There are two ways you can export a pipeline configuration file:
       :align: center
       :class: bordered-image
  
-      **CDAP Application Studio:** Export dialog, with display of configuration file
+      **CDAP Studio:** Export dialog, with display of configuration file
     
    There are two similar actions you take. If you copy the text in the dialog and then
    paste it into a text editor, you will have a JSON file that is the configuration of the
-   pipeline, but without the CDAP Application Studio UI information, such as the icon locations.
+   pipeline, but without the CDAP Studio UI information, such as the icon locations.
 
    If you use the "Export" button, it will prompt for a file location before saving a
    complete file with all the information required to recreate the pipeline in the CDAP Application
@@ -660,7 +660,7 @@ There are two ways you can export a pipeline configuration file:
  
       **CDAP Pipelines:** Configuration page, pipeline detail, showing *Export* button on right
       
-   Similar to exporting from with the CDAP Application Studio, exporting using the button will
+   Similar to exporting from with the CDAP Studio, exporting using the button will
    produce a configuration with UI information, and copying the configuration visible
    in the lower portion of the page will produce a configuration that does not include
    the ``"__ui__"`` object in the JSON.
@@ -669,7 +669,7 @@ Files created by exporting can be edited in a text editor and then imported to c
 
 Importing
 ---------
-From within the CDAP Application Studio, you can import a pipeline configuration JSON file to create a
+From within the CDAP Studio, you can import a pipeline configuration JSON file to create a
 new pipeline using the *Import Pipeline* button:
 
 .. figure:: _images/cdap-pipelines-gs-1-5-buttons.png
@@ -678,7 +678,7 @@ new pipeline using the *Import Pipeline* button:
    :align: center
    :class: bordered-image
 
-   **CDAP Application Studio:** Button labels, upper-right toolbar
+   **CDAP Studio:** Button labels, upper-right toolbar
 
 
 As determined by the configuration file, the application template will be set

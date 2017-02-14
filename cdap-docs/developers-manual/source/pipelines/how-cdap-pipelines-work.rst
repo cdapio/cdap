@@ -43,7 +43,7 @@ Logical versus Physical Pipelines
 Within CDAP, there is the concept of *logical* and *physical* pipelines, converted by a
 planner, and then run in an execution environment.
 
-A **logical pipeline** is the view of the pipeline as seen in the CDAP Application Studio and the
+A **logical pipeline** is the view of the pipeline as seen in the CDAP Studio and the
 CDAP UI. It is the view composed of sources, sinks, and other plugins, and does
 not show the underlying technology used to actually manifest and run the pipeline.
 
@@ -102,8 +102,8 @@ deployment. It provides a generic version of an application which can be repurpo
 instead of requiring the ongoing creation of specialized applications. The
 re-configurability and modularization of the application is exposed through plugins.
 CDAP provides its own, system-defined application templates, though new user-defined
-ones can be added that can use the DAG interface of the CDAP Application Studio. The application
-templates are configured using the CDAP Application Studio and deployed as applications into a Hadoop
+ones can be added that can use the DAG interface of the CDAP Studio. The application
+templates are configured using the CDAP Studio and deployed as applications into a Hadoop
 cluster.
 
 Application templates consist of a definition of its different components |---| processing,
@@ -135,14 +135,14 @@ An **artifact** is a versioned packaging format used to aggregate applications, 
 plugins along with associated metadata. It is a JAR (Java Archive) containing Java classes
 and resources.
 
-CDAP Application Studio
------------------------
-**CDAP Application Studio** is a visual development environment for building data pipelines on
+CDAP Studio
+-----------
+**CDAP Studio** is a visual development environment for building data pipelines on
 Hadoop. It has a click-and-drag interface for building and configuring data pipelines. It
 also supports the ability to develop, run, automate, and operate pipelines from within
 the CDAP UI. The pipeline interface integrates with the CDAP interface, allowing
 drill-down debugging of pipelines and can build metrics dashboards to closely monitor
-pipelines through CDAP. The CDAP Application Studio integrates with other capabilities such as Cask
+pipelines through CDAP. The CDAP Studio integrates with other capabilities such as Cask
 Tracker.
 
 Testing and Automation Framework
@@ -159,15 +159,15 @@ Implementation of CDAP Pipelines
 ================================
 CDAP pipelines are built as a CDAP capability, with three major components:
 
-- **CDAP Application Studio,** the visual editor, running in a browser
+- **CDAP Studio,** the visual editor, running in a browser
 - **Application Templates,** packaged as artifacts, either system- or user-defined
 - **Plugins,** extensions to the application templates, in a variety of different types
   and implementations
 
-The **CDAP Application Studio** interfaces with CDAP using RESTful APIs.
+The **CDAP Studio** interfaces with CDAP using RESTful APIs.
 
 The **application templates** |---| ETL Batch, Data Pipeline Batch, and ETL Real-time |---| are available
-by default from within the CDAP Application Studio. Additional application templates, such as Data Pipeline
+by default from within the CDAP Studio. Additional application templates, such as Data Pipeline
 Real-time and Spark Streaming, are being added in upcoming releases.
 
 The ETL Batch and ETL Real-time application templates expose three plugin types: source,
@@ -192,9 +192,9 @@ manage the different versions of both the application templates and the plugins.
 
 Building of a Pipeline
 ======================
-Here is how the CDAP Application Studio works with CDAP to build a pipeline, beginning
-with a user creating a new pipeline in the CDAP Application Studio. First, the components
-of the CDAP Application Studio:
+Here is how the CDAP Studio works with CDAP to build a pipeline, beginning
+with a user creating a new pipeline in the CDAP Studio. First, the components
+of the CDAP Studio:
 
 .. figure:: _images/cdap-application-studio-annotated.png
    :figwidth: 100%
@@ -202,11 +202,11 @@ of the CDAP Application Studio:
    :align: center
    :class: bordered-image-top-margin
 
-   **CDAP Application Studio, showing different UI components**
+   **CDAP Studio, showing different UI components**
 
 - **User Selects an Application Template**
 
-  A user building a pipeline within the CDAP Application Studio will select a pipeline type, which is
+  A user building a pipeline within the CDAP Studio will select a pipeline type, which is
   essentially picking an application template. They will pick one of ETL Batch, ETL
   Real-time, or Data Pipeline. Other application templates such as Spark Streaming will be
   available in the future.
@@ -221,7 +221,7 @@ of the CDAP Application Studio:
 
 - **Retrieve the Plugin definitions for each Plugin type**
 
-  CDAP Application Studio then makes a request to CDAP for each plugin type, requesting all plugin
+  CDAP Studio then makes a request to CDAP for each plugin type, requesting all plugin
   implementations available for each plugin type.
 
 - **User Builds the CDAP Pipeline**

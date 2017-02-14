@@ -29,7 +29,7 @@ If you are creating your own plugins, see the section on :ref:`developing plugin
 <cdap-pipelines-developing-plugins>` for information on writing plugins, including
 :ref:`packaging plugins in a JAR <cdap-pipelines-packaging-plugins-packaging>` and
 their :ref:`presentation in a UI <cdap-pipelines-packaging-plugins-presentation>`
-such as the CDAP Application Studio.
+such as the CDAP Studio.
 
 If you are installing a **third-party JAR** (such as a **JDBC driver**) to make it
 accessible to other plugins or applications, see :ref:`these instructions
@@ -40,7 +40,7 @@ Available Plugins
 =================
 Plugins available with CDAP are listed beginning on a :ref:`separate reference page <cdap-pipelines-plugins>`.
 User-installed plugins are not listed there, but if they are installed correctly, the reference
-documentation for the plugin will be available through the :ref:`CDAP Application Studio <cdap-application-studio>`.
+documentation for the plugin will be available through the :ref:`CDAP Studio <cdap-studio>`.
 
 
 .. _cdap-pipelines-plugin-management-deployment:
@@ -108,7 +108,7 @@ A sample JDBC Driver Plugin configuration:
 Managing Multiple Versions
 ==========================
 Different versions of the same plugin (or artifact) can be loaded and available at the
-same time. These will appear in the :ref:`CDAP Application Studio <cdap-application-studio>` as
+same time. These will appear in the :ref:`CDAP Studio <cdap-studio>` as
 possible choices when selecting a plugin or creating a :ref:`plugin template
 <cdap-application-studio-plugin-templates>`. If no version is specified for a plugin in the
 :ref:`configuration file <cdap-pipelines-developing-pipelines-configuration-file-format>` used

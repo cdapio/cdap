@@ -17,7 +17,7 @@ CDAP Pipelines
 
     Concepts and Design <concepts-design>
     Getting Started <getting-started>
-    CDAP Application Studio <studio>
+    CDAP Studio <studio>
     Creating Pipelines <creating-pipelines>
     Running Pipelines <running-pipelines>
     Plugin Management <plugin-management>
@@ -42,10 +42,10 @@ to enable the building, deploying, and managing of data pipelines.
 .. |getting-started| replace:: **Getting Started:**
 .. _getting-started: getting-started.html
 
-.. |studio| replace:: **CDAP Application Studio:**
+.. |studio| replace:: **CDAP Studio:**
 .. _studio: studio.html
 
-- |concepts-design|_ **Pipelines**, **plugins**, and the **CDAP Application Studio**
+- |concepts-design|_ **Pipelines**, **plugins**, and the **CDAP Studio**
 
 - |getting-started|_ A **tutorial** demonstrating the basics of building and running a pipeline
 
@@ -86,7 +86,7 @@ to enable the building, deploying, and managing of data pipelines.
 .. |how-cdap-pipelines-work| replace:: **How CDAP Pipelines Work:**
 .. _how-cdap-pipelines-work: how-cdap-pipelines-work.html
 
-- |developing-pipelines|_ Using tools outside of CDAP Application Studio to **create pipelines**
+- |developing-pipelines|_ Using tools outside of CDAP Studio to **create pipelines**
 
 - |developing-plugins|_ Developing custom plugins and using the **test framework** for plugins
 

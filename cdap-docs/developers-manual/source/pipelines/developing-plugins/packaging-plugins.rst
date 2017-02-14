@@ -18,7 +18,7 @@ To **package, present,** and **deploy** your plugin, see these instructions:
 
 - :ref:`Plugin Packaging: <cdap-pipelines-packaging-plugins-packaging>` packaging in a JAR
 - :ref:`Plugin Presentation: <cdap-pipelines-packaging-plugins-presentation>` controlling
-  how your plugin appears in the CDAP Application Studio
+  how your plugin appears in the CDAP Studio
 
 If you are installing a **third-party JAR** (such as a **JDBC driver**) to make it accessible to other
 plugins or applications, see :ref:`these instructions <cdap-pipelines-plugin-management-third-party-plugins>`.
@@ -56,7 +56,7 @@ execution will typically fail with a ``ClassNotFoundException``.
 Plugin Presentation
 -------------------
 When a plugin is displayed in the CDAP UI, its properties are represented by widgets in
-the CDAP Application Studio. Each property of a plugin is represented by default as a
+the CDAP Studio. Each property of a plugin is represented by default as a
 textbox in the user interface. By including an appropriate plugin widget JSON file, you
 can customize that presentation to use a different interface, if desired.
 

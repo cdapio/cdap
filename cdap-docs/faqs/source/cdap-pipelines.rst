@@ -62,8 +62,8 @@ I have a feature request for CDAP pipelines; how can I get it added?
 You can file a JIRA ticket for the feature request or, if you have a commercial CDAP
 subscription, you can use the support portal.
 
-What should I do if I see any of these errors in the CDAP Application Studio User Interface?
---------------------------------------------------------------------------------------------
+What should I do if I see any of these errors in the CDAP Studio User Interface?
+--------------------------------------------------------------------------------
 - **Error parsing widgets JSON for the plugin <plugin-name>**
 
   This error means the :ref:`widget JSON file <cdap-pipelines-creating-custom-plugins-widget-json>` 
@@ -81,17 +81,17 @@ What should I do if I see any of these errors in the CDAP Application Studio Use
   currently working with. As part of plugin deployment, a JAR and a JSON file are deployed with a plugin,
   as described in the :ref:`cdap-pipelines-packaging-plugins`.
 
-In which order do plugin properties appear in the CDAP Application Studio?
---------------------------------------------------------------------------
+In which order do plugin properties appear in the CDAP Studio?
+--------------------------------------------------------------
 The properties are specified as a list inside the configuration groups. Properties of the plugin
 will appear inside the group in the same order as they are listed.
 
 What happens if I don't have a property of the plugin in the Widget JSON?
 -------------------------------------------------------------------------
-The CDAP Application Studio UI will create a separate group named 'Generic', add all properties as 
+The CDAP Studio UI will create a separate group named 'Generic', add all properties as 
 part of that group, and (by default) display all properties in a textbox widget.
 
 What happens when I use an invalid widget in the Widget JSON?
 -------------------------------------------------------------
 In a case where the Widget JSON includes a non-existent (or unknown) widget, 
-the CDAP Application Studio UI defaults to a textbox field.
+the CDAP Studio UI defaults to a textbox field.

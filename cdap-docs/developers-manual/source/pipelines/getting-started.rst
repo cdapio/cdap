@@ -14,8 +14,8 @@ in the CDAP UI, such as entering events into a stream and exploring a dataset:
 
   1. `Install CDAP`_
   #. `Start CDAP Pipelines`_
-  #. `Start CDAP Application Studio`_
-  #. `Quick Tour of CDAP Application Studio`_
+  #. `Start CDAP Studio`_
+  #. `Quick Tour of CDAP Studio`_
   #. `Creating a Simple Pipeline`_
 
 
@@ -47,14 +47,14 @@ Start CDAP Pipelines
 
 .. _cdap_pipelines-getting-started-cdap-application-studio:
 
-Start CDAP Application Studio
-=============================
+Start CDAP Studio
+=================
 
-- To start *CDAP Application Studio* and start creating a pipeline, do any of these:
+- To start *CDAP Studio* and start creating a pipeline, do any of these:
 
   - Click the *+* button to add a new pipeline;
   - Click the tool bar label *Studio* (to the left of the label *Pipelines*); or
-  - Go to the :cdap-application-studio-artifact:`CDAP Application Studio URL <cdap-data-pipeline>`
+  - Go to the :cdap-application-studio-artifact:`CDAP Studio URL <cdap-data-pipeline>`
   
   Studio will start and you will be creating a new pipeline, by default the first
   pipeline type in the menu, a *Data Pipeline - Batch*, which is a batch-type pipeline:
@@ -65,13 +65,13 @@ Start CDAP Application Studio
      :align: center
      :class: bordered-image
 
-     **CDAP Application Studio:** Empty canvas for creating pipelines
+     **CDAP Studio:** Empty canvas for creating pipelines
 
 
 .. _cdap_pipelines-getting-started-studio:
 
-Quick Tour of CDAP Application Studio
-=====================================
+Quick Tour of CDAP Studio
+=========================
 
 Before we begin an example, let's look at Studio and its different components:
 
@@ -81,7 +81,7 @@ Before we begin an example, let's look at Studio and its different components:
    :align: center
    :class: bordered-image
 
-   **CDAP Application Studio:** Annotations showing components
+   **CDAP Studio:** Annotations showing components
 
 In the upper-left is a menu that specifies which **application template artifact** you are
 currently using for your pipeline. For now, we'll leave it with the default, *Data
@@ -92,7 +92,7 @@ with the current application template. They are grouped into different categorie
 revealed by clicking the disclosure triangles to the left of each category label
 (*Source, Transform, Analytics, Sink, Action*).
 
-In the middle is the grey, gridded **application studio canvas**, used to create the pipeline on by
+In the middle is the grey, gridded **studio canvas**, used to create the pipeline on by
 clicking an available plugin in the left sidebar to add the plugin's icon to the canvas, and
 then by dragging the icon into position.
 
@@ -147,7 +147,7 @@ parses them into separate fields, and writes them as individual records to a tab
       :align: center
       :class: bordered-image
  
-      **CDAP Application Studio:** Showing icons
+      **CDAP Studio:** Showing icons
 
 
 #. Connect the *Stream* to the *LogParser* by clicking on the green connection on the
@@ -160,7 +160,7 @@ parses them into separate fields, and writes them as individual records to a tab
       :align: center
       :class: bordered-image
  
-      **CDAP Application Studio:** Showing a connection
+      **CDAP Studio:** Showing a connection
       
 #. Similarly, connect the *LogParser* to the *Table* to complete the connections. Your
    canvas should now look like this, showing that there are a number of properties to
@@ -172,7 +172,7 @@ parses them into separate fields, and writes them as individual records to a tab
       :align: center
       :class: bordered-image
  
-      **CDAP Application Studio:** Showing connections
+      **CDAP Studio:** Showing connections
       
    (If you make a mistake or need to remove a connection, click and drag on the white
    circle just to the right of the connection arrow you'd like to disconnect. When you
@@ -191,7 +191,7 @@ parses them into separate fields, and writes them as individual records to a tab
       :align: center
       :class: bordered-image
  
-      **CDAP Application Studio:** Showing editing of the Stream plugin properties
+      **CDAP Studio:** Showing editing of the Stream plugin properties
       
    Enter a stream name, such as *demoStream*, and a duration, such as *1d*. As the changes
    are automatically saved, you can just close the dialog by either hitting the close button (an *X* in 
@@ -222,7 +222,7 @@ parses them into separate fields, and writes them as individual records to a tab
      :align: center
      :class: bordered-image
 
-     **CDAP Application Studio:** Button labels, upper-right toolbar
+     **CDAP Studio:** Button labels, upper-right toolbar
       
    Clicking the *Validate* button should produce a banner message similar to::
    

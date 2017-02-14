@@ -38,7 +38,7 @@ SDK and Distributed CDAP:
 
 .. rubric:: Plugin Notes
 
-- Plugins are grouped here based on how they are displayed in the CDAP Application Studio UI.
+- Plugins are grouped here based on how they are displayed in the CDAP Studio UI.
   Each plugin is of a particular type, and all plugins that are not sources, sinks, or
   actions are grouped in *transform* plugins. Each page describing a plugin shows its type
   and version at the bottom of the page.
@@ -55,7 +55,7 @@ SDK and Distributed CDAP:
 
 - Certain plugins |---| such as the *JavaScript*, *Python Evaluator*, and *Validator*
   transforms |---| are designed to be customized by end-users with their own code, either
-  from within CDAP Application Studio or in a configuration file. For instance, you can create your
+  from within CDAP Studio or in a configuration file. For instance, you can create your
   own data validators either by using the functions supplied in the *CoreValidator* plugin
   or by implementing and supplying your own custom validation function.
 
@@ -72,7 +72,7 @@ Details on the available plugins and the required properties for sources, analyt
 transformations (transforms), sinks, and other plugin types can be obtained and explored
 using:
 
-- :ref:`CDAP Application Studio <cdap-application-studio>`
+- :ref:`CDAP Studio <cdap-studio>`
 - :ref:`CDAP CLI <cli>`
 - :ref:`Artifact HTTP RESTful API <http-restful-api-artifact>`
 - Individual plugin documentation for

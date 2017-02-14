@@ -2,15 +2,15 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cdap-application-studio:
+.. _cdap-studio:
 
-=======================
-CDAP Application Studio
-=======================
+===========
+CDAP Studio
+===========
 
 CDAP supports end-users with self-service batch and real-time data ingestion combined
 with ETL (extract-transform-load), expressly designed for the building of Hadoop data
-lakes and data pipelines. Called the *CDAP Application Studio*, it provides for CDAP users a
+lakes and data pipelines. Called the *CDAP Studio*, it provides for CDAP users a
 seamless and easy method to configure and operate pipelines from different types of
 sources and data using a visual editor.
 
@@ -23,7 +23,7 @@ configure a pipeline:
    :align: center
    :class: bordered-image-top-margin
 
-   **CDAP Application Studio:** Visual editor showing the creation of a pipeline
+   **CDAP Studio:** Visual editor showing the creation of a pipeline
 
 Once completed, CDAP provides an operational view of the resulting pipeline that allows for
 monitoring of metrics, logs, and other runtime information:
@@ -36,8 +36,8 @@ monitoring of metrics, logs, and other runtime information:
 
    **CDAP Pipelines:** Administration of created pipelines showing their current status
 
-CDAP Application Studio Tips
-============================
+CDAP Studio Tips
+================
 - Once you have **specified an application template** for your pipeline and have started
   adding stages, it cannot be changed for that pipeline. This is because the selection of
   the application template determines which plugins are available for the pipeline.
@@ -60,7 +60,7 @@ CDAP Application Studio Tips
 
 Pipeline Drafts
 ===============
-From within the *CDAP Application Studio*, you can save a pipeline you are working on at
+From within the *CDAP Studio*, you can save a pipeline you are working on at
 any time as a *draft*. The pipeline configuration is saved, and you can resume editing
 later.
 
@@ -72,10 +72,10 @@ To create a draft, give your pipeline a unique name, and then click the *Save* b
   :align: center
   :class: bordered-image
 
-  **CDAP Application Studio:** Button labels, upper-right toolbar
+  **CDAP Studio:** Button labels, upper-right toolbar
 
 The draft will be created, and will show in your list of pipelines as a draft. 
-Clicking on it in the list of pipelines will re-open it in the *CDAP Application Studio* so that 
+Clicking on it in the list of pipelines will re-open it in the *CDAP Studio* so that 
 you can continue working on it.
 
 Note that **if you change the name of draft, it doesn't create a new draft** with the new
@@ -90,7 +90,7 @@ will need to re-name it to a unique name.
 
 Plugin Templates
 ================
-Within the CDAP Application Studio, you can create *plugin templates:* customized versions of a plugin
+Within the CDAP Studio, you can create *plugin templates:* customized versions of a plugin
 that are reusable, and can contain pre-configured settings.
 
 Setting can be locked so that they cannot be altered when they are eventually used.
@@ -107,13 +107,13 @@ time of creation of the pipeline.
   :align: center
   :class: bordered-image
 
-  **CDAP Application Studio:** Creating a plugin template from the Stream source plugin
+  **CDAP Studio:** Creating a plugin template from the Stream source plugin
 
 Creating a Plugin Template
 --------------------------
 To create a plugin-template:
 
-- From within the CDAP Application Studio, hover your mouse over the plugin you would like to use
+- From within the CDAP Studio, hover your mouse over the plugin you would like to use
   for your template, such as the *Stream* source plugin.
 
 - In the on-hover menu that appears, click the *+ Template* button.

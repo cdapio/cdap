@@ -17,7 +17,7 @@ pipelines should refer to the documentation on :ref:`creating pipelines
 As mentioned in :ref:`creating pipelines <cdap-pipelines-creating-pipelines>`, there are two
 different methods for creating pipeline applications:
 
-1. Using the CDAP Application Studio
+1. Using the CDAP Studio
 #. Using command line tools (such as ``curl``, the CDAP CLI, or the CDAP UI)
 
 Using comamnd line tools, pipelines can be created using the :ref:`Lifecycle RESTful API
@@ -26,7 +26,7 @@ Using comamnd line tools, pipelines can be created using the :ref:`Lifecycle RES
 
 In order to create a pipeline application, a pipeline configuration (either as a file or
 in-memory) is required that specifies the configuration of plugins to be used along with
-their properties. (In the CDAP Application Studio, the user interface prompts you for the required
+their properties. (In the CDAP Studio, the user interface prompts you for the required
 information.)
 
 This section describes how to create such a configuration, and various aspects to be
@@ -60,7 +60,7 @@ The configuration file format is JSON, containing these objects at the top level
 
 The first three are required, while the ``__ui__`` is optional. It is added by the CDAP Application
 Studio to store the display of the pipeline in the UI. The format of the ``__ui__`` object
-is not described here, as it is internal to the CDAP Application Studio UI and subject to change.
+is not described here, as it is internal to the CDAP Studio UI and subject to change.
 
 Example (in JSON format):
 

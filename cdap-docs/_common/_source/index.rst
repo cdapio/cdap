@@ -97,7 +97,7 @@ CDAP capabilities include *CDAP Pipelines* and *Metadata Management*.
   - |dev-man-o-black|_ The overall architecture, abstractions, modes, and components behind CDAP
   - |dev-man-bb-black|_ The two core abstractions in CDAP: *Data* and *Applications*, and their components
   - |dev-man-m-black|_ CDAP can automatically capture metadata and let you see **how data is flowing**
-  - |dev-man-p-black|_ A capability of CDAP that enables the **building, deploying, and managing of data pipelines**
+  - |dev-man-p-black|_ A capability of CDAP that that allows users to **build, deploy, and manage data pipelines**
   - |dev-man-s-black|_ Perimeter security, configuration and client authentication
   - |dev-man-tad-black|_ Test framework plus tools and practices for debugging your applications
   - |dev-man-id-black|_ Different techniques for ingesting data into CDAP

@@ -12,7 +12,7 @@ CDAP Pipelines is a self-service, reconfigurable, extendable framework to develo
 automate, and operate **data pipelines** on Hadoop. Completely open source, it is licensed
 under the Apache 2.0 license.
 
-Pipelines are a capability of CDAP and includes the *CDAP Application Studio*, a visual
+Pipelines are a capability of CDAP and includes the *CDAP Studio*, a visual
 click-and-drag interface for building data pipelines from an included library of pre-built
 plugins.
 
@@ -40,7 +40,7 @@ A stage's configuration properties describes what that plugin is to do (read fro
 stream, write to a table, run a script), and is dependent on the particular plugin used.
 
 All stages are connected together in a directed acyclic graph (or *DAG*), which is
-shown in the *CDAP Application Studio* and in CDAP as a connected series of icons:
+shown in the *CDAP Studio* and in CDAP as a connected series of icons:
 
 .. image:: _images/fork-in-pipeline.png
    :width: 6in
@@ -78,7 +78,7 @@ Logical and Physical Pipelines
 ------------------------------
 Within CDAP, there is the concept of *logical* and *physical* pipelines.
 
-A **logical pipeline** is the view as seen in the CDAP Application Studio.
+A **logical pipeline** is the view as seen in the CDAP Studio.
 It shows the stages, but not the underlying technology used to actually manifest and run the pipeline.
 
 A **physical pipeline** is the manifestation of a logical pipeline as a CDAP application,

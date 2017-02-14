@@ -41,9 +41,9 @@ gives you views of current system and user metrics, with customizable dashboards
 Beginning with CDAP 4.0, a new beta UI was added. The new UI is has not yet reached
 feature parity with the original UI, and is still under development.
 
-It includes access to: the Cask Market, with use cases, pipelines, applications, plugins,
-datapacks, and drivers; the Resource Centre, which provides wizards for adding streams,
-drivers, applications, pipelines, and plugins; and access to CDAP extensions.
+It includes access to the Cask Market |---| with use cases, pipelines, applications, plugins,
+datapacks, and drivers |---| and wizards for adding streams, drivers, applications, pipelines,
+and plugins.
 
 Here are screen-captures of the new CDAP Beta UI running on a Distributed CDAP:
 

@@ -5,6 +5,7 @@
 :hide-toc: true
 
 .. _metadata:
+.. _metadata-cdap-metadata:
 
 ========
 Metadata
@@ -13,14 +14,15 @@ Metadata
 .. toctree::
    :maxdepth: 1
    
+    System Metadata <system-metadata>
+    Discovery and Lineage <discovery-lineage>
     CDAP Metadata UI <metadata-ui>
+    Audit Logging <audit-logging>
 
 
-Overview
-========
-*Metadata* (and with *lineage*, a closely-related feature) are important capabilites of
-CDAP. CDAP Metadata helps show how datasets and programs are related to each other and
-helps in understanding the impact of a change before the change is made.
+*Metadata* is an important capability of CDAP. CDAP Metadata helps show how datasets and
+programs are related to each other and helps in understanding the impact of a change
+before the change is made.
 
 These features provide full visibility into the impact of changes while providing an audit
 trail of access to datasets by programs and applications. Together, they give a clear view
@@ -34,11 +36,6 @@ associated with datasets. This gives developers and data scientists flexibility 
 innovating and building solutions on Hadoop, without the worry of maintaining compliance
 and governance for every application.
 
-
-.. _metadata-cdap-metadata:
-
-Metadata
-========
 CDAP metadata |---| consisting of **properties** (a list of key-value pairs) or **tags** (a
 list of keys) |---| can be used to annotate artifacts, applications, programs, datasets,
 streams, and views.
@@ -50,99 +47,9 @@ Metadata keys, values, and tags must conform to the CDAP :ref:`supported charact
 <supported-characters>`, and are limited to 50 characters in length. The entire metadata
 object associated with a single entity is limited to 10K bytes in size.
 
-
-.. _metadata-system-metadata:
-
-System Metadata
-===============
-While CDAP allows users to tag entities with metadata properties and tags, it also
-tags entities with system properties and tags by default. These default properties and tags can be retrieved
-using the CDAP :ref:`Metadata HTTP RESTful API <http-restful-api-metadata>` by setting the
-``scope`` query parameter to *system*. These default annotations can be used to discover CDAP entities using the
-Metadata Search API. 
-
-This table lists the **system** metadata annotations of CDAP entities:
-
-.. list-table::
-   :widths: 20 40 40
-   :header-rows: 1
-
-   * - Entity
-     - System Properties
-     - System Tags
-   * - Artifacts
-     - * Plugins (name and version)
-     - * Artifact name
-   * - Applications
-     - * Programs (name and type) contained in the application
-       * Plugins 
-       * Schedules (name and description)
-     - * Application name
-       * Artifact name
-   * - Programs
-     - * n/a
-     - * Program name and type 
-       * Program mode (*batch* or *realtime*)
-       * Workflow node names (for workflows only)
-   * - Datasets
-     - * Schema (field names and types)
-       * Dataset type (*FileSet, Table, KeyValueTable,* etc.)
-       * TTL (Time To Live)
-     - * Dataset name
-       * *batch* for Datasets accessible through Map Reduce or Spark programs
-       * *explore* for Datasets that can be queried through Explore interface
-   * - Streams
-     - * Schema (field names and types)
-       * TTL
-     - * Stream name
-   * - Stream Views
-     - * Schema (field names and types)
-     - * View name
-
-
-.. _metadata-discovery:
-
-Discovery
-=========
-Metadata can be used to tag different CDAP components so that they are easily identifiable
-and managed. This helps in discovering CDAP components.
-
-For example, you can tag a dataset as *experimental* or an application as *production*. These
-entities can then be discovered by using the annotated metadata in **search queries**. Using search,
-users can discover entities:
-
-- that have a particular **value** for *any key* in their properties;
-- that have a particular **key** with a particular *value* in their properties; or
-- that have a particular **tag**.
-
-
-.. _metadata-lineage:
-
-Lineage
-=======
-**Lineage** can be retrieved for dataset and stream entities. A lineage shows
-|---| for a specified time range |---| all data access of the entity, and details of where
-that access originated from.
-
-For example: with a stream, writing to a stream can take place from a worker, which may
-have obtained the data from a combination of a dataset and a (different) stream. The data
-in those entities can come from (possibly) other entities. The number of levels of the
-lineage that are calculated is set when a request is made to view the lineage of a
-particular entity.
-
-In the case of streams, the lineage includes whether the access was reading or writing to
-the stream. 
-
-In the case of datasets, lineage can indicate if a dataset access was for reading,
-writing, or both, if the methods in the dataset have appropriate :ref:`annotations
-<custom-datasets-access-annotations>`. If annotations are absent, lineage can only
-indicate that a dataset access took place, and does not provide indication if that access
-was for reading or writing.
-
-
 .. _metadata-navigator-integration:
 
-Cloudera Navigator Integration
-==============================
+.. rubric:: Cloudera Navigator Integration
+
 CDAP Metadata can be pushed to Cloudera Navigator for metadata discovery and search. 
 Refer to :ref:`Cloudera Navigator Integration <navigator-integration>` for more information.
