@@ -1,6 +1,13 @@
 cdap CHANGELOG
 ==============
 
+v2.28.4 (Feb 16, 2017)
+----------------------
+- Switch to using Chef::VERSION for cookbook restrictions ( Issue #207 )
+- Set testing log level to error ( Issue #208 )
+- Wrap all node attributes in version check ( Issue #209 )
+- Restrict build-essential on Chef < 12.5 ( Issue: #211 )
+
 v2.28.3 (Feb 9, 2017)
 ---------------------
 - Set Node.js version for SDK 4.0+ ( Issue #204 )
