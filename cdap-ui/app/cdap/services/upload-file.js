@@ -36,7 +36,7 @@ const UploadFile = ({url, fileContents, headers}) => {
         if (xhr.status > 399) {
           observer.onError(xhr.response);
         } else {
-          observer.onNext(true);
+          observer.onNext(xhr.response);
         }
       }
     };
