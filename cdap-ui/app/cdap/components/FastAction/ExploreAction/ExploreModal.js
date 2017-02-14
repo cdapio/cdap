@@ -29,7 +29,7 @@ export default class ExploreModal extends Component {
     super(props);
     this.type = this.props.entity.type === 'datasetinstance' ? 'dataset' : this.props.entity.type;
     this.state = {
-      queryString: 'SELECT * FROM ' + this.type + '_' + this.props.entity.id + ' LIMIT 500',
+      queryString: `SELECT * FROM ${this.props.entity.databaseName}.${this.props.entity.tableName} LIMIT 500`,
       queries: [],
       error: null,
       loading: false
@@ -64,7 +64,12 @@ export default class ExploreModal extends Component {
   }
   getValidQueries(queries) {
     let updatedQueries = queries
-      .filter(q => q.statement.indexOf(this.type + '_' + this.props.entity.id) !== -1);
+      .filter(q => {
+        return (
+          q.statement.indexOf( `${this.props.entity.databaseName}.${this.props.entity.tableName}`) !== -1 ||
+          q.statement.indexOf( `${this.props.entity.id}`) !== -1 // For queries run before 4.1
+        );
+      });
     let updatedStateQueries = [...updatedQueries];
     let intersectingQueries = [];
     if (this.state.queries.length) {
@@ -397,6 +402,8 @@ ExploreModal.propTypes = {
     id: PropTypes.string.isRequired,
     version: PropTypes.string,
     scope: PropTypes.oneOf(['SYSTEM', 'USER']),
-    type: PropTypes.oneOf(['application', 'artifact', 'datasetinstance', 'stream']).isRequired
+    type: PropTypes.oneOf(['application', 'artifact', 'datasetinstance', 'stream']).isRequired,
+    databaseName: PropTypes.string,
+    tableName: PropTypes.string
   })
 };

@@ -135,6 +135,10 @@ class EntityListView extends Component {
   }
 
   refreshSearchByCreationTime() {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    ExploreTablesStore.dispatch(
+     fetchTables(namespace)
+   );
     this.setState({
       sortObj: this.sortOptions[4],
       selectedEntity: null
