@@ -41,7 +41,7 @@ downloaded with the Logging HTTP RESTful API. To do that, send an HTTP GET reque
    * - ``app-id``
      - Name of the application being called
    * - ``program-type``
-     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
    * - ``program-id``
      - Name of the program (*flow*, *MapReduce*, *service*, *Spark*, *workflow*) being called
    * - ``ts``
@@ -79,7 +79,7 @@ To download logs for a program run, send an HTTP GET request::
    * - ``app-id``
      - Name of the application being called
    * - ``program-type``
-     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
    * - ``program-id``
      - Name of the program (*flow*, *MapReduce*, *service*, *Spark*, *workflow*) being called
    * - ``run-id``
@@ -205,7 +205,7 @@ and, in all cases, with a JSON map in the request body consisting of a map of lo
    * - ``version-id``
      - Version of the application
    * - ``program-type``
-     - One of ``flows``, ``mapreduce``, ``services``, or ``workers``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
    * - ``program-id``
      - Name of the program
    * - ``flow-id``
@@ -260,7 +260,7 @@ If the body is not provided or is empty, it will reset the log levels of all log
    * - ``version-id``
      - Version of the application
    * - ``program-type``
-     - One of ``flows``, ``mapreduce``, ``services`` or ``workers``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
    * - ``program-id``
      - Name of the program
    * - ``flow-id``
