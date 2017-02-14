@@ -50,10 +50,9 @@ public abstract class AbstractStageContext implements StageContext {
     this.stageName = stageInfo.getName();
     this.metrics = new DefaultStageMetrics(metrics, stageName);
     this.outputSchema = stageInfo.getOutputSchema();
-    Map<String, Schema> inputSchemas = stageInfo.getInputSchemas();
+    this.inputSchemas = Collections.unmodifiableMap(stageInfo.getInputSchemas());
     // all plugins except joiners have just a single input schema
     this.inputSchema = inputSchemas.isEmpty() ? null : inputSchemas.values().iterator().next();
-    this.inputSchemas = Collections.unmodifiableMap(inputSchemas);
   }
 
   @Override

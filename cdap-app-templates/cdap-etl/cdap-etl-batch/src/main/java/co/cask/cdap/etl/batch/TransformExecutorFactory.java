@@ -116,8 +116,8 @@ public abstract class TransformExecutorFactory<T> {
                                                            transformErrorSinkMap,
                                                          OutputWriter<KEY_OUT, VAL_OUT> outputWriter)
     throws Exception {
-    StageInfo stageInfo = pipeline.getStage(stageName);
     if (pipeline.getSinks().contains(stageName)) {
+      StageInfo stageInfo = pipeline.getStage(stageName);
       // If there is a connector sink/ joiner at the end of pipeline, do not remove stage name. This is needed to save
       // stageName along with the record in connector sink and joiner takes input along with stageName
       String pluginType = stageInfo.getPluginType();

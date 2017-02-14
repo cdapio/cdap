@@ -16,7 +16,6 @@
 
 package co.cask.cdap.etl.spark.streaming;
 
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
@@ -25,7 +24,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Map;
 
 /**
  * Serializable context that can be used to dynamically instantiate plugins from a driver context.
@@ -38,8 +36,6 @@ import java.util.Map;
 public class DynamicDriverContext implements Externalizable {
   private String serializationVersion;
   private StageInfo stageInfo;
-  private Map<String, Schema> inputSchemas;
-  private Schema outputSchema;
   private JavaSparkExecutionContext sec;
   private PluginFunctionContext pluginFunctionContext;
 
@@ -48,25 +44,16 @@ public class DynamicDriverContext implements Externalizable {
   }
 
   public DynamicDriverContext(StageInfo stageInfo, JavaSparkExecutionContext sec) {
-    this(stageInfo, stageInfo.getInputSchemas(), stageInfo.getOutputSchema(), sec);
-  }
-
-  public DynamicDriverContext(StageInfo stageInfo, Map<String, Schema> inputSchemas,
-                              Schema outputSchema, JavaSparkExecutionContext sec) {
     this.serializationVersion = "4.0";
     this.stageInfo = stageInfo;
-    this.inputSchemas = inputSchemas;
-    this.outputSchema = outputSchema;
     this.sec = sec;
-    this.pluginFunctionContext = new PluginFunctionContext(stageInfo, sec, inputSchemas, outputSchema);
+    this.pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
   }
 
   @Override
   public void writeExternal(ObjectOutput out) throws IOException {
     out.writeUTF(serializationVersion);
     out.writeObject(stageInfo);
-    out.writeObject(inputSchemas);
-    out.writeObject(outputSchema);
     out.writeObject(sec);
   }
 
@@ -74,15 +61,13 @@ public class DynamicDriverContext implements Externalizable {
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     serializationVersion = in.readUTF();
     stageInfo = (StageInfo) in.readObject();
-    inputSchemas = (Map<String, Schema>) in.readObject();
-    outputSchema = (Schema) in.readObject();
     sec = (JavaSparkExecutionContext) in.readObject();
 
     // we intentionally do not serialize this context in order to ensure that the runtime arguments
     // and logical start time are picked up from the JavaSparkExecutionContext. If we serialized it,
     // the arguments and start time of the very first pipeline run would get serialized, then
     // used for every subsequent run that loads from the checkpoint.
-    pluginFunctionContext = new PluginFunctionContext(stageInfo, sec, inputSchemas, outputSchema);
+    pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
   }
 
   public JavaSparkExecutionContext getSparkExecutionContext() {

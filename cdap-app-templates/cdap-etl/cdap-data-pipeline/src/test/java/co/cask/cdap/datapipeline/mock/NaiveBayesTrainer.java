@@ -106,7 +106,6 @@ public final class NaiveBayesTrainer extends SparkSink<StructuredRecord> {
 
   @Override
   public void prepareRun(SparkPluginContext context) throws Exception {
-    // no-op; no need to do anything
     inputSchema = context.getInputSchema();
   }
 

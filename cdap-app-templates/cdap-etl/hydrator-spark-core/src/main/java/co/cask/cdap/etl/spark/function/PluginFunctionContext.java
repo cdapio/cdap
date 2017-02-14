@@ -51,11 +51,6 @@ public class PluginFunctionContext implements Serializable {
   private final StageInfo stageInfo;
 
   public PluginFunctionContext(StageInfo stageInfo, JavaSparkExecutionContext sec) {
-    this(stageInfo, sec, stageInfo.getInputSchemas(), stageInfo.getOutputSchema());
-  }
-
-  public PluginFunctionContext(StageInfo stageInfo, JavaSparkExecutionContext sec,
-                               Map<String, Schema> inputSchemas, Schema outputSchema) {
     this.namespace = sec.getNamespace();
     this.stageInfo = stageInfo;
     this.logicalStartTime = sec.getLogicalStartTime();
