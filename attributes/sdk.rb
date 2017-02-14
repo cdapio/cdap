@@ -103,5 +103,8 @@ default['cdap']['sdk']['init_cmd'] =
   end
 default['cdap']['sdk']['init_actions'] = [:enable, :start]
 # Get proper Node.js version on SDK 4.0+
-default['nodejs']['install_method'] = 'binary'
-default['nodejs']['version'] = '4.5.0' if node['cdap']['version'].to_f >= 4.0
+if node['cdap']['version'].to_f >= 4.0
+  default['nodejs']['install_method'] = 'binary'
+  default['nodejs']['version'] = '4.5.0'
+  default['nodejs']['binary']['checksum']['linux_x64'] = nil
+end
