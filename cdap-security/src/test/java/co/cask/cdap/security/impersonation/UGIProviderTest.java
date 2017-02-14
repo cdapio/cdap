@@ -45,7 +45,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
@@ -89,6 +88,7 @@ public class UGIProviderTest {
     // Start mini DFS cluster
     Configuration hConf = new Configuration();
     hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+    hConf.setBoolean("ipc.client.fallback-to-simple-auth-allowed", true);
 
     miniDFSCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     miniDFSCluster.waitClusterUp();
@@ -151,7 +151,6 @@ public class UGIProviderTest {
     }
   }
 
-  @Ignore // TODO (CDAP-8244) fix this test case and un-ignore this test.
   @Test
   public void testRemoteUGIProvider() throws Exception {
     // Starts a mock server to handle remote UGI requests
@@ -226,7 +225,9 @@ public class UGIProviderTest {
 
       // Write it to HDFS
       Location credentialsDir = locationFactory.create("credentials");
-      Preconditions.checkState(credentialsDir.mkdirs());
+      if (!credentialsDir.exists()) {
+        Preconditions.checkState(credentialsDir.mkdirs());
+      }
 
       Location credentialsFile = credentialsDir.append("tmp").getTempFile(".credentials");
       try (DataOutputStream os = new DataOutputStream(new BufferedOutputStream(credentialsFile.getOutputStream()))) {
