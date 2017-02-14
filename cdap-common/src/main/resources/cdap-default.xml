@@ -664,7 +664,7 @@
 
   <property>
     <name>data.tx.prune.plugins</name>
-    <value>data.tx.DefaultHBaseTransactionPruningPlugin</value>
+    <value>data.tx.pruning.plugin</value>
     <description>
       List of transaction pruning plugins; for CDAP HBase tables that use transaction
       functionality to skip or clean invalid data
@@ -672,11 +672,16 @@
   </property>
 
   <property>
-    <name>data.tx.DefaultHBaseTransactionPruningPlugin.class</name>
+    <name>data.tx.pruning.plugin.class</name>
     <value>co.cask.data2.txprune.DefaultHBaseTransactionPruningPlugin</value>
     <description>
       Class name for the default transaction pruning plugin
     </description>
+  </property>
+
+  <property>
+    <name>data.tx.prune.state.table</name>
+    <value>${dataset.table.prefix}_system:tephra.state</value>
   </property>
 
   <property>
