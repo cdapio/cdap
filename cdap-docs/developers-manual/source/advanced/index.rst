@@ -41,3 +41,9 @@ will be of interest to developers who want a deeper dive into CDAP:
 .. _configuring-resources: configuring-resources.html
 
 - |configuring-resources|_ Setting the YARN resources used by the programs of a CDAP application.
+
+.. |retry-policies| replace:: **Program Retry Policies:**
+.. _retry-policies: retry-policies.html
+
+- |retry-policies|_ Configuring the Retry Policy used by the programs of a CDAP application.
+
