@@ -45,6 +45,7 @@
           <th>Program Type</th>
           <th>Access</th>
           <th>User</th>
+          <th>Detail</th>
         </tr>
       </thead>
 
@@ -58,6 +59,10 @@
             <span ng-if="log.type === 'ACCESS'">{{ log.payload.accessType }}</span>
           </td>
           <td>{{ log.user }}</td>
+          <td>
+            <a href="" ng-click="AuditController.showMetadataChangeInfo(log.payload);"
+               ng-if="AuditController.isMetadataChanged(log.type, log.payload)">Details</a>
+          </td>
         </tr>
       </tbody>
     </table>
