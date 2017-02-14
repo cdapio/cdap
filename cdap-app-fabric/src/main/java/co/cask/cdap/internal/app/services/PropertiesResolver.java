@@ -28,6 +28,8 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -35,6 +37,8 @@ import java.util.Map;
  * Used to provide default user and system properties that can be used while starting a Program.
  */
 public class PropertiesResolver {
+
+  private static final Logger LOG = LoggerFactory.getLogger(PropertiesResolver.class);
 
   private final PreferencesStore prefStore;
   private final CConfiguration cConf;
@@ -65,6 +69,7 @@ public class PropertiesResolver {
     if (SecurityUtil.isKerberosEnabled(cConf)) {
       ImpersonationInfo impersonationInfo = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, id.toEntityId(),
                                                                                  ImpersonatedOpType.OTHER);
+      LOG.info("############ The impersonation info in here is {}", impersonationInfo);
       systemArgs.put(ProgramOptionConstants.PRINCIPAL, impersonationInfo.getPrincipal());
       systemArgs.put(ProgramOptionConstants.KEYTAB_URI, impersonationInfo.getKeytabURI());
     }

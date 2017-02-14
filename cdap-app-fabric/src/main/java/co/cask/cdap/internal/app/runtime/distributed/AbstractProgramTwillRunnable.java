@@ -28,6 +28,8 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.kerberos.ImpersonationInfo;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -42,6 +44,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -166,7 +169,23 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       cConf = CConfiguration.create(new File(cmdLine.getOptionValue(RunnableOptions.CDAP_CONF_FILE)));
 
-      Injector injector = Guice.createInjector(createModule(context));
+      programOpts = createProgramOptions(cmdLine, context, context.getSpecification().getConfigs());
+
+      // This impersonation info is added in PropertiesResolver#getSystemProperties
+
+      // if kerberos is enabled we need expect the principal and keytab to be provided in the program options as we
+      // need it is used later in ExploreClient to make request
+      ImpersonationInfo impersonationInfo = null;
+      if (SecurityUtil.isKerberosEnabled(cConf)) {
+        String principal = programOpts.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
+        String keytabURI = programOpts.getArguments().getOption(ProgramOptionConstants.KEYTAB_URI);
+          Preconditions.checkArgument(!(Strings.isNullOrEmpty(principal) || Strings.isNullOrEmpty(keytabURI)));
+        impersonationInfo = new ImpersonationInfo(principal, keytabURI);
+      }
+
+      LOG.info("############ The impersonation info in here is {}", impersonationInfo);
+
+      Injector injector = Guice.createInjector(createModule(context, impersonationInfo));
 
       coreServices.add(injector.getInstance(ZKClientService.class));
       coreServices.add(injector.getInstance(KafkaClientService.class));
@@ -174,8 +193,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       coreServices.add(injector.getInstance(MetricsCollectionService.class));
       coreServices.add(injector.getInstance(StreamCoordinatorClient.class));
       coreServices.add(injector.getInstance(AuthorizationEnforcementService.class));
-
-      programOpts = createProgramOptions(cmdLine, context, context.getSpecification().getConfigs());
 
       // Initialize log appender
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -404,8 +421,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     }
   }
 
-  protected Module createModule(TwillContext context) {
-    return new DistributedProgramRunnableModule(cConf, hConf).createModule(context);
+  protected Module createModule(TwillContext context, ImpersonationInfo impersonationInfo) {
+    return new DistributedProgramRunnableModule(cConf, hConf).createModule(context, impersonationInfo);
   }
 
   /**

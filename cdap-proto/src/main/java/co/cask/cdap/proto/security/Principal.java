@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.id.EntityId;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Identifies a user, group or role which can be authorized to perform an {@link Action} on a {@link EntityId}.
@@ -38,11 +39,19 @@ public class Principal {
   private final String name;
   private final PrincipalType type;
   private final int hashCode;
+  private final String kerberosPrincipal;
+  private final String keytabURI;
 
   public Principal(String name, PrincipalType type) {
+    this(name, type, null, null);
+  }
+
+  public Principal(String name, PrincipalType type, @Nullable String kerberosPrincipal, @Nullable String keytabURI) {
     this.name = name;
     this.type = type;
-    this.hashCode = Objects.hash(name, type);
+    this.kerberosPrincipal = kerberosPrincipal;
+    this.keytabURI = keytabURI;
+    this.hashCode = Objects.hash(name, type, kerberosPrincipal, keytabURI);
   }
 
   public String getName() {
@@ -51,6 +60,16 @@ public class Principal {
 
   public PrincipalType getType() {
     return type;
+  }
+
+  @Nullable
+  public String getKerberosPrincipal() {
+    return kerberosPrincipal;
+  }
+
+  @Nullable
+  public String getKeytabURI() {
+    return keytabURI;
   }
 
   @Override
@@ -65,7 +84,8 @@ public class Principal {
 
     Principal other = (Principal) o;
 
-    return Objects.equals(name, other.name) && Objects.equals(type, other.type);
+    return Objects.equals(name, other.name) && Objects.equals(type, other.type) &&
+      Objects.equals(kerberosPrincipal, other.kerberosPrincipal) && Objects.equals(keytabURI, other.keytabURI);
   }
 
   @Override
@@ -78,6 +98,8 @@ public class Principal {
     return "Principal{" +
       "name='" + name + '\'' +
       ", type=" + type +
+      ", kerberosPrincipal=" + kerberosPrincipal +
+      ", keytabURI=" + keytabURI +
       '}';
   }
 }

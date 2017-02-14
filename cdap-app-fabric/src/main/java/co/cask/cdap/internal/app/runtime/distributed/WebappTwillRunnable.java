@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import co.cask.cdap.internal.app.runtime.webapp.ExplodeJarHttpHandler;
 import co.cask.cdap.internal.app.runtime.webapp.JarHttpHandler;
 import co.cask.cdap.internal.app.runtime.webapp.WebappHttpHandlerFactory;
@@ -35,8 +36,8 @@ final class WebappTwillRunnable extends AbstractProgramTwillRunnable<WebappProgr
   }
 
   @Override
-  protected Module createModule(TwillContext context) {
-    return Modules.combine(super.createModule(context), new AbstractModule() {
+  protected Module createModule(TwillContext context, ImpersonationInfo impersonationInfo) {
+    return Modules.combine(super.createModule(context, impersonationInfo), new AbstractModule() {
       @Override
       protected void configure() {
         // Create webapp http handler factory.

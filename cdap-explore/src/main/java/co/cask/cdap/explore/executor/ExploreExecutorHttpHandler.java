@@ -27,7 +27,10 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.ImpersonationInfo;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -39,6 +42,7 @@ import co.cask.cdap.explore.client.EnableExploreParameters;
 import co.cask.cdap.explore.client.UpdateExploreParameters;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreTableManager;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.id.DatasetId;
@@ -49,6 +53,8 @@ import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -82,6 +88,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
 
+  private final CConfiguration cConf;
   private final ExploreTableManager exploreTableManager;
   private final DatasetFramework datasetFramework;
   private final StreamAdmin streamAdmin;
@@ -89,11 +96,13 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private final Impersonator impersonator;
 
   @Inject
-  public ExploreExecutorHttpHandler(ExploreTableManager exploreTableManager,
+  public ExploreExecutorHttpHandler(CConfiguration cConf,
+                                    ExploreTableManager exploreTableManager,
                                     DatasetFramework datasetFramework,
                                     StreamAdmin streamAdmin,
                                     SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
                                     Impersonator impersonator) {
+    this.cConf = cConf;
     this.exploreTableManager = exploreTableManager;
     this.datasetFramework = datasetFramework;
     this.streamAdmin = streamAdmin;
@@ -357,7 +366,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                            @PathParam("dataset") String datasetName) throws Exception {
     final DatasetId datasetId = new DatasetId(namespace, datasetName);
     propagateUserId(request);
-    impersonator.doAs(datasetId, new Callable<Void>() {
+    ImpersonationInfo impersonationInfo = getImpersonationInfo(request);
+    LOG.info("### The impersonation info in handler is {}", impersonationInfo);
+    impersonator.doAs(impersonationInfo, new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         doAddPartition(request, responder, datasetId);
@@ -437,7 +448,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                             @PathParam("dataset") String datasetName) throws Exception {
     final DatasetId datasetId = new DatasetId(namespace, datasetName);
     propagateUserId(request);
-    impersonator.doAs(datasetId, new Callable<Void>() {
+    ImpersonationInfo impersonationInfo = getImpersonationInfo(request);
+    LOG.info("### The impersonation info in handler is {}", impersonationInfo);
+    impersonator.doAs(impersonationInfo, new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         doDropPartition(request, responder, datasetId);
@@ -509,6 +522,17 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       return isClassNotFoundException(e.getCause());
     }
     return null;
+  }
+
+  @Nullable
+  private ImpersonationInfo getImpersonationInfo(HttpRequest request) throws BadRequestException {
+    String principal = request.getHeader(Constants.Security.Headers.USER_PRINCIPAL);
+    String keytabURI = request.getHeader(Constants.Security.Headers.KEYTAB_URI);
+    LOG.info("### The principal {} the keytaburi {}", principal, keytabURI);
+    if (Strings.isNullOrEmpty(principal) || Strings.isNullOrEmpty(keytabURI)) {
+      return null;
+    }
+    return new ImpersonationInfo(principal, keytabURI);
   }
 
   // propagate userid from the HTTP Request in the current thread

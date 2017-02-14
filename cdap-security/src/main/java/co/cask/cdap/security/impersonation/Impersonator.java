@@ -18,6 +18,7 @@ package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.kerberos.ImpersonatedOpType;
+import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.inject.ImplementedBy;
@@ -25,6 +26,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /**
  * Responsible for executing code for a user.
@@ -45,6 +47,8 @@ public interface Impersonator {
    * @throws Exception if the callable throws any exception
    */
   <T> T doAs(NamespacedEntityId entityId, Callable<T> callable) throws Exception;
+
+  <T> T doAs(@Nullable ImpersonationInfo impersonationInfo, Callable<T> callable) throws Exception;
 
   /**
    * Executes a callable as the user, configurable at a namespace level

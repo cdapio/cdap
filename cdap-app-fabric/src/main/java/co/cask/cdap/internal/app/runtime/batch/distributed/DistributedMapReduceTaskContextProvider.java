@@ -117,6 +117,6 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   }
 
   private static Injector createInjector(CConfiguration cConf, Configuration hConf) {
-    return Guice.createInjector(new DistributedProgramRunnableModule(cConf, hConf).createModule());
+    return Guice.createInjector(new DistributedProgramRunnableModule(cConf, hConf).createModule(null));
   }
 }

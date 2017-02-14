@@ -91,14 +91,9 @@ public interface OwnerAdmin {
    * If a direct owner is not present then the namespace owner information will be returned if
    * one is present else returns null.
    * </p>
-   * <p>
-   * The returned {@link ImpersonationInfo} may have null as the keytab URI, if this owner admin does not
-   * have knowledge about that URI. In this case, it is the caller's responsibility to determine the keytab URI.
-   * </p>
-   *
    * @param entityId the {@link EntityId} whose owner principal information needs to be retrieved
    * @param impersonatedOpType the type of operation which is being impersonated
-   * @return {@link ImpersonationInfo} of the effective owner for the given entity. Its keytab URI may be null.
+   * @return {@link ImpersonationInfo} of the effective owner for the given entity.
    * @throws IOException if  failed to get the store
    * @throws IllegalArgumentException if the given entity is not of supported type.
    */

@@ -29,6 +29,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -67,6 +68,7 @@ import org.apache.twill.api.TwillContext;
 import org.apache.twill.common.Cancellable;
 
 import java.net.InetAddress;
+import javax.annotation.Nullable;
 
 /**
  * Defines guice modules for distributed program runnables. For instance, AbstractProgramTwillRunnable, as well as
@@ -83,7 +85,7 @@ public class DistributedProgramRunnableModule {
   }
 
   // usable from any program runtime, such as mapreduce task, spark task, etc
-  public Module createModule() {
+  public Module createModule(@Nullable ImpersonationInfo impersonationInfo) {
     Module combined = Modules.combine(
       new ConfigModule(cConf, hConf),
       new IOModule(),
@@ -103,7 +105,7 @@ public class DistributedProgramRunnableModule {
       new AuditModule().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getProgramContainerModule(),
+      new AuthenticationContextModules().getProgramContainerModule(impersonationInfo),
       new SecureStoreModules().getDistributedModules(),
       new AbstractModule() {
         @Override
@@ -141,8 +143,8 @@ public class DistributedProgramRunnableModule {
 
   // TODO(terence) make this works for different mode
   // usable from anywhere a TwillContext is exposed
-  public Module createModule(final TwillContext context) {
-    return Modules.combine(createModule(),
+  public Module createModule(final TwillContext context, ImpersonationInfo impersonationInfo) {
+    return Modules.combine(createModule(impersonationInfo),
                            new AbstractModule() {
                              @Override
                              protected void configure() {

@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link Impersonator} that impersonate using {@link UGIProvider}.
@@ -70,6 +71,12 @@ public class DefaultImpersonator implements Impersonator {
   }
 
   @Override
+  public <T> T doAs(@Nullable ImpersonationInfo impersonationInfo, final Callable<T> callable) throws Exception {
+    UserGroupInformation ugi = getUGI(impersonationInfo);
+    return  ImpersonationUtils.doAs(ugi, callable);
+  }
+
+  @Override
   public UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException, NamespaceNotFoundException {
     return getUGI(entityId, ImpersonatedOpType.OTHER);
   }
@@ -91,7 +98,12 @@ public class DefaultImpersonator implements Impersonator {
     }
   }
 
-  private UserGroupInformation getUGI(ImpersonationInfo impersonationInfo) throws IOException {
+  private UserGroupInformation getUGI(@Nullable ImpersonationInfo impersonationInfo) throws IOException {
+    // if kerberos is not enabled or no impersonation info was given then just return current user
+    if (!kerberosEnabled || impersonationInfo == null) {
+      return UserGroupInformation.getCurrentUser();
+    }
+
     // no need to get a UGI if the current UGI is the one we're requesting; simply return it
     String configuredPrincipalShortName = new KerberosName(impersonationInfo.getPrincipal()).getShortName();
     if (UserGroupInformation.getCurrentUser().getShortUserName().equals(configuredPrincipalShortName)) {
