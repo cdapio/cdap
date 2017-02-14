@@ -23,6 +23,7 @@ import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.log.LogContext;
+import co.cask.cdap.etl.planner.StageInfo;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -36,9 +37,9 @@ import java.util.concurrent.Callable;
 public class MapReduceSourceContext extends MapReduceBatchContext implements BatchSourceContext {
   private final Set<String> inputNames;
 
-  public MapReduceSourceContext(MapReduceContext context, Metrics metrics, LookupProvider lookup, String stageName,
-                                Map<String, String> runtimeArgs) {
-    super(context, metrics, lookup, stageName, runtimeArgs);
+  public MapReduceSourceContext(MapReduceContext context, Metrics metrics, LookupProvider lookup,
+                                Map<String, String> runtimeArgs, StageInfo stageInfo) {
+    super(context, metrics, lookup, runtimeArgs, stageInfo);
     this.inputNames = new HashSet<>();
   }
 

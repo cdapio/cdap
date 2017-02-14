@@ -16,15 +16,20 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.etl.api.StageContext;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.log.LogContext;
+import co.cask.cdap.etl.planner.StageInfo;
 import com.google.common.base.Throwables;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /**
  * Base implementation of {@link StageContext} for common functionality.
@@ -36,11 +41,18 @@ public abstract class AbstractStageContext implements StageContext {
   private final PluginContext pluginContext;
   private final String stageName;
   private final StageMetrics metrics;
+  private final Map<String, Schema> inputSchemas;
+  private final Schema inputSchema;
+  private final Schema outputSchema;
 
-  public AbstractStageContext(PluginContext pluginContext, Metrics metrics, String stageName) {
+  public AbstractStageContext(PluginContext pluginContext, Metrics metrics, StageInfo stageInfo) {
     this.pluginContext = pluginContext;
-    this.stageName = stageName;
+    this.stageName = stageInfo.getName();
     this.metrics = new DefaultStageMetrics(metrics, stageName);
+    this.outputSchema = stageInfo.getOutputSchema();
+    this.inputSchemas = Collections.unmodifiableMap(stageInfo.getInputSchemas());
+    // all plugins except joiners have just a single input schema
+    this.inputSchema = inputSchemas.isEmpty() ? null : inputSchemas.values().iterator().next();
   }
 
   @Override
@@ -96,6 +108,23 @@ public abstract class AbstractStageContext implements StageContext {
   @Override
   public final StageMetrics getMetrics() {
     return metrics;
+  }
+
+  @Nullable
+  @Override
+  public Schema getInputSchema() {
+    return inputSchema;
+  }
+
+  @Override
+  public Map<String, Schema> getInputSchemas() {
+    return inputSchemas;
+  }
+
+  @Nullable
+  @Override
+  public Schema getOutputSchema() {
+    return outputSchema;
   }
 
   private String scopePluginId(String childPluginId) {

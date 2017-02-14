@@ -81,7 +81,7 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
     }
 
     DataTracer dataTracer = sec.getDataTracer(stageInfo.getName());
-    StreamingContext sourceContext = new DefaultStreamingContext(stageInfo.getName(), sec, streamingContext);
+    StreamingContext sourceContext = new DefaultStreamingContext(stageInfo, sec, streamingContext);
     JavaDStream<Object> javaDStream = source.getStream(sourceContext);
     if (dataTracer.isEnabled()) {
       // it will create a new function for each RDD, which would limit each RDD but not the entire DStream.

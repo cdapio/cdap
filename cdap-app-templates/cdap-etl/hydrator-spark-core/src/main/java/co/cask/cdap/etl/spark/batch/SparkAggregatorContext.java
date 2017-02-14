@@ -16,28 +16,19 @@
 
 package co.cask.cdap.etl.spark.batch;
 
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.batch.AbstractAggregatorContext;
-import co.cask.cdap.etl.common.DatasetContextLookupProvider;
+import co.cask.cdap.etl.planner.StageInfo;
 
 /**
  * Spark Aggregator Context.
  */
 public class SparkAggregatorContext extends AbstractAggregatorContext {
 
-  public SparkAggregatorContext(SparkClientContext context, LookupProvider lookup, String stageName) {
+  public SparkAggregatorContext(SparkClientContext context, LookupProvider lookup, StageInfo stageInfo) {
     super(context, context, context.getMetrics(),
-          lookup, stageName, context.getLogicalStartTime(), context.getRuntimeArguments(), context.getAdmin());
-  }
-
-  public SparkAggregatorContext(JavaSparkExecutionContext sec, DatasetContext datasetContext,
-                                String stageName, long logicalStartTime) {
-    super(sec.getPluginContext(), datasetContext, sec.getMetrics(),
-          new DatasetContextLookupProvider(datasetContext), stageName,
-          logicalStartTime, sec.getRuntimeArguments(), sec.getAdmin());
+          lookup, context.getLogicalStartTime(), context.getRuntimeArguments(), context.getAdmin(), stageInfo);
   }
 
   @Override

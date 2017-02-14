@@ -21,6 +21,7 @@ import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.TransformContext;
+import co.cask.cdap.etl.planner.StageInfo;
 
 import java.util.Map;
 
@@ -33,9 +34,9 @@ public abstract class AbstractTransformContext extends AbstractStageContext impl
 
   private final LookupProvider lookup;
 
-  public AbstractTransformContext(PluginContext pluginContext,
-                                  Metrics metrics, LookupProvider lookup, String stageName) {
-    super(pluginContext, metrics, stageName);
+  public AbstractTransformContext(PluginContext pluginContext, Metrics metrics,
+                                  LookupProvider lookup, StageInfo stageInfo) {
+    super(pluginContext, metrics, stageInfo);
     this.lookup = lookup;
   }
 

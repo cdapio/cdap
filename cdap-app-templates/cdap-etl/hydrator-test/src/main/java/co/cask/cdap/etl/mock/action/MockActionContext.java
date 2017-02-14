@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.mock.action;
 
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.etl.api.StageMetrics;
@@ -24,9 +25,11 @@ import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.api.action.SettableArguments;
 import co.cask.cdap.proto.id.NamespaceId;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Mock ActionContext for CustomAction tests.
@@ -76,6 +79,23 @@ public class MockActionContext implements ActionContext {
 
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Schema getInputSchema() {
+    return null;
+  }
+
+  @Override
+  public Map<String, Schema> getInputSchemas() {
+    return Collections.emptyMap();
+  }
+
+  @Nullable
+  @Override
+  public Schema getOutputSchema() {
     return null;
   }
 

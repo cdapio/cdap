@@ -20,8 +20,10 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
+import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.NoLookupProvider;
 
 import java.util.Map;
@@ -29,14 +31,16 @@ import java.util.Map;
 /**
  * Default implementation of {@link BatchRuntimeContext} for spark contexts.
  */
-public class SparkBatchRuntimeContext extends AbstractTransformContext implements BatchRuntimeContext {
+public class SparkBatchRuntimeContext extends AbstractTransformContext
+  implements BatchRuntimeContext, BatchJoinerRuntimeContext {
 
   private final long logicalStartTime;
   private final Map<String, String> runtimeArguments;
 
   public SparkBatchRuntimeContext(PluginContext pluginContext, Metrics metrics,
-                                  long logicalStartTime, Map<String, String> runtimeArguments, String stageId) {
-    super(pluginContext, metrics, NoLookupProvider.INSTANCE, stageId);
+                                  long logicalStartTime, Map<String, String> runtimeArguments,
+                                  StageInfo stageInfo) {
+    super(pluginContext, metrics, NoLookupProvider.INSTANCE, stageInfo);
     this.logicalStartTime = logicalStartTime;
     this.runtimeArguments = runtimeArguments;
   }

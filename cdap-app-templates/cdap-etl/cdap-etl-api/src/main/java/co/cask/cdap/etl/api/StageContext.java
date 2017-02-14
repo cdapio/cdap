@@ -17,9 +17,13 @@
 package co.cask.cdap.etl.api;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
+
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Context for a pipeline stage, providing access to information about the stage, metrics, and plugins.
@@ -86,4 +90,32 @@ public interface StageContext {
    */
   <T> T newPluginInstance(String pluginId) throws InstantiationException;
 
+  /**
+   * Return the input schema for the stage. A null input schema indicates that the previous stages did not set a
+   * concrete output schema when the pipeline was deployed. This can either mean the input schema is unknown, or
+   * it can mean the schema is not constant.
+   *
+   * @return the input schema for the stage
+   */
+  @Nullable
+  Schema getInputSchema();
+
+  /**
+   * Return the input schemas for the stage. The map key is the stage name and the map value is the schema from
+   * that stage. A null input schema indicates that the stage did not set a concrete output schema when the pipeline
+   * was deployed. This can either mean the input schema is unknown, or it can mean the schema is not constant.
+   *
+   * @return the map of input stage names to their schema
+   */
+  Map<String, Schema> getInputSchemas();
+
+  /**
+   * Return the output schema of the stage, as set by this stage when the pipeline was deployed. If none was set,
+   * null will be returned. A null schema indicates that the schema is not known, or that the output schema is not
+   * constant.
+   *
+   * @return the output schema of the stage
+   */
+  @Nullable
+  Schema getOutputSchema();
 }

@@ -21,6 +21,7 @@ import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.ExternalDatasets;
+import co.cask.cdap.etl.planner.StageInfo;
 
 import java.util.UUID;
 
@@ -31,8 +32,8 @@ public class SparkBatchSourceContext extends AbstractSparkBatchContext implement
   private final SparkBatchSourceFactory sourceFactory;
 
   public SparkBatchSourceContext(SparkBatchSourceFactory sourceFactory, SparkClientContext sparkContext,
-                                 LookupProvider lookupProvider, String stageId) {
-    super(sparkContext, lookupProvider, stageId);
+                                 LookupProvider lookupProvider, StageInfo stageInfo) {
+    super(sparkContext, lookupProvider, stageInfo);
     this.sourceFactory = sourceFactory;
   }
 
