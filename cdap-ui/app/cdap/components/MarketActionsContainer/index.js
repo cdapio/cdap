@@ -45,6 +45,9 @@ export default class MarketActionsContainer extends Component {
           action: null
         }
       });
+      if (this.state.wizard.actionIndex === this.props.actions.length - 1) {
+        this.props.onActionsComplete();
+      }
       return;
     }
     this.setState({
@@ -148,5 +151,6 @@ MarketActionsContainer.propTypes = {
         })
       )
     })
-  )
+  ),
+  onActionsComplete: PropTypes.func
 };

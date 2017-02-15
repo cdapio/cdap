@@ -34,6 +34,7 @@ import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PingService;
 import co.cask.cdap.client.app.PrefixedEchoHandler;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.Tasks;
@@ -41,6 +42,7 @@ import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.StreamProperties;
@@ -99,7 +101,10 @@ import javax.annotation.Nullable;
 public class CLIMainTest extends CLITestBase {
 
   @ClassRule
-  public static final StandaloneTester STANDALONE = new StandaloneTester();
+  public static final StandaloneTester STANDALONE = new StandaloneTester(
+    // Turn off the log event delay to make log event flush on every write to eliminate race condition.
+    Constants.Logging.PIPELINE_EVENT_DELAY_MS, 0
+  );
 
   @ClassRule
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
@@ -342,13 +347,24 @@ public class CLIMainTest extends CLITestBase {
   @Test
   public void testDataset() throws Exception {
     String datasetName = PREFIX + "sdf123lkj";
+    String ownedDatasetName = PREFIX + "owned";
 
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
     DatasetTypeMeta datasetType = datasetTypeClient.list(NamespaceId.DEFAULT).get(0);
     testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName + " \"a=1\"",
                               "Successfully created dataset");
     testCommandOutputContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
-    testCommandOutputContains(cli, "get dataset instance properties " + datasetName, "\"a\":\"1\"");
+    testCommandOutputContains(cli, "get dataset instance properties " + datasetName, "a,1");
+
+    // test dataset creation with owner
+    String commandOutput = getCommandOutput(cli, "create dataset instance " + datasetType.getName() + " " +
+      ownedDatasetName + " \"a=1\"" + " " + "someDescription " + ArgumentName.PRINCIPAL +
+      " alice/somehost.net@somekdc.net");
+    Assert.assertTrue(commandOutput.contains("Successfully created dataset"));
+    Assert.assertTrue(commandOutput.contains("alice/somehost.net@somekdc.net"));
+
+    // test describing the table returns the given owner information
+    testCommandOutputContains(cli, "describe dataset instance " + ownedDatasetName, "alice/somehost.net@somekdc.net");
 
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
     NamespaceId barspace = new NamespaceId("bar");
@@ -376,6 +392,7 @@ public class CLIMainTest extends CLITestBase {
                               "Successfully created dataset");
     testCommandOutputContains(cli, "list dataset instances", description);
     testCommandOutputContains(cli, "delete dataset instance " + datasetName2, "Successfully deleted");
+    testCommandOutputContains(cli, "delete dataset instance " + ownedDatasetName, "Successfully deleted");
   }
 
   @Test
@@ -617,15 +634,16 @@ public class CLIMainTest extends CLITestBase {
 
     // create a namespace
     String command = String.format("create namespace %s description %s principal %s group-name %s keytab-URI %s " +
-                                     "hbase-namespace %s hive-database %s root-directory %s scheduler-queue-name %s",
+                                     "hbase-namespace %s hive-database %s root-directory %s %s %s %s %s",
                                    name, description, principal, group, keytab, hbaseNamespace,
-                                   hiveDatabase, rootDirectory, schedulerQueueName);
+                                   hiveDatabase, rootDirectory, ArgumentName.NAMESPACE_SCHEDULER_QUEUENAME,
+                                   schedulerQueueName, ArgumentName.NAMESPACE_EXPLORE_AS_PRINCIPAL, false);
     testCommandOutputContains(cli, command, String.format("Namespace '%s' created successfully.", name));
 
     NamespaceMeta expected = new NamespaceMeta.Builder()
       .setName(name).setDescription(description).setPrincipal(principal).setGroupName(group).setKeytabURI(keytab)
       .setHBaseNamespace(hbaseNamespace).setSchedulerQueueName(schedulerQueueName)
-      .setHiveDatabase(hiveDatabase).setRootDirectory(rootDirectory).build();
+      .setHiveDatabase(hiveDatabase).setRootDirectory(rootDirectory).setExploreAsPrincipal(false).build();
     expectedNamespaces = Lists.newArrayList(defaultNs, expected);
     // list namespaces and verify
     testNamespacesOutput(cli, "list namespaces", expectedNamespaces);
@@ -667,7 +685,15 @@ public class CLIMainTest extends CLITestBase {
     String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
     testCommandOutputContains(cli, "start workflow " + workflow + " '" + runtimeArgsKV + "'",
                               "Successfully started workflow");
-    assertProgramStatus(programClient, fakeWorkflowId, "STOPPED");
+
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return programClient.getProgramRuns(fakeWorkflowId, ProgramRunStatus.COMPLETED.name(), 0, Long.MAX_VALUE,
+                                            Integer.MAX_VALUE).size();
+      }
+    }, 180, TimeUnit.SECONDS);
+
     testCommandOutputContains(cli, "cli render as csv", "Now rendering as CSV");
     String commandOutput = getCommandOutput(cli, "get workflow runs " + workflow);
     String[] lines = commandOutput.split("\\r?\\n");

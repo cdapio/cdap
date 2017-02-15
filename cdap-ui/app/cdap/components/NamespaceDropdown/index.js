@@ -26,6 +26,8 @@ import sortBy from 'lodash/sortBy';
 import T from 'i18n-react';
 import {Link} from 'react-router';
 const shortid = require('shortid');
+import globalEvents from 'services/global-events';
+import ee from 'event-emitter';
 require('./NamespaceDropdown.scss');
 
 export default class NamespaceDropdown extends Component {
@@ -42,19 +44,36 @@ export default class NamespaceDropdown extends Component {
     };
 
     this.subscription = NamespaceStore.subscribe(() => {
-      this.setState({
-        currentNamespace : NamespaceStore.getState().selectedNamespace,
-        namespaceList : sortBy(NamespaceStore.getState().namespaces, this.lowerCaseNamespace)
-      });
+      let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+      let namespaces = NamespaceStore.getState().namespaces.map(ns => ns.name);
+      if (namespaces.indexOf(selectedNamespace) === -1) {
+        this.setState({
+          currentNamespace: '--',
+          namespaceList : sortBy(NamespaceStore.getState().namespaces, this.lowerCaseNamespace)
+        });
+      } else {
+        this.setState({
+          currentNamespace : NamespaceStore.getState().selectedNamespace,
+          namespaceList : sortBy(NamespaceStore.getState().namespaces, this.lowerCaseNamespace)
+        });
+      }
     });
 
     this.toggle = this.toggle.bind(this);
     this.showNamespaceWizard = this.showNamespaceWizard.bind(this);
     this.hideNamespaceWizard = this.hideNamespaceWizard.bind(this);
+    this.eventEmitter = ee(ee);
+    this.eventEmitter.on(globalEvents.CREATENAMESPACE, () => {
+      this.setState({
+        openWizard: true
+      });
+    });
   }
   componentWillUnmount() {
     this.subscription();
-    this.apiSubscription.dispose();
+    if (this.apiSubscription) {
+      this.apiSubscription.dispose();
+    }
   }
   toggle() {
     if (!this.state.openPreferenceWizard) {
@@ -160,9 +179,47 @@ export default class NamespaceDropdown extends Component {
     }
     const defaultNamespace = this.state.defaultNamespace;
     const currentNamespace = this.state.currentNamespace;
-
-    return (
+    let isValidNamespace = NamespaceStore.getState().namespaces.filter(ns => ns.name === currentNamespace).length;
+    let currentNamespaceCardHeader = (
       <div>
+        <span className="current-namespace-name">{currentNamespace}</span>
+        <span className="current-namespace-default">
+          {
+            defaultNamespace === currentNamespace ?
+              (
+                <span>
+                  <span className="default-status">(Default)</span>
+                  <i
+                    className="fa fa-star"
+                    onClick={this.setDefault.bind(this, currentNamespace)}
+                  />
+                </span>
+              )
+            :
+              (
+                <span>
+                  <span className="default-status">(Set Default)</span>
+                  <i
+                    className="fa fa-star-o"
+                    onClick={this.setDefault.bind(this, currentNamespace)}
+                  />
+                </span>
+              )
+          }
+        </span>
+      </div>
+    );
+    let preferenceSpecificCardHeader = (
+      <div className="preferences-saved-message text-white">
+        <span>{T.translate('features.FastAction.setPreferencesSuccess.default', {entityType: 'Namespace'})}</span>
+        <span
+          className='fa fa-times'
+          onClick={() => this.setState({preferencesSavedMessage: false})}
+        />
+      </div>
+    );
+    return (
+      <div className="namespace-dropdown">
         <Dropdown
           isOpen={this.state.openDropdown}
           toggle={this.toggle}
@@ -172,104 +229,76 @@ export default class NamespaceDropdown extends Component {
             onClick={this.toggle}
           >
             <div className="namespace-text">
-              {currentNamespace}
+              <small>{T.translate('features.Navbar.NamespaceDropdown.namespaceLabel')}</small>
+              <span>{currentNamespace}</span>
             </div>
-            <span className="fa fa-angle-down float-xs-right" />
+            <span className="fa fa-caret-down float-xs-right" />
           </div>
           <DropdownMenu>
-            <div className="current-namespace-details">
-              <div className="current-namespace-metadata">
-                {
-                  this.state.preferencesSavedMessage === true ?
-                    (
-                      <div className="preferences-saved-message text-white">
-                        <span>{T.translate('features.FastAction.setPreferencesSuccess.default', {entityType: 'Namespace'})}</span>
-                        <span
-                          className='fa fa-times'
-                          onClick={() => this.setState({preferencesSavedMessage: false})}
-                        />
-                      </div>
-                    )
-                  :
-                    (
-                      <div>
-                        <span className="current-namespace-name">{currentNamespace}</span>
-                        <span className="current-namespace-default">
-                          {
-                            defaultNamespace === currentNamespace ?
-                              (
-                                <span>
-                                  <span className="default-status">(Default)</span>
-                                  <i
-                                    className="fa fa-star"
-                                    onClick={this.setDefault.bind(this, currentNamespace)}
-                                  />
-                                </span>
-                              )
-                            :
-                              (
-                                <span>
-                                  <span className="default-status">(Set Default)</span>
-                                  <i
-                                    className="fa fa-star-o"
-                                    onClick={this.setDefault.bind(this, currentNamespace)}
-                                  />
-                                </span>
-                              )
-                          }
-                        </span>
-                      </div>
-                    )
-                }
+            {
+              isValidNamespace ?
+                (
+                  <div className="current-namespace-details">
+                    <div className="current-namespace-metadata">
+                      {
+                        this.state.preferencesSavedMessage === true ?
+                          preferenceSpecificCardHeader
+                        :
+                          currentNamespaceCardHeader
+                      }
 
-                <div className="current-namespace-metrics">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>{T.translate('features.Navbar.NamespaceDropdown.applications')}</th>
-                        <th>{T.translate('features.Navbar.NamespaceDropdown.datasets')}</th>
-                        <th>{T.translate('features.Navbar.NamespaceDropdown.streams')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>
-                          {
-                            this.state.numMetricsLoading ?
-                              <span className = "fa fa-spinner fa-spin" />
-                            :
-                              this.state.numApplications
-                          }
-                        </td>
-                        <td>
-                          {
-                            this.state.numMetricsLoading ?
-                              <span className = "fa fa-spinner fa-spin" />
-                            :
-                              this.state.numDatasets
-                          }
-                        </td>
-                        <td>
-                          {
-                            this.state.numMetricsLoading ?
-                              <span className = "fa fa-spinner fa-spin" />
-                            :
-                              this.state.numStreams
-                          }
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <div className="current-namespace-preferences text-xs-center">
-                <SetPreferenceAction
-                  setAtNamespaceLevel={true}
-                  modalIsOpen={this.preferenceWizardIsOpen.bind(this)}
-                  onSuccess={this.preferencesAreSaved.bind(this)}
-                  savedMessageState={this.state.preferencesSavedMessage}/>
-              </div>
-            </div>
+                      <div className="current-namespace-metrics">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>{T.translate('features.Navbar.NamespaceDropdown.applications')}</th>
+                              <th>{T.translate('features.Navbar.NamespaceDropdown.datasets')}</th>
+                              <th>{T.translate('features.Navbar.NamespaceDropdown.streams')}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>
+                                {
+                                  this.state.numMetricsLoading ?
+                                    <span className = "fa fa-spinner fa-spin" />
+                                  :
+                                    this.state.numApplications
+                                }
+                              </td>
+                              <td>
+                                {
+                                  this.state.numMetricsLoading ?
+                                    <span className = "fa fa-spinner fa-spin" />
+                                  :
+                                    this.state.numDatasets
+                                }
+                              </td>
+                              <td>
+                                {
+                                  this.state.numMetricsLoading ?
+                                    <span className = "fa fa-spinner fa-spin" />
+                                  :
+                                    this.state.numStreams
+                                }
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div className="current-namespace-preferences text-xs-center">
+                      <SetPreferenceAction
+                        setAtNamespaceLevel={true}
+                        modalIsOpen={this.preferenceWizardIsOpen.bind(this)}
+                        onSuccess={this.preferencesAreSaved.bind(this)}
+                        savedMessageState={this.state.preferencesSavedMessage}/>
+                    </div>
+                  </div>
+                )
+              :
+                null
+            }
             <div className="namespace-list">
               {
                 this.state.namespaceList
@@ -317,9 +346,8 @@ export default class NamespaceDropdown extends Component {
           isOpen={this.state.openWizard}
           onClose={this.hideNamespaceWizard}
           wizardType='add_namespace'
-          backdrop={true}
         />
-      </div>
+    </div>
     );
   }
 }

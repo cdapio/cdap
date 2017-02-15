@@ -34,6 +34,12 @@ Building Blocks
     Namespaces <namespaces>
     Transaction System <transaction-system>
 
+.. toctree::
+   :hidden:
+
+   mapreduce-jobs
+   spark-jobs
+
 This section covers the :doc:`core abstractions <core>` in the Cask Data Application Platform
 (CDAP): **Data** and **Applications.**
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,10 +25,10 @@ import org.apache.avro.generic.GenericRecord;
 /**
  * Serializer for ThrowableProxyArray.
  */
-public final class ThrowableProxyArraySerializer {
+final class ThrowableProxyArraySerializer {
   private ThrowableProxyArraySerializer() {}
 
-  public static GenericArray<GenericRecord> encode(Schema schema, IThrowableProxy[] throwableProxies) {
+  static GenericArray<GenericRecord> encode(Schema schema, IThrowableProxy[] throwableProxies) {
     if (throwableProxies != null) {
       Schema tpArraySchema = schema.getTypes().get(1);
       GenericArray<GenericRecord> steArray = new GenericData.Array<>(throwableProxies.length,
@@ -41,7 +41,7 @@ public final class ThrowableProxyArraySerializer {
     return null;
   }
 
-  public static IThrowableProxy[] decode(GenericArray<GenericRecord> datum) {
+  static IThrowableProxy[] decode(GenericArray<GenericRecord> datum) {
     if (datum != null) {
       IThrowableProxy[] throwableProxies = new IThrowableProxy[datum.size()];
       int i = 0;

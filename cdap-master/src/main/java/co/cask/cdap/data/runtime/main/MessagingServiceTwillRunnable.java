@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data.runtime.main;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -47,8 +46,6 @@ import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
-import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,11 +65,7 @@ public class MessagingServiceTwillRunnable extends AbstractMasterTwillRunnable {
   }
 
   @Override
-  protected void getServices(List<? super Service> services) {
-    services.add(injector.getInstance(ZKClientService.class));
-    services.add(injector.getInstance(KafkaClientService.class));
-    services.add(injector.getInstance(MetricsCollectionService.class));
-
+  protected void addServices(List<? super Service> services) {
     MessagingService messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       services.add((Service) messagingService);
@@ -81,7 +74,7 @@ public class MessagingServiceTwillRunnable extends AbstractMasterTwillRunnable {
   }
 
   @Override
-  protected void doInit(TwillContext context) {
+  protected Injector doInit(TwillContext context) {
     CConfiguration cConf = getCConfiguration();
     cConf.set(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS, context.getHost().getHostName());
     cConf.setInt(Constants.MessagingSystem.CONTAINER_INSTANCE_ID, context.getInstanceId());
@@ -105,6 +98,8 @@ public class MessagingServiceTwillRunnable extends AbstractMasterTwillRunnable {
     } catch (IOException ex) {
       LOG.warn("Exception while trying to upgrade TMS PayloadTable.", ex);
     }
+
+    return injector;
   }
 
   @VisibleForTesting

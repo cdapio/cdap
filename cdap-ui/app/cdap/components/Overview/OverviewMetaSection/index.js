@@ -128,6 +128,7 @@ export default class OverviewMetaSection extends Component {
             entity={this.props.entity}
             onSuccess={this.onFastActionSuccess.bind(this)}
             onUpdate={this.onFastActionUpdate.bind(this)}
+            actionToOpen={this.props.fastActionToOpen}
           />
         </div>
         <Description description={description} />
@@ -142,5 +143,6 @@ export default class OverviewMetaSection extends Component {
 OverviewMetaSection.propTypes = {
   entity: PropTypes.object,
   onFastActionSuccess: PropTypes.func,
-  onFastActionUpdate: PropTypes.func
+  onFastActionUpdate: PropTypes.func,
+  fastActionToOpen: PropTypes.string
 };

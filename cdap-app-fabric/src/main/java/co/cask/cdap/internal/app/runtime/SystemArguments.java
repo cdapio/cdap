@@ -23,7 +23,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.common.service.RetryStrategyType;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.tephra.TxConstants;
@@ -32,7 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -183,46 +181,31 @@ public final class SystemArguments {
       default:
         throw new IllegalArgumentException("Invalid program type " + programType);
     }
-    String typeKey = keyPrefix + Constants.Retry.TYPE;
-    String maxRetriesKey = keyPrefix + Constants.Retry.MAX_RETRIES;
-    String maxTimeKey = keyPrefix + Constants.Retry.MAX_TIME_SECS;
-    String baseDelayKey = keyPrefix + Constants.Retry.DELAY_BASE_MS;
-    String maxDelayKey = keyPrefix + Constants.Retry.DELAY_MAX_MS;
 
-
+    // Override from runtime arguments
+    CConfiguration policyConf = CConfiguration.copy(cConf);
     String typeStr = args.get(RETRY_POLICY_TYPE);
-    if (typeStr == null) {
-      typeStr = cConf.get(typeKey);
+    if (typeStr != null) {
+      policyConf.set(keyPrefix + Constants.Retry.TYPE, typeStr);
     }
-    RetryStrategyType type = RetryStrategyType.from(typeStr);
-
-    if (type == RetryStrategyType.NONE) {
-      return RetryStrategies.noRetry();
+    int maxRetries = getNonNegativeInt(args, RETRY_POLICY_MAX_RETRIES, RETRY_POLICY_MAX_RETRIES, -1);
+    if (maxRetries >= 0) {
+      policyConf.setInt(keyPrefix + Constants.Retry.MAX_RETRIES, maxRetries);
     }
-
-    int maxRetries = getNonNegativeInt(args, RETRY_POLICY_MAX_RETRIES, RETRY_POLICY_MAX_RETRIES,
-                                       cConf.getInt(maxRetriesKey));
-    long maxTimeSecs = getNonNegativeLong(args, RETRY_POLICY_MAX_TIME_SECS, RETRY_POLICY_MAX_TIME_SECS,
-                                          cConf.getLong(maxTimeKey));
-    long baseDelay = getNonNegativeLong(args, RETRY_POLICY_DELAY_BASE_MS, RETRY_POLICY_DELAY_BASE_MS,
-                                        cConf.getLong(baseDelayKey));
-
-    RetryStrategy baseStrategy;
-    switch (type) {
-      case FIXED_DELAY:
-        baseStrategy = RetryStrategies.fixDelay(baseDelay, TimeUnit.MILLISECONDS);
-        break;
-      case EXPONENTIAL_BACKOFF:
-        long maxDelay = getNonNegativeLong(args, RETRY_POLICY_DELAY_MAX_MS, RETRY_POLICY_DELAY_MAX_MS,
-                                           cConf.getLong(maxDelayKey));
-        baseStrategy = RetryStrategies.exponentialDelay(baseDelay, maxDelay, TimeUnit.MILLISECONDS);
-        break;
-      default:
-        // not possible
-        throw new IllegalStateException("Unknown retry type " + type);
+    long maxTimeSecs = getNonNegativeLong(args, RETRY_POLICY_MAX_TIME_SECS, RETRY_POLICY_MAX_TIME_SECS, -1L);
+    if (maxTimeSecs >= 0) {
+      policyConf.setLong(keyPrefix + Constants.Retry.MAX_TIME_SECS, maxTimeSecs);
+    }
+    long baseDelay = getNonNegativeLong(args, RETRY_POLICY_DELAY_BASE_MS, RETRY_POLICY_DELAY_BASE_MS, -1L);
+    if (baseDelay >= 0) {
+      policyConf.setLong(keyPrefix + Constants.Retry.DELAY_BASE_MS, baseDelay);
+    }
+    long maxDelay = getNonNegativeLong(args, RETRY_POLICY_DELAY_MAX_MS, RETRY_POLICY_DELAY_MAX_MS, -1L);
+    if (maxDelay >= 0) {
+      policyConf.setLong(keyPrefix + Constants.Retry.DELAY_MAX_MS, maxDelay);
     }
 
-    return RetryStrategies.limit(maxRetries, RetryStrategies.timeLimit(maxTimeSecs, TimeUnit.SECONDS, baseStrategy));
+    return RetryStrategies.fromConfiguration(policyConf, keyPrefix);
   }
 
   /**

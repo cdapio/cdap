@@ -18,15 +18,32 @@ import React, {PropTypes} from 'react';
 
 export default function FastActionButton({icon, action, disabled, id}) {
 
+  let preventPropagation = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation();
+  };
+
+  let onButtonClick = (event) => {
+    preventPropagation(event);
+    action();
+  };
+
   return (
-    <button
-      className="btn btn-link"
-      onClick={action}
-      disabled={disabled}
+    // have to create a wrapper, because disabled elements don't fire mouse events in Firefox
+    // also set tooltip ID on this wrapper, so that the tooltip shows up even on a disabled button
+    <span
+      onClick={preventPropagation.bind(this)}
       id={id}
     >
-      <span className={icon}></span>
-    </button>
+      <button
+        className="btn btn-link"
+        disabled={disabled}
+        onClick={onButtonClick.bind(this)}
+      >
+        <span className={icon}></span>
+      </button>
+    </span>
   );
 }
 

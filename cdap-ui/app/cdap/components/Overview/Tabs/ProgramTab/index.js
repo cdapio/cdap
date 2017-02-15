@@ -118,10 +118,19 @@ export default class ProgramsTab extends Component {
     }
     if (!isNil(this.state.entity)) {
       if (this.state.entity.programs.length) {
+        let title = T.translate('features.Overview.ProgramTab.title', {appId: this.state.entity.name});
+
+        if (['dataset', 'stream'].indexOf(this.state.entity.type) !== -1) {
+          title = T.translate('features.Overview.ProgramTab.altTitle', {
+            entityId: this.state.entity.id,
+            entityType: this.state.entity.type
+          });
+        }
+
         return (
           <div className="program-tab clearfix">
             <div className="message-section float-xs-left">
-              <strong> {T.translate('features.Overview.ProgramTab.title', {appId: this.state.entity.name})} </strong>
+              <strong> {title} </strong>
               <div>{T.translate('features.Overview.ProgramTab.runningProgramLabel', {programCount: runningProgramsCount})}</div>
             </div>
             <ViewSwitch>
@@ -153,6 +162,7 @@ ProgramsTab.propTypes = {
       app: PropTypes.string,
       id: PropTypes.string,
       type: PropTypes.string
-    }))
+    })),
+    type: PropTypes.string
   }))
 };

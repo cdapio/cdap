@@ -112,6 +112,27 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
     }
   };
 
+  const defaultStatusState = {
+    status: null,
+    startTime: null,
+    endTime: null
+  };
+
+  const statusInfo = (state = defaultStatusState, action = {}) => {
+    switch(action.type) {
+      case LOGVIEWERSTORE_ACTIONS.SET_STATUS:
+        return Object.assign({}, state, {
+          status: action.payload.status,
+          startTime: action.payload.startTime,
+          endTime: action.payload.endTime
+        });
+      case LOGVIEWERSTORE_ACTIONS.RESET:
+          return defaultStatusState;
+      default:
+        return state;
+    }
+  };
+
   //Combine the reducers
   let {combineReducers, applyMiddleware} = Redux;
   let combinedReducers = combineReducers({
@@ -121,7 +142,8 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
     searchResults,
     totalLogs,
     totalErrors,
-    totalWarnings
+    totalWarnings,
+    statusInfo
   });
 
   let getInitialState = () => {
@@ -156,6 +178,7 @@ angular.module(`${PKG.name}.commons`)
     'RESET': 'RESET',
     'TOTAL_LOGS' : 'TOTAL_LOGS',
     'TOTAL_ERRORS' : 'TOTAL_ERRORS',
-    'TOTAL_WARNINGS' : 'TOTAL_WARNINGS'
+    'TOTAL_WARNINGS' : 'TOTAL_WARNINGS',
+    'SET_STATUS': 'SET_STATUS'
   })
   .factory('LogViewerStore', LogViewerStore);

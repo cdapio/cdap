@@ -28,6 +28,7 @@ import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 import co.cask.cdap.etl.log.LogContext;
+import co.cask.cdap.etl.planner.StageInfo;
 
 import java.util.Collections;
 import java.util.Map;
@@ -46,11 +47,11 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
                                  DatasetContext datasetContext,
                                  Metrics metrics,
                                  LookupProvider lookup,
-                                 String stageName,
                                  long logicalStartTime,
                                  Map<String, String> runtimeArgs,
-                                 Admin admin) {
-    super(pluginContext, metrics, lookup, stageName);
+                                 Admin admin,
+                                 StageInfo stageInfo) {
+    super(pluginContext, metrics, lookup, stageInfo);
     this.datasetContext = datasetContext;
     this.logicalStartTime = logicalStartTime;
     this.runtimeArgs = runtimeArgs;
@@ -60,11 +61,11 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
   protected <T extends PluginContext & DatasetContext> AbstractBatchContext(T context,
                                                                             Metrics metrics,
                                                                             LookupProvider lookup,
-                                                                            String stageName,
                                                                             long logicalStartTime,
                                                                             Map<String, String> runtimeArgs,
-                                                                            Admin admin) {
-    super(context, metrics, lookup, stageName);
+                                                                            Admin admin,
+                                                                            StageInfo stageInfo) {
+    super(context, metrics, lookup, stageInfo);
     this.datasetContext = context;
     this.logicalStartTime = logicalStartTime;
     this.runtimeArgs = runtimeArgs;

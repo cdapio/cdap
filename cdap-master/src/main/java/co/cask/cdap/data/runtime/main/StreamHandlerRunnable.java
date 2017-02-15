@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.data.runtime.main;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -56,7 +55,6 @@ import co.cask.cdap.security.impersonation.RemoteUGIProvider;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -64,8 +62,6 @@ import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
-import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.List;
 
@@ -81,34 +77,28 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
   }
 
   @Override
-  protected void doInit(TwillContext context) {
-    try {
-      CConfiguration cConf = getCConfiguration();
-      Configuration hConf = getConfiguration();
+  protected Injector doInit(TwillContext context) {
+    CConfiguration cConf = getCConfiguration();
+    Configuration hConf = getConfiguration();
 
-      // Set the host name to the one provided by Twill
-      cConf.set(Constants.Stream.ADDRESS, context.getHost().getHostName());
-      // Set the worker threads to number of cores * 2 available
-      cConf.setInt(Constants.Stream.WORKER_THREADS, Runtime.getRuntime().availableProcessors() * 2);
-      // Set the instance id
-      cConf.setInt(Constants.Stream.CONTAINER_INSTANCE_ID, context.getInstanceId());
+    // Set the host name to the one provided by Twill
+    cConf.set(Constants.Stream.ADDRESS, context.getHost().getHostName());
+    // Set the worker threads to number of cores * 2 available
+    cConf.setInt(Constants.Stream.WORKER_THREADS, Runtime.getRuntime().availableProcessors() * 2);
+    // Set the instance id
+    cConf.setInt(Constants.Stream.CONTAINER_INSTANCE_ID, context.getInstanceId());
 
-      injector = createInjector(cConf, hConf);
-      injector.getInstance(LogAppenderInitializer.class).initialize();
-      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                                                         Constants.Logging.COMPONENT_NAME,
-                                                                         Constants.Service.STREAMS));
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    injector = createInjector(cConf, hConf);
+    injector.getInstance(LogAppenderInitializer.class).initialize();
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
+                                                                       Constants.Logging.COMPONENT_NAME,
+                                                                       Constants.Service.STREAMS));
+    return injector;
   }
 
   @Override
-  protected void getServices(List<? super Service> services) {
-    services.add(injector.getInstance(ZKClientService.class));
-    services.add(injector.getInstance(KafkaClientService.class));
+  protected void addServices(List<? super Service> services) {
     services.add(injector.getInstance(AuthorizationEnforcementService.class));
-    services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(StreamHttpService.class));
     services.add(injector.getInstance(StreamService.class));
   }

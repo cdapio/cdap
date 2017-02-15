@@ -26,6 +26,7 @@ import {MyMetadataApi} from 'api/metadata';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';
 import FastActionToMessage from 'services/fast-action-message-helper';
+import {createRouterPath} from 'react-router/LocationUtils';
 import capitalize from 'lodash/capitalize';
 
 export default class DatasetOverview extends Component {
@@ -138,7 +139,9 @@ export default class DatasetOverview extends Component {
           linkTo={{
             pathname: `/ns/${namespace}/datasets/${this.props.entity.id}`,
             state: {
-              entityDetail: this.state.entityDetail
+              entityDetail: this.state.entityDetail,
+              entityMetadata: this.props.entity,
+              previousPathname: createRouterPath(location).replace(/\/cdap\//g, '/')
             }
           }}
           onClose={this.props.onClose}

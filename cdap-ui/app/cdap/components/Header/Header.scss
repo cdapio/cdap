@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,122 +14,166 @@
  * the License.
  */
 
-@import "../../styles/variables.scss";
+@import '../../styles/variables.scss';
 
-$navbar-brand-bg: #363945;
+.global-navbar {
+  height: 50px;
+  background: $navbar-bg;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+  display: flex;
 
-@mixin product-navbar-mixins($border-product-color, $active-link-color) {
-  .brand-header .navbar-brand { border-color: $border-product-color; }
-  .navbar-list {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    a {
-      &:hover,
-      &.active {
-        color: $active-link-color;
-      }
-      color: #cccccc;
-    }
-  }
-}
-
-.cask-header {
-  @media(max-width: 1260px) {
-    .navbar {
-      .navbar-list {
-        padding-left: 10px;
-      }
-    }
-  }
-  .navbar {
-    height: $height-of-header;
-    background-color: $navbar-bg;
+  a,
+  button,
+  i,
+  li,
+  li a,
+  .with-shadow,
+  .dropdown-toggle,
+  .dropdown-item {
     color: white;
-    border: 0;
-    font-weight: 500;
-    z-index: 1000;
-    margin-bottom: 0;
-    padding: 0;
-
-    &.cdap { @include product-navbar-mixins($cdap-orange, $cdap-orange); }
-    &.hydrator { @include product-navbar-mixins($hydrator-blue, #43AAFF); }
-    &.tracker { @include product-navbar-mixins($tracker-green, $tracker-green); }
-    .brand-header {
-      float: left;
-      a { color: white; }
-
-      .navbar-brand {
-        background-color: transparent;
-        padding: 10px;
+    &:hover,
+    &:focus {
+      color: $cdap-light-orange;
+    }
+    &:active,
+    .active {
+      color: $cdap-orange;
+      &:focus,
+      &:hover {
+        outline: none;
+        color: $cdap-orange;
       }
     }
+  }
 
-    .menu-item,
-    .navbar-item {
-      display: inline-block;
-      line-height: $height-of-header;
-      height: $height-of-header;
-      text-decoration: none;
+  .global-navbar-toggler {
+    display: none;
+
+    @media(max-width: 1011px) {
+      display: inline-flex;
+      height: 50px;
+      padding-top: 0;
+      order: 3;
+      background: transparent;
+      border: transparent;
+      &:hover {
+        background: transparent;
+        border: transparent;
+      }
+      i {
+        line-height: 47px;
+      }
     }
+  }
 
-    .menu-item {
-      font-size: 14px;
-    }
-
-    .product-title {
-      margin-left: 10px;
-      user-select: none;
-    }
-
-    /* RIGHT MENU */
-    .right-menu {
+  .brand-section {
+    display: inline-block;
+    vertical-align: top;
+    img {
       height: 50px;
     }
-    .navbar-item {
-      font-size: 17px;
-      cursor: pointer;
-      float: left;
-      padding: 0 12px;
+  }
 
-      .namespace-holder {
-        height: inherit;
+  .global-navbar-collapse {
+    @media(max-width: 1011px) {
+      display: none;
+      &.minimized {
+        display: block;
+        background-color: inherit;
+        width: 100%;
+        position: absolute;
+        top: 50px;
       }
-      &.open {
-        background-color: white;
-        color: #666666;
-        border-bottom: 2px solid #cccccc;
+    }
+    line-height: 50px;
+    .navbar-right-section {
+      vertical-align: top;
+      display: inline-flex;
+      justify-content: flex-end;
+
+      .cask-market-button {
+        display: block;
       }
 
-      ul.dropdown-menu {
-        margin: 1px 0;
-        border: 0;
-        border-radius: 0 0 4px 4px;
-        max-height: 300px;
-        overflow-y: auto;
+      li {
+        vertical-align: top;
+        &.with-shadow {
+          box-shadow: -18px 0px 24px -9px rgba(0, 0, 0, 0.4);
+          height: 50px;
+          padding-left: 10px;
+          margin-left: 10px;
+          margin-right: 0;
+          min-width: 120px;
+          cursor: pointer;
 
-        li a {
-          line-height: 30px;
-          font-weight: 500;
+          [class*="icon-"] {
+            margin-right: 5px;
+          }
+        }
+        .namespace-dropdown {
+          border: 0;
+          .dropdown {
+            .dropdown-menu {
+              padding: 0;
+            }
+            .current-namespace {
+              background: transparent;
+              &:hover {
+                background: transparent;
+              }
+            }
+          }
         }
       }
     }
-    // TODO: Look into switching this to behave like the Settings uib dropdown
-    .popover.bottom > .arrow {
-      border-bottom-color: #999999;
+  }
+  ul {
+    margin: 0;
+    padding: 0;
+    li {
+      display: inline-block;
+      margin: 0 15px;
+      vertical-align: top;
+      line-height: 50px;
+      &:focus {
+        outline: none;
+      }
+
+      a {
+        color: inherit;
+        display: block;
+        background: transparent;
+        text-decoration: none;
+      }
     }
   }
-
-  .display-container {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: 1040;
+  .navbar-list-section {
+    display: inline-flex;
+    min-width: 300px;
+    align-items: baseline;
+    flex: 1;
+    align-items: flex-start;
+  }
+  .navbar-list-section,
+  .navbar-right-section {
+    .dropdown {
+      .dropdown-menu {
+        padding-bottom: 10px;
+        .dropdown-divider {
+          height: 1px;
+          margin: 0.5rem 0;
+          overflow: hidden;
+        }
+      }
+    }
+    .dropdown.open {
+      .dropdown-toggle {
+        background-color: transparent;
+        color: $cdap-orange;
+      }
+    }
   }
 }

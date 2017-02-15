@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,23 +28,21 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.AbstractScheduledService;
-import org.apache.twill.common.Threads;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Base class for {@link MetricsCollectionService} which collect metrics through a set of cached
  * {@link AggregatedMetricsEmitter}.
  */
-public abstract class AggregatedMetricsCollectionService extends AbstractScheduledService
+public abstract class AggregatedMetricsCollectionService extends AbstractExecutionThreadService
                                                          implements MetricsCollectionService {
 
   private static final Logger LOG = LoggerFactory.getLogger(AggregatedMetricsCollectionService.class);
@@ -52,8 +50,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
   private final LoadingCache<Map<String, String>, MetricsContext> collectors;
   private final LoadingCache<Map<String, String>, LoadingCache<String, AggregatedMetricsEmitter>> emitters;
-
-  private ScheduledExecutorService executorService;
+  private Thread runThread;
 
   public AggregatedMetricsCollectionService() {
     this.collectors = CacheBuilder.newBuilder()
@@ -91,17 +88,51 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
    */
   protected abstract void publish(Iterator<MetricValues> metrics) throws Exception;
 
-  @Override
-  protected final void runOneIteration() throws Exception {
-    final long timestamp = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-    LOG.trace("Start log collection for timestamp {}", timestamp);
-
-    publishMetrics(timestamp, getMetrics(timestamp));
+  /**
+   * Returns the initial delay in milliseconds for the first metrics to be published.
+   */
+  protected long getInitialDelayMillis() {
+    return TimeUnit.SECONDS.toMillis(Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS);
   }
 
-  private void publishMetrics(long timestamp, Iterator<MetricValues> metrics) {
+  /**
+   * Returns the period in milliseconds for metrics to be published periodically after the initial delay.
+   */
+  protected long getPeriodMillis() {
+    return TimeUnit.SECONDS.toMillis(Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS);
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    runThread = Thread.currentThread();
+  }
+
+  @Override
+  protected final void run() {
+    long sleepMillis = getInitialDelayMillis();
+    while (isRunning()) {
+      try {
+        TimeUnit.MILLISECONDS.sleep(sleepMillis);
+        long startTime = System.currentTimeMillis();
+        publishMetrics(startTime);
+        sleepMillis = Math.max(0, getPeriodMillis() - (System.currentTimeMillis() - startTime));
+      } catch (InterruptedException e) {
+        // Expected when stop is called.
+        break;
+      }
+    }
+  }
+
+  private void publishMetrics(long currentTimeMillis) throws InterruptedException {
+    long timestamp = TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis);
+
+    LOG.trace("Start log collection for timestamp {}", timestamp);
+
+    Iterator<MetricValues> metrics = getMetrics(timestamp);
     try {
       publish(metrics);
+    } catch (InterruptedException e) {
+      throw e;
     } catch (Throwable t) {
       LOG.error("Failed in publishing metrics for timestamp {}.", timestamp, t);
     }
@@ -114,17 +145,16 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   }
 
   @Override
-  protected ScheduledExecutorService executor() {
-    executorService = Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("metrics-collection"));
-    return executorService;
-  }
-
-  @Override
-  protected Scheduler scheduler() {
-    return Scheduler.newFixedRateSchedule(Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS,
-                                          Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS,
-                                          TimeUnit.SECONDS);
+  protected Executor executor() {
+    final String name = getClass().getSimpleName();
+    return new Executor() {
+      @Override
+      public void execute(Runnable command) {
+        Thread thread = new Thread(command, name);
+        thread.setDaemon(true);
+        thread.start();
+      }
+    };
   }
 
   @Override
@@ -135,12 +165,13 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   @Override
   protected void shutDown() throws Exception {
     // Flush the metrics when shutting down.
-    try {
-      runOneIteration();
-    } finally {
-      if (executorService != null) {
-        executorService.shutdownNow();
-      }
+    publishMetrics(System.currentTimeMillis());
+  }
+
+  @Override
+  protected void triggerShutdown() {
+    if (runThread != null) {
+      runThread.interrupt();
     }
   }
 

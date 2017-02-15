@@ -151,10 +151,20 @@ public abstract class AbstractTransactionContext extends TransactionContext {
           success = false;
         }
       }
-      if (success) {
-        txClient.abort(currentTx);
-      } else {
-        txClient.invalidate(currentTx.getTransactionId());
+      try {
+        if (success) {
+          txClient.abort(currentTx);
+        } else {
+          txClient.invalidate(currentTx.getTransactionId());
+        }
+      } catch (Throwable t) {
+        if (cause == null) {
+          cause = new TransactionFailureException(
+            String.format("Error while calling transaction service to %s transaction %d.",
+                          success ? "abort" : "invalidate", currentTx.getTransactionId()));
+        } else {
+          cause.addSuppressed(t);
+        }
       }
       if (cause != null) {
         throw cause;

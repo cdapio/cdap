@@ -15,11 +15,15 @@
  */
 import React, {PropTypes} from 'react';
 import EntityCard from 'components/EntityCard';
+import NamespaceStore from 'services/NamespaceStore';
 import {parseMetadata} from 'services/metadata-parser';
+import {convertEntityTypeToApi} from 'services/entity-type-api-converter';
+import {Link} from 'react-router';
 import shortid from 'shortid';
 require('./DataStreamCards.scss');
 
 export default function DatasetStreamCards({dataEntities}) {
+  let currentNamespace = NamespaceStore.getState().selectedNamespace;
   let data = dataEntities.map( dataEntity => {
     let entity = {
       entityId: dataEntity.entityId,
@@ -35,11 +39,13 @@ export default function DatasetStreamCards({dataEntities}) {
     <div className="dataentity-cards">
       {
         data.map(dataEntity => (
-          <EntityCard
-            className="entity-card-container"
-            entity={dataEntity}
-            key={dataEntity.uniqueId}
-          />
+          <Link to={`/ns/${currentNamespace}/${convertEntityTypeToApi(dataEntity.type)}/${dataEntity.id}`}>
+            <EntityCard
+              className="entity-card-container"
+              entity={dataEntity}
+              key={dataEntity.uniqueId}
+            />
+          </Link>
         ))
       }
     </div>

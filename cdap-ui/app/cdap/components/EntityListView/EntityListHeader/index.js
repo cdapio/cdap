@@ -15,11 +15,11 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import { Dropdown, DropdownToggle, DropdownItem } from 'reactstrap';
+import CustomDropdownMenu from 'components/CustomDropdownMenu';
 import T from 'i18n-react';
 import debounce from 'lodash/debounce';
-import PaginationDropdown from 'components/Pagination/PaginationDropdown';
-import {Tooltip} from 'reactstrap';
+import ResourceCenterButton from 'components/ResourceCenterButton';
 
 require('./EntityListHeader.scss');
 
@@ -32,12 +32,9 @@ export default class EntityListHeader extends Component {
       searchText: props.searchText,
       sortOptions: props.sortOptions,
       filterOptions: props.filterOptions,
-      numberOfPages: props.numberOfPages,
-      currentPage: props.currentPage,
       activeFilter: props.activeFilter,
       activeSort: props.activeSort
     };
-
     this.debouncedHandleSearch = debounce(this.handleSearch.bind(this), 500);
   }
 
@@ -46,8 +43,6 @@ export default class EntityListHeader extends Component {
       searchText: nextProps.searchText,
       sortOptions: nextProps.sortOptions,
       filterOptions: nextProps.filterOptions,
-      numberOfPages: nextProps.numberOfPages,
-      currentPage: nextProps.currentPage,
       activeFilter: nextProps.activeFilter,
       activeSort: nextProps.activeSort
     });
@@ -89,49 +84,43 @@ export default class EntityListHeader extends Component {
     });
   }
   render() {
-
     let tooltipId = 'filter-tooltip-target-id';
-    const placeholder = this.props.isSearchDisabled ?
-      T.translate('features.EntityListView.Header.search-disabled-placeholder')
-    :
-      T.translate('features.EntityListView.Header.search-placeholder')
-    ;
-
+    const placeholder = T.translate('features.EntityListView.Header.search-placeholder');
     const sortDropdown = (
-        <Dropdown
-          disabled={this.props.isSortDisabled}
-          isOpen={this.state.isSortExpanded}
-          toggle={this.handleSortToggle.bind(this)}
-          id={tooltipId}
+      <Dropdown
+        isOpen={this.state.isSortExpanded}
+        toggle={this.handleSortToggle.bind(this)}
+        id={tooltipId}
+      >
+        <DropdownToggle
+          tag='div'
+          className="sort-toggle"
         >
-          <DropdownToggle tag='div'>
-            {this.state.isSortExpanded ?
-              <span>{T.translate('features.EntityListView.Header.sort')}</span> :
-              <span>{T.translate('features.EntityListView.Header.sortLabel')}{this.state.activeSort.displayName}</span>
-            }
-            <span className="fa fa-caret-down float-xs-right"></span>
-          </DropdownToggle>
-          <DropdownMenu>
-            {
-              this.state.sortOptions.map((option, index) => {
-                return (
-                  <DropdownItem
-                    key={index}
-                    onClick={this.props.onSortClick.bind(this, option)}
-                  >
-                    {option.displayName}
-                    {
-                      this.state.activeSort.fullSort === option.fullSort ?
-                        <span className="fa fa-check float-xs-right"></span>
-                      :
-                        null
-                    }
-                  </DropdownItem>
-                );
-              })
-            }
-          </DropdownMenu>
-        </Dropdown>
+          <span>{this.state.activeSort.displayName}</span>
+          <span className="fa fa-angle-down float-xs-right"></span>
+        </DropdownToggle>
+        <CustomDropdownMenu>
+          {
+            this.state.sortOptions.slice(1).map((option, index) => {
+              return (
+                <DropdownItem
+                  tag="li"
+                  key={index}
+                  onClick={this.props.onSortClick.bind(this, option)}
+                >
+                  {option.displayName}
+                  {
+                    this.state.activeSort.fullSort === option.fullSort ?
+                      <span className="fa fa-check float-xs-right"></span>
+                    :
+                      null
+                  }
+                </DropdownItem>
+              );
+            })
+          }
+        </CustomDropdownMenu>
+      </Dropdown>
     );
 
     const filterDropdown = (
@@ -139,15 +128,19 @@ export default class EntityListHeader extends Component {
         isOpen={this.state.isFilterExpanded}
         toggle={this.handleFilterToggle.bind(this)}
       >
-        <DropdownToggle tag='div'>
-          <span>{T.translate('features.EntityListView.Header.filters')}</span>
-          <span className="fa fa-filter float-xs-right"></span>
+        <DropdownToggle
+          tag='div'
+          className="filter-toggle"
+        >
+          <span>{T.translate('features.EntityListView.Header.filterBy')}</span>
+          <span className="fa fa-angle-down float-xs-right"></span>
         </DropdownToggle>
-        <DropdownMenu onClick={e => e.stopPropagation()}>
+        <CustomDropdownMenu onClick={e => e.stopPropagation()}>
           {
             this.state.filterOptions.map((option) => {
               return (
                 <DropdownItem
+                  tag="li"
                   key={option.id}
                 >
                   <div className="form-check">
@@ -168,54 +161,36 @@ export default class EntityListHeader extends Component {
               );
             })
           }
-        </DropdownMenu>
+        </CustomDropdownMenu>
       </Dropdown>
     );
 
     return (
-      <div className="entity-list-header">
-        <div className="search-box">
-          <div className="form-group input-group">
-            <label className="control-label sr-only">
-              {T.translate('features.EntityListView.Header.search-placeholder')}
-            </label>
+      <div>
+        <div className="entity-list-header">
+          <div className="search-box input-group">
+            <span className="input-feedback input-group-addon">
+              <span className="fa fa-search"></span>
+            </span>
             <input
-              disabled={this.props.isSearchDisabled ? 'disabled': null}
               type="text"
-              className="form-control"
+              className="search-input form-control"
               placeholder={placeholder}
               value={this.state.searchText}
               onChange={this.onSearchChange.bind(this)}
             />
-            <span className="input-feedback">
-              <span className="fa fa-search"></span>
-            </span>
           </div>
-        </div>
-        <div className="filter">
-          {filterDropdown}
-          <Tooltip
-            placement="top"
-            isOpen={this.state.sortDropdownTooltip}
-            target={tooltipId}
-            toggle={this.toggleSortDropdownTooltip.bind(this)}
-            delay={0}
-          >
-            {T.translate(`features.EntityListView.Header.sortdropdown-tooltip`)}
-          </Tooltip>
-        </div>
-        <div className="view-selector float-xs-right">
+          <div className="filter">
+            {filterDropdown}
+          </div>
           <div className="sort">
+            <span className="sort-label">
+              {T.translate('features.EntityListView.Header.sortLabel')}
+            </span>
             {sortDropdown}
           </div>
-          <div className="pagination-dropdown">
-            <PaginationDropdown
-              numberOfPages={this.state.numberOfPages}
-              currentPage={this.state.currentPage}
-              onPageChange={this.props.onPageChange}
-            />
-          </div>
         </div>
+        <ResourceCenterButton />
       </div>
     );
   }
@@ -247,9 +222,5 @@ EntityListHeader.propTypes = {
   isSortDisabled: PropTypes.bool,
   onSortClick: PropTypes.func,
   onSearch: PropTypes.func,
-  isSearchDisabled: PropTypes.bool,
-  searchText: PropTypes.string,
-  numberOfPages: PropTypes.number,
-  currentPage: PropTypes.number,
-  onPageChange: PropTypes.func
+  searchText: PropTypes.string
 };

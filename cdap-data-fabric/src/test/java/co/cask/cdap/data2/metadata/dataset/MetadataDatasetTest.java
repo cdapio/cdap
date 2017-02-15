@@ -1085,56 +1085,58 @@ public class MetadataDatasetTest {
         // first 2 in ascending order
         searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 0, 2, 0, null, false);
         Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry), searchResults.getResults());
+        Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry, appEntry), searchResults.getAllResults());
         // return 2 with offset 1 in ascending order
         searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 1, 2, 0, null, false);
         Assert.assertEquals(ImmutableList.of(dsEntry, appEntry), searchResults.getResults());
+        Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry, appEntry), searchResults.getAllResults());
         // descending sort by name. offset and filter should be respected.
         SortInfo nameDesc = new SortInfo(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, SortInfo.SortOrder.DESC);
         // first 2 in descending order
         searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 0, 2, 0, null, false);
         Assert.assertEquals(ImmutableList.of(appEntry, dsEntry), searchResults.getResults());
+        Assert.assertEquals(ImmutableList.of(appEntry, dsEntry, flowEntry), searchResults.getAllResults());
         // last 1 in descending order
         searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 2, 1, 0, null, false);
         Assert.assertEquals(ImmutableList.of(flowEntry), searchResults.getResults());
+        Assert.assertEquals(ImmutableList.of(appEntry, dsEntry, flowEntry), searchResults.getAllResults());
         // limit 0 should return empty
         searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 2, 0, 0, null, false);
         Assert.assertTrue(searchResults.getResults().isEmpty());
+        Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry, appEntry), searchResults.getAllResults());
         searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 1, 0, 0, null, false);
         Assert.assertTrue(searchResults.getResults().isEmpty());
+        Assert.assertEquals(ImmutableList.of(appEntry, dsEntry, flowEntry), searchResults.getAllResults());
         // offset greater than total search results should return empty
         searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 4, 0, 0, null, false);
         Assert.assertTrue(searchResults.getResults().isEmpty());
+        Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry, appEntry), searchResults.getAllResults());
         searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 100, 0, 0, null, false);
         Assert.assertTrue(searchResults.getResults().isEmpty());
+        Assert.assertEquals(ImmutableList.of(appEntry, dsEntry, flowEntry), searchResults.getAllResults());
 
         // test cursors
         searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 0, 1, 3, null, false);
-        // limit is 1, but we return 3 because 3 cursors are desired.
-        Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry, appEntry), searchResults.getResults());
+        Assert.assertEquals(ImmutableList.of(flowEntry), searchResults.getResults());
         // only 2 cursors are returned even though we requested 3 because we do not have enough data to return
         Assert.assertEquals(ImmutableList.of(dsName, appName), searchResults.getCursors());
 
         // use first cursor returned in the previous query. the rest of the parameters stay the same
         searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 0, 1, 3, searchResults.getCursors().get(0),
                                        false);
-        // limit is 1, but we return 2 because 3 cursors are desired, however only 2 are available starting
-        // at the cursor.
-        Assert.assertEquals(ImmutableList.of(dsEntry, appEntry), searchResults.getResults());
+        Assert.assertEquals(ImmutableList.of(dsEntry), searchResults.getResults());
         // only 1 cursor is returned even though we requested 3 because we do not have enough data to return
         Assert.assertEquals(ImmutableList.of(appName), searchResults.getCursors());
 
         // use first cursor returned in the previous query. the rest of the parameters stay the same
         searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 0, 1, 3, searchResults.getCursors().get(0),
                                        false);
-        // limit is 1, and even though 3 cursors are desired, we return only 1 result, because the after the cursor we
-        // do not have enough data for 3 further cursors
         Assert.assertEquals(ImmutableList.of(appEntry), searchResults.getResults());
         // no cursors are returned even though we requested 3 because we do not have enough data
         Assert.assertEquals(ImmutableList.of(), searchResults.getCursors());
 
         searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 0, 2, 3, null, false);
-        // limit is 2, we return 3 because 3 cursors are desired
-        Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry, appEntry), searchResults.getResults());
+        Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry), searchResults.getResults());
         // only 1 cursor is returned even though we requested 3 because we do not have enough data to return
         Assert.assertEquals(ImmutableList.of(appName), searchResults.getCursors());
 

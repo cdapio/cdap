@@ -22,6 +22,7 @@ import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.NamespaceClient;
+import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
@@ -33,6 +34,8 @@ import java.util.List;
 
 /**
  * {@link Command} to list namespaces.
+ * Uses {@link NamespaceCommandUtils#prettyPrintNamespaceConfigCLI(NamespaceConfig)} to display the
+ * {@link NamespaceConfig}.
  */
 public class ListNamespacesCommand extends AbstractCommand {
 

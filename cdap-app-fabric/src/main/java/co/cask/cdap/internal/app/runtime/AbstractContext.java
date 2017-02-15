@@ -58,6 +58,7 @@ import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.transaction.RetryingShortTransactionSystemClient;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.preview.DataTracerFactoryProvider;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
@@ -165,10 +166,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
 
+    TransactionSystemClient retryingTxClient = new RetryingShortTransactionSystemClient(txClient, retryStrategy);
     this.datasetCache = multiThreaded
-      ? new MultiThreadDatasetCache(instantiator, txClient, new NamespaceId(program.getId().getNamespace()),
+      ? new MultiThreadDatasetCache(instantiator, retryingTxClient, new NamespaceId(program.getId().getNamespace()),
                                     runtimeArguments, programMetrics, staticDatasets, messagingContext)
-      : new SingleThreadDatasetCache(instantiator, txClient, new NamespaceId(program.getId().getNamespace()),
+      : new SingleThreadDatasetCache(instantiator, retryingTxClient, new NamespaceId(program.getId().getNamespace()),
                                      runtimeArguments, programMetrics, staticDatasets);
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
@@ -574,6 +576,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
         }
       });
     }
+  }
+
+  public RetryStrategy getRetryStrategy() {
+    return retryStrategy;
   }
 
   private ClassLoader setContextCombinedClassLoader() {

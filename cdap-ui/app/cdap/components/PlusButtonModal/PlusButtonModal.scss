@@ -18,6 +18,7 @@
 
 .plus-button-modal {
   overflow-x: hidden;
+  position: relative;
 
   &.modal-dialog {
     height: 75vh;
@@ -36,6 +37,11 @@
         padding: 0;
         height: calc(100% - 51px); // 100% - 51px for modal header
         background: #ffffff;
+        > span,
+        > span > div {
+          display: inline-block;
+          height: 100%;
+        }
       }
       .modal-header {
         height: 52px;
@@ -52,9 +58,7 @@
         }
 
         .modal-close-btn {
-          display: inline-flex;
           cursor: pointer;
-          padding: 0 2px 0 10px;
         }
 
         .button-icon {
@@ -97,16 +101,11 @@
       }
     }
   }
-}
 
-.plus-button-modal {
   .plus-modal-header-text {
     vertical-align: top;
   }
-}
 
-.plus-button-modal {
-  position: relative;
   .plus-button-modal-content-enter {
     opacity: 0.01;
     position: absolute;

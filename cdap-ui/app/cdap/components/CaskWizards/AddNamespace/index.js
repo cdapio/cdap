@@ -62,7 +62,6 @@ export default class AddNamespaceWizard extends Component {
               isOpen={this.state.showWizard}
               toggle={this.props.onClose}
               className="add-namespace-wizard"
-              backdrop={this.props.backdrop}
             >
               <Wizard
                 wizardConfig={AddNamespaceWizardConfig}
@@ -82,6 +81,5 @@ export default class AddNamespaceWizard extends Component {
 AddNamespaceWizard.propTypes = {
   isOpen: PropTypes.bool,
   context: PropTypes.string,
-  onClose: PropTypes.func,
-  backdrop: PropTypes.bool
+  onClose: PropTypes.func
 };

@@ -25,7 +25,6 @@ import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramResourceReporter;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
@@ -45,12 +44,14 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -64,12 +65,14 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.tephra.TxConstants;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.Services;
+import org.apache.twill.kafka.client.BrokerService;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -82,7 +85,9 @@ import java.io.Reader;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.security.Permission;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -109,14 +114,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private ProgramController controller;
   private Configuration hConf;
   private CConfiguration cConf;
-  private ZKClientService zkClientService;
-  private KafkaClientService kafkaClientService;
-  private MetricsCollectionService metricsCollectionService;
-  private StreamCoordinatorClient streamCoordinatorClient;
-  private ProgramResourceReporter resourceReporter;
+  private List<Service> coreServices;
   private LogAppenderInitializer logAppenderInitializer;
-  private CountDownLatch runlatch;
-  private AuthorizationEnforcementService authEnforcementService;
+  private CountDownLatch runLatch;
 
   /**
    * Constructor.
@@ -147,7 +147,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   public void initialize(TwillContext context) {
     System.setSecurityManager(new RunnableSecurityManager(System.getSecurityManager()));
 
-    runlatch = new CountDownLatch(1);
+    runLatch = new CountDownLatch(1);
+    coreServices = new ArrayList<>();
     name = context.getSpecification().getName();
     LOG.info("Initializing runnable: " + name);
     try {
@@ -157,6 +158,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       hConf = new Configuration();
       hConf.clear();
       hConf.addResource(new File(cmdLine.getOptionValue(RunnableOptions.HADOOP_CONF_FILE)).toURI().toURL());
+      // don't have tephra retry in order to give CDAP more control over when to retry and how.
+      hConf.set(TxConstants.Service.CFG_DATA_TX_CLIENT_RETRY_STRATEGY, "n-times");
+      hConf.setInt(TxConstants.Service.CFG_DATA_TX_CLIENT_ATTEMPTS, 0);
 
       UserGroupInformation.setConfiguration(hConf);
 
@@ -164,10 +168,12 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       Injector injector = Guice.createInjector(createModule(context));
 
-      zkClientService = injector.getInstance(ZKClientService.class);
-      kafkaClientService = injector.getInstance(KafkaClientService.class);
-      metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-      streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+      coreServices.add(injector.getInstance(ZKClientService.class));
+      coreServices.add(injector.getInstance(KafkaClientService.class));
+      coreServices.add(injector.getInstance(BrokerService.class));
+      coreServices.add(injector.getInstance(MetricsCollectionService.class));
+      coreServices.add(injector.getInstance(StreamCoordinatorClient.class));
+      coreServices.add(injector.getInstance(AuthorizationEnforcementService.class));
 
       programOpts = createProgramOptions(cmdLine, context, context.getSpecification().getConfigs());
 
@@ -189,9 +195,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
         throw Throwables.propagate(e);
       }
 
-      resourceReporter = new ProgramRunnableResourceReporter(program.getId(), metricsCollectionService, context);
-
-      authEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
+      coreServices.add(new ProgramRunnableResourceReporter(program.getId(),
+                                                           injector.getInstance(MetricsCollectionService.class),
+                                                           context));
       LOG.info("Runnable initialized: {}", name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
@@ -202,7 +208,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   @Override
   public void handleCommand(Command command) throws Exception {
     // need to make sure controller exists before handling the command
-    runlatch.await();
+    runLatch.await();
     if (ProgramCommands.SUSPEND.equals(command)) {
       controller.suspend().get();
       return;
@@ -270,8 +276,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   @Override
   public void run() {
     Futures.getUnchecked(
-      Services.chainStart(zkClientService, kafkaClientService,
-                          metricsCollectionService, streamCoordinatorClient, resourceReporter, authEnforcementService));
+      Services.chainStart(coreServices.get(0),
+                          coreServices.subList(1, coreServices.size()).toArray(new Service[coreServices.size() - 1])));
 
     LOG.info("Starting runnable: {}", name);
     controller = programRunner.run(program, programOpts);
@@ -280,7 +286,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       @Override
       public void alive() {
-        runlatch.countDown();
+        runLatch.countDown();
       }
 
       @Override
@@ -314,7 +320,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       LOG.info("Program {} stopped.", name);
     } catch (InterruptedException e) {
       LOG.warn("Program {} interrupted.", name, e);
-      Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
       LOG.error("Program {} execution failed.", name, e);
       if (propagateServiceError()) {
@@ -326,7 +331,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       }
       // Always unblock the handleCommand method if it is not unblocked before (e.g if program failed to start).
       // The controller state will make sure the corresponding command will be handled correctly in the correct state.
-      runlatch.countDown();
+      runLatch.countDown();
     }
   }
 
@@ -337,9 +342,11 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       if (program != null) {
         Closeables.closeQuietly(program);
       }
+      List<Service> services = Lists.reverse(coreServices);
+
       Futures.getUnchecked(
-        Services.chainStop(authEnforcementService, resourceReporter, streamCoordinatorClient,
-                           metricsCollectionService, kafkaClientService, zkClientService));
+        Services.chainStop(services.get(0),
+                           services.subList(1, services.size()).toArray(new Service[services.size() - 1])));
       LOG.info("Runnable stopped: {}", name);
     } finally {
       if (logAppenderInitializer != null) {

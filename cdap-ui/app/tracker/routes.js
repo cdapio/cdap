@@ -38,7 +38,7 @@ angular.module(PKG.name + '.feature.tracker')
         }
       })
       .state('tracker-enable', {
-        url: '/enable-tracker?iframe&sourceUrl',
+        url: '/enable-metadata?iframe&sourceUrl',
         parent: 'ns',
         templateUrl: '/assets/features/tracker/templates/tracker-enable.html',
         controller: 'TrackerEnableController',
@@ -306,7 +306,7 @@ angular.module(PKG.name + '.feature.tracker')
           }
         })
           .state('tracker.detail.entity.metadata', {
-            url: '/metadata',
+            url: '/summary',
             templateUrl: '/assets/features/tracker/templates/metadata.html',
             controller: 'TrackerMetadataController',
             controllerAs: 'MetadataController',

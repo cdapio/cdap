@@ -19,9 +19,6 @@ package co.cask.cdap.cli.util;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.exception.CommandInputError;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.common.cli.util.Parser;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -45,8 +42,8 @@ public abstract class AbstractCommand extends AbstractAuthCommand {
     super(cliConfig);
   }
 
-  protected Map<String, String> parseMap(@Nullable String value) {
-    return ArgumentParser.parseMap(value);
+  protected Map<String, String> parseMap(@Nullable String value, String description) {
+    return ArgumentParser.parseMap(value, description);
   }
 
   protected List<String> parseList(@Nullable String value) {

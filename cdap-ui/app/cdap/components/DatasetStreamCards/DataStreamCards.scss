@@ -13,6 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
+$card-title-text-color: #373a5c;
+
 .dataentity-cards {
   padding-top: 10px;
+
+  .entity-information {
+    color: $card-title-text-color;
+  }
 }

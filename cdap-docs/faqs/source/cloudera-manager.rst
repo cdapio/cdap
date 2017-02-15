@@ -32,7 +32,7 @@ Start by clicking on the parcel icon (near the top-left corner of Cloudera Manag
 like a gift-wrapped box) and ensure that the CDAP parcel is listed as *Active*.
 
 :ref:`Detailed instructions <admin-installation-cloudera>` are available on how to install CDAP on CDH 
-(`Cloudera Data Hub <http://www.cloudera.com/content/www/en-us/resources/datasheet/cdh-datasheet.html>`__) 
+(`Cloudera Distribution of Apache Hadoop <http://www.cloudera.com/content/www/en-us/resources/datasheet/cdh-datasheet.html>`__) 
 using `Cloudera Manager <http://www.cloudera.com/content/www/en-us/products/cloudera-manager.html>`__. 
 
 

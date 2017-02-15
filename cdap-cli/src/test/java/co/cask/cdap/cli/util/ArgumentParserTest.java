@@ -77,8 +77,13 @@ public class ArgumentParserTest {
     String argValue = "^\\[(?<timestamp>%{DAY} \\s+ %{MONTHDAY} %{TIME} %{YEAR})\\]";
     String mapString = "\"test\"='OXF' arg='" + argValue + "'";
 
-    Map<String, String> actual = ArgumentParser.parseMap(mapString);
+    Map<String, String> actual = ArgumentParser.parseMap(mapString, "<arguments>");
     Assert.assertEquals("OXF", actual.get("test"));
     Assert.assertEquals(argValue, actual.get("arg"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testParseInvalidMap() {
+    Map<String, String> actual = ArgumentParser.parseMap("key1=value key2", "<arguments>");
   }
 }

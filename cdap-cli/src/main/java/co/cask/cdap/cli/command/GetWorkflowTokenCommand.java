@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -97,7 +97,8 @@ public class GetWorkflowTokenCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets the workflow token of a workflow for a given run ID";
+    return String.format("Gets the workflow token of a workflow for a given '<%s>'",
+                         ArgumentName.RUN_ID);
   }
 
   private Table getWorkflowToken(ProgramRunId runId, WorkflowToken.Scope workflowTokenScope, String key)

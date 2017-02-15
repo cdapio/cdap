@@ -39,6 +39,7 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
@@ -866,10 +867,18 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
         throw new BadRequestException("Cursors are not supported when sort info is not specified.");
       }
     }
-    MetadataSearchResponse response =
-      metadataAdmin.search(namespaceId, URLDecoder.decode(searchQuery, "UTF-8"), types,
-                           sortInfo, offset, limit, numCursors, cursor, showHidden);
-    responder.sendJson(HttpResponseStatus.OK, response, MetadataSearchResponse.class, GSON);
+    try {
+      MetadataSearchResponse response =
+        metadataAdmin.search(namespaceId, URLDecoder.decode(searchQuery, "UTF-8"), types,
+                             sortInfo, offset, limit, numCursors, cursor, showHidden);
+      responder.sendJson(HttpResponseStatus.OK, response, MetadataSearchResponse.class, GSON);
+    } catch (Exception e) {
+      // if MetadataDataset throws an exception, it gets wrapped
+      if (Throwables.getRootCause(e) instanceof IllegalArgumentException) {
+        throw new BadRequestException(e.getMessage(), e);
+      }
+      throw e;
+    }
   }
 
   private Set<MetadataRecord> getMetadata(NamespacedEntityId namespacedEntityId,

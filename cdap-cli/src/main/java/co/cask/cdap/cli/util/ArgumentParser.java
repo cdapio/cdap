@@ -43,7 +43,7 @@ public class ArgumentParser {
    * @param mapString {@link String} representation of the map
    * @return a {@link Map} with {@link String} keys and {@link String} values
    */
-  public static Map<String, String> parseMap(String mapString) {
+  public static Map<String, String> parseMap(String mapString, String description) {
     if (mapString == null || mapString.isEmpty()) {
       return ImmutableMap.of();
     }
@@ -56,6 +56,8 @@ public class ArgumentParser {
         String key = token.substring(0, firstEquals);
         String value = token.substring(firstEquals + 1, token.length());
         result.put(extractValue(key), extractValue(value));
+      } else {
+        throw new IllegalArgumentException(description + " must be of the form 'key1=val1 key2=val2'");
       }
     }
     return result.build();
@@ -67,8 +69,8 @@ public class ArgumentParser {
    * @param mapString {@link String} representation of the map
    * @return a {@link Map} with {@link String} keys and {@link Integer} values
    */
-  public static Map<String, Integer> parseStringIntegerMap(String mapString) {
-    return Maps.transformValues(parseMap(mapString), new Function<String, Integer>() {
+  public static Map<String, Integer> parseStringIntegerMap(String mapString, String description) {
+    return Maps.transformValues(parseMap(mapString, description), new Function<String, Integer>() {
       @Override
       public Integer apply(String input) {
         return Integer.valueOf(input);

@@ -41,6 +41,7 @@ import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.common.preview.LimitingTransform;
+import co.cask.cdap.etl.planner.StageInfo;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import org.apache.hadoop.conf.Configuration;
@@ -84,37 +85,29 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
   }
 
   @Override
-  protected BatchRuntimeContext createRuntimeContext(String stageName) {
-    Map<String, String> stageRuntimeArgs = pluginRuntimeArgs.get(stageName);
+  protected MapReduceRuntimeContext createRuntimeContext(StageInfo stageInfo) {
+    Map<String, String> stageRuntimeArgs = pluginRuntimeArgs.get(stageInfo.getName());
     if (stageRuntimeArgs == null) {
       stageRuntimeArgs = new HashMap<>();
     }
     return new MapReduceRuntimeContext(taskContext, metrics, new DatasetContextLookupProvider(taskContext),
-                                       stageName, stageRuntimeArgs);
-  }
-
-  private BatchJoinerRuntimeContext createJoinerRuntimeContext(String stageName) {
-    Map<String, String> stageRuntimeArgs = pluginRuntimeArgs.get(stageName);
-    if (stageRuntimeArgs == null) {
-      stageRuntimeArgs = new HashMap<>();
-    }
-    return new MapReduceJoinerRuntimeContext(taskContext, metrics, new DatasetContextLookupProvider(taskContext),
-                                             stageName, stageRuntimeArgs, perStageInputSchemas.get(stageName),
-                                             outputSchemas.get(stageName));
+                                       stageRuntimeArgs, stageInfo);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  protected TrackedTransform getTransformation(String pluginType, String stageName)
+  protected TrackedTransform getTransformation(StageInfo stageInfo)
     throws Exception {
     DefaultMacroEvaluator macroEvaluator = new DefaultMacroEvaluator(taskContext.getWorkflowToken(),
                                                                      taskContext.getRuntimeArguments(),
                                                                      taskContext.getLogicalStartTime(), taskContext,
                                                                      taskContext.getNamespace());
+    String stageName = stageInfo.getName();
+    String pluginType = stageInfo.getPluginType();
     StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
     if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
       BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
-      BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
+      BatchRuntimeContext runtimeContext = createRuntimeContext(stageInfo);
       batchAggregator.initialize(runtimeContext);
       if (isMapPhase) {
         return getTrackedEmitKeyStep(new MapperAggregatorTransformation(batchAggregator, mapOutputKeyClassName,
@@ -128,7 +121,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
       }
     } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
       BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
-      BatchJoinerRuntimeContext runtimeContext = createJoinerRuntimeContext(stageName);
+      BatchJoinerRuntimeContext runtimeContext = createRuntimeContext(stageInfo);
       batchJoiner.initialize(runtimeContext);
       if (isMapPhase) {
         return getTrackedEmitKeyStep(
@@ -142,7 +135,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
       }
     }
 
-    Transformation transformation = getInitializedTransformation(stageName);
+    Transformation transformation = getInitializedTransformation(stageInfo);
     boolean isLimitingSource =
       taskContext.getDataTracer(stageName).isEnabled() && BatchSource.PLUGIN_TYPE.equals(pluginType) && isMapPhase;
     return new TrackedTransform(

@@ -36,7 +36,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.Services;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.zookeeper.ZKClient;
-import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +74,7 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
    */
   protected ResourceBalancerService(String serviceName,
                                     int partitionCount,
-                                    ZKClientService zkClient,
+                                    ZKClient zkClient,
                                     DiscoveryService discoveryService,
                                     final DiscoveryServiceClient discoveryServiceClient) {
     this.serviceName = serviceName;
@@ -148,6 +147,7 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
     }
     try {
       cancelResourceHandler.cancel();
+      completion.get();
     } catch (Throwable th) {
       throwable = th;
       LOG.error("Exception while shutting down {}.", serviceName, th);
@@ -194,9 +194,19 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
 
         @Override
         public void finished(Throwable failureCause) {
-          if (service != null) {
-            service.stopAndWait();
-            service = null;
+          try {
+            if (service != null) {
+              service.stopAndWait();
+              service = null;
+            }
+            completion.set(null);
+          } catch (Throwable t) {
+            LOG.error("Exception when stopping service {}", service, t);
+            Throwable cause = failureCause == null ? t : failureCause;
+            if (cause != t) {
+              cause.addSuppressed(t);
+            }
+            completion.setException(t);
           }
         }
       };

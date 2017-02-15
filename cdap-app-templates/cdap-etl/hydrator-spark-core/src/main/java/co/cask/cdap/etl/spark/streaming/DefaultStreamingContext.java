@@ -20,6 +20,7 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.streaming.StreamingContext;
 import co.cask.cdap.etl.common.AbstractStageContext;
+import co.cask.cdap.etl.planner.StageInfo;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.tephra.TransactionFailureException;
 
@@ -30,8 +31,8 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   private final JavaSparkExecutionContext sec;
   private final JavaStreamingContext jsc;
 
-  public DefaultStreamingContext(String stageName, JavaSparkExecutionContext sec, JavaStreamingContext jsc) {
-    super(sec.getPluginContext(), sec.getMetrics(), stageName);
+  public DefaultStreamingContext(StageInfo stageInfo, JavaSparkExecutionContext sec, JavaStreamingContext jsc) {
+    super(sec.getPluginContext(), sec.getMetrics(), stageInfo);
     this.sec = sec;
     this.jsc = jsc;
   }
@@ -39,6 +40,11 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   @Override
   public JavaStreamingContext getSparkStreamingContext() {
     return jsc;
+  }
+
+  @Override
+  public JavaSparkExecutionContext getSparkExecutionContext() {
+    return sec;
   }
 
   @Override

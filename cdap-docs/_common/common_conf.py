@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright © 2014-2016 Cask Data, Inc.
+# Copyright © 2014-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -76,6 +76,18 @@ def print_sdk_version():
         print "Version tuple: %s" % (version_tuple)
     else:
         print "Could not get version (%s), full version (%s) from grep" % (version, full_version)
+
+def get_spark_version():
+    spark_version = None
+    try:
+        p1 = subprocess.Popen(['grep' , '<spark.version>', '../../../pom.xml' ], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(['awk', 'NR==1;START{print $1}'], stdin=p1.stdout, stdout=subprocess.PIPE)
+        version = p2.communicate()[0]
+        version = version.strip().replace('<spark.version>', '').replace('</spark.version>', '')
+    except:
+        print "Unexpected error: %s" % sys.exc_info()[0]
+        pass
+    return version
 
 def get_git_hash_timestamp():
     # Gets the Git commit information
@@ -198,6 +210,7 @@ locale_dirs = ['_locale/', '../../_common/_locale']
 # The X.Y short-version
 # The "full" version, which includes any alpha/beta/rc/SNAPSHOT tags, also called the "release" version.
 version, short_version, release, version_tuple = get_sdk_version()
+spark_version = get_spark_version()
 
 # The GIT info and GIT environment variables for the build
 git_hash, git_timestamp = get_git_hash_timestamp()
@@ -245,6 +258,7 @@ extlinks = {
     'cask-issue': ('https://issues.cask.co/browse/%s', ''),
     'cask-repository-parcels-cdap': ("http://repository.cask.co/parcels/cdap/%s/%%s" % short_version, None),
     'cdap-guides': (cdap_guides_github_pattern, None),
+    'spark-docs': ("https://spark.apache.org/docs/%s/%%s" % spark_version, None),
 }
 
 # A string of reStructuredText that will be included at the end of every source file that

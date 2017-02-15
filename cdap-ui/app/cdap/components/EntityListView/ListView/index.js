@@ -19,15 +19,14 @@ import EntityCard from 'components/EntityCard';
 import classnames from 'classnames';
 import {objectQuery} from 'services/helpers';
 import T from 'i18n-react';
-import HomeErrorMessage from 'components/EntityListView/ErrorMessage';
-import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
+import JustAddedSection from 'components/EntityListView/JustAddedSection';
 
 export default class HomeListView extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      loading: false,
-      list: [],
+      loading: this.props.loading || false,
+      list: this.props.list || [],
       selectedEntity: {}
     };
   }
@@ -42,6 +41,51 @@ export default class HomeListView extends Component {
       retryCounter: nextProps.retryCounter
     });
   }
+
+  getActiveFilterStrings() {
+    return this.props.activeFilter.map(filter => {
+      if (filter === 'app') {
+        filter = 'application';
+      }
+      return T.translate(`commons.entity.${filter}.plural`);
+    });
+  }
+
+  getSubstitle() {
+    let text = {
+      search: T.translate('features.EntityListView.Info.subtitle.search'),
+      filteredBy: T.translate('features.EntityListView.Info.subtitle.filteredBy'),
+      sortedBy: T.translate('features.EntityListView.Info.subtitle.sortedBy'),
+      displayAll: T.translate('features.EntityListView.Info.subtitle.displayAll'),
+      displaySome: T.translate('features.EntityListView.Info.subtitle.displaySome'),
+    };
+
+    let activeFilters = this.getActiveFilterStrings();
+    let allFiltersSelected = (activeFilters.length === 0 || activeFilters.length === this.props.filterOptions.length);
+    let activeFilterString = activeFilters.join(', ');
+    let activeSort = this.props.activeSort;
+    let searchText = this.props.searchText;
+    let subtitle;
+
+    if (searchText) {
+      subtitle = `${text.search} "${searchText}"`;
+      if (!allFiltersSelected) {
+        subtitle += `, ${text.filteredBy} ${activeFilterString}`;
+      }
+    } else {
+      if (allFiltersSelected) {
+        subtitle = `${text.displayAll}`;
+      } else {
+        subtitle = `${text.displaySome} ${activeFilterString}`;
+      }
+      if (activeSort) {
+        subtitle += `, ${text.sortedBy} ${activeSort.displayName}`;
+      }
+    }
+
+    return subtitle;
+  }
+
   onClick(entity) {
     let activeEntity = this.state.list.filter(e => e.id === entity.id);
     if (activeEntity.length) {
@@ -68,20 +112,10 @@ export default class HomeListView extends Component {
         {T.translate('features.EntityListView.emptyMessage')}
       </h3>
     );
-    let entitiesToBeRendered;
     if (!this.state.loading && !this.state.list.length) {
-      entitiesToBeRendered = this.state.errorMessage ?
-        <HomeErrorMessage
-          errorMessage={this.props.errorMessage}
-          errorStatusCode={this.props.errorStatusCode}
-          onRetry={this.props.onUpdate}
-          retryCounter={this.props.retryCounter}
-        />
-      :
-        empty;
       content = (
         <div className="entities-container">
-          {entitiesToBeRendered}
+          {empty}
         </div>
       );
     }
@@ -106,15 +140,29 @@ export default class HomeListView extends Component {
 
     return (
       <div className={this.props.className}>
-        <ReactCSSTransitionGroup
-          component="div"
-          className="transition-container"
-          transitionName={"entity-animation--" + this.state.animationDirection}
-          transitionEnterTimeout={1000}
-          transitionLeaveTimeout={1000}
-        >
+        {
+          this.props.searchText || !this.props.numColumns ?
+            null
+          :
+            (<JustAddedSection
+              clickHandler={this.onClick.bind(this)}
+              onFastActionSuccess={this.props.onFastActionSuccess}
+              onUpdate={this.props.onUpdate}
+              activeEntity={this.props.activeEntity}
+              currentPage={this.props.currentPage}
+              limit={this.props.numColumns}
+            />)
+        }
+
+        <div className="subtitle">
+          <span>
+            {this.getSubstitle()}
+          </span>
+        </div>
+
+        <div className="entities-all-list-container">
           {content}
-        </ReactCSSTransitionGroup>
+        </div>
       </div>
     );
   }
@@ -131,5 +179,11 @@ HomeListView.propTypes = {
   className: PropTypes.string,
   animationDirection: PropTypes.string,
   activeEntity: PropTypes.object,
-  retryCounter: PropTypes.number
+  retryCounter: PropTypes.number,
+  currentPage: PropTypes.number,
+  activeFilter: PropTypes.array,
+  filterOptions: PropTypes.array,
+  activeSort: PropTypes.obj,
+  searchText: PropTypes.string,
+  numColumns: PropTypes.number
 };

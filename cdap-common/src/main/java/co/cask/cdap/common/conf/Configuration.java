@@ -252,6 +252,17 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
           new DeprecatedKeyInfo(Constants.LogSaver.NUM_CORES));
       put(Constants.Security.SSL_ENABLED_DEPRECATED,
           new DeprecatedKeyInfo(Constants.Security.SSL.EXTERNAL_ENABLED));
+
+      // The old key is defined in LoggingConfigurations class, which is in cdap-watchdog, hence can't use in here
+      put("log.saver.checkpoint.interval.ms",
+          new DeprecatedKeyInfo(Constants.Logging.PIPELINE_CHECKPOINT_INTERVAL_MS));
+      // The following keys are log appender specific keys and they are not defined in Constants.
+      put("log.file.sync.interval.bytes",
+          new DeprecatedKeyInfo("log.pipeline.cdap.file.sync.interval.bytes"));
+      put("log.max.file.size.bytes",
+          new DeprecatedKeyInfo("log.pipeline.cdap.file.max.size.bytes"));
+      put("log.saver.max.file.lifetime.ms",
+          new DeprecatedKeyInfo("log.pipeline.cdap.file.max.lifetime.ms"));
     }
   };
 
@@ -274,6 +285,10 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
       put(Constants.Service.MASTER_SERVICES_BIND_ADDRESS,
           new String[]{Constants.AppFabric.SERVER_ADDRESS_DEPRECATED, Constants.Dataset.Manager.ADDRESS_DEPRECATED});
       put(Constants.Security.SSL.EXTERNAL_ENABLED, new String[] { Constants.Security.SSL_ENABLED_DEPRECATED });
+      put(Constants.Logging.PIPELINE_CHECKPOINT_INTERVAL_MS, new String[] { "log.saver.checkpoint.interval.ms" });
+      put("log.pipeline.cdap.file.sync.interval.bytes", new String[] { "log.file.sync.interval.bytes" });
+      put("log.pipeline.cdap.file.max.size.bytes", new String[] { "log.max.file.size.bytes" });
+      put("log.pipeline.cdap.file.max.lifetime.ms", new String[] { "log.saver.max.file.lifetime.ms" });
     }
   };
 

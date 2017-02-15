@@ -23,6 +23,7 @@ import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
+import co.cask.cdap.etl.planner.StageInfo;
 
 import java.util.Map;
 
@@ -35,11 +36,11 @@ public class WorkflowBackedActionContext extends AbstractBatchContext implements
   public WorkflowBackedActionContext(WorkflowContext workflowContext,
                                      Metrics metrics,
                                      LookupProvider lookup,
-                                     String stageName,
                                      long logicalStartTime,
-                                     Map<String, String> runtimeArgs) {
-    super(workflowContext, workflowContext, metrics, lookup, stageName, logicalStartTime, runtimeArgs,
-          workflowContext.getAdmin());
+                                     Map<String, String> runtimeArgs,
+                                     StageInfo stageInfo) {
+    super(workflowContext, workflowContext, metrics, lookup, logicalStartTime, runtimeArgs,
+          workflowContext.getAdmin(), stageInfo);
     this.workflowContext = workflowContext;
   }
 

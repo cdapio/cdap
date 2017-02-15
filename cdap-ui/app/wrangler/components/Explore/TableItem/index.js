@@ -96,9 +96,9 @@ export default class TableItem extends Component {
       loading: true
     });
 
-    const table = this.props.table;
+    const tableInfo = this.props.table;
 
-    const query = `SELECT * FROM ${table.type}_${table.name} LIMIT 500`;
+    const query = `SELECT * FROM ${tableInfo.databaseName}.${tableInfo.tableName} LIMIT 500`;
     const namespace = NamespaceStore.getState().selectedNamespace;
 
     myExploreApi

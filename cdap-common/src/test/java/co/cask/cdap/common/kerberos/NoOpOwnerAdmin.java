@@ -49,7 +49,8 @@ public class NoOpOwnerAdmin implements OwnerAdmin {
 
   @Nullable
   @Override
-  public KerberosPrincipalId getEffectiveOwner(NamespacedEntityId entityId) throws IOException {
+  public ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId,
+                                                ImpersonatedOpType impersonatedOpType) throws IOException {
     return null;
   }
 

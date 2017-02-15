@@ -428,6 +428,7 @@ export default class SetPreferenceModal extends Component {
         toggle={this.props.toggleModal}
         className="confirmation-modal set-preference-modal"
         size="lg"
+        backdrop='static'
       >
         <ModalHeader
           className="modal-header"

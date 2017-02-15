@@ -19,6 +19,7 @@ package co.cask.cdap.partitioned;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionOutput;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.WorkerManager;
@@ -68,7 +69,7 @@ public class PartitionCorrectorTestRun extends TestFrameworkTestBase {
         "dataset.name", "tpfs",
         "batch.size", "5",
         "verbose", "true"));
-    workerManager.waitForFinish(60, TimeUnit.SECONDS);
+    workerManager.waitForRun(ProgramRunStatus.COMPLETED, 60, TimeUnit.SECONDS);
     validateAllPartitions(numPartitions);
 
     dropAllPartitions();
@@ -84,7 +85,7 @@ public class PartitionCorrectorTestRun extends TestFrameworkTestBase {
         "batch.size", "8",
         "verbose", "false",
         "disable.explore", "false"));
-    workerManager.waitForFinish(60, TimeUnit.SECONDS);
+    workerManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 60, TimeUnit.SECONDS);
     validateAllPartitions(2 * numPartitions);
   }
 

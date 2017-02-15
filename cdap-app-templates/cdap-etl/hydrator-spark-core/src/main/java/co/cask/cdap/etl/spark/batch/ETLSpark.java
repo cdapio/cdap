@@ -123,29 +123,29 @@ public class ETLSpark extends AbstractSpark {
 
       if (BatchSource.PLUGIN_TYPE.equals(pluginType)) {
         BatchConfigurable<BatchSourceContext> batchSource = context.newPluginInstance(stageName, evaluator);
-        BatchSourceContext sourceContext = new SparkBatchSourceContext(sourceFactory, context, lookProvider, stageName);
+        BatchSourceContext sourceContext = new SparkBatchSourceContext(sourceFactory, context, lookProvider, stageInfo);
         batchSource.prepareRun(sourceContext);
         finishers.add(batchSource, sourceContext);
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType)) {
         BatchConfigurable<BatchSinkContext> batchSink = context.newPluginInstance(stageName, evaluator);
-        BatchSinkContext sinkContext = new SparkBatchSinkContext(sinkFactory, context, null, stageName);
+        BatchSinkContext sinkContext = new SparkBatchSinkContext(sinkFactory, context, null, stageInfo);
         batchSink.prepareRun(sinkContext);
         finishers.add(batchSink, sinkContext);
       } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
         BatchConfigurable<SparkPluginContext> sparkSink = context.newPluginInstance(stageName, evaluator);
-        SparkPluginContext sparkPluginContext = new BasicSparkPluginContext(context, lookProvider, stageName);
+        SparkPluginContext sparkPluginContext = new BasicSparkPluginContext(context, lookProvider, stageInfo);
         sparkSink.prepareRun(sparkPluginContext);
         finishers.add(sparkSink, sparkPluginContext);
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
         BatchAggregator aggregator = context.newPluginInstance(stageName, evaluator);
         AbstractAggregatorContext aggregatorContext =
-          new SparkAggregatorContext(context, new DatasetContextLookupProvider(context), stageName);
+          new SparkAggregatorContext(context, new DatasetContextLookupProvider(context), stageInfo);
         aggregator.prepareRun(aggregatorContext);
         finishers.add(aggregator, aggregatorContext);
         stagePartitions.put(stageName, aggregatorContext.getNumPartitions());
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
         BatchJoiner joiner = context.newPluginInstance(stageName, evaluator);
-        SparkJoinerContext sparkJoinerContext = new SparkJoinerContext(stageName, context);
+        SparkJoinerContext sparkJoinerContext = new SparkJoinerContext(stageInfo, context);
         joiner.prepareRun(sparkJoinerContext);
         finishers.add(joiner, sparkJoinerContext);
         stagePartitions.put(stageName, sparkJoinerContext.getNumPartitions());

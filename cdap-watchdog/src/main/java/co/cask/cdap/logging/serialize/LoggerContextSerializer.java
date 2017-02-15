@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,31 +23,31 @@ import org.apache.avro.generic.GenericRecord;
 
 import java.util.Map;
 
-import static co.cask.cdap.logging.serialize.Util.stringOrNull;
+import static co.cask.cdap.logging.serialize.LogSerializerUtil.stringOrNull;
 
 /**
  * Class used to serialize/de-serialize LoggerContextVO.
  */
-public final class LoggerContextSerializer {
+final class LoggerContextSerializer {
   private LoggerContextSerializer() {}
 
-  public static GenericRecord encode(Schema schema, LoggerContextVO context) {
+  static GenericRecord encode(Schema schema, LoggerContextVO context) {
     if (context != null) {
       GenericRecord datum = new GenericData.Record(schema.getTypes().get(1));
       datum.put("birthTime", context.getBirthTime());
       datum.put("name", context.getName());
-      datum.put("propertyMap", LoggingEvent.encodeMdcMap(context.getPropertyMap()));
+      datum.put("propertyMap", LogSerializerUtil.encodeMDC(context.getPropertyMap()));
       return datum;
     }
     return null;
   }
 
-  public static LoggerContextVO decode(GenericRecord datum) {
+  static LoggerContextVO decode(GenericRecord datum) {
     if (datum != null) {
       long birthTime = (Long) datum.get("birthTime");
       String name = stringOrNull(datum.get("name"));
       //noinspection unchecked
-      Map<String, String> propertyMap = LoggingEvent.decodeMdcMap((Map<?, ?>) datum.get("propertyMap"));
+      Map<String, String> propertyMap = LogSerializerUtil.decodeMDC((Map<?, ?>) datum.get("propertyMap"));
       return new LoggerContextVO(name, propertyMap, birthTime);
     }
     return null;

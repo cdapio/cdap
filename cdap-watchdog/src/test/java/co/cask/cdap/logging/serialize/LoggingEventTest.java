@@ -20,6 +20,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.logback.TestLoggingContext;
+import co.cask.cdap.logging.appender.LogMessage;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
@@ -58,8 +59,8 @@ public class LoggingEventTest {
     iLoggingEvent.setMDCPropertyMap(mdcMap);
 
     Schema schema = new Schema.Parser().parse(getClass().getResourceAsStream("/logging/schema/LoggingEvent.avsc"));
-    GenericRecord datum = LoggingEvent.encode(schema, iLoggingEvent,
-                                              LoggingContextAccessor.getLoggingContext());
+    GenericRecord datum = LoggingEvent.encode(schema, new LogMessage(iLoggingEvent,
+                                                                     LoggingContextAccessor.getLoggingContext()));
 
     LoggingEvent actualEvent = new LoggingEvent(LoggingEvent.decode(datum));
     LoggingEventSerializerTest.assertLoggingEventEquals(iLoggingEvent, actualEvent);
@@ -72,7 +73,8 @@ public class LoggingEventTest {
       getClass().getName(), (ch.qos.logback.classic.Logger) logger, Level.ERROR, null, null, null);
 
     Schema schema = new Schema.Parser().parse(getClass().getResourceAsStream("/logging/schema/LoggingEvent.avsc"));
-    GenericRecord datum = LoggingEvent.encode(schema, iLoggingEvent, LoggingContextAccessor.getLoggingContext());
+    GenericRecord datum = LoggingEvent.encode(schema, new LogMessage(iLoggingEvent,
+                                                                     LoggingContextAccessor.getLoggingContext()));
 
     LoggingEvent actualEvent = new LoggingEvent(LoggingEvent.decode(datum));
     LoggingEventSerializerTest.assertLoggingEventEquals(iLoggingEvent, actualEvent);

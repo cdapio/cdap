@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -100,7 +101,7 @@ public class DataCleansingMapReduceTest extends TestBase {
     ImmutableMap<String, String> args = ImmutableMap.of(DataCleansingMapReduce.OUTPUT_PARTITION_KEY, now.toString(),
                                                         DataCleansingMapReduce.SCHEMA_KEY, schemaJson);
     MapReduceManager mapReduceManager = applicationManager.getMapReduceManager(DataCleansingMapReduce.NAME).start(args);
-    mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
+    mapReduceManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     compareData(now, DataCleansing.CLEAN_RECORDS, filterRecords(RECORD_SET1, true));
     compareData(now, DataCleansing.INVALID_RECORDS, filterRecords(RECORD_SET1, false));
@@ -124,7 +125,7 @@ public class DataCleansingMapReduceTest extends TestBase {
                            DataCleansingMapReduce.SCHEMA_KEY, schemaJson);
 
     mapReduceManager = applicationManager.getMapReduceManager(DataCleansingMapReduce.NAME).start(args);
-    mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
+    mapReduceManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 5, TimeUnit.MINUTES);
 
     ImmutableSet<String> recordSets2and3 =
       ImmutableSet.<String>builder().addAll(RECORD_SET2).addAll(RECORD_SET3).build();
@@ -142,7 +143,7 @@ public class DataCleansingMapReduceTest extends TestBase {
                            DataCleansingMapReduce.SCHEMA_KEY, schemaJson);
 
     mapReduceManager = applicationManager.getMapReduceManager(DataCleansingMapReduce.NAME).start(args);
-    mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
+    mapReduceManager.waitForRuns(ProgramRunStatus.COMPLETED, 3, 5, TimeUnit.MINUTES);
 
     compareData(now, DataCleansing.CLEAN_RECORDS, Collections.<String>emptySet());
     compareData(now, DataCleansing.INVALID_RECORDS, Collections.<String>emptySet());

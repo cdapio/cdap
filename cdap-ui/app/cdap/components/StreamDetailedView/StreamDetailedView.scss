@@ -18,4 +18,15 @@
   .iframe-container {
     height: calc(100% - 26px);
   }
+
+  .properties-container {
+    height: calc(100% - 55px);
+    padding: 15px 10px;
+    overflow: auto;
+
+    .message-section {
+      padding: 0 10px;
+      margin-bottom: 15px;
+    }
+  }
 }

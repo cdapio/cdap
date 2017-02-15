@@ -17,73 +17,48 @@
 package co.cask.cdap.notifications.feeds.client;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
+import co.cask.cdap.common.internal.remote.RemoteClient;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.proto.notification.NotificationFeedInfo;
+import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of the {@link NotificationFeedManager} that connects to a remote feed manager service
  * through internal RESTful APIs.
  */
 public class RemoteNotificationFeedManager implements NotificationFeedManager {
-  private static final Logger LOG = LoggerFactory.getLogger(RemoteNotificationFeedManager.class);
   private static final Gson GSON = new Gson();
 
-  private final Supplier<EndpointStrategy> endpointStrategySupplier;
+  private final RemoteClient remoteClient;
 
   @Inject
   public RemoteNotificationFeedManager(final DiscoveryServiceClient discoveryClient) {
-    this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
-      @Override
-      public EndpointStrategy get() {
-        return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
-      }
-    });
-  }
-
-  private Discoverable getService() throws NotificationFeedException {
-    Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
-    if (discoverable != null) {
-      return discoverable;
-    }
-    throw new NotificationFeedException(
-      String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP));
+    this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP,
+                                         new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
   }
 
   @Override
   public boolean createFeed(NotificationFeedInfo feed) throws NotificationFeedException {
-    HttpRequest request = HttpRequest.put(resolve(
-      String.format("namespaces/%s/feeds/categories/%s/names/%s",
-                    feed.getNamespace(), feed.getCategory(), feed.getFeed())))
-      .withBody(GSON.toJson(feed)).build();
+    String path = String.format("namespaces/%s/feeds/categories/%s/names/%s",
+                                feed.getNamespace(), feed.getCategory(), feed.getFeed());
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT, path)
+        .withBody(GSON.toJson(feed)).build();
     HttpResponse response = execute(request);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return true;
@@ -95,10 +70,9 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
 
   @Override
   public void deleteFeed(NotificationFeedId feed) throws NotificationFeedNotFoundException, NotificationFeedException {
-    HttpResponse response = execute(HttpRequest.delete(
-      resolve(String.format("namespaces/%s/feeds/categories/%s/names/%s",
-                            feed.getNamespace(), feed.getCategory(), feed.getFeed()))
-    ).build());
+    String path = String.format("namespaces/%s/feeds/categories/%s/names/%s",
+                                feed.getNamespace(), feed.getCategory(), feed.getFeed());
+    HttpResponse response = execute(remoteClient.requestBuilder(HttpMethod.DELETE, path).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotificationFeedNotFoundException(feed);
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -109,10 +83,9 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
   @Override
   public NotificationFeedInfo getFeed(NotificationFeedId feed)
     throws NotificationFeedNotFoundException, NotificationFeedException {
-    HttpResponse response = execute(HttpRequest.get(
-      resolve(String.format("namespaces/%s/feeds/categories/%s/names/%s",
-                            feed.getNamespace(), feed.getCategory(), feed.getFeed()))
-    ).build());
+    String path = String.format("namespaces/%s/feeds/categories/%s/names/%s",
+                                feed.getNamespace(), feed.getCategory(), feed.getFeed());
+    HttpResponse response = execute(remoteClient.requestBuilder(HttpMethod.GET, path).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotificationFeedNotFoundException(feed);
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -123,8 +96,8 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
 
   @Override
   public List<NotificationFeedInfo> listFeeds(NamespaceId namespace) throws NotificationFeedException {
-    HttpResponse response = execute(HttpRequest.get(resolve(
-      String.format("namespaces/%s/feeds", namespace.getNamespace()))).build());
+    String path = String.format("namespaces/%s/feeds", namespace.getNamespace());
+    HttpResponse response = execute(remoteClient.requestBuilder(HttpMethod.GET, path).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       ObjectResponse<List<NotificationFeedInfo>> r =
         ObjectResponse.fromJsonBody(response, new TypeToken<List<NotificationFeedInfo>>() { }.getType());
@@ -133,24 +106,9 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
     throw new NotificationFeedException("Cannot list notification feeds. Reason: " + response);
   }
 
-  private URL resolve(String resource) throws NotificationFeedException {
-    Discoverable discoverable = getService();
-    InetSocketAddress addr = discoverable.getSocketAddress();
-    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
-      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
-    String url = String.format("%s%s:%d%s/%s", scheme, addr.getHostName(), addr.getPort(),
-                               Constants.Gateway.API_VERSION_3, resource);
-    LOG.trace("Notification Feed Service URL = {}", url);
-    try {
-      return new URL(url);
-    } catch (MalformedURLException e) {
-      throw new NotificationFeedException(String.format("URL %s is malformed", url));
-    }
-  }
-
   private HttpResponse execute(HttpRequest request) throws NotificationFeedException {
     try {
-      return HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+      return remoteClient.execute(request);
     } catch (IOException e) {
       throw new NotificationFeedException(
         String.format("Error connecting to Notification Feed Service at %s while doing %s",

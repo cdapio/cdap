@@ -27,6 +27,7 @@ import co.cask.common.cli.CommandSet;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.collect.HashMultimap;
@@ -207,44 +208,51 @@ public class HelpCommand implements Command {
   }
 
   /**
-   * Prints the given string with text wrapping at the given column width.
+   * Prints the given string with text wrapping at the given column width, honoring line breaks.
    *
    * @param str the string to print
    * @param output the {@link PrintStream} to write to
    * @param colWidth width of the column
-   * @param prefixSpaces number of spaces as the prefix for each line printed
+   * @param prefixWidth number of spaces as the prefix for each line printed
    */
-  private void wrappedPrint(String str, PrintStream output, int colWidth, int prefixSpaces) {
-    String prefix = Strings.repeat(" ", prefixSpaces);
-    colWidth -= prefixSpaces;
+  private void wrappedPrint(String str, PrintStream output, int colWidth, int prefixWidth) {
+    char lineChar = '\n';
+    String prefix = Strings.repeat(" ", prefixWidth);
 
-    if (str.length() <= colWidth) {
-      output.printf("%s%s", prefix, str);
-      output.println();
+    colWidth -= prefixWidth;
+
+    Iterable<String> lines = Splitter.on(lineChar).split(str);
+    for (String line : lines) {
+      format(line, output, colWidth, prefix);
+    }
+  }
+
+  /**
+   * Prints the given line with text wrapping on spaces at the given column width.
+   * If the line has no spaces within the column width, prints without wrapping.
+   *
+   * @param line the string (without returns) to print
+   * @param output the {@link PrintStream} to write to
+   * @param colWidth width of the column
+   * @param prefixSpaces prefix for each line printed
+   */
+  private void format(String line, PrintStream output, int colWidth, String prefixSpaces) {
+    output.printf(prefixSpaces);
+    int widthRemaining = colWidth - prefixSpaces.length();
+
+    if (line.length() <= widthRemaining) {
+      output.println(line);
       return;
     }
 
-    int beginIdx = 0;
-    while (beginIdx < str.length()) {
-      int idx;
-      if (beginIdx + colWidth >= str.length()) {
-        idx = str.length();
-      } else {
-        idx = str.lastIndexOf(' ', beginIdx + colWidth);
-      }
-
-      // Cannot break line if no space found between beginIdx and (beginIdx + colWidth)
-      // The best we can do is to look forward.
-      // The line will be longer than colWidth though.
-      if (idx < 0 || idx < beginIdx) {
-        idx = str.indexOf(' ', beginIdx + colWidth);
-        if (idx < 0) {
-          idx = str.length();
-        }
-      }
-      output.printf("%s%s", prefix, str.substring(beginIdx, idx));
-      beginIdx = idx + 1;
-      output.println();
+    // Find last space that is before widthRemaining
+    int idx = line.lastIndexOf(' ', widthRemaining);
+    if (idx < 0) {
+      output.println(line);
+      return;
     }
+
+    output.println(line.substring(0, idx));
+    format(line.substring(idx + 1), output, colWidth, prefixSpaces);
   }
 }

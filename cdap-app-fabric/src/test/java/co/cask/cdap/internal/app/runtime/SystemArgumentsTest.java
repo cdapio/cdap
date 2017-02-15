@@ -17,9 +17,17 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.service.RetryStrategy;
+import co.cask.cdap.common.service.RetryStrategyType;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * Unit tests for {@link SystemArguments}.
@@ -70,5 +78,40 @@ public class SystemArgumentsTest {
                                                              "system.resources.cores", "-8"), defaultResources);
     Assert.assertEquals(defaultResources, resources);
 
+  }
+
+  @Test
+  public void testRetryStrategies() throws InterruptedException {
+    CConfiguration cConf = CConfiguration.create();
+    Map<String, String> args = Collections.emptyMap();
+
+    // Get default, expect exponential back-off behavior, until the max delay
+    RetryStrategy strategy = SystemArguments.getRetryStrategy(args, ProgramType.CUSTOM_ACTION, cConf);
+    long startTime = System.currentTimeMillis();
+    Assert.assertEquals(1000L, strategy.nextRetry(1, startTime));
+    Assert.assertEquals(2000L, strategy.nextRetry(2, startTime));
+    Assert.assertEquals(4000L, strategy.nextRetry(3, startTime));
+    Assert.assertEquals(8000L, strategy.nextRetry(4, startTime));
+    Assert.assertEquals(16000L, strategy.nextRetry(5, startTime));
+    Assert.assertEquals(30000L, strategy.nextRetry(6, startTime));
+    Assert.assertEquals(30000L, strategy.nextRetry(7, startTime));
+    // It should give up (returning -1) when exceeding the max retries
+    Assert.assertEquals(-1L, strategy.nextRetry(1001, startTime));
+
+    // Override the strategy type and max retry time
+    args = ImmutableMap.of(
+      "system." + Constants.Retry.TYPE, RetryStrategyType.FIXED_DELAY.toString(),
+      "system." + Constants.Retry.MAX_TIME_SECS, "5"
+    );
+    strategy = SystemArguments.getRetryStrategy(args, ProgramType.CUSTOM_ACTION, cConf);
+    startTime = System.currentTimeMillis();
+    // Expects the delay doesn't change
+    Assert.assertEquals(1000L, strategy.nextRetry(1, startTime));
+    Assert.assertEquals(1000L, strategy.nextRetry(2, startTime));
+    Assert.assertEquals(1000L, strategy.nextRetry(3, startTime));
+    Assert.assertEquals(1000L, strategy.nextRetry(4, startTime));
+
+    // Should give up (returning -1) after passing the max retry time
+    Assert.assertEquals(-1L, strategy.nextRetry(1, startTime - 6000));
   }
 }

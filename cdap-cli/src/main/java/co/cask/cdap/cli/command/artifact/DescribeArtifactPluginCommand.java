@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -88,7 +88,7 @@ public class DescribeArtifactPluginCommand extends AbstractAuthCommand {
   public String getDescription() {
     return String.format("Describes a plugin of a specific type and name available to a specific %s. " +
                          "Can return multiple details if there are multiple versions of the plugin. If no scope is " +
-                         "provided, plugins are looked for first in the SYSTEM and then in the USER scope.",
+                         "provided, plugins are looked for first in the 'SYSTEM' and then in the 'USER' scope.",
                          ElementType.ARTIFACT.getName());
   }
 }

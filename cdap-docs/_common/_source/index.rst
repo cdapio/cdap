@@ -126,7 +126,7 @@ CDAP extensions provide additional capabilities, such as *Cask Hydrator* and *Ca
 .. _integrations: integrations/index.html
 
 .. |integ-man-cm-black| replace:: `Cask Market:`
-.. _integ-man-cm-black: integrations/cask-market/index.html
+.. _integ-man-cm-black: integrations/cask-market.html
 
 .. |integ-man-cl-black| replace:: `Cloudera:`
 .. _integ-man-cl-black: integrations/partners/cloudera/index.html

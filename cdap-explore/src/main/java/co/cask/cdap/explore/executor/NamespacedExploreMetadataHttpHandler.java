@@ -43,6 +43,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Handler that implements namespaced explore metadata APIs.
@@ -83,13 +84,14 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
   @Path("tables/{table}/info")
   public void getTableSchema(HttpRequest request, final HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
-                             @PathParam("table") final String table) {
+                             @PathParam("table") final String table,
+                             @QueryParam("database") final String database) {
     LOG.trace("Received get table info for table {}", table);
     try {
       impersonator.doAs(new NamespaceId(namespaceId), new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          responder.sendJson(HttpResponseStatus.OK, exploreService.getTableInfo(namespaceId, table));
+          responder.sendJson(HttpResponseStatus.OK, exploreService.getTableInfo(namespaceId, database, table));
           return null;
         }
       });

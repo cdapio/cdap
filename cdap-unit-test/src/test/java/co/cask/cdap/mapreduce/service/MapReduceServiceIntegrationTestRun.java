@@ -16,6 +16,7 @@
 
 package co.cask.cdap.mapreduce.service;
 
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -44,7 +45,7 @@ public class MapReduceServiceIntegrationTestRun extends TestFrameworkTestBase {
 
     MapReduceManager mrManager =
       applicationManager.getMapReduceManager(TestMapReduceServiceIntegrationApp.MR_NAME).start();
-    mrManager.waitForFinish(180, TimeUnit.SECONDS);
+    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 180, TimeUnit.SECONDS);
 
     DataSetManager<MyKeyValueTableDefinition.KeyValueTable> outDataSet =
       getDataset(TestMapReduceServiceIntegrationApp.OUTPUT_DATASET);

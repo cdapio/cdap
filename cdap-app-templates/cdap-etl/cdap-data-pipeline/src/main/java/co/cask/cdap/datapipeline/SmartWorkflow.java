@@ -191,8 +191,9 @@ public class SmartWorkflow extends AbstractWorkflow {
     for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
       String name = endingActionEntry.getKey();
       PostAction action = endingActionEntry.getValue();
+      StageInfo stageInfo = StageInfo.builder(name, PostAction.PLUGIN_TYPE).build();
       BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics, lookupProvider,
-                                                                   name, logicalStartTime, runtimeArgs);
+                                                                   logicalStartTime, runtimeArgs, stageInfo);
       try {
         action.run(context);
       } catch (Throwable t) {

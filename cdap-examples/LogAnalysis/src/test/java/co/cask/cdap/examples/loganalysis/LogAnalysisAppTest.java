@@ -17,6 +17,7 @@
 package co.cask.cdap.examples.loganalysis;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
@@ -72,11 +73,11 @@ public class LogAnalysisAppTest extends TestBase {
     // run the spark program
     SparkManager sparkManager = appManager.getSparkManager(
       LogAnalysisApp.ResponseCounterSpark.class.getSimpleName()).start();
-    sparkManager.waitForFinish(60, TimeUnit.SECONDS);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 60, TimeUnit.SECONDS);
 
     // run the mapreduce job
     MapReduceManager mapReduceManager = appManager.getMapReduceManager(HitCounterProgram.class.getSimpleName()).start();
-    mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
+    mapReduceManager.waitForRun(ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
 
     // start and wait for services
     ServiceManager hitCounterServiceManager = getServiceManager(appManager, LogAnalysisApp.HIT_COUNTER_SERVICE);

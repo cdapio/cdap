@@ -59,6 +59,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -324,6 +325,44 @@ public class KafkaTester extends ExternalResource {
         }
       }
     );
+    Assert.assertTrue(String.format("Expected %d messages but found %d messages", expectedNumMsgs, actual.size()),
+                      latch.await(15, TimeUnit.SECONDS));
+    cancellable.cancel();
+    Assert.assertTrue(stopLatch.await(15, TimeUnit.SECONDS));
+    return actual;
+  }
+
+  public <T> Map<Integer, T> getPublishedMessages(String topic, Set<Integer> partitions, int expectedNumMsgs,
+                                                    final Function<FetchedMessage, T> converter)
+    throws InterruptedException {
+    final CountDownLatch latch = new CountDownLatch(expectedNumMsgs);
+    final CountDownLatch stopLatch = new CountDownLatch(1);
+    final Map<Integer, T> actual = new HashMap<>();
+    KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
+    for (int partition : partitions) {
+      preparer.addFromBeginning(topic, partition);
+    }
+    Cancellable cancellable = preparer.consume(
+      new KafkaConsumer.MessageCallback() {
+        @Override
+        public long onReceived(Iterator<FetchedMessage> messages) {
+          long offset = 0L;
+          while (messages.hasNext()) {
+            FetchedMessage message = messages.next();
+            actual.put(message.getTopicPartition().getPartition(), converter.apply(message));
+            latch.countDown();
+            offset = message.getNextOffset();
+          }
+          return offset;
+        }
+
+        @Override
+        public void finished() {
+          stopLatch.countDown();
+        }
+      }
+    );
+
     Assert.assertTrue(String.format("Expected %d messages but found %d messages", expectedNumMsgs, actual.size()),
                       latch.await(15, TimeUnit.SECONDS));
     cancellable.cancel();

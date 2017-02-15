@@ -15,6 +15,8 @@
  */
 import {combineReducers, createStore} from 'redux';
 import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
+import ArtifactUploadWizardConfig from 'services/WizardConfigs/ArtifactUploadWizardConfig';
+import head from 'lodash/head';
 
 const defaultAction = {
   type: '',
@@ -46,8 +48,25 @@ const defaultInitialState = {
   configure: defaultConfigureState
 };
 
+const isNil = (value) => value === null || typeof value === 'undefined' || value === '';
+const isComplete = (state, requiredFields) => {
+  let emptyFieldsInState = Object.keys(state)
+    .filter(fieldName => {
+      return isNil(state[fieldName]) && requiredFields.indexOf(fieldName) !== -1;
+    });
+  return !emptyFieldsInState.length ? true : false;
+};
+
 const upload = (state = defaultUploadState, action = defaultAction) => {
   let stateCopy;
+  let configurationStepRequiredFields = [];
+  if (ArtifactUploadWizardConfig) {
+    configurationStepRequiredFields = head(
+      ArtifactUploadWizardConfig
+        .steps
+        .filter(step => step.id === 'upload')
+      ).requiredFields;
+  }
 
   switch (action.type) {
     case ArtifactUploadActions.setFilePath:
@@ -62,13 +81,20 @@ const upload = (state = defaultUploadState, action = defaultAction) => {
   }
 
   return Object.assign({}, stateCopy, {
-    __complete: true
+    __complete: isComplete(stateCopy, configurationStepRequiredFields)
   });
 };
 
 const configure = (state = defaultConfigureState, action = defaultAction) => {
   let stateCopy;
-
+  let configurationStepRequiredFields = [];
+  if (ArtifactUploadWizardConfig) {
+    configurationStepRequiredFields = head(
+      ArtifactUploadWizardConfig
+        .steps
+        .filter(step => step.id === 'configuration')
+      ).requiredFields;
+  }
   switch (action.type) {
     case ArtifactUploadActions.setName:
       stateCopy = Object.assign({}, state, {
@@ -101,7 +127,7 @@ const configure = (state = defaultConfigureState, action = defaultAction) => {
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: true
+    __complete: isComplete(stateCopy, configurationStepRequiredFields)
   });
 };
 

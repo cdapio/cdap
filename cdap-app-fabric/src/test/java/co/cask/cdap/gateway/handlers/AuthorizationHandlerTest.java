@@ -456,7 +456,7 @@ public class AuthorizationHandlerTest {
       caller.call();
     } catch (FeatureDisabledException expected) {
       Assert.assertEquals(expectedDisabledFeature, expected.getFeature());
-      Assert.assertEquals(FeatureDisabledException.CDAP_SITE, expected.getConfigFile());
+      Assert.assertEquals(FeatureDisabledException.CDAP_SITE, expected.getConfigName());
       Assert.assertEquals(expectedEnableConfig, expected.getEnableConfigKey());
       Assert.assertEquals("true", expected.getEnableConfigValue());
     }

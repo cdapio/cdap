@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,7 +43,7 @@ public class AddMetadataPropertiesCommand extends AbstractCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
-    Map<String, String> properties = parseMap(arguments.get("properties"));
+    Map<String, String> properties = parseMap(arguments.get("properties"), "<properties>");
     client.addProperties(entity.toId(), properties);
     output.println("Successfully added metadata properties");
   }
@@ -55,6 +55,6 @@ public class AddMetadataPropertiesCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Adds metadata properties for an entity";
+    return "Adds metadata properties for an entity. " + ArgumentName.ENTITY_DESCRIPTION_STRING;
   }
 }

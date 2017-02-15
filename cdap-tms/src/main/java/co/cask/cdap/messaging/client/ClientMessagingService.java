@@ -23,9 +23,8 @@ import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
+import co.cask.cdap.common.internal.remote.RemoteClient;
 import co.cask.cdap.messaging.MessageFetcher;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.RollbackDetail;
@@ -35,13 +34,12 @@ import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
+import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequestConfig;
-import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
@@ -61,7 +59,6 @@ import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.tephra.TransactionCodec;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.ByteArrayOutputStream;
@@ -69,9 +66,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -80,7 +74,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -91,9 +84,6 @@ import javax.annotation.Nullable;
  */
 public final class ClientMessagingService implements MessagingService {
 
-  // A arbitrary timeout for getting endpoints from discovery service.
-  // It is mainly for the first discovery call as it takes time for ZK to mirror the changes.
-  private static final long DISCOVERY_PICK_TIMEOUT_SECS = 5L;
   private static final HttpRequestConfig HTTP_REQUEST_CONFIG = new DefaultHttpRequestConfig();
   private static final TransactionCodec TRANSACTION_CODEC = new TransactionCodec();
   private static final Gson GSON = new Gson();
@@ -101,29 +91,23 @@ public final class ClientMessagingService implements MessagingService {
   private static final Type TOPIC_PROPERTY_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type TOPIC_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
 
-  private final Supplier<EndpointStrategy> endpointStrategy;
+  private final RemoteClient remoteClient;
 
   @VisibleForTesting
   @Inject
   public ClientMessagingService(final DiscoveryServiceClient discoveryServiceClient) {
-    // Use a supplier to delay the discovery until the first time it is being used.
-    this.endpointStrategy = Suppliers.memoize(new Supplier<EndpointStrategy>() {
-      @Override
-      public EndpointStrategy get() {
-        return new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.MESSAGING_SERVICE));
-      }
-    });
+    this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.MESSAGING_SERVICE,
+                                         HTTP_REQUEST_CONFIG, "/v1/namespaces/");
   }
 
   @Override
   public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
     TopicId topicId = topicMetadata.getTopicId();
 
-    HttpRequest request = HttpRequest
-      .put(createURL(createTopicPath(topicId)))
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT, createTopicPath(topicId))
       .withBody(GSON.toJson(topicMetadata.getProperties()))
       .build();
-    HttpResponse response = HttpRequests.execute(request, HTTP_REQUEST_CONFIG);
+    HttpResponse response = remoteClient.execute(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
       throw new TopicAlreadyExistsException(topicId.getNamespace(), topicId.getTopic());
@@ -135,11 +119,10 @@ public final class ClientMessagingService implements MessagingService {
   public void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException {
     TopicId topicId = topicMetadata.getTopicId();
 
-    HttpRequest request = HttpRequest
-      .put(createURL(createTopicPath(topicId) + "/properties"))
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT, createTopicPath(topicId) + "/properties")
       .withBody(GSON.toJson(topicMetadata.getProperties()))
       .build();
-    HttpResponse response = HttpRequests.execute(request, HTTP_REQUEST_CONFIG);
+    HttpResponse response = remoteClient.execute(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
@@ -149,10 +132,8 @@ public final class ClientMessagingService implements MessagingService {
 
   @Override
   public void deleteTopic(TopicId topicId) throws TopicNotFoundException, IOException {
-    HttpRequest request = HttpRequest
-      .delete(createURL(createTopicPath(topicId)))
-      .build();
-    HttpResponse response = HttpRequests.execute(request, HTTP_REQUEST_CONFIG);
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.DELETE, createTopicPath(topicId)).build();
+    HttpResponse response = remoteClient.execute(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
@@ -162,10 +143,8 @@ public final class ClientMessagingService implements MessagingService {
 
   @Override
   public TopicMetadata getTopic(TopicId topicId) throws TopicNotFoundException, IOException {
-    HttpRequest request = HttpRequest
-      .get(createURL(createTopicPath(topicId)))
-      .build();
-    HttpResponse response = HttpRequests.execute(request, HTTP_REQUEST_CONFIG);
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET, createTopicPath(topicId)).build();
+    HttpResponse response = remoteClient.execute(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
@@ -178,10 +157,8 @@ public final class ClientMessagingService implements MessagingService {
 
   @Override
   public List<TopicId> listTopics(NamespaceId namespaceId) throws IOException {
-    HttpRequest request = HttpRequest
-      .get(createURL(namespaceId.getNamespace() + "/topics"))
-      .build();
-    HttpResponse response = HttpRequests.execute(request, HTTP_REQUEST_CONFIG);
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET, namespaceId.getNamespace() + "/topics").build();
+    HttpResponse response = remoteClient.execute(request);
 
     handleError(response, "Failed to list topics in namespace " + namespaceId);
     List<String> topics = GSON.fromJson(response.getResponseBodyAsString(), TOPIC_LIST_TYPE);
@@ -224,13 +201,12 @@ public final class ClientMessagingService implements MessagingService {
       ? ByteBuffer.wrap(((ClientRollbackDetail) rollbackDetail).getEncoded())
       : encodeRollbackDetail(rollbackDetail);
 
-    HttpRequest httpRequest = HttpRequest
-      .post(createURL(createTopicPath(topicId) + "/rollback"))
+    HttpRequest httpRequest = remoteClient.requestBuilder(HttpMethod.POST, createTopicPath(topicId) + "/rollback")
       .addHeader(HttpHeaders.CONTENT_TYPE, "avro/binary")
       .withBody(requestBody)
       .build();
 
-    HttpResponse response = HttpRequests.execute(httpRequest, HTTP_REQUEST_CONFIG);
+    HttpResponse response = remoteClient.execute(httpRequest);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
@@ -266,13 +242,12 @@ public final class ClientMessagingService implements MessagingService {
     // Make the publish request
     String writeType = publish ? "publish" : "store";
     TopicId topicId = request.getTopicId();
-    HttpRequest httpRequest = HttpRequest
-      .post(createURL(createTopicPath(topicId) + "/" + writeType))
+    HttpRequest httpRequest = remoteClient.requestBuilder(HttpMethod.POST, createTopicPath(topicId) + "/" + writeType)
       .addHeader(HttpHeaders.CONTENT_TYPE, "avro/binary")
       .withBody(os.toByteBuffer())
       .build();
 
-    HttpResponse response = HttpRequests.execute(httpRequest, HTTP_REQUEST_CONFIG);
+    HttpResponse response = remoteClient.execute(httpRequest);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
@@ -286,21 +261,6 @@ public final class ClientMessagingService implements MessagingService {
    */
   private String createTopicPath(TopicId topicId) {
     return topicId.getNamespace() + "/topics/" + topicId.getTopic();
-  }
-
-  /**
-   * Creates a URL for making HTTP requests to the messaging system.
-   */
-  private URL createURL(String path) throws MalformedURLException {
-    Discoverable discoverable = endpointStrategy.get().pick(DISCOVERY_PICK_TIMEOUT_SECS, TimeUnit.SECONDS);
-    if (discoverable == null) {
-      throw new ServiceUnavailableException(Constants.Service.MESSAGING_SERVICE);
-    }
-
-    InetSocketAddress address = discoverable.getSocketAddress();
-
-    URI baseURI = URI.create(String.format("http://%s:%d/v1/namespaces/", address.getHostName(), address.getPort()));
-    return baseURI.resolve(path).toURL();
   }
 
   /**
@@ -436,7 +396,7 @@ public final class ClientMessagingService implements MessagingService {
 
       // The cask common http library doesn't support read streaming, and we don't want to buffer all messages
       // in memory, hence we use the HttpURLConnection directly instead.
-      URL url = createURL(createTopicPath(topicId) + "/poll");
+      URL url = remoteClient.resolve(createTopicPath(topicId) + "/poll");
       final HttpURLConnection urlConn = (HttpURLConnection)  url.openConnection();
       urlConn.setConnectTimeout(HTTP_REQUEST_CONFIG.getConnectTimeout());
       urlConn.setReadTimeout(HTTP_REQUEST_CONFIG.getReadTimeout());

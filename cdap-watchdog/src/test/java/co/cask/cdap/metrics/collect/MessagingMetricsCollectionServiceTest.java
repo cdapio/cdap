@@ -22,6 +22,7 @@ import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.messaging.data.RawMessage;
@@ -61,6 +62,7 @@ public class MessagingMetricsCollectionServiceTest extends MetricsTestBase {
 
     MetricsCollectionService collectionService = new MessagingMetricsCollectionService(TOPIC_PREFIX,
                                                                                        PARTITION_SIZE,
+                                                                                       CConfiguration.create(),
                                                                                        messagingService,
                                                                                        recordWriter);
     collectionService.startAndWait();

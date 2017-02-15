@@ -16,53 +16,47 @@
 
 package co.cask.cdap.metrics.runtime;
 
-import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.resource.ResourceBalancerService;
+import co.cask.cdap.metrics.process.MessagingMetricsProcessorService;
 import co.cask.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClient;
 
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
- * A service that creates {@link co.cask.cdap.metrics.process.MessagingMetricsProcessorService} dynamically at runtime
+ * A service that creates {@link MessagingMetricsProcessorService} dynamically at runtime
  * according to the given numerical topic suffices from {@link ResourceBalancerService}.
  */
 public final class MessagingMetricsProcessorRuntimeService extends ResourceBalancerService {
 
-  @Nullable
-  private MetricsContext metricsContext;
-
   private static final String SERVICE_NAME = "metrics.processor.messaging.fetcher";
 
   private final MessagingMetricsProcessorServiceFactory factory;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
-  public MessagingMetricsProcessorRuntimeService(CConfiguration conf,
-                                                 ZKClientService zkClient,
-                                                 DiscoveryService discoveryService,
-                                                 DiscoveryServiceClient discoveryServiceClient,
-                                                 MessagingMetricsProcessorServiceFactory
-                                                            metricsProcessorFactory) {
+  MessagingMetricsProcessorRuntimeService(CConfiguration conf,
+                                          ZKClient zkClient,
+                                          DiscoveryService discoveryService,
+                                          DiscoveryServiceClient discoveryServiceClient,
+                                          MetricsCollectionService metricsCollectionService,
+                                          MessagingMetricsProcessorServiceFactory metricsProcessorFactory) {
     super(SERVICE_NAME, conf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM),
           zkClient, discoveryService, discoveryServiceClient);
     this.factory = metricsProcessorFactory;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
   protected Service createService(Set<Integer> topicNumbers) {
-    co.cask.cdap.metrics.process.MessagingMetricsProcessorService service = factory.create(topicNumbers);
-    service.setMetricsContext(metricsContext);
-    return service;
-  }
-
-  public void setMetricsContext(MetricsContext metricsContext) {
-    this.metricsContext = metricsContext;
+    return factory.create(topicNumbers,
+                          metricsCollectionService.getContext(Constants.Metrics.METRICS_PROCESSOR_CONTEXT));
   }
 }

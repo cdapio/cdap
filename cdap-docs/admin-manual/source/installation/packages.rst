@@ -17,7 +17,7 @@ Manual Installation using Packages
 This section describes installing CDAP on Hadoop clusters that are:
 
 - Generic Apache Hadoop distributions; 
-- CDH (Cloudera Data Hub) clusters *not managed* with Cloudera Manager; or
+- CDH (Cloudera Distribution of Apache Hadoop) clusters *not managed* with Cloudera Manager; or
 - HDP (Hortonworks Data Platform) clusters *not managed* with Apache Ambari.
 
 Cloudera Manager (CDH), Apache Ambari (HDP), and MapR distributions should be installed

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,9 +22,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.appender.kafka.StringPartitioner;
 import co.cask.cdap.logging.filter.Filter;
-import co.cask.cdap.logging.save.CheckpointManager;
-import co.cask.cdap.logging.save.CheckpointManagerFactory;
-import co.cask.cdap.logging.save.KafkaLogWriterPlugin;
+import co.cask.cdap.logging.meta.CheckpointManager;
+import co.cask.cdap.logging.meta.CheckpointManagerFactory;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +49,7 @@ public final class DistributedLogReader implements LogReader {
     this.kafkaLogReader = kafkaLogReader;
     this.fileLogReader = fileLogReader;
     this.checkpointManager = checkpointManagerFactory.create(cConf.get(Constants.Logging.KAFKA_TOPIC),
-                                                             KafkaLogWriterPlugin.CHECKPOINT_ROW_KEY_PREFIX);
+                                                             Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX);
     this.partitioner = partitioner;
   }
 

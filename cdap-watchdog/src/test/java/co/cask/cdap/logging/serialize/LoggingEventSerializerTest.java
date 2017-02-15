@@ -25,6 +25,7 @@ import co.cask.cdap.common.logging.ComponentLoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.logging.logback.TestLoggingContext;
+import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import com.google.common.collect.ImmutableMap;
@@ -59,8 +60,8 @@ public class LoggingEventSerializerTest {
     iLoggingEvent.setTimeStamp(10000000L);
 
     // Serialize
-    LoggingEvent event = new LoggingEvent(iLoggingEvent);
-    byte [] serializedBytes = serializer.toBytes(event, LoggingContextAccessor.getLoggingContext());
+    ILoggingEvent event = new LogMessage(iLoggingEvent, LoggingContextAccessor.getLoggingContext());
+    byte [] serializedBytes = serializer.toBytes(event);
 
     // De-serialize
     ILoggingEvent actualEvent = serializer.fromBytes(ByteBuffer.wrap(serializedBytes));
@@ -108,8 +109,8 @@ public class LoggingEventSerializerTest {
     iLoggingEvent.setTimeStamp(1234567890L);
 
     // Serialize
-    LoggingEvent event = new LoggingEvent(iLoggingEvent);
-    byte [] serializedBytes = serializer.toBytes(event, LoggingContextAccessor.getLoggingContext());
+    ILoggingEvent event = new LogMessage(iLoggingEvent, LoggingContextAccessor.getLoggingContext());
+    byte [] serializedBytes = serializer.toBytes(event);
 
     // De-serialize
     ILoggingEvent actualEvent = serializer.fromBytes(ByteBuffer.wrap(serializedBytes));
@@ -156,8 +157,8 @@ public class LoggingEventSerializerTest {
     iLoggingEvent.setTimeStamp(10000000L);
 
     // Serialize
-    LoggingEvent event = new LoggingEvent(iLoggingEvent);
-    byte [] serializedBytes = serializer.toBytes(event, LoggingContextAccessor.getLoggingContext());
+    ILoggingEvent event = new LogMessage(iLoggingEvent, LoggingContextAccessor.getLoggingContext());
+    byte [] serializedBytes = serializer.toBytes(event);
 
     // De-serialize
     ILoggingEvent actualEvent = serializer.fromBytes(ByteBuffer.wrap(serializedBytes));

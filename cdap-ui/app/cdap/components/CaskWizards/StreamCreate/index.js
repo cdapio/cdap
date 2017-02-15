@@ -116,12 +116,12 @@ export default class StreamCreateWizard extends Component {
   buildSuccessInfo(streamId, namespace) {
     let defaultSuccessMessage = T.translate('features.Wizard.StreamCreate.success');
     let buttonLabel = T.translate('features.Wizard.StreamCreate.callToAction');
-    let linkLabel = T.translate('features.Wizard.GoToHomePage');
+    let linkLabel = T.translate('features.Wizard.StreamCreate.secondaryCallToAction.uploadData');
     this.successInfo.message = `${defaultSuccessMessage} "${streamId}".`;
     this.successInfo.buttonLabel = buttonLabel;
     this.successInfo.buttonUrl = `/cdap/ns/${namespace}/streams/${streamId}`;
     this.successInfo.linkLabel = linkLabel;
-    this.successInfo.linkUrl = `/cdap/ns/${namespace}`;
+    this.successInfo.linkUrl = `/cdap/ns/${namespace}/streams/${streamId}?modalToOpen=sendEvents`;
   }
   render() {
     let input = this.props.input || {};

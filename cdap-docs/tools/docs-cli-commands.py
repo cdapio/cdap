@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Copyright © 2016 Cask Data, Inc.
+# Copyright © 2016-2017 Cask Data, Inc.
 #
 # Used to generate a table in the CLI documentation from the output of CLI tools.
 # 
@@ -14,7 +14,7 @@ import os
 import sys
 from optparse import OptionParser
 
-VERSION = "0.0.3"
+VERSION = "0.0.4"
 
 LITERAL = '``'
 SPACE = ' '
@@ -95,7 +95,7 @@ def create_parsed_line(line):
         i +=1 
         if c == QUOTE:
             if not in_literal:
-                if i and line[i-1] != SPACE: # Preceding character
+                if i and line[i-1] not in (SPACE, "("): # Preceding character
                     new_line += c
                 else:
                     new_line += opening_literal_quote

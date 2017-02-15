@@ -17,8 +17,8 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
-import co.cask.cdap.security.impersonation.ImpersonationInfo;
 import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.http.AbstractHttpHandler;

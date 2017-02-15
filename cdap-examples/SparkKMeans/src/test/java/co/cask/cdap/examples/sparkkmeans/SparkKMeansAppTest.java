@@ -18,6 +18,7 @@ package co.cask.cdap.examples.sparkkmeans;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ServiceManager;
@@ -66,7 +67,7 @@ public class SparkKMeansAppTest extends TestBase {
 
     // Start a Spark Program
     SparkManager sparkManager = appManager.getSparkManager("SparkKMeansProgram").start();
-    sparkManager.waitForFinish(60, TimeUnit.SECONDS);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 60, TimeUnit.SECONDS);
 
     flowManager.stop();
 
