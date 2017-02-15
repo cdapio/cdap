@@ -383,13 +383,14 @@ public final class StreamHandler extends AbstractHttpHandler {
       properties = GSON.fromJson(reader, StreamProperties.class);
     } catch (Exception e) {
       throw new BadRequestException("Invalid stream configuration. Please check that the " +
-                                      "configuration is a valid JSON Object with a valid schema.");
+                                      "configuration is a valid JSON Object with a valid schema. Cause: " +
+                                      e.getMessage());
     }
 
     // Validate ttl
     Long ttl = properties.getTTL();
     if (ttl != null && ttl < 0) {
-      throw new BadRequestException("TTL value should be positive.");
+      throw new BadRequestException("Invalid TTL " + ttl + ". TTL value should be positive.");
     }
 
     // Validate format
@@ -417,7 +418,8 @@ public final class StreamHandler extends AbstractHttpHandler {
     // Validate notification threshold
     Integer threshold = properties.getNotificationThresholdMB();
     if (threshold != null && threshold <= 0) {
-      throw new BadRequestException("Threshold value should be greater than zero.");
+      throw new BadRequestException(
+        "Invalid threshold " + threshold + ". Threshold value should be greater than zero.");
     }
 
     // validate owner principal if one is provided
