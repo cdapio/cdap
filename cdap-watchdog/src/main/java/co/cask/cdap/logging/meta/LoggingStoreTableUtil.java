@@ -38,8 +38,10 @@ import java.io.IOException;
 public final class LoggingStoreTableUtil {
 
   // The row key prefix for rows that stores CDAP log files metadata.
-  public static final byte[] FILE_META_ROW_KEY_PREFIX = Bytes.toBytes(200);
+  public static final byte[] OLD_FILE_META_ROW_KEY_PREFIX = Bytes.toBytes(200);
+  public static final byte[] NEW_FILE_META_ROW_KEY_PREFIX = Bytes.toBytes(300);
 
+  public static final byte[] META_TABLE_COLUMN_KEY = Bytes.toBytes("file");
   private static final DatasetId META_TABLE_DATASET_ID = NamespaceId.SYSTEM.dataset(Constants.Logging.META_TABLE);
 
   /**

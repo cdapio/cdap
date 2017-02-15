@@ -59,7 +59,7 @@ import javax.annotation.Nullable;
 public class FileMetaDataManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileMetaDataManager.class);
 
-  private static final byte[] ROW_KEY_PREFIX = LoggingStoreTableUtil.FILE_META_ROW_KEY_PREFIX;
+  private static final byte[] ROW_KEY_PREFIX = LoggingStoreTableUtil.OLD_FILE_META_ROW_KEY_PREFIX;
   private static final byte[] ROW_KEY_PREFIX_END = Bytes.stopKeyForPrefix(ROW_KEY_PREFIX);
 
   private final DatasetFramework datasetFramework;

@@ -20,6 +20,7 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -43,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -55,7 +57,6 @@ import java.util.Map;
 public class FileMetaDataReader {
   private static final Logger LOG = LoggerFactory.getLogger(FileMetaDataReader.class);
 
-  private static final byte[] ROW_KEY_PREFIX = LoggingStoreTableUtil.FILE_META_ROW_KEY_PREFIX;
   private static final Comparator<LogLocation> LOG_LOCATION_COMPARATOR = new Comparator<LogLocation>() {
     @Override
     public int compare(LogLocation o1, LogLocation o2) {
@@ -107,46 +108,14 @@ public class FileMetaDataReader {
           @Override
           public List<LogLocation> call(DatasetContext context) throws Exception {
             Table table = LoggingStoreTableUtil.getMetadataTable(datasetFramework, context);
-            final Row cols = table.get(getRowKey(logPathIdentifier));
-
-            if (cols.isEmpty()) {
-              return Collections.EMPTY_LIST;
-            }
             List<LogLocation> files = new ArrayList<>();
-            for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
-              // old rowkey format length is 8 bytes (just the event timestamp is the column key)
-              // new row-key format length is 17 bytes (version_byte, event timestamp (8b) and current timestamp (8b)
-              if (entry.getKey().length == 8) {
-                long eventTimestamp = Bytes.toLong(entry.getKey());
-                if (eventTimestamp <= endTimestampMs) {
-                  // old format
-                  files.add(new LogLocation(LogLocation.VERSION_0,
-                                            eventTimestamp,
-                                            // use 0 as current time as this information is not available
-                                            0,
-                                            rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))),
-                                            logPathIdentifier.getNamespaceId(), impersonator));
-                }
-              } else if (entry.getKey().length == 17) {
-                // skip the first (version) byte
-                long eventTimestamp = Bytes.toLong(entry.getKey(), 1, Bytes.SIZEOF_LONG);
-                if (eventTimestamp <= endTimestampMs) {
-                  // new format
-                  files.add(new LogLocation(LogLocation.VERSION_1,
-                                            eventTimestamp,
-                                            Bytes.toLong(entry.getKey(), 9, Bytes.SIZEOF_LONG),
-                                            rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))),
-                                            logPathIdentifier.getNamespaceId(), impersonator));
-                }
-              } else {
-                LOG.warn("For row-key {}, got column entry with unexpected key length {}",
-                         logPathIdentifier.getRowKey(), entry.getKey().length);
-              }
-            }
+            // get and add files in old format
+            files.addAll(getFilesInOldFormat(table, logPathIdentifier, endTimestampMs));
+            // get add files from new format
+            files.addAll(getFilesInNewFormat(table, logPathIdentifier, endTimestampMs));
             return files;
           }
         });
-
       // performing extra filtering (based on start timestamp) outside the transaction
       return getFilesInRange(endTimestampFilteredList, startTimestampMs);
     } catch (TransactionFailureException e) {
@@ -154,8 +123,77 @@ public class FileMetaDataReader {
     }
   }
 
+  private List<LogLocation> getFilesInOldFormat(
+    Table metaTable, LogPathIdentifier logPathIdentifier, long endTimestampMs) throws URISyntaxException {
+    List<LogLocation> files = new ArrayList<>();
+    final Row cols = metaTable.get(getRowKey(logPathIdentifier));
+    for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
+      // old rowkey format length is 8 bytes (just the event timestamp is the column key)
+      if (entry.getKey().length == 8) {
+        long eventTimestamp = Bytes.toLong(entry.getKey());
+        if (eventTimestamp <= endTimestampMs) {
+          // old format
+          files.add(new LogLocation(LogLocation.VERSION_0,
+                                    eventTimestamp,
+                                    // use 0 as current time as this information is not available
+                                    0,
+                                    rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))),
+                                    logPathIdentifier.getNamespaceId(), impersonator));
+        }
+      } else {
+        LOG.warn("For row-key {}, got column entry with unexpected key length {}",
+                 logPathIdentifier.getRowKey(), entry.getKey().length);
+      }
+    }
+    return files;
+  }
+
+  private List<LogLocation> getFilesInNewFormat(
+    Table metaTable, LogPathIdentifier logPathIdentifier, long endTimestampMs) throws URISyntaxException {
+    // create scanner with
+    // start rowkey prefix:context:event-time(0):create-time(0)
+    // end rowkey  prefix:context:event-time(endTimestamp):create-time(endTimestamp)
+    // make sure rowkey length is of new format (just for testing)
+    // add these files to the list
+    List<LogLocation> files = new ArrayList<>();
+
+    byte[] logPathIdBytes = Bytes.toBytes(logPathIdentifier.getRowKey());
+    byte[] startRowKey = Bytes.concat(LoggingStoreTableUtil.NEW_FILE_META_ROW_KEY_PREFIX,
+                                      logPathIdBytes,
+                                      Bytes.toBytes(0L),
+                                      Bytes.toBytes(0L));
+
+    byte[] endRowKey = Bytes.concat(LoggingStoreTableUtil.NEW_FILE_META_ROW_KEY_PREFIX,
+                                    logPathIdBytes,
+                                    // end key is exclusive
+                                    Bytes.toBytes(endTimestampMs + 1),
+                                    Bytes.toBytes(0L));
+    int prefixLength = LoggingStoreTableUtil.NEW_FILE_META_ROW_KEY_PREFIX.length + logPathIdBytes.length;
+
+    try (Scanner scanner = metaTable.scan(startRowKey, endRowKey)) {
+      Row row;
+      while ((row = scanner.next()) != null) {
+        if (row.getRow().length != endRowKey.length) {
+          // should not happen
+          LOG.error("Got row-key with different length {} than the expected row-key length",
+                    row.getRow().length, endRowKey.length);
+          continue;
+        }
+        // column value is the file location
+        byte[] value = row.get(LoggingStoreTableUtil.META_TABLE_COLUMN_KEY);
+        files.add(new LogLocation(LogLocation.VERSION_1,
+                                  Bytes.toLong(row.getRow(), prefixLength, Bytes.SIZEOF_LONG),
+                                  Bytes.toLong(row.getRow(), prefixLength + Bytes.SIZEOF_LONG, Bytes.SIZEOF_LONG),
+                                  rootLocationFactory.create(new URI(Bytes.toString(value))),
+                                  logPathIdentifier.getNamespaceId(), impersonator));
+
+      }
+    }
+    return files;
+  }
+
   private byte[] getRowKey(LogPathIdentifier logPathIdentifier) {
-    return Bytes.add(ROW_KEY_PREFIX, logPathIdentifier.getRowKey().getBytes());
+    return Bytes.add(LoggingStoreTableUtil.OLD_FILE_META_ROW_KEY_PREFIX, logPathIdentifier.getRowKey().getBytes());
   }
 
   @VisibleForTesting
