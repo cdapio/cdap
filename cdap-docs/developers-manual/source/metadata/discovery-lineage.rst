@@ -15,7 +15,7 @@ Metadata can be used to tag different CDAP components so that they are easily id
 and managed. This helps in discovering CDAP components.
 
 For example, you can tag a dataset as *experimental* or an application as *production*. These
-entities can then be discovered by using the annotated metadata in **search queries**. 
+entities can then be discovered by using **search queries** with the annotated metadata. 
 
 Using search, you can discover entities:
 
