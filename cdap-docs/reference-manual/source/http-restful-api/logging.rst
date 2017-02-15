@@ -25,7 +25,7 @@ Additional details on logging can be found in the :ref:`Administration Manual: L
 
 Downloading Application Logs
 ============================
-Logs emitted by a *flow*, *MapReduce*, *service*, or *Spark* program running in CDAP can be
+Logs emitted by a *flow*, *MapReduce*, *service*, *Spark*, *worker*, or *workflow* program running in CDAP can be
 downloaded with the Logging HTTP RESTful API. To do that, send an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/logs?start=<ts>&stop=<ts>
@@ -43,7 +43,7 @@ downloaded with the Logging HTTP RESTful API. To do that, send an HTTP GET reque
    * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
    * - ``program-id``
-     - Name of the program (*flow*, *MapReduce*, *service*, *Spark*, *workflow*) being called
+     - Name of the program being called
    * - ``ts``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
@@ -81,7 +81,7 @@ To download logs for a program run, send an HTTP GET request::
    * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
    * - ``program-id``
-     - Name of the program (*flow*, *MapReduce*, *service*, *Spark*, *workflow*) being called
+     - Name of the program being called
    * - ``run-id``
      - Run id of the program run
    * - ``ts``
@@ -110,7 +110,7 @@ Logs emitted by a system service running in CDAP can be downloaded with the Logg
 API. To do that, send an HTTP GET request::
 
   GET /v3/system/services/<service-id>/logs?start=<ts>&stop=<ts>
-  
+
 where:
 
 .. list-table::
