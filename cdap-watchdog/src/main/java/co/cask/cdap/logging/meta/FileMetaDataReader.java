@@ -166,19 +166,14 @@ public class FileMetaDataReader {
     byte[] endRowKey = Bytes.concat(LoggingStoreTableUtil.NEW_FILE_META_ROW_KEY_PREFIX,
                                     logPathIdBytes,
                                     // end key is exclusive
-                                    Bytes.toBytes(endTimestampMs + 1),
+                                    // todo check if this is same as endTimestampMs + 1
+                                    Bytes.stopKeyForPrefix(Bytes.toBytes(endTimestampMs)),
                                     Bytes.toBytes(0L));
     int prefixLength = LoggingStoreTableUtil.NEW_FILE_META_ROW_KEY_PREFIX.length + logPathIdBytes.length;
 
     try (Scanner scanner = metaTable.scan(startRowKey, endRowKey)) {
       Row row;
       while ((row = scanner.next()) != null) {
-        if (row.getRow().length != endRowKey.length) {
-          // should not happen
-          LOG.error("Got row-key with different length {} than the expected row-key length",
-                    row.getRow().length, endRowKey.length);
-          continue;
-        }
         // column value is the file location
         byte[] value = row.get(LoggingStoreTableUtil.META_TABLE_COLUMN_KEY);
         files.add(new LogLocation(LogLocation.VERSION_1,

@@ -23,12 +23,15 @@ import ch.qos.logback.core.spi.FilterReply;
 import ch.qos.logback.core.status.WarnStatus;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Syncable;
+import co.cask.cdap.logging.clean.FileMetadataScanner;
+import co.cask.cdap.logging.clean.LogCleaner;
 import co.cask.cdap.logging.meta.FileMetaDataWriter;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +39,9 @@ import java.io.Flushable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Log Appender implementation for CDAP Log framework
@@ -56,6 +62,9 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   private int syncIntervalBytes;
   private long maxFileLifetimeMs;
   private long maxFileSizeInBytes;
+  private ScheduledExecutorService scheduledExecutorService;
+  private long logCleanupIntervalMins;
+  private long fileRetentionDurationMins;
 
   /**
    * TODO: start a separate cleanup thread to remove files that has passed the TTL
@@ -99,6 +108,22 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     this.maxFileSizeInBytes = maxFileSizeInBytes;
   }
 
+  /**
+   * Sets the file retention duration for the file,
+   * after this duration the file gets cleaned up by log clean up thread.
+   */
+  public void setFileRetentionDurationMins(long fileRetentionDurationMins) {
+    this.fileRetentionDurationMins = fileRetentionDurationMins;
+  }
+
+  /**
+   * Sets the log cleanup interval
+   */
+  public void setLogCleanupIntervalMins(long logCleanupIntervalMins) {
+    this.logCleanupIntervalMins = logCleanupIntervalMins;
+  }
+
+
   @Override
   public void start() {
     // These should all passed. The settings are from the cdap-log-pipeline.xml and the context must be AppenderContext
@@ -107,6 +132,8 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     Preconditions.checkState(syncIntervalBytes > 0, "Property syncIntervalBytes must be > 0.");
     Preconditions.checkState(maxFileLifetimeMs > 0, "Property maxFileLifetimeMs must be > 0");
     Preconditions.checkState(maxFileSizeInBytes > 0, "Property maxFileSizeInBytes must be > 0");
+    Preconditions.checkState(fileRetentionDurationMins > 0, "Property fileRetentionDurationMins must be > 0");
+    Preconditions.checkState(logCleanupIntervalMins > 0, "Property logCleanupIntervalMins must be > 0");
 
     if (context instanceof AppenderContext) {
       AppenderContext context = (AppenderContext) this.context;
@@ -114,6 +141,14 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
                                           syncIntervalBytes, LogSchema.LoggingEvent.SCHEMA,
                                           new FileMetaDataWriter(context.getDatasetManager(), context),
                                           context.getLocationFactory());
+      if (context.getInstanceId() == 0) {
+        scheduledExecutorService =
+          Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("log-clean-up"));
+        FileMetadataScanner fileMetadataScanner = new FileMetadataScanner(context.getDatasetManager(), context);
+        LogCleaner logCleaner = new LogCleaner(fileMetadataScanner, context.getLocationFactory(),
+                                               TimeUnit.MINUTES.toMillis(fileRetentionDurationMins));
+        scheduledExecutorService.scheduleAtFixedRate(logCleaner, 10, logCleanupIntervalMins, TimeUnit.MINUTES);
+      }
     } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {
       throw new IllegalStateException("Expected logger context instance of " + AppenderContext.class.getName() +
                                         " but get " + context.getClass().getName());

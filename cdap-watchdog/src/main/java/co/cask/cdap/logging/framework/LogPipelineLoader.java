@@ -60,7 +60,8 @@ public class LogPipelineLoader {
   private static final String SYSTEM_LOG_PIPELINE_NAME = "cdap";
   private static final Set<byte[]> RESERVED_CHECKPOINT_PREFIX = ImmutableSortedSet.orderedBy(Bytes.BYTES_COMPARATOR)
     .add(Bytes.toBytes(101))    // This is used by the old metrics log plugin
-    .add(Bytes.toBytes(200))    // This is used by the file meta data
+    .add(Bytes.toBytes(200))    // This is used by the old file meta data
+    .add(Bytes.toBytes(300))    // This is used by the new file meta data
     .build();
 
   private final CConfiguration cConf;

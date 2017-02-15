@@ -30,6 +30,8 @@
     <syncIntervalBytes>${file.sync.interval.bytes}</syncIntervalBytes>
     <maxFileLifetimeMs>${file.max.lifetime.ms}</maxFileLifetimeMs>
     <maxFileSizeInBytes>${file.max.size.bytes}</maxFileSizeInBytes>
+    <logCleanupIntervalMins>${file.cleanup.interval.mins}</logCleanupIntervalMins>
+    <fileRetentionDurationMins>${file.retention.duration.mins}</fileRetentionDurationMins>
   </appender>
 
   <appender name="METRICS" class="co.cask.cdap.logging.framework.MetricsLogAppender"/>
