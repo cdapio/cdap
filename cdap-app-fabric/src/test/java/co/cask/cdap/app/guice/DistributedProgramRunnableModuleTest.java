@@ -40,7 +40,7 @@ public class DistributedProgramRunnableModuleTest {
   public void createModule() throws Exception {
     DistributedProgramRunnableModule distributedProgramRunnableModule =
       new DistributedProgramRunnableModule(CConfiguration.create(), new Configuration());
-    Guice.createInjector(distributedProgramRunnableModule.createModule());
+    Guice.createInjector(distributedProgramRunnableModule.createModule(null, null));
     Guice.createInjector(distributedProgramRunnableModule.createModule(new TwillContext() {
       @Override
       public RunId getRunId() {
@@ -117,6 +117,6 @@ public class DistributedProgramRunnableModuleTest {
       public Cancellable announce(String serviceName, int port, byte[] payload) {
         return null;
       }
-    }));
+    }, null, null));
   }
 }

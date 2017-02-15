@@ -16,16 +16,25 @@
 
 package co.cask.cdap.security.auth.context;
 
+import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * Exposes the right {@link AuthenticationContext} via an {@link AbstractModule} based on the context in which
  * it is being invoked.
  */
 public class AuthenticationContextModules {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AuthenticationContextModules.class);
 
   /**
    * An {@link AuthenticationContext} for HTTP requests in Master. The authentication details in this context are
@@ -44,13 +53,26 @@ public class AuthenticationContextModules {
 
   /**
    * An {@link AuthenticationContext} for use in program containers. The authentication details in this context are
-   * determined based on the {@link UserGroupInformation} of the user running the program.
+   * determined based on the {@link UserGroupInformation} of the user running the program. Additionally,
+   * if an principal was provided then that information is also included in the {@link Principal}.
    */
-  public AbstractModule getProgramContainerModule() {
+  public AbstractModule getProgramContainerModule(@Nullable final String principal) {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(AuthenticationContext.class).to(ProgramContainerAuthenticationContext.class);
+        bind(AuthenticationContext.class).toInstance(new AuthenticationContext() {
+          @Override
+          public Principal getPrincipal() {
+            try {
+              return principal == null ?
+                new Principal(UserGroupInformation.getCurrentUser().getShortUserName(), Principal.PrincipalType.USER) :
+                new Principal(UserGroupInformation.getCurrentUser().getShortUserName(), Principal.PrincipalType.USER,
+                              principal);
+            } catch (IOException e) {
+              throw Throwables.propagate(e);
+            }
+          }
+        });
       }
     };
   }

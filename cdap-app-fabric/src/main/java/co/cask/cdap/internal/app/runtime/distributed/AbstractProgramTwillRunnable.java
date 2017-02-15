@@ -28,6 +28,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -42,6 +43,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -166,7 +168,21 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       cConf = CConfiguration.create(new File(cmdLine.getOptionValue(RunnableOptions.CDAP_CONF_FILE)));
 
-      Injector injector = Guice.createInjector(createModule(context));
+      programOpts = createProgramOptions(cmdLine, context, context.getSpecification().getConfigs());
+
+      // This impersonation info is added in PropertiesResolver#getSystemProperties
+      // if kerberos is enabled we expect the principal to be provided in the program options as we
+      // need it to be used later in ExploreClient to make request
+      String principal = null;
+      if (SecurityUtil.isKerberosEnabled(cConf)) {
+        principal = programOpts.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
+          Preconditions.checkArgument(!Strings.isNullOrEmpty(principal));
+        LOG.trace("Kerberos is enabled. The principal provided in ProgramOption is {}", principal);
+      }
+
+      ProgramId programId = GSON.fromJson(cmdLine.getOptionValue(RunnableOptions.PROGRAM_ID), ProgramId.class);
+
+      Injector injector = Guice.createInjector(createModule(context, programId, principal));
 
       coreServices.add(injector.getInstance(ZKClientService.class));
       coreServices.add(injector.getInstance(KafkaClientService.class));
@@ -174,8 +190,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       coreServices.add(injector.getInstance(MetricsCollectionService.class));
       coreServices.add(injector.getInstance(StreamCoordinatorClient.class));
       coreServices.add(injector.getInstance(AuthorizationEnforcementService.class));
-
-      programOpts = createProgramOptions(cmdLine, context, context.getSpecification().getConfigs());
 
       // Initialize log appender
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -186,7 +200,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       try {
         Location programJarLocation = Locations.toLocation(new File(cmdLine.getOptionValue(RunnableOptions.JAR)));
-        ProgramId programId = GSON.fromJson(cmdLine.getOptionValue(RunnableOptions.PROGRAM_ID), ProgramId.class);
         ApplicationSpecification appSpec = readAppSpec(new File(cmdLine.getOptionValue(RunnableOptions.APP_SPEC_FILE)));
 
         program = Programs.create(cConf, programRunner, new ProgramDescriptor(programId, appSpec),
@@ -404,8 +417,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     }
   }
 
-  protected Module createModule(TwillContext context) {
-    return new DistributedProgramRunnableModule(cConf, hConf).createModule(context);
+  protected Module createModule(TwillContext context, ProgramId programId, @Nullable String principal) {
+    return new DistributedProgramRunnableModule(cConf, hConf).createModule(context, programId, principal);
   }
 
   /**

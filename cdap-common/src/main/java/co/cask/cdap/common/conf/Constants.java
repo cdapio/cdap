@@ -872,6 +872,10 @@ public final class Constants {
       public static final String USER_ID = "CDAP-UserId";
       /** User IP header passed from Router to downstream services */
       public static final String USER_IP = "CDAP-UserIP";
+      /** User principal passed from program container to cdap service containers */
+      public static final String USER_PRINCIPAL = "CDAP-User-Principal";
+      /** program id passed from program container to cdap service containers */
+      public static final String PROGRAM_ID = "CDAP-Program-Id";
     }
 
     /**

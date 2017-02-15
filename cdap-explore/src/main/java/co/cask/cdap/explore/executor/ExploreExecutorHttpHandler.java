@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
@@ -43,12 +44,15 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -82,6 +86,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
 
+  private final CConfiguration cConf;
   private final ExploreTableManager exploreTableManager;
   private final DatasetFramework datasetFramework;
   private final StreamAdmin streamAdmin;
@@ -89,11 +94,13 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private final Impersonator impersonator;
 
   @Inject
-  public ExploreExecutorHttpHandler(ExploreTableManager exploreTableManager,
+  public ExploreExecutorHttpHandler(CConfiguration cConf,
+                                    ExploreTableManager exploreTableManager,
                                     DatasetFramework datasetFramework,
                                     StreamAdmin streamAdmin,
                                     SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
                                     Impersonator impersonator) {
+    this.cConf = cConf;
     this.exploreTableManager = exploreTableManager;
     this.datasetFramework = datasetFramework;
     this.streamAdmin = streamAdmin;
@@ -357,7 +364,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                            @PathParam("dataset") String datasetName) throws Exception {
     final DatasetId datasetId = new DatasetId(namespace, datasetName);
     propagateUserId(request);
-    impersonator.doAs(datasetId, new Callable<Void>() {
+    impersonator.doAs(getEntityToImpersonate(datasetId, request), new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         doAddPartition(request, responder, datasetId);
@@ -437,7 +444,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                             @PathParam("dataset") String datasetName) throws Exception {
     final DatasetId datasetId = new DatasetId(namespace, datasetName);
     propagateUserId(request);
-    impersonator.doAs(datasetId, new Callable<Void>() {
+    impersonator.doAs(getEntityToImpersonate(datasetId, request), new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         doDropPartition(request, responder, datasetId);
@@ -509,6 +516,19 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       return isClassNotFoundException(e.getCause());
     }
     return null;
+  }
+
+  @Nullable
+  private String getPrincipal(HttpRequest request) throws BadRequestException {
+    String principal = request.getHeader(Constants.Security.Headers.USER_PRINCIPAL);
+    // if principal was not passed then just return null
+    return Strings.isNullOrEmpty(principal) ? null : principal;
+  }
+
+  private NamespacedEntityId getEntityToImpersonate(NamespacedEntityId entityId, HttpRequest request) {
+    String program = request.getHeader(Constants.Security.Headers.PROGRAM_ID);
+    // if program id was passed then we impersonate the programId
+    return Strings.isNullOrEmpty(program) ? entityId : ProgramId.fromString(program);
   }
 
   // propagate userid from the HTTP Request in the current thread

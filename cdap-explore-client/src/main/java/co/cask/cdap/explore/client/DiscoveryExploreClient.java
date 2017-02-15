@@ -32,6 +32,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 import static co.cask.cdap.common.conf.Constants.Service;
 
@@ -96,4 +97,12 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
   protected String getUserId() {
     return authenticationContext.getPrincipal().getName();
   }
+
+  // when run from programs, the user principal will be set in the authentication context
+  @Override
+  @Nullable
+  protected String getUserPrincipal() {
+    return authenticationContext.getPrincipal().getKerberosPrincipal();
+  }
+
 }

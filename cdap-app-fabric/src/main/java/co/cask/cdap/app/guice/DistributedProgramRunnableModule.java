@@ -38,7 +38,8 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
-import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.explore.client.ExploreClient;
+import co.cask.cdap.explore.client.ProgramDiscoveryExploreClient;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.store.remote.RemoteLineageWriter;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
@@ -47,6 +48,7 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.RemotePrivilegesManager;
@@ -67,6 +69,7 @@ import org.apache.twill.api.TwillContext;
 import org.apache.twill.common.Cancellable;
 
 import java.net.InetAddress;
+import javax.annotation.Nullable;
 
 /**
  * Defines guice modules for distributed program runnables. For instance, AbstractProgramTwillRunnable, as well as
@@ -83,7 +86,7 @@ public class DistributedProgramRunnableModule {
   }
 
   // usable from any program runtime, such as mapreduce task, spark task, etc
-  public Module createModule() {
+  public Module createModule(@Nullable final ProgramId programId, @Nullable final String principal) {
     Module combined = Modules.combine(
       new ConfigModule(cConf, hConf),
       new IOModule(),
@@ -96,14 +99,13 @@ public class DistributedProgramRunnableModule {
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
-      new ExploreClientModule(),
       new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new AuditModule().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getProgramContainerModule(),
+      new AuthenticationContextModules().getProgramContainerModule(principal),
       new SecureStoreModules().getDistributedModules(),
       new AbstractModule() {
         @Override
@@ -126,6 +128,17 @@ public class DistributedProgramRunnableModule {
           bind(PrivilegesManager.class).to(RemotePrivilegesManager.class);
 
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+
+          // Bind ProgramId to the passed in instance programId so that we can retrieve it back later when needed.
+          // For example see ProgramDiscoveryExploreClient.
+          // Also binding to instance is fine here as the programId is guaranteed to not change throughout the
+          // lifecycle of this program runnable
+          if (programId != null) {
+            bind(ProgramId.class).toInstance(programId);
+          }
+
+          // bind explore client to ProgramDiscoveryExploreClient which is aware of the programId
+          bind(ExploreClient.class).to(ProgramDiscoveryExploreClient.class).in(Scopes.SINGLETON);
         }
       }
     );
@@ -141,8 +154,8 @@ public class DistributedProgramRunnableModule {
 
   // TODO(terence) make this works for different mode
   // usable from anywhere a TwillContext is exposed
-  public Module createModule(final TwillContext context) {
-    return Modules.combine(createModule(),
+  public Module createModule(final TwillContext context, @Nullable ProgramId programId, @Nullable String principal) {
+    return Modules.combine(createModule(programId, principal),
                            new AbstractModule() {
                              @Override
                              protected void configure() {

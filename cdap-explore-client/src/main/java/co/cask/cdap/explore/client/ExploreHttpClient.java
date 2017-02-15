@@ -110,6 +110,18 @@ abstract class ExploreHttpClient implements Explore {
     return null;
   }
 
+  @Nullable
+  protected String getUserPrincipal() {
+    // by default, return null, it is only required to be set by DiscoveryExploreClient
+    // for other explore clients this should be null
+    return null;
+  }
+
+  protected void addAdditionalSecurityHeaders (Map<String, String> headers) {
+    // by default no - op. it is only required to set addition security headers if needed as in case of
+    // ProgramDiscoveryExploreClient
+  }
+
   public void ping() throws UnauthenticatedException, ServiceUnavailableException, ExploreException {
     HttpResponse response = doGet("explore/status");
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
@@ -548,7 +560,10 @@ abstract class ExploreHttpClient implements Explore {
       newHeaders.put("Authorization", "Bearer " + authToken);
     } else {
       newHeaders.put(Constants.Security.Headers.USER_ID, userId);
+      newHeaders.put(Constants.Security.Headers.USER_PRINCIPAL, getUserPrincipal());
+      addAdditionalSecurityHeaders(headers);
     }
+
     return newHeaders;
   }
 

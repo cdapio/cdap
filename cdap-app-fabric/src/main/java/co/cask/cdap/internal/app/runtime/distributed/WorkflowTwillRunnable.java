@@ -20,15 +20,19 @@ import co.cask.cdap.app.guice.DefaultProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
+import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.util.Modules;
 import org.apache.twill.api.TwillContext;
+
+import javax.annotation.Nullable;
 
 /**
  *
@@ -40,8 +44,8 @@ final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowP
   }
 
   @Override
-  protected Module createModule(TwillContext context) {
-    Module module = super.createModule(context);
+  protected Module createModule(TwillContext context, ProgramId programId, @Nullable String principal) {
+    Module module = super.createModule(context, programId, principal);
     return Modules.combine(module, new PrivateModule() {
       @Override
       protected void configure() {
