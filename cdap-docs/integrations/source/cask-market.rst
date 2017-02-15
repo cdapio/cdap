@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 .. :hide-toc: true
 
@@ -397,7 +397,7 @@ where ``mysql-connector-java.json`` is a package resource with content such as::
 create_plugin_artifact
 ......................
 Creates a CDAP artifact that contains plugins that extend another artifact.
-For example, it may contain plugins for Hydrator.
+For example, it may contain plugins for CDAP pipelines.
 
 .. list-table::
    :widths: 20 50 10 20
@@ -434,7 +434,7 @@ Example action::
 
   {
     "type": "create_plugin_artifact",
-    "label": "Hydrator Solr Plugin",
+    "label": "CDAP Pipeline Solr Plugin",
     "arguments": [
       {
         "name": "name",
@@ -595,7 +595,7 @@ Example action:
 
 create_pipeline
 ...............
-Creates a Hydrator pipeline. 
+Creates a CDAP pipeline. 
 
 .. list-table::
    :widths: 20 50 10 20
@@ -654,7 +654,7 @@ where ``pipeline.json`` is a package resource containing the pipeline config.
 
 create_pipeline_draft
 .....................
-Creates a Hydrator pipeline draft. Similar to `create_pipeline`_, except that the pipeline
+Creates a CDAP pipeline draft. Similar to `create_pipeline`_, except that the pipeline
 will not be published. Instead, a draft will be created that the user can then modify.
 
 .. list-table::

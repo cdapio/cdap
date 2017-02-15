@@ -1,12 +1,14 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. highlight:: console
 
 .. .. _cdap-etl-guide:
 
-.. _cask-hydrator-guide:
+.. .. _cask-hydrator-guide:
+
+.. _cdap-pipeline-guide:
 
 .. include:: ../../target/_includes/cdap-etl-guide/README.rst
    :end-line: 4

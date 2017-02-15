@@ -6,3 +6,12 @@
 :orphan:
 
 .. redirect to security/index.rst
+
+.. raw:: html
+
+  <script type="text/javascript">
+    var link = "/../security/index.html"; 
+    (function () {
+      window.location.replace(window.location.href.split("#")[0] + link + (window.location.hash.substring(1) ? '#' + window.location.hash.substring(1) : ''));
+    })();
+  </script>

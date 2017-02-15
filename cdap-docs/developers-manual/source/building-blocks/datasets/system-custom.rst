@@ -141,7 +141,7 @@ Annotating Dataset Methods
 --------------------------
 Dataset methods can be annotated with the type of access that they perform on data.
 Annotations help the CDAP runtime to enforce :ref:`authorization <admin-authorization>`,
-as well as track :ref:`lineage <metadata-lineage-lineage>`. Dataset methods (including
+as well as track :ref:`lineage <metadata-lineage>`. Dataset methods (including
 constructors) can be annotated with one of:
 
 - ``@ReadOnly``: Denotes that a method or constructor performs only **read** operations

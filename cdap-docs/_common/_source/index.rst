@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Introduction to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 :hide-relations: true
 
@@ -43,7 +43,7 @@ how to develop and test CDAP applications.
 
 It includes the CDAP programming APIs and client interfaces, with instructions
 on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoop cluster.
-CDAP extensions provide additional capabilities, such as *Cask Hydrator* and *Cask Tracker*.
+CDAP capabilities include *CDAP Pipelines* and *Metadata Management*.
 
 .. role:: link-black
 
@@ -73,6 +73,12 @@ CDAP extensions provide additional capabilities, such as *Cask Hydrator* and *Ca
 .. |dev-man-bb-black| replace:: `Building Blocks:`
 .. _dev-man-bb-black: developers-manual/building-blocks/index.html
 
+.. |dev-man-m-black| replace:: `Metadata:`
+.. _dev-man-m-black: developers-manual/metadata/index.html
+
+.. |dev-man-p-black| replace:: `Pipelines:`
+.. _dev-man-p-black: developers-manual/pipelines/index.html
+
 .. |dev-man-s-black| replace:: `Security:`
 .. _dev-man-s-black: developers-manual/security/index.html
 
@@ -90,11 +96,25 @@ CDAP extensions provide additional capabilities, such as *Cask Hydrator* and *Ca
   - |dev-man-gsd-black|_ A quick, hands-on introduction to developing with CDAP
   - |dev-man-o-black|_ The overall architecture, abstractions, modes, and components behind CDAP
   - |dev-man-bb-black|_ The two core abstractions in CDAP: *Data* and *Applications*, and their components
+  - |dev-man-m-black|_ CDAP can automatically capture metadata and let you see **how data is flowing**
+  - |dev-man-p-black|_ A capability of CDAP that that allows users to **build, deploy, and manage data pipelines**
   - |dev-man-s-black|_ Perimeter security, configuration and client authentication
   - |dev-man-tad-black|_ Test framework plus tools and practices for debugging your applications
   - |dev-man-id-black|_ Different techniques for ingesting data into CDAP
   - |dev-man-at-black|_ Adding a custom logback, best practices for CDAP development,
     class loading in CDAP, configuring program resources
+
+.. |pipelines-black| replace:: **Pipelines:**
+.. _pipelines-black: pipelines/index.html
+
+- |pipelines-black|_ Creating data pipelines without writing code, including details on
+  developing and packaging custom plugins
+
+.. |metadata-management-black| replace:: **Metadata Management:**
+.. _metadata-management-black: metadata-management/index.html
+
+- |metadata-management-black|_ A CDAP capability that captures metadata for datasets, streams, and
+  stream views
 
 
 .. |admin-manual| replace:: **Administration Manual:**
@@ -148,6 +168,7 @@ CDAP extensions provide additional capabilities, such as *Cask Hydrator* and *Ca
 
 .. |integ-man-sq-black| replace:: `Squirrel:`
 .. _integ-man-sq-black: integrations/squirrel.html
+
 
 - |integrations|_ 
 
@@ -262,25 +283,4 @@ CDAP extensions provide additional capabilities, such as *Cask Hydrator* and *Ca
 .. |search| replace:: **Search:**
 .. _search: search.html
 
-- |search|_ Search this documentation using *Quick Search*
-
-
-.. |cdap-extensions-black| replace:: `CDAP Extensions:`
-.. _cdap-extensions-black: index.html#cdap-extensions
-
-.. |cask-hydrator| replace:: **Cask Hydrator:**
-.. _cask-hydrator: hydrator-manual/index.html
-
-.. |cask-tracker| replace:: **Cask Tracker:**
-.. _cask-tracker: tracker-manual/index.html
-
-.. _cdap-extensions:
-
-- |cdap-extensions-black|_
-
-  - |cask-hydrator|_ Creating data pipelines without writing code, including details on
-    developing and packaging custom plugins
-
-  - |cask-tracker|_ A CDAP extension that captures metadata for datasets, streams, and
-    stream views
-
+- |search|_ Search this documentation
