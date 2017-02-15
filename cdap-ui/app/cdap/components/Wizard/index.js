@@ -45,8 +45,6 @@ export default class Wizard extends Component {
     super(props);
     this.state = {
       activeStep: this.props.wizardConfig.steps[0].id,
-      success: false,
-      successInfo: {},
       loading: false,
       error: '',
       requiredStepsCompleted: false
@@ -104,186 +102,121 @@ export default class Wizard extends Component {
     this.setState({loading: true});
     if (onSubmitReturn instanceof Rx.Observable) {
       onSubmitReturn
-        .subscribe(
-          () => {
+      .subscribe(
+        () => {
+          this.setState({
+            error: false,
+            loading: false
+          });
+          if (this.props.successInfo && !isEmpty(this.props.successInfo)) {
+            this.setState({callToActionInfo: this.props.successInfo});
+          } else {
+            this.props.onClose(true);
+          }
+        },
+        (err) => {
+          if (err) {
             this.setState({
-              success: true,
-              successInfo: this.props.successInfo,
-              error: false,
+              error: err,
               loading: false
             });
-          },
-          err => {
-            if (err) {
-              this.setState({
-                error: err,
-                success: false,
-                loading: false
-              });
-            }
           }
-        );
+        }
+      );
     }
   }
-  render() {
-    const getNavigationButtons = function getNavigationButtons(matchedStep) {
-      let matchedIndex = currentStepIndex(this.props.wizardConfig.steps, matchedStep.id);
-      let navButtons;
-      let nextButton = (
-        <button
-          className="btn btn-secondary"
-          onClick={this.goToNextStep.bind(this, matchedStep.id)}
-        >
-          <span>Next</span>
-          <span className="fa fa-chevron-right"></span>
-        </button>
-      );
-      let prevButton = (
-        <button
-          className="btn btn-secondary"
-          onClick={this.goToPreviousStep.bind(this, matchedStep.id)}
-        >
-          <span className="fa fa-chevron-left"></span>
-          <span>Previous</span>
-        </button>
-      );
-      let finishButton = (
-        <button
-          className="btn btn-primary"
-          onClick={this.submitForm.bind(this)}
-          disabled={(!this.state.requiredStepsCompleted || this.state.loading) ? 'disabled' : null}
-        >
-          Finish
-        </button>
-      );
-      // This is ugly. We need to find a better way.
-      if (matchedIndex === 0 && this.props.wizardConfig.steps.length > 1) {
-        navButtons = (
-          <span>
-            {canFinish(matchedStep.id, this.props.wizardConfig) ? finishButton : null}
-            {nextButton}
-          </span>
-        );
-      }
-      if (matchedIndex === this.props.wizardConfig.steps.length - 1 && this.props.wizardConfig.steps.length > 1) {
-        navButtons = (
-          <span>
-            {prevButton}
-            {canFinish(matchedStep.id, this.props.wizardConfig) ? finishButton : null}
-          </span>
-        );
-      }
-      if (matchedIndex !== 0 &&
-          matchedIndex !== this.props.wizardConfig.steps.length - 1 &&
-          this.props.wizardConfig.steps.length > 1) {
-        navButtons = (
-          <span>
-            {prevButton}
-            {canFinish(matchedStep.id, this.props.wizardConfig) ? finishButton : null}
-            {nextButton}
-          </span>
-        );
-      }
-      if (this.props.wizardConfig.steps.length === 1) {
-        navButtons = (
-          <span>
-            {finishButton}
-          </span>
-        );
-      }
+  isStepComplete(stepId) {
+    let state = this.props.store.getState()[stepId];
+    return state && state.__complete;
+  }
 
-      return navButtons;
-    }.bind(this);
-    const isStepComplete = function isStepComplete(stepId) {
-      let state = this.props.store.getState()[stepId];
-      return state && state.__complete;
-    }.bind(this);
-    const onSubmitSuccessMessage = function onSubmitSuccessMessage() {
-      let doneLabel = T.translate('features.Wizard.Done');
-      let skipLabel = T.translate('features.Wizard.Skip');
-      let successInfo = this.state.successInfo;
-      return (
-        <div>
-          <div
-            className="close-section float-xs-right"
-            onClick={this.props.onClose.bind(null, true)}
-          >
-            <span className="fa fa-times" />
-          </div>
-          <div className="result-container">
-            {
-              !isEmpty(successInfo) ?
-                (
-                  <div>
-                    <span className="success-message">
-                      {successInfo.message}
-                      <p>{successInfo.subtitle}</p>
-                    </span>
-                    <div className="clearfix">
-                      <a
-                        href={successInfo.buttonUrl}
-                        className="call-to-action btn btn-primary"
-                      >
-                        {successInfo.buttonLabel}
-                      </a>
-                      <a
-                        href={successInfo.linkUrl}
-                        className="secondary-call-to-action text-white"
-                      >
-                        {successInfo.linkLabel}
-                      </a>
-                    </div>
-                  </div>
-                )
-              :
-                (
-                  <div>
-                    <ul>
-                      {
-                        steps
-                          .map((step, index) => {
-                            return {
-                              index,
-                              label: step.shorttitle,
-                              skipped: this.props.store.getState()[step.id] && this.props.store.getState()[step.id].__skipped
-                            };
-                          })
-                          .map((value) => {
-                            return (
-                              <li key={shortid.generate()}>
-                                Step - {value.index + 1} : {value.label} - {value.skipped ? skipLabel : doneLabel}
-                              </li>
-                            );
-                          })
-                      }
-                    </ul>
-                    <div className="clearfix text-xs-center done-button">
-                      <div
-                        className="btn btn-primary"
-                        onClick={this.props.onClose.bind(null, true)}
-                      >
-                        Done
-                      </div>
-                    </div>
-                  </div>
-                )
-            }
-          </div>
-        </div>
+  getNavigationButtons(matchedStep) {
+    let matchedIndex = currentStepIndex(this.props.wizardConfig.steps, matchedStep.id);
+    let navButtons;
+    let nextButton = (
+      <button
+        className="btn btn-secondary"
+        onClick={this.goToNextStep.bind(this, matchedStep.id)}
+      >
+        <span>Next</span>
+        <span className="fa fa-chevron-right"></span>
+      </button>
+    );
+    let prevButton = (
+      <button
+        className="btn btn-secondary"
+        onClick={this.goToPreviousStep.bind(this, matchedStep.id)}
+      >
+        <span className="fa fa-chevron-left"></span>
+        <span>Previous</span>
+      </button>
+    );
+    let finishButton = (
+      <button
+        className="btn btn-primary"
+        onClick={this.submitForm.bind(this)}
+        disabled={(!this.state.requiredStepsCompleted || this.state.loading) ? 'disabled' : null}
+      >
+        Finish
+      </button>
+    );
+    // This is ugly. We need to find a better way.
+    if (matchedIndex === 0 && this.props.wizardConfig.steps.length > 1) {
+      navButtons = (
+        <span>
+          {canFinish(matchedStep.id, this.props.wizardConfig) ? finishButton : null}
+          {nextButton}
+        </span>
       );
-    }.bind(this);
+    }
+    if (matchedIndex === this.props.wizardConfig.steps.length - 1 && this.props.wizardConfig.steps.length > 1) {
+      navButtons = (
+        <span>
+          {prevButton}
+          {canFinish(matchedStep.id, this.props.wizardConfig) ? finishButton : null}
+        </span>
+      );
+    }
+    if (matchedIndex !== 0 &&
+        matchedIndex !== this.props.wizardConfig.steps.length - 1 &&
+        this.props.wizardConfig.steps.length > 1) {
+      navButtons = (
+        <span>
+          {prevButton}
+          {canFinish(matchedStep.id, this.props.wizardConfig) ? finishButton : null}
+          {nextButton}
+        </span>
+      );
+    }
+    if (this.props.wizardConfig.steps.length === 1) {
+      navButtons = (
+        <span>
+          {finishButton}
+        </span>
+      );
+    }
+
+    return navButtons;
+  }
+
+  getStepHeaders() {
     let stepHeaders = this.props
       .wizardConfig
       .steps
       .map( (step) => (
         <WizardStepHeader
           label={`${step.shorttitle}`}
-          className={ isStepComplete(step.id) ? 'completed' : null}
+          className={ this.isStepComplete(step.id) ? 'completed' : null}
           id={step.id}
           key={shortid.generate()}
           onClick={this.setActiveStep.bind(this, step.id)}
         />
       ));
+
+    return stepHeaders;
+  }
+
+  getStepContent() {
     let stepContent = this.props
       .wizardConfig
       .steps
@@ -298,19 +231,57 @@ export default class Wizard extends Component {
           >
             {matchedStep.content}
             <div className="text-xs-right wizard-navigation">
-              {getNavigationButtons(matchedStep)}
+              {this.getNavigationButtons(matchedStep)}
             </div>
           </WizardStepContent>
         );
       });
-    let wizardFooter;
-    let steps = this.props.wizardConfig.steps;
-    if (this.state.success) {
-      wizardFooter = onSubmitSuccessMessage();
+
+    stepContent = first(stepContent);
+    return stepContent;
+  }
+
+  getCallsToAction() {
+    let callToActionInfo = this.state.callToActionInfo;
+    return (
+      <div>
+        <div
+          className="close-section float-xs-right"
+          onClick={this.props.onClose.bind(null, true)}
+        >
+          <span className="fa fa-times" />
+        </div>
+        <div className="result-container">
+          <span className="success-message">
+            {callToActionInfo.message}
+            <p>{callToActionInfo.subtitle}</p>
+          </span>
+          <div className="clearfix">
+            <a
+              href={callToActionInfo.buttonUrl}
+              className="call-to-action btn btn-primary"
+            >
+              {callToActionInfo.buttonLabel}
+            </a>
+            <a
+              href={callToActionInfo.linkUrl}
+              className="secondary-call-to-action text-white"
+            >
+              {callToActionInfo.linkLabel}
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  getWizardFooter() {
+    let wizardFooter = null;
+    if (this.state.callToActionInfo) {
+      wizardFooter = this.getCallsToAction();
     }
     if (this.state.error) {
       let step = T.translate(`features.Wizard.${this.props.wizardType}.headerlabel`);
-
       wizardFooter = (
         <CardActionFeedback
           type='DANGER'
@@ -319,7 +290,6 @@ export default class Wizard extends Component {
         />
       );
     }
-
     if (this.state.loading) {
       wizardFooter = (
         <CardActionFeedback
@@ -328,20 +298,22 @@ export default class Wizard extends Component {
         />
       );
     }
+    return wizardFooter;
+  }
 
-    stepContent = first(stepContent);
+  render() {
     return (
       <div className="cask-wizard">
         <div className="wizard-body">
           <div className="wizard-steps-header">
-            {stepHeaders}
+            {this.getStepHeaders()}
           </div>
           <div className="wizard-steps-content">
-            {stepContent}
+            {this.getStepContent()}
           </div>
         </div>
-        <div className={classnames("wizard-footer", {success: this.state.success})}>
-          {wizardFooter}
+        <div className={classnames("wizard-footer", {success: this.state.callToActionInfo})}>
+          {this.getWizardFooter()}
         </div>
       </div>
     );

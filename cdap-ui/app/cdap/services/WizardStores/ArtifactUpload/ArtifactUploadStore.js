@@ -30,7 +30,7 @@ const defaultState = {
 
 const defaultConfigureState = Object.assign({
   name: '',
-  type: '',
+  type: ['jdbc'], // had to set this here so that this has a default state
   description: '',
   classname: '',
   parentArtifact: [
@@ -58,31 +58,17 @@ const isComplete = (state, requiredFields) => {
 };
 
 const upload = (state = defaultUploadState, action = defaultAction) => {
-  let stateCopy;
-  let configurationStepRequiredFields = [];
-  if (ArtifactUploadWizardConfig) {
-    configurationStepRequiredFields = head(
-      ArtifactUploadWizardConfig
-        .steps
-        .filter(step => step.id === 'upload')
-      ).requiredFields;
-  }
-
   switch (action.type) {
     case ArtifactUploadActions.setFilePath:
-      stateCopy = Object.assign({}, state, {
-        file: action.payload.file
+      return Object.assign({}, state, {
+        file: action.payload.file,
+        __complete: true
       });
-      break;
     case ArtifactUploadActions.onReset:
       return defaultUploadState;
     default:
       return state;
   }
-
-  return Object.assign({}, stateCopy, {
-    __complete: isComplete(stateCopy, configurationStepRequiredFields)
-  });
 };
 
 const configure = (state = defaultConfigureState, action = defaultAction) => {

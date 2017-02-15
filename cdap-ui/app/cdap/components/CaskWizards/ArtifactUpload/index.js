@@ -30,9 +30,9 @@ export default class ArtifactUploadWizard extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showWizard: this.props.isOpen
+      showWizard: this.props.isOpen,
+      successInfo: {}
     };
-    this.successInfo = {};
   }
   componentWillUnmount() {
     ArtifactUploadStore.dispatch({
@@ -41,7 +41,9 @@ export default class ArtifactUploadWizard extends Component {
   }
 
   onSubmit() {
-    this.buildSuccessInfo();
+    if (!this.props.buildSuccessInfo) {
+      this.buildSuccessInfo();
+    }
     return ArtifactUploadActionCreator.uploadArtifact();
   }
 
@@ -53,25 +55,37 @@ export default class ArtifactUploadWizard extends Component {
       showWizard: !this.state.showWizard
     });
   }
+  // TODO: shouldn't do this, replace in 4.2
   getChildContext() {
     return {
-      isMarket: this.props.isMarket
+      isMarket: this.props.buildSuccessInfo
     };
   }
   buildSuccessInfo() {
     let state = ArtifactUploadStore.getState();
-    let name = state.configure.name;
+    let artifactName = state.configure.name;
     let namespace = NamespaceStore.getState().selectedNamespace;
-    let defaultSuccessMessage = T.translate('features.Wizard.ArtifactUpload.success');
+    let message = T.translate('features.Wizard.ArtifactUpload.success', {artifactName});
     let subtitle = T.translate('features.Wizard.ArtifactUpload.subtitle');
     let buttonLabel = T.translate('features.Wizard.ArtifactUpload.callToAction');
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
-    this.successInfo.message = `${defaultSuccessMessage} "${name}".`;
-    this.successInfo.subtitle = subtitle;
-    this.successInfo.buttonLabel = buttonLabel;
-    this.successInfo.buttonUrl = `/hydrator/ns/${namespace}/studio`;
-    this.successInfo.linkLabel = linkLabel;
-    this.successInfo.linkUrl = `/cdap/ns/${namespace}`;
+    this.setState({
+      successInfo: {
+        message,
+        subtitle,
+        buttonLabel,
+        buttonUrl: window.getHydratorUrl({
+          stateName: 'hydrator.create',
+          stateParams: {
+            namespace
+          }
+        }),
+        linkLabel,
+        linkUrl: window.getAbsUIUrl({
+          namespaceId: namespace
+        })
+      }
+    });
   }
   render() {
     let input = this.props.input;
@@ -87,11 +101,11 @@ export default class ArtifactUploadWizard extends Component {
         className="artifact-upload-wizard"
       >
         <Wizard
-          wizardConfig={this.props.isMarket ? MarketArtifactUploadWizardConfig : ArtifactUploadWizardConfig}
+          wizardConfig={this.props.buildSuccessInfo ? MarketArtifactUploadWizardConfig : ArtifactUploadWizardConfig}
           wizardType="ArtifactUpload"
           store={ArtifactUploadStore}
           onSubmit={this.onSubmit.bind(this)}
-          successInfo={this.successInfo}
+          successInfo={this.state.successInfo}
           onClose={this.toggleWizard.bind(this)}
         />
       </WizardModal>
@@ -105,8 +119,7 @@ ArtifactUploadWizard.defaultProps = {
       arguments: {}
     },
     package: {},
-  },
-  isMarket: false
+  }
 };
 ArtifactUploadWizard.childContextTypes = {
   isMarket: PropTypes.bool
@@ -115,5 +128,5 @@ ArtifactUploadWizard.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
   onClose: PropTypes.func,
-  isMarket: PropTypes.bool
+  buildSuccessInfo: PropTypes.func
 };
