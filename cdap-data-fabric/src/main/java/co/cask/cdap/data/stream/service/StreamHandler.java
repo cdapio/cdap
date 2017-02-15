@@ -73,8 +73,6 @@ import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -102,8 +100,6 @@ import javax.ws.rs.PathParam;
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/streams")
 public final class StreamHandler extends AbstractHttpHandler {
-
-  private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StreamProperties.class, new StreamPropertiesAdapter())
@@ -224,10 +220,7 @@ public final class StreamHandler extends AbstractHttpHandler {
     StreamProperties streamProperties;
     // If the request to create a stream contains a non-empty body, then construct and set StreamProperties
     if (request.getContent().readable()) {
-      streamProperties = getAndValidateConfig(request, responder);
-      if (streamProperties == null) {
-        return;
-      }
+      streamProperties = getAndValidateConfig(request);
 
       if (streamProperties.getTTL() != null) {
         props.put(Constants.Stream.TTL, Long.toString(streamProperties.getTTL()));
@@ -262,13 +255,8 @@ public final class StreamHandler extends AbstractHttpHandler {
                       @PathParam("stream") String stream) throws Exception {
     StreamId streamId = validateAndGetStreamId(namespaceId, stream);
     authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal(), Action.WRITE);
-    try {
-      streamWriter.enqueue(streamId, getHeaders(request, stream), request.getContent().toByteBuffer());
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (IOException e) {
-      LOG.error("Failed to write to stream {}", stream, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
+    streamWriter.enqueue(streamId, getHeaders(request, stream), request.getContent().toByteBuffer());
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @POST
@@ -336,12 +324,7 @@ public final class StreamHandler extends AbstractHttpHandler {
     StreamId streamId = validateAndGetStreamId(namespaceId, stream);
     checkStreamExists(streamId);
 
-    StreamProperties properties = getAndValidateConfig(request, responder);
-    // null is returned if the requested config is invalid. An appropriate response will have already been written
-    // to the responder so we just need to return.
-    if (properties == null) {
-      return;
-    }
+    StreamProperties properties = getAndValidateConfig(request);
 
     streamAdmin.updateConfig(streamId, properties);
     responder.sendStatus(HttpResponseStatus.OK);
@@ -391,25 +374,22 @@ public final class StreamHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Gets stream properties from the request. If there is request is invalid, response will be made and {@code null}
-   * will be return.
+   * Gets stream properties from the request. If there is request is invalid, a BadRequestException will be thrown.
    */
-  private StreamProperties getAndValidateConfig(HttpRequest request, HttpResponder responder) {
+  private StreamProperties getAndValidateConfig(HttpRequest request) throws BadRequestException {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
     StreamProperties properties;
     try {
       properties = GSON.fromJson(reader, StreamProperties.class);
     } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid stream configuration. Please check that the " +
-        "configuration is a valid JSON Object with a valid schema.");
-      return null;
+      throw new BadRequestException("Invalid stream configuration. Please check that the " +
+                                      "configuration is a valid JSON Object with a valid schema.");
     }
 
     // Validate ttl
     Long ttl = properties.getTTL();
     if (ttl != null && ttl < 0) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "TTL value should be positive.");
-      return null;
+      throw new BadRequestException("TTL value should be positive.");
     }
 
     // Validate format
@@ -417,8 +397,7 @@ public final class StreamHandler extends AbstractHttpHandler {
     if (formatSpec != null) {
       String formatName = formatSpec.getName();
       if (formatName == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "A format name must be specified.");
-        return null;
+        throw new BadRequestException("A format name must be specified.");
       }
       try {
         // if a format is given, make sure it is a valid format,
@@ -429,21 +408,16 @@ public final class StreamHandler extends AbstractHttpHandler {
         formatSpec = new FormatSpecification(formatSpec.getName(),
                                                 format.getSchema(), formatSpec.getSettings());
       } catch (UnsupportedTypeException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                             "Format " + formatName + " does not support the requested schema.");
-        return null;
+        throw new BadRequestException("Format " + formatName + " does not support the requested schema.");
       } catch (Exception e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                             "Invalid format, unable to instantiate format " + formatName);
-        return null;
+        throw new BadRequestException("Invalid format, unable to instantiate format " + formatName);
       }
     }
 
     // Validate notification threshold
     Integer threshold = properties.getNotificationThresholdMB();
     if (threshold != null && threshold <= 0) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Threshold value should be greater than zero.");
-      return null;
+      throw new BadRequestException("Threshold value should be greater than zero.");
     }
 
     // validate owner principal if one is provided

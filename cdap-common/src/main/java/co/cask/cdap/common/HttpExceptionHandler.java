@@ -22,7 +22,6 @@ import co.cask.http.ExceptionHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -38,10 +37,11 @@ public class HttpExceptionHandler extends ExceptionHandler {
   @Override
   public void handle(Throwable t, HttpRequest request, HttpResponder responder) {
     // Check if the exception is caused by Service being unavailable: this will happen during master startup
-    if (Iterables.size(Iterables.filter(Throwables.getCausalChain(t), ServiceUnavailableException.class)) > 0) {
-      // no need to log ServiceUnavailableException because at master startup we are waiting for services to come up
-      responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, t.getMessage());
-      return;
+    for (Throwable cause : Throwables.getCausalChain(t)) {
+      if (cause instanceof ServiceUnavailableException) {
+        responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, cause.getMessage());
+        return;
+      }
     }
 
     // If the exception provides http status, response with it
