@@ -97,6 +97,10 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
     while (isRunning()) {
       try {
         collectOperationalStats();
+        if (!isRunning()) {
+          // Need to check here before sleep as the collectOperationStats may swallow interrupted exception
+          break;
+        }
         TimeUnit.SECONDS.sleep(statsRefreshInterval);
       } catch (InterruptedException e) {
         // Expected on stopping. So just break the loop
