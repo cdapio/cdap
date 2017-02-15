@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,12 @@
 package co.cask.cdap.api.messaging;
 
 /**
- * Exception thrown when trying to operation on a topic while the topic of that name does not exists.
+ * Exception thrown when attempting an operation on a topic when a topic of that name does not exist.
  */
+@Beta
 public class TopicNotFoundException extends MessagingException {
 
   public TopicNotFoundException(String namespace, String topic) {
-    super(namespace, topic, "Topic does not exist: " + namespace + ":" + topic);
+    super(namespace, topic, "Topic " + namespace + ":" + topic + " does not exist.");
   }
 }

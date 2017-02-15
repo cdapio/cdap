@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,8 @@
 /**
  * This package contains classes and interfaces for interacting with the Transactional Messaging System.
  *
- * Note: The Transactional Messaging System is an experimental feature introduced in CDAP 4.0; all APIs related to it
- * are subject to change in future CDAP releases until it is out of Beta phase.
+ * Note: The Transactional Messaging System is an experimental feature, introduced in CDAP 4.0; all APIs related to it
+ * are subject to change in future CDAP releases until it is out of the beta phase.
  */
 @Beta
 package co.cask.cdap.api.messaging;
