@@ -47,7 +47,8 @@ var webpackConfig = {
       'papaparse',
       'd3',
       'chart.js',
-      'cdap-avsc'
+      'cdap-avsc',
+      'react-datetime'
     ]
   },
   output: {
