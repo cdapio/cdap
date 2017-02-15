@@ -9,5 +9,6 @@
   "router.server.address": "127.0.0.1",
   "dashboard.bind.port": "11011",
   "enable.preview": "true",
-  "dashboard.router.check.timeout.secs": "0"
+  "dashboard.router.check.timeout.secs": "0",
+  "market.base.url": "http://market.cask.co/dev/v2"
 }

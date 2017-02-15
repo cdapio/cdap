@@ -93,6 +93,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       hydrator: {
         previewEnabled: cdapConfig['enable.preview'] === 'true'
       },
+      marketUrl: cdapConfig['market.base.url'],
       sslEnabled: cdapConfig['ssl.external.enabled'] === 'true',
       securityEnabled: authAddress.enabled,
       isEnterprise: process.env.NODE_ENV === 'production'

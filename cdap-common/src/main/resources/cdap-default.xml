@@ -392,7 +392,7 @@
       are comma-separated.
     </description>
   </property>
-  
+
   <property>
     <name>scheduler.max.thread.pool.size</name>
     <value>100</value>
@@ -958,7 +958,7 @@
     <value>10000</value>
     <description>
       The interval length (in number of messages in the CDAP Kafka service) at which to
-      force an fsync of data written to the log 
+      force an fsync of data written to the log
     </description>
   </property>
 
@@ -1255,7 +1255,17 @@
     </description>
   </property>
 
-  
+  <!-- Market Configuration -->
+
+  <property>
+    <name>market.base.url</name>
+    <value>http://market.cask.co/v1</value>
+    <description>
+      The base URL of the Cask Market used by the CDAP UI for the Cask Market RESTful API.
+      The default value shown is that of the public Cask Market.
+    </description>
+  </property>
+
   <!-- Master Configuration -->
 
   <property>
@@ -1721,7 +1731,7 @@
       store after the number of fetched messages reaches the limit.
     </description>
   </property>
-  
+
   <property>
     <name>metrics.messaging.meta.table</name>
     <value>metrics.messaging.meta</value>
@@ -1858,7 +1868,7 @@
 
 
   <!-- Operational Statistics Configuration -->
-  
+
   <property>
     <name>operational.stats.extensions.dir</name>
     <value>/opt/cdap/master/ext/operations</value>
