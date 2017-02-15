@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.client;
 
 import co.cask.cdap.common.ServiceUnavailableException;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
@@ -31,6 +32,7 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.net.InetSocketAddress;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -100,9 +102,7 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
 
   // when run from programs, the user principal will be set in the authentication context
   @Override
-  @Nullable
-  protected String getUserPrincipal() {
-    return authenticationContext.getPrincipal().getKerberosPrincipal();
+  protected void addAdditionalSecurityHeaders(Map<String, String> headers) {
+    headers.put(Constants.Security.Headers.USER_PRINCIPAL, authenticationContext.getPrincipal().getKerberosPrincipal());
   }
-
 }

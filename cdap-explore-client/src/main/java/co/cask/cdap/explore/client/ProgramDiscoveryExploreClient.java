@@ -43,6 +43,7 @@ public class ProgramDiscoveryExploreClient extends DiscoveryExploreClient {
 
   @Override
   protected void addAdditionalSecurityHeaders(Map<String, String> headers) {
-    headers.put(Constants.Security.Headers.USER_PRINCIPAL, programId.toString());
+    super.addAdditionalSecurityHeaders(headers);
+    headers.put(Constants.Security.Headers.PROGRAM_ID, programId.toString());
   }
 }
