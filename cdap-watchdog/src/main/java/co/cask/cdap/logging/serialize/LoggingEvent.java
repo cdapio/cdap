@@ -21,6 +21,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import ch.qos.logback.classic.spi.ThrowableProxyVO;
+import co.cask.cdap.logging.LoggingUtil;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
@@ -191,7 +192,7 @@ public final class LoggingEvent implements ILoggingEvent {
     }
     datum.put("hasCallerData", loggingEvent.hasCallerData);
     //datum.put("marker", marker);
-    datum.put("mdc", LogSerializerUtil.encodeMDC(loggingEvent.getMDCPropertyMap()));
+    datum.put("mdc", LoggingUtil.encodeMDC(loggingEvent.getMDCPropertyMap()));
     datum.put("timestamp", loggingEvent.timestamp);
     return datum;
   }
@@ -199,9 +200,9 @@ public final class LoggingEvent implements ILoggingEvent {
   @SuppressWarnings("unchecked")
   public static ILoggingEvent decode(GenericRecord datum) {
     LoggingEvent loggingEvent = new LoggingEvent();
-    loggingEvent.threadName = LogSerializerUtil.stringOrNull(datum.get("threadName"));
+    loggingEvent.threadName = LoggingUtil.stringOrNull(datum.get("threadName"));
     loggingEvent.level = (Integer) datum.get("level");
-    loggingEvent.message = LogSerializerUtil.stringOrNull(datum.get("message"));
+    loggingEvent.message = LoggingUtil.stringOrNull(datum.get("message"));
 
     GenericArray<?> argArray = (GenericArray<?>) datum.get("argumentArray");
     if (argArray != null) {
@@ -210,13 +211,13 @@ public final class LoggingEvent implements ILoggingEvent {
         loggingEvent.argumentArray[i] = argArray.get(i) == null ? null : argArray.get(i).toString();
       }
     }
-    loggingEvent.formattedMessage = LogSerializerUtil.stringOrNull(datum.get("formattedMessage"));
-    loggingEvent.loggerName = LogSerializerUtil.stringOrNull(datum.get("loggerName"));
+    loggingEvent.formattedMessage = LoggingUtil.stringOrNull(datum.get("formattedMessage"));
+    loggingEvent.loggerName = LoggingUtil.stringOrNull(datum.get("loggerName"));
     loggingEvent.loggerContextVO = LoggerContextSerializer.decode((GenericRecord) datum.get("loggerContextVO"));
     loggingEvent.throwableProxy = ThrowableProxySerializer.decode((GenericRecord) datum.get("throwableProxy"));
     loggingEvent.callerData = CallerDataSerializer.decode((GenericArray<GenericRecord>) datum.get("callerData"));
     loggingEvent.hasCallerData = (Boolean) datum.get("hasCallerData");
-    loggingEvent.mdc = LogSerializerUtil.decodeMDC((Map<?, ?>) datum.get("mdc"));
+    loggingEvent.mdc = LoggingUtil.decodeMDC((Map<?, ?>) datum.get("mdc"));
     loggingEvent.timestamp = (Long) datum.get("timestamp");
     return loggingEvent;
   }
