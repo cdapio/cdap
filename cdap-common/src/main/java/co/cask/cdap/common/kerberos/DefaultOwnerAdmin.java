@@ -18,6 +18,7 @@ package co.cask.cdap.common.kerberos;
 
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.FeatureDisabledException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.element.EntityType;
@@ -34,11 +35,13 @@ import javax.annotation.Nullable;
  */
 public class DefaultOwnerAdmin implements OwnerAdmin {
 
+  private final CConfiguration cConf;
   private final OwnerStore ownerStore;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
-  public DefaultOwnerAdmin(OwnerStore ownerStore, NamespaceQueryAdmin namespaceQueryAdmin) {
+  public DefaultOwnerAdmin(CConfiguration cConf, OwnerStore ownerStore, NamespaceQueryAdmin namespaceQueryAdmin) {
+    this.cConf = cConf;
     this.ownerStore = ownerStore;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
@@ -74,12 +77,15 @@ public class DefaultOwnerAdmin implements OwnerAdmin {
     if (!entityId.getEntityType().equals(EntityType.NAMESPACE)) {
       KerberosPrincipalId effectiveOwner = ownerStore.getOwner(entityId);
       if (effectiveOwner != null) {
-        return new ImpersonationInfo(effectiveOwner.getPrincipal(), null);
+        return new ImpersonationInfo(effectiveOwner.getPrincipal(),
+                                     SecurityUtil.getKeytabURIforPrincipal(effectiveOwner.getPrincipal(), cConf));
       }
     }
     // (CDAP-8176) Since no owner was found for the entity return namespace principal if present.
     try {
       NamespaceConfig nsConfig = namespaceQueryAdmin.get(entityId.getNamespaceId()).getConfig();
+      // CDAP-8355 If the operation being impersonated is an explore query then check if the namespace configuration
+      // specifies that it can be impersonated with the namespace owner.
       if (impersonatedOpType.equals(ImpersonatedOpType.EXPLORE) && !nsConfig.isExploreAsPrincipal()) {
         throw new FeatureDisabledException(FeatureDisabledException.Feature.EXPLORE,
                                            NamespaceConfig.class.getSimpleName() + " of " + entityId,

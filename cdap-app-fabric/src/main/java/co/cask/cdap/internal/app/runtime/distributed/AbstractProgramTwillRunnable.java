@@ -166,7 +166,15 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       cConf = CConfiguration.create(new File(cmdLine.getOptionValue(RunnableOptions.CDAP_CONF_FILE)));
 
-      Injector injector = Guice.createInjector(createModule(context));
+      programOpts = createProgramOptions(cmdLine, context, context.getSpecification().getConfigs());
+
+      // This impersonation info is added in PropertiesResolver#getSystemProperties
+      // if kerberos is enabled we expect the principal to be provided in the program options as we
+      // need it to be used later in ExploreClient to make request. If kerberos is disabled this will be null
+      String principal = programOpts.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
+      ProgramId programId = GSON.fromJson(cmdLine.getOptionValue(RunnableOptions.PROGRAM_ID), ProgramId.class);
+
+      Injector injector = Guice.createInjector(createModule(context, programId, principal));
 
       coreServices.add(injector.getInstance(ZKClientService.class));
       coreServices.add(injector.getInstance(KafkaClientService.class));
@@ -174,8 +182,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       coreServices.add(injector.getInstance(MetricsCollectionService.class));
       coreServices.add(injector.getInstance(StreamCoordinatorClient.class));
       coreServices.add(injector.getInstance(AuthorizationEnforcementService.class));
-
-      programOpts = createProgramOptions(cmdLine, context, context.getSpecification().getConfigs());
 
       // Initialize log appender
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -186,7 +192,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       try {
         Location programJarLocation = Locations.toLocation(new File(cmdLine.getOptionValue(RunnableOptions.JAR)));
-        ProgramId programId = GSON.fromJson(cmdLine.getOptionValue(RunnableOptions.PROGRAM_ID), ProgramId.class);
         ApplicationSpecification appSpec = readAppSpec(new File(cmdLine.getOptionValue(RunnableOptions.APP_SPEC_FILE)));
 
         program = Programs.create(cConf, programRunner, new ProgramDescriptor(programId, appSpec),
@@ -404,8 +409,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     }
   }
 
-  protected Module createModule(TwillContext context) {
-    return new DistributedProgramRunnableModule(cConf, hConf).createModule(context);
+  protected Module createModule(TwillContext context, ProgramId programId, @Nullable String principal) {
+    return new DistributedProgramRunnableModule(cConf, hConf).createModule(context, programId, principal);
   }
 
   /**

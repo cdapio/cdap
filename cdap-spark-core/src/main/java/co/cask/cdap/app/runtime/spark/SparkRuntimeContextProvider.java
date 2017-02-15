@@ -34,6 +34,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -41,6 +42,7 @@ import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -130,7 +132,7 @@ public final class SparkRuntimeContextProvider {
       // Create the program
       Program program = createProgram(cConf, contextConfig);
 
-      Injector injector = createInjector(cConf, hConf);
+      Injector injector = createInjector(cConf, hConf, contextConfig.getProgramId(), contextConfig.getProgramOptions());
 
       final Service logAppenderService = new LogAppenderService(injector.getInstance(LogAppenderInitializer.class),
                                                                 contextConfig.getProgramOptions());
@@ -261,8 +263,10 @@ public final class SparkRuntimeContextProvider {
     return new PluginInstantiator(cConf, parentClassLoader, new File(pluginArchive));
   }
 
-  private static Injector createInjector(CConfiguration cConf, Configuration hConf) {
-    return Guice.createInjector(new DistributedProgramRunnableModule(cConf, hConf).createModule());
+  private static Injector createInjector(CConfiguration cConf, Configuration hConf,
+                                         ProgramId programId, ProgramOptions programOptions) {
+    String principal = programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
+    return Guice.createInjector(new DistributedProgramRunnableModule(cConf, hConf).createModule(programId, principal));
   }
 
   /**
