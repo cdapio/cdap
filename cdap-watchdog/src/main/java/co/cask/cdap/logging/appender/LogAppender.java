@@ -38,9 +38,9 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
       }
     }
 
-    append(new LogMessage(eventObject, loggingContext));
+    appendEvent(new LogMessage(eventObject, loggingContext));
   }
 
-  protected abstract void append(LogMessage logMessage);
+  protected abstract void appendEvent(LogMessage logMessage);
 
 }

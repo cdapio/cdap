@@ -31,8 +31,6 @@ import co.cask.cdap.internal.io.DatumWriter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.TopicId;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;

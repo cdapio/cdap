@@ -41,6 +41,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -55,8 +56,8 @@ import javax.annotation.Nullable;
 public class LogPipelineLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(LogPipelineLoader.class);
-  private static final String CDAP_LOG_PIPELINE_CONFIG = "cdap-log-pipeline.xml";
-  private static final String CDAP_LOG_PIPELINE_NAME = "cdap";
+  private static final String SYSTEM_LOG_PIPELINE_CONFIG = "cdap-log-pipeline.xml";
+  private static final String SYSTEM_LOG_PIPELINE_NAME = "cdap";
   private static final Set<byte[]> RESERVED_CHECKPOINT_PREFIX = ImmutableSortedSet.orderedBy(Bytes.BYTES_COMPARATOR)
     .add(Bytes.toBytes(101))    // This is used by the old metrics log plugin
     .add(Bytes.toBytes(200))    // This is used by the file meta data
@@ -146,6 +147,17 @@ public class LogPipelineLoader {
           continue;
         }
 
+        if (SYSTEM_LOG_PIPELINE_NAME.equals(spec.getName())) {
+          // Make sure the byte prefix is correct
+          if (!Arrays.equals(spec.getCheckpointPrefix(), Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX)) {
+            // This error cannot be ignored
+            throw new InvalidPipelineException(
+              "System pipeline '" + SYSTEM_LOG_PIPELINE_NAME + "' should have checkpoint prefix set to " +
+                Bytes.toStringBinary(Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX)
+            );
+          }
+        }
+
         result.put(spec.getName(), spec);
       } catch (JoranException e) {
         if (!ignoreOnError) {
@@ -156,7 +168,7 @@ public class LogPipelineLoader {
       }
     }
 
-    Preconditions.checkState(result.containsKey(CDAP_LOG_PIPELINE_NAME),
+    Preconditions.checkState(result.containsKey(SYSTEM_LOG_PIPELINE_NAME),
                              "The CDAP system log processing pipeline is missing. " +
                                "Please check and fix any configuration error shown earlier in the log.");
     return result;
@@ -166,7 +178,7 @@ public class LogPipelineLoader {
    * Returns an {@link Iterable} of {@link URL} of pipeline configuration files.
    */
   private Iterable<URL> getPipelineConfigURLs() {
-    URL systemPipeline = getClass().getClassLoader().getResource(CDAP_LOG_PIPELINE_CONFIG);
+    URL systemPipeline = getClass().getClassLoader().getResource(SYSTEM_LOG_PIPELINE_CONFIG);
     // This shouldn't happen since the cdap pipeline is packaged in the jar.
     Preconditions.checkState(systemPipeline != null, "Missing cdap system pipeline configuration");
 

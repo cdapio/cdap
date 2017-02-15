@@ -31,6 +31,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
+import co.cask.cdap.common.io.Syncable;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.utils.Tasks;
@@ -39,6 +40,7 @@ import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.logging.appender.ForwardingAppender;
+import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.GenericLoggingContext;
@@ -95,6 +97,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -200,6 +203,57 @@ public class KafkaLogProcessorPipelineTest {
     loggerContext.stop();
 
     Assert.assertNull(appender.getEvents());
+  }
+
+  @Test
+  public void testRegularFlush() throws Exception {
+    String topic = "testFlush";
+    LoggerContext loggerContext = createLoggerContext("WARN", ImmutableMap.of("test.logger", "INFO"),
+                                                      TestAppender.class.getName());
+    final TestAppender appender = getAppender(loggerContext.getLogger(Logger.ROOT_LOGGER_NAME),
+                                              "Test", TestAppender.class);
+    TestCheckpointManager checkpointManager = new TestCheckpointManager();
+
+    // Use a longer checkpoint time and a short event delay. Should expect flush called at least once
+    // per event delay.
+    KafkaPipelineConfig config = new KafkaPipelineConfig(topic, Collections.singleton(0), 1024, 100, 1048576, 2000);
+    KAFKA_TESTER.createTopic(topic, 1);
+
+    loggerContext.start();
+    KafkaLogProcessorPipeline pipeline = new KafkaLogProcessorPipeline(
+      new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext), checkpointManager,
+      KAFKA_TESTER.getBrokerService(), config);
+
+    pipeline.startAndWait();
+
+    // Even when there is no event, the flush should still get called.
+    Tasks.waitFor(5, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return appender.getFlushCount();
+      }
+    }, 3, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+    // Publish some logs
+    long now = System.currentTimeMillis();
+    publishLog(topic, ImmutableList.of(
+      createLoggingEvent("test.logger", Level.INFO, "0", now - 500),
+      createLoggingEvent("test.logger", Level.INFO, "1", now - 300),
+      createLoggingEvent("test.logger", Level.INFO, "2", now + 100)
+    ));
+
+    // Wait until getting all logs.
+    Tasks.waitFor(3, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return appender.getEvents().size();
+      }
+    }, 3, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
+
+    pipeline.stopAndWait();
+
+    // Should get at least 20 flush calls, since the checkpoint is every 2 seconds
+    Assert.assertTrue(appender.getFlushCount() >= 20);
   }
 
   @Test
@@ -468,7 +522,7 @@ public class KafkaLogProcessorPipelineTest {
 
     LoggingEventSerializer serializer = new LoggingEventSerializer();
     for (ILoggingEvent event : events) {
-      preparer.add(ByteBuffer.wrap(serializer.toBytes(event, context)), context.getLogPartition());
+      preparer.add(ByteBuffer.wrap(serializer.toBytes(new LogMessage(event, context))), context.getLogPartition());
     }
     preparer.send();
   }
@@ -515,10 +569,11 @@ public class KafkaLogProcessorPipelineTest {
   /**
    * Appender for unit-test.
    */
-  public static final class TestAppender extends AppenderBase<ILoggingEvent> implements Flushable {
+  public static final class TestAppender extends AppenderBase<ILoggingEvent> implements Flushable, Syncable {
 
-    private Queue<ILoggingEvent> events;
+    private final AtomicInteger flushCount = new AtomicInteger();
     private Queue<ILoggingEvent> pending;
+    private Queue<ILoggingEvent> persisted;
 
     @Override
     protected void append(ILoggingEvent event) {
@@ -526,27 +581,36 @@ public class KafkaLogProcessorPipelineTest {
     }
 
     Queue<ILoggingEvent> getEvents() {
-      return events;
+      return persisted;
     }
 
-    @Override
-    public void flush() throws IOException {
-      events.addAll(pending);
-      pending.clear();
+    int getFlushCount() {
+      return flushCount.get();
     }
 
     @Override
     public void start() {
-      events = new ConcurrentLinkedQueue<>();
+      persisted = new ConcurrentLinkedQueue<>();
       pending = new LinkedList<>();
       super.start();
     }
 
     @Override
     public void stop() {
-      events = null;
+      persisted = null;
       pending = null;
       super.stop();
+    }
+
+    @Override
+    public void flush() throws IOException {
+      flushCount.incrementAndGet();
+    }
+
+    @Override
+    public void sync() throws IOException {
+      persisted.addAll(pending);
+      pending.clear();
     }
   }
 

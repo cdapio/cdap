@@ -24,7 +24,6 @@ import co.cask.cdap.logging.appender.kafka.StringPartitioner;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.meta.CheckpointManager;
 import co.cask.cdap.logging.meta.CheckpointManagerFactory;
-import co.cask.cdap.logging.save.KafkaLogWriterPlugin;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +49,7 @@ public final class DistributedLogReader implements LogReader {
     this.kafkaLogReader = kafkaLogReader;
     this.fileLogReader = fileLogReader;
     this.checkpointManager = checkpointManagerFactory.create(cConf.get(Constants.Logging.KAFKA_TOPIC),
-                                                             KafkaLogWriterPlugin.CHECKPOINT_ROW_KEY_PREFIX);
+                                                             Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX);
     this.partitioner = partitioner;
   }
 

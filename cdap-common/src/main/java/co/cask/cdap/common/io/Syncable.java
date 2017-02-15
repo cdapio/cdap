@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,20 @@
  * the License.
  */
 
+package co.cask.cdap.common.io;
+
+import java.io.IOException;
+
 /**
- * Contains classes to log messages into file.
+ * Represent a destination that output can be sync to the underlying storage system.
  */
-package co.cask.cdap.logging.appender.file;
+public interface Syncable {
+
+  /**
+   * Flushes data and sync to the underlying storage system.
+   * Data should be persisted permanently after this call returns.
+   *
+   * @throws IOException if failed to perform the sync operation
+   */
+  void sync() throws IOException;
+}

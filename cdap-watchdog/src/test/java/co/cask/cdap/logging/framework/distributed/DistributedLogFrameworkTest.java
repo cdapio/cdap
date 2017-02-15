@@ -40,6 +40,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.kafka.KafkaTester;
+import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.framework.LogPathIdentifier;
@@ -247,7 +248,7 @@ public class DistributedLogFrameworkTest {
 
     LoggingEventSerializer serializer = new LoggingEventSerializer();
     for (ILoggingEvent event : events) {
-      preparer.add(ByteBuffer.wrap(serializer.toBytes(event, context)), context.getLogPartition());
+      preparer.add(ByteBuffer.wrap(serializer.toBytes(new LogMessage(event, context))), context.getLogPartition());
     }
     preparer.send();
   }

@@ -34,6 +34,12 @@ public interface LoggingContext {
    */
   Map<String, SystemTag> getSystemTagsMap();
 
+  /**
+   * @return Map of tag name to system tag associated with this logging context with the {@link SystemTag#getValue()}
+   * as the map values.
+   */
+  Map<String, String> getSystemTagsAsString();
+
   // hack hack hack: time constraints
   /**
    * Returns the partition name that is used to group log messages of a component into one partition for collection.

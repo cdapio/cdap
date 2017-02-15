@@ -23,11 +23,11 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.logging.KafkaTestBase;
 import co.cask.cdap.logging.LoggingConfiguration;
-import co.cask.cdap.logging.appender.file.FileLogAppender;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
 import co.cask.cdap.logging.appender.kafka.StringPartitioner;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
+import co.cask.cdap.logging.framework.local.LocalLogAppender;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManager;
 import co.cask.cdap.logging.meta.CheckpointManagerFactory;
@@ -36,7 +36,6 @@ import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.ReadRange;
-import co.cask.cdap.logging.save.KafkaLogWriterPlugin;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -98,14 +97,14 @@ public class TestDistributedLogReader extends KafkaTestBase {
     // Generate logs for LOGGING_CONTEXT_BOTH, that contains logs in file, both file and kafka, and only in kafka
     LoggingContextAccessor.setLoggingContext(LOGGING_CONTEXT_BOTH);
 
-    LogAppender fileAppender = injector.getInstance(FileLogAppender.class);
+    LogAppender fileAppender = injector.getInstance(LocalLogAppender.class);
 
     new LogAppenderInitializer(fileAppender).initialize("TestDistributedLogReader-file");
     Logger fileLogger = LoggerFactory.getLogger("TestDistributedLogReader-file");
     generateLogs(fileLogger, "Log message1", 0, 20);
     fileAppender.stop();
 
-    fileAppender = injector.getInstance(FileLogAppender.class);
+    fileAppender = injector.getInstance(LocalLogAppender.class);
     LogAppender kafkaAppender = injector.getInstance(KafkaLogAppender.class);
     new LogAppenderInitializer(fileAppender).initialize("TestDistributedLogReader-both");
     new LogAppenderInitializer(kafkaAppender).initialize("TestDistributedLogReader-both");
@@ -125,7 +124,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
 
     // Generate logs for LOGGING_CONTEXT_FILE, logs only in file
     LoggingContextAccessor.setLoggingContext(LOGGING_CONTEXT_FILE);
-    fileAppender = injector.getInstance(FileLogAppender.class);
+    fileAppender = injector.getInstance(LocalLogAppender.class);
     new LogAppenderInitializer(fileAppender).initialize("TestDistributedLogReader-file-2");
     fileLogger = LoggerFactory.getLogger("TestDistributedLogReader-file-2");
     generateLogs(fileLogger, "Log message2", 0, 40);
@@ -282,7 +281,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
     // Save checkpoint (time of last event)
     CheckpointManagerFactory checkpointManagerFactory = injector.getInstance(CheckpointManagerFactory.class);
     CheckpointManager checkpointManager =
-      checkpointManagerFactory.create(kafkaTopic, KafkaLogWriterPlugin.CHECKPOINT_ROW_KEY_PREFIX);
+      checkpointManagerFactory.create(kafkaTopic, Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX);
     long checkpointTime = events.get(numExpectedEvents - 1).getLoggingEvent().getTimeStamp();
     checkpointManager.saveCheckpoints(ImmutableMap.of(stringPartitioner.partition(loggingContext.getLogPartition(), -1),
                                                       new Checkpoint(numExpectedEvents, checkpointTime)));

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,15 +21,15 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 
-import static co.cask.cdap.logging.serialize.Util.stringOrNull;
+import static co.cask.cdap.logging.serialize.LogSerializerUtil.stringOrNull;
 
 /**
  * Serializer for ClassPackagingData.
  */
-public final class ClassPackagingDataSerializer {
+final class ClassPackagingDataSerializer {
   private ClassPackagingDataSerializer() {}
 
-  public static GenericRecord encode(Schema schema, ClassPackagingData classPackagingData) {
+  static GenericRecord encode(Schema schema, ClassPackagingData classPackagingData) {
     if (classPackagingData != null) {
       GenericRecord datum = new GenericData.Record(schema.getTypes().get(1));
       datum.put("codeLocation", classPackagingData.getCodeLocation());
@@ -40,7 +40,7 @@ public final class ClassPackagingDataSerializer {
     return null;
   }
 
-  public static ClassPackagingData decode(GenericRecord datum) {
+  static ClassPackagingData decode(GenericRecord datum) {
     if (datum != null) {
       String codeLocation =  stringOrNull(datum.get("codeLocation"));
       String version = stringOrNull(datum.get("version"));

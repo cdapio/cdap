@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,10 +24,10 @@ import org.apache.avro.generic.GenericRecord;
 /**
  * Serializer for CallerData.
  */
-public final class CallerDataSerializer {
+final class CallerDataSerializer {
   private CallerDataSerializer() {}
 
-  public static GenericArray<GenericRecord> encode(Schema schema, StackTraceElement[] stackTraceElements) {
+  static GenericArray<GenericRecord> encode(Schema schema, StackTraceElement[] stackTraceElements) {
     if (stackTraceElements != null) {
       Schema steArraySchema = schema.getTypes().get(1);
       GenericArray<GenericRecord> steArray = new GenericData.Array<>(stackTraceElements.length,
@@ -40,7 +40,7 @@ public final class CallerDataSerializer {
     return null;
   }
 
-  public static StackTraceElement[] decode(GenericArray<GenericRecord> datum) {
+  static StackTraceElement[] decode(GenericArray<GenericRecord> datum) {
     if (datum != null) {
       StackTraceElement[] stackTraceElements = new StackTraceElement[datum.size()];
       int i = 0;

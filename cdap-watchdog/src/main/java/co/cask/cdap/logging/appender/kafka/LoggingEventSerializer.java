@@ -18,7 +18,6 @@ package co.cask.cdap.logging.appender.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.serialize.LoggingEvent;
 import com.google.common.base.Throwables;
@@ -53,12 +52,12 @@ public final class LoggingEventSerializer {
     return LogSchema.LoggingEvent.SCHEMA;
   }
 
-  public byte[] toBytes(ILoggingEvent loggingEvent, LoggingContext loggingContext) {
+  public byte[] toBytes(ILoggingEvent loggingEvent) {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     BinaryEncoder encoder = EncoderFactory.get().directBinaryEncoder(out, null);
     GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(getAvroSchema());
     try {
-      writer.write(LoggingEvent.encode(getAvroSchema(), loggingEvent, loggingContext), encoder);
+      writer.write(LoggingEvent.encode(getAvroSchema(), loggingEvent), encoder);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

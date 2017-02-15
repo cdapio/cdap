@@ -22,14 +22,13 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.status.OnConsoleStatusListener;
 import ch.qos.logback.core.status.StatusManager;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Iterators;
 import com.google.inject.Inject;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nullable;
 
 /**
@@ -37,7 +36,6 @@ import javax.annotation.Nullable;
  */
 public class LogAppenderInitializer implements Closeable {
   private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LogAppenderInitializer.class);
-  private static final ConcurrentMap<String, String> initMap = Maps.newConcurrentMap();
   private final LogAppender logAppender;
 
   @Inject
@@ -46,19 +44,20 @@ public class LogAppenderInitializer implements Closeable {
   }
 
   public void initialize() {
-    if (initMap.putIfAbsent(Logger.ROOT_LOGGER_NAME, logAppender.getName()) != null) {
-      // Already initialized.
-      LOG.warn("Log appender {} is already initialized.", logAppender.getName());
-      return;
-    }
     initialize(Logger.ROOT_LOGGER_NAME);
   }
 
   @VisibleForTesting
-  public void initialize(String loggerName) {
+  public synchronized void initialize(String loggerName) {
     LoggerContext loggerContext = getLoggerContext();
     if (loggerContext != null) {
-      Logger rootLogger = loggerContext.getLogger(loggerName);
+      Logger logger = loggerContext.getLogger(loggerName);
+
+      // Check if the logger already contains the logAppender
+      if (Iterators.contains(logger.iteratorForAppenders(), logAppender)) {
+        LOG.warn("Log appender {} is already initialized.", logAppender.getName());
+        return;
+      }
 
       LOG.info("Initializing log appender {}", logAppender.getName());
 
@@ -70,7 +69,7 @@ public class LogAppenderInitializer implements Closeable {
       logAppender.setContext(loggerContext);
       logAppender.start();
 
-      rootLogger.addAppender(logAppender);
+      logger.addAppender(logAppender);
     }
   }
 

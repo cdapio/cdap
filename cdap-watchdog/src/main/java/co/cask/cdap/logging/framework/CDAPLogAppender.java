@@ -22,6 +22,7 @@ import ch.qos.logback.core.LogbackException;
 import ch.qos.logback.core.spi.FilterReply;
 import ch.qos.logback.core.status.WarnStatus;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Syncable;
 import co.cask.cdap.logging.meta.FileMetaDataWriter;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -40,7 +41,7 @@ import java.util.Set;
  * Log Appender implementation for CDAP Log framework
  * TODO : Refactor package CDAP-8196
  */
-public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flushable {
+public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flushable, Syncable {
   private static final Logger LOG = LoggerFactory.getLogger(CDAPLogAppender.class);
   private static final Set<String> PROGRAM_ID_KEYS = ImmutableSet.of(Constants.Logging.TAG_FLOW_ID,
                                                                      Constants.Logging.TAG_MAP_REDUCE_JOB_ID,
@@ -148,11 +149,17 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     // no-op - this wont be called as we are overriding doAppend
   }
 
-
   @Override
   public void flush() throws IOException {
     if (logFileManager != null) {
       logFileManager.flush();
+    }
+  }
+
+  @Override
+  public void sync() throws IOException {
+    if (logFileManager != null) {
+      logFileManager.sync();
     }
   }
 

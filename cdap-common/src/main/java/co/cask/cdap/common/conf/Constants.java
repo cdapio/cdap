@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.conf;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 
@@ -733,6 +734,8 @@ public final class Constants {
 
     // Property key in the logger context to indicate it is performing pipeline validation
     public static final String PIPELINE_VALIDATION = "log.pipeline.validation";
+
+    public static final byte[] SYSTEM_PIPELINE_CHECKPOINT_PREFIX = Bytes.toBytes(100);
 
     // Constants
     // Table used to store log metadata

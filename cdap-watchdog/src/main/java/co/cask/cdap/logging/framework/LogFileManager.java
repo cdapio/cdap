@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.framework;
 
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.io.Syncable;
 import co.cask.cdap.logging.meta.FileMetaDataWriter;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -40,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Class including logic for getting log file to write to. Used by {@link CDAPLogAppender}
  */
-final class LogFileManager implements Flushable {
+final class LogFileManager implements Flushable, Syncable {
   private static final Logger LOG = LoggerFactory.getLogger(LogFileManager.class);
 
   private final String dirPermissions;
@@ -167,6 +168,14 @@ final class LogFileManager implements Flushable {
     // perform flush on all the files in the outputStreamMap
     for (LogFileOutputStream file : outputStreamMap.values()) {
       file.flush();
+    }
+  }
+
+  @Override
+  public void sync() throws IOException {
+    // Perform sync on all files
+    for (LogFileOutputStream file : outputStreamMap.values()) {
+      file.sync();
     }
   }
 

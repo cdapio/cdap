@@ -1116,7 +1116,7 @@
 
   <property>
     <name>log.process.pipeline.checkpoint.interval.ms</name>
-    <value>60000</value>
+    <value>10000</value>
     <description>
       The time between log processing pipeline checkpoints in milliseconds
     </description>

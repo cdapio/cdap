@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,15 +23,15 @@ import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 
-import static co.cask.cdap.logging.serialize.Util.stringOrNull;
+import static co.cask.cdap.logging.serialize.LogSerializerUtil.stringOrNull;
 
 /**
  * Serializer for IThrowableProxy.
  */
-public final class ThrowableProxySerializer {
+final class ThrowableProxySerializer {
   private ThrowableProxySerializer() {}
 
-  public static GenericRecord encode(Schema schema, IThrowableProxy throwableProxy) {
+  static GenericRecord encode(Schema schema, IThrowableProxy throwableProxy) {
     if (throwableProxy != null) {
       Schema tpSchema = schema.getTypes().get(1);
       GenericRecord datum = new GenericData.Record(tpSchema);
@@ -50,7 +50,7 @@ public final class ThrowableProxySerializer {
     return null;
   }
 
-  public static IThrowableProxy decode(GenericRecord datum) {
+  static IThrowableProxy decode(GenericRecord datum) {
     if (datum != null) {
       String className = stringOrNull(datum.get("className"));
       String message = stringOrNull(datum.get("message"));

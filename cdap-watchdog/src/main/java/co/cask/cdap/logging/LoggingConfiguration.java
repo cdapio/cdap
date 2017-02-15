@@ -16,8 +16,6 @@
 
 package co.cask.cdap.logging;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * Logging configuration helper.
  */
@@ -29,19 +27,10 @@ public final class LoggingConfiguration {
   public static final String LOG_FILE_SYNC_INTERVAL_BYTES = "log.file.sync.interval.bytes";
 
   public static final String KAFKA_SEED_BROKERS = "kafka.seed.brokers";
-  public static final String LOG_SAVER_EVENT_BUCKET_INTERVAL_MS = "log.saver.event.bucket.interval.ms";
-  public static final String LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS = "log.saver.event.max.inmemory.buckets";
-  public static final String LOG_SAVER_INACTIVE_FILE_INTERVAL_MS = "log.saver.inactive.file.interval.ms";
-  @Deprecated
-  public static final String LOG_SAVER_MAX_FILE_LIFETIME = "log.saver.max.file.lifetime.ms";
-  @Deprecated
-  public static final String LOG_SAVER_CHECKPOINT_INTERVAL_MS = "log.saver.checkpoint.interval.ms";
-  public static final String LOG_SAVER_TOPIC_WAIT_SLEEP_MS = "log.saver.topic.wait.sleep.ms";
   public static final String LOG_RETENTION_DURATION_DAYS = "log.retention.duration.days";
   public static final String LOG_MAX_FILE_SIZE_BYTES = "log.max.file.size.bytes";
   public static final String KAFKA_PRODUCER_TYPE = "kafka.producer.type";
   public static final String KAFKA_PRODUCER_BUFFER_MS = "kafka.producer.buffer.ms";
-  public static final String LOG_CLEANUP_RUN_INTERVAL_MINS = "log.cleanup.run.interval.mins";
   public static final String LOG_CLEANUP_MAX_NUM_FILES = "log.cleanup.max.num.files";
 
   // Defaults
@@ -49,14 +38,6 @@ public final class LoggingConfiguration {
   public static final String DEFAULT_KAFKA_PRODUCER_TYPE = "async";
 
   public static final long DEFAULT_KAFKA_PRODUCER_BUFFER_MS = 1000;
-  public static final int DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS = 24 * 60;
-
-  public static final long DEFAULT_LOG_SAVER_EVENT_BUCKET_INTERVAL_MS = 1000;
-  public static final long DEFAULT_LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS = 4;
-  public static final long DEFAULT_LOG_SAVER_MAX_FILE_LIFETIME_MS = TimeUnit.HOURS.toMillis(6);
-  public static final long DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS = 60 * 1000;
-  public static final long DEFAULT_LOG_RETENTION_DURATION_DAYS = 30;
-  public static final long DEFAULT_LOG_SAVER_TOPIC_WAIT_SLEEP_MS = TimeUnit.MILLISECONDS.convert(10, TimeUnit.SECONDS);
 
   private LoggingConfiguration() {}
 }
