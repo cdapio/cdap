@@ -1033,7 +1033,7 @@
     <name>log.cleanup.max.num.files</name>
     <value>1000</value>
     <description>
-      Max number of files scanned in one iteration
+      Maximum number of files scanned in one iteration
     </description>
   </property>
 
@@ -1073,7 +1073,7 @@
     <name>log.pipeline.cdap.file.max.lifetime.ms</name>
     <value>21600000</value>
     <description>
-      Maximum time in milliseconds a file is kept opened by the system log appender
+      Maximum time in milliseconds a file is kept open by the system log appender
     </description>
   </property>
 
@@ -1081,7 +1081,7 @@
     <name>log.pipeline.cdap.file.max.size.bytes</name>
     <value>104857600</value>
     <description>
-      Maximum size in bytes a file is kept opened by the system log appender
+      Maximum size in bytes of a file kept open by the system log appender
     </description>
   </property>
 
@@ -1089,7 +1089,7 @@
     <name>log.pipeline.cdap.file.permissions</name>
     <value>600</value>
     <description>
-      Permissions to use for files created by the system log appender
+      Permissions to set for files created by the system log appender
     </description>
   </property>
 
@@ -1097,7 +1097,7 @@
     <name>log.pipeline.cdap.file.sync.interval.bytes</name>
     <value>10485760</value>
     <description>
-      Number of bytes for the sync interval setting of the avro file written by the system log appender
+      Number of bytes for the sync interval setting of the Avro file written by the system log appender
     </description>
   </property>
 
