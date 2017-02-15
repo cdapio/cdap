@@ -16,8 +16,8 @@ Metadata
    
     System Metadata <system-metadata>
     Discovery and Lineage <discovery-lineage>
-    CDAP Metadata UI <metadata-ui>
     Audit Logging <audit-logging>
+    CDAP Metadata UI <metadata-ui>
 
 
 *Metadata* is an important capability of CDAP. CDAP Metadata helps show how datasets and
@@ -48,37 +48,41 @@ Metadata keys, values, and tags must conform to the CDAP :ref:`supported charact
 object associated with a single entity is limited to 10K bytes in size.
 
 
-.. rubric:: System Metadata
+.. |system-metadata| replace:: **System Metadata:**
+.. _system-metadata: system-metadata.html
 
-While CDAP allows users to tag entities with metadata properties and tags, it also tags
-entities with system properties and tags (:ref:`system metadata
-<metadata-system-metadata>`) by default.
-
-
-.. rubric:: Discover and Lineage
-
-Metadata can be used to tag different CDAP components so that they are easily 
-:ref:`identifiable, managed, and discovered <metadata-discovery>`.
-
-:ref:`Lineage <metadata-lineage>` shows |---| for a specified time range |---| all data
-access of the entity, and details of where that access originated from.
+- |system-metadata|_ While CDAP allows users to tag entities with metadata properties and
+  tags, it also tags entities with system properties and tags (:ref:`system metadata
+  <metadata-system-metadata>`) by default.
 
 
-.. rubric:: CDAP Metadata UI
+.. |discovery-lineage| replace:: **Discovery and Lineage:**
+.. _discovery-lineage: discovery-lineage.html
 
-The :ref:`CDAP Metadata UI <metadata-ui>` ("metadata management") lets you see how data is
-flowing into and out of datasets, streams, and stream views.
+- |discovery-lineage|_ Metadata can be used to tag different CDAP components so that they
+  are easily :ref:`discovered <metadata-discovery>`, identifiable, and managed. :ref:`Lineage
+  <metadata-lineage>` shows |---| for a specified time range |---| all data
+  access of the entity, and details of where that access originated from.
 
 
-.. rubric:: Audit Logging
+.. |audit-logging| replace:: **Audit Logging:**
+.. _audit-logging: audit-logging.html
 
-:ref:`Audit logging <audit-logging>` provides a chronological ledger containing evidence
-of operations or changes on CDAP entities.
+- |audit-logging|_ provides a chronological ledger containing evidence of operations or
+  changes on CDAP entities.
+
+
+.. |metadata-ui| replace:: **CDAP Metadata UI:**
+.. _metadata-ui: metadata-ui.html
+
+- |metadata-ui|_ lets you see how data is flowing into and out of datasets, streams, and
+  stream views.
 
 
 .. _metadata-navigator-integration:
 
-.. rubric:: Cloudera Navigator Integration
+.. |navigator-integration| replace:: **Cloudera Navigator Integration:**
 
-CDAP Metadata can be pushed to Cloudera Navigator for metadata discovery and search. 
-Refer to :ref:`Cloudera Navigator Integration <navigator-integration>` for more information.
+- |navigator-integration| CDAP Metadata can be pushed to Cloudera Navigator for metadata discovery
+  and search. Refer to :ref:`Cloudera Navigator Integration <navigator-integration>` for
+  more information.
