@@ -72,7 +72,7 @@ public interface MessagePublisher {
    * @param topic name of the topic
    * @param payloads the payloads to publish. Each element in the array will become a {@link Message}
    * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters and {@code _} or {@code -}.
+   *                                  characters, {@code _}, or {@code -}.
    * @throws IOException if failed to communicate with the messaging system
    * @throws TopicNotFoundException if the given topic doesn't exist
    */
@@ -87,7 +87,7 @@ public interface MessagePublisher {
    * @param charset the {@link Charset} for encoding the payload strings
    * @param payloads the payloads to publish. Each element in the array will become a {@link Message}
    * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters and {@code _} or {@code -}.
+   *                                  characters, {@code _}, or {@code -}.
    * @throws IOException if there was a failure to communicate with the messaging system
    * @throws TopicNotFoundException if the given topic doesn't exist
    */
@@ -101,7 +101,7 @@ public interface MessagePublisher {
    * @param topic name of the topic
    * @param payloads the payloads to publish. Each element in the array will become a {@link Message}
    * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters and {@code _} or {@code -}.
+   *                                  characters, {@code _}, or {@code -}.
    * @throws IOException if there was a failure to communicate with the messaging system
    * @throws TopicNotFoundException if the given topic doesn't exist
    */

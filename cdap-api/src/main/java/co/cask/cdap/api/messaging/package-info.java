@@ -15,7 +15,7 @@
  */
 
 /**
- * This package contains classes and interfaces for interacting with the Transactional Messaging System.
+ * Classes and interfaces for interacting with the Transactional Messaging System.
  *
  * Note: The Transactional Messaging System is an experimental feature, introduced in CDAP 4.0; all APIs related to it
  * are subject to change in future CDAP releases until it is out of the beta phase.

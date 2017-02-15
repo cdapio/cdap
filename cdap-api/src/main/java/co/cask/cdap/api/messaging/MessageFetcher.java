@@ -39,7 +39,7 @@ public interface MessageFetcher {
    *                  Use {@code timestamp = 0} to poll from the first available message.
    * @return a {@link CloseableIterator} of {@link Message}
    * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters and {@code _} or {@code -}.
+   *                                  characters, {@code _}, or {@code -}.
    * @throws IOException if there was a failure to communicate with the messaging system
    * @throws TopicNotFoundException if the give topic doesn't exist
    */
@@ -58,7 +58,7 @@ public interface MessageFetcher {
    *                       the first available message.
    * @return a {@link CloseableIterator} of {@link Message}
    * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters and {@code _} or {@code -}.
+   *                                  characters, {@code _}, or {@code -}.
    * @throws IOException if there was a failure to communicate with the messaging system
    * @throws TopicNotFoundException if the give topic doesn't exist
    */
