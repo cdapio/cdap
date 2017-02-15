@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.messaging;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
  * Exception thrown when trying to create a topic when a topic of that name already exists.
  */

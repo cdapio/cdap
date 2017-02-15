@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.messaging;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
  * Signals that an exception related to the messaging system has occurred.
  * This class is the parent class for exceptions produced by the Transactional Messaging System.
