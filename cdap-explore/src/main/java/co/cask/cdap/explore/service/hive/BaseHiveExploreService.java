@@ -141,6 +141,17 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private static final String HIVE_METASTORE_TOKEN_KEY = "hive.metastore.token.signature";
   public static final String SPARK_YARN_DIST_FILES = "spark.yarn.dist.files";
 
+  private static final String PARAMS_EXPLORE_MODIFIES = com.google.common.base.Joiner.on("|").join(
+    ImmutableList.of("spark.*", "explore.*",
+                     "mapreduce.job.queuename",
+                     "mapreduce.job.complete.cancel.delegation.tokens",
+                     "mapreduce.job.credentials.binary",
+                     "hive.exec.submit.local.task.via.child",
+                     "hive.exec.submitviachild",
+                     "hive.lock.*",
+                     "tez.credentials.path",
+                     CommonConfigurationKeysPublic.HADOOP_SECURITY_AUTHENTICATION));
+
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final TransactionSystemClient txClient;
@@ -245,8 +256,19 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       conf.set(HIVE_METASTORE_TOKEN_KEY, HiveAuthFactory.HS2_CLIENT_TOKEN);
     }
 
+    // workaround to allow CDAP explore to modify params of session conf
+    String whiteListAppend = conf.getVar(HiveConf.ConfVars.HIVE_AUTHORIZATION_SQL_STD_AUTH_CONFIG_WHITELIST_APPEND);
+    if (whiteListAppend != null && !whiteListAppend.trim().isEmpty()) {
+      // if user has configured some value for this, we must append to the regex
+      whiteListAppend = whiteListAppend + "|" + PARAMS_EXPLORE_MODIFIES;
+    } else {
+      whiteListAppend = PARAMS_EXPLORE_MODIFIES;
+    }
+    conf.setVar(HiveConf.ConfVars.HIVE_AUTHORIZATION_SQL_STD_AUTH_CONFIG_WHITELIST_APPEND, whiteListAppend);
+
     // We override this param due to the change in HIVE-14383. Otherwise, the hive job will be launched as the
-    // 'hive' user (or fail to even launch, if on ClouderaManager). See CDAP-8367 for more details.
+    // 'hive' user (or fail to even launch, if on ClouderaManager). See CDAP-8367 for more details. We set this later
+    // in sessionConf.
     conf.set(CommonConfigurationKeysPublic.HADOOP_SECURITY_AUTHENTICATION,
              UserGroupInformation.AuthenticationMethod.SIMPLE.name());
 
