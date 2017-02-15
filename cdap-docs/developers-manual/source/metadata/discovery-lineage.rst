@@ -15,15 +15,16 @@ Metadata can be used to tag different CDAP components so that they are easily id
 and managed. This helps in discovering CDAP components.
 
 For example, you can tag a dataset as *experimental* or an application as *production*. These
-entities can then be discovered by using the annotated metadata in **search queries**. Using search,
-you can discover entities:
+entities can then be discovered by using the annotated metadata in **search queries**. 
+
+Using search, you can discover entities:
 
 - that have a particular **value** for *any key* in their properties;
 - that have a particular **key** with a particular *value* in their properties; or
 - that have a particular **tag**.
 
 You can find a dataset or a stream that has a "field with the given name" or a "field
-with the given name and the given type"
+with the given name and the given type".
 
 To search metadata, you can use the :ref:`Metadata HTTP RESTful API <http-restful-api-metadata-searching>`.
 
