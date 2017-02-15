@@ -47,10 +47,34 @@ Metadata keys, values, and tags must conform to the CDAP :ref:`supported charact
 <supported-characters>`, and are limited to 50 characters in length. The entire metadata
 object associated with a single entity is limited to 10K bytes in size.
 
+
+.. rubric:: System Metadata
+
+While CDAP allows users to tag entities with metadata properties and tags, it also tags
+entities with system properties and tags (:ref:`system metadata
+<metadata-system-metadata>`) by default.
+
+
+.. rubric:: Discover and Lineage
+
+Metadata can be used to tag different CDAP components so that they are easily 
+:ref:`identifiable, managed, and discovered <metadata-discovery>`.
+
+:ref:`Lineage <metadata-lineage>` shows |---| for a specified time range |---| all data
+access of the entity, and details of where that access originated from.
+
+
+.. rubric:: CDAP Metadata UI
+
+The :ref:`CDAP Metadata UI <metadata-ui>` ("metadata management") lets you see how data is
+flowing into and out of datasets, streams, and stream views.
+
+
 .. rubric:: Audit Logging
 
 :ref:`Audit logging <audit-logging>` provides a chronological ledger containing evidence
 of operations or changes on CDAP entities.
+
 
 .. _metadata-navigator-integration:
 

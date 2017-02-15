@@ -3,7 +3,7 @@
     :description: CDAP Metadata Management HTTP RESTful API
     :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _http-restful-api-metadata-management-:
+.. _http-restful-api-metadata-management:
 
 ====================================
 Metadata Management HTTP RESTful API

@@ -22,6 +22,7 @@ users can discover entities:
 - that have a particular **key** with a particular *value* in their properties; or
 - that have a particular **tag**.
 
+To search metadata, you can use the :ref:`Metadata HTTP RESTful API <http-restful-api-metadata-searching>`.
 
 .. _metadata-lineage:
 

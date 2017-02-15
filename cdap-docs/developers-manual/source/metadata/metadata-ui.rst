@@ -96,112 +96,8 @@ An example use case describes how metadata management was employed in the `data 
 three billion records <http://customers.cask.co/rs/882-OYR-915/images/tracker-casestudy1.pdf>`__.
 
 
-Metadata Management Application
-===============================
-CDAP metadata management consists of an application in CDAP with two programs and six datasets:
-
-- ``_Tracker`` application: names begins with an underscore
-- ``TrackerService``: Service exposing the metadata management API endpoints
-- ``AuditLogFlow``: Flow that subscribes to Kafka audit messages and stores them in the
-  ``_auditLog`` dataset
-- ``_auditLog``: Custom dataset for storing audit messages
-- ``_auditMetrics``: Custom cube dataset for collecting dataset metrics
-- ``_auditTagsTable``: Custom dataset for storing preferred tags
-- ``_timeSinceTable``: Custom dataset for storing the last time a specific audit
-  message was received
-- ``_dataDictionary``: A Table dataset containing the columns and definitions of the Data Dictionary
-- ``_configurationTable``: A Key-value table containing metadata management configuration options
-
-The metadata management UI is shipped with CDAP, started automatically in standalone CDAP as part of the
-CDAP UI. It is available at:
- 
-  |literal-tracker-sdk-url|
-  
-or (Distributed CDAP):
-  
-  |literal-tracker-distributed-cdap-url|
-
-The application is built from a system artifact included with CDAP, |literal-cdap-metadata-management-version-jar|.
-
-
-.. highlight:: xml  
-
-Installation
-============
-The CDAP Metadata Management Application is deployed from its system artifact included
-with CDAP. A CDAP administrator does not need to build anything to add metadata management
-to CDAP; they merely need to enable the application after starting CDAP.
-
-Enabling Metadata Management
-----------------------------
-Metadata management is enabled automatically in Standalone CDAP and the UI is available at |tracker-sdk-url|.
-In the Distributed version of CDAP, you must manually enable metadata management in each namespace by visiting
-|literal-tracker-distributed-cdap-url| and pressing the ``"Enable"`` button.
-
-Once pressed, the application will be deployed, the datasets created (if necessary), the
-flow and service started, and search and audit logging will become available.
-
-If you are enabling metadata management from outside the UI, you will need to follow these steps:
-
-- Using the CDAP CLI, load the artifact (|literal-cdap-metadata-management-version-jar|):
-
-  .. container:: highlight
-
-    .. parsed-literal::
-
-      |cdap >| load artifact target/|cdap-metadata-management-version-jar|
-
-.. highlight:: json  
-
-- Create an application configuration file (``appconfig.txt``) that contains the
-  Audit Log reader configuration (the property ``auditLogConfig``). For example::
-    
-    {
-      "config": {
-        "auditLogConfig" : {
-          "topic" : "<audit.topic>",
-          "zookeeperString" : "<zookeeper.quorum>"
-        }
-      }
-    }
-
-  substituting for ``<audit.topic>`` and ``<zookeeper.quorum>`` with appropriate values from ``cdap-site.xml``.
-  
-- Create a CDAP application using the configuration file:
-
-  .. container:: highlight
-
-    .. parsed-literal::
-
-      |cdap >| create app TrackerApp tracker |cdap-metadata-management-version| USER
-
-Restarting CDAP
----------------
-As metadata management is an application running inside CDAP, it does not start up automatically when
-CDAP is restarted. Each time that you start CDAP, you will need to re-enable metadata management.
-Re-enabling metadata management does not recreate the datasets; instead, the same datasets as were
-used in previous runs are used.
-
-If you are using the audit log feature of metadata management, it is best that metadata management be enabled
-**before** you begin any other applications.
-
-If the installation of CDAP is an upgrade from a previous version, all activity and
-datasets prior to the enabling of metadata management will not be available or seen in the CDAP UI.
-
-Disabling and Removing Metadata Management
-------------------------------------------
-If for some reason you need to disable or remove metadata management, you would need to:
-
-- stop all programs of the ``_Tracker`` application
-- delete the metadata management application
-- delete the metadata management datasets
-
-
-Metadata Management and its UI
-==============================
-
 Search
-------
+======
 Searching in metadata management is provided by an interface similar to that of a popular search engine:
 
 .. figure:: /_images/metadata/tracker-home-search.png
@@ -256,7 +152,7 @@ sinks to batch pipelines, while streams can be sources in batch pipelines or sin
 real-time pipelines.
 
 Entity Details
---------------
+==============
 Clicking on a name in the search results list will take you to details for a particular
 entity. Details are provided on the tabs *Metadata*, *Lineage*, *Audit Log*, *Preview*
 (included if the dataset is explorable), and *Usage*.
@@ -381,7 +277,7 @@ For example, any dataset containing the column ``customerId`` will have the same
   :class: bordered-image
 
 Integrations
-------------
+============
 Metadata management allows for an easy integration with `Cloudera Navigator
 <https://www.cloudera.com/products/cloudera-navigator.html>`__  by providing a UI to
 connecting to a Navigator instance:
@@ -394,3 +290,106 @@ connecting to a Navigator instance:
 
 Details on completing this form are described in CDAP's documentation on the
 :ref:`Navigator Integration Application <navigator-integration>`.
+
+
+Administrating Metadata Management
+==================================
+CDAP metadata management consists of an application in CDAP with two programs and six datasets:
+
+- ``_Tracker`` application: names begins with an underscore
+- ``TrackerService``: Service exposing the metadata management API endpoints
+- ``AuditLogFlow``: Flow that subscribes to Kafka audit messages and stores them in the
+  ``_auditLog`` dataset
+- ``_auditLog``: Custom dataset for storing audit messages
+- ``_auditMetrics``: Custom cube dataset for collecting dataset metrics
+- ``_auditTagsTable``: Custom dataset for storing preferred tags
+- ``_timeSinceTable``: Custom dataset for storing the last time a specific audit
+  message was received
+- ``_dataDictionary``: A Table dataset containing the columns and definitions of the Data Dictionary
+- ``_configurationTable``: A Key-value table containing metadata management configuration options
+
+The metadata management UI is shipped with CDAP, started automatically in standalone CDAP as part of the
+CDAP UI. It is available at:
+ 
+  |literal-tracker-sdk-url|
+  
+or (Distributed CDAP):
+  
+  |literal-tracker-distributed-cdap-url|
+
+The application is built from a system artifact included with CDAP, |literal-cdap-metadata-management-version-jar|.
+
+To administer metadata management, an :ref:`HTTP RESTful API <http-restful-api-metadata-management>` is available.
+
+.. highlight:: xml  
+
+Installation
+------------
+The CDAP Metadata Management Application is deployed from its system artifact included
+with CDAP. A CDAP administrator does not need to build anything to add metadata management
+to CDAP; they merely need to enable the application after starting CDAP.
+
+Enabling Metadata Management
+----------------------------
+Metadata management is enabled automatically in Standalone CDAP and the UI is available at |tracker-sdk-url|.
+In the Distributed version of CDAP, you must manually enable metadata management in each namespace by visiting
+|literal-tracker-distributed-cdap-url| and pressing the ``"Enable"`` button.
+
+Once pressed, the application will be deployed, the datasets created (if necessary), the
+flow and service started, and search and audit logging will become available.
+
+If you are enabling metadata management from outside the UI, you will need to follow these steps:
+
+- Using the CDAP CLI, load the artifact (|literal-cdap-metadata-management-version-jar|):
+
+  .. container:: highlight
+
+    .. parsed-literal::
+
+      |cdap >| load artifact target/|cdap-metadata-management-version-jar|
+
+.. highlight:: json  
+
+- Create an application configuration file (``appconfig.txt``) that contains the
+  Audit Log reader configuration (the property ``auditLogConfig``). For example::
+    
+    {
+      "config": {
+        "auditLogConfig" : {
+          "topic" : "<audit.topic>",
+          "zookeeperString" : "<zookeeper.quorum>"
+        }
+      }
+    }
+
+  substituting for ``<audit.topic>`` and ``<zookeeper.quorum>`` with appropriate values from ``cdap-site.xml``.
+  
+- Create a CDAP application using the configuration file:
+
+  .. container:: highlight
+
+    .. parsed-literal::
+
+      |cdap >| create app TrackerApp tracker |cdap-metadata-management-version| USER
+
+Restarting CDAP
+---------------
+As metadata management is an application running inside CDAP, it does not start up automatically when
+CDAP is restarted. Each time that you start CDAP, you will need to re-enable metadata management.
+Re-enabling metadata management does not recreate the datasets; instead, the same datasets as were
+used in previous runs are used.
+
+If you are using the audit log feature of metadata management, it is best that metadata management be enabled
+**before** you begin any other applications.
+
+If the installation of CDAP is an upgrade from a previous version, all activity and
+datasets prior to the enabling of metadata management will not be available or seen in the CDAP UI.
+
+Disabling and Removing Metadata Management
+------------------------------------------
+If for some reason you need to disable or remove metadata management, you would need to:
+
+- stop all programs of the ``_Tracker`` application
+- delete the metadata management application
+- delete the metadata management datasets
+
