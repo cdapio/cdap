@@ -29,12 +29,15 @@ import java.util.Iterator;
 /**
  * Provides message publishing functions of the Transactional Messaging System.
   * <p>
- * Note that for instances acquired through either the {@link MessagingContext#getMessagePublisher()}
- * method or when any of the {@code publish} methods are called within a transactional context,
+ * Note that, for instances acquired through the {@link MessagingContext#getMessagePublisher()}
+ * method, when any of the {@code publish} methods are called within a transactional context,
  * exceptions may not be thrown immediately, but rather at the transaction commit time.
  * If a {@link Transactional#execute(TxRunnable)} was used to execute the transaction, exceptions
  * will always be wrapped inside a {@link TransactionFailureException}.
  * </p>
+ * <p>If the {@code publish} methods are called outside of a transactional context, the publishing
+ * is non-transactional and exceptions will be thrown immediately.
+ * <p>
  */
 @Beta
 public interface MessagePublisher {
