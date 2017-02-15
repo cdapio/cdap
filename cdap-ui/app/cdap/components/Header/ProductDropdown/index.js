@@ -117,70 +117,74 @@ export default class ProductDropdown extends Component {
         <Dropdown
           isOpen={this.state.toggleDropdown}
           className="product-dropdown"
-          toggle={this.toggleCdapMenuDropdown}>
+          toggle={this.toggleCdapMenuDropdown.bind(this)}>
           <DropdownToggle caret>
-            <div className="cdap-logo"></div>
+            <div className="cdap-logo">
+              <img src="/cdap_assets/img/cdap_logo.png" />
+            </div>
             <span className="fa fa-caret-down"></span>
           </DropdownToggle>
           <CustomDropdownMenu right>
-            <DropdownItem
-              tag="li"
-              onClick={this.toggleAboutPage}
-            >
-              <a>{T.translate('features.Navbar.ProductDropdown.aboutLabel')}</a>
-            </DropdownItem>
-            <DropdownItem divider />
             <DropdownItem tag="li">
+              <a
+                target="_blank"
+                href="http://cask.co/company/about/"
+              >
+                {T.translate('features.Navbar.ProductDropdown.aboutLabel')}
+              </a>
+            </DropdownItem>
+              <DropdownItem divider />
+              <DropdownItem tag="li">
+                {
+                  !this.props.nativeLink ?
+                    <Link to={`/management`}>
+                      {T.translate('features.Management.Title')}
+                    </Link>
+                  :
+                    <a href={managementURL}>
+                      {T.translate('features.Management.Title')}
+                    </a>
+                }
+              </DropdownItem>
+              <DropdownItem divider />
+              <DropdownItem tag="li">
+                <a
+                  target="_blank"
+                  href="http://cask.co/products/cdap/"
+                >
+                  {T.translate('features.Navbar.ProductDropdown.prodWebsiteLabel')}
+                </a>
+              </DropdownItem>
+              <DropdownItem tag="li">
+                <a
+                  target="_blank"
+                  href="http://cask.co/community"
+                >
+                  {T.translate('features.Navbar.ProductDropdown.supportLabel')}
+                </a>
+              </DropdownItem>
+              <DropdownItem tag="li">
+                <a
+                  href={docsUrl}
+                  target="_blank"
+                >
+                  {T.translate('features.Navbar.ProductDropdown.documentationLabel')}
+                </a>
+              </DropdownItem>
               {
-                !this.props.nativeLink ?
-                  <Link to={`/management`}>
-                    {T.translate('features.Management.Title')}
-                  </Link>
+                window.CDAP_CONFIG.securityEnabled ?
+                  (
+                    <DropdownItem divider />
+                  )
                 :
-                  <a href={managementURL}>
-                    {T.translate('features.Management.Title')}
-                  </a>
+                  null
               }
-            </DropdownItem>
-            <DropdownItem divider />
-            <DropdownItem tag="li">
-              <a
-                target="_blank"
-                href="http://cask.co/products/cdap/"
-              >
-                {T.translate('features.Navbar.ProductDropdown.prodWebsiteLabel')}
-              </a>
-            </DropdownItem>
-            <DropdownItem tag="li">
-              <a
-                target="_blank"
-                href="http://cask.co/community"
-              >
-                {T.translate('features.Navbar.ProductDropdown.supportLabel')}
-              </a>
-            </DropdownItem>
-            <DropdownItem tag="li">
-              <a
-                href={docsUrl}
-                target="_blank"
-              >
-                {T.translate('features.Navbar.ProductDropdown.documentationLabel')}
-              </a>
-            </DropdownItem>
-            {
-              window.CDAP_CONFIG.securityEnabled ?
-                (
-                  <DropdownItem divider />
-                )
-              :
-                null
-            }
-            {
-              window.CDAP_CONFIG.securityEnabled ?
-                userSection
-              :
-                null
-            }
+              {
+                window.CDAP_CONFIG.securityEnabled ?
+                  userSection
+                :
+                  null
+              }
           </CustomDropdownMenu>
         </Dropdown>
         <AboutPageModal

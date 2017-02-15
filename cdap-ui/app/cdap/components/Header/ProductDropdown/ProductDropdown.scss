@@ -67,16 +67,16 @@
         display: none;
       }
       .cdap-logo {
-        height: 50px;
-        width: 65px;
-        background: url(/cdap_assets/img/cdap_sprite.png) -115px -44px;
         display: inline-block;
-        background-size: 380%;
         float: left;
+        img {
+          height: 20px;
+          width: 90px;
+        }
       }
       .fa.fa-caret-down {
         line-height: 50px;
-        vertical-align: top;
+        vertical-align: middle;
       }
     }
     .dropdown-menu {

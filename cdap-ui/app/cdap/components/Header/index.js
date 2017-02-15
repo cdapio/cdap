@@ -109,7 +109,18 @@ export default class Header extends Component {
           }
         </div>
         <div className="brand-section">
-          <img src="/cdap_assets/img/company_logo.png" />
+          {
+            !this.props.nativeLink ?
+              <Link
+                to={`/ns/${this.state.currentNamespace}`}
+              >
+                <img src="/cdap_assets/img/company_logo.png" />
+              </Link>
+            :
+              <a href={window.getAbsUIUrl({namespaceId: this.state.currentNamespace})}>
+                <img src="/cdap_assets/img/company_logo.png" />
+              </a>
+          }
         </div>
         <ul className="navbar-list-section">
           <li>
