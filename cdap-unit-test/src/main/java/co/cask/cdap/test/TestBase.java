@@ -33,6 +33,8 @@ import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
+import co.cask.cdap.app.preview.PreviewHttpModule;
+import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
@@ -203,6 +205,7 @@ public class TestBase {
   private static AuthorizationBootstrapper authorizationBootstrapper;
   private static MessagingService messagingService;
   private static MessagingContext messagingContext;
+  private static PreviewManager previewManager;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -273,6 +276,7 @@ public class TestBase {
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
+      new PreviewHttpModule(),
       new AbstractModule() {
         @Override
         @SuppressWarnings("deprecation")
@@ -348,6 +352,7 @@ public class TestBase {
     secureStoreManager = injector.getInstance(SecureStoreManager.class);
     messagingContext = new MultiThreadMessagingContext(messagingService);
     firstInit = false;
+    previewManager = injector.getInstance(PreviewManager.class);
   }
 
   private static TestManager getTestManager() {
@@ -1199,6 +1204,13 @@ public class TestBase {
   @Beta
   protected static Authorizer getAuthorizer() throws IOException, InvalidAuthorizerException {
     return authorizerInstantiator.get();
+  }
+
+  /**
+   * Returns a {@link PreviewManager} to interact with preview.
+   */
+  protected static PreviewManager getPreviewManager() {
+    return previewManager;
   }
 
   /**

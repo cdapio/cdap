@@ -152,7 +152,12 @@ public class PreviewDatasetFramework implements DatasetFramework {
   public void addInstance(String datasetTypeName, DatasetId datasetInstanceId,
                           DatasetProperties props,
                           @Nullable KerberosPrincipalId ownerPrincipal) throws DatasetManagementException, IOException {
-    throw new UnsupportedOperationException("Creating dataset instance with owner is not supported");
+    if (ownerPrincipal == null) {
+      addInstance(datasetTypeName, datasetInstanceId, props);
+      return;
+    }
+    throw new UnsupportedOperationException("Creating dataset instance with owner is not supported in preview, " +
+                                              "please try to start the preview without the ownership");
   }
 
   @Override
