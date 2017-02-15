@@ -55,6 +55,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   private String filePermissions;
   private int syncIntervalBytes;
   private long maxFileLifetimeMs;
+  private long maxFileSizeInBytes;
 
   /**
    * TODO: start a separate cleanup thread to remove files that has passed the TTL
@@ -91,6 +92,13 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     this.maxFileLifetimeMs = maxFileLifetimeMs;
   }
 
+  /**
+   * Sets the maximum size of a file. This is called by the logback framework.
+   */
+  public void setMaxFileSizeInBytes(long maxFileSizeInBytes) {
+    this.maxFileSizeInBytes = maxFileSizeInBytes;
+  }
+
   @Override
   public void start() {
     // These should all passed. The settings are from the cdap-log-pipeline.xml and the context must be AppenderContext
@@ -98,11 +106,12 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     Preconditions.checkState(filePermissions != null, "Property filePermissions cannot be null");
     Preconditions.checkState(syncIntervalBytes > 0, "Property syncIntervalBytes must be > 0.");
     Preconditions.checkState(maxFileLifetimeMs > 0, "Property maxFileLifetimeMs must be > 0");
+    Preconditions.checkState(maxFileSizeInBytes > 0, "Property maxFileSizeInBytes must be > 0");
 
     if (context instanceof AppenderContext) {
       AppenderContext context = (AppenderContext) this.context;
-      logFileManager = new LogFileManager(dirPermissions, filePermissions, maxFileLifetimeMs, syncIntervalBytes,
-                                          LogSchema.LoggingEvent.SCHEMA,
+      logFileManager = new LogFileManager(dirPermissions, filePermissions, maxFileLifetimeMs, maxFileSizeInBytes,
+                                          syncIntervalBytes, LogSchema.LoggingEvent.SCHEMA,
                                           new FileMetaDataWriter(context.getDatasetManager(), context),
                                           context.getLocationFactory());
     } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {

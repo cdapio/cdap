@@ -1078,6 +1078,14 @@
   </property>
 
   <property>
+    <name>log.pipeline.cdap.file.max.size.bytes</name>
+    <value>104857600</value>
+    <description>
+      Maximum size in bytes a file is kept opened by the system log appender
+    </description>
+  </property>
+
+  <property>
     <name>log.pipeline.cdap.file.permissions</name>
     <value>600</value>
     <description>
