@@ -1221,6 +1221,7 @@ public final class Constants {
     public static final String WORKER_PREFIX = "worker.";
     public static final String SERVICE_PREFIX = "service.";
     public static final String FLOW_PREFIX = "flow.";
+    public static final int RUN_RECORD_UPDATE_RETRY_DELAY_SECS = 5;
   }
 
   /**
