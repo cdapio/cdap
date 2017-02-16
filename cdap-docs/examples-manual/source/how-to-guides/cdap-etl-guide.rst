@@ -6,8 +6,6 @@
 
 .. .. _cdap-etl-guide:
 
-.. .. _cask-hydrator-guide:
-
 .. _cdap-pipeline-guide:
 
 .. include:: ../../target/_includes/cdap-etl-guide/README.rst

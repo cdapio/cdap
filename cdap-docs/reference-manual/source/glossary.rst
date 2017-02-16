@@ -289,7 +289,8 @@ Glossary
 
    Structured Record
       A data format, defined in CDAP, that can be used to exchange events
-      between plugins. Used by many of the Hydrator Plugins included in CDAP.
+      between plugins. Used by many of the :term:`CDAP pipeline plugins <CDAP Pipeline
+      Plugin>` included in CDAP.
 
    System Artifact
       An application template, shipped with CDAP, that with the addition of a

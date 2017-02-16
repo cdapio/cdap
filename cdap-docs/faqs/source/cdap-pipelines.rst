@@ -16,27 +16,27 @@ FAQs: CDAP Pipelines
     :backlinks: none
 
 
-Do I need to be a developer to use CDAP pipelines?
+Do I need to be a developer to use CDAP Pipelines?
 --------------------------------------------------
 It depends; if you are building data pipelines using the available plugins, then no. But
 if you want to implement a custom plugin, then you need to have knowledge of Java and the
 relevant CDAP APIs.
 
-Are CDAP pipelines available in CDAP standalone mode?
+Are CDAP pipelines available in Standalone CDAP mode?
 -----------------------------------------------------
-It's available as part of CDAP Standalone, and is included in the CDAP SDK.
+It's part of Standalone CDAP, included in the CDAP SDK.
 
 On which public clouds does CDAP work?
 --------------------------------------
 Customers have CDAP running in AWS and GCE, with support for running on Azure forthcoming.
 
-Do CDAP pipelines integrate with Apache Sentry for authorization?
+Do CDAP Pipelines integrate with Apache Sentry for authorization?
 -----------------------------------------------------------------
 CDAP pipelines are built using CDAP. The current stable version of CDAP is not yet
 integrated with Sentry for authorization. Active work is being done on integrating CDAP
 with Apache Sentry. More information about the design can be found here. The first phase
-of Sentry integration is available in CDAP 3.4. This initial phase includes integration of
-authorization for runtime components. CDAP 3.5 will include authorization for Datasets.
+of Sentry integration is available as of CDAP 3.4. This initial phase includes integration of
+authorization for runtime components. CDAP 3.5 adds authorization for Datasets.
  
 If I have a question about a data pipeline I am building, how can I get help?
 -----------------------------------------------------------------------------
@@ -50,14 +50,14 @@ You can use the open source JIRA system for CDAP, CDAP pipelines, and other proj
 you have a commercial CDAP subscription, the Cask support portal is available for
 customers to report issues.
  
-I am interested in contributing to CDAP pipelines; how can I get started?
+I am interested in contributing to CDAP Pipelines; how can I get started?
 -------------------------------------------------------------------------
 CDAP is an open source project licensed under the Apache 2.0 license, though not currently
 part of the Apache Foundation. In order to contribute to CDAP, you may need to provide to
 Cask a signed ICLA or CCLA. The terms are open and very similar to the Apache Foundation.
 Contact Cask through the cdap-users@googlegroups.com for more information. 
  
-I have a feature request for CDAP pipelines; how can I get it added?
+I have a feature request for CDAP Pipelines; how can I get it added?
 --------------------------------------------------------------------
 You can file a JIRA ticket for the feature request or, if you have a commercial CDAP
 subscription, you can use the support portal.
