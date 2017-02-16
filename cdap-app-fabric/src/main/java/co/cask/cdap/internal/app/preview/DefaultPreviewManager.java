@@ -194,7 +194,11 @@ public class DefaultPreviewManager implements PreviewManager {
    * Create injector for the given application id.
    */
   @VisibleForTesting
-  Injector createPreviewInjector(ApplicationId applicationId, Set<String> datasetNames) throws IOException {
+  Injector createPreviewInjector(ApplicationId applicationId,
+                                 Set<String> datasetNames) throws IOException, BadRequestException {
+    if (!cConf.getBoolean(Constants.Preview.ENABLED)) {
+      throw new BadRequestException("Preview is not enabled.");
+    }
     CConfiguration previewcConf = CConfiguration.copy(cConf);
     java.nio.file.Path previewDirPath = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview").toAbsolutePath();
 
