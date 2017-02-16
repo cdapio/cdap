@@ -363,11 +363,10 @@ You can use the :ref:`CDAP CLI <cdap-cli>` to issue :ref:`security commands
   - ``<actions>`` is a comma-separated list of privileges, any of *READ, WRITE, EXECUTE,* or *ADMIN*.
   
   - ``<entity>`` is of the form ``<entity-type>:<entity-id>``, where ``<entity-type>`` is
-    one of ``'namespace'``, ``'artifact'``, ``'app'``, ``'dataset'``, ``'program'``,
-    ``'stream'``, or ``'view'``.
+    one of ``namespace``, ``artifact``, ``app``, ``dataset``, ``program``, ``stream``, or ``view``.
    
   - For namespaces, ``<entity-id>`` is composed from the namespace, such as
-    ``'namespace:<namespace-name>``.
+    ``namespace:<namespace-name>``.
 
   - For artifacts and apps, ``<entity-id>`` is composed of the namespace, entity name, and
     version, such as ``<namespace-name>.<artifact-name>.<artifact-version>`` or
@@ -381,7 +380,7 @@ You can use the :ref:`CDAP CLI <cdap-cli>` to issue :ref:`security commands
     ``<namespace-name>.<dataset-name>`` or ``<namespace-name>.<stream-name>``.
 
   - For (stream) views, ``<entity-id>`` includes the stream that they were created from:
-    ``<namespace-name>.<stream-name>.<view-name>``."
+    ``<namespace-name>.<stream-name>.<view-name>``.
 
 - To check the results, list the privileges for a principal::
 
