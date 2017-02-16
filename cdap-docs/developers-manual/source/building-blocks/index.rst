@@ -86,6 +86,9 @@ write data through the data abstraction layer in CDAP.
   that provides ACID (*atomicity, consistency, isolation,* and *durability*) guarantees,
   critical in applications where data accuracy is required.
 
+- The :doc:`Transactional Messaging System <transactional-messaging-system>` is a CDAP service
+..   that provides a "pub-sub"-type messaging system that understands transactions.
+  
 - :doc:`Secure Keys <secure-keys>` allows users to store and retrieve sensitive information such
   as passwords from secure and encrypted storage.
 
