@@ -16,15 +16,24 @@
 
 package co.cask.cdap.security.impersonation;
 
+
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.ImpersonatedOpType;
 import co.cask.cdap.common.kerberos.ImpersonationInfo;
+import co.cask.cdap.common.kerberos.ImpersonationOpInfo;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerStore;
+import co.cask.cdap.common.kerberos.UGIWithPrincipal;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
@@ -33,9 +42,6 @@ import org.apache.hadoop.minikdc.MiniKdc;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
-import org.apache.hadoop.security.token.TokenIdentifier;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -53,7 +59,9 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -70,11 +78,26 @@ public class UGIProviderTest {
   private static LocationFactory locationFactory;
   private static MiniKdc miniKdc;
   private static File keytabFile;
+  private static InMemoryNamespaceClient namespaceClient = new InMemoryNamespaceClient();
+  private static OwnerStore ownerStore = new MockOwnerStore();
+  private static OwnerAdmin ownerAdmin = new DefaultOwnerAdmin(cConf, ownerStore, namespaceClient);
+  private static KerberosPrincipalId hdfsKerberosPrincipalId;
+  private static KerberosPrincipalId aliceKerberosPrincipalId;
+  private static KerberosPrincipalId bobKerberosPrincipalId;
+
+  private static void createPrincipal(File keytabDirPath, String username) throws Exception {
+    File hdfsKeytab = new File(keytabDirPath, username + ".keytab");
+    Assert.assertTrue(hdfsKeytab.createNewFile());
+    miniKdc.createPrincipal(hdfsKeytab, username);
+  }
 
   @BeforeClass
   public static void init() throws Exception {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+    File keytabDirPath = TEMP_FOLDER.newFolder();
+    cConf.set(Constants.Security.KEYTAB_PATH, keytabDirPath.getAbsolutePath() +
+      Constants.USER_NAME_SPECIFIER + ".keytab");
 
     // Start KDC
     miniKdc = new MiniKdc(MiniKdc.createConf(), TEMP_FOLDER.newFolder());
@@ -82,8 +105,14 @@ public class UGIProviderTest {
     System.setProperty("java.security.krb5.conf", miniKdc.getKrb5conf().getAbsolutePath());
 
     // Generate keytab
-    keytabFile = TEMP_FOLDER.newFile();
-    miniKdc.createPrincipal(keytabFile, "hdfs", "alice", "bob");
+    createPrincipal(keytabDirPath, "hdfs");
+    createPrincipal(keytabDirPath, "alice");
+    createPrincipal(keytabDirPath, "bob");
+
+    // construct Kerberos PrincipalIds
+    hdfsKerberosPrincipalId = new KerberosPrincipalId(getPrincipal("hdfs"));
+    aliceKerberosPrincipalId = new KerberosPrincipalId(getPrincipal("alice"));
+    bobKerberosPrincipalId = new KerberosPrincipalId(getPrincipal("bob"));
 
     // Start mini DFS cluster
     Configuration hConf = new Configuration();
@@ -109,21 +138,27 @@ public class UGIProviderTest {
     }
   }
 
-//  @Test
-//  public void testDefaultUGIProvider() throws IOException {
-//    System.setProperty("sun.security.krb5.debug", "true");
-//
-//    DefaultUGIProvider provider = new DefaultUGIProvider(cConf, locationFactory);
-//
-//    // Try with local keytab file
-//    ImpersonationInfo aliceInfo = new ImpersonationInfo(getPrincipal("alice"), keytabFile.getAbsolutePath());
-//    UserGroupInformation aliceUGI = provider.getConfiguredUGI(aliceInfo);
-//    Assert.assertEquals(UserGroupInformation.AuthenticationMethod.KERBEROS, aliceUGI.getAuthenticationMethod());
-//    Assert.assertTrue(aliceUGI.hasKerberosCredentials());
-//
-//    // Fetch it again, it is should return the same UGI since there is caching
-//    Assert.assertSame(aliceUGI, provider.getConfiguredUGI(aliceInfo));
-//
+  @Test
+  public void testDefaultUGIProvider() throws Exception {
+    System.setProperty("sun.security.krb5.debug", "true");
+
+    DefaultUGIProvider provider = new DefaultUGIProvider(cConf, locationFactory, ownerAdmin, namespaceClient);
+
+    // add an owner for stream
+    StreamId entityId = new StreamId("ugiProviderNs", "dummyStream");
+    ownerAdmin.add(entityId, aliceKerberosPrincipalId);
+
+    // Try with local keytab file
+    ImpersonationOpInfo opInfo = new ImpersonationOpInfo(entityId, ImpersonatedOpType.OTHER);
+    UGIWithPrincipal configuredUGI = provider.getConfiguredUGI(opInfo);
+    Assert.assertEquals(UserGroupInformation.AuthenticationMethod.KERBEROS,
+                        configuredUGI.getUGI().getAuthenticationMethod());
+    Assert.assertEquals(aliceKerberosPrincipalId.getPrincipal(), configuredUGI.getPrincipal());
+    Assert.assertTrue(configuredUGI.getUGI().hasKerberosCredentials());
+
+    // Fetch it again, it is should return the same UGI since there is caching
+    Assert.assertSame(configuredUGI.getUGI(), provider.getConfiguredUGI(opInfo));
+
 //    // Put the keytab on HDFS
 //    Location remoteKeytab = locationFactory.create("keytab").getTempFile(".tmp");
 //    Files.copy(keytabFile, Locations.newOutputSupplier(remoteKeytab));
@@ -149,7 +184,7 @@ public class UGIProviderTest {
 //    } catch (IOException e) {
 //      // Expected
 //    }
-//  }
+  }
 
 //  @Test
 //  public void testRemoteUGIProvider() throws Exception {
@@ -234,6 +269,33 @@ public class UGIProviderTest {
         credentials.writeTokenStorageToStream(os);
       }
       responder.sendString(HttpResponseStatus.OK, credentialsFile.toURI().toString());
+    }
+  }
+
+  private static class MockOwnerStore implements OwnerStore {
+
+    Map<NamespacedEntityId, KerberosPrincipalId> ownerInfo = new HashMap<>();
+
+    @Override
+    public void add(NamespacedEntityId entityId,
+                    KerberosPrincipalId kerberosPrincipalId) throws IOException, AlreadyExistsException {
+      ownerInfo.put(entityId, kerberosPrincipalId);
+    }
+
+    @Nullable
+    @Override
+    public KerberosPrincipalId getOwner(NamespacedEntityId entityId) throws IOException {
+      return ownerInfo.get(entityId);
+    }
+
+    @Override
+    public boolean exists(NamespacedEntityId entityId) throws IOException {
+      return ownerInfo.containsKey(entityId);
+    }
+
+    @Override
+    public void delete(NamespacedEntityId entityId) throws IOException {
+      ownerInfo.remove(entityId);
     }
   }
 }
