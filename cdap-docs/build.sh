@@ -132,11 +132,15 @@ function _build_docs() {
   clear_messages_file
   if [[ ${type} == "docs_set" ]] || [[ ${type} == "docs_web_only" ]]; then
     clean_targets
+    # Build CLI and its rst file before the first doc build so that its refs can be included
     build_docs_cli
     build_docs_first_pass
     clear_messages_file
     if [[ ${type} == "docs_set" ]]; then
+      cache_docs_cli
       build_javadocs docs
+      # As build_javadocs wipes out the results of the build_docs_cli
+      restore_cached_docs_cli
     fi
   fi
   build_docs_second_pass
@@ -216,7 +220,7 @@ function build_docs_cli() {
   if [[ -n ${NO_CLI_DOCS} ]]; then
     echo_red_bold "Building CLI input file disabled. '${NO_CLI_DOCS}'"
   else
-    local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/${TARGET}/cdap-docs-cli.txt
+    local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/target/cdap-docs-cli.txt
     set_version
     check_build_rst
     set_environment
@@ -240,6 +244,36 @@ function build_docs_cli() {
     export USING_CLI_DOCS
   fi
   display_end_title ${title}
+  return ${warnings}
+}
+
+function cache_docs_cli() {
+  local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/target/cdap-docs-cli.txt
+  local cache=${SCRIPT_PATH}/target
+  cp ${target_txt} ${cache}
+  warnings=$?
+  if [[ ${warnings} -eq 0 ]]; then
+    echo "Caching CLI output file from '${target_txt}'"
+  else
+    echo "Error caching CLI output file: ${warnings}"
+    echo "From: ${target_txt}"
+    echo "To: ${cache}"
+  fi
+  return ${warnings}
+}
+
+function restore_cached_docs_cli() {
+  local target=${SCRIPT_PATH}/../cdap-docs-gen/target
+  local cache_txt=${SCRIPT_PATH}/target/cdap-docs-cli.txt
+  cp ${cache_txt} ${target}
+  warnings=$?
+  if [[ ${warnings} -eq 0 ]]; then
+    echo "Restored CLI output file from '${cache_txt}'"
+  else
+    echo "Error restoring CLI output file: ${warnings}"
+    echo "From: ${cache_txt}"
+    echo "To: ${target}"
+  fi
   return ${warnings}
 }
 
