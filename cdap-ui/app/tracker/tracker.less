@@ -924,6 +924,47 @@ body.state-tracker-detail-entity-audit {
     margin-top: 20px;
 
     .table th { cursor: default; }
+    tr td:last-child a {
+      color: @tracker-green;
+    }
+  }
+
+  .modal.tracker-modal.metadata-info-modal {
+    .modal-content {
+      border-radius: 0;
+    }
+    .modal-header {
+      background-color: black;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      padding: 15px;
+      border-radius: 0;
+      span.fa-times {
+        -webkit-text-stroke: 0;
+      }
+    }
+    table thead {
+      th {
+        color: black;
+        width: auto;
+        padding: 10px 8px;
+        vertical-align: middle;
+        text-align: left;
+      }
+      th:first-child {
+        min-width: 75px;
+      }
+      th:nth-child(2) {
+        min-width: 117px;
+      }
+      th:nth-child(3) {
+        min-width: 117px;
+      }
+      th:nth-child(4) {
+        min-width: 109px;
+      }
+    }
   }
 }
 
