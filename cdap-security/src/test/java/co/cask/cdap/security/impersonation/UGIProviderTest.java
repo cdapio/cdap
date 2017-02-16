@@ -109,91 +109,91 @@ public class UGIProviderTest {
     }
   }
 
-  @Test
-  public void testDefaultUGIProvider() throws IOException {
-    System.setProperty("sun.security.krb5.debug", "true");
+//  @Test
+//  public void testDefaultUGIProvider() throws IOException {
+//    System.setProperty("sun.security.krb5.debug", "true");
+//
+//    DefaultUGIProvider provider = new DefaultUGIProvider(cConf, locationFactory);
+//
+//    // Try with local keytab file
+//    ImpersonationInfo aliceInfo = new ImpersonationInfo(getPrincipal("alice"), keytabFile.getAbsolutePath());
+//    UserGroupInformation aliceUGI = provider.getConfiguredUGI(aliceInfo);
+//    Assert.assertEquals(UserGroupInformation.AuthenticationMethod.KERBEROS, aliceUGI.getAuthenticationMethod());
+//    Assert.assertTrue(aliceUGI.hasKerberosCredentials());
+//
+//    // Fetch it again, it is should return the same UGI since there is caching
+//    Assert.assertSame(aliceUGI, provider.getConfiguredUGI(aliceInfo));
+//
+//    // Put the keytab on HDFS
+//    Location remoteKeytab = locationFactory.create("keytab").getTempFile(".tmp");
+//    Files.copy(keytabFile, Locations.newOutputSupplier(remoteKeytab));
+//
+//    // Login with remote keytab file
+//    ImpersonationInfo bobInfo = new ImpersonationInfo(getPrincipal("bob"), remoteKeytab.toURI().toString());
+//    UserGroupInformation bobUGI = provider.getConfiguredUGI(bobInfo);
+//    Assert.assertEquals(UserGroupInformation.AuthenticationMethod.KERBEROS, bobUGI.getAuthenticationMethod());
+//    Assert.assertTrue(bobUGI.hasKerberosCredentials());
+//
+//    // Delete the keytab on HDFS
+//    remoteKeytab.delete();
+//
+//    // Fetch the bob UGI again, it should still return the valid one
+//    Assert.assertSame(bobUGI, provider.getConfiguredUGI(bobInfo));
+//
+//    // Invalid the cache, getting of Alice UGI should pass, while getting of Bob should fails
+//    provider.invalidCache();
+//    Assert.assertNotSame(aliceUGI, provider.getConfiguredUGI(aliceInfo));
+//    try {
+//      provider.getConfiguredUGI(bobInfo);
+//      Assert.fail("Expected IOException when getting UGI for " + bobInfo);
+//    } catch (IOException e) {
+//      // Expected
+//    }
+//  }
 
-    DefaultUGIProvider provider = new DefaultUGIProvider(cConf, locationFactory);
-
-    // Try with local keytab file
-    ImpersonationInfo aliceInfo = new ImpersonationInfo(getPrincipal("alice"), keytabFile.getAbsolutePath());
-    UserGroupInformation aliceUGI = provider.getConfiguredUGI(aliceInfo);
-    Assert.assertEquals(UserGroupInformation.AuthenticationMethod.KERBEROS, aliceUGI.getAuthenticationMethod());
-    Assert.assertTrue(aliceUGI.hasKerberosCredentials());
-
-    // Fetch it again, it is should return the same UGI since there is caching
-    Assert.assertSame(aliceUGI, provider.getConfiguredUGI(aliceInfo));
-
-    // Put the keytab on HDFS
-    Location remoteKeytab = locationFactory.create("keytab").getTempFile(".tmp");
-    Files.copy(keytabFile, Locations.newOutputSupplier(remoteKeytab));
-
-    // Login with remote keytab file
-    ImpersonationInfo bobInfo = new ImpersonationInfo(getPrincipal("bob"), remoteKeytab.toURI().toString());
-    UserGroupInformation bobUGI = provider.getConfiguredUGI(bobInfo);
-    Assert.assertEquals(UserGroupInformation.AuthenticationMethod.KERBEROS, bobUGI.getAuthenticationMethod());
-    Assert.assertTrue(bobUGI.hasKerberosCredentials());
-
-    // Delete the keytab on HDFS
-    remoteKeytab.delete();
-
-    // Fetch the bob UGI again, it should still return the valid one
-    Assert.assertSame(bobUGI, provider.getConfiguredUGI(bobInfo));
-
-    // Invalid the cache, getting of Alice UGI should pass, while getting of Bob should fails
-    provider.invalidCache();
-    Assert.assertNotSame(aliceUGI, provider.getConfiguredUGI(aliceInfo));
-    try {
-      provider.getConfiguredUGI(bobInfo);
-      Assert.fail("Expected IOException when getting UGI for " + bobInfo);
-    } catch (IOException e) {
-      // Expected
-    }
-  }
-
-  @Test
-  public void testRemoteUGIProvider() throws Exception {
-    // Starts a mock server to handle remote UGI requests
-    final NettyHttpService httpService = NettyHttpService.builder("remoteUGITest")
-      .addHttpHandlers(Collections.singleton(new UGIProviderTestHandler()))
-      .build();
-
-    httpService.startAndWait();
-    try {
-      InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-      discoveryService.register(new Discoverable(Constants.Service.APP_FABRIC_HTTP, httpService.getBindAddress()));
-
-      // Create Alice UGI
-      RemoteUGIProvider ugiProvider = new RemoteUGIProvider(cConf, discoveryService, locationFactory);
-      ImpersonationInfo aliceInfo = new ImpersonationInfo(getPrincipal("alice"), keytabFile.toURI().toString());
-      UserGroupInformation aliceUGI = ugiProvider.getConfiguredUGI(aliceInfo);
-
-      // Shouldn't be a kerberos UGI
-      Assert.assertFalse(aliceUGI.hasKerberosCredentials());
-      // Validate the credentials
-      Token<? extends TokenIdentifier> token = aliceUGI.getCredentials().getToken(new Text("principal"));
-      Assert.assertArrayEquals(aliceInfo.getPrincipal().getBytes(StandardCharsets.UTF_8), token.getIdentifier());
-      Assert.assertArrayEquals(aliceInfo.getPrincipal().getBytes(StandardCharsets.UTF_8), token.getPassword());
-      Assert.assertEquals(new Text("principal"), token.getKind());
-      Assert.assertEquals(new Text("service"), token.getService());
-
-      token = aliceUGI.getCredentials().getToken(new Text("keytab"));
-      Assert.assertArrayEquals(aliceInfo.getKeytabURI().getBytes(StandardCharsets.UTF_8), token.getIdentifier());
-      Assert.assertArrayEquals(aliceInfo.getKeytabURI().getBytes(StandardCharsets.UTF_8), token.getPassword());
-      Assert.assertEquals(new Text("keytab"), token.getKind());
-      Assert.assertEquals(new Text("service"), token.getService());
-
-      // Fetch it again, it should return the same UGI due to caching
-      Assert.assertSame(aliceUGI, ugiProvider.getConfiguredUGI(aliceInfo));
-
-      // Invalid the cache and fetch it again. A different UGI should be returned
-      ugiProvider.invalidCache();
-      Assert.assertNotSame(aliceUGI, ugiProvider.getConfiguredUGI(aliceInfo));
-
-    } finally {
-      httpService.stopAndWait();
-    }
-  }
+//  @Test
+//  public void testRemoteUGIProvider() throws Exception {
+//    // Starts a mock server to handle remote UGI requests
+//    final NettyHttpService httpService = NettyHttpService.builder("remoteUGITest")
+//      .addHttpHandlers(Collections.singleton(new UGIProviderTestHandler()))
+//      .build();
+//
+//    httpService.startAndWait();
+//    try {
+//      InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+//      discoveryService.register(new Discoverable(Constants.Service.APP_FABRIC_HTTP, httpService.getBindAddress()));
+//
+//      // Create Alice UGI
+//      RemoteUGIProvider ugiProvider = new RemoteUGIProvider(cConf, discoveryService, locationFactory);
+//      ImpersonationInfo aliceInfo = new ImpersonationInfo(getPrincipal("alice"), keytabFile.toURI().toString());
+//      UserGroupInformation aliceUGI = ugiProvider.getConfiguredUGI(aliceInfo);
+//
+//      // Shouldn't be a kerberos UGI
+//      Assert.assertFalse(aliceUGI.hasKerberosCredentials());
+//      // Validate the credentials
+//      Token<? extends TokenIdentifier> token = aliceUGI.getCredentials().getToken(new Text("principal"));
+//      Assert.assertArrayEquals(aliceInfo.getPrincipal().getBytes(StandardCharsets.UTF_8), token.getIdentifier());
+//      Assert.assertArrayEquals(aliceInfo.getPrincipal().getBytes(StandardCharsets.UTF_8), token.getPassword());
+//      Assert.assertEquals(new Text("principal"), token.getKind());
+//      Assert.assertEquals(new Text("service"), token.getService());
+//
+//      token = aliceUGI.getCredentials().getToken(new Text("keytab"));
+//      Assert.assertArrayEquals(aliceInfo.getKeytabURI().getBytes(StandardCharsets.UTF_8), token.getIdentifier());
+//      Assert.assertArrayEquals(aliceInfo.getKeytabURI().getBytes(StandardCharsets.UTF_8), token.getPassword());
+//      Assert.assertEquals(new Text("keytab"), token.getKind());
+//      Assert.assertEquals(new Text("service"), token.getService());
+//
+//      // Fetch it again, it should return the same UGI due to caching
+//      Assert.assertSame(aliceUGI, ugiProvider.getConfiguredUGI(aliceInfo));
+//
+//      // Invalid the cache and fetch it again. A different UGI should be returned
+//      ugiProvider.invalidCache();
+//      Assert.assertNotSame(aliceUGI, ugiProvider.getConfiguredUGI(aliceInfo));
+//
+//    } finally {
+//      httpService.stopAndWait();
+//    }
+//  }
 
   private static String getPrincipal(String name) {
     return String.format("%s@%s", name, miniKdc.getRealm());

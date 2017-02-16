@@ -106,7 +106,7 @@ public class HBaseQueueClientFactory implements QueueClientFactory, ProgramConte
     HBaseQueueAdmin admin = ensureTableExists(queueName);
     try {
       final List<ConsumerGroupConfig> groupConfigs = Lists.newArrayList();
-      try (final HBaseConsumerStateStore stateStore = admin.getConsumerStateStore(queueName)) {
+      try (HBaseConsumerStateStore stateStore = admin.getConsumerStateStore(queueName)) {
         Transactions.createTransactionExecutor(txExecutorFactory, stateStore).execute(new Subroutine() {
           @Override
           public void apply() throws Exception {

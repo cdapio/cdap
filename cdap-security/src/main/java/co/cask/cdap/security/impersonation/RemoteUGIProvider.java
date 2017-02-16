@@ -20,11 +20,16 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.common.internal.remote.RemoteClient;
-import co.cask.cdap.common.kerberos.ImpersonationInfo;
+import co.cask.cdap.common.kerberos.ImpersonationOpInfo;
+import co.cask.cdap.common.kerberos.PrincipalCredentials;
+import co.cask.cdap.common.kerberos.UGIWithPrincipal;
+import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -47,7 +52,9 @@ import java.net.URL;
 public class RemoteUGIProvider extends AbstractCachedUGIProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteUGIProvider.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+    .create();
 
   private final RemoteClient remoteClient;
   private final LocationFactory locationFactory;
@@ -62,15 +69,16 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
   }
 
   @Override
-  protected UserGroupInformation createUGI(ImpersonationInfo impersonationInfo) throws IOException {
-    String credentialsURI = executeRequest(impersonationInfo).getResponseBodyAsString();
-    LOG.debug("Received response: {}", credentialsURI);
+  protected UGIWithPrincipal createUGI(ImpersonationOpInfo impersonationOpInfo) throws IOException {
+    PrincipalCredentials principalCredentials =
+      GSON.fromJson(executeRequest(impersonationOpInfo).getResponseBodyAsString(), PrincipalCredentials.class);
+    LOG.debug("Received response: {}", principalCredentials);
 
-    Location location = locationFactory.create(URI.create(credentialsURI));
+    Location location = locationFactory.create(URI.create(principalCredentials.getCredentialsPath()));
     try {
-      UserGroupInformation impersonatedUGI = UserGroupInformation.createRemoteUser(impersonationInfo.getPrincipal());
+      UserGroupInformation impersonatedUGI = UserGroupInformation.createRemoteUser(principalCredentials.getPrincipal());
       impersonatedUGI.addCredentials(readCredentials(location));
-      return impersonatedUGI;
+      return new UGIWithPrincipal(principalCredentials.getPrincipal(), impersonatedUGI);
     } finally {
       try {
         if (!location.delete()) {
@@ -82,9 +90,9 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
     }
   }
 
-  private HttpResponse executeRequest(ImpersonationInfo impersonationInfo) throws IOException {
+  private HttpResponse executeRequest(ImpersonationOpInfo impersonationOpInfo) throws IOException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "impersonation/credentials")
-      .withBody(GSON.toJson(impersonationInfo))
+      .withBody(GSON.toJson(impersonationOpInfo))
       .build();
     HttpResponse response = remoteClient.execute(request);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
