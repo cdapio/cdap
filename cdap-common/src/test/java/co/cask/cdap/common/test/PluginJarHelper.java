@@ -89,7 +89,7 @@ public final class PluginJarHelper {
           }
 
           // TODO: this is due to manifest possibly already existing in the jar, but we also
-          // create a manifest programatically so it's possible to have a duplicate entry here
+          // create a manifest programmatically so it's possible to have a duplicate entry here
           if ("META-INF/MANIFEST.MF".equalsIgnoreCase(jarEntry.getName())) {
             jarEntry = jarInput.getNextJarEntry();
             continue;

@@ -1097,7 +1097,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   /**
    * Gets information about why a property was set.  Typically this is the
    * path to the resource objects (file, URL, etc.) the property came from, but
-   * it can also indicate that it was set programatically, or because of the
+   * it can also indicate that it was set programmatically, or because of the
    * command line.
    *
    * @param name - The property name to get the source of.
