@@ -106,6 +106,15 @@
     </description>
   </property>
 
+  <property>
+    <name>log.process.pipeline.lib.dir</name>
+    <value>ext/logging/lib</value>
+    <description>
+      Semicolon-separated list of local directories on the CDAP Master scanned
+      for additional library JAR files to be included for log processing
+    </description>
+  </property>
+
   <!-- Metrics Configuration -->
   
   <property>
