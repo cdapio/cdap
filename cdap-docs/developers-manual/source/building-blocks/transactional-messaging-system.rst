@@ -9,8 +9,6 @@
 Transactional Messaging System
 ==============================
 
-.. wiki: https://wiki.cask.co/display/CE/Messaging
-
 Overview
 ========
 The Transactional Messaging System (TMS) is a CDAP service that provides a
@@ -38,7 +36,8 @@ possible to fetch from ``system`` namespace, attempting to publish to the ``syst
 namespace will result in an error.
 
 Currently, as TMS :ref:`does not use authorization <tms-limitations>`, you can only create
-topics in the same namespace as your application is running in. However, you can publish
+topics in the same namespace as your application is running in. For that reason, you do
+not require the name of the current namespace to create a topic. However, you can publish
 to all topics in all namespaces (except the `system` namespace, as noted above) and fetch
 from all topics in all namespaces.
 
@@ -87,12 +86,12 @@ For example, a pipeline or flow might follow these steps:
 - Publish a message
 - Do additional work
 - Commit the transaction
-- If the transaction is successful: message is now visible to *transactional* consumers
-- If the transaction is unsuccessful: message is rolled back and is never seen by
+- If the transaction is successful: the message is now visible to *transactional* consumers
+- If the transaction is unsuccessful: the message is rolled back and is never seen by
   *transactional* consumers
 
 However, as noted above, *non-transactional* consumers see all messages of a topic,
-including messages that are currently in a transaction.
+including the messages that were published and are currently in a transaction.
 
 With transactional publishing, all the work in a transaction will appear atomically to
 downstream consumers who are also transactional. It is not necessary that those consumers
@@ -100,13 +99,13 @@ be in the *same* transaction; instead, they merely need to be in a transaction t
 
 Example Publish and Subscribe
 =============================
-Consider a flow that modifies a database, and at the same time publishes
-a notification to a topic.
+Consider a flow that modifies a dataset, and at the same time publishes a notification to
+a topic.
 
-If it were to publish to a Kafka topic, a problem can arise as there is no guarantee that
-the Kafka notification will be published only after the database commit:
+**If it were to publish to a Kafka topic,** a problem can arise as there is no guarantee that
+the Kafka notification will be published only after the dataset commit:
 
-**Kafka Topic Example**
+**Kafka Topic Example (Non-transactional)**
 
 ::
 
@@ -120,11 +119,11 @@ the Kafka notification will be published only after the database commit:
   [ flowlet 2.1 ] -> Watches Kafka topic for messages
                   - May see the message about the write before the write completes or even if the write was rolled back 
 
-However, with publishing to a TMS topic transactionally, there is the guarantee that
-transaction consumers will only see the notification if the write to the database is
+**If it were to publish transactionally to a TMS topic,** there is the guarantee that
+transaction consumers will only see the notification if the write to the dataset is
 successfully committed:
 
-**TMS Topic Example**
+**TMS Topic Example (Transactional)**
 
 ::
 
@@ -157,9 +156,6 @@ method to fetch and block until either a message is received or a timeout is rea
 
 ::
 
-  /**
-   * Fetch and block until it get a message.
-   */
   private static Message fetchMessage(MessageFetcher fetcher, String namespace, String topic,
                                       @Nullable String afterMessageId, long timeout, TimeUnit unit) throws Exception {
     CloseableIterator<Message> iterator = fetcher.fetch(namespace, topic, 1, afterMessageId);
@@ -261,6 +257,7 @@ method to fetch and block until either a message is received or a timeout is rea
         // Block until either a message is received or the timeout is reached
         Message message = fetchMessage(fetcher, getContext().getNamespace(), TOPIC, null, 10, TimeUnit.SECONDS);
         String payload = message.getPayloadAsString();
+        // Do something with payload
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
@@ -286,6 +283,7 @@ method to fetch and block until either a message is received or a timeout is rea
             // Block until either a message is received or the timeout is reached
             Message message = fetchMessage(fetcher, getContext().getNamespace(), TOPIC, null, 10, TimeUnit.SECONDS);
             String payload = message.getPayloadAsString();
+            // Do something with payload
           }
         });
       } catch (Exception e) {
