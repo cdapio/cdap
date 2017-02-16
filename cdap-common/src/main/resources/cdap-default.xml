@@ -1031,22 +1031,6 @@
   </property>
 
   <property>
-    <name>log.cleanup.run.interval.mins</name>
-    <value>1440</value>
-    <description>
-      Log cleanup interval in minutes
-    </description>
-  </property>
-
-  <property>
-    <name>log.cleanup.max.num.files</name>
-    <value>1000</value>
-    <description>
-      Maximum number of files scanned in one iteration
-    </description>
-  </property>
-
-  <property>
     <name>log.collection.root</name>
     <value>${local.data.dir}/logs</value>
     <description>
@@ -1119,8 +1103,17 @@
   </property>
 
   <property>
+    <name>log.pipeline.cdap.file.cleanup.transaction.timeout</name>
+    <value>60</value>
+    <description>
+      Transaction timeout for running file cleanup tasks, default is 60 seconds,
+      this should not be larger than max transaction timeout
+    </description>
+  </property>
+
+  <property>
     <name>log.pipeline.cdap.file.cleanup.interval.mins</name>
-    <value>10</value>
+    <value>1440</value>
     <description>
       interval period for the log cleanup thread to run.
     </description>

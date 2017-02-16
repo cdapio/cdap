@@ -141,7 +141,7 @@ public class LogCleanerTest {
     }
 
     Assert.assertEquals(20, dirLocation.list().size());
-    LogCleaner logCleaner = new LogCleaner(fileMetadataScanner, locationFactory, 100);
+    LogCleaner logCleaner = new LogCleaner(fileMetadataScanner, locationFactory, 100, 60);
     logCleaner.run();
     FileMetaDataReader fileMetaDataReader = injector.getInstance(FileMetaDataReader.class);
     // all meta data should be deleted

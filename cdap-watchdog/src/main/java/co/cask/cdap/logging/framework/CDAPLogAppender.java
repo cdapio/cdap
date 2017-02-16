@@ -65,6 +65,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   private ScheduledExecutorService scheduledExecutorService;
   private long logCleanupIntervalMins;
   private long fileRetentionDurationDays;
+  private int fileCleanupTransactionTimeout;
 
   /**
    * TODO: start a separate cleanup thread to remove files that has passed the TTL
@@ -123,6 +124,13 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     this.logCleanupIntervalMins = logCleanupIntervalMins;
   }
 
+  /**
+   * Sets transaction timeout used by file cleanup
+   */
+  public void setFileCleanupTransactionTimeout(int transactionTimeout) {
+    this.fileCleanupTransactionTimeout = transactionTimeout;
+  }
+
 
   @Override
   public void start() {
@@ -134,6 +142,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     Preconditions.checkState(maxFileSizeInBytes > 0, "Property maxFileSizeInBytes must be > 0");
     Preconditions.checkState(fileRetentionDurationDays > 0, "Property fileRetentionDurationDays must be > 0");
     Preconditions.checkState(logCleanupIntervalMins > 0, "Property logCleanupIntervalMins must be > 0");
+    Preconditions.checkState(fileCleanupTransactionTimeout > 0, "Property fileCleanupTransactionTimeout must be > 0");
 
     if (context instanceof AppenderContext) {
       AppenderContext context = (AppenderContext) this.context;
@@ -146,7 +155,8 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
           Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("log-clean-up"));
         FileMetadataScanner fileMetadataScanner = new FileMetadataScanner(context.getDatasetManager(), context);
         LogCleaner logCleaner = new LogCleaner(fileMetadataScanner, context.getLocationFactory(),
-                                               TimeUnit.DAYS.toMillis(fileRetentionDurationDays));
+                                               TimeUnit.DAYS.toMillis(fileRetentionDurationDays),
+                                               fileCleanupTransactionTimeout);
         scheduledExecutorService.scheduleAtFixedRate(logCleaner, 10, logCleanupIntervalMins, TimeUnit.MINUTES);
       }
     } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {

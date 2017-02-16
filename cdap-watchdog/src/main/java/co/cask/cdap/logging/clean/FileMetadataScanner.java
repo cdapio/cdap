@@ -49,12 +49,8 @@ public class FileMetadataScanner {
   private static final byte[] NEW_ROW_KEY_PREFIX = LoggingStoreTableUtil.NEW_FILE_META_ROW_KEY_PREFIX;
   private static final byte[] NEW_ROW_KEY_PREFIX_END = Bytes.stopKeyForPrefix(NEW_ROW_KEY_PREFIX);
 
-  // timeout we will use for transactional calls,
-  // todo : check for this to be smaller than max_timeout
-  private static final int TRANSACTION_TIMEOUT = 60;
-
-  // after this time, we will skip operation and exit transaction
-  private static final int CUTOFF_TIME_TRANSACTION = 45;
+  // cut-off time discount from actual transaction timeout
+  private static final int CUTOFF_DISCOUNT = 5;
   private final Transactional transactional;
   private final DatasetManager datasetManager;
 
@@ -67,10 +63,10 @@ public class FileMetadataScanner {
    * scans for meta data in old format which has expired the log retention.
    */
   @VisibleForTesting
-  List<byte[]> scanAndDeleteOldMetaData() {
+  List<byte[]> scanAndDeleteOldMetaData(int transactionTimeout, final int cutoffTransactionTime) {
     final List<byte[]> deletedEntries = new ArrayList<>();
     try {
-      transactional.execute(TRANSACTION_TIMEOUT, new TxRunnable() {
+      transactional.execute(transactionTimeout, new TxRunnable() {
         public void run(DatasetContext context) throws Exception {
           Stopwatch stopwatch = new Stopwatch();
           stopwatch.start();
@@ -80,7 +76,7 @@ public class FileMetadataScanner {
           try (Scanner scanner = table.scan(scan)) {
             Row row;
             while ((row = scanner.next()) != null) {
-              if (stopwatch.elapsedTime(TimeUnit.SECONDS) > CUTOFF_TIME_TRANSACTION) {
+              if (stopwatch.elapsedTime(TimeUnit.SECONDS) > cutoffTransactionTime) {
                 break;
               }
               byte[] rowKey = row.getRow();
@@ -101,10 +97,15 @@ public class FileMetadataScanner {
   /**
    * scans for meta data in old format which has expired the log retention.
    */
-  public List<DeleteEntry> scanAndGetFilesToDelete(final long tillTime) {
+  public List<DeleteEntry> scanAndGetFilesToDelete(final long tillTime, final int transactionTimeout) {
     final List<DeleteEntry> toDelete = new ArrayList<>();
+    if (transactionTimeout < CUTOFF_DISCOUNT) {
+      LOG.warn("Transaction timeout for log cleanup is really low {}s", transactionTimeout);
+    }
+    final int cutOffTransactionTime =
+      transactionTimeout > CUTOFF_DISCOUNT ? transactionTimeout - CUTOFF_DISCOUNT : transactionTimeout;
     try {
-      transactional.execute(TRANSACTION_TIMEOUT, new TxRunnable() {
+      transactional.execute(transactionTimeout, new TxRunnable() {
         @Override
         public void run(DatasetContext context) throws Exception {
           Stopwatch stopwatch = new Stopwatch();
@@ -116,7 +117,7 @@ public class FileMetadataScanner {
           Scanner scanner;
           boolean reachedEnd = false;
           while (!reachedEnd) {
-            if (stopwatch.elapsedTime(TimeUnit.SECONDS) > CUTOFF_TIME_TRANSACTION) {
+            if (stopwatch.elapsedTime(TimeUnit.SECONDS) > cutOffTransactionTime) {
               break;
             }
             scanner = table.scan(startRowKey, endRowKey);
@@ -152,10 +153,10 @@ public class FileMetadataScanner {
     if (!toDelete.isEmpty()) {
       // we will call delete on old metadata even whenever there is expired entries to delete in new format.
       // though the first call will delete all old meta data.
-      scanAndDeleteOldMetaData();
+      scanAndDeleteOldMetaData(transactionTimeout, cutOffTransactionTime);
 
       // delete meta data first
-      return deleteNewMetadataEntries(toDelete);
+      return deleteNewMetadataEntries(toDelete, transactionTimeout, cutOffTransactionTime);
     }
     return toDelete;
   }
@@ -185,17 +186,18 @@ public class FileMetadataScanner {
    * @return list of deleted entries.
    * if delete time is closer to transaction timeout, we break and return list of deleted entries so far.
    */
-  private List<DeleteEntry> deleteNewMetadataEntries(final List<DeleteEntry> toDeleteRows) {
+  private List<DeleteEntry> deleteNewMetadataEntries(final List<DeleteEntry> toDeleteRows,
+                                                     int transactionTimeout, final int cutOffTransactionTimeout) {
     final List<DeleteEntry> deletedEntries = new ArrayList<>();
     try {
-      transactional.execute(TRANSACTION_TIMEOUT, new TxRunnable() {
+      transactional.execute(transactionTimeout, new TxRunnable() {
         @Override
         public void run(DatasetContext context) throws Exception {
           Stopwatch stopwatch = new Stopwatch();
           stopwatch.start();
           Table table = LoggingStoreTableUtil.getMetadataTable(context, datasetManager);
           for (DeleteEntry entry : toDeleteRows) {
-            if (stopwatch.elapsedTime(TimeUnit.SECONDS) > CUTOFF_TIME_TRANSACTION) {
+            if (stopwatch.elapsedTime(TimeUnit.SECONDS) > cutOffTransactionTimeout) {
               break;
             }
             table.delete(entry.getRowKey());

@@ -33,13 +33,15 @@ public class LogCleaner implements Runnable {
   private final FileMetadataScanner fileMetadataScanner;
   private final LocationFactory locationFactory;
   private final long retentionDurationMs;
+  private final int transactionTimeout;
 
   public LogCleaner(FileMetadataScanner fileMetadataScanner, LocationFactory locationFactory,
-                    long retentionDurationMs) {
+                    long retentionDurationMs, int fileCleanupTransactionTimeout) {
     this.fileMetadataScanner = fileMetadataScanner;
     this.locationFactory = locationFactory;
     this.retentionDurationMs = retentionDurationMs;
-    LOG.debug("Log retention duration = {} ms", retentionDurationMs);
+    this.transactionTimeout = fileCleanupTransactionTimeout;
+    LOG.debug("Log retention duration = {}ms", retentionDurationMs);
   }
 
   @Override
@@ -47,7 +49,8 @@ public class LogCleaner implements Runnable {
     long startTime = System.currentTimeMillis();
     LOG.info("Starting log cleanup at {}", startTime);
     long tillTime = startTime - retentionDurationMs;
-    List<FileMetadataScanner.DeleteEntry> deleteEntries = fileMetadataScanner.scanAndGetFilesToDelete(tillTime);
+    List<FileMetadataScanner.DeleteEntry> deleteEntries =
+      fileMetadataScanner.scanAndGetFilesToDelete(tillTime, transactionTimeout);
     int deleteCount = 0;
     int failureCount = 0;
     for (FileMetadataScanner.DeleteEntry deleteEntry : deleteEntries) {

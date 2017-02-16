@@ -86,7 +86,8 @@ import java.util.concurrent.TimeUnit;
 public class FileMetadataScannerTest {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
-  private static final int CUTOFF_TIME_TRANSACTION = 60;
+  private static final int CUTOFF_TIME_TRANSACTION = 50;
+  private static final int TRANSACTION_TIMEOUT = 60;
 
   private static Injector injector;
   private static TransactionManager txManager;
@@ -178,7 +179,8 @@ public class FileMetadataScannerTest {
       }
 
       FileMetadataScanner fileMetadataScanner = new FileMetadataScanner(datasetManager, transactional);
-      List<byte[]> deletedEntries = fileMetadataScanner.scanAndDeleteOldMetaData();
+      List<byte[]> deletedEntries =
+        fileMetadataScanner.scanAndDeleteOldMetaData(TRANSACTION_TIMEOUT, CUTOFF_TIME_TRANSACTION);
       // we should have deleted 4 rows (flow-context, wflow, mr, spark) rows
       Assert.assertEquals(4, deletedEntries.size());
       for (byte[] deletedEntry : deletedEntries) {
@@ -260,7 +262,8 @@ public class FileMetadataScannerTest {
       }
 
       long tillTime = currentTime + 50;
-      List<FileMetadataScanner.DeleteEntry> deletedEntries = fileMetadataScanner.scanAndGetFilesToDelete(tillTime);
+      List<FileMetadataScanner.DeleteEntry> deletedEntries =
+        fileMetadataScanner.scanAndGetFilesToDelete(tillTime, TRANSACTION_TIMEOUT);
       // we should have deleted 51 rows, till time is inclusive
       Assert.assertEquals(51, deletedEntries.size());
       int count = 0;
@@ -280,7 +283,7 @@ public class FileMetadataScannerTest {
       }
 
       // lets keep the same till time - this should only delete the spark entries now
-      deletedEntries = fileMetadataScanner.scanAndGetFilesToDelete(tillTime);
+      deletedEntries = fileMetadataScanner.scanAndGetFilesToDelete(tillTime, TRANSACTION_TIMEOUT);
       // we should have deleted 51 rows, till time is inclusive
       Assert.assertEquals(10, deletedEntries.size());
       count = 0;
@@ -316,7 +319,7 @@ public class FileMetadataScannerTest {
 
       tillTime = currentTime + 70;
       // lets delete till 70.
-      deletedEntries = fileMetadataScanner.scanAndGetFilesToDelete(tillTime);
+      deletedEntries = fileMetadataScanner.scanAndGetFilesToDelete(tillTime, TRANSACTION_TIMEOUT);
       // we should have deleted 51-70 files of flow and 0-9 files of spark files in that order and 0 files of action.
       Assert.assertEquals(30, deletedEntries.size());
       count = 0;
@@ -330,7 +333,7 @@ public class FileMetadataScannerTest {
 
       tillTime = currentTime + 100;
       // lets delete till 100.
-      deletedEntries = fileMetadataScanner.scanAndGetFilesToDelete(tillTime);
+      deletedEntries = fileMetadataScanner.scanAndGetFilesToDelete(tillTime, TRANSACTION_TIMEOUT);
       // we should have deleted 90-99 of custom action(10) 71-99 (29) files of flow.
       for (int i = 71; i < 100; i++) {
         nextExpected.add(locationFactory.create("testFlowFile" + i));
@@ -344,7 +347,7 @@ public class FileMetadataScannerTest {
 
       // now lets do a delete with till time  = currentTime + 1000, this should return empty result
       tillTime = currentTime + 1000;
-      deletedEntries = fileMetadataScanner.scanAndGetFilesToDelete(tillTime);
+      deletedEntries = fileMetadataScanner.scanAndGetFilesToDelete(tillTime, TRANSACTION_TIMEOUT);
       Assert.assertEquals(0, deletedEntries.size());
     } finally {
       // cleanup meta
