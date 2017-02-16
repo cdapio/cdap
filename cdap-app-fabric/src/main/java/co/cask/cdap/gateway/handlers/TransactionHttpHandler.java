@@ -274,7 +274,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/prune/regions/idle")
   @GET
   public void getIdleRegions(HttpRequest request, HttpResponder responder,
-                             @PathParam("limit") @DefaultValue("-1") int numRegions) {
+                             @QueryParam("limit") @DefaultValue("-1") int numRegions) {
     if (debugClazz == null || debugObject == null) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Invalid List Pruning debug class not found.");
       return;
