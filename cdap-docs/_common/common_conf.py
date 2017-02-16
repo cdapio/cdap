@@ -855,7 +855,7 @@ def source_read_handler(app, docname, source):
         if app.env.config.rst_prolog:
             app.env.config.rst_prolog_cache = app.env.config.rst_prolog
             app.env.config.rst_prolog = None
-        if app.env.config.highlight_language:
+        if app.env.config.highlight_language and not app.env.config.highlight_language == 'none':
             app.env.config.highlight_language_cache = app.env.config.highlight_language
             app.env.config.highlight_language = 'none'
     else:
@@ -865,10 +865,13 @@ def source_read_handler(app, docname, source):
         if (not app.env.config.rst_prolog and hasattr(app.env.config, 'rst_prolog_cache') and 
                 app.env.config.rst_prolog_cache):
             app.env.config.rst_prolog = app.env.config.rst_prolog_cache
-        if (app.env.config.highlight_language == 'none' and 
-                hasattr(app.env.config, 'highlight_language_cache') and 
-                app.env.config.highlight_language_cache):
-            app.env.config.highlight_language = app.env.config.highlight_language_cache
+        if (not app.env.config.highlight_language or app.env.config.highlight_language == 'none'):
+            if (hasattr(app.env.config, 'highlight_language_cache') and 
+                app.env.config.highlight_language_cache and 
+                not app.env.config.highlight_language == 'none'):
+                app.env.config.highlight_language = app.env.config.highlight_language_cache
+            else:
+                app.env.config.highlight_language = 'java'
             
 
 # -- Configure Application --------------------------------------------------
