@@ -45,6 +45,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.PrivilegedExceptionAction;
@@ -338,6 +339,22 @@ public final class Locations {
       resolvedParent = URI.create(parent.substring(0, parent.length() - 1));
     }
     return location.getLocationFactory().create(resolvedParent);
+  }
+
+  /**
+   * Get a Location using a specified location factory and absolute path
+   * @param locationFactory locationFactory to create Location from given Path
+   * @param absolutePath Path to be used for Location
+   * @return Location resulting from absolute locationPath
+   */
+  public static Location getLocationFromAbsolutePath(LocationFactory locationFactory, String absolutePath) {
+    URI homeURI = locationFactory.getHomeLocation().toURI();
+    try {
+      return locationFactory.create(new URI(homeURI.getScheme(), homeURI.getAuthority(), absolutePath, null, null));
+    } catch (URISyntaxException e) {
+      // Should not happen.
+      throw Throwables.propagate(e);
+    }
   }
 
   /**

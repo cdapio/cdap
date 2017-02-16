@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -112,7 +113,7 @@ public final class FileMetaDataManager {
       public void apply(Table table) throws Exception {
         table.put(getRowKey(logPartition),
                   Bytes.toBytes(startTimeMs),
-                  Bytes.toBytes(location.toURI().toString()));
+                  Bytes.toBytes(location.toURI().getPath()));
       }
     });
   }
@@ -139,9 +140,10 @@ public final class FileMetaDataManager {
           @Override
           public Void call() throws Exception {
             for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
+              String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
               // the location can be any location from on the filesystem for custom mapped namespaces
               files.put(Bytes.toLong(entry.getKey()),
-                        rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))));
+                        Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath));
             }
             return null;
           }
@@ -178,7 +180,8 @@ public final class FileMetaDataManager {
             for (final Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
               try {
                 byte[] colName = entry.getKey();
-                URI file = new URI(Bytes.toString(entry.getValue()));
+                String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
+                URI file = Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath).toURI();
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("Got file {} with start time {}", file, Bytes.toLong(colName));
                 }
@@ -186,7 +189,8 @@ public final class FileMetaDataManager {
                 Location fileLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
                   @Override
                   public Location call() throws Exception {
-                    return rootLocationFactory.create(new URI(Bytes.toString(entry.getValue())));
+                    String absolutePath = URI.create(Bytes.toString(entry.getValue())).getPath();
+                    return Locations.getLocationFromAbsolutePath(rootLocationFactory, absolutePath);
                   }
                 });
                 if (!fileLocation.exists()) {

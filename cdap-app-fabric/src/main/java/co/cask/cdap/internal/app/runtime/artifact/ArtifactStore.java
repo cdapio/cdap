@@ -236,7 +236,8 @@ public class ArtifactStore {
             ArtifactData data = gson.fromJson(Bytes.toString(columnEntry.getValue()), ArtifactData.class);
             Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace.toId(), artifactKey.name, version);
             artifacts.add(new ArtifactDetail(new ArtifactDescriptor(
-              artifactId.toArtifactId(), locationFactory.create(data.locationURI)), data.meta));
+              artifactId.toArtifactId(),
+              Locations.getLocationFromAbsolutePath(locationFactory, data.getLocationPath())), data.meta));
           }
         }
         return Collections.unmodifiableList(artifacts);
@@ -302,7 +303,7 @@ public class ArtifactStore {
       Location artifactLocation = impersonator.doAs(artifactId.getNamespace().toEntityId(), new Callable<Location>() {
         @Override
         public Location call() throws Exception {
-          return locationFactory.create(data.locationURI);
+          return Locations.getLocationFromAbsolutePath(locationFactory, data.getLocationPath());
         }
       });
       return new ArtifactDetail(
@@ -338,7 +339,8 @@ public class ArtifactStore {
               AppData appData = gson.fromJson(Bytes.toString(column.getValue()), AppData.class);
 
               ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(
-                artifactColumn.artifactId.toArtifactId(), locationFactory.create(appData.artifactLocationURI));
+                artifactColumn.artifactId.toArtifactId(),
+                Locations.getLocationFromAbsolutePath(locationFactory, appData.getArtifactLocationPath()));
               List<ApplicationClass> existingAppClasses = result.get(artifactDescriptor);
               if (existingAppClasses == null) {
                 existingAppClasses = new ArrayList<>();
@@ -380,7 +382,8 @@ public class ArtifactStore {
               AppData appData = gson.fromJson(Bytes.toString(column.getValue()), AppData.class);
 
               ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(
-                artifactColumn.artifactId.toArtifactId(), locationFactory.create(appData.artifactLocationURI));
+                artifactColumn.artifactId.toArtifactId(),
+                Locations.getLocationFromAbsolutePath(locationFactory, appData.getArtifactLocationPath()));
               result.put(artifactDescriptor, appData.appClass);
             }
           }
@@ -519,7 +522,9 @@ public class ArtifactStore {
           for (PluginClass pluginClass : parentPlugins) {
             if (pluginClass.getName().equals(name) && pluginClass.getType().equals(type)) {
               ArtifactDescriptor parentDescriptor =
-                new ArtifactDescriptor(parentArtifactId.toArtifactId(), locationFactory.create(parentData.locationURI));
+                new ArtifactDescriptor(parentArtifactId.toArtifactId(),
+                                       Locations.getLocationFromAbsolutePath(locationFactory,
+                                                                             parentData.getLocationPath()));
               result.put(parentDescriptor, pluginClass);
               break;
             }
@@ -580,7 +585,9 @@ public class ArtifactStore {
 
           ArtifactMeta updatedMeta = new ArtifactMeta(old.meta.getClasses(), old.meta.getUsableBy(),
                                                       updateFunction.apply(old.meta.getProperties()));
-          ArtifactData updatedData = new ArtifactData(locationFactory.create(old.locationURI), updatedMeta);
+          ArtifactData updatedData =
+            new ArtifactData(Locations.getLocationFromAbsolutePath(locationFactory, old.getLocationPath()),
+                             updatedMeta);
           // write artifact metadata
           table.put(artifactCell.rowkey, artifactCell.column, Bytes.toBytes(gson.toJson(updatedData)));
           return true;
@@ -807,7 +814,7 @@ public class ArtifactStore {
     byte[] artifactColumn = new ArtifactColumn(artifactId).getColumn();
 
     ArtifactClasses classes = data.meta.getClasses();
-    Location artifactLocation = locationFactory.create(data.locationURI);
+    Location artifactLocation = Locations.getLocationFromAbsolutePath(locationFactory, data.getLocationPath());
     // write pluginClass metadata
     for (PluginClass pluginClass : classes.getPlugins()) {
       // write metadata for each artifact this plugin extends
@@ -863,7 +870,7 @@ public class ArtifactStore {
                                  impersonator).impersonate(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          locationFactory.create(oldMeta.locationURI).delete();
+          Locations.getLocationFromAbsolutePath(locationFactory, oldMeta.getLocationPath()).delete();
           return null;
         }
       });
@@ -898,7 +905,7 @@ public class ArtifactStore {
     Set<PluginClass> filteredPlugins = Sets.newLinkedHashSet(Iterables.filter(parentPlugins, filter));
 
     if (!filteredPlugins.isEmpty()) {
-      Location parentLocation = locationFactory.create(parentData.locationURI);
+      Location parentLocation = Locations.getLocationFromAbsolutePath(locationFactory, parentData.getLocationPath());
       ArtifactDescriptor descriptor = new ArtifactDescriptor(artifactId.toArtifactId(), parentLocation);
       result.put(descriptor, filteredPlugins);
     }
@@ -913,7 +920,8 @@ public class ArtifactStore {
       ArtifactData data = gson.fromJson(Bytes.toString(columnVal.getValue()), ArtifactData.class);
       Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace.toId(), artifactKey.name, version);
       artifactDetails.add(new ArtifactDetail(
-        new ArtifactDescriptor(artifactId.toArtifactId(), locationFactory.create(data.locationURI)),
+        new ArtifactDescriptor(artifactId.toArtifactId(),
+                               Locations.getLocationFromAbsolutePath(locationFactory, data.getLocationPath())),
         data.meta));
     }
   }
@@ -957,7 +965,8 @@ public class ArtifactStore {
     // filter out plugins that don't extend this version of the parent artifact
     if (pluginData.usableBy.versionIsInRange(parentArtifactId.getVersion())) {
       ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(
-        artifactColumn.artifactId.toArtifactId(), locationFactory.create(pluginData.artifactLocationURI));
+        artifactColumn.artifactId.toArtifactId(),
+        Locations.getLocationFromAbsolutePath(locationFactory, pluginData.getArtifactLocationPath()));
 
       return ImmutablePair.of(artifactDescriptor, pluginData.pluginClass);
     }
@@ -1085,12 +1094,19 @@ public class ArtifactStore {
 
   // Data that will be stored for an artifact. Same as ArtifactDetail, expected without the id since that is redundant.
   private static class ArtifactData {
+    // For Backward Compatibility
     private final URI locationURI;
+    private final String locationPath;
     private final ArtifactMeta meta;
 
     ArtifactData(Location location, ArtifactMeta meta) {
-      this.locationURI = location.toURI();
+      this.locationURI = null;
+      this.locationPath = location.toURI().getPath();
       this.meta = meta;
+    }
+
+    public String getLocationPath() {
+      return locationPath == null ? locationURI.getPath() : locationPath;
     }
   }
 
@@ -1098,23 +1114,37 @@ public class ArtifactStore {
   private static class PluginData {
     private final PluginClass pluginClass;
     private final ArtifactRange usableBy;
+    // URI For Backward Compatibility
     private final URI artifactLocationURI;
+    private final String artifactLocationPath;
 
     PluginData(PluginClass pluginClass, ArtifactRange usableBy, Location artifactLocation) {
       this.pluginClass = pluginClass;
       this.usableBy = usableBy;
-      this.artifactLocationURI = artifactLocation.toURI();
+      this.artifactLocationURI = null;
+      this.artifactLocationPath = artifactLocation.toURI().getPath();
+    }
+
+    public String getArtifactLocationPath() {
+      return artifactLocationPath == null ? artifactLocationURI.getPath() : artifactLocationPath;
     }
   }
 
   // Data that will be stored for an application class.
   private static class AppData {
     private final ApplicationClass appClass;
+    // URI For Backward Compatibility
     private final URI artifactLocationURI;
+    private final String artifactLocationPath;
 
     AppData(ApplicationClass appClass, Location artifactLocation) {
       this.appClass = appClass;
-      this.artifactLocationURI = artifactLocation.toURI();
+      this.artifactLocationURI = null;
+      this.artifactLocationPath = artifactLocation.toURI().getPath();
+    }
+
+    public String getArtifactLocationPath() {
+      return artifactLocationPath == null ? artifactLocationURI.getPath() : artifactLocationPath;
     }
   }
 }

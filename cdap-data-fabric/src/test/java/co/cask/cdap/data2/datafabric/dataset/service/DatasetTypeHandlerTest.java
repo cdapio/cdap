@@ -280,8 +280,8 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     Assert.assertArrayEquals(Sets.newTreeSet(usedByModules).toArray(),
                              Sets.newTreeSet(moduleMeta.getUsedByModules()).toArray());
     // note: we know it is local
-    Assert.assertNotNull(moduleMeta.getJarLocation());
-    Assert.assertTrue(new File(moduleMeta.getJarLocation()).exists());
+    Assert.assertNotNull(moduleMeta.getJarLocationPath());
+    Assert.assertTrue(new File(moduleMeta.getJarLocationPath()).exists());
   }
 
   private ObjectResponse<List<DatasetTypeMeta>> getTypes() throws IOException {
