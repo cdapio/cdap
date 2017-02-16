@@ -99,43 +99,53 @@
         &:hover,
         &:focus {
           background: transparent;
-          color: rgba(204, 204, 204, 1);
         }
         a {
           text-decoration: none;
           padding: 10px 16px;
           background: transparent;
-        }
-        &.user-profile {
-          margin-left: 0;
 
-          > {
-            :not(:first-child) {
-              cursor: pointer;
-            }
+          &:hover {
+            color: $cdap-light-orange;
           }
 
-          .user-section {
-            span {
-              color: rgba(255, 205, 128, 1);
-            }
-            .user-name {
-              font-size: 13px;
-              text-overflow: ellipsis;
-              max-width: inherit;
-              width: calc(100% - 10px - 23px);
-              overflow: hidden;
-              white-space: nowrap;
-              display: inline-block;
-            }
-            .fa.fa-user {
-              border: 1px solid rgba(255, 205, 128, 1);
-              border-radius: 50%;
-              padding: 5px 6px;
-              background: rgba(255, 205, 128, 1);
-              margin-right: 8px;
-              color: $navbar-bg;
-            }
+          &:active {
+            color: inherit;
+          }
+        }
+      }
+
+      .user-profile {
+        min-width: inherit;
+        max-width: inherit;
+        margin-left: 0;
+
+        > {
+          :not(:first-child) {
+            cursor: pointer;
+          }
+        }
+
+        .user-section {
+          span {
+            color: rgba(255, 205, 128, 1);
+          }
+          .user-name {
+            font-size: 13px;
+            text-overflow: ellipsis;
+            max-width: inherit;
+            width: calc(100% - 10px - 23px);
+            overflow: hidden;
+            white-space: nowrap;
+            display: inline-block;
+          }
+          .fa.fa-user {
+            border: 1px solid rgba(255, 205, 128, 1);
+            border-radius: 50%;
+            padding: 5px 6px;
+            background: rgba(255, 205, 128, 1);
+            margin-right: 8px;
+            color: $navbar-bg;
           }
         }
       }
