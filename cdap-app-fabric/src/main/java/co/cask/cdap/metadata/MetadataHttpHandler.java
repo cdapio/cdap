@@ -850,7 +850,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/metadata/search")
   public void searchMetadata(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
-                             @QueryParam("query") @DefaultValue("") String searchQuery,
+                             @QueryParam("query") String searchQuery,
                              @QueryParam("target") List<String> targets,
                              @QueryParam("sort") @DefaultValue("") String sort,
                              @QueryParam("offset") @DefaultValue("0") int offset,
@@ -860,6 +860,9 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @QueryParam("cursor") @DefaultValue("") String cursor,
                              @QueryParam("showHidden") @DefaultValue("false") boolean showHidden,
                              @Nullable @QueryParam("entityScope") String entityScope) throws Exception {
+    if (searchQuery == null || searchQuery.isEmpty()) {
+      throw new BadRequestException("query is not specified");
+    }
     Set<EntityTypeSimpleName> types = Collections.emptySet();
     if (targets != null) {
       types = ImmutableSet.copyOf(Iterables.transform(targets, STRING_TO_TARGET_TYPE));
