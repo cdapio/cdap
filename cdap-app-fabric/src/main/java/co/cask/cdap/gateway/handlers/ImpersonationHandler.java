@@ -20,6 +20,8 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.kerberos.ImpersonationOpInfo;
 import co.cask.cdap.common.kerberos.PrincipalCredInfo;
 import co.cask.cdap.common.kerberos.UGIWithPrincipal;
+import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import co.cask.cdap.security.impersonation.UGIProvider;
@@ -27,6 +29,7 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.Credentials;
 import org.apache.twill.api.SecureStore;
@@ -54,7 +57,9 @@ import javax.ws.rs.Path;
 public class ImpersonationHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(ImpersonationHandler.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+    .create();
 
   private final UGIProvider ugiProvider;
   private final TokenSecureStoreUpdater tokenSecureStoreUpdater;

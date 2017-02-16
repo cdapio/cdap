@@ -23,10 +23,13 @@ import co.cask.cdap.common.internal.remote.RemoteClient;
 import co.cask.cdap.common.kerberos.ImpersonationOpInfo;
 import co.cask.cdap.common.kerberos.PrincipalCredInfo;
 import co.cask.cdap.common.kerberos.UGIWithPrincipal;
+import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -49,7 +52,9 @@ import java.net.URL;
 public class RemoteUGIProvider extends AbstractCachedUGIProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteUGIProvider.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+    .create();
 
   private final RemoteClient remoteClient;
   private final LocationFactory locationFactory;
