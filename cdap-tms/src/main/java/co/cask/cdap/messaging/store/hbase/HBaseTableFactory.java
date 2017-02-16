@@ -292,9 +292,11 @@ public final class HBaseTableFactory implements TableFactory {
       ProjectInfo.Version version = HBaseTableUtil.getVersion(tableDescriptor);
 
       if (version.compareTo(ProjectInfo.getVersion()) >= 0) {
-        // If cdap has version has not changed or is greater, no need to update
+        // If cdap has version has not changed or is greater, no need to update. Just enable it, in case
+        // it has been disabled by the upgrade tool, and return
         LOG.info("Table '{}' has not changed and its version '{}' is same or greater than current CDAP version '{}'",
                  tableId, version, ProjectInfo.getVersion());
+        enableTable(ddlExecutor, tableId);
         return;
       }
 
