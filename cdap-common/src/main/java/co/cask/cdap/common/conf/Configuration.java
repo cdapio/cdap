@@ -263,6 +263,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
           new DeprecatedKeyInfo("log.pipeline.cdap.file.max.size.bytes"));
       put("log.saver.max.file.lifetime.ms",
           new DeprecatedKeyInfo("log.pipeline.cdap.file.max.lifetime.ms"));
+      put("log.retention.duration.days",
+          new DeprecatedKeyInfo("log.pipeline.cdap.file.retention.duration.days"));
     }
   };
 
@@ -289,6 +291,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
       put("log.pipeline.cdap.file.sync.interval.bytes", new String[] { "log.file.sync.interval.bytes" });
       put("log.pipeline.cdap.file.max.size.bytes", new String[] { "log.max.file.size.bytes" });
       put("log.pipeline.cdap.file.max.lifetime.ms", new String[] { "log.saver.max.file.lifetime.ms" });
+      put("log.pipeline.cdap.file.retention.duration.days", new String[] { "log.retention.duration.days" });
     }
   };
 

@@ -45,25 +45,27 @@ public class LogCleaner implements Runnable {
   @Override
   public void run() {
     long startTime = System.currentTimeMillis();
-    LOG.info("Running log cleanup at {}", startTime);
+    LOG.info("Starting log cleanup at {}", startTime);
     long tillTime = startTime - retentionDurationMs;
     List<FileMetadataScanner.DeleteEntry> deleteEntries = fileMetadataScanner.scanAndGetFilesToDelete(tillTime);
-
+    int deleteCount = 0;
+    int failureCount = 0;
     for (FileMetadataScanner.DeleteEntry deleteEntry : deleteEntries) {
       try {
-
         boolean status = Locations.getLocationFromAbsolutePath(locationFactory,
                                                                deleteEntry.getLocationIdentifier().getPath()).delete();
-
         if (!status) {
+          failureCount++;
           LOG.warn("File {} delete failed", deleteEntry.getLocationIdentifier());
         } else {
+          deleteCount++;
           LOG.trace("File {} deleted by log cleanup", deleteEntry.getLocationIdentifier());
         }
       } catch (IOException e) {
         LOG.warn("Exception while deleting file {}", deleteEntry.getLocationIdentifier(), e);
       }
     }
+    LOG.info("File cleanup completed, Successful file deletes {} Failed file deletes {}", deleteCount, failureCount);
     long completionTime = System.currentTimeMillis();
     LOG.info("Log cleanup completed at {} took {}ms", System.currentTimeMillis(), (completionTime - startTime));
   }

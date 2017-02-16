@@ -1111,10 +1111,10 @@
   </property>
 
   <property>
-    <name>log.pipeline.cdap.file.retention.duration.mins</name>
-    <value>10080</value>
+    <name>log.pipeline.cdap.file.retention.duration.days</name>
+    <value>7</value>
     <description>
-      Maximum time in minutes a file is kept before it could be deleted by log cleanup. Default is 7 days.
+      Maximum time in days a file is kept before it could be deleted by log cleanup. Default is 7 days.
     </description>
   </property>
 

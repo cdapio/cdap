@@ -77,7 +77,6 @@ public class FileMetadataScanner {
           Table table = LoggingStoreTableUtil.getMetadataTable(context, datasetManager);
           // create range with tillTime as endColumn
           Scan scan = new Scan(OLD_ROW_KEY_PREFIX, OLD_ROW_KEY_PREFIX_END, null);
-          int entriesDeleted = 0;
           try (Scanner scanner = table.scan(scan)) {
             Row row;
             while ((row = scanner.next()) != null) {
@@ -203,7 +202,7 @@ public class FileMetadataScanner {
             deletedEntries.add(entry);
           }
           stopwatch.stop();
-          LOG.trace("Deleted {} entries in {} ms", deletedEntries.size(), stopwatch.elapsedMillis());
+          LOG.info("Deleted {} new metadata entries in {} ms", deletedEntries.size(), stopwatch.elapsedMillis());
         }
       });
     } catch (TransactionFailureException e) {

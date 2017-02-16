@@ -64,7 +64,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   private long maxFileSizeInBytes;
   private ScheduledExecutorService scheduledExecutorService;
   private long logCleanupIntervalMins;
-  private long fileRetentionDurationMins;
+  private long fileRetentionDurationDays;
 
   /**
    * TODO: start a separate cleanup thread to remove files that has passed the TTL
@@ -112,8 +112,8 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
    * Sets the file retention duration for the file,
    * after this duration the file gets cleaned up by log clean up thread.
    */
-  public void setFileRetentionDurationMins(long fileRetentionDurationMins) {
-    this.fileRetentionDurationMins = fileRetentionDurationMins;
+  public void setFileRetentionDurationDays(long fileRetentionDurationDays) {
+    this.fileRetentionDurationDays = fileRetentionDurationDays;
   }
 
   /**
@@ -132,7 +132,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     Preconditions.checkState(syncIntervalBytes > 0, "Property syncIntervalBytes must be > 0.");
     Preconditions.checkState(maxFileLifetimeMs > 0, "Property maxFileLifetimeMs must be > 0");
     Preconditions.checkState(maxFileSizeInBytes > 0, "Property maxFileSizeInBytes must be > 0");
-    Preconditions.checkState(fileRetentionDurationMins > 0, "Property fileRetentionDurationMins must be > 0");
+    Preconditions.checkState(fileRetentionDurationDays > 0, "Property fileRetentionDurationDays must be > 0");
     Preconditions.checkState(logCleanupIntervalMins > 0, "Property logCleanupIntervalMins must be > 0");
 
     if (context instanceof AppenderContext) {
@@ -146,7 +146,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
           Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("log-clean-up"));
         FileMetadataScanner fileMetadataScanner = new FileMetadataScanner(context.getDatasetManager(), context);
         LogCleaner logCleaner = new LogCleaner(fileMetadataScanner, context.getLocationFactory(),
-                                               TimeUnit.MINUTES.toMillis(fileRetentionDurationMins));
+                                               TimeUnit.DAYS.toMillis(fileRetentionDurationDays));
         scheduledExecutorService.scheduleAtFixedRate(logCleaner, 10, logCleanupIntervalMins, TimeUnit.MINUTES);
       }
     } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {
