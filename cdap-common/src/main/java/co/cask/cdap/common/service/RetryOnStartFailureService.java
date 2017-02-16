@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,6 +39,7 @@ public class RetryOnStartFailureService extends AbstractService {
   private final Thread startupThread;
   private final String delegateServiceName;
   private volatile Service currentDelegate;
+  private volatile boolean stopped = false;
 
   /**
    * Creates a new instance.
@@ -57,7 +58,7 @@ public class RetryOnStartFailureService extends AbstractService {
         long delay = 0L;
         Service delegateService = service;
 
-        while (delay >= 0 && !isInterrupted()) {
+        while (delay >= 0 && !isInterrupted() && !stopped) {
           try {
             currentDelegate = delegateService;
             delegateService.start().get();
@@ -102,6 +103,7 @@ public class RetryOnStartFailureService extends AbstractService {
 
   @Override
   protected void doStop() {
+    stopped = true;
     startupThread.interrupt();
     Uninterruptibles.joinUninterruptibly(startupThread);
 
