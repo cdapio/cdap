@@ -117,7 +117,7 @@ class CDAP extends Component {
                 <Match exactly pattern="/ns" component={RouteToNamespace} />
                 <Match pattern="/ns/:namespace" history={history} component={Home} />
                 <Match exactly pattern="/ns/:namespace/dashboard" component={Dashboard} />
-                <Match pattern="/Experimental" component={Experimental} />
+                <Match pattern="/dataprep" component={Experimental} />
                 <Match pattern="/socket-example" component={ConnectionExample} />
                 <Match pattern="/schemaeditor" component={SchemaEditor} />
                 <Miss component={Page404} />

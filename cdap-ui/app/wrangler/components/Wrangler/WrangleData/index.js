@@ -129,7 +129,7 @@ export default class WrangleData extends Component {
         .subscribe((res) => {
           let batchArtifact = find(res, { 'name': 'cdap-data-pipeline' });
           let realtimeArtifact = find(res, { 'name': 'cdap-data-streams' });
-          let wranglerArtifact = find(res, { 'name': 'wrangler' });
+          let wranglerArtifact = find(res, { 'name': 'wrangler-transform' });
 
           // Generate hydrator config as URL parameters
           let config = {
@@ -181,8 +181,7 @@ export default class WrangleData extends Component {
         className="btn btn-primary"
         onClick={this.props.onHydratorApply}
       >
-        <span className="fa icon-hydrator" />
-        {T.translate('features.Wrangler.WrangleData.applyToHydrator')}
+        {T.translate('features.Wrangler.WrangleData.applyToPipeline')}
       </button>
     );
 
