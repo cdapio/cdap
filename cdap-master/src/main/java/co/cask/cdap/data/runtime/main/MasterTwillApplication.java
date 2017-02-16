@@ -387,7 +387,7 @@ public class MasterTwillApplication implements TwillApplication {
         extraClassPath.add(file.getName() + "/lib/*");
       } else {
         File targetFile = tempDir.resolve(System.currentTimeMillis() + "-" + file.getName()).toFile();
-        File resultFile = ExploreServiceUtils.rewriteHiveAuthFactory(file, targetFile);
+        File resultFile = ExploreServiceUtils.patchHiveClasses(file, targetFile);
         if (resultFile == targetFile) {
           LOG.info("Rewritten HiveAuthFactory from jar file {} to jar file {}", file, resultFile);
         }

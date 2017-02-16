@@ -24,9 +24,11 @@ import co.cask.cdap.explore.service.hive.Hive14ExploreService;
 import co.cask.cdap.hive.ExploreUtils;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.util.VersionInfo;
 import org.apache.hive.service.auth.HiveAuthFactory;
 import org.objectweb.asm.ClassReader;
@@ -34,6 +36,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,13 +45,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
 import javax.annotation.Nullable;
 
 /**
@@ -57,8 +61,12 @@ import javax.annotation.Nullable;
 public class ExploreServiceUtils {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreServiceUtils.class);
 
-  private static final String HIVE_AUTHFACTORY_CLASS_NAME = "org.apache.hive.service.auth.HiveAuthFactory";
   private static final String HIVE_EXECUTION_ENGINE = "hive.execution.engine";
+
+  private static final Map<String, Set<String>> HIVE_CLASS_FILES_TO_PATCH = ImmutableMap.of(
+    "org/apache/hive/service/auth/HiveAuthFactory.class", Collections.singleton("loginFromKeytab"),
+    "org/apache/hadoop/hive/ql/session/SessionState.class", Collections.singleton("loadAuxJars")
+  );
 
   /**
    * Hive support enum.
@@ -172,21 +180,39 @@ public class ExploreServiceUtils {
   }
 
   /**
-   * Rewrite the {@link HiveAuthFactory} class in the given source jar. The rewrite is for skipping kerberos
-   * authentication from the explore service container.
+   * Patch hive classes by bytecode rewriting in the given source jar. Currently it rewrite the following classes:
+   *
+   * <ul>
+   *   <li>
+   *     {@link HiveAuthFactory} - This is for skipping kerberos authentication from the explore service container.
+   *     {@link SessionState} - This is to workaround a native memory leakage bug due to
+   *                            unclosed URLClassloaders, introduced by HIVE-14037. In normal Java process this
+   *                            leakage won't be a problem as eventually those URLClassLoaders will get GC and
+   *                            have the memory released. However, since explore container runs in YARN and YARN
+   *                            monitor the RSS memory usage, it is highly possible that the URLClassLoader won't get
+   *                            GC due to low heap memory usage, while already taken up all the allowed RSS memory.
+   *                            We don't need aux jars added inside the explore JVM since all CDAP classes are already
+   *                            in the classloader. We only use aux jars config to tell hive to localize CDAP jars
+   *                            to task containers.
+   *   </li>
+   * </ul>
+   *
    *
    * @param sourceJar the source jar to look for the {@link HiveAuthFactory} class.
    * @param targetJar the target jar to write to if rewrite happened
    * @return the source jar if there is no rewrite happened; the target jar if rewrite happened.
    * @throws IOException if failed to read/write to the jar files.
    */
-  public static File rewriteHiveAuthFactory(File sourceJar, File targetJar) throws IOException {
+  public static File patchHiveClasses(File sourceJar, File targetJar) throws IOException {
     try (JarFile input = new JarFile(sourceJar)) {
-      String hiveAuthFactoryPath = HIVE_AUTHFACTORY_CLASS_NAME.replace('.', '/') + ".class";
-      ZipEntry hiveAuthFactoryEntry = input.getEntry(hiveAuthFactoryPath);
+      // See if need to rewrite any classes from the jar
+      boolean needPatch = false;
+      for (String classFile : HIVE_CLASS_FILES_TO_PATCH.keySet()) {
+        needPatch = needPatch || (input.getEntry(classFile) != null);
+      }
 
-      // If the given jar doesn't contain the hive auth factory class, just return the source jar.
-      if (hiveAuthFactoryEntry == null) {
+      // If the given jar doesn't contain any class that needs to be patch, just return the source jar.
+      if (!needPatch) {
         return sourceJar;
       }
 
@@ -198,42 +224,56 @@ public class ExploreServiceUtils {
           output.putNextEntry(new JarEntry(entry.getName()));
 
           try (InputStream entryInputStream = input.getInputStream(entry)) {
-            if (!hiveAuthFactoryPath.equals(entry.getName())) {
+            Set<String> patchMethods = HIVE_CLASS_FILES_TO_PATCH.get(entry.getName());
+            if (patchMethods == null) {
               ByteStreams.copy(entryInputStream, output);
               continue;
             }
 
-            try {
-              // Rewrite the bytecode of HiveAuthFactory.loginFromKeytab method to a no-op method
-              ClassReader cr = new ClassReader(entryInputStream);
-              ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-              cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
-                @Override
-                public MethodVisitor visitMethod(final int access, final String name, final String desc,
-                                                 String signature, String[] exceptions) {
-                  MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
-                  if (!"loginFromKeytab".equals(name)) {
-                    return methodVisitor;
-                  }
-                  GeneratorAdapter adapter = new GeneratorAdapter(methodVisitor, access, name, desc);
-                  adapter.returnValue();
-
-                  // VisitMaxs with 0 so that COMPUTE_MAXS from ClassWriter will compute the right values.
-                  adapter.visitMaxs(0, 0);
-                  return new MethodVisitor(Opcodes.ASM5) {
-                  };
-                }
-              }, 0);
-              output.write(cw.toByteArray());
-            } catch (Exception e) {
-              throw new IOException("Unable to generate HiveAuthFactory class", e);
-            }
+            // Patch the class
+            output.write(rewriteMethodToNoop(entry.getName(), entryInputStream, patchMethods));
           }
         }
       }
 
       return targetJar;
     }
+  }
+
+  /**
+   * Rewrites methods in the given class bytecode to noop methods.
+   */
+  private static byte[] rewriteMethodToNoop(final String classFile,
+                                            InputStream byteCodeStream, final Set<String> methods) throws IOException {
+    ClassReader cr = new ClassReader(byteCodeStream);
+    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+      @Override
+      public MethodVisitor visitMethod(final int access, final String name, final String desc,
+                                       String signature, String[] exceptions) {
+        MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
+
+        if (!methods.contains(name)) {
+          return methodVisitor;
+        }
+
+        // We can only rewrite method that returns void
+        if (!Type.getReturnType(desc).equals(Type.VOID_TYPE)) {
+          LOG.warn("Cannot patch method {} in {} due to non-void return type: {}", name, classFile, desc);
+          return methodVisitor;
+        }
+
+        // Rewrite the method to noop.
+        GeneratorAdapter adapter = new GeneratorAdapter(methodVisitor, access, name, desc);
+        adapter.returnValue();
+
+        // VisitMaxs with 0 so that COMPUTE_MAXS from ClassWriter will compute the right values.
+        adapter.visitMaxs(0, 0);
+        return new MethodVisitor(Opcodes.ASM5) {
+        };
+      }
+    }, 0);
+    return cw.toByteArray();
   }
 
   // Determines whether the execution engine is spark, by checking the SessionConf (if provided) and then the HiveConf.
