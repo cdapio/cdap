@@ -132,16 +132,14 @@ function _build_docs() {
   clear_messages_file
   if [[ ${type} == "docs_set" ]] || [[ ${type} == "docs_web_only" ]]; then
     clean_targets
+    if [[ ${type} == "docs_set" ]]; then
+      # As build_javadocs wipes out the results of the build_docs_cli, need to build it first
+      build_javadocs docs
+    fi
     # Build CLI and its rst file before the first doc build so that its refs can be included
     build_docs_cli
     build_docs_first_pass
     clear_messages_file
-    if [[ ${type} == "docs_set" ]]; then
-      cache_docs_cli
-      build_javadocs docs
-      # As build_javadocs wipes out the results of the build_docs_cli
-      restore_cached_docs_cli
-    fi
   fi
   build_docs_second_pass
   
@@ -245,18 +243,6 @@ function build_docs_cli() {
   fi
   display_end_title ${title}
   return ${warnings}
-}
-
-function cache_docs_cli() {
-  local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/target/cdap-docs-cli.txt
-  local cache_txt=${SCRIPT_PATH}/target/cdap-docs-cli.txt
-  cp target_txt cache_txt
-}
-
-function restore_cached_docs_cli() {
-  local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/target/cdap-docs-cli.txt
-  local cache_txt=${SCRIPT_PATH}/target/cdap-docs-cli.txt
-  cp cache_txt target_txt
 }
 
 function build_docs_inner_level() {
