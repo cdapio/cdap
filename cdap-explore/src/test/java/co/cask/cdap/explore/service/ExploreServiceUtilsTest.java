@@ -57,8 +57,8 @@ public class ExploreServiceUtilsTest {
     String hiveJarFilePath = hiveAuthURL.getPath();
     File hiveJarFile = new File(URI.create(hiveJarFilePath.substring(0, hiveJarFilePath.indexOf("!/"))));
 
-    File targetJar = ExploreServiceUtils.rewriteHiveAuthFactory(hiveJarFile,
-                                                                new File(tmpFolder.newFolder(), "hive.jar"));
+    File targetJar = ExploreServiceUtils.patchHiveClasses(hiveJarFile,
+                                                          new File(tmpFolder.newFolder(), "hive.jar"));
 
     try (
       TestHiveAuthFactoryClassLoader cl = new TestHiveAuthFactoryClassLoader(targetJar, classLoader)
@@ -73,7 +73,7 @@ public class ExploreServiceUtilsTest {
     // Try to rewrite a jar file without the hive auth factory class, it should just return the original jar
     String functionClassPath = classLoader.getResource(Function.class.getName().replace('.', '/') + ".class").getPath();
     File guavaJarFile = new File(URI.create(functionClassPath.substring(0, functionClassPath.indexOf("!/"))));
-    targetJar = ExploreServiceUtils.rewriteHiveAuthFactory(guavaJarFile, new File(tmpFolder.newFolder(), "guava.jar"));
+    targetJar = ExploreServiceUtils.patchHiveClasses(guavaJarFile, new File(tmpFolder.newFolder(), "guava.jar"));
 
     Assert.assertSame(guavaJarFile, targetJar);
   }
