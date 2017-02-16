@@ -17,7 +17,7 @@
 $grey-theme-color:  #e3e3e3;
 $active-text-color: #000000;
 
-.management {
+.administration {
   width: 96%;
   height: 100%;
   border: 2px solid $grey-theme-color;
@@ -32,11 +32,21 @@ $active-text-color: #000000;
     justify-content: space-around;
   }
 
-  .cdap-version-label {
-    text-align: right;
-    position: absolute;
-    right: 75px;
-    font-style: italic;
+  .page-title-and-version {
+    .page-title {
+      padding-left: 10px;
+
+      h3 {
+        display: inline;
+      }
+    }
+
+    .cdap-version-label {
+      text-align: right;
+      position: absolute;
+      right: 75px;
+      font-style: italic;
+    }
   }
 
   .top-panel {
@@ -59,6 +69,7 @@ $active-text-color: #000000;
   }
   .admin-bottom-panel {
     display: flex;
+    padding: 0 10px;
   }
   .nav-buffer {
     width: 40px;
@@ -71,8 +82,8 @@ $active-text-color: #000000;
     -webkit-flex-direction: row;
     flex-direction: row;
     padding-top: 20px;
-    padding-left: 20px;
-    padding-right: 20px;
+    padding-left: 10px;
+    padding-right: 10px;
   }
 
   .centering-container {

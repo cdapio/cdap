@@ -16,7 +16,6 @@
 
 import React, { Component, PropTypes } from 'react';
 import OverviewMetaSection from 'components/Overview/OverviewMetaSection';
-import OverviewHeader from 'components/Overview/OverviewHeader';
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import {fetchTables} from 'services/ExploreTables/ActionCreator';
 import {objectQuery} from 'services/helpers';
@@ -197,8 +196,6 @@ export default class DatasetDetailedView extends Component {
       );
     }
 
-    const title = T.translate('commons.entity.dataset.singular');
-
     if (this.state.notFound) {
       return (
         <Page404
@@ -223,11 +220,6 @@ export default class DatasetDetailedView extends Component {
           previousPaths={previousPaths}
           currentStateIcon="icon-streams"
           currentStateLabel={T.translate('commons.dataset')}
-        />
-        <OverviewHeader
-          icon="icon-datasets"
-          title={title}
-          successMessage={this.state.successMessage}
         />
         <OverviewMetaSection
           entity={this.state.entityMetadata}

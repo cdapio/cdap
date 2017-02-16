@@ -57,11 +57,11 @@ function AdminOverviewPane({services}) {
 
   return (
     <div className="overview-pane">
-      <span>{T.translate('features.Management.Component-Overview.label')}</span>
+      <span>{T.translate('features.Administration.Component-Overview.label')}</span>
       <div className={classnames('overview-pane-container', {'empty-container': !cards.length})}>
       {
         isEmpty ?
-          <h3>{T.translate('features.Management.Component-Overview.emptyMessage')}</h3>
+          <h3>{T.translate('features.Administration.Component-Overview.emptyMessage')}</h3>
         :
           cards
       }

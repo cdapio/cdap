@@ -170,7 +170,7 @@ export default class ServiceStatus extends Component {
       >
         {statusCircle}
         <div className="status-label">
-          {T.translate(`features.Management.Services.${this.props.name.split('.').join('_')}`)}
+          {T.translate(`features.Administration.Services.${this.props.name.split('.').join('_')}`)}
           {
             this.state.serviceWarning ?
               <span
@@ -201,7 +201,7 @@ export default class ServiceStatus extends Component {
             <DropdownMenu>
               <div className="dropdown-service-name service-dropdown-item">
                 <div className="status-label">
-                  {T.translate(`features.Management.Services.${this.props.name.split('.').join('_')}`)}
+                  {T.translate(`features.Administration.Services.${this.props.name.split('.').join('_')}`)}
                 </div>
               </div>
               <a href={logUrl} target="_blank">
@@ -216,7 +216,7 @@ export default class ServiceStatus extends Component {
                 onMouseOver={this.toggleErrorMessage}
                 onMouseOut={this.toggleErrorMessage}
               >
-                {T.translate('features.Management.Services.requested')}
+                {T.translate('features.Administration.Services.requested')}
                 <input
                   className="provision-input"
                   placeholder={this.state.provisioned}
@@ -229,7 +229,7 @@ export default class ServiceStatus extends Component {
                   className={provisionBtnClasses}
                   onClick={this.setProvisionNumber}
                 >
-                  {T.translate('features.Management.Services.setBtn')}
+                  {T.translate('features.Administration.Services.setBtn')}
                   {
                     this.state.serviceWarning ?
                       <span
