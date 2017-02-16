@@ -84,7 +84,7 @@ If you have followed :ref:`the installation instructions <installation-index>`, 
 :ref:`verification step <admin-manual-verification>` or did not startup, check:
 
 - Look in the CDAP logs for error messages (located either in ``/var/log/cdap`` for Distributed CDAP or 
-  ``$CDAP_HOME/logs`` for Standalone CDAP from the CDAP SDK)
+  ``$CDAP_HOME/logs`` for Standalone CDAP)
 - If you see an error such as::
 
     ERROR [main:c.c.c.StandaloneMain@268] - Failed to start Standalone CDAP

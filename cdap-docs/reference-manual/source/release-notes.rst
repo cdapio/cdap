@@ -1779,7 +1779,7 @@ Known Issues
   the fork are still running. It becomes consistent after the join.
 
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  When running in Standalone CDAP mode, if a MapReduce job fails repeatedly, then the SDK
+  When running in Standalone CDAP, if a MapReduce job fails repeatedly, then the SDK
   hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
   this point.
 
@@ -2167,7 +2167,7 @@ Known Issues
   the fork are still running. It becomes consistent after the join.
 
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  When running in Standalone CDAP mode, if a MapReduce job fails repeatedly, then the SDK
+  When running in Standalone CDAP, if a MapReduce job fails repeatedly, then the SDK
   hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
   this point.
 
@@ -2437,7 +2437,7 @@ Known Issues
   the fork are still running. It becomes consistent after the join.
 
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  When running in Standalone CDAP mode, if a MapReduce job fails repeatedly, then the SDK
+  When running in Standalone CDAP, mode, if a MapReduce job fails repeatedly, then the SDK
   hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
   this point.
 
@@ -2781,7 +2781,7 @@ Known Issues
   the fork are still running. It becomes consistent after the join.
 
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  When running in Standalone CDAP mode, if a MapReduce job fails repeatedly, then the SDK
+  When running in Standalone CDAP, if a MapReduce job fails repeatedly, then the SDK
   hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
   this point.
 
@@ -2902,7 +2902,7 @@ Known Issues
   the fork are still running. It becomes consistent after the join.
 
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  When running in Standalone CDAP mode, if a MapReduce job fails repeatedly, then the SDK
+  When running in Standalone CDAP, if a MapReduce job fails repeatedly, then the SDK
   hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
   this point.
 
@@ -3147,7 +3147,7 @@ Bug Fixes
   Fixed a problem in the CDAP UI with scrolling on the namespaces dropdown on certain pages.
   
 - `CDAP-3261 <https://issues.cask.co/browse/CDAP-3261>`__ -
-  Fixed a problem on Distributed CDAP mode with the serializing of the metadata artifact
+  Fixed a problem on Distributed CDAP with the serializing of the metadata artifact
   causing a stack overflow.
   
 - `CDAP-3305 <https://issues.cask.co/browse/CDAP-3305>`__ -
@@ -3180,7 +3180,7 @@ Bug Fixes
   
 - `CDAP-3386 <https://issues.cask.co/browse/CDAP-3386>`__ -
   Fixed a problem with the Spark classes not being found when running a Spark program
-  through a Workflow in Distributed CDAP mode on HDP 2.2.
+  through a Workflow in Distributed CDAP on HDP 2.2.
   
 - `CDAP-3394 <https://issues.cask.co/browse/CDAP-3394>`__ -
   Fixed a problem with the deployment of applications through the CDAP UI.
@@ -3380,7 +3380,7 @@ Known Issues
   the fork are still running. It becomes consistent after the join.
 
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  When running in Standalone CDAP mode, if a MapReduce job fails repeatedly, then the SDK
+  When running in Standalone CDAP, if a MapReduce job fails repeatedly, then the SDK
   hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
   this point.
 
@@ -4450,7 +4450,7 @@ Known Issues
   Large MapReduce jobs can cause excessive logging in the CDAP logs. 
   
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  When running in Standalone CDAP mode, if a MapReduce job fails repeatedly, then the SDK
+  When running in Standalone CDAP, if a MapReduce job fails repeatedly, then the SDK
   hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
   this point.
 
