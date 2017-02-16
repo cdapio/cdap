@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2014-2017 Cask Data, Inc.
+  Copyright © 2014-2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -45,6 +45,14 @@
     <description>
       Semicolon-separated list of local directories that are scanned for
       program runtime extensions
+    </description>
+  </property>
+
+  <property>
+    <name>enable.preview</name>
+    <value>true</value>
+    <description>
+      Determines if preview should be enabled.
     </description>
   </property>
 
@@ -94,27 +102,18 @@
     <description>
       The time a log event stays in the log processing pipeline buffer before
       writing out to log appenders in milliseconds. A longer delay will result
-      in better time ordering of log events before presenting to log appenders
-      but will consume more memory.
+      in less frequent flush to disk but longer for logs to be available.
     </description>
   </property>
-
-
-  <!-- Metadata Management Configuration -->
 
   <property>
-    <name>tracker.app.config</name>
-    <value>{
-             "auditLogConfig" : {
-               "topic" : "${audit.topic}"
-             }
-           }
-    </value>
+    <name>log.process.pipeline.lib.dir</name>
+    <value>ext/logging/lib</value>
     <description>
-      Application configuration for Metadata Management
+      Semicolon-separated list of local directories on the CDAP Master scanned
+      for additional library JAR files to be included for log processing
     </description>
   </property>
-
 
   <!-- Metrics Configuration -->
   
@@ -127,9 +126,7 @@
     </description>
   </property>
 
-
   <!-- Operational Stats Configuration -->
-  
   <property>
     <name>operational.stats.extensions.dir</name>
     <value>ext/operations</value>
@@ -143,6 +140,14 @@
   <!-- Router Configuration -->
   
   <property>
+    <name>router.address</name>
+    <value>127.0.0.1</value>
+    <description>
+      CDAP Router service address to which CDAP UI connects (deprecated; use router.server.address directly)
+    </description>
+  </property>
+
+  <property>
     <name>router.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -152,7 +157,7 @@
 
   <property>
     <name>router.server.address</name>
-    <value>127.0.0.1</value>
+    <value>${router.address}</value>
     <description>
       CDAP Router service address to which CDAP UI connects
     </description>
@@ -170,8 +175,18 @@
     </description>
   </property>
 
-
-  <!-- Security Configuration -->
+  <property>
+    <name>tracker.app.config</name>
+    <value>{
+             "auditLogConfig" : {
+               "topic" : "${audit.topic}"
+             }
+           }
+    </value>
+    <description>
+      Application configuration for Tracker
+    </description>
+  </property>
 
   <property>
     <name>kerberos.auth.enabled</name>
@@ -180,6 +195,5 @@
       Determines if Kerberos authentication is enabled
     </description>
   </property>
-
 
 </configuration>

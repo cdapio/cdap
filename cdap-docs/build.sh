@@ -132,12 +132,12 @@ function _build_docs() {
   clear_messages_file
   if [[ ${type} == "docs_set" ]] || [[ ${type} == "docs_web_only" ]]; then
     clean_targets
+    build_docs_cli
     build_docs_first_pass
     clear_messages_file
     if [[ ${type} == "docs_set" ]]; then
       build_javadocs docs
     fi
-    build_docs_cli
   fi
   build_docs_second_pass
   

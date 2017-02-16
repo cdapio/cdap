@@ -17,13 +17,12 @@
 package co.cask.cdap.logging.serialize;
 
 import ch.qos.logback.classic.spi.LoggerContextVO;
+import co.cask.cdap.logging.LoggingUtil;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 
 import java.util.Map;
-
-import static co.cask.cdap.logging.serialize.LogSerializerUtil.stringOrNull;
 
 /**
  * Class used to serialize/de-serialize LoggerContextVO.
@@ -36,7 +35,7 @@ final class LoggerContextSerializer {
       GenericRecord datum = new GenericData.Record(schema.getTypes().get(1));
       datum.put("birthTime", context.getBirthTime());
       datum.put("name", context.getName());
-      datum.put("propertyMap", LogSerializerUtil.encodeMDC(context.getPropertyMap()));
+      datum.put("propertyMap", LoggingUtil.encodeMDC(context.getPropertyMap()));
       return datum;
     }
     return null;
@@ -45,9 +44,9 @@ final class LoggerContextSerializer {
   static LoggerContextVO decode(GenericRecord datum) {
     if (datum != null) {
       long birthTime = (Long) datum.get("birthTime");
-      String name = stringOrNull(datum.get("name"));
+      String name = LoggingUtil.stringOrNull(datum.get("name"));
       //noinspection unchecked
-      Map<String, String> propertyMap = LogSerializerUtil.decodeMDC((Map<?, ?>) datum.get("propertyMap"));
+      Map<String, String> propertyMap = LoggingUtil.decodeMDC((Map<?, ?>) datum.get("propertyMap"));
       return new LoggerContextVO(name, propertyMap, birthTime);
     }
     return null;

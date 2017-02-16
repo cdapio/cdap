@@ -672,16 +672,20 @@
   </property>
 
   <property>
+    <name>data.tx.prune.state.table</name>
+    <value>${dataset.table.prefix}_system:tephra.state</value>
+    <description>
+      Table used to store intermediate state when invalid transaction list pruning is
+      enabled
+    </description>
+  </property>
+
+  <property>
     <name>data.tx.pruning.plugin.class</name>
     <value>co.cask.data2.txprune.DefaultHBaseTransactionPruningPlugin</value>
     <description>
       Class name for the default transaction pruning plugin
     </description>
-  </property>
-
-  <property>
-    <name>data.tx.prune.state.table</name>
-    <value>${dataset.table.prefix}_system:tephra.state</value>
   </property>
 
   <property>

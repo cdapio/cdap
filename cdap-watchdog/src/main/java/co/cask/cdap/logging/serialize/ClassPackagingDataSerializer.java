@@ -17,11 +17,10 @@
 package co.cask.cdap.logging.serialize;
 
 import ch.qos.logback.classic.spi.ClassPackagingData;
+import co.cask.cdap.logging.LoggingUtil;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
-
-import static co.cask.cdap.logging.serialize.LogSerializerUtil.stringOrNull;
 
 /**
  * Serializer for ClassPackagingData.
@@ -42,8 +41,8 @@ final class ClassPackagingDataSerializer {
 
   static ClassPackagingData decode(GenericRecord datum) {
     if (datum != null) {
-      String codeLocation =  stringOrNull(datum.get("codeLocation"));
-      String version = stringOrNull(datum.get("version"));
+      String codeLocation =  LoggingUtil.stringOrNull(datum.get("codeLocation"));
+      String version = LoggingUtil.stringOrNull(datum.get("version"));
       boolean exact = (Boolean) datum.get("exact");
       return new ClassPackagingData(codeLocation, version, exact);
     }

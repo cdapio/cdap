@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.api.messaging;
+package co.cask.cdap.master.startup;
 
-import co.cask.cdap.api.annotation.Beta;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.AppenderBase;
 
 /**
- * Exception thrown when trying to create a topic when a topic of that name already exists.
+ * A logback {@link Appender} that doesn't do any operations.
  */
-@Beta
-public class TopicAlreadyExistsException extends MessagingException {
+public class NoopAppender extends AppenderBase<ILoggingEvent> {
 
-  public TopicAlreadyExistsException(String namespace, String topic) {
-    super(namespace, topic, "Topic " + namespace + ":" + topic + " already exists.");
+  @Override
+  protected void append(ILoggingEvent eventObject) {
+    // no-op
   }
 }
