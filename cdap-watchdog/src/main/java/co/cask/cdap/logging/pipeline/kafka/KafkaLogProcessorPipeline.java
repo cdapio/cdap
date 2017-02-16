@@ -101,7 +101,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting log processor pipeline for {} with configurations {}", name, config);
+    LOG.debug("Starting log processor pipeline for {} with configurations {}", name, config);
 
     // Reads the existing checkpoints
     Set<Integer> partitions = config.getPartitions();
@@ -118,7 +118,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     fetchExecutor = Executors.newFixedThreadPool(
       partitions.size(), Threads.createDaemonThreadFactory("fetcher-" + name + "-%d"));
 
-    LOG.info("Log processor pipeline for {} started with checkpoint {}", name, checkpoints);
+    LOG.info("Log processor pipeline for {} with config {} started with checkpoint {}", name, config, checkpoints);
   }
 
   @Override
@@ -181,7 +181,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Shutting down log processor pipeline for {}", name);
+    LOG.debug("Shutting down log processor pipeline for {}", name);
     fetchExecutor.shutdownNow();
 
     try {
