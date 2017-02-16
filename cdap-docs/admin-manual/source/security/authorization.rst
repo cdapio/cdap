@@ -354,7 +354,7 @@ select users:
 You can use the :ref:`CDAP CLI <cdap-cli>` to issue :ref:`security commands
 <cli-available-commands-security>`:
 
-- To grant a principal permission to perform certain actions on an entity, use::
+- To grant a principal privileges to perform certain actions on an entity, use::
 
     > grant actions <actions> on entity <entity-id> to <principal-type> <principal-name>
 
