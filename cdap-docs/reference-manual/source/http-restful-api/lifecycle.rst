@@ -902,7 +902,7 @@ with the arguments as a JSON string in the body::
 
     { "instances" : 2 }
   
-- Using ``curl`` and the :ref:`CDAP Standalone SDK <standalone-index>`:
+- Using ``curl`` and the :ref:`Standalone CDAP of the CDAP SDK <standalone-index>`:
 
   .. tabbed-parsed-literal::
 

@@ -24,7 +24,7 @@ relevant CDAP APIs.
 
 Are CDAP pipelines available in Standalone CDAP mode?
 -----------------------------------------------------
-It's part of Standalone CDAP, included in the CDAP SDK.
+It's part of the Standalone CDAP, included in the CDAP SDK.
 
 On which public clouds does CDAP work?
 --------------------------------------

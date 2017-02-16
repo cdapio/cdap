@@ -92,8 +92,8 @@ Glossary
 
    Worker
       Workers are typically long-running background programs that can be used to execute tasks.
-      Each instance of a worker runs either in its own YARN container (CDAP distributed mode) or
-      a single thread (CDAP standalone or in-memory mode) and the number of instances may be updated
+      Each instance of a worker runs either in its own YARN container (Distributed CDAP mode) or
+      a single thread (Standalone CDAP or in-memory mode) and the number of instances may be updated
       via RESTful APIs or the CLI. Datasets can be accessed from inside workers.
 
    Data Abstraction

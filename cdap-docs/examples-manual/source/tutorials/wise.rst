@@ -44,7 +44,7 @@ Conventions
 
 In the examples and commands that follow, for brevity we will use these conventions:
 
-- ``<CDAP-SDK-HOME>`` is the directory that you have installed the CDAP Standalone SDK, either
+- ``<CDAP-SDK-HOME>`` is the directory that you have installed the Standalone CDAP of the CDAP SDK, either
   on a UNIX-type system or Windows.
   
 - The `CDAP Command Line Interface (CLI) <http://docs.cask.co/cdap/current/en/reference-manual/cli-api.html>`__
@@ -299,7 +299,7 @@ this format (broken on two lines to fit)::
     "Mozilla/2.0 (compatible; Ask Jeeves)" 
   
 We have already prepared a sample of Web server access logs for you to inject into the
-*logEventStream*. Run this command from the CDAP Standalone home directory:
+*logEventStream*. Run this command from the Standalone CDAP home directory:
 
 .. tabbed-parsed-literal::
 

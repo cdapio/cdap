@@ -28,7 +28,7 @@ Here's how to add the :ref:`CDAP JDBC driver <cdap-jdbc>` inside *SquirrelSQL*.
    *SquirrelSQL*.
 #. We can now create an alias to connect to a running instance of CDAP. Open the ``Aliases`` pane, and click on
    the ``+`` icon to create a new alias.
-#. In this example, we are going to connect to a standalone CDAP from the SDK.
+#. In this example, we are going to connect to a Standalone CDAP from the SDK.
    The name of our alias will be ``CDAP Standalone``. Select the ``CDAP Driver`` in
    the list of available drivers. Our URL will be ``jdbc:cdap://localhost:11015``. Our standalone instance
    does not require an authentication token, but if yours requires one, HTML-encode your token
