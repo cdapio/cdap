@@ -18,7 +18,7 @@ import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 import {apiCreatorAbsPath} from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
-const basepath = `${window.CDAP_UI_CONFIG.market.path}/${window.CDAP_UI_CONFIG.market.version}`;
+const basepath = `${window.CDAP_CONFIG.marketUrl}`;
 
 export const MyMarketApi = {
   list: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages.json`),

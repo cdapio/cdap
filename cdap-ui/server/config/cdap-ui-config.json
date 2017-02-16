@@ -17,9 +17,5 @@
     },
     "appId": "_ClouderaNavigator",
     "programId": "MetadataFlow"
-  },
-  "market": {
-    "path": "http://market.cask.co",
-    "version": "v1"
   }
 }

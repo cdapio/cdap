@@ -785,3 +785,10 @@ can be run to create the catalog file from all the package specifications, and t
 the signature files.
 
 Another possible setup is to serve the market catalog and packages from Amazon S3.
+
+To configure the location of the Cask Market, when you are using a custom market instead
+of the public Cask Market, configure the property ``market.base.url`` in the 
+``cdap-site.xml`` file to point to the location of your custom market. See the
+:ref:`Market <appendix-cdap-default-market>` section in the :ref:`Appendix 
+<appendix-cdap-site.xml>` of the :ref:`Administration Manual <admin-index>`
+for details on configuring the file.
