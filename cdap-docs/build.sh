@@ -249,14 +249,32 @@ function build_docs_cli() {
 
 function cache_docs_cli() {
   local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/target/cdap-docs-cli.txt
-  local cache_txt=${SCRIPT_PATH}/target/cdap-docs-cli.txt
-  cp target_txt cache_txt
+  local cache=${SCRIPT_PATH}/target
+  cp ${target_txt} ${cache}
+  warnings=$?
+  if [[ ${warnings} -eq 0 ]]; then
+    echo "Caching CLI output file from '${target_txt}'"
+  else
+    echo "Error caching CLI output file: ${warnings}"
+    echo "From: ${target_txt}"
+    echo "To: ${cache}"
+  fi
+  return ${warnings}
 }
 
 function restore_cached_docs_cli() {
-  local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/target/cdap-docs-cli.txt
+  local target=${SCRIPT_PATH}/../cdap-docs-gen/target
   local cache_txt=${SCRIPT_PATH}/target/cdap-docs-cli.txt
-  cp cache_txt target_txt
+  cp ${cache_txt} ${target}
+  warnings=$?
+  if [[ ${warnings} -eq 0 ]]; then
+    echo "Restored CLI output file from '${cache_txt}'"
+  else
+    echo "Error restoring CLI output file: ${warnings}"
+    echo "From: ${cache_txt}"
+    echo "To: ${target}"
+  fi
+  return ${warnings}
 }
 
 function build_docs_inner_level() {
