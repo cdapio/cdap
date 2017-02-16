@@ -132,12 +132,14 @@ function _build_docs() {
   clear_messages_file
   if [[ ${type} == "docs_set" ]] || [[ ${type} == "docs_web_only" ]]; then
     clean_targets
+    if [[ ${type} == "docs_set" ]]; then
+      # As build_javadocs wipes out the results of the build_docs_cli, need to build it first
+      build_javadocs docs
+    fi
+    # Build CLI and its rst file before the first doc build so that its refs can be included
     build_docs_cli
     build_docs_first_pass
     clear_messages_file
-    if [[ ${type} == "docs_set" ]]; then
-      build_javadocs docs
-    fi
   fi
   build_docs_second_pass
   
@@ -216,7 +218,7 @@ function build_docs_cli() {
   if [[ -n ${NO_CLI_DOCS} ]]; then
     echo_red_bold "Building CLI input file disabled. '${NO_CLI_DOCS}'"
   else
-    local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/${TARGET}/cdap-docs-cli.txt
+    local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/target/cdap-docs-cli.txt
     set_version
     check_build_rst
     set_environment
