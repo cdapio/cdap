@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright © 2016-2017 Cask Data, Inc.
+# Copyright © 2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -136,13 +136,14 @@ cdap_home() {
     return 0
   fi
   local readonly __script=${BASH_SOURCE[0]}
-  local readonly __script_bin=$(cd $(dirname ${__script}); pwd -P)
-  local readonly __comp_home=$(cd ${__script%/*/*} >&-; pwd -P)
+  local readonly __dirname=$(dirname "${__script}")
+  local readonly __script_bin=$(cd "${__dirname}"; pwd -P)
+  local readonly __comp_home=$(cd "${__script%/*/*}" >&-; pwd -P)
   if [[ ${__comp_home%/*} == /opt/cdap ]] && [[ ${__comp_home} != /opt/cdap/sdk* ]]; then
     __app_home=${__comp_home}
     __cdap_home=/opt/cdap
   else
-    __app_home=$(dirname ${__script_bin})
+    __app_home=$(dirname "${__script_bin}")
     __cdap_home=${__app_home}
   fi
   echo ${__cdap_home}
@@ -748,9 +749,9 @@ cdap_version() {
   local readonly __cdap_major __cdap_minor __cdap_patch __cdap_snapshot
   local __version
   if [[ -z ${__component} ]]; then
-    __version=$(<${CDAP_HOME}/VERSION)
+    __version=$(<"${CDAP_HOME}"/VERSION)
   else
-    __version=$(<${CDAP_HOME}/${__component}/VERSION)
+    __version=$(<"${CDAP_HOME}"/${__component}/VERSION)
   fi
   __cdap_major=$(echo ${__version} | cut -d. -f1)
   __cdap_minor=$(echo ${__version} | cut -d. -f2)
@@ -789,7 +790,7 @@ cdap_sdk_usage() {
 # cdap_sdk_cleanup
 # Deletes logs and data from CDAP_HOME
 #
-cdap_sdk_cleanup() { echo "Removing ${LOCAL_DIR} and ${LOG_DIR}"; rm -rf ${LOCAL_DIR} ${LOG_DIR}; };
+cdap_sdk_cleanup() { echo "Removing ${LOCAL_DIR} and ${LOG_DIR}"; rm -rf "${LOCAL_DIR}" "${LOG_DIR}"; };
 
 #
 # cdap_sdk_restart
@@ -863,7 +864,7 @@ cdap_sdk_start() {
   CLASSPATH="${CLASSPATH}:${CDAP_HOME}/conf/"
 
   # SDK requires us to be in CDAP_HOME
-  cd ${CDAP_HOME}
+  cd "${CDAP_HOME}"
 
   # Start SDK processes
   echo -n "$(date) Starting CDAP Standalone (SDK) ..."
@@ -969,10 +970,10 @@ cdap_router() {
 cdap_ui() {
   local MAIN_CMD=node
   # Check for embedded node binary, and ensure it's the correct binary ABI for this system
-  if test -x ${CDAP_HOME}/ui/bin/node ; then
-    ${CDAP_HOME}/ui/bin/node --version >/dev/null 2>&1
+  if test -x "${CDAP_HOME}"/ui/bin/node ; then
+    "${CDAP_HOME}"/ui/bin/node --version >/dev/null 2>&1
     if [ $? -eq 0 ] ; then
-      MAIN_CMD=${CDAP_HOME}/ui/bin/node
+      MAIN_CMD="${CDAP_HOME}"/ui/bin/node
     elif [[ $(which node 2>/dev/null) ]]; then
       MAIN_CMD=node
     else
@@ -1015,7 +1016,7 @@ cdap_cli() {
   elif [[ -d ${__path}/conf ]]; then
     CLASSPATH=${CLASSPATH}:"${__path}"/conf/
   fi
-  "${JAVA}" ${JAVA_OPTS} -cp ${CLASSPATH} -Dscript=${__script} ${__class} "${@}"
+  "${JAVA}" ${JAVA_OPTS} -cp "${CLASSPATH}" -Dscript=${__script} ${__class} "${@}"
 }
 
 #
