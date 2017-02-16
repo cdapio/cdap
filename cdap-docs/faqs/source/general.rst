@@ -25,7 +25,7 @@ What platforms are supported by the Cask Data Application Platform SDK?
 -----------------------------------------------------------------------
 The CDAP SDK has been extensively tested on Mac OS X and Linux. CDAP on Windows has not
 been extensively tested. If you have any issues with CDAP on Windows, help us by 
-`filling a ticket <https://issues.cask.co/browse/CDAP>`__.
+`filing a ticket <https://issues.cask.co/browse/CDAP>`__.
 
 What programming languages are supported by CDAP?
 -------------------------------------------------
@@ -48,8 +48,8 @@ Yes. You can install Distributed CDAP on your Hadoop cluster. See the :ref:`Inst
 
 What Hadoop distributions can CDAP run on?
 ------------------------------------------
-CDAP |version| has been tested on and supports CDH 5.0.0 through 5.6.x; HDP 2.0 through 2.3.x; 
-MapR 4.x and 5.x, and Apache Bigtop 1.0. 
+CDAP |version| has been tested on and supports CDH |cdh-versions|, HDP |hdp-versions|, 
+MapR |mapr-versions|, Amazon Hadoop (EMR) |emr-versions|, and Apache Bigtop 1.0. 
 
 I'm seeing log messages about the failure to send audit log message while running the SDK. What's wrong?
 --------------------------------------------------------------------------------------------------------

@@ -302,6 +302,20 @@ if git_build_vars.has_key('GIT_NODE_JS_MAX_VERSION'):
 
 """ % {'node_js_max_version': git_build_vars['GIT_NODE_JS_MAX_VERSION']}
 
+git_hadoop_versions = {
+    'GIT_CDH_VERSIONS':  'cdh-versions',
+    'GIT_HDP_VERSIONS':  'hdp-versions',
+    'GIT_MAPR_VERSIONS': 'mapr-versions',
+    'GIT_EMR_VERSIONS':  'emr-versions',
+    }
+
+for h_key in git_hadoop_versions.keys():
+    if git_build_vars.has_key(h_key):
+        rst_epilog += """
+.. |%s| replace:: %s
+
+""" % (git_hadoop_versions[h_key], git_build_vars[h_key])
+
 if version:
     rst_epilog += """
 .. |bold-version| replace:: **%(version)s**
@@ -345,7 +359,7 @@ if version_tuple:
 .. |literal-version-suffix-realtime| replace:: ``%srealtime``
 """ % version_tuple
 
-if release:
+if release and version:
     # Create release range, such as [4.0.0-SNAPSHOT,4.1.0):
     version_list = version.split('.')
     version_list[1] = str(int(version_list[1])+1)
