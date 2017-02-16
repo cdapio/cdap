@@ -29,11 +29,12 @@ public class CConfigurationCacheSupplier implements CacheSupplier<CConfiguration
 
   private final Supplier<CConfigurationCache> supplier;
 
-  public CConfigurationCacheSupplier(final Configuration hConf, final String sysConfTablePrefix) {
+  public CConfigurationCacheSupplier(final Configuration hConf, final String sysConfTablePrefix,
+                                     final String maxLifetimeProperty, final int defaultMaxLifetime) {
     this.supplier = new Supplier<CConfigurationCache>() {
       @Override
       public CConfigurationCache get() {
-        return new CConfigurationCache(hConf, sysConfTablePrefix);
+        return new CConfigurationCache(hConf, sysConfTablePrefix, maxLifetimeProperty, defaultMaxLifetime);
       }
     };
   }

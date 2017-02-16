@@ -42,12 +42,13 @@ public class ReferenceCountedSupplierTests {
   private static final Log LOG = LogFactory.getLog(ReferenceCountedSupplierTests.class);
   private static final int NUM_OPS = 100;
   private static final int NUM_THREADS = 5;
+  private static final String DUMMY_PROPERTY = "dummyProperty";
 
   @Test
   public void testSupplier() throws Exception {
     // ReferenceCountSupplier is created only once per CacheSupplier class. Thus it is fine to create separate
     // CacheSupplier objects
-    CacheSupplier cConfSupplier = new CConfigurationCacheSupplier(null, null);
+    CacheSupplier cConfSupplier = new CConfigurationCacheSupplier(null, null, DUMMY_PROPERTY, Integer.MAX_VALUE);
     testGetSupplier(Lists.newArrayList(cConfSupplier));
     testReleaseSupplier(Lists.newArrayList(cConfSupplier));
 
@@ -57,8 +58,10 @@ public class ReferenceCountedSupplierTests {
     }
 
     // Test increase and decrease of counts for cConf supplier
-    testGetSupplier(Lists.<CacheSupplier>newArrayList(new CConfigurationCacheSupplier(null, null)));
-    testReleaseSupplier(Lists.<CacheSupplier>newArrayList(new CConfigurationCacheSupplier(null, null)));
+    testGetSupplier(Lists.<CacheSupplier>newArrayList(new CConfigurationCacheSupplier(null, null, DUMMY_PROPERTY,
+                                                                                      Integer.MAX_VALUE)));
+    testReleaseSupplier(Lists.<CacheSupplier>newArrayList(new CConfigurationCacheSupplier(null, null, DUMMY_PROPERTY,
+                                                                                          Integer.MAX_VALUE)));
 
     // Repeat the tests for TopicMetadata CacheSupplier
     testGetSupplier(Lists.<CacheSupplier>newArrayList(new TopicMetadataCacheSupplier(null, null, null, null, null)));
@@ -70,7 +73,7 @@ public class ReferenceCountedSupplierTests {
 
     // Tests multiple suppliers at the same time
     List<CacheSupplier> cacheSupplierList = new ArrayList<>();
-    cacheSupplierList.add(new CConfigurationCacheSupplier(null, null));
+    cacheSupplierList.add(new CConfigurationCacheSupplier(null, null, DUMMY_PROPERTY, Integer.MAX_VALUE));
     cacheSupplierList.add(new TopicMetadataCacheSupplier(null, null, null, null, null));
     testGetSupplier(cacheSupplierList);
     testReleaseSupplier(cacheSupplierList);
