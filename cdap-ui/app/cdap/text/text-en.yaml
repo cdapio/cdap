@@ -218,6 +218,17 @@ features:
     stopConfirmation: "Are you sure you want to stop the program:  *_{entityId}_*?"
     stopProgramHeader: Stop Program
     startProgramHeader: Start Program
+    viewEvents:
+      button: View
+      failedMessage: Failed to view events
+      from: From
+      label: View Events
+      limit: Limit
+      modalHeader: "Filter and View Events for \"{entityId}\""
+      noResults: No Results
+      numEventsTitle: Set Number of Events
+      timeRangeTitle: Select Time Range
+      to: To
 
   JumpButton:
     buttonLabel: Jump
