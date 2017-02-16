@@ -201,7 +201,7 @@ public abstract class DatasetServiceTestBase {
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
 
     // ok to pass null, since the impersonator won't actually be called, if kerberos security is not enabled
-    Impersonator impersonator = new DefaultImpersonator(cConf, null, null);
+    Impersonator impersonator = new DefaultImpersonator(cConf, null);
     DatasetAdminService datasetAdminService =
       new DatasetAdminService(dsFramework, cConf, locationFactory, datasetInstantiatorFactory, new NoOpMetadataStore(),
                               impersonator);
