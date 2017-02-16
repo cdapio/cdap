@@ -17,6 +17,6 @@
 <div class="input-field-selector">
 	<select class="form-control"
 		ng-model="FieldSelector.model"
-		ng-options="option as option for option in FieldSelector.fieldOptions">
+		ng-options="option.value as option.name for option in FieldSelector.fieldOptions">
 	</select>
 </div>

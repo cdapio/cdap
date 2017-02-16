@@ -196,7 +196,8 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'ng-model': 'model',
           'disabled': 'disabled',
-          'input-schema': 'inputSchema'
+          'input-schema': 'inputSchema',
+          'config': 'myconfig'
         }
       }
     };
