@@ -68,7 +68,7 @@ public class DeleteNamespaceCommand extends AbstractCommand {
       String userConfirm = consoleReader.readLine(prompt);
       if ("y".equalsIgnoreCase(userConfirm)) {
         namespaceClient.delete(namespaceId);
-        out.println(String.format(SUCCESS_MSG, namespaceId));
+        out.println(String.format(SUCCESS_MSG, namespaceId.getNamespace()));
         if (cliConfig.getCurrentNamespace().equals(namespaceId)) {
           cliConfig.setNamespace(NamespaceId.DEFAULT);
           out.printf("Now using namespace '%s'", NamespaceId.DEFAULT.getNamespace());
