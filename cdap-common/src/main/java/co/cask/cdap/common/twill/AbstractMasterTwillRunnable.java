@@ -122,7 +122,6 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
       completionFuture.get();
     } catch (InterruptedException e) {
       LOG.debug("Waiting on latch interrupted {}", name);
-      Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
       throw Throwables.propagate(e.getCause());
     }
