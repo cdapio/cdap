@@ -73,8 +73,8 @@ using the same authorization backend.
 
 Authorization Policies
 ======================
-Currently, CDAP allows users to enforce authorization for *READ*, *WRITE*, *ADMIN*, and
-*EXECUTE* operations. (This list will be expanded to allow for additional distinctions and
+Currently, CDAP allows users to enforce authorization for *READ*, *WRITE*, *EXECUTE*, and
+*ADMIN* operations. (This list will be expanded to allow for additional distinctions and
 be made finer-grained in the future.)
 
 In general, this summarizes the authorization policies in CDAP:
@@ -92,14 +92,14 @@ In general, this summarizes the authorization policies in CDAP:
 - A **delete** operation on an entity requires *ADMIN* on the entity.
 - A **list** operation (such as listing or searching applications, datasets, streams,
   artifacts) only returns those entities that the logged-in user has at least one (*READ*,
-  *WRITE*, *ADMIN*, *EXECUTE*) privilege on.
+  *WRITE*, *EXECUTE*, *ADMIN*) privilege on.
 - A **view** operation on an entity only succeeds if the user has at least one (*READ*,
-  *WRITE*, *ADMIN*, *EXECUTE*) privilege on it.
+  *WRITE*, *EXECUTE*, *ADMIN*) privilege on it.
 
 Additionally:
 
 - Upon successful creation of an entity, the logged-in user receives all privileges
-  *(READ*, *WRITE*, *ADMIN*, and *EXECUTE)* on that entity.
+  *(READ*, *WRITE*, *EXECUTE*, and *ADMIN)* on that entity.
 - Upon successful deletion of an entity, all privileges on that entity for all users are revoked.
 
 CDAP supports hierarchical authorization enforcement, which means that an operation that
@@ -128,9 +128,9 @@ Namespaces
    * - Delete
      - *ADMIN*
    * - List
-     - Only returns those namespaces on which user has at least one of *READ, WRITE, ADMIN,* or *EXECUTE*
+     - Only returns those namespaces on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
    * - View
-     - At least one of *READ, WRITE, ADMIN,* or *EXECUTE*
+     - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
 
 .. _security-authorization-policies-artifacts:
 
@@ -152,9 +152,9 @@ Artifacts
    * - Delete
      - *ADMIN*
    * - List
-     - Only returns those artifacts on which user has at least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - Only returns those artifacts on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
    * - View
-     - At least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
 
 .. _security-authorization-policies-applications:
 
@@ -172,9 +172,9 @@ Applications
    * - Delete
      - *ADMIN*
    * - List
-     - Only returns those applications on which user has at least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - Only returns those applications on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
    * - View
-     - At least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
 
 .. _security-authorization-policies-programs:
 
@@ -196,11 +196,11 @@ Programs
    * - Retrieve runtime arguments
      - *READ*
    * - Retrieve status
-     - At least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
    * - List
-     - Only returns those programs on which user has at least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - Only returns those programs on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
    * - View
-     - At least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
 
 .. _security-authorization-policies-datasets:
 
@@ -228,9 +228,9 @@ Datasets
    * - Drop
      - *ADMIN*
    * - List
-     - Only returns those artifacts on which user has at least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - Only returns those artifacts on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
    * - View
-     - At least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
 
 .. _security-authorization-policies-dataset-modules:
 
@@ -250,9 +250,9 @@ Dataset Modules
    * - Delete-all in the namespace
      - *ADMIN* (on the namespace)
    * - List
-     - Only returns those artifacts on which user has at least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - Only returns those artifacts on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
    * - View
-     - At least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
 
 .. _security-authorization-policies-dataset-types:
 
@@ -266,9 +266,9 @@ Dataset Types
    * - Operation
      - Privileges Required
    * - List
-     - Only returns those artifacts on which user has at least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - Only returns those artifacts on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
    * - View
-     - At least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
 
 .. _security-authorization-policies-secure-keys:
 
@@ -286,9 +286,9 @@ Secure Keys
    * - Delete
      - *ADMIN*
    * - List
-     - Only returns those artifacts on which user has at least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - Only returns those artifacts on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
    * - View
-     - At least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
 
 .. _security-authorization-policies-streams:
 
@@ -318,9 +318,9 @@ Streams
    * - Truncate
      - *ADMIN*
    * - List
-     - Only returns those artifacts on which user has at least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - Only returns those artifacts on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
    * - View
-     - At least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
 
 
 .. _security-bootstrapping-authorization:
@@ -339,8 +339,8 @@ select users:
 - The user that runs the CDAP Master is granted *ADMIN* on the CDAP instance, so that the
   *default* namespace can be created by that user if it does not already exist.
 
-- The user that runs the CDAP Master is granted *READ*, *WRITE*, *ADMIN*, and
-  *EXECUTE* on the system namespace, so operations such as creation of system tables,
+- The user that runs the CDAP Master is granted *READ*, *WRITE*, *EXECUTE*, and
+  *ADMIN* on the system namespace, so operations such as creation of system tables,
   deployment of system artifacts, and deployment of system dataset modules can be
   performed by that user.
 
@@ -350,6 +350,42 @@ select users:
   required privileges to create namespaces and grant other users access to the *default*
   namespace. It is recommended that this property be set to the list of users that will
   administer and manage the CDAP installation.
+
+You can use the :ref:`CDAP CLI <cdap-cli>` to issue :ref:`security commands
+<cli-available-commands-security>`:
+
+- To grant a principal permission to perform certain actions on an entity, use::
+
+    > grant actions <actions> on entity <entity-id> to <principal-type> <principal-name>
+
+  where:
+
+  - ``<actions>`` is a comma-separated list of privileges, any of *READ, WRITE, EXECUTE,* or *ADMIN*.
+  
+  - ``<entity>`` is of the form ``<entity-type>:<entity-id>``, where ``<entity-type>`` is
+    one of ``'namespace'``, ``'artifact'``, ``'app'``, ``'dataset'``, ``'program'``,
+    ``'stream'``, or ``'view'``.
+   
+  - For namespaces, ``<entity-id>`` is composed from the namespace, such as
+    ``'namespace:<namespace-name>``.
+
+  - For artifacts and apps, ``<entity-id>`` is composed of the namespace, entity name, and
+    version, such as ``<namespace-name>.<artifact-name>.<artifact-version>`` or
+    ``<namespace-name>.<app-name>.<app-version>``.
+
+  - For programs, ``<entity-id>`` includes the application name and the program type:
+    ``<namespace-name>.<app-name>.<program-type>.<program-name>``. ``<program-type>`` is
+    one of flow, mapreduce, service, spark, worker, or workflow.
+
+  - For datasets and streams, ``<entity-id>`` is the namespace and entity names, such as
+    ``<namespace-name>.<dataset-name>`` or ``<namespace-name>.<stream-name>``.
+
+  - For (stream) views, ``<entity-id>`` includes the stream that they were created from:
+    ``<namespace-name>.<stream-name>.<view-name>``."
+
+- To check the results, list the privileges for a principal::
+
+    > list privileges for <principal-type> <principal-name>
 
 
 .. _security-auth-policy-pushdown:
