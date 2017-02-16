@@ -31,6 +31,7 @@ Building Blocks
     Program Lifecycle <program-lifecycle>
     Namespaces <namespaces>
     Transaction System <transaction-system>
+    Transactional Messaging System <transactional-messaging-system>
 
 .. toctree::
    :hidden:
@@ -87,7 +88,7 @@ write data through the data abstraction layer in CDAP.
   critical in applications where data accuracy is required.
 
 - The :doc:`Transactional Messaging System <transactional-messaging-system>` is a CDAP service
-..   that provides a "pub-sub"-type messaging system that understands transactions.
+  that provides a "publish-and-subscribe" messaging system that understands transactions.
   
 - :doc:`Secure Keys <secure-keys>` allows users to store and retrieve sensitive information such
   as passwords from secure and encrypted storage.
