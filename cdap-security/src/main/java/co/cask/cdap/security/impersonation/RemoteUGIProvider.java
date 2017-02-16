@@ -20,7 +20,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.common.internal.remote.RemoteClient;
-import co.cask.cdap.common.kerberos.ImpersonationInfo;
+import co.cask.cdap.common.kerberos.ImpersonationOpInfo;
+import co.cask.cdap.common.kerberos.PrincipalCredInfo;
+import co.cask.cdap.common.kerberos.UGIWithPrincipal;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -62,15 +64,17 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
   }
 
   @Override
-  protected UserGroupInformation createUGI(ImpersonationInfo impersonationInfo) throws IOException {
-    String credentialsURI = executeRequest(impersonationInfo).getResponseBodyAsString();
-    LOG.debug("Received response: {}", credentialsURI);
+  protected UGIWithPrincipal createUGI(ImpersonationOpInfo impersonationOpInfo) throws IOException {
+    PrincipalCredInfo principalCredInfo =
+      GSON.fromJson(executeRequest(impersonationOpInfo).getResponseBodyAsString(), PrincipalCredInfo.class);
+    LOG.debug("Received response: {}", principalCredInfo);
 
-    Location location = locationFactory.create(URI.create(credentialsURI));
+    Location location = locationFactory.create(URI.create(principalCredInfo.getCredentialsPath()));
     try {
-      UserGroupInformation impersonatedUGI = UserGroupInformation.createRemoteUser(impersonationInfo.getPrincipal());
+      // TODO it should be principal
+      UserGroupInformation impersonatedUGI = UserGroupInformation.createRemoteUser(principalCredInfo.getPrincipal());
       impersonatedUGI.addCredentials(readCredentials(location));
-      return impersonatedUGI;
+      return new UGIWithPrincipal(principalCredInfo.getPrincipal(), impersonatedUGI);
     } finally {
       try {
         if (!location.delete()) {
@@ -82,9 +86,9 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
     }
   }
 
-  private HttpResponse executeRequest(ImpersonationInfo impersonationInfo) throws IOException {
+  private HttpResponse executeRequest(ImpersonationOpInfo impersonationOpInfo) throws IOException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "impersonation/credentials")
-      .withBody(GSON.toJson(impersonationInfo))
+      .withBody(GSON.toJson(impersonationOpInfo))
       .build();
     HttpResponse response = remoteClient.execute(request);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {

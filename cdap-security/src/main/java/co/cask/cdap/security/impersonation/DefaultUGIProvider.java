@@ -16,15 +16,25 @@
 
 package co.cask.cdap.security.impersonation;
 
+import co.cask.cdap.common.FeatureDisabledException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.ImpersonatedOpType;
 import co.cask.cdap.common.kerberos.ImpersonationInfo;
+import co.cask.cdap.common.kerberos.ImpersonationOpInfo;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.kerberos.SecurityUtil;
+import co.cask.cdap.common.kerberos.UGIWithPrincipal;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.FileUtils;
+import co.cask.cdap.proto.NamespaceConfig;
+import co.cask.cdap.proto.element.EntityType;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -47,13 +57,19 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
 
   private final LocationFactory locationFactory;
   private final File tempDir;
+  private final OwnerAdmin ownerAdmin;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
+
 
   @Inject
-  DefaultUGIProvider(CConfiguration cConf, LocationFactory locationFactory) {
+  DefaultUGIProvider(CConfiguration cConf, LocationFactory locationFactory, OwnerAdmin ownerAdmin,
+                     NamespaceQueryAdmin namespaceQueryAdmin) {
     super(cConf);
     this.locationFactory = locationFactory;
     this.tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                             cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.ownerAdmin = ownerAdmin;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
@@ -63,8 +79,37 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
    * @throws IOException if there was any IOException during localization of the keytab
    */
   @Override
-  protected UserGroupInformation createUGI(ImpersonationInfo impersonationInfo) throws IOException {
+  protected UGIWithPrincipal createUGI(ImpersonationOpInfo impersonationOpInfo) throws IOException {
+    if (impersonationOpInfo.getEntityId().getEntityType().equals(EntityType.NAMESPACE)) {
+      try {
+        NamespaceConfig nsConfig = namespaceQueryAdmin.get(impersonationOpInfo.getEntityId().getNamespaceId())
+          .getConfig();
+        if (impersonationOpInfo.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE) &&
+          !nsConfig.isExploreAsPrincipal()) {
+          throw new FeatureDisabledException(FeatureDisabledException.Feature.EXPLORE,
+                                             NamespaceConfig.class.getSimpleName() + " of " +
+                                               impersonationOpInfo.getEntityId(),
+                                             NamespaceConfig.EXPLORE_AS_PRINCIPAL, String.valueOf(true));
+        }
+
+      } catch (IOException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new IOException(e);
+      }
+    }
+
+    ImpersonationInfo impersonationInfo = getImpersonationInfo(impersonationOpInfo.getEntityId());
     LOG.debug("Configured impersonation info: {}", impersonationInfo);
+
+    // CDAP-8355 If the operation being impersonated is an explore query then check if the namespace configuration
+    // specifies that it can be impersonated with the namespace owner.
+
+    // no need to get a UGI if the current UGI is the one we're requesting; simply return it
+    String configuredPrincipalShortName = new KerberosName(impersonationInfo.getPrincipal()).getShortName();
+    if (UserGroupInformation.getCurrentUser().getShortUserName().equals(configuredPrincipalShortName)) {
+      return new UGIWithPrincipal(impersonationInfo.getPrincipal(), UserGroupInformation.getCurrentUser());
+    }
 
     URI keytabURI = URI.create(impersonationInfo.getKeytabURI());
     boolean isKeytabLocal = keytabURI.getScheme() == null || "file".equals(keytabURI.getScheme());
@@ -78,12 +123,21 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       Preconditions.checkArgument(Files.isReadable(localKeytabFile.toPath()),
                                   "Keytab file is not a readable file: %s", localKeytabFile);
 
-      return UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
+      UserGroupInformation loggedInUGI =
+        UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
+      return new UGIWithPrincipal(impersonationInfo.getPrincipal(), loggedInUGI);
     } finally {
       if (!isKeytabLocal && !localKeytabFile.delete()) {
         LOG.warn("Failed to delete file: {}", localKeytabFile);
       }
     }
+  }
+
+  private ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) throws IOException {
+      ImpersonationInfo info = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, entityId);
+      LOG.debug("Impersonating principal {} for entity {}, keytab path is {}",
+                info.getPrincipal(), entityId, info.getKeytabURI());
+      return info;
   }
 
   /**

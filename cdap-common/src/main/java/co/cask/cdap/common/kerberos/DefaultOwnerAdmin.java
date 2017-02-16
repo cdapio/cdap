@@ -17,7 +17,6 @@
 package co.cask.cdap.common.kerberos;
 
 import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.FeatureDisabledException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.NamespaceConfig;
@@ -67,8 +66,7 @@ public class DefaultOwnerAdmin implements OwnerAdmin {
 
   @Nullable
   @Override
-  public ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId,
-                                                ImpersonatedOpType impersonatedOpType) throws IOException {
+  public ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) throws IOException {
     // For program we look for application owner. In future we might want to support lookup parent owner
     // recursively once we have a use-case for it.
     if (entityId.getEntityType().equals(EntityType.PROGRAM)) {
@@ -84,13 +82,6 @@ public class DefaultOwnerAdmin implements OwnerAdmin {
     // (CDAP-8176) Since no owner was found for the entity return namespace principal if present.
     try {
       NamespaceConfig nsConfig = namespaceQueryAdmin.get(entityId.getNamespaceId()).getConfig();
-      // CDAP-8355 If the operation being impersonated is an explore query then check if the namespace configuration
-      // specifies that it can be impersonated with the namespace owner.
-      if (impersonatedOpType.equals(ImpersonatedOpType.EXPLORE) && !nsConfig.isExploreAsPrincipal()) {
-        throw new FeatureDisabledException(FeatureDisabledException.Feature.EXPLORE,
-                                           NamespaceConfig.class.getSimpleName() + " of " + entityId,
-                                           NamespaceConfig.EXPLORE_AS_PRINCIPAL, String.valueOf(true));
-      }
       String nsPrincipal = nsConfig.getPrincipal();
       return nsPrincipal == null ? null : new ImpersonationInfo(nsPrincipal, nsConfig.getKeytabURI());
     } catch (IOException e) {

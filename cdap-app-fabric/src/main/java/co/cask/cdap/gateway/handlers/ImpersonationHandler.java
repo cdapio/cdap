@@ -17,7 +17,9 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.kerberos.ImpersonationInfo;
+import co.cask.cdap.common.kerberos.ImpersonationOpInfo;
+import co.cask.cdap.common.kerberos.PrincipalCredInfo;
+import co.cask.cdap.common.kerberos.UGIWithPrincipal;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import co.cask.cdap.security.impersonation.UGIProvider;
@@ -27,7 +29,6 @@ import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.Credentials;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.SecureStore;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -74,10 +75,10 @@ public class ImpersonationHandler extends AbstractHttpHandler {
     if (requestContent == null) {
       throw new BadRequestException("Request body is empty.");
     }
-    ImpersonationInfo impersonationInfo = GSON.fromJson(requestContent, ImpersonationInfo.class);
-    LOG.info("Credentials for {}", impersonationInfo);
-    UserGroupInformation ugi = ugiProvider.getConfiguredUGI(impersonationInfo);
-    Credentials credentials = ImpersonationUtils.doAs(ugi, new Callable<Credentials>() {
+    ImpersonationOpInfo impersonationOpInfo = GSON.fromJson(requestContent, ImpersonationOpInfo.class);
+    LOG.info("Credentials for {}", impersonationOpInfo);
+    UGIWithPrincipal ugiWithPrincipal = ugiProvider.getConfiguredUGI(impersonationOpInfo);
+    Credentials credentials = ImpersonationUtils.doAs(ugiWithPrincipal.getUGI(), new Callable<Credentials>() {
       @Override
       public Credentials call() throws Exception {
         SecureStore update = tokenSecureStoreUpdater.update();
@@ -98,8 +99,10 @@ public class ImpersonationHandler extends AbstractHttpHandler {
         credentialsFile.getOutputStream("600")))) {
         credentials.writeTokenStorageToStream(os);
       }
-      LOG.debug("Wrote credentials for user {} to {}", ugi.getUserName(), credentialsFile);
-      responder.sendString(HttpResponseStatus.OK, credentialsFile.toURI().toString());
+      LOG.debug("Wrote credentials for user {} to {}", ugiWithPrincipal.getPrincipal(), credentialsFile);
+      PrincipalCredInfo principalCredInfo = new PrincipalCredInfo(ugiWithPrincipal.getPrincipal(),
+                                                                  credentialsFile.toURI().toString());
+      responder.sendJson(HttpResponseStatus.OK, principalCredInfo);
     } else {
       throw new IllegalStateException("Unable to create credentails directory.");
     }
