@@ -92,7 +92,7 @@ export default class MarketActionsContainer extends Component {
                     key={index}
                   >
                     <div className="step text-xs-center">
-                      <span className={classnames("badge", {'completed' : isCompletedAction})}>{index + 1}</span>
+                      <span className={classnames("tag tag-pill", {'completed' : isCompletedAction})}>{index + 1}</span>
                     </div>
                     <div className="action-icon">
                       <div className={classnames("fa", actionIcon)}></div>

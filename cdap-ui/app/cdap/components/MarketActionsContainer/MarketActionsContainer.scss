@@ -23,10 +23,26 @@
     .step {
       font-size: 16px;
       margin-bottom: 5px;
-      .badge {
+      .tag {
+        display: inline-block;
+        padding: 0.25em 0.4em;
+        font-size: 75%;
+        font-weight: 700;
+        line-height: 1;
+        color: #ffffff;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+        background: #777777;
         &.completed {
           background-color: $state-success-text;
         }
+      }
+      .tag-pill {
+        padding-right: 0.6em;
+        padding-left: 0.6em;
+        border-radius: 10rem;
       }
     }
     .action {

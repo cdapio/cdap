@@ -101,7 +101,8 @@
           .step {
             font-size: 16px;
             margin-bottom: 5px;
-            .badge {
+            .tag {
+              background: #777777;
               &.completed {
                 background-color: $state-success-text;
               }
