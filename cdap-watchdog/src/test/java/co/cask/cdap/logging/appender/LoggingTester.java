@@ -35,18 +35,18 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
 public class LoggingTester {
-  public void generateLogs(Logger logger, LoggingContext loggingContextNs1) {
+  public void generateLogs(Logger logger, LoggingContext loggingContextNs1) throws InterruptedException {
     Exception e1 = new Exception("Test Exception1");
     Exception e2 = new Exception("Test Exception2", e1);
 
@@ -57,26 +57,31 @@ public class LoggingTester {
     LoggingContextAccessor.setLoggingContext(loggingContextNs2);
     for (int i = 0; i < 40; ++i) {
       logger.warn("NS_2 Test log message {} {} {}", i, "arg1", "arg2", e2);
+      TimeUnit.MILLISECONDS.sleep(1);
     }
 
     LoggingContextAccessor.setLoggingContext(loggingContextNs1);
     for (int i = 0; i < 20; ++i) {
       logger.warn("Test log message {} {} {}", i, "arg1", "arg2", e2);
+      TimeUnit.MILLISECONDS.sleep(1);
     }
 
     LoggingContextAccessor.setLoggingContext(loggingContextNs2);
     for (int i = 40; i < 80; ++i) {
       logger.warn("NS_2 Test log message {} {} {}", i, "arg1", "arg2", e2);
+      TimeUnit.MILLISECONDS.sleep(1);
     }
 
     LoggingContextAccessor.setLoggingContext(loggingContextNs1);
     for (int i = 20; i < 40; ++i) {
       logger.warn("Test log message {} {} {}", i, "arg1", "arg2", e2);
+      TimeUnit.MILLISECONDS.sleep(1);
     }
 
     LoggingContextAccessor.setLoggingContext(loggingContextNs1);
     for (int i = 40; i < 60; ++i) {
       logger.warn("Test log message {} {} {}", i, "arg1", "arg2", e2);
+      TimeUnit.MILLISECONDS.sleep(1);
     }
 
     // Add logs with a different runid
@@ -84,6 +89,7 @@ public class LoggingTester {
       replaceTag(loggingContextNs1, new Entry(ApplicationLoggingContext.TAG_RUN_ID, "RUN2")));
     for (int i = 40; i < 60; ++i) {
       logger.warn("RUN2 Test log message {} {} {}", i, "arg1", "arg2", e2);
+      TimeUnit.MILLISECONDS.sleep(1);
     }
 
     // Add logs with null runid and null instanceid
@@ -92,6 +98,7 @@ public class LoggingTester {
                  new Entry(ApplicationLoggingContext.TAG_INSTANCE_ID, null)));
     for (int i = 40; i < 60; ++i) {
       logger.warn("NULL Test log message {} {} {}", i, "arg1", "arg2", e2);
+      TimeUnit.MILLISECONDS.sleep(1);
     }
 
     // Check with null runId and null instanceId
@@ -100,12 +107,11 @@ public class LoggingTester {
                  new Entry(ApplicationLoggingContext.TAG_INSTANCE_ID, null)));
     for (int i = 80; i < 120; ++i) {
       logger.warn("NS_2 Test log message {} {} {}", i, "arg1", "arg2", e2);
+      TimeUnit.MILLISECONDS.sleep(1);
     }
 
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    StatusPrinter.setPrintStream(new PrintStream(bos));
+    StatusPrinter.setPrintStream(new PrintStream(System.out, true));
     StatusPrinter.print((LoggerContext) LoggerFactory.getILoggerFactory());
-    System.out.println(bos.toString());
   }
 
   public void testGetNext(LogReader logReader, LoggingContext loggingContext) throws Exception {
