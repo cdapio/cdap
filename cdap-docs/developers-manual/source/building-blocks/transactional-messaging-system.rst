@@ -99,45 +99,48 @@ be in the *same* transaction; instead, they merely need to be in a transaction t
 
 Example Publish and Subscribe
 =============================
-Consider a flow that modifies a dataset, and at the same time publishes a notification to
+Consider a workflow that modifies a dataset, and at the same time publishes a notification to
 a topic.
 
-**If it were to publish to a Kafka topic,** a problem can arise as there is no guarantee that
-the Kafka notification will be published only after the dataset commit:
+**If it were to publish to a topic non-transactionally,** a problem can arise as there is
+no guarantee that the notification will be published only after the dataset commit:
 
-**Kafka Topic Example (Non-transactional)**
+**Non-transactional Example**
 
 ::
 
-  Flow 1
+  Workflow 1
 
-  [ flowlet 1.1 ] -> [ flowlet 1.2 ] -> Writes to a Kafka topic
+  [ Program 1.1 ] -> [ Program 1.2 ] -> Writes to a topic
                                      -> Writes to a dataset
                                
-  Flow 2
+  Workflow 2
 
-  [ flowlet 2.1 ] -> Watches Kafka topic for messages
-                  - May see the message about the write before the write completes or even if the write was rolled back 
+  [ Program 2.1 ] -> Watches topic for messages
+                   - May see the message about the write before the write completes or
+                     even if the write was rolled back
 
 **If it were to publish transactionally to a TMS topic,** there is the guarantee that
 transaction consumers will only see the notification if the write to the dataset is
 successfully committed:
 
-**TMS Topic Example (Transactional)**
+**Transactional Example**
 
 ::
 
-  Flow 1 (explicit transaction)
+  Workflow 1
                                                                Transaction A
-  [ flowlet 1.1 ] -> [[ flowlet 1.2 ] -> Writes to a dataset   ]
-                     [                -> Writes to a TMS topic ] This is now only visible if the write to the dataset succeeds 
+  [ Program 1.1 ] -> |[ Program 1.2 ] -> Writes to a dataset   |
+                     |                -> Writes to a TMS topic | 
+                                       - This is now visible only if the write to the
+                                         dataset succeeds 
                                
-  Flow 2 (explicit transaction)
+  Workflow 2 (explicit transaction)
 
-                  transaction B
-  [[ flowlet 2.1 ]] -> Watches TMS topic for messages
+                   Transaction B
+  |[ Program 2.1 ] -> Watches TMS topic for messages | 
                     - Only sees the message if the write was successful
-                    - Guaranteed to see messages in the correct order of publishing 
+                    - Guaranteed to see messages in the correct order of publishing
 
 
 Currently, TMS:
