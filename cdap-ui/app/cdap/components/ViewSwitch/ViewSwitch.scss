@@ -14,6 +14,8 @@
  * the License.
  */
 
+@import '../../styles/variables.scss';
+
 .view-switch {
   height: inherit;
   .nav.nav-tabs {
@@ -30,6 +32,9 @@
         }
         &.active:hover {
           border-bottom: 0;
+        }
+        &:not(.active):hover {
+          background-color: $cdap-gray;
         }
       }
     }

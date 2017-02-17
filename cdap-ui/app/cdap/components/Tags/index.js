@@ -31,7 +31,8 @@ export default class Tags extends Component {
       systemTags: [],
       userTags: [],
       showInputField: false,
-      currentInputTag: ''
+      loading: false,
+      currentInputTag: '',
     };
 
     this.params = {
@@ -54,13 +55,18 @@ export default class Tags extends Component {
     let systemParams = Object.assign({}, this.params, { scope: 'SYSTEM' });
     let userParams = Object.assign({}, this.params, { scope: 'USER' });
 
+    this.setState({
+      loading: true
+    });
+
     let getTagsSubscription = MyMetadataApi
       .getTags(systemParams)
       .combineLatest(MyMetadataApi.getTags(userParams))
       .subscribe((res) => {
         this.setState({
           systemTags: res[0].sort(),
-          userTags: res[1].sort()
+          userTags: res[1].sort(),
+          loading: false
         });
       }, (err) => {
         this.setState({
@@ -244,8 +250,14 @@ export default class Tags extends Component {
       <div className="tags-holder">
         <strong> {T.translate('features.Tags.label')}({tagsCount}): </strong>
         {
-          !tagsCount ?
+          !tagsCount && !this.state.loading ?
             <i>{T.translate('features.Tags.notags')}</i>
+          :
+            null
+        }
+        {
+          this.state.loading ?
+            <span className="fa fa-lg fa-spinner fa-spin" />
           :
             null
         }
