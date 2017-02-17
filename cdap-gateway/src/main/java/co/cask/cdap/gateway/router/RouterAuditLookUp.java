@@ -24,6 +24,7 @@ import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.internal.asm.Classes;
 import co.cask.http.HttpHandler;
 import co.cask.http.PatternPathRouterWithGroups;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.slf4j.Logger;
@@ -53,12 +54,13 @@ public final class RouterAuditLookUp {
   private static final Logger LOG = LoggerFactory.getLogger(RouterAuditLookUp.class);
   private static final RouterAuditLookUp AUDIT_LOOK_UP = new RouterAuditLookUp();
   private static final int maxParts = 25;
+  private final int numberOfPaths;
 
   private final PatternPathRouterWithGroups<AuditLogContent> patternMatcher =
     PatternPathRouterWithGroups.create(maxParts);
 
   private RouterAuditLookUp() {
-    createMatcher();
+    numberOfPaths = createMatcher();
   }
 
   public static RouterAuditLookUp getAuditLookUp() {
@@ -78,13 +80,13 @@ public final class RouterAuditLookUp {
     return null;
   }
 
-  private void createMatcher() {
+  private int createMatcher() {
     List<Class<?>> handlerClasses;
     try {
       handlerClasses = getAllHandlerClasses();
     } catch (IOException e) {
       LOG.error("Failed to get all handler classes for audit logging: {}", e.getCause());
-      return;
+      return -1;
     }
 
     int count = 0;
@@ -127,6 +129,7 @@ public final class RouterAuditLookUp {
       }
     }
     LOG.debug("Audit log lookup: bootstrapped with {} paths", count);
+    return count;
   }
 
   private HttpMethod getHttpMethod(Method method) {
@@ -152,11 +155,15 @@ public final class RouterAuditLookUp {
       if (!info.getPackageName().startsWith("co.cask.cdap")) {
         continue;
       }
-
       if (Classes.isSubTypeOf(info.getName(), HttpHandler.class.getName(), lookup, cache)) {
         results.add(info.load());
       }
     }
     return results;
+  }
+
+  @VisibleForTesting
+  int getNumberOfPaths() {
+    return numberOfPaths;
   }
 }
