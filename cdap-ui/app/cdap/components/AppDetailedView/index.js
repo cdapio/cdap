@@ -19,7 +19,6 @@ import {objectQuery} from 'services/helpers';
 import {MyAppApi} from 'api/app';
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import {fetchTables} from 'services/ExploreTables/ActionCreator';
-import OverviewHeader from 'components/Overview/OverviewHeader';
 import OverviewMetaSection from 'components/Overview/OverviewMetaSection';
 import T from 'i18n-react';
 import {MySearchApi} from 'api/search';
@@ -180,11 +179,6 @@ export default class AppDetailedView extends Component {
     });
   }
   render() {
-    let title = this.state.entityDetail.isHydrator ?
-      T.translate('commons.entity.cdap-data-pipeline.singular')
-    :
-      T.translate('commons.entity.application.singular');
-
     if (this.state.notFound) {
       return (
         <Page404
@@ -216,11 +210,6 @@ export default class AppDetailedView extends Component {
           previousPaths={previousPaths}
           currentStateIcon="icon-fist"
           currentStateLabel={T.translate('commons.application')}
-        />
-        <OverviewHeader
-          icon="icon-fist"
-          title={title}
-          successMessage={this.state.successMessage}
         />
         <OverviewMetaSection
           entity={this.state.entityMetadata}

@@ -22,9 +22,9 @@ import T from 'i18n-react';
 require('./AdminConfigurePane.scss');
 
 export default function AdminConfigurePane({ openNamespaceWizard, openPreferenceModal, preferencesSavedState, closePreferencesSavedMessage }) {
-  let setPreferencesLabel = T.translate('features.Management.Configure.buttons.set-system-preferences');
+  let setPreferencesLabel = T.translate('features.Administration.Configure.buttons.set-system-preferences');
   let setPreferenceSuccessLabel = T.translate('features.FastAction.setPreferencesSuccess.default', {entityType: 'CDAP'});
-  let addNSLabel = T.translate('features.Management.Configure.buttons.add-ns');
+  let addNSLabel = T.translate('features.Administration.Configure.buttons.add-ns');
   let wrenchClasses = classnames('fa fa-wrench', {'preferences-saved-wrench': preferencesSavedState});
 
   return (

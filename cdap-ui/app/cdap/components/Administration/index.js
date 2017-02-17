@@ -15,7 +15,7 @@
 */
 
 import React, {Component} from 'react';
-require('./Management.scss');
+require('./Administration.scss');
 import InfoCard from '../InfoCard';
 import ServiceLabel from '../ServiceLabel';
 import ServiceStatusPanel from '../ServiceStatusPanel';
@@ -37,7 +37,7 @@ import T from 'i18n-react';
 var shortid = require('shortid');
 var classNames = require('classnames');
 
-class Management extends Component {
+class Administration extends Component {
 
   constructor(props) {
     super(props);
@@ -68,7 +68,7 @@ class Management extends Component {
               apps.push(key);
               if (key !== 'cdap') {
                 services.push({
-                  name: T.translate(`features.Management.Component-Overview.headers.${key}`),
+                  name: T.translate(`features.Administration.Component-Overview.headers.${key}`),
                   version: res[key].Version,
                   url: res[key].WebURL,
                   logs: res[key].LogsURL
@@ -83,7 +83,7 @@ class Management extends Component {
                 let time = `${days}:${hours}:${minutes}`;
                 this.setState({uptime: time});
                 services.push({
-                  name: T.translate(`features.Management.Component-Overview.headers.${key}`)
+                  name: T.translate(`features.Administration.Component-Overview.headers.${key}`)
                 });
               }
             }
@@ -248,28 +248,33 @@ class Management extends Component {
           key={shortid.generate()}
           onClick={this.setToContext.bind(this, item)}
         >
-          {T.translate(`features.Management.Component-Overview.headers.${item}`)}
+          {T.translate(`features.Administration.Component-Overview.headers.${item}`)}
         </li>
       );
     });
 
     return (
-       <div className="management">
+       <div className="administration">
         <Helmet
-          title={T.translate('features.Management.Title')}
+          title={T.translate('features.Administration.Title')}
         />
         <div className="top-panel">
-          <div className="cdap-version-label">
-            {T.translate('features.Management.Top.version-label')} - {this.state.version}
+          <div className="page-title-and-version">
+            <span className="page-title">
+              <h3>{T.translate('features.Administration.Title')}</h3>
+            </span>
+            <span className="cdap-version-label">
+              {T.translate('features.Administration.Top.version-label')} - {this.state.version}
+            </span>
           </div>
           <div className="admin-row top-row">
             <InfoCard
               isLoading={this.state.loading}
               primaryText={this.state.uptime}
-              primaryLabelOne={T.translate('features.Management.Top.primaryLabelOne')}
-              primaryLabelTwo={T.translate('features.Management.Top.primaryLabelTwo')}
-              primaryLabelThree={T.translate('features.Management.Top.primaryLabelThree')}
-              secondaryText={T.translate('features.Management.Top.time-label')}
+              primaryLabelOne={T.translate('features.Administration.Top.primaryLabelOne')}
+              primaryLabelTwo={T.translate('features.Administration.Top.primaryLabelTwo')}
+              primaryLabelThree={T.translate('features.Administration.Top.primaryLabelThree')}
+              secondaryText={T.translate('features.Administration.Top.time-label')}
             />
             <ServiceLabel/>
             <ServiceStatusPanel
@@ -322,4 +327,4 @@ class Management extends Component {
   }
 }
 
-export default Management;
+export default Administration;

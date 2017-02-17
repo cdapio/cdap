@@ -23,7 +23,7 @@ require('./styles/lib-styles.scss');
 require('./styles/common.scss');
 require('./styles/main.scss');
 
-import Management from 'components/Management';
+import Administration from 'components/Administration';
 import Dashboard from 'components/Dashboard';
 import Home from 'components/Home';
 import Header from 'components/Header';
@@ -100,7 +100,7 @@ class CDAP extends Component {
           <div className="container-fluid">
             <Match exactly pattern="/" component={RouteToNamespace} />
             <Match exactly pattern="/notfound" component={Page404} />
-            <Match exactly pattern="/management" component={Management} />
+            <Match exactly pattern="/administration" component={Administration} />
             <Match exactly pattern="/ns" component={RouteToNamespace} />
             <Match pattern="/ns/:namespace" history={history} component={Home} />
             <Match exactly pattern="/ns/:namespace/dashboard" component={Dashboard} />
