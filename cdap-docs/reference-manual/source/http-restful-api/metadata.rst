@@ -539,6 +539,9 @@ metadata property or metadata tag, submit an HTTP GET request::
           * - ``showHidden``
             - By default, metadata search hides entities whose name starts with an ``_`` (underscore) from the search
               results. Set this to ``true`` to include these hidden entities in search results. Default is ``false``.
+          * - ``entityScope``
+            - The scope of entities for the metadata search. By default, all entities will be returned. Set this to
+              ``USER`` to include only user entities; set this to ``SYSTEM`` to include only system entities.
 
        Format for an option: ``&<option-name>=<option-value>``
 
@@ -552,6 +555,7 @@ Entities that match the specified query and entity type are returned in the body
     "showHidden": false,
     "sort": "creation-time DESC",
     "total": 2,
+    "entityScope": [ "SYSTEM" ]
     "results": [
         {
             "entityId": {

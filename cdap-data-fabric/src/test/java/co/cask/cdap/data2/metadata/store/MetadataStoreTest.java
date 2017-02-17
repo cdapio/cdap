@@ -27,6 +27,7 @@ import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditType;
@@ -435,7 +436,7 @@ public class MetadataStoreTest {
     throws BadRequestException {
     return store.search(
       ns, searchQuery, EnumSet.allOf(EntityTypeSimpleName.class),
-      sortInfo, offset, limit, numCursors, "", showHidden);
+      sortInfo, offset, limit, numCursors, "", showHidden, EnumSet.allOf(EntityScope.class));
   }
 
   private void generateMetadataUpdates() {

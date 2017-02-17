@@ -19,6 +19,7 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
@@ -170,9 +171,10 @@ public interface MetadataAdmin {
    *               the cursor. If {@code null}, the first row is used as the cursor
    * @param showHidden boolean which specifies whether to display hidden entities (entity whose name start with "_")
    *                    or not.
+   * @param entityScope a set which specifies which scope of entities to display.
    * @return the {@link MetadataSearchResponse} containing search results for the specified search query and filters
    */
   MetadataSearchResponse search(String namespaceId, String searchQuery, Set<EntityTypeSimpleName> types,
                                 SortInfo sortInfo, int offset, int limit, int numCursors,
-                                String cursor, boolean showHidden) throws Exception;
+                                String cursor, boolean showHidden, Set<EntityScope> entityScope) throws Exception;
 }
