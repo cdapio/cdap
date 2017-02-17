@@ -19,7 +19,7 @@ package co.cask.cdap.security.impersonation;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.kerberos.ImpersonatedOpType;
-import co.cask.cdap.common.kerberos.ImpersonationOpInfo;
+import co.cask.cdap.common.kerberos.ImpersonationRequest;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
@@ -57,7 +57,8 @@ public class DefaultImpersonator implements Impersonator {
   public <T> T doAs(NamespacedEntityId entityId, Callable<T> callable,
                     ImpersonatedOpType impersonatedOpType) throws Exception {
     UserGroupInformation ugi = getUGI(entityId, impersonatedOpType);
-    LOG.debug("Performing doAs with UGI {}", ugi);
+    LOG.debug("Performing doAs with UGI {} for entity {} and impersonation operation type", ugi, entityId,
+              impersonatedOpType);
     return ImpersonationUtils.doAs(ugi, callable);
   }
 
@@ -72,6 +73,6 @@ public class DefaultImpersonator implements Impersonator {
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(entityId.getNamespaceId())) {
       return UserGroupInformation.getCurrentUser();
     }
-    return ugiProvider.getConfiguredUGI(new ImpersonationOpInfo(entityId, impersonatedOpType)).getUGI();
+    return ugiProvider.getConfiguredUGI(new ImpersonationRequest(entityId, impersonatedOpType)).getUGI();
   }
 }

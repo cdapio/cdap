@@ -17,7 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.kerberos.ImpersonationOpInfo;
+import co.cask.cdap.common.kerberos.ImpersonationRequest;
 import co.cask.cdap.common.kerberos.PrincipalCredentials;
 import co.cask.cdap.common.kerberos.UGIWithPrincipal;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
@@ -80,9 +80,9 @@ public class ImpersonationHandler extends AbstractHttpHandler {
     if (requestContent == null) {
       throw new BadRequestException("Request body is empty.");
     }
-    ImpersonationOpInfo impersonationOpInfo = GSON.fromJson(requestContent, ImpersonationOpInfo.class);
-    LOG.info("Fetching credentials for {}", impersonationOpInfo);
-    UGIWithPrincipal ugiWithPrincipal = ugiProvider.getConfiguredUGI(impersonationOpInfo);
+    ImpersonationRequest impersonationRequest = GSON.fromJson(requestContent, ImpersonationRequest.class);
+    LOG.info("Fetching credentials for {}", impersonationRequest);
+    UGIWithPrincipal ugiWithPrincipal = ugiProvider.getConfiguredUGI(impersonationRequest);
     Credentials credentials = ImpersonationUtils.doAs(ugiWithPrincipal.getUGI(), new Callable<Credentials>() {
       @Override
       public Credentials call() throws Exception {

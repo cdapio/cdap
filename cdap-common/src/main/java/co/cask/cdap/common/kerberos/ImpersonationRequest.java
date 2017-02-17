@@ -22,11 +22,11 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
  * A wrapper which wraps around the {@link co.cask.cdap.proto.id.NamespacedEntityId} on which impersonation needs to
  * be performed and the type of operation {@link ImpersonatedOpType} which will be performed.
  */
-public class ImpersonationOpInfo {
+public class ImpersonationRequest {
   private final NamespacedEntityId entityId;
   private final ImpersonatedOpType impersonatedOpType;
 
-  public ImpersonationOpInfo(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType) {
+  public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType) {
     this.entityId = entityId;
     this.impersonatedOpType = impersonatedOpType;
   }
@@ -41,7 +41,7 @@ public class ImpersonationOpInfo {
 
   @Override
   public String toString() {
-    return "ImpersonationOpInfo{" +
+    return "ImpersonationRequest{" +
       "entityId=" + entityId +
       ", impersonatedOpType=" + impersonatedOpType +
       '}';

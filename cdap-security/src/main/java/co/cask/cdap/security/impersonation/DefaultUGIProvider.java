@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.ImpersonatedOpType;
 import co.cask.cdap.common.kerberos.ImpersonationInfo;
-import co.cask.cdap.common.kerberos.ImpersonationOpInfo;
+import co.cask.cdap.common.kerberos.ImpersonationRequest;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.kerberos.UGIWithPrincipal;
@@ -30,7 +30,6 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.FileUtils;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.element.EntityType;
-import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -79,8 +78,9 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
    * @throws IOException if there was any IOException during localization of the keytab
    */
   @Override
-  protected UGIWithPrincipal createUGI(ImpersonationOpInfo impersonationOpInfo) throws IOException {
-    if (impersonationOpInfo.getEntityId().getEntityType().equals(EntityType.NAMESPACE)) {
+  protected UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException {
+    if (impersonationRequest.getEntityId().getEntityType().equals(EntityType.NAMESPACE) &&
+      impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE)) {
       // CDAP-8355 If the operation being impersonated is an explore query then check if the namespace configuration
       // specifies that it can be impersonated with the namespace owner.
       // This is done here rather than in the get getConfiguredUGI because the getConfiguredUGI will be called at
@@ -90,13 +90,12 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       // impersonating the namespace owner for explore queries but that a trade-off to avoid multiple remote calls in
       // more prominent calls.
       try {
-        NamespaceConfig nsConfig = namespaceQueryAdmin.get(impersonationOpInfo.getEntityId().getNamespaceId())
-          .getConfig();
-        if (impersonationOpInfo.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE) &&
-          !nsConfig.isExploreAsPrincipal()) {
+        NamespaceConfig nsConfig =
+          namespaceQueryAdmin.get(impersonationRequest.getEntityId().getNamespaceId()).getConfig();
+        if (!nsConfig.isExploreAsPrincipal()) {
           throw new FeatureDisabledException(FeatureDisabledException.Feature.EXPLORE,
                                              NamespaceConfig.class.getSimpleName() + " of " +
-                                               impersonationOpInfo.getEntityId(),
+                                               impersonationRequest.getEntityId(),
                                              NamespaceConfig.EXPLORE_AS_PRINCIPAL, String.valueOf(true));
         }
 
@@ -107,8 +106,9 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       }
     }
 
-    ImpersonationInfo impersonationInfo = getImpersonationInfo(impersonationOpInfo.getEntityId());
-    LOG.debug("Obtained impersonation info: {} for entity {}", impersonationInfo, impersonationOpInfo.getEntityId());
+    ImpersonationInfo impersonationInfo = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf,
+                                                                               impersonationRequest.getEntityId());
+    LOG.debug("Obtained impersonation info: {} for entity {}", impersonationInfo, impersonationRequest.getEntityId());
 
     // no need to get a UGI if the current UGI is the one we're requesting; simply return it
     String configuredPrincipalShortName = new KerberosName(impersonationInfo.getPrincipal()).getShortName();
@@ -136,11 +136,6 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
         LOG.warn("Failed to delete file: {}", localKeytabFile);
       }
     }
-  }
-
-  private ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) throws IOException {
-      ImpersonationInfo info = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, entityId);
-      return info;
   }
 
   /**

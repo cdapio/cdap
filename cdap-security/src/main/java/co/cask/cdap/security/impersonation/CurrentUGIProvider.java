@@ -16,7 +16,7 @@
 
 package co.cask.cdap.security.impersonation;
 
-import co.cask.cdap.common.kerberos.ImpersonationOpInfo;
+import co.cask.cdap.common.kerberos.ImpersonationRequest;
 import co.cask.cdap.common.kerberos.UGIWithPrincipal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import com.google.inject.Inject;
@@ -37,7 +37,7 @@ public class CurrentUGIProvider implements UGIProvider {
   }
 
   @Override
-  public UGIWithPrincipal getConfiguredUGI(ImpersonationOpInfo impersonationOpInfo) throws IOException {
+  public UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
     return new UGIWithPrincipal(authenticationContext.getPrincipal().getKerberosPrincipal(),
                                 UserGroupInformation.getCurrentUser());
   }

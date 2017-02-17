@@ -18,7 +18,7 @@ package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.kerberos.ImpersonationOpInfo;
+import co.cask.cdap.common.kerberos.ImpersonationRequest;
 import co.cask.cdap.common.kerberos.UGIWithPrincipal;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractCachedUGIProvider implements UGIProvider {
 
   protected final CConfiguration cConf;
-  private final LoadingCache<ImpersonationOpInfo, UGIWithPrincipal> ugiCache;
+  private final LoadingCache<ImpersonationRequest, UGIWithPrincipal> ugiCache;
 
   protected AbstractCachedUGIProvider(CConfiguration cConf) {
     this.cConf = cConf;
@@ -46,14 +46,14 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
   }
 
   /**
-   * Creates a new {@link UGIWithPrincipal} based on the given {@link ImpersonationOpInfo}.
+   * Creates a new {@link UGIWithPrincipal} based on the given {@link ImpersonationRequest}.
    */
-  protected abstract UGIWithPrincipal createUGI(ImpersonationOpInfo impersonationOpInfo) throws IOException;
+  protected abstract UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException;
 
   @Override
-  public final UGIWithPrincipal getConfiguredUGI(ImpersonationOpInfo impersonationOpInfo) throws IOException {
+  public final UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
     try {
-      return ugiCache.get(impersonationOpInfo);
+      return ugiCache.get(impersonationRequest);
     } catch (ExecutionException e) {
       // Get the root cause of the failure
       Throwable cause = Throwables.getRootCause(e);
@@ -70,14 +70,14 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
     ugiCache.cleanUp();
   }
 
-  private LoadingCache<ImpersonationOpInfo, UGIWithPrincipal> createUGICache(CConfiguration cConf) {
+  private LoadingCache<ImpersonationRequest, UGIWithPrincipal> createUGICache(CConfiguration cConf) {
     long expirationMillis = cConf.getLong(Constants.Security.UGI_CACHE_EXPIRATION_MS);
     return CacheBuilder.newBuilder()
       .expireAfterWrite(expirationMillis, TimeUnit.MILLISECONDS)
-      .build(new CacheLoader<ImpersonationOpInfo, UGIWithPrincipal>() {
+      .build(new CacheLoader<ImpersonationRequest, UGIWithPrincipal>() {
         @Override
-        public UGIWithPrincipal load(ImpersonationOpInfo impersonationOpInfo) throws Exception {
-          return createUGI(impersonationOpInfo);
+        public UGIWithPrincipal load(ImpersonationRequest impersonationRequest) throws Exception {
+          return createUGI(impersonationRequest);
         }
       });
   }

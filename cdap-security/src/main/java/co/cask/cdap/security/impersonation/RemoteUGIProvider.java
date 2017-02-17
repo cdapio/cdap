@@ -20,7 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.common.internal.remote.RemoteClient;
-import co.cask.cdap.common.kerberos.ImpersonationOpInfo;
+import co.cask.cdap.common.kerberos.ImpersonationRequest;
 import co.cask.cdap.common.kerberos.PrincipalCredentials;
 import co.cask.cdap.common.kerberos.UGIWithPrincipal;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
@@ -69,9 +69,9 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
   }
 
   @Override
-  protected UGIWithPrincipal createUGI(ImpersonationOpInfo impersonationOpInfo) throws IOException {
+  protected UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException {
     PrincipalCredentials principalCredentials =
-      GSON.fromJson(executeRequest(impersonationOpInfo).getResponseBodyAsString(), PrincipalCredentials.class);
+      GSON.fromJson(executeRequest(impersonationRequest).getResponseBodyAsString(), PrincipalCredentials.class);
     LOG.debug("Received response: {}", principalCredentials);
 
     Location location = locationFactory.create(URI.create(principalCredentials.getCredentialsPath()));
@@ -90,9 +90,9 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
     }
   }
 
-  private HttpResponse executeRequest(ImpersonationOpInfo impersonationOpInfo) throws IOException {
+  private HttpResponse executeRequest(ImpersonationRequest impersonationRequest) throws IOException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "impersonation/credentials")
-      .withBody(GSON.toJson(impersonationOpInfo))
+      .withBody(GSON.toJson(impersonationRequest))
       .build();
     HttpResponse response = remoteClient.execute(request);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {

@@ -34,7 +34,7 @@ public final class ImpersonationInfo {
     if (Strings.isNullOrEmpty(principal)) {
       throw new IllegalArgumentException("A principal must be provided");
     }
-    if (Strings.isNullOrEmpty(principal)) {
+    if (Strings.isNullOrEmpty(keytabURI)) {
       throw new IllegalArgumentException("A keytabURI must be provided");
     }
     this.principal = principal;
