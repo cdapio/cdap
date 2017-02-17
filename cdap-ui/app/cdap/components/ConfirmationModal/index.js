@@ -45,7 +45,6 @@ export default class ConfirmationModal extends Component {
         </ModalBody>
       );
     }
-
     let confirmation = this.props.confirmationElem ? this.props.confirmationElem : this.props.confirmationText;
 
     let actionBtn;
