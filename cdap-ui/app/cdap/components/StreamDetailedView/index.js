@@ -228,6 +228,7 @@ export default class StreamDetailedView extends Component {
           onFastActionSuccess={this.goToHome.bind(this)}
           onFastActionUpdate={this.goToHome.bind(this)}
           fastActionToOpen={this.state.modalToOpen}
+          showFullCreationTime={true}
         />
         <StreamDetaildViewTab
           params={this.props.params}

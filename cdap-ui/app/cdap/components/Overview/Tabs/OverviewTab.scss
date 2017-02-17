@@ -36,6 +36,16 @@
         &:hover {
           border-color: transparent;
         }
+
+        &:not(.active):hover {
+          font-weight: bold;
+        }
+
+        a {
+          &:not(.active):hover {
+            font-weight: bold;
+          }
+        }
       }
     }
   }

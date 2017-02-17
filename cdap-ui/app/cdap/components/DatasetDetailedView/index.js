@@ -225,6 +225,7 @@ export default class DatasetDetailedView extends Component {
           entity={this.state.entityMetadata}
           onFastActionSuccess={this.goToHome.bind(this)}
           onFastActionUpdate={this.goToHome.bind(this)}
+          showFullCreationTime={true}
         />
         <DatasetDetaildViewTab
           params={this.props.params}

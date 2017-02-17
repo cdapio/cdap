@@ -215,6 +215,7 @@ export default class AppDetailedView extends Component {
           entity={this.state.entityMetadata}
           onFastActionSuccess={this.goToHome.bind(this)}
           onFastActionUpdate={this.goToHome.bind(this)}
+          showFullCreationTime={true}
         />
         <AppDetailedViewTab
           params={this.props.params}
