@@ -90,7 +90,7 @@ final class LogFileManager implements Flushable, Syncable {
                                                  long timestamp) throws IOException {
     TimeStampLocation location = createLocation(identifier);
     LogFileOutputStream logFileOutputStream = new LogFileOutputStream(
-      location.getLocation(), schema, syncIntervalBytes, location.getTimeStamp(), new Closeable() {
+      location.getLocation(), filePermissions, schema, syncIntervalBytes, location.getTimeStamp(), new Closeable() {
       @Override
       public void close() throws IOException {
         outputStreamMap.remove(identifier);
