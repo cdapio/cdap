@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
+import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
@@ -72,7 +73,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   public TransactionHttpHandler(CConfiguration cConf, TransactionSystemClient txClient) {
-    this.txClient = txClient;
+    this.txClient = new TransactionSystemClientAdapter(txClient);
     try {
       this.debugClazz = getClass().getClassLoader()
         .loadClass("org.apache.tephra.hbase.txprune.InvalidListPruningDebug");
