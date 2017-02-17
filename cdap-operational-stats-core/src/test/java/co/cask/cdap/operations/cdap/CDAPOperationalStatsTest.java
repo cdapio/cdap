@@ -96,10 +96,10 @@ public class CDAPOperationalStatsTest {
     Assert.assertTrue(transactions.getSnapshotTime() > TEST_START_TIME);
     Assert.assertTrue(transactions.getReadPointer() > TEST_START_TIME);
     Assert.assertTrue(transactions.getWritePointer() > TEST_START_TIME);
-    CDAPConnections requests = new CDAPConnections();
+    CDAPLoad requests = new CDAPLoad();
     requests.initialize(injector);
     Assert.assertEquals(AbstractCDAPStats.SERVICE_NAME, requests.getServiceName());
-    Assert.assertEquals("connections", requests.getStatType());
+    Assert.assertEquals("lastHourLoad", requests.getStatType());
     requests.collect();
   }
 }
