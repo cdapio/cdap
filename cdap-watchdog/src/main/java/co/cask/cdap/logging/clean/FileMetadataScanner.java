@@ -89,6 +89,8 @@ public class FileMetadataScanner {
       });
     } catch (TransactionFailureException e) {
       LOG.warn("Got Exception while deleting old metadata", e);
+      // not required as we dont delete files in old format, but still safe to clear.
+      deletedEntries.clear();
     }
     LOG.info("Deleted {} entries from the meta table for the old log format", deletedEntries.size());
     return deletedEntries;
@@ -96,6 +98,9 @@ public class FileMetadataScanner {
 
   /**
    * scans for meta data in old format which has expired the log retention.
+   * @param tillTime time till which files will be deleted
+   * @param transactionTimeout transaction timeout to use for scanning entries, deleting entries.
+   * @return list of DeleteEntry - used to get files to delete for which metadata has already been deleted
    */
   public List<DeleteEntry> scanAndGetFilesToDelete(final long tillTime, final int transactionTimeout) {
     final List<DeleteEntry> toDelete = new ArrayList<>();
@@ -148,6 +153,8 @@ public class FileMetadataScanner {
       });
     } catch (TransactionFailureException e) {
       LOG.warn("Got Exception while scanning metadata table", e);
+      // if there is an exception, no metadata, so delete file should be skipped.
+      return new ArrayList<>();
     }
 
     if (!toDelete.isEmpty()) {
@@ -158,6 +165,7 @@ public class FileMetadataScanner {
       // delete meta data first
       return deleteNewMetadataEntries(toDelete, transactionTimeout, cutOffTransactionTime);
     }
+    // toDelete is empty, safe to return that
     return toDelete;
   }
 
@@ -182,9 +190,9 @@ public class FileMetadataScanner {
 
   /**
    * delete the rows specified in the list
+   * if delete time is closer to transaction timeout, we break and return list of deleted entries so far.
    * @param toDeleteRows
    * @return list of deleted entries.
-   * if delete time is closer to transaction timeout, we break and return list of deleted entries so far.
    */
   private List<DeleteEntry> deleteNewMetadataEntries(final List<DeleteEntry> toDeleteRows,
                                                      int transactionTimeout, final int cutOffTransactionTimeout) {
@@ -209,6 +217,8 @@ public class FileMetadataScanner {
       });
     } catch (TransactionFailureException e) {
       LOG.warn("Exception while deleting metadata entries", e);
+      // exception, no metadata entry deleted, skip deleting files
+      return new ArrayList<>();
     }
     return deletedEntries;
   }
