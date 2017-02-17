@@ -52,13 +52,13 @@ class LogFileOutputStream implements Closeable, Flushable, Syncable {
   private DataFileWriter<GenericRecord> dataFileWriter;
   private long fileSize;
 
-  LogFileOutputStream(Location location, Schema schema, int syncIntervalBytes, long createTime,
+  LogFileOutputStream(Location location, String filePermissions, Schema schema, int syncIntervalBytes, long createTime,
                       Closeable closeable) throws IOException {
     this.location = location;
     this.schema = schema;
     this.closeable = closeable;
     try {
-      this.outputStream = location.getOutputStream();
+      this.outputStream = location.getOutputStream(filePermissions);
       this.dataFileWriter = new DataFileWriter<>(new GenericDatumWriter<GenericRecord>(schema));
       this.dataFileWriter.create(schema, outputStream);
       this.dataFileWriter.setSyncInterval(syncIntervalBytes);
