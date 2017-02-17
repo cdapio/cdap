@@ -23,6 +23,8 @@ import {MyStreamApi} from 'api/stream';
 import FastActionButton from '../FastActionButton';
 import ConfirmationModal from 'components/ConfirmationModal';
 import {Tooltip} from 'reactstrap';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 import T from 'i18n-react';
 
 export default class DeleteAction extends Component {
@@ -41,6 +43,7 @@ export default class DeleteAction extends Component {
       extendedMessage: '',
       disabled: this.props.entity.type === 'artifact' && this.props.entity.scope === 'SYSTEM'
     };
+    this.eventEmitter = ee(ee);
   }
 
   toggleModal(event) {
@@ -93,6 +96,7 @@ export default class DeleteAction extends Component {
           loading: false,
           modal: false
         });
+        this.eventEmitter.emit(globalEvents.DELETEENTITY, params);
       }, (err) => {
         this.setState({
           loading: false,

@@ -43,6 +43,7 @@ export default class JustAddedSection extends Component {
     this.eventEmitter.on(globalEvents.APPUPLOAD, this.fetchEntities);
     this.eventEmitter.on(globalEvents.STREAMCREATE, this.fetchEntities);
     this.eventEmitter.on(globalEvents.PUBLISHPIPELINE, this.fetchEntities);
+    this.eventEmitter.on(globalEvents.DELETEENTITY, this.fetchEntities);
     this.namespaceSub = NamespaceStore.subscribe(this.fetchEntities);
   }
 
@@ -54,6 +55,7 @@ export default class JustAddedSection extends Component {
     this.eventEmitter.off(globalEvents.APPUPLOAD, this.fetchEntities);
     this.eventEmitter.off(globalEvents.STREAMCREATE, this.fetchEntities);
     this.eventEmitter.off(globalEvents.PUBLISHPIPELINE, this.fetchEntities);
+    this.eventEmitter.off(globalEvents.DELETEENTITY, this.fetchEntities);
     this.namespaceSub();
   }
 
