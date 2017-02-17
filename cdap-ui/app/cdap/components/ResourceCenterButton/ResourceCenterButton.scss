@@ -27,10 +27,15 @@
     width: 58px;
     background: $success-message-bg;
     display: inline-flex;
+    display: -webkit-inline-box;
     align-items: center;
     justify-content: center;
     color: white;
     margin: 0;
     border-radius: 50%;
+
+    h1 {
+      font-size: 3em;
+    }
   }
 }

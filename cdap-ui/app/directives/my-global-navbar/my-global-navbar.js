@@ -37,12 +37,7 @@ angular.module(PKG.name+'.commons')
                 selectedNamespace : $state.params.namespace
               }
             });
-            window.CaskCommon.Store.dispatch({
-              type: 'UPDATE_NAMESPACES',
-              payload: {
-                namespaces: $scope.namespaces
-              }
-            });
+            updateNamespaceList();
           }
         });
         if (window.CDAP_CONFIG.securityEnabled && myAuth.isAuthenticated()) {

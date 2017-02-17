@@ -24,7 +24,7 @@
 @tracker-banner-font-color: #1f293a;
 @tracker-grey: #999999;
 @border-color: #cdcdcd;
-@search-font-color: #666666;
+@search-font-color: #66666;
 @title-font-color: #333333;
 @active-font: #363945;
 @filter-sidebar-background-color: #eeeeee;
@@ -51,6 +51,9 @@ body[class*='state-tracker'] {
     margin-top: 50px;
     width: 100%;
     overflow-x: hidden;
+    // FIXME: ad-hoc - This is added here because of the resource center button.
+    min-height: 500px;
+    overflow-y: auto;
 
     h1,
     h2,
@@ -234,12 +237,22 @@ body.state-tracker-home.state-tracker {
     }
   }
   cask-resource-center-button {
+    display: inline-block;
+    width: 58px;
     .cask-resourcecenter-button {
-      h1 {
-        margin: 0;
-        color: white;
-        font-size: 4rem;
-        margin-bottom: 0.5rem;
+      position: absolute;
+      top: 30px;
+
+      .button-container {
+        display: inline-flex;
+        justify-content: center;
+        h1 {
+          color: white;
+          font-size: 3em;
+          border: 0;
+          margin: 0;
+          margin-bottom: 0.5rem;
+        }
       }
     }
   }
@@ -256,6 +269,7 @@ body.state-tracker {
     display: flex;
     align-items: center;
     height: 60px;
+    position: relative;
 
     .tracker-search-bar {
       width: 500px;
@@ -547,12 +561,19 @@ body.state-tracker {
 
   cask-resource-center-button {
     .cask-resourcecenter-button {
-      top: 81px;
-      h1 {
-        margin: 0;
-        color: white;
-        font-size: 4rem;
-        margin-bottom: 0.5rem;
+      position: absolute;
+      top: 30px;
+
+      .button-container {
+        display: inline-flex;
+        justify-content: center;
+        h1 {
+          color: white;
+          font-size: 3em;
+          border: 0;
+          margin: 0;
+          margin-bottom: 0.5rem;
+        }
       }
     }
   }
@@ -904,8 +925,9 @@ body.state-tracker-detail-entity {
 
   cask-resource-center-button {
     .cask-resourcecenter-button {
-      top: 81px;
-      right: 130px;
+      right: 93px;
+      position: absolute;
+      top: 30px;
     }
   }
 }

@@ -86,14 +86,8 @@ export default class Header extends Component {
       stateParams: {
         namespace: this.state.currentNamespace
       }
-    }),
-    pipelinesStudioUrl =  window.getHydratorUrl({
-      stateName: 'hydrator.create',
-      stateParams: {
-        namespace: this.state.currentNamespace
-      }
     });
-    let isPipelinesViewActive = pipelinesListUrl.indexOf(location.pathname)  !== -1 || pipelinesStudioUrl.indexOf(location.pathname) !== -1;
+    let isPipelinesViewActive = location.pathname.indexOf('/pipelines/') !== -1;
     let oldUIUrl = `/oldcdap/ns/${this.state.currentNamespace}`;
     return (
       <div className="global-navbar">

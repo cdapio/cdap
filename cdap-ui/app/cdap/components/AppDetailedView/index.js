@@ -35,6 +35,7 @@ import capitalize from 'lodash/capitalize';
 import Page404 from 'components/404';
 import ResourceCenterButton from 'components/ResourceCenterButton';
 import Helmet from 'react-helmet';
+import OverviewHeader from 'components/Overview/OverviewHeader';
 require('./AppDetailedView.scss');
 
 export default class AppDetailedView extends Component {
@@ -136,8 +137,11 @@ export default class AppDetailedView extends Component {
               loading: false
             });
           }
+          let metadata = entityMetadata
+            .filter(en => en.type === 'application')
+            .find( en => en.id === this.props.params.appId);
           this.setState({
-            entityMetadata: entityMetadata[0],
+            entityMetadata: metadata,
             loading: false
           });
         });
@@ -211,6 +215,7 @@ export default class AppDetailedView extends Component {
           currentStateIcon="icon-fist"
           currentStateLabel={T.translate('commons.application')}
         />
+        <OverviewHeader successMessage={this.state.successMessage} />
         <OverviewMetaSection
           entity={this.state.entityMetadata}
           onFastActionSuccess={this.goToHome.bind(this)}

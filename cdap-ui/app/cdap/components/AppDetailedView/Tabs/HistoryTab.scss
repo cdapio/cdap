@@ -18,7 +18,8 @@
 
 .history-tab {
   padding: 10px 20px;
-  height: calc(100% - 40px);
+  overflow-y: hidden;
+  height: 100%;
   overflow-y: auto;
 
   &.table-bordered {
