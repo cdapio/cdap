@@ -123,7 +123,7 @@ function build_docs_set() {
 function build_docs_set_local() {
   LOCAL_INCLUDES="${TRUE}"
   export LOCAL_INCLUDES
-  _build_docs docs_set "Building Docs Set: docs_set w/ local files"
+  _build_docs docs_set "Building Docs Set: docs_set w/local files"
 }
 
 function build_docs_only() {
@@ -133,7 +133,7 @@ function build_docs_only() {
 function build_docs_only_local() {
   LOCAL_INCLUDES="${TRUE}"
   export LOCAL_INCLUDES
-  _build_docs docs_only "Building Docs Only: docs_only w/ local files"
+  _build_docs docs_only "Building Docs Only: docs_only w/local files"
 }
 
 function build_docs_web_only() {
