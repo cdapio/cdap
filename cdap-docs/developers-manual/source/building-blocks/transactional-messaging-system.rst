@@ -9,6 +9,11 @@
 Transactional Messaging System
 ==============================
 
+.. topic::  **Note: Beta Feature** 
+
+    TMS is currently a **beta** feature of CDAP |release|, and is subject to change without notice.
+
+
 Overview
 ========
 The Transactional Messaging System (TMS) is a CDAP service that provides a
@@ -24,9 +29,6 @@ described below.
 
 TMS is similar to `Apache Kafka <https://kafka.apache.org>`__ but with added guarantees as
 to ordering and persistence of messages.
-
-**Note:** TMS is currently a **beta** feature of CDAP |release|, and is subject to change
-without notice.
 
 
 Topics
