@@ -17,7 +17,10 @@ package co.cask.cdap.logging.save;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.resource.ResourceBalancerService;
+import co.cask.cdap.common.service.RetryOnStartFailureService;
+import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.logging.LoggingConfiguration;
+import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryService;
@@ -25,6 +28,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Log saver service that processes events from Kafka.
@@ -49,7 +53,12 @@ public final class KafkaLogSaverService extends ResourceBalancerService {
   }
 
   @Override
-  protected Service createService(Set<Integer> partitions) {
-    return logSaverFactory.create(partitions);
+  protected Service createService(final Set<Integer> partitions) {
+    return new RetryOnStartFailureService(new Supplier<Service>() {
+      @Override
+      public Service get() {
+        return logSaverFactory.create(partitions);
+      }
+    }, RetryStrategies.fixDelay(2, TimeUnit.SECONDS));
   }
 }

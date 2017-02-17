@@ -72,7 +72,7 @@ public class LogWriter implements Runnable {
 
   @Override
   public void run() {
-    while (true) {
+    while (stopLatch.getCount() > 0) {
       try {
         // Read new messages only if previous write was successful.
         if (writeListMap.isEmpty()) {
@@ -89,8 +89,8 @@ public class LogWriter implements Runnable {
               long oldestBucketKey = rowKeySet.first();
 
               Map<String, Entry<Long, List<KafkaLogEvent>>> row = messageTable.row(oldestBucketKey);
-              for (Iterator<Map.Entry<String, Entry<Long, List<KafkaLogEvent>>>> it = row.entrySet().iterator();
-                   it.hasNext(); ) {
+              Iterator<Map.Entry<String, Entry<Long, List<KafkaLogEvent>>>> it = row.entrySet().iterator();
+              while (it.hasNext() && stopLatch.getCount() > 0) {
                 Map.Entry<String, Entry<Long, List<KafkaLogEvent>>> mapEntry = it.next();
                 // Stop if event arrival time is more than the limit (this is for events being generated now)
                 // However, if we have reached maxNumberOfBucketsInTable then it means we are reading old
