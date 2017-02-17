@@ -86,27 +86,42 @@ def create_parsed_line(line):
     """ Parses a line and changes single-quotes to a combination of literals and single-quotes.
         Handles closing literals with a backslash correctly for alpha-numerics.
         Any text that is enclosed with single-quotes will be converted to a literal with single-quotes.
-        'text' will become ``'text'``
+        'text' will become ``'text'``.
+        Any text that is enclosed in '<...>' or of the form '<...>...' will however have the single quotes removed
     """
     i = 0
     in_literal = False
+    stripping_quotes = False
     finished_literal = False
-    opening_literal_quote = LITERAL
-    closing_literal_quote = LITERAL
+    opening_literal = LITERAL
+    closing_literal = LITERAL
+    opening_literal_quote = LITERAL + QUOTE
+    closing_quote_literal = QUOTE + LITERAL
     new_line = ''
     i = -1
     for c in line:
         i +=1 
         if c == QUOTE:
             if not in_literal:
-                if i and line[i-1] not in (SPACE, "("): # Preceding character
+                if i and i < len(line) and line[i+1] in ('<'): # Following character
+                    new_line += opening_literal
+                    in_literal = not in_literal
+                    stripping_quotes = True
+                elif i and line[i-1] in ('>'): # Preceding character
+                    new_line += closing_literal
+                    in_literal = not in_literal                    
+                elif i and line[i-1] not in (SPACE, "("): # Preceding character
                     new_line += c
                 else:
                     new_line += opening_literal_quote
                     in_literal = not in_literal
-            else:
-                new_line += closing_literal_quote
+            else: # in_literal
+                if stripping_quotes or (i and line[i-1] in ('>')): # Preceding character
+                    new_line += closing_literal
+                else:
+                    new_line += closing_quote_literal
                 finished_literal = True
+                stripping_quotes = False
                 in_literal = not in_literal
         else:
             if finished_literal:
