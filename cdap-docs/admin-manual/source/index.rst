@@ -158,4 +158,4 @@ installation and its security configuration.
   - :ref:`Appendix: Minimal cdap-site.xml <appendix-minimal-cdap-site.xml>`: Minimal required configuration for a CDAP installation
   - :ref:`Appendix: cdap-site.xml <appendix-cdap-site.xml>`: Default properties for a CDAP installation
   - :ref:`Appendix: cdap-security.xml <appendix-cdap-security.xml>`: Default security properties for a CDAP installation
-  - :ref:`Appendix: HBaseDDLExecutor <appendix-hbase-ddl-executor>` Example implementation and description for replication
+  - :ref:`Appendix: HBaseDDLExecutor <appendix-hbase-ddl-executor>`: Example implementation and description for replication
