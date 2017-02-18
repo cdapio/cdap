@@ -16,7 +16,7 @@
 
 package co.cask.cdap.logging.plugins;
 
-import org.apache.hadoop.fs.Syncable;
+import co.cask.cdap.common.io.Syncable;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,15 +29,17 @@ import java.io.OutputStream;
  * Location outputstream used by {@link LocationManager} which holds location, number of bytes written to a location
  * and its open outputstream
  */
-public class LocationOutputStream extends FilterOutputStream {
+public class LocationOutputStream extends FilterOutputStream implements Syncable {
   private static final Logger LOG = LoggerFactory.getLogger(LocationOutputStream.class);
 
   private Location location;
   private long numOfBytes;
+  private long lastWriteTimestamp;
 
-  public LocationOutputStream(Location location, OutputStream outputStream) {
+  public LocationOutputStream(Location location, OutputStream outputStream, long lastWriteTimestamp) {
     super(outputStream);
     this.location = location;
+    this.lastWriteTimestamp = lastWriteTimestamp;
   }
 
   public Location getLocation() {
@@ -52,6 +54,10 @@ public class LocationOutputStream extends FilterOutputStream {
     return numOfBytes;
   }
 
+  public long getLastWriteTimestamp() {
+    return lastWriteTimestamp;
+  }
+
   @Override
   public void write(byte[] b) throws IOException {
     out.write(b);
@@ -61,13 +67,18 @@ public class LocationOutputStream extends FilterOutputStream {
       numOfBytes = length;
     }
     numOfBytes = numOfBytes + b.length;
+    lastWriteTimestamp = System.currentTimeMillis();
   }
 
   @Override
   public void flush() throws IOException {
     out.flush();
+  }
+
+  @Override
+  public void sync() throws IOException {
     if (out instanceof Syncable) {
-      ((Syncable) out).hsync();
+      ((org.apache.hadoop.fs.Syncable) out).hsync();
     }
   }
 

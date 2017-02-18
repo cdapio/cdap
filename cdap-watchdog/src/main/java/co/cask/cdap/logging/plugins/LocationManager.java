@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.plugins;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Syncable;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -35,13 +36,14 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
  * Manage locations for {@link RollingLocationLogAppender}
  */
-public class LocationManager implements Flushable, Closeable {
+public class LocationManager implements Flushable, Closeable, Syncable {
   private static final Logger LOG = LoggerFactory.getLogger(LocationManager.class);
   protected static final String TAG_NAMESPACE_ID = Constants.Logging.TAG_NAMESPACE_ID;
   protected static final String TAG_APPLICATION_ID = Constants.Logging.TAG_APPLICATION_ID;
@@ -50,14 +52,16 @@ public class LocationManager implements Flushable, Closeable {
   private final String filePermissions;
   private final String dirPermissions;
   private final Map<LocationIdentifier, LocationOutputStream> activeLocations;
+  private final long fileMaxInactiveTimeMs;
   private LocationOutputStream invalidOutputStream;
 
   public LocationManager(LocationFactory locationFactory, String basePath, String dirPermissions,
-                         String filePermissions) {
+                         String filePermissions, long fileMaxInactiveTimeMs) {
     this.logBaseDir = locationFactory.create(basePath);
     this.dirPermissions = dirPermissions;
     this.filePermissions = filePermissions;
     this.activeLocations = new HashMap<>();
+    this.fileMaxInactiveTimeMs = fileMaxInactiveTimeMs;
   }
 
   /**
@@ -122,7 +126,8 @@ public class LocationManager implements Flushable, Closeable {
         // create new file and open outputstream on it
         logFile.createNew(filePermissions);
         // TODO: Handle existing file in a better way rather than copying it over
-        OutputStream outputStream = new LocationOutputStream(logFile, logFile.getOutputStream());
+        OutputStream outputStream = new LocationOutputStream(logFile, logFile.getOutputStream(filePermissions),
+                                                             System.currentTimeMillis());
         activeLocations.put(locationIdentifier, (LocationOutputStream) outputStream);
         ByteStreams.copy(inputStream, outputStream);
         outputStream.flush();
@@ -136,7 +141,9 @@ public class LocationManager implements Flushable, Closeable {
     } else {
       // create file with correct permissions
       logFile.createNew(filePermissions);
-      activeLocations.put(locationIdentifier, new LocationOutputStream(logFile, logFile.getOutputStream()));
+      activeLocations.put(locationIdentifier, new LocationOutputStream(logFile,
+                                                                       logFile.getOutputStream(filePermissions),
+                                                                       System.currentTimeMillis()));
     }
 
     return activeLocations.get(locationIdentifier);
@@ -175,9 +182,36 @@ public class LocationManager implements Flushable, Closeable {
    */
   @Override
   public void flush() throws IOException {
+    Iterator<Map.Entry<LocationIdentifier, LocationOutputStream>> iter = activeLocations.entrySet().iterator();
+
+    while (iter.hasNext()) {
+      Map.Entry<LocationIdentifier, LocationOutputStream> entry = iter.next();
+      entry.getValue().flush();
+
+      if (shouldCloseFile(entry)) {
+        iter.remove();
+        entry.getValue().close();
+      }
+    }
+  }
+
+  private boolean shouldCloseFile(Map.Entry<LocationIdentifier, LocationOutputStream> entry) {
+    // do not close files if fileMaxInactiveTimeMs is not specified
+    if (fileMaxInactiveTimeMs == 0) {
+      return false;
+    }
+    return (entry.getValue().getLastWriteTimestamp() < (System.currentTimeMillis() - fileMaxInactiveTimeMs));
+  }
+
+  /**
+   * Syncs all the open output streams
+   */
+  @Override
+  public void sync() throws IOException {
+    // Perform sync on all files
     Collection<LocationOutputStream> locations = activeLocations.values();
     for (LocationOutputStream locationOutputStream : locations) {
-      locationOutputStream.flush();
+      locationOutputStream.sync();
     }
   }
 

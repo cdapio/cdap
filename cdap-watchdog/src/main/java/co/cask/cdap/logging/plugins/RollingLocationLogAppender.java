@@ -25,6 +25,7 @@ import ch.qos.logback.core.rolling.TriggeringPolicy;
 import ch.qos.logback.core.spi.FilterReply;
 import co.cask.cdap.api.logging.AppenderContext;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Syncable;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -40,7 +41,7 @@ import java.io.OutputStream;
 /**
  * Rolling Appender for {@link Location}
  */
-public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> implements Flushable {
+public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> implements Flushable, Syncable {
   private static final Logger LOG = LoggerFactory.getLogger(RollingLocationLogAppender.class);
 
   private TriggeringPolicy<ILoggingEvent> triggeringPolicy;
@@ -57,6 +58,7 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
   private String filePermissions;
   private String dirPermissions;
   private LocationManager locationManager;
+  private long fileMaxInactiveTimeMs;
 
   public RollingLocationLogAppender() {
     setName(getClass().getName());
@@ -76,7 +78,8 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
 
     if (context instanceof AppenderContext) {
       AppenderContext context = (AppenderContext) this.context;
-      locationManager = new LocationManager(context.getLocationFactory(), basePath, dirPermissions, filePermissions);
+      locationManager = new LocationManager(context.getLocationFactory(), basePath, dirPermissions, filePermissions,
+                                            fileMaxInactiveTimeMs);
       filePath = filePath.replace("instanceId", Integer.toString(context.getInstanceId()));
     } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {
       throw new IllegalStateException("Expected logger context instance of " + AppenderContext.class.getName() +
@@ -189,7 +192,16 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
 
   @Override
   public void flush() throws IOException {
-    locationManager.flush();
+    if (locationManager != null) {
+      locationManager.flush();
+    }
+  }
+
+  @Override
+  public void sync() throws IOException {
+    if (locationManager != null) {
+      locationManager.sync();
+    }
   }
 
   @Override
@@ -272,5 +284,15 @@ public class RollingLocationLogAppender extends FileAppender<ILoggingEvent> impl
 
   public void setDirPermissions(String dirPermissions) {
     this.dirPermissions = dirPermissions;
+  }
+
+  // It is an optional parameter, which takes number of miliseconds. Appender will close a file if it is not
+  // modified for fileMaxInactiveTimeMs period of time
+  public void setFileMaxInactiveTimeMs(long fileMaxInactiveTimeMs) {
+    this.fileMaxInactiveTimeMs = fileMaxInactiveTimeMs;
+  }
+
+  public long getFileMaxInactiveTimeMs() {
+    return fileMaxInactiveTimeMs;
   }
 }
