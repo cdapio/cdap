@@ -54,9 +54,9 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
   public final UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
     try {
       return ugiCache.get(impersonationRequest);
-    } catch (ExecutionException e) {
+    } catch (Throwable t) {
       // Get the root cause of the failure
-      Throwable cause = Throwables.getRootCause(e);
+      Throwable cause = Throwables.getRootCause(t);
       // Propagate if the cause is an IOException or RuntimeException
       Throwables.propagateIfPossible(cause, IOException.class);
       // Otherwise always wrap it with IOException
