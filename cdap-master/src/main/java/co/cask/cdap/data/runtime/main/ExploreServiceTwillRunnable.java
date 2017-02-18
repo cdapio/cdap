@@ -235,7 +235,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       if (!hiveExtraJars.containsKey(fileName)) {
         hiveExtraJars.put(fileName, url);
       } else {
-        LOG.info("Ignore jar with name {} that was added previously with {}", fileName, url);
+        LOG.debug("Ignore jar with name {} that was added previously with {}", fileName, url);
       }
     }
 
