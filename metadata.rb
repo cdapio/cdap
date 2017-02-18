@@ -4,7 +4,7 @@ maintainer_email 'ops@cask.co'
 license          'Apache 2.0'
 description      'Installs/Configures Cask Data Application Platform (CDAP)'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
-version          '2.28.4'
+version          '2.28.5'
 
 %w(ambari ark apt java nodejs ntp yum yum-epel).each do |cb|
   depends cb
