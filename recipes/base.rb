@@ -1,6 +1,6 @@
 #
 # Cookbook Name:: cdap
-# Recipe:: cli
+# Recipe:: base
 #
 # Copyright © 2013-2017 Cask Data, Inc.
 #
@@ -17,11 +17,24 @@
 # limitations under the License.
 #
 
-# Installs prerequisites, setup repo, set CDAP_HOME, and install base package
-include_recipe 'cdap::base'
+# Install Java and Hadoop Clients
+unless node['cdap'].key?('skip_prerequisites') && node['cdap']['skip_prerequisites'].to_s == 'true'
+  include_recipe 'cdap::prerequisites'
+end
 
-# Install cli package
-package 'cdap-cli' do
+include_recipe 'cdap::repo'
+
+# add global CDAP_HOME environment variable
+file '/etc/profile.d/cdap_home.sh' do
+  content <<-EOS
+    export CDAP_HOME=/opt/cdap
+    export PATH=$PATH:$CDAP_HOME/bin
+  EOS
+  mode '0755'
+end
+
+# Install cdap base package
+package 'cdap' do
   action :install
   version node['cdap']['version']
 end

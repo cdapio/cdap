@@ -17,26 +17,8 @@
 # limitations under the License.
 #
 
-# Install Java and Hadoop Clients
-unless node['cdap'].key?('skip_prerequisites') && node['cdap']['skip_prerequisites'].to_s == 'true'
-  include_recipe 'cdap::prerequisites'
-end
-
-include_recipe 'cdap::repo'
-
-# add global CDAP_HOME environment variable
-file '/etc/profile.d/cdap_home.sh' do
-  content <<-EOS
-    export CDAP_HOME=/opt/cdap
-    export PATH=$PATH:$CDAP_HOME/bin
-  EOS
-  mode '0755'
-end
-
-package 'cdap' do
-  version node['cdap']['version']
-  action :install
-end
+# Installs prerequisites, setup repo, set CDAP_HOME, and install base package
+include_recipe 'cdap::base'
 
 if node['cdap'].key?('cdap_env') && node['cdap']['cdap_env'].key?('log_dir')
   cdap_log_dir =
