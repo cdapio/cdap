@@ -123,8 +123,8 @@ public class ApplicationClient {
    * specified artifact name and version.
    *
    * @param namespace the namespace to list applications from
-   * @param artifactName the name of the artifact to filter by. If null, no filtering will be done
-   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will be done
+   * @param artifactName the name of the artifact to filter by. If null, no filtering will be done.
+   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will be done.
    * @return list of {@link ApplicationRecord ApplicationRecords}.
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
@@ -142,8 +142,8 @@ public class ApplicationClient {
    * specified artifact name and version.
    *
    * @param namespace the namespace to list applications from
-   * @param artifactName the name of the artifact to filter by. If null, no filtering will be done
-   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will be done
+   * @param artifactName the name of the artifact to filter by. If null, no filtering will be done.
+   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will be done.
    * @return list of {@link ApplicationRecord ApplicationRecords}.
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
@@ -163,8 +163,8 @@ public class ApplicationClient {
    * the specified artifact names and the specified artifact version.
    *
    * @param namespace the namespace to list applications from
-   * @param artifactNames the set of artifact names to allow. If empty, no filtering will be done
-   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will be done
+   * @param artifactNames the set of artifact names to allow. If empty, no filtering will be done.
+   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will be done.
    * @return list of {@link ApplicationRecord ApplicationRecords}.
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
@@ -182,8 +182,8 @@ public class ApplicationClient {
    * the specified artifact names and the specified artifact version.
    *
    * @param namespace the namespace to list applications from
-   * @param artifactNames the set of artifact names to allow. If empty, no filtering will be done
-   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will be done
+   * @param artifactNames the set of artifact names to allow. If empty, no filtering will be done.
+   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will be done.
    * @return list of {@link ApplicationRecord ApplicationRecords}.
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
@@ -475,7 +475,7 @@ public class ApplicationClient {
   /**
    * Deploys an application.
    *
-   * @param jarFile jar file of the application to deploy
+   * @param jarFile JAR file of the application to deploy
    * @throws IOException if a network error occurred
    * @deprecated since 4.0.0. Use {@link #deploy(NamespaceId, File)} instead.
    */
@@ -487,7 +487,7 @@ public class ApplicationClient {
   /**
    * Deploys an application.
    *
-   * @param jarFile jar file of the application to deploy
+   * @param jarFile JAR file of the application to deploy
    * @throws IOException if a network error occurred
    */
   public void deploy(NamespaceId namespace, File jarFile) throws IOException, UnauthenticatedException {
@@ -499,7 +499,7 @@ public class ApplicationClient {
    * Deploys an application with a serialized application configuration string.
    *
    * @param namespace namespace to which the application should be deployed
-   * @param jarFile jar file of the application to deploy
+   * @param jarFile JAR file of the application to deploy
    * @param appConfig serialized application configuration
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
@@ -515,17 +515,36 @@ public class ApplicationClient {
    * Deploys an application with a serialized application configuration string.
    *
    * @param namespace namespace to which the application should be deployed
-   * @param jarFile jar file of the application to deploy
+   * @param jarFile JAR file of the application to deploy
    * @param appConfig serialized application configuration
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void deploy(NamespaceId namespace, File jarFile,
                      @Nullable String appConfig) throws IOException, UnauthenticatedException {
+    deploy(namespace, jarFile, appConfig, null);
+  }
+
+  /**
+   * Deploys an application with a serialized application configuration string and an owner.
+   *
+   * @param namespace namespace to which the application should be deployed
+   * @param jarFile JAR file of the application to deploy
+   * @param appConfig serialized application configuration
+   * @param ownerPrincipal the principal of application owner
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void deploy(NamespaceId namespace, File jarFile,
+                     @Nullable String appConfig,
+                     @Nullable String ownerPrincipal) throws IOException, UnauthenticatedException {
     Map<String, String> headers = new HashMap<>();
     headers.put("X-Archive-Name", jarFile.getName());
     if (appConfig != null) {
       headers.put("X-App-Config", appConfig);
+    }
+    if (ownerPrincipal != null) {
+      headers.put("X-Principal", ownerPrincipal);
     }
     deployApp(namespace, jarFile, headers);
   }
@@ -534,7 +553,7 @@ public class ApplicationClient {
    * Deploys an application with an application configuration object.
    *
    * @param namespace namespace to which the application should be deployed
-   * @param jarFile jar file of the application to deploy
+   * @param jarFile JAR file of the application to deploy
    * @param appConfig application configuration object
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
@@ -550,7 +569,7 @@ public class ApplicationClient {
    * Deploys an application with an application configuration object.
    *
    * @param namespace namespace to which the application should be deployed
-   * @param jarFile jar file of the application to deploy
+   * @param jarFile JAR file of the application to deploy
    * @param appConfig application configuration object
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
@@ -651,7 +670,7 @@ public class ApplicationClient {
   }
 
   /**
-   * Lists all programs of some type.
+   * Lists all programs of a type.
    *
    * @param programType type of the programs to list
    * @return list of {@link ProgramRecord}s
@@ -666,7 +685,7 @@ public class ApplicationClient {
   }
 
   /**
-   * Lists all programs of some type.
+   * Lists all programs of a type.
    *
    * @param programType type of the programs to list
    * @return list of {@link ProgramRecord}s
@@ -724,7 +743,7 @@ public class ApplicationClient {
   }
 
   /**
-   * Lists programs of some type belonging to an application.
+   * Lists programs of a type belonging to an application.
    *
    * @param app the application
    * @param programType type of the programs to list
@@ -741,7 +760,7 @@ public class ApplicationClient {
   }
 
   /**
-   * Lists programs of some type belonging to an application.
+   * Lists programs of a type belonging to an application.
    *
    * @param app the application
    * @param programType type of the programs to list
@@ -765,7 +784,7 @@ public class ApplicationClient {
   }
 
   /**
-   * Lists programs of some type belonging to an application.
+   * Lists programs of a type belonging to an application.
    *
    * @param app the application
    * @return Map of {@link ProgramType} to list of {@link ProgramRecord}s
@@ -781,7 +800,7 @@ public class ApplicationClient {
   }
 
   /**
-   * Lists programs of some type belonging to an application.
+   * Lists programs of a type belonging to an application.
    *
    * @param app the application
    * @return Map of {@link ProgramType} to list of {@link ProgramRecord}s
@@ -803,7 +822,7 @@ public class ApplicationClient {
   }
 
   /**
-   * Lists programs belonging to an application.
+   * Lists all programs belonging to an application.
    *
    * @param app the application
    * @return List of all {@link ProgramRecord}s
@@ -819,7 +838,7 @@ public class ApplicationClient {
   }
 
   /**
-   * Lists programs belonging to an application.
+   * Lists all programs belonging to an application.
    *
    * @param app the application
    * @return List of all {@link ProgramRecord}s

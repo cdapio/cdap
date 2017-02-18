@@ -91,7 +91,10 @@ public class CDAPOperationalStatsTest {
     Assert.assertEquals(1, transactions.getNumInProgressTransactions());
     Assert.assertEquals(1, transactions.getNumInvalidTransactions());
     Assert.assertEquals(1, transactions.getNumCommittingChangeSets());
-    Assert.assertEquals(0, transactions.getNumCommittedChangeSets());
+    // the entites.collect calls appLifecycleService.getApps which fetches the owner principal of the deployed
+    // app making the committed transaction 1 here. We assert for 1 or greater because we might add other such calls
+    // which will cause a transaction to be completed.
+    Assert.assertTrue(transactions.getNumCommittedChangeSets() >= 1);
     Assert.assertTrue(transactions.getVisibilityUpperBound() > TEST_START_TIME);
     Assert.assertTrue(transactions.getSnapshotTime() > TEST_START_TIME);
     Assert.assertTrue(transactions.getReadPointer() > TEST_START_TIME);
