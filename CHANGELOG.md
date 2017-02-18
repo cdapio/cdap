@@ -1,6 +1,12 @@
 cdap CHANGELOG
 ==============
 
+v2.28.5 (Feb 17, 2017)
+----------------------
+- Update SDK 4.0.1 checksum ( Issue #212 )
+- Update ark and krb5 dependencies ( Issue #213 )
+- Split base package install into its own recipe ( Issue #214 )
+
 v2.28.4 (Feb 16, 2017)
 ----------------------
 - Switch to using Chef::VERSION for cookbook restrictions ( Issue #207 )
