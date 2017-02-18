@@ -37,6 +37,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -54,6 +56,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
@@ -273,8 +276,16 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        runtimeStore.setStart(programId, runId.getId(), startTimeInSeconds, twillRunId,
-                              userArgs.asMap(), arguments.asMap());
+
+        final long finalStartTimeInSeconds = startTimeInSeconds;
+        Retries.supplyWithRetries(new Supplier<Void>() {
+          @Override
+          public Void get() {
+            runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId,
+                                  userArgs.asMap(), arguments.asMap());
+            return null;
+          }
+        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
       }
 
       @Override
@@ -285,16 +296,31 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
           // Service was killed
           runStatus = ProgramController.State.KILLED.getRunStatus();
         }
-        runtimeStore.setStop(programId, runId.getId(),
-                             TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), runStatus);
+
+        final ProgramRunStatus finalRunStatus = runStatus;
+        Retries.supplyWithRetries(new Supplier<Void>() {
+          @Override
+          public Void get() {
+            runtimeStore.setStop(programId, runId.getId(),
+                                 TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), finalRunStatus);
+            return null;
+          }
+        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
       }
 
       @Override
-      public void failed(Service.State from, @Nullable Throwable failure) {
+      public void failed(Service.State from, @Nullable final Throwable failure) {
         closeAll(closeables);
-        runtimeStore.setStop(programId, runId.getId(),
-                             TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                             ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
+
+        Retries.supplyWithRetries(new Supplier<Void>() {
+          @Override
+          public Void get() {
+            runtimeStore.setStop(programId, runId.getId(),
+                                 TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                 ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
+            return null;
+          }
+        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
       }
     };
   }
