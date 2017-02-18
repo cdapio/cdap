@@ -25,7 +25,6 @@ import {objectQuery} from 'services/helpers';
 import shortid from 'shortid';
 import T from 'i18n-react';
 import FastActionToMessage from 'services/fast-action-message-helper';
-require('./AppOverview.scss');
 import {createRouterPath} from 'react-router/LocationUtils';
 import capitalize from 'lodash/capitalize';
 

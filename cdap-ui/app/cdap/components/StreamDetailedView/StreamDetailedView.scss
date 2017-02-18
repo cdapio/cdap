@@ -15,18 +15,37 @@
  */
 
 .app-detailed-view {
-  .iframe-container {
-    height: calc(100% - 26px);
-  }
+  &.streams-deatiled-view {
+    .iframe-container {
+      height: 100%;
+    }
 
-  .properties-container {
-    height: calc(100% - 55px);
-    padding: 15px 10px;
-    overflow: auto;
+    .properties-container {
+      padding: 15px 10px;
+      overflow: auto;
 
-    .message-section {
-      padding: 0 10px;
-      margin-bottom: 15px;
+      .message-section {
+        padding: 0 10px;
+        margin-bottom: 15px;
+      }
+    }
+    .overview-meta-section {
+      .fast-actions-container {
+        align-items: flex-start;
+      }
+    }
+    .overview-tab {
+      .tab-content {
+        margin-top: 0;
+        overflow: hidden;
+        height: 100%;
+        .tab-pane {
+          > * {
+            height: 100%;
+            overflow: auto;
+          }
+        }
+      }
     }
   }
 }

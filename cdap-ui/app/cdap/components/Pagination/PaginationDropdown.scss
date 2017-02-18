@@ -13,7 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-.app-overview {
-  height: inherit;
+.pagination-dropdown {
+  cursor: pointer;
+  &.dropdown {
+    .dropdown-menu {
+      .dropdown-item {
+        cursor: pointer;
+        .dropdownItems {
+          .page-number {
+            line-height: 1;
+          }
+        }
+      }
+    }
+  }
 }

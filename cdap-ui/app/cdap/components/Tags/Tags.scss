@@ -18,6 +18,10 @@
   .btn {
     padding: 3px 5px;
     font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 
     &.plus-button-container {
       margin-left: 5px;

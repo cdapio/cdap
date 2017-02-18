@@ -107,14 +107,14 @@ features:
     accessToken: "Access Token: "
     close: Close
   AppDetailedView:
-    Title: Application - {appId}
+    Title: CDAP | Applications | {appId}
     History:
       emptyMessage: No Runs found.
   ConfirmationModal:
     confirmDefaultText: OK
     cancelDefaultText: Cancel
   EntityListView:
-    Title: CDAP - Home
+    Title: CDAP | Overview
     Info:
       title: Entities in Namespace
       subtitle:
@@ -237,6 +237,7 @@ features:
 
   Administration:
     Title: Administration
+    PageTitle: CDAP | Management
     Top:
       version-label: Version
       time-label: Uptime
@@ -541,9 +542,9 @@ features:
       fieldName: Field Name
       symbolName: Symbol Name
   StreamDetailedView:
-    Title: Stream - {streamId}
+    Title: CDAP | Stream | {streamId}
   DatasetDetailedView:
-    Title: Dataset - {datasetId}
+    Title: CDAP | Dataset | {datasetId}
   Wizard:
     ApplicationUpload:
       headerlabel: Upload Application

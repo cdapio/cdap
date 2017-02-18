@@ -33,12 +33,15 @@ $hovered-page-background-color: rgba(219, 219, 219, 1);
     .total-entities {
       font-weight: bold;
       font-size: 12px;
+      display: inline-block;
+      vertical-align: top;
     }
 
     .page-list {
       padding-left: 16px;
       list-style-type: none;
-      display: inline;
+      display: inline-block;
+      margin-bottom: 0;
 
       li {
         font-weight: bold;

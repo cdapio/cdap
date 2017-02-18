@@ -28,12 +28,17 @@
     </div>
   </div>
 
+  <div ng-if="!$state.params.iframe">
+    <cask-resource-center-button></cask-resource-center-button>
+  </div>
+
    <span class="try-star-search"
          ng-if="$state.params.searchQuery && $state.params.searchQuery[$state.params.searchQuery.length - 1] !== '*'">
     Didn't find what you are looking for? Try
     <a ui-sref="tracker.detail.result({ searchQuery: $state.params.searchQuery + '*' })"
        ui-sref-opts="{reload: true}">{{ $state.params.searchQuery }}*</a>
   </span>
+
 </div>
 
 <ui-view></ui-view>

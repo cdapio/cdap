@@ -15,7 +15,7 @@
  */
 
 import React, {PropTypes, Component} from 'react';
-import { Nav, NavItem, NavLink} from 'reactstrap';
+import { Nav, NavItem, NavLink, TabContent} from 'reactstrap';
 import ProgramTab from 'components/Overview/Tabs/ProgramTab';
 import DatasetTab from 'components/Overview/Tabs/DatasetTab';
 import HistoryTab from 'components/AppDetailedView/Tabs/HistoryTab';
@@ -72,26 +72,28 @@ export default class AppDetailedViewTab extends Component {
             </NavLink>
           </NavItem>
         </Nav>
-        <Match pattern={'/ns/:namespace/apps/:appId/'} render={() => {
-            return (
-              <ProgramTab entity={this.state.entity} />
-            );
-          }} />
-        <Match pattern={'/ns/:namespace/apps/:appId/programs'} render={() => {
-            return (
-              <ProgramTab entity={this.state.entity} />
-            );
-          }} />
-        <Match pattern={'/ns/:namespace/apps/:appId/datasets'} render={() => {
-            return (
-              <DatasetTab entity={this.state.entity} />
-            );
-          }} />
-        <Match pattern={'/ns/:namespace/apps/:appId/history'} render={() => {
-            return (
-              <HistoryTab entity={this.state.entity} />
-            );
-        }}/>
+        <TabContent>
+          <Match pattern={'/ns/:namespace/apps/:appId/'} render={() => {
+              return (
+                <ProgramTab entity={this.state.entity} />
+              );
+            }} />
+          <Match pattern={'/ns/:namespace/apps/:appId/programs'} render={() => {
+              return (
+                <ProgramTab entity={this.state.entity} />
+              );
+            }} />
+          <Match pattern={'/ns/:namespace/apps/:appId/datasets'} render={() => {
+              return (
+                <DatasetTab entity={this.state.entity} />
+              );
+            }} />
+          <Match pattern={'/ns/:namespace/apps/:appId/history'} render={() => {
+              return (
+                <HistoryTab entity={this.state.entity} />
+              );
+          }}/>
+        </TabContent>
       </div>
     );
   }

@@ -21,13 +21,11 @@
         <label class="heading">Data Dictionary</label>
       </div>
     </div>
+    <div ng-if="!$state.params.iframe">
+      <cask-resource-center-button></cask-resource-center-button>
+    </div>
   </div>
 </div>
-
-<div ng-if="!$state.params.iframe">
-  <cask-resource-center-button></cask-resource-center-button>
-</div>
-
 
 <div class="row">
   <div class="col-sm-12">

@@ -75,7 +75,7 @@ export default class MetadataDropdown extends Component {
     });
     return (
       <Dropdown
-        className="metadata-dropdown"
+        className={classnames("metadata-dropdown", {'active': location.pathname.indexOf('metadata') !== -1})}
         isOpen={this.state.toggleDropdown}
         toggle={this.toggleMetadataDropdown.bind(this)}
       >
