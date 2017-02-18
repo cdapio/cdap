@@ -39,7 +39,7 @@ public final class LogSamplers {
   /**
    * Returns a {@link LogSampler} that accepts once on every N calls.
    */
-  public static LogSampler limit(final int count) {
+  public static LogSampler onceEvery(final int count) {
     Preconditions.checkArgument(count > 0, "Count must be > 0");
     return new CountBasedLogSampler() {
       @Override

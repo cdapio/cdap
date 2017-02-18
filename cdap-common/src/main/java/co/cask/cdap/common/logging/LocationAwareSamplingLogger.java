@@ -440,7 +440,7 @@ final class LocationAwareSamplingLogger implements Logger, LocationAwareLogger {
           }
           break;
         default:
-          // This should happen. Just ignore it
+          // This shouldn't happen. Just ignore it
       }
       return;
     }
@@ -469,7 +469,7 @@ final class LocationAwareSamplingLogger implements Logger, LocationAwareLogger {
         logger.error(marker, message, arguments);
         break;
       default:
-        // This should happen. Just ignore it
+        // This shouldn't happen. Just ignore it
     }
   }
 }

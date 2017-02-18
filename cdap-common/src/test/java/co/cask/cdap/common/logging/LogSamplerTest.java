@@ -42,8 +42,8 @@ public class LogSamplerTest {
   private static final Logger LOG = LoggerFactory.getLogger(LogSamplerTest.class);
 
   @Test
-  public void testLimit() {
-    LogSampler sampler = LogSamplers.limit(10);
+  public void testOnceEvery() {
+    LogSampler sampler = LogSamplers.onceEvery(10);
     List<Integer> accepted = new ArrayList<>();
 
     for (int i = 0; i < 100; i++) {
@@ -122,7 +122,7 @@ public class LogSamplerTest {
 
   @Test
   public void testOnMessages() {
-    LogSampler sampler = LogSamplers.onMessages(LogSamplers.limit(3), "test1", "test5", "test8");
+    LogSampler sampler = LogSamplers.onMessages(LogSamplers.onceEvery(3), "test1", "test5", "test8");
     List<Integer> accepted = new ArrayList<>();
 
     for (int i = 0; i < 10; i++) {
@@ -137,7 +137,7 @@ public class LogSamplerTest {
 
   @Test
   public void testOnPatternFull() {
-    LogSampler sampler = LogSamplers.onPattern(LogSamplers.limit(4), Pattern.compile("test1\\d+"), true);
+    LogSampler sampler = LogSamplers.onPattern(LogSamplers.onceEvery(4), Pattern.compile("test1\\d+"), true);
     List<Integer> accepted = new ArrayList<>();
 
     for (int i = 5; i < 20; i++) {
@@ -152,7 +152,7 @@ public class LogSamplerTest {
 
   @Test
   public void testOnPatternPartial() {
-    LogSampler sampler = LogSamplers.onPattern(LogSamplers.limit(4), Pattern.compile("st1\\d+"), false);
+    LogSampler sampler = LogSamplers.onPattern(LogSamplers.onceEvery(4), Pattern.compile("st1\\d+"), false);
     List<Integer> accepted = new ArrayList<>();
 
     for (int i = 5; i < 20; i++) {
@@ -170,7 +170,7 @@ public class LogSamplerTest {
     List<Integer> accepted = new ArrayList<>();
 
     // Samples on TRACE or lower
-    runAcceptOnLogLevels(LogSamplers.onTrace(LogSamplers.limit(10)), accepted);
+    runAcceptOnLogLevels(LogSamplers.onTrace(LogSamplers.onceEvery(10)), accepted);
     Assert.assertEquals(Arrays.asList(
       0,                              // TRACE
       0, 1, 2, 3, 4, 5, 6, 7, 8, 9,   // DEBUG
@@ -182,7 +182,7 @@ public class LogSamplerTest {
     accepted.clear();
 
     // Samples on DEBUG or lower
-    runAcceptOnLogLevels(LogSamplers.onDebug(LogSamplers.limit(10)), accepted);
+    runAcceptOnLogLevels(LogSamplers.onDebug(LogSamplers.onceEvery(10)), accepted);
     Assert.assertEquals(Arrays.asList(
       0,                              // TRACE
       0,                              // DEBUG
@@ -194,7 +194,7 @@ public class LogSamplerTest {
     accepted.clear();
 
     // Samples on INFO or lower
-    runAcceptOnLogLevels(LogSamplers.onInfo(LogSamplers.limit(10)), accepted);
+    runAcceptOnLogLevels(LogSamplers.onInfo(LogSamplers.onceEvery(10)), accepted);
     Assert.assertEquals(Arrays.asList(
       0,                              // TRACE
       0,                              // DEBUG
@@ -207,7 +207,7 @@ public class LogSamplerTest {
     accepted.clear();
 
     // Samples on WARN or lower
-    runAcceptOnLogLevels(LogSamplers.onWarn(LogSamplers.limit(10)), accepted);
+    runAcceptOnLogLevels(LogSamplers.onWarn(LogSamplers.onceEvery(10)), accepted);
     Assert.assertEquals(Arrays.asList(
       0,                              // TRACE
       0,                              // DEBUG
@@ -220,7 +220,7 @@ public class LogSamplerTest {
     accepted.clear();
 
     // Samples on ERROR or lower
-    runAcceptOnLogLevels(LogSamplers.onError(LogSamplers.limit(10)), accepted);
+    runAcceptOnLogLevels(LogSamplers.onError(LogSamplers.onceEvery(10)), accepted);
     Assert.assertEquals(Arrays.asList(
       0,                              // TRACE
       0,                              // DEBUG
@@ -233,7 +233,7 @@ public class LogSamplerTest {
   @Test
   public void testAny() {
     // A sampler that accept once every 500 count, but also accept if time passed 200 milliseconds
-    LogSampler sampler = LogSamplers.any(LogSamplers.limit(500),
+    LogSampler sampler = LogSamplers.any(LogSamplers.onceEvery(500),
                                          LogSamplers.limitRate(200, new TimeProvider.IncrementalTimeProvider()));
     List<Integer> accepted = new ArrayList<>();
 
@@ -248,7 +248,7 @@ public class LogSamplerTest {
 
   @Test
   public void testAll() {
-    LogSampler sampler = LogSamplers.all(LogSamplers.limit(500),
+    LogSampler sampler = LogSamplers.all(LogSamplers.onceEvery(500),
                                          LogSamplers.limitRate(200, new TimeProvider.IncrementalTimeProvider()));
     List<Integer> accepted = new ArrayList<>();
 
@@ -266,7 +266,7 @@ public class LogSamplerTest {
     LogSampler sampler = LogSamplers.perMessage(new Supplier<LogSampler>() {
       @Override
       public LogSampler get() {
-        return LogSamplers.limit(3);
+        return LogSamplers.onceEvery(3);
       }
     });
 

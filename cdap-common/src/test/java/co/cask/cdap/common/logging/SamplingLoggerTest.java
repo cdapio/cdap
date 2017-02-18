@@ -46,7 +46,7 @@ public class SamplingLoggerTest {
   @Test
   public void testSamplingLogger() throws Exception {
     LoggerContext loggerContext = createLoggerContext("ALL", TestAppender.class.getName());
-    Logger logger = Loggers.sampling(loggerContext.getLogger("LoggerTest"), LogSamplers.limit(10));
+    Logger logger = Loggers.sampling(loggerContext.getLogger("LoggerTest"), LogSamplers.onceEvery(10));
 
     for (int i = 0; i < 100; i++) {
       logger.info("Testing " + i);
