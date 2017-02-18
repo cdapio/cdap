@@ -21,8 +21,6 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import com.google.common.base.Functions;
 import com.google.common.base.Objects;
@@ -37,7 +35,6 @@ import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -431,34 +428,30 @@ public final class Transactions {
   }
 
   /**
-   * Executes the given callable with a transaction.
+   * Executes the given callable with a transaction. Think twice before you call this. Usages of this method
+   * likely indicate poor exception handling.
+   *
    * @param transactional the {@link Transactional} used to submit the task
    * @param callable the task
    * @param <V> type of result
    * @return value returned by the given {@link TxCallable}.
-   * @throws ServiceUnavailableException when the transaction service is not running
-   * @throws RuntimeException for any other errors that occurs
+   * @throws RuntimeException for any errors that occur
    */
   public static <V> V executeUnchecked(Transactional transactional, final TxCallable<V> callable) {
     try {
       return execute(transactional, callable);
     } catch (TransactionFailureException e) {
       throw propagate(e);
-    } catch (RuntimeException e) {
-      Throwable t = e.getCause();
-      if (t != null && t instanceof TException) {
-        throw new ServiceUnavailableException(Constants.Service.TRANSACTION, e);
-      }
-      throw e;
     }
   }
 
   /**
-   * Executes the given runnable with a transaction.
+   * Executes the given runnable with a transaction. Think twice before you call this. Usages of this method
+   * likely indicate poor exception handling.
+   *
    * @param transactional the {@link Transactional} used to submit the task
    * @param runnable task
-   * @throws ServiceUnavailableException when the transaction service is not running
-   * @throws RuntimeException for any other errors that occurs
+   * @throws RuntimeException for errors that occur
    */
   public static void executeUnchecked(Transactional transactional, final TxRunnable runnable) {
     executeUnchecked(transactional, new TxCallable<Void>() {

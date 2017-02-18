@@ -24,6 +24,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
+import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -54,7 +55,8 @@ public class DatasetInstanceManager {
 
     Map<String, String> emptyArgs = Collections.emptyMap();
     this.datasetCache = new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
-                                                    txClientService, NamespaceId.SYSTEM, emptyArgs, null,
+                                                    new TransactionSystemClientAdapter(txClientService),
+                                                    NamespaceId.SYSTEM, emptyArgs, null,
                                                     ImmutableMap.of(
                                                       DatasetMetaTableUtil.INSTANCE_TABLE_NAME, emptyArgs
                                                     ));
