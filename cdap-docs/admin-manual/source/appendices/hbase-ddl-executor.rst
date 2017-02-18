@@ -17,110 +17,16 @@ The ``HBaseDDLExecutorImpl`` class performs the DDL operations on the local and 
 
 Interface
 =========
-Interface of ``HBaseDDLExecutor``::
+Interface of ``HBaseDDLExecutor``. Note that this is a *Beta* feature and subject to change without notice.
 
-  /**
-   * Interface providing the HBase DDL operations.
-   */
-  public interface HBaseDDLExecutor extends Closeable {
-    /**
-     * Initialize the {@link HBaseDDLExecutor}.
-     * @param context the context for the executor
-     */
-    void initialize(HBaseDDLExecutorContext context);
- 
-    /**
-     * Create the specified namespace if it does not exist.
-     *
-     * @param name the namespace to create
-     * @throws IOException if a remote or network exception occurs
-     */
-    boolean createNamespaceIfNotExists(String name) throws IOException;
- 
-    /**
-     * Delete the specified namespace if it exists.
-     *
-     * @param name the namespace to delete
-     * @throws IOException if a remote or network exception occurs
-     * @throws IllegalStateException if there are tables in the namespace
-     */
-    void deleteNamespaceIfExists(String name) throws IOException;
- 
-    /**
-     * Create the specified table if it does not exist.
-     *
-     * @param descriptor the descriptor for the table to create
-     * @param splitKeys the initial split keys for the table
-     * @throws IOException if a remote or network exception occurs
-     */
-    void createTableIfNotExists(TableDescriptor descriptor, @Nullable byte[][] splitKeys)
-      throws IOException;
- 
-    /**
-     * Enable the specified table if it is disabled.
-     *
-     * @param namespace the namespace of the table to enable
-     * @param name the name of the table to enable
-     * @throws IOException if a remote or network exception occurs
-     */
-    void enableTableIfDisabled(String namespace, String name) throws IOException;
- 
-    /**
-     * Disable the specified table if it is enabled.
-     *
-     * @param namespace the namespace of the table to disable
-     * @param name the name of the table to disable
-     * @throws IOException if a remote or network exception occurs
-     */
-    void disableTableIfEnabled(String namespace, String name) throws IOException;
- 
-    /**
-     * Modify the specified table. The table must be disabled.
-     *
-     * @param namespace the namespace of the table to modify
-     * @param name the name of the table to modify
-     * @param descriptor the descriptor for the table
-     * @throws IOException if a remote or network exception occurs
-     * @throws IllegalStateException if the specified table is not disabled
-     */
-    void modifyTable(String namespace, String name, TableDescriptor descriptor) throws IOException;
- 
-    /**
-     * Truncate the specified table. The table must be disabled.
-     *
-     * @param namespace the namespace of the table to truncate
-     * @param name the name of the table to truncate
-     * @throws IOException if a remote or network exception occurs
-     * @throws IllegalStateException if the specified table is not disabled
-     */
-    void truncateTable(String namespace, String name) throws IOException;
- 
-    /**
-     * Delete the table if it exists. The table must be disabled.
-     *
-     * @param namespace the namespace of the table to delete
-     * @param name the table to delete
-     * @throws IOException if a remote or network exception occurs
-     * @throws IllegalStateException if the specified table is not disabled
-     */
-    void deleteTableIfExists(String namespace, String name) throws IOException;
- 
-    /**
-     * Grant permissions on a table to users or groups.
-     *
-     * @param namespace the namespace of the table
-     * @param name the name of the table
-     * @param permissions A map from user name to the permissions for that user, given as a string containing
-     *                    only the characters 'a' (Admin), 'c' (Create), 'r' (Read), 'w' (Write), and 'x' (Execute).
-     * @throws IOException if anything goes wrong
-     */
-    void grantPermissions(String namespace, String name, Map<String, String> permissions) throws IOException;
-  }
+.. literalinclude:: /../../../cdap-hbase-spi/src/main/java/co/cask/cdap/spi/hbase/HBaseDDLExecutor.java
+   :language: java
+   :lines: 27-
 
 
 Implementation
 ==============
-Sample implementation of HBaseDDLExecutor::
+Sample implementation of ``HBaseDDLExecutor``, for HBase version 1.0.0-cdh5.5.1::
 
   /*
    * Copyright © 2017 Cask Data, Inc.
@@ -419,7 +325,9 @@ Sample implementation of HBaseDDLExecutor::
 
 POM File
 ========
-Corresponding ``pom.xml``::
+Corresponding ``pom.xml``. Configure the property ``hbase-client`` (currently ``1.0.0-cdh5.5.1``) below as appropriate:
+
+.. parsed-literal::
 
   <?xml version="1.0" encoding="UTF-8"?>
   <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -433,7 +341,7 @@ Corresponding ``pom.xml``::
  
     <name>HBase DDL executor</name>
     <properties>
-      <cdap.version>4.1.0-SNAPSHOT</cdap.version>
+      <cdap.version>|release|</cdap.version>
       <slf4j.version>1.7.5</slf4j.version>
     </properties>
  
