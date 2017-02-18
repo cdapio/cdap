@@ -195,6 +195,13 @@ public class LocalLogAppender extends LogAppender {
             event = eventQueue.take();
           }
         }
+
+        // If event is not null, it means this pipeline stopped in between
+        // the event was dequeue and before callAppenders.
+        // We need to append this event before returning.
+        if (event != null) {
+          callAppenders(event);
+        }
       } catch (InterruptedException e) {
         // Just ignore it. Not resetting the interrupt flag so that shutdown can operate without interruption.
       }
