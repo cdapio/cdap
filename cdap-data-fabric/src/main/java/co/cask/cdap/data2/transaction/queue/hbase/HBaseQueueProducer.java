@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.tephra.Transaction;
+import org.apache.tephra.util.TxUtils;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -47,10 +48,12 @@ public class HBaseQueueProducer extends AbstractQueueProducer implements Closeab
   private final byte[] queueRowPrefix;
   private final HTable hTable;
   private final List<byte[]> rollbackKeys;
+  private final long txMaxLifeTimeInMillis;
 
   public HBaseQueueProducer(HTable hTable, QueueName queueName,
                             QueueMetrics queueMetrics, HBaseQueueStrategy queueStrategy,
-                            Iterable<? extends ConsumerGroupConfig> consumerGroupConfigs) {
+                            Iterable<? extends ConsumerGroupConfig> consumerGroupConfigs,
+                            long txMaxLifeTimeInMillis) {
     super(queueMetrics, queueName);
     this.queueStrategy = queueStrategy;
     // Make sure only one config per consumer group
@@ -67,6 +70,7 @@ public class HBaseQueueProducer extends AbstractQueueProducer implements Closeab
     this.queueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
     this.rollbackKeys = Lists.newArrayList();
     this.hTable = hTable;
+    this.txMaxLifeTimeInMillis = txMaxLifeTimeInMillis;
   }
 
   @Override
@@ -90,6 +94,7 @@ public class HBaseQueueProducer extends AbstractQueueProducer implements Closeab
 
     List<byte[]> rowKeys = Lists.newArrayList();
     long writePointer = transaction.getWritePointer();
+    ensureValidTxLifetime(writePointer);
     for (QueueEntry entry : entries) {
       rowKeys.clear();
       queueStrategy.getRowKeys(consumerGroupConfigs, entry, queueRowPrefix, writePointer, count, rowKeys);
@@ -101,7 +106,6 @@ public class HBaseQueueProducer extends AbstractQueueProducer implements Closeab
         Put put = new Put(rowKey);
         put.add(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.DATA_COLUMN, entry.getData());
         put.add(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.META_COLUMN, metaData);
-
         puts.add(put);
 
         bytes += entry.getData().length;
@@ -129,5 +133,14 @@ public class HBaseQueueProducer extends AbstractQueueProducer implements Closeab
     }
     hTable.delete(deletes);
     hTable.flushCommits();
+  }
+
+  private void ensureValidTxLifetime(long transactionWritePointer) throws IOException {
+    long txTimestamp = TxUtils.getTimestamp(transactionWritePointer);
+    boolean validLifetime = (txTimestamp + txMaxLifeTimeInMillis) > System.currentTimeMillis();
+    if (!validLifetime) {
+      throw new IOException(String.format("Transaction %s has exceeded max lifetime %s ms",
+                                          transactionWritePointer, txMaxLifeTimeInMillis));
+    }
   }
 }

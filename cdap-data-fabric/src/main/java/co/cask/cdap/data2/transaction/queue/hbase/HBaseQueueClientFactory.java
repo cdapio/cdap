@@ -16,6 +16,7 @@
 package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.queue.ConsumerConfig;
@@ -57,6 +58,7 @@ import java.io.IOException;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Factory for creating HBase queue producer and consumer instances.
@@ -74,6 +76,7 @@ public class HBaseQueueClientFactory implements QueueClientFactory, ProgramConte
   private final HBaseQueueUtil queueUtil;
   private final HBaseTableUtil hBaseTableUtil;
   private final TransactionExecutorFactory txExecutorFactory;
+  private final long txMaxLifeTimeInMillis;
 
   @Inject
   public HBaseQueueClientFactory(CConfiguration cConf, Configuration hConf, HBaseTableUtil hBaseTableUtil,
@@ -84,6 +87,8 @@ public class HBaseQueueClientFactory implements QueueClientFactory, ProgramConte
     this.queueUtil = new HBaseQueueUtilFactory().get();
     this.hBaseTableUtil = hBaseTableUtil;
     this.txExecutorFactory = txExecutorFactory;
+    this.txMaxLifeTimeInMillis = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tephra.CFG_TX_MAX_LIFETIME,
+                                                                         Constants.Tephra.DEFAULT_TX_MAX_LIFETIME));
   }
 
   @Override
@@ -220,7 +225,7 @@ public class HBaseQueueClientFactory implements QueueClientFactory, ProgramConte
   private HBaseQueueProducer createProducer(HTable hTable, QueueName queueName, QueueMetrics queueMetrics,
                                             HBaseQueueStrategy queueStrategy,
                                             Iterable<? extends ConsumerGroupConfig> groupConfigs) throws IOException {
-    return new HBaseQueueProducer(hTable, queueName, queueMetrics, queueStrategy, groupConfigs);
+    return new HBaseQueueProducer(hTable, queueName, queueMetrics, queueStrategy, groupConfigs, txMaxLifeTimeInMillis);
   }
 
   /**

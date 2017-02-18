@@ -18,6 +18,7 @@
 
 package org.apache.tephra;
 
+import co.cask.cdap.common.conf.Constants;
 import org.apache.tephra.snapshot.DefaultSnapshotCodec;
 import org.apache.tephra.snapshot.SnapshotCodecV2;
 import org.apache.tephra.snapshot.SnapshotCodecV3;
@@ -161,11 +162,11 @@ public class TxConstants {
     /**
      * The maximum time in seconds that a transaction can be used for data writes.
      */
-    public static final String CFG_TX_MAX_LIFETIME = "data.tx.max.lifetime";
+    public static final String CFG_TX_MAX_LIFETIME = Constants.Tephra.CFG_TX_MAX_LIFETIME;
     /**
      * The default value for the maximum transaction lifetime.
      */
-    public static final int DEFAULT_TX_MAX_LIFETIME = (int) TimeUnit.HOURS.toSeconds(25);
+    public static final int DEFAULT_TX_MAX_LIFETIME = Constants.Tephra.DEFAULT_TX_MAX_LIFETIME;
     /** The frequency (in seconds) to perform periodic snapshots, or 0 for no periodic snapshots. */
     public static final String CFG_TX_SNAPSHOT_INTERVAL = "data.tx.snapshot.interval";
     /** Default value for frequency of periodic snapshots of transaction state. */

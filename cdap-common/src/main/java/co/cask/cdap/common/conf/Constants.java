@@ -1194,6 +1194,21 @@ public final class Constants {
     public static final String HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES = "cdap.messaging.table.prefix.num.bytes";
   }
 
+  // TODO: Remove these once CDAP-8678 when is fixed
+  /**
+   * Constants introduced in Tephra 0.11.0.
+   */
+  public static final class Tephra {
+    /**
+     * The maximum time in seconds that a transaction can be used for data writes.
+     */
+    public static final String CFG_TX_MAX_LIFETIME = "data.tx.max.lifetime";
+    /**
+     * The default value for the maximum transaction lifetime.
+     */
+    public static final int DEFAULT_TX_MAX_LIFETIME = (int) TimeUnit.HOURS.toSeconds(25);
+  }
+
   /**
    * Constants for operational stats
    */
