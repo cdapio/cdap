@@ -18,6 +18,7 @@ package co.cask.cdap.logging.plugins;
 
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.util.StatusPrinter;
+import co.cask.cdap.api.logging.AppenderContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -37,7 +38,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
-import co.cask.cdap.logging.framework.AppenderContext;
 import co.cask.cdap.logging.framework.LocalAppenderContext;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;

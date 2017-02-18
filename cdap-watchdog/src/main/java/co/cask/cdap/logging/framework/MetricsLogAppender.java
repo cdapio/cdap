@@ -19,6 +19,7 @@ package co.cask.cdap.logging.framework;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.AppenderBase;
+import co.cask.cdap.api.logging.AppenderContext;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.common.conf.Constants;

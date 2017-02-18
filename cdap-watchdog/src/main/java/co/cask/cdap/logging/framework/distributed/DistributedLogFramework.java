@@ -16,13 +16,13 @@
 
 package co.cask.cdap.logging.framework.distributed;
 
+import co.cask.cdap.api.logging.AppenderContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.resource.ResourceBalancerService;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.logging.framework.AppenderContext;
 import co.cask.cdap.logging.framework.LogPipelineLoader;
 import co.cask.cdap.logging.framework.LogPipelineSpecification;
 import co.cask.cdap.logging.meta.CheckpointManagerFactory;
