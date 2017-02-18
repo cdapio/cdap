@@ -15,10 +15,11 @@
  */
 
 class LogsAppHomeController {
-  constructor($state, LogViewerStore, $scope) {
+  constructor($state, LogViewerStore, $scope, moment) {
     'ngInject';
 
     this.LogViewerStore = LogViewerStore;
+    this.moment = moment;
 
     let {
       namespace,
@@ -47,6 +48,9 @@ class LogsAppHomeController {
     this.startTime = statusInfo.startTime;
     this.endTime = statusInfo.endTime;
     this.status = statusInfo.status;
+    if (document.title.indexOf('started at') === -1 && this.startTime) {
+      document.title = document.title + ' (started at ' + this.moment.utc(this.startTime * 1000).format('MM/DD/YYYY HH:mm:ss')+ ' )';
+    }
   }
 
   checkValidQueryParams() {

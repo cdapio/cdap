@@ -22,6 +22,7 @@ import HistoryTab from 'components/AppDetailedView/Tabs/HistoryTab';
 import isNil from 'lodash/isNil';
 import Match from 'react-router/Match';
 import Link from 'react-router/Link';
+import T from 'i18n-react';
 
 export default class AppDetailedViewTab extends Component {
   constructor(props) {
@@ -51,7 +52,7 @@ export default class AppDetailedViewTab extends Component {
                    return location.pathname.match(basepath);
                 }}
               >
-                Programs ({this.state.entity.programs.length})
+                {T.translate('features.AppDetailedView.Tabs.programsLabel')} ({this.state.entity.programs.length})
               </Link>
             </NavLink>
           </NavItem>
@@ -60,7 +61,9 @@ export default class AppDetailedViewTab extends Component {
               <Link
                 to={`/ns/${this.props.params.namespace}/apps/${this.props.params.appId}/datasets`}
                 activeClassName="active"
-              >Datasets ({this.state.entity.datasets.length})</Link>
+              >
+                {T.translate('features.AppDetailedView.Tabs.datasetsLabel')} ({this.state.entity.datasets.length})
+              </Link>
             </NavLink>
           </NavItem>
           <NavItem>
@@ -68,7 +71,9 @@ export default class AppDetailedViewTab extends Component {
               <Link
                 to={`/ns/${this.props.params.namespace}/apps/${this.props.params.appId}/history`}
                 activeClassName="active"
-              >History</Link>
+              >
+                {T.translate('features.AppDetailedView.Tabs.historyLabel')}
+              </Link>
             </NavLink>
           </NavItem>
         </Nav>
