@@ -20,6 +20,9 @@ configured Hadoop, HBase, and Hive (plus an optional Spark client) `MapR Converg
 Platform <https://www.mapr.com>`__ cluster needs to be available for the node(s) where CDAP
 will run.
 
+If you are installing CDAP with the intention of using *replication,* see these
+instructions on :ref:`CDAP Replication <installation-replication>` *before* installing or starting CDAP.
+
 If colocating CDAP on cluster hosts with actual services, such as the *MapR CLDB*, *YARN
 ResourceManager*, or *HBase Master*, then the client configurations will already be in place.
 
