@@ -104,18 +104,6 @@ CDAP capabilities include *CDAP Pipelines* and *Metadata Management*.
   - |dev-man-at-black|_ Adding a custom logback, best practices for CDAP development,
     class loading in CDAP, configuring program resources
 
-.. |pipelines-black| replace:: **Pipelines:**
-.. _pipelines-black: pipelines/index.html
-
-- |pipelines-black|_ Creating data pipelines without writing code, including details on
-  developing and packaging custom plugins
-
-.. |metadata-management-black| replace:: **Metadata Management:**
-.. _metadata-management-black: metadata-management/index.html
-
-- |metadata-management-black|_ A CDAP capability that captures metadata for datasets, streams, and
-  stream views
-
 
 .. |admin-manual| replace:: **Administration Manual:**
 .. _admin-manual: admin-manual/index.html
