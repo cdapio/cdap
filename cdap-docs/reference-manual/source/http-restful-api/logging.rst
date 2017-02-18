@@ -168,11 +168,11 @@ Changing Program Log Levels
 Log levels can be set for a particular run of a program. Once changed, they can be reset back to what
 they started with by using the :ref:`reset endpoint <http-restful-api-logging-resetting>` shown below.
 
-**Note:** The log levels can only be changed for programs that are running under CDAP Distributed mode.
+**Note:** The log levels can only be changed for programs that are running under Distributed CDAP.
 
 Setting Program Log Levels
 --------------------------
-To set the log levels of a program run at runtime under CDAP Distributed mode, submit an HTTP PUT request::
+To set the log levels of a program run at runtime under Distributed CDAP, submit an HTTP PUT request::
 
   PUT /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/loglevels
 
@@ -228,7 +228,7 @@ Resetting Program Log Levels
 ----------------------------
 Resetting the log levels will change the log levels back to what they were when the program was started.
 
-To reset the log levels of a program run at runtime under CDAP Distributed mode, submit an HTTP PUT request::
+To reset the log levels of a program run at runtime under Distributed CDAP mode, submit an HTTP PUT request::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/resetloglevels
 

@@ -77,7 +77,7 @@ started correctly.
 
      $ docker pull caskdata/cdap-standalone:|release|
 
-#. Start the *CDAP Standalone* Docker container with:
+#. Start the *Standalone CDAP* Docker container with:
 
    .. tabbed-parsed-literal::
      :tabs: "Linux or Mac OS X",Windows
@@ -90,7 +90,7 @@ started correctly.
      
    This will start the container (in the background), name it ``cdap-sdk``, and set the proxying of ports.
 
-#. Start the *CDAP Standalone Docker container* with:
+#. Start the *Standalone CDAP Docker container* with:
 
    .. tabbed-parsed-literal::
      :tabs: "Linux or Mac OS X",Windows

@@ -46,7 +46,7 @@ Bug Fixes
 - :cask-issue:`CDAP-7694` - Fixed an issue where the CDAP service scripts could cause a
   terminal session to not echo characters.
 
-- :cask-issue:`CDAP-7992` - The CDAP Security service under CDAP Standalone is no longer
+- :cask-issue:`CDAP-7992` - The CDAP Security service under Standalone CDAP is no longer
   forced to bind to localhost.
 
 - :cask-issue:`CDAP-8000` - To avoid transaction timeouts, log cleanup is now done in
@@ -862,10 +862,10 @@ Known Issues
   in favor of the new property. If you don't, your custom value will be replaced with the
   default value.
 
-- :cask-issue:`CDAP-7608` - When running in CDAP Standalone, the Cask Hydrator plugin
+- :cask-issue:`CDAP-7608` - When running in Standalone CDAP, the Cask Hydrator plugin
   NaiveBayesTrainer has a *permgen* memory leak that leads to an out-of-memory error if
   the plugin is repeatedly used a number of times, as few as six runs. The only workaround
-  is to reset the memory by restarting CDAP Standalone.
+  is to reset the memory by restarting Standalone CDAP.
 
 Improvements
 ------------
@@ -1439,7 +1439,7 @@ Improvements
 - :cask-issue:`CDAP-6363` - Provided service dependencies for Ambari (requires Ambari
   2.2+).
 
-- :cask-issue:`CDAP-6384` - Updated the CDAP Standalone VM version of IntelliJ IDE to
+- :cask-issue:`CDAP-6384` - Updated the Standalone CDAP VM version of IntelliJ IDE to
   2016.1.3.
 
 - :cask-issue:`CDAP-6573` - Added a tool that allows bringing Hive in-sync with the
@@ -1779,12 +1779,12 @@ Known Issues
   the fork are still running. It becomes consistent after the join.
 
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  When running in CDAP Standalone mode, if a MapReduce job fails repeatedly, then the SDK
+  When running in Standalone CDAP, if a MapReduce job fails repeatedly, then the SDK
   hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
   this point.
 
 - `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
-  For Microsoft Windows, the CDAP Standalone scripts can fail when used with a JAVA_HOME
+  For Microsoft Windows, the Standalone CDAP scripts can fail when used with a JAVA_HOME
   that is defined as a path with spaces in it. A workaround is to use a definition of
   JAVA_HOME that does not include spaces, such as ``C:\PROGRA~1\Java\jdk1.7.0_79\bin`` or
   ``C:\ProgramData\Oracle\Java\javapath``.
@@ -2167,12 +2167,12 @@ Known Issues
   the fork are still running. It becomes consistent after the join.
 
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  When running in CDAP Standalone mode, if a MapReduce job fails repeatedly, then the SDK
+  When running in Standalone CDAP, if a MapReduce job fails repeatedly, then the SDK
   hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
   this point.
 
 - `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
-  For Microsoft Windows, the CDAP Standalone scripts can fail when used with a JAVA_HOME
+  For Microsoft Windows, the Standalone CDAP scripts can fail when used with a JAVA_HOME
   that is defined as a path with spaces in it. A workaround is to use a definition of
   JAVA_HOME that does not include spaces, such as ``C:\PROGRA~1\Java\jdk1.7.0_79\bin`` or
   ``C:\ProgramData\Oracle\Java\javapath``.
@@ -2437,12 +2437,12 @@ Known Issues
   the fork are still running. It becomes consistent after the join.
 
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  When running in CDAP Standalone mode, if a MapReduce job fails repeatedly, then the SDK
+  When running in Standalone CDAP, mode, if a MapReduce job fails repeatedly, then the SDK
   hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
   this point.
 
 - `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
-  For Microsoft Windows, the CDAP Standalone scripts can fail when used with a JAVA_HOME
+  For Microsoft Windows, the Standalone CDAP scripts can fail when used with a JAVA_HOME
   that is defined as a path with spaces in it. A workaround is to use a definition of
   JAVA_HOME that does not include spaces, such as ``C:\PROGRA~1\Java\jdk1.7.0_79\bin`` or
   ``C:\ProgramData\Oracle\Java\javapath``.
@@ -2781,12 +2781,12 @@ Known Issues
   the fork are still running. It becomes consistent after the join.
 
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  When running in CDAP Standalone mode, if a MapReduce job fails repeatedly, then the SDK
+  When running in Standalone CDAP, if a MapReduce job fails repeatedly, then the SDK
   hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
   this point.
 
 - `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
-  For Microsoft Windows, the CDAP Standalone scripts can fail when used with a JAVA_HOME
+  For Microsoft Windows, the Standalone CDAP scripts can fail when used with a JAVA_HOME
   that is defined as a path with spaces in it. A workaround is to use a definition of
   JAVA_HOME that does not include spaces, such as ``C:\PROGRA~1\Java\jdk1.7.0_79\bin`` or
   ``C:\ProgramData\Oracle\Java\javapath``.
@@ -2902,12 +2902,12 @@ Known Issues
   the fork are still running. It becomes consistent after the join.
 
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  When running in CDAP Standalone mode, if a MapReduce job fails repeatedly, then the SDK
+  When running in Standalone CDAP, if a MapReduce job fails repeatedly, then the SDK
   hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
   this point.
 
 - `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
-  For Microsoft Windows, the CDAP Standalone scripts can fail when used with a JAVA_HOME
+  For Microsoft Windows, the Standalone CDAP scripts can fail when used with a JAVA_HOME
   that is defined as a path with spaces in it. A workaround is to use a definition of
   JAVA_HOME that does not include spaces, such as ``C:\PROGRA~1\Java\jdk1.7.0_79\bin`` or
   ``C:\ProgramData\Oracle\Java\javapath``.
@@ -3119,7 +3119,7 @@ Bug Fixes
   Fixed a problem where failure of a spark node would cause a workflow to restart indefinitely.
   
 - `CDAP-3073 <https://issues.cask.co/browse/CDAP-3073>`__ -
-  Fixed an issue with the CDAP standalone process periodically crashing with Out-of-Memory
+  Fixed an issue with the Standalone CDAP process periodically crashing with Out-of-Memory
   errors when writing to an Oracle table.
   
 - `CDAP-3101 <https://issues.cask.co/browse/CDAP-3101>`__ -
@@ -3147,7 +3147,7 @@ Bug Fixes
   Fixed a problem in the CDAP UI with scrolling on the namespaces dropdown on certain pages.
   
 - `CDAP-3261 <https://issues.cask.co/browse/CDAP-3261>`__ -
-  Fixed a problem on CDAP distributed mode with the serializing of the metadata artifact
+  Fixed a problem on Distributed CDAP with the serializing of the metadata artifact
   causing a stack overflow.
   
 - `CDAP-3305 <https://issues.cask.co/browse/CDAP-3305>`__ -
@@ -3180,7 +3180,7 @@ Bug Fixes
   
 - `CDAP-3386 <https://issues.cask.co/browse/CDAP-3386>`__ -
   Fixed a problem with the Spark classes not being found when running a Spark program
-  through a Workflow in CDAP Distributed mode on HDP 2.2.
+  through a Workflow in Distributed CDAP on HDP 2.2.
   
 - `CDAP-3394 <https://issues.cask.co/browse/CDAP-3394>`__ -
   Fixed a problem with the deployment of applications through the CDAP UI.
@@ -3380,12 +3380,12 @@ Known Issues
   the fork are still running. It becomes consistent after the join.
 
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  When running in CDAP Standalone mode, if a MapReduce job fails repeatedly, then the SDK
+  When running in Standalone CDAP, if a MapReduce job fails repeatedly, then the SDK
   hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
   this point.
 
 - `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
-  For Microsoft Windows, the CDAP Standalone scripts can fail when used with a JAVA_HOME
+  For Microsoft Windows, the Standalone CDAP scripts can fail when used with a JAVA_HOME
   that is defined as a path with spaces in it. A workaround is to use a definition of
   JAVA_HOME that does not include spaces, such as ``C:\PROGRA~1\Java\jdk1.7.0_79\bin`` or
   ``C:\ProgramData\Oracle\Java\javapath``.
@@ -4069,7 +4069,7 @@ Bug Fixes
   reporting two writes each.
 
 - `CDAP-2821 <https://issues.cask.co/browse/CDAP-2821>`__ -
-  Fixed a problem with a Spark native library linkage error causing CDAP standalone to stop.
+  Fixed a problem with a Spark native library linkage error causing Standalone CDAP to stop.
 
 - `CDAP-2823 <https://issues.cask.co/browse/CDAP-2823>`__ -
   Fixed a problem with the conversion from Avro and to Avro not taking into account nested records.
@@ -4450,7 +4450,7 @@ Known Issues
   Large MapReduce jobs can cause excessive logging in the CDAP logs. 
   
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  When running in CDAP Standalone mode, if a MapReduce job fails repeatedly, then the SDK
+  When running in Standalone CDAP, if a MapReduce job fails repeatedly, then the SDK
   hits an out-of-memory exception due to ``perm gen``. The Standalone needs restarting at
   this point.
 
@@ -4556,7 +4556,7 @@ Bug Fixes
   configuration for Database Sources and Sinks
   (`CDAP-2453 <https://issues.cask.co/browse/CDAP-2453>`__).
 
-- Fixed a problem in CDAP Distributed where the status of running program always returns 
+- Fixed a problem in Distributed CDAP where the status of running program always returns 
   as "STOPPED" when the CDAP Master is restarted
   (`CDAP-2489 <https://issues.cask.co/browse/CDAP-2489>`__).
   
@@ -4640,7 +4640,7 @@ Bug Fixes
   
 **CDAP SDK Standalone**
 
-- Updated the messages displayed when starting the CDAP Standalone SDK as to components 
+- Updated the messages displayed when starting the Standalone CDAP SDK as to components 
   and the JVM required (`CDAP-2445 <https://issues.cask.co/browse/CDAP-2445>`__).
   
 - Fixed a problem with the creation of the default namespace upon starting the CDAP SDK

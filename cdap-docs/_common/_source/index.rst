@@ -245,11 +245,11 @@ CDAP capabilities include *CDAP Pipelines* and *Metadata Management*.
 .. |faqs-s-black| replace:: `Startup`
 .. _faqs-s-black: faqs/cdap.html
 
+.. |faqs-cp-black| replace:: `CDAP Pipelines`
+.. _faqs-cp-black: faqs/cdap-pipelines.html
+
 .. |faqs-cm-black| replace:: `Cloudera Manager`
 .. _faqs-cm-black: faqs/cloudera-manager.html
-
-.. |faqs-h-black| replace:: `Hydrator`
-.. _faqs-h-black: faqs/hydrator.html
 
 .. |faqs-ar-black| replace:: `Additional Resources:`
 .. _faqs-ar-black: faqs/index.html#additional-resources
@@ -259,8 +259,8 @@ CDAP capabilities include *CDAP Pipelines* and *Metadata Management*.
 
   - |faqs-gc-black|_
   - |faqs-ci-black|_ and |faqs-s-black|_ 
+  - |faqs-cp-black|_ 
   - |faqs-cm-black|_
-  - |faqs-h-black|_ 
   - |faqs-ar-black|_ Other resources for solving problems
   
 ..   - **Applications** 

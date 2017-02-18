@@ -15,10 +15,10 @@ To use the **Virtual Machine image**:
 
 - Download and install either `Oracle VirtualBox <https://www.virtualbox.org>`__ or
   `VMWare <http://www.vmware.com/products/player>`__ player to your environment.
-- Download the CDAP Standalone Virtual Machine (*Standalone VM*) at `<http://cask.co/downloads/#cdap>`__.
+- Download the Standalone CDAP Virtual Machine (*Standalone VM*) at `<http://cask.co/downloads/#cdap>`__.
 - Import the downloaded ``.ova`` file into either the VirtualBox or VMWare Player.
 
-The CDAP Standalone Virtual Machine is configured with the recommended settings for Standalone CDAP:
+The Standalone CDAP Virtual Machine is configured with the recommended settings for Standalone CDAP:
 
 - 4 GB of RAM
 - Ubuntu Desktop Linux
