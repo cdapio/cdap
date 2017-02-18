@@ -110,10 +110,14 @@ features:
     Title: CDAP | Applications | {appId}
     History:
       emptyMessage: No Runs found.
+      nameLabel: Program Name
+      startLabel: Start Time
+      runIDLabel: Run ID
+      statusLabel: Status
     Tabs:
       programsLabel: Programs
       datasetsLabel: Datasets
-      historyLabel: Runs
+      historyLabel: Program Runs
       propertiesLabel: Properties
 
   AuthorizationMessage:
@@ -863,7 +867,7 @@ features:
       readsLabel: Reads
       writesLabel: Writes
       eventsLabel: Events
-      sizeLabel: Size
+      sizeLabel: Size(MB)
     ProgramTable:
       lastStartedLabel: Last Started
       statusLabel: Status

@@ -16,24 +16,39 @@
 
 @import '../../../styles/variables.scss';
 
+$border-color: #bbbbbb;
+
 .history-tab {
   padding: 10px 20px;
-  overflow-y: hidden;
   height: 100%;
   overflow-y: auto;
 
-  &.table-bordered {
-    width: calc(100% - 20px);
-    margin: 10px;
-  }
-
   table {
-    tr th,
-    tr td {
-      border-color: $custom_table-border-color;
-    }
-    a.btn.btn-link {
-      color: #4f5050;
+    border: 1px solid $border-color;
+
+    tr {
+      th,
+      td {
+        border-left: 0;
+        border-right: 0;
+        border-top: 0;
+        border-bottom: 1px solid $border-color;
+        padding-top: 0;
+        padding-bottom: 0;
+        vertical-align: middle;
+      }
+
+      th {
+        line-height: 30px;
+      }
+
+      td {
+        line-height: 40px;
+
+        a.btn.btn-link {
+          color: #4f5050;
+        }
+      }
     }
   }
 }
