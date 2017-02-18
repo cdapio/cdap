@@ -79,8 +79,7 @@ public class ArtifactInspectorTest {
     try (CloseableClassLoader artifactClassLoader =
            classLoaderFactory.createClassLoader(
              artifactLocation, new EntityImpersonator(artifactId.toEntityId(),
-                                                      new DefaultImpersonator(CConfiguration.create(),
-                                                                                  null, null)))) {
+                                                      new DefaultImpersonator(CConfiguration.create(), null)))) {
       artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader);
     }
   }
@@ -97,8 +96,7 @@ public class ArtifactInspectorTest {
     try (CloseableClassLoader artifactClassLoader =
            classLoaderFactory.createClassLoader(
              artifactLocation, new EntityImpersonator(artifactId.toEntityId(),
-                                                      new DefaultImpersonator(CConfiguration.create(),
-                                                                                  null, null)))) {
+                                                      new DefaultImpersonator(CConfiguration.create(), null)))) {
 
       ArtifactClasses classes = artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader);
 

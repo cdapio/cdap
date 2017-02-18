@@ -92,14 +92,12 @@ public interface OwnerAdmin {
    * one is present else returns null.
    * </p>
    * @param entityId the {@link EntityId} whose owner principal information needs to be retrieved
-   * @param impersonatedOpType the type of operation which is being impersonated
    * @return {@link ImpersonationInfo} of the effective owner for the given entity.
    * @throws IOException if  failed to get the store
    * @throws IllegalArgumentException if the given entity is not of supported type.
    */
   @Nullable
-  ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId,
-                                         ImpersonatedOpType impersonatedOpType) throws IOException;
+  ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) throws IOException;
 
   /**
    * Checks if owner information exists or not

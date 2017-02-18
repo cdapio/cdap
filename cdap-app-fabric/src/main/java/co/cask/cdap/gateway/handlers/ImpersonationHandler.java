@@ -17,7 +17,11 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.kerberos.ImpersonationInfo;
+import co.cask.cdap.common.kerberos.ImpersonationRequest;
+import co.cask.cdap.common.kerberos.PrincipalCredentials;
+import co.cask.cdap.common.kerberos.UGIWithPrincipal;
+import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import co.cask.cdap.security.impersonation.UGIProvider;
@@ -25,9 +29,9 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.Credentials;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.SecureStore;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -53,7 +57,9 @@ import javax.ws.rs.Path;
 public class ImpersonationHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(ImpersonationHandler.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(NamespacedEntityId.class, new EntityIdTypeAdapter())
+    .create();
 
   private final UGIProvider ugiProvider;
   private final TokenSecureStoreUpdater tokenSecureStoreUpdater;
@@ -74,10 +80,10 @@ public class ImpersonationHandler extends AbstractHttpHandler {
     if (requestContent == null) {
       throw new BadRequestException("Request body is empty.");
     }
-    ImpersonationInfo impersonationInfo = GSON.fromJson(requestContent, ImpersonationInfo.class);
-    LOG.info("Credentials for {}", impersonationInfo);
-    UserGroupInformation ugi = ugiProvider.getConfiguredUGI(impersonationInfo);
-    Credentials credentials = ImpersonationUtils.doAs(ugi, new Callable<Credentials>() {
+    ImpersonationRequest impersonationRequest = GSON.fromJson(requestContent, ImpersonationRequest.class);
+    LOG.info("Fetching credentials for {}", impersonationRequest);
+    UGIWithPrincipal ugiWithPrincipal = ugiProvider.getConfiguredUGI(impersonationRequest);
+    Credentials credentials = ImpersonationUtils.doAs(ugiWithPrincipal.getUGI(), new Callable<Credentials>() {
       @Override
       public Credentials call() throws Exception {
         SecureStore update = tokenSecureStoreUpdater.update();
@@ -98,10 +104,12 @@ public class ImpersonationHandler extends AbstractHttpHandler {
         credentialsFile.getOutputStream("600")))) {
         credentials.writeTokenStorageToStream(os);
       }
-      LOG.debug("Wrote credentials for user {} to {}", ugi.getUserName(), credentialsFile);
-      responder.sendString(HttpResponseStatus.OK, credentialsFile.toURI().toString());
+      LOG.debug("Wrote credentials for user {} to {}", ugiWithPrincipal.getPrincipal(), credentialsFile);
+      PrincipalCredentials principalCredentials = new PrincipalCredentials(ugiWithPrincipal.getPrincipal(),
+                                                                           credentialsFile.toURI().toString());
+      responder.sendJson(HttpResponseStatus.OK, principalCredentials);
     } else {
-      throw new IllegalStateException("Unable to create credentails directory.");
+      throw new IllegalStateException("Unable to create credentials directory.");
     }
   }
 }

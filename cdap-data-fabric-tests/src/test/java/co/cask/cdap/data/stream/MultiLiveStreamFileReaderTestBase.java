@@ -51,7 +51,7 @@ public abstract class MultiLiveStreamFileReaderTestBase {
 
   protected static CConfiguration cConf = CConfiguration.create();
 
-  private static final Impersonator impersonator = new DefaultImpersonator(cConf, new UnsupportedUGIProvider(), null);
+  private static final Impersonator impersonator = new DefaultImpersonator(cConf, new UnsupportedUGIProvider());
 
   protected abstract LocationFactory getLocationFactory();
 

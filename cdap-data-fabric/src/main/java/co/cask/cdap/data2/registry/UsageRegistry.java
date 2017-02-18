@@ -33,17 +33,17 @@ public interface UsageRegistry extends RuntimeUsageRegistry {
    *
    * @param applicationId application
    */
-  void unregister(final ApplicationId applicationId);
+  void unregister(ApplicationId applicationId);
 
-  Set<DatasetId> getDatasets(final ApplicationId id);
+  Set<DatasetId> getDatasets(ApplicationId id);
 
-  Set<StreamId> getStreams(final ApplicationId id);
+  Set<StreamId> getStreams(ApplicationId id);
 
-  Set<DatasetId> getDatasets(final ProgramId id);
+  Set<DatasetId> getDatasets(ProgramId id);
 
-  Set<StreamId> getStreams(final ProgramId id);
+  Set<StreamId> getStreams(ProgramId id);
 
-  Set<ProgramId> getPrograms(final StreamId id);
+  Set<ProgramId> getPrograms(StreamId id);
 
-  Set<ProgramId> getPrograms(final DatasetId id);
+  Set<ProgramId> getPrograms(DatasetId id);
 }
