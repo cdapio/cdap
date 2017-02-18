@@ -56,11 +56,11 @@ public class DescribeDatasetModuleCommand extends AbstractAuthCommand {
     DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get(moduleId);
 
     Table table = Table.builder()
-      .setHeader("name", "className", "jarLocation", "types", "usesModules", "usedByModules")
+      .setHeader("name", "className", "jarLocationPath", "types", "usesModules", "usedByModules")
       .setRows(ImmutableList.of(datasetModuleMeta), new RowMaker<DatasetModuleMeta>() {
         @Override
         public List<?> makeRow(DatasetModuleMeta object) {
-          return Lists.newArrayList(object.getName(), object.getClassName(), object.getJarLocation(),
+          return Lists.newArrayList(object.getName(), object.getClassName(), object.getJarLocationPath(),
                                     Joiner.on(", ").join(object.getTypes()),
                                     Joiner.on(", ").join(object.getUsesModules()),
                                     Joiner.on(", ").join(object.getUsedByModules()));

@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.DirectoryClassLoader;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
@@ -371,7 +372,7 @@ public class DatasetTypeManager {
               impersonator.doAs(datasetModuleId.getNamespace().toEntityId(), new Callable<Location>() {
                 @Override
                 public Location call() throws Exception {
-                  return locationFactory.create(module.getJarLocation());
+                  return Locations.getLocationFromAbsolutePath(locationFactory, module.getJarLocationPath());
                 }
               });
             if (!moduleJarLocation.delete()) {
@@ -422,7 +423,8 @@ public class DatasetTypeManager {
               public Void call() throws Exception {
                 for (DatasetModuleMeta module : modules) {
                   typesToDelete.addAll(module.getTypes());
-                  moduleLocations.add(locationFactory.create(module.getJarLocation()));
+                  moduleLocations.add(Locations.getLocationFromAbsolutePath(locationFactory,
+                                                                            module.getJarLocationPath()));
                 }
                 return null;
               }
