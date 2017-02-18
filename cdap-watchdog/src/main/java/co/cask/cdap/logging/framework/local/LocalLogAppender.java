@@ -17,9 +17,9 @@
 package co.cask.cdap.logging.framework.local;
 
 import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import co.cask.cdap.api.logging.AppenderContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -84,9 +84,9 @@ public class LocalLogAppender extends LogAppender {
 
     // Load and starts all configured log processing pipelines
     LogPipelineLoader pipelineLoader = new LogPipelineLoader(cConf);
-    Map<String, LogPipelineSpecification<LoggerContext>> specs = pipelineLoader.load(new Provider<LoggerContext>() {
+    Map<String, LogPipelineSpecification<AppenderContext>> specs = pipelineLoader.load(new Provider<AppenderContext>() {
       @Override
-      public LoggerContext get() {
+      public AppenderContext get() {
         return new LocalAppenderContext(datasetFramework, txClient, locationFactory, metricsCollectionService);
       }
     });
@@ -94,8 +94,10 @@ public class LocalLogAppender extends LogAppender {
     // Use the event delay as the sync interval
     long syncIntervalMillis = cConf.getLong(Constants.Logging.PIPELINE_EVENT_DELAY_MS);
 
-    for (LogPipelineSpecification<LoggerContext> spec : specs.values()) {
-      LogProcessorPipelineContext context = new LogProcessorPipelineContext(cConf, spec.getName(), spec.getContext());
+    for (LogPipelineSpecification<AppenderContext> spec : specs.values()) {
+      LogProcessorPipelineContext context =
+        new LogProcessorPipelineContext(cConf, spec.getName(), spec.getContext(),
+                                        spec.getContext().getMetricsContext(), spec.getContext().getInstanceId());
       LocalLogProcessorPipeline pipeline = new LocalLogProcessorPipeline(context, syncIntervalMillis);
       pipeline.startAndWait();
       pipelines.add(pipeline);
