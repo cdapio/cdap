@@ -25,6 +25,8 @@ import CaskMarketButton from 'components/Header/CaskMarketButton';
 import {MyNamespaceApi} from 'api/namespace';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import classnames from 'classnames';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 require('./Header.scss');
 
@@ -37,6 +39,7 @@ export default class Header extends Component {
       metadataDropdown: false
     };
     this.namespacesubscription = null;
+    this.eventEmitter = ee(ee);
   }
   componentWillMount() {
     // Polls for namespace data
@@ -51,7 +54,10 @@ export default class Header extends Component {
               }
             });
           } else {
-            // To-Do: No namespaces returned ; throw error / redirect
+            // TL;DR - This is emitted for Authorization in main.js
+            // This means there is no namespace for the user to work on.
+            // which indicates she/he have no authorization for any namesapce in the system.
+            this.eventEmitter.emit(globalEvents.NONAMESPACE);
           }
         }
       );
