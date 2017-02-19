@@ -19,6 +19,7 @@ package co.cask.cdap.logging.framework.local;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -49,6 +50,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class LocalLogAppender extends LogAppender {
 
+  private static final ILoggingEvent SHUTDOWN_EVENT = new LoggingEvent();
   private static final int EVENT_QUEUE_SIZE = 256;
 
   private final CConfiguration cConf;
@@ -133,7 +135,6 @@ public class LocalLogAppender extends LogAppender {
     private final LogProcessorPipelineContext context;
     private final long syncIntervalMillis;
     private final BlockingQueue<ILoggingEvent> eventQueue;
-    private Thread runThread;
     private long lastSyncTime;
 
     private LocalLogProcessorPipeline(LogProcessorPipelineContext context, long syncIntervalMillis) {
@@ -152,7 +153,6 @@ public class LocalLogAppender extends LogAppender {
     @Override
     protected void startUp() throws Exception {
       addInfo("Starting log processing pipeline " + getName());
-      runThread = Thread.currentThread();
       context.start();
       addInfo("Log processing pipeline " + getName() + " started");
     }
@@ -162,6 +162,9 @@ public class LocalLogAppender extends LogAppender {
       addInfo("Stopping log processing pipeline " + getName());
       // Write all pending events out
       for (ILoggingEvent event : eventQueue) {
+        if (event == SHUTDOWN_EVENT) {
+          continue;
+        }
         context.getEffectiveLogger(event.getLoggerName()).callAppenders(event);
       }
       context.stop();
@@ -170,9 +173,7 @@ public class LocalLogAppender extends LogAppender {
 
     @Override
     protected void triggerShutdown() {
-      if (runThread != null) {
-        runThread.interrupt();
-      }
+      eventQueue.offer(SHUTDOWN_EVENT);
     }
 
     @Override
@@ -226,6 +227,9 @@ public class LocalLogAppender extends LogAppender {
     }
 
     private void callAppenders(ILoggingEvent event) {
+      if (event == SHUTDOWN_EVENT) {
+        return;
+      }
       Logger logger = context.getEffectiveLogger(event.getLoggerName());
       try {
         logger.callAppenders(event);
