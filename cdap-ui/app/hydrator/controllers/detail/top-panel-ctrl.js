@@ -14,6 +14,33 @@
  * the License.
  */
 
+/*
+  A small utility to bump the version of pipeline name while cloning the pipeline.
+
+  Usage:
+  getClonePipelineName('SamplePipeline') -> SamplePipeline_v1
+  getClonePipelineName('SamplePipeline_v1') -> SamplePipeline_v2
+  getClonePipelineName('SamplePipeline_v100') -> SamplePipeline_v101
+  getClonePipelineName('SamplePipeline_v1_v3_v33') -> SamplePipeline_v1_v3_v34
+  getClonePipelineName('SamplePipeline_22_v33') -> SamplePipeline_22_v34
+  getClonePipelineName(1) -> 1_v1 (apparently this is allowed for a pipeline name).
+*/
+
+const getClonePipelineName = (name) => {
+  name = typeof a === 'string' ? name : name.toString();
+  let version = name.match(/(_v[\d]*)$/g);
+  var existingSuffix; // For cases where pipeline name is of type 'SamplePipeline_v2_v4_v333'
+  if (Array.isArray(version)) {
+    version = version.pop();
+    existingSuffix = version;
+    version = version.replace('_v', '');
+    version = '_v' + ((!isNaN(parseInt(version, 10)) ? parseInt(version, 10) : 1) + 1);
+  } else {
+    version = '_v1';
+  }
+  return name.split(existingSuffix)[0] + version;
+};
+
 class HydratorDetailTopPanelController {
   constructor(HydratorPlusPlusDetailRunsStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailActions, GLOBALS, $state, myLoadingService, $timeout, $scope, moment, myAlertOnValium, myPipelineExportModalService, myPipelineApi, myHelpers, myPreferenceApi, $q, $interval) {
     this.GLOBALS = GLOBALS;
@@ -28,6 +55,8 @@ class HydratorDetailTopPanelController {
     this.HydratorPlusPlusDetailRunsStore = HydratorPlusPlusDetailRunsStore;
     this.HydratorPlusPlusDetailActions = HydratorPlusPlusDetailActions;
     this.config = HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
+    this.cloneConfig = _.cloneDeep(HydratorPlusPlusDetailNonRunsStore.getCloneConfig());
+    this.cloneConfig.name = getClonePipelineName(this.cloneConfig.name);
     this.myPipelineApi = myPipelineApi;
     this.myHelpers = myHelpers;
     this.myLoadingService = myLoadingService;
