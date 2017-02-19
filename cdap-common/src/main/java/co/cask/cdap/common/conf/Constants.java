@@ -119,6 +119,8 @@ public final class Constants {
   public static final class HBase {
     public static final String AUTH_KEY_UPDATE_INTERVAL = "hbase.auth.key.update.interval";
     public static final String MANAGE_COPROCESSORS = "master.manage.hbase.coprocessors";
+    public static final String CLIENT_RETRIES = "hbase.client.retries.number";
+    public static final String RPC_TIMEOUT = "hbase.rpc.timeout";
   }
 
   /**

@@ -158,9 +158,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       hConf = new Configuration();
       hConf.clear();
       hConf.addResource(new File(cmdLine.getOptionValue(RunnableOptions.HADOOP_CONF_FILE)).toURI().toURL());
-      // don't have tephra retry in order to give CDAP more control over when to retry and how.
-      hConf.set(TxConstants.Service.CFG_DATA_TX_CLIENT_RETRY_STRATEGY, "n-times");
-      hConf.setInt(TxConstants.Service.CFG_DATA_TX_CLIENT_ATTEMPTS, 0);
 
       UserGroupInformation.setConfiguration(hConf);
 
