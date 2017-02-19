@@ -850,7 +850,7 @@ features:
       lastStartedLabel: Last Started
       statusLabel: Status
   Page404:
-    genericMessage: Sorry, we are are not able to find the page you are looking for.
+    genericMessage: Sorry, we are not able to find the page you are looking for.
     entityMessage: Sorry, we are not able to find {entityType}
     subtitleMessage1: Here are some options on where to go next
     subtitleMessage2: View all your entities in the
