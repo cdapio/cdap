@@ -16,10 +16,10 @@
 
 package co.cask.cdap.logging.framework.distributed;
 
+import co.cask.cdap.api.logging.AppenderContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.framework.AbstractAppenderContext;
-import co.cask.cdap.logging.framework.AppenderContext;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.TwillContext;
