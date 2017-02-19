@@ -34,7 +34,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.filesystem.LocationFactory;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,7 +49,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class LocalLogAppender extends LogAppender {
 
-  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LocalLogAppender.class);
   private static final int EVENT_QUEUE_SIZE = 256;
 
   private final CConfiguration cConf;
@@ -115,7 +113,7 @@ public class LocalLogAppender extends LogAppender {
       try {
         pipeline.stopAndWait();
       } catch (Throwable t) {
-        LOG.error("Exception raised when stopping log processing pipeline {}", pipeline.getName(), t);
+        addError("Exception raised when stopping log processing pipeline " + pipeline.getName(), t);
       }
     }
   }
@@ -153,21 +151,21 @@ public class LocalLogAppender extends LogAppender {
 
     @Override
     protected void startUp() throws Exception {
-      LOG.info("Starting log processing pipeline {}", getName());
+      addInfo("Starting log processing pipeline " + getName());
       runThread = Thread.currentThread();
       context.start();
-      LOG.info("Log processing pipeline {} started", getName());
+      addInfo("Log processing pipeline " + getName() + " started");
     }
 
     @Override
     protected void shutDown() throws Exception {
-      LOG.info("Stopping log processing pipeline {}", getName());
+      addInfo("Stopping log processing pipeline " + getName());
       // Write all pending events out
       for (ILoggingEvent event : eventQueue) {
         context.getEffectiveLogger(event.getLoggerName()).callAppenders(event);
       }
       context.stop();
-      LOG.info("Log processing pipeline {}", getName());
+      addInfo("Log processing pipeline " + getName() + " stopped");
     }
 
     @Override
@@ -242,7 +240,7 @@ public class LocalLogAppender extends LogAppender {
         context.sync();
         lastSyncTime = now;
       } catch (IOException e) {
-        LOG.error("Exception raised when syncing log processing pipeline {}", getName(), e);
+        addError("Exception raised when syncing log processing pipeline " + getName(), e);
       }
     }
   }
