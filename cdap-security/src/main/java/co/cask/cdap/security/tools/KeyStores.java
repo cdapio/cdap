@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ import sun.security.x509.X509CertImpl;
 import sun.security.x509.X509CertInfo;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
@@ -125,9 +126,25 @@ public final class KeyStores {
     X509CertInfo info = new X509CertInfo();
     info.set(X509CertInfo.VALIDITY, interval);
     info.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber(sn));
+    // In java 7, subject is of type CertificateSubjectName and issuer is of type CertificateIssuerName.
+    // These were changed to X500Name in Java8. So looking at the field type before setting them.
     // This certificate will be self signed, hence the subject and the issuer are same.
-    info.set(X509CertInfo.SUBJECT, new CertificateSubjectName(owner));
-    info.set(X509CertInfo.ISSUER, new CertificateIssuerName(owner));
+    Field subjectField = null;
+    try {
+      subjectField = info.getClass().getDeclaredField("subject");
+      if (subjectField.getType().equals(X500Name.class)) {
+        info.set(X509CertInfo.SUBJECT, owner);
+        info.set(X509CertInfo.ISSUER, owner);
+      } else {
+        info.set(X509CertInfo.SUBJECT, new CertificateSubjectName(owner));
+        info.set(X509CertInfo.ISSUER, new CertificateIssuerName(owner));
+      }
+    } catch (NoSuchFieldException e) {
+      // Trying to set it to Java 8 types. If one of the underlying fields has changed then this will throw a
+      // CertificateException which is handled by the caller.
+      info.set(X509CertInfo.SUBJECT, owner);
+      info.set(X509CertInfo.ISSUER, owner);
+    }
     info.set(X509CertInfo.KEY, new CertificateX509Key(pair.getPublic()));
     info.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V3));
     AlgorithmId algo = new AlgorithmId(AlgorithmId.md5WithRSAEncryption_oid);
