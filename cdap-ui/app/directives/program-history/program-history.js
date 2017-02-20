@@ -31,13 +31,35 @@ angular.module(PKG.name + '.commons')
         $scope.programId = $scope.programId || $state.params.programId;
 
         $scope.currentPage = 1;
+
         $scope.$watchCollection('model', function (newVal) {
             if (!angular.isArray(newVal)) {
               return;
             }
             $scope.runs = newVal.map(function (run) {
+              let stateName;
+              switch ($scope.type) {
+                case 'WORKFLOWS':
+                  stateName = 'workflows.detail.run';
+                  break;
+                case 'SPARK':
+                  stateName = 'spark.detail.run';
+                  break;
+                case 'WORKERS':
+                  stateName = 'workers.detail.run';
+                  break;
+              }
               return angular.extend({
-                duration: ( run.end? (run.end - run.start) : 0 )
+                duration: ( run.end? (run.end - run.start) : 0 ),
+                detailUrl: window.getOldCDAPUrl({
+                  stateName: stateName,
+                  stateParams: {
+                    namespace: $state.params.namespace,
+                    appId: $scope.appId,
+                    programId: $scope.programId,
+                    runId: run.runid
+                  }
+                })
               }, run);
             });
         });
