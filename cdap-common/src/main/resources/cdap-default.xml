@@ -1981,7 +1981,8 @@
     <name>custom.action.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for custom actions
+      The type of retry policy for custom actions. Allowed options: "exponential.backoff",
+      "fixed.delay", or "none".
     </description>
   </property>
 
@@ -2021,7 +2022,8 @@
     <name>flow.retry.policy.type</name>
     <value>none</value>
     <description>
-      The type of retry policy for flows
+      The type of retry policy for flows. Allowed options: "exponential.backoff",
+      "fixed.delay", or "none".
     </description>
   </property>
 
@@ -2061,7 +2063,8 @@
     <name>mapreduce.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for MapReduce programs
+      The type of retry policy for MapReduce programs. Allowed options: "exponential.backoff",
+      "fixed.delay", or "none".
     </description>
   </property>
 
@@ -2101,7 +2104,8 @@
     <name>service.retry.policy.type</name>
     <value>none</value>
     <description>
-      The type of retry policy for services
+      The type of retry policy for services. Allowed options: "exponential.backoff",
+      "fixed.delay", or "none".
     </description>
   </property>
 
@@ -2141,7 +2145,8 @@
     <name>spark.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for Spark programs
+      The type of retry policy for Spark programs. Allowed options: "exponential.backoff",
+      "fixed.delay", or "none".
     </description>
   </property>
 
@@ -2173,7 +2178,8 @@
     <name>system.log.process.retry.policy.type</name>
     <value>fixed.delay</value>
     <description>
-      The type of retry policy for log processing
+      The type of retry policy for log processing. Allowed options: "exponential.backoff",
+      "fixed.delay", or "none".
     </description>
   </property>
 
@@ -2205,7 +2211,8 @@
     <name>system.metrics.retry.policy.type</name>
     <value>fixed.delay</value>
     <description>
-      The type of retry policy for metrics publishing
+      The type of retry policy for metrics publishing. Allowed options: "exponential.backoff",
+      "fixed.delay", or "none".
     </description>
   </property>
 
@@ -2245,7 +2252,8 @@
     <name>worker.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for workers
+      The type of retry policy for workers. Allowed options: "exponential.backoff",
+      "fixed.delay", or "none".
     </description>
   </property>
 
@@ -2285,7 +2293,8 @@
     <name>workflow.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for workflows
+      The type of retry policy for workflows. Allowed options: "exponential.backoff",
+      "fixed.delay", or "none".
     </description>
   </property>
 
