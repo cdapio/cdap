@@ -415,7 +415,8 @@ body.state-tracker {
 
         h4,
         h5 { font-weight: 500; }
-        p { color: @tracker-grey; }
+        p,
+        .creation-time { color: @tracker-grey; }
         h4,
         h4 a {
           font-size: 16px;
@@ -435,6 +436,13 @@ body.state-tracker {
         .row {
           border-bottom: 1px solid @border-color;
           padding: 0 15px 15px;
+        }
+
+        my-truth-meter {
+          display: inline-block;
+        }
+        .creation-time {
+          margin-top: 5px;
         }
       }
     }
@@ -925,7 +933,7 @@ body.state-tracker-detail-entity {
 
   cask-resource-center-button {
     .cask-resourcecenter-button {
-      right: 93px;
+      right: 110px;
       position: absolute;
       top: 30px;
     }

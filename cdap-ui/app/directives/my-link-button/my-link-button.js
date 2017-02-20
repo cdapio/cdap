@@ -17,27 +17,11 @@
 class MyLinkButtonCtrl {
   constructor($stateParams) {
     this.entities.forEach(entity => {
-
-      if (entity.entityType === 'streams') {
-        entity.url = window.getTrackerUrl({
-          stateName: 'tracker.detail.entity.metadata',
-          stateParams: {
-            namespace: $stateParams.namespace,
-            entityType: 'streams',
-            entityId: entity.streamId
-          }
-        });
-      } else {
-        entity.url = window.getTrackerUrl({
-          stateName: 'tracker.detail.entity.metadata',
-          stateParams: {
-            namespace: $stateParams.namespace,
-            entityType: 'datasets',
-            entityId: entity.datasetId
-          }
-        });
-      }
-
+      entity.url = window.getAbsUIUrl({
+        namespaceId: $stateParams.namespace,
+        entityType: entity.entityType,
+        entityId: entity.entityType === 'streams' ? entity.streamId : entity.datasetId
+      });
     });
   }
 }
