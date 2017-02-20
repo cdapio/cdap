@@ -17,6 +17,7 @@
 package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -112,6 +113,9 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
       }
       try {
         metaTable = metricDatasetFactory.createConsumerMeta();
+      } catch (ServiceUnavailableException e) {
+        // No need to log the exception here since this can only happen when the DatasetService is not running.
+        // try in next iteration
       } catch (Exception e) {
         LOG.warn("Cannot access consumer metaTable, will retry in 1 sec.");
         try {

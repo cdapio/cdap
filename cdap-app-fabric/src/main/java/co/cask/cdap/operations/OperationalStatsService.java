@@ -16,12 +16,14 @@
 
 package co.cask.cdap.operations;
 
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,10 +125,15 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
       LOG.debug("Collecting stats for service {} of type {}", stats.getServiceName(), stats.getStatType());
       try {
         stats.collect();
-      } catch (InterruptedException e) {
-        throw e;
       } catch (Throwable t) {
+        Throwables.propagateIfInstanceOf(t, InterruptedException.class);
         Throwable rootCause = Throwables.getRootCause(t);
+        if (rootCause instanceof ServiceUnavailableException || rootCause instanceof TException) {
+          // Required service (for example DatasetService in case of ServiceUnavailableException
+          // or Transaction Service in case of TException) is not running yet.
+          // Return without logging.
+          return;
+        }
         if (rootCause instanceof InterruptedException) {
           throw (InterruptedException) rootCause;
         }

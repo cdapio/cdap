@@ -25,6 +25,7 @@ import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.logging.LogSamplers;
@@ -154,6 +155,9 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
       }
       try {
         metaTable = metricDatasetFactory.createConsumerMeta();
+      } catch (ServiceUnavailableException e) {
+        // No need to log the exception here since this can only happen when the DatasetService is not running.
+        // try in next iteration
       } catch (Exception e) {
         LOG.warn("Cannot access consumer metaTable, will retry in 1 sec.");
         try {
