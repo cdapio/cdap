@@ -1514,11 +1514,11 @@
     <name>messaging.system.topics</name>
     <value>${audit.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic}</value>
     <description>
-      A comma-separated list of topics that is always available in the system namespace.
-      Multiple topics sharing the same prefix and distinguished by different numerical suffices
+      A comma-separated list of topics that are always available in the system namespace.
+      Multiple topics sharing the same prefix and distinguished by different numerical suffixes
       can be specified with the syntax &lt;common.prefix&gt;:&lt;total.topic.number&gt;,
       where the &lt;total.topic.number&gt; is the total number of topics sharing the &lt;common.prefix&gt;,
-      and the numerical suffices will range from 0 to (&lt;total.topic.number&gt; - 1).
+      and the numerical suffixes will range from 0 to (&lt;total.topic.number&gt; - 1).
     </description>
   </property>
 
