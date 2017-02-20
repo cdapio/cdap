@@ -102,7 +102,7 @@ CDAP capabilities include *CDAP Pipelines* and *Metadata Management*.
   - |dev-man-tad-black|_ Test framework plus tools and practices for debugging your applications
   - |dev-man-id-black|_ Different techniques for ingesting data into CDAP
   - |dev-man-at-black|_ Adding a custom logback, best practices for CDAP development,
-    class loading in CDAP, configuring program resources
+    class loading in CDAP, configuring program resources and retry policies
 
 
 .. |admin-manual| replace:: **Administration Manual:**
