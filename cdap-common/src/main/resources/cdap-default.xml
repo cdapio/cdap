@@ -1161,26 +1161,10 @@
   </property>
 
   <property>
-    <name>log.process.pipeline.logger.cache.size</name>
-    <value>1000</value>
-    <description>
-      The number of loggers that each log processing pipeline will cache.
-    </description>
-  </property>
-
-  <property>
-    <name>log.process.pipeline.logger.cache.expiration.ms</name>
-    <value>300000</value>
-    <description>
-      Logger cache entry expiration time in milliseconds.
-    </description>
-  </property>
-
-  <property>
     <name>log.process.pipeline.kafka.fetch.size</name>
     <value>1048576</value>
     <description>
-      The size of the buffer for fetching log events from Kafka per topic partition in bytes
+      The buffer size in bytes, per topic partition, for fetching log events from Kafka
     </description>
   </property>
 
@@ -1190,6 +1174,22 @@
     <description>
       Semicolon-separated list of local directories on the CDAP Master scanned
       for additional library JAR files to be included for log processing
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.logger.cache.size</name>
+    <value>1000</value>
+    <description>
+      The number of loggers that each log processing pipeline will cache
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.logger.cache.expiration.ms</name>
+    <value>300000</value>
+    <description>
+      Logger cache entry expiration time in milliseconds
     </description>
   </property>
 
@@ -1514,11 +1514,11 @@
     <name>messaging.system.topics</name>
     <value>${audit.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic}</value>
     <description>
-      A comma-separated list of topics that is always available in the system namespace.
-      Multiple topics sharing the same prefix and distinguished by different numerical suffices
+      A comma-separated list of topics that are always available in the system namespace.
+      Multiple topics sharing the same prefix and distinguished by different numerical suffixes
       can be specified with the syntax &lt;common.prefix&gt;:&lt;total.topic.number&gt;,
       where the &lt;total.topic.number&gt; is the total number of topics sharing the &lt;common.prefix&gt;,
-      and the numerical suffices will range from 0 to (&lt;total.topic.number&gt; - 1).
+      and the numerical suffixes will range from 0 to (&lt;total.topic.number&gt; - 1).
     </description>
   </property>
 
@@ -1981,7 +1981,8 @@
     <name>custom.action.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for custom actions
+      The type of retry policy for custom actions. Allowed options: "none",
+      "fixed.delay", or "exponential.backoff".
     </description>
   </property>
 
@@ -2021,7 +2022,8 @@
     <name>flow.retry.policy.type</name>
     <value>none</value>
     <description>
-      The type of retry policy for flows
+      The type of retry policy for flows. Allowed options: "none",
+      "fixed.delay", or "exponential.backoff".
     </description>
   </property>
 
@@ -2061,7 +2063,8 @@
     <name>mapreduce.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for MapReduce programs
+      The type of retry policy for MapReduce programs. Allowed options: "none",
+      "fixed.delay", or "exponential.backoff".
     </description>
   </property>
 
@@ -2101,7 +2104,8 @@
     <name>service.retry.policy.type</name>
     <value>none</value>
     <description>
-      The type of retry policy for services
+      The type of retry policy for services. Allowed options: "none",
+      "fixed.delay", or "exponential.backoff".
     </description>
   </property>
 
@@ -2141,7 +2145,8 @@
     <name>spark.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for Spark programs
+      The type of retry policy for Spark programs. Allowed options: "none",
+      "fixed.delay", or "exponential.backoff".
     </description>
   </property>
 
@@ -2173,7 +2178,8 @@
     <name>system.log.process.retry.policy.type</name>
     <value>fixed.delay</value>
     <description>
-      The type of retry policy for log processing
+      The type of retry policy for log processing. Allowed options: "none",
+      "fixed.delay", or "exponential.backoff".
     </description>
   </property>
 
@@ -2205,7 +2211,8 @@
     <name>system.metrics.retry.policy.type</name>
     <value>fixed.delay</value>
     <description>
-      The type of retry policy for metrics publishing
+      The type of retry policy for metrics publishing. Allowed options: "none",
+      "fixed.delay", or "exponential.backoff".
     </description>
   </property>
 
@@ -2245,7 +2252,8 @@
     <name>worker.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for workers
+      The type of retry policy for workers. Allowed options: "none",
+      "fixed.delay", or "exponential.backoff".
     </description>
   </property>
 
@@ -2285,7 +2293,8 @@
     <name>workflow.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for workflows
+      The type of retry policy for workflows. Allowed options: "none",
+      "fixed.delay", or "exponential.backoff".
     </description>
   </property>
 
