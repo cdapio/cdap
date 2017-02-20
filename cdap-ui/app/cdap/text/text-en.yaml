@@ -110,6 +110,10 @@ features:
     Title: CDAP | Applications | {appId}
     History:
       emptyMessage: No Runs found.
+    Tabs:
+      programsLabel: Programs
+      datasetsLabel: Datasets
+      historyLabel: Runs
   ConfirmationModal:
     confirmDefaultText: OK
     cancelDefaultText: Cancel

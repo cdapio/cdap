@@ -19,6 +19,7 @@ import {MyProgramApi} from 'api/program';
 import {convertProgramToApi} from 'services/program-api-converter';
 import NamespaceStore from 'services/NamespaceStore';
 import {humanReadableDate} from 'services/helpers';
+import LogAction from 'components/FastAction/LogAction';
 import T from 'i18n-react';
 import orderBy from 'lodash/orderBy';
 
@@ -64,9 +65,12 @@ export default class HistoryTab extends Component {
                 runRecord.end = runRecord.end !== runFromBackend.end ? runFromBackend.end : runRecord.end;
                 return runRecord;
               });
-              newRuns.map( r => {
-                r.programName = programId;
-                return r;
+              newRuns = newRuns.map( r => {
+                return Object.assign({}, r, {
+                  programName: programId,
+                  programType,
+                  appId
+                });
               });
               res = orderBy([
                 ...newRuns,
@@ -99,6 +103,7 @@ export default class HistoryTab extends Component {
                     <th>Start Time</th>
                     <th>Run ID</th>
                     <th>Status</th>
+                    <th>Logs</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -112,6 +117,16 @@ export default class HistoryTab extends Component {
                             <td>{humanReadableDate(history.start)}</td>
                             <td>{history.runid}</td>
                             <td>{history.status}</td>
+                            <td>
+                              <LogAction
+                                entity={{
+                                  id: history.programName,
+                                  uniqueId: history.runid,
+                                  applicationId: history.appId,
+                                  programType: history.programType
+                                }}
+                              />
+                            </td>
                           </tr>
                         );
                       })
