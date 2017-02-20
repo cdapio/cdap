@@ -33,8 +33,9 @@ CDAP currently supports Java for developing applications.
 
 What version of Java SDK is required by CDAP?
 ---------------------------------------------
-The latest version of the JDK or JRE version 7 or version 8 must be installed
-in your environment; we recommend the Oracle JDK.
+The latest version of the JDK or JRE version 7 or version 8 must be installed in your
+environment; we recommend the Oracle JDK. CDAP is tested on both the Oracle JDK and the
+OpenJDK.
 
 What version of Node.js is required by CDAP?
 --------------------------------------------
