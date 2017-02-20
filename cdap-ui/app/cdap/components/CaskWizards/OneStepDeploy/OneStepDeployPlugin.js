@@ -41,7 +41,7 @@ export default class OneStepDeployPlugin extends Component {
   }
 
   publishPlugin() {
-    const marketBasepath = `${window.CDAP_UI_CONFIG.market.path}/${window.CDAP_UI_CONFIG.market.version}`;
+    const marketBasepath = `${window.CDAP_CONFIG.marketUrl}`;
 
     const {
       name,
