@@ -11,7 +11,13 @@ CDAP Replication
 This document lists the detailed steps required for setting up CDAP replication, where one
 CDAP cluster (a *master*) is replicated to one or more additional CDAP *slave* clusters.
 
+**Note:** As described below, CDAP must have :ref:`invalid transaction list pruning disabled 
+<installation-replication-disable-invalid-transaction-list-pruning>`, as this cannot be
+used with replication.
+
 **These steps should be reviewed (and the `Cluster Setup`_ completed) prior to starting CDAP.**
+
+.. _installation-replication-cluster-setup:
 
 Cluster Setup
 =============
@@ -121,6 +127,7 @@ common solution. See `Mirroring data between clusters
 <https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=27846330>`__
 for additional information.
 
+.. _installation-replication-cdap-setup:
 
 CDAP Setup
 ==========
@@ -129,6 +136,10 @@ on both clusters instead of only on a single cluster. To create the extension, y
 implement the ``HBaseDDLExecutor`` class. Details on implementing this class, a sample
 implementation, and example files are available in the :ref:`Appendix: HBaseDDLExecutor
 <appendix-hbase-ddl-executor>`.
+
+CDAP must have :ref:`invalid transaction list pruning disabled 
+<installation-replication-disable-invalid-transaction-list-pruning>`, as this cannot be
+used with replication.
 
 To deploy your extension (once compiled and packaged as a JAR file, such as
 *my-extension.jar*), run these steps on **both** your master and slave clusters:
@@ -173,6 +184,19 @@ To deploy your extension (once compiled and packaged as a JAR file, such as
     <property>
       <name>cdap.hbase.spi.hbase.replication</name>
       <value>true</value>
+    </property>
+
+.. _installation-replication-disable-invalid-transaction-list-pruning:
+
+#. Modify ``cdap-site.xml`` to **disable invalid transaction list pruning,** as it cannot
+   be used with replication::
+
+    <property>
+      <name>data.tx.prune.enable</name>
+      <value>false</value>
+      <description>
+        Enable invalid transaction list pruning
+      </description>
     </property>
 
 .. highlight:: console
