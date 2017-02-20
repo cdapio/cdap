@@ -664,6 +664,15 @@ public class DefaultMetadataStore implements MetadataStore {
     }
   }
 
+  public void removeNullOrEmptyTags(final DatasetId metadataDatasetInstance, final MetadataScope scope) {
+    execute(new TransactionExecutor.Procedure<MetadataDataset>() {
+      @Override
+      public void apply(MetadataDataset dataset) throws Exception {
+        dataset.removeNullOrEmptyTags(metadataDatasetInstance);
+      }
+    }, scope);
+  }
+
   public void createOrUpgrade(MetadataScope scope) throws DatasetManagementException, IOException {
     DatasetId metadataDatasetInstance = getMetadataDatasetInstance(scope);
     if (dsFramework.hasInstance(metadataDatasetInstance)) {
@@ -672,6 +681,7 @@ public class DefaultMetadataStore implements MetadataStore {
           metadataDatasetInstance,
           DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build()
         );
+        removeNullOrEmptyTags(metadataDatasetInstance, scope);
       }
     } else {
       DatasetsUtil.createIfNotExists(
