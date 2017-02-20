@@ -53,9 +53,14 @@ require('./SpotlightModal.scss');
          >
            <span className="search-results-total">
              {
-               T.translate('features.SpotlightSearch.SpotlightModal.numResults', {
+              this.props.total === 1 ?
+                T.translate('features.SpotlightSearch.SpotlightModal.numResult', {
                  total: this.props.total
-               })
+                })
+              :
+                T.translate('features.SpotlightSearch.SpotlightModal.numResults', {
+                 total: this.props.total
+                })
              }
            </span>
            <span>

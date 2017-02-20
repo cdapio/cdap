@@ -541,6 +541,7 @@ features:
     SpotlightModal:
       headerTagResults: Entities with the tag "{tag}"
       numResults: "{total} results"
+      numResult: "{total} result"
 
   SchemaEditor:
     Labels:
