@@ -235,6 +235,7 @@ public class MasterServiceMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
+    resetShutdownTime();
     cleanupTempDir();
     checkExploreRequirements();
   }
@@ -257,6 +258,24 @@ public class MasterServiceMain extends DaemonMain {
                                                   KeeperException.NodeExistsException.class, null));
 
     leaderElection.startAndWait();
+  }
+
+  @Override
+  public void stop() {
+    LOG.info("Stopping {}", Constants.Service.MASTER_SERVICES);
+    stopped = true;
+
+    // if leader election failed to start, its listener will stop the master.
+    // In that case, we don't want to try stopping it again, as it will log confusing exceptions
+    if (leaderElection.isRunning()) {
+      stopQuietly(leaderElection);
+    }
+    stopQuietly(zkClient);
+  }
+
+  @Override
+  public void destroy() {
+    saveShutdownTime(System.currentTimeMillis());
   }
 
   /**
@@ -309,43 +328,27 @@ public class MasterServiceMain extends DaemonMain {
     return false;
   }
 
-  @Override
-  public void stop() {
-    LOG.info("Stopping {}", Constants.Service.MASTER_SERVICES);
-    stopped = true;
-
-    // if leader election failed to start, its listener will stop the master.
-    // In that case, we don't want to try stopping it again, as it will log confusing exceptions
-    if (leaderElection.isRunning()) {
-      stopQuietly(leaderElection);
-    }
-    stopQuietly(zkClient);
-  }
-
-  @Override
-  public void destroy() {
-    // no-op
-  }
-
   /**
    * Gets an instance of the given {@link Service} class from the given {@link Injector}, start the service and
    * returns it.
    */
-  private <T extends Service> T getAndStart(Injector injector, Class<T> cls) {
+  private static <T extends Service> T getAndStart(Injector injector, Class<T> cls) {
     T service = injector.getInstance(cls);
-    LOG.info("Starting service in master {}", service);
+    LOG.debug("Starting service in master {}", service);
     service.startAndWait();
+    LOG.info("Service {} started in master", service);
     return service;
   }
 
   /**
    * Stops a guava {@link Service}. No exception will be thrown even stopping failed.
    */
-  private void stopQuietly(@Nullable Service service) {
+  private static void stopQuietly(@Nullable Service service) {
     try {
       if (service != null) {
-        LOG.info("Stopping service in master: {}", service);
+        LOG.debug("Stopping service in master: {}", service);
         service.stopAndWait();
+        LOG.info("Service {} stopped in master", service);
       }
     } catch (Exception e) {
       LOG.warn("Exception when stopping service {}", service, e);
@@ -353,46 +356,19 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   /**
-   * Stops a guava {@link Service}. No exception will be thrown even stopping failed.
+   * Stops a {@link TwillRunnerService}. No exception will be thrown even stopping failed.
    */
-  private void stopQuietly(@Nullable TwillRunnerService service) {
+  private static void stopQuietly(@Nullable TwillRunnerService service) {
     try {
       if (service != null) {
+        LOG.debug("Stopping twill runner service");
         service.stop();
+        LOG.info("Twill runner service stopped in master");
       }
     } catch (Exception e) {
       LOG.warn("Exception when stopping service {}", service, e);
     }
   }
-
-  private Map<String, Integer> getSystemServiceInstances(ServiceStore serviceStore) {
-    Map<String, Integer> instanceCountMap = new HashMap<>();
-    Set<ServiceResourceKeys> serviceResourceKeysSet = MasterUtils.createSystemServicesResourceKeysSet(cConf);
-    for (ServiceResourceKeys serviceResourceKeys : serviceResourceKeysSet) {
-      String service = serviceResourceKeys.getServiceName();
-      try {
-        int maxCount = serviceResourceKeys.getMaxInstances();
-
-        Integer savedCount = serviceStore.getServiceInstance(service);
-        if (savedCount == null || savedCount == 0) {
-          savedCount = Math.min(maxCount, serviceResourceKeys.getInstances());
-        } else {
-          // If the max value is smaller than the saved instance count, update the store to the max value.
-          if (savedCount > maxCount) {
-            savedCount = maxCount;
-          }
-        }
-
-        serviceStore.setServiceInstance(service, savedCount);
-        instanceCountMap.put(service, savedCount);
-        LOG.info("Setting instance count of {} Service to {}", service, savedCount);
-      } catch (Exception e) {
-        LOG.error("Couldn't retrieve instance count {}: {}", service, e.getMessage(), e);
-      }
-    }
-    return instanceCountMap;
-  }
-
 
   /**
    * Creates an not started {@link LeaderElection} for the master service.
@@ -471,15 +447,21 @@ public class MasterServiceMain extends DaemonMain {
   /**
    * The replication Status tool will use CDAP shutdown time to determine last CDAP related writes to HBase.
    */
-  private void saveShutdownTime(Long timestamp) {
+  private void saveShutdownTime(long timestamp) {
     File shutdownTimeFile = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                             Constants.Replication.CDAP_SHUTDOWN_TIME_FILENAME).getAbsoluteFile();
+                                     Constants.Replication.CDAP_SHUTDOWN_TIME_FILENAME).getAbsoluteFile();
+    if (!DirUtils.mkdirs(shutdownTimeFile.getParentFile())) {
+      LOG.error("Failed to create parent directory for writing shutdown time {} to file {}",
+                timestamp, shutdownTimeFile);
+      return;
+    }
+
     try (BufferedWriter bw = new BufferedWriter(new FileWriter(shutdownTimeFile))) {
       //Write shutdown time
-      bw.write(timestamp.toString());
-      LOG.info("Saved CDAP shutdown time {} at file {}", timestamp, shutdownTimeFile.getAbsolutePath());
+      bw.write(Long.toString(timestamp));
+      LOG.info("Saved CDAP shutdown time {} at file {}", timestamp, shutdownTimeFile);
     } catch (IOException e) {
-      LOG.error("Failed to save CDAP shutdown time", e);
+      LOG.error("Failed to save CDAP shutdown time {} to file {}", timestamp, shutdownTimeFile, e);
     }
   }
 
@@ -667,7 +649,6 @@ public class MasterServiceMain extends DaemonMain {
       }
       services.clear();
       stopQuietly(twillRunner);
-      saveShutdownTime(System.currentTimeMillis());
       Closeables.closeQuietly(authorizerInstantiator);
       Closeables.closeQuietly(exploreClient);
     }
@@ -791,7 +772,7 @@ public class MasterServiceMain extends DaemonMain {
         try {
           Path logbackFile = saveLogbackConf(runDir.resolve("logback.xml"));
           MasterTwillApplication masterTwillApp = new MasterTwillApplication(cConf,
-                                                                             getSystemServiceInstances(serviceStore));
+                                                                             getServiceInstances(serviceStore, cConf));
           List<String> extraClassPath = masterTwillApp.prepareLocalizeResource(runDir, hConf);
           TwillPreparer preparer = twillRunner.prepare(masterTwillApp);
 
@@ -908,6 +889,38 @@ public class MasterServiceMain extends DaemonMain {
         throw Throwables.propagate(e);
       }
     }
+
+    /**
+     * Reads the master service instance count configuration.
+     */
+    private Map<String, Integer> getServiceInstances(ServiceStore serviceStore, CConfiguration cConf) {
+      Map<String, Integer> instanceCountMap = new HashMap<>();
+      Set<ServiceResourceKeys> serviceResourceKeysSet = MasterUtils.createSystemServicesResourceKeysSet(cConf);
+      for (ServiceResourceKeys serviceResourceKeys : serviceResourceKeysSet) {
+        String service = serviceResourceKeys.getServiceName();
+        try {
+          int maxCount = serviceResourceKeys.getMaxInstances();
+
+          Integer savedCount = serviceStore.getServiceInstance(service);
+          if (savedCount == null || savedCount == 0) {
+            savedCount = Math.min(maxCount, serviceResourceKeys.getInstances());
+          } else {
+            // If the max value is smaller than the saved instance count, update the store to the max value.
+            if (savedCount > maxCount) {
+              savedCount = maxCount;
+            }
+          }
+
+          serviceStore.setServiceInstance(service, savedCount);
+          instanceCountMap.put(service, savedCount);
+          LOG.info("Setting instance count of {} Service to {}", service, savedCount);
+        } catch (Exception e) {
+          LOG.error("Couldn't retrieve instance count {}: {}", service, e.getMessage(), e);
+        }
+      }
+      return instanceCountMap;
+    }
+
 
     /**
      * Prepare the specs of the twill application for the Explore twill runnable.
