@@ -15,6 +15,7 @@
  */
 
 import React, { Component, PropTypes } from 'react';
+import isNil from 'lodash/isNil';
 require('./Timer.scss');
 
 export default class Timer extends Component {
@@ -26,12 +27,13 @@ export default class Timer extends Component {
     };
 
     this.startTimer();
+    this.currentTimer = 0;
   }
 
   componentWillReceiveProps(nextProps) {
-    if (this.props.time !== nextProps.time) {
-      this.setState({time: nextProps.time});
-      this.startTimer();
+    if (!isNil(nextProps.time) && this.props.time !== nextProps.time) {
+      clearTimeout(this.currentTimer);
+      this.setState({time: nextProps.time}, this.startTimer.bind(this));
     }
   }
 
@@ -39,8 +41,8 @@ export default class Timer extends Component {
     let newTime = this.state.time - 1;
     this.setState({time: newTime});
 
-    if (newTime !== 0) {
-      setTimeout(() => {
+    if (newTime > 0) {
+      this.currentTimer = setTimeout(() => {
         this.startTimer();
       }, 1000);
     } else {
