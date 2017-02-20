@@ -1164,7 +1164,7 @@
     <name>log.process.pipeline.kafka.fetch.size</name>
     <value>1048576</value>
     <description>
-      The size of the buffer for fetching log events from Kafka per topic partition in bytes
+      The buffer size in bytes, per topic partition, for fetching log events from Kafka
     </description>
   </property>
 
@@ -1181,7 +1181,7 @@
     <name>log.process.pipeline.logger.cache.size</name>
     <value>1000</value>
     <description>
-      The number of loggers that each log processing pipeline will cache.
+      The number of loggers that each log processing pipeline will cache
     </description>
   </property>
 
@@ -1189,7 +1189,7 @@
     <name>log.process.pipeline.logger.cache.expiration.ms</name>
     <value>300000</value>
     <description>
-      Logger cache entry expiration time in milliseconds.
+      Logger cache entry expiration time in milliseconds
     </description>
   </property>
 
