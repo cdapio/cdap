@@ -40,6 +40,7 @@ import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.common.zookeeper.election.LeaderElectionInfoService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -77,6 +78,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
@@ -111,6 +113,7 @@ import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.apache.twill.internal.zookeeper.LeaderElection;
+import org.apache.twill.internal.zookeeper.ReentrantDistributedLock;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -126,9 +129,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.net.InetAddress;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -138,11 +139,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 import javax.annotation.Nullable;
 
 /**
@@ -162,8 +165,11 @@ public class MasterServiceMain extends DaemonMain {
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final ZKClientService zkClient;
+  private final Lock shutdownLock;
   private final LeaderElection leaderElection;
+  private final LeaderElectionInfoService electionInfoService;
   private final LogAppenderInitializer logAppenderInitializer;
+  private final MasterLeaderElectionHandler electionHandler;
 
   private volatile boolean stopped;
 
@@ -181,6 +187,7 @@ public class MasterServiceMain extends DaemonMain {
     new MasterServiceMain().doMain(args);
   }
 
+  @SuppressWarnings("WeakerAccess")
   public MasterServiceMain() {
     CConfiguration cConf = CConfiguration.create();
 
@@ -194,7 +201,12 @@ public class MasterServiceMain extends DaemonMain {
     this.hConf = injector.getInstance(Configuration.class);
     this.logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     this.zkClient = injector.getInstance(ZKClientService.class);
-    this.leaderElection = createLeaderElection();
+    this.shutdownLock = new ReentrantDistributedLock(zkClient, "/lock/" + Constants.Service.MASTER_SERVICES);
+
+    String electionPath = "/election/" + Constants.Service.MASTER_SERVICES;
+    this.electionInfoService = new LeaderElectionInfoService(zkClient, electionPath);
+    this.electionHandler = new MasterLeaderElectionHandler(cConf, hConf, zkClient, electionInfoService);
+    this.leaderElection = new LeaderElection(zkClient, electionPath, electionHandler);
 
     // leader election will normally stay running. Will only stop if there was some issue starting up.
     this.leaderElection.addListener(new ServiceListenerAdapter() {
@@ -230,13 +242,75 @@ public class MasterServiceMain extends DaemonMain {
                               QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
     createSystemHBaseNamespace();
     updateConfigurationTable();
-
     zkClient.startAndWait();
     // Tries to create the ZK root node (which can be namespaced through the zk connection string)
     Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
                                                   KeeperException.NodeExistsException.class, null));
-
+    electionInfoService.startAndWait();
     leaderElection.startAndWait();
+  }
+
+  @Override
+  public void stop() {
+    LOG.info("Stopping {}", Constants.Service.MASTER_SERVICES);
+    stopped = true;
+
+    // When shutting down, we want to have the leader process not to stop the YARN application if there are
+    // followers running (CDAP-8565).
+    // During shutdown, we use a lock to ensure the leader and followers have a consistent view
+    // about the leader-election participants. This is mainly to deal with the case when multiple master
+    // processes get shutting down simultaneously. When multiple masters are stopping at about the same time,
+    // we want to perform a rolling style shutdown sequence such that the last master getting stopped
+    // would become the last leader and stopping the YARN application as well.
+
+    // The first lock block below guarantees that there is always an active leader until the last leader withdrawn
+
+    // If the process currently is a leader, the following sequence of events will happen
+    // 1. Acquire the shutdown lock
+    // 2. Become follower with the electionHandler.follower() method get invoked
+    // 3. Leader election stopped with the leader-election ephemeral node removed from ZK
+    // 4. Release shutdown lock with the lock ephemeral node removed from ZK
+
+    // For any other master process, before it was able to acquire the
+    // lock (after step 4 above is performed by the original leader),
+    // it must have received the leader-election children change event, hence the transition to leader must
+    // be triggered for the next follower in line. Here is the sequence of events:
+    // 5. ElectionHandler.leader() get triggered and lock acquired (the order doesn't matter)
+    // 6. LeaderElection.stopAndWait gets called, and it will block until ElectionHandler.leader() completed
+    // 7. ElectionHandler.leader() completed with the control of the yarn app
+    // 8. Then step 2-4 above will happen in the new leader process
+
+    shutdownLock.lock();
+    try {
+      // if leader election failed to start, its listener will stop the master.
+      // In that case, we don't want to try stopping it again, as it will log confusing exceptions
+      if (leaderElection.isRunning()) {
+        stopQuietly(leaderElection);
+      }
+    } finally {
+      shutdownLock.unlock();
+    }
+
+    // This second lock block is to guarantee the following conditions after the lock is acquired
+    // 1. All other master processes that are still running must received the leader-election children change event
+    // 2. For leader-election participants that this process can see by fetching from ZK while holding the lock,
+    //    those must NOT have gone through the first lock block above.
+
+    // Because of the conditions above, inside the electionHandler.postStop() method, if there are
+    // non-zero participants, we don't need to stop the yarn app if this process was the leader.
+    shutdownLock.lock();
+    try {
+      electionHandler.postStop();
+    } finally {
+      shutdownLock.unlock();
+    }
+    stopQuietly(electionInfoService);
+    stopQuietly(zkClient);
+  }
+
+  @Override
+  public void destroy() {
+    // no-op
   }
 
   /**
@@ -289,24 +363,6 @@ public class MasterServiceMain extends DaemonMain {
     return false;
   }
 
-  @Override
-  public void stop() {
-    LOG.info("Stopping {}", Constants.Service.MASTER_SERVICES);
-    stopped = true;
-
-    // if leader election failed to start, its listener will stop the master.
-    // In that case, we don't want to try stopping it again, as it will log confusing exceptions
-    if (leaderElection.isRunning()) {
-      stopQuietly(leaderElection);
-    }
-    stopQuietly(zkClient);
-  }
-
-  @Override
-  public void destroy() {
-    // no-op
-  }
-
   /**
    * Gets an instance of the given {@link Service} class from the given {@link Injector}, start the service and
    * returns it.
@@ -345,15 +401,6 @@ public class MasterServiceMain extends DaemonMain {
     }
   }
 
-  private InetAddress getLocalHost() {
-    try {
-      return InetAddress.getLocalHost();
-    } catch (UnknownHostException e) {
-      LOG.error("Error obtaining localhost address", e);
-      throw Throwables.propagate(e);
-    }
-  }
-
   private Map<String, Integer> getSystemServiceInstances(ServiceStore serviceStore) {
     Map<String, Integer> instanceCountMap = new HashMap<>();
     Set<ServiceResourceKeys> serviceResourceKeysSet = MasterUtils.createSystemServicesResourceKeysSet(cConf);
@@ -382,14 +429,6 @@ public class MasterServiceMain extends DaemonMain {
     return instanceCountMap;
   }
 
-
-  /**
-   * Creates an unstarted {@link LeaderElection} for the master service.
-   */
-  private LeaderElection createLeaderElection() {
-    String electionPath = "/election/" + Constants.Service.MASTER_SERVICES;
-    return new LeaderElection(zkClient, electionPath, new MasterLeaderElectionHandler(cConf, hConf, zkClient));
-  }
 
   /**
    * Cleanup the cdap system temp directory.
@@ -521,8 +560,9 @@ public class MasterServiceMain extends DaemonMain {
     private final CConfiguration cConf;
     private final Configuration hConf;
     private final ZKClientService zkClient;
-    private final AtomicReference<TwillController> controller = new AtomicReference<>();
-    private final List<Service> services = new ArrayList<>();
+    private final LeaderElectionInfoService electionInfoService;
+    private final AtomicReference<TwillController> controller;
+    private final List<Service> services;
 
     private Injector injector;
     private Cancellable secureStoreUpdateCancellable;
@@ -530,14 +570,16 @@ public class MasterServiceMain extends DaemonMain {
     private ScheduledExecutorService executor;
     private AuthorizerInstantiator authorizerInstantiator;
     private TwillRunnerService twillRunner;
-    private ServiceStore serviceStore;
-    private TokenSecureStoreUpdater secureStoreUpdater;
     private ExploreClient exploreClient;
 
-    private MasterLeaderElectionHandler(CConfiguration cConf, Configuration hConf, ZKClientService zkClient) {
+    private MasterLeaderElectionHandler(CConfiguration cConf, Configuration hConf, ZKClientService zkClient,
+                                        LeaderElectionInfoService electionInfoService) {
       this.cConf = cConf;
       this.hConf = hConf;
       this.zkClient = zkClient;
+      this.electionInfoService = electionInfoService;
+      this.controller = new AtomicReference<>();
+      this.services = new ArrayList<>();
     }
 
     @Override
@@ -559,13 +601,13 @@ public class MasterServiceMain extends DaemonMain {
       services.add(getAndStart(injector, KafkaClientService.class));
       services.add(getAndStart(injector, MetricsCollectionService.class));
       services.add(getAndStart(injector, AuthorizationEnforcementService.class));
-      serviceStore = getAndStart(injector, ServiceStore.class);
+      ServiceStore serviceStore = getAndStart(injector, ServiceStore.class);
       services.add(serviceStore);
 
       twillRunner = injector.getInstance(TwillRunnerService.class);
       twillRunner.start();
 
-      secureStoreUpdater = injector.getInstance(TokenSecureStoreUpdater.class);
+      TokenSecureStoreUpdater secureStoreUpdater = injector.getInstance(TokenSecureStoreUpdater.class);
 
       // Schedule secure store update.
       if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
@@ -614,7 +656,7 @@ public class MasterServiceMain extends DaemonMain {
       stop(stopped);
     }
 
-    private void stop(boolean shouldTerminateApp) {
+    private void stop(boolean stopRequested) {
       // Shutdown the retry executor so that no re-run of the twill app will be attempted
       if (executor != null) {
         executor.shutdownNow();
@@ -623,13 +665,11 @@ public class MasterServiceMain extends DaemonMain {
       if (secureStoreUpdateCancellable != null) {
         secureStoreUpdateCancellable.cancel();
       }
-      // If the master process has been explcitly stopped, stop the twill application as well.
-      if (shouldTerminateApp) {
-        LOG.info("Stopping master twill application");
-        TwillController twillController = controller.get();
-        if (twillController != null) {
-          Futures.getUnchecked(twillController.terminate());
-        }
+      // If it is a transition from leader to follower due to ZK event, stop the twillRunner.
+      // Otherwise it will be stopped in the postStop() method
+      if (!stopRequested) {
+        controller.set(null);
+        stopQuietly(twillRunner);
       }
       // Stop local services last since DatasetService is running locally
       // and remote services need it to preserve states.
@@ -637,11 +677,56 @@ public class MasterServiceMain extends DaemonMain {
         stopQuietly(service);
       }
       services.clear();
-      stopQuietly(twillRunner);
       Closeables.closeQuietly(authorizerInstantiator);
       Closeables.closeQuietly(exploreClient);
     }
 
+    /**
+     * Stops the twill application if necessary. If this process was not the leader, this method will just return.
+     * If this process was the leader, it will check if there is any other participants currently running. If there is,
+     * it won't stop the twill application; otherwise it will.
+     */
+    void postStop() {
+      TwillController twillController = controller.get();
+      try {
+        // The twill controller won't be null if this was the leader.
+        if (twillController == null) {
+          return;
+        }
+
+        SortedMap<Integer, LeaderElectionInfoService.Participant> participants = ImmutableSortedMap.of();
+        try {
+          participants = electionInfoService.fetchCurrentParticipants();
+
+          // Expected the size of participants to be non-zero
+          // If the current process is the only participant, the size of the map would be one, because
+          // LeaderElection only remove the node after the follower() method is returned.
+          // If there are other processes as participants, the size would be > 1.
+          // In case if the participants map is empty, also terminate the twill ap to be safe
+        } catch (Exception e) {
+          // Calling e.toString() explicitly, otherwise it will print the stack trace, which we don't need in this case
+          LOG.warn("Unable to detect if there are other leader election partitions due to {}", e.toString());
+        }
+
+        // If failed to get the participant information, the safest thing to do is to shutdown the Twill app
+        // to make sure nothing left behind
+        if (participants.isEmpty()) {
+          LOG.info("No other master process detected, stopping master twill application");
+          twillController.terminate();
+          try {
+            twillController.awaitTerminated();
+            LOG.info("Master twill application terminated successfully");
+          } catch (ExecutionException e) {
+            LOG.info("Master twill application terminated with exception", e.getCause());
+          }
+        } else {
+          LOG.info("Keep the twill application running to fail-over to a master in the set {}",
+                   participants.values());
+        }
+      } finally {
+        stopQuietly(twillRunner);
+      }
+    }
 
     /**
      * Monitors the twill application for master services running through Twill.
@@ -671,6 +756,23 @@ public class MasterServiceMain extends DaemonMain {
           throw e;
         }
         startTime = System.currentTimeMillis();
+      }
+
+      // Attache the log handler to pipe container logs to master log
+      if (cConf.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
+        if (LOG instanceof ch.qos.logback.classic.Logger) {
+          controller.addLogHandler(new LogHandler() {
+            @Override
+            public void onLog(LogEntry entry) {
+              ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LOG;
+              logger.callAppenders(new TwillLogEntryAdapter(entry));
+            }
+          });
+        } else {
+          LOG.warn("Unsupported logger binding ({}) for container log collection. Falling back to System.out.",
+                   LOG.getClass().getName());
+          controller.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+        }
       }
 
       // Monitor the application
@@ -767,21 +869,7 @@ public class MasterServiceMain extends DaemonMain {
             new MasterTwillApplication(cConf, cConfFile.toFile(), hConfFile.toFile(),
                                        getSystemServiceInstances(serviceStore)));
 
-          if (cConf.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
-            if (LOG instanceof ch.qos.logback.classic.Logger) {
-              preparer.addLogHandler(new LogHandler() {
-                @Override
-                public void onLog(LogEntry entry) {
-                  ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LOG;
-                  logger.callAppenders(new TwillLogEntryAdapter(entry));
-                }
-              });
-            } else {
-              LOG.warn("Unsupported logger binding ({}) for container log collection. Falling back to System.out.",
-                       LOG.getClass().getName());
-              preparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
-            }
-          } else {
+          if (!cConf.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
             preparer.addJVMOptions("-Dtwill.disable.kafka=true");
           }
 
