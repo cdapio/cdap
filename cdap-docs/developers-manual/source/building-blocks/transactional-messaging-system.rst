@@ -104,46 +104,26 @@ Example Publish and Subscribe
 Consider a workflow that modifies a dataset, and at the same time publishes a notification to
 a topic.
 
-**If it were to publish to a topic non-transactionally,** a problem can arise as there is
+If it were to **publish to a topic non-transactionally,** a problem can arise as there is
 no guarantee that the notification will be published only after the dataset commit:
 
-**Non-transactional Example**
+.. figure:: /_images/tms_illustrations_1.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
 
-::
+  **Non-transactional Example**
 
-  Workflow 1
-
-  [ Program 1.1 ] -> [ Program 1.2 ] -> Writes to a topic
-                                     -> Writes to a dataset
-                               
-  Workflow 2
-
-  [ Program 2.1 ] -> Watches topic for messages
-                   - May see the message about the write before the write completes or
-                     even if the write was rolled back
-
-**If it were to publish transactionally to a TMS topic,** there is the guarantee that
+If it were to **publish transactionally to a TMS topic,** there is the guarantee that
 transaction consumers will only see the notification if the write to the dataset is
 successfully committed:
 
-**Transactional Example**
+.. figure:: /_images/tms_illustrations_2.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
 
-::
-
-  Workflow 1
-                                                               Transaction A
-  [ Program 1.1 ] -> |[ Program 1.2 ] -> Writes to a dataset   |
-                     |                -> Writes to a TMS topic | 
-                                       - This is now visible only if the write to the
-                                         dataset succeeds 
-                               
-  Workflow 2 (explicit transaction)
-
-                   Transaction B
-  |[ Program 2.1 ] -> Watches TMS topic for messages | 
-                    - Only sees the message if the write was successful
-                    - Guaranteed to see messages in the correct order of publishing
-
+  **Transactional Example**
 
 Currently, TMS:
 
