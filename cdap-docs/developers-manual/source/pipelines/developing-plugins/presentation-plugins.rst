@@ -4,6 +4,7 @@
 
 .. _plugins-presentation:
 .. _cdap-pipelines-packaging-plugins-presentation:
+.. _cdap-pipelines-creating-custom-plugins-widget-json:
 
 ===================
 Plugin Presentation
