@@ -364,6 +364,11 @@ pre {
     -moz-box-shadow: 1px 1px 1px #d8d8d8;
 }
 
+div.first.last.highlight-json-ellipsis pre {
+	  margin: 0.25em -0.5em 0.5em 0;
+	  padding: 5px;
+}
+
 tt {
     color: #222;
     font-size: 1.1em;
