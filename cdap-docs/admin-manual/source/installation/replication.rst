@@ -141,6 +141,8 @@ CDAP must have :ref:`invalid transaction list pruning disabled
 <installation-replication-disable-invalid-transaction-list-pruning>`, as this cannot be
 used with replication.
 
+.. highlight:: console
+
 To deploy your extension (once compiled and packaged as a JAR file, such as
 *my-extension.jar*), run these steps on **both** your master and slave clusters:
 
@@ -152,7 +154,7 @@ To deploy your extension (once compiled and packaged as a JAR file, such as
 
     $ cp my-extension.jar /opt/cdap/master/ext/hbase/repl/
 
-.. highlight:: xml
+   .. highlight:: xml
 
 #. Modify ``cdap-site.xml`` to use your implementation of ``HBaseDDLExecutor``::
 
@@ -186,7 +188,7 @@ To deploy your extension (once compiled and packaged as a JAR file, such as
       <value>true</value>
     </property>
 
-.. _installation-replication-disable-invalid-transaction-list-pruning:
+   .. _installation-replication-disable-invalid-transaction-list-pruning:
 
 #. Modify ``cdap-site.xml`` to **disable invalid transaction list pruning,** as it cannot
    be used with replication::
@@ -199,17 +201,18 @@ To deploy your extension (once compiled and packaged as a JAR file, such as
       </description>
     </property>
 
-.. highlight:: console
+   .. highlight:: console
 
 #. Before starting CDAP on the master cluster, run a command on the slave cluster to load
    the HBase coprocessors required by CDAP onto the slave's HDFS::
    
-    slave$ cdap setup coprocessors
+    $_slave cdap setup coprocessors
 
 #. Start CDAP on the master cluster::
 
-    master$ cdap master start
+    $_master cdap master start
 
+.. highlight:: console
 
 Manual Failover Procedure
 =========================
@@ -220,25 +223,25 @@ To manually failover from the master to a slave cluster, follow these steps:
 #. Copy any HDFS files that have not yet been copied using either your distro's solution or ``distcp``
 #. Run the CDAP replication status tool to retrieve the cluster state::
 
-    master$ cdap run co.cask.cdap.data.tools.ReplicationStatusTool -m -o /tmp/master_state
+    $_master cdap run co.cask.cdap.data.tools.ReplicationStatusTool -m -o /tmp/master_state
 
 #. Copy the master state onto your slave cluster::
 
-    master$ scp /tmp/master_state <slave>:/tmp/master_state
+    $_master scp /tmp/master_state <slave>:/tmp/master_state
 
 #. Verify that replication has copied the required data onto the slave::
 
-    slave$ cdap run co.cask.cdap.data.tools.ReplicationStatusTool -i /tmp/master_state
+    $_slave cdap run co.cask.cdap.data.tools.ReplicationStatusTool -i /tmp/master_state
     ...
     Master and Slave Checksums match. HDFS Replication is complete.
     HBase Replication is complete.
 
 #. Run Hive's ``metatool`` to update the locations for the Hive tables::
 
-    slave$ hive --service metatool -updateLocation hdfs://[slave-namenode-host]:[slave-namenode-port] \
+    $_slave hive --service metatool -updateLocation hdfs://[slave-namenode-host]:[slave-namenode-port] \
                  hdfs://[master-namenode-host]:[master-namenode-port] \
                  -tablePropKey avro.schema.url -serdePropKey avro.schema.url
 
 #. Start CDAP on the slave::
 
-    slave$ cdap master start
+    $_slave cdap master start
