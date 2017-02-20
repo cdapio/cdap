@@ -47,8 +47,6 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 
 .. |cdh-title| replace:: Cloudera Distribution of Apache Hadoop (CDH)
 .. |note-4| replace:: :ref:`(Note 4) <admin-manual-hadoop-compatibility-matrix-note-4>`
-.. |cdh-versions|       replace:: 5.1 through 5.9 :ref:`(Note 4) <admin-manual-hadoop-compatibility-matrix-note-4>`
-.. |hdp-versions|       replace:: 2.0 through 2.5 :ref:`(Note 4) <admin-manual-hadoop-compatibility-matrix-note-4>`
 
 +----------------+---------------------------------+---------------------------------------+
 | Component      | Source                          | Supported Versions                    |
