@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data.tools;
+package co.cask.cdap.metadata;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.view.ViewAdmin;
@@ -65,11 +66,11 @@ import java.util.concurrent.Callable;
 /**
  * Updates system metadata for existing entities.
  */
-class ExistingEntitySystemMetadataWriter {
+public class ExistingEntitySystemMetadataWriter {
   private static final Logger LOG = LoggerFactory.getLogger(ExistingEntitySystemMetadataWriter.class);
 
   private final MetadataStore metadataStore;
-  private final NamespaceStore nsStore;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final Store store;
   private final StreamAdmin streamAdmin;
   private final ViewAdmin viewAdmin;
@@ -79,11 +80,11 @@ class ExistingEntitySystemMetadataWriter {
   private final Impersonator impersonator;
 
   @Inject
-  ExistingEntitySystemMetadataWriter(MetadataStore metadataStore, NamespaceStore nsStore, Store store,
+  ExistingEntitySystemMetadataWriter(MetadataStore metadataStore, NamespaceQueryAdmin namespaceQueryAdmin, Store store,
                                      ArtifactStore artifactStore, StreamAdmin streamAdmin, ViewAdmin viewAdmin,
                                      LocationFactory locationFactory, CConfiguration cConf, Impersonator impersonator) {
     this.metadataStore = metadataStore;
-    this.nsStore = nsStore;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.store = store;
     this.streamAdmin = streamAdmin;
     this.viewAdmin = viewAdmin;
@@ -94,7 +95,7 @@ class ExistingEntitySystemMetadataWriter {
   }
 
   void write(DatasetFramework dsFramework) throws Exception {
-    for (NamespaceMeta namespaceMeta : nsStore.list()) {
+    for (NamespaceMeta namespaceMeta : namespaceQueryAdmin.list()) {
       NamespaceId namespace = new NamespaceId(namespaceMeta.getName());
       writeSystemMetadataForArtifacts(namespace);
       writeSystemMetadataForApps(namespace);
