@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright © 2016 Cask Data, Inc.
+# Copyright © 2016-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -208,14 +208,14 @@ cdap_stop_pidfile() {
 #
 cdap_check_pidfile() {
   local readonly __pidfile=${1} __label=${2:-Process}
-  if [[ -f ${__pidfile} ]]; then
-    local readonly __pid=$(<${__pidfile})
-    if [[ $(cdap_status_pidfile ${__pidfile} ${__label} >/dev/null) ]]; then
-      echo "${__label} running as PID ${__pid}. Stop it first."
-      return 1
-    fi
-  fi
-  return 0
+  local readonly __ret
+  cdap_status_pidfile ${__pidfile} ${__label} > /dev/null
+  __ret=$?
+  case ${__ret} in
+    0) echo "$(date) Please stop ${__label} running at $(<${__pidfile}), first, or use the restart function" ;;
+    *) return 0 ;;
+  esac
+  return 1
 }
 
 ###
