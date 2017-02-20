@@ -137,6 +137,15 @@
   </property>
 
 
+  <!-- Tephra Configuration -->
+  <property>
+    <name>data.tx.prune.enable</name>
+    <value>false</value>
+    <description>
+      Disable invalid list transaction pruning
+    </description>
+  </property>
+
   <!-- Router Configuration -->
   
   <property>
