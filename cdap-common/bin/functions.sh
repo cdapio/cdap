@@ -209,11 +209,10 @@ cdap_stop_pidfile() {
 cdap_check_pidfile() {
   local readonly __pidfile=${1} __label=${2:-Process}
   local readonly __ret
-  cdap_status_pidfile ${__pidfile} ${__label}
+  cdap_status_pidfile ${__pidfile} ${__label} > /dev/null
   __ret=$?
   case ${__ret} in
-    3) echo "Please delete ${__pidfile} and try again" ;;
-    0) echo "Please stop ${__label}, first" ;;
+    0) echo "$(date) Please stop ${__label} running at $(<${__pidfile}), first, or use the restart function" ;;
     *) return 0 ;;
   esac
   return 1
