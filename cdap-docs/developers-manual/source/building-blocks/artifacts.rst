@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _artifacts:
 
@@ -26,7 +26,7 @@ The **artifact scope** is either ``'user'`` or ``'system'``. An artifact in the 
 through the CLI or RESTful API. A *'user'* artifact belongs in a namespace and cannot be accessed in
 another namespace. A *'system'* artifact is an artifact that is available across all namespaces. It
 is added by placing the artifact in a special directory on either the CDAP Master node(s) or the
-CDAP Standalone SDK. 
+Standalone CDAP of the CDAP SDK. 
 
 Once added to CDAP, an *Artifact* cannot be modified unless it is a **snapshot artifact.**
 An *Artifact* is a snapshot artifact if the version suffix begins with ``SNAPSHOT``. For example,
@@ -71,14 +71,14 @@ Normally, an artifact is added to a specific namespace. Users in one namespace c
 artifacts in another namespace. These are referred to as :ref:`user artifacts <plugins-deployment-user>`.
 
 Sometimes there is a need to provide an artifact that can be used across namespaces. One
-example of this are the :ref:`Hydrator artifacts <cask-hydrator-plugins>` shipped with 
+example of this are the :ref:`pipeline artifacts <cdap-pipelines-plugins>` shipped with 
 CDAP. In such scenarios, a :ref:`system artifact <plugins-deployment-system>` can be used. 
 
 System artifacts cannot be added through the RESTful API, but must be added by placing the
 artifact in a special directory. For Distributed CDAP, this directory is defined by the
 ``app.artifact.dir`` setting in :ref:`cdap-site.xml <appendix-cdap-site.xml>`. Multiple directories
 can be defined by separating them with a semicolon. It defaults to
-``/opt/cdap/master/artifacts``. For the CDAP Standalone SDK, the directory is set to the
+``/opt/cdap/master/artifacts``. For the Standalone CDAP, the directory is set to the
 ``artifacts`` directory.
 
 Any artifact in the directory will be added to CDAP when it starts up. In addition, a 

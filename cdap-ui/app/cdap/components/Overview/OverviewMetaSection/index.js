@@ -20,9 +20,9 @@ import FastActions from 'components/EntityCard/FastActions';
 import isNil from 'lodash/isNil';
 import Description from 'components/Description';
 import TimeAgo from 'react-timeago';
-import VersionsDropdown from 'components/VersionsDropdown';
 import Tags from 'components/Tags';
 import moment from 'moment';
+import shortid from 'shortid';
 import T from 'i18n-react';
 
 require('./OverviewMetaSection.scss');
@@ -44,6 +44,12 @@ export default class OverviewMetaSection extends Component {
         entity
       });
     }
+  }
+
+  getFullCreationTime(creationTime) {
+    // Sample formatted time string: Deployed on 02/16/2017, at 03:40 pm
+    let formattedTime = moment(parseInt(creationTime)).format('[ on] MM/DD/YYYY, [at] hh:mm a');
+    return formattedTime;
   }
 
   renderStreamInfo() {
@@ -97,14 +103,18 @@ export default class OverviewMetaSection extends Component {
   render() {
     let creationTime = objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'creation-time');
     let description =  objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'description');
+    let entity = this.props.entity;
+    // have to generate new uniqueId here, because we don't want the fast actions here to
+    // trigger the tooltips on the card view
+    entity.uniqueId = shortid.generate();
     return (
       <div className="overview-meta-section">
         <h2>{this.props.entity.id}</h2>
         <div className="fast-actions-container">
           <div>
             {
-              this.state.entity.type === 'application' ?
-                <VersionsDropdown entity={this.props.entity} />
+              this.props.entity.type === 'application' ?
+                <span>{this.props.entity.version}</span>
               :
                 null
             }
@@ -116,18 +126,19 @@ export default class OverviewMetaSection extends Component {
                   T.translate('features.Overview.deployedLabel.app')
               }
               {
-                creationTime ?
-                  <TimeAgo date={parseInt(creationTime, 10)} />
+                this.props.showFullCreationTime ?
+                  <span>{this.getFullCreationTime(creationTime)}</span>
                 :
-                  null
+                  <TimeAgo date={parseInt(creationTime, 10)} />
               }
             </small>
           </div>
           <FastActions
             className="overview-fast-actions"
-            entity={this.props.entity}
+            entity={entity}
             onSuccess={this.onFastActionSuccess.bind(this)}
             onUpdate={this.onFastActionUpdate.bind(this)}
+            actionToOpen={this.props.fastActionToOpen}
           />
         </div>
         <Description description={description} />
@@ -142,5 +153,7 @@ export default class OverviewMetaSection extends Component {
 OverviewMetaSection.propTypes = {
   entity: PropTypes.object,
   onFastActionSuccess: PropTypes.func,
-  onFastActionUpdate: PropTypes.func
+  onFastActionUpdate: PropTypes.func,
+  fastActionToOpen: PropTypes.string,
+  showFullCreationTime: PropTypes.bool
 };

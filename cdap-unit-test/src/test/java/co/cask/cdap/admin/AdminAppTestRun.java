@@ -83,7 +83,7 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     FlowManager flowManager = appManager.getFlowManager(AdminApp.FLOW_NAME).start();
 
     try {
-      flowManager.waitForStatus(true, 5, 5);
+      flowManager.waitForRun(ProgramRunStatus.RUNNING, 5, TimeUnit.MINUTES);
 
       // send some events to the stream
       StreamManager streamManager = getStreamManager("events");
@@ -111,7 +111,7 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     } finally {
       flowManager.stop();
     }
-    flowManager.waitForFinish(30, TimeUnit.SECONDS);
+    flowManager.waitForRun(ProgramRunStatus.KILLED, 30, TimeUnit.SECONDS);
 
     // flowlet destroy() deletes all the tables - validate
     Assert.assertNull(getDataset("counters_a").get());
@@ -326,7 +326,7 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     countsManager.flush();
 
     manager = manager.start();
-    manager.waitForFinish(60, TimeUnit.SECONDS);
+    manager.waitForRun(ProgramRunStatus.COMPLETED, 180, TimeUnit.SECONDS);
 
     // validate that there are no counts for "you" and "me", and the the other counts are accurate
     countsManager.flush(); // need to start a new tx to see the output of MR

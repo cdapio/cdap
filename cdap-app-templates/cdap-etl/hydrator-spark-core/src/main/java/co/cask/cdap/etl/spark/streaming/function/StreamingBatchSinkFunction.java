@@ -22,6 +22,7 @@ import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.batch.SparkBatchSinkContext;
 import co.cask.cdap.etl.spark.batch.SparkBatchSinkFactory;
 import co.cask.cdap.etl.spark.function.CountingFunction;
@@ -42,13 +43,13 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
   private static final Logger LOG = LoggerFactory.getLogger(StreamingBatchSinkFunction.class);
   private final PairFlatMapFunction<T, Object, Object> sinkFunction;
   private final JavaSparkExecutionContext sec;
-  private final String stageName;
+  private final StageInfo stageInfo;
 
   public StreamingBatchSinkFunction(PairFlatMapFunction<T, Object, Object> sinkFunction,
-                                    JavaSparkExecutionContext sec, String stageName) {
+                                    JavaSparkExecutionContext sec, StageInfo stageInfo) {
     this.sinkFunction = sinkFunction;
     this.sec = sec;
-    this.stageName = stageName;
+    this.stageInfo = stageInfo;
   }
 
   @Override
@@ -60,6 +61,7 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
                                                          sec.getSecureStore(),
                                                          sec.getNamespace());
     final SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
+    final String stageName = stageInfo.getName();
     final BatchSink<Object, Object, Object> batchSink =
       sec.getPluginContext().newPluginInstance(stageName, evaluator);
     boolean isPrepared = false;
@@ -70,7 +72,7 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
         @Override
         public void run(DatasetContext datasetContext) throws Exception {
           SparkBatchSinkContext sinkContext =
-            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, stageName, logicalStartTime);
+            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo);
           batchSink.prepareRun(sinkContext);
         }
       });
@@ -83,7 +85,7 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
         @Override
         public void run(DatasetContext datasetContext) throws Exception {
           SparkBatchSinkContext sinkContext =
-            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, stageName, logicalStartTime);
+            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo);
           batchSink.onRunFinish(true, sinkContext);
         }
       });
@@ -95,7 +97,7 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
           @Override
           public void run(DatasetContext datasetContext) throws Exception {
             SparkBatchSinkContext sinkContext =
-              new SparkBatchSinkContext(sinkFactory, sec, datasetContext, stageName, logicalStartTime);
+              new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo);
             batchSink.onRunFinish(false, sinkContext);
           }
         });

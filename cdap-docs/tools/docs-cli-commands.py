@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Copyright © 2016 Cask Data, Inc.
+# Copyright © 2016-2017 Cask Data, Inc.
 #
 # Used to generate a table in the CLI documentation from the output of CLI tools.
 # 
@@ -14,7 +14,7 @@ import os
 import sys
 from optparse import OptionParser
 
-VERSION = "0.0.3"
+VERSION = "0.0.4"
 
 LITERAL = '``'
 SPACE = ' '
@@ -28,7 +28,11 @@ LITERAL_LINE = SPACES + ' | '
 SKIP_SECTIONS = []
 
 MISSING_FILE_TEMPLATE = "   **Missing Input File**,\"Missing input file %s\""
+
+# Positional parameters: section anchor, section title, section title underline
 SECTION_TABLE_HEADER = """
+.. _cli-available-commands-%s:
+
 %s
 %s
 
@@ -87,15 +91,15 @@ def create_parsed_line(line):
     i = 0
     in_literal = False
     finished_literal = False
-    opening_literal_quote = LITERAL + QUOTE
-    closing_literal_quote = QUOTE + LITERAL
+    opening_literal_quote = LITERAL
+    closing_literal_quote = LITERAL
     new_line = ''
     i = -1
     for c in line:
         i +=1 
         if c == QUOTE:
             if not in_literal:
-                if i and line[i-1] != SPACE: # Preceding character
+                if i and line[i-1] not in (SPACE, "("): # Preceding character
                     new_line += c
                 else:
                     new_line += opening_literal_quote
@@ -113,9 +117,10 @@ def create_parsed_line(line):
     return new_line
 
 def create_new_section(line):
-    sectionTitle = line.replace('**','').strip()
-    underline = len(sectionTitle) * '-'
-    return SECTION_TABLE_HEADER % (sectionTitle, underline)
+    section_title = line.replace('**','').strip()
+    section_title_anchor = section_title.lower().replace(' ', '-')
+    underline = len(section_title) * '-'
+    return SECTION_TABLE_HEADER % (section_title_anchor, section_title, underline)
 
 #
 # Create the table

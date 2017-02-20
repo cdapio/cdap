@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,20 +18,19 @@ package co.cask.cdap.logging.serialize;
 
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
+import co.cask.cdap.logging.LoggingUtil;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 
-import static co.cask.cdap.logging.serialize.Util.stringOrNull;
-
 /**
  * Serializer for IThrowableProxy.
  */
-public final class ThrowableProxySerializer {
+final class ThrowableProxySerializer {
   private ThrowableProxySerializer() {}
 
-  public static GenericRecord encode(Schema schema, IThrowableProxy throwableProxy) {
+  static GenericRecord encode(Schema schema, IThrowableProxy throwableProxy) {
     if (throwableProxy != null) {
       Schema tpSchema = schema.getTypes().get(1);
       GenericRecord datum = new GenericData.Record(tpSchema);
@@ -50,10 +49,10 @@ public final class ThrowableProxySerializer {
     return null;
   }
 
-  public static IThrowableProxy decode(GenericRecord datum) {
+  static IThrowableProxy decode(GenericRecord datum) {
     if (datum != null) {
-      String className = stringOrNull(datum.get("className"));
-      String message = stringOrNull(datum.get("message"));
+      String className = LoggingUtil.stringOrNull(datum.get("className"));
+      String message = LoggingUtil.stringOrNull(datum.get("message"));
       int commonFramesCount = (Integer) datum.get("commonFramesCount");
       @SuppressWarnings("unchecked") StackTraceElementProxy[] steArray =
         StackTraceElementProxyArraySerializer.decode(

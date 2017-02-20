@@ -16,75 +16,46 @@
 
 @import "../../styles/variables.scss";
 
-/* Animation - Slide in direction of Next */
-.entity-animation--next-enter {
-  &:not(h3) {
-    opacity: 0.1;
-    &.entity-animation--next-enter-active {
-      opacity: 1;
-      transition: opacity 1000ms;
-    }
-  }
-}
-
-.entity-animation--next-appear {
-  &:not(h3) {
-    &.animation--next-appear-active {
-      opacity: 1;
-      transition: opacity 1000ms ease-in;
-    }
-  }
-}
-
-.entity-animation--next-leave {
-  opacity: 0;
-  &.entity-animation--next-leave-active {
-    transition: opacity 1000ms ease-in;
-  }
-}
-
-/* Animation - Slide in direction of Prev */
-.entity-animation--prev-enter {
-  &:not(h3) {
-    opacity: 0.1;
-    &.entity-animation--prev-enter-active {
-      transition: opacity 1000ms;
-      opacity: 1;
-    }
-  }
-}
-
-.entity-animation--prev-appear {
-  &:not(h3) {
-    opacity: 0;
-    &.animation--prev-appear-active {
-      opacity: 1;
-      transition: opacity 1000ms ease-in;
-    }
-  }
-}
-
-.entity-animation--prev-leave {
-  opacity: 0;
-  &.entity-animation--prev-leave-active {
-    transition: opacity 1000ms ease-in;
-  }
-}
-
 .entity-list-view {
-  height: calc(100vh - 132px);
+  height: calc(100vh - 155px);
   align-items: flex-start;
 
+  .subtitle {
+    color: #999999;
+    border-bottom: 1px solid #dddddd;
+    height: 11px;
+    clear: both;
+    margin-right: 20px;
+    margin-left: 5px;
+    width: 100%;
+
+    span {
+      background-color: #ffffff;
+      padding-right: 15px;
+    }
+
+    margin-bottom: 15px;
+  }
+
+  .namespace-not-found {
+    .open-namespace-wizard-link {
+      color: $cdap_orange;
+      cursor: pointer;
+      margin: 0 5px;
+    }
+  }
   .entities-container {
+    padding: 0 0 0 5px;
     display: flex;
     flex-wrap: wrap;
-    padding: 10px 0px 0 5px;
+    width: 100%;
 
-    .transition-container {
+    .entities-all-list-container {
       display: inline-flex;
       flex-wrap: wrap;
       height: 100%;
       flex: 1;
+      width: 100%;
     }
 
     .home-list-view-container {
@@ -134,6 +105,19 @@
           width: calc((100% - 20px - 10px - (2 * 10px)) / 3);
         }
       }
+
+      @media(min-width: 500px) and (max-width: 767px) {
+        .entity-cards {
+          width: calc((100% - 20px - 10px - 10px) / 2);
+        }
+      }
+
+      @media(max-width: 499px) {
+        .entity-cards {
+          width: calc((100% - 20px - 10px));
+        }
+      }
+
       &.show-overview-main-container {
         flex: 1 1;
 
@@ -165,19 +149,19 @@
           }
         }
 
-        @media (min-width: 1401px) and (max-width: 1600px) {
+        @media (min-width: 1400px) and (max-width: 1600px) {
           .entity-cards {
             width: calc((100% - 20px - 10px - (2 * 10px)) / 3);
           }
         }
 
-        @media (min-width: 1100px) and (max-width: 1400px) {
+        @media (min-width: 1200px) and (max-width: 1399px) {
           .entity-cards {
             width: calc((100% - 20px - 10px - 10px) / 2);
           }
         }
 
-        @media (max-width: 1099px) {
+        @media (max-width: 1199px) {
           .entity-cards {
             width: calc(100% - 20px - 10px);
           }

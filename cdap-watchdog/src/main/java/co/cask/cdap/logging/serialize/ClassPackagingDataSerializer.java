@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,19 +17,18 @@
 package co.cask.cdap.logging.serialize;
 
 import ch.qos.logback.classic.spi.ClassPackagingData;
+import co.cask.cdap.logging.LoggingUtil;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 
-import static co.cask.cdap.logging.serialize.Util.stringOrNull;
-
 /**
  * Serializer for ClassPackagingData.
  */
-public final class ClassPackagingDataSerializer {
+final class ClassPackagingDataSerializer {
   private ClassPackagingDataSerializer() {}
 
-  public static GenericRecord encode(Schema schema, ClassPackagingData classPackagingData) {
+  static GenericRecord encode(Schema schema, ClassPackagingData classPackagingData) {
     if (classPackagingData != null) {
       GenericRecord datum = new GenericData.Record(schema.getTypes().get(1));
       datum.put("codeLocation", classPackagingData.getCodeLocation());
@@ -40,10 +39,10 @@ public final class ClassPackagingDataSerializer {
     return null;
   }
 
-  public static ClassPackagingData decode(GenericRecord datum) {
+  static ClassPackagingData decode(GenericRecord datum) {
     if (datum != null) {
-      String codeLocation =  stringOrNull(datum.get("codeLocation"));
-      String version = stringOrNull(datum.get("version"));
+      String codeLocation =  LoggingUtil.stringOrNull(datum.get("codeLocation"));
+      String version = LoggingUtil.stringOrNull(datum.get("version"));
       boolean exact = (Boolean) datum.get("exact");
       return new ClassPackagingData(codeLocation, version, exact);
     }

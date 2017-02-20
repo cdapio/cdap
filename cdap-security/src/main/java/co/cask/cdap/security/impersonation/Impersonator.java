@@ -17,6 +17,7 @@
 package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.kerberos.ImpersonatedOpType;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.inject.ImplementedBy;
@@ -43,7 +44,21 @@ public interface Impersonator {
    * @return the return value of the callable
    * @throws Exception if the callable throws any exception
    */
-  <T> T doAs(final NamespacedEntityId entityId, final Callable<T> callable) throws Exception;
+  <T> T doAs(NamespacedEntityId entityId, Callable<T> callable) throws Exception;
+
+  /**
+   * Executes a callable as the user, configurable at a namespace level
+   *
+   * @param entityId the entity to use to lookup the user to impersonate
+   * @param callable the callable to execute
+   * @param <T> return type of the callable
+   * @param impersonatedOpType {@link ImpersonatedOpType} representing the type of the operation which is
+   * being impersonated
+   *
+   * @return the return value of the callable
+   * @throws Exception if the callable throws any exception
+   */
+  <T> T doAs(NamespacedEntityId entityId, Callable<T> callable, ImpersonatedOpType impersonatedOpType) throws Exception;
 
   /**
    * Retrieve the {@link UserGroupInformation} for the given {@link NamespaceId}
@@ -53,5 +68,5 @@ public interface Impersonator {
    * @throws IOException if there was any error fetching the {@link UserGroupInformation}
    * @throws NamespaceNotFoundException if namespaceId does not exist
    */
-  UserGroupInformation getUGI(final NamespacedEntityId entityId) throws IOException, NamespaceNotFoundException;
+  UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException, NamespaceNotFoundException;
 }

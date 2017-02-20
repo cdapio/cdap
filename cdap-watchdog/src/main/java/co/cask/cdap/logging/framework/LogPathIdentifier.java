@@ -16,19 +16,25 @@
 
 package co.cask.cdap.logging.framework;
 
+import java.util.Objects;
+
 /**
  * Identifier for CDAP Logging Context
  */
 public class LogPathIdentifier {
   private static final String META_SEPARATOR = ":";
+
   private final String namespaceId;
   private final String pathId1;
   private final String pathId2;
+  private final transient String rowKey;
+
 
   public LogPathIdentifier(String namespaceId, String pathId1, String pathId2) {
     this.namespaceId = namespaceId;
     this.pathId1 = pathId1;
     this.pathId2 = pathId2;
+    this.rowKey = String.format("%s%s%s%s%s", namespaceId, META_SEPARATOR, pathId1, META_SEPARATOR, pathId2);
   }
 
   /**
@@ -60,6 +66,25 @@ public class LogPathIdentifier {
    * @return rowkey string
    */
   public String getRowKey() {
-    return String.format("%s%s%s%s%s", namespaceId, META_SEPARATOR, pathId1, META_SEPARATOR, pathId2);
+    return rowKey;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    LogPathIdentifier that = (LogPathIdentifier) o;
+    return Objects.equals(namespaceId, that.namespaceId) &&
+      Objects.equals(pathId1, that.pathId1) &&
+      Objects.equals(pathId2, that.pathId2);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(namespaceId, pathId1, pathId2);
   }
 }

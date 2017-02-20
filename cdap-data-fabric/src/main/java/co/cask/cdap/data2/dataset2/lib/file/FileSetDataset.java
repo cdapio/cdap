@@ -35,6 +35,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.twill.filesystem.ForwardingLocationFactory;
@@ -60,10 +61,11 @@ import javax.annotation.Nullable;
  */
 public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
 
-  private static final Logger LOG = LoggerFactory.getLogger(FileSetDataset.class);
-
   public static final String FILESET_VERSION_PROPERTY = "fileset.version";
   static final String FILESET_VERSION = "2";
+
+  private static final Logger LOG = LoggerFactory.getLogger(FileSetDataset.class);
+  private static final String HADOOP_UMASK_PROPERTY = FsPermission.UMASK_LABEL; // fs.permissions.umask-mode
 
   private final DatasetSpecification spec;
   private final Map<String, String> runtimeArguments;
@@ -267,7 +269,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
       outputPermissions = this.permissions;
     }
     if (outputPermissions != null) {
-      config.put("fs.permissions.umask-mode", FileUtils.permissionsToUmask(outputPermissions));
+      config.put(HADOOP_UMASK_PROPERTY, FileUtils.permissionsToUmask(outputPermissions));
     }
     config.putAll(outputArguments);
     return config;

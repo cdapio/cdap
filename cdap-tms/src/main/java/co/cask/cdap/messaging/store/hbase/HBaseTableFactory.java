@@ -19,6 +19,8 @@ package co.cask.cdap.messaging.store.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.ColumnFamilyDescriptorBuilder;
@@ -77,8 +79,11 @@ import javax.annotation.Nonnull;
  */
 public final class HBaseTableFactory implements TableFactory {
 
-  public static final byte[] COLUMN_FAMILY = MessagingUtils.Constants.COLUMN_FAMILY;
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTableFactory.class);
+  // Exponentially log less on executor rejected execution due to limit threads
+  private static final Logger REJECTION_LOG = Loggers.sampling(LOG, LogSamplers.exponentialLimit(1, 1024, 2.0d));
+
+  public static final byte[] COLUMN_FAMILY = MessagingUtils.Constants.COLUMN_FAMILY;
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -98,10 +103,13 @@ public final class HBaseTableFactory implements TableFactory {
     this.coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
 
     RejectedExecutionHandler callerRunsPolicy = new RejectedExecutionHandler() {
+
       @Override
       public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-        LOG.info("No more threads in the HBase scan thread pool. Consider increase {}. Runnable from caller thread {}",
-                 Constants.MessagingSystem.HBASE_MAX_SCAN_THREADS, Thread.currentThread().getName());
+        REJECTION_LOG.info(
+          "No more threads in the HBase scan thread pool. Consider increase {}. Scan from caller thread {}",
+          Constants.MessagingSystem.HBASE_MAX_SCAN_THREADS, Thread.currentThread().getName()
+        );
         // Runs it from the caller thread
         if (!executor.isShutdown()) {
           r.run();
@@ -281,9 +289,11 @@ public final class HBaseTableFactory implements TableFactory {
       ProjectInfo.Version version = HBaseTableUtil.getVersion(tableDescriptor);
 
       if (version.compareTo(ProjectInfo.getVersion()) >= 0) {
-        // If cdap has version has not changed or is greater, no need to update
+        // If cdap has version has not changed or is greater, no need to update. Just enable it, in case
+        // it has been disabled by the upgrade tool, and return
         LOG.info("Table '{}' has not changed and its version '{}' is same or greater than current CDAP version '{}'",
                  tableId, version, ProjectInfo.getVersion());
+        enableTable(ddlExecutor, tableId);
         return;
       }
 

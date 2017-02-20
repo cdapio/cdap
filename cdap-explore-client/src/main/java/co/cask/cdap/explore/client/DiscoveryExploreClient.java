@@ -16,6 +16,8 @@
 
 package co.cask.cdap.explore.client;
 
+import co.cask.cdap.common.ServiceUnavailableException;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
@@ -25,11 +27,14 @@ import co.cask.common.http.HttpRequestConfig;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static co.cask.cdap.common.conf.Constants.Service;
@@ -69,7 +74,7 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
     if (discoverable != null) {
       return discoverable.getSocketAddress();
     }
-    throw new RuntimeException(String.format("Cannot discover service %s", Service.EXPLORE_HTTP_USER_SERVICE));
+    throw new ServiceUnavailableException(Service.EXPLORE_HTTP_USER_SERVICE);
   }
 
   // This class is only used internally.
@@ -94,5 +99,12 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
   @Override
   protected String getUserId() {
     return authenticationContext.getPrincipal().getName();
+  }
+
+  // when run from programs, the user principal will be set in the authentication context
+  @Override
+  protected Map<String, String> addAdditionalSecurityHeaders() {
+    return Collections.singletonMap(Constants.Security.Headers.USER_PRINCIPAL,
+                                    authenticationContext.getPrincipal().getKerberosPrincipal());
   }
 }

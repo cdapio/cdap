@@ -84,21 +84,20 @@ public interface OwnerAdmin {
 
   /**
    * <p>
-   * Retrieves the owner information for the given {@link EntityId} by tracing the entity hierarchy.
+   * Retrieves the impersonation information for the given {@link EntityId} by tracing the entity hierarchy.
    * </p>
    * <p>
-   * If an owner is present for this entity id then returns the {@link KerberosPrincipalId} of that immediate owner.
-   * If a direct owner is not present then the namespace owner {@link KerberosPrincipalId} will be returned if
+   * If an owner is present for this entity id then returns the information of that immediate owner.
+   * If a direct owner is not present then the namespace owner information will be returned if
    * one is present else returns null.
-   * <p>
-   *
+   * </p>
    * @param entityId the {@link EntityId} whose owner principal information needs to be retrieved
-   * @return {@link KerberosPrincipalId} of the effective owner for the given entity
+   * @return {@link ImpersonationInfo} of the effective owner for the given entity.
    * @throws IOException if  failed to get the store
    * @throws IllegalArgumentException if the given entity is not of supported type.
    */
   @Nullable
-  KerberosPrincipalId getEffectiveOwner(NamespacedEntityId entityId) throws IOException;
+  ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) throws IOException;
 
   /**
    * Checks if owner information exists or not

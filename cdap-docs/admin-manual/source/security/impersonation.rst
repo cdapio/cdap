@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 .. _admin-impersonation:
 
@@ -48,6 +48,7 @@ partition duration (``stream.partition.duration``), which has a default value of
 one hour (3600000). It must also be larger than the log saver's maximum file
 lifetime (``log.saver.max.file.lifetime.ms``), which has a value of six hours (21600000).
 
+
 Known Issues
 ============
-- :cask-issue:`CDAP-6587` - Explore is not supported when impersonation is enabled.
+- :cask-issue:`CDAP-8140` - Explore is not supported when impersonation is enabled with Hive 0.13.

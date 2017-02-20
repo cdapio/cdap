@@ -23,6 +23,7 @@ import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -80,11 +81,13 @@ public class MetadataAdminAuthorizationTest {
     EnumSet<EntityTypeSimpleName> types = EnumSet.allOf(EntityTypeSimpleName.class);
     Assert.assertFalse(
       metadataAdmin.search(NamespaceId.DEFAULT.getNamespace(), "*", types,
-                           SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 0, null, false).getResults().isEmpty());
+                           SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 0, null, false,
+                           EnumSet.allOf(EntityScope.class)).getResults().isEmpty());
     SecurityRequestContext.setUserId("bob");
     Assert.assertTrue(
       metadataAdmin.search(NamespaceId.DEFAULT.getNamespace(), "*", types,
-                           SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 0, null, false).getResults().isEmpty());
+                           SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 0, null, false,
+                           EnumSet.allOf(EntityScope.class)).getResults().isEmpty());
   }
 
   @AfterClass

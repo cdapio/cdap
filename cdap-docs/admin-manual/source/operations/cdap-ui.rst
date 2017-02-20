@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _cdap-console:
 .. _cdap-ui:
@@ -13,6 +13,34 @@ The **CDAP UI** is available for deploying, querying and managing the Cask Data
 Application Platform in all modes of CDAP except as an 
 :ref:`in-memory CDAP <in-memory-data-application-platform>`.
 
+Supported Browsers and Components
+---------------------------------
++-------------------+--------------------------------+---------------------+
+| Browser           | Platform                       | Supported Versions  |
++===================+================================+=====================+
+| Chrome            | Apple OS X, Microsoft Windows  | 55.0 and higher     |
++-------------------+--------------------------------+---------------------+
+| Firefox           | Apple OS X, Microsoft Windows  | 50.0 and higher     |
++-------------------+--------------------------------+---------------------+
+| Safari            | Apple OS X, Microsoft Windows  | 10 and higher       |
++-------------------+--------------------------------+---------------------+
+|                   |                                |                     |
++-------------------+--------------------------------+---------------------+
+
+
++-------------------+--------------------------------+---------------------+
+| Component         | Platform                       | Supported Versions  |
++===================+================================+=====================+
+| Node.js           | Various                        | 4.5.0 through 7.0.0 |
++-------------------+--------------------------------+---------------------+
+
+**Note:** Supported component versions shown in these tables are those that we have tested
+and are confident of their suitability and compatibility. Earlier versions (and different
+suppliers) of components may work, but have not necessarily been either tested or
+confirmed compatible.
+
+User Interface
+--------------
 Here is a screen-capture of the CDAP UI running on a Distributed CDAP:
 
 .. figure:: ../_images/console/console_01_overview.png
@@ -36,15 +64,14 @@ gives you views of current system and user metrics, with customizable dashboards
 
 .. _cdap-ui-beta:
 
-.. rubric:: CDAP 4.0 New Beta UI
-
+CDAP 4.0 New Beta UI
+--------------------
 Beginning with CDAP 4.0, a new beta UI was added. The new UI is has not yet reached
 feature parity with the original UI, and is still under development.
 
-It includes access to: the Cask Market, with use cases, pipelines, applications, plugins,
-datapacks, and drivers; the Resource Centre, which provides wizards for adding streams,
-drivers, applications, Hydrator pipelines, and plugins; and access to CDAP extensions
-including Cask Hydrator, Cask Tracker, and Cask Wrangler.
+It includes access to the Cask Market |---| with use cases, pipelines, applications, plugins,
+datapacks, and drivers |---| and wizards for adding streams, drivers, applications, pipelines,
+and plugins.
 
 Here are screen-captures of the new CDAP Beta UI running on a Distributed CDAP:
 

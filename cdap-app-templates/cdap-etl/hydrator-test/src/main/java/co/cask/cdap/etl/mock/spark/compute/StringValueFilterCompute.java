@@ -20,9 +20,12 @@ import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
+import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
@@ -44,6 +47,21 @@ public class StringValueFilterCompute extends SparkCompute<StructuredRecord, Str
 
   public StringValueFilterCompute(Conf conf) {
     this.conf = conf;
+  }
+
+  @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+    stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
+  }
+
+  @Override
+  public void initialize(SparkExecutionPluginContext context) throws Exception {
+    // should never happen, here to test app correctness in unit tests
+    Schema inputSchema = context.getInputSchema();
+    if (inputSchema != null && !inputSchema.equals(context.getOutputSchema())) {
+      throw new IllegalStateException("runtime schema does not match what was set at configure time.");
+    }
   }
 
   @Override

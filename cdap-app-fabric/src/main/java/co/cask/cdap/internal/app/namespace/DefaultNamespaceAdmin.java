@@ -40,7 +40,6 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.impersonation.ImpersonationInfo;
 import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -161,6 +160,29 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       validateCustomMapping(metadata);
     }
 
+    // check that the user has configured either both of none of the following configuration: principal and keytab URI
+    boolean hasValidKerberosConf = false;
+    if (metadata.getConfig() != null) {
+      String configuredPrincipal = metadata.getConfig().getPrincipal();
+      String configuredKeytabURI = metadata.getConfig().getKeytabURI();
+      if ((!Strings.isNullOrEmpty(configuredPrincipal) && Strings.isNullOrEmpty(configuredKeytabURI)) ||
+        (Strings.isNullOrEmpty(configuredPrincipal) && !Strings.isNullOrEmpty(configuredKeytabURI))) {
+        throw new BadRequestException(
+          String.format("Either neither or both of the following two configurations must be configured. " +
+                          "Configured principal: %s, Configured keytabURI: %s",
+                        configuredPrincipal, configuredKeytabURI));
+      }
+      hasValidKerberosConf = true;
+    }
+
+    // check that if explore as principal is explicitly set to false then user has kerberos configuration
+    if (!metadata.getConfig().isExploreAsPrincipal() && !hasValidKerberosConf) {
+      throw new BadRequestException(
+        String.format("No kerberos principal or keytab-uri was provided while '%s' was set to true.",
+                      NamespaceConfig.EXPLORE_AS_PRINCIPAL));
+
+    }
+
     // Namespace can be created. Grant all the permissions to the user.
     Principal principal = authenticationContext.getPrincipal();
     privilegesManager.grant(namespace, principal, EnumSet.allOf(Action.class));
@@ -170,7 +192,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     if (SecurityUtil.isKerberosEnabled(cConf) && !NamespaceId.SYSTEM.equals(namespace)) {
       String namespacePrincipal = metadata.getConfig().getPrincipal();
       if (Strings.isNullOrEmpty(namespacePrincipal)) {
-        executionUserName = ImpersonationInfo.getMasterImpersonationInfo(cConf).getPrincipal();
+        executionUserName = SecurityUtil.getMasterPrincipal(cConf);
       } else {
         executionUserName = new KerberosName(namespacePrincipal).getShortName();
       }
@@ -203,7 +225,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       privilegesManager.revoke(namespace);
       throw new NamespaceCannotBeCreatedException(namespace, t);
     }
-    LOG.info("Namespace {} created.", metadata.getNamespaceId());
+    LOG.info("Namespace {} created with meta {}", metadata.getNamespaceId(), metadata);
   }
 
   private void validateCustomMapping(NamespaceMeta metadata) throws Exception {
@@ -359,14 +381,20 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       builder.setSchedulerQueueName(config.getSchedulerQueueName());
     }
 
+    if (config != null) {
+      builder.setExploreAsPrincipal(config.isExploreAsPrincipal());
+    }
+
     Set<String> difference = existingMeta.getConfig().getDifference(config);
     if (!difference.isEmpty()) {
       throw new BadRequestException(String.format("Mappings %s for namespace %s cannot be updated once the namespace " +
                                                     "is created.", difference, namespaceId));
     }
-    nsStore.update(builder.build());
+    NamespaceMeta updatedMeta = builder.build();
+    nsStore.update(updatedMeta);
     // refresh the cache with new meta
     namespaceMetaCache.refresh(namespaceId);
+    LOG.info("Namespace {} updated with meta {}", namespaceId, updatedMeta);
   }
 
   /**

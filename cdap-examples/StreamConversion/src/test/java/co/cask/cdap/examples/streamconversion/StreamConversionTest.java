@@ -17,6 +17,7 @@
 package co.cask.cdap.examples.streamconversion;
 
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -54,7 +55,7 @@ public class StreamConversionTest extends TestBase {
     // run the mapreduce
     MapReduceManager mapReduceManager = appManager.getMapReduceManager("StreamConversionMapReduce")
       .start(ImmutableMap.of("logical.start.time", Long.toString(startTime)));
-    mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
+    mapReduceManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     // verify the single partition in the file set
     DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("converted");

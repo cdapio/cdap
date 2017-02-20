@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _http-restful-api-artifact:
 
@@ -471,7 +471,7 @@ of the ``cdap-data-pipeline`` artifact (pretty-printed and reformatted to fit):
             "className": "co.cask.hydrator.plugin.transform.LogParserTransform",
             "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "SYSTEM"
             }
         },
@@ -534,7 +534,7 @@ of the ``cdap-data-pipeline`` artifact (pretty-printed and reformatted to fit):
             "className": "co.cask.hydrator.plugin.transform.JavaScriptTransform",
             "artifact": {
                 "name": "core-plugins",
-                "version": "|cask-hydrator-version|",
+                "version": "|cdap-pipelines-version|",
                 "scope": "SYSTEM"
             },
             "properties": {

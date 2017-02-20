@@ -19,6 +19,9 @@ import Papa from 'papaparse';
 import WrangleData from 'wrangler/components/Wrangler/WrangleData';
 import WranglerActions from 'wrangler/components/Wrangler/Store/WranglerActions';
 import WranglerStore from 'wrangler/components/Wrangler/Store/WranglerStore';
+import NamespaceStore from 'services/NamespaceStore';
+import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
+import {fetchTables} from 'services/ExploreTables/ActionCreator';
 import classnames from 'classnames';
 import {convertHistoryToDml} from 'wrangler/components/Wrangler/dml-converter';
 import Explore from 'wrangler/components/Explore';
@@ -71,6 +74,12 @@ export default class Wrangler extends Component {
     return {source: this.props.source};
   }
 
+  componentWillMount() {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    ExploreTablesStore.dispatch(
+      fetchTables(namespace)
+    );
+  }
   componentWillUnmount() {
     WranglerStore.dispatch({
       type: WranglerActions.reset

@@ -84,6 +84,13 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
+    if (config.schema != null) {
+      // should never happen, just done to test App correctness in unit tests
+      Schema outputSchema = Schema.parseJson(config.schema);
+      if (!outputSchema.equals(context.getOutputSchema())) {
+        throw new IllegalStateException("Output schema does not match what was set at configure time.");
+      }
+    }
   }
 
   @Override

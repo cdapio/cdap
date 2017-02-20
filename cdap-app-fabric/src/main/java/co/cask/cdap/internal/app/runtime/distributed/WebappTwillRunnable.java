@@ -19,11 +19,14 @@ import co.cask.cdap.internal.app.runtime.webapp.ExplodeJarHttpHandler;
 import co.cask.cdap.internal.app.runtime.webapp.JarHttpHandler;
 import co.cask.cdap.internal.app.runtime.webapp.WebappHttpHandlerFactory;
 import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
 import org.apache.twill.api.TwillContext;
+
+import javax.annotation.Nullable;
 
 /**
  * Twill runnable wrapper for webapp.
@@ -35,8 +38,8 @@ final class WebappTwillRunnable extends AbstractProgramTwillRunnable<WebappProgr
   }
 
   @Override
-  protected Module createModule(TwillContext context) {
-    return Modules.combine(super.createModule(context), new AbstractModule() {
+  protected Module createModule(TwillContext context, ProgramId programId, @Nullable String principal) {
+    return Modules.combine(super.createModule(context, programId, principal), new AbstractModule() {
       @Override
       protected void configure() {
         // Create webapp http handler factory.

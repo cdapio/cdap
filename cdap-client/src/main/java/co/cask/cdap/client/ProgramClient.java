@@ -848,8 +848,8 @@ public class ProgramClient {
                                        Constants.AppFabric.QUERY_PARAM_END_TIME, endTime,
                                        Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
 
-    String path = String.format("apps/%s/%s/%s/runs?%s",
-                                program.getApplication(),
+    String path = String.format("apps/%s/versions/%s/%s/%s/runs?%s",
+                                program.getApplication(), program.getVersion(),
                                 program.getType().getCategoryName(),
                                 program.getProgram(), queryParams);
     URL url = config.resolveNamespacedURLV3(program.getNamespaceId(), path);

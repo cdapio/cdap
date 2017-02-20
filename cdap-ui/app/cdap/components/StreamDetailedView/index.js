@@ -16,7 +16,6 @@
 
 import React, { Component, PropTypes } from 'react';
 import OverviewMetaSection from 'components/Overview/OverviewMetaSection';
-import OverviewHeader from 'components/Overview/OverviewHeader';
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import {fetchTables} from 'services/ExploreTables/ActionCreator';
 import {objectQuery} from 'services/helpers';
@@ -33,6 +32,10 @@ import {parseMetadata} from 'services/metadata-parser';
 import FastActionToMessage from 'services/fast-action-message-helper';
 import capitalize from 'lodash/capitalize';
 import Redirect from 'react-router/Redirect';
+import Page404 from 'components/404';
+import BreadCrumb from 'components/BreadCrumb';
+import ResourceCenterButton from 'components/ResourceCenterButton';
+import Helmet from 'react-helmet';
 
 require('./StreamDetailedView.scss');
 
@@ -49,7 +52,9 @@ export default class StreamDetailedView extends Component {
       entityMetadata: objectQuery(this.props, 'location', 'state', 'entityMetadata') || {},
       isInvalid: false,
       routeToHome: false,
-      successMessage: null
+      successMessage: null,
+      notFound: false,
+      modalToOpen: objectQuery(this.props, 'location', 'query', 'modalToOpen') || ''
     };
   }
 
@@ -62,6 +67,49 @@ export default class StreamDetailedView extends Component {
       fetchTables(namespace)
     );
 
+    this.fetchEntityDetails(namespace, streamId);
+    this.fetchEntityMetadata(namespace, streamId);
+    if (
+      isNil(this.state.entityMetadata) ||
+      isEmpty(this.state.entityMetadata) ||
+      isNil(this.state.entity) ||
+      isEmpty(this.state.entity)
+    ) {
+      this.setState({
+        loading: true
+      });
+    }
+
+  }
+
+  componentWillReceiveProps(nextProps) {
+    let {namespace: currentNamespace, streamId: currentStreamId} = this.props.params;
+    let {namespace: nextNamespace, streamId: nextStreamId} = nextProps.params;
+    if (currentNamespace === nextNamespace && currentStreamId === nextStreamId) {
+      return;
+    }
+    let {namespace, streamId} = nextProps.params;
+    if (!namespace) {
+      namespace = NamespaceStore.getState().selectedNamespace;
+    }
+    ExploreTablesStore.dispatch(
+      fetchTables(namespace)
+    );
+
+    this.setState({
+      entityDetail: {
+        schema: null,
+        programs: []
+      },
+      loading: true,
+      entityMetadata: {}
+    }, () => {
+      this.fetchEntityDetails(namespace, streamId);
+      this.fetchEntityMetadata(namespace, streamId);
+    });
+  }
+
+  fetchEntityDetails(namespace, streamId) {
     if (!this.state.entityDetail.schema || this.state.entityDetail.programs.length === 0) {
       const streamParams = {
         namespace,
@@ -77,37 +125,49 @@ export default class StreamDetailedView extends Component {
 
       MyMetadataApi.getProperties(metadataParams)
         .combineLatest(MyStreamApi.getPrograms(streamParams))
-        .subscribe((res) => {
-          let appId;
-          let programs = res[1].map((program) => {
-            program.uniqueId = shortid.generate();
-            appId = program.application.applicationId;
-            program.app = appId;
-            program.name = program.id;
-            return program;
-          });
+        .subscribe(
+          (res) => {
+            let appId;
+            let programs = res[1].map((program) => {
+              program.uniqueId = shortid.generate();
+              appId = program.application.applicationId;
+              program.app = appId;
+              program.name = program.id;
+              return program;
+            });
 
-          let entityDetail = {
-            programs,
-            schema: res[0].schema,
-            name: appId, // FIXME: Finalize on entity detail for fast action
-            app: appId,
-            id: streamId,
-            type: 'dataset'
-          };
+            let entityDetail = {
+              programs,
+              schema: res[0].schema,
+              name: appId, // FIXME: Finalize on entity detail for fast action
+              app: appId,
+              id: streamId,
+              type: 'stream'
+            };
 
-          this.setState({
-            entityDetail
-          }, () => {
-            setTimeout(() => {
+            this.setState({
+              entityDetail
+            }, () => {
+              setTimeout(() => {
+                this.setState({
+                  loading: false
+                });
+              }, 1000);
+            });
+          },
+          (err) => {
+            if (err.statusCode === 404) {
               this.setState({
+                notFound: true,
                 loading: false
               });
-            }, 1000);
-          });
-        });
+            }
+          }
+        );
     }
+  }
 
+  fetchEntityMetadata(namespace) {
     if (
       isNil(this.state.entityMetadata) ||
       isEmpty(this.state.entityMetadata)
@@ -121,24 +181,22 @@ export default class StreamDetailedView extends Component {
         })
         .map(res => res.results.map(parseMetadata))
         .subscribe(entityMetadata => {
-          this.setState({
-            entityMetadata: entityMetadata[0],
-            loading: false
-          });
+          if (!entityMetadata.length) {
+            this.setState({
+              loading: false,
+              notFound: true
+            });
+          } else {
+            let metadata = entityMetadata
+              .filter(en => en.type === 'stream')
+              .find( en => en.id === this.props.params.streamId);
+            this.setState({
+              entityMetadata: metadata,
+              loading: false
+            });
+          }
         });
     }
-
-    if (
-      isNil(this.state.entityMetadata) ||
-      isEmpty(this.state.entityMetadata) ||
-      isNil(this.state.entity) ||
-      isEmpty(this.state.entity)
-    ) {
-      this.setState({
-        loading: true
-      });
-    }
-
   }
 
   goToHome(action) {
@@ -175,19 +233,38 @@ export default class StreamDetailedView extends Component {
       );
     }
 
-    const title = T.translate('commons.entity.stream.singular');
+    if (this.state.notFound) {
+      return (
+        <Page404
+          entityType="Stream"
+          entityName={this.props.params.streamId}
+        />
+      );
+    }
 
+    let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+    let previousPathname = objectQuery(this.props, 'location', 'state', 'previousPathname')  || `/ns/${selectedNamespace}`;
+    let previousPaths = [{
+      pathname: previousPathname,
+      label: T.translate('commons.back')
+    }];
     return (
-      <div className="app-detailed-view">
-        <OverviewHeader
-          icon="icon-streams"
-          title={title}
-          successMessage={this.state.successMessage}
+      <div className="app-detailed-view streams-deatiled-view">
+        <Helmet
+          title={T.translate('features.StreamDetailedView.Title', {streamId: this.props.params.streamId})}
+        />
+        <ResourceCenterButton />
+        <BreadCrumb
+          previousPaths={previousPaths}
+          currentStateIcon="icon-streams"
+          currentStateLabel={T.translate('commons.stream')}
         />
         <OverviewMetaSection
           entity={this.state.entityMetadata}
           onFastActionSuccess={this.goToHome.bind(this)}
           onFastActionUpdate={this.goToHome.bind(this)}
+          fastActionToOpen={this.state.modalToOpen}
+          showFullCreationTime={true}
         />
         <StreamDetaildViewTab
           params={this.props.params}

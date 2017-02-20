@@ -22,21 +22,25 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractCommand;
+import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.common.cli.Arguments;
-import com.google.gson.Gson;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Sets properties for a dataset instance.
  */
 public class GetDatasetInstancePropertiesCommand extends AbstractCommand {
 
-  private static final Gson GSON = new Gson();
   private final DatasetClient datasetClient;
 
   @Inject
@@ -51,7 +55,17 @@ public class GetDatasetInstancePropertiesCommand extends AbstractCommand {
       arguments.get(ArgumentName.DATASET.toString()));
 
     Map<String, String> properties = datasetClient.getProperties(instance);
-    output.printf(GSON.toJson(properties));
+    Table table = Table.builder()
+      .setHeader("property", "value")
+      .setRows(Iterables.transform(properties.entrySet(), new Function<Map.Entry<String, String>, List<String>>() {
+        @Nullable
+        @Override
+        public List<String> apply(Map.Entry<String, String> entry) {
+          return ImmutableList.of(entry.getKey(), entry.getValue());
+        }
+      }))
+      .build();
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override

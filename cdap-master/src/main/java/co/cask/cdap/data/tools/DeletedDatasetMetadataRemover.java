@@ -21,6 +21,7 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.DatasetId;
@@ -56,7 +57,8 @@ final class DeletedDatasetMetadataRemover {
     for (NamespaceMeta namespaceMeta : nsStore.list()) {
       Set<MetadataSearchResultRecord> searchResults =
         metadataStore.search(namespaceMeta.getName(), "*", EnumSet.of(EntityTypeSimpleName.DATASET),
-                             SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 0, null, false).getResults();
+                             SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 0, null, false,
+                             EnumSet.allOf(EntityScope.class)).getResults();
       for (MetadataSearchResultRecord searchResult : searchResults) {
         NamespacedEntityId entityId = searchResult.getEntityId();
         Preconditions.checkState(entityId instanceof DatasetId,

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright © 2014-2016 Cask Data, Inc.
+# Copyright © 2014-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -77,6 +77,18 @@ def print_sdk_version():
     else:
         print "Could not get version (%s), full version (%s) from grep" % (version, full_version)
 
+def get_spark_version():
+    spark_version = None
+    try:
+        p1 = subprocess.Popen(['grep' , '<spark.version>', '../../../pom.xml' ], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(['awk', 'NR==1;START{print $1}'], stdin=p1.stdout, stdout=subprocess.PIPE)
+        version = p2.communicate()[0]
+        version = version.strip().replace('<spark.version>', '').replace('</spark.version>', '')
+    except:
+        print "Unexpected error: %s" % sys.exc_info()[0]
+        pass
+    return version
+
 def get_git_hash_timestamp():
     # Gets the Git commit information
     git_hash = None
@@ -141,20 +153,17 @@ _intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
 
 # Mapping keys must be alpha-numeric only
 intersphinx_mapping_cdap_manuals = {
-  'introduction': ('../../introduction/',      os.path.abspath(_intersphinx_mapping % 'introduction')),
-  'developers':   ('../../developers-manual/', os.path.abspath(_intersphinx_mapping % 'developers-manual')),
-#   'cdapapps':     ('../../cdap-apps',          os.path.abspath(_intersphinx_mapping % 'cdap-apps')),
-  'admin':        ('../../admin-manual/',      os.path.abspath(_intersphinx_mapping % 'admin-manual')),
-#   'cdapadmin':    ('../../admin-manual/',      os.path.abspath(_intersphinx_mapping % 'admin-manual')),
-  'integrations': ('../../integrations/',      os.path.abspath(_intersphinx_mapping % 'integrations')),
-  'examples':     ('../../examples-manual',    os.path.abspath(_intersphinx_mapping % 'examples-manual')),
-  'reference':    ('../../reference-manual',   os.path.abspath(_intersphinx_mapping % 'reference-manual')),
-  'faqs':         ('../../faqs',               os.path.abspath(_intersphinx_mapping % 'faqs')),
+  'introduction': ('../../introduction/',        os.path.abspath(_intersphinx_mapping % 'introduction')),
+  'developers':   ('../../developers-manual/',   os.path.abspath(_intersphinx_mapping % 'developers-manual')),
+  'admin':        ('../../admin-manual/',        os.path.abspath(_intersphinx_mapping % 'admin-manual')),
+  'integrations': ('../../integrations/',        os.path.abspath(_intersphinx_mapping % 'integrations')),
+  'examples':     ('../../examples-manual',      os.path.abspath(_intersphinx_mapping % 'examples-manual')),
+  'reference':    ('../../reference-manual',     os.path.abspath(_intersphinx_mapping % 'reference-manual')),
+  'faqs':         ('../../faqs',                 os.path.abspath(_intersphinx_mapping % 'faqs')),
 }
 
 intersphinx_mapping_cdap_extensions = {
-  'hydrator':     ('../../hydrator-manual/',   os.path.abspath(_intersphinx_mapping % 'hydrator-manual')),
-  'tracker':      ('../../tracker-manual/',   os.path.abspath(_intersphinx_mapping % 'tracker-manual')),
+# If a section of "CDAP Extensions" is desired, add them here
 }
 
 # Merge dictionaries
@@ -198,6 +207,7 @@ locale_dirs = ['_locale/', '../../_common/_locale']
 # The X.Y short-version
 # The "full" version, which includes any alpha/beta/rc/SNAPSHOT tags, also called the "release" version.
 version, short_version, release, version_tuple = get_sdk_version()
+spark_version = get_spark_version()
 
 # The GIT info and GIT environment variables for the build
 git_hash, git_timestamp = get_git_hash_timestamp()
@@ -237,14 +247,15 @@ extlinks = {
     'cdap-ui-data': ("%s/data/%%s" % _cdap_ui_base, None),
     'cdap-ui-datasets': ("%s/datasets/%%s" % _cdap_ui_base, None),
     'cdap-ui-datasets-explore': ("%s/datasets/%%s/overview/explore" % _cdap_ui_base, None),
-    'cask-hydrator': ("%s/%%s" % _cdap_ui_base, None),
-    'cask-hydrator-studio': ("%s/hydrator/%%s" % _cdap_ui_base, None),
-    'cask-hydrator-studio-artifact': ("%s/hydrator/studio?artifactType=%%s" % _cdap_ui_base, None),
+    'cdap-pipelines': ("%s/%%s" % _cdap_ui_base, None),
+    'cdap-studio': ("%s/pipelines/%%s" % _cdap_ui_base, None),
+    'cdap-studio-artifact': ("%s/pipelines/studio?artifactType=%%s" % _cdap_ui_base, None),
     'cdap-java-source-github': (cdap_java_source_github_pattern , None),
     'cdap-security-extn-source-github': (cdap_security_extn_github_pattern, None),
     'cask-issue': ('https://issues.cask.co/browse/%s', ''),
     'cask-repository-parcels-cdap': ("http://repository.cask.co/parcels/cdap/%s/%%s" % short_version, None),
     'cdap-guides': (cdap_guides_github_pattern, None),
+    'spark-docs': ("https://spark.apache.org/docs/%s/%%s" % spark_version, None),
 }
 
 # A string of reStructuredText that will be included at the end of every source file that
@@ -291,6 +302,20 @@ if git_build_vars.has_key('GIT_NODE_JS_MAX_VERSION'):
 
 """ % {'node_js_max_version': git_build_vars['GIT_NODE_JS_MAX_VERSION']}
 
+git_hadoop_versions = {
+    'GIT_CDH_VERSIONS':  'cdh-versions',
+    'GIT_HDP_VERSIONS':  'hdp-versions',
+    'GIT_MAPR_VERSIONS': 'mapr-versions',
+    'GIT_EMR_VERSIONS':  'emr-versions',
+    }
+
+for h_key in git_hadoop_versions.keys():
+    if git_build_vars.has_key(h_key):
+        rst_epilog += """
+.. |%s| replace:: %s
+
+""" % (git_hadoop_versions[h_key], git_build_vars[h_key])
+
 if version:
     rst_epilog += """
 .. |bold-version| replace:: **%(version)s**
@@ -334,7 +359,7 @@ if version_tuple:
 .. |literal-version-suffix-realtime| replace:: ``%srealtime``
 """ % version_tuple
 
-if release:
+if release and version:
     # Create release range, such as [4.0.0-SNAPSHOT,4.1.0):
     version_list = version.split('.')
     version_list[1] = str(int(version_list[1])+1)
@@ -379,28 +404,28 @@ if cdap_apps_version and cdap_apps_compatibile_version:
 else:
     print 'Unable to find cdap_apps_version and cdap_apps_compatibile_version'    
 
-cask_tracker_version = os.environ.get('CASK_TRACKER_VERSION')
-if cask_tracker_version:
+cdap_metadata_management_version = os.environ.get('CDAP_METADATA_MANAGEMENT_VERSION')
+if cdap_metadata_management_version:
     rst_epilog += """
-.. |cask-tracker-version| replace:: %(cask-tracker-version)s
-.. |cask-tracker-version-jar| replace:: tracker-%(cask-tracker-version)s.jar
-.. |literal-cask-tracker-version| replace:: ``%(cask-tracker-version)s``
-.. |literal-cask-tracker-version-jar| replace:: ``tracker-%(cask-tracker-version)s.jar``
+.. |cdap-metadata-management-version| replace:: %(cdap-metadata-management-version)s
+.. |cdap-metadata-management-version-jar| replace:: tracker-%(cdap-metadata-management-version)s.jar
+.. |literal-cdap-metadata-management-version| replace:: ``%(cdap-metadata-management-version)s``
+.. |literal-cdap-metadata-management-version-jar| replace:: ``tracker-%(cdap-metadata-management-version)s.jar``
 
-""" % {'cask-tracker-version': cask_tracker_version}
+""" % {'cdap-metadata-management-version': cdap_metadata_management_version}
 else:
-    print 'Unable to find CASK_TRACKER_VERSION'    
+    print 'Unable to find CDAP_METADATA_MANAGEMENT_VERSION'    
 
-cask_hydrator_version = os.environ.get('CASK_HYDRATOR_VERSION')
-if cask_hydrator_version:
+cdap_pipelines_version = os.environ.get('CDAP_PIPELINES_VERSION')
+if cdap_pipelines_version:
     rst_epilog += """
-.. |cask-hydrator-version| replace:: %(cask-hydrator-version)s
+.. |cdap-pipelines-version| replace:: %(cdap-pipelines-version)s
 
-.. |literal-cask-hydrator-version| replace:: ``%(cask-hydrator-version)s``
+.. |literal-cdap-pipelines-version| replace:: ``%(cdap-pipelines-version)s``
 
-""" % {'cask-hydrator-version': cask_hydrator_version}
+""" % {'cdap-pipelines-version': cdap_pipelines_version}
 else:
-    print 'Unable to find CASK_HYDRATOR_VERSION'
+    print 'Unable to find CDAP_PIPELINES_VERSION'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -466,19 +491,16 @@ html_theme = 'cdap'
 # icon: "" for none, "new-icon" for the ico_new.png
 
 cdap_manuals_list = [
-    ['introduction',      'introduction', 'Introduction to CDAP',            '',],
-    ['developers-manual', 'developers',  u'Developers’ Manual',              '',],
-    ['admin-manual',      'admin',        'Administration Manual',           '',],
-    ['integrations',      'integrations', 'Integrations',                    '',],
-    ['examples-manual',   'examples',     'Examples, Guides, and Tutorials', '',],
-    ['reference-manual',  'reference',    'Reference Manual',                '',],
-    ['faqs',              'faqs',         'FAQs',                            '',],
+    ['introduction',        'introduction', 'Introduction to CDAP',            '',],
+    ['developers-manual',   'developers',  u'Developers’ Manual',              '',],
+    ['admin-manual',        'admin',        'Administration Manual',           '',],
+    ['integrations',        'integrations', 'Integrations',                    '',],
+    ['examples-manual',     'examples',     'Examples, Guides, and Tutorials', '',],
+    ['reference-manual',    'reference',    'Reference Manual',                '',],
+    ['faqs',                'faqs',         'FAQs',                            '',],
 ]
-#     ['cdap-apps',         'cdapapps',     'CDAP Applications',               '',],
 
 cdap_extension_manuals_list = [
-    ['hydrator-manual',   'hydrator',     'Cask Hydrator',                   '',],
-    ['tracker-manual',    'tracker',      'Cask Tracker',                    '',],
 ]
 
 manuals_list = cdap_manuals_list + cdap_extension_manuals_list

@@ -19,19 +19,23 @@ import {objectQuery} from 'services/helpers';
 import {MyAppApi} from 'api/app';
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import {fetchTables} from 'services/ExploreTables/ActionCreator';
-import OverviewHeader from 'components/Overview/OverviewHeader';
 import OverviewMetaSection from 'components/Overview/OverviewMetaSection';
 import T from 'i18n-react';
 import {MySearchApi} from 'api/search';
 import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
 import NamespaceStore from 'services/NamespaceStore';
+import BreadCrumb from 'components/BreadCrumb';
 import {parseMetadata} from 'services/metadata-parser';
 import AppDetailedViewTab from 'components/AppDetailedView/Tabs';
 import shortid from 'shortid';
 import Redirect from 'react-router/Redirect';
 import FastActionToMessage from 'services/fast-action-message-helper';
 import capitalize from 'lodash/capitalize';
+import Page404 from 'components/404';
+import ResourceCenterButton from 'components/ResourceCenterButton';
+import Helmet from 'react-helmet';
+import OverviewHeader from 'components/Overview/OverviewHeader';
 require('./AppDetailedView.scss');
 
 export default class AppDetailedView extends Component {
@@ -44,7 +48,8 @@ export default class AppDetailedView extends Component {
         streams: [],
         routeToHome: false,
         selectedNamespace: null,
-        successMessage: null
+        successMessage: null,
+        notFound: false
       },
       loading: true,
       entityMetadata: objectQuery(this.props, 'location', 'state', 'entityMetadata') || {},
@@ -66,38 +71,53 @@ export default class AppDetailedView extends Component {
           namespace,
           appId
         })
-        .subscribe(entityDetail => {
-          let programs = entityDetail.programs.map(prog => {
-            prog.uniqueId = shortid.generate();
-            return prog;
-          });
-          let datasets = entityDetail.datasets.map(dataset => {
-            dataset.entityId = {
-              id: {
-                instanceId: dataset.name
-              },
-              type: 'datasetinstance'
-            };
-            dataset.uniqueId = shortid.generate();
-            return dataset;
-          });
-          let streams = entityDetail.streams.map(stream => {
-            stream.entityId = {
-              id: {
-                streamName: stream.name
-              },
-              type: 'stream'
-            };
-            stream.uniqueId = shortid.generate();
-            return stream;
-          });
-          entityDetail.streams = streams;
-          entityDetail.datasets = datasets;
-          entityDetail.programs = programs;
-          this.setState({
-            entityDetail
-          });
-        });
+        .subscribe(
+          entityDetail => {
+            if (isEmpty(entityDetail)) {
+              this.setState({
+                notFound: true,
+                loading: false
+              });
+            }
+            let programs = entityDetail.programs.map(prog => {
+              prog.uniqueId = shortid.generate();
+              return prog;
+            });
+            let datasets = entityDetail.datasets.map(dataset => {
+              dataset.entityId = {
+                id: {
+                  instanceId: dataset.name
+                },
+                type: 'datasetinstance'
+              };
+              dataset.uniqueId = shortid.generate();
+              return dataset;
+            });
+            let streams = entityDetail.streams.map(stream => {
+              stream.entityId = {
+                id: {
+                  streamName: stream.name
+                },
+                type: 'stream'
+              };
+              stream.uniqueId = shortid.generate();
+              return stream;
+            });
+            entityDetail.streams = streams;
+            entityDetail.datasets = datasets;
+            entityDetail.programs = programs;
+            this.setState({
+              entityDetail
+            });
+          },
+          err => {
+            if (err.statusCode === 404) {
+              this.setState({
+                notFound: true
+              });
+            }
+          }
+      );
     }
     if (
       isNil(this.state.entityMetadata) ||
@@ -111,21 +131,30 @@ export default class AppDetailedView extends Component {
         })
         .map(res => res.results.map(parseMetadata))
         .subscribe(entityMetadata => {
+          if (!entityMetadata.length) {
+            this.setState({
+              notFound: true,
+              loading: false
+            });
+          }
+          let metadata = entityMetadata
+            .filter(en => en.type === 'application')
+            .find( en => en.id === this.props.params.appId);
           this.setState({
-            entityMetadata: entityMetadata[0],
+            entityMetadata: metadata,
             loading: false
           });
         });
     }
 
     if (
-      isNil(this.state.entityMetadata) ||
-      isEmpty(this.state.entityMetadata) ||
-      isNil(this.state.entity) ||
-      isEmpty(this.state.entity)
+      !isNil(this.state.entityMetadata) &&
+      !isEmpty(this.state.entityMetadata) &&
+      !isNil(this.state.entityDetail) &&
+      !isEmpty(this.state.entityDetail)
     ) {
       this.setState({
-        loading: true
+        loading: false
       });
     }
   }
@@ -154,11 +183,14 @@ export default class AppDetailedView extends Component {
     });
   }
   render() {
-    let title = this.state.entityDetail.isHydrator ?
-      T.translate('commons.entity.cdap-data-pipeline.singular')
-    :
-      T.translate('commons.entity.application.singular');
-
+    if (this.state.notFound) {
+      return (
+        <Page404
+          entityType="Application"
+          entityName={this.props.params.appId}
+        />
+      );
+    }
     if (this.state.loading) {
       return (
         <div className="app-detailed-view">
@@ -166,17 +198,29 @@ export default class AppDetailedView extends Component {
         </div>
       );
     }
+    let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+    let previousPathname = objectQuery(this.props, 'location', 'state', 'previousPathname')  || `/ns/${selectedNamespace}`;
+    let previousPaths = [{
+      pathname: previousPathname,
+      label: T.translate('commons.back')
+    }];
     return (
       <div className="app-detailed-view">
-        <OverviewHeader
-          icon="icon-fist"
-          title={title}
-          successMessage={this.state.successMessage}
+        <Helmet
+          title={T.translate('features.AppDetailedView.Title', {appId: this.props.params.appId})}
         />
+        <ResourceCenterButton />
+        <BreadCrumb
+          previousPaths={previousPaths}
+          currentStateIcon="icon-fist"
+          currentStateLabel={T.translate('commons.application')}
+        />
+        <OverviewHeader successMessage={this.state.successMessage} />
         <OverviewMetaSection
           entity={this.state.entityMetadata}
           onFastActionSuccess={this.goToHome.bind(this)}
           onFastActionUpdate={this.goToHome.bind(this)}
+          showFullCreationTime={true}
         />
         <AppDetailedViewTab
           params={this.props.params}
@@ -224,7 +268,8 @@ AppDetailedView.propTypes = {
     search: PropTypes.string,
     state: PropTypes.shape({
       entityDetail: entityDetailType,
-      entityMetadata: PropTypes.object
+      entityMetadata: PropTypes.object,
+      previousPathname: PropTypes.string
     })
   })
 };

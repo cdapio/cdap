@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -63,7 +63,8 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
     Schema schema = getSchema(arguments);
     Map<String, String> settings = Collections.emptyMap();
     if (arguments.hasArgument(ArgumentName.SETTINGS.toString())) {
-      settings = ArgumentParser.parseMap(arguments.get(ArgumentName.SETTINGS.toString()));
+      settings = ArgumentParser.parseMap(arguments.get(ArgumentName.SETTINGS.toString()),
+                                         ArgumentName.SETTINGS.toString());
     }
     FormatSpecification formatSpecification = new FormatSpecification(formatName, schema, settings);
     StreamProperties streamProperties = new StreamProperties(currentProperties.getTTL(),
@@ -101,8 +102,8 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Sets the format of %s. Valid '<%s>'s are '%s'. '<%s>' is a SQL-like schema " +
-      "'column_name data_type, ...' or an Avro-like JSON schema and '<%s>' is specified in the format " +
+    return String.format("Sets the format of %s. A valid '<%s>' is one of '%s'. A '<%s>' is an SQL-like schema " +
+      "'column_name data_type, ...' or an Avro-like JSON schema. A '<%s>' is specified in the format " +
       "'key1=v1 key2=v2'.",
       Fragment.of(Article.A, ElementType.STREAM.getName()), ArgumentName.FORMAT, Joiner.on("', '").join(Formats.ALL),
       ArgumentName.SCHEMA, ArgumentName.SETTINGS);

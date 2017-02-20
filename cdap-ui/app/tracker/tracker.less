@@ -24,7 +24,7 @@
 @tracker-banner-font-color: #1f293a;
 @tracker-grey: #999999;
 @border-color: #cdcdcd;
-@search-font-color: #666666;
+@search-font-color: #66666;
 @title-font-color: #333333;
 @active-font: #363945;
 @filter-sidebar-background-color: #eeeeee;
@@ -37,6 +37,8 @@
 @light-grey: #cccccc;
 @very-light-grey: #dddddd;
 
+body { background-color: #e5e5e5; }
+
 body[class*='state-tracker'] {
   &:not(.state-tracker-home) {
     main.container { width: 100%; }
@@ -45,7 +47,13 @@ body[class*='state-tracker'] {
     main.container { padding: 0 0 15px 0; }
   }
   main.container {
+    margin: 0;
     margin-top: 50px;
+    width: 100%;
+    overflow-x: hidden;
+    // FIXME: ad-hoc - This is added here because of the resource center button.
+    min-height: 500px;
+    overflow-y: auto;
 
     h1,
     h2,
@@ -181,7 +189,9 @@ body.state-tracker-detail-entity-usage {
 body.state-tracker-home.state-tracker {
   background-color: white;
 
-  .tracker-content { margin: 150px auto; }
+  .tracker-content {
+    width: 100%;
+  }
 
   div.tracker-banner {
     width: 357px;
@@ -201,16 +211,14 @@ body.state-tracker-home.state-tracker {
     }
   }
   div.tracker-search {
-    margin: 0 auto;
-    width: 500px;
+    background: #efefef;
+    border-bottom: 1px solid #c9c9c9;
 
     .form-group {
-      margin-top: 25px;
-
-      .form-control { height: 40px; }
+      margin: 5px;
 
       span {
-        line-height: 40px;
+        line-height: 33px;
         font-size: 18px;
         color: @tracker-grey;
         margin-right: 8px;
@@ -228,6 +236,26 @@ body.state-tracker-home.state-tracker {
       }
     }
   }
+  cask-resource-center-button {
+    display: inline-block;
+    width: 58px;
+    .cask-resourcecenter-button {
+      position: absolute;
+      top: 30px;
+
+      .button-container {
+        display: inline-flex;
+        justify-content: center;
+        h1 {
+          color: white;
+          font-size: 3em;
+          border: 0;
+          margin: 0;
+          margin-bottom: 0.5rem;
+        }
+      }
+    }
+  }
 }
 
 body.state-tracker {
@@ -238,6 +266,10 @@ body.state-tracker {
   .tracker-top-search {
     background-color: #dfdfdf;
     border-bottom: 1px solid @border-color;
+    display: flex;
+    align-items: center;
+    height: 60px;
+    position: relative;
 
     .tracker-search-bar {
       width: 500px;
@@ -526,6 +558,25 @@ body.state-tracker {
   .tab-header-inner { background-color: #eeeeee; }
 
   my-complex-schema my-embedded-schema-selector div.tab-toggle.expanded:before { background-color: transparent; }
+
+  cask-resource-center-button {
+    .cask-resourcecenter-button {
+      position: absolute;
+      top: 30px;
+
+      .button-container {
+        display: inline-flex;
+        justify-content: center;
+        h1 {
+          color: white;
+          font-size: 3em;
+          border: 0;
+          margin: 0;
+          margin-bottom: 0.5rem;
+        }
+      }
+    }
+  }
 }
 
 body.state-tracker-detail-entity {
@@ -574,6 +625,7 @@ body.state-tracker-detail-entity {
         margin-bottom: 0;
         margin-left: 20px;
         height: 50px;
+        overflow-y: hidden;
       }
       li {
         font-size: 14px;
@@ -870,6 +922,14 @@ body.state-tracker-detail-entity {
       .table-container { height: 100%; }
     }
   }
+
+  cask-resource-center-button {
+    .cask-resourcecenter-button {
+      right: 93px;
+      position: absolute;
+      top: 30px;
+    }
+  }
 }
 
 body.state-tracker-detail-entity-lineage {
@@ -886,6 +946,47 @@ body.state-tracker-detail-entity-audit {
     margin-top: 20px;
 
     .table th { cursor: default; }
+    tr td:last-child a {
+      color: @tracker-green;
+    }
+  }
+
+  .modal.tracker-modal.metadata-info-modal {
+    .modal-content {
+      border-radius: 0;
+    }
+    .modal-header {
+      background-color: black;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      padding: 15px;
+      border-radius: 0;
+      span.fa-times {
+        -webkit-text-stroke: 0;
+      }
+    }
+    table thead {
+      th {
+        color: black;
+        width: auto;
+        padding: 10px 8px;
+        vertical-align: middle;
+        text-align: left;
+      }
+      th:first-child {
+        min-width: 75px;
+      }
+      th:nth-child(2) {
+        min-width: 117px;
+      }
+      th:nth-child(3) {
+        min-width: 117px;
+      }
+      th:nth-child(4) {
+        min-width: 109px;
+      }
+    }
   }
 }
 
@@ -1257,7 +1358,6 @@ body.state-tracker-tags {
       border-color: @border-color;
       font-size: 12px;
       font-weight: 500;
-      margin-top: 10px;
       padding: 4px 8px;
     }
     div.preferred-tags .table-responsive {
@@ -1276,7 +1376,7 @@ body.state-tracker-tags {
       }
     }
     table.table.table-striped {
-      margin-top: 25px;
+      margin-top: 45px;
       thead tr,
       tbody tr:nth-of-type(even) { background-color: rgb(238, 238, 238); }
       thead tr th {
@@ -1322,7 +1422,18 @@ body.state-tracker-tags {
     }
     div.well {
       height: 100px;
-      margin-top: 25px;
+      margin-top: 45px;
+    }
+
+    .tracker-top-search {
+      .tracker-search-bar {
+        h2 {
+          margin: 0;
+          display: inline-block;
+          vertical-align: middle;
+          margin-right: 10px;
+        }
+      }
     }
   }
   div.add-preferred-tags-modal {
@@ -1434,7 +1545,6 @@ body.state-tracker-dictionary {
   .heading {
     font-size: 20px;
     color: #000000;
-    margin-top: 20px;
   }
   background-color: #ffffff;
   .action-buttons {
@@ -1485,6 +1595,7 @@ body.state-tracker-dictionary {
   }
   .table {
     background-color: #ffffff;
+    margin-top: 25px;
   }
   .tooltip .tooltip-inner {
     background-color: #000000;

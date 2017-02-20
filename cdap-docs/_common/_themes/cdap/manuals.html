@@ -46,6 +46,8 @@
   <div role="note" aria-label="manuals links">
     <h3><a href="{{ master_url_root }}{{ _('/../index.html') }}" rel="nofollow">{{ CDAP_DOCS }} v{{ version }}</a></h3>
     {{ build_manuals_list(theme_cdap_manuals, CDAP_DOCS) }}
+{%- if theme_cdap_extension_manuals %}
     <h3 class="cdap-extensions">{{ CDAP_EXTENSIONS }}</h3>
     {{ build_manuals_list(theme_cdap_extension_manuals, CDAP_EXTENSIONS) }}
+{%- endif %}
   </div>

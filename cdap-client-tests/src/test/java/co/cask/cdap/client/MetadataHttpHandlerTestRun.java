@@ -38,6 +38,7 @@ import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
 import co.cask.cdap.metadata.MetadataHttpHandler;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamProperties;
@@ -1192,6 +1193,19 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   }
 
   @Test
+  public void testInvalidParams() throws Exception {
+    NamespaceId namespace = new NamespaceId("testInvalidParams");
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
+    try {
+      EnumSet<EntityTypeSimpleName> targets = EnumSet.allOf(EntityTypeSimpleName.class);
+      searchMetadata(namespace, "text", targets, AbstractSystemMetadataWriter.CREATION_TIME_KEY + " desc");
+      Assert.fail("Expected not to be able to specify 'query' and 'sort' parameters.");
+    } catch (BadRequestException expected) {
+      // expected
+    }
+  }
+
+  @Test
   public void testSearchResultSorting() throws Exception {
     NamespaceId namespace = new NamespaceId("sorting");
     namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
@@ -1809,7 +1823,8 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     }
     return new MetadataSearchResponse(searchResponse.getSort(), searchResponse.getOffset(), searchResponse.getLimit(),
                                       searchResponse.getNumCursors(), searchResponse.getTotal(), transformed,
-                                      searchResponse.getCursors(), searchResponse.isShowHidden());
+                                      searchResponse.getCursors(), searchResponse.isShowHidden(),
+                                      searchResponse.getEntityScope());
   }
 
   private MetadataSearchResponse searchMetadata(NamespaceId namespaceId, String query,

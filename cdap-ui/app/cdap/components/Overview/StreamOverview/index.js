@@ -26,6 +26,7 @@ import {MyStreamApi} from 'api/stream';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';
 import FastActionToMessage from 'services/fast-action-message-helper';
+import {createRouterPath} from 'react-router/LocationUtils';
 import capitalize from 'lodash/capitalize';
 
 export default class StreamOverview extends Component {
@@ -134,14 +135,16 @@ export default class StreamOverview extends Component {
     let title = T.translate('commons.entity.stream.singular');
     let namespace = NamespaceStore.getState().selectedNamespace;
     return (
-      <div className="app-overview">
+      <div className="app-overview streams-overview">
         <OverviewHeader
           icon="icon-streams"
           title={title}
           linkTo={{
             pathname: `/ns/${namespace}/streams/${this.props.entity.id}`,
             state: {
-              entityDetail: this.state.entityDetail
+              entityDetail: this.state.entityDetail,
+              entityMetadata: this.props.entity,
+              previousPathname: createRouterPath(location).replace(/\/cdap\//g, '/')
             }
           }}
           onClose={this.props.onClose}

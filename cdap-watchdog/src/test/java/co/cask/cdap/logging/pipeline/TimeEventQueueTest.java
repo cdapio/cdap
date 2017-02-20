@@ -131,12 +131,14 @@ public class TimeEventQueueTest {
     Assert.assertEquals(2, iterator.getOffset().intValue());
     iterator.remove();
     Assert.assertEquals(10, eventQueue.getEventSize());
+    Assert.assertTrue(eventQueue.isEmpty(1));
 
     Assert.assertEquals("m11", iterator.next());
     Assert.assertEquals(2, iterator.getPartition());
     Assert.assertEquals(3, iterator.getOffset().intValue());
     iterator.remove();
     Assert.assertEquals(0, eventQueue.getEventSize());
+    Assert.assertTrue(eventQueue.isEmpty(2));
 
     Assert.assertTrue(eventQueue.isEmpty());
   }

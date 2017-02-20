@@ -71,7 +71,7 @@
     <name>local.data.dir</name>
     <value>data</value>
     <description>
-      Data directory for Standalone CDAP and the master process in
+      Data directory for Standalone CDAP and the CDAP Master process in
       Distributed CDAP
     </description>
   </property>
@@ -99,7 +99,7 @@
     <name>master.manage.hbase.coprocessors</name>
     <value>true</value>
     <description>
-      Whether CDAP master should manage HBase coprocessors. This should only
+      Whether CDAP Master should manage HBase coprocessors. This should only
       be set to false if you are managing coprocessors yourself in order to
       support rolling HBase upgrades.
     </description>
@@ -136,7 +136,7 @@
       Comma-separated list of packages containing checks that will be run
       before the CDAP Master starts up. If any of the checks fails, the CDAP
       Master will not start up. Checks will only be run if
-      master.startup.checks.enabled is set to true.
+      ${master.startup.checks.enabled} is set to true.
     </description>
   </property>
 
@@ -181,9 +181,9 @@
     <name>twill.location.cache.dir</name>
     <value>.cache</value>
     <description>
-      The relative directory name on the distributed file system for twill to cache generated files
-      to speed up application launch. The directory set here is relative to ${root.namespace}/twill
-      on the file system.
+      The relative directory name on the distributed file system for Apache Twill to cache
+      generated files, to speed up launching applications. This directory is relative to
+      ${root.namespace}/twill on the file system.
     </description>
   </property>
 
@@ -392,7 +392,7 @@
       are comma-separated.
     </description>
   </property>
-  
+
   <property>
     <name>scheduler.max.thread.pool.size</name>
     <value>100</value>
@@ -630,7 +630,7 @@
     <name>data.tx.thrift.max.read.buffer</name>
     <value>${thrift.max.read.buffer}</value>
     <description>
-      Maximum read buffer size (in bytes) used by the transaction service;
+      Maximum read buffer size in bytes used by the transaction service;
       the value should be set to something greater than the maximum frame
       sent on the RPC channel
     </description>
@@ -664,7 +664,7 @@
 
   <property>
     <name>data.tx.prune.plugins</name>
-    <value>data.tx.DefaultHBaseTransactionPruningPlugin</value>
+    <value>data.tx.pruning.plugin</value>
     <description>
       List of transaction pruning plugins; for CDAP HBase tables that use transaction
       functionality to skip or clean invalid data
@@ -672,7 +672,16 @@
   </property>
 
   <property>
-    <name>data.tx.DefaultHBaseTransactionPruningPlugin.class</name>
+    <name>data.tx.prune.state.table</name>
+    <value>${dataset.table.prefix}_system:tephra.state</value>
+    <description>
+      Table used to store intermediate state when invalid transaction list pruning is
+      enabled
+    </description>
+  </property>
+
+  <property>
+    <name>data.tx.pruning.plugin.class</name>
     <value>co.cask.data2.txprune.DefaultHBaseTransactionPruningPlugin</value>
     <description>
       Class name for the default transaction pruning plugin
@@ -801,7 +810,7 @@
     <description>
       Memory in megabytes for each CDAP Explore executor instance.
       This is explicitly set differently than ${master.service.memory.mb} as
-      Explore requires more memory to run than the Master service.
+      Explore requires more memory to run than the CDAP Master service.
     </description>
   </property>
 
@@ -809,7 +818,17 @@
     <name>explore.executor.container.num.cores</name>
     <value>1</value>
     <description>
-      Number of virtual cores for each explore executor instance
+      Number of virtual cores for each CDAP Explore executor instance
+    </description>
+  </property>
+
+  <property>
+    <name>explore.http.timeout</name>
+    <value>20</value>
+    <description>
+      The timeout in seconds for HTTP requests to the CDAP Explore service. Because requests
+      may happen within a transaction, it is recommended to keep this timeout noticeably
+      shorter than the default transaction timeout, ${data.tx.timeout}.
     </description>
   </property>
 
@@ -826,7 +845,15 @@
     <name>explore.local.data.dir</name>
     <value>${local.data.dir}/explore</value>
     <description>
-      Data directory for CDAP Explore Service when in Standalone CDAP
+      Data directory for the CDAP Explore service when in Standalone CDAP
+    </description>
+  </property>
+
+  <property>
+    <name>explore.service.bind.port</name>
+    <value>0</value>
+    <description>
+      CDAP Explore service bind port
     </description>
   </property>
 
@@ -834,9 +861,9 @@
     <name>explore.start.on.demand</name>
     <value>false</value>
     <description>
-      Determines the start-up of the CDAP Explore Service (ad-hoc SQL
-      queries); if false, the explore service starts up when CDAP is
-      started; if true, the CDAP Explore Service will start upon the first
+      Determines the start-up of the CDAP Explore service (ad-hoc SQL
+      queries); if false, the Explore service starts up when CDAP is
+      started; if true, the Explore service will start upon the first
       query it receives
     </description>
   </property>
@@ -845,16 +872,8 @@
     <name>explore.writes.enabled</name>
     <value>true</value>
     <description>
-      Determines if writing to a table through the CDAP Explore Service (ad-
+      Determines if writing to a table through the CDAP Explore service (ad-
       hoc SQL queries) is enabled
-    </description>
-  </property>
-
-  <property>
-    <name>explore.service.bind.port</name>
-    <value>0</value>
-    <description>
-      Explore service bind port
     </description>
   </property>
 
@@ -939,7 +958,7 @@
     <value>10000</value>
     <description>
       The interval length (in number of messages in the CDAP Kafka service) at which to
-      force an fsync of data written to the log 
+      force an fsync of data written to the log
     </description>
   </property>
 
@@ -1020,6 +1039,14 @@
   </property>
 
   <property>
+    <name>log.cleanup.max.num.files</name>
+    <value>1000</value>
+    <description>
+      Maximum number of files scanned in one iteration
+    </description>
+  </property>
+
+  <property>
     <name>log.collection.root</name>
     <value>${local.data.dir}/logs</value>
     <description>
@@ -1040,6 +1067,141 @@
     <value>10</value>
     <description>
       Number of CDAP Kafka service partitions to publish the logs to
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.dir.permissions</name>
+    <value>700</value>
+    <description>
+      Permissions to use for directories created by the system log appender
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.max.lifetime.ms</name>
+    <value>21600000</value>
+    <description>
+      Maximum time in milliseconds a file is kept open by the system log appender
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.max.size.bytes</name>
+    <value>104857600</value>
+    <description>
+      Maximum size in bytes of a file kept open by the system log appender
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.permissions</name>
+    <value>600</value>
+    <description>
+      Permissions to set for files created by the system log appender
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.sync.interval.bytes</name>
+    <value>10485760</value>
+    <description>
+      Number of bytes for the sync interval setting of the Avro file written by the system log appender
+    </description>
+  </property>
+
+
+  <property>
+    <name>log.process.pipeline.auto.buffer.ratio</name>
+    <value>0.7</value>
+    <description>
+      The ratio of total memory used for determining processing pipeline buffer size.
+      This property is only used if ${log.process.pipeline.buffer.size}
+      is set to zero and the value should be greater than zero and less than one.
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.buffer.size</name>
+    <value>0</value>
+    <description>
+      The internal buffer size in bytes for each log processing pipeline.
+      Setting it to zero means the system will determine it dynamically based
+      on the container size as given by ${log.saver.container.memory.mb}.
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.checkpoint.interval.ms</name>
+    <value>10000</value>
+    <description>
+      The time between log processing pipeline checkpoints in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.config.dir</name>
+    <value>/opt/cdap/master/ext/logging/config</value>
+    <description>
+      A local directory on the CDAP Master that is scanned for log processing pipeline
+      configurations. Each pipeline is defined by a file in the logback XML format, with
+      ".xml" as the file name extension.
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.event.delay.ms</name>
+    <value>2000</value>
+    <description>
+      The time a log event stays in the log processing pipeline buffer before
+      writing out to log appenders in milliseconds. A longer delay will result
+      in better time ordering of log events before presenting to log appenders
+      but will consume more memory.
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.logger.cache.size</name>
+    <value>1000</value>
+    <description>
+      The number of loggers that each log processing pipeline will cache.
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.logger.cache.expiration.ms</name>
+    <value>300000</value>
+    <description>
+      Logger cache entry expiration time in milliseconds.
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.kafka.fetch.size</name>
+    <value>1048576</value>
+    <description>
+      The size of the buffer for fetching log events from Kafka per topic partition in bytes
+    </description>
+  </property>
+
+  <property>
+    <name>log.process.pipeline.lib.dir</name>
+    <value>/opt/cdap/master/ext/logging/lib</value>
+    <description>
+      Semicolon-separated list of local directories on the CDAP Master scanned
+      for additional library JAR files to be included for log processing
+    </description>
+  </property>
+
+  <property>
+    <name>log.publish.partition.key</name>
+    <value>program</value>
+    <description>
+      Publish logs from an application or a program to the same partition. Valid values
+      are "application" or "program". If set to "application", logs from all the programs
+      of an application go to the same partition. If set to "program", logs from the same
+      program go to the same partition. Changes to this property requires restarting of
+      all CDAP applications.
     </description>
   </property>
 
@@ -1068,20 +1230,12 @@
   </property>
 
   <property>
-    <name>log.saver.checkpoint.interval.ms</name>
-    <value>60000</value>
-    <description>
-      The time between log saver checkpoints in milliseconds
-    </description>
-  </property>
-
-  <property>
     <name>log.saver.container.memory.mb</name>
     <value>1024</value>
     <description>
       Memory in megabytes for each log saver instance to run in YARN.
       This is explicitly set differently than ${master.service.memory.mb} as
-      Log saver requires more memory to run than the Master service.
+      Log saver requires more memory to run than the CDAP Master service.
     </description>
   </property>
 
@@ -1101,6 +1255,16 @@
     </description>
   </property>
 
+  <!-- Market Configuration -->
+
+  <property>
+    <name>market.base.url</name>
+    <value>http://market.cask.co/v1</value>
+    <description>
+      The base URL of the Cask Market used by the CDAP UI for the Cask Market RESTful API.
+      The default value shown is that of the public Cask Market.
+    </description>
+  </property>
 
   <!-- Master Configuration -->
 
@@ -1250,7 +1414,7 @@
 
   <property>
     <name>messaging.hbase.max.scan.threads</name>
-    <value>48</value>
+    <value>96</value>
     <description>
       Maximum number of threads used for scanning HBase tables
     </description>
@@ -1530,7 +1694,7 @@
     <name>metrics.kafka.partition.size</name>
     <value>10</value>
     <description>
-      Number of partitions for Kafka metrics topic
+      Number of partitions for the Kafka metrics topic
     </description>
   </property>
 
@@ -1562,12 +1726,12 @@
     <name>metrics.messaging.fetcher.limit</name>
     <value>200</value>
     <description>
-      Maximum number of metrics messages to be fetched from the messaging fetcher at once.
-      It is also the maximum number of metric values to be persisted in the metrics store after the
-      number of fetched messages reaches the limit.
+      Maximum number of metrics messages to be fetched from the messaging fetcher at a
+      time. It is also the maximum number of metric values to be persisted in the metrics
+      store after the number of fetched messages reaches the limit.
     </description>
   </property>
-  
+
   <property>
     <name>metrics.messaging.meta.table</name>
     <value>metrics.messaging.meta</value>
@@ -1704,7 +1868,7 @@
 
 
   <!-- Operational Statistics Configuration -->
-  
+
   <property>
     <name>operational.stats.extensions.dir</name>
     <value>/opt/cdap/master/ext/operations</value>
@@ -1982,6 +2146,70 @@
   </property>
 
   <property>
+    <name>system.log.process.retry.policy.base.delay.ms</name>
+    <value>1000</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.log.process.retry.policy.max.retries</name>
+    <value>1500</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>system.log.process.retry.policy.max.time.secs</name>
+    <value>1500</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>system.log.process.retry.policy.type</name>
+    <value>fixed.delay</value>
+    <description>
+      The type of retry policy for log processing
+    </description>
+  </property>
+
+  <property>
+    <name>system.metrics.retry.policy.base.delay.ms</name>
+    <value>1000</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.metrics.retry.policy.max.retries</name>
+    <value>600</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>system.metrics.retry.policy.max.time.secs</name>
+    <value>600</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>system.metrics.retry.policy.type</name>
+    <value>fixed.delay</value>
+    <description>
+      The type of retry policy for metrics publishing
+    </description>
+  </property>
+
+  <property>
     <name>worker.retry.policy.base.delay.ms</name>
     <value>1000</value>
     <description>
@@ -2157,7 +2385,7 @@
     <name>router.ssl.server.port</name>
     <value>${router.ssl.bind.port}</value>
     <description>
-      CDAP Router service port for HTTPS, for clients and webapps
+      CDAP Router service bind port for HTTPS, for clients and webapps
     </description>
   </property>
 

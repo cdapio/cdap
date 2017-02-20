@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,8 +31,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Testing the basic properties of the {@link AggregatedMetricsCollectionService}.
@@ -72,8 +75,13 @@ public class AggregatedMetricsCollectionServiceTest {
       }
 
       @Override
-      protected Scheduler scheduler() {
-        return Scheduler.newFixedRateSchedule(5, 1, TimeUnit.SECONDS);
+      protected long getInitialDelayMillis() {
+        return 5000L;
+      }
+
+      @Override
+      protected long getPeriodMillis() {
+        return 1000L;
       }
     };
 
@@ -154,6 +162,37 @@ public class AggregatedMetricsCollectionServiceTest {
     } finally {
       service.stopAndWait();
     }
+  }
+
+  @Test
+  public void testServiceShutdown() throws InterruptedException, TimeoutException, ExecutionException {
+    final CountDownLatch latch = new CountDownLatch(1);
+    AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
+      @Override
+      protected void publish(Iterator<MetricValues> metrics) {
+        while (isRunning()) {
+          try {
+            latch.countDown();
+            TimeUnit.MINUTES.sleep(1);
+          } catch (InterruptedException e) {
+            // Ignore the interrupt for testing.
+            // The isRunning() should return false if the interrupt is due to service shutdown
+          }
+        }
+      }
+
+      @Override
+      protected long getInitialDelayMillis() {
+        return 0L;
+      }
+    };
+
+    service.startAndWait();
+    // Make sure the publish has been called
+    Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
+
+    // Issue a stop on the service. It should interrupt the publish sleep and return quickly.
+    service.stop().get(5, TimeUnit.SECONDS);
   }
 
   private void verifyCounterMetricsValue(MetricValues metricValues) {

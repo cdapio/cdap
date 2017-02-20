@@ -132,13 +132,19 @@ function addCustomQueryParams(url, params = {}) {
 
 window.getTrackerUrl = function(navigationObj = {}) {
   let {stateName, stateParams} = navigationObj;
-  let uiApp = 'tracker';
+  let uiApp = 'metadata';
   let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
   let stateToUrlMap = {
     'tracker': '',
     'tracker.detail': '',
     'tracker.detail.entity': '/entity/:entityType/:entityId',
-    'tracker.detail.entity.metadata': '/entity/:entityType/:entityId/metadata'
+    'tracker.detail.entity.metadata': '/entity/:entityType/:entityId/metadata',
+    'tracker.integrations': '/integrations',
+    'tracker.detail.entity.audit': '/entity/:entityType/:entityId/audit',
+    'tracker.detail.entity.lineage': '/entity/:entityType/:entityId/lineage',
+    'tracker.detail.entity.usage': '/entity/:entityType/:entityId/usage',
+    'tracker.tags': '/tags',
+    'tracker.dictionary': '/dictionary'
   };
   let url = baseUrl + stateToUrlMap[stateName || 'tracker'];
   url = buildCustomUrl(url, stateParams);
@@ -146,7 +152,7 @@ window.getTrackerUrl = function(navigationObj = {}) {
 };
 window.getHydratorUrl = function(navigationObj = {}) {
   let {stateName, stateParams} = navigationObj;
-  let uiApp = 'hydrator';
+  let uiApp = 'pipelines';
   let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
   let stateToUrlMap = {
     'hydrator': '',
@@ -154,7 +160,7 @@ window.getHydratorUrl = function(navigationObj = {}) {
     'hydrator.detail': '/view/:pipelineId',
     'hydrator.list': '?page'
   };
-  let url = baseUrl + stateToUrlMap[stateName || 'hydrator'];
+  let url = baseUrl + stateToUrlMap[stateName || 'pipelines'];
   url = buildCustomUrl(url, stateParams);
   return url;
 };
@@ -176,7 +182,7 @@ window.getOldCDAPUrl = function(navigationObj = {}) {
     'flows.detail': '/apps/:appId/programs/flows/:programId/runs',
     'services.detail': '/apps/:appId/programs/services/:programId/runs'
   };
-  let url = baseUrl + stateToUrlMap[stateName || 'hydrator'];
+  let url = baseUrl + stateToUrlMap[stateName || 'pipelines'];
   url = buildCustomUrl(url, stateParams);
   return url;
 };

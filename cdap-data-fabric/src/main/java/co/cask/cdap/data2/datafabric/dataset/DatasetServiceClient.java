@@ -23,15 +23,13 @@ import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
+import co.cask.cdap.common.internal.remote.RemoteClient;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.data2.dataset2.ModuleConflictException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
-import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.id.EntityId;
@@ -40,22 +38,14 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequestConfig;
-import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Joiner;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -63,15 +53,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Type;
-import java.net.InetSocketAddress;
-import java.net.URL;
-import java.util.Arrays;
+import java.net.ConnectException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -82,12 +68,10 @@ class DatasetServiceClient {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetServiceClient.class);
   private static final Gson GSON = new Gson();
   private static final Type SUMMARY_LIST_TYPE = new TypeToken<List<DatasetSpecificationSummary>>() { }.getType();
-  private static final Type MODULE_META_LIST_TYPE = new TypeToken<List<DatasetModuleMeta>>() { }.getType();
   private static final Type DATASET_NAME_TYPE = new TypeToken<Set<String>>() { }.getType();
 
-  private final Supplier<EndpointStrategy> endpointStrategySupplier;
+  private final RemoteClient remoteClient;
   private final NamespaceId namespaceId;
-  private final HttpRequestConfig httpRequestConfig;
   private final boolean securityEnabled;
   private final boolean kerberosEnabled;
   private final boolean authorizationEnabled;
@@ -96,14 +80,10 @@ class DatasetServiceClient {
 
   DatasetServiceClient(final DiscoveryServiceClient discoveryClient, NamespaceId namespaceId,
                        CConfiguration cConf, AuthenticationContext authenticationContext) {
-    this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
-      @Override
-      public EndpointStrategy get() {
-        return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER));
-      }
-    });
+    this.remoteClient = new RemoteClient(
+      discoveryClient, Constants.Service.DATASET_MANAGER, new DefaultHttpRequestConfig(false),
+      String.format("%s/namespaces/%s/data", Constants.Gateway.API_VERSION_3, namespaceId.getNamespace()));
     this.namespaceId = namespaceId;
-    this.httpRequestConfig = new DefaultHttpRequestConfig(false);
     this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
@@ -158,16 +138,6 @@ class DatasetServiceClient {
     }
 
     return GSON.fromJson(response.getResponseBodyAsString(), SUMMARY_LIST_TYPE);
-  }
-
-  public Collection<DatasetModuleMeta> getAllModules() throws DatasetManagementException {
-    HttpResponse response = doGet("modules");
-    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
-                                                         response));
-    }
-
-    return GSON.fromJson(response.getResponseBodyAsString(), MODULE_META_LIST_TYPE);
   }
 
   @Nullable
@@ -265,9 +235,10 @@ class DatasetServiceClient {
 
   public void addModule(String moduleName, String className, Location jarLocation) throws DatasetManagementException {
 
-    HttpResponse response = doRequest(HttpMethod.PUT, "modules/" + moduleName,
-                                      ImmutableMultimap.of("X-Class-Name", className),
-                                      Locations.newInputSupplier(jarLocation));
+    HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.PUT, "modules/" + moduleName)
+      .addHeader("X-Class-Name", className)
+      .withBody(Locations.newInputSupplier(jarLocation));
+    HttpResponse response = doRequest(requestBuilder);
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new ModuleConflictException(String.format("Failed to add module %s due to conflict, details: %s",
@@ -301,61 +272,40 @@ class DatasetServiceClient {
   }
 
   private HttpResponse doGet(String resource) throws DatasetManagementException {
-    return doRequest(HttpMethod.GET, resource);
+    return doRequest(remoteClient.requestBuilder(HttpMethod.GET, resource));
   }
 
   private HttpResponse doPut(String resource, String body) throws DatasetManagementException {
-    return doRequest(HttpMethod.PUT, resource, null, body);
+    HttpRequest request = addUserIdHeader(remoteClient.requestBuilder(HttpMethod.PUT, resource)
+      .withBody(body))
+      .build();
+    try {
+      return remoteClient.execute(request);
+    } catch (IOException e) {
+      throw new DatasetManagementException(remoteClient.createErrorMessage(request, body), e);
+    }
   }
 
   private HttpResponse doPost(String resource) throws DatasetManagementException {
-    return doRequest(HttpMethod.POST, resource);
+    return doRequest(remoteClient.requestBuilder(HttpMethod.POST, resource));
   }
 
   private HttpResponse doDelete(String resource) throws DatasetManagementException {
-    return doRequest(HttpMethod.DELETE, resource);
+    return doRequest(remoteClient.requestBuilder(HttpMethod.DELETE, resource));
   }
 
-  private HttpResponse doRequest(HttpMethod method, String resource, @Nullable Multimap<String, String> headers,
-                                 String body) throws DatasetManagementException {
-    String url = resolve(resource);
+  private HttpResponse doRequest(HttpRequest.Builder requestBuilder) throws DatasetManagementException {
+    HttpRequest request = addUserIdHeader(requestBuilder).build();
     try {
-      return HttpRequests.execute(addUserIdHeader(
-        HttpRequest.builder(method, new URL(url))
-          .addHeaders(headers)
-          .withBody(body)
-      ).build(), httpRequestConfig);
+      return remoteClient.execute(request);
+    } catch (ConnectException e) {
+      throw new ServiceUnavailableException(Constants.Service.DATASET_MANAGER, e);
     } catch (IOException e) {
-      throw new DatasetManagementException(
-        String.format("Error during talking to Dataset Service at %s while doing %s with headers %s and body %s",
-                      url, method,
-                      headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers.entries()),
-                      body == null ? "null" : body), e);
+      throw new DatasetManagementException(remoteClient.createErrorMessage(request, null), e);
     }
   }
 
-  private HttpResponse doRequest(HttpMethod method, String resource,
-                                 @Nullable Multimap<String, String> headers,
-                                 @Nullable InputSupplier<? extends InputStream> body)
-    throws DatasetManagementException {
-
-    String url = resolve(resource);
-    try {
-      return HttpRequests.execute(addUserIdHeader(
-        HttpRequest.builder(method, new URL(url))
-          .addHeaders(headers)
-          .withBody(body)
-      ).build(), httpRequestConfig);
-    } catch (IOException e) {
-      throw new DatasetManagementException(
-        String.format("Error during talking to Dataset Service at %s while doing %s with headers %s and body %s",
-                      url, method,
-                      headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers.entries()),
-                      body == null ? "null" : body), e);
-    }
-  }
-
-  private HttpRequest.Builder addUserIdHeader(HttpRequest.Builder builder) throws IOException {
+  private HttpRequest.Builder addUserIdHeader(HttpRequest.Builder builder) throws DatasetManagementException {
     if (!securityEnabled || !authorizationEnabled) {
       return builder;
     }
@@ -364,7 +314,7 @@ class DatasetServiceClient {
     try {
       currUserShortName = UserGroupInformation.getCurrentUser().getShortUserName();
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new DatasetManagementException("Unable to get the current user", e);
     }
 
     // If the request originated from the router and was forwarded to any service other than dataset service, before
@@ -386,26 +336,10 @@ class DatasetServiceClient {
       if (!kerberosEnabled || currUserShortName.equals(masterShortUserName)) {
         LOG.trace("Accessing dataset in system namespace using the system principal because the current user " +
                     "{} is the same as the CDAP master user {}.",
-                  UserGroupInformation.getCurrentUser().getUserName(), masterShortUserName);
+                  currUserShortName, masterShortUserName);
         userId = currUserShortName;
       }
     }
     return builder.addHeader(Constants.Security.Headers.USER_ID, userId);
-  }
-
-  private HttpResponse doRequest(HttpMethod method, String url) throws DatasetManagementException {
-    return doRequest(method, url, null, (InputSupplier<? extends InputStream>) null);
-  }
-
-  private String resolve(String resource) throws DatasetManagementException {
-    Discoverable discoverable = endpointStrategySupplier.get().pick(1L, TimeUnit.SECONDS);
-    if (discoverable == null) {
-      throw new ServiceUnavailableException("DatasetService");
-    }
-    InetSocketAddress address = discoverable.getSocketAddress();
-    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
-      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
-    return String.format("%s%s:%s%s/namespaces/%s/data/%s", scheme, address.getHostName(), address.getPort(),
-                         Constants.Gateway.API_VERSION_3, namespaceId.getNamespace(), resource);
   }
 }

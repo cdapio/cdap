@@ -18,23 +18,22 @@ package co.cask.cdap.security.auth.context;
 
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.security.UserGroupInformation;
-
-import java.io.IOException;
 
 /**
  * An {@link AuthenticationContext} for use in program containers. The authentication details in this context are
  * determined based on the {@link UserGroupInformation} of the user running the program.
  */
-public class ProgramContainerAuthenticationContext implements AuthenticationContext {
+class ProgramContainerAuthenticationContext implements AuthenticationContext {
+
+  private final Principal principal;
+
+  ProgramContainerAuthenticationContext(Principal principal) {
+    this.principal = principal;
+  }
 
   @Override
   public Principal getPrincipal() {
-    try {
-      return new Principal(UserGroupInformation.getCurrentUser().getShortUserName(), Principal.PrincipalType.USER);
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
+    return principal;
   }
 }

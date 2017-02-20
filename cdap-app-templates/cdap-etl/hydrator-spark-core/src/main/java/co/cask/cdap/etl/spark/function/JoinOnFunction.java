@@ -49,7 +49,7 @@ public class JoinOnFunction<JOIN_KEY, INPUT_RECORD>
   public Iterable<Tuple2<JOIN_KEY, INPUT_RECORD>> call(INPUT_RECORD input) throws Exception {
     if (joinFunction == null) {
       BatchJoiner<JOIN_KEY, INPUT_RECORD, Object> joiner = pluginFunctionContext.createPlugin();
-      BatchJoinerRuntimeContext context = pluginFunctionContext.createJoinerRuntimeContext();
+      BatchJoinerRuntimeContext context = pluginFunctionContext.createBatchRuntimeContext();
       joiner.initialize(context);
       joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner, inputStageName),
                                                pluginFunctionContext.createStageMetrics(),

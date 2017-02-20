@@ -418,6 +418,21 @@ td .docutils.literal {
   padding: 0;
 }
 
+/* -- General Table styles --------------------------------------------- */
+
+table.docutils p.first {
+	line-height: 17px;
+}
+
+table.docutils p.last {
+	line-height: 17px;
+	margin-bottom: 0;
+}
+
+table.docutils tbody td p {
+	line-height: 17px;
+}
+
 /* -- Table styles used in Introduction page -------------------------------------- */
 
 div.table-block.container {

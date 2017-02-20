@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.store.remote;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.internal.remote.RemoteOpsClient;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
@@ -42,8 +41,8 @@ public class RemoteLineageWriter extends RemoteOpsClient implements LineageWrite
   private final ConcurrentMap<BasicLineageWriter.DataAccessKey, Boolean> registered = new ConcurrentHashMap<>();
 
   @Inject
-  RemoteLineageWriter(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
-    super(cConf, discoveryClient, Constants.Service.REMOTE_SYSTEM_OPERATION);
+  RemoteLineageWriter(DiscoveryServiceClient discoveryClient) {
+    super(discoveryClient, Constants.Service.REMOTE_SYSTEM_OPERATION);
   }
 
   @Override

@@ -66,6 +66,7 @@ public class MessagingAppTestRun extends TestFrameworkTestBase {
 
   @Before
   public void beforeTest() throws Exception {
+    super.beforeTest();
     getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(NAMESPACE).build());
     getMessagingAdmin(NAMESPACE).createTopic(MessagingApp.CONTROL_TOPIC);
   }
@@ -151,13 +152,7 @@ public class MessagingAppTestRun extends TestFrameworkTestBase {
 
 
     // Wait for the worker to finish and verify that it completes successfully.
-    workerManager.waitForFinish(5, TimeUnit.SECONDS);
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return workerManager.getHistory(ProgramRunStatus.COMPLETED).size();
-      }
-    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    workerManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.SECONDS);
   }
 
   @Test
@@ -175,17 +170,10 @@ public class MessagingAppTestRun extends TestFrameworkTestBase {
       workerManager.start(Collections.singletonMap("get.in.tx", Boolean.toString(getInTx)));
 
       // Wait for the worker to finish and verify that it completes successfully.
-      workerManager.waitForFinish(5, TimeUnit.SECONDS);
+      int workerRunCount = getInTx ? 1 : 2;
+      workerManager.waitForRuns(ProgramRunStatus.COMPLETED, workerRunCount, 60, TimeUnit.SECONDS);
       messagingAdmin.deleteTopic(MessagingApp.TOPIC);
     }
-
-    // Verify both executed successfully.
-    Tasks.waitFor(2, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return workerManager.getHistory(ProgramRunStatus.COMPLETED).size();
-      }
-    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   @Test
@@ -249,12 +237,6 @@ public class MessagingAppTestRun extends TestFrameworkTestBase {
       }
     }, 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-    sparkManager.waitForFinish(60, TimeUnit.SECONDS);
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return sparkManager.getHistory(ProgramRunStatus.COMPLETED).size();
-      }
-    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 60, TimeUnit.SECONDS);
   }
 }

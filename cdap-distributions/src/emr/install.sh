@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2015-2016 Cask Data, Inc.
+# Copyright © 2015-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@ CDAP_BRANCH=${CDAP_BRANCH:-develop}
 # Optional tag to checkout - All released versions of this script should set this
 CDAP_TAG=''
 # The CDAP package version passed to Chef
-CDAP_VERSION=${CDAP_VERSION:-4.0.1-SNAPSHOT-1}
+CDAP_VERSION=${CDAP_VERSION:-4.1.0-SNAPSHOT-1}
 # The version of Chef to install
 CHEF_VERSION=${CHEF_VERSION:-12.10.24}
 # cdap-site.xml configuration parameters
@@ -109,6 +109,9 @@ git clone --depth 1 --branch ${CDAP_BRANCH} https://github.com/caskdata/cdap.git
 
 # Check out to specific tag if specified
 if [ -n "${CDAP_TAG}" ]; then
+  # Ensure tags are fetched
+  git -C ${__gitdir} fetch --all --tags --prune
+  # Checks out tag to a detached head state
   git -C ${__gitdir} checkout tags/${CDAP_TAG}
 fi
 

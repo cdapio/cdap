@@ -35,6 +35,7 @@ import co.cask.cdap.data2.metadata.indexer.InvertedValueIndexer;
 import co.cask.cdap.data2.metadata.indexer.SchemaIndexer;
 import co.cask.cdap.data2.metadata.indexer.ValueOnlyIndexer;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -468,7 +469,7 @@ public class MetadataDataset extends AbstractDataset {
       return Collections.emptySet();
     }
 
-    List<ImmutablePair<byte [], byte []>> fuzzyKeys = new ArrayList<>();
+    List<ImmutablePair<byte [], byte []>> fuzzyKeys = new ArrayList<>(targetIds.size());
     for (NamespacedEntityId targetId : targetIds) {
       fuzzyKeys.add(getFuzzyKeyFor(targetId));
     }
@@ -556,23 +557,29 @@ public class MetadataDataset extends AbstractDataset {
    *               the cursor. If {@code null}, the first row is used as the cursor
    * @param showHidden boolean which specifies whether to display hidden entities (entity whose name start with "_")
    *                    or not.
+   * @param entityScope a set which specifies which scope of entities to display.
    * @return a {@link SearchResults} object containing a list of {@link MetadataEntry} containing each matching
    *         {@link NamespacedEntityId} with its associated metadata. It also optionally contains a list of cursors
    *         for subsequent queries to start with, if the specified #sortInfo is not {@link SortInfo#DEFAULT}.
    */
   public SearchResults search(String namespaceId, String searchQuery, Set<EntityTypeSimpleName> types,
                               SortInfo sortInfo, int offset, int limit, int numCursors,
-                              @Nullable String cursor, boolean showHidden) {
-    if (SortInfo.DEFAULT.equals(sortInfo)) {
-      return searchByDefaultIndex(namespaceId, searchQuery, types, showHidden);
+                              @Nullable String cursor, boolean showHidden, Set<EntityScope> entityScope) {
+    if (!SortInfo.DEFAULT.equals(sortInfo)) {
+      if (!"*".equals(searchQuery)) {
+        throw new IllegalArgumentException("Cannot search with non-default sort with any query other than '*'");
+      }
+      return searchByCustomIndex(namespaceId, types, sortInfo, offset, limit, numCursors, cursor, showHidden,
+                                 entityScope);
     }
-    return searchByCustomIndex(namespaceId, types, sortInfo, offset, limit, numCursors, cursor, showHidden);
+    return searchByDefaultIndex(namespaceId, searchQuery, types, showHidden, entityScope);
   }
 
   private SearchResults searchByDefaultIndex(String namespaceId, String searchQuery,
-                                             Set<EntityTypeSimpleName> types, boolean showHidden) {
-    List<MetadataEntry> results = new ArrayList<>();
-    for (String searchTerm : getSearchTerms(namespaceId, searchQuery)) {
+                                             Set<EntityTypeSimpleName> types, boolean showHidden,
+                                             Set<EntityScope> entityScope) {
+    List<MetadataEntry> results = new LinkedList<>();
+    for (String searchTerm : getSearchTerms(namespaceId, searchQuery, entityScope)) {
       Scanner scanner;
       if (searchTerm.endsWith("*")) {
         // if prefixed search get start and stop key
@@ -595,21 +602,23 @@ public class MetadataDataset extends AbstractDataset {
         scanner.close();
       }
     }
+
     // cursors are currently not supported for default indexes
-    return new SearchResults(results, Collections.<String>emptyList());
+    return new SearchResults(results, Collections.<String>emptyList(), results);
   }
 
   private SearchResults searchByCustomIndex(String namespaceId, Set<EntityTypeSimpleName> types,
                                             SortInfo sortInfo, int offset, int limit, int numCursors,
-                                            @Nullable String cursor, boolean showHidden) {
-    List<MetadataEntry> results = new ArrayList<>();
+                                            @Nullable String cursor, boolean showHidden,
+                                            Set<EntityScope> entityScope) {
+    List<MetadataEntry> returnedResults = new LinkedList<>();
+    List<MetadataEntry> allResults = new LinkedList<>();
     String indexColumn = getIndexColumn(sortInfo.getSortBy(), sortInfo.getSortOrder());
     // we want to return the first chunk of 'limit' elements after offset
     // in addition, we want to pre-fetch 'numCursors' chunks of size 'limit'
     int fetchSize = offset + ((numCursors + 1) * limit);
     List<String> cursors = new ArrayList<>(numCursors);
-    int count = 0;
-    for (String searchTerm : getSearchTerms(namespaceId, "*")) {
+    for (String searchTerm : getSearchTerms(namespaceId, "*", entityScope)) {
       byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
       byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
       // if a cursor is provided, then start at the cursor
@@ -621,32 +630,35 @@ public class MetadataDataset extends AbstractDataset {
       // we want to add a key as a cursor, if upon dividing the current number of results by the chunk size,
       // the remainder is 1. However, this is not true, when the chunk size is 1, since in that case, the
       // remainder on division can never be 1, it is always 0.
-      int mod = limit == 1 ? 0 : 1;
+      int mod = (limit == 1) ? 0 : 1;
       try (Scanner scanner = indexedTable.scanByIndex(Bytes.toBytes(indexColumn), startKey, stopKey)) {
         Row next;
-        while ((next = scanner.next()) != null && count < fetchSize) {
-          // skip until we reach offset
-          if (count < offset) {
-            if (parseRow(next, indexColumn, types, showHidden).isPresent()) {
-              count++;
-            }
+        while ((next = scanner.next()) != null) {
+          Optional<MetadataEntry> metadataEntry = parseRow(next, indexColumn, types, showHidden);
+          if (!metadataEntry.isPresent()) {
             continue;
           }
-          Optional<MetadataEntry> metadataEntry = parseRow(next, indexColumn, types, showHidden);
-          if (metadataEntry.isPresent()) {
-            count++;
-            results.add(metadataEntry.get());
+          allResults.add(metadataEntry.get());
+
+          // skip until we reach offset
+          // skip if we have enough cursors
+          if (allResults.size() <= offset || allResults.size() > fetchSize) {
+            continue;
           }
-          // note that count will be different than results.size, in the case that offset != 0
-          if (results.size() % limit == mod && results.size() > limit) {
-            // add the cursor, with the namespace removed.
-            String cursorWithNamespace = Bytes.toString(next.get(indexColumn));
-            cursors.add(cursorWithNamespace.substring(cursorWithNamespace.indexOf(KEYVALUE_SEPARATOR) + 1));
+
+          if (returnedResults.size() < limit) {
+            returnedResults.add(metadataEntry.get());
+          } else {
+            if ((allResults.size() - offset) % limit == mod) {
+              // add the cursor, with the namespace removed.
+              String cursorWithNamespace = Bytes.toString(next.get(indexColumn));
+              cursors.add(cursorWithNamespace.substring(cursorWithNamespace.indexOf(KEYVALUE_SEPARATOR) + 1));
+            }
           }
         }
       }
     }
-    return new SearchResults(results, cursors);
+    return new SearchResults(returnedResults, cursors, allResults);
   }
 
   // there may not be a MetadataEntry in the row or it may for a different targetType (entityFilter),
@@ -690,10 +702,11 @@ public class MetadataDataset extends AbstractDataset {
    * @param namespaceId the namespaceId to search in
    * @param searchQuery the user specified search query. If {@code *}, returns a singleton list containing
    *                    {@code *} which matches everything.
+   * @param entityScope a set which specifies which scope of entities to display.
    * @return formatted search query which is namespaced
    */
-  private Iterable<String> getSearchTerms(String namespaceId, String searchQuery) {
-    List<String> searchTerms = new ArrayList<>();
+  private Iterable<String> getSearchTerms(String namespaceId, String searchQuery, Set<EntityScope> entityScope) {
+    List<String> searchTerms = new LinkedList<>();
     for (String term : Splitter.on(SPACE_SEPARATOR_PATTERN).omitEmptyStrings().trimResults().split(searchQuery)) {
       String formattedSearchTerm = term.toLowerCase();
       // if this is a key:value search remove  spaces around the separator too
@@ -702,10 +715,13 @@ public class MetadataDataset extends AbstractDataset {
         String[] split = formattedSearchTerm.split(KEYVALUE_SEPARATOR, 2);
         formattedSearchTerm = split[0].trim() + KEYVALUE_SEPARATOR + split[1].trim();
       }
-      searchTerms.add(namespaceId + KEYVALUE_SEPARATOR + formattedSearchTerm);
+      if (entityScope.size() == 2 || !entityScope.contains(EntityScope.SYSTEM)) {
+        searchTerms.add(namespaceId + KEYVALUE_SEPARATOR + formattedSearchTerm);
+      }
       // for non-system namespaces, also add the system namespace, so entities from system namespace are surfaced
       // in the search results as well
-      if (!NamespaceId.SYSTEM.getEntityName().equals(namespaceId)) {
+      if (!NamespaceId.SYSTEM.getEntityName().equals(namespaceId) &&
+        (entityScope.size() == 2 || !entityScope.contains(EntityScope.USER))) {
         searchTerms.add(NamespaceId.SYSTEM.getEntityName() + KEYVALUE_SEPARATOR + formattedSearchTerm);
       }
     }

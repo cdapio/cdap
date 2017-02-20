@@ -38,6 +38,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.security.AuthEnforce;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -68,6 +70,7 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
@@ -325,6 +328,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     final ProgramController controller = runtimeInfo.getController();
     final String runId = controller.getRunId().getId();
     final String twillRunId = runtimeInfo.getTwillRunId() == null ? null : runtimeInfo.getTwillRunId().getId();
+
     if (programId.getType() != ProgramType.MAPREDUCE && programId.getType() != ProgramType.SPARK
       && programId.getType() != ProgramType.WORKFLOW) {
       // MapReduce state recording is done by the MapReduceProgramRunner, Spark state recording
@@ -339,7 +343,16 @@ public class ProgramLifecycleService extends AbstractIdleService {
             // If RunId is not time-based, use current time as start time
             startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
           }
-          store.setStart(programId, runId, startTimeInSeconds, twillRunId, userArgs, systemArgs);
+
+          final long finalStartTimeInSeconds = startTimeInSeconds;
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              store.setStart(programId, runId, finalStartTimeInSeconds, twillRunId, userArgs, systemArgs);
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+
           if (state == ProgramController.State.COMPLETED) {
             completed();
           }
@@ -351,34 +364,64 @@ public class ProgramLifecycleService extends AbstractIdleService {
         @Override
         public void completed() {
           LOG.debug("Program {} completed successfully.", programId);
-          store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.COMPLETED.getRunStatus());
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                            ProgramController.State.COMPLETED.getRunStatus());
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
         }
 
         @Override
         public void killed() {
           LOG.debug("Program {} killed.", programId);
-          store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.KILLED.getRunStatus());
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                            ProgramController.State.KILLED.getRunStatus());
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
         }
 
         @Override
         public void suspended() {
           LOG.debug("Suspending Program {} {}.", programId, runId);
-          store.setSuspend(programId, runId);
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              store.setSuspend(programId, runId);
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
         }
 
         @Override
         public void resuming() {
           LOG.debug("Resuming Program {} {}.", programId, runId);
-          store.setResume(programId, runId);
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              store.setResume(programId, runId);
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
         }
 
         @Override
-        public void error(Throwable cause) {
+        public void error(final Throwable cause) {
           LOG.info("Program stopped with error {}, {}", programId, runId, cause);
-          store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                            ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
         }
       }, Threads.SAME_THREAD_EXECUTOR);
     }
@@ -413,20 +456,30 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public void stop(ProgramId programId, @Nullable String runId) throws Exception {
     List<ListenableFuture<ProgramController>> futures = issueStop(programId, runId);
-    ListenableFuture<List<ProgramController>> future = Futures.successfulAsList(futures);
-    future.get();
 
-    List<Throwable> causes = new ArrayList<>();
+    // Block until all stop requests completed. This call never throw ExecutionException
+    Futures.successfulAsList(futures).get();
+
+    Throwable failureCause = null;
     for (ListenableFuture<ProgramController> f : futures) {
       try {
         f.get();
-      } catch (ExecutionException | InterruptedException e) {
-        causes.add(e.getCause());
+      } catch (ExecutionException e) {
+        // If the program is stopped in between the time listing runs and issuing stops of the program,
+        // an IllegalStateException will be throw, which we can safely ignore
+        if (!(e.getCause() instanceof IllegalStateException)) {
+          if (failureCause == null) {
+            failureCause = e.getCause();
+          } else {
+            failureCause.addSuppressed(e.getCause());
+          }
+        }
       }
     }
-    if (!causes.isEmpty()) {
-      throw new Exception(String.format("%d out of %d runs of the program %s failed to stop",
-                                        causes.size(), futures.size(), programId));
+    if (failureCause != null) {
+      throw new ExecutionException(String.format("%d out of %d runs of the program %s failed to stop",
+                                                 failureCause.getSuppressed().length + 1, futures.size(), programId),
+                                   failureCause);
     }
   }
 
@@ -1175,12 +1228,12 @@ public class ProgramLifecycleService extends AbstractIdleService {
     @Override
     public void run() {
       try {
-        RunRecordsCorrectorRunnable.LOG.debug("Start correcting invalid run records ...");
+        RunRecordsCorrectorRunnable.LOG.trace("Start correcting invalid run records ...");
 
         // Lets update the running programs run records
         programLifecycleService.validateAndCorrectRunningRunRecords();
 
-        RunRecordsCorrectorRunnable.LOG.debug("End correcting invalid run records.");
+        RunRecordsCorrectorRunnable.LOG.trace("End correcting invalid run records.");
       } catch (Throwable t) {
         // Ignore any exception thrown since this behaves like daemon thread.
         //noinspection ThrowableResultOfMethodCallIgnored

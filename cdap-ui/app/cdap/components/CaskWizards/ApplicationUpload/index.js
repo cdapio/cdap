@@ -42,7 +42,7 @@ export default class ApplicationUploadWizard extends Component {
   }
   onSubmit() {
     return UploadApplication().map((res) => {
-      this.buildSuccessInfo();
+      this.buildSuccessInfo(res);
       this.eventEmitter.emit(globalEvents.APPUPLOAD);
       return res;
     });
@@ -55,17 +55,16 @@ export default class ApplicationUploadWizard extends Component {
       showWizard: !this.state.showWizard
     });
   }
-  buildSuccessInfo() {
-    let state = ApplicationUploadStore.getState();
-    // TODO: change this when the backend gives back the app name when the jar file is uploaded successfully
-    let name = state.uploadFile.file.name.substring(0, state.uploadFile.file.name.indexOf('-'));
+  buildSuccessInfo(uploadResponse) {
+    // uploadResponse has the format "Successfully deployed app {appName}"
+    let appName = uploadResponse.slice(uploadResponse.indexOf('app') + 4);
     let namespace = NamespaceStore.getState().selectedNamespace;
     let defaultSuccessMessage = T.translate('features.Wizard.ApplicationUpload.success');
     let buttonLabel = T.translate('features.Wizard.ApplicationUpload.callToAction');
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
-    this.successInfo.message = `${defaultSuccessMessage} "${name}".`;
+    this.successInfo.message = `${defaultSuccessMessage} "${appName}".`;
     this.successInfo.buttonLabel = buttonLabel;
-    this.successInfo.buttonUrl = `/cdap/ns/${namespace}/apps/${name}`;
+    this.successInfo.buttonUrl = `/cdap/ns/${namespace}/apps/${appName}`;
     this.successInfo.linkLabel = linkLabel;
     this.successInfo.linkUrl = `/cdap/ns/${namespace}`;
   }

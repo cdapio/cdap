@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -56,8 +56,8 @@ public class DeleteAppCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deletes %s with an optional version. If version is not provided, default version \"%s\" " +
-                           "will be used", Fragment.of(Article.A, ElementType.APP.getName()),
+    return String.format("Deletes %s with an optional version. If version is not provided, default version '%s' " +
+                           "will be used.", Fragment.of(Article.A, ElementType.APP.getName()),
                          ApplicationId.DEFAULT_VERSION);
   }
 }

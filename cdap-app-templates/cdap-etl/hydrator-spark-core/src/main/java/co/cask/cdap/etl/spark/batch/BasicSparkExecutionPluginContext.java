@@ -27,6 +27,7 @@ import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
+import co.cask.cdap.etl.planner.StageInfo;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -45,8 +46,8 @@ public class BasicSparkExecutionPluginContext extends AbstractTransformContext i
 
   public BasicSparkExecutionPluginContext(JavaSparkExecutionContext sec,
                                           JavaSparkContext jsc, DatasetContext datasetContext,
-                                          String stageName) {
-    super(sec.getPluginContext(), sec.getMetrics(), null, stageName);
+                                          StageInfo stageInfo) {
+    super(sec.getPluginContext(), sec.getMetrics(), null, stageInfo);
     this.sec = sec;
     this.jsc = jsc;
     this.datasetContext = datasetContext;

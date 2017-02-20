@@ -35,12 +35,11 @@ public class RevokeActionForPrincipalCommand extends RevokeActionCommand {
   public String getPattern() {
     return String.format("revoke actions <actions> on entity <%s> from <%s> <%s>", ArgumentName.ENTITY,
                          ArgumentName.PRINCIPAL_TYPE, ArgumentName.PRINCIPAL_NAME);
-
   }
 
   @Override
   public String getDescription() {
-    return "Revokes a user's permission to perform certain actions on an entity. " +
-      "'<actions>' is a comma-separated list.";
+    return String.format("Revokes a principal's privileges to perform certain actions on an entity. %s %s",
+      ArgumentName.ENTITY_DESCRIPTION_ACTIONS, ArgumentName.ENTITY_DESCRIPTION_ALL_STRING);
   }
 }

@@ -16,21 +16,23 @@
 
  import T from 'i18n-react';
  T.setTexts(require('../cdap/text/text-en.yaml'));
- var HeaderActions = require('../cdap/components/HeaderActions').default;
- var HeaderBrand = require('../cdap/components/HeaderBrand').default;
  var Store = require('../cdap/services/NamespaceStore').default;
+ var Header = require('../cdap/components/Header').default;
+ var ResourceCenterButton = require('../cdap/components/ResourceCenterButton').default;
  var Wrangler = require('../wrangler/components/Wrangler').default;
  var globalEvents = require('../cdap/services/global-events').default;
  var ee = require('event-emitter');
  var VersionStore = require('../cdap/services/VersionStore').default;
  var VersionActions = require('../cdap/services/VersionStore/VersionActions').default;
+ var Version = require('../cdap/services/VersionRange/Version').default;
  export {
   Store,
-  HeaderBrand,
-  HeaderActions,
+  Header,
   Wrangler,
   globalEvents,
   ee,
   VersionStore,
-  VersionActions
+  VersionActions,
+  Version,
+  ResourceCenterButton
 };

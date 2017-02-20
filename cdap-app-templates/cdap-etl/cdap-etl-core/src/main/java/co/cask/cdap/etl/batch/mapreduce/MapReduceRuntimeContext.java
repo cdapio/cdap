@@ -21,9 +21,11 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
+import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 import co.cask.cdap.etl.log.LogContext;
+import co.cask.cdap.etl.planner.StageInfo;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -35,14 +37,14 @@ import java.util.concurrent.Callable;
  * transforms, and sinks don't need to worry that plugins they use conflict with plugins other sources, transforms,
  * or sinks use.
  */
-public class MapReduceRuntimeContext extends AbstractTransformContext implements BatchRuntimeContext {
+public class MapReduceRuntimeContext extends AbstractTransformContext
+  implements BatchRuntimeContext, BatchJoinerRuntimeContext {
   private final MapReduceTaskContext context;
   private final Map<String, String> runtimeArgs;
 
   public MapReduceRuntimeContext(MapReduceTaskContext context, Metrics metrics,
-                                 LookupProvider lookup, String stageName,
-                                 Map<String, String> runtimeArgs) {
-    super(context, metrics, lookup, stageName);
+                                 LookupProvider lookup, Map<String, String> runtimeArgs, StageInfo stageInfo) {
+    super(context, metrics, lookup, stageInfo);
     this.context = context;
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
   }

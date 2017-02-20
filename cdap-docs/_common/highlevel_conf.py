@@ -60,6 +60,7 @@ def build_common_index(app, exception):
 # Load index from a js file
 def load_index(builder, index_rel_path=''):
     index = None
+    searchindexfn = None
     try:
         if index_rel_path:
             searchindexfn = os.path.join(builder.outdir, index_rel_path, builder.searchindex_filename)
@@ -74,7 +75,7 @@ def load_index(builder, index_rel_path=''):
         finally:
             f.close()
     except (IOError, OSError, ValueError):
-        builder.warn('search index couldn\'t be loaded')
+        builder.warn("search index %s couldn\'t be loaded" % searchindexfn)
     return index
 
 

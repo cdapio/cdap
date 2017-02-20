@@ -15,7 +15,6 @@
  */
 
 .overview-tab {
-  height: calc(100% - 175px);
   .nav-tabs {
     background: white;
     border: 0;
@@ -36,13 +35,23 @@
         &:hover {
           border-color: transparent;
         }
+
+        &:not(.active):hover {
+          font-weight: bold;
+        }
+
+        a {
+          &:not(.active):hover {
+            font-weight: bold;
+          }
+        }
       }
     }
   }
   .tab-content {
     overflow: auto;
     overflow-x: hidden;
-    height: calc(100% - 15px);
+
     .tab-pane,
     .row,
     [class*="col-"] {

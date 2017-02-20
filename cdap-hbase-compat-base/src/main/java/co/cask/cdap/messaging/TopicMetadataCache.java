@@ -24,16 +24,17 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.data2.util.hbase.ScanBuilder;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -47,8 +48,8 @@ import javax.annotation.Nullable;
  * Used in coprocessors to get the metadata of a Topic. It also provides the metadata of topics by periodically
  * scanning the Metadata table.
  */
-public class TopicMetadataCache {
-  private static final Logger LOG = LoggerFactory.getLogger(TopicMetadataCache.class);
+public class TopicMetadataCache extends AbstractIdleService {
+  private static final Log LOG = LogFactory.getLog(TopicMetadataCache.class);
   private static final Gson GSON = new Gson();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
@@ -61,13 +62,14 @@ public class TopicMetadataCache {
   private final String metadataTableNamespace;
   private final ScanBuilder scanBuilder;
 
-  private Thread refreshThread;
-  private long lastUpdated;
-
+  private volatile Thread refreshThread;
+  private volatile boolean stopped;
+  private volatile CConfiguration cConf;
   private volatile Map<ByteBuffer, Map<String, String>> metadataCache = new HashMap<>();
+
+  private long lastUpdated;
   private long metadataCacheUpdateFreqInMillis = TimeUnit.SECONDS.toMillis(
     MessagingUtils.Constants.METADATA_CACHE_UPDATE_FREQUENCY_SECS);
-  private volatile CConfiguration cConf;
 
   public TopicMetadataCache(RegionCoprocessorEnvironment env, CConfigurationReader cConfReader,
                             String hbaseNamespacePrefix, String metadataTableNamespace, ScanBuilder scanBuilder) {
@@ -76,16 +78,25 @@ public class TopicMetadataCache {
     this.hbaseNamespacePrefix = hbaseNamespacePrefix;
     this.metadataTableNamespace = metadataTableNamespace;
     this.scanBuilder = scanBuilder;
-    startRefreshThread();
   }
 
   public boolean isAlive() {
     return refreshThread.isAlive();
   }
 
-  public void stop() {
+  @Override
+  protected void startUp() throws Exception {
+    LOG.info("Starting TopicMetadataCache Refresh Thread.");
+    startRefreshThread();
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    LOG.info("Stopping TopicMetadataCache Refresh Thread.");
+    stopped = true;
     if (refreshThread != null) {
       refreshThread.interrupt();
+      refreshThread.join(TimeUnit.SECONDS.toMillis(1));
     }
   }
 
@@ -116,10 +127,12 @@ public class TopicMetadataCache {
         metadataCacheUpdateFreqInMillis = TimeUnit.SECONDS.toMillis(cConf.getLong(
           Constants.MessagingSystem.COPROCESSOR_METADATA_CACHE_UPDATE_FREQUENCY_SECONDS,
           MessagingUtils.Constants.METADATA_CACHE_UPDATE_FREQUENCY_SECS));
+        String tableName = cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME);
 
-        metadataTable = getMetadataTable(cConf);
+        metadataTable = getMetadataTable(tableName);
         if (metadataTable == null) {
-          LOG.warn("Could not find HTableInterface of metadataTable {}. Cannot update metadata cache", metadataTable);
+          LOG.warn(String.format("Could not find HTableInterface of metadataTable %s:%s. Cannot update metadata cache",
+                                 hbaseNamespacePrefix, tableName));
           return;
         }
 
@@ -141,7 +154,7 @@ public class TopicMetadataCache {
         long elapsed = System.currentTimeMillis()  - now;
         this.metadataCache = newTopicCache;
         this.lastUpdated = now;
-        LOG.debug("Updated consumer config cache with {} topics, took {} msec", topicCount, elapsed);
+        LOG.debug(String.format("Updated consumer config cache with %d topics, took %d msec", topicCount, elapsed));
       }
     } finally {
       if (metadataTable != null) {
@@ -154,8 +167,7 @@ public class TopicMetadataCache {
     }
   }
 
-  private HTableInterface getMetadataTable(CConfiguration cConf) throws IOException {
-    String tableName = cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME);
+  private HTableInterface getMetadataTable(String tableName) throws IOException {
     return env.getTable(HTableNameConverter.toTableName(hbaseNamespacePrefix,
                                                         TableId.from(metadataTableNamespace, tableName)));
   }
@@ -164,13 +176,13 @@ public class TopicMetadataCache {
     refreshThread = new Thread("tms-topic-metadata-cache-refresh") {
       @Override
       public void run() {
-        while (!isInterrupted()) {
+        while (!isInterrupted() && !stopped) {
           long now = System.currentTimeMillis();
           if (now > (lastUpdated + metadataCacheUpdateFreqInMillis)) {
             try {
               updateCache();
             } catch (TableNotFoundException ex) {
-              LOG.warn("Metadata table not found: {}", ex.getMessage(), ex);
+              LOG.warn("Metadata table not found.", ex);
               break;
             } catch (IOException ex) {
               LOG.warn("Error updating metadata table cache", ex);

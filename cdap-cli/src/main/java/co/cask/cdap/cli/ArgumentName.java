@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2016 Cask Data, Inc.
+ * Copyright © 2012-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,11 @@ package co.cask.cdap.cli;
  * Argument names.
  */
 public enum ArgumentName {
+  /**
+   * Commons
+   */
+  DESCRIPTION("description"),
+
   PROGRAM("app-id.program-id"),
   STREAM("stream-id"),
   WORKER("app-id.worker-id"),
@@ -79,14 +84,13 @@ public enum ArgumentName {
   FREQUENCY("frequency"),
 
   NAMESPACE_NAME("namespace-name"),
-  NAMESPACE_DESCRIPTION("description"),
-  NAMESPACE_PRINCIPAL("principal"),
   NAMESPACE_GROUP_NAME("group-name"),
   NAMESPACE_KEYTAB_PATH("keytab-URI"),
   NAMESPACE_HBASE_NAMESPACE("hbase-namespace"),
   NAMESPACE_HIVE_DATABASE("hive-database"),
   NAMESPACE_ROOT_DIR("root-directory"),
   NAMESPACE_SCHEDULER_QUEUENAME("scheduler-queue-name"),
+  NAMESPACE_EXPLORE_AS_PRINCIPAL("explore-as-principal"),
 
   INSTANCE("instance-id"),
   COMMAND_CATEGORY("command-category"),
@@ -110,21 +114,22 @@ public enum ArgumentName {
 
   INSTANCE_URI("cdap-instance-uri"),
   VERIFY_SSL_CERT("verify-ssl-cert"),
-  ENTITY("entity-id"),
+  ENTITY("entity"),
 
   /**
    * Metadata
    */
+  METADATA_SCOPE("scope"),
   SEARCH_QUERY("search-query"),
   TARGET_TYPE("target-type"),
-  METADATA_SCOPE("scope"),
 
   /**
    * Authorization
    */
   PRINCIPAL_TYPE("principal-type"),
   PRINCIPAL_NAME("principal-name"),
-  ROLE_NAME("role-name");
+  ROLE_NAME("role-name"),
+  PRINCIPAL("principal");
 
   private final String name;
 
@@ -140,4 +145,39 @@ public enum ArgumentName {
   public String toString() {
     return name;
   }
+
+  public static final String ENTITY_DESCRIPTION_TEMPLATE_STRING = "'<%s>' " +
+    "is of the form '<entity-type>:<entity-id>', where '<entity-type>' is one of " +
+    "%s" +
+    "'artifact', 'app', 'dataset', 'program', 'stream', or 'view'.\n" +
+    "\n" +
+    "%s" +
+    "For artifacts and apps, " +
+    "'<entity-id>' is composed of the namespace, entity name, and version, such as " +
+    "'<namespace-name>.<artifact-name>.<artifact-version>' or " +
+    "'<namespace-name>.<app-name>.<app-version>'.\n" +
+    "\n" +
+    "For programs, '<entity-id>' includes the " +
+    "application name and the program type: " +
+    "'<namespace-name>.<app-name>.<program-type>.<program-name>'. '<program-type>' is one of " +
+    "flow, mapreduce, service, spark, worker, or workflow.\n" +
+    "\n" +
+    "For datasets and streams, " +
+    "'<entity-id>' is the namespace and entity names, such as '<namespace-name>.<dataset-name>' " +
+    "or '<namespace-name>.<stream-name>'.\n" +
+    "\n" +
+    "For (stream) views, '<entity-id>' includes the stream " +
+    "that they were created from: '<namespace-name>.<stream-name>.<view-name>'.";
+
+  public static final String ENTITY_DESCRIPTION_STRING = String.format(ENTITY_DESCRIPTION_TEMPLATE_STRING,
+    ENTITY, "", "");
+
+  public static final String ENTITY_DESCRIPTION_ALL_STRING = String.format(ENTITY_DESCRIPTION_TEMPLATE_STRING,
+    ENTITY, "'namespace', ", "For namespaces, '<entity-id>' is composed from the namespace, such as " +
+    "'namespace:<namespace-name>'.\n" +
+    "\n");
+
+  public static final String ENTITY_DESCRIPTION_ACTIONS = "'<actions>' is a comma-separated list of " +
+    "privileges, any of 'READ', 'WRITE', 'EXECUTE', or 'ADMIN'.";
 }
+

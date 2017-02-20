@@ -51,7 +51,7 @@ public final class StreamUtils {
 
   // The directory name for storing stream files that are pending for deletion
   // StreamId cannot have "." there, so it's safe that it won't clash with any stream name
-  private static final String DELETED = ".deleted";
+  public static final String DELETED = ".deleted";
 
   /**
    * Decode a map.

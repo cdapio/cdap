@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.proto.NamespaceConfig;
 
 /**
@@ -34,22 +35,36 @@ public final class NamespaceCommandUtils {
   public static String prettyPrintNamespaceConfigCLI(NamespaceConfig namespaceConfig) {
     StringBuilder builder = new StringBuilder();
     if (!namespaceConfig.getSchedulerQueueName().isEmpty()) {
-      builder.append("scheduler-queue-name='").append(namespaceConfig.getSchedulerQueueName()).append("', ");
+      builder.append(ArgumentName.NAMESPACE_SCHEDULER_QUEUENAME);
+      builder.append("='").append(namespaceConfig.getSchedulerQueueName()).append("', ");
     }
     if (namespaceConfig.getRootDirectory() != null) {
-      builder.append("root-directory='").append(namespaceConfig.getRootDirectory()).append("', ");
+      builder.append(ArgumentName.NAMESPACE_ROOT_DIR);
+      builder.append("='").append(namespaceConfig.getRootDirectory()).append("', ");
     }
     if (namespaceConfig.getHbaseNamespace() != null) {
-      builder.append("hbase-namespace='").append(namespaceConfig.getHbaseNamespace()).append("', ");
+      builder.append(ArgumentName.NAMESPACE_HBASE_NAMESPACE);
+      builder.append("='").append(namespaceConfig.getHbaseNamespace()).append("', ");
     }
     if (namespaceConfig.getHiveDatabase() != null) {
-      builder.append("hive-database='").append(namespaceConfig.getHiveDatabase()).append("', ");
+      builder.append(ArgumentName.NAMESPACE_HIVE_DATABASE);
+      builder.append("='").append(namespaceConfig.getHiveDatabase()).append("', ");
     }
     if (namespaceConfig.getPrincipal() != null) {
-      builder.append("principal='").append(namespaceConfig.getPrincipal()).append("', ");
+      builder.append(ArgumentName.PRINCIPAL);
+      builder.append("='").append(namespaceConfig.getPrincipal()).append("', ");
     }
     if (namespaceConfig.getKeytabURI() != null) {
-      builder.append("keytab-URI='").append(namespaceConfig.getKeytabURI()).append("', ");
+      builder.append(ArgumentName.NAMESPACE_KEYTAB_PATH);
+      builder.append("='").append(namespaceConfig.getKeytabURI()).append("', ");
+    }
+    if (namespaceConfig.getGroupName() != null) {
+      builder.append(ArgumentName.NAMESPACE_GROUP_NAME);
+      builder.append("='").append(namespaceConfig.getGroupName()).append("', ");
+    }
+    if (namespaceConfig.isExploreAsPrincipal() != null) {
+      builder.append(ArgumentName.NAMESPACE_EXPLORE_AS_PRINCIPAL);
+      builder.append("='").append(namespaceConfig.isExploreAsPrincipal()).append("', ");
     }
     // Remove the final ", "
     if (builder.length() > 0) {

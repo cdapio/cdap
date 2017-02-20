@@ -21,7 +21,6 @@ import CreateStreamWithUploadAction from 'services/WizardStores/CreateStreamWith
 import { CreateStream } from 'services/WizardStores/CreateStreamWithUpload/ActionCreator';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
 import NamespaceStore from 'services/NamespaceStore';
-
 import CreateStreamUploadWizardConfig from 'services/WizardConfigs/CreateStreamWithUploadWizardConfig';
 import T from 'i18n-react';
 require('./StreamCreate.scss');
@@ -95,12 +94,18 @@ export default class StreamCreateWithUploadWizard extends Component {
   buildSuccessInfo(streamId, namespace) {
     let defaultSuccessMessage = T.translate('features.Wizard.StreamCreate.success');
     let buttonLabel = T.translate('features.Wizard.StreamCreate.callToAction');
-    let linkLabel = T.translate('features.Wizard.GoToHomePage');
+    let linkLabel = T.translate('features.Wizard.StreamCreate.secondaryCallToAction.uploadData');
+    let linkUrl = `/cdap/ns/${namespace}/streams/${streamId}?modalToOpen=sendEvents`;
+    let state = CreateStreamWithUploadStore.getState();
+    if (state.upload.data) {
+      linkLabel = T.translate('features.Wizard.StreamCreate.secondaryCallToAction.queryStream');
+      linkUrl = `/cdap/ns/${namespace}/streams/${streamId}?modalToOpen=explore`;
+    }
     this.successInfo.message = `${defaultSuccessMessage} "${streamId}".`;
     this.successInfo.buttonLabel = buttonLabel;
     this.successInfo.buttonUrl = `/cdap/ns/${namespace}/streams/${streamId}`;
     this.successInfo.linkLabel = linkLabel;
-    this.successInfo.linkUrl = `/cdap/ns/${namespace}`;
+    this.successInfo.linkUrl = linkUrl;
   }
   render() {
     let input = this.props.input || {};

@@ -29,18 +29,18 @@ import PlusButtonStore from 'services/PlusButtonStore';
 import globalEvents from 'services/global-events';
 import isNil from 'lodash/isNil';
 import Overview from 'components/Overview';
+import EntityListInfo from './EntityListInfo';
 import WelcomeScreen from 'components/EntityListView/WelcomeScreen';
 import HomeListView from 'components/EntityListView/ListView';
-
+import NamespaceStore from 'services/NamespaceStore';
+import Page404 from 'components/404';
+import PageErrorMessage from 'components/EntityListView/ErrorMessage/PageErrorMessage';
+import HomeErrorMessage from 'components/EntityListView/ErrorMessage';
+import isEqual from 'lodash/isEqual';
 require('./EntityListView.scss');
 import ee from 'event-emitter';
 
-const defaultFilter = ['app', 'dataset', 'stream'];
-
-// 312 = cardWith (300) + (5 x 2 side margins) + ( 1 x 2 border widths)
-const cardWidthWithMarginAndBorder = 312;
-// 140 = cardHeight (128) + (5 x 2 top bottom margins) + (1 x 2 border widths)
-const cardHeightWithMarginAndBorder = 140;
+const defaultFilter = ['app', 'artifact', 'dataset', 'stream'];
 
 class EntityListView extends Component {
   constructor(props) {
@@ -57,10 +57,6 @@ class EntityListView extends Component {
       {
         displayName: T.translate('commons.entity.dataset.plural'),
         id: 'dataset'
-      },
-      {
-        displayName: T.translate('commons.entity.program.plural'),
-        id: 'program'
       },
       {
         displayName: T.translate('commons.entity.stream.plural'),
@@ -108,9 +104,7 @@ class EntityListView extends Component {
     this.state = {
       filter: defaultFilter,
       sortObj: this.sortOptions[4],
-      isSortDisabled: false,
       query: '',
-      isSearchDisabled: false,
       entities: [],
       selectedEntity: null,
       numPages: 1,
@@ -118,9 +112,13 @@ class EntityListView extends Component {
       currentPage: 1,
       animationDirection: 'next',
       showSplash: true,
-      userStoreObj : ''
+      userStoreObj : '',
+      notFound: false,
+      numColumns: null,
+      total: 0
     };
 
+    // FIXME: @ajainarayanan: I'm not sure why this is outside of state :|
     this.retryCounter = 0; // being used for search API retry
 
     // By default, expect a single page -- update when search is performed and we can parse it
@@ -139,6 +137,10 @@ class EntityListView extends Component {
   }
 
   refreshSearchByCreationTime() {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    ExploreTablesStore.dispatch(
+     fetchTables(namespace)
+   );
     this.setState({
       sortObj: this.sortOptions[4],
       selectedEntity: null
@@ -162,10 +164,12 @@ class EntityListView extends Component {
     let queryObject = this.getQueryObject(nextProps.location.query);
     if (
       (nextProps.params.namespace !== this.props.params.namespace) ||
-      queryObject.filter !== this.state.filter &&
-      queryObject.sort.fullSort !== this.state.sortObj.fullSort &&
-      queryObject.query !== this.state.query &&
-      queryObject.page !== this.state.currentPage
+      (
+        !isEqual(queryObject.filter, this.state.filter) ||
+        queryObject.sort.fullSort !== this.state.sortObj.fullSort ||
+        queryObject.query !== this.state.query ||
+        queryObject.page !== this.state.currentPage
+      )
     ) {
       this.updateData(queryObject.query, queryObject.filter, queryObject.sort, nextProps.params.namespace, queryObject.page);
       this.setState({
@@ -174,6 +178,8 @@ class EntityListView extends Component {
         query: queryObject.query,
         currentPage: queryObject.page,
         loading: true,
+        entityErr: false,
+        errStatusCode: null
       });
     }
   }
@@ -196,7 +202,6 @@ class EntityListView extends Component {
 
     // Process and return valid query parameters
     let queryObject = this.getQueryObject(this.props.location.query);
-
     this.setState({
       filter: queryObject.filter,
       sortObj: queryObject.sort,
@@ -205,38 +210,92 @@ class EntityListView extends Component {
     });
   }
 
+  // Performs calculations to determine number of entities to render per page
   calculatePageSize() {
+    // different screen sizes
+    // consistent with media queries in style sheet
+    const sevenColumnWidth = 1701;
+    const sixColumnWidth = 1601;
+    const fiveColumnWidth = 1201;
+    const fourColumnWidth = 993;
+    const threeColumnWidth = 768;
+
+    // 140 = cardHeight (128) + (5 x 2 top bottom margins) + (1 x 2 border widths)
+    const cardHeightWithMarginAndBorder = 140;
+
     let entityListViewEle = document.getElementsByClassName('entity-list-view');
 
     if (!entityListViewEle.length) {
       return;
     }
-    // Performs calculations to determine number of entities to render per page
-    // minus 60px of padding in entity-list-view (30px each side)
-    let containerWidth = entityListViewEle[0].offsetWidth - 60;
 
-    // Subtract 55px to account for entity-list-header's height (30px) and container's top margin (25px)
-    // minus 20px of padding from top and bottom (10px each)
-    let containerHeight = document.getElementsByClassName('entity-list-view')[0].offsetHeight - 55 - 20;
+    // Subtract 65px to account for entity-list-info's height (45px) and paddings (20px)
+    // minus 10px of padding from top and bottom (10px each)
+    let containerHeight = entityListViewEle[0].offsetHeight - 65 - 10;
+    let containerWidth = entityListViewEle[0].offsetWidth;
+    let numColumns = 1;
 
-    let numColumns = Math.floor(containerWidth / cardWidthWithMarginAndBorder);
+    // different screen sizes
+    // consistent with media queries in style sheet
+    if (containerWidth >= sevenColumnWidth) {
+      numColumns = 7;
+    } else if (containerWidth >= sixColumnWidth && containerWidth < sevenColumnWidth) {
+      numColumns = 6;
+    } else if (containerWidth >= fiveColumnWidth && containerWidth < sixColumnWidth) {
+      numColumns = 5;
+    } else if (containerWidth >= fourColumnWidth && containerWidth < fiveColumnWidth) {
+      numColumns = 4;
+    } else if (containerWidth >= threeColumnWidth && containerWidth < fourColumnWidth) {
+      numColumns = 3;
+    }
+
+    this.setState({numColumns});
+
     let numRows = Math.floor(containerHeight / cardHeightWithMarginAndBorder);
 
     // We must have one column and one row at the very least
-    if (numColumns === 0) {
-      numColumns = 1;
-    }
-
     if (numRows === 0) {
       numRows = 1;
     }
 
     this.pageSize = numColumns * numRows;
   }
+
   // Retrieve entities for rendering
   componentDidMount() {
-    this.calculatePageSize();
-    this.updateData();
+    let namespaces = NamespaceStore.getState().namespaces.map(ns => ns.name);
+    if (namespaces.length) {
+      let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+      if (namespaces.indexOf(selectedNamespace) === -1) {
+        this.setState({
+          notFound: true,
+          loading: false
+        });
+      } else {
+        this.calculatePageSize();
+        this.updateData();
+      }
+    } else {
+      const namespaceSubcriber = () => {
+        let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+        let namespaces = NamespaceStore.getState().namespaces.map(ns => ns.name);
+        if (namespaces.length && namespaces.indexOf(selectedNamespace) === -1) {
+          this.setState({
+            notFound: true
+          });
+        } else {
+          this.setState({
+            notFound: false,
+            currentPage: this.state.currentPage
+          }, () => {
+            this.calculatePageSize();
+            this.search();
+            this.namespaceStoreSubscription();
+          });
+        }
+      };
+      this.namespaceStoreSubscription = NamespaceStore.subscribe(namespaceSubcriber.bind(this));
+    }
   }
 
   // Construct and return query object from query parameters
@@ -319,6 +378,12 @@ class EntityListView extends Component {
   ) {
     let offset = (currentPage - 1) * this.pageSize;
 
+    // TODO/FIXME: hack to not display programs when filter is empty (which means all
+    // entities should be displayed). Maybe this should be a backend change?
+    if (filter.length === 0) {
+      filter = ['app', 'artifact', 'dataset', 'stream'];
+    }
+
     this.setState({
       loading : true,
       selectedEntity: null
@@ -331,8 +396,6 @@ class EntityListView extends Component {
       offset: offset
     };
 
-    let isSortDisabled = typeof query === 'string' && query.length ? true : false;
-    let isSearchDisabled = sortObj.fullSort === 'none' ? false : true;
     if (typeof query === 'string' && query.length) {
       params.query = `${query}*`;
     } else {
@@ -341,10 +404,11 @@ class EntityListView extends Component {
       params.numCursors = 10;
     }
 
-    let total;
+    let total, limit;
     MySearchApi.search(params)
       .map((res) => {
         total = res.total;
+        limit = res.limit;
         return res.results
           .map(parseMetadata)
           .map((entity) => {
@@ -353,25 +417,32 @@ class EntityListView extends Component {
           });
       })
       .subscribe((res) => {
-        this.setState({
-          isSortDisabled,
-          isSearchDisabled,
-          entities: res,
-          loading: false,
-          entityErr: false,
-          errStatusCode: null,
-          numPages: Math.ceil(total / this.pageSize)
-        });
+        if (total > 0 && Math.ceil(total/limit) < this.state.currentPage) {
+          this.setState({
+            entityErr: true,
+            errStatusCode: 'PAGE_NOT_FOUND',
+            loading: false
+          });
+        } else {
+          this.setState({
+            entities: res,
+            total: total,
+            loading: false,
+            entityErr: false,
+            errStatusCode: null,
+            numPages: Math.ceil(total / this.pageSize)
+          });
 
-        this.retryCounter = 0;
+          this.retryCounter = 0;
+        }
       }, (err) => {
         this.retryCounter++;
 
         // On Error: render page as if there are no results found
         this.setState({
-          isSortDisabled,
-          isSearchDisabled,
           loading: false,
+          entities: [],
+          total: 0,
           entityErr: typeof err === 'object' ? err.response : err,
           errStatusCode: err.statusCode
         });
@@ -399,7 +470,8 @@ class EntityListView extends Component {
 
     this.setState({
       filter : filters,
-      selectedEntity: null
+      selectedEntity: null,
+      currentPage: 1
     }, () => {
       this.search(this.state.query, filters, this.state.sortObj);
     });
@@ -420,23 +492,26 @@ class EntityListView extends Component {
   }
 
   handleSortClick(option) {
-    let isSearchDisabled = option.fullSort === 'none' ? false : true;
     this.setState({
       sortObj : option,
-      isSearchDisabled,
-      selectedEntity: null
+      query: '',
+      selectedEntity: null,
+      currentPage: 1
     }, () => {
       this.search(this.state.query, this.state.filter, option);
     });
   }
 
   handleSearch(query) {
-    let isSortDisabled = typeof query === 'string' && query.length ? true : false;
+    let sortObj = this.sortOptions[0];
+    if (query.length === 0) {
+      sortObj = this.sortOptions[4]; // search text is empty, revert to default ('Newest')
+    }
     this.setState({
       query,
-      isSortDisabled,
-      sortObj: this.sortOptions[0],
-      selectedEntity: null
+      sortObj,
+      selectedEntity: null,
+      currentPage: this.state.currentPage
     }, () => {
       this.search(query, this.state.filter, this.state.sortObj);
     });
@@ -535,7 +610,37 @@ class EntityListView extends Component {
   }
 
   render() {
-
+    if (this.state.notFound) {
+      return (
+        <div className="entity-list-view">
+          <Page404
+            entityType="Namespace"
+            entityName={this.props.params.namespace}
+          >
+            <div className="namespace-not-found text-xs-center">
+              <h4>
+                <strong>
+                  {T.translate('features.EntityListView.NamespaceNotFound.createMessage')}
+                  <span
+                    className="open-namespace-wizard-link"
+                    onClick={() => {
+                      this.eventEmitter.emit(globalEvents.CREATENAMESPACE);
+                    }}
+                  >
+                    {T.translate('features.EntityListView.NamespaceNotFound.createLinkLabel')}
+                  </span>
+                </strong>
+              </h4>
+              <h4>
+                <strong>
+                  {T.translate('features.EntityListView.NamespaceNotFound.switchMessage')}
+                </strong>
+              </h4>
+            </div>
+          </Page404>
+        </div>
+      );
+    }
     if (!this.state.showSplash) {
       return (
         <WelcomeScreen
@@ -545,6 +650,27 @@ class EntityListView extends Component {
       );
     }
 
+    let errorContent = null;
+    if (this.state.entityErr) {
+      if (this.state.errStatusCode === 'PAGE_NOT_FOUND') {
+        errorContent = (
+          <PageErrorMessage
+            pageNum={this.state.currentPage}
+            query={this.state.query}
+          />
+        );
+      } else {
+        errorContent = (
+          <HomeErrorMessage
+            errorMessage={this.state.entityErr}
+            errorStatusCode={this.state.errStatusCode}
+            onRetry={this.search.bind(this)}
+            retryCounter={this.retryCounter}
+          />
+        );
+      }
+    }
+
     return (
       <div>
         <EntityListHeader
@@ -552,14 +678,10 @@ class EntityListView extends Component {
           onFilterClick={this.handleFilterClick.bind(this)}
           activeFilter={this.state.filter}
           sortOptions={this.sortOptions}
-          isSortDisabled={this.state.isSortDisabled}
           activeSort={this.state.sortObj}
           onSortClick={this.handleSortClick.bind(this)}
           onSearch={this.handleSearch.bind(this)}
-          isSearchDisabled={this.state.isSearchDisabled}
           searchText={this.state.query}
-          numberOfPages={this.state.numPages}
-          currentPage={this.state.currentPage}
           onPageChange={this.handlePageChange}
         />
         <Pagination
@@ -569,19 +691,34 @@ class EntityListView extends Component {
           currentPage={this.state.currentPage}
           setDirection={this.setAnimationDirection}
         >
+          <EntityListInfo
+            className="entity-list-info"
+            namespace={this.props.params.namespace}
+            numberOfEntities={this.state.total}
+            numberOfPages={this.state.numPages}
+            currentPage={this.state.currentPage}
+            onPageChange={this.handlePageChange}
+          />
           <div className={classNames("entities-container")}>
-            <HomeListView
-              className={classNames("home-list-view-container", {"show-overview-main-container": !isNil(this.state.selectedEntity)})}
-              list={this.state.entities}
-              loading={this.state.loading}
-              onEntityClick={this.handleEntityClick.bind(this)}
-              onFastActionSuccess={this.onFastActionSuccess.bind(this)}
-              errorMessage={this.state.entityErr}
-              errorStatusCode={this.state.errStatusCode}
-              animationDirection={this.state.animationDirection}
-              activeEntity={this.state.selectedEntity}
-              retryCounter={this.retryCounter}
-            />
+            {
+              this.state.entityErr ?
+                errorContent
+              :
+                <HomeListView
+                  className={classNames("home-list-view-container", {"show-overview-main-container": !isNil(this.state.selectedEntity)})}
+                  list={this.state.entities}
+                  loading={this.state.loading}
+                  onEntityClick={this.handleEntityClick.bind(this)}
+                  onFastActionSuccess={this.onFastActionSuccess.bind(this)}
+                  activeEntity={this.state.selectedEntity}
+                  currentPage={this.state.currentPage}
+                  activeFilter={this.state.filter}
+                  filterOptions={this.filterOptions}
+                  activeSort={this.state.sortObj}
+                  searchText={this.state.query}
+                  numColumns={this.state.numColumns}
+                />
+            }
             <Overview
               toggleOverview={!isNil(this.state.selectedEntity)}
               entity={this.state.selectedEntity}

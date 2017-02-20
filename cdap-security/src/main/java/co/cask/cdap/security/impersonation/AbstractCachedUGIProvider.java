@@ -18,6 +18,8 @@ package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.ImpersonationRequest;
+import co.cask.cdap.common.kerberos.UGIWithPrincipal;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -30,25 +32,28 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * An abstract base class for {@link UGIProvider} that provides caching of {@link UserGroupInformation}.
+ * An abstract base class for {@link UGIProvider} that provides caching of {@link UGIWithPrincipal} containing the
+ * {@link UserGroupInformation}.
  */
 public abstract class AbstractCachedUGIProvider implements UGIProvider {
 
-  private final LoadingCache<ImpersonationInfo, UserGroupInformation> ugiCache;
+  protected final CConfiguration cConf;
+  private final LoadingCache<ImpersonationRequest, UGIWithPrincipal> ugiCache;
 
   protected AbstractCachedUGIProvider(CConfiguration cConf) {
+    this.cConf = cConf;
     this.ugiCache = createUGICache(cConf);
   }
 
   /**
-   * Creates a new {@link UserGroupInformation} based on the given {@link ImpersonationInfo}.
+   * Creates a new {@link UGIWithPrincipal} based on the given {@link ImpersonationRequest}.
    */
-  protected abstract UserGroupInformation createUGI(ImpersonationInfo impersonationInfo) throws IOException;
+  protected abstract UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException;
 
   @Override
-  public final UserGroupInformation getConfiguredUGI(ImpersonationInfo impersonationInfo) throws IOException {
+  public final UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
     try {
-      return ugiCache.get(impersonationInfo);
+      return ugiCache.get(impersonationRequest);
     } catch (ExecutionException e) {
       // Get the root cause of the failure
       Throwable cause = Throwables.getRootCause(e);
@@ -65,14 +70,14 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
     ugiCache.cleanUp();
   }
 
-  private LoadingCache<ImpersonationInfo, UserGroupInformation> createUGICache(CConfiguration cConf) {
+  private LoadingCache<ImpersonationRequest, UGIWithPrincipal> createUGICache(CConfiguration cConf) {
     long expirationMillis = cConf.getLong(Constants.Security.UGI_CACHE_EXPIRATION_MS);
     return CacheBuilder.newBuilder()
       .expireAfterWrite(expirationMillis, TimeUnit.MILLISECONDS)
-      .build(new CacheLoader<ImpersonationInfo, UserGroupInformation>() {
+      .build(new CacheLoader<ImpersonationRequest, UGIWithPrincipal>() {
         @Override
-        public UserGroupInformation load(ImpersonationInfo impersonationInfo) throws Exception {
-          return createUGI(impersonationInfo);
+        public UGIWithPrincipal load(ImpersonationRequest impersonationRequest) throws Exception {
+          return createUGI(impersonationRequest);
         }
       });
   }

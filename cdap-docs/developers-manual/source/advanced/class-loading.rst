@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _class-loading:
 
@@ -18,9 +18,9 @@ loading strategy, we provide these properties for an application:
 - different plugins can choose to use any library of any version, yet all plugins are
   usable by the same application at the same time.
 
+
 Parent Delegation Model
 =======================
-
 When a Java Virtual Machine (JVM) needs to load a class, by default it follows the
 `parent delegation model 
 <https://www-01.ibm.com/support/knowledgecenter/#!/SSYKE2_7.0.0/com.ibm.java.zos.70.doc/diag/understanding/cl_delegation.html>`__. 
@@ -29,6 +29,7 @@ loaders, as long as those class loaders have the defining class loader of that c
 common ancestor. This property enables one to define an extensible class loading
 architecture that provides class isolation, yet at the same time they’re able to
 inter-operate with a set of common API classes.
+
 
 Class Loading in CDAP
 =====================
@@ -70,9 +71,9 @@ only classes under those packages will be available to the plugin. This is to av
 libraries used by the application interfering with the ones used by the plugin. The plugin
 JAR file is following a similar structure as an application JAR file.
 
+
 Class Loading in Apache Hadoop MapReduce and Apache Spark
 =========================================================
-
 One of the major challenges faced when we integrate CDAP with data processing frameworks,
 such as MapReduce and Spark, is the class loading. Both frameworks use a
 flat classpath approach. For example, in MapReduce, all the job classes, the
@@ -88,3 +89,33 @@ isolation behavior as described in the previous section. To do so, we alter the 
 of the YARN container for the job and make it first call the main method of our launcher
 class. The launcher class will setup the class loader hierarchy as desired and then
 delegate the call to the actual MapReduce or Spark task runner.
+
+
+Libraries Provided by the CDAP Runtime
+======================================
+At runtime, CDAP provides access for required libraries to CDAP programs. The libraries
+provided depend on the program type. 
+
+All :ref:`program types <building-blocks>` have access to:
+
+- the ``cdap-api`` classes :javadoc:`CDAP API classes <co/cask/cdap/api>` as well as the
+  libraries that ``cdap-api`` depends on:
+
+  - ``co.cask.cdap.cdap-api-common``
+  - ``com.google.code.findbugs.jsr305``
+  - ``com.google.code.gson.gson``
+  - ``org.slf4j.slf4j-api``
+  - ``org.apache.tephra.tephra-api``
+  - ``org.apache.twill.twill-api``
+  - ``javax.ws.rs.javax.ws.rs-api``
+  - ``junit.junit``
+
+- the Hadoop classes (classes in the package ``org.apache.hadoop``), with the exception of
+  the HBase classes (classes in the package ``org.apache.hadoop.hbase``). Transitive
+  dependencies from Hadoop are not made available.
+
+Spark programs have, in addition to the above, access to:
+
+- the Scala library ``org.scala-lang.scala-library``
+
+- the Spark package ``org.apache.spark``

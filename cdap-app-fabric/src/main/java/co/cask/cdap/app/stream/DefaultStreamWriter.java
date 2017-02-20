@@ -19,12 +19,10 @@ package co.cask.cdap.app.stream;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.stream.StreamEventData;
-import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
+import co.cask.cdap.common.internal.remote.RemoteClient;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
@@ -32,29 +30,27 @@ import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
@@ -62,23 +58,23 @@ import java.util.concurrent.ConcurrentMap;
  * Default implementation of {@link StreamWriter}
  */
 public class DefaultStreamWriter implements StreamWriter {
-  private final EndpointStrategy endpointStrategy;
-  private final ConcurrentMap<Id.Stream, Boolean> isStreamRegistered;
+  private final ConcurrentMap<StreamId, Boolean> isStreamRegistered;
   private final RuntimeUsageRegistry runtimeUsageRegistry;
 
   /**
    * The namespace that this {@link StreamWriter} belongs to.
    */
-  private final Id.Namespace namespace;
+  private final NamespaceId namespace;
   /**
    * The owners of this {@link StreamWriter}.
    */
   private final Iterable<? extends EntityId> owners;
-  private final Id.Run run;
+  private final ProgramRunId run;
   private final LineageWriter lineageWriter;
   private final AuthenticationContext authenticationContext;
   private final boolean authorizationEnabled;
   private final RetryStrategy retryStrategy;
+  private final RemoteClient remoteClient;
 
   @Inject
   public DefaultStreamWriter(@Assisted("run") Id.Run run,
@@ -89,50 +85,25 @@ public class DefaultStreamWriter implements StreamWriter {
                              DiscoveryServiceClient discoveryServiceClient,
                              AuthenticationContext authenticationContext,
                              CConfiguration cConf) {
-    this.run = run;
-    this.namespace = run.getNamespace();
+    this.run = run.toEntityId();
+    this.namespace = run.getNamespace().toEntityId();
     this.owners = owners;
     this.lineageWriter = lineageWriter;
-    this.endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.STREAMS));
     this.isStreamRegistered = Maps.newConcurrentMap();
     this.runtimeUsageRegistry = runtimeUsageRegistry;
     this.authenticationContext = authenticationContext;
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.retryStrategy = retryStrategy;
+    this.remoteClient = new RemoteClient(
+      discoveryServiceClient, Constants.Service.STREAMS, new DefaultHttpRequestConfig(false),
+      String.format("%s/namespaces/%s/streams/", Constants.Gateway.API_VERSION_3, namespace.getNamespace()));
   }
 
-  private URL getStreamURL(String stream) throws IOException {
-    return getStreamURL(stream, false);
-  }
-
-  private URL getStreamURL(String stream, boolean batch) throws IOException {
-    Discoverable discoverable = Retries.supplyWithRetries(new Supplier<Discoverable>() {
-      @Override
-      public Discoverable get() {
-        Discoverable discoverable = endpointStrategy.pick();
-        if (discoverable == null) {
-          throw new ServiceUnavailableException(Constants.Service.STREAMS);
-        }
-        return discoverable;
-      }
-    }, retryStrategy);
-
-    InetSocketAddress address = discoverable.getSocketAddress();
-    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
-      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
-    String path = String.format("%s%s:%d%s/namespaces/%s/streams/%s", scheme, address.getHostName(), address.getPort(),
-                                Constants.Gateway.API_VERSION_3, namespace.getId(), stream);
-    if (batch) {
-      path = String.format("%s/batch", path);
-    }
-    return new URL(path);
-  }
-
-  private void writeToStream(Id.Stream stream, HttpRequest.Builder builder) throws IOException {
+  private void writeToStream(StreamId stream, HttpRequest.Builder builder) throws IOException {
     if (authorizationEnabled) {
       builder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
     }
-    HttpResponse response = HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
+    HttpResponse response = remoteClient.execute(builder.build());
     int responseCode = response.getResponseCode();
     if (responseCode == HttpResponseStatus.NOT_FOUND.getCode()) {
       throw new IOException(String.format("Stream %s not found", stream));
@@ -148,13 +119,18 @@ public class DefaultStreamWriter implements StreamWriter {
     }
   }
 
-  private void write(String stream, ByteBuffer data, Map<String, String> headers) throws IOException {
-    URL streamURL = getStreamURL(stream);
-    HttpRequest.Builder requestBuilder = HttpRequest.post(streamURL).withBody(data);
-    for (Map.Entry<String, String> header : headers.entrySet()) {
-      requestBuilder.addHeader(stream + "." + header.getKey(), header.getValue());
-    }
-    writeToStream(Id.Stream.from(namespace, stream), requestBuilder);
+  private void write(final String stream, final ByteBuffer data, final Map<String, String> headers) throws IOException {
+    Retries.callWithRetries(new Retries.Callable<Void, IOException>() {
+      @Override
+      public Void call() throws IOException {
+        HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.POST, stream).withBody(data);
+        for (Map.Entry<String, String> header : headers.entrySet()) {
+          requestBuilder.addHeader(stream + "." + header.getKey(), header.getValue());
+        }
+        writeToStream(namespace.stream(stream), requestBuilder);
+        return null;
+      }
+    }, retryStrategy);
   }
 
   @Override
@@ -178,16 +154,27 @@ public class DefaultStreamWriter implements StreamWriter {
   }
 
   @Override
-  public void writeFile(String stream, File file, String contentType) throws IOException {
-    URL url = getStreamURL(stream, true);
-    HttpRequest.Builder requestBuilder = HttpRequest.post(url).withBody(file).addHeader(
-      HttpHeaders.CONTENT_TYPE, contentType);
-    writeToStream(Id.Stream.from(namespace, stream), requestBuilder);
+  public void writeFile(final String stream, final File file, final String contentType) throws IOException {
+    Retries.callWithRetries(new Retries.Callable<Void, IOException>() {
+      @Override
+      public Void call() throws IOException {
+        HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.POST, stream + "/batch")
+          .withBody(file)
+          .addHeader(HttpHeaders.CONTENT_TYPE, contentType);
+        writeToStream(namespace.stream(stream), requestBuilder);
+        return null;
+      }
+    }, retryStrategy);
   }
 
   @Override
-  public StreamBatchWriter createBatchWriter(String stream, String contentType) throws IOException {
-    URL url = getStreamURL(stream, true);
+  public StreamBatchWriter createBatchWriter(final String stream, String contentType) throws IOException {
+    URL url = Retries.callWithRetries(new Retries.Callable<URL, IOException>() {
+      @Override
+      public URL call() throws IOException {
+        return remoteClient.resolve(stream + "/batch");
+      }
+    }, retryStrategy);
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     connection.setRequestMethod(HttpMethod.POST.name());
     connection.setReadTimeout(15000);
@@ -200,7 +187,7 @@ public class DefaultStreamWriter implements StreamWriter {
     connection.setChunkedStreamingMode(0);
     connection.connect();
     try {
-      Id.Stream streamId = Id.Stream.from(namespace, stream);
+      StreamId streamId = namespace.stream(stream);
       registerStream(streamId);
       return new DefaultStreamBatchWriter(connection, streamId);
     } catch (IOException e) {
@@ -209,14 +196,14 @@ public class DefaultStreamWriter implements StreamWriter {
     }
   }
 
-  private void registerStream(Id.Stream stream) {
+  private void registerStream(StreamId stream) {
     // prone to being entered multiple times, but OK since usageRegistry.register is not an expensive operation
     if (!isStreamRegistered.containsKey(stream)) {
-      runtimeUsageRegistry.registerAll(owners, stream.toEntityId());
+      runtimeUsageRegistry.registerAll(owners, stream);
       isStreamRegistered.put(stream, true);
     }
 
     // Lineage writer handles duplicate accesses internally
-    lineageWriter.addAccess(run.toEntityId(), stream.toEntityId(), AccessType.WRITE);
+    lineageWriter.addAccess(run, stream, AccessType.WRITE);
   }
 }

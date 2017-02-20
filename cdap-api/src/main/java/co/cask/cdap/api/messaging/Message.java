@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@ import co.cask.cdap.api.annotation.Beta;
 import java.nio.charset.Charset;
 
 /**
- * Represents a message in the messaging system.
+ * Represents a message in the Transactional Messaging System.
  */
 @Beta
 public interface Message {
@@ -34,15 +34,15 @@ public interface Message {
   /**
    * Returns the message payload as a string decoded with the given {@link Charset}.
    *
-   * @param charset the {@link Charset} to use for decoding.
-   * @return the message payload as a string.
+   * @param charset the {@link Charset} to use for decoding
+   * @return the message payload as a string
    */
   String getPayloadAsString(Charset charset);
 
   /**
    * Returns the message payload as a UTF-8 string.
    *
-   * @return a UTF-8 string representation of the message payload.
+   * @return a UTF-8 string representation of the message payload
    */
   String getPayloadAsString();
 

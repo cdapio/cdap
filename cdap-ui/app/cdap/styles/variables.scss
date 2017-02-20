@@ -16,9 +16,11 @@
 
 @import "~bootstrap/scss/_variables.scss";
 
+$cdap_body_min_width:   700px;
 // new variables for use in themes
 $cdap-white:            rgb(255, 255, 255); // #fff, white
 $cdap-orange:           rgb(255, 102, 0);   // #ff6600
+$cdap-light-orange:     rgb(255, 167, 38);
 $cdap-darkorange:       rgb(138, 56, 0);    // #8A3800
 $cdap-header:           rgb(60, 67, 85);    // #3c4355
 $cdap-darkness:         rgb(102, 110, 130); // #666e82
@@ -46,6 +48,8 @@ $alert-danger-bg:       rgb(250, 67, 71);   // #FA4347
 $alert-success-bg:      $brand-success;     // #4ab63c
 $alert-warning-bg:      $brand-warning;     // #f4b400
 
+// MODALS/WIZARDS
+$modal-header-color: rgba(70, 74, 87, 1);
 
 // NAVS
 $nav-tabs-border-color:                       rgb(209, 211, 218);  // #d1d3da
@@ -85,14 +89,14 @@ $tracker-green: #35c853;
 $hydrator-blue: #098cf9;
 $wrangler-yellow: #fad01c;
 $wrangler-dark-color: #31313d;
-$navbar-bg: #464a56;
+$navbar-bg: rgba(51, 51, 51, 1);
 
 $artifact-entity-header-bg: #6399AB;
 $application-entity-header-bg: #2c3e50;
 $datapipeline-entity-header-bg: $hydrator-blue;
 $datasetinstance-entity-header-bg: #5DAFDB;
 $stream-entity-header-bg:  #336699;
-$success-message-bg: #7ed321;
+$success-message-bg: rgb(126, 211, 33);
 
 $streamview-entity-header-bg: #1abc9c;
 $program-entity-header-bg: rgba(41, 177, 159,1);

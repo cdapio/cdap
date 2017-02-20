@@ -17,7 +17,7 @@ DOCS_LOCAL="docs-local"
 DOCS_OUTER="docs-outer"
 
 CDAP_MANUALS="introduction developers-manual admin-manual integrations examples-manual reference-manual faqs"
-EXTENSION_MANUALS="hydrator-manual tracker-manual"
+EXTENSION_MANUALS=""
 MANUALS="${CDAP_MANUALS} ${EXTENSION_MANUALS}"
 
 # Used to monitor any changes in scripts or commands for the building of Javadocs
@@ -28,6 +28,11 @@ BUILD_RST_HASH="5db96f8c4866f62b2f28b4ca3c99448c"
 #
 # All "GIT_" variables are loaded by the Sphinx build and need to be static as they are not sourced
 #
+
+GIT_CDH_VERSIONS="5.1 through 5.9"
+GIT_HDP_VERSIONS="2.0 through 2.5"
+GIT_MAPR_VERSIONS="4.1 through 5.2"
+GIT_EMR_VERSIONS="4.6 through 4.8"
 
 GIT_PREVIOUS_SHORT_VERSION="3.6"
 
@@ -40,6 +45,9 @@ GIT_BRANCH_PARENT="develop"
 # Used by admin-manual
 GIT_BRANCH_CDAP_SECURITY_EXTN="develop"
 
+# Used for metadata management documentation in admin-manual
+GIT_BRANCH_CDAP_METADATA_MANAGEMENT="develop"
+
 # Used by developers-manual
 GIT_BRANCH_CDAP_CLIENTS="develop"
 GIT_BRANCH_CDAP_INGEST="develop"
@@ -47,18 +55,15 @@ GIT_BRANCH_CDAP_INGEST="develop"
 GIT_BRANCH_CDAP_APPS="develop"
 GIT_VERSION_CDAP_APPS="0.8.0"
 
+# Used for pipelines documentation in developers-manual
+GIT_BRANCH_CDAP_PIPELINES="develop"
+
 # Used by examples manual
 GIT_BRANCH_CDAP_GUIDES="develop"
 
 # Used by integrations-manual
 GIT_BRANCH_CDAP_PACKS="develop"
 GIT_VERSION_NAVIGATOR="0.1.0"
-
-# Used for Hydrator documentation
-GIT_BRANCH_CASK_HYDRATOR="develop"
-
-# Used for Tracker documentation
-GIT_BRANCH_CASK_TRACKER="develop"
 
 # Google Analytics Code
 GOOGLE_TAG_MANAGER_CODE="GTM-KWLFGH"

@@ -38,13 +38,13 @@ angular.module(PKG.name + '.feature.tracker')
         }
       })
       .state('tracker-enable', {
-        url: '/enable-tracker?iframe&sourceUrl',
+        url: '/enable-metadata?iframe&sourceUrl',
         parent: 'ns',
         templateUrl: '/assets/features/tracker/templates/tracker-enable.html',
         controller: 'TrackerEnableController',
         controllerAs: 'EnableController',
         onEnter: function() {
-          document.title = 'Enable Tracker';
+          document.title = 'CDAP | Enable Search';
         },
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
@@ -178,7 +178,7 @@ angular.module(PKG.name + '.feature.tracker')
         templateUrl: '/assets/features/tracker/templates/main.html',
         controller: 'TrackerMainController',
         onEnter: function() {
-          document.title = 'Tracker Home';
+          document.title = 'CDAP | Search';
         },
         controllerAs: 'MainController'
       })
@@ -187,7 +187,7 @@ angular.module(PKG.name + '.feature.tracker')
         url: '/integrations',
         templateUrl: '/assets/features/tracker/templates/integrations.html',
         onEnter: function() {
-          document.title = 'Tracker Integrations';
+          document.title = 'CDAP | Integrations';
         },
         controller: 'TrackerIntegrationsController',
         controllerAs: 'IntegrationsController',
@@ -203,7 +203,7 @@ angular.module(PKG.name + '.feature.tracker')
         controller: 'TrackerTagsController',
         controllerAs: 'TagsController',
         onEnter: function() {
-          document.title = 'Tracker Tags';
+          document.title = 'CDAP | Tags';
         },
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
@@ -217,7 +217,7 @@ angular.module(PKG.name + '.feature.tracker')
         controller: 'TrackerDictionaryController',
         controllerAs: 'DictionaryController',
         onEnter: function() {
-          document.title = 'Dictionary';
+          document.title = 'CDAP | Dictionary';
         },
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
@@ -242,7 +242,7 @@ angular.module(PKG.name + '.feature.tracker')
           controller: 'TrackerResultsController',
           controllerAs: 'ResultsController',
           onEnter: function() {
-            document.title = 'Search Query Result';
+            document.title = 'CDAP | Search Results';
           },
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
@@ -256,7 +256,7 @@ angular.module(PKG.name + '.feature.tracker')
           controller: 'TrackerEntityController',
           controllerAs: 'EntityController',
           onEnter: function($stateParams) {
-            document.title = 'Tracker - ' + $stateParams.entityId + ' Detailed view';
+            document.title = 'CDAP | Search | ' + $stateParams.entityId;
           },
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
@@ -306,12 +306,12 @@ angular.module(PKG.name + '.feature.tracker')
           }
         })
           .state('tracker.detail.entity.metadata', {
-            url: '/metadata',
+            url: '/summary',
             templateUrl: '/assets/features/tracker/templates/metadata.html',
             controller: 'TrackerMetadataController',
             controllerAs: 'MetadataController',
             onEnter: function($stateParams) {
-              document.title = 'Tracker - ' + $stateParams.entityId + ' Metadata view';
+              document.title = 'CDAP | Search | ' + $stateParams.entityId + ' | Summary';
             },
             data: {
               authorizedRoles: MYAUTH_ROLE.all,
@@ -323,7 +323,7 @@ angular.module(PKG.name + '.feature.tracker')
             templateUrl: '/assets/features/tracker/templates/lineage.html',
             controller: 'TrackerLineageController',
             onEnter: function($stateParams) {
-              document.title = 'Tracker - ' + $stateParams.entityId + ' Lineage';
+              document.title = 'CDAP | Search | ' + $stateParams.entityId + ' | Lineage';
             },
             controllerAs: 'LineageController',
             data: {
@@ -337,7 +337,7 @@ angular.module(PKG.name + '.feature.tracker')
             controller: 'TrackerAuditController',
             controllerAs: 'AuditController',
             onEnter: function($stateParams) {
-              document.title = 'Tracker - ' + $stateParams.entityId + ' Audit view';
+              document.title = 'CDAP | Search | ' + $stateParams.entityId + ' | Audit Log';
             },
             data: {
               authorizedRoles: MYAUTH_ROLE.all,
@@ -350,7 +350,7 @@ angular.module(PKG.name + '.feature.tracker')
             controller: 'TrackerUsageController',
             controllerAs: 'UsageController',
             onEnter: function($stateParams) {
-              document.title = 'Tracker - ' + $stateParams.entityId + ' Usage view';
+              document.title = 'CDAP | Search | ' + $stateParams.entityId + ' | Usage';
             },
             data: {
               authorizedRoles: MYAUTH_ROLE.all,
@@ -363,7 +363,7 @@ angular.module(PKG.name + '.feature.tracker')
             controller: 'TrackerPreviewController',
             controllerAs: 'PreviewController',
             onEnter: function($stateParams) {
-              document.title = 'Tracker - ' + $stateParams.entityId + ' preview';
+              document.title = 'CDAP | Search | ' + $stateParams.entityId + ' | Preview';
             },
             data: {
               authorizedRoles: MYAUTH_ROLE.all,
@@ -376,7 +376,7 @@ angular.module(PKG.name + '.feature.tracker')
             controller: 'TrackerComplianceController',
             controllerAs: 'ComplianceController',
             onEnter: function($stateParams) {
-              document.title = 'Tracker - ' + $stateParams.entityId + ' Compliance view';
+              document.title = 'CDAP | Search | ' + $stateParams.entityId + ' | Compliance';
             },
             data: {
               authorizedRoles: MYAUTH_ROLE.all,

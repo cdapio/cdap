@@ -1,0 +1,97 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+$page-li-size: 22px;
+$current-page-background-color: rgba(93, 103, 137, 1);
+$hovered-page-background-color: rgba(219, 219, 219, 1);
+
+.entity-list-info {
+  padding: 15px 25px 5px 10px;
+
+  .title {
+    display: inline-block;
+  }
+
+  .pagination {
+    float: right;
+    margin-right: 50px;
+    margin-bottom: initial;
+
+    .total-entities {
+      font-weight: bold;
+      font-size: 12px;
+      display: inline-block;
+      vertical-align: top;
+    }
+
+    .page-list {
+      padding-left: 16px;
+      list-style-type: none;
+      display: inline-block;
+      margin-bottom: 0;
+
+      li {
+        font-weight: bold;
+        display: inline-block;
+        border-radius: 100%;
+
+        a {
+          display: flex;
+          height: $page-li-size;
+          width: $page-li-size;
+          justify-content: center;
+          align-items: center;
+          color: inherit;
+          user-select: none;
+
+          &:hover,
+          &:focus {
+            text-decoration: none;
+            outline: 0;
+          }
+        }
+
+        &:not(:first-child) {
+          margin-left: 15px;
+        }
+
+        &.current-page {
+          background-color: $current-page-background-color;
+
+          a {
+            color: #ffffff;
+          }
+        }
+
+        &.ellipsis {
+          margin-left: 5px;
+          margin-right: -10px;
+
+          span {
+            user-select: none;
+          }
+        }
+
+        &:hover {
+          &:not(.current-page):not(.ellipsis) {
+            cursor: pointer;
+            background-color: $hovered-page-background-color;
+          }
+        }
+      }
+    }
+  }
+}

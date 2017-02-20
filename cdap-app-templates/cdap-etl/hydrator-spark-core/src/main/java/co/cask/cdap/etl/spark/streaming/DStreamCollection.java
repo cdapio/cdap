@@ -98,8 +98,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public <U> SparkCollection<U> compute(StageInfo stageInfo, SparkCompute<T, U> compute) throws Exception {
-    final String stageName = stageInfo.getName();
+  public <U> SparkCollection<U> compute(final StageInfo stageInfo, SparkCompute<T, U> compute) throws Exception {
     final SparkCompute<T, U> wrappedCompute =
       new DynamicSparkCompute<>(new DynamicDriverContext(stageInfo, sec), compute);
     sec.execute(new TxRunnable() {
@@ -107,16 +106,16 @@ public class DStreamCollection<T> implements SparkCollection<T> {
       public void run(DatasetContext datasetContext) throws Exception {
         SparkExecutionPluginContext sparkPluginContext =
           new BasicSparkExecutionPluginContext(sec, JavaSparkContext.fromSparkContext(stream.context().sparkContext()),
-                                               datasetContext, stageName);
+                                               datasetContext, stageInfo);
         wrappedCompute.initialize(sparkPluginContext);
       }
     });
-    return wrap(stream.transform(new ComputeTransformFunction<>(sec, stageName, wrappedCompute)));
+    return wrap(stream.transform(new ComputeTransformFunction<>(sec, stageInfo, wrappedCompute)));
   }
 
   @Override
   public void store(StageInfo stageInfo, PairFlatMapFunction<T, Object, Object> sinkFunction) {
-    stream.foreachRDD(new StreamingBatchSinkFunction<>(sinkFunction, sec, stageInfo.getName()));
+    stream.foreachRDD(new StreamingBatchSinkFunction<>(sinkFunction, sec, stageInfo));
   }
 
   @Override

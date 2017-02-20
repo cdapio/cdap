@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -29,10 +29,14 @@ Building Blocks
     Workflows <workflows>
     Artifacts <artifacts>
     Program Lifecycle <program-lifecycle>
-    Metadata and Lineage <metadata-lineage>
-    Audit Logging <audit-logging>
     Namespaces <namespaces>
     Transaction System <transaction-system>
+
+.. toctree::
+   :hidden:
+
+   mapreduce-jobs
+   spark-jobs
 
 This section covers the :doc:`core abstractions <core>` in the Cask Data Application Platform
 (CDAP): **Data** and **Applications.**
@@ -64,13 +68,13 @@ write data through the data abstraction layer in CDAP.
 
 - All of the program building blocks follow a :doc:`Program Lifecycle <program-lifecycle>`.
 
-- :doc:`Metadata <metadata-lineage>` |---| consisting of **properties** (a list of key-value pairs)
+- :ref:`Metadata <metadata>` |---| consisting of **properties** (a list of key-value pairs)
   or **tags** (a list of keys) |---| can be set for artifacts, applications, programs, datasets, streams, and views.
   These can be retrieved and searched, and the metadata used to discover CDAP entities.
-  Access of these entities is tracked, and you can view the :doc:`lineage <metadata-lineage>` of datasets and streams.
+  Access of these entities is tracked, and you can view the :ref:`lineage <metadata-lineage>` of datasets and streams.
   With a lineage diagram, you can then drill down into the metadata of its nodes. 
 
-- :doc:`Audit Logging <audit-logging>` provides a chronological ledger containing evidence of operations or
+- :ref:`Audit Logging <audit-logging>` provides a chronological ledger containing evidence of operations or
   changes on CDAP entities. This information can be used to capture a trail of the activities that 
   determined the state of an entity at a given point in time.
 

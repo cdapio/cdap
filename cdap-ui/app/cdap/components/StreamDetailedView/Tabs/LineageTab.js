@@ -20,17 +20,26 @@ import NamespaceStore from 'services/NamespaceStore';
 export default function UsageTab({entity}) {
   let namespace = NamespaceStore.getState().selectedNamespace;
 
-  let url = `/tracker/ns/${namespace}/entity/streams/${entity.id}/lineage?iframe=true`;
+  let url = window.getTrackerUrl({
+    stateName: 'tracker.detail.entity.lineage',
+    stateParams: {
+      namespace,
+      entityType: 'streams',
+      entityId: entity.id,
+      iframe: true
+    }
+  });
   let encodedSource = encodeURIComponent(url);
   url += `&sourceUrl=${encodedSource}`;
 
   return (
-    <div className="iframe-container">
+    <div className="embed-responsive embed-responsive-16by9">
       <iframe
         src={url}
         frameBorder="0"
         width="100%"
         height="100%"
+        className="embed-responsive-item"
       >
       </iframe>
     </div>

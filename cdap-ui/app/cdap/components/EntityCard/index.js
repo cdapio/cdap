@@ -24,7 +24,6 @@ import ProgramMetrics from './ProgramMetrics';
 import StreamMetrics from './StreamMetrics';
 import classnames from 'classnames';
 import FastActions from 'components/EntityCard/FastActions';
-import JumpButton from 'components/JumpButton';
 import FastActionToMessage from 'services/fast-action-message-helper';
 import isNil from 'lodash/isNil';
 import capitalize from 'lodash/capitalize';
@@ -73,21 +72,6 @@ export default class EntityCard extends Component {
     }
   }
 
-  renderJumpButton() {
-    const entity = this.props.entity;
-    if (['datasetinstance', 'stream'].indexOf(entity.type) === -1 && !entity.isHydrator) {
-      return null;
-    }
-
-    return (
-      <div className="jump-button-container text-xs-center float-xs-right">
-        <JumpButton
-          entity={this.props.entity}
-        />
-      </div>
-    );
-  }
-
   onClick() {
     if (this.props.entity.type === 'artifact' || this.props.entity.type === 'program') {
       return;
@@ -119,7 +103,6 @@ export default class EntityCard extends Component {
     }
     const header = (
       <EntityCardHeader
-        onClick={this.onClick.bind(this)}
         className={this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type}
         entity={this.props.entity}
         systemTags={this.props.entity.metadata.metadata.SYSTEM.tags}
@@ -145,9 +128,10 @@ export default class EntityCard extends Component {
               `entity-cards-${this.props.entity.type}`
             )
           }
+          onClick={this.onClick.bind(this)}
         >
           <div className="entity-information clearfix">
-            <div className="entity-id-container">
+            <div className={classnames("entity-id-container", {'with-version': this.props.entity.version})}>
               <h4
                 className={classnames({'with-version': this.props.entity.version})}
               >
@@ -157,10 +141,9 @@ export default class EntityCard extends Component {
                   this.props.entity.version ?
                     this.props.entity.version
                   :
-                    '1.0.0'
+                    ''
                 }</small>
             </div>
-            {this.renderJumpButton()}
           </div>
 
           {this.renderEntityStatus()}

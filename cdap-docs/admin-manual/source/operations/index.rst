@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -35,7 +35,7 @@ Operations
 .. _metrics: metrics.html
 
 - |metrics|_ CDAP collects **metrics about the application’s behavior and performance**.
-  
+
 
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: preferences.html

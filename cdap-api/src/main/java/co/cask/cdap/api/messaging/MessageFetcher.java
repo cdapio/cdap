@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,13 +23,13 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
- * Provides access to fetch messages from the transactional messaging system.
+ * Provides message fetching functions of the Transactional Messaging System.
  */
 @Beta
 public interface MessageFetcher {
 
   /**
-   * Fetch messages from the given topic that was published on or after the given timestamp.
+   * Fetches messages from the given topic that were published on or after the given timestamp.
    *
    * @param namespace namespace of the topic
    * @param topic name of the topic
@@ -39,27 +39,27 @@ public interface MessageFetcher {
    *                  Use {@code timestamp = 0} to poll from the first available message.
    * @return a {@link CloseableIterator} of {@link Message}
    * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters and {@code _} or {@code -}.
-   * @throws IOException if failed to communicate with the messaging system
+   *                                  characters, {@code _}, or {@code -}.
+   * @throws IOException if there was a failure to communicate with the messaging system
    * @throws TopicNotFoundException if the give topic doesn't exist
    */
   CloseableIterator<Message> fetch(String namespace, String topic,
                                    int limit, long timestamp) throws TopicNotFoundException, IOException;
 
   /**
-   * Fetch messages from the given topic that was published after a message, identified by the given
+   * Fetches messages from the given topic that were published after a message, identified by the given
    * message id.
    *
    * @param namespace namespace of the topic
    * @param topic name of the topic
    * @param limit maximum number of messages to fetch
-   * @param afterMessageId message id returned from the {@link Message#getId()} method via some prior call to
+   * @param afterMessageId message id returned from the {@link Message#getId()} method from a prior call to
    *                       one of the {@code pollMessages} methods. If it is {@code null}, it will fetch from
    *                       the first available message.
    * @return a {@link CloseableIterator} of {@link Message}
    * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters and {@code _} or {@code -}.
-   * @throws IOException if failed to communicate with the messaging system
+   *                                  characters, {@code _}, or {@code -}.
+   * @throws IOException if there was a failure to communicate with the messaging system
    * @throws TopicNotFoundException if the give topic doesn't exist
    */
   CloseableIterator<Message> fetch(String namespace, String topic, int limit,

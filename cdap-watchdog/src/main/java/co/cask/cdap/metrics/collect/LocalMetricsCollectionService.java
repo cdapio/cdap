@@ -63,6 +63,7 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
   @Override
   protected void startUp() throws Exception {
+    super.startUp();
     // It will only do cleanup if the underlying table doesn't supports TTL.
     scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-cleanup"));
     long retentionSecs = cConf.getLong(Constants.Metrics.RETENTION_SECONDS + ".1.seconds",

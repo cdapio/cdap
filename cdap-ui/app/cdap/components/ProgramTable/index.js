@@ -50,7 +50,7 @@ export default function ProgramTable({programs}) {
             return (
               <tr key={program.name}>
                 <td>{program.name}</td>
-                <td>{program.type}</td>
+                <td>{program.programType}</td>
                 <td>{
                   !isEmpty(program.latestRun) ? humanReadableDate(program.latestRun.start) : 'n/a'
                 }</td>

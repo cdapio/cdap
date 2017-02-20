@@ -71,6 +71,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -514,6 +515,32 @@ public class AppFabricClient {
     appLifecycleHttpHandler.getAppInfo(request, mockResponder, appId.getNamespace(), appId.getApplication());
     verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Getting app info failed");
     return mockResponder.decodeResponseContent(new TypeToken<ApplicationDetail>() { }.getType(), GSON);
+  }
+
+  public ApplicationDetail getVersionedInfo(ApplicationId appId) throws Exception {
+    DefaultHttpRequest request = new DefaultHttpRequest(
+      HttpVersion.HTTP_1_1, HttpMethod.GET,
+      String.format("%s/apps/%s/versions/%s", getNamespacePath(appId.getNamespace()),
+                    appId.getApplication(), appId.getVersion())
+    );
+    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    MockResponder mockResponder = new MockResponder();
+    appLifecycleHttpHandler.getAppVersionInfo(request, mockResponder, appId.getNamespace(), appId.getApplication(),
+                                              appId.getVersion());
+    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Getting app version info failed");
+    return mockResponder.decodeResponseContent(new TypeToken<ApplicationDetail>() { }.getType(), GSON);
+  }
+
+  public Collection<String> listAppVersions(ApplicationId appId) throws Exception {
+    DefaultHttpRequest request = new DefaultHttpRequest(
+      HttpVersion.HTTP_1_1, HttpMethod.GET,
+      String.format("%s/apps/%s/versions", getNamespacePath(appId.getNamespace()), appId.getApplication())
+    );
+    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    MockResponder mockResponder = new MockResponder();
+    appLifecycleHttpHandler.listAppVersions(request, mockResponder, appId.getNamespace(), appId.getApplication());
+    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to list application versions");
+    return mockResponder.decodeResponseContent(new TypeToken<Collection<String>>() { }.getType(), GSON);
   }
 
   public void setRuntimeArgs(ProgramId programId, Map<String, String> args) throws Exception {

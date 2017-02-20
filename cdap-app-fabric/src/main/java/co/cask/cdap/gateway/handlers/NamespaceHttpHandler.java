@@ -78,7 +78,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void updateNamespaceProperties(HttpRequest request, HttpResponder responder,
                                         @PathParam("namespace-id") String namespaceId) throws Exception {
-    NamespaceMeta meta = parseBody(request, NamespaceMeta.class);
+    NamespaceMeta meta = getNamespaceMeta(request);
     namespaceAdmin.updateProperties(new NamespaceId(namespaceId), meta);
     responder.sendString(HttpResponseStatus.OK, String.format("Updated properties for namespace '%s'.", namespaceId));
   }
@@ -95,12 +95,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       throw new BadRequestException("Namespace id can contain only alphanumeric characters or '_'.");
     }
 
-    NamespaceMeta metadata;
-    try {
-      metadata = parseBody(request, NamespaceMeta.class);
-    } catch (JsonSyntaxException e) {
-      throw new BadRequestException("Invalid json object provided in request body.");
-    }
+    NamespaceMeta metadata = getNamespaceMeta(request);
 
     if (isReserved(namespaceId)) {
       throw new BadRequestException(String.format("Cannot create the namespace '%s'. '%s' is a reserved namespace.",
@@ -112,19 +107,6 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     builder.setName(namespace);
 
     NamespaceMeta finalMetadata = builder.build();
-
-    // check that the user has configured either both of none of the following configuration: principal and keytab URI
-    if (finalMetadata.getConfig() != null) {
-      String configuredPrincipal = finalMetadata.getConfig().getPrincipal();
-      String configuredKeytabURI = finalMetadata.getConfig().getKeytabURI();
-      if (configuredPrincipal != null && configuredKeytabURI == null ||
-        configuredPrincipal == null && configuredKeytabURI != null) {
-        throw new BadRequestException(
-          String.format("Either neither or both of the following two configurations must be configured. " +
-                          "Configured principal: %s, Configured keytabURI: %s",
-                        configuredPrincipal, configuredKeytabURI));
-      }
-    }
 
     try {
       namespaceAdmin.create(finalMetadata);
@@ -170,5 +152,13 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   private boolean isReserved(String namespaceId) {
     return Id.Namespace.DEFAULT.getId().equals(namespaceId) || Id.Namespace.SYSTEM.getId().equals(namespaceId) ||
       Id.Namespace.CDAP.getId().equals(namespaceId);
+  }
+
+  private NamespaceMeta getNamespaceMeta(HttpRequest request) throws BadRequestException {
+    try {
+      return parseBody(request, NamespaceMeta.class);
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Invalid json object provided in request body.");
+    }
   }
 }

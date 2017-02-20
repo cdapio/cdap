@@ -1,0 +1,82 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+body.state-logviewerhome {
+  margin-bottom: 0;
+
+  .alerts { top: 50px; }
+
+  header {
+    height: 50px;
+    background-color: rgba(51, 51, 51, 1);
+    position: fixed;
+    top: 0;
+    width: 100%;
+
+    img {
+      height: 50px;
+    }
+  }
+
+  footer {
+    position: fixed;
+    border-top: 1px solid #cccccc;
+  }
+
+  main.container {
+    margin-top: 50px;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0;
+    width: 100%;
+
+    .logs-info {
+      height: 60px;
+      padding-left: 10px;
+      padding-top: 10px;
+      position: fixed;
+      top: 50px;
+      background-color: white;
+      width: 100%;
+      overflow-x: auto;
+      white-space: nowrap;
+
+      h4 {
+        font-weight: 500;
+        margin-top: 0;
+      }
+
+      span {
+        margin-right: 10px;
+      }
+    }
+
+    .logs-container {
+      margin-top: 60px;
+      overflow-y: hidden;
+    }
+  }
+
+  my-log-viewer .log-viewer-container {
+    .logs-table {
+      height: calc(~"100vh - 277px");
+    }
+
+    &.full-screen .logs-table {
+      height: calc(~"100vh - 166px");
+    }
+  }
+}

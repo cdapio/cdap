@@ -19,18 +19,16 @@ package co.cask.cdap.operations;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.management.ManagementFactory;
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.management.InstanceNotFoundException;
@@ -52,19 +50,19 @@ import javax.management.ObjectName;
  *
  * It also updates the Beans periodically by calling their {@link OperationalStats#collect()} method.
  */
-public class OperationalStatsService extends AbstractScheduledService {
+public class OperationalStatsService extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(OperationalStatsService.class);
 
   private final OperationalStatsLoader operationalStatsLoader;
-  private final int statsRefreshInterval;
+  private final long statsRefreshInterval;
   private final Injector injector;
 
-  private ScheduledExecutorService executor;
+  private Thread runThread;
 
   @Inject
-  OperationalStatsService(OperationalStatsLoader operationalStatsLoader, CConfiguration cConf, Injector injector) {
-    this.operationalStatsLoader = operationalStatsLoader;
-    this.statsRefreshInterval = cConf.getInt(Constants.OperationalStats.REFRESH_INTERVAL_SECS);
+  OperationalStatsService(CConfiguration cConf, Injector injector) {
+    this.operationalStatsLoader = new OperationalStatsLoader(cConf);
+    this.statsRefreshInterval = cConf.getLong(Constants.OperationalStats.REFRESH_INTERVAL_SECS);
     this.injector = injector;
   }
 
@@ -73,6 +71,8 @@ public class OperationalStatsService extends AbstractScheduledService {
    */
   @Override
   protected void startUp() throws Exception {
+    runThread = Thread.currentThread();
+
     MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
     for (Map.Entry<OperationalExtensionId, OperationalStats> entry : operationalStatsLoader.getAll().entrySet()) {
       OperationalStats operationalStats = entry.getValue();
@@ -88,38 +88,65 @@ public class OperationalStatsService extends AbstractScheduledService {
       // register MBean
       mbs.registerMBean(operationalStats, objectName);
     }
+
     LOG.info("Successfully started Operational Stats Service...");
   }
 
-  /**
-   * Also schedules asynchronous stats collection for all {@link MXBean MXBeans} by calling the
-   * {@link OperationalStats#collect()} method.
-   */
   @Override
-  protected void runOneIteration() throws Exception {
+  protected void run() {
+    while (isRunning()) {
+      try {
+        collectOperationalStats();
+        if (!isRunning()) {
+          // Need to check here before sleep as the collectOperationStats may swallow interrupted exception
+          break;
+        }
+        TimeUnit.SECONDS.sleep(statsRefreshInterval);
+      } catch (InterruptedException e) {
+        // Expected on stopping. So just break the loop
+        break;
+      }
+    }
+  }
+
+  /**
+   * Collects stats from all {@link OperationalStats}.
+   */
+  private void collectOperationalStats() throws InterruptedException {
     LOG.debug("Running operational stats extension service iteration");
     for (Map.Entry<OperationalExtensionId, OperationalStats> entry : operationalStatsLoader.getAll().entrySet()) {
-      LOG.debug("Collecting {} stats for service {}", entry.getValue().getStatType(),
-                entry.getValue().getServiceName());
+      if (!isRunning()) {
+        return;
+      }
+
+      OperationalStats stats = entry.getValue();
+      LOG.debug("Collecting stats for service {} of type {}", stats.getServiceName(), stats.getStatType());
       try {
-        entry.getValue().collect();
+        stats.collect();
+      } catch (InterruptedException e) {
+        throw e;
       } catch (Throwable t) {
-        LOG.warn("Error while collecting stats for service: {}; type: {}", entry.getValue().getServiceName(),
-                 entry.getValue().getStatType(), t);
+        Throwable rootCause = Throwables.getRootCause(t);
+        if (rootCause instanceof InterruptedException) {
+          throw (InterruptedException) rootCause;
+        }
+        LOG.warn("Failed to collect stats for service {} of type {} due to {}",
+                 stats.getServiceName(), stats.getStatType(), rootCause.getMessage());
       }
     }
   }
 
   @Override
-  protected Scheduler scheduler() {
-    return Scheduler.newFixedDelaySchedule(0, statsRefreshInterval, TimeUnit.SECONDS);
-  }
-
-  @Override
-  protected ScheduledExecutorService executor() {
-    executor = Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("operational-stats-collector-%d"));
-    return executor;
+  protected Executor executor() {
+    final String name = getClass().getSimpleName();
+    return new Executor() {
+      @Override
+      public void execute(Runnable command) {
+        Thread thread = new Thread(command, name);
+        thread.setDaemon(true);
+        thread.start();
+      }
+    };
   }
 
   @Override
@@ -142,10 +169,14 @@ public class OperationalStatsService extends AbstractScheduledService {
       }
       operationalStats.destroy();
     }
-    if (executor != null) {
-      executor.shutdownNow();
-    }
     LOG.info("Successfully shutdown operational stats service.");
+  }
+
+  @Override
+  protected void triggerShutdown() {
+    if (runThread != null) {
+      runThread.interrupt();
+    }
   }
 
   @Nullable

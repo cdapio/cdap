@@ -25,7 +25,7 @@ Additional details on logging can be found in the :ref:`Administration Manual: L
 
 Downloading Application Logs
 ============================
-Logs emitted by a *flow*, *MapReduce*, *service*, or *Spark* program running in CDAP can be
+Logs emitted by a *flow*, *MapReduce*, *service*, *Spark*, *worker*, or *workflow* program running in CDAP can be
 downloaded with the Logging HTTP RESTful API. To do that, send an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/logs?start=<ts>&stop=<ts>
@@ -41,9 +41,9 @@ downloaded with the Logging HTTP RESTful API. To do that, send an HTTP GET reque
    * - ``app-id``
      - Name of the application being called
    * - ``program-type``
-     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
    * - ``program-id``
-     - Name of the program (*flow*, *MapReduce*, *service*, *Spark*, *workflow*) being called
+     - Name of the program being called
    * - ``ts``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
@@ -79,9 +79,9 @@ To download logs for a program run, send an HTTP GET request::
    * - ``app-id``
      - Name of the application being called
    * - ``program-type``
-     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
    * - ``program-id``
-     - Name of the program (*flow*, *MapReduce*, *service*, *Spark*, *workflow*) being called
+     - Name of the program being called
    * - ``run-id``
      - Run id of the program run
    * - ``ts``
@@ -110,7 +110,7 @@ Logs emitted by a system service running in CDAP can be downloaded with the Logg
 API. To do that, send an HTTP GET request::
 
   GET /v3/system/services/<service-id>/logs?start=<ts>&stop=<ts>
-  
+
 where:
 
 .. list-table::
@@ -168,11 +168,11 @@ Changing Program Log Levels
 Log levels can be set for a particular run of a program. Once changed, they can be reset back to what
 they started with by using the :ref:`reset endpoint <http-restful-api-logging-resetting>` shown below.
 
-**Note:** The log levels can only be changed for programs that are running under CDAP Distributed mode.
+**Note:** The log levels can only be changed for programs that are running under Distributed CDAP.
 
 Setting Program Log Levels
 --------------------------
-To set the log levels of a program run at runtime under CDAP Distributed mode, submit an HTTP PUT request::
+To set the log levels of a program run at runtime under Distributed CDAP, submit an HTTP PUT request::
 
   PUT /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/loglevels
 
@@ -205,7 +205,7 @@ and, in all cases, with a JSON map in the request body consisting of a map of lo
    * - ``version-id``
      - Version of the application
    * - ``program-type``
-     - One of ``flows``, ``mapreduce``, ``services``, or ``workers``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
    * - ``program-id``
      - Name of the program
    * - ``flow-id``
@@ -228,7 +228,7 @@ Resetting Program Log Levels
 ----------------------------
 Resetting the log levels will change the log levels back to what they were when the program was started.
 
-To reset the log levels of a program run at runtime under CDAP Distributed mode, submit an HTTP PUT request::
+To reset the log levels of a program run at runtime under Distributed CDAP mode, submit an HTTP PUT request::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/resetloglevels
 
@@ -260,7 +260,7 @@ If the body is not provided or is empty, it will reset the log levels of all log
    * - ``version-id``
      - Version of the application
    * - ``program-type``
-     - One of ``flows``, ``mapreduce``, ``services`` or ``workers``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
    * - ``program-id``
      - Name of the program
    * - ``flow-id``

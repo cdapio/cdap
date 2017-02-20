@@ -24,12 +24,14 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -45,7 +47,6 @@ import org.apache.twill.kafka.client.KafkaPublisher;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
@@ -53,6 +54,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -61,6 +63,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Testing the basic properties of the {@link MessagingMetricsProcessorService}
@@ -76,8 +79,6 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
 
   private InMemoryZKServer zkServer;
 
-  // TODO  CDAP-8336 flaky test due to test design, remove after improving the test.
-  @Ignore
   @Test
   public void testMetricsProcessor() throws Exception {
     injector.getInstance(TransactionManager.class).startAndWait();
@@ -102,19 +103,15 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
     }
 
     KafkaPublisher publisher = kafkaClient.getPublisher(KafkaPublisher.Ack.FIRE_AND_FORGET, Compression.SNAPPY);
-    KafkaPublisher.Preparer preparer = publisher.prepare(TOPIC_PREFIX);
+    final KafkaPublisher.Preparer preparer = publisher.prepare(TOPIC_PREFIX);
 
-    // Publish metrics to Kafka and record expected metrics before kafkaMetricsProcessorService starts
-    for (int i = 1; i < 5; i++) {
-      addKafkaMetrics(i, METRICS_CONTEXT, expected, preparer, MetricType.GAUGE);
-    }
-    for (int i = 5; i < 10; i++) {
-      addKafkaMetrics(i, METRICS_CONTEXT, expected, preparer, MetricType.COUNTER);
-    }
-    preparer.send();
-
-    // Sleep to make sure metrics get published
-    Thread.sleep(2000);
+    // Wait for metrics to be successfully published to Kafka. Retry if publishing fails.
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return publishKafkaMetrics(METRICS_CONTEXT, expected, preparer);
+      }
+    }, 15, TimeUnit.SECONDS, "Failed to publish correct number of metrics to Kafka");
 
     // Start KafkaMetricsProcessorService after metrics are published to Kafka
     KafkaMetricsProcessorService kafkaMetricsProcessorService =
@@ -122,17 +119,17 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
                                        injector.getInstance(MetricDatasetFactory.class),
                                        new MetricsMessageCallbackFactory(injector.getInstance(SchemaGenerator.class),
                                                                          injector.getInstance(DatumReaderFactory.class),
-                                                                         metricStore, 4), TOPIC_PREFIX, partitions);
+                                                                         metricStore, 4), TOPIC_PREFIX, partitions,
+                                       new NoopMetricsContext());
     kafkaMetricsProcessorService.startAndWait();
 
     // Intentionally set fetcher persist threshold to a small value, so that MessagingMetricsProcessorService
     // internally can persist metrics when more messages are to be fetched
     MessagingMetricsProcessorService messagingMetricsProcessorService =
       new MessagingMetricsProcessorService(injector.getInstance(MetricDatasetFactory.class), TOPIC_PREFIX,
-                                           partitions, messagingService, injector.getInstance(SchemaGenerator.class),
+                                           messagingService, injector.getInstance(SchemaGenerator.class),
                                            injector.getInstance(DatumReaderFactory.class),
-                                           metricStore,
-                                           1);
+                                           metricStore, 1, partitions, new NoopMetricsContext(), 50);
     messagingMetricsProcessorService.startAndWait();
 
     // Publish metrics with messaging service and record expected metrics
@@ -140,17 +137,16 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
       publishMessagingMetrics(i, METRICS_CONTEXT, expected, SYSTEM_METRIC_PREFIX, MetricType.COUNTER);
     }
 
-    Thread.sleep(5000);
+    Thread.sleep(500);
     // Stop and restart messagingMetricsProcessorService
     messagingMetricsProcessorService.stopAndWait();
     // Intentionally set fetcher persist threshold to a large value, so that MessagingMetricsProcessorService
     // internally only persists metrics during terminating.
     messagingMetricsProcessorService =
       new MessagingMetricsProcessorService(injector.getInstance(MetricDatasetFactory.class), TOPIC_PREFIX,
-                                           partitions, messagingService, injector.getInstance(SchemaGenerator.class),
+                                           messagingService, injector.getInstance(SchemaGenerator.class),
                                            injector.getInstance(DatumReaderFactory.class),
-                                           metricStore,
-                                           100);
+                                           metricStore, 100, partitions, new NoopMetricsContext(), 50);
     messagingMetricsProcessorService.startAndWait();
 
     // Publish metrics after MessagingMetricsProcessorService restarts and record expected metrics
@@ -158,26 +154,32 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
       publishMessagingMetrics(i, METRICS_CONTEXT, expected, SYSTEM_METRIC_PREFIX, MetricType.GAUGE);
     }
 
-    long current = System.currentTimeMillis();
-    Tasks.waitFor(true, new Callable<Boolean>() {
-                    @Override
-                    public Boolean call() throws Exception {
-                      return canQueryAllMetrics(metricStore, METRICS_CONTEXT, expected);
-                    }
-                  }, 10000, TimeUnit.MILLISECONDS, "Cannot get all expected metrics from the metrics store.");
-    LOG.debug("Wait time: {}", System.currentTimeMillis() - current);
+    final List<String> missingMetricNames = new ArrayList<>();
+    // Wait until all expected metrics can be queried from the metric store. If not all expected metrics
+    // are retrieved when timeout occurs, print out the missing metrics
+    try {
+      Tasks.waitFor(true, new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          return canQueryAllMetrics(metricStore, METRICS_CONTEXT, expected, missingMetricNames);
+        }
+      }, 10000, TimeUnit.MILLISECONDS, "Failed to get all metrics");
+    } catch (TimeoutException e) {
+      Assert.fail(String.format("Metrics: [%s] cannot be found in the metrics store.",
+                                Joiner.on(", ").join(missingMetricNames)));
+    }
 
     // Query metrics from the metricStore and compare them with the expected ones
     assertMetricsResult(metricStore, METRICS_CONTEXT, expected);
 
-    // Query for the 5 counter metrics published with Kafka and 5 counter metrics published with messaging
+    // Query for the 5 counter metrics published with messaging between time 5 - 14
     Collection<MetricTimeSeries> queryResult =
       metricStore.query(new MetricDataQuery(5, 14, 1, Integer.MAX_VALUE,
                                             ImmutableMap.of(SYSTEM_METRIC_PREFIX + COUNTER_METRIC_NAME,
                                                             AggregationFunction.SUM),
                                             METRICS_CONTEXT, ImmutableList.<String>of(), null));
     MetricTimeSeries timeSeries = Iterables.getOnlyElement(queryResult);
-    Assert.assertEquals(10, timeSeries.getTimeValues().size());
+    Assert.assertEquals(5, timeSeries.getTimeValues().size());
     for (TimeValue timeValue : timeSeries.getTimeValues()) {
       Assert.assertEquals(1L, timeValue.getValue());
     }
@@ -191,10 +193,34 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
     metricStore.deleteAll();
   }
 
-  private void addKafkaMetrics(int i, Map<String, String> metricsContext, Map<String, Long> expected,
+  /**
+   * Publish metrics to Kafka. Return {@code true} if correct number of messages are published,
+   * otherwise return {@code false}
+   */
+  private boolean publishKafkaMetrics(Map<String, String> metricsContext, Map<String, Long> expected,
+                                      KafkaPublisher.Preparer preparer) {
+    // Publish metrics to Kafka and record expected metrics before kafkaMetricsProcessorService starts
+    for (int metricIndex = 0; metricIndex < 10; metricIndex++) {
+      try {
+        addKafkaMetrics(metricIndex, metricsContext, expected, preparer, MetricType.GAUGE);
+      } catch (Exception e) {
+        LOG.error("Failed to add metric with index {} to Kafka", metricIndex, e);
+      }
+    }
+    int publishedMetricsCount = 0;
+    try {
+      publishedMetricsCount = preparer.send().get(5, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      LOG.error("Exception occurs when sending metrics to Kafka", e);
+    }
+    return publishedMetricsCount == 10;
+  }
+
+  private void addKafkaMetrics(int metricIndex, Map<String, String> metricsContext, Map<String, Long> expected,
                                KafkaPublisher.Preparer preparer, MetricType metricType)
     throws IOException, TopicNotFoundException {
-    MetricValues metric = getMetricValuesAddToExpected(i, metricsContext, expected, SYSTEM_METRIC_PREFIX, metricType);
+    MetricValues metric = getMetricValuesAddToExpected(metricIndex, metricsContext, expected,
+                                                       SYSTEM_METRIC_PREFIX, metricType);
     // partitioning by the context
     preparer.add(ByteBuffer.wrap(encoderOutputStream.toByteArray()), metric.getTags().hashCode());
     encoderOutputStream.reset();
@@ -206,17 +232,18 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
    * Checks whether all expected metrics can be obtained with query
    */
   private boolean canQueryAllMetrics(MetricStore metricStore, Map<String, String> metricsContext,
-                                     Map<String, Long> expected) {
+                                     Map<String, Long> expected, List<String> missingMetricNames) {
+    missingMetricNames.clear();
     for (Map.Entry<String, Long> metric : expected.entrySet()) {
       Collection<MetricTimeSeries> queryResult =
         metricStore.query(new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE,
                                               metric.getKey(), AggregationFunction.SUM,
                                               metricsContext, ImmutableList.<String>of()));
       if (queryResult.size() == 0) {
-        return false;
+        missingMetricNames.add(metric.getKey());
       }
     }
-    return true;
+    return missingMetricNames.isEmpty();
   }
 
   private void assertMetricsResult(MetricStore metricStore, Map<String, String> metricsContext,
@@ -229,7 +256,8 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
       MetricTimeSeries timeSeries = Iterables.getOnlyElement(queryResult);
       List<TimeValue> timeValues = timeSeries.getTimeValues();
       TimeValue timeValue = Iterables.getOnlyElement(timeValues);
-      Assert.assertEquals(metric.getValue().longValue(), timeValue.getValue());
+      Assert.assertEquals(String.format("Actual value of metric: %s does not match expected", metric.getKey()),
+                          metric.getValue().longValue(), timeValue.getValue());
     }
   }
 

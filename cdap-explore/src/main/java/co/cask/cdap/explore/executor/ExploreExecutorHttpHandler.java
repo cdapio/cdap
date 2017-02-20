@@ -43,12 +43,15 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -68,6 +71,7 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -354,10 +358,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @Path("datasets/{dataset}/partitions")
   public void addPartition(final HttpRequest request, final HttpResponder responder,
                            @PathParam("namespace-id") String namespace,
-                           @PathParam("dataset") String datasetName) throws Exception {
+                           @PathParam("dataset") String datasetName,
+                           @HeaderParam(Constants.Security.Headers.PROGRAM_ID) String programId) throws Exception {
     final DatasetId datasetId = new DatasetId(namespace, datasetName);
     propagateUserId(request);
-    impersonator.doAs(datasetId, new Callable<Void>() {
+    impersonator.doAs(getEntityToImpersonate(datasetId, programId), new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         doAddPartition(request, responder, datasetId);
@@ -434,10 +439,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @Path("datasets/{dataset}/deletePartition")
   public void dropPartition(final HttpRequest request, final HttpResponder responder,
                             @PathParam("namespace-id") String namespace,
-                            @PathParam("dataset") String datasetName) throws Exception {
+                            @PathParam("dataset") String datasetName,
+                            @HeaderParam(Constants.Security.Headers.PROGRAM_ID) String programId) throws Exception {
     final DatasetId datasetId = new DatasetId(namespace, datasetName);
     propagateUserId(request);
-    impersonator.doAs(datasetId, new Callable<Void>() {
+    impersonator.doAs(getEntityToImpersonate(datasetId, programId), new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         doDropPartition(request, responder, datasetId);
@@ -509,6 +515,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       return isClassNotFoundException(e.getCause());
     }
     return null;
+  }
+
+  private NamespacedEntityId getEntityToImpersonate(NamespacedEntityId entityId, String programId) {
+    // if program id was passed then we impersonate the programId
+    return Strings.isNullOrEmpty(programId) ? entityId : ProgramId.fromString(programId);
   }
 
   // propagate userid from the HTTP Request in the current thread

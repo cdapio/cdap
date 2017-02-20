@@ -23,16 +23,15 @@ require('./styles/lib-styles.scss');
 require('./styles/common.scss');
 require('./styles/main.scss');
 
-import Management from 'components/Management';
+import Administration from 'components/Administration';
 import Dashboard from 'components/Dashboard';
 import Home from 'components/Home';
-import CdapHeader from 'components/CdapHeader';
+import Header from 'components/Header';
 import Footer from 'components/Footer';
 import SplashScreen from 'components/SplashScreen';
 import ConnectionExample from 'components/ConnectionExample';
 import Experimental from 'components/Experimental';
 import cookie from 'react-cookie';
-import {MyNamespaceApi} from 'api/namespace';
 import Router from 'react-router/BrowserRouter';
 import T from 'i18n-react';
 import Match from 'react-router/Match';
@@ -48,6 +47,7 @@ import VersionActions from 'services/VersionStore/VersionActions';
 import StatusFactory from 'services/StatusFactory';
 import LoadingIndicator from 'components/LoadingIndicator';
 import StatusAlertMessage from 'components/StatusAlertMessage';
+import Page404 from 'components/404';
 
 class CDAP extends Component {
   constructor(props) {
@@ -68,22 +68,6 @@ class CDAP extends Component {
         }
       });
     }
-    // Polls for namespace data
-    MyNamespaceApi.pollList()
-      .subscribe(
-        (res) => {
-          if (res.length > 0) {
-            NamespaceStore.dispatch({
-              type: NamespaceActions.updateNamespaces,
-              payload: {
-                namespaces : res
-              }
-            });
-          } else {
-            // To-Do: No namespaces returned ; throw error / redirect
-          }
-        }
-      );
 
     StatusFactory.startPolling();
 
@@ -109,21 +93,21 @@ class CDAP extends Component {
           <Helmet
             title={T.translate('features.EntityListView.Title')}
           />
-          <CdapHeader />
+          <Header />
           <SplashScreen openVideo={this.openCaskVideo}/>
           <LoadingIndicator />
           <StatusAlertMessage />
           <div className="container-fluid">
             <Match exactly pattern="/" component={RouteToNamespace} />
-            <Match exactly pattern="/notfound" component={Missed} />
-            <Match exactly pattern="/management" component={Management} />
+            <Match exactly pattern="/notfound" component={Page404} />
+            <Match exactly pattern="/administration" component={Administration} />
             <Match exactly pattern="/ns" component={RouteToNamespace} />
             <Match pattern="/ns/:namespace" history={history} component={Home} />
             <Match exactly pattern="/ns/:namespace/dashboard" component={Dashboard} />
             <Match pattern="/Experimental" component={Experimental} />
             <Match pattern="/socket-example" component={ConnectionExample} />
             <Match pattern="/schemaeditor" component={SchemaEditor} />
-            <Miss component={Missed} />
+            <Miss component={Page404} />
           </div>
           <Footer version={this.state.version} />
         </div>
@@ -135,19 +119,6 @@ class CDAP extends Component {
 CDAP.propTypes = {
   children: React.PropTypes.node,
   params: PropTypes.object
-};
-
-function Missed({ location }) {
-  return (
-    <div>
-      <h2>404 - Page Not Found</h2>
-      <p>Page {location.pathname} not found</p>
-    </div>
-  );
-}
-
-Missed.propTypes = {
-  location : PropTypes.object
 };
 
 ReactDOM.render(

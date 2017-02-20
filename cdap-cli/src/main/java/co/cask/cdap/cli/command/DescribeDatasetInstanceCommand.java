@@ -56,12 +56,12 @@ public class DescribeDatasetInstanceCommand extends AbstractAuthCommand {
     DatasetMeta meta = datasetClient.get(instance);
 
     Table table = Table.builder()
-      .setHeader("hive table", "spec", "type")
+      .setHeader("hive table", "spec", "type", "principal")
       .setRows(ImmutableList.of(meta), new RowMaker<DatasetMeta>() {
         @Override
         public List<?> makeRow(DatasetMeta object) {
           return Lists.newArrayList(object.getHiveTableName(), GSON.toJson(object.getSpec()),
-                                    GSON.toJson(object.getType()));
+                                    GSON.toJson(object.getType()), object.getOwnerPrincipal());
         }
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);

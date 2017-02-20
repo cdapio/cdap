@@ -42,6 +42,16 @@ public class ProvidedOutput {
     }
   }
 
+  public ProvidedOutput(String alias,
+                        OutputFormatProvider outputFormatProvider,
+                        String outputFormatClassName,
+                        Map<String, String> outputFormatConfiguration) {
+    this.alias = alias;
+    this.outputFormatProvider = outputFormatProvider;
+    this.outputFormatClassName = outputFormatClassName;
+    this.outputFormatConfiguration = outputFormatConfiguration;
+  }
+
   public String getAlias() {
     return alias;
   }

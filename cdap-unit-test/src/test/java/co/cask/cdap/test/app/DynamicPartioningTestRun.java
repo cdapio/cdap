@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -129,7 +130,7 @@ public class DynamicPartioningTestRun extends TestFrameworkTestBase {
     Map<String, String> arguments = ImmutableMap.of("outputs", outputArg);
     MapReduceManager mrManager = appManager.getMapReduceManager("DynamicPartitioningMR");
     mrManager.start(arguments);
-    mrManager.waitForFinish(5, TimeUnit.MINUTES);
+    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     for (String dataset : outputs) {
       validatePartitions(dataset, dataset.equals(dsWithExistingPartition));

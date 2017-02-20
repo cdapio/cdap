@@ -34,6 +34,12 @@ export default class SendEventAction extends Component {
     this.toggleTooltip = this.toggleTooltip.bind(this);
   }
 
+  componentWillMount() {
+    if (this.props.opened) {
+      this.setState({modal: true});
+    }
+  }
+
   toggleTooltip() {
     this.setState({ tooltipOpen : !this.state.tooltipOpen });
   }
@@ -86,5 +92,6 @@ SendEventAction.propTypes = {
     uniqueId: PropTypes.string,
     type: PropTypes.oneOf(['datasetinstance', 'stream']).isRequired,
   }),
-  onSuccess: PropTypes.func
+  onSuccess: PropTypes.func,
+  opened: PropTypes.bool
 };

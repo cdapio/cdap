@@ -48,6 +48,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -57,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 
 abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorServiceTestBase.class);
 
   protected static final String COUNTER_METRIC_NAME = "counter_metric";
   protected static final String GAUGE_METRIC_NAME_PREFIX = "gauge_metric";
@@ -73,13 +76,20 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
   protected final Map<String, Long> expected = new HashMap<>();
   private final Encoder encoder = new BinaryEncoder(encoderOutputStream);
 
-  protected void publishMessagingMetrics(int i, Map<String, String> metricsContext, Map<String, Long> expected,
-                                         String expectedMetricPrefix, MetricType metricType)
-    throws IOException, TopicNotFoundException {
-    getMetricValuesAddToExpected(i, metricsContext, expected, expectedMetricPrefix, metricType);
-    messagingService.publish(StoreRequestBuilder.of(NamespaceId.SYSTEM.topic(TOPIC_PREFIX + (i % PARTITION_SIZE)))
-                               .addPayloads(encoderOutputStream.toByteArray()).build());
-    encoderOutputStream.reset();
+  protected void publishMessagingMetrics(int metricIndex, Map<String, String> metricsContext,
+                                         Map<String, Long> expected, String expectedMetricPrefix,
+                                         MetricType metricType) {
+
+    try {
+      getMetricValuesAddToExpected(metricIndex, metricsContext, expected, expectedMetricPrefix, metricType);
+      messagingService.publish(
+        StoreRequestBuilder.of(NamespaceId.SYSTEM.topic(TOPIC_PREFIX + (metricIndex % PARTITION_SIZE)))
+          .addPayloads(encoderOutputStream.toByteArray()).build());
+    } catch (Exception e) {
+      LOG.error("Failed to publish metric with index {} to messaging service", metricIndex, e);
+    } finally {
+      encoderOutputStream.reset();
+    }
   }
 
   /**

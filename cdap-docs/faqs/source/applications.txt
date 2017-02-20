@@ -63,7 +63,7 @@ CDAP UI.
 Spark
 =====
 
-How do I debug Spark jobs running in CDAP Distributed Mode?
+How do I debug Spark jobs running in Distributed CDAP Mode?
 -----------------------------------------------------------
 There are a number of ways to solve problems with Spark:
 

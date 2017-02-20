@@ -15,7 +15,7 @@
  */
 
 import React, { Component, PropTypes } from 'react';
-import { Nav, NavItem, NavLink} from 'reactstrap';
+import { Nav, NavItem, NavLink, TabContent} from 'reactstrap';
 import isNil from 'lodash/isNil';
 import Match from 'react-router/Match';
 import Link from 'react-router/Link';
@@ -24,6 +24,7 @@ import SchemaTab from 'components/Overview/Tabs/SchemaTab';
 import UsageTab from 'components/DatasetDetailedView/Tabs/UsageTab';
 import AuditTab from 'components/DatasetDetailedView/Tabs/AuditTab';
 import LineageTab from 'components/DatasetDetailedView/Tabs/LineageTab';
+import PropertiesTab from 'components/DatasetDetailedView/Tabs/PropertiesTab';
 
 export default class DatasetDetailedViewTabs extends Component {
   constructor(props) {
@@ -106,49 +107,69 @@ export default class DatasetDetailedViewTabs extends Component {
               </Link>
             </NavLink>
           </NavItem>
+
+          <NavItem>
+            <NavLink>
+              <Link
+                to={`${baseLinkPath}/properties`}
+                activeClassName="active"
+              >
+                Properties
+              </Link>
+            </NavLink>
+          </NavItem>
         </Nav>
-        <Match pattern={`${baseMatchPath}/`} render={
-          () => {
-            return (
-              <UsageTab entity={this.state.entity} />
-            );
-          }}
-        />
-        <Match pattern={`${baseMatchPath}/usage`} render={
-          () => {
-            return (
-              <UsageTab entity={this.state.entity} />
-            );
-          }}
-        />
-        <Match pattern={`${baseMatchPath}/schema`} render={
-          () => {
-            return (
-              <SchemaTab entity={this.state.entity} />
-            );
-          }}
-        />
-        <Match pattern={`${baseMatchPath}/programs`} render={
-          () => {
-            return (
-              <ProgramTab entity={this.state.entity} />
-            );
-          }}
-        />
-        <Match pattern={`${baseMatchPath}/lineage`} render={
-          () => {
-            return (
-              <LineageTab entity={this.state.entity} />
-            );
-          }}
-        />
-        <Match pattern={`${baseMatchPath}/audit`} render={
-          () => {
-            return (
-              <AuditTab entity={this.state.entity} />
-            );
-          }}
-        />
+        <TabContent>
+          <Match pattern={`${baseMatchPath}/`} render={
+            () => {
+              return (
+                <UsageTab entity={this.state.entity} />
+              );
+            }}
+          />
+          <Match pattern={`${baseMatchPath}/usage`} render={
+            () => {
+              return (
+                <UsageTab entity={this.state.entity} />
+              );
+            }}
+          />
+          <Match pattern={`${baseMatchPath}/schema`} render={
+            () => {
+              return (
+                <SchemaTab entity={this.state.entity} />
+              );
+            }}
+          />
+          <Match pattern={`${baseMatchPath}/programs`} render={
+            () => {
+              return (
+                <ProgramTab entity={this.state.entity} />
+              );
+            }}
+          />
+          <Match pattern={`${baseMatchPath}/lineage`} render={
+            () => {
+              return (
+                <LineageTab entity={this.state.entity} />
+              );
+            }}
+          />
+          <Match pattern={`${baseMatchPath}/audit`} render={
+            () => {
+              return (
+                <AuditTab entity={this.state.entity} />
+              );
+            }}
+          />
+          <Match pattern={`${baseMatchPath}/properties`} render={
+            () => {
+              return (
+                <PropertiesTab entity={this.state.entity} />
+              );
+            }}
+          />
+        </TabContent>
       </div>
     );
   }
@@ -160,4 +181,3 @@ DatasetDetailedViewTabs.propTypes = {
   pathname: PropTypes.string,
   params: PropTypes.object
 };
-

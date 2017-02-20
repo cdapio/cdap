@@ -45,12 +45,10 @@ angular.module(PKG.name + '.commons')
         }
       },
       'password': {
-        element: '<input/>',
+        element: '<my-password></my-password>',
         attributes: {
-          'class': 'form-control',
-          'ng-trim': 'false',
           'ng-model': 'model',
-          type: 'password'
+          'ng-trim': 'false'
         }
       },
       'datetime': {

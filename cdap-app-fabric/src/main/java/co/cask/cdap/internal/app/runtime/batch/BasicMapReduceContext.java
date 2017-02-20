@@ -263,10 +263,10 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   }
 
   /**
-   * @return a map from output name to provied output for the MapReduce job
+   * @return a map from output name to provided output for the MapReduce job
    */
   Map<String, ProvidedOutput> getOutputs() {
-    return ImmutableMap.copyOf(outputs);
+    return new HashMap<>(outputs);
   }
 
   @Override

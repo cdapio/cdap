@@ -16,30 +16,9 @@
 
 package co.cask.cdap.etl.api.batch;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.etl.api.MultiInputPipelineConfigurer;
-
-import java.util.Map;
-import javax.annotation.Nullable;
-
 /**
  * Runtime context for batch joiner
  */
 public interface BatchJoinerRuntimeContext extends BatchRuntimeContext {
 
-  /**
-   * Returns a map of input schemas for joiner. If the input schema for an input is null, the map will have input
-   * name with null schema for that input
-   * @return a map of input stage name to input schema for all the inputs to joiner
-   */
-  Map<String, Schema> getInputSchemas();
-
-  /**
-   * Returns output schema configured in {@link BatchJoiner#configurePipeline(MultiInputPipelineConfigurer)}
-   * at configure time.
-   * If not configured it will return null
-   * @return output schema {@link Schema} for joiner
-   */
-  @Nullable
-  Schema getOutputSchema();
 }

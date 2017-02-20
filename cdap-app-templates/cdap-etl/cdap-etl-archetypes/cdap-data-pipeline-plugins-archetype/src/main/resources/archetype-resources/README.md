@@ -9,7 +9,7 @@ These files can be used to deploy your plugins.
 
 UI Integration
 --------------
-The Cask Hydrator UI displays each plugin property as a simple textbox. To customize how the plugin properties
+The CDAP UI displays each plugin property as a simple textbox. To customize how the plugin properties
 are displayed in the UI, you can place a configuration file in the ``widgets`` directory.
 The file must be named following a convention of ``[plugin-name]-[plugin-type].json``.
 

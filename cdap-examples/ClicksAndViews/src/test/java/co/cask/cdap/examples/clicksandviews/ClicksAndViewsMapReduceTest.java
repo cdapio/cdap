@@ -19,6 +19,7 @@ package co.cask.cdap.examples.clicksandviews;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -83,7 +84,7 @@ public class ClicksAndViewsMapReduceTest extends TestBase {
       // configure this run of the MapReduce to write to the partition keyed by OUTPUT_PARTITION_RUNTIME
       .start(ImmutableMap.of("output.partition.key.runtime", Integer.toString(OUTPUT_PARTITION_RUNTIME)));
 
-    mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
+    mapReduceManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     List<String> joinedViews = new ArrayList<>();
     for (int i = 0; i < VIEWS.size(); i++) {

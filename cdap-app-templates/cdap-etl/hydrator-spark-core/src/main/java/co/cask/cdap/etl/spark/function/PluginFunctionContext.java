@@ -25,13 +25,10 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.StageMetrics;
-import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
-import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.batch.SparkBatchRuntimeContext;
-import co.cask.cdap.etl.spark.batch.SparkJoinerRuntimeContext;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -45,24 +42,17 @@ public class PluginFunctionContext implements Serializable {
   private static final long serialVersionUID = -8131461628444037900L;
 
   private final String namespace;
-  private final String stageName;
   private final long logicalStartTime;
   private final Map<String, String> arguments;
-  private final Map<String, Schema> inputSchemas;
-  private final Schema outputSchema;
   private final PluginContext pluginContext;
   private final Metrics metrics;
   private final SecureStore secureStore;
   private final DataTracer dataTracer;
+  private final StageInfo stageInfo;
 
   public PluginFunctionContext(StageInfo stageInfo, JavaSparkExecutionContext sec) {
-    this(stageInfo.getName(), sec, stageInfo.getInputSchemas(), stageInfo.getOutputSchema());
-  }
-
-  public PluginFunctionContext(String stageName, JavaSparkExecutionContext sec,
-                               Map<String, Schema> inputSchemas, Schema outputSchema) {
     this.namespace = sec.getNamespace();
-    this.stageName = stageName;
+    this.stageInfo = stageInfo;
     this.logicalStartTime = sec.getLogicalStartTime();
     Map<String, String> arguments = new HashMap<>();
     arguments.putAll(sec.getRuntimeArguments());
@@ -73,34 +63,31 @@ public class PluginFunctionContext implements Serializable {
       }
     }
     this.arguments = arguments;
-    this.inputSchemas = inputSchemas;
-    this.outputSchema = outputSchema;
     this.pluginContext = sec.getPluginContext();
     this.metrics = sec.getMetrics();
     this.secureStore = sec.getSecureStore();
-    this.dataTracer = sec.getDataTracer(stageName);
+    this.dataTracer = sec.getDataTracer(stageInfo.getName());
   }
 
   public <T> T createPlugin() throws Exception {
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(arguments, logicalStartTime, secureStore, namespace);
-    return pluginContext.newPluginInstance(stageName, macroEvaluator);
+    return pluginContext.newPluginInstance(stageInfo.getName(), macroEvaluator);
   }
 
   public String getStageName() {
-    return stageName;
+    return stageInfo.getName();
+  }
+
+  public StageInfo getStageInfo() {
+    return stageInfo;
   }
 
   public StageMetrics createStageMetrics() {
-    return new DefaultStageMetrics(metrics, stageName);
+    return new DefaultStageMetrics(metrics, stageInfo.getName());
   }
 
-  public BatchRuntimeContext createBatchRuntimeContext() {
-    return new SparkBatchRuntimeContext(pluginContext, metrics, logicalStartTime, arguments, stageName);
-  }
-
-  public BatchJoinerRuntimeContext createJoinerRuntimeContext() {
-    return new SparkJoinerRuntimeContext(pluginContext, metrics, logicalStartTime, arguments,
-                                         stageName, inputSchemas, outputSchema);
+  public SparkBatchRuntimeContext createBatchRuntimeContext() {
+    return new SparkBatchRuntimeContext(pluginContext, metrics, logicalStartTime, arguments, stageInfo);
   }
 
   public DataTracer getDataTracer() {

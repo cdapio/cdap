@@ -55,11 +55,16 @@ function createApplicationObj(entity) {
     'cdap-etl-realtime'
   ];
 
+  let version = entity.metadata.SYSTEM.properties.version;
+  if (version === '-SNAPSHOT') {
+    version = '1.0.0-SNAPSHOT';
+  }
+
   return {
     id: entity.entityId.id.applicationId,
     type: entity.entityId.type,
     metadata: entity,
-    version: `1.0.0${entity.metadata.SYSTEM.properties.version}`,
+    version,
     icon: EntityIconMap[entity.entityId.type],
     isHydrator: intersection(entity.metadata.SYSTEM.tags, hydratorAritfacts).length > 0
   };

@@ -49,7 +49,31 @@ export default class Wizard extends Component {
       successInfo: {},
       loading: false,
       error: '',
+      requiredStepsCompleted: false
     };
+  }
+  componentWillMount() {
+    this.checkRequiredSteps();
+    this.storeSubscription = this.props.store.subscribe(() => {
+      this.checkRequiredSteps();
+    });
+  }
+  componentWillUnmount() {
+    this.storeSubscription();
+  }
+  checkRequiredSteps() {
+    let state = this.props.store.getState();
+    let steps = Object.keys(state);
+
+    // non-required steps are marked as complete by default
+    let requiredStepsCompleted = steps.every(key => {
+      return state[key].__complete;
+    });
+    if (this.state.requiredStepsCompleted != requiredStepsCompleted) {
+      this.setState({
+        requiredStepsCompleted
+      });
+    }
   }
   getChildContext() {
     return {
@@ -127,7 +151,7 @@ export default class Wizard extends Component {
         <button
           className="btn btn-primary"
           onClick={this.submitForm.bind(this)}
-          disabled={this.props.finishButtonDisabled ? 'disabled' : null}
+          disabled={(!this.state.requiredStepsCompleted || this.state.loading) ? 'disabled' : null}
         >
           Finish
         </button>
@@ -351,5 +375,4 @@ Wizard.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   successInfo: PropTypes.object,
   onClose: PropTypes.func.isRequired,
-  finishButtonDisabled: PropTypes.bool
 };

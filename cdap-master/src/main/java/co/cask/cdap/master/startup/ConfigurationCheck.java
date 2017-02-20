@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.master.startup;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.logging.appender.kafka.LogPartitionType;
 import co.cask.cdap.proto.id.EntityId;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
@@ -25,7 +26,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import kafka.common.Topic;
-import org.apache.kafka.common.errors.InvalidTopicException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +34,7 @@ import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Checks the CDAP Configuration for bad settings.
@@ -56,9 +57,10 @@ class ConfigurationCheck extends AbstractMasterCheck {
     Set<String> problemKeys = new HashSet<>();
     checkServiceResources(problemKeys);
     checkBindAddresses();
-    checkPotentialPortConflicts();
+    checkPotentialPortConflicts(problemKeys);
     checkKafkaTopic(problemKeys);
     checkMessagingTopics(problemKeys);
+    checkLogPartitionKey(problemKeys);
 
     if (!problemKeys.isEmpty()) {
       throw new RuntimeException("Invalid configuration settings for keys: " + Joiner.on(',').join(problemKeys));
@@ -70,22 +72,17 @@ class ConfigurationCheck extends AbstractMasterCheck {
   // and the instances does not exceed max instances
   private void checkServiceResources(Set<String> problemKeys) {
     for (ServiceResourceKeys serviceResourceKeys : systemServicesResourceKeys) {
-      verifyResources(serviceResourceKeys, problemKeys);
-
-      // verify instances and max instances are positive integers
-      boolean instancesIsPositive = !problemKeys.contains(serviceResourceKeys.getInstancesKey());
-      boolean maxInstancesIsPositive = !problemKeys.contains(serviceResourceKeys.getMaxInstancesKey());
+      validatePositiveInteger(serviceResourceKeys.getMemoryKey(), problemKeys);
+      validatePositiveInteger(serviceResourceKeys.getVcoresKey(), problemKeys);
+      Integer instances = validatePositiveInteger(serviceResourceKeys.getInstancesKey(), problemKeys);
+      Integer maxInstances = validatePositiveInteger(serviceResourceKeys.getMaxInstancesKey(), problemKeys);
 
       // verify instances <= maxInstances
-      if (instancesIsPositive && maxInstancesIsPositive) {
-        int instances = serviceResourceKeys.getInstances();
-        int maxInstances = serviceResourceKeys.getMaxInstances();
-        if (instances > maxInstances) {
-          LOG.error("  {}={} must not be greater than {}={}",
-                    serviceResourceKeys.getInstancesKey(), instances,
-                    serviceResourceKeys.getMaxInstancesKey(), maxInstances);
-          problemKeys.add(serviceResourceKeys.getInstancesKey());
-        }
+      if (instances != null && maxInstances != null &&  instances > maxInstances) {
+        LOG.error("  {} is set to {} but must not be greater than the {} of {}",
+                  serviceResourceKeys.getInstancesKey(), instances,
+                  serviceResourceKeys.getMaxInstancesKey(), maxInstances);
+        problemKeys.add(serviceResourceKeys.getInstancesKey());
       }
     }
   }
@@ -99,19 +96,28 @@ class ConfigurationCheck extends AbstractMasterCheck {
       String bindAddress = cConf.get(bindAddressKey);
       try {
         if (InetAddress.getByName(bindAddress).isLoopbackAddress()) {
-          LOG.warn("{} is set to {}. The service may not be discoverable on a multinode Hadoop cluster.",
+          LOG.warn("  {} is set to {}. The service may not be discoverable on a multinode Hadoop cluster.",
                    bindAddressKey, bindAddress);
         }
       } catch (UnknownHostException e) {
-        LOG.warn("Unable to resolve {}.", bindAddressKey, e);
+        LOG.warn("  {} is set to {} and cannot be resolved. ", bindAddressKey, bindAddress, e);
       }
     }
   }
 
-  private void checkPotentialPortConflicts() {
+  private void checkPotentialPortConflicts(Set<String> problemKeys) {
     // check for potential port conflicts
     Multimap<Integer, String> services = HashMultimap.create();
-    if (cConf.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED)) {
+    String sslKey = Constants.Security.SSL.EXTERNAL_ENABLED;
+    boolean isSSL;
+    try {
+      isSSL = cConf.getBoolean(sslKey);
+    } catch (Exception e) {
+      logProblem("  {} is set to {} and cannot be parsed as a boolean", sslKey, cConf.get(sslKey), e);
+      problemKeys.add(Constants.Security.SSL.EXTERNAL_ENABLED);
+      return;
+    }
+    if (isSSL) {
       services.put(cConf.getInt(Constants.Router.ROUTER_SSL_PORT), "Router");
       services.put(cConf.getInt(Constants.Security.AuthenticationServer.SSL_PORT), "Authentication Server");
     } else {
@@ -128,56 +134,103 @@ class ConfigurationCheck extends AbstractMasterCheck {
   }
 
   private void checkKafkaTopic(Set<String> problemKeys) {
-    if (!isValidKafkaTopic(Constants.Logging.KAFKA_TOPIC)) {
-      problemKeys.add(Constants.Logging.KAFKA_TOPIC);
-    }
+    validateKafkaTopic(Constants.Logging.KAFKA_TOPIC, problemKeys);
+  }
+
+  private void checkLogPartitionKey(Set<String> problemKeys) {
+    validatePartitionKey(Constants.Logging.LOG_PUBLISH_PARTITION_KEY, problemKeys);
   }
 
   private void checkMessagingTopics(Set<String> problemKeys) {
-    if (!EntityId.isValidId(cConf.get(Constants.Audit.TOPIC))) {
-      problemKeys.add(Constants.Audit.TOPIC);
-    }
-    if (!EntityId.isValidId(cConf.get(Constants.Notification.TOPIC))) {
-      problemKeys.add(Constants.Notification.TOPIC);
-    }
+    validateMessagingTopic(Constants.Audit.TOPIC, problemKeys);
+    validateMessagingTopic(Constants.Notification.TOPIC, problemKeys);
   }
 
-  private boolean verifyResources(ServiceResourceKeys serviceResourceKeys, Set<String> problemKeys) {
+  /**
+   * Validate that the value for the given key is a valid messaging topic, that is, a valid dataset name.
+   * If it is not, log an error and add the key to the problemKeys.
+   */
+  private void validateMessagingTopic(String key, Set<String> problemKeys) {
+    String value = cConf.get(key);
     try {
-      boolean allPositive = true;
-      if (serviceResourceKeys.getMemory() <= 0) {
-        LOG.error("  {} must be a positive integer", serviceResourceKeys.getMemoryKey());
-        problemKeys.add(serviceResourceKeys.getMemoryKey());
-        allPositive = false;
+      if (!EntityId.isValidDatasetId(value)) {
+        LOG.error("  {} must be a valid entity id but is {}", key, value);
+        problemKeys.add(key);
       }
-      if (serviceResourceKeys.getVcores() <= 0) {
-        LOG.error("  {} must be a positive integer", serviceResourceKeys.getVcoresKey());
-        problemKeys.add(serviceResourceKeys.getVcoresKey());
-        allPositive = false;
-      }
-      if (serviceResourceKeys.getInstances() <= 0) {
-        LOG.error("  {} must be a positive integer", serviceResourceKeys.getInstancesKey());
-        problemKeys.add(serviceResourceKeys.getInstancesKey());
-        allPositive = false;
-      }
-      if (serviceResourceKeys.getMaxInstances() <= 0) {
-        LOG.error("  {} must be a positive integer", serviceResourceKeys.getMaxInstancesKey());
-        problemKeys.add(serviceResourceKeys.getMaxInstancesKey());
-        allPositive = false;
-      }
-      return allPositive;
     } catch (Exception e) {
-      return false;
+      logProblem("  {} is set to {} and cannot be verified as a valid entity id", key, value, e);
+      problemKeys.add(key);
     }
   }
 
-  private boolean isValidKafkaTopic(String key) {
+  /**
+   * Validate that the value for the given key is a positive integer.
+   * If it is not, log an error and add the key to the problemKeys.
+   *
+   * @return the value configured for the key if it is a positive integer; null otherwise
+   */
+  private Integer validatePositiveInteger(String key, Set<String> problemKeys) {
+    // it may happen that a service does not have this config.
+    // for example, explore service does not have instances and maxInstances
+    if (key == null) {
+      return null;
+    }
+    String value = cConf.get(key);
+    try {
+      int intValue = Integer.parseInt(value);
+      if (intValue > 0) {
+        return intValue;
+      }
+      LOG.error("  {} must be a positive integer but is {}", key, value);
+      problemKeys.add(key);
+    } catch (Exception e) {
+      logProblem("  {} is set to {} and cannot be parsed as an integer", key, value, e);
+      problemKeys.add(key);
+    }
+    return null;
+  }
+
+  /**
+   * Validate that the value for the given key is a valid Kafka topic.
+   * If it is not, log an error and add the key to the problemKeys.
+   */
+  private void validateKafkaTopic(String key, Set<String> problemKeys) {
     try {
       Topic.validate(cConf.get(key));
-    } catch (InvalidTopicException e) {
-      LOG.error("  {} key has invalid kafka topic name. {}", key, e.getMessage());
-      return false;
+    } catch (Exception e) {
+      logProblem("  {} must be a valid kafka topic name but is {}", key, cConf.get(key), e);
+      problemKeys.add(key);
     }
-    return true;
+  }
+
+  /**
+   * Validate that the value for the given key is a valid partition key.
+   * If it is not, log an error and add the key to the problemKeys.
+   */
+  private void validatePartitionKey(String key, Set<String> problemKeys) {
+    try {
+      LogPartitionType.valueOf(cConf.get(key).toUpperCase());
+    } catch (Exception e) {
+      logProblem("  {} must be a valid log partition type (program or application) but is {}", key, cConf.get(key), e);
+      problemKeys.add(key);
+    }
+  }
+
+  /**
+   * Best effort to log a user-friendly error message for a badly configured key and value.
+   *
+   * @param message The message desxcribing the problem
+   * @param e The exception that caused the problem.
+   */
+  private void logProblem(String message, String key, @Nullable String value, @Nullable Exception e) {
+    if (e == null || value == null) {
+      LOG.error(message, key, value);
+    } else if (e.getMessage() == null) {
+      LOG.error(message + ". {}", key, value, e.getClass().getSimpleName());
+    } else if (e instanceof IllegalArgumentException) {
+      LOG.error(message + ". {}", key, value, e.getMessage());
+    } else {
+      LOG.error(message + ". {}: {}", key, value, e.getClass().getSimpleName(), e.getMessage());
+    }
   }
 }

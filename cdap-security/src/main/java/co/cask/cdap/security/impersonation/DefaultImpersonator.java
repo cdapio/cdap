@@ -18,17 +18,14 @@ package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.kerberos.OwnerAdmin;
+import co.cask.cdap.common.kerberos.ImpersonatedOpType;
+import co.cask.cdap.common.kerberos.ImpersonationRequest;
 import co.cask.cdap.common.kerberos.SecurityUtil;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,57 +38,41 @@ import java.util.concurrent.Callable;
 public class DefaultImpersonator implements Impersonator {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultImpersonator.class);
-
-  private final CConfiguration cConf;
-  private final OwnerAdmin ownerAdmin;
-  private final boolean kerberosEnabled;
   private final UGIProvider ugiProvider;
+  private final boolean kerberosEnabled;
 
   @Inject
   @VisibleForTesting
-  public DefaultImpersonator(CConfiguration cConf, UGIProvider ugiProvider,
-                             OwnerAdmin ownerAdmin) {
-    this.cConf = cConf;
-    this.ownerAdmin = ownerAdmin;
+  public DefaultImpersonator(CConfiguration cConf, UGIProvider ugiProvider) {
     this.ugiProvider = ugiProvider;
     this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
   }
 
   @Override
   public <T> T doAs(NamespacedEntityId entityId, final Callable<T> callable) throws Exception {
-    UserGroupInformation ugi = getUGI(entityId);
-    return  ImpersonationUtils.doAs(ugi, callable);
+    return doAs(entityId, callable, ImpersonatedOpType.OTHER);
+  }
+
+  @Override
+  public <T> T doAs(NamespacedEntityId entityId, Callable<T> callable,
+                    ImpersonatedOpType impersonatedOpType) throws Exception {
+    UserGroupInformation ugi = getUGI(entityId, impersonatedOpType);
+    LOG.debug("Performing doAs with UGI {} for entity {} and impersonation operation type", ugi, entityId,
+              impersonatedOpType);
+    return ImpersonationUtils.doAs(ugi, callable);
   }
 
   @Override
   public UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException, NamespaceNotFoundException {
+    return getUGI(entityId, ImpersonatedOpType.OTHER);
+  }
+
+  private UserGroupInformation getUGI(NamespacedEntityId entityId,
+                                      ImpersonatedOpType impersonatedOpType) throws IOException {
     // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(entityId.getNamespaceId())) {
       return UserGroupInformation.getCurrentUser();
     }
-    String principal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
-    String keytabURI = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
-    try {
-      KerberosPrincipalId principalId = ownerAdmin.getEffectiveOwner(entityId);
-      // If an effective owner was not found then the operation will be performed as the configured master user
-      if (principalId != null) {
-        principal = principalId.getPrincipal();
-        keytabURI = SecurityUtil.getKeytabURIforPrincipal(principal, cConf);
-      }
-      LOG.debug("Impersonating principal {} for entity {}, keytab path is {}", principal, entityId, keytabURI);
-      return getUGI(new ImpersonationInfo(principal, keytabURI));
-    } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, IOException.class);
-      throw Throwables.propagate(e);
-    }
-  }
-
-  private UserGroupInformation getUGI(ImpersonationInfo impersonationInfo) throws IOException {
-    // no need to get a UGI if the current UGI is the one we're requesting; simply return it
-    String configuredPrincipalShortName = new KerberosName(impersonationInfo.getPrincipal()).getShortName();
-    if (UserGroupInformation.getCurrentUser().getShortUserName().equals(configuredPrincipalShortName)) {
-      return UserGroupInformation.getCurrentUser();
-    }
-    return ugiProvider.getConfiguredUGI(impersonationInfo);
+    return ugiProvider.getConfiguredUGI(new ImpersonationRequest(entityId, impersonatedOpType)).getUGI();
   }
 }

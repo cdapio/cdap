@@ -20,13 +20,17 @@
 html {
   position: relative;
   min-height: 100%;
+  overflow-y: hidden;
 }
 
 body {
   background-color: white;
+  min-width: $cdap_body_min_width;
 
   #app-container {
     margin-top: 50px;
+    overflow-y: auto;
+    height: calc(100vh - 104px); // Header + footer heights
   }
   .container-fluid {
     padding-bottom: 52px; // footer height

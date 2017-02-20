@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,10 +25,10 @@ import org.apache.avro.generic.GenericRecord;
 /**
  * Serializer for an array of StackTraceElementProxies.
  */
-public final class StackTraceElementProxyArraySerializer {
+final class StackTraceElementProxyArraySerializer {
   private StackTraceElementProxyArraySerializer() {}
 
-  public static GenericArray<GenericRecord> encode(Schema schema, StackTraceElementProxy[] stackTraceElementProxies) {
+  static GenericArray<GenericRecord> encode(Schema schema, StackTraceElementProxy[] stackTraceElementProxies) {
     if (stackTraceElementProxies != null) {
       Schema steArraySchema = schema.getTypes().get(1);
       GenericArray<GenericRecord> steArray = new GenericData.Array<>(stackTraceElementProxies.length,
@@ -41,7 +41,7 @@ public final class StackTraceElementProxyArraySerializer {
     return null;
   }
 
-  public static StackTraceElementProxy[] decode(GenericArray<GenericRecord> datum) {
+  static StackTraceElementProxy[] decode(GenericArray<GenericRecord> datum) {
     if (datum != null) {
       StackTraceElementProxy[] stackTraceElementProxies = new StackTraceElementProxy[datum.size()];
       int i = 0;

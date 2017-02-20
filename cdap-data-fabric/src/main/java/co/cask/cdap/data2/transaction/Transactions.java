@@ -87,25 +87,18 @@ public final class Transactions {
     return new TransactionFailureException(message, t);
   }
 
-
-  private static Supplier<TransactionContext>
-  constantContextSupplier(final TransactionSystemClient txClient,
-                          final Iterable<? extends TransactionAware> txAwares) {
-    return new Supplier<TransactionContext>() {
-      @Override
-      public TransactionContext get() {
-        return new TransactionContext(txClient, Iterables.transform(txAwares, Functions.<TransactionAware>identity()));
-      }
-    };
-  }
-
   /**
    * Handy method to create {@link TransactionExecutor} (See TEPHRA-71).
    */
   public static TransactionExecutor createTransactionExecutor(TransactionExecutorFactory factory,
                                                               final TransactionSystemClient txClient,
                                                               final Iterable<? extends TransactionAware> txAwares) {
-    return factory.createExecutor(constantContextSupplier(txClient, txAwares));
+    return factory.createExecutor(new Supplier<TransactionContext>() {
+      @Override
+      public TransactionContext get() {
+        return new TransactionContext(txClient, Iterables.transform(txAwares, Functions.<TransactionAware>identity()));
+      }
+    });
   }
 
   /**
@@ -272,7 +265,7 @@ public final class Transactions {
     return result.get();
   }
 
-  /*
+  /**
    * Creates a new {@link Transactional} that will automatically retry upon transaction failure.
    *
    * @param transactional The {@link Transactional} to delegate the transaction execution to
@@ -434,5 +427,39 @@ public final class Transactions {
     return null;
   }
 
+  /**
+   * Executes the given callable with a transaction. Think twice before you call this. Usages of this method
+   * likely indicate poor exception handling.
+   *
+   * @param transactional the {@link Transactional} used to submit the task
+   * @param callable the task
+   * @param <V> type of result
+   * @return value returned by the given {@link TxCallable}.
+   * @throws RuntimeException for any errors that occur
+   */
+  public static <V> V executeUnchecked(Transactional transactional, final TxCallable<V> callable) {
+    try {
+      return execute(transactional, callable);
+    } catch (TransactionFailureException e) {
+      throw propagate(e);
+    }
+  }
 
+  /**
+   * Executes the given runnable with a transaction. Think twice before you call this. Usages of this method
+   * likely indicate poor exception handling.
+   *
+   * @param transactional the {@link Transactional} used to submit the task
+   * @param runnable task
+   * @throws RuntimeException for errors that occur
+   */
+  public static void executeUnchecked(Transactional transactional, final TxRunnable runnable) {
+    executeUnchecked(transactional, new TxCallable<Void>() {
+      @Override
+      public Void call(DatasetContext context) throws Exception {
+        runnable.run(context);
+        return null;
+      }
+    });
+  }
 }

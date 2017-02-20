@@ -16,7 +16,7 @@ CDAP datasets using the :ref:`CDAP JDBC driver <cdap-jdbc>`.
    file to the ``lib`` directory of *Pentaho Data Integration*, located at the root of the application's directory.
 #. Open *Pentaho Data Integration*.
 #. In the toolbar, select ``File -> New -> Database Connection...``.
-#. In the ``General`` section, select a ``Connection Name``, like ``CDAP Standalone``. For the ``Connection Type``, select
+#. In the ``General`` section, select a ``Connection Name``, such as ``CDAP Standalone``. For the ``Connection Type``, select
    ``Generic database``. Select ``Native (JDBC)`` for the ``Access`` field. In this example, where we connect to
    a standalone instance of CDAP, our ``Custom Connection URL`` will then be ``jdbc:cdap://localhost:11015``.
    In the field ``Custom Driver Class Name``, enter ``co.cask.cdap.explore.jdbc.ExploreDriver``.

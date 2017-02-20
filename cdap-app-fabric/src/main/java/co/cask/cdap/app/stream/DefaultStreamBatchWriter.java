@@ -18,7 +18,7 @@ package co.cask.cdap.app.stream;
 
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.common.io.ByteBuffers;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
@@ -33,10 +33,10 @@ public class DefaultStreamBatchWriter implements StreamBatchWriter {
 
   private final HttpURLConnection connection;
   private final OutputStream outputStream;
-  private final Id.Stream stream;
+  private final StreamId stream;
   private boolean open;
 
-  public DefaultStreamBatchWriter(HttpURLConnection connection, Id.Stream stream) throws IOException {
+  public DefaultStreamBatchWriter(HttpURLConnection connection, StreamId stream) throws IOException {
     this.connection = connection;
     this.outputStream = connection.getOutputStream();
     this.stream = stream;

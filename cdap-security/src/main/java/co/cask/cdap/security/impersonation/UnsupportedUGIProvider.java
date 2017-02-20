@@ -16,7 +16,8 @@
 
 package co.cask.cdap.security.impersonation;
 
-import org.apache.hadoop.security.UserGroupInformation;
+import co.cask.cdap.common.kerberos.ImpersonationRequest;
+import co.cask.cdap.common.kerberos.UGIWithPrincipal;
 
 import java.io.IOException;
 
@@ -25,7 +26,7 @@ import java.io.IOException;
  */
 public class UnsupportedUGIProvider implements UGIProvider {
   @Override
-  public UserGroupInformation getConfiguredUGI(ImpersonationInfo impersonationInfo) throws IOException {
+  public UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
     // If this implementation's method is called, then some guice binding is done improperly.
     // For instance, we don't call this method if Kerberos is not enabled, and we only bind this implementation
     // in-memory and for Standalone, where Kerberos is not enabled.

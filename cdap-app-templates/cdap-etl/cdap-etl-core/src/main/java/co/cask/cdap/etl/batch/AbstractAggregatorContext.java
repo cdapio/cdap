@@ -22,6 +22,7 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchAggregatorContext;
+import co.cask.cdap.etl.planner.StageInfo;
 
 import java.util.Map;
 
@@ -37,11 +38,11 @@ public abstract class AbstractAggregatorContext extends AbstractBatchContext imp
                                       DatasetContext datasetContext,
                                       Metrics metrics,
                                       LookupProvider lookup,
-                                      String stageName,
                                       long logicalStartTime,
                                       Map<String, String> runtimeArgs,
-                                      Admin admin) {
-    super(pluginContext, datasetContext, metrics, lookup, stageName, logicalStartTime, runtimeArgs, admin);
+                                      Admin admin,
+                                      StageInfo stageInfo) {
+    super(pluginContext, datasetContext, metrics, lookup, logicalStartTime, runtimeArgs, admin, stageInfo);
   }
 
   @Override

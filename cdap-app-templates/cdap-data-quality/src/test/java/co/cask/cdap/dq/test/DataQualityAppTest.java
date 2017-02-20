@@ -31,6 +31,7 @@ import co.cask.cdap.dq.functions.DiscreteValuesHistogram;
 import co.cask.cdap.dq.testclasses.StreamBatchSource;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -100,6 +101,7 @@ public class DataQualityAppTest extends TestBase {
 
   @Before
   public void beforeTest() throws Exception {
+    super.beforeTest();
     if (sentData) {
       return;
     }
@@ -156,7 +158,7 @@ public class DataQualityAppTest extends TestBase {
     ApplicationManager applicationManager = deployApplication(appId, appRequest);
 
     MapReduceManager mrManager = applicationManager.getMapReduceManager("FieldAggregator").start();
-    mrManager.waitForFinish(180, TimeUnit.SECONDS);
+    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 180, TimeUnit.SECONDS);
 
     Table logDataStore = (Table) getDataset("dataQuality").get();
 
@@ -197,7 +199,7 @@ public class DataQualityAppTest extends TestBase {
     ApplicationManager applicationManager = deployApplication(appId, appRequest);
 
     MapReduceManager mrManager = applicationManager.getMapReduceManager("FieldAggregator").start();
-    mrManager.waitForFinish(180, TimeUnit.SECONDS);
+    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 180, TimeUnit.SECONDS);
 
     ServiceManager serviceManager = applicationManager.getServiceManager
       (DataQualityService.SERVICE_NAME).start();
@@ -215,7 +217,7 @@ public class DataQualityAppTest extends TestBase {
     TimestampValue firstTimestampValue = tsValueListActual.get(0);
     Assert.assertEquals(256.0, firstTimestampValue.getValue());
     serviceManager.stop();
-    serviceManager.waitForFinish(180, TimeUnit.SECONDS);
+    serviceManager.waitForRun(ProgramRunStatus.KILLED, 180, TimeUnit.SECONDS);
   }
 
   @Test
@@ -237,7 +239,7 @@ public class DataQualityAppTest extends TestBase {
     ApplicationManager applicationManager = deployApplication(appId, appRequest);
 
     MapReduceManager mrManager = applicationManager.getMapReduceManager("FieldAggregator").start();
-    mrManager.waitForFinish(180, TimeUnit.SECONDS);
+    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 180, TimeUnit.SECONDS);
 
     Map<String, Integer> expectedMap = new HashMap<>();
     expectedMap.put("256", 3);
@@ -285,7 +287,7 @@ public class DataQualityAppTest extends TestBase {
     expectedAggregationTypeValuesList.add(new AggregationTypeValue("DiscreteValuesHistogram", true));
     Assert.assertEquals(expectedAggregationTypeValuesList, outputAggregationTypeValuesList);
     serviceManager.stop();
-    serviceManager.waitForFinish(180, TimeUnit.SECONDS);
+    serviceManager.waitForRun(ProgramRunStatus.KILLED, 180, TimeUnit.SECONDS);
   }
 
   private DataQualitySource getStreamSource() {

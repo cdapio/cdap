@@ -16,52 +16,46 @@
 
 package co.cask.cdap.metrics.runtime;
 
-import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.resource.ResourceBalancerService;
+import co.cask.cdap.metrics.process.KafkaMetricsProcessorService;
 import co.cask.cdap.metrics.process.KafkaMetricsProcessorServiceFactory;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClient;
 
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
- * A service that creates {@link co.cask.cdap.metrics.process.KafkaMetricsProcessorService} dynamically at runtime
+ * A service that creates {@link KafkaMetricsProcessorService} dynamically at runtime
  * according to the given partitions from {@link ResourceBalancerService}.
  */
 public final class KafkaMetricsProcessorRuntimeService extends ResourceBalancerService {
 
-  @Nullable
-  private MetricsContext metricsContext;
-
   private static final String SERVICE_NAME = "metrics.processor.kafka.consumer";
 
   private final KafkaMetricsProcessorServiceFactory factory;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
-  public KafkaMetricsProcessorRuntimeService(CConfiguration conf,
-                                             ZKClientService zkClient,
-                                             DiscoveryService discoveryService,
-                                             DiscoveryServiceClient discoveryServiceClient,
-                                             KafkaMetricsProcessorServiceFactory metricsProcessorFactory) {
+  KafkaMetricsProcessorRuntimeService(CConfiguration conf,
+                                      ZKClient zkClient,
+                                      DiscoveryService discoveryService,
+                                      DiscoveryServiceClient discoveryServiceClient,
+                                      MetricsCollectionService metricsCollectionService,
+                                      KafkaMetricsProcessorServiceFactory metricsProcessorFactory) {
     super(SERVICE_NAME, conf.getInt(Constants.Metrics.KAFKA_PARTITION_SIZE),
           zkClient, discoveryService, discoveryServiceClient);
     this.factory = metricsProcessorFactory;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
   protected Service createService(Set<Integer> partitions) {
-    co.cask.cdap.metrics.process.KafkaMetricsProcessorService service = factory.create(partitions);
-    service.setMetricsContext(metricsContext);
-    return service;
-  }
-
-  public void setMetricsContext(MetricsContext metricsContext) {
-    this.metricsContext = metricsContext;
+    return factory.create(partitions, metricsCollectionService.getContext(Constants.Metrics.METRICS_PROCESSOR_CONTEXT));
   }
 }

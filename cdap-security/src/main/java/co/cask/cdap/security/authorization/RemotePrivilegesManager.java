@@ -16,7 +16,6 @@
 
 package co.cask.cdap.security.authorization;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.internal.remote.RemoteOpsClient;
 import co.cask.cdap.proto.id.EntityId;
@@ -39,8 +38,8 @@ public class RemotePrivilegesManager extends RemoteOpsClient implements Privileg
   private static final Logger LOG = LoggerFactory.getLogger(RemotePrivilegesManager.class);
 
   @Inject
-  RemotePrivilegesManager(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
-    super(cConf, discoveryClient, Constants.Service.APP_FABRIC_HTTP);
+  RemotePrivilegesManager(DiscoveryServiceClient discoveryClient) {
+    super(discoveryClient, Constants.Service.APP_FABRIC_HTTP);
   }
 
   @Override

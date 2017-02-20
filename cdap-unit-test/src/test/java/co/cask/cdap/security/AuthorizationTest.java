@@ -22,7 +22,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
@@ -171,12 +170,12 @@ public class AuthorizationTest extends TestBase {
   public static void setup() {
     instance = new InstanceId(getConfiguration().get(Constants.INSTANCE_NAME));
     oldUser = SecurityRequestContext.getUserId();
-    SecurityRequestContext.setUserId(ALICE.getName());
   }
 
   @Before
   public void setupTest() throws Exception {
     Assert.assertEquals(ImmutableSet.<Privilege>of(), getAuthorizer().listPrivileges(ALICE));
+    SecurityRequestContext.setUserId(ALICE.getName());
   }
 
   @Test
@@ -238,7 +237,7 @@ public class AuthorizationTest extends TestBase {
       }
     }, 5, TimeUnit.SECONDS);
     flowManager.stop();
-    flowManager.waitForFinish(5, TimeUnit.SECONDS);
+    flowManager.waitForRun(ProgramRunStatus.KILLED, 60, TimeUnit.SECONDS);
 
     // Now revoke read permission for Alice on that stream (revoke ALL and then grant everything other than READ)
     authorizer.revoke(streamId, ALICE, EnumSet.allOf(Action.class));
@@ -263,7 +262,7 @@ public class AuthorizationTest extends TestBase {
     authorizer.revoke(streamId, ALICE, ImmutableSet.of(Action.READ));
     TimeUnit.MILLISECONDS.sleep(10);
     flowManager.stop();
-    flowManager.waitForFinish(5, TimeUnit.SECONDS);
+    flowManager.waitForRuns(ProgramRunStatus.KILLED, 2, 5, TimeUnit.SECONDS);
     appManager.delete();
   }
 
@@ -279,13 +278,8 @@ public class AuthorizationTest extends TestBase {
 
     WorkerManager workerManager = appManager.getWorkerManager(StreamAuthApp.WORKER);
     workerManager.start();
-    workerManager.waitForFinish(5, TimeUnit.SECONDS);
-    try {
-      workerManager.stop();
-    } catch (Exception e) {
-      // workaround since we want worker job to be de-listed from the running processes to allow cleanup to happen
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
-    }
+    workerManager.waitForRun(ProgramRunStatus.COMPLETED, 60, TimeUnit.SECONDS);
+
     StreamId streamId = AUTH_NAMESPACE.stream(StreamAuthApp.STREAM);
     StreamManager streamManager = getStreamManager(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM));
     Assert.assertEquals(5, streamManager.getEvents(0, Long.MAX_VALUE, Integer.MAX_VALUE).size());
@@ -294,13 +288,8 @@ public class AuthorizationTest extends TestBase {
     authorizer.revoke(streamId, ALICE, EnumSet.allOf(Action.class));
     authorizer.grant(streamId, ALICE, EnumSet.of(Action.READ, Action.ADMIN, Action.EXECUTE));
     workerManager.start();
-    workerManager.waitForFinish(5, TimeUnit.SECONDS);
-    try {
-      workerManager.stop();
-    } catch (Exception e) {
-      // workaround since we want worker job to be de-listed from the running processes to allow cleanup to happen
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
-    }
+    workerManager.waitForRuns(ProgramRunStatus.FAILED, 1, 60, TimeUnit.SECONDS);
+
     // Give permissions back so that we can fetch the stream events
     authorizer.grant(streamId, ALICE, EnumSet.allOf(Action.class));
     Assert.assertEquals(5, streamManager.getEvents(0, Long.MAX_VALUE, Integer.MAX_VALUE).size());
@@ -323,13 +312,8 @@ public class AuthorizationTest extends TestBase {
     streamManager.send("Hello");
     final SparkManager sparkManager = appManager.getSparkManager(StreamAuthApp.SPARK);
     sparkManager.start();
-    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
-    try {
-      sparkManager.stop();
-    } catch (Exception e) {
-      // workaround since we want spark job to be de-listed from the running processes to allow cleanup to happen
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
-    }
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
+
     DataSetManager<KeyValueTable> kvManager = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
     try (KeyValueTable kvTable = kvManager.get()) {
       byte[] value = kvTable.read("Hello");
@@ -341,20 +325,8 @@ public class AuthorizationTest extends TestBase {
     authorizer.revoke(streamId, ALICE, EnumSet.allOf(Action.class));
     authorizer.grant(streamId, ALICE, EnumSet.of(Action.WRITE, Action.ADMIN, Action.EXECUTE));
     sparkManager.start();
-    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
-    try {
-      sparkManager.stop();
-    } catch (Exception e) {
-      // workaround since we want spark job to be de-listed from the running processes to allow cleanup to happen
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
-    }
+    sparkManager.waitForRun(ProgramRunStatus.FAILED, 1, TimeUnit.MINUTES);
 
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return sparkManager.getHistory(ProgramRunStatus.FAILED).size();
-      }
-    }, 5, TimeUnit.SECONDS);
     kvManager = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
     try (KeyValueTable kvTable = kvManager.get()) {
       byte[] value = kvTable.read("World");
@@ -364,21 +336,8 @@ public class AuthorizationTest extends TestBase {
     // Grant ALICE, READ permission on STREAM and now Spark job should run successfully
     authorizer.grant(streamId, ALICE, ImmutableSet.of(Action.READ));
     sparkManager.start();
-    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
-    try {
-      sparkManager.stop();
-    } catch (Exception e) {
-      // workaround since we want spark job to be de-listed from the running processes to allow cleanup to happen
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
-    }
+    sparkManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 1, TimeUnit.MINUTES);
 
-    // so far there should be 2 successful runs of spark program
-    Tasks.waitFor(2, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return sparkManager.getHistory(ProgramRunStatus.COMPLETED).size();
-      }
-    }, 5, TimeUnit.SECONDS);
     kvManager = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
     try (KeyValueTable kvTable = kvManager.get()) {
       byte[] value = kvTable.read("World");
@@ -402,25 +361,14 @@ public class AuthorizationTest extends TestBase {
     streamManager.send("Hello");
     final MapReduceManager mrManager = appManager.getMapReduceManager(StreamAuthApp.MAPREDUCE);
     mrManager.start();
-    mrManager.waitForFinish(1, TimeUnit.MINUTES);
-    try {
-      mrManager.stop();
-    } catch (Exception e) {
-      // workaround since we want mr job to be de-listed from the running processes to allow cleanup to happen
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
-    }
+    // Since Alice had full permissions, she should be able to execute the MR job successfully
+    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 1, TimeUnit.MINUTES);
+
     DataSetManager<KeyValueTable> kvManager = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
     try (KeyValueTable kvTable = kvManager.get()) {
       byte[] value = kvTable.read("Hello");
       Assert.assertArrayEquals(Bytes.toBytes("Hello"), value);
     }
-    // Since Alice had full permissions, she should be able to execute the MR job successfully
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return mrManager.getHistory(ProgramRunStatus.COMPLETED).size();
-      }
-    }, 5, TimeUnit.SECONDS);
 
     ProgramId mrId = AUTH_NAMESPACE.app(StreamAuthApp.APP).mr(StreamAuthApp.MAPREDUCE);
     authorizer.grant(mrId.getNamespaceId(), BOB, ImmutableSet.of(Action.ADMIN));
@@ -437,20 +385,8 @@ public class AuthorizationTest extends TestBase {
     // Switch user to Bob. Note that he doesn't have READ access on the stream.
     SecurityRequestContext.setUserId(BOB.getName());
     mrManager.start();
-    mrManager.waitForFinish(1, TimeUnit.MINUTES);
-    try {
-      mrManager.stop();
-    } catch (Exception e) {
-      // workaround since we want mr job to be de-listed from the running processes to allow cleanup to happen
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
-    }
+    mrManager.waitForRun(ProgramRunStatus.FAILED, 1, TimeUnit.MINUTES);
 
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return mrManager.getHistory(ProgramRunStatus.FAILED).size();
-      }
-    }, 5, TimeUnit.SECONDS);
     kvManager = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
     try (KeyValueTable kvTable = kvManager.get()) {
       byte[] value = kvTable.read("World");
@@ -460,20 +396,8 @@ public class AuthorizationTest extends TestBase {
     // Now grant Bob, READ access on the stream. MR job should execute successfully now.
     authorizer.grant(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM), BOB, ImmutableSet.of(Action.READ));
     mrManager.start();
-    mrManager.waitForFinish(1, TimeUnit.MINUTES);
-    try {
-      mrManager.stop();
-    } catch (Exception e) {
-      // workaround since we want mr job to be de-listed from the running processes to allow cleanup to happen
-      Assert.assertTrue(e.getCause() instanceof BadRequestException);
-    }
+    mrManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 1, TimeUnit.MINUTES);
 
-    Tasks.waitFor(2, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return mrManager.getHistory(ProgramRunStatus.COMPLETED).size();
-      }
-    }, 5, TimeUnit.SECONDS);
     kvManager = getDataset(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE));
     try (KeyValueTable kvTable = kvManager.get()) {
       byte[] value = kvTable.read("World");
@@ -810,8 +734,6 @@ public class AuthorizationTest extends TestBase {
 
     testSystemDatasetAccessFromFlowlet(flowManager);
     testCrossNSDatasetAccessFromFlowlet(flowManager);
-
-    appManager.stopAll();
   }
 
   private void testSystemDatasetAccessFromFlowlet(final FlowManager flowManager) throws Exception {
@@ -921,8 +843,6 @@ public class AuthorizationTest extends TestBase {
 
     testCrossNSSystemDatasetAccessWithAuthMapReduce(mrManager);
     testCrossNSDatasetAccessWithAuthMapReduce(mrManager);
-
-    appManager.stopAll();
   }
 
   private void testCrossNSSystemDatasetAccessWithAuthMapReduce(MapReduceManager mrManager) throws Exception {
@@ -1018,7 +938,7 @@ public class AuthorizationTest extends TestBase {
     // switch back to BOB and run MR again. this should work
     SecurityRequestContext.setUserId(BOB.getName());
     mrManager.start(argsForMR);
-    mrManager.waitForFinish(5, TimeUnit.MINUTES);
+    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     // Verify results as alice
     SecurityRequestContext.setUserId(ALICE.getName());
@@ -1040,8 +960,6 @@ public class AuthorizationTest extends TestBase {
 
     testCrossNSSystemDatasetAccessWithAuthSpark(sparkManager);
     testCrossNSDatasetAccessWithAuthSpark(sparkManager);
-
-    appManager.stopAll();
   }
 
   @Test
@@ -1222,7 +1140,7 @@ public class AuthorizationTest extends TestBase {
     SecurityRequestContext.setUserId(BOB.getName());
 
     sparkManager.start(args);
-    sparkManager.waitForFinish(120, TimeUnit.SECONDS);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 120, TimeUnit.SECONDS);
 
     // Verify the results as alice
     SecurityRequestContext.setUserId(ALICE.getName());
@@ -1242,7 +1160,7 @@ public class AuthorizationTest extends TestBase {
     String text = "some random text for pfs";
     ServiceManager pfsService = appMgr.getServiceManager(PartitionTestApp.PFS_SERVICE_NAME);
     pfsService.start();
-    pfsService.waitForStatus(true);
+    pfsService.waitForRun(ProgramRunStatus.RUNNING, 1, TimeUnit.MINUTES);
     URL pfsURL = pfsService.getServiceURL();
     String apiPath = String.format("partitions/%s/subpartitions/%s", partition, subPartition);
     URL url = new URL(pfsURL, apiPath);
@@ -1255,12 +1173,12 @@ public class AuthorizationTest extends TestBase {
       Assert.assertEquals(500, response.getResponseCode());
     } finally {
       pfsService.stop();
-      pfsService.waitForFinish(5, TimeUnit.SECONDS);
+      pfsService.waitForRun(ProgramRunStatus.KILLED, 1, TimeUnit.MINUTES);
     }
     // grant write on dataset and restart
     grantAndAssertSuccess(AUTH_NAMESPACE.dataset(PartitionTestApp.PFS_NAME), BOB, EnumSet.of(Action.WRITE));
     pfsService.start();
-    pfsService.waitForStatus(true);
+    pfsService.waitForRun(ProgramRunStatus.RUNNING, 1, TimeUnit.MINUTES);
     pfsURL = pfsService.getServiceURL();
     url = new URL(pfsURL, apiPath);
     try  {
@@ -1279,7 +1197,7 @@ public class AuthorizationTest extends TestBase {
       Assert.assertEquals(200, response.getResponseCode());
     } finally {
       pfsService.stop();
-      pfsService.waitForFinish(5, TimeUnit.SECONDS);
+      pfsService.waitForRuns(ProgramRunStatus.KILLED, 2, 1, TimeUnit.MINUTES);
       SecurityRequestContext.setUserId(ALICE.getName());
     }
   }
@@ -1358,7 +1276,6 @@ public class AuthorizationTest extends TestBase {
     Map<String, String> programArgs, final ProgramManager<T> programManager)
     throws TimeoutException, InterruptedException, ExecutionException {
     programManager.start(programArgs);
-    programManager.waitForFinish(5, TimeUnit.MINUTES);
 
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
@@ -1370,9 +1287,16 @@ public class AuthorizationTest extends TestBase {
             return false;
           }
         }
-        return true;
+        return !history.isEmpty();
       }
-    }, 120, TimeUnit.SECONDS, "Not all program runs have failed status. Expected all run status to be failed");
+    }, 5, TimeUnit.MINUTES, "Not all program runs have failed status. Expected all run status to be failed");
+
+    Tasks.waitFor(false, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return programManager.isRunning();
+      }
+    }, 60, TimeUnit.SECONDS);
   }
 
 

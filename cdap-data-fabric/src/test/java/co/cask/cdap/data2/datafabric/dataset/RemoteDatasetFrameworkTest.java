@@ -110,7 +110,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     CConfigurationUtil.copyTxProperties(cConf, txConf);
 
     // ok to pass null, since the impersonator won't actually be called, if kerberos security is not enabled
-    Impersonator impersonator = new DefaultImpersonator(cConf, null, null);
+    Impersonator impersonator = new DefaultImpersonator(cConf, null);
 
     // TODO: Refactor to use injector for everything
     Injector injector = Guice.createInjector(

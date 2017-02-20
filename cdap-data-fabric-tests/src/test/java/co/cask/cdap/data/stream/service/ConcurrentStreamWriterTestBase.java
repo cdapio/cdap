@@ -73,7 +73,7 @@ public abstract class ConcurrentStreamWriterTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConcurrentStreamWriterTestBase.class);
   private static final CConfiguration cConf = CConfiguration.create();
-  private static final Impersonator impersonator = new DefaultImpersonator(cConf, new UnsupportedUGIProvider(), null);
+  private static final Impersonator impersonator = new DefaultImpersonator(cConf, new UnsupportedUGIProvider());
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();

@@ -33,13 +33,13 @@ export default class FastActions extends Component {
         fastActionTypes = ['setPreferences', 'delete'];
         break;
       case 'stream':
-        fastActionTypes = ['truncate', 'delete', 'explore', 'sendEvents'];
+        fastActionTypes = ['truncate', 'delete', 'explore', 'sendEvents', 'viewEvents'];
         break;
       case 'datasetinstance':
         fastActionTypes = ['truncate', 'delete', 'explore'];
         break;
       case 'program':
-        fastActionTypes = ['setPreferences', 'startStop'];
+        fastActionTypes = ['setPreferences', 'startStop', 'log'];
         break;
     }
 
@@ -69,9 +69,20 @@ export default class FastActions extends Component {
     let className = this.props.className || 'text-xs-center';
     return (
       <h4 className={className}>
-        <span>
-          {
-            fastActions.map((action) => {
+        {
+          fastActions.map((action) => {
+            if (this.props.actionToOpen && this.props.actionToOpen === action) {
+              return (
+                <FastAction
+                  key={action}
+                  type={action}
+                  entity={this.props.entity}
+                  opened={true}
+                  onSuccess={this.onSuccess.bind(this, action)}
+                />
+              );
+            }
+            else {
               return (
                 <FastAction
                   key={action}
@@ -80,9 +91,9 @@ export default class FastActions extends Component {
                   onSuccess={this.onSuccess.bind(this, action)}
                 />
               );
-            })
-          }
-        </span>
+            }
+          })
+        }
       </h4>
     );
   }
@@ -92,5 +103,6 @@ FastActions.propTypes = {
   entity: PropTypes.object,
   onUpdate: PropTypes.func,
   className: PropTypes.string,
-  onSuccess: PropTypes.func
+  onSuccess: PropTypes.func,
+  actionToOpen: PropTypes.string
 };

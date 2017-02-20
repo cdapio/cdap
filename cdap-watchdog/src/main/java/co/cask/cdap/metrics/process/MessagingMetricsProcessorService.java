@@ -27,6 +27,8 @@ import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryDecoder;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.internal.io.DatumReader;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
@@ -52,7 +54,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -72,6 +73,8 @@ import javax.annotation.Nullable;
  */
 public class MessagingMetricsProcessorService extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsProcessorService.class);
+  // Log the metrics processing progress no more than once per minute.
+  private static final Logger PROGRESS_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(60000));
 
   private final MetricDatasetFactory metricDatasetFactory;
   private final List<TopicId> metricsTopics;
@@ -79,6 +82,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   private final DatumReader<MetricValues> recordReader;
   private final Schema recordSchema;
   private final MetricStore metricStore;
+  private final Map<String, String> metricsContextMap;
   private final int fetcherLimit;
   private final ConcurrentLinkedDeque<MetricValues> records;
   private final ConcurrentMap<TopicIdMetaKey, byte[]> topicMessageIds;
@@ -86,10 +90,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   private final int metricsProcessIntervalMillis;
   private final List<ProcessMetricsThread> processMetricsThreads;
 
-  private long lastLoggedMillis;
   private long recordsProcessed;
 
-  private Map<String, String> metricsContextMap;
   private MetricsConsumerMetaTable metaTable;
 
   private volatile boolean stopping;
@@ -97,25 +99,27 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   @Inject
   public MessagingMetricsProcessorService(MetricDatasetFactory metricDatasetFactory,
                                           @Named(Constants.Metrics.TOPIC_PREFIX) String topicPrefix,
-                                          @Assisted Set<Integer> topicNumbers,
                                           MessagingService messagingService,
                                           SchemaGenerator schemaGenerator,
                                           DatumReaderFactory readerFactory,
                                           MetricStore metricStore,
-                                          @Named(Constants.Metrics.MESSAGING_FETCHER_LIMIT) int fetcherLimit) {
-    this(metricDatasetFactory, topicPrefix, topicNumbers, messagingService,
-         schemaGenerator, readerFactory, metricStore, fetcherLimit, 1000);
+                                          @Named(Constants.Metrics.MESSAGING_FETCHER_LIMIT) int fetcherLimit,
+                                          @Assisted Set<Integer> topicNumbers,
+                                          @Assisted MetricsContext metricsContext) {
+    this(metricDatasetFactory, topicPrefix, messagingService,
+         schemaGenerator, readerFactory, metricStore, fetcherLimit, topicNumbers, metricsContext, 1000);
   }
 
   @VisibleForTesting
   MessagingMetricsProcessorService(MetricDatasetFactory metricDatasetFactory,
-                                   @Named(Constants.Metrics.TOPIC_PREFIX) String topicPrefix,
-                                   @Assisted Set<Integer> topicNumbers,
+                                   String topicPrefix,
                                    MessagingService messagingService,
                                    SchemaGenerator schemaGenerator,
                                    DatumReaderFactory readerFactory,
                                    MetricStore metricStore,
-                                   @Named(Constants.Metrics.MESSAGING_FETCHER_LIMIT) int fetcherLimit,
+                                   int fetcherLimit,
+                                   Set<Integer> topicNumbers,
+                                   MetricsContext metricsContext,
                                    int metricsProcessIntervalMillis) {
     this.metricDatasetFactory = metricDatasetFactory;
     this.metricsTopics = new ArrayList<>();
@@ -131,18 +135,14 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
       throw Throwables.propagate(e);
     }
     this.metricStore = metricStore;
+    this.metricStore.setMetricsContext(metricsContext);
     this.fetcherLimit = fetcherLimit;
-    this.metricsContextMap = Collections.emptyMap();
+    this.metricsContextMap = metricsContext.getTags();
     this.processMetricsThreads = new ArrayList<>();
     this.records = new ConcurrentLinkedDeque<>();
     this.topicMessageIds = new ConcurrentHashMap<>();
     this.persistingFlag = new AtomicBoolean();
     this.metricsProcessIntervalMillis = metricsProcessIntervalMillis;
-  }
-
-  public void setMetricsContext(MetricsContext metricsContext) {
-    this.metricsContextMap = metricsContext.getTags();
-    metricStore.setMetricsContext(metricsContext);
   }
 
   private MetricsConsumerMetaTable getMetaTable() {
@@ -242,12 +242,9 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         new MetricValue("metrics.process.delay.ms", MetricType.GAUGE, delay))));
     metricStore.add(metricValues);
     recordsProcessed += metricValues.size();
-    // avoid logging more than once a minute
-    if (now > lastLoggedMillis + TimeUnit.MINUTES.toMillis(1)) {
-      lastLoggedMillis = now;
-      LOG.debug("{} metrics records processed. Last metric record's timestamp: {}. Metrics process delay: {}",
-                recordsProcessed, lastRecordTime, delay);
-    }
+
+    PROGRESS_LOG.debug("{} metrics records processed. Last metric record's timestamp: {}. Metrics process delay: {}",
+                       recordsProcessed, lastRecordTime, delay);
   }
 
   private class ProcessMetricsThread extends Thread {
@@ -286,8 +283,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         fetcher.setLimit(fetcherLimit);
         byte[] lastMessageId = topicMessageIds.get(topicIdMetaKey);
         if (lastMessageId != null) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Start fetching from lastMessageId = {}", Bytes.toStringBinary(lastMessageId));
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("Start fetching from lastMessageId = {}", Bytes.toStringBinary(lastMessageId));
           }
           fetcher.setStartMessage(lastMessageId, false);
         } else {

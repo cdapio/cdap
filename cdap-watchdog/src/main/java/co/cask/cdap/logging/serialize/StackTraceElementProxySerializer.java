@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,10 +25,10 @@ import org.apache.avro.generic.GenericRecord;
 /**
  * Serializer for StackTraceElementProxy.
  */
-public final class StackTraceElementProxySerializer {
+final class StackTraceElementProxySerializer {
   private StackTraceElementProxySerializer() {}
 
-  public static GenericRecord encode(Schema schema, StackTraceElementProxy stackTraceElementProxy) {
+  static GenericRecord encode(Schema schema, StackTraceElementProxy stackTraceElementProxy) {
     GenericRecord datum = new GenericData.Record(schema);
     datum.put("stackTraceElement", StackTraceElementSerializer.encode(schema.getField("stackTraceElement").schema(),
                                                         stackTraceElementProxy.getStackTraceElement()));
@@ -37,7 +37,7 @@ public final class StackTraceElementProxySerializer {
     return datum;
   }
 
-  public static StackTraceElementProxy decode(GenericRecord datum) {
+  static StackTraceElementProxy decode(GenericRecord datum) {
     StackTraceElement ste =
       StackTraceElementSerializer.decode((GenericRecord) datum.get("stackTraceElement"));
     ClassPackagingData cpd = ClassPackagingDataSerializer.decode((GenericRecord) datum.get("classPackagingData"));

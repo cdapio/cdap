@@ -72,28 +72,63 @@ commons:
     keyPlaceholder: key
     valuePlaceholder: value
   market: Cask Market
-  resource-center: Resource Center
+  resource-center: Add Entity
   tracker: Cask Tracker
   nameLabel: Name
   descriptionLabel: Description
   formatLabel: Format
   schemaLabel: Schema
   wrangler: Cask Wrangler
+  back: Back
+  application: Application
+  stream: Stream
+  dataset: Dataset
 features:
+  AboutPage:
+    version: Version {version}
+    mode: "Mode: "
+    security: "Security: "
+    copyright:
+      firstLine: The Cask Data Application Platform (CDAP) product is copyrighted
+      secondLine: Copyright © 2014-2017 Cask Data, Inc.
+      thirdLine:
+        view: "View "
+        termsAndConditions: Terms and Conditions
+        and: " and "
+        privacyPolicy: Privacy Policy
+  AccessTokenModal:
+    modalHeader: Access Token
+    login:
+      textContent: Please enter your username and password to generate a new access token
+      usernamePlaceholder: Username
+      passwordPlaceholder: Password
+      submit: Generate access token
+      error: Login failed. Please check your username and password and try again.
+    accessToken: "Access Token: "
+    close: Close
   AppDetailedView:
-    Title: Application - {appId}
+    Title: CDAP | Applications | {appId}
     History:
       emptyMessage: No Runs found.
   ConfirmationModal:
     confirmDefaultText: OK
     cancelDefaultText: Cancel
   EntityListView:
-    Title: CDAP - Home
+    Title: CDAP | Overview
+    Info:
+      title: Entities in Namespace
+      subtitle:
+        search: Search Results for
+        filteredBy: filtered by
+        sortedBy: sorted by
+        displayAll: Displaying All Entities
+        displaySome: Displaying
     emptyMessage: No entities found in the system.
     Cards:
       type: "Type: "
     Errors:
       retryNow: Retry now
+      retrying: Retrying...
       secondsLabel: seconds.
       tryAgain: Unable to communicate with CDAP services. Retrying in
       timeOut: Timed out while attempting to communicate with CDAP services. Please contact your system administrator.
@@ -106,14 +141,14 @@ features:
       gotoLabel: Go to CDAP
       disclaimerMessage: For full feature parity, switch to original UI by clicking "VIEW ORIGINAL UI" in top navigation bar.
     Header:
-      filters: Filters
-      search-placeholder: Search entities...
+      filterBy: Filter by
+      search-placeholder: Search
       sortdropdown-tooltip: Clear Search to enable Sort
       search-disabled-placeholder: Sort by Relevance to Search
       sort: Sort
       sortLabel: "Sort by "
       sortOptions:
-        none: Relevance
+        none: ''
         entityNameAsc:
           displayName: A - Z
         entityNameDesc:
@@ -122,8 +157,22 @@ features:
           displayName: Newest
         creationTimeAsc:
           displayName: Oldest
+    PageErrorMessage:
+      errorMessage: Page {pageNum} not found
+      suggestionMessage1: "Go back to:"
+      suggestionMessage2: Page 1
+    NamespaceNotFound:
+      createMessage: Would like to
+      createLinkLabel: create a new one?
+      switchMessage: Or select a different namespace from the namespace dropdown.
+    JustAddedSection:
+      subtitle: Just added
   Dashboard:
     Title: Dashboard
+
+  DetailView:
+    PropertiesTab:
+      title: Properties for {entityType} "{entityId}"
 
   FileDnD:
     uploadLabel: Drag-and-drop the file to be uploaded
@@ -133,6 +182,7 @@ features:
     exploreLabel: Explore
     deleteLabel: Delete
     deleteFailed: Failed to delete {entityId}.
+    logLabel: Logs
     truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
     truncateLabel: Truncate
     truncateSuccess: Truncated Successfully
@@ -169,14 +219,26 @@ features:
     stopConfirmation: "Are you sure you want to stop the program:  *_{entityId}_*?"
     stopProgramHeader: Stop Program
     startProgramHeader: Start Program
+    viewEvents:
+      button: View
+      failedMessage: Failed to view events
+      from: From
+      label: View Events
+      limit: Limit
+      modalHeader: "Filter and View Events for \"{entityId}\""
+      noResults: No Results
+      numEventsTitle: Set Number of Events
+      timeRangeTitle: Select Time Range
+      to: To
 
   JumpButton:
     buttonLabel: Jump
     viewHydrator: View in Hydrator
     viewTracker: View in Tracker
 
-  Management:
-    Title: Management
+  Administration:
+    Title: Administration
+    PageTitle: CDAP | Management
     Top:
       version-label: Version
       time-label: Uptime
@@ -225,7 +287,7 @@ features:
       headers:
         apps: Apps
         blocks: Blocks
-        connections: Connections
+        lasthourload: Load (last hour)
         entities: Entities
         load: Load
         nodes: Nodes
@@ -354,34 +416,40 @@ features:
       company: Company
       created: Created
       cdapversion: CDAP Version
+    doneLabel: Done
+    closeLabel: Close
   MarketEntityModal:
     version: "Version :"
   Navbar:
-    CDAP:
-      dashboard: Dashboard
-      home: Home
-      management: Management
-      olduilink: VIEW ORIGINAL UI
-    HeaderActions:
-      caskHome: Cask Home
-      documentation: Documentation
+    overviewLabel: Overview
+    pipelinesLabel: Pipelines
+    metadataLabel: Metadata
+    ProductDropdown:
       logout: Logout
-      signedInAs: Signed in as
-      support: Support
-      standalonelabel: Standalone
-      distributelabel: Distributed
-    Sidebar:
-      extension: "Extensions:"
+      prodWebsiteLabel: Product Website
+      supportLabel: Support
+      documentationLabel: Documentation
+      aboutLabel: About CDAP
+      accessToken: Access Token
+    Metadata:
+      searchLabel: Search
+      integrationsLabel: Integrations
+      tagsLabel: Tags
+      dictionaryLabel: Dictionary
+    RightSection:
+      olduilink: View Original UI
     NamespaceDropdown:
       applications: Applications
+      namespaceLabel: Namespace
       datasets: Datasets
       streams: Streams
       addNS: "Add Namespace"
   Overview:
     ProgramTab:
       emptyMessage: No Programs found.
-      title: "Programs in \"{appId}\""
+      title: "Programs in application \"{appId}\""
       runningProgramLabel: "Number of programs running: {programCount}"
+      altTitle: "Programs using {entityType} \"{entityId}\""
     DatasetTab:
       title: "Dataset Used by \"{appId}\""
     SchemaTab:
@@ -396,6 +464,30 @@ features:
       app: Deployed
   Pagination:
     dropdown-label: Page
+  PropertiesEditor:
+    AddProperty:
+      button: Add Property
+      modalHeader: Add Property for {entityId}
+      keyPlaceholder: Enter name
+      valuePlaceholder: Enter value
+      shortError: Failed to add property
+      propertyExistError: Property {key} already exists
+    DeleteConfirmation:
+      shortError: Failed to delete property
+      headerTitle: Delete Confirmation
+      confirmationText: "Are you sure you want to delete \"{key}\" property?"
+      confirmButton: Delete
+    EditProperty:
+      shortError: Failed to save property
+      modalHeader: "Edit property: {key}"
+      valuePlaceholder: Enter new value
+      button: Save
+    system: System
+    user: Business
+    name: Name
+    value: Value
+    scope: Scope
+
   Resource-Center:
     Stream:
       label: Stream
@@ -442,16 +534,18 @@ features:
     getUpdates: Get Updates
 
   SpotlightSearch:
-    noResult: No results found
-    showAll: Show all {num} results
     SpotlightModal:
-      headerSearchResults: "Search results for: {query}"
-      numResults: "{total} results found"
+      headerTagResults: Entities with the tag "{tag}"
+      numResults: "{total} results"
 
   SchemaEditor:
     Labels:
       fieldName: Field Name
       symbolName: Symbol Name
+  StreamDetailedView:
+    Title: CDAP | Stream | {streamId}
+  DatasetDetailedView:
+    Title: CDAP | Dataset | {datasetId}
   Wizard:
     ApplicationUpload:
       headerlabel: Upload Application
@@ -531,6 +625,9 @@ features:
       headerlabel: Create Stream
       success: You have successfully created the stream
       callToAction: View Stream Details
+      secondaryCallToAction:
+        uploadData: Upload Data to Stream
+        queryStream: Query Stream
     UploadData:
       Step1:
         shorttitle: View Data
@@ -737,7 +834,7 @@ features:
     message: 'Services are back online'
   Tags:
     label: Tags
-    notags: No Tags added
+    notags: No tags found. Click to add a new business tag.
   Description:
     label: Description
     nodescription: No Description available
@@ -753,4 +850,12 @@ features:
     ProgramTable:
       lastStartedLabel: Last Started
       statusLabel: Status
+  Page404:
+    genericMessage: Sorry, we are not able to find the page you are looking for.
+    entityMessage: Sorry, we are not able to find {entityType}
+    subtitleMessage1: Here are some options on where to go next
+    subtitleMessage2: View all your entities in the
+    overviewLabel: Overview
+    manageLabel: Manage
+    pipelinesMessage: Pipelines
 ...

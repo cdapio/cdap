@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.increment.hbase10.IncrementTxFilter;
 import co.cask.cdap.data2.transaction.coprocessor.CConfigurationCache;
+import co.cask.cdap.data2.transaction.coprocessor.CConfigurationCacheSupplier;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import com.google.common.base.Supplier;
@@ -55,6 +56,7 @@ import javax.annotation.Nullable;
 public class DefaultTransactionProcessor extends TransactionProcessor {
   private static final Log LOG = LogFactory.getLog(DefaultTransactionProcessor.class);
 
+  private CConfigurationCacheSupplier cConfCacheSupplier;
   private CConfigurationCache cConfCache;
   private String sysConfigTablePrefix;
 
@@ -66,7 +68,8 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
       String hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
 
       this.sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
-      this.cConfCache = createCConfCache(env);
+      this.cConfCacheSupplier = new CConfigurationCacheSupplier(env.getConfiguration(), sysConfigTablePrefix);
+      this.cConfCache = cConfCacheSupplier.get();
     }
     // Need to create the cConf cache before calling start on the parent, since it is required for
     // initializing some properties in the parent class.
@@ -76,9 +79,7 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
   @Override
   public void stop(CoprocessorEnvironment e) throws IOException {
     super.stop(e);
-    if (cConfCache != null) {
-      cConfCache.stop();
-    }
+    cConfCacheSupplier.release();
   }
 
   @Override
@@ -118,21 +119,10 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
     }
   }
 
-  private CConfigurationCache getCConfCache(RegionCoprocessorEnvironment env) {
-    if (cConfCache == null || (!cConfCache.isAlive())) {
-      cConfCache = createCConfCache(env);
-    }
-    return cConfCache;
-  }
-
-  private CConfigurationCache createCConfCache(RegionCoprocessorEnvironment env) {
-    return new CConfigurationCache(env.getConfiguration(), sysConfigTablePrefix);
-  }
-
   @Override
   @Nullable
   protected Configuration getConfiguration(CoprocessorEnvironment env) {
-    CConfiguration cConf = getCConfCache((RegionCoprocessorEnvironment) env).getCConf();
+    CConfiguration cConf = cConfCache.getCConf();
     if (cConf == null) {
       return null;
     }

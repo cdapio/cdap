@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2014 Cask Data, Inc.
+ * Copyright © 2012-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -126,7 +126,7 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
 
   @Override
   public String getDescription() {
-    return String.format("Executes %s with optional <%s> in minutes (default is no timeout).",
+    return String.format("Executes %s with optional '<%s>' in minutes (default is no timeout)",
                          Fragment.of(Article.A, ElementType.QUERY.getName()), ArgumentName.TIMEOUT);
   }
 

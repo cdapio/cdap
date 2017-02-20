@@ -35,6 +35,7 @@ import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.LoggingTester;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
+import co.cask.cdap.logging.framework.local.LocalLogAppender;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
@@ -107,7 +108,7 @@ public class TestFileLogging {
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 
-    LogAppender appender = injector.getInstance(FileLogAppender.class);
+    LogAppender appender = injector.getInstance(LocalLogAppender.class);
     new LogAppenderInitializer(appender).initialize("TestFileLogging");
 
     Logger logger = LoggerFactory.getLogger("TestFileLogging");

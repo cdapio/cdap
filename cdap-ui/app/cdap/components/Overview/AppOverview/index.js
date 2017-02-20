@@ -25,7 +25,7 @@ import {objectQuery} from 'services/helpers';
 import shortid from 'shortid';
 import T from 'i18n-react';
 import FastActionToMessage from 'services/fast-action-message-helper';
-require('./AppOverview.scss');
+import {createRouterPath} from 'react-router/LocationUtils';
 import capitalize from 'lodash/capitalize';
 
 export default class AppOverview extends Component {
@@ -139,7 +139,9 @@ export default class AppOverview extends Component {
           linkTo={{
             pathname: `/ns/${namespace}/apps/${this.props.entity.id}`,
             state: {
-              entityDetail: this.state.entityDetail
+              entityDetail: this.state.entityDetail,
+              entityMetadata: this.props.entity,
+              previousPathname: createRouterPath(location).replace(/\/cdap\//g, '/')
             }
           }}
           successMessage={this.state.successMessage}

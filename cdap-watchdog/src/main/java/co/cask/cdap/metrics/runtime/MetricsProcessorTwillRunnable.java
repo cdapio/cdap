@@ -16,8 +16,6 @@
 
 package co.cask.cdap.metrics.runtime;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -55,8 +53,6 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -68,8 +64,6 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
-import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,55 +75,31 @@ import java.util.List;
 public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorTwillRunnable.class);
 
-  public static final ImmutableMap<String, String> METRICS_PROCESSOR_CONTEXT =
-    ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
-                    Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
-
   private Injector injector;
-  private KafkaMetricsProcessorRuntimeService kafkaMetricsProcessorRuntimeService;
-  private MessagingMetricsProcessorRuntimeService messagingMetricsProcessorRuntimeService;
-  private MetricsCollectionService metricsCollectionService;
 
   public MetricsProcessorTwillRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
   }
 
   @Override
-  protected void doInit(TwillContext context) {
-    try {
-      getCConfiguration().set(Constants.MetricsProcessor.ADDRESS, context.getHost().getCanonicalHostName());
-      injector = createGuiceInjector(getCConfiguration(), getConfiguration());
-      injector.getInstance(LogAppenderInitializer.class).initialize();
-      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                                                         Constants.Logging.COMPONENT_NAME,
-                                                                         Constants.Service.METRICS_PROCESSOR));
+  protected Injector doInit(TwillContext context) {
+    getCConfiguration().set(Constants.MetricsProcessor.ADDRESS, context.getHost().getCanonicalHostName());
+    // Set the hostname of the machine so that cConf can be used to start internal services
+    LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
 
-      // Set the hostname of the machine so that cConf can be used to start internal services
-      LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
-
-      metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-      MetricsContext metricsContext = metricsCollectionService.getContext(METRICS_PROCESSOR_CONTEXT);
-
-      kafkaMetricsProcessorRuntimeService = injector.getInstance(
-        KafkaMetricsProcessorRuntimeService.class);
-      kafkaMetricsProcessorRuntimeService.setMetricsContext(metricsContext);
-      messagingMetricsProcessorRuntimeService = injector.getInstance(
-        MessagingMetricsProcessorRuntimeService.class);
-      messagingMetricsProcessorRuntimeService.setMetricsContext(metricsContext);
-    } catch (Throwable t) {
-      LOG.error(t.getMessage(), t);
-      throw Throwables.propagate(t);
-    }
+    injector = createGuiceInjector(getCConfiguration(), getConfiguration());
+    injector.getInstance(LogAppenderInitializer.class).initialize();
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
+                                                                       Constants.Logging.COMPONENT_NAME,
+                                                                       Constants.Service.METRICS_PROCESSOR));
+    return injector;
   }
 
   @Override
-  public void getServices(List<? super Service> services) {
-    services.add(injector.getInstance(ZKClientService.class));
-    services.add(injector.getInstance(KafkaClientService.class));
+  public void addServices(List<? super Service> services) {
     services.add(injector.getInstance(AuthorizationEnforcementService.class));
-    services.add(metricsCollectionService);
-    services.add(kafkaMetricsProcessorRuntimeService);
-    services.add(messagingMetricsProcessorRuntimeService);
+    services.add(injector.getInstance(KafkaMetricsProcessorRuntimeService.class));
+    services.add(injector.getInstance(MessagingMetricsProcessorRuntimeService.class));
     services.add(injector.getInstance(MetricsProcessorStatusService.class));
   }
 

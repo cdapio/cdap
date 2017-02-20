@@ -34,34 +34,22 @@ export default class PublishPipelineWizard extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showWizard: this.props.isOpen,
-      pipelineNameIsEmpty: false
+      showWizard: this.props.isOpen
     };
 
     this.successInfo = {};
     this.setDefaultConfig();
 
-    PublishPipelineWizardStore.subscribe(() => {
-      let pipelineName = PublishPipelineWizardStore.getState().pipelinemetadata.name;
-      if (pipelineName === "") {
-        this.setState({pipelineNameIsEmpty: true});
-      } else {
-        if (this.state.pipelineNameIsEmpty) {
-          this.setState({pipelineNameIsEmpty: false});
-        }
-      }
-    });
     this.eventEmitter = ee(ee);
   }
   componentWillMount() {
     let action = this.props.input.action;
     let filename = head(action.arguments.filter(arg => arg.name === 'config')).value;
-    PublishPipelineActionCreator
-      .fetchPipelineConfig({
-        entityName: this.props.input.package.name,
-        entityVersion: this.props.input.package.version,
-        filename
-      });
+    PublishPipelineActionCreator.fetchPipelineConfig({
+      entityName: this.props.input.package.name,
+      entityVersion: this.props.input.package.version,
+      filename
+    });
   }
   componentWillReceiveProps({isOpen}) {
     this.setState({
@@ -174,7 +162,6 @@ export default class PublishPipelineWizard extends Component {
                 successInfo={this.successInfo}
                 onClose={this.toggleWizard.bind(this)}
                 store={PublishPipelineWizardStore}
-                finishButtonDisabled={this.state.pipelineNameIsEmpty}
               />
             </WizardModal>
           :

@@ -29,7 +29,6 @@ import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.util.Map;
 
 /**
  * Sets RouteConfig for a service.
@@ -47,7 +46,8 @@ public class SetRouteConfigCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     ServiceId serviceId = new ServiceId(parseProgramId(arguments, ElementType.SERVICE));
     String routeConfig = arguments.get(ArgumentName.ROUTE_CONFIG.getName());
-    serviceClient.storeRouteConfig(serviceId, ArgumentParser.parseStringIntegerMap(routeConfig));
+    serviceClient.storeRouteConfig(serviceId, ArgumentParser.parseStringIntegerMap(
+      routeConfig, ArgumentName.ROUTE_CONFIG.toString()));
     output.printf("Successfully set route configuration of %s '%s' of application '%s' to '%s'\n",
                   ElementType.SERVICE.getName(), serviceId.getProgram(), serviceId.getApplication(), routeConfig);
   }

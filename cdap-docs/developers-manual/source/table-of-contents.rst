@@ -1,10 +1,10 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
-============================================
+=========================================
 CDAP Developers’ Manual Table of Contents
-============================================
+=========================================
 
 .. toctree::
    :maxdepth: 4
@@ -13,6 +13,8 @@ CDAP Developers’ Manual Table of Contents
     Getting Started Developing <getting-started/index>
     Overview <overview/index>
     Building Blocks <building-blocks/index>
+    Metadata <metadata/index>
+    Pipelines <pipelines/index>
     Security <security/index>
     Testing and Debugging <testing/index>
     Ingesting Data <ingesting-tools/index>

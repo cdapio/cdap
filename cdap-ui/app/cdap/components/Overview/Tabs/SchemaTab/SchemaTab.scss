@@ -15,8 +15,9 @@
  */
 
 .schema-tab {
-  padding: 10px;
-  height: calc(100% - 26px);
+  padding: 10px 10px 0 10px;
+  overflow-y: auto;
+  height: 100%;
 
   .empty-schema { margin-top: 10px; }
 

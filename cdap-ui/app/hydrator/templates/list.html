@@ -50,9 +50,7 @@
       <span>Drafts</span>
     </li>
   </ul>
-  <a ui-sref="hydrator.create({ namespace: $stateParams.namespace })" class="btn btn-primary add-pipeline">
-    <span class="fa fa-plus"></span>
-  </a>
+  <cask-resource-center-button></cask-resource-center-button>
 </div>
 
 <div class="my-pipelines">
@@ -68,7 +66,7 @@
             <th data-predicate="_stats.lastStartTime"
                   data-predicate-default>Last Start Time</th>
             <th data-predicate="_latest.end">Last Finished Run</th>
-            <th></th>
+            <th skip-sort></th>
           </tr>
         </thead>
         <tbody>

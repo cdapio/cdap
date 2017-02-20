@@ -13,7 +13,6 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-
 <div class="tracker-entity-top-bar"
      ng-if="!$state.params.iframe">
   <div class="back-button text-center"
@@ -48,7 +47,7 @@
   <div class="tab-options">
     <ul class="list-inline">
       <li ng-class="{'active': $state.is('tracker.detail.entity.metadata')}">
-        <a ui-sref="tracker.detail.entity.metadata">Metadata</a>
+        <a ui-sref="tracker.detail.entity.metadata">Summary</a>
       </li>
       <li ng-class="{'active': $state.is('tracker.detail.entity.lineage')}">
         <a ui-sref="tracker.detail.entity.lineage">Lineage</a>

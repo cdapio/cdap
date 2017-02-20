@@ -18,6 +18,7 @@ package co.cask.cdap.spark.stream;
 
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -49,7 +50,7 @@ public class SparkStreamIntegrationTestRun extends TestFrameworkTestBase {
     }
 
     SparkManager sparkManager = applicationManager.getSparkManager("SparkStreamProgram").start();
-    sparkManager.waitForFinish(120, TimeUnit.SECONDS);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 120, TimeUnit.SECONDS);
 
     // The Spark job simply turns every stream event body into key/value pairs, with key==value.
     DataSetManager<KeyValueTable> datasetManager = getDataset("result");
@@ -89,7 +90,7 @@ public class SparkStreamIntegrationTestRun extends TestFrameworkTestBase {
     );
 
     SparkManager sparkManager = spark1.getSparkManager("SparkStreamProgram").start(args);
-    sparkManager.waitForFinish(120, TimeUnit.SECONDS);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 120, TimeUnit.SECONDS);
     // Verify the results written in default namespace by spark1
     DataSetManager<KeyValueTable> datasetManager = getDataset("result");
     verifyDatasetResult(datasetManager);
@@ -107,7 +108,7 @@ public class SparkStreamIntegrationTestRun extends TestFrameworkTestBase {
     );
 
     sparkManager = spark2.getSparkManager("SparkCrossNSDatasetProgram").start(args);
-    sparkManager.waitForFinish(120, TimeUnit.SECONDS);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 120, TimeUnit.SECONDS);
     // Verify the results written in DEFAULT by spark2
     datasetManager = getDataset(outputDatasetNS.getNamespaceId().dataset("finalDataset"));
     verifyDatasetResult(datasetManager);

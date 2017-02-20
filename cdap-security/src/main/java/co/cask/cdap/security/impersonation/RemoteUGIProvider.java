@@ -18,20 +18,21 @@ package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
+import co.cask.cdap.common.internal.remote.RemoteClient;
+import co.cask.cdap.common.kerberos.ImpersonationRequest;
+import co.cask.cdap.common.kerberos.PrincipalCredentials;
+import co.cask.cdap.common.kerberos.UGIWithPrincipal;
+import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequestConfig;
-import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -42,11 +43,8 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Makes requests to ImpersonationHandler to request credentials.
@@ -54,36 +52,33 @@ import java.util.concurrent.TimeUnit;
 public class RemoteUGIProvider extends AbstractCachedUGIProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteUGIProvider.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(NamespacedEntityId.class, new EntityIdTypeAdapter())
+    .create();
 
-  private final Supplier<EndpointStrategy> endpointStrategySupplier;
+  private final RemoteClient remoteClient;
   private final LocationFactory locationFactory;
-  private final HttpRequestConfig httpRequestConfig;
 
   @Inject
   RemoteUGIProvider(CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
                     LocationFactory locationFactory) {
     super(cConf);
-    this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
-      @Override
-      public EndpointStrategy get() {
-        return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
-      }
-    });
+    this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP,
+                                         new DefaultHttpRequestConfig(false), "/v1/");
     this.locationFactory = locationFactory;
-    this.httpRequestConfig = new DefaultHttpRequestConfig(false);
   }
 
   @Override
-  protected UserGroupInformation createUGI(ImpersonationInfo impersonationInfo) throws IOException {
-    String credentialsURI = executeRequest(impersonationInfo).getResponseBodyAsString();
-    LOG.debug("Received response: {}", credentialsURI);
+  protected UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException {
+    PrincipalCredentials principalCredentials =
+      GSON.fromJson(executeRequest(impersonationRequest).getResponseBodyAsString(), PrincipalCredentials.class);
+    LOG.debug("Received response: {}", principalCredentials);
 
-    Location location = locationFactory.create(URI.create(credentialsURI));
+    Location location = locationFactory.create(URI.create(principalCredentials.getCredentialsPath()));
     try {
-      UserGroupInformation impersonatedUGI = UserGroupInformation.createRemoteUser(impersonationInfo.getPrincipal());
+      UserGroupInformation impersonatedUGI = UserGroupInformation.createRemoteUser(principalCredentials.getPrincipal());
       impersonatedUGI.addCredentials(readCredentials(location));
-      return impersonatedUGI;
+      return new UGIWithPrincipal(principalCredentials.getPrincipal(), impersonatedUGI);
     } finally {
       try {
         if (!location.delete()) {
@@ -95,26 +90,15 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
     }
   }
 
-  private URL resolve(String resource) throws IOException {
-    Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
-    if (discoverable == null) {
-      throw new IOException(String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP));
-    }
-    InetSocketAddress address = discoverable.getSocketAddress();
-    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
-      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
-    URI baseURI = URI.create(String.format("%s%s:%d", scheme, address.getHostName(), address.getPort()));
-    return baseURI.resolve("/v1/" + resource).toURL();
-  }
-
-  private HttpResponse executeRequest(ImpersonationInfo impersonationInfo) throws IOException {
-    URL url = resolve("impersonation/credentials");
-    HttpRequest.Builder builder = HttpRequest.post(url).withBody(GSON.toJson(impersonationInfo));
-    HttpResponse response = HttpRequests.execute(builder.build(), httpRequestConfig);
+  private HttpResponse executeRequest(ImpersonationRequest impersonationRequest) throws IOException {
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "impersonation/credentials")
+      .withBody(GSON.toJson(impersonationRequest))
+      .build();
+    HttpResponse response = remoteClient.execute(request);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return response;
     }
-    throw new IOException(String.format("%s Response: %s.", createErrorMessage(url), response));
+    throw new IOException(String.format("%s Response: %s.", createErrorMessage(request.getURL()), response));
   }
 
   // creates error message, encoding details about the request

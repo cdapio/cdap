@@ -45,6 +45,7 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
@@ -72,7 +73,6 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
@@ -113,7 +113,7 @@ public class DefaultStore implements Store {
     this.dsFramework = framework;
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
-        new SystemDatasetInstantiator(framework), txClient,
+        new SystemDatasetInstantiator(framework), new TransactionSystemClientAdapter(txClient),
         NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
@@ -146,7 +146,7 @@ public class DefaultStore implements Store {
   @Override
   public ProgramDescriptor loadProgram(final ProgramId id) throws IOException, ApplicationNotFoundException,
                                                                    ProgramNotFoundException {
-    ApplicationMeta appMeta = txExecute(transactional, new TxCallable<ApplicationMeta>() {
+    ApplicationMeta appMeta = Transactions.executeUnchecked(transactional, new TxCallable<ApplicationMeta>() {
       @Override
       public ApplicationMeta call(DatasetContext context) throws Exception {
         return getAppMetadataStore(context).getApplication(id.getNamespace(), id.getApplication(), id.getVersion());
@@ -169,7 +169,7 @@ public class DefaultStore implements Store {
                                      final ProgramRunStatus newStatus) {
     Preconditions.checkArgument(expectedStatus != null, "Expected of program run should be defined");
     Preconditions.checkArgument(newStatus != null, "New state of program run should be defined");
-    return txExecute(transactional, new TxCallable<Boolean>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Boolean>() {
       @Override
       public Boolean call(DatasetContext context) throws Exception {
         AppMetadataStore mds = getAppMetadataStore(context);
@@ -216,7 +216,7 @@ public class DefaultStore implements Store {
   public void setStart(final ProgramId id, final String pid, final long startTime,
                        final String twillRunId, final Map<String, String> runtimeArgs,
                        final Map<String, String> systemArgs) {
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         getAppMetadataStore(context).recordProgramStart(id, pid, startTime, twillRunId, runtimeArgs, systemArgs);
@@ -238,7 +238,7 @@ public class DefaultStore implements Store {
   public void setStop(final ProgramId id, final String pid, final long endTime, final ProgramRunStatus runStatus,
                       final BasicThrowable failureCause) {
     Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -308,7 +308,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void deleteWorkflowStats(final ApplicationId id) {
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         getWorkflowDataset(context).delete(id);
@@ -318,17 +318,17 @@ public class DefaultStore implements Store {
 
   @Override
   public void setSuspend(final ProgramId id, final String pid) {
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
-       getAppMetadataStore(context).recordProgramSuspend(id, pid);
+        getAppMetadataStore(context).recordProgramSuspend(id, pid);
       }
     });
   }
 
   @Override
   public void setResume(final ProgramId id, final String pid) {
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         getAppMetadataStore(context).recordProgramResumed(id, pid);
@@ -339,7 +339,7 @@ public class DefaultStore implements Store {
   @Nullable
   public WorkflowStatistics getWorkflowStatistics(final WorkflowId id, final long startTime,
                                                   final long endTime, final List<Double> percentiles) {
-    return txExecute(transactional, new TxCallable<WorkflowStatistics>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<WorkflowStatistics>() {
       @Override
       public WorkflowStatistics call(DatasetContext context) throws Exception {
         return getWorkflowDataset(context).getStatistics(id, startTime, endTime, percentiles);
@@ -349,7 +349,7 @@ public class DefaultStore implements Store {
 
   @Override
   public WorkflowDataset.WorkflowRunRecord getWorkflowRun(final WorkflowId workflowId, final String runId) {
-    return txExecute(transactional, new TxCallable<WorkflowDataset.WorkflowRunRecord>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<WorkflowDataset.WorkflowRunRecord>() {
       @Override
       public WorkflowDataset.WorkflowRunRecord call(DatasetContext context) throws Exception {
         return getWorkflowDataset(context).getRecord(workflowId, runId);
@@ -362,7 +362,8 @@ public class DefaultStore implements Store {
                                                                              final String runId,
                                                                              final int limit,
                                                                              final long timeInterval) {
-    return txExecute(transactional, new TxCallable<Collection<WorkflowDataset.WorkflowRunRecord>>() {
+    return Transactions.executeUnchecked(transactional,
+                                         new TxCallable<Collection<WorkflowDataset.WorkflowRunRecord>>() {
       @Override
       public Collection<WorkflowDataset.WorkflowRunRecord> call(DatasetContext context) throws Exception {
         return getWorkflowDataset(context).getDetailsOfRange(workflow, runId, limit, timeInterval);
@@ -380,7 +381,7 @@ public class DefaultStore implements Store {
   public Map<ProgramRunId, RunRecordMeta> getRuns(final ProgramId id, final ProgramRunStatus status,
                                      final long startTime, final long endTime, final int limit,
                                      @Nullable final Predicate<RunRecordMeta> filter) {
-    return txExecute(transactional, new TxCallable<Map<ProgramRunId, RunRecordMeta>>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Map<ProgramRunId, RunRecordMeta>>() {
       @Override
       public Map<ProgramRunId, RunRecordMeta> call(DatasetContext context) throws Exception {
         return getAppMetadataStore(context).getRuns(id, status, startTime, endTime, limit, filter);
@@ -391,7 +392,7 @@ public class DefaultStore implements Store {
   @Override
   public Map<ProgramRunId, RunRecordMeta> getRuns(final ProgramRunStatus status,
                                                   final Predicate<RunRecordMeta> filter) {
-    return txExecute(transactional, new TxCallable<Map<ProgramRunId, RunRecordMeta>>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Map<ProgramRunId, RunRecordMeta>>() {
       @Override
       public Map<ProgramRunId, RunRecordMeta> call(DatasetContext context) throws Exception {
         return getAppMetadataStore(context).getRuns(status, filter);
@@ -401,7 +402,7 @@ public class DefaultStore implements Store {
 
   @Override
   public Map<ProgramRunId, RunRecordMeta> getRuns(final Set<ProgramRunId> programRunIds) {
-    return txExecute(transactional, new TxCallable<Map<ProgramRunId, RunRecordMeta>>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Map<ProgramRunId, RunRecordMeta>>() {
       @Override
       public Map<ProgramRunId, RunRecordMeta> call(DatasetContext context) throws Exception {
         return getAppMetadataStore(context).getRuns(programRunIds);
@@ -418,7 +419,7 @@ public class DefaultStore implements Store {
    */
   @Override
   public RunRecordMeta getRun(final ProgramId id, final String runId) {
-    return txExecute(transactional, new TxCallable<RunRecordMeta>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<RunRecordMeta>() {
       @Override
       public RunRecordMeta call(DatasetContext context) throws Exception {
         return getAppMetadataStore(context).getRun(id, runId);
@@ -428,7 +429,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void addApplication(final ApplicationId id, final ApplicationSpecification spec) {
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         getAppMetadataStore(context).writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), spec);
@@ -441,7 +442,7 @@ public class DefaultStore implements Store {
   public List<ProgramSpecification> getDeletedProgramSpecifications(final ApplicationId id,
                                                                     ApplicationSpecification appSpec) {
 
-    ApplicationMeta existing = txExecute(transactional, new TxCallable<ApplicationMeta>() {
+    ApplicationMeta existing = Transactions.executeUnchecked(transactional, new TxCallable<ApplicationMeta>() {
       @Override
       public ApplicationMeta call(DatasetContext context) throws Exception {
         return getAppMetadataStore(context).getApplication(id.getNamespace(), id.getApplication(), id.getVersion());
@@ -480,7 +481,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void addStream(final NamespaceId id, final StreamSpecification streamSpec) {
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         getAppMetadataStore(context).writeStream(id.getNamespace(), streamSpec);
@@ -490,7 +491,7 @@ public class DefaultStore implements Store {
 
   @Override
   public StreamSpecification getStream(final NamespaceId id, final String name) {
-    return txExecute(transactional, new TxCallable<StreamSpecification>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<StreamSpecification>() {
       @Override
       public StreamSpecification call(DatasetContext context) throws Exception {
         return getAppMetadataStore(context).getStream(id.getNamespace(), name);
@@ -500,7 +501,7 @@ public class DefaultStore implements Store {
 
   @Override
   public Collection<StreamSpecification> getAllStreams(final NamespaceId id) {
-    return txExecute(transactional, new TxCallable<Collection<StreamSpecification>>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Collection<StreamSpecification>>() {
       @Override
       public Collection<StreamSpecification> call(DatasetContext context) throws Exception {
         return getAppMetadataStore(context).getAllStreams(id.getNamespace());
@@ -515,7 +516,7 @@ public class DefaultStore implements Store {
     LOG.trace("Setting flowlet instances: namespace: {}, application: {}, flow: {}, flowlet: {}, " +
                 "new instances count: {}", id.getNamespace(), id.getApplication(), id.getProgram(), flowletId, count);
 
-    FlowSpecification flowSpec = txExecute(transactional, new TxCallable<FlowSpecification>() {
+    FlowSpecification flowSpec = Transactions.executeUnchecked(transactional, new TxCallable<FlowSpecification>() {
       @Override
       public FlowSpecification call(DatasetContext context) throws Exception {
         AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -533,7 +534,7 @@ public class DefaultStore implements Store {
 
   @Override
   public int getFlowletInstances(final ProgramId id, final String flowletId) {
-    return txExecute(transactional, new TxCallable<Integer>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Integer>() {
       @Override
       public Integer call(DatasetContext context) throws Exception {
         ApplicationSpecification appSpec = getAppSpecOrFail(getAppMetadataStore(context), id);
@@ -547,7 +548,7 @@ public class DefaultStore implements Store {
   @Override
   public void setWorkerInstances(final ProgramId id, final int instances) {
     Preconditions.checkArgument(instances > 0, "Cannot change number of worker instances to %s", instances);
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -573,7 +574,7 @@ public class DefaultStore implements Store {
   @Override
   public void setServiceInstances(final ProgramId id, final int instances) {
     Preconditions.checkArgument(instances > 0, "Cannot change number of service instances to %s", instances);
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -596,7 +597,7 @@ public class DefaultStore implements Store {
 
   @Override
   public int getServiceInstances(final ProgramId id) {
-    return txExecute(transactional, new TxCallable<Integer>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Integer>() {
       @Override
       public Integer call(DatasetContext context) throws Exception {
         ApplicationSpecification appSpec = getAppSpecOrFail(getAppMetadataStore(context), id);
@@ -608,7 +609,7 @@ public class DefaultStore implements Store {
 
   @Override
   public int getWorkerInstances(final ProgramId id) {
-    return txExecute(transactional, new TxCallable<Integer>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Integer>() {
       @Override
       public Integer call(DatasetContext context) throws Exception {
         ApplicationSpecification appSpec = getAppSpecOrFail(getAppMetadataStore(context), id);
@@ -622,7 +623,7 @@ public class DefaultStore implements Store {
   public void removeApplication(final ApplicationId id) {
     LOG.trace("Removing application: namespace: {}, application: {}", id.getNamespace(), id.getApplication());
 
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -636,7 +637,7 @@ public class DefaultStore implements Store {
   public void removeAllApplications(final NamespaceId id) {
     LOG.trace("Removing all applications of namespace with id: {}", id.getNamespace());
 
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -650,7 +651,7 @@ public class DefaultStore implements Store {
   public void removeAll(final NamespaceId id) {
     LOG.trace("Removing all applications of namespace with id: {}", id.getNamespace());
 
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -663,7 +664,7 @@ public class DefaultStore implements Store {
 
   @Override
   public Map<String, String> getRuntimeArguments(final ProgramRunId programRunId) {
-    return txExecute(transactional, new TxCallable<Map<String, String>>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Map<String, String>>() {
       @Override
       public Map<String, String> call(DatasetContext context) throws Exception {
         RunRecordMeta runRecord = getAppMetadataStore(context).getRun(programRunId.getParent(), programRunId.getRun());
@@ -684,7 +685,7 @@ public class DefaultStore implements Store {
   @Nullable
   @Override
   public ApplicationSpecification getApplication(final ApplicationId id) {
-    return txExecute(transactional, new TxCallable<ApplicationSpecification>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<ApplicationSpecification>() {
       @Override
       public ApplicationSpecification call(DatasetContext context) throws Exception {
         return getApplicationSpec(getAppMetadataStore(context), id);
@@ -694,7 +695,7 @@ public class DefaultStore implements Store {
 
   @Override
   public Collection<ApplicationSpecification> getAllApplications(final NamespaceId id) {
-    return txExecute(transactional, new TxCallable<Collection<ApplicationSpecification>>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Collection<ApplicationSpecification>>() {
       @Override
       public Collection<ApplicationSpecification> call(DatasetContext context) throws Exception {
         return Lists.transform(
@@ -704,14 +705,14 @@ public class DefaultStore implements Store {
             public ApplicationSpecification apply(ApplicationMeta input) {
               return input.getSpec();
             }
-        });
+          });
       }
     });
   }
 
   @Override
   public Collection<ApplicationSpecification> getAllAppVersions(final ApplicationId id) {
-    return txExecute(transactional, new TxCallable<Collection<ApplicationSpecification>>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Collection<ApplicationSpecification>>() {
       @Override
       public Collection<ApplicationSpecification> call(DatasetContext context) throws Exception {
         return Lists.transform(
@@ -728,7 +729,7 @@ public class DefaultStore implements Store {
 
   @Override
   public Collection<ApplicationId> getAllAppVersionsAppIds(final ApplicationId id) {
-    return txExecute(transactional, new TxCallable<Collection<ApplicationId>>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Collection<ApplicationId>>() {
       @Override
       public Collection<ApplicationId> call(DatasetContext context) throws Exception {
         return getAppMetadataStore(context).getAllAppVersionsAppIds(id.getNamespace(), id.getApplication());
@@ -738,7 +739,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void addSchedule(final ProgramId program, final ScheduleSpecification scheduleSpecification) {
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -756,7 +757,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void deleteSchedule(final ProgramId program, final String scheduleName) {
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -817,7 +818,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void updateWorkflowToken(final ProgramRunId workflowRunId, final WorkflowToken token) {
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         getAppMetadataStore(context).updateWorkflowToken(workflowRunId, token);
@@ -827,7 +828,7 @@ public class DefaultStore implements Store {
 
   @Override
   public WorkflowToken getWorkflowToken(final WorkflowId workflowId, final String workflowRunId) {
-    return txExecute(transactional, new TxCallable<WorkflowToken>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<WorkflowToken>() {
       @Override
       public WorkflowToken call(DatasetContext context) throws Exception {
         return getAppMetadataStore(context).getWorkflowToken(workflowId, workflowRunId);
@@ -837,7 +838,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void addWorkflowNodeState(final ProgramRunId workflowRunId, final WorkflowNodeStateDetail nodeStateDetail) {
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         getAppMetadataStore(context).addWorkflowNodeState(workflowRunId, nodeStateDetail);
@@ -847,7 +848,7 @@ public class DefaultStore implements Store {
 
   @Override
   public List<WorkflowNodeStateDetail> getWorkflowNodeStates(final ProgramRunId workflowRunId) {
-    return txExecute(transactional, new TxCallable<List<WorkflowNodeStateDetail>>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<List<WorkflowNodeStateDetail>>() {
       @Override
       public List<WorkflowNodeStateDetail> call(DatasetContext context) throws Exception {
         return getAppMetadataStore(context).getWorkflowNodeStates(workflowRunId);
@@ -862,7 +863,7 @@ public class DefaultStore implements Store {
   }
 
   public void upgradeAppVersion() throws Exception {
-    txExecute(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         getAppMetadataStore(context).upgradeVersionKeys();
@@ -1044,33 +1045,11 @@ public class DefaultStore implements Store {
   }
 
   public Set<RunId> getRunningInRange(final long startTimeInSecs, final long endTimeInSecs) {
-    return txExecute(transactional, new TxCallable<Set<RunId>>() {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Set<RunId>>() {
       @Override
       public Set<RunId> call(DatasetContext context) throws Exception {
         return getAppMetadataStore(context).getRunningInRange(startTimeInSecs, endTimeInSecs);
       }
     });
-  }
-
-  /**
-   * Executes the given callable with a transaction. Any exception will result in {@link RuntimeException}.
-   */
-  private <V> V txExecute(Transactional transactional, TxCallable<V> callable) {
-    try {
-      return Transactions.execute(transactional, callable);
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e);
-    }
-  }
-
-  /**
-   * Executes the given runnable with a transaction. Any exception will result in {@link RuntimeException}.
-   */
-  private void txExecute(Transactional transactional, TxRunnable runnable) {
-    try {
-      transactional.execute(runnable);
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e);
-    }
   }
 }

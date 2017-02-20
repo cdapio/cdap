@@ -1,0 +1,67 @@
+<!--
+  Copyright © 2017 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="log-viewer-app-container">
+  <div ng-if="!Home.checkValidQueryParams()">
+    <h3 class="text-center">Invalid log URL</h3>
+  </div>
+
+  <div ng-if="Home.checkValidQueryParams()">
+
+    <div class="logs-info">
+      <h4>Logs</h4>
+      <div class="logs-metadata">
+        <span>
+          <strong>Program Name: </strong>
+          <span>{{ Home.programId }}</span>
+        </span>
+
+        <span>
+          <strong>App Name:</strong>
+          <span>{{ Home.appId }}</span>
+        </span>
+
+        <span>
+          <strong>Status: </strong>
+          <span>{{ Home.status }}</span>
+        </span>
+
+        <span>
+          <strong>Start Time: </strong>
+          <span ng-if="Home.startTime">{{ Home.startTime * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss a' }}</span>
+          <span ng-if="!Home.startTime">--</span>
+        </span>
+
+        <span>
+          <strong>End Time: </strong>
+          <span ng-if="Home.endTime">{{ Home.endTime * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss a'}}</span>
+          <span ng-if="!Home.endTime">--</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="logs-container">
+      <my-log-viewer
+        namespace-id="{{Home.namespace}}"
+        app-id="{{Home.appId}}"
+        program-type="{{Home.programType}}"
+        program-id="{{Home.programId}}"
+        run-id="{{Home.runId}}"
+        entity-name="{{Home.programId}}">
+      </my-log-viewer>
+    </div>
+  </div>
+</div>

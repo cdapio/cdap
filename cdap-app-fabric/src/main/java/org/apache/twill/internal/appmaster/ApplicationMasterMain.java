@@ -17,7 +17,6 @@
  */
 package org.apache.twill.internal.appmaster;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
@@ -33,7 +32,6 @@ import org.apache.twill.internal.TwillRuntimeSpecification;
 import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.internal.logging.Loggings;
-import org.apache.twill.internal.utils.Networks;
 import org.apache.twill.internal.yarn.VersionDetectYarnAMClientFactory;
 import org.apache.twill.internal.yarn.YarnAMClient;
 import org.apache.twill.zookeeper.OperationFuture;
@@ -143,7 +141,6 @@ public final class ApplicationMasterMain extends ServiceMain {
     return System.getenv(EnvKeys.TWILL_RUNNABLE_NAME);
   }
 
-
   /**
    * A service wrapper for starting/stopping {@link EmbeddedKafkaServer} and make sure the ZK path for
    * Kafka exists before starting the Kafka server.
@@ -186,12 +183,8 @@ public final class ApplicationMasterMain extends ServiceMain {
     }
 
     private Properties generateKafkaConfig(String kafkaZKConnect) {
-      int port = Networks.getRandomPort();
-      Preconditions.checkState(port > 0, "Failed to get random port.");
-
       Properties prop = new Properties();
       prop.setProperty("log.dir", new File("kafka-logs").getAbsolutePath());
-      prop.setProperty("port", Integer.toString(port));
       prop.setProperty("broker.id", "1");
       prop.setProperty("socket.send.buffer.bytes", "1048576");
       prop.setProperty("socket.receive.buffer.bytes", "1048576");
