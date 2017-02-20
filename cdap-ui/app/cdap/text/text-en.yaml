@@ -455,7 +455,7 @@ features:
       runningProgramLabel: "Number of programs running: {programCount}"
       altTitle: "Programs using {entityType} \"{entityId}\""
     DatasetTab:
-      title: "Dataset Used by \"{appId}\""
+      title: "Datasets and Streams used by \"{appId}\""
     SchemaTab:
       emptyMessage: No Schema found.
       title: Schema of each record in the {entityType} "{entityId}"

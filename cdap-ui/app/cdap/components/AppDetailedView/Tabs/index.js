@@ -62,7 +62,7 @@ export default class AppDetailedViewTab extends Component {
                 to={`/ns/${this.props.params.namespace}/apps/${this.props.params.appId}/datasets`}
                 activeClassName="active"
               >
-                {T.translate('features.AppDetailedView.Tabs.datasetsLabel')} ({this.state.entity.datasets.length})
+                {T.translate('features.AppDetailedView.Tabs.datasetsLabel')} ({this.state.entity.datasets.length + this.state.entity.streams.length})
               </Link>
             </NavLink>
           </NavItem>
