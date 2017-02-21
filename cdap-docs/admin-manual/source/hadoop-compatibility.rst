@@ -132,5 +132,5 @@ but have not necessarily been either tested or confirmed compatible.
 
 .. _admin-manual-hadoop-compatibility-matrix-note-4:
 
-**Note 4:** An upcoming release of CDAP will drop support for all versions
-older than *CDH 5.4.11* or *HDP 2.5.0.0*.
+**Note 4:** An upcoming release of CDAP (scheduled for CDAP 4.3) will drop support for all
+versions older than *CDH 5.4.11* or *HDP 2.5.0.0*.
