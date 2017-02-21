@@ -133,4 +133,9 @@ but have not necessarily been either tested or confirmed compatible.
 .. _admin-manual-hadoop-compatibility-matrix-note-4:
 
 **Note 4:** An upcoming release of CDAP (scheduled for CDAP 4.3) will drop support for all
-versions older than *CDH 5.4.11* or *HDP 2.5.0.0*.
+versions older than `CDH 5.4.11
+<https://www.cloudera.com/documentation/other/security-bulletins/topics/csb_all_product_issues.html#tsb_175>`__
+or `HDP 2.5.0.0 
+<http://docs.hortonworks.com/HDPDocuments/HDP2/HDP-2.5.0/bk_release-notes/content/ch_relnotes_v250.html>`__
+due to an `Apache Hadoop Privilege Escalation Vulnerability 
+<https://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2016-5393>`__.
