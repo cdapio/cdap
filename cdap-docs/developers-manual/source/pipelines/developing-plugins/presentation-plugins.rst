@@ -59,8 +59,8 @@ Each configuration group consists of a list of the :ref:`individual properties
       ...
     ],
     "outputs": [
-      {"ouput-property-1"},
-      {"ouput-property-2"},
+      {"output-property-1"},
+      {"output-property-2"},
       ...
     ]
   }
@@ -165,8 +165,10 @@ To find the available field names, you can use the :ref:`Artifact HTTP RESTful A
 available field names. (If the artifact is your own, you will already know the available
 field names from your source code.)
 
-In the case of a *Batch Source* plugin example, the ``configuration-groups`` could be
-represented by::
+In this example of a *Batch Source* plugin and its ``configuration-groups``, four
+different properties are defined; three use a *textbox* widget, while one uses a
+*dataset-selector*. The *groupByFields* property includes a :ref:`plugin function
+<plugins-presentation-plugin-function>`, used to fetch an output schema for the widget::
 
   {
     "configuration-groups": [
@@ -207,11 +209,6 @@ represented by::
       }
     ]
   }
-
-In this example, four different properties are defined; three use a *textbox* widget,
-while one uses a *dataset-selector*. The *groupByFields* property includes a :ref:`plugin
-function <plugins-presentation-plugin-function>`, used to fetch an output schema for the
-widget.
 
 
 .. _plugins-presentation-widgets:
@@ -287,7 +284,7 @@ CDAP pipelines as of version |version|:
             "delimiter": ",",
             "values-delimiter": ":",
             "numValues": "3",
-            "placeholders": ["Input Field", "Lookup", "Ouput Field"]
+            "placeholders": ["Input Field", "Lookup", "Output Field"]
           }
         }
 
@@ -320,10 +317,10 @@ CDAP pipelines as of version |version|:
           "widget-attributes": {}
         }
      
-   * - ``javascript-editor`` or ``python-editor``
+   * - ``javascript-editor``
      - ``default``: default ``string`` value for the widget
      - ``string``
-     - An editor to write JavaScript (``javascript-editor``) or Python (``python-editor``) code as a value of a property
+     - An editor to write JavaScript code as a value of a property
      - ::
 
         {
@@ -335,15 +332,6 @@ CDAP pipelines as of version |version|:
           }
         }
 
-        {
-          "name": "property-python-editor",
-          "label": "My Python Editor Property",
-          "widget-type": "python-editor",
-          "widget-attributes": {
-            "default": "def transform(input, emitter, context):\n  emitter.emit(input)\n"
-          }
-        }
-     
    * - ``json-editor``
      - ``default``: default serialized JSON value for the widget
      - ``string``
@@ -440,6 +428,21 @@ CDAP pipelines as of version |version|:
           "widget-attributes": {}
         }
      
+   * - ``python-editor``
+     - ``default``: default ``string`` value for the widget
+     - ``string``
+     - An editor to write Python code as a value of a property
+     - ::
+
+        {
+          "name": "property-python-editor",
+          "label": "My Python Editor Property",
+          "widget-type": "python-editor",
+          "widget-attributes": {
+            "default": "def transform(input, emitter, context):\n  emitter.emit(input)\n"
+          }
+        }
+     
    * - ``schema``
      - - ``schema-default-type``: default type for each newly-added field in the schema
        - ``schema-types``: list of schema types for each field from which the user can chose when setting the schema
@@ -520,9 +523,10 @@ CDAP pipelines as of version |version|:
 
 Plugin Function
 ---------------
-A plugin function is a method exposed by a particular plugin that can be used to fetch an
-output schema for a plugin. These fields need to be configured to use the plugin functions
-in the CDAP UI:
+A plugin function is a method exposed by a particular plugin that can be used for a
+specific task, such as fetching an output schema for a plugin. 
+
+These fields need to be configured to use the plugin functions in the CDAP UI:
 
 - **method:** Type of request to make when calling the plugin function from the CDAP UI
   (for example: GET or POST)
