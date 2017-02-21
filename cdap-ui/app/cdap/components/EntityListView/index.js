@@ -397,7 +397,7 @@ class EntityListView extends Component {
     };
 
     if (typeof query === 'string' && query.length) {
-      params.query = `${query}*`;
+      params.query = query.charAt(query.length - 1) === '*' ? query : `${query}*`;
     } else {
       params.sort = sortObj.fullSort === 'none' ? this.sortOptions[3].fullSort : sortObj.fullSort;
       params.query = '*';
