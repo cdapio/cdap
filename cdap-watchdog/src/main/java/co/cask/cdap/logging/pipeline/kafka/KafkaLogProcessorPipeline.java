@@ -17,6 +17,8 @@
 package co.cask.cdap.logging.pipeline.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LogSampler;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
@@ -90,6 +92,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
   private final KafkaPipelineConfig config;
   private final TimeEventQueue<ILoggingEvent, Long> eventQueue;
   private final Map<BrokerInfo, KafkaSimpleConsumer> kafkaConsumers;
+  private final MetricsContext metricsContext;
 
   private ExecutorService fetchExecutor;
   private volatile Thread runThread;
@@ -109,6 +112,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     this.eventQueue = new TimeEventQueue<>(config.getPartitions());
     this.serializer = new LoggingEventSerializer();
     this.kafkaConsumers = new HashMap<>();
+    this.metricsContext = context;
   }
 
   @Override
@@ -129,6 +133,9 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
 
     fetchExecutor = Executors.newFixedThreadPool(
       partitions.size(), Threads.createDaemonThreadFactory("fetcher-" + name + "-%d"));
+
+    // emit pipeline related config as metrics
+    emitConfigMetrics();
 
     LOG.info("Log processor pipeline for {} with config {} started with checkpoint {}", name, config, checkpoints);
   }
@@ -291,6 +298,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       }
 
       try {
+        metricsContext.increment("kafka.bytes.read", message.message().payloadSize());
         ILoggingEvent loggingEvent = serializer.fromBytes(message.message().payload());
         // Use the message payload size as the size estimate of the logging event
         // Although it's not the same as the in memory object size, it should be just a constant factor, hence
@@ -343,6 +351,9 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     TimeEventQueue.EventIterator<ILoggingEvent, Long> iterator = eventQueue.iterator();
 
     int eventsAppended = 0;
+    long minDelay = Long.MAX_VALUE;
+    long maxDelay = -1;
+
     while (iterator.hasNext()) {
       ILoggingEvent event = iterator.next();
 
@@ -351,6 +362,11 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       if (eventQueue.getEventSize() <= maxRetainSize && event.getTimeStamp() >= minEventTime) {
         break;
       }
+
+      // update delay
+      long delay = System.currentTimeMillis() - event.getTimeStamp();
+      minDelay = delay < minDelay ? delay : minDelay;
+      maxDelay = delay > maxDelay ? delay : maxDelay;
 
       try {
         // Otherwise, append the event
@@ -392,11 +408,18 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
         }
       }
     }
+    if (eventsAppended > 0) {
+      // events were appended from iterator
+      metricsContext.gauge(Constants.Metrics.Name.Log.PROCESS_MIN_DELAY, minDelay);
+      metricsContext.gauge(Constants.Metrics.Name.Log.PROCESS_MAX_DELAY, maxDelay);
+      metricsContext.increment(Constants.Metrics.Name.Log.PROCESS_MESSAGES_COUNT, eventsAppended);
+    }
 
     // Always try to call flush, even there was no event written. This is needed so that appender get called
     // periodically even there is no new events being appended to perform housekeeping work.
     // Failure to flush is ok and it will be retried by the wrapped appender
     try {
+      metricsContext.gauge("event.queue.size.bytes", eventQueue.getEventSize());
       context.flush();
     } catch (IOException e) {
       OUTAGE_LOG.warn("Failed to flush in pipeline {}. Will be retried.", name, e);
@@ -421,6 +444,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       // Only persist if sync succeeded. Since persistCheckpoints never throw, it's ok to be inside the try.
       persistCheckpoints();
       lastCheckpointTime = currentTimeMillis;
+      metricsContext.gauge("last.checkpoint.time", lastCheckpointTime);
       unSyncedEvents = 0;
       LOG.debug("Events synced and checkpoint persisted for {}", name);
     } catch (Exception e) {
@@ -562,6 +586,13 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     BrokerInfo getBrokerInfo() {
       return brokerInfo;
     }
+  }
+
+  private void emitConfigMetrics() {
+    metricsContext.gauge("max.buffer.size", config.getMaxBufferSize());
+    metricsContext.gauge("event.delay.millis", config.getEventDelayMillis());
+    metricsContext.gauge("kafka.fetch.buffer.size", config.getKafkaFetchBufferSize());
+    metricsContext.gauge("checkpoint.interval.millis", config.getCheckpointIntervalMillis());
   }
 
   /**

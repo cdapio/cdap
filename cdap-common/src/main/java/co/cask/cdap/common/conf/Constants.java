@@ -638,7 +638,8 @@ public final class Constants {
        * Logs metrics
        */
       public static final class Log {
-        public static final String PROCESS_DELAY = "log.process.delay";
+        public static final String PROCESS_MIN_DELAY = "log.process.min.delay";
+        public static final String PROCESS_MAX_DELAY = "log.process.max.delay";
         public static final String PROCESS_MESSAGES_COUNT = "log.process.message.count";
       }
     }
