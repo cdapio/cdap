@@ -114,6 +114,16 @@ features:
       programsLabel: Programs
       datasetsLabel: Datasets
       historyLabel: Runs
+  AuthorizationMessage:
+    mainMessage: " You do not have authorization to access existing namespaces"
+    callToAction1: Please contact your system administrator to request access to a namespace
+    callToAction2:
+      message1: You are logged in as *{username}*.
+      loginLabel: " Login "
+      message2: as another user
+    callToAction3:
+      message1: "Create a new namespace "
+      message2: "(Note: You will require ADMIN privileges on CDAP for creating a namespace)"
   ConfirmationModal:
     confirmDefaultText: OK
     cancelDefaultText: Cancel

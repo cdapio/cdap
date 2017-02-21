@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,27 @@
  * the License.
  */
 
-export default {
-  APPUPLOAD: 'APPICATION_UPLOAD',
-  STREAMCREATE: 'STREAM_CREATE',
-  PUBLISHPIPELINE: 'PUBLISH_PIPELINE',
-  CREATENAMESPACE: 'CREATE_NAMESPACE',
-  DELETEENTITY: 'DELETE_ENTITY',
-  NONAMESPACE: 'NO_NAMESPACE'
-};
+@import '../../styles/variables.scss';
+
+.auth-error-message {
+  height: 75vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  h3 {
+    border-bottom: 1px solid;
+    padding-bottom: 5px;
+  }
+
+  .cta-section {
+    margin-left: 40px;
+    line-height: 1.8;
+  }
+
+  .link {
+    color: $cdap-orange;
+    cursor: pointer;
+  }
+}
