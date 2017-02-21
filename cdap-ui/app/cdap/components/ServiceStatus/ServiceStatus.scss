@@ -77,12 +77,13 @@ $circle-top-offset: 2px;
       color: #333333;
       position: absolute;
       left: -202.5px;
-      top: -8px;
+      top: -4px;
       border: none;
       margin: 0;
       width: 200px;
       padding-top: 0;
       padding-bottom: 0;
+      z-index: 1501;
 
       a {
         text-decoration: inherit;
@@ -124,7 +125,7 @@ $circle-top-offset: 2px;
       outline: 0;
     }
     .service-dropdown-item {
-      height: 30px;
+      min-height: 30px;
       width: 100%;
       outline: 0;
       cursor: auto;
@@ -151,6 +152,10 @@ $circle-top-offset: 2px;
       &:hover {
         background-color: #cccccc;
       }
+    }
+
+    div.service-dropdown {
+      height: 100%;
     }
   }
 
@@ -216,5 +221,11 @@ $circle-top-offset: 2px;
     font-size: 14px;
     font-weight: bold;
     color: #ffffff;
+    max-width: 180px;
+    word-wrap: break-word;
+  }
+
+  > div {
+    vertical-align: top;
   }
 }
