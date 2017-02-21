@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,19 +27,16 @@ import co.cask.common.cli.Arguments;
 import java.io.PrintStream;
 
 /**
- * Deletes preferences for instance, namespace, application, program.
  *
- * @deprecated since 4.1.0. Use {@link DeletePreferencesNewCommand} instead.
  */
-@Deprecated
-public class DeletePreferencesCommand extends AbstractCommand {
+public class DeletePreferencesNewCommand extends AbstractCommand {
   private static final String SUCCESS = "Deleted preferences successfully for the '%s'";
 
   private final PreferencesClient client;
   private final ElementType type;
   private final CLIConfig cliConfig;
 
-  protected DeletePreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
+  protected DeletePreferencesNewCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
     super(cliConfig);
     this.type = type;
     this.client = client;
@@ -91,7 +88,7 @@ public class DeletePreferencesCommand extends AbstractCommand {
     switch (type) {
       case INSTANCE:
       case NAMESPACE:
-        return String.format("delete preferences %s", type.getShortName());
+        return String.format("delete %s preferences", type.getShortName());
       case APP:
       case FLOW:
       case MAPREDUCE:
@@ -99,15 +96,13 @@ public class DeletePreferencesCommand extends AbstractCommand {
       case SERVICE:
       case WORKER:
       case SPARK:
-        return String.format("delete preferences %s <%s>", type.getShortName(), type.getArgumentName());
+        return String.format("delete %s preferences <%s>", type.getShortName(), type.getArgumentName());
     }
     throw new RuntimeException("Unrecognized element type: " + type.getShortName());
   }
 
   @Override
   public String getDescription() {
-    return String.format("Deletes the preferences of %s (Deprecated as of CDAP 4.1.0. Use delete %s preferences <%s> " +
-                           "instead)", Fragment.of(Article.A, type.getName()), type.getShortName(),
-                         type.getArgumentName());
+    return String.format("Deletes the preferences of %s", Fragment.of(Article.A, type.getName()));
   }
 }

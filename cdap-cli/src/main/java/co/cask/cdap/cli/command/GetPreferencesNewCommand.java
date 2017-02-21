@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,27 +23,23 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.client.PreferencesClient;
 
 /**
- * Gets preferences for instance, namespace, application, program.
  *
- * @deprecated since 4.1.0. Use {@link GetPreferencesNewCommand} instead.
  */
-@Deprecated
-public class GetPreferencesCommand extends AbstractGetPreferencesCommand {
+public class GetPreferencesNewCommand extends AbstractGetPreferencesCommand {
   private final ElementType type;
 
-  protected GetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
+  protected GetPreferencesNewCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
     super(type, client, cliConfig, false);
     this.type = type;
   }
 
   @Override
   public String getPattern() {
-    return determinePattern();
+    return determineNewPattern();
   }
 
   @Override
   public String getDescription() {
-    return String.format("Gets the preferences of %s (Deprecated as of CDAP 4.1.0. Use %s instead)",
-                         Fragment.of(Article.A, type.getName()), determineNewPattern());
+    return String.format("Gets the preferences of %s", Fragment.of(Article.A, type.getName()));
   }
 }

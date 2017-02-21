@@ -76,6 +76,24 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
       throw new RuntimeException("Unrecognized element type: " + type.getShortName());
   }
 
+  protected String determineNewPattern() {
+    String action = resolved ? "get resolved" : "get";
+    switch (type) {
+      case INSTANCE:
+      case NAMESPACE:
+        return String.format("%s %s preferences", action, type.getShortName());
+      case APP:
+      case FLOW:
+      case MAPREDUCE:
+      case WORKFLOW:
+      case SERVICE:
+      case WORKER:
+      case SPARK:
+        return String.format("%s %s preferences <%s>", action, type.getShortName(), type.getArgumentName());
+    }
+    throw new RuntimeException("Unrecognized element type: " + type.getShortName());
+  }
+
   private Map<String, String> parsePreferences(Arguments arguments)
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
 

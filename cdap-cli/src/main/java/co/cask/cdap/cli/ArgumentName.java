@@ -39,6 +39,7 @@ public enum ArgumentName {
   APP_CONFIG("app-config"),
   APP_CONFIG_FILE("app-config-file"),
   RUNTIME_ARGS("runtime-args"),
+  PREFERENCES("preferences"),
   ROUTE_CONFIG("route-config"),
   HOSTNAME("hostname"),
   DATASET_TYPE("dataset-type"),

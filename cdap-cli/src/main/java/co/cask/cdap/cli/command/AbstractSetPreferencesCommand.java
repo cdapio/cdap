@@ -48,6 +48,11 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
     if (arguments.hasArgument(type.getArgumentName().toString())) {
       programIdParts = arguments.get(type.getArgumentName().toString()).split("\\.");
     }
+    setPreferences(arguments, printStream, args, programIdParts);
+  }
+
+  protected void setPreferences(Arguments arguments, PrintStream printStream,
+                                Map<String, String> args, String[] programIdParts) throws Exception {
     switch (type) {
       case INSTANCE:
         checkInputLength(programIdParts, 0);
@@ -89,6 +94,55 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
         return determinePatternLoadHelper();
     }
     throw new RuntimeException("Unrecognized element type: " + type.getShortName());
+  }
+
+  protected String determineNewPattern(String action) {
+
+    switch (action) {
+      case "set":
+        return determineNewSetPatternHelper();
+      case "load":
+        return determineNewLoadPatternHelper();
+    }
+    throw new RuntimeException("Unrecognized element type: " + type.getShortName());
+  }
+
+  private String determineNewSetPatternHelper() {
+    switch (type) {
+      case INSTANCE:
+      case NAMESPACE:
+        return String.format("set %s preferences <%s>",
+                             type.getShortName(), ArgumentName.PREFERENCES);
+      case APP:
+      case FLOW:
+      case MAPREDUCE:
+      case WORKFLOW:
+      case SERVICE:
+      case WORKER:
+      case SPARK:
+        return String.format("set %s preferences <%s> <%s>", type.getShortName(), type.getArgumentName(),
+                             ArgumentName.PREFERENCES);
+    }
+    throw new RuntimeException("Unrecognized element type: " + type.getShortName());
+  }
+
+  private String determineNewLoadPatternHelper() {
+    switch (type) {
+      case INSTANCE:
+      case NAMESPACE:
+        return String.format("load %s preferences <%s> <%s>", type.getShortName(),
+                             ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
+      case APP:
+      case FLOW:
+      case MAPREDUCE:
+      case WORKFLOW:
+      case SERVICE:
+      case WORKER:
+      case SPARK:
+        return String.format("load %s preferences <%s> <%s> <%s>", type.getShortName(), type.getArgumentName(),
+                             ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
+    }
+    return "None";
   }
 
   private String determinePatternSetHelper() {

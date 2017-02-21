@@ -24,7 +24,10 @@ import co.cask.cdap.client.PreferencesClient;
 
 /**
  * Get Resolved Preferences for instance, namespace, application, program
+ *
+ * @deprecated since 4.1.0. Use {@link GetResolvedPreferencesNewCommand} instead.
  */
+@Deprecated
 public class GetResolvedPreferencesCommand extends AbstractGetPreferencesCommand {
   private final ElementType type;
 
@@ -40,6 +43,7 @@ public class GetResolvedPreferencesCommand extends AbstractGetPreferencesCommand
 
   @Override
   public String getDescription() {
-    return String.format("Gets the resolved preferences of %s", Fragment.of(Article.A, type.getName()));
+    return String.format("Gets the resolved preferences of %s (Deprecated as of CDAP 4.1.0. Use %s instead)",
+                         Fragment.of(Article.A, type.getName()), determineNewPattern());
   }
 }
