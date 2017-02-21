@@ -40,7 +40,7 @@ GIT_NODE_JS_MIN_VERSION="v4.5.0"
 # GIT_NODE_JS_MAX_VERSION="" # not currently known
 
 # This needs to be explicitly set as Git has trouble identifying it
-GIT_BRANCH_PARENT="develop"
+GIT_BRANCH_PARENT="release/4.1"
 
 # Used by admin-manual
 GIT_BRANCH_CDAP_SECURITY_EXTN="develop"
