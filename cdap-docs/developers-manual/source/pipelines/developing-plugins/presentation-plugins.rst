@@ -284,7 +284,11 @@ CDAP pipelines as of version |version|:
             "delimiter": ",",
             "values-delimiter": ":",
             "numValues": "3",
-            "placeholders": ["Input Field", "Lookup", "Output Field"]
+            "placeholders": [
+              "Input Field", 
+              "Lookup", 
+              "Output Field"
+            ]
           }
         }
 
@@ -328,7 +332,9 @@ CDAP pipelines as of version |version|:
           "label": "My JavaScript Editor Property",
           "widget-type": "javascript-editor",
           "widget-attributes": {
-            "default": "function transform(input, emitter, context) {\n  emitter.emit(input);\n}"
+            "default": 
+              "function transform(input, emitter, context) {\
+        \\n  emitter.emit(input);\\n}"
           }
         }
 
@@ -439,7 +445,9 @@ CDAP pipelines as of version |version|:
           "label": "My Python Editor Property",
           "widget-type": "python-editor",
           "widget-attributes": {
-            "default": "def transform(input, emitter, context):\n  emitter.emit(input)\n"
+            "default": 
+              "def transform(input, emitter, context):\
+        \\n  emitter.emit(input)\\n"
           }
         }
      
