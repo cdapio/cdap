@@ -50,7 +50,7 @@
   .global-navbar-toggler {
     display: none;
 
-    @media(max-width: 1011px) {
+    @media(max-width: 860px) {
       display: inline-flex;
       height: 50px;
       padding-top: 0;
@@ -76,7 +76,7 @@
   }
 
   .global-navbar-collapse {
-    @media(max-width: 1011px) {
+    @media(max-width: 860px) {
       display: none;
       &.minimized {
         display: block;
