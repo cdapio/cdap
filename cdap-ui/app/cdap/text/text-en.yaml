@@ -442,19 +442,18 @@ features:
     pipelinesLabel: Pipelines
     metadataLabel: Metadata
     ProductDropdown:
-      logout: Logout
-      prodWebsiteLabel: Product Website
-      supportLabel: Support
-      documentationLabel: Documentation
       aboutLabel: About CDAP
       accessToken: Access Token
+      documentationLabel: Documentation
+      logout: Logout
+      olduilink: Switch to Classic View
+      prodWebsiteLabel: Product Website
+      supportLabel: Support
     Metadata:
       searchLabel: Search
       integrationsLabel: Integrations
       tagsLabel: Tags
       dictionaryLabel: Dictionary
-    RightSection:
-      olduilink: View Original UI
     NamespaceDropdown:
       applications: Applications
       namespaceLabel: Namespace

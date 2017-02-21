@@ -94,7 +94,6 @@ export default class Header extends Component {
       }
     });
     let isPipelinesViewActive = location.pathname.indexOf('/pipelines/') !== -1;
-    let oldUIUrl = `/oldcdap/ns/${this.state.currentNamespace}`;
     return (
       <div className="global-navbar">
         <div
@@ -155,11 +154,6 @@ export default class Header extends Component {
           })}>
           <div className="navbar-right-section">
             <ul>
-              <li>
-                <a href={oldUIUrl}>
-                  {T.translate('features.Navbar.RightSection.olduilink')}
-                </a>
-              </li>
               <li className="with-shadow">
                 <CaskMarketButton>
                   <span className="fa icon-CaskMarket"></span>
