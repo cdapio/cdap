@@ -426,6 +426,16 @@ function display_version() {
   echo "  CDAP_METADATA_MANAGEMENT_VERSION: ${CDAP_METADATA_MANAGEMENT_VERSION}"
 }
 
+function print_version() {
+  cd ${SCRIPT_PATH}/developers-manual
+  ./build.sh display-version
+}
+
+function set_and_display_version() {
+  set_version
+  display_version
+}
+
 function get_cdap_pipelines_version() {
   # $1 Branch of Hydrator to use
   CDAP_PIPELINES_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/hydrator-plugins/${1}/pom.xml" | grep "<version>")
@@ -593,6 +603,7 @@ function run_command() {
     build-docs-local)      "${1//-/_}";;
     build-web-local)       "${1//-/_}";;
     display-version)       "${1/-/_}";;
+    version)               "set_and_display_version";;
     license-pdfs)          "build_license_pdfs";;
     docs)                  "build_docs";;
     docs-local)            "build_docs_local";;
