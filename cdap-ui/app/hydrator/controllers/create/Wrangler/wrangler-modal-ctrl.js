@@ -15,12 +15,19 @@
  */
 
 class WranglerModalController {
-  constructor(rPlugin, $uibModalInstance, EventPipe) {
+  constructor(rPlugin, $uibModalInstance, EventPipe, $scope) {
     this.node = rPlugin;
     this.$uibModalInstance = $uibModalInstance;
     this.EventPipe = EventPipe;
 
     this.applyToHydrator = this.applyToHydrator.bind(this);
+
+    $scope.$on('modal.closing', (e, reason) => {
+      if (reason === 'ADD_TO_PIPELINE') { return; }
+
+      let shouldClose = confirm('Are you sure you want to exit Wrangler?');
+      if (!shouldClose) { e.preventDefault(); }
+    });
   }
 
   applyToHydrator (properties) {
@@ -29,7 +36,7 @@ class WranglerModalController {
 
     this.EventPipe.emit('schema.import', properties.schema);
 
-    this.$uibModalInstance.close();
+    this.$uibModalInstance.close('ADD_TO_PIPELINE');
   }
 }
 
