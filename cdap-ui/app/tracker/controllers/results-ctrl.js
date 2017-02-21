@@ -140,7 +140,7 @@ class TrackerResultsController {
     if (params.query === '*') {
       params.sort = 'creation-time desc';
       params.numCursors = 10;
-    } else {
+    } else if (params.query.charAt(params.query.length - 1) !== '*') {
       params.query = params.query + '*';
     }
 
