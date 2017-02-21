@@ -202,6 +202,28 @@ cdap_stop_pidfile() {
   return ${__ret}
 }
 
+cdap_kill_pidfile() {
+  local readonly __ret __pidfile=${1} __label=${2:-Process}
+  if [[ -f ${__pidfile} ]]; then
+    local readonly __pid=$(<${__pidfile})
+    echo -n "$(date) Killing ${__label} ..."
+    if kill -0 ${__pid} >/dev/null 2>&1; then
+      kill -9 ${__pid} >/dev/null 2>&1
+      while kill -0 ${__pid} >/dev/null 2>&1; do
+        echo -n .
+        sleep 1
+      done
+      rm -f ${__pidfile}
+      echo
+      __ret=0
+    else
+      __ret=${?}
+    fi
+    echo
+  fi
+  return ${__ret}
+}
+
 #
 # cdap_check_pidfile <pidfile> [label]
 # returns: 1 on error, 0 otherwise
@@ -560,7 +582,7 @@ cdap_service() {
   cdap_create_log_dir
 
   case ${__action} in
-    status|stop) cdap_${__action}_pidfile ${__pidfile} "CDAP ${__name}"; __ret=${?} ;;
+    status|stop|kill) cdap_${__action}_pidfile ${__pidfile} "CDAP ${__name}"; __ret=${?} ;;
     start|restart|condrestart)
       if [[ ${__action} == condrestart ]]; then
         cdap_status_pidfile ${__pidfile} "CDAP ${__name}" >/dev/null && \
