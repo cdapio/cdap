@@ -87,7 +87,7 @@ case ${1} in
     echo
     if [[ $(cdap_context) == 'distributed' ]]; then
     # No indent to make lining up easier
-    echo "    auth-server  - Sends the arguments (start/stop/etc.) to the appropriate CDAP service on this host"
+    echo "    auth-server  - Sends the arguments (start/stop/kill/etc.) to the appropriate CDAP service on this host"
     echo "    kafka-server"
     echo "    master"
     echo "    router"
