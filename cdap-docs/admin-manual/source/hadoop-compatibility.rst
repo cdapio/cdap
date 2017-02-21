@@ -42,9 +42,11 @@ installed.
 
 .. rubric:: Hadoop/HBase Environment
 
-For a Distributed CDAP cluster, version |release|, you **must** install these Hadoop components:
+For a Distributed CDAP cluster, version |release|, you **must** install these Hadoop components
+(see notes following the tables):
 
 .. |cdh-title| replace:: Cloudera Distribution of Apache Hadoop (CDH)
+.. |note-4| replace:: :ref:`(Note 4) <admin-manual-hadoop-compatibility-matrix-note-4>`
 
 +----------------+---------------------------------+---------------------------------------+
 | Component      | Source                          | Supported Versions                    |
@@ -53,9 +55,9 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 +----------------+---------------------------------+---------------------------------------+
 | **HBase**      | Apache                          | 0.98.x and 1.2                        |
 +                +---------------------------------+---------------------------------------+
-|                | |cdh-title|                     | |cdh-versions|                        |
+|                | |cdh-title|                     | |cdh-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | |hdp-versions|                        |
+|                | Hortonworks Data Platform (HDP) | |hdp-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | |mapr-versions| (with Apache HBase)   |
 +                +---------------------------------+---------------------------------------+
@@ -63,9 +65,9 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 +----------------+---------------------------------+---------------------------------------+
 | **HDFS**       | Apache Hadoop                   | 2.0.2-alpha through 2.6               |
 +                +---------------------------------+---------------------------------------+
-|                | |cdh-title|                     | |cdh-versions|                        |
+|                | |cdh-title|                     | |cdh-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | |hdp-versions|                        |
+|                | Hortonworks Data Platform (HDP) | |hdp-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | |mapr-versions| (with MapR-FS)        |
 +                +---------------------------------+---------------------------------------+
@@ -73,9 +75,9 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 +----------------+---------------------------------+---------------------------------------+
 | **YARN** and   | Apache Hadoop                   | 2.0.2-alpha through 2.7               |
 + **MapReduce2** +---------------------------------+---------------------------------------+
-|                | |cdh-title|                     | |cdh-versions|                        |
+|                | |cdh-title|                     | |cdh-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | |hdp-versions|                        |
+|                | Hortonworks Data Platform (HDP) | |hdp-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | |mapr-versions|                       |
 +                +---------------------------------+---------------------------------------+
@@ -83,9 +85,9 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 +----------------+---------------------------------+---------------------------------------+
 | **ZooKeeper**  | Apache                          | Version 3.4.3 through 3.4             |
 +                +---------------------------------+---------------------------------------+
-|                | |cdh-title|                     | |cdh-versions|                        |
+|                | |cdh-title|                     | |cdh-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | |hdp-versions|                        |
+|                | Hortonworks Data Platform (HDP) | |hdp-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | |mapr-versions|                       |
 +                +---------------------------------+---------------------------------------+
@@ -100,9 +102,9 @@ Hadoop components, as required:
 +================+=================================+=======================================+
 | **Hive**       | Apache                          | Version 0.12.0 through 1.2.x          |
 +                +---------------------------------+---------------------------------------+
-|                | |cdh-title|                     | |cdh-versions|                        |
+|                | |cdh-title|                     | |cdh-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | |hdp-versions|                        |
+|                | Hortonworks Data Platform (HDP) | |hdp-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | |mapr-versions|                       |
 +                +---------------------------------+---------------------------------------+
@@ -110,20 +112,30 @@ Hadoop components, as required:
 +----------------+---------------------------------+---------------------------------------+
 | **Spark**      | Apache                          | Versions 1.2.x through 1.6.x          |
 +                +---------------------------------+---------------------------------------+
-|                | |cdh-title|                     | |cdh-versions|                        |
+|                | |cdh-title|                     | |cdh-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | |hdp-versions|                        |
+|                | Hortonworks Data Platform (HDP) | |hdp-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | |mapr-versions|                       |
 +                +---------------------------------+---------------------------------------+
 |                | Amazon Hadoop (EMR)             | |emr-versions|                        |
 +----------------+---------------------------------+---------------------------------------+
 
-**Note:** Component versions shown in these tables are those that we have tested and are
+**Note 1:** Component versions shown in these tables are those that we have tested and are
 confident of their suitability and compatibility. Later versions of components may work,
 but have not necessarily been either tested or confirmed compatible.
 
-**Note:** Certain CDAP components need to reference your *Hadoop*, *YARN*, *HBase*, and
+**Note 2:** Certain CDAP components need to reference your *Hadoop*, *YARN*, *HBase*, and
 *Hive* cluster configurations by adding those configurations to their class paths.
 
-**Note:** *Hive 0.12* is not supported for :ref:`secure cluster configurations <admin-security>`.
+**Note 3:** *Hive 0.12* is not supported for :ref:`secure cluster configurations <admin-security>`.
+
+.. _admin-manual-hadoop-compatibility-matrix-note-4:
+
+**Note 4:** An upcoming release of CDAP (scheduled for CDAP 4.3) will drop support for all
+versions older than `CDH 5.4.11
+<https://www.cloudera.com/documentation/other/security-bulletins/topics/csb_all_product_issues.html#tsb_175>`__
+or `HDP 2.5.0.0 
+<http://docs.hortonworks.com/HDPDocuments/HDP2/HDP-2.5.0/bk_release-notes/content/ch_relnotes_v250.html>`__
+due to an `Apache Hadoop Privilege Escalation Vulnerability 
+<https://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2016-5393>`__.
