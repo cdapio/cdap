@@ -23,6 +23,7 @@ import co.cask.cdap.WordCountMinusFlowApp;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableProperties;
@@ -38,10 +39,8 @@ import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
 import co.cask.cdap.metadata.MetadataHttpHandler;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
-import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
@@ -630,15 +629,15 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     );
 
     // Update stream properties and verify metadata got updated (except creation time and description)
-    long newTtl = 100000L;
-    streamClient.setStreamProperties(streamId, new StreamProperties(newTtl, null, null));
+    long newTTL = 100000L;
+    streamClient.setStreamProperties(streamId, StreamProperties.builder().setTTL(newTTL).build());
     streamSystemProperties = getProperties(streamId, MetadataScope.SYSTEM);
     Assert.assertEquals(
       ImmutableMap.of(AbstractSystemMetadataWriter.SCHEMA_KEY,
                       Schema.recordOf("stringBody",
                                       Schema.Field.of("body",
                                                       Schema.of(Schema.Type.STRING))).toString(),
-                      AbstractSystemMetadataWriter.TTL_KEY, String.valueOf(newTtl * 1000),
+                      AbstractSystemMetadataWriter.TTL_KEY, String.valueOf(newTTL * 1000),
                       AbstractSystemMetadataWriter.DESCRIPTION_KEY, "test stream",
                       AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(createTime),
                       AbstractSystemMetadataWriter.ENTITY_NAME_KEY, streamId.getEntityName()

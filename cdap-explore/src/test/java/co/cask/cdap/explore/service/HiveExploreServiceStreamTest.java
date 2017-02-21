@@ -17,14 +17,13 @@
 package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryResult;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
@@ -279,9 +278,8 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
         Schema.Field.of("num", Schema.of(Schema.Type.INT)),
         Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE))
       );
-      FormatSpecification formatSpecification = new FormatSpecification(
-        Formats.AVRO, schema, Collections.<String, String>emptyMap());
-      StreamProperties properties = new StreamProperties(Long.MAX_VALUE, formatSpecification, 1000);
+      StreamProperties properties = StreamProperties.builder().setTTL(Long.MAX_VALUE)
+        .setFormat(Formats.AVRO).setSchema(schema).setNotificatonThreshold(1000).build();
       setStreamProperties(NAMESPACE_ID.getNamespace(), "avroStream", properties);
 
       // our schemas are compatible

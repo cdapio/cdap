@@ -18,6 +18,7 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.StreamNotFoundException;
@@ -46,7 +47,6 @@ import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
@@ -335,8 +335,13 @@ public class FileStreamAdmin implements StreamAdmin {
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(streamId);
     StreamConfig config = getConfig(streamId);
     StreamSpecification spec = streamMetaStore.getStream(streamId);
-    return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB(),
-                                spec.getDescription(), ownerPrincipal);
+    return StreamProperties.builder()
+      .setTTL(config.getTTL())
+      .setFormatSpec(config.getFormat())
+      .setNotificatonThreshold(config.getNotificationThresholdMB())
+      .setDescription(spec.getDescription())
+      .setPrincipal(ownerPrincipal)
+      .build();
   }
 
   @Override
@@ -358,18 +363,17 @@ public class FileStreamAdmin implements StreamAdmin {
       streamId, new Callable<CoordinatorStreamProperties>() {
         @Override
         public CoordinatorStreamProperties call() throws Exception {
-          StreamProperties oldProperties = updateProperties(streamId, properties);
-
-          FormatSpecification format = properties.getFormat();
-          if (format != null) {
+          FormatSpecification oldFormat = updateProperties(streamId, properties);
+          FormatSpecification newFormat = properties.getFormat();
+          if (newFormat != null) {
             // if the schema has changed, we need to recreate the hive table.
             // Changes in format and settings don't require
             // a hive change, as they are just properties used by the stream storage handler.
-            Schema currSchema = oldProperties.getFormat().getSchema();
-            Schema newSchema = format.getSchema();
+            Schema currSchema = oldFormat.getSchema();
+            Schema newSchema = newFormat.getSchema();
             if (!Objects.equals(currSchema, newSchema)) {
               alterExploreStream(streamId, false, null);
-              alterExploreStream(streamId, true, format);
+              alterExploreStream(streamId, true, newFormat);
             }
           }
 
@@ -702,7 +706,7 @@ public class FileStreamAdmin implements StreamAdmin {
     });
   }
 
-  private StreamProperties updateProperties(StreamId streamId, StreamProperties properties) throws Exception {
+  private FormatSpecification updateProperties(StreamId streamId, StreamProperties properties) throws Exception {
     StreamConfig config = getConfig(streamId);
 
     StreamConfig.Builder builder = StreamConfig.builder(config);
@@ -736,7 +740,7 @@ public class FileStreamAdmin implements StreamAdmin {
       metadataStore, streamId, newConfig, description);
     systemMetadataWriter.write();
 
-    return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB());
+    return config.getFormat();
   }
 
   private void writeConfig(StreamConfig config) throws IOException {

@@ -15,11 +15,11 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Throwables;
@@ -133,9 +133,14 @@ public abstract class StreamCoordinatorTestBase {
           try {
             barrier.await();
             for (int i = 0; i < 100; i++) {
-              Long ttl = (threadId == 0) ? (long) (i * 1000) : null;
-              Integer threshold = (threadId == 1) ? i : null;
-              streamAdmin.updateConfig(streamId, new StreamProperties(ttl, null, threshold));
+              StreamProperties.Builder builder = StreamProperties.builder();
+              if (threadId == 0) {
+                builder.setTTL(i * 1000L);
+              }
+              if (threadId == 1) {
+                builder.setNotificatonThreshold(i);
+              }
+              streamAdmin.updateConfig(streamId, builder.build());
             }
             completeLatch.countDown();
           } catch (Exception e) {

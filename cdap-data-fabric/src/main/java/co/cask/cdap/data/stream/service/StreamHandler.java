@@ -19,6 +19,7 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.RecordFormat;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -40,7 +41,6 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.format.RecordFormats;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.StreamDetail;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
@@ -426,9 +426,8 @@ public final class StreamHandler extends AbstractHttpHandler {
     if (properties.getOwnerPrincipal() != null) {
       SecurityUtil.validateKerberosPrincipal(properties.getOwnerPrincipal());
     }
-
-    return new StreamProperties(ttl, formatSpec, threshold, properties.getDescription(),
-                                properties.getOwnerPrincipal());
+    // the format spec may have been filled with a schema: copy the properties and replace the format spec
+    return formatSpec == null ? properties : StreamProperties.builder(properties).setFormatSpec(formatSpec).build();
   }
 
   private RejectedExecutionHandler createAsyncRejectedExecutionHandler() {
@@ -510,21 +509,27 @@ public final class StreamHandler extends AbstractHttpHandler {
     @Override
     public StreamProperties deserialize(JsonElement json, Type typeOfT,
                                         JsonDeserializationContext context) throws JsonParseException {
+
+      StreamProperties.Builder builder = StreamProperties.builder();
       JsonObject jsonObj = json.getAsJsonObject();
-      Long ttl = jsonObj.has("ttl") ? TimeUnit.SECONDS.toMillis(jsonObj.get("ttl").getAsLong()) : null;
 
-      FormatSpecification format = null;
-      if (jsonObj.has("format")) {
-        format = context.deserialize(jsonObj.get("format"), FormatSpecification.class);
+      if (jsonObj.has("ttl")) {
+        builder.setTTL(TimeUnit.SECONDS.toMillis(jsonObj.get("ttl").getAsLong()));
       }
-
-      Integer threshold = jsonObj.has("notification.threshold.mb") ?
-        jsonObj.get("notification.threshold.mb").getAsInt() : null;
-
-      String description = jsonObj.has("description") ? jsonObj.get("description").getAsString() : null;
-      String ownerPrincipal = jsonObj.has(Constants.Security.PRINCIPAL) ?
-        jsonObj.get(Constants.Security.PRINCIPAL).getAsString() : null;
-      return new StreamProperties(ttl, format, threshold, description, ownerPrincipal);
+      if (jsonObj.has("format")) {
+        FormatSpecification formatSpec = context.deserialize(jsonObj.get("format"), FormatSpecification.class);
+        builder.setFormatSpec(formatSpec);
+      }
+      if (jsonObj.has("notification.threshold.mb")) {
+        builder.setNotificatonThreshold(jsonObj.get("notification.threshold.mb").getAsInt());
+      }
+      if (jsonObj.has("description")) {
+        builder.setDescription(jsonObj.get("description").getAsString());
+      }
+      if (jsonObj.has(Constants.Security.PRINCIPAL)) {
+        builder.setPrincipal(jsonObj.get(Constants.Security.PRINCIPAL).getAsString());
+      }
+      return builder.build();
     }
   }
 

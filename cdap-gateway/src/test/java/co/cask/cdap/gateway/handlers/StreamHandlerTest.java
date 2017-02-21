@@ -16,9 +16,9 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.Constants;
@@ -32,14 +32,12 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamDetail;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
@@ -119,9 +117,9 @@ public class StreamHandlerTest extends GatewayTestBase {
     HttpURLConnection urlConn = openURL(createURL("streams/stream1"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     Schema schema = Schema.recordOf("event", Schema.Field.of("purchase", Schema.of(Schema.Type.STRING)));
-    FormatSpecification formatSpecification = new FormatSpecification(
-      TextRecordFormat.class.getCanonicalName(), schema, ImmutableMap.of(TextRecordFormat.CHARSET, "utf8"));
-    StreamProperties properties = new StreamProperties(1L, formatSpecification, 128, desc, null);
+    StreamProperties properties = StreamProperties.builder()
+      .setTTL(1L).setFormat(TextRecordFormat.class.getCanonicalName()).setSchema(schema)
+      .addSetting(TextRecordFormat.CHARSET, "utf8").setNotificatonThreshold(128).setDescription(desc).build();
     urlConn.getOutputStream().write(GSON.toJson(properties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -135,7 +133,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     Assert.assertEquals(properties, actual);
 
     // Update desc and ttl and check whether the changes were persisted
-    StreamProperties newProps = new StreamProperties(2L, null, null, "small stream", null);
+    StreamProperties newProps = StreamProperties.builder().setTTL(2L).setDescription("small stream").build();
     urlConn = openURL(createPropertiesURL("stream1"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     urlConn.getOutputStream().write(GSON.toJson(newProps).getBytes(Charsets.UTF_8));
@@ -147,9 +145,10 @@ public class StreamHandlerTest extends GatewayTestBase {
     actual = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8),
                            StreamProperties.class);
     urlConn.disconnect();
-    StreamProperties expected = new StreamProperties(newProps.getTTL(), properties.getFormat(),
-                                                     properties.getNotificationThresholdMB(),
-                                                     newProps.getDescription(), properties.getOwnerPrincipal());
+    @SuppressWarnings("ConstantConditions")
+    StreamProperties expected = StreamProperties.builder().setTTL(newProps.getTTL())
+      .setFormatSpec(properties.getFormat()).setNotificatonThreshold(properties.getNotificationThresholdMB())
+      .setDescription(newProps.getDescription()).build();
     Assert.assertEquals(expected, actual);
   }
 
@@ -277,11 +276,9 @@ public class StreamHandlerTest extends GatewayTestBase {
     urlConn = openURL(createPropertiesURL("stream_info"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     Schema schema = Schema.recordOf("event", Schema.Field.of("purchase", Schema.of(Schema.Type.STRING)));
-    FormatSpecification formatSpecification;
-    formatSpecification = new FormatSpecification(TextRecordFormat.class.getCanonicalName(),
-                            schema,
-                            ImmutableMap.of(TextRecordFormat.CHARSET, "utf8"));
-    StreamProperties streamProperties = new StreamProperties(2L, formatSpecification, 20);
+    StreamProperties streamProperties = StreamProperties.builder().setTTL(2L)
+      .setFormat(TextRecordFormat.class.getCanonicalName()).setSchema(schema)
+      .addSetting(TextRecordFormat.CHARSET, "utf8").setNotificatonThreshold(20).build();
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -306,8 +303,8 @@ public class StreamHandlerTest extends GatewayTestBase {
     urlConn = openURL(createPropertiesURL("stream_defaults"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     // don't give the schema to make sure a default gets used
-    FormatSpecification formatSpecification = new FormatSpecification(Formats.TEXT, null, null);
-    StreamProperties streamProperties = new StreamProperties(2L, formatSpecification, 20);
+    StreamProperties streamProperties = StreamProperties.builder()
+      .setTTL(2L).setFormat(Formats.TEXT).setNotificatonThreshold(20).build();
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -320,7 +317,8 @@ public class StreamHandlerTest extends GatewayTestBase {
                                                        Charsets.UTF_8), StreamProperties.class);
     urlConn.disconnect();
 
-    StreamProperties expected = new StreamProperties(2L, StreamConfig.DEFAULT_STREAM_FORMAT, 20);
+    StreamProperties expected = StreamProperties.builder()
+      .setTTL(2L).setFormatSpec(StreamConfig.DEFAULT_STREAM_FORMAT).setNotificatonThreshold(20).build();
     Assert.assertEquals(expected, actual);
   }
 
@@ -341,7 +339,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     // put a config with an invalid TTL
     urlConn = openURL(createPropertiesURL("stream_badconf"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
-    StreamProperties streamProperties = new StreamProperties(-1L, null, 20);
+    StreamProperties streamProperties = StreamProperties.builder().setTTL(-1L).setNotificatonThreshold(20).build();
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -349,17 +347,15 @@ public class StreamHandlerTest extends GatewayTestBase {
     // put a config with a format without a format class
     urlConn = openURL(createPropertiesURL("stream_badconf"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
-    FormatSpecification formatSpec = new FormatSpecification(null, null, null);
-    streamProperties = new StreamProperties(2L, formatSpec, 20);
-    urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
+    // can't be done via builder() as the builder prevents that. But possible in HTTP handler via Json
+    urlConn.getOutputStream().write("{\"format\":{}}".getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
 
     // put a config with a format with a bad format class
     urlConn = openURL(createPropertiesURL("stream_badconf"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
-    formatSpec = new FormatSpecification("gibberish", null, null);
-    streamProperties = new StreamProperties(2L, formatSpec, 20);
+    streamProperties = StreamProperties.builder().setFormat("gibberish").build();
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -368,8 +364,8 @@ public class StreamHandlerTest extends GatewayTestBase {
     urlConn = openURL(createPropertiesURL("stream_badconf"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     Schema schema = Schema.recordOf("event", Schema.Field.of("col", Schema.of(Schema.Type.DOUBLE)));
-    formatSpec = new FormatSpecification(TextRecordFormat.class.getCanonicalName(), schema, null);
-    streamProperties = new StreamProperties(2L, formatSpec, 20);
+    streamProperties = StreamProperties.builder()
+      .setFormat(TextRecordFormat.class.getCanonicalName()).setSchema(schema).build();
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -377,7 +373,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     // put a config with a bad threshold
     urlConn = openURL(createPropertiesURL("stream_badconf"), HttpMethod.PUT);
     urlConn.setDoOutput(true);
-    streamProperties = new StreamProperties(2L, null, -20);
+    streamProperties = StreamProperties.builder().setNotificatonThreshold(-20).build();
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -542,7 +538,7 @@ public class StreamHandlerTest extends GatewayTestBase {
                                      @Nullable String owner) throws IOException, URISyntaxException {
     HttpURLConnection urlConn = openURL(createURL(streamUrl), HttpMethod.PUT);
     urlConn.setDoOutput(true);
-    StreamProperties properties = new StreamProperties(1L, null, 128, null, owner);
+    StreamProperties properties = StreamProperties.builder().setTTL(1L).setPrincipal(owner).build();
     urlConn.getOutputStream().write(GSON.toJson(properties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(responseStatus.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -550,7 +546,7 @@ public class StreamHandlerTest extends GatewayTestBase {
 
   private void verifyUpdateOwnerFailure(String streamName, @Nullable String ownerPrincipal)
     throws IOException, URISyntaxException {
-    StreamProperties newProps = new StreamProperties(1L, null, null, null, ownerPrincipal);
+    StreamProperties newProps = StreamProperties.builder().setPrincipal(ownerPrincipal).build();
     HttpURLConnection urlConn = openURL(createPropertiesURL(streamName), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     urlConn.getOutputStream().write(GSON.toJson(newProps).getBytes(Charsets.UTF_8));
