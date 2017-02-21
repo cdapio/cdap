@@ -287,17 +287,20 @@ Hadoop, HBase, ZooKeeper, and (optionally) Hive.  In this case, the setting for
 identified by the default authenticated Kerberos principal.
 
 **Note:** CDAP support for secure Hadoop clusters is limited to the latest versions of
-CDH, HDP, and Apache BigTop; currently, MapR is not supported on secure Hadoop clusters.
+CDH, HDP, MapR, and Apache BigTop; currently, Amazon EMR is not supported on secure Hadoop
+clusters.
 
 A. In order to configure **CDAP for Kerberos authentication:**
 
-   i. Create a Kerberos principal for the user running CDAP.  The principal name should be in
+   #. Create a Kerberos principal for the user running CDAP.  The principal name should be in
       the form ``username/hostname@REALM``, creating a separate principal for each host
       where a CDAP service will run.  This prevents simultaneous login attempts from
       multiple hosts from being mistaken for a replay attack by the Kerberos KDC.
+      
    #. Generate a keytab file for each CDAP Master Kerberos principal, and place the file as
       ``/etc/security/keytabs/cdap.keytab`` on the corresponding CDAP Master host.  The
       file should be readable only by the user running the CDAP Master service.
+      
    #. Edit ``/etc/cdap/conf/cdap-site.xml`` on each host running a CDAP service, substituting the Kerberos
       primary (user) for ``<cdap-principal>``, and your Kerberos authentication realm for ``EXAMPLE.COM``,
       when adding these two properties:
@@ -332,8 +335,10 @@ A. In order to configure **CDAP for Kerberos authentication:**
         $ echo "grant 'cdap', 'RWCA'" | hbase shell
 
    #. When CDAP Master is started, it will login using the configured keytab file and principal.
-   
-#. In order to configure **YARN for secure Hadoop:** the ``<cdap-principal>`` user must be 
+
+.. configuration-yarn-for-secure-hadoop:
+
+B. In order to configure **YARN for secure Hadoop:** the ``<cdap-principal>`` user must be 
    able to launch YARN containers, either by adding it to the YARN ``allowed.system.users``
    whitelist (preferred) or by adjusting the YARN ``min.user.id`` to include the ``<cdap-principal>`` user.
 
@@ -341,7 +346,7 @@ A. In order to configure **CDAP for Kerberos authentication:**
 
    .. highlight:: xml
 
-   i. To allow CDAP to act as a Hive client, it must be given ``proxyuser`` permissions and allowed from all hosts. 
+   #. To allow CDAP to act as a Hive client, it must be given ``proxyuser`` permissions and allowed from all hosts. 
       For example: set the following properties in the configuration file ``core-site.xml``, where ``cdap`` is a system 
       group to which the ``cdap`` user is a member::
   

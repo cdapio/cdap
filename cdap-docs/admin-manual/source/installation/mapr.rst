@@ -205,14 +205,21 @@ Advanced Topics
 
 .. _mapr-configuration-enabling-kerberos:
 
-Enabling Kerberos
------------------
-Kerberos is currently not supported by CDAP on secure MapR clusters.
+.. Enabling Kerberos
+.. -----------------
+.. include:: /../target/_includes/mapr-configuration.rst
+    :start-after: .. configuration-enabling-kerberos:
+    :end-before: .. configuration-yarn-for-secure-hadoop:
 
-.. 
-.. .. include:: /../target/_includes/mapr-configuration.rst
-..     :start-after: .. configuration-enabling-kerberos:
-..     :end-before: .. _mapr-configuration-eps:
+..
+
+   8. Edit ``/etc/cdap/conf/cdap-env.sh`` on each host running CDAP Master, adding::
+
+        export OPTS="${OPTS} -Djava.security.auth.login.config=/opt/mapr/conf/mapr.login.conf -Dhadoop.login=hybrid -Dzookeeper.saslprovider=com.mapr.security.maprsasl.MaprSaslProvider"
+
+.. include:: /../target/_includes/mapr-configuration.rst
+    :start-after: .. configuration-yarn-for-secure-hadoop:
+    :end-before: .. _mapr-configuration-eps:
 
 .. Enabling CDAP HA
 .. ----------------
