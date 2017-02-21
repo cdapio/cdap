@@ -39,6 +39,7 @@
   <!-- do not check thrift generated files -->
   <suppress checks=".*" files=".*[/\\]transaction[/\\]distributed[/\\]thrift[/\\].*" />
 
-
+  <suppress checks=".*" files=".*[/\\]src[/\\](main)[/\\](thrift)[/\\].*" />
+  <suppress checks=".*" files=".*[/\\]src[/\\](main)[/\\](java)[/\\](co|org)[/\\](cask|apache)[/\\](tephra|thrift)[/\\].*" />
 
 </suppressions>
