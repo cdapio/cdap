@@ -20,6 +20,7 @@ import ProgramTab from 'components/Overview/Tabs/ProgramTab';
 import DatasetTab from 'components/Overview/Tabs/DatasetTab';
 import classnames from 'classnames';
 import isNil from 'lodash/isNil';
+import T from 'i18n-react';
 require('../Tabs/OverviewTab.scss');
 
 export default class AppOverviewTab extends Component {
