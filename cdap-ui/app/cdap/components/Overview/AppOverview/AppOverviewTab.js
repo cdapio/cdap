@@ -62,7 +62,7 @@ export default class AppOverviewTab extends Component {
                 className={classnames({ active: this.state.activeTab === '2' })}
                 onClick={() => { this.toggleTab('2'); }}
               >
-                Datasets ({this.state.entity.datasets.length})
+                {T.translate('features.AppDetailedView.Tabs.datasetsLabel')} ({this.state.entity.datasets.length + this.state.entity.streams.length})
               </NavLink>
             </NavItem>
           </Nav>
