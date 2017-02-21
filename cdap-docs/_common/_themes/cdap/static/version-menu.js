@@ -40,7 +40,7 @@
  * 
  * list of development versions; one current version; list of additional versions; dict of Google Custom Search Engines (gcse)
  *
- * version 0.4
+ * version 0.5
  * 
  */
 
@@ -48,7 +48,7 @@
   var versionsURL = 'http://docs.cask.co/cdap/';
   var versionID = 'select-version';
   var buildURL = (function(dir){
-    return versionsURL + dir + '/en/';
+    return versionsURL + dir + '/en/' + location.pathname.substr(location.pathname.lastIndexOf('/en/')+4);
   });
   var writeLink = (function(dir, label){
     document.write('<option value="' + buildURL(dir) + '">' + label + '</option>');
