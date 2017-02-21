@@ -42,16 +42,16 @@ public class PreferencesCommandSet extends CommandSet<Command> implements Catego
     List<Command> commands = Lists.newArrayList();
     for (ElementType elementType : ElementType.values()) {
       if (elementType.hasPreferences()) {
+        commands.add(new GetPreferencesDeprecatedCommand(elementType, client, cliConfig));
         commands.add(new GetPreferencesCommand(elementType, client, cliConfig));
-        commands.add(new GetPreferencesNewCommand(elementType, client, cliConfig));
+        commands.add(new GetResolvedPreferencesDeprecatedCommand(elementType, client, cliConfig));
         commands.add(new GetResolvedPreferencesCommand(elementType, client, cliConfig));
-        commands.add(new GetResolvedPreferencesNewCommand(elementType, client, cliConfig));
+        commands.add(new SetPreferencesDeprecatedCommand(elementType, client, cliConfig));
         commands.add(new SetPreferencesCommand(elementType, client, cliConfig));
-        commands.add(new SetPreferencesNewCommand(elementType, client, cliConfig));
+        commands.add(new DeletePreferencesDeprecatedCommand(elementType, client, cliConfig));
         commands.add(new DeletePreferencesCommand(elementType, client, cliConfig));
-        commands.add(new DeletePreferencesNewCommand(elementType, client, cliConfig));
+        commands.add(new LoadPreferencesDeprecatedCommand(elementType, client, cliConfig));
         commands.add(new LoadPreferencesCommand(elementType, client, cliConfig));
-        commands.add(new LoadPreferencesNewCommand(elementType, client, cliConfig));
       }
     }
     return commands;

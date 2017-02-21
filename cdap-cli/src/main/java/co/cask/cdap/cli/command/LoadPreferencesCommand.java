@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,10 +37,7 @@ import java.util.Map;
 
 /**
  * Command to load a config property file.
- *
- * @deprecated since 4.1.0. Use {@link LoadPreferencesNewCommand} instead.
  */
-@Deprecated
 public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
   private static final String SUCCESS = "Load Preferences File was successful for the '%s'";
   private static final Gson GSON = new Gson();
@@ -84,12 +81,12 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getPattern() {
-    return determinePattern("load");
+    return determineNewPattern("load");
   }
 
   @Override
   public String getDescription() {
-    return String.format("Sets the preferences of %s from a local JSON config file (Deprecated as of CDAP 4.1.0. " +
-                           "Use %s instead)", Fragment.of(Article.A, type.getName()), determineNewPattern("load"));
+    return String.format("Sets the preferences of %s from a local JSON config file",
+                         Fragment.of(Article.A, type.getName()));
   }
 }
