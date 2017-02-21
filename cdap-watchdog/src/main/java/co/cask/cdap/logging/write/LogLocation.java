@@ -26,8 +26,6 @@ import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.serialize.LoggingEvent;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -45,7 +43,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.concurrent.Callable;
 
 /**
  * LogLocation representing a log file and methods to read the file's contents.
@@ -61,17 +58,12 @@ public class LogLocation {
   private final long eventTimeMs;
   private final long fileCreationTimeMs;
   private final Location location;
-  private final NamespaceId namespaceId;
-  private final Impersonator impersonator;
 
-  public LogLocation(String frameworkVersion, long eventTimeMs, long fileCreationTimeMs, Location location,
-                     String namespaceId, Impersonator impersonator) {
+  public LogLocation(String frameworkVersion, long eventTimeMs, long fileCreationTimeMs, Location location) {
     this.frameworkVersion = frameworkVersion;
     this.eventTimeMs = eventTimeMs;
     this.fileCreationTimeMs = fileCreationTimeMs;
     this.location = location;
-    this.namespaceId = new NamespaceId(namespaceId);
-    this.impersonator = impersonator;
   }
 
   /**
@@ -365,8 +357,7 @@ public class LogLocation {
   }
 
   private DataFileReader<GenericRecord> createReader() throws IOException {
-    boolean shouldImpersonate = this.getFrameworkVersion().equals(VERSION_0);
-    return new DataFileReader<>(new LocationSeekableInput(location, namespaceId, impersonator, shouldImpersonate),
+    return new DataFileReader<>(new LocationSeekableInput(location),
                                 new GenericDatumReader<GenericRecord>(LogSchema.LoggingEvent.SCHEMA));
   }
 
@@ -378,21 +369,9 @@ public class LogLocation {
     private final SeekableInputStream is;
     private final long len;
 
-    LocationSeekableInput(final Location location,
-                          NamespaceId namespaceId, Impersonator impersonator,
-                          boolean shouldImpersonate) throws IOException {
+    LocationSeekableInput(final Location location) throws IOException {
       try {
-        if (shouldImpersonate) {
-          this.is = impersonator.doAs(namespaceId, new Callable<SeekableInputStream>() {
-            @Override
-            public SeekableInputStream call() throws Exception {
-              return Locations.newInputSupplier(location).getInput();
-            }
-          });
-        } else {
-          // impersonation is not required for V1 version.
-          this.is = Locations.newInputSupplier(location).getInput();
-        }
+        this.is = Locations.newInputSupplier(location).getInput();
       } catch (IOException e) {
         throw e;
       } catch (Exception e) {

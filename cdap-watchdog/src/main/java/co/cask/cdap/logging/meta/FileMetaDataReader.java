@@ -21,6 +21,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -39,6 +40,7 @@ import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +50,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * class to read log meta data table
@@ -113,7 +116,7 @@ public class FileMetaDataReader {
               return Collections.EMPTY_LIST;
             }
             List<LogLocation> files = new ArrayList<>();
-            for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
+            for (final Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
               // old rowkey format length is 8 bytes (just the event timestamp is the column key)
               // new row-key format length is 17 bytes (version_byte, event timestamp (8b) and current timestamp (8b)
               if (entry.getKey().length == 8) {
@@ -124,19 +127,26 @@ public class FileMetaDataReader {
                                             eventTimestamp,
                                             // use 0 as current time as this information is not available
                                             0,
-                                            rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))),
-                                            logPathIdentifier.getNamespaceId(), impersonator));
+                                            rootLocationFactory.create(new URI(Bytes.toString(entry.getValue())))));
                 }
               } else if (entry.getKey().length == 17) {
                 // skip the first (version) byte
                 long eventTimestamp = Bytes.toLong(entry.getKey(), 1, Bytes.SIZEOF_LONG);
                 if (eventTimestamp <= endTimestampMs) {
                   // new format
+                  Location fileLocation =
+                    impersonator.doAs(NamespaceId.fromString(logPathIdentifier.getNamespaceId()),
+                                      new Callable<Location>() {
+                                        @Override
+                                        public Location call() throws Exception {
+                                          return Locations.getLocationFromAbsolutePath(
+                                            rootLocationFactory, Bytes.toString(entry.getValue()));
+                                        }
+                                      });
                   files.add(new LogLocation(LogLocation.VERSION_1,
                                             eventTimestamp,
                                             Bytes.toLong(entry.getKey(), 9, Bytes.SIZEOF_LONG),
-                                            rootLocationFactory.create(new URI(Bytes.toString(entry.getValue()))),
-                                            logPathIdentifier.getNamespaceId(), impersonator));
+                                            fileLocation));
                 }
               } else {
                 LOG.warn("For row-key {}, got column entry with unexpected key length {}",
