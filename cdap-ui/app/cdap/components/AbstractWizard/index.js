@@ -17,7 +17,9 @@
 import React, {PropTypes} from 'react';
 import StreamCreateWizard from 'components/CaskWizards/StreamCreate';
 import UploadDataWizard from 'components/CaskWizards/UploadData';
+import UploadDataUsecaseWizard from 'components/CaskWizards/UploadDataUsecase';
 import PublishPipelineWizard from 'components/CaskWizards/PublishPipeline';
+import PublishPipelineUsecaseWizard from 'components/CaskWizards/PublishPipelineUsecase';
 import InformationalWizard from 'components/CaskWizards/Informational';
 import ArtifactUploadWizard from 'components/CaskWizards/ArtifactUpload';
 import PluginArtifactUploadWizard from 'components/CaskWizards/PluginArtifactUpload';
@@ -75,8 +77,12 @@ const WizardTypesMap = {
     tag: UploadDataWizard,
     store: UploadDataStore
   },
+  'load_datapack_usecase': {
+    tag: UploadDataUsecaseWizard,
+    store: UploadDataStore
+  },
   'create_pipeline': {
-    tag: PublishPipelineWizard,
+    tag: PublishPipelineUsecaseWizard,
     store: PublishPipelineStore
   },
   'create_pipeline_draft': {

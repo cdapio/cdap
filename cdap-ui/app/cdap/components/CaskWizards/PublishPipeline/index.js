@@ -34,10 +34,10 @@ export default class PublishPipelineWizard extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showWizard: this.props.isOpen
+      showWizard: this.props.isOpen,
+      successInfo: {}
     };
 
-    this.successInfo = {};
     this.setDefaultConfig();
 
     this.eventEmitter = ee(ee);
@@ -75,15 +75,27 @@ export default class PublishPipelineWizard extends Component {
       }
     });
   }
-  buildSuccessInfo(name, draftId, namespace) {
-    let defaultSuccessMessage = T.translate('features.Wizard.PublishPipeline.success');
-    let buttonLabel = T.translate('features.Wizard.PublishPipeline.callToAction');
+  buildSuccessInfo(pipelineName, namespace, draftId) {
+    let message = T.translate('features.Wizard.PublishPipeline.success', {pipelineName});
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
-    this.successInfo.message = `${defaultSuccessMessage} "${name}".`;
-    this.successInfo.buttonLabel = buttonLabel;
-    this.successInfo.buttonUrl = `/hydrator/ns/${namespace}/studio?draftId=${draftId}`;
-    this.successInfo.linkLabel = linkLabel;
-    this.successInfo.linkUrl = `/cdap/ns/${namespace}`;
+    let buttonLabel = T.translate('features.Wizard.PublishPipeline.callToAction.customize');
+    this.setState({
+      successInfo: {
+        message: message,
+        buttonLabel,
+        buttonUrl: window.getHydratorUrl({
+          stateName: 'hydrator.create',
+          stateParams: {
+            namespace,
+            draftId
+          }
+        }),
+        linkLabel,
+        linkUrl: window.getAbsUIUrl({
+          namespaceId: namespace
+        })
+      }
+    });
   }
   toggleWizard(returnResult) {
     if (this.state.showWizard) {
@@ -119,12 +131,14 @@ export default class PublishPipelineWizard extends Component {
           return MyUserStoreApi.set({}, res.property);
         })
         .map((res) => {
-          this.buildSuccessInfo(name, draftId, currentNamespace);
+          this.buildSuccessInfo(name, currentNamespace, draftId);
           this.eventEmitter.emit(globalEvents.PUBLISHPIPELINE);
           return res;
         });
     }
-    if (this.props.input.action.type === 'create_pipeline') {
+    // this is the case when this is used in an usecase, so
+    // PublishPipelineUsecase passes the CTA info to this component
+    if (this.props.input.action.type === 'create_pipeline' && this.props.buildSuccessInfo) {
       return MyPipelineApi
         .publish({
           namespace: currentNamespace,
@@ -135,6 +149,10 @@ export default class PublishPipelineWizard extends Component {
           }
         )
         .map((res) => {
+          let successInfo = this.props.buildSuccessInfo(name, currentNamespace);
+          this.setState({
+            successInfo
+          });
           this.eventEmitter.emit(globalEvents.PUBLISHPIPELINE);
           return res;
         });
@@ -159,7 +177,7 @@ export default class PublishPipelineWizard extends Component {
                 wizardConfig={PublishPipelineWizardConfig}
                 wizardType="PublishPipeline"
                 onSubmit={this.publishPipeline.bind(this)}
-                successInfo={this.successInfo}
+                successInfo={this.state.successInfo}
                 onClose={this.toggleWizard.bind(this)}
                 store={PublishPipelineWizardStore}
               />
@@ -174,5 +192,6 @@ export default class PublishPipelineWizard extends Component {
 PublishPipelineWizard.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
+  buildSuccessInfo: PropTypes.func,
 };
