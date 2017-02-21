@@ -135,7 +135,7 @@ public abstract class StreamCoordinatorTestBase {
             for (int i = 0; i < 100; i++) {
               StreamProperties.Builder builder = StreamProperties.builder();
               if (threadId == 0) {
-                builder.setTTL(i * 1000L);
+                builder.setTTL(i);
               }
               if (threadId == 1) {
                 builder.setNotificatonThreshold(i);
@@ -157,7 +157,7 @@ public abstract class StreamCoordinatorTestBase {
     // Check the last threshold and ttl are correct. We don't check if the listener gets every update as it's
     // possible that it doesn't see every updates, but only the latest value (that's what ZK watch guarantees).
     Assert.assertTrue(validateLastElement(thresholds, 99));
-    Assert.assertTrue(validateLastElement(ttls, 99000L));
+    Assert.assertTrue(validateLastElement(ttls, 99L));
 
     // Verify the config is right
     StreamConfig config = streamAdmin.getConfig(streamId);

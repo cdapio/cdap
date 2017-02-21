@@ -325,7 +325,7 @@ public abstract class StreamConsumerTestBase {
     final long approxEarliestNonExpiredTime = currentTime - TimeUnit.HOURS.toMillis(1);
 
     StreamProperties streamProperties = StreamProperties.builder()
-      .setTTL(ttl).addProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl)).build();
+      .setTTL(ttl / 1000).addProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl)).build();
     streamAdmin.create(streamId, streamProperties);
 
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
@@ -381,7 +381,7 @@ public abstract class StreamConsumerTestBase {
     final long approxEarliestNonExpiredTime = currentTime - TimeUnit.HOURS.toMillis(1);
 
     StreamProperties streamProperties = StreamProperties.builder()
-      .setTTL(ttl).addProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl)).build();
+      .setTTL(ttl / 1000).addProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl)).build();
     streamAdmin.create(streamId, streamProperties);
 
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
@@ -436,7 +436,7 @@ public abstract class StreamConsumerTestBase {
     final long ttl = TimeUnit.SECONDS.toMillis(3);
 
     StreamProperties streamProperties = StreamProperties.builder()
-      .setTTL(ttl).addProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl)).build();
+      .setTTL(3).addProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl)).build();
     streamAdmin.create(streamId, streamProperties);
 
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
