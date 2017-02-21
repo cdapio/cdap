@@ -114,6 +114,8 @@ features:
       programsLabel: Programs
       datasetsLabel: Datasets
       historyLabel: Runs
+      propertiesLabel: Properties
+
   AuthorizationMessage:
     mainMessage: " You do not have authorization to access existing namespaces"
     callToAction1: Please contact your system administrator to request access to a namespace

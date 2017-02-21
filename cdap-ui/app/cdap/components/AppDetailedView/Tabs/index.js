@@ -19,6 +19,7 @@ import { Nav, NavItem, NavLink, TabContent} from 'reactstrap';
 import ProgramTab from 'components/Overview/Tabs/ProgramTab';
 import DatasetTab from 'components/Overview/Tabs/DatasetTab';
 import HistoryTab from 'components/AppDetailedView/Tabs/HistoryTab';
+import PropertiesTab from 'components/AppDetailedView/Tabs/PropertiesTab';
 import isNil from 'lodash/isNil';
 import Match from 'react-router/Match';
 import Link from 'react-router/Link';
@@ -76,6 +77,16 @@ export default class AppDetailedViewTab extends Component {
               </Link>
             </NavLink>
           </NavItem>
+          <NavItem>
+            <NavLink>
+              <Link
+                to={`/ns/${this.props.params.namespace}/apps/${this.props.params.appId}/properties`}
+                activeClassName="active"
+              >
+                {T.translate('features.AppDetailedView.Tabs.propertiesLabel')}
+              </Link>
+            </NavLink>
+          </NavItem>
         </Nav>
         <TabContent>
           <Match pattern={'/ns/:namespace/apps/:appId/'} render={() => {
@@ -96,6 +107,11 @@ export default class AppDetailedViewTab extends Component {
           <Match pattern={'/ns/:namespace/apps/:appId/history'} render={() => {
               return (
                 <HistoryTab entity={this.state.entity} />
+              );
+          }}/>
+          <Match pattern={'/ns/:namespace/apps/:appId/properties'} render={() => {
+              return (
+                <PropertiesTab entity={this.state.entity} />
               );
           }}/>
         </TabContent>

@@ -89,4 +89,15 @@
     transform: translate(-50%, -50%);
     color: gray;
   }
+
+  .properties-container {
+    height: 100%;
+    padding: 15px 10px;
+    overflow: auto;
+
+    .message-section {
+      padding: 0 10px;
+      margin-bottom: 15px;
+    }
+  }
 }
