@@ -513,7 +513,8 @@ public class MasterServiceMain extends DaemonMain {
    */
   @VisibleForTesting
   static Injector createLeaderInjector(CConfiguration cConf, Configuration hConf,
-                                       final ZKClientService zkClientService) {
+                                       final ZKClientService zkClientService,
+                                       final LeaderElectionInfoService electionInfoService) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new AbstractModule() {
@@ -523,6 +524,7 @@ public class MasterServiceMain extends DaemonMain {
           // binding to reuse the same ZKClient used for leader election
           bind(ZKClient.class).toInstance(zkClientService);
           bind(ZKClientService.class).toInstance(zkClientService);
+          bind(LeaderElectionInfoService.class).toInstance(electionInfoService);
         }
       },
       new LoggingModules().getDistributedModules(),
@@ -588,7 +590,7 @@ public class MasterServiceMain extends DaemonMain {
 
       // We need to create a new injector each time becoming leader so that new instances of singleton Services
       // will be created
-      injector = createLeaderInjector(cConf, hConf, zkClient);
+      injector = createLeaderInjector(cConf, hConf, zkClient, electionInfoService);
 
       if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
         exploreClient = injector.getInstance(ExploreClient.class);
