@@ -41,11 +41,14 @@ function usage() {
   echo 
   echo "  Action (select one)"
   echo
-  echo "    docs-set          Clean build of HTML, CLI, and Javadocs, zipped, ready for deploying"
   echo "    docs-all          alias to \"docs-set\""
+  echo
+  echo "    docs-set          Clean build of HTML, CLI, including Javadocs, zipped"
+  echo "    docs-set-local    Clean build of HTML, CLI, including Javadocs, zipped, but using local copies"
   echo "    docs-web-only     Clean build of HTML, CLI, zipped, skipping Javadocs"
   echo 
   echo "    docs              Dirty build of HTML, skipping CLI, Javadocs, or zipping"
+  echo "    docs-local        Dirty build of HTML, skipping CLI, Javadocs, or zipping, but using local copies"
   echo 
   echo "    clean             Clean up any previous build's target directories"
   echo "    docs-cli          Build CLI input file for documentation"
@@ -65,12 +68,14 @@ function run_command() {
     check )             build_docs_check; warnings=$?;;
     clean )             clean_targets;;
     docs )              build_docs_only; warnings=$?;;
+    docs-local )        build_docs_only_local; warnings=$?;;
     docs-all )          build_docs_set; warnings=$?;;
     docs-cli )          build_docs_cli;;
     docs-first-pass )   build_docs_first_pass;;
     docs-second-pass )  build_docs_second_pass;;
     docs-package )      build_docs_package;;
     docs-set )          build_docs_set; warnings=$?;;
+    docs-set-local )    build_docs_set_local; warnings=$?;;
     docs-web-only )     build_docs_web_only; warnings=$?;;
     javadocs )          build_javadocs docs;;
     javadocs-all )      build_javadocs all;;
@@ -115,8 +120,20 @@ function build_docs_set() {
   _build_docs docs_set "Building Docs Set: docs_set"
 }
 
+function build_docs_set_local() {
+  LOCAL_INCLUDES="${TRUE}"
+  export LOCAL_INCLUDES
+  _build_docs docs_set "Building Docs Set: docs_set w/local files"
+}
+
 function build_docs_only() {
   _build_docs docs_only "Building Docs Only: docs_only"
+}
+
+function build_docs_only_local() {
+  LOCAL_INCLUDES="${TRUE}"
+  export LOCAL_INCLUDES
+  _build_docs docs_only "Building Docs Only: docs_only w/local files"
 }
 
 function build_docs_web_only() {
@@ -281,6 +298,10 @@ function build_docs_inner_level() {
   # Change to each manual, and run the local ./build.sh from there.
   # Each manual can (and does) have a customised build script, using the common-build.sh as a base.
   local build_target=${1}
+  if [[ ${LOCAL_INCLUDES} == ${TRUE} ]]; then
+    echo "Using local builds."
+    build_target="${1}-local"
+  fi
   pushd $(pwd) > /dev/null
   for i in ${MANUALS}; do
     echo "========================================================"
@@ -324,6 +345,7 @@ function build_docs_outer_level() {
     ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_options} ${TARGET_PATH}/${SOURCE} ${TARGET_PATH}/${HTML}
   fi
   consolidate_messages
+  add_html_redirect
   echo
 }
  
