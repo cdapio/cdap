@@ -29,7 +29,6 @@ import co.cask.cdap.proto.id.StreamViewId;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import javax.annotation.Nullable;
 
 /**
@@ -115,7 +114,7 @@ public interface StreamAdmin {
    * @return The {@link StreamConfig} associated with the new stream
    * @throws Exception if creation fails
    */
-  StreamConfig create(StreamId streamId, @Nullable Properties props) throws Exception;
+  StreamConfig create(StreamId streamId, @Nullable StreamProperties props) throws Exception;
 
   /**
    * Wipes out stream data.

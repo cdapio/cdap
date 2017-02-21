@@ -119,7 +119,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     Schema schema = Schema.recordOf("event", Schema.Field.of("purchase", Schema.of(Schema.Type.STRING)));
     StreamProperties properties = StreamProperties.builder()
       .setTTL(1L).setFormat(TextRecordFormat.class.getCanonicalName()).setSchema(schema)
-      .addSetting(TextRecordFormat.CHARSET, "utf8").setNotificatonThreshold(128).setDescription(desc).build();
+      .addFormatSetting(TextRecordFormat.CHARSET, "utf8").setNotificatonThreshold(128).setDescription(desc).build();
     urlConn.getOutputStream().write(GSON.toJson(properties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -278,7 +278,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     Schema schema = Schema.recordOf("event", Schema.Field.of("purchase", Schema.of(Schema.Type.STRING)));
     StreamProperties streamProperties = StreamProperties.builder().setTTL(2L)
       .setFormat(TextRecordFormat.class.getCanonicalName()).setSchema(schema)
-      .addSetting(TextRecordFormat.CHARSET, "utf8").setNotificatonThreshold(20).build();
+      .addFormatSetting(TextRecordFormat.CHARSET, "utf8").setNotificatonThreshold(20).build();
     urlConn.getOutputStream().write(GSON.toJson(streamProperties).getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();

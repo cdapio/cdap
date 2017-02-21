@@ -66,6 +66,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.common.Threads;
@@ -81,7 +82,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -216,35 +216,13 @@ public final class StreamHandler extends AbstractHttpHandler {
 
     StreamId streamId = validateAndGetStreamId(namespaceId, stream);
 
-    Properties props = new Properties();
-    StreamProperties streamProperties;
+    StreamProperties streamProperties = null;
     // If the request to create a stream contains a non-empty body, then construct and set StreamProperties
     if (request.getContent().readable()) {
       streamProperties = getAndValidateConfig(request);
-
-      if (streamProperties.getTTL() != null) {
-        props.put(Constants.Stream.TTL, Long.toString(streamProperties.getTTL()));
-      }
-
-      if (streamProperties.getNotificationThresholdMB() != null) {
-        props.put(Constants.Stream.NOTIFICATION_THRESHOLD,
-                  Integer.toString(streamProperties.getNotificationThresholdMB()));
-      }
-
-      if (streamProperties.getDescription() != null) {
-        props.put(Constants.Stream.DESCRIPTION, streamProperties.getDescription());
-      }
-
-      if (streamProperties.getFormat() != null) {
-        props.put(Constants.Stream.FORMAT_SPECIFICATION, GSON.toJson(streamProperties.getFormat()));
-      }
-
-      if (streamProperties.getOwnerPrincipal() != null) {
-        props.put(Constants.Security.PRINCIPAL, streamProperties.getOwnerPrincipal());
-      }
     }
 
-    streamAdmin.create(streamId, props);
+    streamAdmin.create(streamId, streamProperties);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -485,6 +463,9 @@ public final class StreamHandler extends AbstractHttpHandler {
    */
   private static final class StreamPropertiesAdapter implements JsonSerializer<StreamProperties>,
                                                                 JsonDeserializer<StreamProperties> {
+
+    private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+
     @Override
     public JsonElement serialize(StreamProperties src, Type typeOfSrc, JsonSerializationContext context) {
       JsonObject json = new JsonObject();
@@ -503,6 +484,7 @@ public final class StreamHandler extends AbstractHttpHandler {
       if (src.getOwnerPrincipal() != null) {
         json.addProperty(Constants.Security.PRINCIPAL, src.getOwnerPrincipal());
       }
+      json.add("properties", context.serialize(src.getProperties(), STRING_MAP_TYPE));
       return json;
     }
 
@@ -528,6 +510,12 @@ public final class StreamHandler extends AbstractHttpHandler {
       }
       if (jsonObj.has(Constants.Security.PRINCIPAL)) {
         builder.setPrincipal(jsonObj.get(Constants.Security.PRINCIPAL).getAsString());
+      }
+      if (jsonObj.has("properties")) {
+        for (Map.Entry<String, String> entry:
+          context.<Map<String, String>>deserialize(jsonObj.get("properties"), STRING_MAP_TYPE).entrySet()) {
+          builder.addProperty(entry.getKey(), entry.getValue());
+        }
       }
       return builder.build();
     }

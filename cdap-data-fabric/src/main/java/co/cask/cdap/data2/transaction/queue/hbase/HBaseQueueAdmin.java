@@ -178,11 +178,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
 
   @Override
   public void create(QueueName queueName) throws IOException {
-    create(queueName, new Properties());
-  }
-
-  @Override
-  public void create(QueueName queueName, Properties properties) throws IOException {
     // Queue Config needs to be on separate table, otherwise disabling the queue table would makes queue config
     // not accessible by the queue region coprocessor for doing eviction.
 
@@ -190,7 +185,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     createStateStoreDataset(queueName.getFirstComponent());
 
     TableId tableId = getDataTableId(queueName);
-    try (QueueDatasetAdmin dsAdmin = new QueueDatasetAdmin(tableId, hConf, cConf, tableUtil, properties)) {
+    try (QueueDatasetAdmin dsAdmin = new QueueDatasetAdmin(tableId, hConf, cConf, tableUtil, new Properties())) {
       dsAdmin.create();
     }
   }

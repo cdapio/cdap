@@ -31,7 +31,7 @@ public class CoordinatorStreamProperties extends StreamProperties {
 
   public CoordinatorStreamProperties(Long ttl, FormatSpecification format, Integer threshold, Integer generation,
                                      @Nullable String description, @Nullable String kerberosPrincipalId) {
-    super(ttl, format, threshold, description, kerberosPrincipalId);
+    super(ttl, format, threshold, description, kerberosPrincipalId, null);
     this.generation = generation;
   }
 

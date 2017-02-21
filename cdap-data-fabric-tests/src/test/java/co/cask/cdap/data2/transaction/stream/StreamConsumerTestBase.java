@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -47,7 +48,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -324,9 +324,8 @@ public abstract class StreamConsumerTestBase {
     final long increment = TimeUnit.SECONDS.toMillis(1);
     final long approxEarliestNonExpiredTime = currentTime - TimeUnit.HOURS.toMillis(1);
 
-    Properties streamProperties = new Properties();
-    streamProperties.setProperty(Constants.Stream.TTL, Long.toString(ttl));
-    streamProperties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl));
+    StreamProperties streamProperties = StreamProperties.builder()
+      .setTTL(ttl).addProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl)).build();
     streamAdmin.create(streamId, streamProperties);
 
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
@@ -381,9 +380,8 @@ public abstract class StreamConsumerTestBase {
     final long increment = TimeUnit.SECONDS.toMillis(1);
     final long approxEarliestNonExpiredTime = currentTime - TimeUnit.HOURS.toMillis(1);
 
-    Properties streamProperties = new Properties();
-    streamProperties.setProperty(Constants.Stream.TTL, Long.toString(ttl));
-    streamProperties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl));
+    StreamProperties streamProperties = StreamProperties.builder()
+      .setTTL(ttl).addProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl)).build();
     streamAdmin.create(streamId, streamProperties);
 
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
@@ -437,9 +435,8 @@ public abstract class StreamConsumerTestBase {
     // Create stream with ttl of 3 seconds and partition duration of 3 seconds
     final long ttl = TimeUnit.SECONDS.toMillis(3);
 
-    Properties streamProperties = new Properties();
-    streamProperties.setProperty(Constants.Stream.TTL, Long.toString(ttl));
-    streamProperties.setProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl));
+    StreamProperties streamProperties = StreamProperties.builder()
+      .setTTL(ttl).addProperty(Constants.Stream.PARTITION_DURATION, Long.toString(ttl)).build();
     streamAdmin.create(streamId, streamProperties);
 
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
