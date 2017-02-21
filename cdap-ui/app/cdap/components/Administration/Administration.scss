@@ -33,18 +33,15 @@ $active-text-color: #000000;
   }
 
   .page-title-and-version {
+    padding: 0 10px;
     .page-title {
-      padding-left: 10px;
-
       h3 {
         display: inline;
       }
     }
 
     .cdap-version-label {
-      text-align: right;
-      position: absolute;
-      right: 75px;
+      float: right;
       font-style: italic;
     }
   }

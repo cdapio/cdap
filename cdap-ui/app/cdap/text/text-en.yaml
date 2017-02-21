@@ -311,6 +311,7 @@ features:
         resources: Resources
         storage: Storage
         transactions: Transactions
+        connections: Connections
       labels:
         Accepted: Accepted
         RemainingBytes: Available
