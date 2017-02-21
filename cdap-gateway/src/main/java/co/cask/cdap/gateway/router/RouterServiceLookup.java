@@ -160,7 +160,7 @@ public class RouterServiceLookup {
 
     if (endpointStrategy.pick() == null) {
       String message = String.format("No discoverable endpoints found for service %s", cacheKey);
-      LOG.error(message);
+      LOG.debug(message);
       throw new Exception(message);
     }
 
