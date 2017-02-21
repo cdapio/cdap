@@ -18,17 +18,27 @@ package co.cask.cdap.internal.asm;
 
 import com.google.common.base.Function;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.GeneratorAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A util class to help on class inspections and manipulations through bytecode.
  */
 public final class Classes {
+
+  private static final Logger LOG = LoggerFactory.getLogger(Classes.class);
 
   /**
    * Checks if the given class extends or implements a super type.
@@ -91,5 +101,41 @@ public final class Classes {
   }
 
   private Classes() {
+  }
+
+  /**
+   * Rewrites methods in the given class bytecode to noop methods.
+   */
+  public static byte[] rewriteMethodToNoop(final String classFile,
+                                           InputStream byteCodeStream, final Set<String> methods) throws IOException {
+    ClassReader cr = new ClassReader(byteCodeStream);
+    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+      @Override
+      public MethodVisitor visitMethod(final int access, final String name, final String desc,
+                                       String signature, String[] exceptions) {
+        MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
+
+        if (!methods.contains(name)) {
+          return methodVisitor;
+        }
+
+        // We can only rewrite method that returns void
+        if (!Type.getReturnType(desc).equals(Type.VOID_TYPE)) {
+          LOG.warn("Cannot patch method {} in {} due to non-void return type: {}", name, classFile, desc);
+          return methodVisitor;
+        }
+
+        // Rewrite the method to noop.
+        GeneratorAdapter adapter = new GeneratorAdapter(methodVisitor, access, name, desc);
+        adapter.returnValue();
+
+        // VisitMaxs with 0 so that COMPUTE_MAXS from ClassWriter will compute the right values.
+        adapter.visitMaxs(0, 0);
+        return new MethodVisitor(Opcodes.ASM5) {
+        };
+      }
+    }, 0);
+    return cw.toByteArray();
   }
 }

@@ -22,6 +22,7 @@ import co.cask.cdap.explore.service.hive.Hive12ExploreService;
 import co.cask.cdap.explore.service.hive.Hive13ExploreService;
 import co.cask.cdap.explore.service.hive.Hive14ExploreService;
 import co.cask.cdap.hive.ExploreUtils;
+import co.cask.cdap.internal.asm.Classes;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -31,13 +32,6 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.util.VersionInfo;
 import org.apache.hive.service.auth.HiveAuthFactory;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.GeneratorAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -231,49 +225,13 @@ public class ExploreServiceUtils {
             }
 
             // Patch the class
-            output.write(rewriteMethodToNoop(entry.getName(), entryInputStream, patchMethods));
+            output.write(Classes.rewriteMethodToNoop(entry.getName(), entryInputStream, patchMethods));
           }
         }
       }
 
       return targetJar;
     }
-  }
-
-  /**
-   * Rewrites methods in the given class bytecode to noop methods.
-   */
-  private static byte[] rewriteMethodToNoop(final String classFile,
-                                            InputStream byteCodeStream, final Set<String> methods) throws IOException {
-    ClassReader cr = new ClassReader(byteCodeStream);
-    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
-      @Override
-      public MethodVisitor visitMethod(final int access, final String name, final String desc,
-                                       String signature, String[] exceptions) {
-        MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
-
-        if (!methods.contains(name)) {
-          return methodVisitor;
-        }
-
-        // We can only rewrite method that returns void
-        if (!Type.getReturnType(desc).equals(Type.VOID_TYPE)) {
-          LOG.warn("Cannot patch method {} in {} due to non-void return type: {}", name, classFile, desc);
-          return methodVisitor;
-        }
-
-        // Rewrite the method to noop.
-        GeneratorAdapter adapter = new GeneratorAdapter(methodVisitor, access, name, desc);
-        adapter.returnValue();
-
-        // VisitMaxs with 0 so that COMPUTE_MAXS from ClassWriter will compute the right values.
-        adapter.visitMaxs(0, 0);
-        return new MethodVisitor(Opcodes.ASM5) {
-        };
-      }
-    }, 0);
-    return cw.toByteArray();
   }
 
   // Determines whether the execution engine is spark, by checking the SessionConf (if provided) and then the HiveConf.
