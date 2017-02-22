@@ -142,6 +142,9 @@ cdap_home() {
   if [[ ${__comp_home%/*} == /opt/cdap ]] && [[ ${__comp_home} != /opt/cdap/sdk* ]]; then
     __app_home=${__comp_home}
     __cdap_home=/opt/cdap
+  elif [[ ${__comp_home##*/} == cli ]]; then
+    __app_home=${__comp_home}
+    __cdap_home=${__comp_home%/*}
   else
     __app_home=$(dirname "${__script_bin}")
     __cdap_home=${__app_home}
