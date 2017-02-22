@@ -41,12 +41,16 @@ public class CConfigurationUtil extends Configuration {
   }
 
   /**
-   * Copies configurations prefixed with {@code twill.} to the given hadoop configuration.
+   * Copies the prefixed properties from {@link CConfiguration} into {@link org.apache.hadoop.conf.Configuration}.
+   * @param prefix the prefix for the property which need to be copied
+   * @param cConf source config
+   * @param destination destination config
    */
-  public static void copyTwillProperties(CConfiguration cConf, org.apache.hadoop.conf.Configuration destination) {
+  public static void copyPrefixedProperties(String prefix, CConfiguration cConf,
+                                            org.apache.hadoop.conf.Configuration destination) {
     Properties props = cConf.getProps();
     for (String property : props.stringPropertyNames()) {
-      if (property.startsWith("twill.")) {
+      if (property.startsWith(prefix)) {
         destination.set(property, cConf.get(property));
       }
     }

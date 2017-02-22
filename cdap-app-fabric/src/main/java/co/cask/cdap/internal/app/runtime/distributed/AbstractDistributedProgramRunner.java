@@ -60,6 +60,7 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.tephra.TxConstants;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
@@ -155,8 +156,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
                                              TokenSecureStoreUpdater tokenSecureStoreUpdater,
                                              Impersonator impersonator) {
     this.twillRunner = twillRunner;
-    this.hConf = hConf;
-    this.cConf = cConf;
+    this.hConf = new YarnConfiguration(hConf);
+    this.cConf = CConfiguration.copy(cConf);
     this.eventHandler = createEventHandler(cConf);
     this.secureStoreUpdater = tokenSecureStoreUpdater;
     this.impersonator = impersonator;
@@ -188,6 +189,17 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
         hConf.set(JobContext.QUEUE_NAME, schedulerQueueName);
         LOG.info("Setting scheduler queue to {}", schedulerQueueName);
       }
+
+      // don't have tephra retry in order to give CDAP more control over when to retry and how.
+      cConf.set(TxConstants.Service.CFG_DATA_TX_CLIENT_RETRY_STRATEGY, "n-times");
+      cConf.setInt(TxConstants.Service.CFG_DATA_TX_CLIENT_ATTEMPTS, 0);
+
+      // Unset the hbase.client.retries.number and hbase.rpc.timeout from hConf and cConf so that program container
+      // runs with default values for them from hbase-site/hbase-default.
+      hConf.unset(Constants.HBase.CLIENT_RETRIES);
+      hConf.unset(Constants.HBase.RPC_TIMEOUT);
+      cConf.unset(Constants.HBase.CLIENT_RETRIES);
+      cConf.unset(Constants.HBase.RPC_TIMEOUT);
 
       final Map<String, LocalizeResource> localizeResources = new HashMap<>();
       final ProgramOptions options = addArtifactPluginFiles(oldOptions, localizeResources,

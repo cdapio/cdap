@@ -68,18 +68,12 @@ public class DistributedProgramRunnerTxTimeoutTest {
   private static Program spark = createProgram(ProgramType.SPARK, "spark");
   private static Program workflow = createProgram(ProgramType.WORKER, "workflow");
 
-  private static AbstractDistributedProgramRunner flowRunner =
-    new DistributedFlowProgramRunner(null, null, cConf, null, null, null, null, null);
-  private static AbstractDistributedProgramRunner serviceRunner =
-    new DistributedServiceProgramRunner(null, null, cConf, null, null);
-  private static AbstractDistributedProgramRunner workerRunner =
-    new DistributedWorkerProgramRunner(null, null, cConf, null, null);
-  private static AbstractDistributedProgramRunner mapreduceRunner =
-    new DistributedMapReduceProgramRunner(null, null, cConf, null, null);
-  private static AbstractDistributedProgramRunner sparkRunner =
-    new DistributedSparkProgramRunner(null, yConf, cConf, null, null);
-  private static AbstractDistributedProgramRunner workflowRunner =
-    new DistributedWorkflowProgramRunner(null, yConf, cConf, null, null, null);
+  private static AbstractDistributedProgramRunner flowRunner;
+  private static AbstractDistributedProgramRunner serviceRunner;
+  private static AbstractDistributedProgramRunner workerRunner;
+  private static AbstractDistributedProgramRunner mapreduceRunner;
+  private static AbstractDistributedProgramRunner sparkRunner;
+  private static AbstractDistributedProgramRunner workflowRunner;
 
   @BeforeClass
   public static void setup() {
@@ -96,6 +90,12 @@ public class DistributedProgramRunnerTxTimeoutTest {
     // System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(appSpec));
 
     cConf.setInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT, 60);
+    flowRunner = new DistributedFlowProgramRunner(null, yConf, cConf, null, null, null, null, null);
+    serviceRunner = new DistributedServiceProgramRunner(null, yConf, cConf, null, null);
+    workerRunner = new DistributedWorkerProgramRunner(null, yConf, cConf, null, null);
+    mapreduceRunner = new DistributedMapReduceProgramRunner(null, yConf, cConf, null, null);
+    sparkRunner = new DistributedSparkProgramRunner(null, yConf, cConf, null, null);
+    workflowRunner = new DistributedWorkflowProgramRunner(null, yConf, cConf, null, null, null);
   }
 
   @Test
