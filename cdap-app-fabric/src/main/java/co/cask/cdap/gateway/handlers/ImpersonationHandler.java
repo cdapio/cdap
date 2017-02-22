@@ -81,7 +81,7 @@ public class ImpersonationHandler extends AbstractHttpHandler {
       throw new BadRequestException("Request body is empty.");
     }
     ImpersonationRequest impersonationRequest = GSON.fromJson(requestContent, ImpersonationRequest.class);
-    LOG.info("Fetching credentials for {}", impersonationRequest);
+    LOG.debug("Fetching credentials for {}", impersonationRequest);
     UGIWithPrincipal ugiWithPrincipal = ugiProvider.getConfiguredUGI(impersonationRequest);
     Credentials credentials = ImpersonationUtils.doAs(ugiWithPrincipal.getUGI(), new Callable<Credentials>() {
       @Override
