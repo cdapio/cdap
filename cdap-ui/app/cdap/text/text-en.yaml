@@ -614,10 +614,9 @@ features:
     OneStepDeploy:
       headerlabel: Deploy
       Step1:
-        description: One step deploy
-        shorttitle: Deploy
-        title: Deploy
-        content: Deploy
+        description: Deploy {entityType} using JAR file
+        shorttitle: Deploy {entityType}
+        title: Deploy JAR
     Skip: Skipped
     FailedMessage: Failed to {step}
     StreamCreate:

@@ -23,6 +23,8 @@ import PluginArtifactUploadActions from 'services/WizardStores/PluginArtifactUpl
 import ArtifactUploadActionCreator from 'services/WizardStores/PluginArtifactUpload/ActionCreator';
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 require('./PluginArtifactUpload.scss');
 
@@ -33,6 +35,7 @@ export default class PluginArtifactUploadWizard extends Component {
       showWizard: this.props.isOpen,
       successInfo: {}
     };
+    this.eventEmitter = ee(ee);
   }
   componentWillUnmount() {
     PluginArtifactUploadStore.dispatch({
@@ -43,7 +46,10 @@ export default class PluginArtifactUploadWizard extends Component {
     this.buildSuccessInfo();
     return ArtifactUploadActionCreator
       .uploadArtifact()
-      .flatMap(() => ArtifactUploadActionCreator.uploadConfigurationJson());
+      .flatMap(() => {
+        this.eventEmitter.emit(globalEvents.ARTIFACTUPLOAD);
+        return ArtifactUploadActionCreator.uploadConfigurationJson();
+      });
   }
   toggleWizard(returnResult) {
     if (this.state.showWizard) {

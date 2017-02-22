@@ -18,16 +18,16 @@ import React from 'react';
 import T from 'i18n-react';
 import Deploy from 'components/CaskWizards/OneStepDeploy/Deploy';
 
-const OneStepDeployConfig = {
+const OneStepDeployAppConfig = {
   steps: [
     {
       id: 'one_step_deploy_app',
-      shorttitle: T.translate('features.Wizard.OneStepDeploy.Step1.shorttitle'),
+      shorttitle: T.translate('features.Wizard.OneStepDeploy.Step1.shorttitle', {entityType: 'Application'}),
       title: T.translate('features.Wizard.OneStepDeploy.Step1.title'),
-      description: T.translate('features.Wizard.OneStepDeploy.Step1.description'),
+      description: T.translate('features.Wizard.OneStepDeploy.Step1.description', {entityType: 'Application'}),
       content: (<Deploy />),
     }
   ]
 };
 
-export default OneStepDeployConfig;
+export default OneStepDeployAppConfig;

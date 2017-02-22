@@ -134,6 +134,7 @@ class EntityListView extends Component {
     this.eventEmitter.on(globalEvents.APPUPLOAD, this.refreshSearchByCreationTime);
     this.eventEmitter.on(globalEvents.STREAMCREATE, this.refreshSearchByCreationTime);
     this.eventEmitter.on(globalEvents.PUBLISHPIPELINE, this.refreshSearchByCreationTime);
+    this.eventEmitter.on(globalEvents.ARTIFACTUPLOAD, this.refreshSearchByCreationTime);
   }
 
   refreshSearchByCreationTime() {
@@ -151,6 +152,7 @@ class EntityListView extends Component {
     this.eventEmitter.off(globalEvents.APPUPLOAD, this.refreshSearchByCreationTime);
     this.eventEmitter.off(globalEvents.STREAMCREATE, this.refreshSearchByCreationTime);
     this.eventEmitter.off(globalEvents.PUBLISHPIPELINE, this.refreshSearchByCreationTime);
+    this.eventEmitter.off(globalEvents.ARTIFACTUPLOAD, this.refreshSearchByCreationTime);
   }
 
   componentWillReceiveProps(nextProps) {
