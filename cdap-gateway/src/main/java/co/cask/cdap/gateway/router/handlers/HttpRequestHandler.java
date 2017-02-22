@@ -126,7 +126,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
         outboundChannel.getPipeline().addAfter("request-encoder",
                                                "outbound-handler", new OutboundHandler(inboundChannel));
         if (Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload())) {
-          SSLContext clientContext = null;
+          SSLContext clientContext;
           try {
             clientContext = SSLContext.getInstance("TLS");
             clientContext.init(null, PermissiveTrustManagerFactory.getTrustManagers(), null);
@@ -232,9 +232,15 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
         return;
     }
 
-    LOG.error("Exception raised in Request Handler {}", ctx.getChannel(), cause);
+    if (cause instanceof HandlerException &&
+      ((HandlerException) cause).getFailureStatus() != HttpResponseStatus.INTERNAL_SERVER_ERROR) {
+      LOG.debug("Exception raised in Request Handler {}", ctx.getChannel(), cause);
+    } else {
+      LOG.error("Exception raised in Request Handler {}", ctx.getChannel(), cause);
+    }
+
     if (ctx.getChannel().isConnected() && !channelClosed) {
-      HttpResponse response = (cause instanceof HandlerException) ?
+      HttpResponse response = cause instanceof HandlerException ?
                               ((HandlerException) cause).createFailureResponse() :
                               new DefaultHttpResponse(HttpVersion.HTTP_1_1,
                                                       HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -269,15 +275,15 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
                                               final InetSocketAddress address) {
     EndpointStrategy strategy = serviceLookup.getDiscoverable(address.getPort(), httpRequest);
     if (strategy == null) {
-      throw  new HandlerException(HttpResponseStatus.SERVICE_UNAVAILABLE,
-                                  String.format("No endpoint strategy found for request : %s",
-                                  httpRequest.getUri()));
+      throw new HandlerException(HttpResponseStatus.SERVICE_UNAVAILABLE,
+                                 String.format("No endpoint strategy found for request : %s",
+                                 httpRequest.getUri()));
     }
     Discoverable discoverable = strategy.pick();
     if (discoverable == null) {
-      throw  new HandlerException(HttpResponseStatus.SERVICE_UNAVAILABLE,
-                                  String.format("No discoverable found for request : %s",
-                                                httpRequest.getUri()));
+      throw new HandlerException(HttpResponseStatus.SERVICE_UNAVAILABLE,
+                                 String.format("No discoverable found for request : %s",
+                                               httpRequest.getUri()));
     }
     return new WrappedDiscoverable(discoverable);
   }
