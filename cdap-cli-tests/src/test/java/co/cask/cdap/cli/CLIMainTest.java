@@ -542,6 +542,70 @@ public class CLIMainTest extends CLITestBase {
 
   @Test
   public void testPreferences() throws Exception {
+    testPreferencesOutput(cli, "get instance preferences", ImmutableMap.<String, String>of());
+    Map<String, String> propMap = Maps.newHashMap();
+    propMap.put("key", "newinstance");
+    propMap.put("k1", "v1");
+    testCommandOutputContains(cli, "delete instance preferences", "successfully");
+    testCommandOutputContains(cli, "set instance preferences 'key=newinstance k1=v1'",
+                              "successfully");
+    testPreferencesOutput(cli, "get instance preferences", propMap);
+    testPreferencesOutput(cli, "get resolved instance preferences", propMap);
+    testCommandOutputContains(cli, "delete instance preferences", "successfully");
+    propMap.clear();
+    testPreferencesOutput(cli, "get instance preferences", propMap);
+    propMap.put("key", "flow");
+    testCommandOutputContains(cli, String.format("set flow preferences %s.%s 'key=flow'",
+                                                 FakeApp.NAME, FakeFlow.NAME), "successfully");
+    testPreferencesOutput(cli, String.format("get flow preferences %s.%s", FakeApp.NAME, FakeFlow.NAME), propMap);
+    testCommandOutputContains(cli, String.format("delete flow preferences %s.%s", FakeApp.NAME, FakeFlow.NAME),
+                              "successfully");
+    propMap.clear();
+    testPreferencesOutput(cli, String.format("get app preferences %s", FakeApp.NAME), propMap);
+    testCommandOutputContains(cli, "delete namespace preferences", "successfully");
+    testPreferencesOutput(cli, "get namespace preferences", propMap);
+    testCommandOutputContains(cli, "get app preferences invalidapp", "not found");
+
+    File file = new File(TMP_FOLDER.newFolder(), "prefFile.txt");
+    // If the file not exist or not a file, upload should fails with an error.
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "Not a file");
+    testCommandOutputContains(cli, "load instance preferences " + file.getParentFile().getAbsolutePath() + " json",
+                              "Not a file");
+    // Generate a file to load
+    BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      writer.write("{'key':'somevalue'}");
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "successful");
+    propMap.clear();
+    propMap.put("key", "somevalue");
+    testPreferencesOutput(cli, "get instance preferences", propMap);
+    testCommandOutputContains(cli, "delete namespace preferences", "successfully");
+    testCommandOutputContains(cli, "delete instance preferences", "successfully");
+
+    //Try invalid Json
+    file = new File(TMP_FOLDER.newFolder(), "badPrefFile.txt");
+    writer = Files.newWriter(file, Charsets.UTF_8);
+    try {
+      writer.write("{'key:'somevalue'}");
+    } finally {
+      writer.close();
+    }
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " json", "invalid");
+    testCommandOutputContains(cli, "load instance preferences " + file.getAbsolutePath() + " xml", "Unsupported");
+
+    testCommandOutputContains(cli, "set namespace preferences 'k1=v1'", "successfully");
+    testCommandOutputContains(cli, "set namespace preferences 'k1=v1' name",
+                              "Error: Expected format: set namespace preferences <preferences>");
+    testCommandOutputContains(cli, "set instance preferences 'k1=v1' name",
+                              "Error: Expected format: set instance preferences <preferences>");
+  }
+
+  @Test
+  @Deprecated
+  public void testDeprecatedPreferences() throws Exception {
     testPreferencesOutput(cli, "get preferences instance", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put("key", "newinstance");
@@ -562,6 +626,7 @@ public class CLIMainTest extends CLITestBase {
                               "successfully");
     propMap.clear();
     testPreferencesOutput(cli, String.format("get preferences app %s", FakeApp.NAME), propMap);
+    testCommandOutputContains(cli, "delete preferences namespace", "successfully");
     testPreferencesOutput(cli, "get preferences namespace", propMap);
     testCommandOutputContains(cli, "get preferences app invalidapp", "not found");
 
