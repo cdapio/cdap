@@ -1,0 +1,61 @@
+<!--
+  Copyright © 2017 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="keyvalue-container">
+
+  <div class="row" ng-if="showDelimiter">
+    <div class="col-md-6">
+      <div class="form-group">
+        <label class="control-label">Delimiter</label>
+        <input type="text" class="form-control" ng-model="delimiter" />
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="form-group">
+        <label class="control-label">KeyValue Delimiter</label>
+        <input type="text" class="form-control" ng-model="kvdelimiter" />
+      </div>
+    </div>
+  </div>
+
+  <div ng-repeat="property in properties" class="row" ng-keypress="enter($event, $last)">
+    <div class="inputs-container">
+      <input type="text" class="form-control" ng-model="property.key" placeholder="{{ keyPlaceholder }}" my-focus-watch="property.newField" />
+      <input type="text" class="form-control" ng-model="property.value" placeholder="{{ valuePlaceholder }}" ng-if="!isDropdown" />
+      <select class="form-control"
+        ng-model="property.value"
+        ng-if="isDropdown"
+        ng-options="option as option for option in dropdownOptions">
+      </select>
+    </div>
+    <div class="btns-container">
+      <a href="" class="btn btn-danger" ng-click="removeProperty(property)">
+        <span class="fa fa-fw fa-trash"> </span>
+      </a>
+      <a class="btn btn-info btn-transparent" ng-click="addProperty()" ng-if="$last">
+        <span class="fa fa-fw fa-plus"></span>
+      </a>
+    </div>
+  </div>
+
+  <div ng-if="properties.length === 0" class="empty-container">
+    <a class="btn btn-blue" ng-click="addProperty()">
+      <span class="fa fa-fw fa-plus"></span>
+      <span>Add Property</span>
+    </a>
+  </div>
+
+</div>
