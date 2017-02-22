@@ -21,7 +21,9 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       scope: {
         type: '=',
-        name: '='
+        datasetName: '=',
+        tableName: '=',
+        databaseName: '='
       },
       templateUrl: 'explore/explore.html',
       controller: myExploreCtrl,
@@ -40,35 +42,35 @@ angular.module(PKG.name + '.commons')
           namespace: $state.params.namespace,
           scope: $scope
         };
-        vm.databaseName = 'default';
-        vm.tableName = $scope.type + '_' + $scope.name;
+        vm.databaseName = $scope.databaseName || 'default';
+        vm.tableName = $scope.tableName || '';
 
         vm.setDbAndTableNames = function() {
           let defer = $q.defer();
-          if (!$scope.type || !$scope.name) {
+          if (!$scope.type || !$scope.datasetName) {
             defer.reject();
             return defer.promise;
           }
 
           if ($scope.type === 'stream') {
-            vm.databaseName = 'default';
-            vm.tableName = $scope.type + '_' + $scope.name;
+            vm.databaseName = $scope.databaseName;
+            vm.tableName = $scope.tableName;
             defer.resolve();
           } else {
             myDatasetApi
-              .get( Object.assign({}, params, { datasetId: $scope.name }) )
+              .get( Object.assign({}, params, { datasetId: $scope.datasetName }) )
               .$promise
               .then(datasetSpec => {
                 datasetSpec = datasetSpec.spec;
                 if (datasetSpec.properties['explore.database.name']) {
                   vm.databaseName = datasetSpec.properties['explore.database.name'];
                 } else {
-                  vm.databaseName = 'default';
+                  vm.databaseName = $scope.databaseName;
                 }
                 if (datasetSpec.properties['explore.table.name']) {
                   vm.tableName = datasetSpec.properties['explore.table.name'];
                 } else {
-                  vm.tableName = $scope.type + '_' + $scope.name;
+                  vm.tableName = $scope.tableName;
                 }
                 defer.resolve();
               });
@@ -76,7 +78,7 @@ angular.module(PKG.name + '.commons')
           return defer.promise;
         };
 
-        $scope.$watch('name', function() {
+        $scope.$watch('datasetName', function() {
           vm.setDbAndTableNames()
             .then(
               function success() {

@@ -87,6 +87,44 @@ angular.module(PKG.name + '.feature.streams')
           ncyBreadcrumb: {
             label: 'Explore',
             parent: 'streams.detail.overview.status'
+          },
+          resolve: {
+            explorableDatasets: function(myExploreApi, $q, myDatasetApi, $stateParams) {
+              var defer = $q.defer();
+              var params = {
+                namespace: $stateParams.namespace
+              };
+              $q.all([myDatasetApi.list(params).$promise, myExploreApi.list(params).$promise])
+                .then(function (res) {
+                  var exploreTables = res[1];
+                  var datasetSpecs = res[0];
+                  angular.forEach(exploreTables, function(v) {
+                    if (v.table.indexOf('_') === -1) {
+                      v.name = v.table;
+                      v.type = 'dataset';
+                    } else {
+                      var split = v.table.split('_');
+                      v.type = split[0];
+                      split.splice(0,1); // removing the data type from the array
+                      v.name = split.join('_');
+                    }
+                  });
+
+                  exploreTables = exploreTables.map(tb => {
+                    var tablename = tb.name;
+                    var match = datasetSpecs.find(dSpec => dSpec.name.toLowerCase() === tablename);
+                    if (match) {
+                      return Object.assign({}, tb, {
+                        datasetName: match.name
+                      });
+                    }
+                    return tb;
+                  });
+
+                  return defer.resolve(exploreTables);
+                });
+              return defer.promise;
+            }
           }
         })
 

@@ -15,10 +15,21 @@
  */
 
 angular.module(PKG.name + '.feature.streams')
-  .controller('StreamExploreController', function($scope, $state, EventPipe, myStreamApi) {
+  .controller('StreamExploreController', function($scope, $state, EventPipe, myStreamApi, explorableDatasets, $filter) {
 
     this.activePanel = [0];
-    this.name = $state.params.streamId;
+    let streamId = $state.params.streamId;
+    streamId = streamId.replace(/[\.\-]/g, '_');
+    this.name = streamId;
+    var filterFilter = $filter('filter');
+
+    var match = filterFilter(explorableDatasets, streamId);
+    if (match.length) {
+      match = match[0];
+      this.tableName = match.table;
+      this.databaseName = match.database;
+      this.streamName = streamId;
+    }
 
     var now = Date.now();
 

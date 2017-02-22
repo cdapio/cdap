@@ -71,7 +71,9 @@ angular.module(PKG.name + '.feature.explore')
     this.selectTable = function (data) {
       // Passing this info to sql-query directive
       this.type = data.type;
-      this.name = data.datasetName || data.name;
+      this.selectedTableName = data.table;
+      this.selectedDatabaseName = data.database;
+      this.selectedDatasetName = data.datasetName || data.name;
 
       params.table = data.table;
 

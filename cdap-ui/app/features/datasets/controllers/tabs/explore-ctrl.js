@@ -16,11 +16,17 @@
 
 angular.module(PKG.name + '.feature.datasets')
   .controller('DatasetExploreController',
-    function($state) {
-
+    function($state, explorableDatasets, $filter) {
+      var filterFilter = $filter('filter');
       var datasetId = $state.params.datasetId;
       datasetId = datasetId.replace(/[\.\-]/g, '_');
-      this.name = datasetId;
+      var match = filterFilter(explorableDatasets, datasetId);
+      if (match.length) {
+        match = match[0];
+        this.tableName = match.table;
+        this.databaseName = match.database;
+        this.datasetName = datasetId;
+      }
 
     }
   );
