@@ -18,7 +18,8 @@ import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
-const basepath = '/namespaces/:namespace/apps/wrangler/services/service/methods/workspaces/:workspaceId';
+const wranglerServicePath = '/namespaces/:namespace/apps/wrangler/services/service/methods';
+const basepath = `${wranglerServicePath}/workspaces/:workspaceId`;
 
 const MyWranglerApi = {
   create: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath),
@@ -26,7 +27,8 @@ const MyWranglerApi = {
   upload: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/upload`),
   execute: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/execute`),
   summary: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/summary`),
-  getSchema: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/schema`)
+  getSchema: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/schema`),
+  getUsage: apiCreator(dataSrc, 'GET', 'REQUEST', `${wranglerServicePath}/usage`)
 };
 
 export default MyWranglerApi;

@@ -834,8 +834,8 @@ features:
       scatter: Scatter
     wrangleButton: Wrangle
     WrangleData:
-      applyToHydrator: Apply to Hydrator
-      addToHydrator: Add to Hydrator
+      applyToPipeline: Apply to Pipeline
+      addToPipeline: Add to Pipeline
       wrangling: "Wrangling..."
     Tooltips:
       actions: Actions

@@ -32,7 +32,7 @@ class WranglerModalController {
 
   applyToHydrator (properties) {
     this.node.plugin.properties.schema = properties.schema;
-    this.node.plugin.properties.specification = properties.specification;
+    this.node.plugin.properties.directives = properties.directives;
 
     this.EventPipe.emit('schema.import', properties.schema);
 
