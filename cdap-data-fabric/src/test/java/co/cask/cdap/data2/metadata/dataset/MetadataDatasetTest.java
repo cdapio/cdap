@@ -19,6 +19,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.metadata.indexer.Indexer;
@@ -1496,14 +1497,14 @@ public class MetadataDatasetTest {
   // should be called inside a transaction. This method does not start a transaction on its own, so that you can
   // have multiple invocations in the same transaction.
   private List<MetadataEntry> searchByDefaultIndex(String namespaceId, String searchQuery,
-                                                   Set<EntityTypeSimpleName> types) {
+                                                   Set<EntityTypeSimpleName> types) throws BadRequestException {
     return searchByDefaultIndex(dataset, namespaceId, searchQuery, types);
   }
 
   // should be called inside a transaction. This method does not start a transaction on its own, so that you can
   // have multiple invocations in the same transaction.
   private List<MetadataEntry> searchByDefaultIndex(MetadataDataset dataset, String namespaceId, String searchQuery,
-                                                   Set<EntityTypeSimpleName> types) {
+                                                   Set<EntityTypeSimpleName> types) throws BadRequestException {
     return dataset.search(namespaceId, searchQuery, types,
                           SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null, false,
                           EnumSet.allOf(EntityScope.class)).getResults();

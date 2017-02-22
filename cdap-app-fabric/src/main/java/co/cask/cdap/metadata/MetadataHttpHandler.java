@@ -877,7 +877,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, response, MetadataSearchResponse.class, GSON);
     } catch (Exception e) {
       // if MetadataDataset throws an exception, it gets wrapped
-      if (Throwables.getRootCause(e) instanceof IllegalArgumentException) {
+      if (Throwables.getRootCause(e) instanceof BadRequestException) {
         throw new BadRequestException(e.getMessage(), e);
       }
       throw e;

@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
@@ -554,11 +555,11 @@ public class MetadataDataset extends AbstractDataset {
    *         for subsequent queries to start with, if the specified #sortInfo is not {@link SortInfo#DEFAULT}.
    */
   public SearchResults search(String namespaceId, String searchQuery, Set<EntityTypeSimpleName> types,
-                              SortInfo sortInfo, int offset, int limit, int numCursors,
-                              @Nullable String cursor, boolean showHidden, Set<EntityScope> entityScope) {
+                              SortInfo sortInfo, int offset, int limit, int numCursors, @Nullable String cursor,
+                              boolean showHidden, Set<EntityScope> entityScope) throws BadRequestException {
     if (!SortInfo.DEFAULT.equals(sortInfo)) {
       if (!"*".equals(searchQuery)) {
-        throw new IllegalArgumentException("Cannot search with non-default sort with any query other than '*'");
+        throw new BadRequestException("Cannot search with non-default sort with any query other than '*'");
       }
       return searchByCustomIndex(namespaceId, types, sortInfo, offset, limit, numCursors, cursor, showHidden,
                                  entityScope);
