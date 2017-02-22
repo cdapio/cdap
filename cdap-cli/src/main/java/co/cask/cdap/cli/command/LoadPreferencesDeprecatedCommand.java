@@ -84,12 +84,12 @@ public class LoadPreferencesDeprecatedCommand extends AbstractSetPreferencesComm
 
   @Override
   public String getPattern() {
-    return determinePattern("load");
+    return determineDeprecatedPattern("load");
   }
 
   @Override
   public String getDescription() {
     return String.format("Sets the preferences of %s from a local JSON config file (Deprecated as of CDAP 4.1.0. " +
-                           "Use %s instead)", Fragment.of(Article.A, type.getName()), determineNewPattern("load"));
+                           "Use %s instead)", Fragment.of(Article.A, type.getName()), determinePattern("load"));
   }
 }

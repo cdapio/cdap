@@ -541,7 +541,7 @@ public class CLIMainTest extends CLITestBase {
   }
 
   @Test
-  public void testNewPreferences() throws Exception {
+  public void testPreferences() throws Exception {
     testPreferencesOutput(cli, "get instance preferences", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put("key", "newinstance");
@@ -605,7 +605,7 @@ public class CLIMainTest extends CLITestBase {
 
   @Test
   @Deprecated
-  public void testPreferences() throws Exception {
+  public void testDeprecatedPreferences() throws Exception {
     testPreferencesOutput(cli, "get preferences instance", ImmutableMap.<String, String>of());
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put("key", "newinstance");

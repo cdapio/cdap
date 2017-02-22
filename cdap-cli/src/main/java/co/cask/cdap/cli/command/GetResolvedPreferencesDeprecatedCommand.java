@@ -38,12 +38,12 @@ public class GetResolvedPreferencesDeprecatedCommand extends AbstractGetPreferen
 
   @Override
   public String getPattern() {
-    return determinePattern();
+    return determineDeprecatedPattern();
   }
 
   @Override
   public String getDescription() {
     return String.format("Gets the resolved preferences of %s (Deprecated as of CDAP 4.1.0. Use %s instead)",
-                         Fragment.of(Article.A, type.getName()), determineNewPattern());
+                         Fragment.of(Article.A, type.getName()), determinePattern());
   }
 }

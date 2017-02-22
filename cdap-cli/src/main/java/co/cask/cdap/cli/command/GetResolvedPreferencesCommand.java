@@ -35,7 +35,7 @@ public class GetResolvedPreferencesCommand extends AbstractGetPreferencesCommand
 
   @Override
   public String getPattern() {
-    return determineNewPattern();
+    return determinePattern();
   }
 
   @Override

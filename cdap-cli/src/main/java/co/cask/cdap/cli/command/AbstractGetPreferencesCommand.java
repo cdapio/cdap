@@ -58,7 +58,8 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
     printStream.print(joinMapEntries(parsePreferences(arguments)));
   }
 
-  protected String determinePattern() {
+  @Deprecated
+  protected String determineDeprecatedPattern() {
     String action = resolved ? "get resolved" : "get";
       switch (type) {
         case INSTANCE:
@@ -76,7 +77,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
       throw new RuntimeException("Unrecognized element type: " + type.getShortName());
   }
 
-  protected String determineNewPattern() {
+  protected String determinePattern() {
     String action = resolved ? "get resolved" : "get";
     switch (type) {
       case INSTANCE:

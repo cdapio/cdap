@@ -62,7 +62,7 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getPattern() {
-    return determineNewPattern("set");
+    return determinePattern("set");
   }
 
   @Override

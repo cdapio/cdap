@@ -57,13 +57,13 @@ public class SetPreferencesDeprecatedCommand extends AbstractSetPreferencesComma
 
   @Override
   public String getPattern() {
-    return determinePattern("set");
+    return determineDeprecatedPattern("set");
   }
 
   @Override
   public String getDescription() {
     return String.format("Sets the preferences of %s. '<%s>' is specified in the format 'key1=v1 key2=v2'. " +
                            "(Deprecated as of CDAP 4.1.0. Use %s instead)", Fragment.of(Article.A, type.getName()),
-                         ArgumentName.RUNTIME_ARGS, determineNewPattern("set"));
+                         ArgumentName.RUNTIME_ARGS, determinePattern("set"));
   }
 }
