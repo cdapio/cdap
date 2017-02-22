@@ -23,25 +23,20 @@ export default function WelcomeScreen({onClose, onMarketOpen}) {
     <div className="splash-screen-container">
       <div className="splash-screen-first-time">
         <h2 className="welcome-message">
-          {T.translate('features.EntityListView.SplashScreen.welcomeMessage')}
+          {T.translate('features.EntityListView.SplashScreen.welcomeMessage1')}
         </h2>
-        <div className="beta-notice">
-          {T.translate('features.EntityListView.SplashScreen.welcomeMessage1')}*
+        <div className="welcome-message">
+          {T.translate('features.EntityListView.SplashScreen.welcomeMessage2')}
         </div>
+
         <div className="cdap-fist-icon">
           <span className="icon-fist" />
         </div>
-        <div className="introducing">
-          {T.translate('features.EntityListView.SplashScreen.introText')}
-        </div>
-        <div className="app-store-bd">
-          {T.translate('features.EntityListView.SplashScreen.introText1')}
-        </div>
+
         <div
           className="splash-screen-first-time-btn"
           onClick={onMarketOpen}
         >
-          <span className="icon-CaskMarket" />
           {T.translate('features.EntityListView.SplashScreen.caskmarket')}
         </div>
         <div
@@ -52,7 +47,7 @@ export default function WelcomeScreen({onClose, onMarketOpen}) {
         </div>
         <div className="splash-screen-disclaimer">
           <p>
-            * {T.translate('features.EntityListView.SplashScreen.disclaimerMessage')}
+            {T.translate('features.EntityListView.SplashScreen.disclaimerMessage')}
           </p>
         </div>
       </div>
