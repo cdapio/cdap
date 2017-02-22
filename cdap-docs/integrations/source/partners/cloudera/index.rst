@@ -19,7 +19,7 @@ Cloudera
 .. toctree::
    :hidden:
 
-    configuring
+   configuring
     
     
 .. rubric:: Overview
