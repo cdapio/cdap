@@ -307,6 +307,7 @@ git_hadoop_versions = {
     'GIT_HDP_VERSIONS':  'hdp-versions',
     'GIT_MAPR_VERSIONS': 'mapr-versions',
     'GIT_EMR_VERSIONS':  'emr-versions',
+    'GIT_CASK_MARKET_VERSION': 'cask-market-version',
     }
 
 for h_key in git_hadoop_versions.keys():

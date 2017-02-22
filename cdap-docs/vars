@@ -66,6 +66,7 @@ GIT_BRANCH_CDAP_GUIDES="release/cdap-4.0-compatible"
 # Used by integrations-manual
 GIT_BRANCH_CDAP_PACKS="release/cdap-4.1-compatible"
 GIT_VERSION_NAVIGATOR="0.1.0"
+GIT_CASK_MARKET_VERSION="v2"
 
 # Google Analytics Code
 GOOGLE_TAG_MANAGER_CODE="GTM-KWLFGH"
