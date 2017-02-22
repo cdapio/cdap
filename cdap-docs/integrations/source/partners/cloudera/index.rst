@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -16,6 +16,12 @@ Cloudera
     Ingestion and Exploration <ingesting>
     Navigator Integration <navigator-integration>
 
+.. toctree::
+   :hidden:
+
+    configuring
+    
+    
 .. rubric:: Overview
 
 .. include:: /_includes/cloudera-certified.rst
