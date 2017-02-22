@@ -49,6 +49,8 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
   @Override
   public void perform(Arguments arguments, PrintStream printStream) throws Exception {
     String[] programIdParts = new String[0];
+    // If program ID and preferences are in the wrong order, this will return invalid command format instead of
+    // invalid preferences format
     if (arguments.hasArgument(type.getArgumentName().toString())) {
       programIdParts = arguments.get(type.getArgumentName().toString()).split("\\.");
       if (programIdParts.length < 2) {
