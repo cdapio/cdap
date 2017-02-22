@@ -41,6 +41,9 @@ HBase
   - ``cdap-hbase-compat-1.0-cdh5.5.0``
   - ``cdap-hbase-compat-1.1``
   - ``cdap-hbase-compat-1.2-cdh5.7.0``
+  
+  *Note:* For Cloudera Manager, all of these packages will be installed in your "Parcel Directory"
+  and as described below, you will add the appropriate one to your ``HBASE_CLASSPATH``.
 
 .. highlight:: xml
 
@@ -64,10 +67,16 @@ HBase
 
 - Modify ``hbase-env.sh`` on all HBase nodes to include the HBase coprocessor in the classpath::
 
-    export HBASE_CLASSPATH="$HBASE_CLASSPATH:/opt/cdap/<hbase-compat-version>/coprocessor/*"
+    export HBASE_CLASSPATH="$HBASE_CLASSPATH:/<cdap-home>/<hbase-compat-version>/coprocessor/*"
+    
+    # <cdap-home> will vary depending on your distibution and installation
+    # For CM/CDH: ${PARCEL_ROOT}/CDAP where ${PARCEL_ROOT} is your configured "Parcel Directory"
+    # Ambari/HDP, MapR, packages: /opt/cdap
+    #
+    # <hbase-compat-version> is the HBase compact package 
  
-    # For example, if you're on cdh5.5.x and have installed the cdap-hbase-compat-1.0-cdh5.5.0 package:
-    export HBASE_CLASSPATH="$HBASE_CLASSPATH:/opt/cdap/hbase-compat-1.0-cdh5.5.0/coprocessor/*"
+    # For example, if you're on CDH 5.5.x and have installed the cdap-hbase-compat-1.0-cdh5.5.0 package:
+    export HBASE_CLASSPATH="$HBASE_CLASSPATH:/opt/cloudera/parcels/CDAP/hbase-compat-1.0-cdh5.5.0/coprocessor/*"
 
 - Restart HBase master and regionservers.
 - Enable replication from master to slave::
@@ -75,14 +84,14 @@ HBase
     master_hbase_shell> add_peer '[slave-name]', '[slave-zookeeper-quorum]:/[slave-zk-node]'
  
     # For example:
-    master_hbase_shell> add_peer 'hbase2', 'hbase2-master.domain.net:2181:/hbase'
+    master_hbase_shell> add_peer 'hbase2', 'hbase2-master.example.com:2181:/hbase'
 
 - Enable replication from slave to master::
 
     slave_hbase_shell> add_peer '[master-name]', '[master-zookeeper-quorum]:/[master-zk-node]'
  
     # For example:
-    slave_hbase_shell> add_peer 'hbase1', 'hbase1-master.domain.net:2181:/hbase'
+    slave_hbase_shell> add_peer 'hbase1', 'hbase1-master.example.com:2181:/hbase'
     
 - Confirm that HBase replication is working::
 
@@ -164,12 +173,12 @@ To deploy your extension (once compiled and packaged as a JAR file, such as
     </property>
 
 #. Modify ``cdap-site.xml`` with any properties required by your executor. Any property prefixed
-   with ``cdap.hbase.spi.hbase.`` will be available through the ``Context`` object passed into your
-   executor's initialize method::
+   with ``cdap.hbase.spi.hbase.`` will be available through the
+   ``HBaseDDLExecutorContext`` object passed into your executor's initialize method::
 
     <property>
       <name>cdap.hbase.spi.hbase.zookeeper.quorum</name>
-      <value>hbase-master-i18003-1000.dev.continuuity.net:2181/cdap</value>
+      <value>hbase-master-example.com:2181/cdap</value>
     </property>
     <property>
       <name>cdap.hbase.spi.hbase.zookeeper.session.timeout</name>
@@ -206,11 +215,11 @@ To deploy your extension (once compiled and packaged as a JAR file, such as
 #. Before starting CDAP on the master cluster, run a command on the slave cluster to load
    the HBase coprocessors required by CDAP onto the slave's HDFS::
    
-    $_slave cdap setup coprocessors
+    [slave] $ cdap setup coprocessors
 
 #. Start CDAP on the master cluster::
 
-    $_master cdap master start
+    [master] $ cdap master start
 
 .. highlight:: console
 
@@ -223,25 +232,25 @@ To manually failover from the master to a slave cluster, follow these steps:
 #. Copy any HDFS files that have not yet been copied using either your distro's solution or ``distcp``
 #. Run the CDAP replication status tool to retrieve the cluster state::
 
-    $_master cdap run co.cask.cdap.data.tools.ReplicationStatusTool -m -o /tmp/master_state
+    [master] $ cdap run co.cask.cdap.data.tools.ReplicationStatusTool -m -o /tmp/master_state
 
 #. Copy the master state onto your slave cluster::
 
-    $_master scp /tmp/master_state <slave>:/tmp/master_state
+    [master] $ scp /tmp/master_state <slave>:/tmp/master_state
 
 #. Verify that replication has copied the required data onto the slave::
 
-    $_slave cdap run co.cask.cdap.data.tools.ReplicationStatusTool -i /tmp/master_state
+    [slave] $ cdap run co.cask.cdap.data.tools.ReplicationStatusTool -i /tmp/master_state
     ...
     Master and Slave Checksums match. HDFS Replication is complete.
     HBase Replication is complete.
 
 #. Run Hive's ``metatool`` to update the locations for the Hive tables::
 
-    $_slave hive --service metatool -updateLocation hdfs://[slave-namenode-host]:[slave-namenode-port] \
+    [slave] $ hive --service metatool -updateLocation hdfs://[slave-namenode-host]:[slave-namenode-port] \
                  hdfs://[master-namenode-host]:[master-namenode-port] \
                  -tablePropKey avro.schema.url -serdePropKey avro.schema.url
 
 #. Start CDAP on the slave::
 
-    $_slave cdap master start
+    [slave] $ cdap master start
