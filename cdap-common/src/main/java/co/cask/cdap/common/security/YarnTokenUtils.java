@@ -80,12 +80,12 @@ public final class YarnTokenUtils {
           services.add(SecurityUtil.buildTokenService(YarnUtils.getRMAddress(configuration)).toString());
         }
 
-        Token<TokenIdentifier> token = ConverterUtils.convertFromYarn(rmDelegationToken, (InetSocketAddress) null);
+        Token<TokenIdentifier> token = ConverterUtils.convertFromYarn(rmDelegationToken, null);
         token.setService(new Text(Joiner.on(',').join(services)));
         credentials.addToken(new Text(token.getService()), token);
 
         // OK to log, it won't log the credential, only information about the token.
-        LOG.info("Added RM delegation token: {}", token);
+        LOG.debug("Added RM delegation token: {}", token);
 
       } finally {
         yarnClient.stop();
@@ -93,7 +93,6 @@ public final class YarnTokenUtils {
 
       return credentials;
     } catch (Exception e) {
-      LOG.error("Failed to get secure token for Yarn.", e);
       throw Throwables.propagate(e);
     }
   }

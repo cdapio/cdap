@@ -58,8 +58,6 @@ public final class JobHistoryServerTokenUtils {
     String historyServerAddress = configuration.get("mapreduce.jobhistory.address");
     HostAndPort hostAndPort = HostAndPort.fromString(historyServerAddress);
     try {
-      LOG.info("Obtaining delegation token for JHS");
-
       ResourceMgrDelegate resourceMgrDelegate = new ResourceMgrDelegate(new YarnConfiguration(configuration));
       MRClientCache clientCache = new MRClientCache(configuration, resourceMgrDelegate);
       MRClientProtocol hsProxy = clientCache.getInitializedHSProxy();
@@ -71,9 +69,9 @@ public final class JobHistoryServerTokenUtils {
         ConverterUtils.convertFromYarn(hsProxy.getDelegationToken(request).getDelegationToken(), address);
 
       credentials.addToken(new Text(token.getService()), token);
+      LOG.debug("Adding JobHistoryServer delegation token {}.", token);
       return credentials;
     } catch (Exception e) {
-      LOG.error("Failed to get secure token for JHS at {}.", hostAndPort, e);
       throw Throwables.propagate(e);
     }
   }
