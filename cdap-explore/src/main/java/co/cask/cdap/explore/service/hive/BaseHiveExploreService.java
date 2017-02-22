@@ -68,6 +68,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
@@ -139,6 +140,17 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private static final long METASTORE_CLIENT_CLEANUP_PERIOD = 60;
   private static final String HIVE_METASTORE_TOKEN_KEY = "hive.metastore.token.signature";
   public static final String SPARK_YARN_DIST_FILES = "spark.yarn.dist.files";
+
+  private static final String PARAMS_EXPLORE_MODIFIES = com.google.common.base.Joiner.on("|").join(
+    ImmutableList.of("spark.*", "explore.*",
+                     "mapreduce.job.queuename",
+                     "mapreduce.job.complete.cancel.delegation.tokens",
+                     "mapreduce.job.credentials.binary",
+                     "hive.exec.submit.local.task.via.child",
+                     "hive.exec.submitviachild",
+                     "hive.lock.*",
+                     "tez.credentials.path",
+                     CommonConfigurationKeysPublic.HADOOP_SECURITY_AUTHENTICATION));
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -243,6 +255,22 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     if (UserGroupInformation.isSecurityEnabled()) {
       conf.set(HIVE_METASTORE_TOKEN_KEY, HiveAuthFactory.HS2_CLIENT_TOKEN);
     }
+
+    // workaround to allow CDAP explore to modify params of session conf
+    String whiteListAppend = conf.getVar(HiveConf.ConfVars.HIVE_AUTHORIZATION_SQL_STD_AUTH_CONFIG_WHITELIST_APPEND);
+    if (whiteListAppend != null && !whiteListAppend.trim().isEmpty()) {
+      // if user has configured some value for this, we must append to the regex
+      whiteListAppend = whiteListAppend + "|" + PARAMS_EXPLORE_MODIFIES;
+    } else {
+      whiteListAppend = PARAMS_EXPLORE_MODIFIES;
+    }
+    conf.setVar(HiveConf.ConfVars.HIVE_AUTHORIZATION_SQL_STD_AUTH_CONFIG_WHITELIST_APPEND, whiteListAppend);
+
+    // We override this param due to the change in HIVE-14383. Otherwise, the hive job will be launched as the
+    // 'hive' user (or fail to even launch, if on ClouderaManager). See CDAP-8367 for more details. We set this later
+    // in sessionConf.
+    conf.set(CommonConfigurationKeysPublic.HADOOP_SECURITY_AUTHENTICATION,
+             UserGroupInformation.AuthenticationMethod.SIMPLE.name());
 
     // Since we use delegation token in HIVE, unset the SPNEGO authentication if it is
     // enabled. Please see CDAP-3452 for details.
@@ -1303,6 +1331,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // is enabled. However, in our case we don't have Kerberos credentials for Explore service.
       // Hence it will not be automatically added by Hive, instead we have to add it ourselves.
       sessionConf.put(MRJobConfig.MAPREDUCE_JOB_CREDENTIALS_BINARY, credentialsFilePath);
+
+      // CDAP-8367 We need to set this back to Kerberos if security is enabled. We override it in HiveConf.
+      sessionConf.put(CommonConfigurationKeysPublic.HADOOP_SECURITY_AUTHENTICATION,
+                      UserGroupInformation.AuthenticationMethod.KERBEROS.name());
 
       sessionConf.put("hive.exec.submit.local.task.via.child", Boolean.FALSE.toString());
       sessionConf.put("hive.exec.submitviachild", Boolean.FALSE.toString());
