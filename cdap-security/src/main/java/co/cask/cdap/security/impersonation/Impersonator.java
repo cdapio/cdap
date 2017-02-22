@@ -16,7 +16,6 @@
 
 package co.cask.cdap.security.impersonation;
 
-import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.kerberos.ImpersonatedOpType;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
@@ -66,7 +65,6 @@ public interface Impersonator {
    * @param entityId Entity whose effective owner's UGI will be returned
    * @return {@link UserGroupInformation}
    * @throws IOException if there was any error fetching the {@link UserGroupInformation}
-   * @throws NamespaceNotFoundException if namespaceId does not exist
    */
-  UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException, NamespaceNotFoundException;
+  UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException;
 }

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.security.impersonation;
 
-import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.kerberos.ImpersonatedOpType;
 import co.cask.cdap.common.kerberos.ImpersonationRequest;
@@ -24,8 +23,10 @@ import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,12 +41,20 @@ public class DefaultImpersonator implements Impersonator {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultImpersonator.class);
   private final UGIProvider ugiProvider;
   private final boolean kerberosEnabled;
+  private String masterShortUsername;
 
   @Inject
   @VisibleForTesting
   public DefaultImpersonator(CConfiguration cConf, UGIProvider ugiProvider) {
     this.ugiProvider = ugiProvider;
     this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
+    // on kerberos disabled cluster the master principal will be null
+    String masterPrincipal = SecurityUtil.getMasterPrincipal(cConf);
+    try {
+      masterShortUsername = masterPrincipal == null ? null : new KerberosName(masterPrincipal).getShortName();
+    } catch (IOException e) {
+      Throwables.propagate(e);
+    }
   }
 
   @Override
@@ -63,7 +72,7 @@ public class DefaultImpersonator implements Impersonator {
   }
 
   @Override
-  public UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException, NamespaceNotFoundException {
+  public UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException {
     return getUGI(entityId, ImpersonatedOpType.OTHER);
   }
 
@@ -73,6 +82,15 @@ public class DefaultImpersonator implements Impersonator {
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(entityId.getNamespaceId())) {
       return UserGroupInformation.getCurrentUser();
     }
-    return ugiProvider.getConfiguredUGI(new ImpersonationRequest(entityId, impersonatedOpType)).getUGI();
+
+    ImpersonationRequest impersonationRequest = new ImpersonationRequest(entityId, impersonatedOpType);
+    // if the current user is not same as cdap master user then it means we are already impersonating some user
+    // and hence we should not allow another impersonation. See CDAP-8641
+    if (!UserGroupInformation.getCurrentUser().getShortUserName().equals(masterShortUsername)) {
+      LOG.trace("Not impersonating for {} as the call is already impersonated as {}",
+                impersonationRequest, UserGroupInformation.getCurrentUser());
+      return UserGroupInformation.getCurrentUser();
+    }
+    return ugiProvider.getConfiguredUGI(impersonationRequest).getUGI();
   }
 }
