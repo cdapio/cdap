@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,21 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-@import '../../styles/variables.scss';
 
-.cask-resourcecenter-button {
-  position: fixed;
-  top: 71px;
-  right: 20px;
-  cursor: pointer;
-  z-index: 998;
+const MarketCategoriesIconMap = {
+  all: 'icon-all',
+  usecase: 'icon-usecases',
+  pipeline: 'icon-pipelines',
+  example: 'icon-app',
+  'hydrator-plugin': 'fa-plug',
+  datapack: 'icon-datapacks',
+  '3rd-party-artifact': 'icon-artifacts',
+  cloudera: 'icon-cloudera',
+  hortonworks: 'icon-Hortonworks',
+  datawarehouse: 'icon-datawarehouse',
+  mapr: 'icon-mapr'
+};
 
-  .button-container {
-    height: 58px;
-    width: 58px;
-
-    h1 {
-      font-size: 3em;
-    }
-  }
-}
+export default MarketCategoriesIconMap;

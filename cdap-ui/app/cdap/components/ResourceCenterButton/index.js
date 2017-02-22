@@ -49,9 +49,10 @@ export default class ResourceCenterButton extends Component {
         className={classnames("cask-resourcecenter-button", this.props.className)}
         onClick={this.onClickHandler.bind(this)}
       >
-        <div className="button-container">
-          <h1 className="fa">+</h1>
-        </div>
+        <img
+          className="button-container"
+          src="/cdap_assets/img/plus_ico.svg"
+        />
         <PlusButtonModal
           isOpen={this.state.showResourceCenter}
           onCloseHandler={this.onClickHandler.bind(this)}

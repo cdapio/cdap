@@ -111,6 +111,13 @@
     &.beta {
       margin-top: -17px;
     }
+    [class*="icon-"] {
+      line-height: 87px;
+      font-size: 60px;
+      width: 87px;
+      display: inline-block;
+      text-align: center;
+    }
   }
   .package-metadata-container {
     margin-top: 5px;
@@ -124,8 +131,8 @@
   &.expanded {
 
     .experimental-banner {
-      left: -26px;
-      top: -18px;
+      left: -25px;
+      top: -25px;
       text-align: center;
     }
     cursor: default;

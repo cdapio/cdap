@@ -38,4 +38,14 @@
       font-weight: bold;
     }
   }
+  span {
+    display: inline-block;
+    &:nth-child(2) {
+      width: calc(100% - 25px);
+      text-overflow: ellipsis;
+      overflow: hidden;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+  }
 }

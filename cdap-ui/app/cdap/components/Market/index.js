@@ -25,6 +25,7 @@ import find from 'lodash/find';
 import MarketStore from 'components/Market/store/market-store.js';
 import sortedUniq from 'lodash/sortedUniq';
 import cloneDeep from 'lodash/cloneDeep';
+import MarketCategoriesIconMap from 'services/market-category-icon-map';
 
 import shortid from 'shortid';
 
@@ -50,16 +51,17 @@ export default class Market extends Component {
         let tabsList = sortedUniq(state.list.map(a => a.categories).reduce((prev, curr) => prev.concat(curr), []) || []);
 
         let tabCategoriesFromConfig = tabConfig.tabs.map(tab => tab.filter);
-        let missingTabsFromConfig = tabsList.filter( tab => tabCategoriesFromConfig.indexOf(tab) === -1);
-        let defaultTabConfig = {
-          id: shortid.generate(),
-          filter: '',
-          icon: 'fa fa-question',
-          name: '',
-          content:TabConfig.defaultTabContent
+        let missingTabsFromConfig = sortedUniq(tabsList.filter(tab => tabCategoriesFromConfig.indexOf(tab) === -1));
+        const getDefaultTabConfig = (missingTab) => {
+          let placeholderIcon = MarketCategoriesIconMap[missingTab] || `icon-${missingTab[0].toUpperCase()}`;
+          return {
+            id: shortid.generate(),
+            icon: `fa ${placeholderIcon}`,
+            content: TabConfig.defaultTabContent
+          };
         };
         if (missingTabsFromConfig.length) {
-          missingTabsFromConfig = missingTabsFromConfig.map(missingTab => Object.assign({}, defaultTabConfig, { filter: missingTab, name: missingTab}));
+          missingTabsFromConfig = missingTabsFromConfig.map(missingTab => Object.assign({}, getDefaultTabConfig(missingTab), { filter: missingTab, name: missingTab}));
         }
         tabConfig.tabs = tabConfig.tabs.concat(missingTabsFromConfig);
 
