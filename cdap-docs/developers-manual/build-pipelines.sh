@@ -207,7 +207,7 @@ function pipelines_download_includes() {
     if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
       local pipelines_branch="develop"
     else
-      local pipelines_branch="${GIT_BRANCH_CASK_CDAP_PIPELINES}"
+      local pipelines_branch="${GIT_BRANCH_CDAP_PIPELINES}"
     fi
     CDAP_PIPELINES_SOURCE="${base_source}/${pipelines_branch}"
   fi

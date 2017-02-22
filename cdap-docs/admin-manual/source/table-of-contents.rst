@@ -20,3 +20,10 @@ CDAP Administration Manual Table of Contents
     Security <security/index>
     Operations <operations/index>
     Appendices <appendices/index>
+
+.. these are redirects for deleted pages
+
+.. toctree::
+   :hidden:
+
+   security

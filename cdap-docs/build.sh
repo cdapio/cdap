@@ -462,16 +462,6 @@ function build_license_dependency_pdfs() {
   cd ${SCRIPT_PATH}/reference-manual
   ./build.sh license-pdfs
 }
-  
-function print_version() {
-  cd ${SCRIPT_PATH}/developers-manual
-  ./build.sh display-version
-}
-
-function set_and_display_version() {
-  set_version
-  display_version
-}
 
 function set_project_path() {
   PROJECT_PATH="${SCRIPT_PATH}/.."

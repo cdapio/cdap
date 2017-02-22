@@ -18,6 +18,16 @@ Installation
     MapR <mapr>
     Packages <packages>
 
+.. these are redirects for deleted pages
+
+.. toctree::
+   :hidden:
+
+   cdap-site
+   installation
+   security
+
+    
 Installation and configuration instructions for either **specific distributions** or
 **generic Apache Hadoop** clusters using RPM or Debian Package Managers:
 

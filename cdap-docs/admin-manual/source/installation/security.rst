@@ -2,4 +2,4 @@
 
 .. raw:: html
 
-   <script language="javascript">window.location.href = "security/index.html"</script>
+   <script language="javascript">window.location.href = "../security/index.html"</script>

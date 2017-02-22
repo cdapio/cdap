@@ -234,8 +234,8 @@ when the run completes, a post-run action send an email indicating that the run 
               "properties": {
                 "runCondition": "completion",
                 "includeWorkflowToken": "false",
-                "recipients": "users@example.com",
-                "sender": "admin@example.com",
+                "recipients": "users\@example.com",
+                "sender": "admin\@example.com",
                 "subject": "Post-action Status",
                 "message": "Completed run."
               }
