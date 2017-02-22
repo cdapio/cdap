@@ -562,6 +562,7 @@ public class CLIMainTest extends CLITestBase {
                               "successfully");
     propMap.clear();
     testPreferencesOutput(cli, String.format("get app preferences %s", FakeApp.NAME), propMap);
+    testCommandOutputContains(cli, "delete namespace preferences", "successfully");
     testPreferencesOutput(cli, "get namespace preferences", propMap);
     testCommandOutputContains(cli, "get app preferences invalidapp", "not found");
 
@@ -625,6 +626,7 @@ public class CLIMainTest extends CLITestBase {
                               "successfully");
     propMap.clear();
     testPreferencesOutput(cli, String.format("get preferences app %s", FakeApp.NAME), propMap);
+    testCommandOutputContains(cli, "delete preferences namespace", "successfully");
     testPreferencesOutput(cli, "get preferences namespace", propMap);
     testCommandOutputContains(cli, "get preferences app invalidapp", "not found");
 
