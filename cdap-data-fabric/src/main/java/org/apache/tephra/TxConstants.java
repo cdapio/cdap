@@ -376,6 +376,11 @@ public class TxConstants {
     public static final String PRUNE_FLUSH_INTERVAL = "data.tx.prune.flush.interval";
 
     /**
+     * The time in seconds used to pad transaction max lifetime while pruning.
+     */
+    public static final String PRUNE_GRACE_PERIOD = "data.tx.grace.period";
+
+    /**
      * Comma separated list of invalid transaction pruning plugins to load
      */
     public static final String PLUGINS = "data.tx.prune.plugins";
@@ -388,6 +393,7 @@ public class TxConstants {
     public static final String DEFAULT_PRUNE_STATE_TABLE = "tephra.state";
     public static final long DEFAULT_PRUNE_INTERVAL = TimeUnit.HOURS.toSeconds(6);
     public static final long DEFAULT_PRUNE_FLUSH_INTERVAL = TimeUnit.MINUTES.toSeconds(1);
+    public static final long DEFAULT_PRUNE_GRACE_PERIOD = TimeUnit.HOURS.toSeconds(24);
     public static final String DEFAULT_PLUGIN = "data.tx.prune.plugin.default";
     public static final String DEFAULT_PLUGIN_CLASS =
       "org.apache.tephra.hbase.txprune.HBaseTransactionPruningPlugin";
