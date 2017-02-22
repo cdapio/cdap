@@ -35,16 +35,16 @@ export default class StartStopAction extends Component {
     };
 
     this.state = {
-      status: 'loading',
+      programStatus: '',
+      actionStatus: '',
       modal: false,
       tooltipOpen: false,
       errorMessage: '',
-      extendedMessage: '',
+      extendedMessage: ''
     };
 
     this.startStop;
     this.toggleTooltip = this.toggleTooltip.bind(this);
-    this.onClick = this.onClick.bind(this);
     this.doStartStop = this.doStartStop.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
   }
@@ -63,80 +63,78 @@ export default class StartStopAction extends Component {
   componentWillMount() {
     this.statusPoll$ = MyProgramApi.pollStatus(this.params)
       .subscribe((res) => {
-
-        // If the fast action has stopped loading and the modal is open, and we do not have an error message, close the modal
-        if (this.state.status === 'loading' && this.state.status !== res.status && this.state.modal && !this.state.errorMessage) {
-          this.setState({
-            status: res.status,
-            modal: false
-          });
-        } else {
-          this.setState({
-            status: res.status
-          });
+        let programStatus = res.status;
+        if (!this.state.modal) {
+          if (programStatus === 'STOPPED') {
+            this.startStop = 'start';
+          } else {
+            this.startStop = 'stop';
+          }
         }
+        this.setState({
+          programStatus,
+          actionStatus: ''
+        });
       });
+  }
+
+  componentWillUpdate() {
+    // don't update the modal if it's already open
+    if (!this.state.modal) {
+      if (this.state.programStatus === 'STOPPED') {
+        this.startStop = 'start';
+      } else {
+        this.startStop = 'stop';
+      }
+    }
   }
 
   componentWillUnmount() {
     this.statusPoll$.dispose();
   }
 
-  onClick(e) {
-    this.toggleModal();
-    e.stopPropagation();
-    e.nativeEvent.stopImmediatePropagation();
-  }
-
   doStartStop() {
     let params = Object.assign({}, this.params);
-    if (this.state.status === 'RUNNING' || this.state.status === 'STARTING') {
-      params.action = 'stop';
-    } else {
-      params.action = 'start';
-    }
+    params.action = this.startStop;
 
     this.setState({
-      status: 'loading',
-      startStop: params.action
+      actionStatus: 'loading'
     });
 
     MyProgramApi.action(params)
       .subscribe((res) => {
-        this.props.onSuccess(res);
         this.setState({
           errorMessage : '',
-          extendedMessage : ''
+          extendedMessage : '',
+          modal: false
         });
+        this.props.onSuccess(res);
       }, (err) => {
         this.setState({
           errorMessage : `Program ${this.props.entity.id} failed to ${params.action}`,
           extendedMessage : err.response,
-          status: ''
+          actionStatus: ''
         });
       });
   }
 
 
   render() {
-    let icon;
     let confirmBtnText;
     let headerText;
     let confirmationText;
 
-    if (this.state.status === 'RUNNING' || this.state.status === 'STARTING') {
-      this.startStop = 'stop';
-      icon = 'fa fa-stop text-danger';
-      confirmBtnText = "stopConfirmLabel";
-      headerText = T.translate('features.FastAction.stopProgramHeader');
-      confirmationText = T.translate('features.FastAction.stopConfirmation', {entityId: this.props.entity.id});
-    } else {
-      this.startStop = 'start';
-      icon = 'fa fa-play text-success';
-      confirmBtnText = "startConfirmLabel";
+    if (this.startStop === 'start') {
+      confirmBtnText = 'startConfirmLabel';
       headerText = T.translate('features.FastAction.startProgramHeader');
       confirmationText = T.translate('features.FastAction.startConfirmation', {entityId: this.props.entity.id});
+    } else {
+      confirmBtnText = 'stopConfirmLabel';
+      headerText = T.translate('features.FastAction.stopProgramHeader');
+      confirmationText = T.translate('features.FastAction.stopConfirmation', {entityId: this.props.entity.id});
     }
+    // icon can change in the background, so using state instead of this.startStop
+    let icon = this.state.programStatus === 'STOPPED' ? 'fa fa-play text-success' : 'fa fa-stop text-danger';
     let tooltipID = `${this.props.entity.uniqueId}-${this.startStop}`;
 
     return (
@@ -150,7 +148,7 @@ export default class StartStopAction extends Component {
               confirmButtonText={T.translate('features.FastAction.' + confirmBtnText)}
               confirmFn={this.doStartStop}
               cancelFn={this.toggleModal}
-              isLoading={this.state.status === 'loading'}
+              isLoading={this.state.actionStatus === 'loading'}
               isOpen={this.state.modal}
               errorMessage={this.state.errorMessage}
               disableAction={!!this.state.errorMessage}
@@ -159,7 +157,7 @@ export default class StartStopAction extends Component {
           ) : null
         }
         {
-          this.state.status === 'loading' ? (
+          this.state.actionStatus === 'loading' ? (
             <button className="btn btn-link" disabled>
               <span className="fa fa-spin fa-spinner"></span>
             </button>
@@ -168,7 +166,7 @@ export default class StartStopAction extends Component {
             <span>
               <FastActionButton
                 icon={icon}
-                action={this.onClick}
+                action={this.toggleModal}
                 id={tooltipID}
               />
               <Tooltip
