@@ -205,13 +205,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     // store the meta first in the namespace store because namespacedLocationFactory needs to look up location
     // mapping from namespace config
     nsStore.create(metadata);
-    UserGroupInformation ugi;
-    if (NamespaceId.DEFAULT.equals(namespace)) {
-      ugi = UserGroupInformation.getCurrentUser();
-    } else {
-      ugi = impersonator.getUGI(namespace);
-    }
     try {
+      UserGroupInformation ugi;
+      if (NamespaceId.DEFAULT.equals(namespace)) {
+        ugi = UserGroupInformation.getCurrentUser();
+      } else {
+        ugi = impersonator.getUGI(namespace);
+      }
       ImpersonationUtils.doAs(ugi, new Callable<Void>() {
         @Override
         public Void call() throws Exception {
