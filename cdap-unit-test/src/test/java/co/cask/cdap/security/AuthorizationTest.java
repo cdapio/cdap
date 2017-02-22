@@ -411,6 +411,38 @@ public class AuthorizationTest extends TestBase {
 
   @Test
   @Category(SlowTests.class)
+  public void testStreams() throws Exception {
+    createAuthNamespace();
+    StreamId streamId = AUTH_NAMESPACE.stream("someStream");
+
+    // create stream as alice
+    getStreamManager(streamId).createStream();
+
+    // verify that alice gets all access
+    assertAllAccess(ALICE, streamId);
+
+    // grant access to bob on namespace so that he can create namespace
+    grantAndAssertSuccess(AUTH_NAMESPACE, BOB, ImmutableSet.of(Action.WRITE));
+
+    // switch to bob
+    SecurityRequestContext.setUserId(BOB.getName());
+    // verify that BOB does not have any access on stream
+    assertNoAccess(BOB, streamId);
+
+    // try to create the same stream as bob
+    // this will not fail since stream create is idempotent
+    getStreamManager(streamId).createStream();
+
+    // verify that even thought stream create which is an idempotent operation and didn't fail above for bob
+    // doest not grant any privilege on stream to bob
+    assertNoAccess(BOB, streamId);
+
+    // verify that alice still have all access
+    assertAllAccess(ALICE, streamId);
+  }
+
+  @Test
+  @Category(SlowTests.class)
   public void testApps() throws Exception {
     try {
       deployApplication(NamespaceId.DEFAULT, DummyApp.class);
@@ -1252,7 +1284,7 @@ public class AuthorizationTest extends TestBase {
     assertNoAccess(entityId);
   }
 
-  private void assertNoAccess(final EntityId entityId) throws Exception {
+  private void assertNoAccess(Principal principal, final EntityId entityId) throws Exception {
     Authorizer authorizer = getAuthorizer();
     Predicate<Privilege> entityFilter = new Predicate<Privilege>() {
       @Override
@@ -1260,8 +1292,11 @@ public class AuthorizationTest extends TestBase {
         return entityId.equals(input.getEntity());
       }
     };
-    Assert.assertTrue(Sets.filter(authorizer.listPrivileges(ALICE), entityFilter).isEmpty());
-    Assert.assertTrue(Sets.filter(authorizer.listPrivileges(BOB), entityFilter).isEmpty());
+    Assert.assertTrue(Sets.filter(authorizer.listPrivileges(principal), entityFilter).isEmpty());
+  }
+  private void assertNoAccess(final EntityId entityId) throws Exception {
+    assertNoAccess(ALICE, entityId);
+    assertNoAccess(BOB, entityId);
   }
 
   private void assertDatasetIsEmpty(NamespaceId namespaceId, String datasetName) throws Exception {
