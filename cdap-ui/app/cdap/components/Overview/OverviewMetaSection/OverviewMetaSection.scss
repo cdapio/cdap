@@ -20,6 +20,12 @@
   background: white;
   padding: 10px 16px 10px 16px;
 
+  hr {
+    margin-left: -16px;
+    margin-right: -16px;
+    border-color: #cccccc;
+  }
+
   > div {
     margin-top: 8px;
   }

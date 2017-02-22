@@ -15,14 +15,43 @@
  */
 @import '../../../styles/variables.scss';
 
+@mixin generate-color($color) {
+  background-color: $color;
+
+  .link-to-detail:hover {
+    background-color: darken($color, 10%);
+  }
+}
+
 .overview-header {
   display: flex;
-  color: black;
-  padding: 10px 16px 5px;
-  background: white;
+  color: white;
+  padding: 10px 16px;
   position: relative;
+
   &.message-placeholder {
     padding: 0;
+  }
+
+  &.artifact {
+    @include generate-color($artifact-entity-header-bg);
+  }
+
+  &.application {
+    @include generate-color($application-entity-header-bg);
+  }
+
+  &.cdap-data-pipeline,
+  &.cdap-data-streams {
+    @include generate-color($datapipeline-entity-header-bg);
+  }
+
+  &.datasetinstance {
+    @include generate-color($datasetinstance-entity-header-bg);
+  }
+
+  &.stream {
+    @include generate-color($stream-entity-header-bg);
   }
 
   .success-message {
@@ -53,7 +82,14 @@
   }
   .link-to-detail {
     margin-right: 50px;
-    color: $cdap-orange;
+    color: white;
+    display: inline-block;
+    padding: 0 15px;
+    margin-top: -10px;
+    margin-bottom: -10px;
+    line-height: 40px;
+
+    &:hover { text-decoration: none; }
   }
   .fa.fa-times {
     font-size: 19px;
