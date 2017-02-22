@@ -47,10 +47,15 @@ __comp_home=${COMPONENT_HOME:-$(cd "${__target%/*/*}" >&- 2>/dev/null; pwd -P)}
 
 # Determine if we're in Distributed from packages or SDK/Parcel
 if [[ ${__comp_home%/*} == /opt/cdap ]] && [[ ${__comp_home} != /opt/cdap/sdk* ]]; then
+  # We're distributed from packages
   __app_home=${__comp_home}
   __cdap_home=${CDAP_HOME:-/opt/cdap}
+elif [[ ${__comp_home##*/} == cli ]]; then
+  # We're distributed in a non-standard location, such as Parcel, or CLI
+  __app_home=${__comp_home}
+  __cdap_home=${CDAP_HOME:-${__comp_home%/*}}
 else
-  # We're in the SDK, __app_home and __cdap_home are identical, but honor CDAP_HOME if it's set (for Parcel)
+  # We're in the SDK, __app_home and __cdap_home are identical
   __cdap_home=${CDAP_HOME:-${__app_home}}
 fi
 
