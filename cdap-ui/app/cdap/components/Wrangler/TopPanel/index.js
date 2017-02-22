@@ -97,6 +97,7 @@ export default class WranglerTopPanel extends Component {
         <div className="left-title float-xs-left">
           <div className="data-prep-name">
             <strong>Data Preparation</strong>
+            <span className="tag tag-success">BETA</span>
           </div>
 
           <div
