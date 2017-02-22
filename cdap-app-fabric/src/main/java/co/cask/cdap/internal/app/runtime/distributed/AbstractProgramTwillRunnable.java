@@ -306,7 +306,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       LOG.info("Program {} stopped.", name);
     } catch (InterruptedException e) {
       LOG.warn("Program {} interrupted.", name, e);
-      Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
       LOG.error("Program {} execution failed.", name, e);
       if (propagateServiceError()) {

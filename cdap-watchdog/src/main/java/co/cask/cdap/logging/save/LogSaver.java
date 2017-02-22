@@ -42,7 +42,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Saves logs published through Kafka.
@@ -68,10 +67,7 @@ public final class LogSaver extends AbstractIdleService {
            @Named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES)
            Set<KafkaLogProcessorFactory> messageProcessorFactories,
            @Assisted Set<Integer> partitions,
-           MetricsCollectionService metricsCollectionService)
-    throws Exception {
-    LOG.info("Initializing LogSaver...");
-
+           MetricsCollectionService metricsCollectionService) throws Exception {
     this.topic = cConf.get(Constants.Logging.KAFKA_TOPIC);
     this.partitions = partitions;
     LOG.info(String.format("Kafka topic: %s, partitions: %s", this.topic, this.partitions));
@@ -90,18 +86,17 @@ public final class LogSaver extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting LogSaver...");
+    LOG.debug("Starting LogSaver");
     createProcessors(partitions);
-    waitForDatasetAvailability();
     scheduleTasks(partitions);
-    LOG.info("Started LogSaver.");
+    LOG.info("LogSaver started for topic {} on partitions {}", topic, partitions);
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Stopping LogSaver...");
+    LOG.debug("Stopping LogSaver");
     unscheduleTasks();
-    LOG.info("Stopped LogSaver.");
+    LOG.info("LogSaver stopped for topic {} on partitions {}", topic, partitions);
   }
 
   @VisibleForTesting
@@ -159,7 +154,7 @@ public final class LogSaver extends AbstractIdleService {
   }
 
   private void subscribe(Set<Integer> partitions) throws Exception {
-    LOG.info("Prepare to subscribe for partitions: {}", partitions);
+    LOG.debug("Prepare to subscribe for partitions: {}", partitions);
 
     Map<Integer, Long> partitionOffset = Maps.newHashMap();
     for (int part : partitions) {
@@ -203,21 +198,5 @@ public final class LogSaver extends AbstractIdleService {
     }
     LOG.debug("Lowest checkpoint for partition {} is {}", partition, lowestCheckpoint);
     return lowestCheckpoint;
-  }
-
-
-  private void waitForDatasetAvailability() throws InterruptedException {
-    boolean isDatasetAvailable = false;
-    while (!isDatasetAvailable) {
-      try {
-         for (KafkaLogProcessor processor : partitionProcessorsMap.values()) {
-           processor.getCheckpoint();
-         }
-        isDatasetAvailable = true;
-      } catch (Exception e) {
-        LOG.warn(String.format("Cannot discover dataset service. Retry after %d seconds timeout.", TIMEOUT_SECONDS));
-        TimeUnit.SECONDS.sleep(TIMEOUT_SECONDS);
-      }
-    }
   }
 }

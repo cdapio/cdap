@@ -81,7 +81,8 @@ public class MasterTwillApplication implements TwillApplication {
     return runnableSetter
         .withPlacementPolicy()
           .add(TwillSpecification.PlacementPolicy.Type.DISTRIBUTED, Constants.Service.STREAMS)
-        .anyOrder()
+        .withOrder()
+          .begin(Constants.Service.TRANSACTION, Constants.Service.DATASET_EXECUTOR)
         .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout))
         .build();
   }

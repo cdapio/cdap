@@ -173,6 +173,30 @@ stop() {
   fi
 }
 
+dokill() {
+  if [ -f ${pid} ]; then
+    pidToKill=$(<${pid})
+    # kill -0 == see if the PID exists
+    if kill -0 ${pidToKill} > /dev/null 2>&1; then
+      echo -n "Killing ${APP}"
+      echo "$(date) Killing ${APP}" >>${loglog}
+      kill -9 ${pidToKill} > /dev/null 2>&1
+      # TODO: infinite loops are bad, mm'kay?
+      while kill -0 ${pidToKill} > /dev/null 2>&1; do
+        echo -n "."
+        sleep 1
+      done
+      echo
+    else
+      retval=$?
+      echo "Nothing to kill because kill -0 of pid ${pidToKill} failed with status ${retval}"
+    fi
+    rm -f $pid
+  else
+    echo "Nothing to kill because no pid file ${pid}"
+  fi
+}
+
 restart() {
   stop
   start
@@ -240,6 +264,7 @@ run() {
 
 case ${1} in
   start|stop|restart) ${1} ;;
+  kill) dokill ;;
   status)
     _status
     statuscode=$?

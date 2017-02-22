@@ -36,7 +36,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.Services;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.zookeeper.ZKClient;
-import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +47,7 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- * A services that automatically balances resource assignments between its instances.
+ * A service that automatically balances resource assignments between its instances.
  */
 public abstract class ResourceBalancerService extends AbstractIdleService {
 
@@ -75,7 +74,7 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
    */
   protected ResourceBalancerService(String serviceName,
                                     int partitionCount,
-                                    ZKClientService zkClient,
+                                    ZKClient zkClient,
                                     DiscoveryService discoveryService,
                                     final DiscoveryServiceClient discoveryServiceClient) {
     this.serviceName = serviceName;
@@ -148,6 +147,7 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
     }
     try {
       cancelResourceHandler.cancel();
+      completion.get();
     } catch (Throwable th) {
       throwable = th;
       LOG.error("Exception while shutting down {}.", serviceName, th);
@@ -166,40 +166,50 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
 
   private ResourceHandler createResourceHandler(Discoverable discoverable) {
     return new ResourceHandler(discoverable) {
-        private Service service;
+      private Service service;
 
-        @Override
-        public void onChange(Collection<PartitionReplica> partitionReplicas) {
-          Set<Integer> partitions = Sets.newHashSet();
-          for (PartitionReplica replica : partitionReplicas) {
-            partitions.add(Integer.valueOf(replica.getName()));
-          }
-
-          LOG.info("Partitions changed {}, service: {}", partitions, serviceName);
-          try {
-            if (service != null) {
-              service.stopAndWait();
-            }
-            if (partitions.isEmpty() || !election.isRunning()) {
-              service = null;
-            } else {
-              service = createService(partitions);
-              service.startAndWait();
-            }
-          } catch (Throwable t) {
-            LOG.error("Failed to change partitions, service: {}.", serviceName, t);
-            completion.setException(t);
-          }
+      @Override
+      public void onChange(Collection<PartitionReplica> partitionReplicas) {
+        Set<Integer> partitions = Sets.newHashSet();
+        for (PartitionReplica replica : partitionReplicas) {
+          partitions.add(Integer.valueOf(replica.getName()));
         }
 
-        @Override
-        public void finished(Throwable failureCause) {
+        LOG.info("Partitions changed {}, service: {}", partitions, serviceName);
+        try {
+          if (service != null) {
+            service.stopAndWait();
+          }
+          if (partitions.isEmpty() || !election.isRunning()) {
+            service = null;
+          } else {
+            service = createService(partitions);
+            service.startAndWait();
+          }
+        } catch (Throwable t) {
+          LOG.error("Failed to change partitions, service: {}.", serviceName, t);
+          completion.setException(t);
+        }
+      }
+
+      @Override
+      public void finished(Throwable failureCause) {
+        try {
           if (service != null) {
             service.stopAndWait();
             service = null;
           }
+          completion.set(null);
+        } catch (Throwable t) {
+          LOG.error("Exception when stopping service {}", service, t);
+          Throwable cause = failureCause == null ? t : failureCause;
+          if (cause != t) {
+            cause.addSuppressed(t);
+          }
+          completion.setException(t);
         }
-      };
+      }
+    };
   }
 
   private Discoverable createDiscoverable(final String serviceName) {
