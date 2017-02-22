@@ -385,6 +385,11 @@ angular.module(PKG.name + '.commons')
               targetId.cssClass = 'wrangler-anchor';
             }
 
+            if (node.type === 'errortransform') {
+              originId.cssClass = 'error-anchor';
+              targetId.cssClass = 'error-anchor';
+            }
+
             vm.instance.addEndpoint(node.name, transformOrigin, originId);
             vm.instance.addEndpoint(node.name, transformTarget, targetId);
             break;
