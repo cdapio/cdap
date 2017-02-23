@@ -41,16 +41,19 @@ public class StageSpec {
   private final String errorDatasetName;
   private final Map<String, Schema> inputSchemas;
   private final Schema outputSchema;
+  private final Schema errorSchema;
   private final Set<String> inputs;
   private final Set<String> outputs;
 
   private StageSpec(String name, PluginSpec plugin, String errorDatasetName,
-                    Map<String, Schema> inputSchemas, Schema outputSchema, Set<String> inputs, Set<String> outputs) {
+                    Map<String, Schema> inputSchemas, Schema outputSchema, Schema errorSchema,
+                    Set<String> inputs, Set<String> outputs) {
     this.name = name;
     this.plugin = plugin;
     this.errorDatasetName = errorDatasetName;
     this.inputSchemas = inputSchemas;
     this.outputSchema = outputSchema;
+    this.errorSchema = errorSchema;
     this.inputs = ImmutableSet.copyOf(inputs);
     this.outputs = ImmutableSet.copyOf(outputs);
   }
@@ -73,6 +76,10 @@ public class StageSpec {
 
   public Schema getOutputSchema() {
     return outputSchema;
+  }
+
+  public Schema getErrorSchema() {
+    return errorSchema;
   }
 
   public Set<String> getInputs() {
@@ -99,13 +106,14 @@ public class StageSpec {
       Objects.equals(errorDatasetName, that.errorDatasetName) &&
       Objects.equals(inputSchemas, that.inputSchemas) &&
       Objects.equals(outputSchema, that.outputSchema) &&
+      Objects.equals(errorSchema, that.errorSchema) &&
       Objects.equals(inputs, that.inputs) &&
       Objects.equals(outputs, that.outputs);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, plugin, errorDatasetName, inputSchemas, outputSchema, inputs, outputs);
+    return Objects.hash(name, plugin, errorDatasetName, inputSchemas, outputSchema, errorSchema, inputs, outputs);
   }
 
   @Override
@@ -116,6 +124,7 @@ public class StageSpec {
       ", errorDatasetName='" + errorDatasetName + '\'' +
       ", inputSchemas=" + inputSchemas +
       ", outputSchema=" + outputSchema +
+      ", errorSchema=" + errorSchema +
       ", inputs=" + inputs +
       ", outputs=" + outputs +
       '}';
@@ -134,6 +143,7 @@ public class StageSpec {
     private String errorDatasetName;
     private Map<String, Schema> inputSchemas;
     private Schema outputSchema;
+    private Schema errorSchema;
     private Set<String> inputs;
     private Set<String> outputs;
 
@@ -165,6 +175,11 @@ public class StageSpec {
       return this;
     }
 
+    public Builder setErrorSchema(Schema errorSchema) {
+      this.errorSchema = errorSchema;
+      return this;
+    }
+
     public Builder addInputs(Collection<String> inputs) {
       this.inputs.addAll(inputs);
       return this;
@@ -190,7 +205,7 @@ public class StageSpec {
     }
 
     public StageSpec build() {
-      return new StageSpec(name, plugin, errorDatasetName, inputSchemas, outputSchema, inputs, outputs);
+      return new StageSpec(name, plugin, errorDatasetName, inputSchemas, outputSchema, errorSchema, inputs, outputs);
     }
 
   }

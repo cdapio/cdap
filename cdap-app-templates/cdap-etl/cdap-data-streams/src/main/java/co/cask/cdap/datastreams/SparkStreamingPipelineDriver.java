@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
+import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
@@ -57,7 +58,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
     .create();
   private static final Set<String> SUPPORTED_PLUGIN_TYPES = ImmutableSet.of(
     StreamingSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE,
-    BatchJoiner.PLUGIN_TYPE, SparkCompute.PLUGIN_TYPE, Windower.PLUGIN_TYPE);
+    BatchJoiner.PLUGIN_TYPE, SparkCompute.PLUGIN_TYPE, Windower.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE);
 
   @Override
   public void run(final JavaSparkExecutionContext sec) throws Exception {
@@ -72,6 +73,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
                               .addOutputs(stageSpec.getOutputs())
                               .addInputSchemas(stageSpec.getInputSchemas())
                               .setOutputSchema(stageSpec.getOutputSchema())
+                              .setErrorSchema(stageSpec.getErrorSchema())
                               .build());
     }
     final PipelinePhase pipelinePhase = phaseBuilder.build();

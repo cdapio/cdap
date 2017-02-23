@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,23 +20,26 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.ErrorRecord;
+import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
-import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Transform that doubles every record it receives.
+ * Filters out errors that have a specific error code
  */
-@Plugin(type = Transform.PLUGIN_TYPE)
-@Name("Double")
-public class DoubleTransform extends Transform<StructuredRecord, StructuredRecord> {
+@Plugin(type = ErrorTransform.PLUGIN_TYPE)
+@Name("Filter")
+public class FilterErrorTransform extends ErrorTransform<StructuredRecord, StructuredRecord> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
+  private Config config;
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
@@ -45,17 +48,29 @@ public class DoubleTransform extends Transform<StructuredRecord, StructuredRecor
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
-    emitter.emit(input);
-    emitter.emit(input);
+  public void transform(ErrorRecord<StructuredRecord> input, Emitter<StructuredRecord> emitter) throws Exception {
+    if (input.getErrorCode() != config.code) {
+      emitter.emit(input.getRecord());
+    }
   }
 
-  public static ETLPlugin getPlugin() {
-    return new ETLPlugin("Double", Transform.PLUGIN_TYPE, new HashMap<String, String>(), null);
+  /**
+   * Config for the error transform.
+   */
+  public static class Config extends PluginConfig {
+    private int code;
+  }
+
+  public static ETLPlugin getPlugin(int code) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("code", String.valueOf(code));
+    return new ETLPlugin("Filter", ErrorTransform.PLUGIN_TYPE, properties, null);
   }
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    return new PluginClass(Transform.PLUGIN_TYPE, "Double", "", DoubleTransform.class.getName(), null, properties);
+    properties.put("code", new PluginPropertyField("code", "", "int", true, false));
+    return new PluginClass(ErrorTransform.PLUGIN_TYPE, "Filter", "", FilterErrorTransform.class.getName(),
+                           "config", properties);
   }
 }

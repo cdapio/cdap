@@ -20,6 +20,7 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.common.DefaultEmitter;
+import co.cask.cdap.etl.common.NoErrorEmitter;
 import co.cask.cdap.etl.common.TrackedTransform;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import scala.Tuple2;
@@ -60,11 +61,12 @@ public class AggregatorGroupByFunction<GROUP_KEY, GROUP_VAL>
   private static class GroupByTransform<GROUP_KEY, GROUP_VAL>
     implements Transformation<GROUP_VAL, Tuple2<GROUP_KEY, GROUP_VAL>> {
     private final BatchAggregator<GROUP_KEY, GROUP_VAL, ?> aggregator;
-    private final DefaultEmitter<GROUP_KEY> keyEmitter;
+    private final NoErrorEmitter<GROUP_KEY> keyEmitter;
 
     GroupByTransform(BatchAggregator<GROUP_KEY, GROUP_VAL, ?> aggregator) {
       this.aggregator = aggregator;
-      this.keyEmitter = new DefaultEmitter<>();
+      this.keyEmitter =
+        new NoErrorEmitter<>("Error records cannot be emitted from the groupBy method of an aggregator");
     }
 
     @Override

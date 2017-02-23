@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,27 +16,30 @@
 
 package co.cask.cdap.etl.api;
 
-import co.cask.cdap.api.annotation.Beta;
-
 /**
- * Used to emit one or more key, value pairs to the next stage.
+ * Information about a record that was emitted using {@link Emitter#emitError(InvalidEntry)}.
  *
- * @param <T> Type of the object to emit
+ * @param <T> the record type
  */
-@Beta
-public interface Emitter<T> {
+public interface ErrorRecord<T> {
 
   /**
-   * Emit an object.
-   * @param value the object to emit
+   * @return the error record
    */
-  void emit(T value);
+  T getRecord();
 
   /**
-   * Emit an Error object. If an {@link ErrorTransform} is placed after this stage, it will be able to consume
-   * the errors. Otherwise the errors are simply dropped.
-   *
-   * @param invalidEntry {@link InvalidEntry InvalidEntry&lt;T&gt;} representing the error.
+   * @return the error code
    */
-  void emitError(InvalidEntry<T> invalidEntry);
+  int getErrorCode();
+
+  /**
+   * @return the error message
+   */
+  String getErrorMessage();
+
+  /**
+   * @return the stage the error was emitted from
+   */
+  String getStageName();
 }

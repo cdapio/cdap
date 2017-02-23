@@ -19,8 +19,8 @@ package co.cask.cdap.etl.spark.function;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
-import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.TrackedTransform;
+import co.cask.cdap.etl.spark.CombinedEmitter;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import scala.Tuple2;
 
@@ -30,20 +30,20 @@ import scala.Tuple2;
  *
  * @param <GROUP_KEY> type of group key
  * @param <GROUP_VAL> type of group value
- * @param <OUT> type of output object
+ * @param <OUT> type of aggregate output
  */
 public class AggregatorAggregateFunction<GROUP_KEY, GROUP_VAL, OUT>
-  implements FlatMapFunction<Tuple2<GROUP_KEY, Iterable<GROUP_VAL>>, OUT> {
+  implements FlatMapFunction<Tuple2<GROUP_KEY, Iterable<GROUP_VAL>>, Tuple2<Boolean, Object>> {
   private final PluginFunctionContext pluginFunctionContext;
   private transient TrackedTransform<Tuple2<GROUP_KEY, Iterable<GROUP_VAL>>, OUT> aggregateTransform;
-  private transient DefaultEmitter<OUT> emitter;
+  private transient CombinedEmitter<OUT> emitter;
 
   public AggregatorAggregateFunction(PluginFunctionContext pluginFunctionContext) {
     this.pluginFunctionContext = pluginFunctionContext;
   }
 
   @Override
-  public Iterable<OUT> call(Tuple2<GROUP_KEY, Iterable<GROUP_VAL>> input) throws Exception {
+  public Iterable<Tuple2<Boolean, Object>> call(Tuple2<GROUP_KEY, Iterable<GROUP_VAL>> input) throws Exception {
     if (aggregateTransform == null) {
       BatchAggregator<GROUP_KEY, GROUP_VAL, OUT> aggregator = pluginFunctionContext.createPlugin();
       aggregator.initialize(pluginFunctionContext.createBatchRuntimeContext());
@@ -51,11 +51,11 @@ public class AggregatorAggregateFunction<GROUP_KEY, GROUP_VAL, OUT>
                                                   pluginFunctionContext.createStageMetrics(),
                                                   "aggregator.groups",
                                                   TrackedTransform.RECORDS_OUT, pluginFunctionContext.getDataTracer());
-      emitter = new DefaultEmitter<>();
+      emitter = new CombinedEmitter<>(pluginFunctionContext.getStageName());
     }
     emitter.reset();
     aggregateTransform.transform(input, emitter);
-    return emitter.getEntries();
+    return emitter.getEmitted();
   }
 
   private static class AggregateTransform<GROUP_KEY, GROUP_VAL, OUT_VAL>

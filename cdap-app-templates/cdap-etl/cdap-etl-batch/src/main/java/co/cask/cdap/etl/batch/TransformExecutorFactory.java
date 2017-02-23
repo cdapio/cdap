@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.preview.DataTracer;
+import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.StageLifecycle;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transformation;
@@ -123,7 +124,8 @@ public abstract class TransformExecutorFactory<T> {
       String pluginType = stageInfo.getPluginType();
       boolean removeStageName = !(pluginType.equals(Constants.CONNECTOR_TYPE) ||
         pluginType.equals(BatchJoiner.PLUGIN_TYPE));
-      transformations.put(stageName, new PipeTransformDetail(stageName, removeStageName,
+      boolean isErrorConsumer = pluginType.equals(ErrorTransform.PLUGIN_TYPE);
+      transformations.put(stageName, new PipeTransformDetail(stageName, removeStageName, isErrorConsumer,
                                                              getTransformation(stageInfo),
                                                              new SinkEmitter<>(stageName, outputWriter)));
       return;
@@ -149,18 +151,19 @@ public abstract class TransformExecutorFactory<T> {
     // If stageName is a connector source, it will have stageName along with record so use ConnectorSourceEmitter
     if (pipeline.getSources().contains(stageName) && pluginType.equals(Constants.CONNECTOR_TYPE)) {
       transformations.put(stageName,
-                          new PipeTransformDetail(stageName, true,
+                          new PipeTransformDetail(stageName, true, false,
                                                   getTransformation(stageInfo),
                                                   new ConnectorSourceEmitter(stageName)));
     } else if (pluginType.equals(BatchJoiner.PLUGIN_TYPE) && isMapPhase) {
       // Do not remove stageName only for Map phase of BatchJoiner
       transformations.put(stageName,
-                          new PipeTransformDetail(stageName, false,
+                          new PipeTransformDetail(stageName, false, false,
                                                   getTransformation(stageInfo),
                                                   new TransformEmitter(stageName, errorOutputWriter)));
     } else {
+      boolean isErrorConsumer = ErrorTransform.PLUGIN_TYPE.equals(pluginType);
       transformations.put(stageName,
-                          new PipeTransformDetail(stageName, true,
+                          new PipeTransformDetail(stageName, true, isErrorConsumer,
                                                   getTransformation(stageInfo),
                                                   new TransformEmitter(stageName, errorOutputWriter)));
     }

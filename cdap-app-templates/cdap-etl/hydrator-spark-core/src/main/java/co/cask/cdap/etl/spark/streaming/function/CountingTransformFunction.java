@@ -29,15 +29,15 @@ import javax.annotation.Nullable;
  *
  * @param <T> type of object in the rdd.
  */
-public class CountingTranformFunction<T> implements Function<JavaRDD<T>, JavaRDD<T>> {
+public class CountingTransformFunction<T> implements Function<JavaRDD<T>, JavaRDD<T>> {
   private final Metrics metrics;
   private final String stageName;
   private final String metricName;
   private final DataTracer dataTracer;
 
   // DataTracer is null for records.in
-  public CountingTranformFunction(String stageName, Metrics metrics, String metricName,
-                                  @Nullable DataTracer dataTracer) {
+  public CountingTransformFunction(String stageName, Metrics metrics, String metricName,
+                                   @Nullable DataTracer dataTracer) {
     this.metrics = metrics;
     this.stageName = stageName;
     this.metricName = metricName;
