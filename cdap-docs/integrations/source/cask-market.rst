@@ -697,7 +697,7 @@ Example action:
   .. parsed-literal::
 
     {
-      "type": "deploy_app",
+      "type": "one_step_deploy_app",
       "label": "Deploy Word Count Example App"
       "arguments": [
         {
