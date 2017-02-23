@@ -17,6 +17,11 @@
 function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $q, moment, myAlertOnValium) {
   'ngInject';
 
+  /**
+   *  For reference:
+   *  The entry point for this log is startTimeRequest()
+   **/
+
   var dataSrc = new MyCDAPDataSource($scope);
   var pollPromise;
   //Collapsing LogViewer Table Columns
@@ -102,29 +107,31 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   vm.logEvents = ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
 
-  let included = {
-    'ERROR' : false,
-    'WARN' : false,
-    'INFO' : false,
-    'DEBUG' : false,
-    'TRACE' : false
+  vm.activeLogLevels = {
+    'ERROR' : true,
+    'WARN' : true,
+    'INFO' : true,
+    'DEBUG' : true,
+    'TRACE' : true
   };
 
-  let numEvents = 0;
+  vm.selectedLogLevel = 'TRACE';
+
   vm.toggleExpandAll = false;
 
   let unsub = LogViewerStore.subscribe(() => {
-    vm.totalCount = LogViewerStore.getState().totalLogs;
-    vm.warningCount = LogViewerStore.getState().totalWarnings;
-    vm.errorCount = LogViewerStore.getState().totalErrors;
+    let logViewerState = LogViewerStore.getState();
 
-    vm.fullScreen = LogViewerStore.getState().fullScreen;
-    if (vm.logStartTime === LogViewerStore.getState().startTime){
+    vm.totalCount = logViewerState.totalLogs;
+    vm.warningCount = logViewerState.totalWarnings;
+    vm.errorCount = logViewerState.totalErrors;
+
+    vm.fullScreen = logViewerState.fullScreen;
+    if (vm.logStartTime === logViewerState.startTime){
       return;
     }
 
-    vm.logStartTime = LogViewerStore.getState().startTime;
-
+    vm.logStartTime = logViewerState.startTime;
 
     if (!vm.logStartTime || vm.startTimeMs === vm.logStartTime){
       return;
@@ -133,6 +140,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     vm.startTimeMs = (vm.logStartTime instanceof Date) ? vm.logStartTime.getTime() : vm.logStartTime;
 
     vm.fromOffset = -10000 + '.' + vm.startTimeMs;
+
+    vm.endRequest = false;
     startTimeRequest();
   });
 
@@ -143,27 +152,27 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
     if(isInview && vm.displayData && vm.displayData.length > 0) {
 
-      //tbody extends beyond the viewport when scrolling down the table
+      // tbody extends beyond the viewport when scrolling down the table
       let topOfTable = event.inViewTarget.parentElement.getBoundingClientRect().top;
 
-      //measures the scroll position of the window within the viewport
+      // measures the scroll position of the window within the viewport
       let pageScrollPosition = page[0].scrollY;
 
-      //gives the offsetTop property for a row that is within the viewport
+      // gives the offsetTop property for a row that is within the viewport
       let rowTopVal = event.inViewTarget.offsetTop;
 
-      //Adjusted val combines the tbody absolute offset that may extend beyond the viewport, with it's relatively positioned table row, giving us an absolute positioning for the row
+      // Adjusted val combines the tbody absolute offset that may extend beyond the viewport, with it's relatively positioned table row, giving us an absolute positioning for the row
       let adjustedVal = topOfTable + pageScrollPosition + rowTopVal;
 
-      //Difference accounts for the difference between the top of the logviewer table container and the table rows
+      // Difference accounts for the difference between the top of the logviewer table container and the table rows
       let difference = adjustedVal - $scope.tableEl[0].offsetTop;
 
-      //Offset the height of the bottom timeline and scrollpin row (55 + 15) if in full-screen
+      // Offset the height of the bottom timeline and scrollpin row (55 + 15) if in full-screen
       if (vm.fullScreen){
         difference-=70;
       }
 
-      //By taking the smallest non-negative value, we have found the top-most row
+      // By taking the smallest non-negative value, we have found the top-most row
       if (difference > 0 && (proximityVal > difference || proximityVal < 0)){
         index++;
         newTime = vm.displayData[index].log.timestamp;
@@ -175,7 +184,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   if (vm.runId) {
-    //Get Initial Status
+    // Get Initial Status
     myLogsApi.getLogsMetadata({
       namespace : vm.namespaceId,
       appId : vm.appId,
@@ -207,10 +216,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   }
 
   vm.filterSearch = () => {
-    //Rerender data
+    // Rerender data
     vm.renderData();
-    //If the search query is blank, otherwise filter
-    if(vm.searchText.length === 0){
+    // If the search query is blank, otherwise filter
+    if (vm.searchText.length === 0){
       vm.updateSearchResultsInStore([]);
       return;
     }
@@ -218,7 +227,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     let searchResults = [];
 
     vm.displayData = vm.displayData.filter( data => {
-      if(data.log.message.toLowerCase().indexOf(vm.searchText.toLowerCase()) !== -1){
+      if (data.log.message.toLowerCase().indexOf(vm.searchText.toLowerCase()) !== -1){
         searchResults.push(data.log.timestamp);
         return true;
       }
@@ -327,14 +336,21 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       'programType' : vm.programType,
       'programId' : vm.programId,
       'runId' : vm.runId,
-      'fromOffset' : vm.fromOffset
+      'fromOffset' : vm.fromOffset,
+      filter: `loglevel=${vm.selectedLogLevel}`
     }).$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
         vm.loading = false;
 
-        if(res.length === 0){
+        if (res.length === 0) {
+          offsetScroll();
           getStatus();
+
+          if (vm.statusType !== 0) {
+            vm.endRequest = true;
+          }
+
           return;
         }
 
@@ -357,6 +373,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         console.log('ERROR: ', err);
         vm.errorRetrievingLogs = true;
         vm.loading = false;
+        offsetScroll();
       });
   }
 
@@ -396,7 +413,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   function pollForNewLogs () {
     pollPromise = dataSrc.poll({
-      _cdapPath: '/namespaces/' + vm.namespaceId + '/apps/' + vm.appId + '/' + vm.programType + '/' + vm.programId + '/runs/' + vm.runId + '/logs/next?format=json&max=100&fromOffset=' + vm.fromOffset,
+      _cdapPath: '/namespaces/' + vm.namespaceId + '/apps/' + vm.appId + '/' + vm.programType + '/' + vm.programId + '/runs/' + vm.runId + '/logs/next?format=json&max=100&fromOffset=' + vm.fromOffset + '&filter=loglevel=' + vm.selectedLogLevel,
       method: 'GET'
     },
     (res) => {
@@ -473,12 +490,13 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     angular.element(document.getElementsByClassName('logs-table'))[0].scrollTop = 0;
 
     myLogsApi.nextLogsJsonOffset({
-        namespace : vm.namespaceId,
-        appId : vm.appId,
-        programType : vm.programType,
-        programId : vm.programId,
-        runId : vm.runId,
-        fromOffset: vm.fromOffset
+      namespace : vm.namespaceId,
+      appId : vm.appId,
+      programType : vm.programType,
+      programId : vm.programId,
+      runId : vm.runId,
+      fromOffset: vm.fromOffset,
+      filter: `loglevel=${vm.selectedLogLevel}`
     }).$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
@@ -579,30 +597,54 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   vm.includeEvent = function(eventType){
-    if(included[eventType]){
-      numEvents--;
-    } else{
-      numEvents++;
+    if (eventType === vm.selectedLogLevel) { return; }
+
+    vm.endRequest = false;
+
+    // reset log levels
+    vm.activeLogLevels = {
+      'ERROR' : false,
+      'WARN' : false,
+      'INFO' : false,
+      'DEBUG' : false,
+      'TRACE' : false
+    };
+
+    switch (eventType) {
+      case 'TRACE':
+        vm.activeLogLevels['TRACE'] = true;
+        /* falls through */
+      case 'DEBUG':
+        vm.activeLogLevels['DEBUG'] = true;
+        /* falls through */
+      case 'INFO':
+        vm.activeLogLevels['INFO'] = true;
+        /* falls through */
+      case 'WARN':
+        vm.activeLogLevels['WARN'] = true;
+        /* falls through */
+      case 'ERROR':
+        vm.activeLogLevels['ERROR'] = true;
     }
-    included[eventType] = !included[eventType];
-    vm.renderData();
+
+    // Whenever we change the log level filter, the data needs
+    // to start from scratch
+    vm.data = [];
+    vm.fromOffset = -10000 + '.' + vm.startTimeMs;
+
+    vm.selectedLogLevel = eventType;
+    startTimeRequest();
   };
 
   vm.renderData = () => {
+    /*
+      This function used to do the UI only filtering for log level.
+      Not sure all the different scenarios. Since the log level filter
+      now comes from backend, all the function needs to do now is set the
+      displayData to the data list we get from backend
+    */
     //Clean slate
-    vm.displayData = [];
-    if(numEvents === 0){
-      angular.forEach(vm.data, (value, key) => {
-        vm.displayData.push(vm.data[key]);
-      });
-      return;
-    } else {
-      angular.forEach(vm.data, (value, key) => {
-        if(included[vm.data[key].log.logLevel]){
-          vm.displayData.push(vm.data[key]);
-        }
-      });
-    }
+    vm.displayData = vm.data;
   };
 
   vm.highlight = (text) => {
@@ -616,16 +658,21 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     ));
   };
 
-  vm.eventFilter = function(entry){
-    if(numEvents === 0 || included[entry.log.logLevel]){
-      return entry;
-    }
-    return;
-  };
+  function offsetScroll() {
+    let logsTableContainer = document.getElementsByClassName('logs-table');
 
-  vm.scrollFn = function(){
-      requestWithOffset();
-  };
+    if (logsTableContainer && Array.isArray(logsTableContainer)) {
+      // Offset the scroll by a tiny margin to stop the infinite scroll to
+      // fire repeatedly
+      logsTableContainer[0].scrollTop = logsTableContainer[0].scrollTop - 15;
+    }
+  }
+
+  vm.scrollFn = _.throttle(function() {
+    if (vm.loading || vm.endRequest) { return; }
+    offsetScroll();
+    requestWithOffset();
+  }, 500);
 
   vm.preventClick = function (event) {
     // disabled is not a valid attribute for <a>
@@ -653,6 +700,7 @@ const link = (scope) => {
 };
 
 angular.module(PKG.name + '.commons')
+  .value('THROTTLE_MILLISECONDS', 250) // throttle infinite scroll
   .directive('myLogViewer', function () {
     return {
       templateUrl: 'log-viewer/log-viewer.html',
