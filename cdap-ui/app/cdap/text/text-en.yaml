@@ -654,6 +654,7 @@ features:
       Step2:
         shorttitle: Select Destination
         title: Select a Destination
+        tooltiptext: The stream will be created if it does not exist
         description: Select the destination where the data needs to be uploaded.
         dataentitynameplaceholder: Dataset/Stream Name
         destinationtype: Destination Type
