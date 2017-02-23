@@ -39,6 +39,8 @@
   <logger name="org.quartz.core" level="WARN"/>
   <logger name="org.eclipse.jetty" level="WARN"/>
   <logger name="io.netty.util.internal" level="WARN"/>
+  <!-- Avoid logging from LogFileManager in SDK, to avoid deadlock. See CDAP-8701 -->
+  <logger name="co.cask.cdap.logging.framework.LogFileManager" level="ERROR"/>
   <logger name="co.cask.cdap.operations.OperationalStats" level="ERROR"/>
   <logger name="co.cask.cdap.extension.AbstractExtensionLoader" level="ERROR"/>
 
