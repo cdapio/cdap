@@ -190,7 +190,7 @@ and a list of actions required to install the package:
             {
               "name": "steps",
               "value": [
-                "Download the ZIP file from MySQL at \https://dev.mysql.com/downloads/file/?id=462850",
+                "Download the ZIP file from MySQL at https://dev.mysql.com/downloads/file/?id=462850",
                 "Unzip the file",
                 "In the next step, upload the 'mysql-connector-java-5.1.39-bin.jar' file from the ZIP"
               ]
