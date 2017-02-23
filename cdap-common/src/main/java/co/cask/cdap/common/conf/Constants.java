@@ -959,6 +959,16 @@ public final class Constants {
     public static final String STREAM_NAMESPACE = "explore.stream.namespace";
     public static final String PREVIEWS_DIR_NAME = "explore.previews.dir";
     public static final String CREDENTIALS_DIR_NAME = "explore.credentials.dir";
+
+    // Older hive versions don't have the following defined so we cannot use conf.getVar or conf.setVar and
+    // we need to hardcode it here so that we can use conf.get and conf.set instead.
+    public static final String HIVE_SERVER2_SPNEGO_KEYTAB = "hive.server2.authentication.spnego.keytab";
+    public static final String HIVE_SERVER2_SPNEGO_PRINCIPAL = "hive.server2.authentication.spnego.principal";
+    public static final String SUBMITLOCALTASKVIACHILD = "hive.exec.submit.local.task.via.child";
+    public static final String SUBMITVIACHILD = "hive.exec.submitviachild";
+    public static final String HIVE_AUTHORIZATION_SQL_STD_AUTH_CONFIG_WHITELIST_APPEND =
+      "hive.security.authorization.sqlstd.confwhitelist.append";
+
     // a marker so that we know which tables are created by CDAP
     public static final String CDAP_NAME = "cdap.name";
     public static final String CDAP_VERSION = "cdap.version";
