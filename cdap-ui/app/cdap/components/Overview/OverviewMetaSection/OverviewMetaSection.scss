@@ -26,6 +26,10 @@
 
   h2 {
     color: rgba(51, 51, 51, 1);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 95%;
   }
   .fast-actions-container {
     display: flex;
