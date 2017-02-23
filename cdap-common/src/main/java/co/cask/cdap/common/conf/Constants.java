@@ -479,6 +479,7 @@ public final class Constants {
     public static final String CLIENT_WORKER_THREADS = "router.client.worker.threads";
     public static final String CONNECTION_TIMEOUT_SECS = "router.connection.idle.timeout.secs";
     public static final String ROUTER_USERSERVICE_FALLBACK_STRAGEY = "router.userservice.fallback.strategy";
+    public static final String ROUTER_AUDIT_PATH_CHECK_ENABLED = "router.audit.path.check.enabled";
 
     /**
      * Defaults.

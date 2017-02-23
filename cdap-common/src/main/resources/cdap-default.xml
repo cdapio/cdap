@@ -2319,6 +2319,14 @@
   <!-- Router Configuration -->
 
   <property>
+    <name>router.audit.path.check.enabled</name>
+    <value>true</value>
+    <description>
+      The boolean which indicates whether we need to check the number of paths for audit logging.
+    </description>
+  </property>
+
+  <property>
     <name>router.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -2426,7 +2434,6 @@
       any service and will return "service not found".
     </description>
   </property>
-
 
   <!-- Security Configuration -->
 
