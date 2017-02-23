@@ -762,6 +762,8 @@ public final class Constants {
     public static final String TAG_WORKFLOW_SPARK_ID = ".workflowSparkId";
     public static final String TAG_WORKFLOW_PROGRAM_RUN_ID = ".workflowProgramRunId";
 
+    // cut-off time discount from actual transaction timeout
+    public static final int TX_TIMEOUT_DISCOUNT_SECS = 5;
   }
 
   /**

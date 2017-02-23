@@ -126,6 +126,9 @@ public class CDAPLogAppenderTest {
     cdapLogAppender.setMaxFileSizeInBytes(104857600);
     cdapLogAppender.setDirPermissions("700");
     cdapLogAppender.setFilePermissions("600");
+    cdapLogAppender.setFileRetentionDurationDays(1);
+    cdapLogAppender.setLogCleanupIntervalMins(10);
+    cdapLogAppender.setFileCleanupTransactionTimeout(30);
     AppenderContext context = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
                                                        injector.getInstance(TransactionSystemClient.class),
                                                        injector.getInstance(LocationFactory.class),
@@ -195,6 +198,9 @@ public class CDAPLogAppenderTest {
     cdapLogAppender.setMaxFileSizeInBytes(104857600);
     cdapLogAppender.setDirPermissions("750");
     cdapLogAppender.setFilePermissions("640");
+    cdapLogAppender.setFileRetentionDurationDays(1);
+    cdapLogAppender.setLogCleanupIntervalMins(10);
+    cdapLogAppender.setFileCleanupTransactionTimeout(30);
     cdapLogAppender.setContext(context);
     cdapLogAppender.start();
 
@@ -265,6 +271,9 @@ public class CDAPLogAppenderTest {
     cdapLogAppender.setMaxFileSizeInBytes(500);
     cdapLogAppender.setDirPermissions("750");
     cdapLogAppender.setFilePermissions("640");
+    cdapLogAppender.setFileRetentionDurationDays(1);
+    cdapLogAppender.setLogCleanupIntervalMins(10);
+    cdapLogAppender.setFileCleanupTransactionTimeout(30);
     cdapLogAppender.setContext(context);
     cdapLogAppender.start();
 

@@ -27,6 +27,7 @@ public class LogPathIdentifier {
   private final String namespaceId;
   private final String pathId1;
   private final String pathId2;
+  private final transient String oldRowkey;
   private final transient String rowKey;
 
 
@@ -34,7 +35,10 @@ public class LogPathIdentifier {
     this.namespaceId = namespaceId;
     this.pathId1 = pathId1;
     this.pathId2 = pathId2;
-    this.rowKey = String.format("%s%s%s%s%s", namespaceId, META_SEPARATOR, pathId1, META_SEPARATOR, pathId2);
+    this.oldRowkey = String.format("%s%s%s%s%s",
+                                   namespaceId, META_SEPARATOR, pathId1, META_SEPARATOR, pathId2);
+    // add separator key at the end for new row key
+    this.rowKey = String.format("%s%s", oldRowkey, META_SEPARATOR);
   }
 
   /**
@@ -65,8 +69,16 @@ public class LogPathIdentifier {
    * Rowkey combining the namespace and log file identifier separated by separator ":"
    * @return rowkey string
    */
-  public String getRowKey() {
+  public String getRowkey() {
     return rowKey;
+  }
+
+  /**
+   * Rowkey combining the namespace and log file identifier separated by separator ":" in old format
+   * @return rowkey string
+   */
+  public String getOldRowkey() {
+    return oldRowkey;
   }
 
   @Override
