@@ -16,9 +16,10 @@
 
 import React, {PropTypes} from 'react';
 import T from 'i18n-react';
+import ResourceCenterButton from 'components/ResourceCenterButton';
 require('./WelcomeScreen.scss');
 
-export default function WelcomeScreen({onClose, onMarketOpen}) {
+export default function WelcomeScreen({onClose, onAddEntity}) {
   return (
     <div className="splash-screen-container">
       <div className="splash-screen-first-time">
@@ -35,9 +36,9 @@ export default function WelcomeScreen({onClose, onMarketOpen}) {
 
         <div
           className="splash-screen-first-time-btn"
-          onClick={onMarketOpen}
+          onClick={onAddEntity}
         >
-          {T.translate('features.EntityListView.SplashScreen.caskmarket')}
+          {T.translate('features.EntityListView.SplashScreen.addentity')}
         </div>
         <div
           className="go-to-cdap"
@@ -51,10 +52,14 @@ export default function WelcomeScreen({onClose, onMarketOpen}) {
           </p>
         </div>
       </div>
+
+      <div className="resource-center-hidden">
+        <ResourceCenterButton />
+      </div>
     </div>
   );
 }
 WelcomeScreen.propTypes = {
   onClose: PropTypes.func,
-  onMarketOpen: PropTypes.func
+  onAddEntity: PropTypes.func
 };

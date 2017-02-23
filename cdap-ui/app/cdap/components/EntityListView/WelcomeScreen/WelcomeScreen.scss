@@ -82,4 +82,11 @@
       }
     }
   }
+
+  .resource-center-hidden {
+    .cask-resourcecenter-button {
+      position: absolute;
+      left: -3000px;
+    }
+  }
 }

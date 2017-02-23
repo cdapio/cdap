@@ -151,7 +151,7 @@ features:
     SplashScreen:
       welcomeMessage1: Welcome To The New CDAP
       welcomeMessage2: User Experience
-      caskmarket: Start by Adding Entities to CDAP
+      addentity: Start by Adding Entities to CDAP
       gotoLabel: Go to Overview page
       disclaimerMessage: To access the classic view of the CDAP UI, please use the "Switch to Classic View" option from the CDAP dropdown on the top right.
     Header:
