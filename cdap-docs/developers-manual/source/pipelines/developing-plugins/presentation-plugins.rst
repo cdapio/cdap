@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright   2016-2017 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 .. _plugins-presentation:
 .. _cdap-pipelines-packaging-plugins-presentation:
@@ -69,16 +69,10 @@ Each configuration group consists of a list of the :ref:`individual properties
 
 Metadata
 --------
-Metadata refers to the top-level information about a plugin. All of the information, with
-the exception of the ``spec-version`` (currently |plugins-spec-version|) is optional. The
-metadata is a *map* consisting of:
+Metadata refers to the top-level information about a plugin. The only information required is the
+a *map* consisting of the ``spec-version``, the version of the specification which the JSON follows. 
 
-- ``spec-version``: Version of the specification which the JSON follows. Current version: |plugins-spec-version|
-- ``artifact-version``: Version of the artifact plugin (optional)
-- ``type``:  Type of the plugin (optional)
-- ``name``: Name of the plugin (optional)
-
-For example:
+Current version: |plugins-spec-version|. For example:
 
 .. parsed-literal::
 
@@ -624,27 +618,28 @@ particular plugin.
 
 The output schema for a plugin can be represented in two different ways, either:
 
-- via an *explicit schema* using a ``Schema`` property; or
+- via an *explicit schema* using a named property; or
 - via an *implicit schema*
 
 Output properties are configured in a similar manner as individual properties in
-configuration groups. They are composed of a name and a widget type, one of either
+configuration groups. They are composed of a name and a widget-type, one of either
 ``schema`` (for an *explicit schema*) or ``non-editable-schema-editor`` (for an *implicit
 schema*).
 
-With the ``schema`` widget type, a list of widget attributes can be included; with
+With the ``schema`` widget type, a list of widget attributes can be included; with the
 ``non-editable-schema-editor``, a schema to be displayed is added instead.
 
-An **explicit schema** using a ``Schema`` property can be defined as the output schema and then will
+An **explicit schema** using a property can be defined as the output schema and then will
 be editable through the CDAP UI.
 
-For example, a "Batch Source" plugin can have a configurable output schema, with a default
-type of ``string``, and then a list of types that are available::
+For example, a "Batch Source" plugin could have a configurable output schema named
+``data-format``, displayed for editing with the ``schema`` widget-type, with a default
+type of ``string``, and a list of types that are available::
 
   {
     "outputs": [
       {
-        "name": "schema",
+        "name": "data-format",
         "widget-type": "schema",
         "widget-attributes": {
           "schema-default-type": "string",
