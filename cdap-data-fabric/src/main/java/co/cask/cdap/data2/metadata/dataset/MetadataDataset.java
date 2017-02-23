@@ -875,6 +875,20 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
+   * Removes all metadata which is {@code null}.
+   *
+   * @param targetId the {@link NamespacedEntityId} for which to remove the {@code null} or empty tags
+   */
+  public void removeNullOrEmptyTags(final NamespacedEntityId targetId) {
+    removeMetadata(targetId, new Predicate<String>() {
+      @Override
+      public boolean apply(String input) {
+        return TAGS_KEY.equals(input) && Strings.isNullOrEmpty(getMetadata(targetId, input).getValue());
+      }
+    });
+  }
+
+  /**
    * Returns all the {@link Indexer indexers} that apply to a specified metadata key.
    *
    * @param key the key for which {@link Indexer indexers} are required

@@ -481,10 +481,7 @@ public class DefaultMetadataStore implements MetadataStore {
     if (SortInfo.SortOrder.WEIGHTED != sortInfo.getSortOrder()) {
       Set<NamespacedEntityId> entities = new LinkedHashSet<>(results.size());
       for (MetadataEntry metadataEntry : results) {
-        //TODO Remove this null check after CDAP-7228 resolved. Since previous CDAP version may have null value.
-        if (metadataEntry != null) {
-          entities.add(metadataEntry.getTargetId());
-        }
+        entities.add(metadataEntry.getTargetId());
       }
       return entities;
     }
@@ -492,12 +489,9 @@ public class DefaultMetadataStore implements MetadataStore {
     // Score results
     final Map<NamespacedEntityId, Integer> weightedResults = new HashMap<>();
     for (MetadataEntry metadataEntry : results) {
-      //TODO Remove this null check after CDAP-7228 resolved. Since previous CDAP version may have null value.
-      if (metadataEntry != null) {
-        Integer score = weightedResults.get(metadataEntry.getTargetId());
-        score = (score == null) ? 0 : score;
-        weightedResults.put(metadataEntry.getTargetId(), score + 1);
-      }
+      Integer score = weightedResults.get(metadataEntry.getTargetId());
+      score = (score == null) ? 0 : score;
+      weightedResults.put(metadataEntry.getTargetId(), score + 1);
     }
 
     // Sort the results by score
@@ -664,6 +658,15 @@ public class DefaultMetadataStore implements MetadataStore {
     }
   }
 
+  public void removeNullOrEmptyTags(final DatasetId metadataDatasetInstance, final MetadataScope scope) {
+    execute(new TransactionExecutor.Procedure<MetadataDataset>() {
+      @Override
+      public void apply(MetadataDataset dataset) throws Exception {
+        dataset.removeNullOrEmptyTags(metadataDatasetInstance);
+      }
+    }, scope);
+  }
+
   public void createOrUpgrade(MetadataScope scope) throws DatasetManagementException, IOException {
     DatasetId metadataDatasetInstance = getMetadataDatasetInstance(scope);
     if (dsFramework.hasInstance(metadataDatasetInstance)) {
@@ -672,6 +675,7 @@ public class DefaultMetadataStore implements MetadataStore {
           metadataDatasetInstance,
           DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build()
         );
+        removeNullOrEmptyTags(metadataDatasetInstance, scope);
       }
     } else {
       DatasetsUtil.createIfNotExists(

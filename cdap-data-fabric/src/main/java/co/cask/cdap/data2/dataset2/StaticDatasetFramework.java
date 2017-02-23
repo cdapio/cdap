@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
  * The modules cannot be changed after the creation of the DatasetFramework.
  * Since the modules are fixed, this implementation has better performance than {@link InMemoryDatasetFramework}.
  */
-public class StaticDatasetFramework extends InMemoryDatasetFramework implements DatasetFramework {
+public class StaticDatasetFramework extends InMemoryDatasetFramework {
   private static final String REGISTRY_CACHE_KEY = "registry";
   private static final String MODULES_CACHE_KEY = "modules";
 
