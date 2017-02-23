@@ -416,94 +416,104 @@ public abstract class AbstractProgramController implements ProgramController {
       this.executor = executor;
     }
 
+    private void execute(Runnable runnable, String methodName) {
+      try {
+        executor.execute(runnable);
+      } catch (Throwable t) {
+        String msg = String.format("Exception while executing method '%s' on listener %s with executor %s.",
+                                   methodName, listener, executor);
+        LOG.error(msg, t);
+      }
+    }
+
     @Override
     public void init(final State currentState, @Nullable final Throwable cause) {
-      executor.execute(new Runnable() {
+      execute(new Runnable() {
         @Override
         public void run() {
           listener.init(currentState, cause);
         }
-      });
+      }, "init");
     }
 
     @Override
     public void suspending() {
-      executor.execute(new Runnable() {
+      execute(new Runnable() {
         @Override
         public void run() {
           listener.suspending();
         }
-      });
+      }, "suspending");
     }
 
     @Override
     public void suspended() {
-      executor.execute(new Runnable() {
+      execute(new Runnable() {
         @Override
         public void run() {
           listener.suspended();
         }
-      });
+      }, "suspended");
     }
 
     @Override
     public void resuming() {
-      executor.execute(new Runnable() {
+      execute(new Runnable() {
         @Override
         public void run() {
           listener.resuming();
         }
-      });
+      }, "resuming");
     }
 
     @Override
     public void alive() {
-      executor.execute(new Runnable() {
+      execute(new Runnable() {
         @Override
         public void run() {
           listener.alive();
         }
-      });
+      }, "alive");
     }
 
     @Override
     public void stopping() {
-      executor.execute(new Runnable() {
+      execute(new Runnable() {
         @Override
         public void run() {
           listener.stopping();
         }
-      });
+      }, "stopping");
     }
 
     @Override
     public void completed() {
-      executor.execute(new Runnable() {
+      execute(new Runnable() {
         @Override
         public void run() {
           listener.completed();
         }
-      });
+      }, "completed");
     }
 
     @Override
     public void killed() {
-      executor.execute(new Runnable() {
+      execute(new Runnable() {
         @Override
         public void run() {
           listener.killed();
         }
-      });
+      }, "killed");
     }
 
     @Override
     public void error(final Throwable cause) {
-      executor.execute(new Runnable() {
+      execute(new Runnable() {
         @Override
         public void run() {
           listener.error(cause);
         }
-      });
+      }, "error");
     }
 
     @Override
