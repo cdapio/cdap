@@ -588,13 +588,20 @@ class EntityListView extends Component {
     });
   }
 
-  openMarketModal() {
+  openAddEntityModal() {
     PlusButtonStore.dispatch({
       type: 'TOGGLE_PLUSBUTTON_MODAL',
       payload: {
         modalState: true
       }
     });
+
+    MyUserStoreApi
+      .get()
+      .subscribe(res => {
+        res.property['user-has-visited'] = true;
+        MyUserStoreApi.set({}, res.property);
+      });
   }
 
   onOverviewCloseAndRefresh() {
@@ -645,7 +652,7 @@ class EntityListView extends Component {
       return (
         <WelcomeScreen
           onClose={this.dismissSplash.bind(this)}
-          onMarketOpen={this.openMarketModal.bind(this)}
+          onAddEntity={this.openAddEntityModal.bind(this)}
         />
       );
     }

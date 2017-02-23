@@ -16,7 +16,6 @@
 
 import React, {Component, PropTypes} from 'react';
 import PlusButtonModal from 'components/PlusButtonModal';
-import PlusButtonStore from 'services/PlusButtonStore';
 import classnames from 'classnames';
 
 export default class CaskMarketButton extends Component {
@@ -25,14 +24,6 @@ export default class CaskMarketButton extends Component {
     this.state = {
       showMarketPlace: false
     };
-  }
-  componentDidMount() {
-    this.plusButtonSubscription = PlusButtonStore.subscribe(() => {
-      let modalState = PlusButtonStore.getState().modalState;
-      this.setState({
-        showMarketPlace: modalState
-      });
-    });
   }
   componentWillUnmount() {
     this.plusButtonSubscription();

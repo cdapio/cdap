@@ -29,16 +29,12 @@
     justify-content: center;
     align-items: center;
 
-    .app-store-bd {
-      font-size: 20px;
-    }
     .welcome-message {
-      font-weight: bold;
+      font-weight: 500;
       font-size: 50px;
+      margin-bottom: 0;
     }
-    .beta-notice {
-      font-size: 40px;
-    }
+
     .cdap-fist-icon {
       margin-top: 20px;
       margin-bottom: 20px;
@@ -47,9 +43,7 @@
         font-size: 10rem;
       }
     }
-    .introducing {
-      font-size: 30px;
-    }
+
     .go-to-cdap {
       color: $cdap-orange;
       cursor: pointer;
@@ -57,9 +51,8 @@
       text-decoration: underline;
     }
     .splash-screen-first-time-btn {
-      width: 50%;
       height: 40px;
-      padding: 1px;
+      padding: 1px 15px;
       border-radius: 4px;
       box-shadow: 0 0 2px black;
       margin-top: 30px;
@@ -71,10 +64,6 @@
       align-items: center;
       background-color: $cdap-orange;
       cursor: pointer;
-
-      .icon-CaskMarket {
-        margin-right: 5px;
-      }
 
       &:hover {
         color: $cdap-orange;
@@ -88,9 +77,16 @@
       margin-top: 15px;
 
       p {
-        margin: 0;
+        margin-top: 10px;
         text-align: center;
       }
+    }
+  }
+
+  .resource-center-hidden {
+    .cask-resourcecenter-button {
+      position: absolute;
+      left: -3000px;
     }
   }
 }
