@@ -419,6 +419,14 @@
     </description>
   </property>
 
+  <property>
+    <name>app.meta.upgrade.timeout.secs</name>
+    <value>60</value>
+    <description>
+      Timeout value in seconds while upgrading application versions
+    </description>
+  </property>
+
 
   <!-- Audit Configuration -->
 

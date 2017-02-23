@@ -1064,6 +1064,7 @@ public final class Constants {
    * Used for upgrade and backwards compatability
    */
   public static final String DEVELOPER_ACCOUNT = "developer";
+  public static final String APP_META_UPGRADE_TIMEOUT_SECS = "app.meta.upgrade.timeout.secs";
 
   /**
    * Constants related to external systems.
