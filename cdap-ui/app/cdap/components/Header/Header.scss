@@ -31,14 +31,12 @@
   li,
   li a,
   .with-shadow,
-  .dropdown-toggle,
   .dropdown-item {
     color: white;
     &:hover,
-    &:focus {
+    &:active {
       color: $cdap-light-orange;
     }
-    &:active,
     .active {
       color: $cdap-orange;
       &:focus,
@@ -52,7 +50,7 @@
   .global-navbar-toggler {
     display: none;
 
-    @media(max-width: 1011px) {
+    @media(max-width: 860px) {
       display: inline-flex;
       height: 50px;
       padding-top: 0;
@@ -78,7 +76,7 @@
   }
 
   .global-navbar-collapse {
-    @media(max-width: 1011px) {
+    @media(max-width: 860px) {
       display: none;
       &.minimized {
         display: block;
@@ -86,6 +84,7 @@
         width: 100%;
         position: absolute;
         top: 50px;
+        left: 0;
       }
     }
     line-height: 50px;
@@ -104,7 +103,7 @@
           box-shadow: -18px 0px 24px -9px rgba(0, 0, 0, 0.4);
           height: 50px;
           padding-left: 10px;
-          margin-left: 10px;
+          margin-left: 0;
           margin-right: 0;
           min-width: 120px;
           cursor: pointer;
@@ -172,7 +171,12 @@
     .dropdown.open {
       .dropdown-toggle {
         background-color: transparent;
-        color: $cdap-orange;
+        color: inherit;
+        &.active {
+          &:hover {
+            color: $cdap-light-orange;
+          }
+        }
       }
     }
   }

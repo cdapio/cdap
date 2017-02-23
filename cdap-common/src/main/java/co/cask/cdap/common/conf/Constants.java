@@ -119,6 +119,8 @@ public final class Constants {
   public static final class HBase {
     public static final String AUTH_KEY_UPDATE_INTERVAL = "hbase.auth.key.update.interval";
     public static final String MANAGE_COPROCESSORS = "master.manage.hbase.coprocessors";
+    public static final String CLIENT_RETRIES = "hbase.client.retries.number";
+    public static final String RPC_TIMEOUT = "hbase.rpc.timeout";
   }
 
   /**
@@ -638,7 +640,8 @@ public final class Constants {
        * Logs metrics
        */
       public static final class Log {
-        public static final String PROCESS_DELAY = "log.process.delay";
+        public static final String PROCESS_MIN_DELAY = "log.process.min.delay";
+        public static final String PROCESS_MAX_DELAY = "log.process.max.delay";
         public static final String PROCESS_MESSAGES_COUNT = "log.process.message.count";
       }
     }
@@ -1225,6 +1228,7 @@ public final class Constants {
     public static final String WORKER_PREFIX = "worker.";
     public static final String SERVICE_PREFIX = "service.";
     public static final String FLOW_PREFIX = "flow.";
+    public static final int RUN_RECORD_UPDATE_RETRY_DELAY_SECS = 5;
   }
 
   /**

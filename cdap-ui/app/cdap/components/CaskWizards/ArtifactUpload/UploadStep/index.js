@@ -50,6 +50,7 @@ export default function UploadStep(undefined, context) {
     <Provider store={ArtifactUploadStore}>
       <div className="upload-step-container">
         {
+          /* TODO: shouldn't do this, replace in 4.2} */
           context.isMarket ?
             (
               <h4 className="upload-instruction">

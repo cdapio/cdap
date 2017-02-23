@@ -84,7 +84,8 @@ function usage() {
   echo "    build-web        Clean build of docs with extras (no Javadocs)"
   echo "    build-docs       Clean build of docs (no extras or Javadocs)"
   echo "    docs             alias for 'build-docs'"
-  echo "    docs-local       Clean build of docs (no extras or Javadocs), using local copies of downloaded files"
+  echo "    build-web-local  Clean build of docs with extras (no Javadocs), using local copies of downloaded files"
+  echo "    build-docs-local Clean build of docs (no extras or Javadocs), using local copies of downloaded files"
   echo
   echo "    check            Runs build without running Sphinx, to check all downloads and includes"
   echo "    license-pdfs     Clean build of License Dependency PDFs"
@@ -135,23 +136,50 @@ function build_docs() {
   fi  
   build_extras
   consolidate_messages
+  add_html_redirect
 }
 
 function build_docs_local() {
-  BELL="${TRUE}"
   LOCAL_INCLUDES="${TRUE}"
   export LOCAL_INCLUDES
   build_docs
 }
 
 function build_web() {
+  echo "common-build.sh build_web"
+  build_docs ${GOOGLE_TAG_MANAGER_CODE}
+}
+
+function build_web_local() {
+  LOCAL_INCLUDES="${TRUE}"
+  export LOCAL_INCLUDES
   build_docs ${GOOGLE_TAG_MANAGER_CODE}
 }
 
 function build_extras() {
   # Over-ride this function in guides where Javadocs or licenses are being built or copied.
-  # Currently performed in reference-manual
   echo "No extras being built or copied."
+}
+
+function add_html_redirect() {
+  local redirect_text=$(cat <<EOF
+<!DOCTYPE HTML>
+<html lang="en-US">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="refresh" content="0;url=html/index.html">
+        <script type="text/javascript">
+            window.location.href = "html/index.html"
+        </script>
+        <title></title>
+    </head>
+    <body>
+    </body>
+</html>
+EOF
+)
+  echo_set_message "Adding redirect"
+  echo ${redirect_text} >> ${TARGET}/redirect.html
 }
 
 function check() {
@@ -398,6 +426,16 @@ function display_version() {
   echo "  CDAP_METADATA_MANAGEMENT_VERSION: ${CDAP_METADATA_MANAGEMENT_VERSION}"
 }
 
+function print_version() {
+  cd ${SCRIPT_PATH}/developers-manual
+  ./build.sh display-version
+}
+
+function set_and_display_version() {
+  set_version
+  display_version
+}
+
 function get_cdap_pipelines_version() {
   # $1 Branch of Hydrator to use
   CDAP_PIPELINES_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/hydrator-plugins/${1}/pom.xml" | grep "<version>")
@@ -561,12 +599,15 @@ function rewrite() {
 function run_command() {
   set_version
   case ${1} in
-    build-web|build-docs)  "${1/-/_}";;
-    check|check-includes)  "${1/-/_}";;
+    build-docs|build-web)  "${1/-/_}";;
+    build-docs-local)      "${1//-/_}";;
+    build-web-local)       "${1//-/_}";;
     display-version)       "${1/-/_}";;
+    version)               "set_and_display_version";;
     license-pdfs)          "build_license_pdfs";;
     docs)                  "build_docs";;
     docs-local)            "build_docs_local";;
     *)                     usage;;
   esac
 }
+

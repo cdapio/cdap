@@ -27,6 +27,8 @@ import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryDecoder;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.internal.io.DatumReader;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
@@ -71,6 +73,8 @@ import javax.annotation.Nullable;
  */
 public class MessagingMetricsProcessorService extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsProcessorService.class);
+  // Log the metrics processing progress no more than once per minute.
+  private static final Logger PROGRESS_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(60000));
 
   private final MetricDatasetFactory metricDatasetFactory;
   private final List<TopicId> metricsTopics;
@@ -86,7 +90,6 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   private final int metricsProcessIntervalMillis;
   private final List<ProcessMetricsThread> processMetricsThreads;
 
-  private long lastLoggedMillis;
   private long recordsProcessed;
 
   private MetricsConsumerMetaTable metaTable;
@@ -239,12 +242,9 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         new MetricValue("metrics.process.delay.ms", MetricType.GAUGE, delay))));
     metricStore.add(metricValues);
     recordsProcessed += metricValues.size();
-    // avoid logging more than once a minute
-    if (now > lastLoggedMillis + TimeUnit.MINUTES.toMillis(1)) {
-      lastLoggedMillis = now;
-      LOG.debug("{} metrics records processed. Last metric record's timestamp: {}. Metrics process delay: {}",
-                recordsProcessed, lastRecordTime, delay);
-    }
+
+    PROGRESS_LOG.debug("{} metrics records processed. Last metric record's timestamp: {}. Metrics process delay: {}",
+                       recordsProcessed, lastRecordTime, delay);
   }
 
   private class ProcessMetricsThread extends Thread {

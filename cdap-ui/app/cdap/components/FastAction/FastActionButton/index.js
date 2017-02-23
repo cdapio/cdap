@@ -26,7 +26,7 @@ export default function FastActionButton({icon, action, disabled, id}) {
 
   let onButtonClick = (event) => {
     preventPropagation(event);
-    action();
+    action(event);
   };
 
   return (

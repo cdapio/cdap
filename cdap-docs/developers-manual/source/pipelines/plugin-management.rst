@@ -52,6 +52,8 @@ Deploying Plugins
    :start-after: .. _plugins-deployment-artifact:
    :end-before:  .. _plugins-deployment-packaging:
 
+.. _cdap-pipelines-plugin-management-deployment-deploying-as-a-system-artifact:
+
 .. include:: /building-blocks/plugins.rst
    :start-after: .. _plugins-deployment-system:
    :end-before:  .. _plugins-deployment-user:
@@ -131,5 +133,5 @@ Note that in all cases, the actual files (JARs and JSON files) associated with t
 are not deleted. Instead, the references to them are deleted in the CDAP system. If the
 files are not removed after these references are deleted, then |---| in the case of the
 ``system`` scope plugins |---|, the artifacts will be reloaded the next time CDAP is
-restarted, as they are automatically loaded at startup from the `appropriate directory
-<plugin-management#deploying-as-a-system-artifact>`_.
+restarted, as they are automatically loaded at startup from the :ref:`appropriate directory
+<cdap-pipelines-plugin-management-deployment-deploying-as-a-system-artifact>`.

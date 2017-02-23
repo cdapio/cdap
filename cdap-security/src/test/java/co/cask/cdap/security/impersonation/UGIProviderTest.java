@@ -16,16 +16,33 @@
 
 package co.cask.cdap.security.impersonation;
 
+
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.kerberos.ImpersonationInfo;
+import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
+import co.cask.cdap.common.kerberos.ImpersonatedOpType;
+import co.cask.cdap.common.kerberos.ImpersonationRequest;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
+import co.cask.cdap.common.kerberos.OwnerStore;
+import co.cask.cdap.common.kerberos.PrincipalCredentials;
+import co.cask.cdap.common.kerberos.UGIWithPrincipal;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.io.Text;
@@ -54,6 +71,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -69,21 +89,49 @@ public class UGIProviderTest {
   private static MiniDFSCluster miniDFSCluster;
   private static LocationFactory locationFactory;
   private static MiniKdc miniKdc;
-  private static File keytabFile;
+  private static InMemoryNamespaceClient namespaceClient;
+  private static KerberosPrincipalId aliceKerberosPrincipalId;
+  private static KerberosPrincipalId bobKerberosPrincipalId;
+  private static KerberosPrincipalId eveKerberosPrincipalId;
+  private static NamespaceId namespaceId = new NamespaceId("UGIProviderTest");
+  private static StreamId aliceEntity = namespaceId.stream("dummyStream");
+  private static DatasetId bobEntity = namespaceId.dataset("dummyDataset");
+
+  private static File localKeytabDirPath;
+  private static File aliceKeytabFile;
+  private static File bobKeytabFile;
+  private static File eveKeytabFile;
+
+  private static File createPrincipal(File keytabDirPath, String username) throws Exception {
+    File keytabFile = new File(keytabDirPath, username + ".keytab");
+    Assert.assertTrue(keytabFile.createNewFile());
+    miniKdc.createPrincipal(keytabFile, username);
+    return keytabFile;
+  }
 
   @BeforeClass
   public static void init() throws Exception {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
 
+    namespaceClient = new InMemoryNamespaceClient();
+
     // Start KDC
     miniKdc = new MiniKdc(MiniKdc.createConf(), TEMP_FOLDER.newFolder());
     miniKdc.start();
     System.setProperty("java.security.krb5.conf", miniKdc.getKrb5conf().getAbsolutePath());
 
+    localKeytabDirPath = TEMP_FOLDER.newFolder();
+
     // Generate keytab
-    keytabFile = TEMP_FOLDER.newFile();
-    miniKdc.createPrincipal(keytabFile, "hdfs", "alice", "bob");
+    aliceKeytabFile = createPrincipal(localKeytabDirPath, "alice");
+    bobKeytabFile = createPrincipal(localKeytabDirPath, "bob");
+    eveKeytabFile = createPrincipal(localKeytabDirPath, "eve");
+
+    // construct Kerberos PrincipalIds
+    aliceKerberosPrincipalId = new KerberosPrincipalId(getPrincipal("alice"));
+    bobKerberosPrincipalId = new KerberosPrincipalId(getPrincipal("bob"));
+    eveKerberosPrincipalId = new KerberosPrincipalId(getPrincipal("eve"));
 
     // Start mini DFS cluster
     Configuration hConf = new Configuration();
@@ -110,45 +158,88 @@ public class UGIProviderTest {
   }
 
   @Test
-  public void testDefaultUGIProvider() throws IOException {
+  public void testDefaultUGIProviderWithLocalFiles() throws Exception {
     System.setProperty("sun.security.krb5.debug", "true");
 
-    DefaultUGIProvider provider = new DefaultUGIProvider(cConf, locationFactory);
+    // sets the path of local keytabs in cConf to be used by SecurityUtil to fetch owner keytab
+    setKeytabDir(localKeytabDirPath.getAbsolutePath());
+
+    // get the owner admin which has been created from the cConf which got modified above
+    OwnerAdmin ownerAdmin = getOwnerAdmin();
+
+    DefaultUGIProvider provider = new DefaultUGIProvider(cConf, locationFactory, ownerAdmin, namespaceClient);
+
+    // create a namespace with a principal and keytab so that later we can verify that if a required entity owner does
+    // not exists then the provider gives the UGI for namespace owner
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespaceId).setPrincipal(
+      eveKerberosPrincipalId.getPrincipal()).setKeytabURI(eveKeytabFile.getAbsolutePath()).build());
+
+    // add an owner for some entity
+    ownerAdmin.add(aliceEntity, aliceKerberosPrincipalId);
+    ownerAdmin.add(bobEntity, bobKerberosPrincipalId);
 
     // Try with local keytab file
-    ImpersonationInfo aliceInfo = new ImpersonationInfo(getPrincipal("alice"), keytabFile.getAbsolutePath());
-    UserGroupInformation aliceUGI = provider.getConfiguredUGI(aliceInfo);
-    Assert.assertEquals(UserGroupInformation.AuthenticationMethod.KERBEROS, aliceUGI.getAuthenticationMethod());
-    Assert.assertTrue(aliceUGI.hasKerberosCredentials());
+    ImpersonationRequest aliceImpRequest = new ImpersonationRequest(aliceEntity, ImpersonatedOpType.OTHER);
+    ImpersonationRequest bobImpRequest = new ImpersonationRequest(bobEntity, ImpersonatedOpType.OTHER);
+    UGIWithPrincipal aliceUGIWithPrincipal = verifyAndGetUGI(provider, aliceKerberosPrincipalId, aliceImpRequest);
+    UGIWithPrincipal bobUGIWithPrincipal = verifyAndGetUGI(provider, bobKerberosPrincipalId, bobImpRequest);
 
-    // Fetch it again, it is should return the same UGI since there is caching
-    Assert.assertSame(aliceUGI, provider.getConfiguredUGI(aliceInfo));
+    // delete the local keytab file for bob
+    Assert.assertTrue(bobKeytabFile.delete());
 
-    // Put the keytab on HDFS
-    Location remoteKeytab = locationFactory.create("keytab").getTempFile(".tmp");
-    Files.copy(keytabFile, Locations.newOutputSupplier(remoteKeytab));
+    // verify caching by fetch the bob UGI again, it should still return the valid one but after invalidating the
+    // cache it shouldn't
+    verifyCaching(provider, aliceImpRequest, bobImpRequest, aliceUGIWithPrincipal, bobUGIWithPrincipal);
 
-    // Login with remote keytab file
-    ImpersonationInfo bobInfo = new ImpersonationInfo(getPrincipal("bob"), remoteKeytab.toURI().toString());
-    UserGroupInformation bobUGI = provider.getConfiguredUGI(bobInfo);
-    Assert.assertEquals(UserGroupInformation.AuthenticationMethod.KERBEROS, bobUGI.getAuthenticationMethod());
-    Assert.assertTrue(bobUGI.hasKerberosCredentials());
+    // delete the owner info for bob's entity
+    ownerAdmin.delete(bobEntity);
 
-    // Delete the keytab on HDFS
-    remoteKeytab.delete();
+    // now we should get the namespace owner principal if we get try to impersonate bobEntity
+    UGIWithPrincipal eveUGIWithPrincipal = provider.getConfiguredUGI(bobImpRequest);
+    Assert.assertEquals(UserGroupInformation.AuthenticationMethod.KERBEROS,
+                        eveUGIWithPrincipal.getUGI().getAuthenticationMethod());
+    Assert.assertTrue(eveUGIWithPrincipal.getUGI().hasKerberosCredentials());
+    Assert.assertEquals(eveKerberosPrincipalId.getPrincipal(), eveUGIWithPrincipal.getPrincipal());
 
-    // Fetch the bob UGI again, it should still return the valid one
-    Assert.assertSame(bobUGI, provider.getConfiguredUGI(bobInfo));
+    // cleanup
+    ownerAdmin.delete(aliceEntity);
+    ownerAdmin.delete(bobEntity);
+    namespaceClient.delete(namespaceId);
+  }
 
-    // Invalid the cache, getting of Alice UGI should pass, while getting of Bob should fails
-    provider.invalidCache();
-    Assert.assertNotSame(aliceUGI, provider.getConfiguredUGI(aliceInfo));
-    try {
-      provider.getConfiguredUGI(bobInfo);
-      Assert.fail("Expected IOException when getting UGI for " + bobInfo);
-    } catch (IOException e) {
-      // Expected
-    }
+  @Test
+  public void testDefaultUGIProviderWithHDFSFiles() throws Exception {
+    // create a location on hdfs for keytabs
+    Location hdfsKeytabDir = locationFactory.create("keytabs");
+    // set in the cConf so that later it can be used to fetch the keytabs for the given principal
+    setKeytabDir(hdfsKeytabDir.toURI().toString());
+
+    Location aliceRemoteKeytabFile = copyFileToHDFS(hdfsKeytabDir, aliceKeytabFile);
+    Location bobRemoteKeytabFile = copyFileToHDFS(hdfsKeytabDir, bobKeytabFile);
+
+    OwnerAdmin ownerAdmin = getOwnerAdmin();
+    DefaultUGIProvider provider = new DefaultUGIProvider(cConf, locationFactory, ownerAdmin, namespaceClient);
+
+    // add some entity owners
+    ownerAdmin.add(aliceEntity, aliceKerberosPrincipalId);
+    ownerAdmin.add(bobEntity, bobKerberosPrincipalId);
+
+    // Try with keytab file on hdfs
+    ImpersonationRequest aliceImpRequest = new ImpersonationRequest(aliceEntity, ImpersonatedOpType.OTHER);
+    ImpersonationRequest bobImpRequest = new ImpersonationRequest(bobEntity, ImpersonatedOpType.OTHER);
+    UGIWithPrincipal aliceUGIWithPrincipal = verifyAndGetUGI(provider, aliceKerberosPrincipalId, aliceImpRequest);
+    UGIWithPrincipal bobUGIWithPrincipal = verifyAndGetUGI(provider, bobKerberosPrincipalId, bobImpRequest);
+
+    // delete bob's keytab file on hdfs
+    Assert.assertTrue(bobRemoteKeytabFile.delete());
+
+    // verify caching by ensuring that we are able to fetch bob's ugi even after delete but not after invalidating the
+    // cache
+    verifyCaching(provider, aliceImpRequest, bobImpRequest, aliceUGIWithPrincipal, bobUGIWithPrincipal);
+
+    // cleanup
+    ownerAdmin.delete(aliceEntity);
+    ownerAdmin.delete(bobEntity);
   }
 
   @Test
@@ -159,40 +250,99 @@ public class UGIProviderTest {
       .build();
 
     httpService.startAndWait();
+
+    setKeytabDir(localKeytabDirPath.getAbsolutePath());
+
+    OwnerAdmin ownerAdmin = getOwnerAdmin();
+
+    // add an owner for stream
+    ownerAdmin.add(aliceEntity, aliceKerberosPrincipalId);
+
     try {
       InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
       discoveryService.register(new Discoverable(Constants.Service.APP_FABRIC_HTTP, httpService.getBindAddress()));
 
-      // Create Alice UGI
       RemoteUGIProvider ugiProvider = new RemoteUGIProvider(cConf, discoveryService, locationFactory);
-      ImpersonationInfo aliceInfo = new ImpersonationInfo(getPrincipal("alice"), keytabFile.toURI().toString());
-      UserGroupInformation aliceUGI = ugiProvider.getConfiguredUGI(aliceInfo);
+
+      ImpersonationRequest aliceImpRequest = new ImpersonationRequest(aliceEntity, ImpersonatedOpType.OTHER);
+      UGIWithPrincipal aliceUGIWithPrincipal = ugiProvider.getConfiguredUGI(aliceImpRequest);
 
       // Shouldn't be a kerberos UGI
-      Assert.assertFalse(aliceUGI.hasKerberosCredentials());
+      Assert.assertFalse(aliceUGIWithPrincipal.getUGI().hasKerberosCredentials());
       // Validate the credentials
-      Token<? extends TokenIdentifier> token = aliceUGI.getCredentials().getToken(new Text("principal"));
-      Assert.assertArrayEquals(aliceInfo.getPrincipal().getBytes(StandardCharsets.UTF_8), token.getIdentifier());
-      Assert.assertArrayEquals(aliceInfo.getPrincipal().getBytes(StandardCharsets.UTF_8), token.getPassword());
-      Assert.assertEquals(new Text("principal"), token.getKind());
+      Token<? extends TokenIdentifier> token =
+        aliceUGIWithPrincipal.getUGI().getCredentials().getToken(new Text("entity"));
+      Assert.assertArrayEquals(aliceEntity.toString().getBytes(StandardCharsets.UTF_8), token.getIdentifier());
+      Assert.assertArrayEquals(aliceEntity.toString().getBytes(StandardCharsets.UTF_8), token.getPassword());
+      Assert.assertEquals(new Text("entity"), token.getKind());
       Assert.assertEquals(new Text("service"), token.getService());
 
-      token = aliceUGI.getCredentials().getToken(new Text("keytab"));
-      Assert.assertArrayEquals(aliceInfo.getKeytabURI().getBytes(StandardCharsets.UTF_8), token.getIdentifier());
-      Assert.assertArrayEquals(aliceInfo.getKeytabURI().getBytes(StandardCharsets.UTF_8), token.getPassword());
-      Assert.assertEquals(new Text("keytab"), token.getKind());
+      token = aliceUGIWithPrincipal.getUGI().getCredentials().getToken(new Text("opType"));
+      Assert.assertArrayEquals(aliceImpRequest.getImpersonatedOpType().toString().getBytes(StandardCharsets.UTF_8),
+                               token.getIdentifier());
+      Assert.assertArrayEquals(aliceImpRequest.getImpersonatedOpType().toString().getBytes(StandardCharsets.UTF_8),
+                               token.getPassword());
+      Assert.assertEquals(new Text("opType"), token.getKind());
       Assert.assertEquals(new Text("service"), token.getService());
 
       // Fetch it again, it should return the same UGI due to caching
-      Assert.assertSame(aliceUGI, ugiProvider.getConfiguredUGI(aliceInfo));
+      Assert.assertSame(aliceUGIWithPrincipal, ugiProvider.getConfiguredUGI(aliceImpRequest));
 
       // Invalid the cache and fetch it again. A different UGI should be returned
       ugiProvider.invalidCache();
-      Assert.assertNotSame(aliceUGI, ugiProvider.getConfiguredUGI(aliceInfo));
-
+      Assert.assertNotSame(aliceUGIWithPrincipal, ugiProvider.getConfiguredUGI(aliceImpRequest));
     } finally {
       httpService.stopAndWait();
     }
+
+    // cleanup
+    ownerAdmin.delete(aliceEntity);
+  }
+
+  private void verifyCaching(DefaultUGIProvider provider, ImpersonationRequest aliceImpRequest,
+                             ImpersonationRequest bobImpRequest, UGIWithPrincipal aliceUGIWithPrincipal,
+                             UGIWithPrincipal bobUGIWithPrincipal) throws IOException {
+    // Fetch the bob UGI again, it should still return the valid one
+    Assert.assertSame(bobUGIWithPrincipal, provider.getConfiguredUGI(bobImpRequest));
+
+    // Invalid the cache, getting of Alice UGI should pass, while getting of Bob should fails
+    provider.invalidCache();
+    Assert.assertNotSame(aliceUGIWithPrincipal, provider.getConfiguredUGI(aliceImpRequest));
+    try {
+      provider.getConfiguredUGI(bobImpRequest);
+      Assert.fail("Expected IOException when getting UGI for " + bobImpRequest);
+    } catch (IOException e) {
+      // Expected
+    }
+  }
+
+  private Location copyFileToHDFS(Location hdfsKeytabDir, File localFile) throws IOException {
+    Location remoteFile = hdfsKeytabDir.append(localFile.getName());
+    Assert.assertTrue(remoteFile.createNew());
+    Files.copy(localFile, Locations.newOutputSupplier(remoteFile));
+    return remoteFile;
+  }
+
+  private UGIWithPrincipal verifyAndGetUGI(UGIProvider provider, KerberosPrincipalId principalId,
+                                           ImpersonationRequest impersonationRequest) throws IOException {
+    UGIWithPrincipal ugiWithPrincipal = provider.getConfiguredUGI(impersonationRequest);
+    Assert.assertEquals(UserGroupInformation.AuthenticationMethod.KERBEROS,
+                        ugiWithPrincipal.getUGI().getAuthenticationMethod());
+    Assert.assertEquals(principalId.getPrincipal(), ugiWithPrincipal.getPrincipal());
+    Assert.assertTrue(ugiWithPrincipal.getUGI().hasKerberosCredentials());
+
+    // Fetch it again, it is should return the same UGI since there is caching
+    Assert.assertSame(ugiWithPrincipal.getUGI(), provider.getConfiguredUGI(impersonationRequest).getUGI());
+    return ugiWithPrincipal;
+  }
+
+  private OwnerAdmin getOwnerAdmin() {
+    return new DefaultOwnerAdmin(cConf, new MockOwnerStore(), namespaceClient);
+  }
+
+  private void setKeytabDir(String keytabDirPath) {
+    cConf.set(Constants.Security.KEYTAB_PATH, keytabDirPath + "/" +
+      Constants.USER_NAME_SPECIFIER + ".keytab");
   }
 
   private static String getPrincipal(String name) {
@@ -205,22 +355,28 @@ public class UGIProviderTest {
    */
   public static final class UGIProviderTestHandler extends AbstractHttpHandler {
 
+    private static final Gson GSON = new GsonBuilder()
+      .registerTypeAdapter(NamespacedEntityId.class, new EntityIdTypeAdapter())
+      .create();
+
     @Path("/v1/impersonation/credentials")
     @POST
     public void getCredentials(HttpRequest request, HttpResponder responder) throws IOException {
-      ImpersonationInfo impersonationInfo = new Gson().fromJson(request.getContent().toString(StandardCharsets.UTF_8),
-                                                                ImpersonationInfo.class);
+      ImpersonationRequest impersonationRequest =
+        GSON.fromJson(request.getContent().toString(StandardCharsets.UTF_8), ImpersonationRequest.class);
       // Generate a Credentials based on the request info
       Credentials credentials = new Credentials();
-      credentials.addToken(new Text("principal"),
-                           new Token<>(impersonationInfo.getPrincipal().getBytes(StandardCharsets.UTF_8),
-                                       impersonationInfo.getPrincipal().getBytes(StandardCharsets.UTF_8),
-                                       new Text("principal"),
+      credentials.addToken(new Text("entity"),
+                           new Token<>(impersonationRequest.getEntityId().toString().getBytes(StandardCharsets.UTF_8),
+                                       impersonationRequest.getEntityId().toString().getBytes(StandardCharsets.UTF_8),
+                                       new Text("entity"),
                                        new Text("service")));
-      credentials.addToken(new Text("keytab"),
-                           new Token<>(impersonationInfo.getKeytabURI().getBytes(StandardCharsets.UTF_8),
-                                       impersonationInfo.getKeytabURI().getBytes(StandardCharsets.UTF_8),
-                                       new Text("keytab"),
+      credentials.addToken(new Text("opType"),
+                           new Token<>(impersonationRequest.getImpersonatedOpType().toString()
+                                         .getBytes(StandardCharsets.UTF_8),
+                                       impersonationRequest.getImpersonatedOpType().toString()
+                                         .getBytes(StandardCharsets.UTF_8),
+                                       new Text("opType"),
                                        new Text("service")));
 
       // Write it to HDFS
@@ -233,7 +389,36 @@ public class UGIProviderTest {
       try (DataOutputStream os = new DataOutputStream(new BufferedOutputStream(credentialsFile.getOutputStream()))) {
         credentials.writeTokenStorageToStream(os);
       }
-      responder.sendString(HttpResponseStatus.OK, credentialsFile.toURI().toString());
+      PrincipalCredentials principalCredentials = new PrincipalCredentials(aliceKerberosPrincipalId.getPrincipal(),
+                                                                           credentialsFile.toURI().toString());
+      responder.sendJson(HttpResponseStatus.OK, principalCredentials);
+    }
+  }
+
+  private static class MockOwnerStore implements OwnerStore {
+
+    final Map<NamespacedEntityId, KerberosPrincipalId> ownerInfo = new HashMap<>();
+
+    @Override
+    public void add(NamespacedEntityId entityId,
+                    KerberosPrincipalId kerberosPrincipalId) throws IOException, AlreadyExistsException {
+      ownerInfo.put(entityId, kerberosPrincipalId);
+    }
+
+    @Nullable
+    @Override
+    public KerberosPrincipalId getOwner(NamespacedEntityId entityId) throws IOException {
+      return ownerInfo.get(entityId);
+    }
+
+    @Override
+    public boolean exists(NamespacedEntityId entityId) throws IOException {
+      return ownerInfo.containsKey(entityId);
+    }
+
+    @Override
+    public void delete(NamespacedEntityId entityId) throws IOException {
+      ownerInfo.remove(entityId);
     }
   }
 }

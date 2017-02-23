@@ -16,13 +16,13 @@
 
 package co.cask.cdap.logging.framework.distributed;
 
+import co.cask.cdap.api.logging.AppenderContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.resource.ResourceBalancerService;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.logging.framework.AppenderContext;
 import co.cask.cdap.logging.framework.LogPipelineLoader;
 import co.cask.cdap.logging.framework.LogPipelineSpecification;
 import co.cask.cdap.logging.meta.CheckpointManagerFactory;
@@ -91,7 +91,6 @@ public class DistributedLogFramework extends ResourceBalancerService {
 
       long bufferSize = getBufferSize(pipelineCount, cConf, partitions.size());
       final String topic = cConf.get(Constants.Logging.KAFKA_TOPIC);
-
       final KafkaPipelineConfig config = new KafkaPipelineConfig(
         topic, partitions, bufferSize,
         cConf.getLong(Constants.Logging.PIPELINE_EVENT_DELAY_MS),
@@ -104,7 +103,8 @@ public class DistributedLogFramework extends ResourceBalancerService {
         @Override
         public Service get() {
           return new KafkaLogProcessorPipeline(
-            new LogProcessorPipelineContext(cConf, context.getName(), context),
+            new LogProcessorPipelineContext(cConf, context.getName(), context,
+                                            context.getMetricsContext(), context.getInstanceId()),
             checkpointManagerFactory.create(topic, pipelineSpec.getCheckpointPrefix()), brokerService, config);
         }
       }, retryStrategy));

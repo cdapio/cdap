@@ -86,4 +86,4 @@ CDAP Developers’ Manual
 - |advanced|_ Covers **advanced topics on CDAP** that will be of interest to
   developers who want a deeper dive into CDAP, including **adding a custom logback** to a
   CDAP application, suggested **best practices for CDAP development**, **class loading in
-  CDAP**, and on **configuring program resources** of a CDAP application.
+  CDAP**, and on **configuring program resources** and **program retry policies** of a CDAP application.

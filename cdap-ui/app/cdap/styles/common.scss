@@ -29,6 +29,8 @@ body {
 
   #app-container {
     margin-top: 50px;
+    overflow-y: auto;
+    height: calc(100vh - 104px); // Header + footer heights
   }
   .container-fluid {
     padding-bottom: 52px; // footer height

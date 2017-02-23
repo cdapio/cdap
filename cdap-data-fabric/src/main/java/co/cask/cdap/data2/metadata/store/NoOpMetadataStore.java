@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Cask Data, Inc.
+ * Copyright 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.data2.metadata.store;
 
+import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
@@ -25,6 +27,7 @@ import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import com.google.common.collect.ImmutableSet;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -145,12 +148,27 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
-  public void rebuildIndexes() {
+  public void rebuildIndexes(MetadataScope scope, RetryStrategy retryStrategy) {
     // NO-OP
   }
 
   @Override
-  public void deleteAllIndexes() {
+  public void deleteAllIndexes(MetadataScope scope) {
     // NO-OP
+  }
+
+  @Override
+  public void createOrUpgrade(MetadataScope scope) throws DatasetManagementException, IOException {
+    return;
+  }
+
+  @Override
+  public void markUpgradeComplete(MetadataScope scope) throws DatasetManagementException, IOException {
+    return;
+  }
+
+  @Override
+  public boolean isUpgradeRequired(MetadataScope scope) throws DatasetManagementException {
+    return false;
   }
 }

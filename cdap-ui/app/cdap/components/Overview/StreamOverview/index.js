@@ -135,7 +135,7 @@ export default class StreamOverview extends Component {
     let title = T.translate('commons.entity.stream.singular');
     let namespace = NamespaceStore.getState().selectedNamespace;
     return (
-      <div className="app-overview">
+      <div className="app-overview streams-overview">
         <OverviewHeader
           icon="icon-streams"
           title={title}

@@ -59,6 +59,7 @@ export default function UploadJsonStep(undefined, context) {
     <Provider store={PluginArtifactUploadStore}>
       <div className="upload-step-container">
         {
+          /* TODO: shouldn't do this, replace in 4.2} */
           context.isMarket ?
             (
               <h4 className="upload-instruction">

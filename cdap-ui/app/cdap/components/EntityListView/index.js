@@ -114,9 +114,11 @@ class EntityListView extends Component {
       showSplash: true,
       userStoreObj : '',
       notFound: false,
-      numColumns: null
+      numColumns: null,
+      total: 0
     };
 
+    // FIXME: @ajainarayanan: I'm not sure why this is outside of state :|
     this.retryCounter = 0; // being used for search API retry
 
     // By default, expect a single page -- update when search is performed and we can parse it
@@ -395,7 +397,7 @@ class EntityListView extends Component {
     };
 
     if (typeof query === 'string' && query.length) {
-      params.query = `${query}*`;
+      params.query = query.charAt(query.length - 1) === '*' ? query : `${query}*`;
     } else {
       params.sort = sortObj.fullSort === 'none' ? this.sortOptions[3].fullSort : sortObj.fullSort;
       params.query = '*';
@@ -439,6 +441,8 @@ class EntityListView extends Component {
         // On Error: render page as if there are no results found
         this.setState({
           loading: false,
+          entities: [],
+          total: 0,
           entityErr: typeof err === 'object' ? err.response : err,
           errStatusCode: err.statusCode
         });
@@ -706,11 +710,7 @@ class EntityListView extends Component {
                   loading={this.state.loading}
                   onEntityClick={this.handleEntityClick.bind(this)}
                   onFastActionSuccess={this.onFastActionSuccess.bind(this)}
-                  errorMessage={this.state.entityErr}
-                  errorStatusCode={this.state.errStatusCode}
-                  animationDirection={this.state.animationDirection}
                   activeEntity={this.state.selectedEntity}
-                  retryCounter={this.retryCounter}
                   currentPage={this.state.currentPage}
                   activeFilter={this.state.filter}
                   filterOptions={this.filterOptions}

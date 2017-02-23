@@ -409,9 +409,14 @@ Port* is used by the CDAP UI to connect to the CDAP Router service.
 
    **Add Service Wizard, Page 4:** Reviewing changes and (initial) configuration.
 
-**Additional CDAP configuration properties** can be added using Cloudera Manager's 
-*Safety Valve Advanced Configuration Snippets.* Documentation of the available CDAP
-properties is in the :ref:`appendix-cdap-site.xml`.
+**Additional CDAP configuration properties** can be added using Cloudera Manager's *Safety
+Valve Advanced Configuration Snippets.* Documentation of the available CDAP properties is
+in the :ref:`appendix-cdap-site.xml`. Note that for certain CDAP properties, the defaults
+values for Cloudera may vary from the above appendix:
+
+- For ``kafka.server.log.dirs``, the default value is ``{$LOCAL_DIR/kafka-logs}`` or
+  ``/var/tmp/cdap/kafka-logs``, instead of ``/tmp/kafka-logs`` as shown in the
+  :ref:`Appendix: Kafka Server <appendix-cdap-default-kafka-server>`.
 
 **Additional environment variables** can be set, as required, using Cloudera Manager's
 *CDAP Service Environment Advanced Configuration Snippet (Safety Valve).* See the example below for

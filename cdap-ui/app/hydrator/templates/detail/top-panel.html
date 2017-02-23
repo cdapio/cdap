@@ -224,7 +224,6 @@
         </span>
       </div>
     </div>
-
   </div>
 
   <div class="pipeline-specific-section">
@@ -247,7 +246,7 @@
       <span class="fa fa-sliders"></span>
     </div>
     <div class="btn"
-         ui-sref="hydrator.create({data: TopPanelCtrl.config, type: TopPanelCtrl.app.type, isClone: true})"
+         ui-sref="hydrator.create({data: TopPanelCtrl.cloneConfig, type: TopPanelCtrl.app.type, isClone: true})"
          uib-tooltip="Clone"
          tooltip-placement="bottom"
          tooltip-append-to-body="true"
@@ -285,6 +284,7 @@
       <span class="icon-delete"></span>
     </div>
   </div>
+  <cask-resource-center-button></cask-resource-center-button>
   <div class="pipeline-settings-backdrop"
        ng-if="TopPanelCtrl.viewSettings || TopPanelCtrl.viewSummary || TopPanelCtrl.viewLogs || TopPanelCtrl.runPlayer.view"
        ng-click="TopPanelCtrl.viewSettings = false; TopPanelCtrl.viewSummary = false; TopPanelCtrl.runPlayer.view = false; TopPanelCtrl.viewLogs = false; TopPanelCtrl.runPlayer.action = null">

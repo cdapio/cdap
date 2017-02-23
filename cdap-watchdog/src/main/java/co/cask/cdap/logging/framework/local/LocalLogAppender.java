@@ -17,8 +17,9 @@
 package co.cask.cdap.logging.framework.local;
 
 import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import co.cask.cdap.api.logging.AppenderContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -34,7 +35,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.filesystem.LocationFactory;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class LocalLogAppender extends LogAppender {
 
-  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LocalLogAppender.class);
+  private static final ILoggingEvent SHUTDOWN_EVENT = new LoggingEvent();
   private static final int EVENT_QUEUE_SIZE = 256;
 
   private final CConfiguration cConf;
@@ -84,9 +84,9 @@ public class LocalLogAppender extends LogAppender {
 
     // Load and starts all configured log processing pipelines
     LogPipelineLoader pipelineLoader = new LogPipelineLoader(cConf);
-    Map<String, LogPipelineSpecification<LoggerContext>> specs = pipelineLoader.load(new Provider<LoggerContext>() {
+    Map<String, LogPipelineSpecification<AppenderContext>> specs = pipelineLoader.load(new Provider<AppenderContext>() {
       @Override
-      public LoggerContext get() {
+      public AppenderContext get() {
         return new LocalAppenderContext(datasetFramework, txClient, locationFactory, metricsCollectionService);
       }
     });
@@ -94,8 +94,10 @@ public class LocalLogAppender extends LogAppender {
     // Use the event delay as the sync interval
     long syncIntervalMillis = cConf.getLong(Constants.Logging.PIPELINE_EVENT_DELAY_MS);
 
-    for (LogPipelineSpecification<LoggerContext> spec : specs.values()) {
-      LogProcessorPipelineContext context = new LogProcessorPipelineContext(cConf, spec.getName(), spec.getContext());
+    for (LogPipelineSpecification<AppenderContext> spec : specs.values()) {
+      LogProcessorPipelineContext context =
+        new LogProcessorPipelineContext(cConf, spec.getName(), spec.getContext(),
+                                        spec.getContext().getMetricsContext(), spec.getContext().getInstanceId());
       LocalLogProcessorPipeline pipeline = new LocalLogProcessorPipeline(context, syncIntervalMillis);
       pipeline.startAndWait();
       pipelines.add(pipeline);
@@ -115,7 +117,7 @@ public class LocalLogAppender extends LogAppender {
       try {
         pipeline.stopAndWait();
       } catch (Throwable t) {
-        LOG.error("Exception raised when stopping log processing pipeline {}", pipeline.getName(), t);
+        addError("Exception raised when stopping log processing pipeline " + pipeline.getName(), t);
       }
     }
   }
@@ -135,7 +137,6 @@ public class LocalLogAppender extends LogAppender {
     private final LogProcessorPipelineContext context;
     private final long syncIntervalMillis;
     private final BlockingQueue<ILoggingEvent> eventQueue;
-    private Thread runThread;
     private long lastSyncTime;
 
     private LocalLogProcessorPipeline(LogProcessorPipelineContext context, long syncIntervalMillis) {
@@ -153,28 +154,28 @@ public class LocalLogAppender extends LogAppender {
 
     @Override
     protected void startUp() throws Exception {
-      LOG.info("Starting log processing pipeline {}", getName());
-      runThread = Thread.currentThread();
+      addInfo("Starting log processing pipeline " + getName());
       context.start();
-      LOG.info("Log processing pipeline {} started", getName());
+      addInfo("Log processing pipeline " + getName() + " started");
     }
 
     @Override
     protected void shutDown() throws Exception {
-      LOG.info("Stopping log processing pipeline {}", getName());
+      addInfo("Stopping log processing pipeline " + getName());
       // Write all pending events out
       for (ILoggingEvent event : eventQueue) {
+        if (event == SHUTDOWN_EVENT) {
+          continue;
+        }
         context.getEffectiveLogger(event.getLoggerName()).callAppenders(event);
       }
       context.stop();
-      LOG.info("Log processing pipeline {}", getName());
+      addInfo("Log processing pipeline " + getName() + " stopped");
     }
 
     @Override
     protected void triggerShutdown() {
-      if (runThread != null) {
-        runThread.interrupt();
-      }
+      eventQueue.offer(SHUTDOWN_EVENT);
     }
 
     @Override
@@ -194,6 +195,13 @@ public class LocalLogAppender extends LogAppender {
             // After sync'ed everything, block until there is more event
             event = eventQueue.take();
           }
+        }
+
+        // If event is not null, it means this pipeline stopped in between
+        // the event was dequeue and before callAppenders.
+        // We need to append this event before returning.
+        if (event != null) {
+          callAppenders(event);
         }
       } catch (InterruptedException e) {
         // Just ignore it. Not resetting the interrupt flag so that shutdown can operate without interruption.
@@ -221,6 +229,9 @@ public class LocalLogAppender extends LogAppender {
     }
 
     private void callAppenders(ILoggingEvent event) {
+      if (event == SHUTDOWN_EVENT) {
+        return;
+      }
       Logger logger = context.getEffectiveLogger(event.getLoggerName());
       try {
         logger.callAppenders(event);
@@ -235,7 +246,7 @@ public class LocalLogAppender extends LogAppender {
         context.sync();
         lastSyncTime = now;
       } catch (IOException e) {
-        LOG.error("Exception raised when syncing log processing pipeline {}", getName(), e);
+        addError("Exception raised when syncing log processing pipeline " + getName(), e);
       }
     }
   }

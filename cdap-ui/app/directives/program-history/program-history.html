@@ -36,9 +36,9 @@
           <td>
             <a ui-sref="flows.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'FLOWS'">{{run.runid}}</a>
             <a ui-sref="mapreduce.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'MAPREDUCE'">{{run.runid}}</a>
-            <a ui-sref="workflows.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'WORKFLOWS'">{{run.runid}}</a>
-            <a ui-sref="spark.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'SPARK'">{{run.runid}}</a>
-            <a ui-sref="worker.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'WORKER' || type === 'WORKERS'">{{run.runid}}</a>
+            <a href="{{run.detailUrl}}" ng-if="type === 'WORKFLOWS'">{{run.runid}}</a>
+            <a href="{{run.detailUrl}}" ng-if="type === 'SPARK'">{{run.runid}}</a>
+            <a href="{{run.detailUrl}}" ng-if="type === 'WORKER' || type === 'WORKERS'">{{run.runid}}</a>
             <a ui-sref="services.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'SERVICES'">{{run.runid}}</a>
           </td>
           <td> {{ (run.start * 1000) | date: 'medium'}}</td>

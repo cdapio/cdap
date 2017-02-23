@@ -50,7 +50,7 @@ export default class ResourceCenterButton extends Component {
         onClick={this.onClickHandler.bind(this)}
       >
         <div className="button-container">
-          <h1 className="fa fa-3x">+</h1>
+          <h1 className="fa">+</h1>
         </div>
         <PlusButtonModal
           isOpen={this.state.showResourceCenter}

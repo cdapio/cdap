@@ -18,7 +18,8 @@
 
 .history-tab {
   padding: 10px 20px;
-  height: calc(100% - 40px);
+  overflow-y: hidden;
+  height: 100%;
   overflow-y: auto;
 
   &.table-bordered {
@@ -30,6 +31,9 @@
     tr th,
     tr td {
       border-color: $custom_table-border-color;
+    }
+    a.btn.btn-link {
+      color: #4f5050;
     }
   }
 }

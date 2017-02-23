@@ -14,7 +14,7 @@
  * the License.
  */
 
-function FieldSelectorController() {
+function FieldSelectorController(myHelpers) {
   'ngInject';
 
   let vm = this;
@@ -22,11 +22,30 @@ function FieldSelectorController() {
   vm.fieldOptions = [];
 
   function init() {
+
     if (!vm.inputSchema || vm.inputSchema.length === 0 ) { return; }
 
     try {
       let schema = JSON.parse(vm.inputSchema[0].schema);
-      vm.fieldOptions = schema.fields.map((field) => field.name);
+
+      vm.fieldOptions = schema.fields.map((field) => {
+       return {
+          name:field.name,
+          value:field.name
+        };
+      });
+      let isEnableAllOptionsSet = myHelpers.objectQuery(vm.config, 'widget-attributes', 'enableAllOptions');
+      if (!vm.model && isEnableAllOptionsSet) {
+        vm.model = vm.config['widget-attributes'].allOptionValue || '*';
+      }
+
+      if (isEnableAllOptionsSet) {
+        vm.fieldOptions.unshift({
+          name: vm.config['widget-attributes'].allOptionValue || '*',
+          value: vm.config['widget-attributes'].allOptionValue || '*'
+        });
+      }
+
     } catch (e) {
       console.log('Error', e);
     }
@@ -45,7 +64,8 @@ angular.module(PKG.name + '.commons')
       bindToController: true,
       scope: {
         model: '=ngModel',
-        inputSchema: '='
+        inputSchema: '=',
+        config: '='
       },
       controller: FieldSelectorController,
       controllerAs: 'FieldSelector'

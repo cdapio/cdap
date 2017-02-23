@@ -1049,6 +1049,6 @@ public class ArtifactStoreTest {
     String contents) throws ArtifactAlreadyExistsException, IOException, WriteConflictException {
     artifactStore.write(artifactId, meta, ByteStreams.newInputStreamSupplier(Bytes.toBytes(contents)),
                         new EntityImpersonator(artifactId.toEntityId(),
-                                               new DefaultImpersonator(CConfiguration.create(), null, null)));
+                                               new DefaultImpersonator(CConfiguration.create(), null)));
   }
 }

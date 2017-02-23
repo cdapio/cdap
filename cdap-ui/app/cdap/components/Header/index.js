@@ -25,6 +25,8 @@ import CaskMarketButton from 'components/Header/CaskMarketButton';
 import {MyNamespaceApi} from 'api/namespace';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import classnames from 'classnames';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 require('./Header.scss');
 
@@ -37,6 +39,7 @@ export default class Header extends Component {
       metadataDropdown: false
     };
     this.namespacesubscription = null;
+    this.eventEmitter = ee(ee);
   }
   componentWillMount() {
     // Polls for namespace data
@@ -51,7 +54,10 @@ export default class Header extends Component {
               }
             });
           } else {
-            // To-Do: No namespaces returned ; throw error / redirect
+            // TL;DR - This is emitted for Authorization in main.js
+            // This means there is no namespace for the user to work on.
+            // which indicates she/he have no authorization for any namesapce in the system.
+            this.eventEmitter.emit(globalEvents.NONAMESPACE);
           }
         }
       );
@@ -86,15 +92,8 @@ export default class Header extends Component {
       stateParams: {
         namespace: this.state.currentNamespace
       }
-    }),
-    pipelinesStudioUrl =  window.getHydratorUrl({
-      stateName: 'hydrator.create',
-      stateParams: {
-        namespace: this.state.currentNamespace
-      }
     });
-    let isPipelinesViewActive = pipelinesListUrl.indexOf(location.pathname)  !== -1 || pipelinesStudioUrl.indexOf(location.pathname) !== -1;
-    let oldUIUrl = `/oldcdap/ns/${this.state.currentNamespace}`;
+    let isPipelinesViewActive = location.pathname.indexOf('/pipelines/') !== -1;
     return (
       <div className="global-navbar">
         <div
@@ -155,11 +154,6 @@ export default class Header extends Component {
           })}>
           <div className="navbar-right-section">
             <ul>
-              <li>
-                <a href={oldUIUrl}>
-                  {T.translate('features.Navbar.RightSection.olduilink')}
-                </a>
-              </li>
               <li className="with-shadow">
                 <CaskMarketButton>
                   <span className="fa icon-CaskMarket"></span>

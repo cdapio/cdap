@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright © 2016 Cask Data, Inc.
+# Copyright © 2016-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -26,28 +26,36 @@ __script=${BASH_SOURCE[0]}
 # Resolve symlinks
 __readlink() {
   local __target_file=${1}
-  cd $(dirname ${__target_file})
-  __target_file=$(basename ${__target_file})
-  while test -L ${__target_file}; do
-    __target_file=$(readlink ${__target_file})
-    cd $(dirname ${__target_file})
-    __target_file=$(basename ${__target_file})
+  cd $(dirname "${__target_file}")
+  __target_file=$(basename "${__target_file}")
+  while test -L "${__target_file}"; do
+    __target_file=$(readlink "${__target_file}")
+    cd $(dirname "${__target_file}")
+    __target_file=$(basename "${__target_file}")
   done
   echo "$(pwd -P)/${__target_file}"
 }
 
 __target=$(__readlink ${__script})
-__target=$(cd $(dirname ${__target}); echo "$(pwd -P)/$(basename ${__target})")
+__basename=$(basename "${__target}")
+__dirname=$(dirname "${__target}")
+__target=$(cd "${__dirname}"; echo $(pwd -P)/${__basename})
 
-__app_home=$(cd $(dirname ${__target})/.. >&-; pwd -P)
-__comp_home=${COMPONENT_HOME:-$(cd ${__target%/*/*} >&- 2>/dev/null; pwd -P)}
+__app_home=$(dirname "${__target}")
+__app_home=$(cd "${__app_home}"/.. >&-; pwd -P)
+__comp_home=${COMPONENT_HOME:-$(cd "${__target%/*/*}" >&- 2>/dev/null; pwd -P)}
 
 # Determine if we're in Distributed from packages or SDK/Parcel
 if [[ ${__comp_home%/*} == /opt/cdap ]] && [[ ${__comp_home} != /opt/cdap/sdk* ]]; then
+  # We're distributed from packages
   __app_home=${__comp_home}
   __cdap_home=${CDAP_HOME:-/opt/cdap}
+elif [[ ${__comp_home##*/} == cli ]]; then
+  # We're distributed in a non-standard location, such as Parcel, or CLI
+  __app_home=${__comp_home}
+  __cdap_home=${CDAP_HOME:-${__comp_home%/*}}
 else
-  # We're in the SDK, __app_home and __cdap_home are identical, but honor CDAP_HOME if it's set (for Parcel)
+  # We're in the SDK, __app_home and __cdap_home are identical
   __cdap_home=${CDAP_HOME:-${__app_home}}
 fi
 
@@ -84,7 +92,7 @@ case ${1} in
     echo
     if [[ $(cdap_context) == 'distributed' ]]; then
     # No indent to make lining up easier
-    echo "    auth-server  - Sends the arguments (start/stop/etc.) to the appropriate CDAP service on this host"
+    echo "    auth-server  - Sends the arguments (start/stop/kill/etc.) to the appropriate CDAP service on this host"
     echo "    kafka-server"
     echo "    master"
     echo "    router"

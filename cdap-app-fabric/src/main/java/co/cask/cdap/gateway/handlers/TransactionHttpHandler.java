@@ -20,8 +20,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
+import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.http.ChunkResponder;
+import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
@@ -33,6 +35,7 @@ import org.apache.tephra.InvalidTruncateTimeException;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCouldNotTakeSnapshotException;
 import org.apache.tephra.TransactionSystemClient;
+import org.apache.tephra.TxConstants;
 import org.apache.tephra.txprune.RegionPruneInfo;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -66,31 +69,18 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Type STRING_LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
   private static final Type STRING_LONG_SET_MAP_TYPE = new TypeToken<Map<String, Set<Long>>>() { }.getType();
 
+  private final CConfiguration cConf;
   private final TransactionSystemClient txClient;
+  private final boolean pruneEnable;
   private Class<?> debugClazz;
   private Object debugObject;
 
   @Inject
   public TransactionHttpHandler(CConfiguration cConf, TransactionSystemClient txClient) {
-    this.txClient = txClient;
-    try {
-      this.debugClazz = getClass().getClassLoader()
-        .loadClass("org.apache.tephra.hbase.txprune.InvalidListPruningDebug");
-      this.debugObject = debugClazz.newInstance();
-      Configuration hConf = new Configuration();
-      for (Map.Entry<String, String> entry : cConf) {
-        hConf.set(entry.getKey(), entry.getValue());
-      }
-      Method initMethod = debugClazz.getMethod("initialize", Configuration.class);
-      initMethod.setAccessible(true);
-      initMethod.invoke(debugObject, hConf);
-    } catch (ClassNotFoundException | IllegalAccessException | InstantiationException ex) {
-      LOG.warn("InvalidListPruningDebug class not found. Pruning Debug endpoints will not work.", ex);
-      this.debugClazz = null;
-    } catch (NoSuchMethodException | InvocationTargetException ex) {
-      LOG.warn("Initialize method was not found in InvalidListPruningDebug. Debug endpoints will not work.", ex);
-      this.debugClazz = null;
-    }
+    this.cConf = cConf;
+    this.txClient = new TransactionSystemClientAdapter(txClient);
+    this.pruneEnable = cConf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE,
+                                        TxConstants.TransactionPruning.DEFAULT_PRUNE_ENABLE);
   }
 
   /**
@@ -223,8 +213,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/prune/regions/{region-name}")
   @GET
   public void getPruneInfo(HttpRequest request, HttpResponder responder, @PathParam("region-name") String regionName) {
-    if (debugClazz == null || debugObject == null) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Invalid List Pruning debug class not found.");
+    if (!initializePruningDebug(responder)) {
       return;
     }
 
@@ -249,8 +238,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getTimeRegions(HttpRequest request, HttpResponder responder,
                              @QueryParam("time") @DefaultValue("9223372036854775807") long time) {
-    if (debugClazz == null || debugObject == null) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Invalid List Pruning debug class not found.");
+    if (!initializePruningDebug(responder)) {
       return;
     }
 
@@ -275,8 +263,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getIdleRegions(HttpRequest request, HttpResponder responder,
                              @QueryParam("limit") @DefaultValue("-1") int numRegions) {
-    if (debugClazz == null || debugObject == null) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Invalid List Pruning debug class not found.");
+    if (!initializePruningDebug(responder)) {
       return;
     }
 
@@ -289,6 +276,56 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
       LOG.debug("Exception while trying to fetch the idle regions.", e);
+    }
+  }
+
+  private boolean initializePruningDebug(HttpResponder responder) {
+    if (!pruneEnable) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid List Pruning is not enabled.");
+      return false;
+    }
+
+    synchronized (this) {
+      if (debugClazz == null || debugObject == null) {
+        try {
+          this.debugClazz = getClass().getClassLoader()
+            .loadClass("org.apache.tephra.hbase.txprune.InvalidListPruningDebug");
+          this.debugObject = debugClazz.newInstance();
+          Configuration hConf = new Configuration();
+          for (Map.Entry<String, String> entry : cConf) {
+            hConf.set(entry.getKey(), entry.getValue());
+          }
+          Method initMethod = debugClazz.getMethod("initialize", Configuration.class);
+          initMethod.setAccessible(true);
+          initMethod.invoke(debugObject, hConf);
+        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException ex) {
+          LOG.debug("InvalidListPruningDebug class not found. Pruning Debug endpoints will not work.", ex);
+          this.debugClazz = null;
+        } catch (NoSuchMethodException | InvocationTargetException ex) {
+          LOG.debug("Initialize method was not found in InvalidListPruningDebug. Debug endpoints will not work.", ex);
+          this.debugClazz = null;
+        }
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public void destroy(HandlerContext context) {
+    super.destroy(context);
+    synchronized (this) {
+      if (debugClazz != null && debugObject != null) {
+        try {
+          Method destroyMethod = debugClazz.getMethod("destroy");
+          destroyMethod.setAccessible(true);
+          destroyMethod.invoke(debugObject);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+          LOG.debug("Destroy method was not found in InvalidListPruningDebug.", e);
+        } finally {
+          debugClazz = null;
+          debugObject = null;
+        }
+      }
     }
   }
 }

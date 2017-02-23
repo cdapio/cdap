@@ -35,9 +35,12 @@
     background: transparent;
   }
 
-  .btn {
+  .btn.btn-secondary {
     background: transparent;
     border: 0;
+    &:focus {
+      color: $cdap-light-orange;
+    }
   }
   &.dropdown,
   &.dropdown.open {
@@ -54,7 +57,7 @@
       padding: 0;
       position: relative;
       width: 120px;
-      color: white;
+      color: inherit;
       line-height: 50px;
       margin-right: 5px;
 
@@ -70,8 +73,9 @@
         display: inline-block;
         float: left;
         img {
-          height: 20px;
-          width: 90px;
+          height: 15px;
+          width: 70px;
+          margin-left: 10px;
         }
       }
       .fa.fa-caret-down {
@@ -107,10 +111,6 @@
 
           &:hover {
             color: $cdap-light-orange;
-          }
-
-          &:active {
-            color: inherit;
           }
         }
       }

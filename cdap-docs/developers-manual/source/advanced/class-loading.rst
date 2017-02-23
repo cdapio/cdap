@@ -98,7 +98,7 @@ provided depend on the program type.
 
 All :ref:`program types <building-blocks>` have access to:
 
-- the ``cdap-api`` classes :javadoc:`CDAP API classes <co/cask/cdap/api>` as well as the
+- the ``cdap-api`` classes :javadoc:`CDAP API classes <co/cask/cdap/api/package-summary.html>` as well as the
   libraries that ``cdap-api`` depends on:
 
   - ``co.cask.cdap.cdap-api-common``

@@ -49,8 +49,7 @@ public class NoOpOwnerAdmin implements OwnerAdmin {
 
   @Nullable
   @Override
-  public ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId,
-                                                ImpersonatedOpType impersonatedOpType) throws IOException {
+  public ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) throws IOException {
     return null;
   }
 

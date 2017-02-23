@@ -80,7 +80,7 @@ public abstract class StreamDataFileTestBase {
 
   protected static CConfiguration cConf = CConfiguration.create();
 
-  private static final Impersonator impersonator = new DefaultImpersonator(cConf, new UnsupportedUGIProvider(), null);
+  private static final Impersonator impersonator = new DefaultImpersonator(cConf, new UnsupportedUGIProvider());
 
   @Test
   public void testEmptyFile() throws Exception {

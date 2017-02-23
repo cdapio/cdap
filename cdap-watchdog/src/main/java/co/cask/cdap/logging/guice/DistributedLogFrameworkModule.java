@@ -16,9 +16,9 @@
 
 package co.cask.cdap.logging.guice;
 
+import co.cask.cdap.api.logging.AppenderContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
-import co.cask.cdap.logging.framework.AppenderContext;
 import co.cask.cdap.logging.framework.distributed.DistributedAppenderContext;
 import co.cask.cdap.logging.framework.distributed.DistributedLogFramework;
 import co.cask.cdap.logging.service.LogSaverStatusService;

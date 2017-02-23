@@ -24,10 +24,10 @@
           ng-click="TagsController.showAddModal(key)">Add Preferred Tags</button>
       </div>
     </div>
+    <div ng-if="!$state.params.iframe">
+      <cask-resource-center-button></cask-resource-center-button>
+    </div>
   </div>
-</div>
-<div ng-if="!$state.params.iframe">
-  <cask-resource-center-button></cask-resource-center-button>
 </div>
 <div class="row">
   <div class="col-sm-6 preferred-tags">

@@ -1190,6 +1190,14 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     } catch (BadRequestException e) {
       // expected
     }
+
+    // search with invalid query
+    try {
+      searchMetadata(NamespaceId.DEFAULT, "");
+      Assert.fail();
+    } catch (BadRequestException e) {
+      // expected
+    }
   }
 
   @Test

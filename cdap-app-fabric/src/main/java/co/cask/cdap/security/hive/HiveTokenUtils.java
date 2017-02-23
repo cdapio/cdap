@@ -41,7 +41,6 @@ public final class HiveTokenUtils {
     Thread.currentThread().setContextClassLoader(hiveClassloader);
 
     try {
-      LOG.info("Obtaining delegation token for Hive");
       Class hiveConfClass = hiveClassloader.loadClass("org.apache.hadoop.hive.conf.HiveConf");
       Object hiveConf = hiveConfClass.newInstance();
 
@@ -58,12 +57,11 @@ public final class HiveTokenUtils {
       Token<DelegationTokenIdentifier> delegationToken = new Token<>();
       delegationToken.decodeFromUrlString(tokenStr);
       delegationToken.setService(new Text(HiveAuthFactory.HS2_CLIENT_TOKEN));
-      LOG.info("Adding delegation token {} from MetaStore for service {} for user {}",
-               delegationToken, delegationToken.getService(), user);
+      LOG.debug("Adding delegation token {} from MetaStore for service {} for user {}",
+                delegationToken, delegationToken.getService(), user);
       credentials.addToken(delegationToken.getService(), delegationToken);
       return credentials;
     } catch (Exception e) {
-      LOG.error("Exception when fetching delegation token from Hive MetaStore", e);
       throw Throwables.propagate(e);
     } finally {
       Thread.currentThread().setContextClassLoader(contextClassloader);

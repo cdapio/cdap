@@ -15,13 +15,15 @@
  */
 
 import React, {PropTypes, Component} from 'react';
-import { Nav, NavItem, NavLink} from 'reactstrap';
+import { Nav, NavItem, NavLink, TabContent} from 'reactstrap';
 import ProgramTab from 'components/Overview/Tabs/ProgramTab';
 import DatasetTab from 'components/Overview/Tabs/DatasetTab';
 import HistoryTab from 'components/AppDetailedView/Tabs/HistoryTab';
+import PropertiesTab from 'components/AppDetailedView/Tabs/PropertiesTab';
 import isNil from 'lodash/isNil';
 import Match from 'react-router/Match';
 import Link from 'react-router/Link';
+import T from 'i18n-react';
 
 export default class AppDetailedViewTab extends Component {
   constructor(props) {
@@ -51,7 +53,7 @@ export default class AppDetailedViewTab extends Component {
                    return location.pathname.match(basepath);
                 }}
               >
-                Programs ({this.state.entity.programs.length})
+                {T.translate('features.AppDetailedView.Tabs.programsLabel')} ({this.state.entity.programs.length})
               </Link>
             </NavLink>
           </NavItem>
@@ -60,7 +62,9 @@ export default class AppDetailedViewTab extends Component {
               <Link
                 to={`/ns/${this.props.params.namespace}/apps/${this.props.params.appId}/datasets`}
                 activeClassName="active"
-              >Datasets ({this.state.entity.datasets.length})</Link>
+              >
+                {T.translate('features.AppDetailedView.Tabs.datasetsLabel')} ({this.state.entity.datasets.length + this.state.entity.streams.length})
+              </Link>
             </NavLink>
           </NavItem>
           <NavItem>
@@ -68,30 +72,49 @@ export default class AppDetailedViewTab extends Component {
               <Link
                 to={`/ns/${this.props.params.namespace}/apps/${this.props.params.appId}/history`}
                 activeClassName="active"
-              >History</Link>
+              >
+                {T.translate('features.AppDetailedView.Tabs.historyLabel')}
+              </Link>
+            </NavLink>
+          </NavItem>
+          <NavItem>
+            <NavLink>
+              <Link
+                to={`/ns/${this.props.params.namespace}/apps/${this.props.params.appId}/properties`}
+                activeClassName="active"
+              >
+                {T.translate('features.AppDetailedView.Tabs.propertiesLabel')}
+              </Link>
             </NavLink>
           </NavItem>
         </Nav>
-        <Match pattern={'/ns/:namespace/apps/:appId/'} render={() => {
-            return (
-              <ProgramTab entity={this.state.entity} />
-            );
-          }} />
-        <Match pattern={'/ns/:namespace/apps/:appId/programs'} render={() => {
-            return (
-              <ProgramTab entity={this.state.entity} />
-            );
-          }} />
-        <Match pattern={'/ns/:namespace/apps/:appId/datasets'} render={() => {
-            return (
-              <DatasetTab entity={this.state.entity} />
-            );
-          }} />
-        <Match pattern={'/ns/:namespace/apps/:appId/history'} render={() => {
-            return (
-              <HistoryTab entity={this.state.entity} />
-            );
-        }}/>
+        <TabContent>
+          <Match pattern={'/ns/:namespace/apps/:appId/'} render={() => {
+              return (
+                <ProgramTab entity={this.state.entity} />
+              );
+            }} />
+          <Match pattern={'/ns/:namespace/apps/:appId/programs'} render={() => {
+              return (
+                <ProgramTab entity={this.state.entity} />
+              );
+            }} />
+          <Match pattern={'/ns/:namespace/apps/:appId/datasets'} render={() => {
+              return (
+                <DatasetTab entity={this.state.entity} />
+              );
+            }} />
+          <Match pattern={'/ns/:namespace/apps/:appId/history'} render={() => {
+              return (
+                <HistoryTab entity={this.state.entity} />
+              );
+          }}/>
+          <Match pattern={'/ns/:namespace/apps/:appId/properties'} render={() => {
+              return (
+                <PropertiesTab entity={this.state.entity} />
+              );
+          }}/>
+        </TabContent>
       </div>
     );
   }

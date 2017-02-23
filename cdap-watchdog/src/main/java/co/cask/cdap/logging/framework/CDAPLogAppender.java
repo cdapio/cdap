@@ -21,6 +21,7 @@ import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.core.LogbackException;
 import ch.qos.logback.core.spi.FilterReply;
 import ch.qos.logback.core.status.WarnStatus;
+import co.cask.cdap.api.logging.AppenderContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Syncable;
 import co.cask.cdap.logging.meta.FileMetaDataWriter;

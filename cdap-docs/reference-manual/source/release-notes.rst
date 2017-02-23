@@ -4741,7 +4741,7 @@ Known Issues
   `CDAP-2749 <https://issues.cask.co/browse/CDAP-2749>`__).
 
 - Metrics for `TimePartitionedFileSets 
-  <http://docs.cask.co/cdap/3.0.1/en/developers-manual/building-blocks/datasets/time-partitioned-fileset.html#datasets-timepartitioned-fileset>`__
+  <http://docs.cask.co/cdap/3.0.1/en/developers-manual/building-blocks/datasets/fileset.html#timepartitionedfileset>`__
   can show zero values even if there is data present
   (`CDAP-2721 <https://issues.cask.co/browse/CDAP-2721>`__).
   
@@ -5179,7 +5179,7 @@ API Changes
   (`CDAP-1603 <https://issues.cask.co/browse/CDAP-1603>`__).
 - Endpoints have been added to retrieve the CDAP version and the current configurations of
   CDAP and HBase (`Configuration HTTP RESTful API 
-  <http://docs.cask.co/cdap/2.8.0/en/reference-manual/http-restful-api/configuration.html#http-restful-api-configuration>`__).
+  <http://docs.cask.co/cdap/2.8.0/en/reference-manual/http-restful-api/http-restful-api-v3/configuration.html>`__).
 
 
 .. _known-issues-280:
@@ -5597,7 +5597,7 @@ Other Changes
 -------------
 
 - The scripts ``send-query.sh``, ``access-token.sh`` and ``access-token.bat`` has been replaced by the 
-  `CDAP Command Line Interface <http://docs.cask.co/cdap/2.5.1/en/reference-manual/cli-api.html#cli>`__, ``cdap cli``.
+  `CDAP Command Line Interface <http://docs.cask.co/cdap/2.5.1/en/api.html#command-line-interface>`__, ``cdap cli``.
 - The CDAP Command Line Interface now uses and saves access tokens when connecting to a secure CDAP instance.
 - The CDAP Java Stream Client now allows empty String events to be sent.
 - The CDAP Python Authentication Client's ``configure()`` method now takes a dictionary rather than a filepath.

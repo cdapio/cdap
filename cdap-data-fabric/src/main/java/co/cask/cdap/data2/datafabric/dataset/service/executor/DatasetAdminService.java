@@ -26,7 +26,6 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.IncompatibleUpdateException;
 import co.cask.cdap.api.dataset.Updatable;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -260,7 +259,7 @@ public class DatasetAdminService {
   }
 
   private static UserGroupInformation getUgiForDataset(Impersonator impersonator, DatasetId datasetInstanceId)
-    throws IOException, NamespaceNotFoundException {
+    throws IOException {
     // for system dataset do not look up owner information in store as we know that it will be null.
     // Also, this is required for CDAP to start, because initially we don't want to look up owner admin
     // (causing its own lookup) as the SystemDatasetInitiator.getDataset is called when CDAP starts

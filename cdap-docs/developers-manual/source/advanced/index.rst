@@ -15,6 +15,7 @@ Advanced Topics
     Best Practices <best-practices>
     Class Loading <class-loading>
     Configuring Program Resources <configuring-resources>
+    Program Retry Policies <program-retry-policies>
 
 
 This section of the documentation includes articles that cover advanced topics on CDAP that
@@ -41,3 +42,10 @@ will be of interest to developers who want a deeper dive into CDAP:
 .. _configuring-resources: configuring-resources.html
 
 - |configuring-resources|_ Setting the YARN resources used by the programs of a CDAP application.
+
+
+.. |program-retry-policies| replace:: **Program Retry Policies:**
+.. _program-retry-policies: program-retry-policies.html
+
+- |program-retry-policies|_ Configuring the retry policies used by the programs of a CDAP application.
+

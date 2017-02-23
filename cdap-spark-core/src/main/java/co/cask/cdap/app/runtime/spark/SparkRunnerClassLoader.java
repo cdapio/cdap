@@ -21,7 +21,9 @@ import co.cask.cdap.common.internal.guava.ClassPath;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.ClassPathResources;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
+import co.cask.cdap.internal.asm.Classes;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -71,6 +73,8 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
   private static final Type SPARK_SUBMIT_TYPE = Type.getObjectType("org/apache/spark/deploy/SparkSubmit$");
   private static final Type SPARK_YARN_CLIENT_TYPE = Type.getObjectType("org/apache/spark/deploy/yarn/Client");
   private static final Type SPARK_DSTREAM_GRAPH_TYPE = Type.getObjectType("org/apache/spark/streaming/DStreamGraph");
+  private static final Type YARNSPARKHADOOPUTIL_TYPE =
+    Type.getObjectType("org/apache/spark/deploy/yarn/YarnSparkHadoopUtil");
 
   // Don't refer akka Remoting with the ".class" because in future Spark version, akka dependency is removed and
   // we don't want to force a dependency on akka.
@@ -181,6 +185,10 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
       } else if (name.equals(AKKA_REMOTING_TYPE.getClassName())) {
         // Define the akka.remote.Remoting class to avoid thread leakage
         cls = defineAkkaRemoting(name, is);
+      } else if (name.equals(YARNSPARKHADOOPUTIL_TYPE.getClassName())) {
+        // CDAP-8636 Rewrite methods of YarnSparkHadoopUtil to avoid acquiring delegation token, because when we execute
+        // spark submit, we don't have keytab login
+        cls = defineHadoopSparkHadoopUtil(name, is);
       } else {
         // Otherwise, just define it with this ClassLoader
         cls = findClass(name);
@@ -552,6 +560,19 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
     }, ClassReader.EXPAND_FRAMES);
 
     byte[] byteCode = cw.toByteArray();
+    return defineClass(name, byteCode, 0, byteCode.length);
+  }
+
+  /**
+   * CDAP-8636 Rewrite methods of YarnSparkHadoopUtil to avoid acquiring delegation token, because when we execute
+   * spark submit, we don't have keytab login. Because of that and the change in SPARK-12241, the attempt to acquire
+   * delegation tokens causes a spark program submission failure.
+   */
+  private Class<?> defineHadoopSparkHadoopUtil(String name,
+                                               InputStream byteCodeStream) throws IOException, ClassNotFoundException {
+    Set<String> methods =
+      ImmutableSet.of("obtainTokensForNamenodes", "obtainTokenForHiveMetastore", "obtainTokenForHBase");
+    byte[] byteCode = Classes.rewriteMethodToNoop(name, byteCodeStream, methods);
     return defineClass(name, byteCode, 0, byteCode.length);
   }
 

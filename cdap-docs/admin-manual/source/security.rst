@@ -1,17 +1,5 @@
-.. meta::
-    :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
-    :http-equiv=refresh: 0; URL=security/index.html
-  
-:orphan:
-
-.. redirect to security/index.rst
+.. redirect page; include a reference in the toctree (hidden) of the index page
 
 .. raw:: html
 
-  <script type="text/javascript">
-    var link = "/../security/index.html"; 
-    (function () {
-      window.location.replace(window.location.href.split("#")[0] + link + (window.location.hash.substring(1) ? '#' + window.location.hash.substring(1) : ''));
-    })();
-  </script>
+   <script language="javascript">window.location.href = "security/index.html"</script>

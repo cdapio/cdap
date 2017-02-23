@@ -222,6 +222,9 @@ public final class SecurityUtil {
    */
   static String getKeytabURIforPrincipal(String principal, CConfiguration cConf) throws IOException {
     String confPath = cConf.getRaw(Constants.Security.KEYTAB_PATH);
+    Preconditions.checkNotNull(confPath, String.format("Failed to get a valid keytab path. " +
+                                                         "Please ensure that you have specified %s in cdap-site.xml",
+                                                       Constants.Security.KEYTAB_PATH));
     String name = new KerberosName(principal).getShortName();
     return confPath.replace(Constants.USER_NAME_SPECIFIER, name);
   }
@@ -235,9 +238,8 @@ public final class SecurityUtil {
    * </ul>
    */
   public static ImpersonationInfo createImpersonationInfo(OwnerAdmin ownerAdmin, CConfiguration cConf,
-                                                          NamespacedEntityId entityId,
-                                                          ImpersonatedOpType impersonatedOpType) throws IOException {
-    ImpersonationInfo impersonationInfo = ownerAdmin.getImpersonationInfo(entityId, impersonatedOpType);
+                                                          NamespacedEntityId entityId) throws IOException {
+    ImpersonationInfo impersonationInfo = ownerAdmin.getImpersonationInfo(entityId);
     if (impersonationInfo == null) {
       return new ImpersonationInfo(getMasterPrincipal(cConf), getMasterKeytabURI(cConf));
     }

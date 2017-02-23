@@ -16,7 +16,7 @@ Integrating CDAP with Impala
 When using CDAP with Impala:
 
 .. |cdap-pipelines| replace:: **Data Pipelines:**
-.. _cdap-pipelines: ../../../pipelines/index.html
+.. _cdap-pipelines: ../../../developers-manual/pipelines/index.html
 
 - |cdap-pipelines|_ Using **CDAP pipelines** and **plugins** to create either real-time or batch data pipelines
 

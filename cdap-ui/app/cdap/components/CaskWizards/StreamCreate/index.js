@@ -37,7 +37,6 @@ export default class StreamCreateWizard extends Component {
     };
 
     this.setDefaultConfig();
-    this.successInfo = {};
   }
   setDefaultConfig() {
     const args = this.props.input.action.arguments;
@@ -90,9 +89,9 @@ export default class StreamCreateWizard extends Component {
           if (this.props.withUploadStep) {
             // FIXME: I think we can chain this to the next step. TL;DR - will do.
             let url = `/namespaces/${currentNamespace}/streams/${state.general.name}/batch`;
-            let uplodatastate = UploadDataStore.getState();
-            let fileContents = uplodatastate.viewdata.data;
-            let filename = uplodatastate.viewdata.filename;
+            let uploadDataState = UploadDataStore.getState();
+            let fileContents = uploadDataState.viewdata.data;
+            let filename = uploadDataState.viewdata.filename;
             let filetype = 'text/' + filename.split('.').pop();
             return UploadDataActionCreator
               .uploadData({
@@ -108,20 +107,9 @@ export default class StreamCreateWizard extends Component {
         }
       )
       .map((res) => {
-        this.buildSuccessInfo(name, currentNamespace);
         this.eventEmitter.emit(globalEvents.STREAMCREATE);
         return res;
       });
-  }
-  buildSuccessInfo(streamId, namespace) {
-    let defaultSuccessMessage = T.translate('features.Wizard.StreamCreate.success');
-    let buttonLabel = T.translate('features.Wizard.StreamCreate.callToAction');
-    let linkLabel = T.translate('features.Wizard.StreamCreate.secondaryCallToAction.uploadData');
-    this.successInfo.message = `${defaultSuccessMessage} "${streamId}".`;
-    this.successInfo.buttonLabel = buttonLabel;
-    this.successInfo.buttonUrl = `/cdap/ns/${namespace}/streams/${streamId}`;
-    this.successInfo.linkLabel = linkLabel;
-    this.successInfo.linkUrl = `/cdap/ns/${namespace}/streams/${streamId}?modalToOpen=sendEvents`;
   }
   render() {
     let input = this.props.input || {};
@@ -146,7 +134,6 @@ export default class StreamCreateWizard extends Component {
                   }
                 wizardType="StreamCreate"
                 onSubmit={this.createStream.bind(this)}
-                successInfo={this.successInfo}
                 onClose={this.toggleWizard.bind(this)}
                 store={CreateStreamStore}/>
             </WizardModal>
