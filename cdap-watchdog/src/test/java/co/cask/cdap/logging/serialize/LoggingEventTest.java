@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.serialize;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.logback.TestLoggingContext;
@@ -30,6 +31,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
@@ -58,12 +60,11 @@ public class LoggingEventTest {
     Map<String, String> mdcMap = Maps.newHashMap(ImmutableMap.of("mdck1", "mdcv1", "mdck2", "mdck2"));
     iLoggingEvent.setMDCPropertyMap(mdcMap);
 
-    Schema schema = new Schema.Parser().parse(getClass().getResourceAsStream("/logging/schema/LoggingEvent.avsc"));
-    GenericRecord datum = LoggingEvent.encode(schema, new LogMessage(iLoggingEvent,
-                                                                     LoggingContextAccessor.getLoggingContext()));
+    LoggingEventSerializer serializer = new LoggingEventSerializer();
+    byte[] encoded = serializer.toBytes(new LogMessage(iLoggingEvent, LoggingContextAccessor.getLoggingContext()));
 
-    LoggingEvent actualEvent = new LoggingEvent(LoggingEvent.decode(datum));
-    LoggingEventSerializerTest.assertLoggingEventEquals(iLoggingEvent, actualEvent);
+    ILoggingEvent decodedEvent = serializer.fromBytes(ByteBuffer.wrap(encoded));
+    LoggingEventSerializerTest.assertLoggingEventEquals(iLoggingEvent, decodedEvent);
   }
 
   @Test
@@ -72,11 +73,10 @@ public class LoggingEventTest {
     ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent(
       getClass().getName(), (ch.qos.logback.classic.Logger) logger, Level.ERROR, null, null, null);
 
-    Schema schema = new Schema.Parser().parse(getClass().getResourceAsStream("/logging/schema/LoggingEvent.avsc"));
-    GenericRecord datum = LoggingEvent.encode(schema, new LogMessage(iLoggingEvent,
-                                                                     LoggingContextAccessor.getLoggingContext()));
+    LoggingEventSerializer serializer = new LoggingEventSerializer();
+    byte[] encoded = serializer.toBytes(new LogMessage(iLoggingEvent, LoggingContextAccessor.getLoggingContext()));
 
-    LoggingEvent actualEvent = new LoggingEvent(LoggingEvent.decode(datum));
-    LoggingEventSerializerTest.assertLoggingEventEquals(iLoggingEvent, actualEvent);
+    ILoggingEvent decodedEvent = serializer.fromBytes(ByteBuffer.wrap(encoded));
+    LoggingEventSerializerTest.assertLoggingEventEquals(iLoggingEvent, decodedEvent);
   }
 }

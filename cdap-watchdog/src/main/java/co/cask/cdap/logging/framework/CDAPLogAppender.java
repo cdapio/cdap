@@ -27,7 +27,6 @@ import co.cask.cdap.common.io.Syncable;
 import co.cask.cdap.logging.clean.FileMetadataCleaner;
 import co.cask.cdap.logging.clean.LogCleaner;
 import co.cask.cdap.logging.meta.FileMetaDataWriter;
-import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -147,7 +146,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     if (context instanceof AppenderContext) {
       AppenderContext context = (AppenderContext) this.context;
       logFileManager = new LogFileManager(dirPermissions, filePermissions, maxFileLifetimeMs, maxFileSizeInBytes,
-                                          syncIntervalBytes, LogSchema.LoggingEvent.SCHEMA,
+                                          syncIntervalBytes,
                                           new FileMetaDataWriter(context.getDatasetManager(), context),
                                           context.getLocationFactory());
       if (context.getInstanceId() == 0) {

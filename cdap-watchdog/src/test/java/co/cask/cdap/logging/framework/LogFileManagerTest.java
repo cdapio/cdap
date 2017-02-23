@@ -41,7 +41,6 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.meta.FileMetaDataWriter;
-import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -131,7 +130,6 @@ public class LogFileManagerTest {
 
     FileMetaDataWriter fileMetaDataWriter = new FileMetaDataWriter(datasetManager, transactional);
     LogFileManager logFileManager = new LogFileManager("700", "600", maxLifeTimeMs, maxFileSizeInBytes, syncInterval,
-                                                       LogSchema.LoggingEvent.SCHEMA,
                                                        fileMetaDataWriter,
                                                        injector.getInstance(LocationFactory.class));
     LogPathIdentifier logPathIdentifier = new LogPathIdentifier("test", "testApp", "testFlow");

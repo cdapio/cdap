@@ -212,13 +212,12 @@ public class LogLocation {
                                                long fromTimeMs, long endSyncPosition) throws IOException {
 
     List<LogEvent> logSegment = new ArrayList<>();
-    GenericRecord datum = null;
     long currentSyncPosition = dataFileReader.previousSync();
     // Read up to the end if endSyncPosition is not known (in case of an open file)
     // or read until endSyncPosition has been reached
     while (dataFileReader.hasNext() && (endSyncPosition == -1 || (currentSyncPosition < endSyncPosition))) {
-      datum = dataFileReader.next(datum);
-      ILoggingEvent loggingEvent = LoggingEvent.decode(datum);
+      ILoggingEvent loggingEvent = new LoggingEvent(dataFileReader.next());
+      loggingEvent.prepareForDeferredProcessing();
 
       // Stop when reached fromTimeMs
       if (loggingEvent.getTimeStamp() > fromTimeMs) {
@@ -278,7 +277,9 @@ public class LogLocation {
         dataFileReader = createReader();
         if (dataFileReader.hasNext()) {
           datum = dataFileReader.next();
-          loggingEvent = LoggingEvent.decode(datum);
+          loggingEvent = new LoggingEvent(datum);
+          loggingEvent.prepareForDeferredProcessing();
+
           long prevPrevSyncPos = 0;
           long prevSyncPos = 0;
           // Seek to time fromTimeMs
@@ -290,7 +291,8 @@ public class LogLocation {
             LOG.trace("Syncing to pos {}", curPos);
             dataFileReader.sync(curPos);
             if (dataFileReader.hasNext()) {
-              loggingEvent = LoggingEvent.decode(dataFileReader.next(datum));
+              loggingEvent = new LoggingEvent(dataFileReader.next(datum));
+              loggingEvent.prepareForDeferredProcessing();
             }
           }
 
@@ -313,7 +315,9 @@ public class LogLocation {
       try {
         // read events from file
         while (next == null && dataFileReader.hasNext()) {
-          loggingEvent = LoggingEvent.decode(dataFileReader.next(datum));
+          loggingEvent = new LoggingEvent(dataFileReader.next(datum));
+          loggingEvent.prepareForDeferredProcessing();
+
           if (loggingEvent.getTimeStamp() >= fromTimeMs && logFilter.match(loggingEvent)) {
             ++count;
             if ((count > maxEvents || loggingEvent.getTimeStamp() >= toTimeMs)
