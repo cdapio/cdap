@@ -27,7 +27,6 @@ import co.cask.cdap.etl.api.ErrorRecord;
 import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
-import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
@@ -50,7 +49,7 @@ public class FilterErrorTransform extends ErrorTransform<StructuredRecord, Struc
 
   @Override
   public void transform(ErrorRecord<StructuredRecord> input, Emitter<StructuredRecord> emitter) throws Exception {
-    if (input.getErrorCode() != null && input.getErrorCode() != config.code) {
+    if (input.getErrorCode() != config.code) {
       emitter.emit(input.getRecord());
     }
   }

@@ -31,7 +31,7 @@ import co.cask.cdap.etl.spark.streaming.DStreamCollection;
 import co.cask.cdap.etl.spark.streaming.DefaultStreamingContext;
 import co.cask.cdap.etl.spark.streaming.DynamicDriverContext;
 import co.cask.cdap.etl.spark.streaming.PairDStreamCollection;
-import co.cask.cdap.etl.spark.streaming.function.CountingTranformFunction;
+import co.cask.cdap.etl.spark.streaming.function.CountingTransformFunction;
 import co.cask.cdap.etl.spark.streaming.function.DynamicJoinMerge;
 import co.cask.cdap.etl.spark.streaming.function.DynamicJoinOn;
 import co.cask.cdap.etl.spark.streaming.function.WrapOutputTransformFunction;
@@ -90,7 +90,7 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
       javaDStream = javaDStream.transform(new LimitingFunction<>(numOfRecordsPreview));
     }
     JavaDStream<Tuple2<Boolean, Object>> outputDStream = javaDStream
-      .transform(new CountingTranformFunction<>(stageInfo.getName(), sec.getMetrics(), "records.out", dataTracer))
+      .transform(new CountingTransformFunction<>(stageInfo.getName(), sec.getMetrics(), "records.out", dataTracer))
       .map(new WrapOutputTransformFunction<>());
     return new DStreamCollection<>(sec, outputDStream);
   }

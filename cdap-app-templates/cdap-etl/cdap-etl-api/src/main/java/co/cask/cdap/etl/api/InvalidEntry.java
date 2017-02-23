@@ -31,7 +31,8 @@ public class InvalidEntry<T> implements Serializable {
 
   public InvalidEntry(int errorCode, String errorMsg, T invalidRecord) {
     this.errorCode = errorCode;
-    this.errorMsg = errorMsg;
+    // since user code creates this object, just make sure it can't be null
+    this.errorMsg = errorMsg == null ? "" : errorMsg;
     this.invalidRecord = invalidRecord;
   }
 

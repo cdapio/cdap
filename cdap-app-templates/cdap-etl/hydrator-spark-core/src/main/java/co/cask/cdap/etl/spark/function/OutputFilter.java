@@ -20,8 +20,7 @@ import co.cask.cdap.etl.api.ErrorRecord;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import scala.Tuple2;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
 
 /**
  * Filters a SparkCollection containing both output and errors to one that just contains errors.
@@ -32,11 +31,8 @@ public class OutputFilter<T> implements FlatMapFunction<Tuple2<Boolean, Object>,
 
   @Override
   public Iterable<ErrorRecord<T>> call(Tuple2<Boolean, Object> input) throws Exception {
-    List<ErrorRecord<T>> output = new ArrayList<>();
-    if (input._1()) {
-      //noinspection unchecked
-      output.add((ErrorRecord<T>) input._2());
-    }
-    return output;
+    //noinspection unchecked
+    return input._1() ?
+      Collections.singletonList((ErrorRecord<T>) input._2()) : Collections.<ErrorRecord<T>>emptyList();
   }
 }

@@ -30,10 +30,10 @@ public class BasicErrorRecord<T> implements ErrorRecord<T>, Serializable {
   private static final long serialVersionUID = 3026318232156561080L;
   private final T record;
   private final String stageName;
-  private final Integer errorCode;
+  private final int errorCode;
   private final String errorMessage;
 
-  public BasicErrorRecord(T record, String stageName, @Nullable Integer errorCode, @Nullable String errorMessage) {
+  public BasicErrorRecord(T record, String stageName, int errorCode, String errorMessage) {
     this.record = record;
     this.stageName = stageName;
     this.errorCode = errorCode;
@@ -47,7 +47,7 @@ public class BasicErrorRecord<T> implements ErrorRecord<T>, Serializable {
 
   @Nullable
   @Override
-  public Integer getErrorCode() {
+  public int getErrorCode() {
     return errorCode;
   }
 

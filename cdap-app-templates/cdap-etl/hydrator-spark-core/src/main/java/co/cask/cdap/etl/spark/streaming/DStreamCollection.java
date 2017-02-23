@@ -28,7 +28,7 @@ import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
 import co.cask.cdap.etl.spark.batch.BasicSparkExecutionPluginContext;
 import co.cask.cdap.etl.spark.streaming.function.ComputeTransformFunction;
-import co.cask.cdap.etl.spark.streaming.function.CountingTranformFunction;
+import co.cask.cdap.etl.spark.streaming.function.CountingTransformFunction;
 import co.cask.cdap.etl.spark.streaming.function.DynamicAggregatorAggregate;
 import co.cask.cdap.etl.spark.streaming.function.DynamicAggregatorGroupBy;
 import co.cask.cdap.etl.spark.streaming.function.DynamicSparkCompute;
@@ -133,9 +133,9 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   @Override
   public SparkCollection<T> window(StageInfo stageInfo, Windower windower) {
     String stageName = stageInfo.getName();
-    return wrap(stream.transform(new CountingTranformFunction<T>(stageName, sec.getMetrics(), "records.in", null))
+    return wrap(stream.transform(new CountingTransformFunction<T>(stageName, sec.getMetrics(), "records.in", null))
                   .window(Durations.seconds(windower.getWidth()), Durations.seconds(windower.getSlideInterval()))
-                  .transform(new CountingTranformFunction<T>(stageName, sec.getMetrics(), "records.out",
+                  .transform(new CountingTransformFunction<T>(stageName, sec.getMetrics(), "records.out",
                                                              sec.getDataTracer(stageName))));
   }
 

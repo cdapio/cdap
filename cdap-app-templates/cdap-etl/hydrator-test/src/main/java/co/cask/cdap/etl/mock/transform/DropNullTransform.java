@@ -60,22 +60,17 @@ public class DropNullTransform extends Transform<StructuredRecord, StructuredRec
 
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
-    boolean isNotNull = false;
     StructuredRecord.Builder builder = StructuredRecord.builder(getOutputSchema(input.getSchema()));
     for (Schema.Field field : input.getSchema().getFields()) {
       String fieldName = field.getName();
       Object val = input.get(fieldName);
-      if (fieldName.equals(config.field)) {
-        isNotNull = val != null;
-        continue;
+      if (fieldName.equals(config.field) && val != null) {
+        emitter.emitError(new InvalidEntry<>(5, "Field " + config.field + " was not null", input));
+        return;
       }
       builder.set(fieldName, input.get(fieldName));
     }
-    if (isNotNull) {
-      emitter.emitError(new InvalidEntry<>(5, "Field " + config.field + " was not null", input));
-    } else {
-      emitter.emit(builder.build());
-    }
+    emitter.emit(builder.build());
   }
 
   private Schema getOutputSchema(Schema inputSchema) {

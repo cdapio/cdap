@@ -16,8 +16,6 @@
 
 package co.cask.cdap.etl.api;
 
-import javax.annotation.Nullable;
-
 /**
  * Information about a record that was emitted using {@link Emitter#emitError(InvalidEntry)}.
  *
@@ -31,15 +29,13 @@ public interface ErrorRecord<T> {
   T getRecord();
 
   /**
-   * @return the error code if one was give
+   * @return the error code
    */
-  @Nullable
-  Integer getErrorCode();
+  int getErrorCode();
 
   /**
-   * @return the error message if one was given
+   * @return the error message
    */
-  @Nullable
   String getErrorMessage();
 
   /**

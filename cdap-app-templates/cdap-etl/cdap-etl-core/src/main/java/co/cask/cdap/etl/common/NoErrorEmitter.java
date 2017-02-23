@@ -32,10 +32,6 @@ public class NoErrorEmitter<T> implements Emitter<T> {
   private final List<T> entryList;
   private final String errorMessage;
 
-  public NoErrorEmitter() {
-    this("Error records cannot be emitted from the groupBy method of an aggregator");
-  }
-
   public NoErrorEmitter(String errorMessage) {
     this.entryList = Lists.newArrayList();
     this.errorMessage = errorMessage;
