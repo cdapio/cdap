@@ -15,16 +15,20 @@
 -->
 
 <div uib-dropdown>
-  <button class="btn btn-jump"
-    uib-dropdown-toggle
-    ng-if="entityType === 'datasets' || entityType === 'streams'">
-    Jump <span class="fa fa-angle-down"></span>
-  </button>
+  <div class="jump-button-group">
+    <div>
+      <button class="btn btn-jump"
+        uib-dropdown-toggle
+        ng-if="entityType === 'datasets' || entityType === 'streams'">
+        Actions <span class="fa fa-angle-down"></span>
+      </button>
+    </div>
+  </div>
 
   <!-- STREAM MENU -->
   <ul class="pull-right" uib-dropdown-menu ng-if="entityType === 'streams'">
     <li>
-      <a href="{{Jump.viewInCDAPLink}}">View in CDAP</a>
+      <a href="{{Jump.viewInCDAPLink}}">View Details</a>
     </li>
     <li>
       <a href="{{Jump.exploreLink}}">Explore</a>
@@ -39,9 +43,9 @@
   <ul class="pull-right" uib-dropdown-menu
       ng-if="entityType === 'datasets' && Jump.isAvailableDataset">
     <li>
-      <a href="{{Jump.viewInCDAPLink}}">View in CDAP</a>
+      <a href="{{Jump.viewInCDAPLink}}">View Details</a>
     </li>
-    <li ng-if="datasetExplorable === true">
+    <li>
       <a href="{{Jump.exploreLink}}">Explore</a>
     </li>
     <li class="divider"></li>
@@ -56,9 +60,6 @@
 
   <ul class="pull-right" uib-dropdown-menu
       ng-if="entityType === 'datasets' && !Jump.isAvailableDataset">
-    <li>
-      <a href="{{Jump.viewInCDAPLink}}">View in CDAP</a>
-    </li>
     <li ng-if="datasetExplorable === true">
       <a href="{{Jump.exploreLink}}">Explore</a>
     </li>

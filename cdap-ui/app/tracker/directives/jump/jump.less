@@ -20,11 +20,14 @@ my-jump-button {
     background-color: #999999;
     padding: 5px 10px;
     transition: background-color 0.1s ease-in-out;
-    span.fa { margin-left: 10px; }
     &:hover,
     &:focus {
       background-color: darken(#35c853, 10%);
       color: white;
     }
+  }
+
+  .jump-button-group > div {
+    display: inline-block;
   }
 }
