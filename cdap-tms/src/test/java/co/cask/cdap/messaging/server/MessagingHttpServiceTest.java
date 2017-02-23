@@ -74,6 +74,8 @@ public class MessagingHttpServiceTest {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setInt(Constants.MessagingSystem.HTTP_SERVER_CONSUME_CHUNK_SIZE, 128);
+    // Set max life time to a high value so that dummy tx ids that we create in the tests still work
+    cConf.setLong(Constants.Tephra.CFG_TX_MAX_LIFETIME, 10000000000L);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -96,6 +98,37 @@ public class MessagingHttpServiceTest {
   @AfterClass
   public static void finish() {
     httpService.stopAndWait();
+  }
+
+  @Test
+  public void testTxMaxLifeTime() throws Exception {
+    NamespaceId nsId = new NamespaceId("txCheck");
+    TopicId topic1 = nsId.topic("t1");
+
+    // Create a topic
+    client.createTopic(new TopicMetadata(topic1));
+    final RollbackDetail rollbackDetail = client.publish(StoreRequestBuilder.of(topic1).setTransaction(1L)
+                                                     .addPayloads("a", "b").build());
+    try {
+      client.publish(StoreRequestBuilder.of(topic1).setTransaction(-Long.MAX_VALUE).addPayloads("c", "d").build());
+      Assert.fail("Expected IOException");
+    } catch (IOException ex) {
+      // expected
+    }
+
+    Set<String> msgs = new HashSet<>();
+    CloseableIterator<RawMessage> messages = client.prepareFetch(topic1).fetch();
+    while (messages.hasNext()) {
+      RawMessage message = messages.next();
+      msgs.add(Bytes.toString(message.getPayload()));
+    }
+    Assert.assertEquals(2, msgs.size());
+    Assert.assertTrue(msgs.contains("a"));
+    Assert.assertTrue(msgs.contains("b"));
+    messages.close();
+
+    client.rollback(topic1, rollbackDetail);
+    client.deleteTopic(topic1);
   }
 
   @Test
