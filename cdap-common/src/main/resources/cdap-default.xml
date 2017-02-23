@@ -1031,22 +1031,6 @@
   </property>
 
   <property>
-    <name>log.cleanup.run.interval.mins</name>
-    <value>1440</value>
-    <description>
-      Log cleanup interval in minutes
-    </description>
-  </property>
-
-  <property>
-    <name>log.cleanup.max.num.files</name>
-    <value>1000</value>
-    <description>
-      Maximum number of files scanned in one iteration
-    </description>
-  </property>
-
-  <property>
     <name>log.collection.root</name>
     <value>${local.data.dir}/logs</value>
     <description>
@@ -1107,6 +1091,31 @@
     <value>10485760</value>
     <description>
       Number of bytes for the sync interval setting of the Avro file written by the system log appender
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.retention.duration.days</name>
+    <value>7</value>
+    <description>
+      Maximum time in days a file is kept before it could be deleted by log cleanup. Default is 7 days.
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.cleanup.transaction.timeout</name>
+    <value>60</value>
+    <description>
+      Transaction timeout for running file cleanup tasks, default is 60 seconds,
+      this should not be larger than max transaction timeout
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.cleanup.interval.mins</name>
+    <value>1440</value>
+    <description>
+      interval period for the log cleanup thread to run.
     </description>
   </property>
 
@@ -1202,14 +1211,6 @@
       of an application go to the same partition. If set to "program", logs from the same
       program go to the same partition. Changes to this property requires restarting of
       all CDAP applications.
-    </description>
-  </property>
-
-  <property>
-    <name>log.retention.duration.days</name>
-    <value>7</value>
-    <description>
-      Duration (the time-to-live) in days of saved log files in HDFS retention
     </description>
   </property>
 
@@ -2318,6 +2319,14 @@
   <!-- Router Configuration -->
 
   <property>
+    <name>router.audit.path.check.enabled</name>
+    <value>true</value>
+    <description>
+      The boolean which indicates whether we need to check the number of paths for audit logging.
+    </description>
+  </property>
+
+  <property>
     <name>router.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -2425,7 +2434,6 @@
       any service and will return "service not found".
     </description>
   </property>
-
 
   <!-- Security Configuration -->
 

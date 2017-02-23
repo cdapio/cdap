@@ -78,8 +78,11 @@ public class TransactionPruningService extends AbstractIdleService {
     Map<String, TransactionPruningPlugin> plugins = initializePlugins();
     long txMaxLifetimeMillis = TimeUnit.SECONDS.toMillis(conf.getInt(TxConstants.Manager.CFG_TX_MAX_LIFETIME,
                                                                      TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME));
+    long txPruneBufferMillis =
+      TimeUnit.SECONDS.toMillis(conf.getLong(TxConstants.TransactionPruning.PRUNE_GRACE_PERIOD,
+                                            TxConstants.TransactionPruning.DEFAULT_PRUNE_GRACE_PERIOD));
     scheduledExecutorService.scheduleAtFixedRate(
-      getTxPruneRunnable(txManager, plugins, txMaxLifetimeMillis),
+      getTxPruneRunnable(txManager, plugins, txMaxLifetimeMillis, txPruneBufferMillis),
       scheduleInterval, scheduleInterval, TimeUnit.SECONDS);
     LOG.info("Scheduled {} plugins with interval {} seconds", plugins.size(), scheduleInterval);
   }
@@ -104,8 +107,8 @@ public class TransactionPruningService extends AbstractIdleService {
   @VisibleForTesting
   TransactionPruningRunnable getTxPruneRunnable(TransactionManager txManager,
                                                 Map<String, TransactionPruningPlugin> plugins,
-                                                long txMaxLifetimeMillis) {
-    return new TransactionPruningRunnable(txManager, plugins, txMaxLifetimeMillis);
+                                                long txMaxLifetimeMillis, long txPruneBufferMillis) {
+    return new TransactionPruningRunnable(txManager, plugins, txMaxLifetimeMillis, txPruneBufferMillis);
   }
 
   private Map<String, TransactionPruningPlugin> initializePlugins()

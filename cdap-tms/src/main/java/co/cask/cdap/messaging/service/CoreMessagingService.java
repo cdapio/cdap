@@ -46,6 +46,7 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import org.apache.tephra.util.TxUtils;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,6 +82,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   private final LoadingCache<TopicId, ConcurrentMessageWriter> payloadTableWriterCache;
   private final TimeProvider timeProvider;
   private final MetricsCollectionService metricsCollectionService;
+  private final long txMaxLifeTimeInMillis;
 
   @Inject
   CoreMessagingService(CConfiguration cConf, TableFactory tableFactory,
@@ -108,6 +110,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     //        messaging service ->
     //          "metrics collection"
     this.metricsCollectionService = metricsCollectionService;
+    this.txMaxLifeTimeInMillis = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tephra.CFG_TX_MAX_LIFETIME,
+                                                                         Constants.Tephra.DEFAULT_TX_MAX_LIFETIME));
   }
 
   @Override
@@ -178,6 +182,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   public RollbackDetail publish(StoreRequest request) throws TopicNotFoundException, IOException {
     try {
       TopicMetadata metadata = topicCache.get(request.getTopicId());
+      if (request.isTransactional()) {
+        ensureValidTxLifetime(request.getTransactionWritePointer());
+      }
       return messageTableWriterCache.get(request.getTopicId()).persist(request, metadata);
     } catch (ExecutionException e) {
       Throwable cause = Objects.firstNonNull(e.getCause(), e);
@@ -201,7 +208,6 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Override
   public void rollback(TopicId topicId, RollbackDetail rollbackDetail) throws TopicNotFoundException, IOException {
     TopicMetadata metadata = getTopic(topicId);
-
     Exception failure = null;
     try (MessageTable messageTable = createMessageTable(metadata)) {
       messageTable.rollback(metadata, rollbackDetail);
@@ -289,6 +295,15 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     messageTableWriterCache.invalidateAll();
     payloadTableWriterCache.invalidateAll();
     LOG.info("Core Messaging Service stopped");
+  }
+
+  private void ensureValidTxLifetime(long transactionWritePointer) throws IOException {
+    long txTimestamp = TxUtils.getTimestamp(transactionWritePointer);
+    boolean validLifetime = (txTimestamp + txMaxLifeTimeInMillis) > System.currentTimeMillis();
+    if (!validLifetime) {
+      throw new IOException(String.format("Transaction %s has exceeded max lifetime %s ms",
+                                          transactionWritePointer, txMaxLifeTimeInMillis));
+    }
   }
 
   /**

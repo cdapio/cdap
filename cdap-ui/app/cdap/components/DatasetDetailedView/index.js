@@ -52,7 +52,8 @@ export default class DatasetDetailedView extends Component {
       isInvalid: false,
       routeToHome: false,
       successMessage: null,
-      notFound: false
+      notFound: false,
+      modalToOpen: objectQuery(this.props, 'location', 'query', 'modalToOpen') || ''
     };
   }
 
@@ -260,6 +261,7 @@ export default class DatasetDetailedView extends Component {
           entity={this.state.entityMetadata}
           onFastActionSuccess={this.goToHome.bind(this)}
           onFastActionUpdate={this.goToHome.bind(this)}
+          fastActionToOpen={this.state.modalToOpen}
           showFullCreationTime={true}
         />
         <DatasetDetaildViewTab

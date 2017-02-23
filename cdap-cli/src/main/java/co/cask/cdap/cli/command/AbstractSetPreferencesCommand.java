@@ -48,6 +48,11 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
     if (arguments.hasArgument(type.getArgumentName().toString())) {
       programIdParts = arguments.get(type.getArgumentName().toString()).split("\\.");
     }
+    setPreferences(arguments, printStream, args, programIdParts);
+  }
+
+  protected void setPreferences(Arguments arguments, PrintStream printStream,
+                                Map<String, String> args, String[] programIdParts) throws Exception {
     switch (type) {
       case INSTANCE:
         checkInputLength(programIdParts, 0);
@@ -80,18 +85,69 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
     }
   }
 
+  @Deprecated
+  protected String determineDeprecatedPattern(String action) {
+
+    switch (action) {
+      case "set":
+        return determineDeprecatedPatternSetHelper();
+      case "load":
+        return determineDeprecatedPatternLoadHelper();
+    }
+    throw new RuntimeException("Unrecognized action: " + action);
+  }
+
   protected String determinePattern(String action) {
 
     switch (action) {
       case "set":
-        return determinePatternSetHelper();
+        return determineSetPatternHelper();
       case "load":
-        return determinePatternLoadHelper();
+        return determineLoadPatternHelper();
+    }
+    throw new RuntimeException("Unrecognized action: " + action);
+  }
+
+  private String determineSetPatternHelper() {
+    switch (type) {
+      case INSTANCE:
+      case NAMESPACE:
+        return String.format("set %s preferences <%s>",
+                             type.getShortName(), ArgumentName.PREFERENCES);
+      case APP:
+      case FLOW:
+      case MAPREDUCE:
+      case WORKFLOW:
+      case SERVICE:
+      case WORKER:
+      case SPARK:
+        return String.format("set %s preferences <%s> <%s>", type.getShortName(), type.getArgumentName(),
+                             ArgumentName.PREFERENCES);
     }
     throw new RuntimeException("Unrecognized element type: " + type.getShortName());
   }
 
-  private String determinePatternSetHelper() {
+  private String determineLoadPatternHelper() {
+    switch (type) {
+      case INSTANCE:
+      case NAMESPACE:
+        return String.format("load %s preferences <%s> <%s>", type.getShortName(),
+                             ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
+      case APP:
+      case FLOW:
+      case MAPREDUCE:
+      case WORKFLOW:
+      case SERVICE:
+      case WORKER:
+      case SPARK:
+        return String.format("load %s preferences <%s> <%s> <%s>", type.getShortName(), type.getArgumentName(),
+                             ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
+    }
+    throw new RuntimeException("Unrecognized element type: " + type.getShortName());
+  }
+
+  @Deprecated
+  private String determineDeprecatedPatternSetHelper() {
     switch (type) {
       case INSTANCE:
       case NAMESPACE:
@@ -110,7 +166,8 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
     throw new RuntimeException("Unrecognized element type: " + type.getShortName());
   }
 
-  private String determinePatternLoadHelper() {
+  @Deprecated
+  private String determineDeprecatedPatternLoadHelper() {
     switch (type) {
       case INSTANCE:
       case NAMESPACE:
@@ -127,6 +184,6 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
                              ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE,
                              type.getArgumentName());
     }
-    return "None";
+    throw new RuntimeException("Unrecognized element type: " + type.getShortName());
   }
 }

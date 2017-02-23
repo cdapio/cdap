@@ -36,18 +36,21 @@ import java.util.TreeSet;
  * This class executes one run of transaction pruning every time it is invoked.
  * Typically, this class will be scheduled to run periodically.
  */
+@SuppressWarnings("WeakerAccess")
 public class TransactionPruningRunnable implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPruningRunnable.class);
 
   private final TransactionManager txManager;
   private final Map<String, TransactionPruningPlugin> plugins;
   private final long txMaxLifetimeMillis;
+  private final long txPruneBufferMillis;
 
   public TransactionPruningRunnable(TransactionManager txManager, Map<String, TransactionPruningPlugin> plugins,
-                                    long txMaxLifetimeMillis) {
+                                    long txMaxLifetimeMillis, long txPruneBufferMillis) {
     this.txManager = txManager;
     this.plugins = plugins;
     this.txMaxLifetimeMillis = txMaxLifetimeMillis;
+    this.txPruneBufferMillis = txPruneBufferMillis;
   }
 
   @Override
@@ -57,8 +60,13 @@ public class TransactionPruningRunnable implements Runnable {
       Transaction tx = txManager.startShort();
       txManager.abort(tx);
 
+      if (tx.getInvalids().length == 0) {
+        LOG.info("Invalid list is empty, not running transaction pruning");
+        return;
+      }
+
       long now = getTime();
-      long inactiveTransactionBound = TxUtils.getInactiveTxBound(now, txMaxLifetimeMillis);
+      long inactiveTransactionBound = TxUtils.getInactiveTxBound(now, txMaxLifetimeMillis + txPruneBufferMillis);
       LOG.info("Starting invalid prune run for time {} and inactive transaction bound {}",
                now, inactiveTransactionBound);
 

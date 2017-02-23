@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -88,7 +88,7 @@ public class DeletePreferencesCommand extends AbstractCommand {
     switch (type) {
       case INSTANCE:
       case NAMESPACE:
-        return String.format("delete preferences %s", type.getShortName());
+        return String.format("delete %s preferences", type.getShortName());
       case APP:
       case FLOW:
       case MAPREDUCE:
@@ -96,7 +96,7 @@ public class DeletePreferencesCommand extends AbstractCommand {
       case SERVICE:
       case WORKER:
       case SPARK:
-        return String.format("delete preferences %s <%s>", type.getShortName(), type.getArgumentName());
+        return String.format("delete %s preferences <%s>", type.getShortName(), type.getArgumentName());
     }
     throw new RuntimeException("Unrecognized element type: " + type.getShortName());
   }

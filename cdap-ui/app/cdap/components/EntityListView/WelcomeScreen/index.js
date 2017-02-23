@@ -16,33 +16,29 @@
 
 import React, {PropTypes} from 'react';
 import T from 'i18n-react';
+import ResourceCenterButton from 'components/ResourceCenterButton';
 require('./WelcomeScreen.scss');
 
-export default function WelcomeScreen({onClose, onMarketOpen}) {
+export default function WelcomeScreen({onClose, onAddEntity}) {
   return (
     <div className="splash-screen-container">
       <div className="splash-screen-first-time">
         <h2 className="welcome-message">
-          {T.translate('features.EntityListView.SplashScreen.welcomeMessage')}
+          {T.translate('features.EntityListView.SplashScreen.welcomeMessage1')}
         </h2>
-        <div className="beta-notice">
-          {T.translate('features.EntityListView.SplashScreen.welcomeMessage1')}*
+        <div className="welcome-message">
+          {T.translate('features.EntityListView.SplashScreen.welcomeMessage2')}
         </div>
+
         <div className="cdap-fist-icon">
           <span className="icon-fist" />
         </div>
-        <div className="introducing">
-          {T.translate('features.EntityListView.SplashScreen.introText')}
-        </div>
-        <div className="app-store-bd">
-          {T.translate('features.EntityListView.SplashScreen.introText1')}
-        </div>
+
         <div
           className="splash-screen-first-time-btn"
-          onClick={onMarketOpen}
+          onClick={onAddEntity}
         >
-          <span className="icon-CaskMarket" />
-          {T.translate('features.EntityListView.SplashScreen.caskmarket')}
+          {T.translate('features.EntityListView.SplashScreen.addentity')}
         </div>
         <div
           className="go-to-cdap"
@@ -52,14 +48,18 @@ export default function WelcomeScreen({onClose, onMarketOpen}) {
         </div>
         <div className="splash-screen-disclaimer">
           <p>
-            * {T.translate('features.EntityListView.SplashScreen.disclaimerMessage')}
+            {T.translate('features.EntityListView.SplashScreen.disclaimerMessage')}
           </p>
         </div>
+      </div>
+
+      <div className="resource-center-hidden">
+        <ResourceCenterButton />
       </div>
     </div>
   );
 }
 WelcomeScreen.propTypes = {
   onClose: PropTypes.func,
-  onMarketOpen: PropTypes.func
+  onAddEntity: PropTypes.func
 };

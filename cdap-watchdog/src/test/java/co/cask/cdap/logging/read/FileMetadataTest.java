@@ -25,6 +25,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
+import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
@@ -36,11 +37,13 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.logging.LoggingConfiguration;
+import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.framework.CDAPLogAppender;
 import co.cask.cdap.logging.framework.LogPathIdentifier;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.meta.FileMetaDataReader;
 import co.cask.cdap.logging.meta.FileMetaDataWriter;
+import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.logging.write.LogLocation;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -160,5 +163,75 @@ public class FileMetadataTest {
     Assert.assertEquals(location.append("82"), locationList.get(0).getLocation());
 
     Assert.assertEquals(1, fileMetadataReader.listFiles(logPathIdentifier, 150, 1000).size());
+  }
+
+  @Test
+  public void testFileMetadataReadWriteAcrossFormats() throws Exception {
+    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
+    DatasetManager datasetManager = new DefaultDatasetManager(datasetFramework, NamespaceId.SYSTEM,
+                                                              co.cask.cdap.common.service.RetryStrategies.noRetry());
+    Transactional transactional = Transactions.createTransactionalWithRetry(
+      Transactions.createTransactional(new MultiThreadDatasetCache(
+        new SystemDatasetInstantiator(datasetFramework), injector.getInstance(TransactionSystemClient.class),
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
+      RetryStrategies.retryOnConflict(20, 100)
+    );
+    FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
+    FileMetaDataWriter fileMetaDataWriter = new FileMetaDataWriter(datasetManager, transactional);
+    LogPathIdentifier logPathIdentifier =
+      new LogPathIdentifier(NamespaceId.DEFAULT.getNamespace(), "testApp", "testFlow");
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+    Location location = locationFactory.create(TMP_FOLDER.newFolder().getPath()).append("/logs");
+    long currentTime = System.currentTimeMillis();
+
+    LoggingContext loggingContext =
+      LoggingContextHelper.getLoggingContext(NamespaceId.DEFAULT.getNamespace(), "testApp", "testFlow");
+
+    // 10 files in old format
+    for (int i = 1; i <= 10; i++) {
+      // i is the event time
+      fileMetaDataManager.writeMetaData(loggingContext, currentTime + i,
+                                       location.append("testFile" + Integer.toString(i)));
+    }
+
+    long eventTime = currentTime + 20;
+    long newCurrentTime = currentTime + 100;
+    // 10 files in new format
+    for (int i = 1; i <= 10; i++) {
+      fileMetaDataWriter.writeMetaData(logPathIdentifier, eventTime + i, newCurrentTime + i,
+                                       location.append("testFileNew" + Integer.toString(i)));
+    }
+    // reader test
+    FileMetaDataReader fileMetadataReader = injector.getInstance(FileMetaDataReader.class);
+    // scan only in old files time range
+    List<LogLocation> locations = fileMetadataReader.listFiles(logPathIdentifier, currentTime + 2, currentTime + 6);
+    // should include files from currentTime (1..6)
+    Assert.assertEquals(6, locations.size());
+    for (LogLocation logLocation : locations) {
+      Assert.assertEquals(LogLocation.VERSION_0, logLocation.getFrameworkVersion());
+    }
+
+    // scan only in new files time range
+    locations = fileMetadataReader.listFiles(logPathIdentifier, eventTime + 2, eventTime + 6);
+    // should include files from currentTime (1..6)
+    Assert.assertEquals(6, locations.size());
+    for (LogLocation logLocation : locations) {
+      Assert.assertEquals(LogLocation.VERSION_1, logLocation.getFrameworkVersion());
+    }
+
+    // scan time range across formats
+    locations = fileMetadataReader.listFiles(logPathIdentifier, currentTime + 2, eventTime + 6);
+    // should include files from old range (1..10) and new range (1..6)
+    Assert.assertEquals(16, locations.size());
+
+    for (int i = 0; i < locations.size(); i++) {
+      if (i < 10) {
+        Assert.assertEquals(LogLocation.VERSION_0, locations.get(i).getFrameworkVersion());
+        Assert.assertEquals(location.append("testFile" + Integer.toString(i + 1)), locations.get(i).getLocation());
+      } else {
+        Assert.assertEquals(LogLocation.VERSION_1, locations.get(i).getFrameworkVersion());
+        Assert.assertEquals(location.append("testFileNew" + Integer.toString(i - 9)), locations.get(i).getLocation());
+      }
+    }
   }
 }

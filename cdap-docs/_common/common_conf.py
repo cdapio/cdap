@@ -238,6 +238,14 @@ if git_build_vars.has_key(GIT_BRANCH_CDAP_GUIDES):
 else:
     cdap_guides_github_pattern = ''
 
+GIT_BRANCH_HYDRATOR_PLUGINS = 'GIT_BRANCH_HYDRATOR_PLUGINS'
+if git_build_vars.has_key(GIT_BRANCH_HYDRATOR_PLUGINS):
+    hydrator_plugins_github_pattern = "https://github.com/caskdata/hydrator-plugins/blob/%s/%%s" % \
+        git_build_vars[GIT_BRANCH_HYDRATOR_PLUGINS]
+else:
+    hydrator_plugins_github_pattern = ''
+
+
 _cdap_ui_base = 'http://localhost:11011/oldcdap/ns/default'
 
 extlinks = {
@@ -256,6 +264,7 @@ extlinks = {
     'cask-repository-parcels-cdap': ("http://repository.cask.co/parcels/cdap/%s/%%s" % short_version, None),
     'cdap-guides': (cdap_guides_github_pattern, None),
     'spark-docs': ("https://spark.apache.org/docs/%s/%%s" % spark_version, None),
+    'github-hydrator-plugins': (hydrator_plugins_github_pattern, None),
 }
 
 # A string of reStructuredText that will be included at the end of every source file that
@@ -290,32 +299,25 @@ rst_epilog = """
 .. |non-breaking-space| unicode:: U+00A0 .. non-breaking space
 """
 
-if git_build_vars.has_key('GIT_NODE_JS_MIN_VERSION'):
-    rst_epilog += """
-.. |node-js-min-version| replace:: %(node_js_min_version)s
-
-""" % {'node_js_min_version': git_build_vars['GIT_NODE_JS_MIN_VERSION']}
-
-if git_build_vars.has_key('GIT_NODE_JS_MAX_VERSION'):
-    rst_epilog += """
-.. |node-js-max-version| replace:: %(node_js_max_version)s
-
-""" % {'node_js_max_version': git_build_vars['GIT_NODE_JS_MAX_VERSION']}
-
-git_hadoop_versions = {
+git_vars = {
     'GIT_CDH_VERSIONS':  'cdh-versions',
     'GIT_HDP_VERSIONS':  'hdp-versions',
     'GIT_MAPR_VERSIONS': 'mapr-versions',
     'GIT_EMR_VERSIONS':  'emr-versions',
     'GIT_CASK_MARKET_VERSION': 'cask-market-version',
+    'GIT_PLUGINS_SPEC_VERSION': 'plugins-spec-version',
+    'GIT_NODE_JS_MIN_VERSION': 'node-js-min-version',
+    'GIT_NODE_JS_MAX_VERSION': 'node-js-max-version',
     }
 
-for h_key in git_hadoop_versions.keys():
+for h_key in git_vars.keys():
     if git_build_vars.has_key(h_key):
         rst_epilog += """
 .. |%s| replace:: %s
 
-""" % (git_hadoop_versions[h_key], git_build_vars[h_key])
+""" % (git_vars[h_key], git_build_vars[h_key])
+    else:
+        print "Unable to find in 'git_build_vars' %s" % h_key
 
 if version:
     rst_epilog += """

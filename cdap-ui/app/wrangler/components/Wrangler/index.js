@@ -336,7 +336,7 @@ export default class Wrangler extends Component {
     };
 
     let properties = {
-      specification: spec,
+      directives: spec,
       schema: JSON.stringify(schema)
     };
 

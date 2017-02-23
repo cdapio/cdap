@@ -46,6 +46,15 @@ export default class ExploreModal extends Component {
     this._mounted = false;
     this.subscriptions.map(subscriber => subscriber.dispose());
   }
+  componentWillReceiveProps(nextProps) {
+    let {databaseName:existingDatabaseName, tableName:existingTableName} = this.props.entity;
+    let {databaseName:newDatabaseName, tableName:newTablename} = nextProps.entity;
+    if (existingDatabaseName !== newDatabaseName || existingTableName !== newTablename) {
+      this.setState({
+        queryString: `SELECT * FROM ${nextProps.entity.databaseName}.${nextProps.entity.tableName} LIMIT 500`,
+      });
+    }
+  }
   updateState() {
     if (!this._mounted) {
       return;

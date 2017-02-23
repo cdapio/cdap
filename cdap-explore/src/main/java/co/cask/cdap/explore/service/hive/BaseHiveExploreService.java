@@ -146,8 +146,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                      "mapreduce.job.queuename",
                      "mapreduce.job.complete.cancel.delegation.tokens",
                      "mapreduce.job.credentials.binary",
-                     "hive.exec.submit.local.task.via.child",
-                     "hive.exec.submitviachild",
+                     Constants.Explore.SUBMITLOCALTASKVIACHILD,
+                     Constants.Explore.SUBMITVIACHILD,
                      "hive.lock.*",
                      "tez.credentials.path",
                      CommonConfigurationKeysPublic.HADOOP_SECURITY_AUTHENTICATION));
@@ -257,14 +257,14 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
 
     // workaround to allow CDAP explore to modify params of session conf
-    String whiteListAppend = conf.getVar(HiveConf.ConfVars.HIVE_AUTHORIZATION_SQL_STD_AUTH_CONFIG_WHITELIST_APPEND);
+    String whiteListAppend = conf.get(Constants.Explore.HIVE_AUTHORIZATION_SQL_STD_AUTH_CONFIG_WHITELIST_APPEND);
     if (whiteListAppend != null && !whiteListAppend.trim().isEmpty()) {
       // if user has configured some value for this, we must append to the regex
       whiteListAppend = whiteListAppend + "|" + PARAMS_EXPLORE_MODIFIES;
     } else {
       whiteListAppend = PARAMS_EXPLORE_MODIFIES;
     }
-    conf.setVar(HiveConf.ConfVars.HIVE_AUTHORIZATION_SQL_STD_AUTH_CONFIG_WHITELIST_APPEND, whiteListAppend);
+    conf.set(Constants.Explore.HIVE_AUTHORIZATION_SQL_STD_AUTH_CONFIG_WHITELIST_APPEND, whiteListAppend);
 
     // We override this param due to the change in HIVE-14383. Otherwise, the hive job will be launched as the
     // 'hive' user (or fail to even launch, if on ClouderaManager). See CDAP-8367 for more details. We set this later
@@ -274,8 +274,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     // Since we use delegation token in HIVE, unset the SPNEGO authentication if it is
     // enabled. Please see CDAP-3452 for details.
-    conf.unset("hive.server2.authentication.spnego.keytab");
-    conf.unset("hive.server2.authentication.spnego.principal");
+    conf.unset(Constants.Explore.HIVE_SERVER2_SPNEGO_KEYTAB);
+    conf.unset(Constants.Explore.HIVE_SERVER2_SPNEGO_PRINCIPAL);
     return conf;
   }
 
@@ -1342,8 +1342,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       sessionConf.put(CommonConfigurationKeysPublic.HADOOP_SECURITY_AUTHENTICATION,
                       UserGroupInformation.AuthenticationMethod.KERBEROS.name());
 
-      sessionConf.put("hive.exec.submit.local.task.via.child", Boolean.FALSE.toString());
-      sessionConf.put("hive.exec.submitviachild", Boolean.FALSE.toString());
+      sessionConf.put(Constants.Explore.SUBMITLOCALTASKVIACHILD, Boolean.FALSE.toString());
+      sessionConf.put(Constants.Explore.SUBMITVIACHILD, Boolean.FALSE.toString());
       if (ExploreServiceUtils.isTezEngine(hiveConf, additionalSessionConf)) {
         // Add token file location property for tez if engine is tez
         sessionConf.put("tez.credentials.path", credentialsFilePath);
