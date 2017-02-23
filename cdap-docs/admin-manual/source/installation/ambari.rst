@@ -38,7 +38,7 @@ You can make these changes during the configuration of your cluster `using Ambar
 
 .. HDFS Permissions
 .. ----------------
-.. include:: ../_includes/installation/hdfs-permissions.txt
+.. include:: /../target/_includes/ambari-hdfs-permissions.rst
 
 
 Downloading and Distributing Packages

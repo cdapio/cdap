@@ -96,7 +96,7 @@ for CDAP to run successfully.
         .. parsed-literal::
         
           |$| su hdfs
-          |$| hdfs dfs -mkdir -p /user/|hdfs-user| && hadoop fs -chown |hdfs-user| /user/|hdfs-user| && hadoop fs -chgrp |hdfs-user| /user/|hdfs-user|
+          |$| hadoop fs -mkdir -p /user/|hdfs-user| && hadoop fs -chown |hdfs-user| /user/|hdfs-user| && hadoop fs -chgrp |hdfs-user| /user/|hdfs-user|
 
    #. If you want to use **an HDFS directory** with a name other than ``/cdap``:
 
@@ -131,7 +131,7 @@ for CDAP to run successfully.
            .. parsed-literal::
          
              |$| su hdfs
-             |$| hdfs dfs -mkdir -p /user/|my_username| && hadoop fs -chown |my_username| /user/|my_username| && hadoop fs -chgrp |my_username| /user/|my_username|
+             |$| hadoop fs -mkdir -p /user/|my_username| && hadoop fs -chown |my_username| /user/|my_username| && hadoop fs -chgrp |my_username| /user/|my_username|
       
       #. If you use an HDFS user other than |hdfs-user|, you must use either a secure
          cluster or use the `LinuxContainerExecutor

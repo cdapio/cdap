@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 :section-numbering: true
 
@@ -42,7 +42,7 @@ packages installed, and can be configured using the MapR `configure.sh
 
 .. HDFS Permissions
 .. ----------------
-.. include:: ../_includes/installation/hdfs-permissions.txt
+.. include:: /../target/_includes/mapr-hdfs-permissions.rst
       
 
 Downloading and Distributing Packages
