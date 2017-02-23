@@ -153,23 +153,26 @@ used with replication.
 .. highlight:: console
 
 To deploy your extension (once compiled and packaged as a JAR file, such as
-*my-extension.jar*), run these steps on **both** your master and slave clusters:
+*my-extension.jar*), run these steps on **both** your master and slave clusters.
+In these steps, substitute for ``<cdap-home>`` or ``${cdap-home}`` an appropriate location, depending on your
+distribution: for CM/CDH, ``${PARCEL_ROOT}/CDAP`` where ``${PARCEL_ROOT}`` is your configured "Parcel Directory"; 
+for Ambari/HDP, MapR, packages, ``/opt/cdap``:
 
 1. Create an extension directory, such as::
 
-    $ mkdir -p /opt/cdap/master/ext/hbase/repl
+    $ mkdir -p <cdap-home>/master/ext/hbase/repl
     
 #. Copy your JAR to the directory::
 
-    $ cp my-extension.jar /opt/cdap/master/ext/hbase/repl/
+    $ cp my-extension.jar <cdap-home>/master/ext/hbase/repl/
 
    .. highlight:: xml
 
-#. Modify ``cdap-site.xml`` to use your implementation of ``HBaseDDLExecutor``::
+#. Modify ``cdap-site.xml`` to use your implementation of ``HBaseDDLExecutor``, substituting for ``${cdap-home}``::
 
     <property>
       <name>hbase.ddlexecutor.extension.dir</name>
-      <value>/opt/cdap/master/ext/hbase</value>
+      <value>${cdap-home}/master/ext/hbase</value>
     </property>
 
 #. Modify ``cdap-site.xml`` with any properties required by your executor. Any property prefixed
