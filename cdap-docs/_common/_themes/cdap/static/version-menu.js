@@ -48,7 +48,12 @@
   var versionsURL = 'http://docs.cask.co/cdap/';
   var versionID = 'select-version';
   var buildURL = (function(dir){
-    return versionsURL + dir + '/en/' + location.pathname.substr(location.pathname.lastIndexOf('/en/')+4);
+    var en = location.pathname.indexOf('/en/');
+    if (en != -1) {
+      return versionsURL + dir + location.pathname.substr(en);
+    } else {
+      return versionsURL + dir + '/en/';
+    }    
   });
   var writeLink = (function(dir, label){
     document.write('<option value="' + buildURL(dir) + '">' + label + '</option>');
