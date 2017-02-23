@@ -63,7 +63,8 @@ class LogFileOutputStream implements Closeable, Flushable, Syncable {
 
     Schema schema = serializer.getAvroSchema();
     try {
-      this.outputStream = location.getOutputStream(filePermissions);
+      this.outputStream =
+        filePermissions.isEmpty() ? location.getOutputStream() : location.getOutputStream(filePermissions);
       this.dataFileWriter = new DataFileWriter<>(new GenericDatumWriter<GenericRecord>(schema));
       this.dataFileWriter.create(schema, outputStream);
       this.dataFileWriter.setSyncInterval(syncIntervalBytes);

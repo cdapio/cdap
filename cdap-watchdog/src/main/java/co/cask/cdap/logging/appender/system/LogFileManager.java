@@ -128,12 +128,16 @@ final class LogFileManager implements Flushable, Syncable {
     // however there is a possibility for the log.saver could crash after file was created
     // but before meta data was written, log clean up should handle this scenario.
     // log cleanup shouldn't rely on metadata table for cleaning up old files.
-    while (!location.getLocation().createNew(filePermissions)) {
+    while (!createLocation(location.getLocation(), filePermissions)) {
       Uninterruptibles.sleepUninterruptibly(1L, TimeUnit.MILLISECONDS);
       location = getLocation(logPathIdentifier);
     }
     LOG.trace("Created new file at Location {}", location);
     return location;
+  }
+
+  private boolean createLocation(Location location, String filePermissions) throws IOException {
+    return filePermissions.isEmpty() ? location.createNew() : location.createNew(filePermissions);
   }
 
   private LogFileOutputStream rotateOutputStream(LogFileOutputStream logFileOutputStream,
@@ -192,10 +196,14 @@ final class LogFileManager implements Flushable, Syncable {
   }
 
   private void ensureDirectoryCheck(Location location) throws IOException {
-    if (!location.isDirectory() && !location.mkdirs(dirPermissions) && !location.isDirectory()) {
+    if (!location.isDirectory() && !mkDirs(location) && !location.isDirectory()) {
       throw new IOException(
         String.format("File Exists at the logging location %s, Expected to be a directory", location));
     }
+  }
+
+  private boolean mkDirs(Location location) throws IOException {
+    return dirPermissions.isEmpty() ? location.mkdirs() : location.mkdirs(dirPermissions);
   }
 
   // only used by tests
