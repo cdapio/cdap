@@ -15,6 +15,7 @@ Developing Plugins
 
     Plugin Basics <plugin-basics>
     Creating a Plugin <creating-a-plugin>
+    Plugin Presentation <presentation-plugins>
     Testing Plugins <testing-plugins>
     Packaging Plugins <packaging-plugins>
 
@@ -40,18 +41,24 @@ artifact.
 .. |creating-a-plugin| replace:: **Creating a Plugin:**
 .. _creating-a-plugin: creating-a-plugin.html
 
+.. |presentation-plugins| replace:: **Plugin Presentation:**
+.. _presentation-plugins: presentation-plugins.html
+
 .. |testing-plugins| replace:: **Testing Plugins:**
 .. _testing-plugins: testing-plugins.html
 
 .. |packaging-plugins| replace:: **Packaging Plugins:**
 .. _packaging-plugins: packaging-plugins.html
 
+
 - |plugin-basics|_ Plugin types, Maven archetypes, plugin class annotations, and plugin configuration
 
 - |creating-a-plugin|_ The Java methods that need to be implemented for each plugin type
 
+- |presentation-plugins|_ Controlling how your plugin :ref:`appears in the CDAP Studio 
+  <plugins-presentation>`
+
 - |testing-plugins|_ Using CDAP testing facilities and the CDAP Pipelines test module
 
-- |packaging-plugins|_ Packaging a :ref:`plugin in a JAR <cdap-pipelines-packaging-plugins>`, 
-  and controlling how your plugin :ref:`appears in the CDAP Studio 
-  <cdap-pipelines-packaging-plugins-presentation>`.
+- |packaging-plugins|_ Packaging a :ref:`plugin in a JAR <cdap-pipelines-packaging-plugins>`
+
