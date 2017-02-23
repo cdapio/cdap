@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.framework;
+package co.cask.cdap.logging.appender.system;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -39,6 +39,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
+import co.cask.cdap.logging.framework.LocalAppenderContext;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.meta.FileMetaDataReader;
 import co.cask.cdap.logging.read.LogEvent;

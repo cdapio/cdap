@@ -18,7 +18,7 @@
 
 <configuration>
 
-  <appender name="metrics" class="co.cask.cdap.logging.framework.MetricsLogAppender" />
+  <appender name="metrics" class="co.cask.cdap.logging.appender.system.MetricsLogAppender" />
 
   <root level="ALL">
     <appender-ref ref="metrics"/>
