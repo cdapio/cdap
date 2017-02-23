@@ -53,7 +53,10 @@ import javax.annotation.Nullable;
  * admin for queues in memory.
  */
 @Singleton
-public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdmin {
+public class InMemoryStreamAdmin implements StreamAdmin {
+
+  private final InMemoryQueueService queueService;
+  private final InMemoryQueueAdmin queueAdmin;
   private final StreamMetaStore streamMetaStore;
   private final UsageRegistry usageRegistry;
   private final LineageWriter lineageWriter;
@@ -69,7 +72,8 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
                              StreamMetaStore streamMetaStore,
                              MetadataStore metadataStore,
                              ViewAdmin viewAdmin) {
-    super(queueService);
+    this.queueService = queueService;
+    this.queueAdmin = new InMemoryQueueAdmin(queueService);
     this.usageRegistry = usageRegistry;
     this.streamMetaStore = streamMetaStore;
     this.lineageWriter = lineageWriter;
@@ -105,6 +109,11 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   @Override
+  public void upgrade() throws Exception {
+    // No-op
+  }
+
+  @Override
   public List<StreamSpecification> listStreams(NamespaceId namespaceId) throws Exception {
     return streamMetaStore.listStreams(namespaceId);
   }
@@ -126,19 +135,19 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
 
   @Override
   public boolean exists(StreamId streamId) throws Exception {
-    return exists(QueueName.fromStream(streamId));
+    return queueAdmin.exists(QueueName.fromStream(streamId));
   }
 
   @Override
   public StreamConfig create(StreamId streamId) throws Exception {
-    create(QueueName.fromStream(streamId));
+    queueAdmin.create(QueueName.fromStream(streamId));
     publishAudit(streamId, AuditType.CREATE);
     return null;
   }
 
   @Override
   public StreamConfig create(StreamId streamId, @Nullable Properties props) throws Exception {
-    create(QueueName.fromStream(streamId), props);
+    queueAdmin.create(QueueName.fromStream(streamId), props);
     String description = (props != null) ? props.getProperty(Constants.Stream.DESCRIPTION) : null;
     streamMetaStore.addStream(streamId, description);
     publishAudit(streamId, AuditType.CREATE);
@@ -148,7 +157,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   @Override
   public void truncate(StreamId streamId) throws Exception {
     Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
-    truncate(QueueName.fromStream(streamId));
+    queueAdmin.truncate(QueueName.fromStream(streamId));
     publishAudit(streamId, AuditType.TRUNCATE);
   }
 
@@ -157,7 +166,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
     Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
     // Remove metadata for the stream
     metadataStore.removeMetadata(streamId);
-    drop(QueueName.fromStream(streamId));
+    queueAdmin.drop(QueueName.fromStream(streamId));
     streamMetaStore.removeStream(streamId);
     publishAudit(streamId, AuditType.DELETE);
   }
