@@ -37,6 +37,7 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.CannotBeDeletedException;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
@@ -78,7 +79,6 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
@@ -249,7 +249,7 @@ ApplicationLifecycleService extends AbstractIdleService {
       throw new ApplicationNotFoundException(appId);
     }
     ensureAccess(appId);
-    String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
+    String ownerPrincipal = ownerAdmin.getImpersonationPrincipal(appId);
     return ApplicationDetail.fromSpec(appSpec, ownerPrincipal);
   }
 
@@ -334,10 +334,15 @@ ApplicationLifecycleService extends AbstractIdleService {
       newArtifactId = new ArtifactId(currentArtifact.getName(), requestedVersion, currentArtifact.getScope());
     }
 
-    // ownerAdmin.getOwner will give the owner of application irrespective of the version
-    boolean equals = Objects.equals(ownerAdmin.getOwnerPrincipal(appId), appRequest.getOwnerPrincipal());
-    Preconditions.checkArgument(equals,
-                                String.format("Updating %s is not supported.", Constants.Security.PRINCIPAL));
+    // ownerAdmin.getImpersonationPrincipal will give the owner which will be impersonated for the application
+    // irrespective of the version
+    if (!Objects.equals(ownerAdmin.getImpersonationPrincipal(appId), appRequest.getOwnerPrincipal())) {
+      // Not giving existing owner information as it might be unacceptable under some security scenarios
+      throw new ConflictException(String.format("The specified %s : '%s' is not the same as existing one. " +
+                                                  "The %s of an %s cannot be updated.",
+                                                Constants.Security.PRINCIPAL, appRequest.getOwnerPrincipal(),
+                                                Constants.Security.PRINCIPAL, appId.getEntityType()));
+    }
 
     Object requestedConfigObj = appRequest.getConfig();
     // if config is null, use the previous config. Shouldn't use a static GSON since the request Config object can

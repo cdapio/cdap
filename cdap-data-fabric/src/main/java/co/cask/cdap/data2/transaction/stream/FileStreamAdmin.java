@@ -19,6 +19,7 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -332,7 +333,8 @@ public class FileStreamAdmin implements StreamAdmin {
   public StreamProperties getProperties(StreamId streamId) throws Exception {
     // User should have any access on the stream to read its properties
     ensureAccess(streamId);
-    String ownerPrincipal = ownerAdmin.getOwnerPrincipal(streamId);
+    // get the principal which will be used for impersonation to display as owner
+    String ownerPrincipal = ownerAdmin.getImpersonationPrincipal(streamId);
     StreamConfig config = getConfig(streamId);
     StreamSpecification spec = streamMetaStore.getStream(streamId);
     return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB(),
@@ -864,9 +866,15 @@ public class FileStreamAdmin implements StreamAdmin {
     }
   }
 
-  private void verifyOwner(StreamId streamId, @Nullable String specifiedOwnerPrincipal) throws IOException {
-    boolean equals = Objects.equals(specifiedOwnerPrincipal, ownerAdmin.getOwnerPrincipal(streamId));
-    Preconditions.checkArgument(equals,
-                                String.format("Updating %s is not supported.", Constants.Security.PRINCIPAL));
+  private void verifyOwner(StreamId streamId,
+                           @Nullable String specifiedOwnerPrincipal) throws IOException, ConflictException {
+    // verify  owner with the effective owner principal
+    if (!Objects.equals(specifiedOwnerPrincipal, ownerAdmin.getImpersonationPrincipal(streamId))) {
+      // Not giving existing owner information as it might be unacceptable under some security scenarios
+      throw new ConflictException(String.format("The specified %s : '%s' is not the same as existing one. " +
+                                                  "The %s of an %s cannot be updated.",
+                                                Constants.Security.PRINCIPAL, specifiedOwnerPrincipal,
+                                                Constants.Security.PRINCIPAL, streamId.getEntityType()));
+    }
   }
 }

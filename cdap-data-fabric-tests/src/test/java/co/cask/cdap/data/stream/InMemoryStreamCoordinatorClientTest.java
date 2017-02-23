@@ -22,8 +22,9 @@ import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.kerberos.OwnerStore;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -74,7 +75,6 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
       }),
       new DataFabricModules().getInMemoryModules(),
       new NonCustomLocationUnitTestModule().getModule(),
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
@@ -89,6 +89,7 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
             bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
             bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+            bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
           }
         })
     );
