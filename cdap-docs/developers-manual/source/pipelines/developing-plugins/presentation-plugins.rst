@@ -97,9 +97,8 @@ Configuration groups are a simple grouping of properties of a plugin. A configur
 group is represented as a JSON object with a *label* and an ordered *list* of plugin
 properties for that group.
 
-For example, in a *Batch Source* plugin, properties labelled such as *Dataset Name*
-(``name``), *Dataset Base Path* (``basePath``), *Duration* (``duration``),
-and *Delay* (``delay``) could be grouped into a *Batch Source Configuration*.
+For example, in a *Batch Source* plugin, properties such as ``name``, ``basePath``,
+``duration``, and ``delay`` could be grouped into a *Batch Source Configuration*.
 
 .. highlight:: json-ellipsis
 
@@ -112,22 +111,18 @@ In the case of a *Batch Source* plugin, it could look like this::
         "properties": [
           {
             "name": "name",
-            "label": "Dataset Name",
             ...
           },
           {
             "name": "basePath",
-            "label": "Dataset Base Path",
             ...
           },
           {
             "name": "duration",
-            "label": "Duration",
             ...
           },
           {
             "name": "delay",
-            "label": "Delay",
             ...
           }
         ]
@@ -145,8 +140,7 @@ Property Configuration
 ----------------------
 Each individual property of the plugin is represented by a configuration, composed of:
 
-- **name:** Name of the field (as supplied by the CDAP UI backend for the artifact).
-- **label:** Label to be displayed in the CDAP UI for the property.
+- **name:** Name of the field (as supplied by the CDAP server for the artifact).
 - :ref:`widget-type: <plugins-presentation-widgets>` The type of
   widget to be used to represent this property.
 - **widget-attributes:** A map of attributes that the widget type requires to be defined in
@@ -156,8 +150,7 @@ Each individual property of the plugin is represented by a configuration, compos
   An optional map of plugin method and its widget attributes that can be applied to a
   particular plugin property.
 
-Note that with the exception of the value of the *label*, all properties and property
-values are case-sensitive.
+Note that all properties and property values are case-sensitive.
 
 To find the available field names, you can use the :ref:`Artifact HTTP RESTful API 
 <http-restful-api-artifact>` to :ref:`retrieve plugin details 
@@ -177,17 +170,14 @@ different properties are defined; three use a *textbox* widget, while one uses a
         "properties": [
           {
             "name": "name",
-            "label": "Dataset Name",
             "widget-type": "dataset-selector"
           },
           {
             "name": "basePath",
-            "label": "Dataset Base Path",
             "widget-type": "textbox"
           },
           {
             "name": "groupByFields",
-            "label": "Group By Fields",
             "widget-type": "textbox",
             "plugin-function": {
               "method": "POST",
@@ -201,7 +191,6 @@ different properties are defined; three use a *textbox* widget, while one uses a
           },
           {
             "name": "duration",
-            "label": "Duration",
             "widget-type": "textbox"
           },
           ...
@@ -236,35 +225,29 @@ CDAP pipelines as of version |version|:
      - No attributes
      - Comma-separated ``string``
      - Comma-separated values; each value is entered in a separate box
-     - ::
+     - .. container:: copyable copyable-text
+     
+         ::
 
-        {
-          "name": "property-csv",
-          "label": "My CSV Property",
-          "widget-type": "csv",
-          "widget-attributes": {}
-        }
+          {
+            "name": "property-csv",
+            "widget-type": "csv",
+            "widget-attributes": {}
+          }
 
-   * - ``dataset-selector`` or ``stream-selector``
+   * - ``dataset-selector``
      - No attributes
      - ``string``
-     - A type-ahead textbox with a list of datasets (``dataset-selector``) or streams
-       (``stream-selector``) from the CDAP instance
-     - ::
+     - A type-ahead textbox with a list of datasets from the CDAP instance
+     - .. container:: copyable copyable-text
+     
+         ::
 
-        {
-          "name": "property-dataset-selector",
-          "label": "My Dataset Selector Property",
-          "widget-type": "dataset-selector",
-          "widget-attributes": {}
-        }
-
-        {
-          "name": "property-stream-selector",
-          "label": "My Stream Selector Property",
-          "widget-type": "stream-selector",
-          "widget-attributes": {}
-        }
+          {
+            "name": "property-dataset-selector",
+            "widget-type": "dataset-selector",
+            "widget-attributes": {}
+          }
 
    * - ``ds-multiplevalues``
      - - ``delimiter``: the delimiter between each *set* of values
@@ -274,101 +257,107 @@ CDAP pipelines as of version |version|:
      - ``string``
      - A delimiter-separated values widget that allows specifying lists of values
        separated by delimiters
-     - ::
+     - .. container:: copyable copyable-text
+     
+         ::
 
-        {
-          "name": "property-ds-multiplevalues",
-          "label": "My Multiple Values Property",
-          "widget-type": "ds-multiplevalues",
-          "widget-attributes": {
-            "delimiter": ",",
-            "values-delimiter": ":",
-            "numValues": "3",
-            "placeholders": [
-              "Input Field", 
-              "Lookup", 
-              "Output Field"
-            ]
+          {
+            "name": "property-ds-multiplevalues",
+            "widget-type": "ds-multiplevalues",
+            "widget-attributes": {
+              "delimiter": ",",
+              "values-delimiter": ":",
+              "numValues": "3",
+              "placeholders": [
+                "Input Field", 
+                "Lookup", 
+                "Output Field"
+              ]
+            }
           }
-        }
 
    * - ``dsv``
      - ``delimiter``: delimiter used to separate the values
      - Delimiter-separated ``string``
      - Delimiter-separated values; each value is entered in a separate box
-     - ::
+     - .. container:: copyable copyable-text
+     
+         ::
 
-        {
-          "name": "property-dsv",
-          "label": "My DSV Property",
-          "widget-type": "dsv",
-          "widget-attributes": {
-            "delimiter": ":"
+          {
+            "name": "property-dsv",
+            "widget-type": "dsv",
+            "widget-attributes": {
+              "delimiter": ":"
+            }
           }
-        }
      
    * - ``input-field-selector``
      - No attributes
      - ``string``
      - A dropdown widget with a list of columns taken from the input schema. 
        Selecting sets the input column for that plugin property.
-     - ::
+     - .. container:: copyable copyable-text
+     
+         ::
 
-        {
-          "name": "Property1",
-          "label": "My Date Property",
-          "widget-type": "csv",
-          "widget-attributes": {}
-        }
+          {
+            "name": "Property1",
+            "widget-type": "csv",
+            "widget-attributes": {}
+          }
      
    * - ``javascript-editor``
      - ``default``: default ``string`` value for the widget
      - ``string``
      - An editor to write JavaScript code as a value of a property
-     - ::
+     - .. container:: copyable copyable-text
+     
+         ::
 
-        {
-          "name": "property-javascript-editor",
-          "label": "My JavaScript Editor Property",
-          "widget-type": "javascript-editor",
-          "widget-attributes": {
-            "default": 
-              "function transform(input, emitter, context) {\
-        \\n  emitter.emit(input);\\n}"
+          {
+            "name": "property-javascript-editor",
+            "widget-type": "javascript-editor",
+            "widget-attributes": {
+              "default": 
+                "function transform(input, emitter, context) {\
+          \\n  emitter.emit(input);\\n}"
+            }
           }
-        }
 
    * - ``json-editor``
      - ``default``: default serialized JSON value for the widget
      - ``string``
      - A JSON editor that pretty-prints and auto-formats JSON while it is being entered
-     - ::
+     - .. container:: copyable copyable-text
+     
+         ::
 
-        {
-          "name": "property-json-editor",
-          "label": "My JSON Editor Property",
-          "widget-type": "json-editor",
-          "widget-attributes": {
-            "default": "{ \"p1\": \"value\" }"
+          {
+            "name": "property-json-editor",
+            "widget-type": "json-editor",
+            "widget-attributes": {
+              "default": "{ \"p1\": \"value\" }"
+            }
           }
-        }
      
    * - ``keyvalue``
      - - ``delimiter``: delimiter for the key-value pairs
        - ``kv-delimiter``: delimiter between key and value
      - ``string``
      - A key-value editor for constructing maps of key-value pairs
-     - ::
+     - .. container:: copyable copyable-text
+     
+         ::
 
-        {
-          "name": "property-keyvalue",
-          "label": "My Key-Value Property",
-          "widget-type": "keyvalue",
-          "widget-attributes": {
-              "delimiter": ",",
-              "kv-delimiter": ":"
+          {
+            "name": "property-keyvalue",
+            "widget-type": "keyvalue",
+            "widget-attributes": {
+                "delimiter": ",",
+                "kv-delimiter": ":"
+            }
           }
-        }
      
    * - ``keyvalue-dropdown``
      - - ``delimiter``: delimiter for the key-value pairs
@@ -376,31 +365,33 @@ CDAP pipelines as of version |version|:
        - ``kv-delimiter``: delimiter between key and value
      - ``string``
      - Similar to *keyvalue* widget, but with a drop-down value list
-     - ::
+     - .. container:: copyable copyable-text
+     
+         ::
 
-        {
-          "name": "property-keyvalue-dropdown",
-          "label": "My Key-Value Dropdown Property",
-          "widget-type": "keyvalue-dropdown",
-          "widget-attributes": {
-              "delimiter": ",",
-              "kv-delimiter": ":",
-              "dropdownOptions": [ "Option1", "Option2"]
+          {
+            "name": "property-keyvalue-dropdown",
+            "widget-type": "keyvalue-dropdown",
+            "widget-attributes": {
+                "delimiter": ",",
+                "kv-delimiter": ":",
+                "dropdownOptions": [ "Option1", "Option2"]
+            }
           }
-        }
      
    * - ``non-editable-schema-editor``
      - ``schema``: schema that will be used as the output schema for the plugin
      - ``string``
      - A non-editable widget for displaying a schema
-     - ::
+     - .. container:: copyable copyable-text
+     
+         ::
 
-        {
-          "name": "property-non-editable-schema-editor",
-          "label": "My Non-editable Schema Editor Property",
-          "widget-type": "non-editable-schema-editor",
-          "widget-attributes": {}
-        }
+          {
+            "name": "property-non-editable-schema-editor",
+            "widget-type": "non-editable-schema-editor",
+            "widget-attributes": {}
+          }
      
    * - ``number``
      - - ``default``: default value for the widget
@@ -408,123 +399,144 @@ CDAP pipelines as of version |version|:
        - ``min``: minimum value for the number box
      - ``string``
      - Default HTML number textbox that only accepts valid numbers
-     - ::
+     - .. container:: copyable copyable-text
+     
+         ::
 
-        {
-          "name": "property-number",
-          "label": "My Number Property",
-          "widget-type": "number",
-          "widget-attributes": {
-            "default": "1",
-            "min": "1",
-            "max": "100"
+          {
+            "name": "property-number",
+            "widget-type": "number",
+            "widget-attributes": {
+              "default": "1",
+              "min": "1",
+              "max": "100"
+            }
           }
-        }
      
    * - ``password``
      - No attributes
      - ``string``
      - Default HTML password entry box
-     - ::
+     - .. container:: copyable copyable-text
+     
+         ::
 
-        {
-          "name": "property-password",
-          "label": "My Password Property",
-          "widget-type": "password",
-          "widget-attributes": {}
-        }
+          {
+            "name": "property-password",
+            "widget-type": "password",
+            "widget-attributes": {}
+          }
      
    * - ``python-editor``
      - ``default``: default ``string`` value for the widget
      - ``string``
      - An editor to write Python code as a value of a property
-     - ::
+     - .. container:: copyable copyable-text
+     
+         ::
 
-        {
-          "name": "property-python-editor",
-          "label": "My Python Editor Property",
-          "widget-type": "python-editor",
-          "widget-attributes": {
-            "default": 
-              "def transform(input, emitter, context):\
-        \\n  emitter.emit(input)\\n"
+          {
+            "name": "property-python-editor",
+            "widget-type": "python-editor",
+            "widget-attributes": {
+              "default": 
+                "def transform(input, emitter, context):\
+          \\n  emitter.emit(input)\\n"
+            }
           }
-        }
      
    * - ``schema``
      - - ``schema-default-type``: default type for each newly-added field in the schema
        - ``schema-types``: list of schema types for each field from which the user can chose when setting the schema
      - ``string``
      - A four-column, editable table for representing the schema of a plugin
-     - ::
+     - .. container:: copyable copyable-text
+     
+         ::
 
-        {
-          "name": "property-schema",
-          "label": "My Schema Property",
-          "widget-type": "schema",
-          "widget-attributes": {
-            "schema-default-type": "string",
-            "schema-types": [
-              "boolean",
-              "int",
-              "long",
-              "float",
-              "double",
-              "bytes",
-              "string",
-              "map<string, string>"
-            ]
+          {
+            "name": "property-schema",
+            "widget-type": "schema",
+            "widget-attributes": {
+              "schema-default-type": "string",
+              "schema-types": [
+                "boolean",
+                "int",
+                "long",
+                "float",
+                "double",
+                "bytes",
+                "string",
+                "map<string, string>"
+              ]
+            }
           }
-        }
      
    * - ``select``
      - - ``default``: default value from the list
        - ``values``: list of values for the drop-down
      - ``string``
      - An HTML drop-down with a list of values; allows one choice from the list
-     - ::
-
-        {
-          "name": "property-select",
-          "label": "My Select Property",
-          "widget-type": "select",
-          "widget-attributes": {
-              "default": "Bananas",
-              "values": ["Apples", "Oranges", "Bananas"]
-          }
-        }
+     - .. container:: copyable copyable-text
      
+         ::
+
+          {
+            "name": "property-select",
+            "widget-type": "select",
+            "widget-attributes": {
+                "default": "Bananas",
+                "values": ["Apples", "Oranges", "Bananas"]
+            }
+          }
+     
+   * -  ``stream-selector``
+     - No attributes
+     - ``string``
+     - A type-ahead textbox with a list of streams from the CDAP instance
+     - .. container:: copyable copyable-text
+     
+         ::
+
+          {
+            "name": "property-stream-selector",
+            "widget-type": "stream-selector",
+            "widget-attributes": {}
+          }
+
    * - ``textarea``
      - - ``default``: default value for the widget
        - ``rows``: height of the ``textarea``
      - ``string``
      - An HTML ``textarea`` element which accepts a default value attribute and a height in rows
-     - ::
+     - .. container:: copyable copyable-text
+     
+         ::
 
-        {
-          "name": "property-textarea",
-          "label": "My Textarea Property",
-          "widget-type": "textarea",
-          "widget-attributes": {
-            "default": "Default text.",
-            "rows": "1"
+          {
+            "name": "property-textarea",
+            "widget-type": "textarea",
+            "widget-attributes": {
+              "default": "Default text.",
+              "rows": "1"
+            }
           }
-        }
      
    * - ``textbox``
      - ``default``: default value for the widget
      - ``string``
      - An HTML textbox, used to enter any string, with a default value attribute
-     - ::
+     - .. container:: copyable copyable-text
+     
+         ::
 
-        {
-          "name": "property-textbox",
-          "label": "My Textbox Property",
-          "widget-type": "textbox",
-          "widget-attributes": {
-            "default": "Default text."
+          {
+            "name": "property-textbox",
+            "widget-type": "textbox",
+            "widget-attributes": {
+              "default": "Default text."
+            }
           }
-        }
      
 
 .. _plugins-presentation-plugin-function:
@@ -566,17 +578,14 @@ plugin-function, could be represented by::
         "properties": [
           {
             "name": "name",
-            "label": "Dataset Name",
             "widget-type": "dataset-selector"
           },
           {
             "name": "basePath",
-            "label": "Dataset Base Path",
             "widget-type": "textbox"
           },
           {
             "name": "groupByFields",
-            "label": "Group By Fields",
             "widget-type": "textbox",
             "plugin-function": {
               "method": "POST",
@@ -590,17 +599,14 @@ plugin-function, could be represented by::
           },
           {
             "name": "aggregates",
-            "label": "Aggregates",
             "widget-type": "textbox"
           },
           {
             "name": "duration",
-            "label": "Duration",
             "widget-type": "textbox"
           },
           {
             "name": "duration",
-            "label": "Duration",
             "widget-type": "textbox"
           },
           ...
@@ -705,27 +711,22 @@ Based on the above specification, we can write a widget JSON for a *Batch Source
         "properties": [
           {
             "widget-type": "dataset-selector",
-            "label": "Dataset Name",
             "name": "name"
           },
           {
             "widget-type": "textbox",
-            "label": "Dataset Base Path",
             "name": "basePath"
           },
           {
             "widget-type": "textbox",
-            "label": "Duration",
             "name": "duration"
           },
           {
             "widget-type": "textbox",
-            "label": "Delay",
             "name": "delay"
           },
           {
             "widget-type": "textbox",
-            "label": "Group By Fields",
             "name": "groupByFields",
             "plugin-function": {
               "method": "POST",
@@ -739,7 +740,6 @@ Based on the above specification, we can write a widget JSON for a *Batch Source
           },
           {
             "widget-type": "keyvalue-dropdown",
-            "label": "Aggregates",
             "name": "aggregates",
             "widget-attributes": {
               "showDelimiter": "false",
