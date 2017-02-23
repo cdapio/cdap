@@ -73,16 +73,18 @@ is ``'market.cask.co'``.
 
 .. directory-structure-start
 
-The directory structure must be::
+The directory structure must be:
 
-  <base>/v1/packages.json
-  <base>/v1/packages/<package-name>/<version>/icon.png
-  <base>/v1/packages/<package-name>/<version>/spec.json
-  <base>/v1/packages/<package-name>/<version>/spec.json.asc
-  <base>/v1/packages/<package-name>/<version>/<resource1>
-  <base>/v1/packages/<package-name>/<version>/<resource1>.asc
-  <base>/v1/packages/<package-name>/<version>/<resource2>
-  <base>/v1/packages/<package-name>/<version>/<resource2>.asc
+.. parsed-literal::
+
+  <base>/|cask-market-version|/packages.json
+  <base>/|cask-market-version|/packages/<package-name>/<version>/icon.png
+  <base>/|cask-market-version|/packages/<package-name>/<version>/spec.json
+  <base>/|cask-market-version|/packages/<package-name>/<version>/spec.json.asc
+  <base>/|cask-market-version|/packages/<package-name>/<version>/<resource1>
+  <base>/|cask-market-version|/packages/<package-name>/<version>/<resource1>.asc
+  <base>/|cask-market-version|/packages/<package-name>/<version>/<resource2>
+  <base>/|cask-market-version|/packages/<package-name>/<version>/<resource2>.asc
   ...
 
 .. directory-structure-end
@@ -98,9 +100,11 @@ Get Market Catalog
 
 .. highlight:: console
 
-To retrieve a list of available packages, submit an HTTP GET request::
+To retrieve a list of available packages, submit an HTTP GET request:
 
-  GET /v1/packages.json
+.. parsed-literal::
+
+  GET /|cask-market-version|/packages.json
 
 .. highlight:: json-ellipsis
 
@@ -149,9 +153,11 @@ Get Package Specification
 
 .. highlight:: console
 
-To retrieve a package specification, submit an HTTP GET request::
+To retrieve a package specification, submit an HTTP GET request:
 
-  GET /v1/packages/<package-name>/<version>/spec.json
+.. parsed-literal::
+
+  GET /|cask-market-version|/packages/<package-name>/<version>/spec.json
 
 .. highlight:: json-ellipsis
 
@@ -271,9 +277,11 @@ These actions are available:
 - `informational`_
 - `create_driver_artifact`_
 - `create_plugin_artifact`_
+- `one_step_deploy_plugin`_
 - `create_stream`_
 - `load_datapack`_
 - `deploy_app`_
+- `one_step_deploy_app`_
 - `create_pipeline`_
 - `create_pipeline_draft`_
 
@@ -333,7 +341,7 @@ Creates a CDAP artifact containing a third-party JDBC Driver.
      - Yes
      -
    * - ``jar``
-     - Package resource containing the artifact JAR contents
+     - JAR resource containing the artifact
      - Yes
      -
    * - ``scope``
@@ -362,12 +370,12 @@ Example action::
         "value": "mysql-connector-java"
       },
       {
-        "name": "version",
-        "value": "5.1.39"
-      },
-      {
         "name": "scope",
         "value": "user"
+      },
+      {
+        "name": "version",
+        "value": "5.1.39"
       },
       {
         "name": "config",
@@ -396,8 +404,8 @@ where ``mysql-connector-java.json`` is a package resource with content such as::
 
 create_plugin_artifact
 ......................
-Creates a CDAP artifact that contains plugins that extend another artifact.
-For example, it may contain plugins for CDAP pipelines.
+Creates a CDAP artifact that contains plugins that extend another artifact. For example,
+it may contain plugins for CDAP pipelines. Prompts the user to upload the artifact JAR.
 
 .. list-table::
    :widths: 20 50 10 20
@@ -409,10 +417,6 @@ For example, it may contain plugins for CDAP pipelines.
      - Default
    * - ``name``
      - Artifact name
-     - Yes
-     -
-   * - ``jar``
-     - Package resource containing the artifact JAR contents
      - Yes
      -
    * - ``scope``
@@ -441,12 +445,12 @@ Example action::
         "value": "solrsearch-plugins"
       },
       {
-        "name": "version",
-        "value": "1.5.0"
-      },
-      {
         "name": "scope",
         "value": "user"
+      },
+      {
+        "name": "version",
+        "value": "1.5.0"
       },
       {
         "name": "config",
@@ -465,6 +469,81 @@ where ``solrsearch-plugins.json`` is a package resource with content such as::
     "properties": { }
   }
 
+one_step_deploy_plugin
+......................
+Deploys a CDAP artifact that contains plugins that extend another artifact.
+For example, it may contain plugins for CDAP pipelines. It deploys the
+artifact without prompting users.
+
+.. list-table::
+   :widths: 20 50 10 20
+   :header-rows: 1
+
+   * - Argument
+     - Description
+     - Required?
+     - Default
+   * - ``name``
+     - Artifact name
+     - Yes
+     -
+   * - ``jar``
+     - JAR resource containing the artifact
+     - Yes
+     -
+   * - ``scope``
+     - Artifact scope
+     - No
+     - ``user``
+   * - ``version``
+     - Artifact version
+     - No
+     - Version contained in the JAR manifest
+   * - ``config``
+     - Package resource containing artifact parents, plugins, and properties
+     - No
+     -
+
+.. highlight:: json-ellipsis
+
+Example action::
+
+  {
+    "type": "one_step_deploy_plugin",
+    "label": "Deploy CDAP Pipeline Solr Plugin",
+    "arguments": [
+      {
+        "name": "name",
+        "value": "solrsearch-plugins"
+      },
+      {
+        "name": "jar",
+        "value": "solrsearch-plugins-1.5.0.jar"
+      },
+      {
+        "name": "scope",
+        "value": "user"
+      },
+      {
+        "name": "version",
+        "value": "1.5.0"
+      },
+      {
+        "name": "config",
+        "value": "solrsearch-plugins.json"
+      }
+    ]
+  }
+
+where ``solrsearch-plugins.json`` is a package resource with content such as::
+
+  {
+    "parents": [
+      "system:cdap-data-pipeline[3.0.0,10.0.0]",
+      "system:cdap-data-streams[3.0.0,10.0.0]"
+    ],
+    "properties": { }
+  }
 
 create_stream
 .............
@@ -577,8 +656,7 @@ where ``texts1.tsv`` and ``texts2.tsv`` are package resources containing the dat
 deploy_app
 ..........
 Deploys a CDAP application by prompting the user to upload the application JAR.
-Does not take any arguments. In a future release, you will be able to specify
-the JAR as a package resource.
+Does not take any arguments.
 
 .. highlight:: json-ellipsis
 
@@ -592,6 +670,42 @@ Example action:
       "type": "deploy_app",
       "label": "Word Count Example App"
     }
+
+one_step_deploy_app
+...................
+Deploys a CDAP application.
+
+.. list-table::
+   :widths: 20 50 10 20
+   :header-rows: 1
+
+   * - Argument
+     - Description
+     - Required?
+     - Default
+   * - ``jar``
+     - JAR resource containing the application
+     - Yes
+     -
+
+.. highlight:: json-ellipsis
+
+Example action:
+
+.. container:: highlight
+
+  .. parsed-literal::
+
+    {
+      "type": "one_step_deploy_app",
+      "label": "Deploy Word Count Example App"
+      "arguments": [
+        {
+          "name": "jar",
+          "value": "WordCount-|release|.jar",
+        }      
+    }
+
 
 create_pipeline
 ...............
@@ -717,9 +831,11 @@ Get Package Specification Signature
 
 .. highlight:: console
 
-To retrieve the signature for a package specification, submit an HTTP GET request::
+To retrieve the signature for a package specification, submit an HTTP GET request:
 
-  GET /v1/packages/<package-name>/<version>/spec.json.asc
+.. parsed-literal::
+
+  GET /|cask-market-version|/packages/<package-name>/<version>/spec.json.asc
 
 The signature is a PGP signature that can be used to validate a package resource. The
 package publisher signs the package specification with their private key. The signature can
@@ -731,9 +847,11 @@ Get Package Resource
 
 .. highlight:: console
 
-To retrieve a package resource, submit an HTTP GET request::
+To retrieve a package resource, submit an HTTP GET request:
 
-  GET /v1/packages/<package-name>/<version>/<resource-name>
+.. parsed-literal::
+
+  GET /|cask-market-version|/packages/<package-name>/<version>/<resource-name>
 
 The resource can contain arbitrary data. They can be artifact JARs, configuration files,
 sample data, or anything else that a package action may require.
@@ -743,9 +861,11 @@ Get Package Resource Signature
 
 .. highlight:: console
 
-To retrieve the signature for a package resource, submit an HTTP GET request::
+To retrieve the signature for a package resource, submit an HTTP GET request:
 
-  GET /v1/packages/<package-name>/<version>/<resource-name>.asc
+.. parsed-literal::
+
+  GET /|cask-market-version|/packages/<package-name>/<version>/<resource-name>.asc
 
 The signature is a PGP signature that can be used to validate a package resource. The
 package publisher signs the package resource with their private key. The signature can
@@ -757,9 +877,11 @@ Get Package Icon
 
 .. highlight:: console
 
-To retrieve the icon for a package, submit an HTTP GET request::
+To retrieve the icon for a package, submit an HTTP GET request:
 
-  GET /v1/packages/<package-name>/<version>/icon.png
+.. parsed-literal::
+
+  GET /|cask-market-version|/packages/<package-name>/<version>/icon.png
 
 
 Hosting a Custom Cask Market
