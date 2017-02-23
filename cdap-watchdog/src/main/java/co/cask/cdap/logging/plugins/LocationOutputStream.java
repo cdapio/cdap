@@ -72,13 +72,21 @@ public class LocationOutputStream extends FilterOutputStream implements Syncable
 
   @Override
   public void flush() throws IOException {
-    out.flush();
+    // output stream on hdfs should be org.apache.hadoop.fs.Syncable
+    if (out instanceof org.apache.hadoop.fs.Syncable) {
+      ((org.apache.hadoop.fs.Syncable) out).hflush();
+    } else {
+      out.flush();
+    }
   }
 
   @Override
   public void sync() throws IOException {
-    if (out instanceof Syncable) {
+    // output stream on hdfs should be org.apache.hadoop.fs.Syncable
+    if (out instanceof org.apache.hadoop.fs.Syncable) {
       ((org.apache.hadoop.fs.Syncable) out).hsync();
+    } else {
+      out.flush();
     }
   }
 
