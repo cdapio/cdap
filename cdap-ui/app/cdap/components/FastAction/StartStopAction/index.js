@@ -123,6 +123,7 @@ export default class StartStopAction extends Component {
     let confirmBtnText;
     let headerText;
     let confirmationText;
+    let icon;
 
     if (this.startStop === 'start') {
       confirmBtnText = 'startConfirmLabel';
@@ -134,7 +135,11 @@ export default class StartStopAction extends Component {
       confirmationText = T.translate('features.FastAction.stopConfirmation', {entityId: this.props.entity.id});
     }
     // icon can change in the background, so using state instead of this.startStop
-    let icon = this.state.programStatus === 'STOPPED' ? 'fa fa-play text-success' : 'fa fa-stop text-danger';
+    if (this.state.programStatus === '') {
+      icon = 'fa fa-spinner fa-spin';
+    } else {
+      icon = this.state.programStatus === 'STOPPED' ? 'fa fa-play text-success' : 'fa fa-stop text-danger';
+    }
     let tooltipID = `${this.props.entity.uniqueId}-${this.startStop}`;
 
     return (

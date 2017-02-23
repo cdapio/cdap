@@ -27,15 +27,14 @@ export default class LogAction extends Component {
 
     this.state = {
       isDisabled: false,
-      runId: null,
-      startTime: null,
-      endTime: null,
+      runId: props.entity.runId,
       tooltipOpen: false
     };
     this.toggleTooltip = this.toggleTooltip.bind(this);
   }
 
   componentWillMount() {
+    if (this.state.runId) { return; }
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     this.pollRuns$ = MyProgramApi.pollRuns({
@@ -46,16 +45,16 @@ export default class LogAction extends Component {
     }).subscribe((res) => {
       if (res.length > 0) {
         this.setState({
-          runId: res[0].runid,
-          startTime: res[0].start,
-          endTime: res[0].end
+          runId: res[0].runid
         });
       }
     });
   }
 
   componentWillUnmount() {
-    this.pollRuns$.dispose();
+    if (this.pollRuns$) {
+      this.pollRuns$.dispose();
+    }
   }
 
   generateLink() {
@@ -76,7 +75,8 @@ export default class LogAction extends Component {
   }
 
   render() {
-    const tooltipID = `${this.props.entity.uniqueId}-logs`;
+    // have to do this because ID cannot start with a number
+    const tooltipID = `logs-${this.props.entity.uniqueId}`;
     const renderDisabled = (
       <button
         className="btn btn-link"
@@ -124,6 +124,7 @@ LogAction.propTypes = {
     id: PropTypes.string.isRequired,
     uniqueId: PropTypes.string,
     applicationId: PropTypes.string.isRequired,
-    programType: PropTypes.string.isRequired
-  })
+    programType: PropTypes.string.isRequired,
+    runId: PropTypes.string
+  }),
 };
