@@ -19,23 +19,27 @@ package co.cask.cdap.data2.dataset2.lib.partitioned;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 
 /**
- * Represents an operation on a particular path. Must be used in context of a base location, because the path is a
- * relative path.
+ * Represents the creation of a partition.
  */
-class PartitionOperation {
-  private final String relativePath;
-  private final PartitionKey partitionKey;
+class AddPartitionOperation extends PartitionOperation {
 
-  PartitionOperation(PartitionKey partitionKey, String relativePath) {
-    this.partitionKey = partitionKey;
-    this.relativePath = relativePath;
+  private final boolean filesCreated;
+  private boolean explorePartitionCreated = false;
+
+  AddPartitionOperation(PartitionKey partitionKey, String relativePath, boolean filesCreated) {
+    super(partitionKey, relativePath);
+    this.filesCreated = filesCreated;
   }
 
-  String getRelativePath() {
-    return relativePath;
+  void setExplorePartitionCreated() {
+    explorePartitionCreated = true;
   }
 
-  PartitionKey getPartitionKey() {
-    return partitionKey;
+  boolean isFilesCreated() {
+    return filesCreated;
+  }
+
+  boolean isExplorePartitionCreated() {
+    return explorePartitionCreated;
   }
 }

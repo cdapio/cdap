@@ -120,7 +120,6 @@ import java.net.URL;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -408,6 +407,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         // invalids long running tx. All writes done by MR cannot be undone at this point.
         txClient.invalidate(transaction.getWritePointer());
       }
+    } catch (Throwable t) {
+      success = false;
+      throw t;
     } finally {
       // whatever happens we want to call this
       try {
@@ -635,8 +637,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         public void run(DatasetContext ctxt) throws Exception {
           ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
           try {
-            for (ProvidedOutput output : context.getOutputs().values()) {
-              commitOutput(succeeded, output.getAlias(), output.getOutputFormatProvider(), failureCause);
+            for (Map.Entry<String, ProvidedOutput> output : context.getOutputs().entrySet()) {
+              commitOutput(succeeded, output.getKey(), output.getValue().getOutputFormatProvider(), failureCause);
               if (succeeded && failureCause.get() != null) {
                 // mapreduce was successful but this output committer failed: call onFailure() for all committers
                 for (ProvidedOutput toFail : context.getOutputs().values()) {
@@ -644,6 +646,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                 }
                 break;
               }
+            }
+            // if there was a failure, we must throw an exception to fail the transaction
+            // this will roll back all the outputs and also make sure that postCommit() is not called
+            // throwing the failure cause: it will be wrapped in a TxFailure and handled in the outer catch()
+            Exception cause = failureCause.get();
+            if (cause != null) {
+              failureCause.set(null);
+              throw cause;
             }
           } finally {
             ClassLoaders.setContextClassLoader(oldClassLoader);
@@ -814,13 +824,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Map<String, ProvidedOutput> outputsMap = context.getOutputs();
     fixOutputPermissions(job, outputsMap);
     LOG.debug("Using as output for MapReduce Job: {}", outputsMap.keySet());
-    Collection<ProvidedOutput> outputs = outputsMap.values();
-    if (outputs.isEmpty()) {
+    if (outputsMap.isEmpty()) {
       // user is not going through our APIs to add output; leave the job's output format to user
       return;
-    } else if (outputs.size() == 1) {
+    } else if (outputsMap.size() == 1) {
       // If only one output is configured through the context, then set it as the root OutputFormat
-      ProvidedOutput output = outputs.iterator().next();
+      ProvidedOutput output = outputsMap.values().iterator().next();
       ConfigurationUtil.setAll(output.getOutputFormatConfiguration(), job.getConfiguration());
       job.getConfiguration().set(Job.OUTPUT_FORMAT_CLASS_ATTR, output.getOutputFormatClassName());
       return;
@@ -831,7 +840,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                                                          new HashMap<String, String>());
     job.setOutputFormatClass(MultipleOutputsMainOutputWrapper.class);
 
-    for (ProvidedOutput output : outputs) {
+    for (Map.Entry<String, ProvidedOutput> entry : outputsMap.entrySet()) {
+      ProvidedOutput output = entry.getValue();
       String outputName = output.getAlias();
       String outputFormatClassName = output.getOutputFormatClassName();
       Map<String, String> outputConfig = output.getOutputFormatConfiguration();

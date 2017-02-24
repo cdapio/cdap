@@ -66,6 +66,7 @@ import java.io.File;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -120,7 +121,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     this.resourcesToLocalize = new HashMap<>();
 
     this.inputs = new HashMap<>();
-    this.outputs = new HashMap<>();
+    this.outputs = new LinkedHashMap<>();
 
     if (spec.getInputDataSet() != null) {
       addInput(Input.ofDataset(spec.getInputDataSet()));
@@ -266,7 +267,8 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
    * @return a map from output name to provided output for the MapReduce job
    */
   Map<String, ProvidedOutput> getOutputs() {
-    return new HashMap<>(outputs);
+    // LinkedHashMap() will preserve the order of the outputs
+    return new LinkedHashMap<>(outputs);
   }
 
   @Override

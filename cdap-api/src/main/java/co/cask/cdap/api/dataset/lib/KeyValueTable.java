@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -211,7 +211,7 @@ public class KeyValueTable extends AbstractDataset implements
   * @param stop if non-null, the returned splits will only cover keys that are less
   * @return list of {@link Split}
   */
-  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
+  public List<Split> getSplits(int numSplits, @Nullable byte[] start, @Nullable byte[] stop) {
     return table.getSplits(numSplits, start, stop);
   }
 

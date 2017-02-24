@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _datasets-partitioned-fileset:
 
@@ -357,3 +357,32 @@ You need to specify the SerDe, the input format, the output format, and any addi
 any of these may need as table properties. This is an experimental feature and only tested for
 Avro; see the :ref:`StreamConversion <examples-stream-conversion>` example and
 the :ref:`fileset-exploration` for more details.
+
+.. _datasets-partitioned-fileset-transactions:
+
+PartitionedFileSets and Transactions
+====================================
+
+A PartitionedFileSet is a hybrid of a non-transactional FileSet and a transactional Table
+that stores the partition metadata. As a consequence, operations that need access to the
+partition table (such as adding a partition or listing partitions) can only be performed
+in the context of a transaction, while operations that only require access to the
+FileSet (such as ``getPartitionOutput()`` or ``getEmbeddedFileSet()``) can be performed
+without a transaction.
+
+Because a FileSet is not a transactional dataset, it normally does not participate in a
+transaction rollback: files written in a transaction are not rolled back if the transaction
+fails; and files deleted in a transaction are not restored. However, in the context of a
+PartitionedFileSet, consistency between the partition files and the partition metadata
+is desired. As a consequence, the FileSet embedded in a PartitionedFileSet behaves
+transactionally as follows:
+
+- If ``PartitionOutput.addPartition()`` is used to add a new partition, and the
+  transaction fails, then the location of that PartitionOutput is deleted.
+- If a partition is added as the output of a MapReduce program, and the MapReduce fails,
+  then the partition and its files are removed as part of the job cleanup.
+- However, if a partition is added using ``PartitionedFileSet.addPartition()`` with
+  an existing relative path in the FileSet, then the files at that location are not
+  removed on transaction failure.
+- If a partition is deleted using ``dropPartition()``, then the partition and its files
+  are restored if the transaction fails.

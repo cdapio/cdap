@@ -319,8 +319,7 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * @param stop if non-null, the returned splits will only cover keys that are less
    * @return list of {@link Split}
    */
-  List<Split> getSplits(int numSplits, byte[] start, byte[] stop);
-
+  List<Split> getSplits(int numSplits, @Nullable byte[] start, @Nullable byte[] stop);
 
   /**
    * Compares-and-swaps (atomically) the value of the specified row and column by looking for
@@ -333,7 +332,6 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * @return true if compare and swap succeeded, false otherwise (stored value is different from expected)
    */
   boolean compareAndSwap(byte[] key, byte[] keyColumn, byte[] oldValue, byte[] newValue);
-
 
   /**
    * Writes the {key, value} record into a dataset.

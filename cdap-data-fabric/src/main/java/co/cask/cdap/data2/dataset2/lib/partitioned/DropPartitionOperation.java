@@ -19,23 +19,10 @@ package co.cask.cdap.data2.dataset2.lib.partitioned;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 
 /**
- * Represents an operation on a particular path. Must be used in context of a base location, because the path is a
- * relative path.
+ * Represents the drop of a partition.
  */
-class PartitionOperation {
-  private final String relativePath;
-  private final PartitionKey partitionKey;
-
-  PartitionOperation(PartitionKey partitionKey, String relativePath) {
-    this.partitionKey = partitionKey;
-    this.relativePath = relativePath;
-  }
-
-  String getRelativePath() {
-    return relativePath;
-  }
-
-  PartitionKey getPartitionKey() {
-    return partitionKey;
+class DropPartitionOperation extends PartitionOperation {
+  DropPartitionOperation(PartitionKey partitionKey, String relativePath) {
+    super(partitionKey, relativePath);
   }
 }
