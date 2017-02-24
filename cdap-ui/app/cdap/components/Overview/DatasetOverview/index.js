@@ -145,12 +145,14 @@ export default class DatasetOverview extends Component {
             }
           }}
           onClose={this.props.onClose}
+          entityType="datasetinstance"
           successMessage={this.state.successMessage}
         />
         <OverviewMetaSection
           entity={this.state.entity}
           onFastActionSuccess={this.onFastActionSuccess.bind(this)}
           onFastActionUpdate={this.onFastActionUpdate.bind(this)}
+          showSeparator={true}
         />
         <DatasetOverviewTab entity={this.state.entityDetail} />
       </div>

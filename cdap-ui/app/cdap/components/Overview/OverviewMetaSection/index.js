@@ -142,6 +142,9 @@ export default class OverviewMetaSection extends Component {
             actionToOpen={this.props.fastActionToOpen}
           />
         </div>
+
+        {this.props.showSeparator ? <hr /> : null}
+
         <Description description={description} />
         {this.renderDatasetInfo()}
         {this.renderStreamInfo()}
@@ -156,5 +159,6 @@ OverviewMetaSection.propTypes = {
   onFastActionSuccess: PropTypes.func,
   onFastActionUpdate: PropTypes.func,
   fastActionToOpen: PropTypes.string,
-  showFullCreationTime: PropTypes.bool
+  showFullCreationTime: PropTypes.bool,
+  showSeparator: PropTypes.bool
 };

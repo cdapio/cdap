@@ -36,6 +36,22 @@ export function parseMetadata(entity) {
   }
 }
 
+export function getType(entity) {
+  if (entity.type === 'program') {
+    return entity.programType.toLowerCase();
+  } else if (entity.type !== 'application') {
+    return entity.type;
+  }
+
+  if (entity.metadata.metadata.SYSTEM.tags.indexOf('cdap-data-pipeline') !== -1) {
+    return 'cdap-data-pipeline';
+  } else if (entity.metadata.metadata.SYSTEM.tags.indexOf('cdap-data-streams') !== -1) {
+    return 'cdap-data-streams';
+  } else {
+    return entity.type;
+  }
+}
+
 function createArtifactObj(entity) {
   return {
     id: entity.entityId.id.name,

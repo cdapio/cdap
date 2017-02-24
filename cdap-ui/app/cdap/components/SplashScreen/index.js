@@ -138,7 +138,7 @@ class SplashScreen extends Component {
                     </div>
                   :
                     <div>
-                      <img width="100px" src="cdap_assets/img/cdaplogo_white.png" />
+                      <img width="150px" src="cdap_assets/img/cdaplogo_white.svg" />
                       <div className="version-label">
                         {T.translate('features.SplashScreen.version-label')}
                       </div>

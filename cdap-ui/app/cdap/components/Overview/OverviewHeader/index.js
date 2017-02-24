@@ -41,7 +41,7 @@ export default class OverviewHeader extends Component {
   }
   render() {
     return (
-      <div className={classnames("overview-header", {'message-placeholder': typeof this.props.onClose !== 'function'})}>
+      <div className={classnames("overview-header", this.props.entityType, {'message-placeholder': typeof this.props.onClose !== 'function'})}>
         {
           this.state.successMessage ?
             <div className="overview-header success-message">
@@ -95,5 +95,6 @@ OverviewHeader.propTypes = {
   title: PropTypes.string,
   linkTo: PropTypes.object,
   onClose: PropTypes.func,
-  successMessage: PropTypes.string
+  successMessage: PropTypes.string,
+  entityType: PropTypes.string
 };
