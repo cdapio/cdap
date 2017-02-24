@@ -182,7 +182,7 @@
                 </goals>
                 <configuration>
                   <excludeArtifactIds>*</excludeArtifactIds>
-                  <includeArtifactIds>${artifactId}</includeArtifactIds>
+                  <includeArtifactIds>${project.artifactId}</includeArtifactIds>
                   <silent>true</silent>
                   <includeScope>compile</includeScope>
                 </configuration>
