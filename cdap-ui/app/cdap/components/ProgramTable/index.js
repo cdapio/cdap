@@ -100,11 +100,15 @@ export default class ProgramTable extends Component {
                   <i className={classnames('fa', icon)} />
                   {program.programType}
                 </td>
-                <td>{
-                  !isEmpty(program.latestRun) ? humanReadableDate(program.latestRun.start) : 'n/a'
-                }</td>
+                <td>
+                  {
+                    !isEmpty(program.latestRun) ? humanReadableDate(program.latestRun.start) : 'n/a'
+                  }
+                </td>
                 <td className={statusClass}>
-                  {program.status}
+                  {
+                    !isEmpty(program.status) ? program.status : 'n/a'
+                  }
                 </td>
                 <td>
                   <div className="fast-actions-container">
@@ -123,28 +127,33 @@ export default class ProgramTable extends Component {
   }
 
   render() {
-    // because of runs, we don't want to load until we have all these info
-    const isAllLoaded = () => {
-      return this.state.entities.every(program => {
-        return program.name && program.programType && program.latestRun && program.status;
-      });
-    };
-    if (!isAllLoaded()) {
-      return (
-        <div className="program-table">
-          <h3 className="text-xs-center">
-            <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
-          </h3>
-        </div>
-      );
+
+    if (this.state.entities && Array.isArray(this.state.entities)) {
+      if (this.state.entities.length) {
+        return (
+          <div className="program-table">
+            <SortableTable
+              entities={this.state.entities}
+              tableHeaders={this.tableHeaders}
+              renderTableBody={this.renderTableBody}
+            />
+          </div>
+        );
+      } else {
+        return (
+          <div className="history-tab">
+            <i>
+              {T.translate('features.Overview.ProgramTab.emptyMessage')}
+            </i>
+          </div>
+        );
+      }
     }
     return (
       <div className="program-table">
-        <SortableTable
-          entities={this.state.entities}
-          tableHeaders={this.tableHeaders}
-          renderTableBody={this.renderTableBody}
-        />
+        <h3 className="text-xs-center">
+          <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
+        </h3>
       </div>
     );
   }
