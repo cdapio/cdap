@@ -338,10 +338,11 @@ ApplicationLifecycleService extends AbstractIdleService {
     // irrespective of the version
     if (!Objects.equals(ownerAdmin.getImpersonationPrincipal(appId), appRequest.getOwnerPrincipal())) {
       // Not giving existing owner information as it might be unacceptable under some security scenarios
-      throw new ConflictException(String.format("The specified %s : '%s' is not the same as existing one. " +
-                                                  "The %s of an %s cannot be updated.",
+      throw new ConflictException(String.format("%s '%s' already exists and the specified %s '%s' is not the same as " +
+                                                  "the existing one. The %s of an entity cannot be changed.",
+                                                appId.getEntityType(), appId.getApplication(),
                                                 Constants.Security.PRINCIPAL, appRequest.getOwnerPrincipal(),
-                                                Constants.Security.PRINCIPAL, appId.getEntityType()));
+                                                Constants.Security.PRINCIPAL));
     }
 
     Object requestedConfigObj = appRequest.getConfig();
