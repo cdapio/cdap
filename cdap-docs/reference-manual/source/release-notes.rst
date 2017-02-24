@@ -121,43 +121,43 @@ New Features
   framework.
 
 - :cask-issue:`HYDRATOR-1049` - Added a DynamoDb Sink as a plugin, available at
-  `https://github.com/hydrator/dynamodb-sink`__.
+  `github.com/hydrator/dynamodb-sink <https://github.com/hydrator/dynamodb-sink>`__.
 
 - :cask-issue:`HYDRATOR-1050` - Added a DynamoDB Batch Source plugin, available at
-  `https://github.com/hydrator/dynamodb-source`__.
+  `github.com/hydrator/dynamodb-source <https://github.com/hydrator/dynamodb-source>`__.
 
 - :cask-issue:`HYDRATOR-1172` - Added a Realtime Stream Source plugin, available at
-  `https://github.com/hydrator/realtime-stream-source`__.
+  `github.com/hydrator/realtime-stream-source <https://github.com/hydrator/realtime-stream-source>`__.
 
 - :cask-issue:`HYDRATOR-1249` - The Tokenizer plugin is now available in it own repository
-  at `https://github.com/hydrator/tokenizer-analytics`__.
+  at `github.com/hydrator/tokenizer-analytics <https://github.com/hydrator/tokenizer-analytics>`__.
 
 - :cask-issue:`HYDRATOR-1250` - The NGramTransform plugin is now available in its own
-  repository at `https://github.com/hydrator/ngram-analytics`__.
+  repository at `github.com/hydrator/ngram-analytics <https://github.com/hydrator/ngram-analytics>`__.
 
 - :cask-issue:`HYDRATOR-1251` - The DecisionTree Regression plugins are now available in
-  their own repository at `https://github.com/hydrator/decision-tree-analytics`__.
+  their own repository at `github.com/hydrator/decision-tree-analytics <https://github.com/hydrator/decision-tree-analytics>`__.
 
 - :cask-issue:`HYDRATOR-1252` - The SKipGram Feature Generator plugin is now available in
-  its own repository at `https://github.com/hydrator/skipgram-analytics`__.
+  its own repository at `github.com/hydrator/skipgram-analytics <https://github.com/hydrator/skipgram-analytics>`__.
 
 - :cask-issue:`HYDRATOR-1253` - The Naive Bayes Analytics plugin is now available in its
-  own repository at `https://github.com/hydrator/naive-bayes-analytics`__.
+  own repository at `github.com/hydrator/naive-bayes-analytics <https://github.com/hydrator/naive-bayes-analytics>`__.
 
 - :cask-issue:`HYDRATOR-1254` - The HashingTF Feature Generator plugin is now available in
-  its own repository at `https://github.com/hydrator/hashing-tf-feature-generator`__.
+  its own repository at `github.com/hydrator/hashing-tf-feature-generator <https://github.com/hydrator/hashing-tf-feature-generator>`__.
 
 - :cask-issue:`HYDRATOR-1255` - The LogisticRegression plugins are now available in their
-  own repository at `https://github.com/hydrator/logistic-regression-analytics`__.
+  own repository at `github.com/hydrator/logistic-regression-analytics <https://github.com/hydrator/logistic-regression-analytics>`__.
 
 - :cask-issue:`HYDRATOR-235` - The Kinesis Spark Streaming source plugin is available in
-  its own repository at `https://github.com/hydrator/kinesis-spark-streaming-source`__.
+  its own repository at `github.com/hydrator/kinesis-spark-streaming-source <https://github.com/hydrator/kinesis-spark-streaming-source>`__.
 
 - :cask-issue:`HYDRATOR-552` - Added a plugin for sampling data from a source, available
-  at `https://github.com/hydrator/sampling-aggregator`__.
+  at `github.com/hydrator/sampling-aggregator <https://github.com/hydrator/sampling-aggregator>`__.
 
 - :cask-issue:`HYDRATOR-585` - The HTTP Sink plugin (for posting data from a pipeline to
-  an external endpoint) has been added at `https://github.com/hydrator/http-sink`__.
+  an external endpoint) has been added at `github.com/hydrator/http-sink <https://github.com/hydrator/http-sink>`__.
 
 - :cask-issue:`HYDRATOR-954` - The Kinesis Source plugin now works in realtime pipelines.
 
@@ -209,11 +209,11 @@ Improvements
   use.
 
 - :cask-issue:`HYDRATOR-1073` - Added a "Fail This Pipeline" sink plugin in a repo at
-  `https://github.com/hydrator/failpipeline-sink`__.
+  ` <https://github.com/hydrator/failpipeline-sink>`__.
 
 - :cask-issue:`HYDRATOR-1074` - Added a plugin for fetching data from an external HTTP
   site and writing the response to HDFS, available at
-  `https://github.com/hydrator/httptohdfs-action`__.
+  ` <https://github.com/hydrator/httptohdfs-action>`__.
 
 - :cask-issue:`HYDRATOR-1144` - Updated the use of "true/false" select boxes to be
   consistent in their ordering.
@@ -296,8 +296,9 @@ Bug Fixes
   3.2 to CDAP version 3.2.
 
 - :cask-issue:`CDAP-8087` - Provided a workaround for Scala bug SI-6240
-  (`https://issues.scala-lang.org/browse/SI-6240`__) to allow concurrent execution of Spark
-  programs in CDAP Workflows.
+  (`issues.scala-lang.org/browse/SI-6240
+  <https://issues.scala-lang.org/browse/SI-6240>`__) to allow concurrent execution of
+  Spark programs in CDAP Workflows.
 
 - :cask-issue:`CDAP-8088` - Fixed the CDAP UI pipeline detail view so that it can be
   rendered in older browsers.
