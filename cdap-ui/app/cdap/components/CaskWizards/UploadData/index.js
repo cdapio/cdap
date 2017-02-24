@@ -20,9 +20,12 @@ import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import UploadDataWizardConfig from 'services/WizardConfigs/UploadDataWizardConfig';
 import UploadDataActions from 'services/WizardStores/UploadData/UploadDataActions';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
+import {MyStreamApi} from 'api/stream';
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 import cookie from 'react-cookie';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 import head from 'lodash/head';
 
@@ -35,6 +38,7 @@ export default class UploadDataWizard extends Component {
     };
     this.setDefaultConfig();
     this.prepareInputForSteps();
+    this.eventEmitter = ee(ee);
   }
   componentWillUnmount() {
     UploadDataStore.dispatch({
@@ -53,16 +57,36 @@ export default class UploadDataWizard extends Component {
     if (!this.props.buildSuccessInfo) {
       this.buildSuccessInfo(packagename, streamId, currentNamespace);
     }
-
-    return UploadDataActionCreator.uploadData({
-      url: `/namespaces/${currentNamespace}/streams/${streamId}/batch`,
-      fileContents,
-      headers: {
-        filetype,
-        filename,
-        authToken
-      }
-    });
+    return MyStreamApi
+      .list({namespace: currentNamespace})
+      .flatMap((streamsList) => {
+        let matchingStream = streamsList
+          .map(stream => stream.name)
+          .find(stream => stream === streamId);
+        if (!matchingStream) {
+          return MyStreamApi
+            .create({
+              namespace: currentNamespace,
+              streamId
+            })
+            .flatMap(() => {
+              this.eventEmitter.emit(globalEvents.STREAMCREATE);
+              return Promise.resolve();
+            });
+        }
+        return Promise.resolve();
+      })
+      .flatMap(() => {
+        return UploadDataActionCreator.uploadData({
+          url: `/namespaces/${currentNamespace}/streams/${streamId}/batch`,
+          fileContents,
+          headers: {
+            filetype,
+            filename,
+            authToken
+          }
+        });
+      });
   }
   toggleWizard(returnResult) {
     if (this.state.showWizard) {
