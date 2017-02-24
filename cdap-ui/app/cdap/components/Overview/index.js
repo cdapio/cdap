@@ -52,6 +52,12 @@ export default class Overview extends Component {
       });
     }
   }
+  componentDidUpdate() {
+    if (this.props.entity) {
+      let el = document.getElementById(this.props.entity.uniqueId);
+      el.scrollIntoView();
+    }
+  }
   hideOverview() {
     if (this.props.onClose) {
       this.props.onClose();
