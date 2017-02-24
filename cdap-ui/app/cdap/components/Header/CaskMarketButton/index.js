@@ -17,6 +17,8 @@
 import React, {Component, PropTypes} from 'react';
 import PlusButtonModal from 'components/PlusButtonModal';
 import classnames from 'classnames';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 export default class CaskMarketButton extends Component {
   constructor(props) {
@@ -24,15 +26,28 @@ export default class CaskMarketButton extends Component {
     this.state = {
       showMarketPlace: false
     };
+
+    this.closeCaskMarketModal = this.closeCaskMarketModal.bind(this);
+    this.eventEmitter = ee(ee);
+    this.eventEmitter.on(globalEvents.CLOSEMARKET, this.closeCaskMarketModal);
   }
+
   componentWillUnmount() {
-    this.plusButtonSubscription();
+    this.eventEmitter.off(globalEvents.CLOSEMARKET, this.closeCaskMarketModal);
   }
+
   onClickHandler() {
     this.setState({
       showMarketPlace: !this.state.showMarketPlace
     });
   }
+
+  closeCaskMarketModal () {
+    this.setState({
+      showMarketPlace: false
+    });
+  }
+
   render() {
     return (
       <span

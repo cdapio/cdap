@@ -20,7 +20,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: calc(100vh - 80px);
+  height: calc(100vh - 104px);
 
   .splash-screen-first-time {
     color: $cdap-orange;
@@ -28,6 +28,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    margin: auto;
 
     .welcome-message {
       font-weight: 500;
