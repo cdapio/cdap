@@ -55,7 +55,9 @@ export default class Overview extends Component {
   componentDidUpdate() {
     if (this.props.entity) {
       let el = document.getElementById(this.props.entity.uniqueId);
+      let paginationContainer = document.querySelector('.pagination-container');
       el.scrollIntoView();
+      paginationContainer.scrollTop -= 63;
     }
   }
   hideOverview() {
