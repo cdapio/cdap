@@ -125,20 +125,12 @@
         </div>
       </div>
       <div class="col-xs-2 text-right">
-        <div uib-dropdown>
-          <button class="btn" uib-dropdown-toggle>
-            <span>Jump</span>
-            <span class="fa fa-angle-down"></span>
-          </button>
-
-          <ul class="pull-right" uib-dropdown-menu>
-            <li>
-              <a ui-sref="flows.detail({ appId: IntegrationsController.UI_CONFIG.navigator.appId, programId: IntegrationsController.UI_CONFIG.navigator.programId})">
-                View in CDAP
-              </a>
-            </li>
-          </ul>
-        </div>
+        <a
+          href="{{IntegrationsController.flowDetailUrl}}"
+          class="btn flows-detail-btn"
+        >
+          <span>View Detail</span>
+        </a>
       </div>
     </div>
 

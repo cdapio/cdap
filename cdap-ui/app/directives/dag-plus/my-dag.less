@@ -107,17 +107,6 @@ my-dag-plus {
         .node {
           border: 3px solid #4586f3;
         }
-
-        &.wrangler {
-          color: @wrangler-yellow;
-          .node {
-            border-color: @wrangler-yellow;
-          }
-          .plugin-name {
-            // Wrangler yellow makes the text unreadable
-            color: darken(@wrangler-yellow, 10%);
-          }
-        }
       }
       &.realtimesink,
       &.batchsink,
@@ -359,11 +348,6 @@ my-dag-plus {
           stroke: #4586f3;
         }
 
-        &.wrangler-anchor {
-          circle {
-            stroke: @wrangler-yellow;
-          }
-        }
       }
       &-anchor-sinkAnchor {
         circle,
