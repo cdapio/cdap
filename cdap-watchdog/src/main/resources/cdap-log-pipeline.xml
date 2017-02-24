@@ -31,7 +31,7 @@
     <maxFileLifetimeMs>${file.max.lifetime.ms}</maxFileLifetimeMs>
     <maxFileSizeInBytes>${file.max.size.bytes}</maxFileSizeInBytes>
     <logCleanupIntervalMins>${file.cleanup.interval.mins}</logCleanupIntervalMins>
-    <fileRetentionDurationDays>${file.retention.duration.days}</fileRetentionDurationDays>
+    <fileRetentionDurationMins>${file.retention.duration.mins}</fileRetentionDurationMins>
     <fileCleanupTransactionTimeout>${file.cleanup.transaction.timeout}</fileCleanupTransactionTimeout>
   </appender>
 

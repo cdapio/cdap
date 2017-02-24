@@ -1103,6 +1103,14 @@
   </property>
 
   <property>
+    <name>log.pipeline.cdap.file.retention.duration.mins</name>
+    <value>60</value>
+    <description>
+      Maximum time in mins a file is kept before it could be deleted by log cleanup. Default is 7 days.
+    </description>
+  </property>
+
+  <property>
     <name>log.pipeline.cdap.file.cleanup.transaction.timeout</name>
     <value>60</value>
     <description>
@@ -1113,7 +1121,7 @@
 
   <property>
     <name>log.pipeline.cdap.file.cleanup.interval.mins</name>
-    <value>1440</value>
+    <value>20</value>
     <description>
       interval period for the log cleanup thread to run.
     </description>

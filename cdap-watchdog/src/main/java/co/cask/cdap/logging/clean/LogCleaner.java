@@ -41,7 +41,7 @@ public class LogCleaner implements Runnable {
     this.locationFactory = locationFactory;
     this.retentionDurationMs = retentionDurationMs;
     this.transactionTimeout = fileCleanupTransactionTimeout;
-    LOG.debug("Log retention duration = {}ms", retentionDurationMs);
+    LOG.info("Log retention duration = {}ms", retentionDurationMs);
   }
 
   @Override

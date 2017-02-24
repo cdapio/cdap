@@ -64,7 +64,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   private long maxFileSizeInBytes;
   private ScheduledExecutorService scheduledExecutorService;
   private int logCleanupIntervalMins;
-  private int fileRetentionDurationDays;
+  private int fileRetentionDurationMins;
   private int fileCleanupTransactionTimeout;
 
   public CDAPLogAppender() {
@@ -110,8 +110,8 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
    * Sets the file retention duration for the file,
    * after this duration the file gets cleaned up by log clean up thread.
    */
-  public void setFileRetentionDurationDays(int fileRetentionDurationDays) {
-    this.fileRetentionDurationDays = fileRetentionDurationDays;
+  public void setFileRetentionDurationMins(int fileRetentionDurationMins) {
+    this.fileRetentionDurationMins = fileRetentionDurationMins;
   }
 
   /**
@@ -137,7 +137,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     Preconditions.checkState(syncIntervalBytes > 0, "Property syncIntervalBytes must be > 0.");
     Preconditions.checkState(maxFileLifetimeMs > 0, "Property maxFileLifetimeMs must be > 0");
     Preconditions.checkState(maxFileSizeInBytes > 0, "Property maxFileSizeInBytes must be > 0");
-    Preconditions.checkState(fileRetentionDurationDays > 0, "Property fileRetentionDurationDays must be > 0");
+    Preconditions.checkState(fileRetentionDurationMins > 0, "Property fileRetentionDurationMins must be > 0");
     Preconditions.checkState(logCleanupIntervalMins > 0, "Property logCleanupIntervalMins must be > 0");
     Preconditions.checkState(fileCleanupTransactionTimeout > Constants.Logging.TX_TIMEOUT_DISCOUNT_SECS,
                              String.format("Property fileCleanupTransactionTimeout must be greater than %s seconds",
@@ -154,9 +154,9 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
           Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("log-clean-up"));
         FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(context.getDatasetManager(), context);
         LogCleaner logCleaner = new LogCleaner(fileMetadataCleaner, context.getLocationFactory(),
-                                               TimeUnit.DAYS.toMillis(fileRetentionDurationDays),
+                                               TimeUnit.MINUTES.toMillis(fileRetentionDurationMins),
                                                fileCleanupTransactionTimeout);
-        scheduledExecutorService.scheduleAtFixedRate(logCleaner, 10, logCleanupIntervalMins, TimeUnit.MINUTES);
+        scheduledExecutorService.scheduleAtFixedRate(logCleaner, 0, logCleanupIntervalMins, TimeUnit.MINUTES);
       }
     } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {
       throw new IllegalStateException("Expected logger context instance of " + AppenderContext.class.getName() +
