@@ -402,7 +402,7 @@ Bug Fixes
 Known Issues
 ------------
 
-- :cask-issue:`CDAP-8531`, :cask-issue:`CDAP-8659`- If the property
+- :cask-issue:`CDAP-8531`, :cask-issue:`CDAP-8659` - If the property
   ``hive.compute.query.using.stats`` is ``true`` in HDP 2.5.x clusters, CDAP Explore
   queries that trigger a MapReduce program can fail.
 
