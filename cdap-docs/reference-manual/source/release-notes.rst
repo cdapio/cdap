@@ -39,9 +39,6 @@ New Features
 - :cask-issue:`CDAP-4556` - CDAP now uses environment variables in the ``spark-env.sh`` and
   properties in the ``spark-defaults.conf`` when launching Spark programs.
 
-- :cask-issue:`CDAP-4739` - Fixed an issue to make artifact, datasets, logs, and
-  coprocessor jar locations resilient to an HA upgrade.
-
 - :cask-issue:`CDAP-7596` - Added the ability to reuse an existing file system location
   and Hive table when creating a partitioned file set.
 
@@ -209,11 +206,11 @@ Improvements
   use.
 
 - :cask-issue:`HYDRATOR-1073` - Added a "Fail This Pipeline" sink plugin in a repo at
-  ` <https://github.com/hydrator/failpipeline-sink>`__.
+  `github.com/hydrator/failpipeline-sink <https://github.com/hydrator/failpipeline-sink>`__.
 
 - :cask-issue:`HYDRATOR-1074` - Added a plugin for fetching data from an external HTTP
   site and writing the response to HDFS, available at
-  ` <https://github.com/hydrator/httptohdfs-action>`__.
+  `github.com/hydrator/httptohdfs-action <https://github.com/hydrator/httptohdfs-action>`__.
 
 - :cask-issue:`HYDRATOR-1144` - Updated the use of "true/false" select boxes to be
   consistent in their ordering.
@@ -238,6 +235,9 @@ Bug Fixes
 
 - :cask-issue:`CDAP-2543` - Fixed an issue of a hanging application in the case that a
   user program JAR is missing dependencies.
+
+- :cask-issue:`CDAP-4739` - Fixed an issue to make artifact, datasets, logs, and
+  coprocessor jar locations resilient to an HA upgrade.
 
 - :cask-issue:`CDAP-5107` - Added an HTTP RESTful endpoint to retrieve a specific property
   for a specific version of an artifact in the 'system' scope.
