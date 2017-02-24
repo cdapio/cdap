@@ -55,6 +55,12 @@ The developer does not need to worry about what will happen when this code is ru
 transaction service is unavailable. The program will retry the relevant transaction calls until
 the configured timeout is reached or the transaction service recovers.
 
+Currently, retry policies only apply when the failure is due unavailability of a CDAP system service.
+If underlying infrastructure like HBase is not available, the CDAP retry policy will not be applied
+to that HBase operation. For example, if HBase is unavailable while you are scanning a Table in a
+MapReduce job, the scan will be retried according to the HBase properties you have set in your
+hbase-site.xml, and not according to the retry policy for that MapReduce program. 
+
 .. _program-retry-policies-config:
 
 Configuring Default Retry Policy 
