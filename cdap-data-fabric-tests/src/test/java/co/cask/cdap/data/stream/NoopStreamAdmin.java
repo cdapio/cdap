@@ -81,11 +81,13 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
+  @Nullable
   public StreamConfig create(StreamId streamId) throws Exception {
     return null;
   }
 
   @Override
+  @Nullable
   public StreamConfig create(StreamId streamId, @Nullable Properties props) throws Exception {
     return null;
   }

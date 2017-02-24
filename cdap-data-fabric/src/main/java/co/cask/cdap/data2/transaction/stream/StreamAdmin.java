@@ -103,18 +103,20 @@ public interface StreamAdmin {
   /**
    * Creates stream if doesn't exist. If stream exists does nothing.
    * @param streamId Id of the stream to create
-   * @return The {@link StreamConfig} associated with the new stream
+   * @return The {@link StreamConfig} associated with the new stream or null if the stream already exists
    * @throws Exception if creation fails
    */
+  @Nullable
   StreamConfig create(StreamId streamId) throws Exception;
 
   /**
    * Creates stream if doesn't exist. If stream exists, does nothing.
    * @param streamId Id of the stream to create
    * @param props additional properties
-   * @return The {@link StreamConfig} associated with the new stream
+   * @return The {@link StreamConfig} associated with the new stream or null if the stream already exists
    * @throws Exception if creation fails
    */
+  @Nullable
   StreamConfig create(StreamId streamId, @Nullable Properties props) throws Exception;
 
   /**

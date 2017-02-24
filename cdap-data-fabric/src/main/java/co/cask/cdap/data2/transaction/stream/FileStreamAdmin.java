@@ -401,91 +401,62 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
+  @Nullable
   public StreamConfig create(StreamId streamId) throws Exception {
     return create(streamId, new Properties());
   }
 
   @Override
+  @Nullable
   public StreamConfig create(final StreamId streamId, @Nullable final Properties props) throws Exception {
     // User should have write access to the namespace
     NamespaceId streamNamespace = streamId.getParent();
     ensureAccess(streamNamespace, Action.WRITE);
-    // revoke privileges to make sure there is no orphaned privileges
-    privilegesManager.revoke(streamId);
+
     final Properties properties = (props == null) ? new Properties() : props;
+    String ownerPrincipal = properties.containsKey(Constants.Security.PRINCIPAL) ?
+      properties.getProperty(Constants.Security.PRINCIPAL) : null;
+
+    if (exists(streamId)) {
+      // if stream exists then make sure owner for this create request is same
+      verifyOwner(streamId, ownerPrincipal);
+      // stream create is an idempotent operation as of now so just return null and don't do anything
+      return null;
+    }
+    // revoke privileges to make sure there is no orphaned privileges as the stream doesn't exist its safe to do so
+    try {
+      privilegesManager.revoke(streamId);
+    } catch (Exception e) {
+      // if failed to revoke privileges for some reason there might be left over privilees which will get enforced now
+      // just warn but do not fail the stream creation itself.
+      LOG.warn("Failed to delete privileges for a new {} being created. If the authorization store had some " +
+                 "orphaned privileges for {} they will be enforced. ");
+    }
+    // if the stream didn't exist then add the owner information
+    if (ownerPrincipal != null) {
+      ownerAdmin.add(streamId, new KerberosPrincipalId(ownerPrincipal));
+    }
     try {
       // Grant All access to the stream created to the User
       privilegesManager.grant(streamId, authenticationContext.getPrincipal(), EnumSet.allOf(Action.class));
-
-      String ownerPrincipal = properties.containsKey(Constants.Security.PRINCIPAL) ?
-        properties.getProperty(Constants.Security.PRINCIPAL) : null;
-
-      if (exists(streamId)) {
-        // if stream exists then make sure owner for this create request is same
-        verifyOwner(streamId, ownerPrincipal);
-      } else {
-        // if the stream didn't exist then add the owner information
-        if (ownerPrincipal != null) {
-          ownerAdmin.add(streamId, new KerberosPrincipalId(ownerPrincipal));
-        }
+      try {
+        final Location streamLocation = impersonator.doAs(streamId, new Callable<Location>() {
+          @Override
+          public Location call() throws Exception {
+            assertNamespaceHomeExists(streamId.getParent());
+            Location streamLocation = getStreamLocation(streamId);
+            Locations.mkdirsIfNotExists(streamLocation);
+            return streamLocation;
+          }
+        });
+        return createStream(streamId, properties, streamLocation);
+      } catch (Exception e) {
+        // clean up privileges
+        privilegesManager.revoke(streamId);
+        throw e;
       }
-
-      final Location streamLocation = impersonator.doAs(streamId, new Callable<Location>() {
-        @Override
-        public Location call() throws Exception {
-          assertNamespaceHomeExists(streamId.getParent());
-          Location streamLocation = getStreamLocation(streamId);
-          Locations.mkdirsIfNotExists(streamLocation);
-          return streamLocation;
-        }
-      });
-
-      return streamCoordinatorClient.createStream(streamId, new Callable<StreamConfig>() {
-        @Override
-        public StreamConfig call() throws Exception {
-          if (exists(streamId)) {
-            return null;
-          }
-
-          long createTime = System.currentTimeMillis();
-          long partitionDuration = Long.parseLong(properties.getProperty(
-            Constants.Stream.PARTITION_DURATION, cConf.get(Constants.Stream.PARTITION_DURATION)));
-          long indexInterval = Long.parseLong(properties.getProperty(
-            Constants.Stream.INDEX_INTERVAL, cConf.get(Constants.Stream.INDEX_INTERVAL)));
-          long ttl = Long.parseLong(properties.getProperty(
-            Constants.Stream.TTL, cConf.get(Constants.Stream.TTL)));
-          int threshold = Integer.parseInt(properties.getProperty(
-            Constants.Stream.NOTIFICATION_THRESHOLD, cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
-          String description = properties.getProperty(Constants.Stream.DESCRIPTION);
-          FormatSpecification formatSpec = null;
-          if (properties.containsKey(Constants.Stream.FORMAT_SPECIFICATION)) {
-            formatSpec = GSON.fromJson(properties.getProperty(Constants.Stream.FORMAT_SPECIFICATION),
-                                       FormatSpecification.class);
-          }
-
-          final StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
-                                                       ttl, streamLocation, formatSpec, threshold);
-          impersonator.doAs(streamId, new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-              writeConfig(config);
-              return null;
-            }
-          });
-
-          createStreamFeeds(config);
-          alterExploreStream(streamId, true, config.getFormat());
-          streamMetaStore.addStream(streamId, description);
-          publishAudit(streamId, AuditType.CREATE);
-          SystemMetadataWriter systemMetadataWriter =
-            new StreamSystemMetadataWriter(metadataStore, streamId, config, createTime, description);
-          systemMetadataWriter.write();
-          return config;
-        }
-      });
     } catch (Exception e) {
-      // there was a problem creating the stream. so revoke privilege.
-      privilegesManager.revoke(streamId);
+      // there was a problem creating the stream so delete owner information
       ownerAdmin.delete(streamId); // safe to call even if entry doesn't exists
       throw e;
     }
@@ -608,6 +579,65 @@ public class FileStreamAdmin implements StreamAdmin {
   public void addAccess(ProgramRunId run, StreamId streamId, AccessType accessType) {
     lineageWriter.addAccess(run, streamId, accessType);
     AuditPublishers.publishAccess(auditPublisher, streamId, accessType, run);
+  }
+
+  @Nullable
+  private StreamConfig createStream(final StreamId streamId, final Properties properties,
+                                    final Location streamLocation) throws Exception {
+    try {
+      return streamCoordinatorClient.createStream(streamId, new Callable<StreamConfig>() {
+        @Override
+        public StreamConfig call() throws Exception {
+          // Note: Do not remove this check. It is required to check for the stream existence here as the
+          // streamCoordinatorClient.createStream would have acquired a lock which will guarantee that only
+          // this thread creates the stream in the whole system and it didn't got created by some other thread after
+          // the earlier check
+          if (exists(streamId)) {
+            return null;
+          }
+          long createTime = System.currentTimeMillis();
+          long partitionDuration = Long.parseLong(properties.getProperty(
+            Constants.Stream.PARTITION_DURATION, cConf.get(Constants.Stream.PARTITION_DURATION)));
+          long indexInterval = Long.parseLong(properties.getProperty(
+            Constants.Stream.INDEX_INTERVAL, cConf.get(Constants.Stream.INDEX_INTERVAL)));
+          long ttl = Long.parseLong(properties.getProperty(
+            Constants.Stream.TTL, cConf.get(Constants.Stream.TTL)));
+          int threshold = Integer.parseInt(properties.getProperty(
+            Constants.Stream.NOTIFICATION_THRESHOLD, cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
+          String description = properties.getProperty(Constants.Stream.DESCRIPTION);
+          FormatSpecification formatSpec = null;
+          if (properties.containsKey(Constants.Stream.FORMAT_SPECIFICATION)) {
+            formatSpec = GSON.fromJson(properties.getProperty(Constants.Stream.FORMAT_SPECIFICATION),
+                                       FormatSpecification.class);
+          }
+
+          final StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
+                                                       ttl, streamLocation, formatSpec, threshold);
+          impersonator.doAs(streamId, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+              writeConfig(config);
+              return null;
+            }
+          });
+
+          createStreamFeeds(config);
+          alterExploreStream(streamId, true, config.getFormat());
+          // this call can fail; if it does then the catch below will cleanup streamLocation recursively which will
+          // delete the config file created above
+          streamMetaStore.addStream(streamId, description);
+          publishAudit(streamId, AuditType.CREATE);
+          SystemMetadataWriter systemMetadataWriter =
+            new StreamSystemMetadataWriter(metadataStore, streamId, config, createTime, description);
+          systemMetadataWriter.write();
+          return config;
+        }
+      });
+    } catch (Exception e) {
+      // clean up stream location
+      streamLocation.delete(true);
+      throw e;
+    }
   }
 
   /**

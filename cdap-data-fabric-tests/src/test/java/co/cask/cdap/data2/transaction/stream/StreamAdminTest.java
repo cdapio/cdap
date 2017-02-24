@@ -55,7 +55,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -75,7 +74,6 @@ import java.util.Properties;
 import java.util.Set;
 
 public abstract class StreamAdminTest {
-  private static final Gson GSON = new Gson();
   private static final Principal USER = new Principal(System.getProperty("user.name"), Principal.PrincipalType.USER);
 
   protected static CConfiguration cConf = CConfiguration.create();
@@ -286,6 +284,18 @@ public abstract class StreamAdminTest {
     } catch (IllegalArgumentException e) {
       // expected
     }
+
+    // trying to create same stream with different owner should fail
+    properties.put(Constants.Security.PRINCIPAL, "someOtherUser/someHost@somekdc.net");
+    try {
+      streamAdmin.create(stream, properties);
+      Assert.fail("Should have failed to add the same stream with different owner");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+
+    // ensure that the previous owner still exists
+    Assert.assertEquals(ownerPrincipal, streamAdmin.getProperties(stream).getOwnerPrincipal());
 
     // drop the stream which should also delete the owner info
     streamAdmin.drop(stream);
