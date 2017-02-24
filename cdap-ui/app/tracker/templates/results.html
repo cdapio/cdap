@@ -68,7 +68,8 @@
 
 
       <h4 ng-mouseenter="ResultsController.metadataShowAllButton = true"
-          ng-mouseleave="ResultsController.metadataShowAllButton = false">
+          ng-mouseleave="ResultsController.metadataShowAllButton = false"
+          ng-if="ResultsController.numMetadataFiltersMatched > 0">
         <span>Metadata</span>
         <span class="filter-show-all pull-right"
               ng-click="ResultsController.showAll('METADATA')"
