@@ -209,7 +209,7 @@ angular.module(PKG.name + '.commons')
         'run': 'icon-Run',
         'oracleexport': 'icon-OracleDump',
         'snapshottext': 'icon-SnapshotTextSink',
-        'errorflattener': 'fa-exclamation-triangle'
+        'errorcollector': 'fa-exclamation-triangle'
       };
 
       var pluginName = plugin.toLowerCase();
