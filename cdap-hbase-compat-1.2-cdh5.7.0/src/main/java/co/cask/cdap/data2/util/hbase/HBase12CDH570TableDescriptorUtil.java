@@ -74,8 +74,6 @@ public class HBase12CDH570TableDescriptorUtil {
     }
 
     for (Map.Entry<String, String> property : descriptor.getProperties().entrySet()) {
-      // TODO: should not add coprocessor related properties since those were already be added
-      // using addCoprocessor call.
       htd.setValue(property.getKey(), property.getValue());
     }
     return htd;
@@ -90,11 +88,7 @@ public class HBase12CDH570TableDescriptorUtil {
     Set<CoprocessorDescriptor> coprocessors = new HashSet<>();
     coprocessors.addAll(CoprocessorUtil.getCoprocessors(descriptor).values());
 
-    Map<String, String> properties = new HashMap<>();
-    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> value : descriptor.getValues().entrySet()) {
-      properties.put(org.apache.hadoop.hbase.util.Bytes.toString(value.getKey().get()),
-                     org.apache.hadoop.hbase.util.Bytes.toString(value.getValue().get()));
-    }
+    Map<String, String> properties = CoprocessorUtil.getNonCoprocessorProperties(descriptor);
 
     // TODO: should add configurations as well
     return new TableDescriptor(descriptor.getTableName().getNamespaceAsString(),
