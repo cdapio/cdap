@@ -95,3 +95,12 @@ What happens when I use an invalid widget in the Widget JSON?
 -------------------------------------------------------------
 In a case where the Widget JSON includes a non-existent (or unknown) widget, 
 the CDAP Studio UI defaults to a textbox field.
+
+My plugin is not showing up correctly in the CDAP Studio; what should I look at?
+--------------------------------------------------------------------------------
+If you are not seeing the correct widget or the correct default value set in your widget's
+JSON file, check all the spelling of properties and their values in the widget JSON file.
+
+In particular, check that all values of the properties ``widget-type`` and
+``widget-attributes`` are spelled correctly. As these values are case-sensitive, errors
+can easily be made that can be hard to uncover in the UI itself.
