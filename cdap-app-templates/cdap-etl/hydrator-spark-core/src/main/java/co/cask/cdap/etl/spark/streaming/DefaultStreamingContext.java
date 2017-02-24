@@ -16,25 +16,37 @@
 
 package co.cask.cdap.etl.spark.streaming;
 
+import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.InstanceConflictException;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.streaming.StreamingContext;
 import co.cask.cdap.etl.common.AbstractStageContext;
 import co.cask.cdap.etl.planner.StageInfo;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.tephra.TransactionFailureException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of StreamingContext for Spark.
  */
 public class DefaultStreamingContext extends AbstractStageContext implements StreamingContext {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultStreamingContext.class);
+  private static final String EXTERNAL_DATASET_TYPE = "externalDataset";
+
   private final JavaSparkExecutionContext sec;
   private final JavaStreamingContext jsc;
+  private final Admin admin;
 
   public DefaultStreamingContext(StageInfo stageInfo, JavaSparkExecutionContext sec, JavaStreamingContext jsc) {
     super(sec.getPluginContext(), sec.getMetrics(), stageInfo);
     this.sec = sec;
     this.jsc = jsc;
+    this.admin = sec.getAdmin();
   }
 
   @Override
@@ -45,6 +57,27 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   @Override
   public JavaSparkExecutionContext getSparkExecutionContext() {
     return sec;
+  }
+
+  @Override
+  public void registerLineage(final String referenceName) throws DatasetManagementException,
+    TransactionFailureException {
+    try {
+      if (!admin.datasetExists(referenceName)) {
+        admin.createDataset(referenceName, EXTERNAL_DATASET_TYPE, DatasetProperties.EMPTY);
+      }
+    } catch (InstanceConflictException ex) {
+      // Might happen if there is executed in multiple drivers in parallel. A race condition exists between check
+      // for dataset existence and creation.
+      LOG.debug("Dataset with name {} already created. Hence not creating the external dataset.", referenceName);
+    }
+
+    sec.execute(new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        context.getDataset(referenceName);
+      }
+    });
   }
 
   @Override

@@ -18,9 +18,11 @@ package co.cask.cdap.etl.api.streaming;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.StageContext;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
+import org.apache.tephra.TransactionFailureException;
 
 /**
  * Context for streaming plugin stages.
@@ -37,4 +39,12 @@ public interface StreamingContext extends StageContext, Transactional {
    * @return CDAP JavaSparkExecutionContext for the pipeline.
    */
   JavaSparkExecutionContext getSparkExecutionContext();
+
+  /**
+   * Register lineage for this Spark program using the given reference name
+   * @param referenceName reference name used for source
+   * @throws DatasetManagementException thrown if there was an error in creating reference dataset
+   * @throws TransactionFailureException thrown if there was an error while fetching the dataset to register usage
+   */
+  void registerLineage(String referenceName) throws DatasetManagementException, TransactionFailureException;
 }
