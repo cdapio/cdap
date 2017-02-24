@@ -106,9 +106,10 @@ export default class EntityListHeader extends Component {
                 <DropdownItem
                   tag="li"
                   key={index}
+                  className="clearfix"
                   onClick={this.props.onSortClick.bind(this, option)}
                 >
-                  {option.displayName}
+                  <span className="float-xs-left">{option.displayName}</span>
                   {
                     this.state.activeSort.fullSort === option.fullSort ?
                       <span className="fa fa-check float-xs-right"></span>
@@ -142,6 +143,7 @@ export default class EntityListHeader extends Component {
                 <DropdownItem
                   tag="li"
                   key={option.id}
+                  onClick={this.onFilterClick.bind(this, option)}
                 >
                   <div className="form-check">
                     <label

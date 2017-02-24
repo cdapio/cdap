@@ -35,6 +35,9 @@ export default class ViewSwitch extends Component {
       this.setState({
         activeTab: tab
       });
+      if (this.props.onSwitch) {
+        this.props.onSwitch();
+      }
     }
   }
   render() {
@@ -72,5 +75,6 @@ export default class ViewSwitch extends Component {
 }
 ViewSwitch.propTypes = {
   list: PropTypes.arrayOf(PropTypes.object),
-  children: PropTypes.node
+  children: PropTypes.node,
+  onSwitch: PropTypes.func
 };

@@ -47,6 +47,10 @@ export default class DatasetTab extends Component {
       this.state.entity.streams.forEach(this.addStreamMetrics.bind(this));
     }
   }
+  onTabSwitch() {
+    this.state.entity.datasets.forEach(this.addDatasetMetrics.bind(this));
+    this.state.entity.streams.forEach(this.addStreamMetrics.bind(this));
+  }
   getEntitiesForTable({datasets, streams}) {
     return datasets
       .map(dataset => Object.assign({}, dataset, {type: 'datasetinstance', id: dataset.name}))
@@ -62,7 +66,7 @@ export default class DatasetTab extends Component {
       streamId: this.props.entity.name
     };
     const metricsParams = {
-      tag: [`namespace:${currentNamespace}`, `stream:${stream}`],
+      tag: [`namespace:${currentNamespace}`, `stream:${stream.name}`],
       metric: ['system.collect.events', 'system.collect.bytes'],
       aggregate: true
     };
@@ -160,7 +164,7 @@ export default class DatasetTab extends Component {
           <strong> {T.translate('features.Overview.DatasetTab.title', {appId: this.state.entity.name})} </strong>
         </div>
         {
-          <ViewSwitch>
+          <ViewSwitch onSwitch={this.onTabSwitch.bind(this)}>
             <DatasetStreamCards dataEntities={this.state.entity.datasets.concat(this.state.entity.streams)} />
             <DatasetStreamTable dataEntities={this.state.entitiesForTable} />
           </ViewSwitch>

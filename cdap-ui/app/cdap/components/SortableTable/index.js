@@ -41,6 +41,12 @@ export default class SortableTable extends Component {
     });
   }
 
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      entities: nextProps.entities
+    });
+  }
+
   getDefaultSortedHeader() {
     let defaultHeader = '';
     for (let i = 0; i < this.props.tableHeaders.length; i++) {

@@ -67,7 +67,8 @@ export default class AccessTokenModal extends Component {
       body: JSON.stringify({
         username: this.state.usernameInput,
         password: this.state.passwordInput
-      })
+      }),
+      credentials: 'include'
     })
       .then((response) => {
         if (response.status >= 200 && response.status < 300) {

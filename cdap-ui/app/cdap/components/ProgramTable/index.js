@@ -74,8 +74,9 @@ export default class ProgramTable extends Component {
   }
 
   updateEntities(programs) {
-    let entities = programs.map(prog => {
+    return programs.map(prog => {
       return Object.assign({}, prog, {
+        latestRun: prog.latestRun || {},
         applicationId: prog.app,
         programType: prog.type,
         type: 'program',
@@ -83,7 +84,6 @@ export default class ProgramTable extends Component {
         uniqueId: shortid.generate()
       });
     });
-    return entities;
   }
 
   renderTableBody() {
@@ -95,7 +95,11 @@ export default class ProgramTable extends Component {
             let statusClass = program.status === 'RUNNING' ? 'text-success' : '';
             return (
               <tr key={program.uniqueId}>
-                <td>{program.name}</td>
+                <td>
+                  <span title={program.name}>
+                    {program.name}
+                  </span>
+                </td>
                 <td>
                   <i className={classnames('fa', icon)} />
                   {program.programType}

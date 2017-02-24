@@ -101,7 +101,7 @@ angular.module(PKG.name + '.services')
       'sparkcompute': 'transform',
       'batchjoiner': 'transform',
       'action': 'action',
-      'errortransform': 'errortransform'
+      'errortransform': 'transform'
     },
 
     artifactConvert: {

@@ -28,6 +28,7 @@ import {MyMarketApi} from 'api/market';
 import {MyArtifactApi} from 'api/artifact';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
+import isNil from 'lodash/isNil';
 
 export default class OneStepDeployPlugin extends Component {
   constructor(props) {
@@ -130,14 +131,17 @@ export default class OneStepDeployPlugin extends Component {
 
         if (window.CDAP_CONFIG.securityEnabled) {
           let token = cookie.load('CDAP_Auth_Token');
-          headers.Authorization = `Bearer ${token}`;
+          if (!isNil(token)) {
+            headers.Authorization = `Bearer ${token}`;
+          }
         }
 
         let fetchUrl = `/forwardMarketToCdap?source=${marketPath}&target=${cdapPath}`;
 
         fetch(fetchUrl, {
           method: 'GET',
-          headers: headers
+          headers: headers,
+          credentials: 'include'
         })
           .then((res) => {
             if (res.status > 299) {
