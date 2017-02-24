@@ -67,11 +67,7 @@ public class DefaultOwnerAdmin implements OwnerAdmin {
   @Nullable
   @Override
   public ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) throws IOException {
-    // For program we look for application owner. In future we might want to support lookup parent owner
-    // recursively once we have a use-case for it.
-    if (entityId.getEntityType().equals(EntityType.PROGRAM)) {
-      entityId = ((ProgramId) entityId).getParent();
-    }
+    entityId = getEffectiveEntity(entityId);
     if (!entityId.getEntityType().equals(EntityType.NAMESPACE)) {
       KerberosPrincipalId effectiveOwner = ownerStore.getOwner(entityId);
       if (effectiveOwner != null) {
@@ -80,10 +76,35 @@ public class DefaultOwnerAdmin implements OwnerAdmin {
       }
     }
     // (CDAP-8176) Since no owner was found for the entity return namespace principal if present.
+    NamespaceConfig nsConfig = getNamespaceConfig(entityId.getNamespaceId());
+    return nsConfig.getPrincipal() == null ? null : new ImpersonationInfo(nsConfig.getPrincipal(),
+                                                                          nsConfig.getKeytabURI());
+  }
+
+  @Nullable
+  @Override
+  public String getImpersonationPrincipal(NamespacedEntityId entityId) throws IOException {
+    entityId = getEffectiveEntity(entityId);
+    KerberosPrincipalId effectiveOwner = null;
+    if (!entityId.getEntityType().equals(EntityType.NAMESPACE)) {
+      effectiveOwner = ownerStore.getOwner(entityId);
+    }
+    // (CDAP-8176) Since no owner was found for the entity return namespace principal if present.
+    return effectiveOwner != null ? effectiveOwner.getPrincipal() : getNamespaceConfig(entityId).getPrincipal();
+  }
+
+  private NamespacedEntityId getEffectiveEntity(NamespacedEntityId entityId) {
+    // For program we look for application owner. In future we might want to support lookup parent owner
+    // recursively once we have a use-case for it.
+    if (entityId.getEntityType().equals(EntityType.PROGRAM)) {
+      entityId = ((ProgramId) entityId).getParent();
+    }
+    return entityId;
+  }
+
+  private NamespaceConfig getNamespaceConfig(NamespacedEntityId entityId) throws IOException {
     try {
-      NamespaceConfig nsConfig = namespaceQueryAdmin.get(entityId.getNamespaceId()).getConfig();
-      String nsPrincipal = nsConfig.getPrincipal();
-      return nsPrincipal == null ? null : new ImpersonationInfo(nsPrincipal, nsConfig.getKeytabURI());
+      return namespaceQueryAdmin.get(entityId.getNamespaceId()).getConfig();
     } catch (IOException e) {
       throw e;
     } catch (Exception e) {

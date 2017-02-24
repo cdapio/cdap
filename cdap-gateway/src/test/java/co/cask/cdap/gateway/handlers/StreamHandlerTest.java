@@ -554,7 +554,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     HttpURLConnection urlConn = openURL(createPropertiesURL(streamName), HttpMethod.PUT);
     urlConn.setDoOutput(true);
     urlConn.getOutputStream().write(GSON.toJson(newProps).getBytes(Charsets.UTF_8));
-    Assert.assertEquals(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.CONFLICT.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
   }
 }

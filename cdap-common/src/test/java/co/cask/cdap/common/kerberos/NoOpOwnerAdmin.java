@@ -53,6 +53,12 @@ public class NoOpOwnerAdmin implements OwnerAdmin {
     return null;
   }
 
+  @Nullable
+  @Override
+  public String getImpersonationPrincipal(NamespacedEntityId entityId) throws IOException {
+    return null;
+  }
+
   @Override
   public boolean exists(NamespacedEntityId entityId) throws IOException {
     return false;

@@ -19,6 +19,7 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -281,7 +282,7 @@ public abstract class StreamAdminTest {
     try {
       streamAdmin.updateConfig(stream, new StreamProperties(1L, null, null, null, "user/somekdc.net"));
       Assert.fail();
-    } catch (IllegalArgumentException e) {
+    } catch (ConflictException e) {
       // expected
     }
 
@@ -290,7 +291,7 @@ public abstract class StreamAdminTest {
     try {
       streamAdmin.create(stream, properties);
       Assert.fail("Should have failed to add the same stream with different owner");
-    } catch (IllegalArgumentException e) {
+    } catch (ConflictException e) {
       // expected
     }
 
