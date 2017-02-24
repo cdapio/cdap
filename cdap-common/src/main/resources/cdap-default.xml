@@ -1260,7 +1260,7 @@
 
   <property>
     <name>market.base.url</name>
-    <value>http://market.cask.co/v1</value>
+    <value>http://market.cask.co/v2</value>
     <description>
       The base URL of the Cask Market used by the CDAP UI for the Cask Market RESTful API.
       The default value shown is that of the public Cask Market.
