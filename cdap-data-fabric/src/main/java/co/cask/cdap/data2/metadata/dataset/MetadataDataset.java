@@ -603,8 +603,8 @@ public class MetadataDataset extends AbstractDataset {
                                             SortInfo sortInfo, int offset, int limit, int numCursors,
                                             @Nullable String cursor, boolean showHidden,
                                             Set<EntityScope> entityScope) {
-    List<MetadataEntry> returnedResults = new LinkedList<>();
-    List<MetadataEntry> allResults = new LinkedList<>();
+    List<MetadataEntry> resultsFromOffset = new LinkedList<>();
+    List<MetadataEntry> resultsFromBeginning = new LinkedList<>();
     String indexColumn = getIndexColumn(sortInfo.getSortBy(), sortInfo.getSortOrder());
     // we want to return the first chunk of 'limit' elements after offset
     // in addition, we want to pre-fetch 'numCursors' chunks of size 'limit'.
@@ -626,22 +626,22 @@ public class MetadataDataset extends AbstractDataset {
       int mod = (limit == 1) ? 0 : 1;
       try (Scanner scanner = indexedTable.scanByIndex(Bytes.toBytes(indexColumn), startKey, stopKey)) {
         Row next;
-        while ((next = scanner.next()) != null && allResults.size() < fetchSize) {
+        while ((next = scanner.next()) != null && resultsFromBeginning.size() < fetchSize) {
           Optional<MetadataEntry> metadataEntry = parseRow(next, indexColumn, types, showHidden);
           if (!metadataEntry.isPresent()) {
             continue;
           }
-          allResults.add(metadataEntry.get());
+          resultsFromBeginning.add(metadataEntry.get());
 
           // skip until we reach offset
-          if (allResults.size() <= offset) {
+          if (resultsFromBeginning.size() <= offset) {
             continue;
           }
 
-          if (returnedResults.size() < limit) {
-            returnedResults.add(metadataEntry.get());
+          if (resultsFromOffset.size() < limit) {
+            resultsFromOffset.add(metadataEntry.get());
           } else {
-            if ((allResults.size() - offset) % limit == mod) {
+            if ((resultsFromBeginning.size() - offset) % limit == mod) {
               // add the cursor, with the namespace removed.
               String cursorWithNamespace = Bytes.toString(next.get(indexColumn));
               cursors.add(cursorWithNamespace.substring(cursorWithNamespace.indexOf(KEYVALUE_SEPARATOR) + 1));
@@ -650,7 +650,7 @@ public class MetadataDataset extends AbstractDataset {
         }
       }
     }
-    return new SearchResults(returnedResults, cursors, allResults);
+    return new SearchResults(resultsFromOffset, cursors, resultsFromBeginning);
   }
 
   // there may not be a MetadataEntry in the row or it may for a different targetType (entityFilter),

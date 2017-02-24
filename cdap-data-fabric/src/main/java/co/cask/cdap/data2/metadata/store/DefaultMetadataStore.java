@@ -416,21 +416,21 @@ public class DefaultMetadataStore implements MetadataStore {
       throw new IllegalArgumentException("limit must not be negative");
     }
 
-    List<MetadataEntry> results = new LinkedList<>();
+    List<MetadataEntry> resultsFromOffset = new LinkedList<>();
     List<String> cursors = new LinkedList<>();
-    List<MetadataEntry> allResults = new LinkedList<>();
+    List<MetadataEntry> resultsFromBeginning = new LinkedList<>();
     for (MetadataScope scope : scopes) {
       SearchResults searchResults =
         getSearchResults(scope, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor,
                          showHidden, entityScope);
-      results.addAll(searchResults.getResults());
+      resultsFromOffset.addAll(searchResults.getResultsFromOffset());
       cursors.addAll(searchResults.getCursors());
-      allResults.addAll(searchResults.getAllResults());
+      resultsFromBeginning.addAll(searchResults.getResultsFromBeginning());
     }
 
     // sort if required
-    Set<NamespacedEntityId> sortedEntities = getSortedEntities(results, sortInfo);
-    int total = getSortedEntities(allResults, sortInfo).size();
+    Set<NamespacedEntityId> sortedEntities = getSortedEntities(resultsFromOffset, sortInfo);
+    int total = getSortedEntities(resultsFromBeginning, sortInfo).size();
 
     // pagination is not performed at the dataset level, because:
     // 1. scoring is needed for DEFAULT sort info. So perform it here for now.
