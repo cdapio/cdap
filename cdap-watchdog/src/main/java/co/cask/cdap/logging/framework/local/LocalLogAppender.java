@@ -138,6 +138,7 @@ public class LocalLogAppender extends LogAppender {
     private final long syncIntervalMillis;
     private final BlockingQueue<ILoggingEvent> eventQueue;
     private long lastSyncTime;
+    private Thread appenderThread;
 
     private LocalLogProcessorPipeline(LogProcessorPipelineContext context, long syncIntervalMillis) {
       this.context = context;
@@ -180,6 +181,7 @@ public class LocalLogAppender extends LogAppender {
 
     @Override
     protected void run() {
+      appenderThread = Thread.currentThread();
       try {
         ILoggingEvent event = eventQueue.take();
 
@@ -212,7 +214,11 @@ public class LocalLogAppender extends LogAppender {
      * Appends the given {@link ILoggingEvent} to the pipeline.
      */
     void append(ILoggingEvent event) {
-      if (!isRunning()) {
+      // Don't append if the pipeline is already stopped or the log is coming from the same thread that do the actual
+      // call to appenders. This won't guard against the case that an appender starts a new thread and emit log per
+      // event (something like what this class does). If that's the case, the appender itself need to guard against
+      // it, similar to what's being done in here.
+      if (!isRunning() || Thread.currentThread() == appenderThread) {
         return;
       }
 
