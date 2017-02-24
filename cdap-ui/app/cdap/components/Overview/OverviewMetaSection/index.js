@@ -102,6 +102,14 @@ export default class OverviewMetaSection extends Component {
 
   render() {
     let creationTime = objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'creation-time');
+    const renderCreationTime = (creationTime) => {
+      return (
+        this.props.showFullCreationTime ?
+          <span>{this.getFullCreationTime(creationTime)}</span>
+        :
+          <TimeAgo date={parseInt(creationTime, 10)} />
+      );
+    };
     let description =  objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'description');
     // have to generate new uniqueId here, because we don't want the fast actions here to
     // trigger the tooltips on the card view
@@ -127,10 +135,10 @@ export default class OverviewMetaSection extends Component {
                   T.translate('features.Overview.deployedLabel.app')
               }
               {
-                this.props.showFullCreationTime ?
-                  <span>{this.getFullCreationTime(creationTime)}</span>
+                !isNil(creationTime) ?
+                  renderCreationTime(creationTime)
                 :
-                  <TimeAgo date={parseInt(creationTime, 10)} />
+                  null
               }
             </small>
           </div>

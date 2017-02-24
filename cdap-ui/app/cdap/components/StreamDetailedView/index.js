@@ -44,7 +44,7 @@ export default class StreamDetailedView extends Component {
     super(props);
 
     this.state = {
-      entityDetail: objectQuery(this.props, 'location', 'state', 'entityDetail') | {
+      entityDetail: objectQuery(this.props, 'location', 'state', 'entityDetail') || {
         schema: null,
         programs: []
       },
