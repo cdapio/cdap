@@ -116,7 +116,12 @@ public abstract class AbstractYarnAMClient<T> extends AbstractIdleService implem
       requests.clear();
     } else {
       for (T request : removes) {
-        removeContainerRequest(request);
+        try {
+          removeContainerRequest(request);
+        } catch (NullPointerException e) {
+          // workaround for TWILL-186
+          LOG.info("Got exception.", e);
+        }
       }
       removes.clear();
     }
