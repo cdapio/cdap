@@ -26,6 +26,8 @@ import WizardStepHeader from './WizardStepHeader';
 import WizardStepContent from './WizardStepContent';
 import CardActionFeedback from 'components/CardActionFeedback';
 import classnames from 'classnames';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 const currentStepIndex = (arr, id) => {
   return findIndex(arr, (step) => id === step.id);
@@ -49,6 +51,9 @@ export default class Wizard extends Component {
       error: '',
       requiredStepsCompleted: false
     };
+
+    this.handleCallToActionClick = this.handleCallToActionClick.bind(this);
+    this.eventEmitter = ee(ee);
   }
   componentWillMount() {
     this.checkRequiredSteps();
@@ -199,6 +204,10 @@ export default class Wizard extends Component {
     return navButtons;
   }
 
+  handleCallToActionClick() {
+    this.eventEmitter.emit(globalEvents.CLOSEMARKET);
+  }
+
   getStepHeaders() {
     let stepHeaders = this.props
       .wizardConfig
@@ -260,12 +269,14 @@ export default class Wizard extends Component {
             <a
               href={callToActionInfo.buttonUrl}
               className="call-to-action btn btn-primary"
+              onClick={this.handleCallToActionClick}
             >
               {callToActionInfo.buttonLabel}
             </a>
             <a
               href={callToActionInfo.linkUrl}
               className="secondary-call-to-action text-white"
+              onClick={this.handleCallToActionClick}
             >
               {callToActionInfo.linkLabel}
             </a>
