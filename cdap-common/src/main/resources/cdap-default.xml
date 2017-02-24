@@ -287,7 +287,7 @@
     <name>app.bind.port</name>
     <value>0</value>
     <description>
-      App Fabric service bind port
+      App Fabric service bind port; if 0 binds to a random port
     </description>
   </property>
 
@@ -370,7 +370,7 @@
     <name>app.ssl.bind.port</name>
     <value>30443</value>
     <description>
-      App Fabric service bind port
+      App Fabric service bind port for HTTPS
     </description>
   </property>
 
@@ -732,7 +732,7 @@
     <name>dataset.executor.bind.port</name>
     <value>0</value>
     <description>
-      Dataset executor bind port
+      Dataset executor bind port; if 0 binds to a random port
     </description>
   </property>
 
@@ -748,7 +748,7 @@
     <name>dataset.service.bind.port</name>
     <value>0</value>
     <description>
-      Dataset service bind port
+      Dataset service bind port; if 0 binds to a random port
     </description>
   </property>
 
@@ -853,7 +853,7 @@
     <name>explore.service.bind.port</name>
     <value>0</value>
     <description>
-      CDAP Explore service bind port
+      CDAP Explore service bind port; if 0 binds to a random port
     </description>
   </property>
 
@@ -1593,7 +1593,7 @@
     <name>metadata.service.bind.port</name>
     <value>0</value>
     <description>
-      Metadata HTTP service bind port
+      Metadata HTTP service bind port; if 0 binds to a random port
     </description>
   </property>
 
@@ -2797,7 +2797,7 @@
     <name>stream.bind.port</name>
     <value>0</value>
     <description>
-      Stream HTTP service bind port
+      Stream HTTP service bind port; if 0 binds to a random port
     </description>
   </property>
 
