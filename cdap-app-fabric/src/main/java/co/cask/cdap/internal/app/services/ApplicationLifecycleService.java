@@ -673,6 +673,7 @@ ApplicationLifecycleService extends AbstractIdleService {
     store.deleteWorkflowStats(appId);
     store.removeApplication(appId);
     try {
+      // delete the owner as it has already been determined that this is the only version of the app
       ownerAdmin.delete(appId);
     } catch (Exception e) {
       LOG.warn("Failed to delete app owner principal for application {} if one existed while deleting the " +
