@@ -14,7 +14,7 @@
  * the License.
  */
 
-class TrackerPreviewController{
+class TrackerPreviewController {
   constructor($state, myTrackerApi, $scope, MyCDAPDataSource) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
@@ -23,6 +23,12 @@ class TrackerPreviewController{
     this.loading = true;
     this.viewLimit = 10;
 
+    this.entityExploreUrl = window.getAbsUIUrl({
+      namespaceId: $state.params.namespace,
+      entityType: $state.params.entityType,
+      entityId: $state.params.entityId
+    });
+    this.entityExploreUrl += '?modalToOpen=explore';
     this.generatePreview();
   }
 
