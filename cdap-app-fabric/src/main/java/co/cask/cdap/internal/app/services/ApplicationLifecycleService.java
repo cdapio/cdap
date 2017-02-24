@@ -220,7 +220,8 @@ ApplicationLifecycleService extends AbstractIdleService {
       ArtifactId artifactId = appSpec.getArtifactId();
       ArtifactSummary artifactSummary = artifactId == null ?
         new ArtifactSummary(appSpec.getName(), null) : ArtifactSummary.from(artifactId);
-      ApplicationRecord record = new ApplicationRecord(artifactSummary, appId, appSpec.getDescription());
+      ApplicationRecord record = new ApplicationRecord(artifactSummary, appId, appSpec.getDescription(),
+                                                       ownerAdmin.getImpersonationPrincipal(appId));
       if (predicate.apply(record)) {
         appRecords.add(record);
       }

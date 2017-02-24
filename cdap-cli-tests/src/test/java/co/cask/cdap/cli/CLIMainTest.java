@@ -251,6 +251,8 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, "list streams", streamId);
     testCommandOutputContains(cli, "list dataset instances", datasetId);
     testCommandOutputContains(cli, "delete app " + ConfigTestApp.NAME, "Successfully");
+    testCommandOutputContains(cli, "delete dataset instance " + datasetId, "Successfully deleted");
+    testCommandOutputContains(cli, "delete stream " + streamId, "Successfully deleted stream");
   }
 
   @Test
@@ -270,6 +272,43 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, "list streams", streamId);
     testCommandOutputContains(cli, "list dataset instances", datasetId);
     testCommandOutputContains(cli, "delete app " + ConfigTestApp.NAME, "Successfully");
+    testCommandOutputContains(cli, "delete dataset instance " + datasetId, "Successfully deleted");
+    testCommandOutputContains(cli, "delete stream " + streamId, "Successfully deleted stream");
+  }
+
+  @Test
+  public void testAppOwner() throws Exception {
+    // load an artifact
+    File appJarFile = createAppJarFile(ConfigTestApp.class);
+    String streamId = ConfigTestApp.DEFAULT_STREAM;
+    String datasetId = ConfigTestApp.DEFAULT_TABLE;
+    testCommandOutputContains(cli, String.format("load artifact %s name %s version %s", appJarFile.getAbsolutePath(),
+                                                 "OwnedConfigTestAppArtifact", V1),
+                              "Successfully added artifact");
+
+    // create a config file which has principal information
+    File configFile = new File(TMP_FOLDER.newFolder(), "testOwnerConfigFile.txt");
+    try (BufferedWriter writer = Files.newWriter(configFile, Charsets.UTF_8)) {
+      writer.write(String.format("{\n\"%s\":\"%s\"\n}", ArgumentName.PRINCIPAL, "user/host.net@kdc.net"));
+      writer.close();
+    }
+
+    // create app with the config containing the principla
+    testCommandOutputContains(cli, String.format("create app %s %s %s %s %s",
+                                                 "OwnedApp", "OwnedConfigTestAppArtifact", V1,
+                                                 ArtifactScope.USER, configFile.getAbsolutePath()),
+                              "Successfully created application");
+
+    /// ensure that the app details have owner information
+    testCommandOutputContains(cli, "list apps", "user/host.net@kdc.net");
+
+    // clean up
+    if (!appJarFile.delete()) {
+      LOG.warn("Failed to delete temporary app jar file: {}", appJarFile.getAbsolutePath());
+    }
+    testCommandOutputContains(cli, "delete app " + "OwnedApp", "Successfully");
+    testCommandOutputContains(cli, "delete dataset instance " + datasetId, "Successfully deleted");
+    testCommandOutputContains(cli, "delete stream " + streamId, "Successfully deleted stream");
   }
 
   @Test

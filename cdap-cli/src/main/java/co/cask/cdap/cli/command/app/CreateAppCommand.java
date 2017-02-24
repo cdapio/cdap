@@ -65,16 +65,18 @@ public class CreateAppCommand extends AbstractAuthCommand {
     ArtifactSummary artifact = new ArtifactSummary(artifactName, artifactVersion, artifactScope);
 
     JsonObject config = new JsonObject();
+    String ownerPrincipal = null;
     String configPath = arguments.getOptional(ArgumentName.APP_CONFIG_FILE.toString());
     if (configPath != null) {
       File configFile = resolver.resolvePathToFile(configPath);
       try (FileReader reader = new FileReader(configFile)) {
         AppRequest<JsonObject> appRequest = GSON.fromJson(reader, configType);
         config = appRequest.getConfig();
+        ownerPrincipal = appRequest.getOwnerPrincipal();
       }
     }
 
-    AppRequest<JsonObject> appRequest = new AppRequest<>(artifact, config);
+    AppRequest<JsonObject> appRequest = new AppRequest<>(artifact, config, ownerPrincipal);
     applicationClient.deploy(appId, appRequest);
     output.println("Successfully created application");
   }
@@ -93,7 +95,8 @@ public class CreateAppCommand extends AbstractAuthCommand {
                            "configuration is needed, it must be given as a file whose contents are a JSON object " +
                            "containing the application config. For example, the file contents could contain: " +
                            "'{ \"config\": { \"stream\": \"purchases\" } }'. In this case, the application would " +
-                           "receive '{ \"stream\": \"purchases\" }' as its config object.",
+                           "receive '{ \"stream\": \"purchases\" }' as its config object. Finally, an optional " +
+                           "principal may be given",
       Fragment.of(Article.A, ElementType.APP.getName()), ApplicationId.DEFAULT_VERSION);
   }
 }
