@@ -63,6 +63,13 @@
           width: inherit;
           height: inherit;
         }
+        [class*="icon-"] {
+          line-height: 87px;
+          font-size: 60px;
+          width: 87px;
+          display: inline-block;
+          text-align: center;
+        }
       }
       .entity-content {
         display: flex;

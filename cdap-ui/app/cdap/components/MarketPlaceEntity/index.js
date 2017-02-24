@@ -31,7 +31,9 @@ export default class MarketPlaceEntity extends Component {
       expandedMode: false,
       entityDetail: {},
       performSingleAction: false,
-      actionsComplete: false
+      actionsComplete: false,
+      imageError: false,
+      logoIcon: null
     };
     this.unsub = MarketStore.subscribe(() => {
       let marketState = MarketStore.getState();
@@ -83,6 +85,12 @@ export default class MarketPlaceEntity extends Component {
   switchCloseBtn() {
     this.setState({
       actionsComplete: true
+    });
+  }
+  imageError() {
+    this.setState({
+      imageError: true,
+      logoIcon: `icon-${this.props.entity.label[0].toUpperCase()}`
     });
   }
   render() {
@@ -190,7 +198,15 @@ export default class MarketPlaceEntity extends Component {
                 null
             }
             <div className={beta}>
-              <img src={MyMarketApi.getIcon(this.props.entity)} />
+              {
+                this.state.imageError ?
+                  <span className={classnames("fa", this.state.logoIcon)}></span>
+                :
+                  <img
+                    src={MyMarketApi.getIcon(this.props.entity)}
+                    onError={this.imageError.bind(this)}
+                  />
+              }
             </div>
             <div className="package-metadata-container">
               <strong className="package-label">{this.props.entity.label}</strong>
@@ -215,7 +231,15 @@ export default class MarketPlaceEntity extends Component {
             <div>
               <div
                 className={beta}>
-                <img src={MyMarketApi.getIcon(this.props.entity)} />
+                {
+                  this.state.imageError ?
+                    <span className={classnames("fa", this.state.logoIcon)}></span>
+                  :
+                    <img
+                      src={MyMarketApi.getIcon(this.props.entity)}
+                      onError={this.imageError.bind(this)}
+                    />
+                }
               </div>
 
               <div className="package-metadata-container text-xs-left">
