@@ -18,6 +18,7 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.StreamNotFoundException;
@@ -46,7 +47,6 @@ import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
@@ -88,7 +88,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
@@ -335,8 +334,13 @@ public class FileStreamAdmin implements StreamAdmin {
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(streamId);
     StreamConfig config = getConfig(streamId);
     StreamSpecification spec = streamMetaStore.getStream(streamId);
-    return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB(),
-                                spec.getDescription(), ownerPrincipal);
+    return StreamProperties.builder()
+      .setTTL(StreamUtils.ttlToSeconds(config.getTTL())) // config is in millis, properties are in seconds
+      .setFormatSpec(config.getFormat())
+      .setNotificatonThreshold(config.getNotificationThresholdMB())
+      .setDescription(spec.getDescription())
+      .setPrincipal(ownerPrincipal)
+      .build();
   }
 
   @Override
@@ -358,18 +362,17 @@ public class FileStreamAdmin implements StreamAdmin {
       streamId, new Callable<CoordinatorStreamProperties>() {
         @Override
         public CoordinatorStreamProperties call() throws Exception {
-          StreamProperties oldProperties = updateProperties(streamId, properties);
-
-          FormatSpecification format = properties.getFormat();
-          if (format != null) {
+          FormatSpecification oldFormat = updateProperties(streamId, properties);
+          FormatSpecification newFormat = properties.getFormat();
+          if (newFormat != null) {
             // if the schema has changed, we need to recreate the hive table.
             // Changes in format and settings don't require
             // a hive change, as they are just properties used by the stream storage handler.
-            Schema currSchema = oldProperties.getFormat().getSchema();
-            Schema newSchema = format.getSchema();
+            Schema currSchema = oldFormat.getSchema();
+            Schema newSchema = newFormat.getSchema();
             if (!Objects.equals(currSchema, newSchema)) {
               alterExploreStream(streamId, false, null);
-              alterExploreStream(streamId, true, format);
+              alterExploreStream(streamId, true, newFormat);
             }
           }
 
@@ -402,23 +405,21 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public StreamConfig create(StreamId streamId) throws Exception {
-    return create(streamId, new Properties());
+    return create(streamId, null);
   }
 
   @Override
-  public StreamConfig create(final StreamId streamId, @Nullable final Properties props) throws Exception {
+  public StreamConfig create(final StreamId streamId, @Nullable final StreamProperties props) throws Exception {
     // User should have write access to the namespace
     NamespaceId streamNamespace = streamId.getParent();
     ensureAccess(streamNamespace, Action.WRITE);
     // revoke privileges to make sure there is no orphaned privileges
     privilegesManager.revoke(streamId);
-    final Properties properties = (props == null) ? new Properties() : props;
     try {
       // Grant All access to the stream created to the User
       privilegesManager.grant(streamId, authenticationContext.getPrincipal(), EnumSet.allOf(Action.class));
 
-      String ownerPrincipal = properties.containsKey(Constants.Security.PRINCIPAL) ?
-        properties.getProperty(Constants.Security.PRINCIPAL) : null;
+      String ownerPrincipal = props == null ? null : props.getOwnerPrincipal();
 
       if (exists(streamId)) {
         // if stream exists then make sure owner for this create request is same
@@ -448,23 +449,23 @@ public class FileStreamAdmin implements StreamAdmin {
           }
 
           long createTime = System.currentTimeMillis();
-          long partitionDuration = Long.parseLong(properties.getProperty(
-            Constants.Stream.PARTITION_DURATION, cConf.get(Constants.Stream.PARTITION_DURATION)));
-          long indexInterval = Long.parseLong(properties.getProperty(
-            Constants.Stream.INDEX_INTERVAL, cConf.get(Constants.Stream.INDEX_INTERVAL)));
-          long ttl = Long.parseLong(properties.getProperty(
-            Constants.Stream.TTL, cConf.get(Constants.Stream.TTL)));
-          int threshold = Integer.parseInt(properties.getProperty(
-            Constants.Stream.NOTIFICATION_THRESHOLD, cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
-          String description = properties.getProperty(Constants.Stream.DESCRIPTION);
-          FormatSpecification formatSpec = null;
-          if (properties.containsKey(Constants.Stream.FORMAT_SPECIFICATION)) {
-            formatSpec = GSON.fromJson(properties.getProperty(Constants.Stream.FORMAT_SPECIFICATION),
-                                       FormatSpecification.class);
-          }
+          @SuppressWarnings("ConstantConditions")
+          long partitionDuration = props != null && props.getProperty(Constants.Stream.PARTITION_DURATION) != null
+            ? Long.parseLong(props.getProperty(Constants.Stream.PARTITION_DURATION))
+            : cConf.getLong(Constants.Stream.PARTITION_DURATION);
+          @SuppressWarnings("ConstantConditions")
+          long indexInterval = props != null && props.getProperty(Constants.Stream.INDEX_INTERVAL) != null
+            ? Long.parseLong(props.getProperty(Constants.Stream.INDEX_INTERVAL))
+            : cConf.getLong(Constants.Stream.INDEX_INTERVAL);
+          long ttl = props != null && props.getTTL() != null ? props.getTTL() : cConf.getLong(Constants.Stream.TTL);
+          int threshold = props != null && props.getNotificationThresholdMB() != null
+            ? props.getNotificationThresholdMB() : cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD);
+          String description = props == null ? null : props.getDescription();
+          FormatSpecification formatSpec = props == null ? null : props.getFormat();
 
           final StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
-                                                       ttl, streamLocation, formatSpec, threshold);
+                                                       StreamUtils.ttlToMillis(ttl),
+                                                       streamLocation, formatSpec, threshold);
           impersonator.doAs(streamId, new Callable<Void>() {
             @Override
             public Void call() throws Exception {
@@ -702,12 +703,12 @@ public class FileStreamAdmin implements StreamAdmin {
     });
   }
 
-  private StreamProperties updateProperties(StreamId streamId, StreamProperties properties) throws Exception {
+  private FormatSpecification updateProperties(StreamId streamId, StreamProperties properties) throws Exception {
     StreamConfig config = getConfig(streamId);
 
     StreamConfig.Builder builder = StreamConfig.builder(config);
     if (properties.getTTL() != null) {
-      builder.setTTL(properties.getTTL());
+      builder.setTTL(StreamUtils.ttlToMillis(properties.getTTL()));
     }
     if (properties.getFormat() != null) {
       builder.setFormatSpec(properties.getFormat());
@@ -736,7 +737,7 @@ public class FileStreamAdmin implements StreamAdmin {
       metadataStore, streamId, newConfig, description);
     systemMetadataWriter.write();
 
-    return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB());
+    return config.getFormat();
   }
 
   private void writeConfig(StreamConfig config) throws IOException {

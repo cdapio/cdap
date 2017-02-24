@@ -16,6 +16,7 @@
 
 package co.cask.cdap.docgen.client;
 
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -37,7 +38,6 @@ import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.SystemServiceMeta;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;

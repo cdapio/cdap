@@ -81,11 +81,6 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void create(QueueName queueName, @SuppressWarnings("unused") Properties props) throws Exception {
-    create(queueName);
-  }
-
-  @Override
   public void truncate(QueueName queueName) throws Exception {
     // all queues for one flow are stored in same table, and we would clear all of them. this makes it optional.
     if (doTruncateTable(queueName)) {

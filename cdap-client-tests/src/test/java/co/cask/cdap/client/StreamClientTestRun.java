@@ -18,13 +18,13 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
@@ -91,7 +91,8 @@ public class StreamClientTestRun extends ClientTestBase {
     Long ttl = 10L;
     Integer notifMB = 300;
     StreamId streamId = namespaceId.stream("testDesc");
-    StreamProperties properties = new StreamProperties(ttl, null, notifMB, description);
+    StreamProperties properties = StreamProperties.builder()
+      .setTTL(ttl).setNotificatonThreshold(notifMB).setDescription(description).build();
     streamClient.create(streamId, properties);
     StreamProperties actual = streamClient.getConfig(streamId);
     Assert.assertEquals(description, actual.getDescription());

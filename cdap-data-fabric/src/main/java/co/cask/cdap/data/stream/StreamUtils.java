@@ -480,6 +480,20 @@ public final class StreamUtils {
     });
   }
 
+  /**
+   * Convert TTL in milliseconds to seconds. MAX_VALUE and negative values remain unchanged.
+   */
+  public static long ttlToSeconds(long ttlMillis) {
+    return ttlMillis == Long.MAX_VALUE || ttlMillis < 0 ? ttlMillis : ttlMillis / 1000L;
+  }
+
+  /**
+   * Convert TTL in seconds to milliseconds. MAX_VALUE and negative values remain unchanged.
+   */
+  public static long ttlToMillis(long ttlSeconds) {
+    return ttlSeconds == Long.MAX_VALUE || ttlSeconds < 0 ? ttlSeconds : ttlSeconds * 1000L;
+  }
+
   private StreamUtils() {
   }
 }

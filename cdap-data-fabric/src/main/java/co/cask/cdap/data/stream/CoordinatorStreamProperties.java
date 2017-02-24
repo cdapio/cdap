@@ -17,7 +17,7 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
-import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.api.data.stream.StreamProperties;
 import com.google.common.base.Objects;
 
 import javax.annotation.Nullable;
@@ -31,7 +31,7 @@ public class CoordinatorStreamProperties extends StreamProperties {
 
   public CoordinatorStreamProperties(Long ttl, FormatSpecification format, Integer threshold, Integer generation,
                                      @Nullable String description, @Nullable String kerberosPrincipalId) {
-    super(ttl, format, threshold, description, kerberosPrincipalId);
+    super(ttl, format, threshold, description, kerberosPrincipalId, null);
     this.generation = generation;
   }
 

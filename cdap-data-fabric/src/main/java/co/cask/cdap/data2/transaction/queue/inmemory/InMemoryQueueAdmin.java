@@ -25,8 +25,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import java.util.Properties;
-
 /**
  * admin for queues in memory.
  */
@@ -48,11 +46,6 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   @Override
   public void create(QueueName queueName) throws Exception {
     queueService.getQueue(queueName);
-  }
-
-  @Override
-  public void create(QueueName queueName, @SuppressWarnings("unused") Properties props) throws Exception {
-    create(queueName);
   }
 
   @Override

@@ -17,6 +17,7 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
@@ -26,7 +27,6 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.ImmutableList;
@@ -58,10 +58,10 @@ public class DescribeStreamCommand extends AbstractAuthCommand {
       .setHeader("ttl", "format", "schema", "notification.threshold.mb", "description")
       .setRows(ImmutableList.of(config), new RowMaker<StreamProperties>() {
         @Override
-        public List<?> makeRow(StreamProperties object) {
-          FormatSpecification format = object.getFormat();
-          return Lists.newArrayList(object.getTTL(), format.getName(), format.getSchema().toString(),
-                                    object.getNotificationThresholdMB(), object.getDescription());
+        public List<?> makeRow(StreamProperties streamProperties) {
+          FormatSpecification format = streamProperties.getFormat();
+          return Lists.newArrayList(streamProperties.getTTL(), format.getName(), format.getSchema().toString(),
+                                    streamProperties.getNotificationThresholdMB(), streamProperties.getDescription());
         }
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
