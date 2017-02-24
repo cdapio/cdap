@@ -607,8 +607,9 @@ public class MetadataDataset extends AbstractDataset {
     List<MetadataEntry> allResults = new LinkedList<>();
     String indexColumn = getIndexColumn(sortInfo.getSortBy(), sortInfo.getSortOrder());
     // we want to return the first chunk of 'limit' elements after offset
-    // in addition, we want to pre-fetch 'numCursors' chunks of size 'limit'
-    int fetchSize = offset + ((numCursors + 1) * limit);
+    // in addition, we want to pre-fetch 'numCursors' chunks of size 'limit'.
+    // Note that there's a potential for overflow so we account by limiting it to Integer.MAX_VALUE
+    int fetchSize = (int) Math.min(offset + ((numCursors + 1) * (long) limit), Integer.MAX_VALUE);
     List<String> cursors = new ArrayList<>(numCursors);
     for (String searchTerm : getSearchTerms(namespaceId, "*", entityScope)) {
       byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
@@ -625,7 +626,7 @@ public class MetadataDataset extends AbstractDataset {
       int mod = (limit == 1) ? 0 : 1;
       try (Scanner scanner = indexedTable.scanByIndex(Bytes.toBytes(indexColumn), startKey, stopKey)) {
         Row next;
-        while ((next = scanner.next()) != null) {
+        while ((next = scanner.next()) != null && allResults.size() < fetchSize) {
           Optional<MetadataEntry> metadataEntry = parseRow(next, indexColumn, types, showHidden);
           if (!metadataEntry.isPresent()) {
             continue;
@@ -633,8 +634,7 @@ public class MetadataDataset extends AbstractDataset {
           allResults.add(metadataEntry.get());
 
           // skip until we reach offset
-          // skip if we have enough cursors
-          if (allResults.size() <= offset || allResults.size() > fetchSize) {
+          if (allResults.size() <= offset) {
             continue;
           }
 
