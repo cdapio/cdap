@@ -54,6 +54,10 @@ export default class WorkspaceModal extends Component {
     });
   }
 
+  componentDidMount() {
+    this.workspaceInputRef.focus();
+  }
+
   componentWillUnmount() {
     this.sub();
   }
@@ -167,15 +171,20 @@ export default class WorkspaceModal extends Component {
   }
 
   upload() {
-    if (!this.state.file || !this.state.recordDelimiter) { return; }
+    if (!this.state.file) { return; }
 
-    let delimiter = encodeURIComponent(this.state.recordDelimiter);
+    let delimiter = this.state.recordDelimiter;
 
-    let url = `/namespaces/default/apps/wrangler/services/service/methods/workspaces/${this.state.activeWorkspace}/upload?recorddelimiter=${delimiter}`;
+    let url = `/namespaces/default/apps/wrangler/services/service/methods/workspaces/${this.state.activeWorkspace}/upload`;
     let headers = {
       'Content-Type': 'application/octet-stream',
-      'X-Archive-Name': name,
+      'X-Archive-Name': name
     };
+
+    if (delimiter) {
+      headers['recorddelimiter'] = delimiter;
+    }
+
     UploadFile({url, fileContents: this.state.file, headers})
       .subscribe((res) => {
         console.log(res);
@@ -238,26 +247,27 @@ export default class WorkspaceModal extends Component {
             />
           </div>
 
-          <div className="record-delimiter form-inline">
-            <label className="label-control">Record Delimiter:</label>
-            <input
-              type="text"
-              className="form-control"
-              value={this.state.recordDelimiter}
-              onChange={this.handleRecordDelimiterChange}
-            />
-          </div>
+          <div className="clearfix">
+            <div className="button-container float-xs-left">
+              <button
+                className="btn btn-secondary"
+                onClick={this.upload}
+                disabled={!this.state.file}
+              >
+                Upload
+              </button>
+            </div>
 
-          <div className="button-container">
-            <button
-              className="btn btn-secondary"
-              onClick={this.upload}
-              disabled={!this.state.file || !this.state.recordDelimiter}
-            >
-              Upload
-            </button>
+            <div className="record-delimiter form-inline float-xs-right">
+              <label className="label-control">Record Delimiter:</label>
+              <input
+                type="text"
+                className="form-control"
+                value={this.state.recordDelimiter}
+                onChange={this.handleRecordDelimiterChange}
+              />
+            </div>
           </div>
-
         </div>
       </div>
     );
@@ -320,6 +330,7 @@ export default class WorkspaceModal extends Component {
               className="form-control"
               value={this.state.workspaceId}
               onChange={this.handleWorkspaceInput}
+              ref={ref => this.workspaceInputRef = ref}
             />
           </div>
           <div className="button-container">
