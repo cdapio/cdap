@@ -179,10 +179,11 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
       if (!Objects.equals(ownerPrincipal,
                          specifiedOwnerPrincipal == null ? null : specifiedOwnerPrincipal.getPrincipal())) {
         // Not giving existing owner information as it might be unacceptable under some security scenarios
-        throw new ConflictException(String.format("The specified %s : '%s' is not the same as existing one. " +
-                                                    "The %s of an %s cannot be updated.",
+        throw new ConflictException(String.format("%s '%s' already exists and the specified %s '%s' is not the same " +
+                                                    "as the existing one. The %s of an entity cannot be changed.",
+                                                  entityId.getEntityType(), entityId.getEntityName(),
                                                   Constants.Security.PRINCIPAL, specifiedOwnerPrincipal,
-                                                  Constants.Security.PRINCIPAL, entityId.getEntityType()));
+                                                  Constants.Security.PRINCIPAL));
       }
     } catch (IOException e) {
       throw new DatasetManagementException(e.getMessage(), e);
