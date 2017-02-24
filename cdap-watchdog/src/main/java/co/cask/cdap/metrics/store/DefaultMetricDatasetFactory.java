@@ -19,7 +19,6 @@ package co.cask.cdap.metrics.store;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.TableProperties;
-import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -44,7 +43,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -59,16 +57,10 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   private final DatasetFramework dsFramework;
 
   @Inject
-  public DefaultMetricDatasetFactory(final CConfiguration cConf, final DatasetFramework dsFramework) {
-    this(dsFramework, cConf);
-  }
-
-  private DefaultMetricDatasetFactory(DatasetFramework namespacedDsFramework, final CConfiguration cConf) {
+  public DefaultMetricDatasetFactory(final CConfiguration cConf, DatasetFramework dsFramework) {
     this.cConf = cConf;
-    this.dsFramework = namespacedDsFramework;
-
+    this.dsFramework = dsFramework;
     this.entityTable = Suppliers.memoize(new Supplier<EntityTable>() {
-
       @Override
       public EntityTable get() {
         String tableName = cConf.get(Constants.Metrics.ENTITY_TABLE_NAME,
@@ -97,47 +89,28 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
               GSON.toJson(FactTable.getSplits(DefaultMetricStore.AGGREGATIONS.size())));
 
     MetricsTable table = getOrCreateMetricsTable(tableName, props.build());
-    LOG.info("FactTable created: {}", tableName);
+    LOG.debug("FactTable created: {}", tableName);
     return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));
   }
 
   @Override
   public MetricsConsumerMetaTable createConsumerMeta() {
     String tableName = cConf.get(Constants.Metrics.KAFKA_META_TABLE);
-    try {
-      MetricsTable table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
-      LOG.info("MetricsConsumerMetaTable created: {}", tableName);
-      return new MetricsConsumerMetaTable(table);
-    } catch (Exception e) {
-      LOG.error("Exception in creating MetricsConsumerMetaTable.", e);
-      throw Throwables.propagate(e);
-    }
+    MetricsTable table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
+    LOG.debug("MetricsConsumerMetaTable created: {}", tableName);
+    return new MetricsConsumerMetaTable(table);
   }
 
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props) {
-    MetricsTable table = null;
     // metrics tables are in the system namespace
     DatasetId metricsDatasetInstanceId = NamespaceId.SYSTEM.dataset(tableName);
-    while (table == null) {
-      try {
-        table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
-                                                MetricsTable.class.getName(), props, null, null);
-      } catch (DatasetManagementException | ServiceUnavailableException e) {
-        // dataset service may be not up yet
-        // todo: seems like this logic applies everywhere, so should we move it to DatasetsUtil?
-        LOG.warn("Cannot access or create table {}, will retry in 1 sec.", tableName);
-        try {
-          TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException ie) {
-          Thread.currentThread().interrupt();
-          break;
-        }
-      } catch (IOException e) {
-        LOG.error("Exception while creating table {}.", tableName, e);
-        throw Throwables.propagate(e);
-      }
+    MetricsTable table = null;
+    try {
+      table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId, MetricsTable.class.getName(),
+                                              props, null, null);
+    } catch (Exception e) {
+      Throwables.propagate(e);
     }
-
     return table;
   }
 
@@ -193,5 +166,4 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     return cConf.getInt(Constants.Metrics.TIME_SERIES_TABLE_ROLL_TIME,
                         Constants.Metrics.DEFAULT_TIME_SERIES_TABLE_ROLL_TIME);
   }
-
 }
