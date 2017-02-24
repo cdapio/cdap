@@ -124,6 +124,13 @@ angular.module(PKG.name + '.commons')
           'data-config': 'myconfig'
         }
       },
+      'keyvalue-encoded': {
+        element: '<my-key-value-encoded></my-key-value-encoded>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig'
+        }
+      },
       'keyvalue-dropdown': {
         element: '<my-key-value></my-key-value>',
         attributes: {
