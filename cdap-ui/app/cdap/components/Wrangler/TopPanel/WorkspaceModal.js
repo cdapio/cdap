@@ -34,7 +34,8 @@ export default class WorkspaceModal extends Component {
       workspaceId: null,
       file: null,
       message: null,
-      messageType: null
+      messageType: null,
+      recordDelimiter: '\\n'
     };
 
     this.handleWorkspaceInput = this.handleWorkspaceInput.bind(this);
@@ -44,6 +45,7 @@ export default class WorkspaceModal extends Component {
     this.fileChange = this.fileChange.bind(this);
     this.upload = this.upload.bind(this);
     this.attemptModalClose = this.attemptModalClose.bind(this);
+    this.handleRecordDelimiterChange = this.handleRecordDelimiterChange.bind(this);
 
     this.sub = WranglerStore.subscribe(() => {
       this.setState({
@@ -160,10 +162,16 @@ export default class WorkspaceModal extends Component {
     this.setState({file: e.target.files[0]});
   }
 
-  upload() {
-    if (!this.state.file) { return; }
+  handleRecordDelimiterChange(e) {
+    this.setState({recordDelimiter: e.target.value});
+  }
 
-    let url = `/namespaces/default/apps/wrangler/services/service/methods/workspaces/${this.state.activeWorkspace}/upload`;
+  upload() {
+    if (!this.state.file || !this.state.recordDelimiter) { return; }
+
+    let delimiter = encodeURIComponent(this.state.recordDelimiter);
+
+    let url = `/namespaces/default/apps/wrangler/services/service/methods/workspaces/${this.state.activeWorkspace}/upload?recorddelimiter=${delimiter}`;
     let headers = {
       'Content-Type': 'application/octet-stream',
       'X-Archive-Name': name,
@@ -230,11 +238,21 @@ export default class WorkspaceModal extends Component {
             />
           </div>
 
+          <div className="record-delimiter form-inline">
+            <label className="label-control">Record Delimiter:</label>
+            <input
+              type="text"
+              className="form-control"
+              value={this.state.recordDelimiter}
+              onChange={this.handleRecordDelimiterChange}
+            />
+          </div>
+
           <div className="button-container">
             <button
               className="btn btn-secondary"
               onClick={this.upload}
-              disabled={!this.state.file}
+              disabled={!this.state.file || !this.state.recordDelimiter}
             >
               Upload
             </button>
