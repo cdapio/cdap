@@ -17,6 +17,7 @@ import React, {Component} from 'react';
 import {Dropdown, DropdownToggle, DropdownItem} from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
 import NamespaceStore from 'services/NamespaceStore';
+import find from 'lodash/find';
 import T from 'i18n-react';
 import classnames from 'classnames';
 
@@ -54,10 +55,9 @@ export default class MetadataDropdown extends Component {
   }
   getDefaultNamespace() {
     let list = NamespaceStore.getState().namespaces;
+    if (list.length === 0) { return; }
     let selectedNamespace;
-    let defaultNamespace;
-
-    defaultNamespace = localStorage.getItem('DefaultNamespace');
+    let defaultNamespace = localStorage.getItem('DefaultNamespace');
     let defaultNsFromBackend = list.filter(ns => ns.name === defaultNamespace);
     if (defaultNsFromBackend.length) {
       selectedNamespace = defaultNsFromBackend[0];

@@ -24,6 +24,7 @@ import MetadataDropdown from 'components/Header/MetadataDropdown';
 import CaskMarketButton from 'components/Header/CaskMarketButton';
 import {MyNamespaceApi} from 'api/namespace';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
+import find from 'lodash/find';
 import classnames from 'classnames';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
@@ -81,10 +82,9 @@ export default class Header extends Component {
   }
   getDefaultNamespace() {
     let list = NamespaceStore.getState().namespaces;
+    if (list.length === 0) { return; }
     let selectedNamespace;
-    let defaultNamespace;
-
-    defaultNamespace = localStorage.getItem('DefaultNamespace');
+    let defaultNamespace = localStorage.getItem('DefaultNamespace');
     let defaultNsFromBackend = list.filter(ns => ns.name === defaultNamespace);
     if (defaultNsFromBackend.length) {
       selectedNamespace = defaultNsFromBackend[0];
