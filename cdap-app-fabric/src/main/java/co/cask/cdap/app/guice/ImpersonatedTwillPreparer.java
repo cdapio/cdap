@@ -48,133 +48,165 @@ final class ImpersonatedTwillPreparer implements TwillPreparer {
 
   @Override
   public TwillPreparer addLogHandler(LogHandler handler) {
-    return delegate.addLogHandler(handler);
+    delegate.addLogHandler(handler);
+    return this;
   }
 
   @Override
   @Deprecated
   public TwillPreparer setUser(String user) {
-    return delegate.setUser(user);
+    delegate.setUser(user);
+    return this;
   }
 
   @Override
   public TwillPreparer setSchedulerQueue(String name) {
-    return delegate.setSchedulerQueue(name);
+    delegate.setSchedulerQueue(name);
+    return this;
   }
 
   @Override
   public TwillPreparer setJVMOptions(String options) {
-    return delegate.setJVMOptions(options);
+    delegate.setJVMOptions(options);
+    return this;
   }
 
   @Override
   public TwillPreparer addJVMOptions(String options) {
-    return delegate.addJVMOptions(options);
+    delegate.addJVMOptions(options);
+    return this;
   }
 
   @Override
   public TwillPreparer enableDebugging(String... runnables) {
-    return delegate.enableDebugging(runnables);
+    delegate.enableDebugging(runnables);
+    return this;
   }
 
   @Override
   public TwillPreparer enableDebugging(boolean doSuspend, String... runnables) {
-    return delegate.enableDebugging(doSuspend, runnables);
+    delegate.enableDebugging(doSuspend, runnables);
+    return this;
   }
 
   @Override
   public TwillPreparer withApplicationArguments(String... args) {
-    return delegate.withApplicationArguments(args);
+    delegate.withApplicationArguments(args);
+    return this;
   }
 
   @Override
   public TwillPreparer withApplicationArguments(Iterable<String> args) {
-    return delegate.withApplicationArguments(args);
+    delegate.withApplicationArguments(args);
+    return this;
   }
 
   @Override
   public TwillPreparer withArguments(String runnableName, String... args) {
-    return delegate.withArguments(runnableName, args);
+    delegate.withArguments(runnableName, args);
+    return this;
   }
 
   @Override
   public TwillPreparer withArguments(String runnableName, Iterable<String> args) {
-    return delegate.withArguments(runnableName, args);
+    delegate.withArguments(runnableName, args);
+    return this;
   }
 
   @Override
   public TwillPreparer withDependencies(Class<?>... classes) {
-    return delegate.withDependencies(classes);
+    delegate.withDependencies(classes);
+    return this;
   }
 
   @Override
   public TwillPreparer withDependencies(Iterable<Class<?>> classes) {
-    return delegate.withDependencies(classes);
+    delegate.withDependencies(classes);
+    return this;
   }
 
   @Override
   public TwillPreparer withResources(URI... resources) {
-    return delegate.withResources(resources);
+    delegate.withResources(resources);
+    return this;
   }
 
   @Override
   public TwillPreparer withResources(Iterable<URI> resources) {
-    return delegate.withResources(resources);
+    delegate.withResources(resources);
+    return this;
   }
 
   @Override
   public TwillPreparer withClassPaths(String... classPaths) {
-    return delegate.withClassPaths(classPaths);
+    delegate.withClassPaths(classPaths);
+    return this;
   }
 
   @Override
   public TwillPreparer withClassPaths(Iterable<String> classPaths) {
-    return delegate.withClassPaths(classPaths);
+    delegate.withClassPaths(classPaths);
+    return this;
   }
 
   @Override
   public TwillPreparer withEnv(Map<String, String> env) {
-    return delegate.withEnv(env);
+    delegate.withEnv(env);
+    return this;
   }
 
   @Override
   public TwillPreparer withEnv(String runnableName, Map<String, String> env) {
-    return delegate.withEnv(runnableName, env);
+    delegate.withEnv(runnableName, env);
+    return this;
   }
 
   @Override
   public TwillPreparer withApplicationClassPaths(String... classPaths) {
-    return delegate.withApplicationClassPaths(classPaths);
+    delegate.withApplicationClassPaths(classPaths);
+    return this;
   }
 
   @Override
   public TwillPreparer withApplicationClassPaths(Iterable<String> classPaths) {
-    return delegate.withApplicationClassPaths(classPaths);
+    delegate.withApplicationClassPaths(classPaths);
+    return this;
   }
 
   @Override
   public TwillPreparer withBundlerClassAcceptor(ClassAcceptor classAcceptor) {
-    return delegate.withBundlerClassAcceptor(classAcceptor);
+    delegate.withBundlerClassAcceptor(classAcceptor);
+    return this;
+  }
+
+  @Override
+  public TwillPreparer withMaxRetries(String runnableName, int maxRetries) {
+    delegate.withMaxRetries(runnableName, maxRetries);
+    return this;
   }
 
   @Override
   public TwillPreparer addSecureStore(SecureStore secureStore) {
-    return delegate.addSecureStore(secureStore);
+    delegate.addSecureStore(secureStore);
+    return this;
   }
 
   @Override
   public TwillPreparer setLogLevel(LogEntry.Level logLevel) {
-    return delegate.setLogLevel(logLevel);
+    delegate.setLogLevel(logLevel);
+    return this;
   }
 
   @Override
   public TwillPreparer setLogLevels(Map<String, LogEntry.Level> logLevels) {
-    return delegate.setLogLevels(logLevels);
+    delegate.setLogLevels(logLevels);
+    return this;
   }
 
   @Override
   public TwillPreparer setLogLevels(String runnableName, Map<String, LogEntry.Level> logLevelsForRunnable) {
-    return delegate.setLogLevels(runnableName, logLevelsForRunnable);
+    delegate.setLogLevels(runnableName, logLevelsForRunnable);
+    return this;
   }
 
   @Override
