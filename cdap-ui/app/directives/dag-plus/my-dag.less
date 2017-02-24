@@ -21,6 +21,7 @@
 @light-yellow: lighten(#ffff99, 10%);
 @brown: #988470;
 @yellow-shadow: lighten(#f1c40f, 20%);
+@error-transform: #e74c3c;
 
 my-dag-plus {
   .zoom-control {
@@ -107,6 +108,15 @@ my-dag-plus {
         .node {
           border: 3px solid #4586f3;
         }
+
+        &.errortransform {
+          color: @error-transform;
+          left: 30vw;
+          .node {
+            border: 3px solid @error-transform;
+          }
+        }
+
       }
       &.realtimesink,
       &.batchsink,
@@ -348,6 +358,12 @@ my-dag-plus {
           stroke: #4586f3;
         }
 
+        &.error-anchor {
+          circle {
+            stroke: @error-transform;
+          }
+        }
+
       }
       &-anchor-sinkAnchor {
         circle,
@@ -368,6 +384,10 @@ my-dag-plus {
     .metric-label-text {
       color: #397cf1;
       font-size: 12px;
+    }
+
+    .metric-error-label {
+      color: @brand-danger;
     }
   }
 

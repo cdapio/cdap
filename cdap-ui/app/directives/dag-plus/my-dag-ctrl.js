@@ -47,7 +47,7 @@ angular.module(PKG.name + '.commons')
       [ 'Custom', {
         create: function (label) {
           labels.push(label);
-          return angular.element('<div><span class="metric-label-text"></span></div>');
+          return angular.element('<div><span class="metric-label-text"></span> / <span class="metric-error-label"></span></div>');
         },
         width: 100,
         location: [4.3, 0],
@@ -192,15 +192,32 @@ angular.module(PKG.name + '.commons')
           angular.forEach(labels, function (endpoint) {
             var label = endpoint.getOverlay('metricLabel');
 
-            var tooltip = $tooltip(angular.element(label.getElement()).children(), {
-              trigger: 'hover',
-              title: 'Records Out',
-              delay: 300,
-              container: 'body'
-            });
+            let childrenElem = angular.element(label.getElement()).children();
 
-            $scope.$on('$destroy', function () {
-              tooltip.destroy();
+            angular.forEach(childrenElem, (child) => {
+              var tooltip;
+
+              if (child.className === 'metric-label-text') {
+                tooltip = $tooltip(angular.element(child), {
+                  trigger: 'hover',
+                  title: 'Records Out',
+                  delay: 300,
+                  container: 'body'
+                });
+              } else if (child.className === 'metric-error-label') {
+                tooltip = $tooltip(angular.element(child), {
+                  trigger: 'hover',
+                  title: 'Error Records',
+                  delay: 300,
+                  container: 'body'
+                });
+              }
+
+              $scope.$on('$destroy', function () {
+                if (tooltip) {
+                  tooltip.destroy();
+                }
+              });
             });
 
           });
@@ -224,7 +241,8 @@ angular.module(PKG.name + '.commons')
                 return;
               }
 
-              var recordsOut = $scope.metricsData[endpoint.elementId].recordsOut;
+              var recordsOut = $scope.metricsData[endpoint.elementId].recordsOut || 0;
+              var recordsError = $scope.metricsData[endpoint.elementId].recordsError || 0;
 
               // hide label if the metric is greater than METRICS_THRESHOLD.
               // the intent is to hide the metrics when the length is greater than 12.
@@ -235,8 +253,15 @@ angular.module(PKG.name + '.commons')
                 label.show();
               }
 
-              angular.element(label.getElement()).children()
-                .text(numberFilter(recordsOut, 0));
+              let children = angular.element(label.getElement()).children();
+
+              angular.forEach(children, (child) => {
+                if (child.className === 'metric-label-text') {
+                  angular.element(child).text(numberFilter(recordsOut, 0));
+                } else if (child.className === 'metric-error-label') {
+                  angular.element(child).text(numberFilter(recordsError, 0));
+                }
+              });
 
             });
           }, true);
@@ -383,6 +408,11 @@ angular.module(PKG.name + '.commons')
             if (node.plugin.name === 'Wrangler') {
               originId.cssClass = 'wrangler-anchor';
               targetId.cssClass = 'wrangler-anchor';
+            }
+
+            if (node.type === 'errortransform') {
+              originId.cssClass = 'error-anchor';
+              targetId.cssClass = 'error-anchor';
             }
 
             vm.instance.addEndpoint(node.name, transformOrigin, originId);
