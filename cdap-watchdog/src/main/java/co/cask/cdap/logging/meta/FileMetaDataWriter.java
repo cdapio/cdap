@@ -22,7 +22,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManager;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.logging.framework.LogPathIdentifier;
+import co.cask.cdap.logging.appender.system.LogPathIdentifier;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

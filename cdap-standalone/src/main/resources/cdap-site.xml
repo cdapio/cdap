@@ -115,6 +115,22 @@
     </description>
   </property>
 
+  <property>
+    <name>log.pipeline.cdap.file.permissions</name>
+    <value> </value>
+    <description>
+      we don't want to use set permissions in standalone, as posix permissions are not supported on windows FS.
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.dir.permissions</name>
+    <value> </value>
+    <description>
+      we don't want to use set permissions in standalone, as posix permissions are not supported on windows FS.
+    </description>
+  </property>
+
   <!-- Metrics Configuration -->
   
   <property>

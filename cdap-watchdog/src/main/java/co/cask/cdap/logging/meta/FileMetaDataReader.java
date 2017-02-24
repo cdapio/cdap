@@ -28,7 +28,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
-import co.cask.cdap.logging.framework.LogPathIdentifier;
+import co.cask.cdap.logging.appender.system.LogPathIdentifier;
 import co.cask.cdap.logging.write.LogLocation;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.Impersonator;

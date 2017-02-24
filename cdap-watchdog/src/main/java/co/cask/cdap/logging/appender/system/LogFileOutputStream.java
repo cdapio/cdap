@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.framework;
+package co.cask.cdap.logging.appender.system;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.common.io.ByteBuffers;
@@ -63,7 +63,8 @@ class LogFileOutputStream implements Closeable, Flushable, Syncable {
 
     Schema schema = serializer.getAvroSchema();
     try {
-      this.outputStream = location.getOutputStream(filePermissions);
+      this.outputStream =
+        filePermissions.isEmpty() ? location.getOutputStream() : location.getOutputStream(filePermissions);
       this.dataFileWriter = new DataFileWriter<>(new GenericDatumWriter<GenericRecord>(schema));
       this.dataFileWriter.create(schema, outputStream);
       this.dataFileWriter.setSyncInterval(syncIntervalBytes);
