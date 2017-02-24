@@ -17,8 +17,10 @@
 package co.cask.cdap.logging.framework;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.cdap.common.io.Syncable;
 import co.cask.cdap.logging.serialize.LoggingEvent;
+import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.io.Closeables;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
@@ -32,6 +34,7 @@ import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 
 /**
  * Represents output stream for a log file.
@@ -45,18 +48,20 @@ class LogFileOutputStream implements Closeable, Flushable, Syncable {
 
   private final Location location;
   private final long createTime;
-  private final Schema schema;
   private final Closeable closeable;
+  private final LoggingEventSerializer serializer;
 
   private OutputStream outputStream;
   private DataFileWriter<GenericRecord> dataFileWriter;
   private long fileSize;
 
-  LogFileOutputStream(Location location, String filePermissions, Schema schema, int syncIntervalBytes, long createTime,
-                      Closeable closeable) throws IOException {
+  LogFileOutputStream(Location location, String filePermissions,
+                      int syncIntervalBytes, long createTime, Closeable closeable) throws IOException {
     this.location = location;
-    this.schema = schema;
     this.closeable = closeable;
+    this.serializer = new LoggingEventSerializer();
+
+    Schema schema = serializer.getAvroSchema();
     try {
       this.outputStream = location.getOutputStream(filePermissions);
       this.dataFileWriter = new DataFileWriter<>(new GenericDatumWriter<GenericRecord>(schema));
@@ -76,7 +81,18 @@ class LogFileOutputStream implements Closeable, Flushable, Syncable {
   }
 
   void append(ILoggingEvent event) throws IOException {
-    dataFileWriter.append(LoggingEvent.encode(schema, event));
+    // If the event is already a LoggingEvent, we don't need to re-encode.
+    if (event instanceof LoggingEvent) {
+      ByteBuffer encoded = ((LoggingEvent) event).getEncoded();
+      if (encoded != null) {
+        // TODO: CDAP-8735 Remove the copying after upgraded to Avro 1.7.4+
+        dataFileWriter.appendEncoded(ByteBuffers.copy(encoded));
+      } else {
+        dataFileWriter.append(((LoggingEvent) event).getRecord());
+      }
+      return;
+    }
+    dataFileWriter.append(serializer.toGenericRecord(event));
   }
 
   /**

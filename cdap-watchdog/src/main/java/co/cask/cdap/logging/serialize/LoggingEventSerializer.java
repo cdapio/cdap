@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.logging.appender.kafka;
+package co.cask.cdap.logging.serialize;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.logging.serialize.LogSchema;
-import co.cask.cdap.logging.serialize.LoggingEvent;
+import co.cask.cdap.logging.LoggingUtil;
 import com.google.common.base.Throwables;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericArray;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
@@ -53,13 +55,19 @@ public final class LoggingEventSerializer {
     return LogSchema.LoggingEvent.SCHEMA;
   }
 
-  public byte[] toBytes(ILoggingEvent loggingEvent) {
+  /**
+   * Encodes a {@link ILoggingEvent} to byte array.
+   */
+  public byte[] toBytes(ILoggingEvent event) {
+    event.prepareForDeferredProcessing();
+
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     BinaryEncoder encoder = EncoderFactory.get().directBinaryEncoder(out, null);
     GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(getAvroSchema());
     try {
-      writer.write(LoggingEvent.encode(getAvroSchema(), loggingEvent), encoder);
+      writer.write(toGenericRecord(event), encoder);
     } catch (IOException e) {
+      // This shouldn't happen since we are writing to byte array output stream.
       throw Throwables.propagate(e);
     }
     return out.toByteArray();
@@ -74,7 +82,7 @@ public final class LoggingEventSerializer {
    * @throws IOException if fail to decode
    */
   public ILoggingEvent fromBytes(ByteBuffer buffer) throws IOException {
-    return LoggingEvent.decode(toGenericRecord(buffer));
+    return new LoggingEvent(toGenericRecord(buffer), buffer);
   }
 
   /**
@@ -86,12 +94,7 @@ public final class LoggingEventSerializer {
    * @throws IOException if fail to decode
    */
   public long decodeEventTimestamp(ByteBuffer buffer) throws IOException {
-    if (buffer.hasArray()) {
-      decoder = DecoderFactory.get().binaryDecoder(buffer.array(), buffer.arrayOffset() + buffer.position(),
-                                                   buffer.remaining(), decoder);
-    } else {
-      decoder = DecoderFactory.get().binaryDecoder(Bytes.toBytes(buffer), decoder);
-    }
+    BinaryDecoder decoder = getDecoder(buffer);
 
     for (Schema.Field field : getAvroSchema().getFields()) {
       if ("timestamp".equals(field.name())) {
@@ -107,18 +110,6 @@ public final class LoggingEventSerializer {
     throw new IOException("Missing timestamp field in the LoggingEvent schema");
   }
 
-  /**
-   * Decodes the content of the given {@link ByteBuffer} into {@link GenericRecord}, based on the schema
-   * returned by the {@link #getAvroSchema()} method.
-   *
-   * @param buffer the buffer to decode
-   * @return a {@link GenericRecord} representing the decoded content.
-   * @throws IOException if fail to decode
-   */
-  public GenericRecord toGenericRecord(ByteBuffer buffer) throws IOException {
-    return datumReader.read(null, getDecoder(buffer));
-  }
-
   private BinaryDecoder getDecoder(ByteBuffer buffer) {
     if (buffer.hasArray()) {
       decoder = DecoderFactory.get().binaryDecoder(buffer.array(), buffer.arrayOffset() + buffer.position(),
@@ -127,6 +118,56 @@ public final class LoggingEventSerializer {
       decoder = DecoderFactory.get().binaryDecoder(Bytes.toBytes(buffer), decoder);
     }
     return decoder;
+  }
+
+  /**
+   * Decodes the content of the given {@link ByteBuffer} into {@link GenericRecord}, based on the schema
+   * returned by the {@link #getAvroSchema()} method.
+   *
+   * @param buffer the buffer to decode
+   * @return a {@link GenericRecord} representing the decoded content.
+   * @throws IOException if fail to decode
+   */
+  private GenericRecord toGenericRecord(ByteBuffer buffer) throws IOException {
+    return datumReader.read(null, getDecoder(buffer));
+  }
+
+  /**
+   * Creates a new {@link GenericRecord} that represents the given {@link ILoggingEvent}.
+   */
+  public GenericRecord toGenericRecord(ILoggingEvent event) {
+    Schema schema = getAvroSchema();
+    GenericRecord datum = new GenericData.Record(schema);
+    datum.put("threadName", event.getThreadName());
+    datum.put("level", event.getLevel() == null ? Level.ERROR_INT : event.getLevel().toInt());
+    datum.put("message", event.getMessage());
+
+    Object[] arguments = event.getArgumentArray();
+    if (arguments != null) {
+      GenericArray<String> argArray =
+        new GenericData.Array<>(arguments.length,
+                                schema.getField("argumentArray").schema().getTypes().get(1));
+      for (Object argument : arguments) {
+        argArray.add(argument == null ? null : argument.toString());
+      }
+      datum.put("argumentArray", argArray);
+    }
+
+    datum.put("formattedMessage", event.getFormattedMessage());
+    datum.put("loggerName", event.getLoggerName());
+    datum.put("loggerContextVO", LoggerContextSerializer.encode(schema.getField("loggerContextVO").schema(),
+                                                                event.getLoggerContextVO()));
+    datum.put("throwableProxy", ThrowableProxySerializer.encode(schema.getField("throwableProxy").schema(),
+                                                                event.getThrowableProxy()));
+    if (event.hasCallerData()) {
+      datum.put("callerData", CallerDataSerializer.encode(schema.getField("callerData").schema(),
+                                                          event.getCallerData()));
+    }
+    datum.put("hasCallerData", event.hasCallerData());
+    //datum.put("marker", marker);
+    datum.put("mdc", LoggingUtil.encodeMDC(event.getMDCPropertyMap()));
+    datum.put("timestamp", event.getTimeStamp());
+    return datum;
   }
 
   /**

@@ -26,7 +26,6 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.logging.logback.TestLoggingContext;
 import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -129,13 +128,10 @@ public class LoggingEventSerializerTest {
     mdcMap.put(ServiceLoggingContext.TAG_SERVICE_ID, "ser1");
 
     ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent();
-    iLoggingEvent.setCallerData(new StackTraceElement[]{
-      null
-    });
+    iLoggingEvent.setCallerData(new StackTraceElement[] { null });
     iLoggingEvent.setMDCPropertyMap(mdcMap);
-    LoggingEvent event = new LoggingEvent(iLoggingEvent);
 
-    Assert.assertTrue(LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap())
+    Assert.assertTrue(LoggingContextHelper.getLoggingContext(iLoggingEvent.getMDCPropertyMap())
                         instanceof ServiceLoggingContext);
   }
 

@@ -22,7 +22,6 @@ import co.cask.cdap.logging.meta.FileMetaDataWriter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Uninterruptibles;
-import org.apache.avro.Schema;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -55,17 +54,15 @@ final class LogFileManager implements Flushable, Syncable {
   private final Map<LogPathIdentifier, LogFileOutputStream> outputStreamMap;
   private final Location logsDirectoryLocation;
   private final FileMetaDataWriter fileMetaDataWriter;
-  private final Schema schema;
 
   LogFileManager(String dirPermissions, String filePermissions,
                  long maxFileLifetimeMs, long maxFileSizeInBytes, int syncIntervalBytes,
-                 Schema schema, FileMetaDataWriter fileMetaDataWriter, LocationFactory locationFactory) {
+                 FileMetaDataWriter fileMetaDataWriter, LocationFactory locationFactory) {
     this.dirPermissions = dirPermissions;
     this.filePermissions = filePermissions;
     this.maxLifetimeMillis = maxFileLifetimeMs;
     this.maxFileSizeInBytes = maxFileSizeInBytes;
     this.syncIntervalBytes = syncIntervalBytes;
-    this.schema = schema;
     this.fileMetaDataWriter = fileMetaDataWriter;
     this.logsDirectoryLocation = locationFactory.create("logs");
     this.outputStreamMap = new HashMap<>();
@@ -95,7 +92,7 @@ final class LogFileManager implements Flushable, Syncable {
                                                  long timestamp) throws IOException {
     TimeStampLocation location = createLocation(identifier);
     LogFileOutputStream logFileOutputStream = new LogFileOutputStream(
-      location.getLocation(), filePermissions, schema, syncIntervalBytes, location.getTimeStamp(), new Closeable() {
+      location.getLocation(), filePermissions, syncIntervalBytes, location.getTimeStamp(), new Closeable() {
       @Override
       public void close() throws IOException {
         outputStreamMap.remove(identifier);

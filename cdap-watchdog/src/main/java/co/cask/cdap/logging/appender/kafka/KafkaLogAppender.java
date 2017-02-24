@@ -23,6 +23,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
+import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
