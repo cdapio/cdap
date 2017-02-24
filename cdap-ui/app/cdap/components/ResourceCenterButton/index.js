@@ -36,7 +36,9 @@ export default class ResourceCenterButton extends Component {
     });
   }
   componentWillUnmount() {
-    this.plusButtonSubscription();
+    if (this.plusButtonSubscription) {
+      this.plusButtonSubscription();
+    }
   }
   onClickHandler() {
     this.setState({

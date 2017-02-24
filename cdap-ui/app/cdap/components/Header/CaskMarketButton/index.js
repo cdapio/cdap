@@ -25,9 +25,6 @@ export default class CaskMarketButton extends Component {
       showMarketPlace: false
     };
   }
-  componentWillUnmount() {
-    this.plusButtonSubscription();
-  }
   onClickHandler() {
     this.setState({
       showMarketPlace: !this.state.showMarketPlace
