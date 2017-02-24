@@ -115,14 +115,14 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
    * Collects stats from all {@link OperationalStats}.
    */
   private void collectOperationalStats() throws InterruptedException {
-    LOG.debug("Running operational stats extension service iteration");
+    LOG.trace("Running operational stats extension service iteration");
     for (Map.Entry<OperationalExtensionId, OperationalStats> entry : operationalStatsLoader.getAll().entrySet()) {
       if (!isRunning()) {
         return;
       }
 
       OperationalStats stats = entry.getValue();
-      LOG.debug("Collecting stats for service {} of type {}", stats.getServiceName(), stats.getStatType());
+      LOG.trace("Collecting stats for service {} of type {}", stats.getServiceName(), stats.getStatType());
       try {
         stats.collect();
       } catch (Throwable t) {
@@ -170,7 +170,7 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
       try {
         mbs.unregisterMBean(objectName);
       } catch (InstanceNotFoundException e) {
-        LOG.debug("MBean {} not found while un-registering. Ignoring.", objectName);
+        LOG.warn("MBean {} not found while un-registering. Ignoring.", objectName);
       } catch (MBeanRegistrationException e) {
         LOG.warn("Error while un-registering MBean {}.", e);
       }
