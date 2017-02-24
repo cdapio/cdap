@@ -2631,6 +2631,15 @@
   </property>
 
   <property>
+    <name>security.keytab.path</name>
+    <value></value>
+    <description>
+      The location of kerberos keytabs used for impersonation. The location can contain ${name}
+      which will be replaced by the short user name of the principal being impersonated.
+    </description>
+  </property>
+
+  <property>
     <name>security.realm</name>
     <value>cdap</value>
     <description>
