@@ -162,8 +162,7 @@ The only method that needs to be implemented is::
   the runtime of the ``Transform``. It is guaranteed that this method will be invoked
   before the ``transform`` method.
 - ``transform()``: This method contains the logic that will be applied on each
-  incoming data object. An emitter can be used to pass the results to the subsequent stage
-  (which could be either another Transformation or a Sink).
+  incoming data object. An emitter can be used to pass the results to the subsequent stage.
 - ``destroy()``: Used to perform any cleanup before the plugin shuts down.
 
 Below is an example of a ``StringCase`` that transforms specific fields to lowercase or uppercase.
@@ -185,6 +184,37 @@ number of fields changed. The user metrics can be queried by using the CDAP
     getContext().getMetrics().count("fieldsChanged", fieldsChanged);
   }
 
+.. _cdap-pipelines-creating-a-plugin-error-transformations:
+
+.. highlight:: java
+
+Error Transformation Plugin
+===========================
+An ``ErrorTransform`` plugin is a special type of ``Transform`` that consumes error records emitted
+from the previous stages instead of output records. It is used to transform an ``ErrorRecord`` to zero
+or more output records. In addition to the actual error object, an ``ErrorRecord`` exposes the stage the
+error was emitted from, an error code, and an error message. Errors can be emitted by ``BatchSource``,
+``Transform``, and ``BatchAggregator`` plugins using the ``Emitter`` they receive.
+An ``ErrorTransform`` can be used in both batch and real-time data pipelines.
+
+The only method that needs to be implemented is::
+
+  transform()
+
+.. rubric:: Methods
+
+- ``initialize()``: Used to perform any initialization step that might be required during
+  the runtime of the ``ErrorTransform``. It is guaranteed that this method will be invoked
+  before the ``transform`` method.
+- ``transform()``: This method contains the logic that will be applied on each
+  incoming ``ErrorRecord`` object. An emitter can be used to pass the results to the subsequent stage.
+- ``destroy()``: Used to perform any cleanup before the plugin shuts down.
+
+Below is an example of an ``ErrorCollector`` that adds the error stage, code, and message to each record it receives.
+
+.. literalinclude:: /../../../cdap-app-templates/cdap-etl/cdap-etl-archetypes/cdap-data-pipeline-plugins-archetype/src/main/resources/archetype-resources/src/main/java/ErrorCollector.java
+   :language: java
+   :lines: 34-
 
 .. _cdap-pipelines-creating-a-plugin-script-transformations:
 
