@@ -128,6 +128,7 @@ export default class HomeListView extends Component {
                 { active: entity.uniqueId === objectQuery(this.state, 'activeEntity', 'uniqueId') }
               )
             }
+            id={entity.uniqueId}
             key={entity.uniqueId}
             onClick={this.onClick.bind(this, entity)}
             entity={entity}

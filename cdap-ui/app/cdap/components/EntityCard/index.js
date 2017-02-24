@@ -117,6 +117,7 @@ export default class EntityCard extends Component {
             this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type,
             this.props.className)
         }
+        id={this.props.id}
         ref={(ref) => this.cardRef = ref}
       >
         <Card
@@ -173,6 +174,7 @@ EntityCard.propTypes = {
   onUpdate: PropTypes.func, // FIXME: Remove??
   onFastActionSuccess: PropTypes.func,
   className: PropTypes.string,
+  id: PropTypes.string,
   onClick: PropTypes.func,
   activeEntity: PropTypes.string
 };

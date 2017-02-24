@@ -62,7 +62,7 @@ export default class Header extends Component {
         }
       );
     this.nsSubscription = NamespaceStore.subscribe(() => {
-      let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+      let selectedNamespace = this.getDefaultNamespace();
       if (selectedNamespace !== this.state.currentNamespace) {
         this.setState({
           currentNamespace: selectedNamespace
@@ -75,6 +75,31 @@ export default class Header extends Component {
     if (this.namespacesubscription) {
       this.namespacesubscription.dispose();
     }
+  }
+  findNamespace(list, name) {
+    return find(list, {name: name});
+  }
+  getDefaultNamespace() {
+    let list = NamespaceStore.getState().namespaces;
+    let selectedNamespace;
+    let defaultNamespace;
+
+    defaultNamespace = localStorage.getItem('DefaultNamespace');
+    let defaultNsFromBackend = list.filter(ns => ns.name === defaultNamespace);
+    if (defaultNsFromBackend.length) {
+      selectedNamespace = defaultNsFromBackend[0];
+    }
+    // Check #2
+    if (!selectedNamespace) {
+      selectedNamespace = this.findNamespace(list, 'default');
+    }
+    // Check #3
+    if (!selectedNamespace) {
+      selectedNamespace = list[0].name;
+    } else {
+      selectedNamespace = selectedNamespace.name;
+    }
+    return selectedNamespace;
   }
   toggleNavbar() {
     this.setState({

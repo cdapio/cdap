@@ -113,6 +113,7 @@ export default class JustAddedSection extends Component {
             )
           }
           key={entity.uniqueId}
+          id={entity.uniqueId}
           onClick={this.props.clickHandler.bind(this, entity)}
           entity={entity}
           onFastActionSuccess={this.props.onFastActionSuccess}

@@ -136,7 +136,8 @@ features:
   EntityListView:
     Title: CDAP | Overview
     Info:
-      title: Entities in Namespace
+      entities: Entities
+      title: Entities in Namespace "{namespace}"
       subtitle:
         search: Search Results for
         filteredBy: filtered by
