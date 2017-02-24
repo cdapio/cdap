@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "Error Collector Configuration",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Message Field",
+          "name": "messageField",
+          "plugin-function": {
+            "method": "POST",
+            "widget": "outputSchema",
+            "plugin-method": "getSchema"
+          },
+          "widget-attributes": {
+            "default": "errMsg"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Code Field",
+          "name": "codeField",
+          "widget-attributes": {
+            "default": "errCode"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Stage Field",
+          "name": "stageField",
+          "widget-attributes": {
+            "default": "errStage"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": []
+}

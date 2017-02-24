@@ -17,6 +17,7 @@ In CDAP pipelines, these plugin types are presently used:
 - Batch Sink (*batchsink*)
 - Streaming Source (*streamingsource*, restricted to real-time pipelines)
 - Transformation (*transform*)
+- Error Transformation (*errortransform*)
 - Batch Aggregator (*batchaggregator*)
 - Batch Joiner (*batchjoiner*)
 - Spark Compute (*sparkcompute*)
