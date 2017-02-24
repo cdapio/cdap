@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
-    :version: 4.0.0
+    :copyright: Copyright © 2017 Cask Data, Inc.
+    :version: 4.1.0
 
 =================================================
 Cask Data Application Platform |version|
@@ -40,6 +40,8 @@ Cask Data Application Platform Standalone Dependencies
    "com.jcraft.jsch-0.1.42.jar","0.1.42","\-","BSD 3-Clause License","http://www.jcraft.com/jsch/LICENSE.txt"
    "com.jolbox.bonecp-0.8.0.RELEASE.jar","0.8.0","RELEASE","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.ning.async-http-client-1.7.18.jar","1.7.18","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "com.sun.jersey.jersey-core-1.9.jar","1.9","\-","Common Development and Distribution License (CDDL)","http://glassfish.java.net/public/CDDL+GPL_1_1.html"
+   "com.sun.jersey.jersey-server-1.9.jar","1.9","\-","Common Development and Distribution License (CDDL)","http://glassfish.java.net/public/CDDL+GPL_1_1.html"
    "com.thoughtworks.paranamer.paranamer-2.3.jar","2.3","\-","BSD 3-Clause License","https://raw.githubusercontent.com/paul-hammant/paranamer/paranamer-2.3/LICENSE.txt"
    "com.yammer.metrics.metrics-core-2.2.0.jar","2.2.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-beanutils.commons-beanutils-1.7.0.jar","1.7.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -48,6 +50,7 @@ Cask Data Application Platform Standalone Dependencies
    "commons-codec.commons-codec-1.6.jar","1.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-collections.commons-collections-3.2.1.jar","3.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-configuration.commons-configuration-1.6.jar","1.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "commons-daemon.commons-daemon-1.0.13.jar","1.0.13","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-dbcp.commons-dbcp-1.4.jar","1.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-digester.commons-digester-1.8.jar","1.8","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-el.commons-el-1.0.jar","1.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -66,6 +69,7 @@ Cask Data Application Platform Standalone Dependencies
    "javax.inject.javax.inject-1.jar","1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "javax.jdo.jdo-api-3.0.1.jar","3.0.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "javax.servlet.javax.servlet-api-3.0.1.jar","3.0.1","\-","CDDL 1.0","https://glassfish.dev.java.net/nonav/public/CDDL+GPL.html"
+   "javax.servlet.jsp.jsp-api-2.1.jar","2.1","\-","CDDL 1.0","https://glassfish.dev.java.net/nonav/public/CDDL+GPL.html"
    "javax.transaction.jta-1.1.jar","1.1","\-","CDDL 1.0","https://glassfish.dev.java.net/public/CDDLv1.0.html"
    "javax.ws.rs.javax.ws.rs-api-2.0.jar","2.0","\-","Best of CDDL and GPL 2.0","http://glassfish.java.net/public/CDDL+GPL_1_1.html"
    "jline.jline-2.12.jar","2.12","\-","BSD 3-Clause License","http://www.opensource.org/licenses/bsd-license.php"
@@ -126,6 +130,8 @@ Cask Data Application Platform Standalone Dependencies
    "org.apache.hive.shims.hive-shims-0.23-1.2.1.jar","0.23","1.2.1","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hive.shims.hive-shims-common-1.2.1.jar","1.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hive.shims.hive-shims-scheduler-1.2.1.jar","1.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.httpcomponents.httpclient-4.2.5.jar","4.2.5","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.httpcomponents.httpcore-4.2.5.jar","4.2.5","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.ivy.ivy-2.4.0.jar","2.4.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.kafka.kafka-clients-0.8.2.2.jar","0.8.2.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.kafka.kafka_2.10-0.8.2.2.jar","0.8.2.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -133,13 +139,13 @@ Cask Data Application Platform Standalone Dependencies
    "org.apache.tephra.tephra-core-0.10.0-incubating.jar","0.10.0","incubating","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.thrift.libfb303-0.9.2.jar","0.9.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.thrift.libthrift-0.9.3.jar","0.9.3","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.twill.twill-api-0.9.0.jar","0.9.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.twill.twill-common-0.9.0.jar","0.9.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.twill.twill-core-0.9.0.jar","0.9.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.twill.twill-discovery-api-0.9.0.jar","0.9.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.twill.twill-discovery-core-0.9.0.jar","0.9.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.twill.twill-yarn-0.9.0.jar","0.9.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.twill.twill-zookeeper-0.9.0.jar","0.9.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.twill.twill-api-0.10.0.jar","0.10.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.twill.twill-common-0.10.0.jar","0.10.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.twill.twill-core-0.10.0.jar","0.10.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.twill.twill-discovery-api-0.10.0.jar","0.10.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.twill.twill-discovery-core-0.10.0.jar","0.10.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.twill.twill-yarn-0.10.0.jar","0.10.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.twill.twill-zookeeper-0.10.0.jar","0.10.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.velocity.velocity-1.5.jar","1.5","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.xbean.xbean-reflect-3.6.jar","3.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.codehaus.jackson.jackson-core-asl-1.8.8.jar","1.8.8","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -175,6 +181,8 @@ Cask Data Application Platform Standalone Dependencies
    "org.jboss.resteasy.resteasy-servlet-initializer-3.0.8.Final.jar","3.0.8","Final","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.jboss.spec.javax.annotation.jboss-annotations-api_1.1_spec-1.0.1.Final.jar","1.0.1","Final","Public Domain","http://repository.jboss.org/licenses/cc0-1.0.txt"
    "org.json.json-20090211.jar","20090211","\-","JSON License","http://www.json.org/license.html"
+   "org.mortbay.jetty.jetty-6.1.22.jar","6.1.22","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.mortbay.jetty.jetty-util-6.1.26.jar","6.1.26","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.ow2.asm.asm-all-5.0.3.jar","5.0.3","\-","BSD 3-Clause License","http://asm.ow2.org/license.html"
    "org.pentaho.pentaho-aggdesigner-algorithm-5.1.5-jhyde.jar","5.1.5","jhyde","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.quartz-scheduler.quartz-2.2.0.jar","2.2.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -185,4 +193,5 @@ Cask Data Application Platform Standalone Dependencies
    "org.xerial.snappy.snappy-java-1.1.1.7.jar","1.1.1.7","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "oro.oro-2.0.8.jar","2.0.8","\-","Apache License, Version 1.1","http://www.apache.org/licenses/LICENSE-1.1"
    "stax.stax-api-1.0.1.jar","1.0.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "tomcat.jasper-runtime-5.5.23.jar","5.5.23","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "xmlenc.xmlenc-0.52.jar","0.52","\-","BSD 3-Clause License","https://opensource.org/licenses/BSD-3-Clause"

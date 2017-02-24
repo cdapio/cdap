@@ -31,9 +31,16 @@ Cask Data, Inc.:
      - Common descriptive name for the goods or services
    * - Cask
      - Computer software and related services
+   * - Cask Hydrator
+     - Computer software
+   * - Cask Tracker
+     - Computer software
+   * - Coopr
+     - Computer software
+   * - Tephra
+     - Computer software
    * - Tigon
-     - Computer software and related services
-
+     - Computer software
 
 Our logos ("Logos") include any logos or illustrations used on these webpages.
 The unique visual styling of our website and packaging is referred to as the "Trade Dress".
