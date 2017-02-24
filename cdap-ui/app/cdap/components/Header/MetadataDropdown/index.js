@@ -37,7 +37,7 @@ export default class MetadataDropdown extends Component {
   }
   componentWillMount() {
     this.nsSubscription = NamespaceStore.subscribe(() => {
-      let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+      let selectedNamespace = NamespaceStore.getState().selectedNamespace || localStorage.getItem('DefaultNamespace');
       if (selectedNamespace !== this.state.currentNamespace) {
         this.setState({
           currentNamespace: selectedNamespace
