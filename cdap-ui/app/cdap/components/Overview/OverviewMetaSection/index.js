@@ -103,13 +103,14 @@ export default class OverviewMetaSection extends Component {
   render() {
     let creationTime = objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'creation-time');
     let description =  objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'description');
-    let entity = this.props.entity;
     // have to generate new uniqueId here, because we don't want the fast actions here to
     // trigger the tooltips on the card view
-    entity.uniqueId = shortid.generate();
+    let entity = Object.assign({}, this.props.entity, {uniqueId: shortid.generate()});
     return (
       <div className="overview-meta-section">
-        <h2>{this.props.entity.id}</h2>
+        <h2 title={this.props.entity.id}>
+          {this.props.entity.id}
+        </h2>
         <div className="fast-actions-container">
           <div>
             {

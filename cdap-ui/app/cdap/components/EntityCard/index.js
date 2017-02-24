@@ -134,6 +134,7 @@ export default class EntityCard extends Component {
             <div className={classnames("entity-id-container", {'with-version': this.props.entity.version})}>
               <h4
                 className={classnames({'with-version': this.props.entity.version})}
+                title={this.props.entity.id}
               >
                 {this.props.entity.id}
               </h4>
