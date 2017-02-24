@@ -25,6 +25,8 @@ import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 import {MyMarketApi} from 'api/market';
 import find from 'lodash/find';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 require('./MarketHydratorPluginUpload.scss');
 
@@ -35,6 +37,7 @@ export default class MarketHydratorPluginUpload extends Component {
       showWizard: this.props.isOpen,
       successInfo: {}
     };
+    this.eventEmitter = ee(ee);
   }
 
   componentDidMount() {
@@ -71,7 +74,10 @@ export default class MarketHydratorPluginUpload extends Component {
     this.buildSuccessInfo();
     return ArtifactUploadActionCreator
       .uploadArtifact()
-      .flatMap(() => ArtifactUploadActionCreator.uploadConfigurationJson());
+      .flatMap(() => {
+        this.eventEmitter.emit(globalEvents.ARTIFACTUPLOAD);
+        return ArtifactUploadActionCreator.uploadConfigurationJson();
+      });
   }
 
   toggleWizard(returnResult) {

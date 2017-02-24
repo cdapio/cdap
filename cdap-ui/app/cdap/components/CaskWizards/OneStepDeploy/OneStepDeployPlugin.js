@@ -23,13 +23,16 @@ import 'whatwg-fetch';
 import Rx from 'rx';
 import OneStepDeployWizard from 'components/CaskWizards/OneStepDeploy';
 import cookie from 'react-cookie';
+import T from 'i18n-react';
 import {MyMarketApi} from 'api/market';
 import {MyArtifactApi} from 'api/artifact';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 export default class OneStepDeployPlugin extends Component {
   constructor(props) {
     super(props);
-
+    this.eventEmitter = ee(ee);
     this.publishPlugin = this.publishPlugin.bind(this);
   }
 
@@ -38,6 +41,30 @@ export default class OneStepDeployPlugin extends Component {
       type: OneStepDeployActions.setName,
       payload: this.props.input.package.label || this.props.input.package.name
     });
+  }
+
+  buildSuccessInfo(pluginName) {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    let message = T.translate('features.Wizard.PluginArtifact.success', {pluginName});
+    let subtitle = T.translate('features.Wizard.PluginArtifact.subtitle');
+    let buttonLabel = T.translate('features.Wizard.PluginArtifact.callToAction');
+    let linkLabel = T.translate('features.Wizard.GoToHomePage');
+    let successInfo = {
+      message,
+      subtitle,
+      buttonLabel,
+      buttonUrl: window.getHydratorUrl({
+        stateName: 'hydrator.create',
+        stateParams: {
+          namespace
+        }
+      }),
+      linkLabel,
+      linkUrl: window.getAbsUIUrl({
+        namespaceId: namespace
+      })
+    };
+    return successInfo;
   }
 
   publishPlugin() {
@@ -126,7 +153,9 @@ export default class OneStepDeployPlugin extends Component {
                   version: pluginVersion
                 }, pluginJson.properties)
                 .subscribe(() => {
-                  observer.onNext();
+                  let successInfo = this.buildSuccessInfo(pluginName);
+                  this.eventEmitter.emit(globalEvents.ARTIFACTUPLOAD);
+                  observer.onNext(successInfo);
                   observer.onCompleted();
                 }, (error) => {
                   observer.onError(error);

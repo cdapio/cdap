@@ -29,11 +29,11 @@ import globalEvents from 'services/global-events';
 export default class ApplicationUploadWizard extends Component {
   constructor(props) {
     super(props);
-    this.eventEmitter = ee(ee);
     this.state = {
       showWizard: props.isOpen || false,
       successInfo: {}
     };
+    this.eventEmitter = ee(ee);
   }
   componentWillUnmount() {
     ApplicationUploadStore.dispatch({

@@ -15,29 +15,19 @@
  */
 
 import React from 'react';
-import { connect, Provider } from 'react-redux';
-import OneStepDeployStore from 'services/WizardStores/OneStepDeploy/OneStepDeployStore';
-import FileDnD from 'components/FileDnD';
-require('./Deploy.scss');
+import T from 'i18n-react';
+import Deploy from 'components/CaskWizards/OneStepDeploy/Deploy';
 
-const mapStateWithProps = (state) => {
-  return {
-    file: {name: state.oneStepDeploy.name}
-  };
+const OneStepDeployPluginConfig = {
+  steps: [
+    {
+      id: 'one_step_deploy_plugin',
+      shorttitle: T.translate('features.Wizard.OneStepDeploy.Step1.shorttitle', {entityType: 'Plugin'}),
+      title: T.translate('features.Wizard.OneStepDeploy.Step1.title'),
+      description: T.translate('features.Wizard.OneStepDeploy.Step1.description', {entityType: 'Plugin'}),
+      content: (<Deploy />),
+    }
+  ]
 };
 
-let ApplicationName = connect(
-  mapStateWithProps,
-  null
-)(FileDnD);
-
-
-export default function Deploy() {
-  return (
-    <Provider store={OneStepDeployStore}>
-      <div className="deploy-step">
-        <ApplicationName />
-      </div>
-    </Provider>
-  );
-}
+export default OneStepDeployPluginConfig;
