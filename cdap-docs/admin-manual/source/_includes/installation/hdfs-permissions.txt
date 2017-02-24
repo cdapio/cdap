@@ -1,9 +1,13 @@
 .. highlight:: console
 
+.. _|distribution|-hdfs-permissions:
+
 HDFS Permissions
 ----------------
 Ensure YARN is configured properly to run MapReduce programs.  Often, this includes
-ensuring that the HDFS ``/user/yarn`` directory exists with proper permissions::
+ensuring that the HDFS ``/user/yarn`` and ``/user/cdap`` directories exist with proper
+permissions::
    
   # su hdfs
-  $ hdfs dfs -mkdir -p /user/yarn && hadoop fs -chown yarn /user/yarn && hadoop fs -chgrp yarn /user/yarn
+  $ hadoop fs -mkdir -p /user/yarn && hadoop fs -chown yarn:yarn /user/yarn
+  $ hadoop fs -mkdir -p /user/cdap && hadoop fs -chown cdap:cdap /user/cdap

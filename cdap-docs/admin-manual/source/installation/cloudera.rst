@@ -119,7 +119,7 @@ changes.
 
 .. HDFS Permissions
 .. ----------------
-.. include:: ../_includes/installation/hdfs-permissions.txt
+.. include:: /../target/_includes/cloudera-hdfs-permissions.rst
 
 
 Downloading and Distributing Packages

@@ -53,7 +53,7 @@ function download_includes() {
   local source_rst="${target_includes_dir}/../../source/_includes/installation"
   local pattern="\|distribution\|"
   local distributions="cloudera ambari mapr packages"
-  local types="installation configuration starting"
+  local types="configuration hdfs-permissions installation starting"
   local dist
   local type
   for dist in ${distributions}; do
