@@ -1,4 +1,4 @@
-Cask Data Application Platform Software Development Kit - ${project.version}
+Cask Data Application Platform Software Development Kit - @@project.version@@
 ================================================================================
 
 The Cask Data Application Platform (CDAP) Development Kit includes a Standalone
@@ -20,12 +20,12 @@ prerequisites:
 Once you have installed the prerequisites, unzip the SDK to a suitable directory:
 
   %> cd <path to SDK>
-  %> unzip /tmp/cdap-sdk-${project.version}.zip
+  %> unzip /tmp/cdap-sdk-@@project.version@@.zip
 
 or on Windows:
   
   > cd <path to SDK>
-  > jar xf cdap-sdk-${project.version}.zip
+  > jar xf cdap-sdk-@@project.version@@.zip
 
 Starting CDAP
 =============
@@ -33,12 +33,12 @@ Starting CDAP
 You are now ready to start CDAP. Do so by running the 'cdap' 
 script in the $CDAP/bin folder:
 
-  %> cd <path to SDK>/cdap-sdk-${project.version}
+  %> cd <path to SDK>/cdap-sdk-@@project.version@@
   %> ./bin/cdap sdk start
   
 or on Windows:
   
-  > cd <path to SDK>\cdap-sdk-${project.version}
+  > cd <path to SDK>\cdap-sdk-@@project.version@@
   > bin\cdap.bat sdk start
   
 
@@ -49,11 +49,11 @@ Open a browser window to http://localhost:11011 to view the CDAP-UI.
 
 To get started with CDAP, see our online introduction:
  
-  http://docs.cask.co/cdap/${project.version}/en/introduction/index.html
+  http://docs.cask.co/cdap/@@project.version@@/en/introduction/index.html
 
 Documentation for CDAP can be found at our documentation website:
 
-  http://docs.cask.co/cdap/${project.version}/en/index.html
+  http://docs.cask.co/cdap/@@project.version@@/en/index.html
 
 Contacts for support, sales, and general information can be found on our website at:
 
@@ -63,7 +63,7 @@ Contacts for support, sales, and general information can be found on our website
 Licensing
 =========
   
-Copyright © 2014-${package.build.year} Cask Data, Inc.
+Copyright © 2014-@@package.build.year@@ Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
