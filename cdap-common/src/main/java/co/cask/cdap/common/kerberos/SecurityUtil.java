@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
@@ -38,6 +39,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -244,5 +246,36 @@ public final class SecurityUtil {
       return new ImpersonationInfo(getMasterPrincipal(cConf), getMasterKeytabURI(cConf));
     }
     return impersonationInfo;
+  }
+
+  /**
+   * <p>Verifies the owner principal of an entity is same as the owner specified during entity creation. If an owner
+   * was not specified during entity creation but is being specified later (i.e. during updating properties etc) the
+   * specified owner principal is same as the effective impersonating principal.</p>
+   * <p>Note: This method should not be called for an non-existing entity for example while the entity is being
+   * created.</p>
+   * @param existingEntity the existing entity whose owner principal is being verified
+   * @param specifiedOwnerPrincipal the specified principal
+   * @param ownerAdmin {@link OwnerAdmin}
+   * @throws IOException  if failed to query the given ownerAdmin
+   * @throws UnauthorizedException if the specified owner information is not valid with the existing
+   * impersonation principal
+   */
+  public static void verifyOwnerPrincipal(NamespacedEntityId existingEntity,
+                                    @Nullable String specifiedOwnerPrincipal,
+                                    OwnerAdmin ownerAdmin)
+    throws IOException, UnauthorizedException {
+    // if an owner principal was not specified then ensure that a direct owner doesn't exist. Although, if an owner
+    // principal was specified then it must be equal to the effective impersonating principal of this entity
+    if (!((specifiedOwnerPrincipal == null && ownerAdmin.getOwnerPrincipal(existingEntity) == null) ||
+      Objects.equals(specifiedOwnerPrincipal, ownerAdmin.getImpersonationPrincipal(existingEntity)))) {
+      // Not giving existing owner information as it might be unacceptable under some security scenarios
+      throw new UnauthorizedException(String.format("%s '%s' already exists and the specified %s '%s' is not the " +
+                                                      "same as the existing one. The %s of an entity cannot be " +
+                                                      "changed.",
+                                                    existingEntity.getEntityType(), existingEntity.getEntityName(),
+                                                    Constants.Security.PRINCIPAL, specifiedOwnerPrincipal,
+                                                    Constants.Security.PRINCIPAL));
+    }
   }
 }

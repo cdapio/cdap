@@ -35,8 +35,6 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.verification.Verifier;
 import co.cask.cdap.app.verification.VerifyResult;
-import co.cask.cdap.common.ConflictException;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -52,6 +50,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -64,7 +63,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -81,7 +79,8 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   private final Store store;
   private final OwnerAdmin ownerAdmin;
 
-  public ApplicationVerificationStage(Store store, DatasetFramework dsFramework, OwnerAdmin ownerAdmin) {
+  public ApplicationVerificationStage(Store store, DatasetFramework dsFramework,
+                                      OwnerAdmin ownerAdmin) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.dsFramework = dsFramework;
@@ -135,7 +134,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   protected void verifyData(ApplicationId appId,
                             ApplicationSpecification specification,
                             @Nullable KerberosPrincipalId specifiedOwnerPrincipal)
-    throws DatasetManagementException, ConflictException {
+    throws DatasetManagementException, UnauthorizedException {
     // NOTE: no special restrictions on dataset module names, etc
     VerifyResult result;
     for (DatasetCreationSpec dataSetCreateSpec : specification.getDatasets().values()) {
@@ -172,19 +171,11 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   }
 
   private void verifyOwner(NamespacedEntityId entityId, @Nullable KerberosPrincipalId specifiedOwnerPrincipal)
-    throws DatasetManagementException, ConflictException {
-    String ownerPrincipal;
+    throws DatasetManagementException, UnauthorizedException {
     try {
-      ownerPrincipal = ownerAdmin.getImpersonationPrincipal(entityId);
-      if (!Objects.equals(ownerPrincipal,
-                         specifiedOwnerPrincipal == null ? null : specifiedOwnerPrincipal.getPrincipal())) {
-        // Not giving existing owner information as it might be unacceptable under some security scenarios
-        throw new ConflictException(String.format("%s '%s' already exists and the specified %s '%s' is not the same " +
-                                                    "as the existing one. The %s of an entity cannot be changed.",
-                                                  entityId.getEntityType(), entityId.getEntityName(),
-                                                  Constants.Security.PRINCIPAL, specifiedOwnerPrincipal,
-                                                  Constants.Security.PRINCIPAL));
-      }
+      SecurityUtil.verifyOwnerPrincipal(entityId,
+                                        specifiedOwnerPrincipal == null ? null : specifiedOwnerPrincipal.getPrincipal(),
+                                        ownerAdmin);
     } catch (IOException e) {
       throw new DatasetManagementException(e.getMessage(), e);
     }

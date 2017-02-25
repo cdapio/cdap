@@ -161,13 +161,13 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     String bobPrincipal = "bob/somehost.net@somekdc.net";
     appRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()), null, bobPrincipal);
-    Assert.assertEquals(HttpResponseCodes.SC_BAD_REQUEST,
+    Assert.assertEquals(HttpResponseCodes.SC_FORBIDDEN,
                         deploy(applicationId, appRequest).getStatusLine().getStatusCode());
 
     // trying to deploy the same app with different version and another owner should fail too
     appRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()), null, bobPrincipal);
-    Assert.assertEquals(HttpResponseCodes.SC_BAD_REQUEST,
+    Assert.assertEquals(HttpResponseCodes.SC_FORBIDDEN,
                         deploy(new ApplicationId(applicationId.getNamespace(), applicationId.getApplication(), "1.0"),
                                appRequest).getStatusLine().getStatusCode());
 
