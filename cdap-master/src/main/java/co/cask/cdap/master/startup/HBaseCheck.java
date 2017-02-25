@@ -17,7 +17,9 @@
 package co.cask.cdap.master.startup;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.startup.Check;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.HBaseVersion;
 import com.google.inject.Inject;
@@ -25,6 +27,7 @@ import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
+import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,8 +52,9 @@ class HBaseCheck extends Check {
   @Override
   public void run() {
     LOG.info("Checking HBase version.");
+    HBaseTableUtil hBaseTableUtil;
     try {
-      new HBaseTableUtilFactory(cConf).get();
+      hBaseTableUtil = new HBaseTableUtilFactory(cConf).get();
     } catch (ProvisionException e) {
       throw new RuntimeException("Unsupported Hbase version " + HBaseVersion.getVersionString());
     }
@@ -65,6 +69,42 @@ class HBaseCheck extends Check {
         "Unable to connect to HBase. " +
           "Please check that HBase is running and that the correct HBase configuration (hbase-site.xml) " +
           "and libraries are included in the CDAP master classpath.", e);
+    }
+
+    if (hConf.getBoolean("hbase.security.authorization", false)) {
+      if (cConf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE)) {
+        LOG.info("Transaction pruning is enabled. Checking global admin privileges for cdap.");
+        try {
+          boolean isGlobalAdmin = hBaseTableUtil.isGlobalAdmin(hConf);
+          LOG.info("Global admin privileges check status: {}", isGlobalAdmin);
+          if (isGlobalAdmin) {
+            return;
+          }
+          // if global admin was false then depend on the TX_PRUNE_ACL_CHECK value
+          if (cConf.getBoolean(Constants.Startup.TX_PRUNE_ACL_CHECK, false)) {
+            LOG.info("Found {} to be set to true. Continuing with cdap master startup even though global admin check " +
+                       "returned false", Constants.Startup.TX_PRUNE_ACL_CHECK);
+            return;
+          }
+          StringBuilder builder = new StringBuilder("Transaction pruning is enabled and cdap does not have global " +
+                                                      "admin privileges in HBase. Global admin privileges for cdap " +
+                                                      "is required for transaction pruning. " +
+                                                      "Either disable transaction pruning or grant global admin " +
+                                                      "privilege to cdap in HBase.");
+          if (HBaseVersion.get().equals(HBaseVersion.Version.HBASE_96) ||
+            HBaseVersion.get().equals(HBaseVersion.Version.HBASE_98)) {
+            builder.append(" Detected HBase version ");
+            builder.append(HBaseVersion.get());
+            builder.append(" CDAP will not be able determine if it has global admin privilege in HBase.");
+            builder.append(" After granting global admin privilege please set ");
+            builder.append(Constants.Startup.TX_PRUNE_ACL_CHECK);
+          }
+          throw new RuntimeException(builder.toString());
+        } catch (IOException e) {
+          throw new RuntimeException("Unable to determines cdap privileges as global admin in HBase.");
+        }
+      }
+      LOG.info("Hbase authorized is disabled. Skipping global admin check.");
     }
   }
 }

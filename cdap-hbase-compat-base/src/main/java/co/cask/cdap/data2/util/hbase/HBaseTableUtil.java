@@ -83,7 +83,7 @@ public abstract class HBaseTableUtil {
     ROW, ROWCOL, NONE
   }
 
-  private static final Logger LOG = LoggerFactory.getLogger(HBaseTableUtil.class);
+  protected static final Logger LOG = LoggerFactory.getLogger(HBaseTableUtil.class);
   // 4Mb
   public static final int DEFAULT_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
@@ -584,6 +584,8 @@ public abstract class HBaseTableUtil {
 
   public abstract BloomType getBloomFilter(HColumnDescriptor columnDescriptor);
 
+  public abstract boolean isGlobalAdmin(Configuration hConf) throws IOException;
+
   public abstract Class<? extends Coprocessor> getTransactionDataJanitorClassForVersion();
   public abstract Class<? extends Coprocessor> getQueueRegionObserverClassForVersion();
   public abstract Class<? extends Coprocessor> getDequeueScanObserverClassForVersion();
@@ -625,6 +627,11 @@ public abstract class HBaseTableUtil {
       }
     }
     return datasetStat;
+  }
+
+  protected void warnGlobalAdminCheckFailure() {
+    LOG.warn("Unable to determine if cdap is a global admin or not. Failing back to {} configuration.",
+             Constants.Startup.TX_PRUNE_ACL_CHECK);
   }
 
   /**
