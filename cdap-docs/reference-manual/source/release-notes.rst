@@ -117,6 +117,19 @@ New Features
 - :cask-issue:`CDAP-8428` - Added additional metrics about the status of the log
   framework.
 
+- :cask-issue:`HYDRATOR-235` - The Kinesis Spark Streaming source plugin is available in
+  its own repository at `github.com/hydrator/kinesis-spark-streaming-source <https://github.com/hydrator/kinesis-spark-streaming-source>`__.
+
+- :cask-issue:`HYDRATOR-552` - Added a plugin for sampling data from a source, available
+  at `github.com/hydrator/sampling-aggregator <https://github.com/hydrator/sampling-aggregator>`__.
+
+- :cask-issue:`HYDRATOR-585` - The HTTP Sink plugin (for posting data from a pipeline to
+  an external endpoint) has been added at `github.com/hydrator/http-sink <https://github.com/hydrator/http-sink>`__.
+
+- :cask-issue:`HYDRATOR-954` - The Kinesis Source plugin now works in realtime pipelines.
+
+- :cask-issue:`HYDRATOR-983` - Added a Feature Generator plugin for a pipeline builder.
+
 - :cask-issue:`HYDRATOR-1049` - Added a DynamoDb Sink as a plugin, available at
   `github.com/hydrator/dynamodb-sink <https://github.com/hydrator/dynamodb-sink>`__.
 
@@ -147,18 +160,9 @@ New Features
 - :cask-issue:`HYDRATOR-1255` - The LogisticRegression plugins are now available in their
   own repository at `github.com/hydrator/logistic-regression-analytics <https://github.com/hydrator/logistic-regression-analytics>`__.
 
-- :cask-issue:`HYDRATOR-235` - The Kinesis Spark Streaming source plugin is available in
-  its own repository at `github.com/hydrator/kinesis-spark-streaming-source <https://github.com/hydrator/kinesis-spark-streaming-source>`__.
+- :cask-issue:`HYDRATOR-1398` - Support added for Table datasets for lookups in plugins
+  and pipelines.
 
-- :cask-issue:`HYDRATOR-552` - Added a plugin for sampling data from a source, available
-  at `github.com/hydrator/sampling-aggregator <https://github.com/hydrator/sampling-aggregator>`__.
-
-- :cask-issue:`HYDRATOR-585` - The HTTP Sink plugin (for posting data from a pipeline to
-  an external endpoint) has been added at `github.com/hydrator/http-sink <https://github.com/hydrator/http-sink>`__.
-
-- :cask-issue:`HYDRATOR-954` - The Kinesis Source plugin now works in realtime pipelines.
-
-- :cask-issue:`HYDRATOR-983` - Added a Feature Generator plugin for a pipeline builder.
 
 Improvements
 ------------
