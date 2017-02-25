@@ -20,6 +20,8 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.io.SeekableInputStream;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
@@ -43,6 +45,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
@@ -52,6 +56,8 @@ import java.util.concurrent.Callable;
  */
 public class LogLocation {
   private static final Logger LOG = LoggerFactory.getLogger(LogLocation.class);
+  private static final Logger READ_FAILURE_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(60000));
+
   private static final long DEFAULT_SKIP_LEN = 10 * 1024 * 1024;
   // old version
   public static final String VERSION_0 = "V0";
@@ -144,65 +150,61 @@ public class LogLocation {
    */
   @SuppressWarnings("WeakerAccess")
   public Collection<LogEvent> readLogPrev(Filter logFilter, long fromTimeMs, final int maxEvents) throws IOException {
-    DataFileReader<GenericRecord> dataFileReader = createReader();
-
+//    List<List<LogEvent>> logSegments = Lists.newArrayList();
+    Deque<Collection<LogEvent>> logSegments = new LinkedList<>();
+    int count = 0;
     try {
-      if (!dataFileReader.hasNext()) {
-        return ImmutableList.of();
-      }
+      try (DataFileReader<GenericRecord> dataFileReader = createReader()) {
 
-      List<List<LogEvent>> logSegments = Lists.newArrayList();
-      List<LogEvent> logSegment;
-      int count = 0;
+        if (!dataFileReader.hasNext()) {
+          return ImmutableList.of();
+        }
 
-      // Calculate skipLen based on fileLength
-      long length = location.length();
-      LOG.trace("Got file length {}", length);
-      long skipLen = length / 10;
-      if (skipLen > DEFAULT_SKIP_LEN || skipLen <= 0) {
-        skipLen = DEFAULT_SKIP_LEN;
-      }
+        // Calculate skipLen based on fileLength
+        long length = location.length();
+        LOG.trace("File length {} {}", location, length);
+        long skipLen = length / 10;
+        if (skipLen > DEFAULT_SKIP_LEN || skipLen <= 0) {
+          skipLen = DEFAULT_SKIP_LEN;
+        }
 
-      // For open file, endPosition sync marker is unknown so start from file length and read up to the actual EOF
-      dataFileReader.sync(length);
-      long finalSync = dataFileReader.previousSync();
-      logSegment = readToEndSyncPosition(dataFileReader, logFilter, fromTimeMs, -1);
-
-      if (!logSegment.isEmpty()) {
-        logSegments.add(logSegment);
-        count = count + logSegment.size();
-      }
-
-      LOG.trace("Read logevents {} from position {}", count, finalSync);
-
-      long startPosition = finalSync;
-      long endPosition = startPosition;
-      long currentSync;
-
-      while (startPosition > 0 && count < maxEvents) {
-        // Skip to sync position less than current sync position
-        startPosition = skipToPosition(dataFileReader, startPosition, endPosition, skipLen);
-        currentSync = dataFileReader.previousSync();
-        logSegment = readToEndSyncPosition(dataFileReader, logFilter, fromTimeMs, endPosition);
+        // For open file, endPosition sync marker is unknown so start from file length and read up to the actual EOF
+        dataFileReader.sync(length);
+        long finalSync = dataFileReader.previousSync();
+        List<LogEvent> logSegment = readToEndSyncPosition(dataFileReader, logFilter, fromTimeMs, -1);
 
         if (!logSegment.isEmpty()) {
-          logSegments.add(logSegment);
+          logSegments.addFirst(logSegment);
           count = count + logSegment.size();
         }
-        LOG.trace("Read logevents {} from position {} to endPosition {}", count, currentSync, endPosition);
 
-        endPosition = currentSync;
-      }
+        LOG.trace("Read log events {} from position {}", count, finalSync);
 
-      int skip = count >= maxEvents ? count - maxEvents : 0;
-      return Lists.newArrayList(Iterables.skip(Iterables.concat(Lists.reverse(logSegments)), skip));
-    } finally {
-      try {
-        dataFileReader.close();
-      } catch (IOException e) {
-        LOG.error("Got exception while closing log file {}", location, e);
+        long startPosition = finalSync;
+        long endPosition = startPosition;
+        long currentSync;
+
+        while (startPosition > 0 && count < maxEvents) {
+          // Skip to sync position less than current sync position
+          startPosition = skipToPosition(dataFileReader, startPosition, endPosition, skipLen);
+          currentSync = dataFileReader.previousSync();
+          logSegment = readToEndSyncPosition(dataFileReader, logFilter, fromTimeMs, endPosition);
+
+          if (!logSegment.isEmpty()) {
+            logSegments.addFirst(logSegment);
+            count = count + logSegment.size();
+          }
+          LOG.trace("Read log events {} from position {} to endPosition {}", count, currentSync, endPosition);
+
+          endPosition = currentSync;
+        }
       }
+    } catch (IOException e) {
+      READ_FAILURE_LOG.warn("Got exception while reading log file {}", location, e);
     }
+
+    int skip = count >= maxEvents ? count - maxEvents : 0;
+    return Lists.newArrayList(Iterables.skip(Iterables.concat(logSegments), skip));
   }
 
   /**
@@ -333,14 +335,16 @@ public class LogLocation {
         // We want to ignore invalid or missing log files.
         // If the 'next' variable wasn't set by this method call, then the 'hasNext' method
         // will return false, and no more events will be read from this file.
-        LOG.error("Got exception while reading log file {}", location.getName(), e);
+        READ_FAILURE_LOG.error("Got exception while reading log file {}", location.getName(), e);
       }
     }
 
     @Override
     public void close() {
       try {
-        dataFileReader.close();
+        if (dataFileReader != null) {
+          dataFileReader.close();
+        }
       } catch (IOException e) {
         LOG.error("Got exception while closing log file {}", location.getName(), e);
       }
