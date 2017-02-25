@@ -209,6 +209,13 @@ public class HBase98TableUtil extends HBaseTableUtil {
   }
 
   @Override
+  public boolean isGlobalAdmin(Configuration hConf) throws IOException {
+    // we do not support determining whether cdap is global admin or not for hbase 96
+    warnGlobalAdminCheckFailure();
+    return false;
+  }
+
+  @Override
   public Class<? extends Coprocessor> getTransactionDataJanitorClassForVersion() {
     return DefaultTransactionProcessor.class;
   }
