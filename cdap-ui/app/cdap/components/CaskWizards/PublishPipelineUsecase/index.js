@@ -33,13 +33,13 @@ export default class PublishPipelineUsecaseWizard extends Component {
       let linkLabel = T.translate('features.Wizard.GoToHomePage');
       let buttonLabel = T.translate('features.Wizard.PublishPipeline.callToAction.view');
       successInfo = {
-        message: message,
+        message,
         buttonLabel,
         buttonUrl: window.getHydratorUrl({
           stateName: 'hydrator.detail',
           stateParams: {
             namespace,
-            pipelineId: name
+            pipelineId: pipelineName
           }
         }),
         linkLabel,
