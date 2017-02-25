@@ -38,6 +38,7 @@ import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
 import co.cask.cdap.metadata.MetadataHttpHandler;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamProperties;
@@ -1189,6 +1190,14 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     } catch (BadRequestException e) {
       // expected
     }
+
+    // search with invalid query
+    try {
+      searchMetadata(NamespaceId.DEFAULT, "");
+      Assert.fail();
+    } catch (BadRequestException e) {
+      // expected
+    }
   }
 
   @Test
@@ -1822,7 +1831,8 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     }
     return new MetadataSearchResponse(searchResponse.getSort(), searchResponse.getOffset(), searchResponse.getLimit(),
                                       searchResponse.getNumCursors(), searchResponse.getTotal(), transformed,
-                                      searchResponse.getCursors(), searchResponse.isShowHidden());
+                                      searchResponse.getCursors(), searchResponse.isShowHidden(),
+                                      searchResponse.getEntityScope());
   }
 
   private MetadataSearchResponse searchMetadata(NamespaceId namespaceId, String query,

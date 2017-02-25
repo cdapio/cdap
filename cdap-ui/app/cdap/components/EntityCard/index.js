@@ -117,6 +117,7 @@ export default class EntityCard extends Component {
             this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type,
             this.props.className)
         }
+        id={this.props.id}
         ref={(ref) => this.cardRef = ref}
       >
         <Card
@@ -134,6 +135,7 @@ export default class EntityCard extends Component {
             <div className={classnames("entity-id-container", {'with-version': this.props.entity.version})}>
               <h4
                 className={classnames({'with-version': this.props.entity.version})}
+                title={this.props.entity.id}
               >
                 {this.props.entity.id}
               </h4>
@@ -172,6 +174,7 @@ EntityCard.propTypes = {
   onUpdate: PropTypes.func, // FIXME: Remove??
   onFastActionSuccess: PropTypes.func,
   className: PropTypes.string,
+  id: PropTypes.string,
   onClick: PropTypes.func,
   activeEntity: PropTypes.string
 };

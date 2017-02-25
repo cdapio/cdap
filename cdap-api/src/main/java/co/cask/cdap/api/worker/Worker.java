@@ -22,17 +22,17 @@ import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
 
 /**
- * Defines a Worker.
+ * Defines a {@code Worker}.
  */
 public interface Worker extends Runnable, ProgramLifecycle<WorkerContext> {
 
   /**
-   * Configure a Worker.
+   * Configure a {@code Worker}.
    */
   void configure(WorkerConfigurer configurer);
 
   /**
-   * Initialize the Worker.
+   * Initialize the {@code Worker}.
    *
    * Note that unlike most program types, this method is not called within an implicit transaction,
    * but instead it can start its own transactions using {@link WorkerContext#execute(TxRunnable)}.
@@ -43,7 +43,7 @@ public interface Worker extends Runnable, ProgramLifecycle<WorkerContext> {
   void initialize(WorkerContext context) throws Exception;
 
   /**
-   * Destroy the Worker.
+   * Destroy the {@code Worker}.
    *
    * Note that unlike most program types, this method is not called within an implicit transaction,
    * but instead it can start its own transactions using {@link WorkerContext#execute(TxRunnable)}.
@@ -53,7 +53,8 @@ public interface Worker extends Runnable, ProgramLifecycle<WorkerContext> {
   void destroy();
 
   /**
-   * Request to stop the running worker.
+   * Stop the {@code Worker}. This method will be invoked whenever the worker is externally stopped by CDAP.
+   *
    * This method will be invoked from a different thread than the one calling the {@link #run()} method.
    */
   void stop();

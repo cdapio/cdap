@@ -42,13 +42,11 @@ installed.
 
 .. rubric:: Hadoop/HBase Environment
 
-For a Distributed CDAP cluster, version |release|, you **must** install these Hadoop components:
+For a Distributed CDAP cluster, version |release|, you **must** install these Hadoop components
+(see notes following the tables):
 
 .. |cdh-title| replace:: Cloudera Distribution of Apache Hadoop (CDH)
-.. |cdh-version|       replace:: 5.1 through 5.9
-.. |hdp-version|       replace:: 2.0 through 2.5
-.. |mapr-version|      replace:: 4.1 through 5.2
-.. |emr-version|       replace:: 4.6 through 4.8
+.. |note-4| replace:: :ref:`(Note 4) <admin-manual-hadoop-compatibility-matrix-note-4>`
 
 +----------------+---------------------------------+---------------------------------------+
 | Component      | Source                          | Supported Versions                    |
@@ -57,43 +55,43 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 +----------------+---------------------------------+---------------------------------------+
 | **HBase**      | Apache                          | 0.98.x and 1.2                        |
 +                +---------------------------------+---------------------------------------+
-|                | |cdh-title|                     | |cdh-version|                         |
+|                | |cdh-title|                     | |cdh-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
+|                | Hortonworks Data Platform (HDP) | |hdp-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | MapR                            | |mapr-version| (with Apache HBase)    |
+|                | MapR                            | |mapr-versions| (with Apache HBase)   |
 +                +---------------------------------+---------------------------------------+
-|                | Amazon Hadoop (EMR)             | |emr-version| (with Apache HBase)     |
+|                | Amazon Hadoop (EMR)             | |emr-versions| (with Apache HBase)    |
 +----------------+---------------------------------+---------------------------------------+
 | **HDFS**       | Apache Hadoop                   | 2.0.2-alpha through 2.6               |
 +                +---------------------------------+---------------------------------------+
-|                | |cdh-title|                     | |cdh-version|                         |
+|                | |cdh-title|                     | |cdh-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
+|                | Hortonworks Data Platform (HDP) | |hdp-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | MapR                            | |mapr-version| (with MapR-FS)         |
+|                | MapR                            | |mapr-versions| (with MapR-FS)        |
 +                +---------------------------------+---------------------------------------+
-|                | Amazon Hadoop (EMR)             | |emr-version|                         |
+|                | Amazon Hadoop (EMR)             | |emr-versions|                        |
 +----------------+---------------------------------+---------------------------------------+
 | **YARN** and   | Apache Hadoop                   | 2.0.2-alpha through 2.7               |
 + **MapReduce2** +---------------------------------+---------------------------------------+
-|                | |cdh-title|                     | |cdh-version|                         |
+|                | |cdh-title|                     | |cdh-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
+|                | Hortonworks Data Platform (HDP) | |hdp-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | MapR                            | |mapr-version|                        |
+|                | MapR                            | |mapr-versions|                       |
 +                +---------------------------------+---------------------------------------+
-|                | Amazon Hadoop (EMR)             | |emr-version|                         |
+|                | Amazon Hadoop (EMR)             | |emr-versions|                        |
 +----------------+---------------------------------+---------------------------------------+
 | **ZooKeeper**  | Apache                          | Version 3.4.3 through 3.4             |
 +                +---------------------------------+---------------------------------------+
-|                | |cdh-title|                     | |cdh-version|                         |
+|                | |cdh-title|                     | |cdh-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
+|                | Hortonworks Data Platform (HDP) | |hdp-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | MapR                            | |mapr-version|                        |
+|                | MapR                            | |mapr-versions|                       |
 +                +---------------------------------+---------------------------------------+
-|                | Amazon Hadoop (EMR)             | |emr-version|                         |
+|                | Amazon Hadoop (EMR)             | |emr-versions|                        |
 +----------------+---------------------------------+---------------------------------------+
 
 For a Distributed CDAP cluster, version |release|, you *can* (optionally) install these
@@ -104,30 +102,40 @@ Hadoop components, as required:
 +================+=================================+=======================================+
 | **Hive**       | Apache                          | Version 0.12.0 through 1.2.x          |
 +                +---------------------------------+---------------------------------------+
-|                | |cdh-title|                     | |cdh-version|                         |
+|                | |cdh-title|                     | |cdh-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
+|                | Hortonworks Data Platform (HDP) | |hdp-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | MapR                            | |mapr-version|                        |
+|                | MapR                            | |mapr-versions|                       |
 +                +---------------------------------+---------------------------------------+
-|                | Amazon Hadoop (EMR)             | |emr-version|                         |
+|                | Amazon Hadoop (EMR)             | |emr-versions|                        |
 +----------------+---------------------------------+---------------------------------------+
 | **Spark**      | Apache                          | Versions 1.2.x through 1.6.x          |
 +                +---------------------------------+---------------------------------------+
-|                | |cdh-title|                     | |cdh-version|                         |
+|                | |cdh-title|                     | |cdh-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | Hortonworks Data Platform (HDP) | |hdp-version|                         |
+|                | Hortonworks Data Platform (HDP) | |hdp-versions| |note-4|               |
 +                +---------------------------------+---------------------------------------+
-|                | MapR                            | |mapr-version|                        |
+|                | MapR                            | |mapr-versions|                       |
 +                +---------------------------------+---------------------------------------+
-|                | Amazon Hadoop (EMR)             | |emr-version|                         |
+|                | Amazon Hadoop (EMR)             | |emr-versions|                        |
 +----------------+---------------------------------+---------------------------------------+
 
-**Note:** Component versions shown in these tables are those that we have tested and are
+**Note 1:** Component versions shown in these tables are those that we have tested and are
 confident of their suitability and compatibility. Later versions of components may work,
 but have not necessarily been either tested or confirmed compatible.
 
-**Note:** Certain CDAP components need to reference your *Hadoop*, *YARN*, *HBase*, and
+**Note 2:** Certain CDAP components need to reference your *Hadoop*, *YARN*, *HBase*, and
 *Hive* cluster configurations by adding those configurations to their class paths.
 
-**Note:** *Hive 0.12* is not supported for :ref:`secure cluster configurations <admin-security>`.
+**Note 3:** *Hive 0.12* is not supported for :ref:`secure cluster configurations <admin-security>`.
+
+.. _admin-manual-hadoop-compatibility-matrix-note-4:
+
+**Note 4:** An upcoming release of CDAP (scheduled for CDAP 4.3) will drop support for all
+versions older than `CDH 5.4.11
+<https://www.cloudera.com/documentation/other/security-bulletins/topics/csb_all_product_issues.html#tsb_175>`__
+or `HDP 2.5.0.0 
+<http://docs.hortonworks.com/HDPDocuments/HDP2/HDP-2.5.0/bk_release-notes/content/ch_relnotes_v250.html>`__
+due to an `Apache Hadoop Privilege Escalation Vulnerability 
+<https://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2016-5393>`__.

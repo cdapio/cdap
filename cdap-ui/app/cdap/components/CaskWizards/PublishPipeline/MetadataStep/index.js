@@ -48,7 +48,10 @@ const PipelineName = connect(
 export default function MetadataStep() {
   return (
     <Provider store={PublishPipelineStore}>
-      <Form className="form-horizontal pipeline-publish-metadata-step">
+      <Form
+        className="form-horizontal pipeline-publish-metadata-step"
+        onSubmit={(e) => {e.stopPropagation(); e.preventDefault();}}
+      >
         <FormGroup row>
           <Col xs="3">
             <Label className="control-label">

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,23 +22,22 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.annotation.TransactionControl;
 
 /**
- * Provides access to the transactional messaging system.
+ * Provides access to the Transactional Messaging System.
  */
 @Beta
 public interface MessagingContext {
 
   /**
-   * Gets an instance of {@link MessagePublisher} for publishing messages.
+   * Returns an instance of {@link MessagePublisher} for publishing messages.
    * <p>
-   * Messages will be published
-   * transactionally if any of the {@code publish} methods in the {@link MessagePublisher} is called from a
-   * transactional context (either through {@link TransactionControl#IMPLICIT Implicit Transaction Control},
-   * or via {@link Transactional#execute(TxRunnable)}
+   * Messages will be published transactionally if any of the {@code publish} methods in the
+   * {@link MessagePublisher} are called from a transactional context (either through {@link
+   * TransactionControl#IMPLICIT Implicit Transaction Control}, or {@link Transactional#execute(TxRunnable)}
    * when {@link TransactionControl#EXPLICIT Explicit Transaction Control} is used).
    * </p>
    * <p>
-   * When those {@code publish} methods are called without a transactional context, message will be published
-   * without transaction.
+   * When those {@code publish} methods are called without a transactional context, the message will be published
+   * without a transaction.
    * </p>
    *
    * @return a new instance of {@link MessagePublisher}. The returned instance cannot be shared across multiple threads.
@@ -46,27 +45,28 @@ public interface MessagingContext {
   MessagePublisher getMessagePublisher();
 
   /**
-   * Gets an instance of {@link MessagePublisher} for publishing messages. Messages published through the
-   * resulting {@link MessagePublisher} is always published without using transaction and is immediately
-   * available for consumption.
+   * Returns an instance of {@link MessagePublisher} for publishing messages without a transaction.
+   * <p>
+   * Messages published through the resulting {@link MessagePublisher} are always published without using
+   * a transaction and are immediately available for consumption.
    *
    * @return a new instance of {@link MessagePublisher}. The returned instance is safe to be used from multiple threads.
    */
   MessagePublisher getDirectMessagePublisher();
 
   /**
-   * Gets an instance of {@link MessageFetcher} for fetching messages.
+   * Returns an instance of {@link MessageFetcher} for fetching messages.
    * <p>
-   * Messages will be fetched
-   * transactionally if any of the {@code fetch} methods in the {@link MessageFetcher} is called from a
-   * transactional context (either through {@link TransactionControl#IMPLICIT Implicit Transaction Control},
-   * or via {@link Transactional#execute(TxRunnable)}
+   * Messages will be fetched transactionally if any of the {@code publish} methods in the
+   * {@link MessagePublisher} are called from a transactional context (either through {@link
+   * TransactionControl#IMPLICIT Implicit Transaction Control}, or {@link Transactional#execute(TxRunnable)}
    * when {@link TransactionControl#EXPLICIT Explicit Transaction Control} is used).
    * </p>
    * <p>
-   * When those {@code fetch} methods are called without a transactional context, message will be fetched
-   * without transaction.
+   * When those {@code fetch} methods are called without a transactional context, the message will be fetched
+   * without a transaction.
    * </p>
+   *
    * @return a new instance of {@link MessageFetcher}. The returned instance cannot be shared across multiple threads.
    */
   MessageFetcher getMessageFetcher();

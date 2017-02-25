@@ -75,7 +75,7 @@ public class CoprocessorManager {
   /**
    * Get the descriptor for a single coprocessor that uses the pre-built coprocessor jar.
    */
-  public CoprocessorDescriptor getCoprocessorDescriptor(Class<? extends  Coprocessor> coprocessor,
+  public CoprocessorDescriptor getCoprocessorDescriptor(Class<? extends Coprocessor> coprocessor,
                                                         @Nullable Integer priority) throws IOException {
     if (priority == null) {
       priority = Coprocessor.PRIORITY_USER;

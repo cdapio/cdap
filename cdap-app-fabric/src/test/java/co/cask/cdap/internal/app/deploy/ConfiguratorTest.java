@@ -94,14 +94,14 @@ public class ConfiguratorTest {
     CConfiguration cConf = CConfiguration.create();
     ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizer,
                                                              new DummyProgramRunnerFactory(),
-                                                             new DefaultImpersonator(cConf, null, null),
+                                                             new DefaultImpersonator(cConf, null),
                                                              authEnforcer, authenticationContext);
 
     // Create a configurator that is testable. Provide it a application.
     try (CloseableClassLoader artifactClassLoader =
            artifactRepo.createArtifactClassLoader(
              appJar, new EntityImpersonator(artifactId.getNamespace().toEntityId(),
-                                            new DefaultImpersonator(cConf, null, null)))) {
+                                            new DefaultImpersonator(cConf, null)))) {
       Configurator configurator = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId,
                                                            WordCountApp.class.getName(), artifactRepo,
                                                            artifactClassLoader, null, "");
@@ -127,7 +127,7 @@ public class ConfiguratorTest {
     CConfiguration cConf = CConfiguration.create();
     ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizer,
                                                              new DummyProgramRunnerFactory(),
-                                                             new DefaultImpersonator(cConf, null, null),
+                                                             new DefaultImpersonator(cConf, null),
                                                              authEnforcer, authenticationContext);
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
@@ -135,7 +135,7 @@ public class ConfiguratorTest {
     try (CloseableClassLoader artifactClassLoader =
            artifactRepo.createArtifactClassLoader(
              appJar, new EntityImpersonator(artifactId.getNamespace().toEntityId(),
-                                            new DefaultImpersonator(cConf, null, null)))) {
+                                            new DefaultImpersonator(cConf, null)))) {
       Configurator configuratorWithConfig =
         new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
                                  artifactRepo, artifactClassLoader, null, new Gson().toJson(config));

@@ -33,6 +33,7 @@ var plugins = [
 var webpackConfig = {
   entry: {
     vendor: [
+      'babel-polyfill',
       'react',
       'react-dom',
       'redux',

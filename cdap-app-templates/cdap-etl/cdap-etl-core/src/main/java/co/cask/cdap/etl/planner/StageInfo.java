@@ -40,14 +40,17 @@ public class StageInfo implements Serializable {
   private final Map<String, Schema> inputSchemas;
   private final Set<String> outputs;
   private final Schema outputSchema;
+  private final Schema errorSchema;
   private final String errorDatasetName;
 
   private StageInfo(String name, String pluginType, Set<String> inputs, Map<String, Schema> inputSchemas,
-                    Set<String> outputs, @Nullable Schema outputSchema, @Nullable String errorDatasetName) {
+                    Set<String> outputs, @Nullable Schema outputSchema, @Nullable Schema errorSchema,
+                    @Nullable String errorDatasetName) {
     this.name = name;
     this.pluginType = pluginType;
     this.inputSchemas = Collections.unmodifiableMap(inputSchemas);
     this.outputSchema = outputSchema;
+    this.errorSchema = errorSchema;
     this.inputs = ImmutableSet.copyOf(inputs);
     this.outputs = ImmutableSet.copyOf(outputs);
     this.errorDatasetName = errorDatasetName;
@@ -83,6 +86,11 @@ public class StageInfo implements Serializable {
     return errorDatasetName;
   }
 
+  @Nullable
+  public Schema getErrorSchema() {
+    return errorSchema;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -100,24 +108,26 @@ public class StageInfo implements Serializable {
       Objects.equals(inputSchemas, that.inputSchemas) &&
       Objects.equals(outputs, that.outputs) &&
       Objects.equals(outputSchema, that.outputSchema) &&
+      Objects.equals(errorSchema, that.errorSchema) &&
       Objects.equals(errorDatasetName, that.errorDatasetName);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(name, pluginType, inputs, inputSchemas,
-                        outputs, outputSchema, errorDatasetName);
+                        outputs, outputSchema, errorSchema, errorDatasetName);
   }
 
   @Override
   public String toString() {
     return "StageInfo{" +
       "name='" + name + '\'' +
-      "pluginType='" + pluginType + '\'' +
-      "inputs='" + inputs + '\'' +
-      "inputSchemas='" + inputSchemas + '\'' +
-      "outputs='" + outputs + '\'' +
-      "outputSchema='" + outputSchema + '\'' +
+      ", pluginType='" + pluginType + '\'' +
+      ", inputs=" + inputs +
+      ", inputSchemas=" + inputSchemas +
+      ", outputs=" + outputs +
+      ", outputSchema=" + outputSchema +
+      ", errorSchema=" + errorSchema +
       ", errorDatasetName='" + errorDatasetName + '\'' +
       '}';
   }
@@ -136,6 +146,7 @@ public class StageInfo implements Serializable {
     private final Set<String> outputs;
     private final Map<String, Schema> inputSchemas;
     private Schema outputSchema;
+    private Schema errorSchema;
     private String errorDatasetName;
 
     public Builder(String name, String pluginType) {
@@ -181,13 +192,19 @@ public class StageInfo implements Serializable {
       return this;
     }
 
+    public Builder setErrorSchema(Schema schema) {
+      errorSchema = schema;
+      return this;
+    }
+
     public Builder setErrorDatasetName(String errorDatasetName) {
       this.errorDatasetName = errorDatasetName;
       return this;
     }
 
     public StageInfo build() {
-      return new StageInfo(name, pluginType, inputs, inputSchemas, outputs, outputSchema, errorDatasetName);
+      return new StageInfo(name, pluginType, inputs, inputSchemas, outputs,
+                           outputSchema, errorSchema, errorDatasetName);
     }
   }
 }

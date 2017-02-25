@@ -25,6 +25,7 @@ import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
+import co.cask.cdap.logging.LoggingUtil;
 import co.cask.cdap.logging.framework.distributed.LogSaverTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsProcessorTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsTwillRunnable;
@@ -50,8 +51,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -69,12 +68,6 @@ public class MasterTwillApplication implements TwillApplication {
   private static final String NAME = Constants.Service.MASTER_SERVICES;
   private static final String CCONF_NAME = "cConf.xml";
   private static final String HCONF_NAME = "hConf.xml";
-  private static final Comparator<File> FILE_NAME_COMPARATOR = new Comparator<File>() {
-    @Override
-    public int compare(File o1, File o2) {
-      return o1.getName().compareTo(o2.getName());
-    }
-  };
   private static final Set<String> ALL_SERVICES = ImmutableSet.of(
     Constants.Service.MESSAGING_SERVICE,
     Constants.Service.TRANSACTION,
@@ -331,12 +324,7 @@ public class MasterTwillApplication implements TwillApplication {
 
     // Localize log lib jars
     // First collect jars under each of the configured lib directory
-    List<File> libJars = new ArrayList<>();
-    for (String libDir : cConf.getTrimmedStringCollection(Constants.Logging.PIPELINE_LIBRARY_DIR)) {
-      List<File> files = new ArrayList<>(DirUtils.listFiles(new File(libDir), "jar"));
-      Collections.sort(files, FILE_NAME_COMPARATOR);
-      libJars.addAll(files);
-    }
+    List<File> libJars = LoggingUtil.getExtensionJars(cConf);
     if (!libJars.isEmpty()) {
       Path libJar = Files.createTempFile("log.lib", ".jar");
       try (JarOutputStream jarOutput = new JarOutputStream(Files.newOutputStream(libJar))) {
@@ -399,7 +387,7 @@ public class MasterTwillApplication implements TwillApplication {
         extraClassPath.add(file.getName() + "/lib/*");
       } else {
         File targetFile = tempDir.resolve(System.currentTimeMillis() + "-" + file.getName()).toFile();
-        File resultFile = ExploreServiceUtils.rewriteHiveAuthFactory(file, targetFile);
+        File resultFile = ExploreServiceUtils.patchHiveClasses(file, targetFile);
         if (resultFile == targetFile) {
           LOG.info("Rewritten HiveAuthFactory from jar file {} to jar file {}", file, resultFile);
         }

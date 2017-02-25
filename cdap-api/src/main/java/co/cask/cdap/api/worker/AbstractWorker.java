@@ -102,11 +102,18 @@ public abstract class AbstractWorker extends AbstractPluginConfigurable<WorkerCo
     return context;
   }
 
+  /**
+   * By default, this method is a no-op. This method should be overridden to provide actual {@code stop} functionality.
+   */
   @Override
   public void stop() {
     // default no-op
   }
 
+  /**
+   * By default, this method is a no-op. This method should be overridden to provide actual {@code destroy}
+   * functionality.
+   */
   @Override
   @TransactionPolicy(TransactionControl.EXPLICIT)
   public void destroy() {

@@ -40,6 +40,14 @@ Because of this, it is simplest to specify a custom mapping for ``root.directory
 ``hbase.namespace`` when using impersonation so that the privileges granted to the
 configured principal can be kept to a minimum.
 
+HDFS Permissions
+----------------
+In the case of impersonation, *every user who can be impersonated* will need access to
+their corresponding HDFS ``/user/<username>`` directory. The commands for this are
+described in the installation section for each distribution (:ref:`Cloudera Manager
+<cloudera-hdfs-permissions>`, :ref:`Ambari <ambari-hdfs-permissions>`, 
+:ref:`MapR <mapr-hdfs-permissions>`, and :ref:`packages <packages-hdfs-permissions>`).
+
 
 Limitations
 ===========

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.ReflectionUtils;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -97,7 +97,9 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
     throws IOException, InterruptedException {
     // return a MultipleOutputsCommitter that commits for the root output format as well as all delegate outputformats
     if (committer == null) {
-      Map<String, OutputCommitter> committers = new HashMap<>();
+      // use a linked hash map: it preserves the order of insertion, so the output committers are called in the
+      // same order as outputs were added. This makes multi-output a little more predictable (and testable).
+      Map<String, OutputCommitter> committers = new LinkedHashMap<>();
       for (String name : MultipleOutputs.getNamedOutputsList(context)) {
         Class<? extends OutputFormat> namedOutputFormatClass =
           MultipleOutputs.getNamedOutputFormatClass(context, name);

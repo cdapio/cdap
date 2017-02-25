@@ -17,6 +17,7 @@
 package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.zookeeper.election.LeaderElectionInfoService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
@@ -38,9 +39,12 @@ public class MasterServiceMainTest {
   @Test
   public void testInjector() {
     Injector baseInjector = MasterServiceMain.createProcessInjector(CConfiguration.create(), new Configuration());
-    Injector injector = MasterServiceMain.createLeaderInjector(baseInjector.getInstance(CConfiguration.class),
-                                                               baseInjector.getInstance(Configuration.class),
-                                                               baseInjector.getInstance(ZKClientService.class));
+    Injector injector = MasterServiceMain.createLeaderInjector(
+      baseInjector.getInstance(CConfiguration.class),
+      baseInjector.getInstance(Configuration.class),
+      baseInjector.getInstance(ZKClientService.class),
+      new LeaderElectionInfoService(baseInjector.getInstance(ZKClientService.class), "/election")
+    );
 
     Assert.assertNotNull(injector.getInstance(AuthorizerInstantiator.class));
     Assert.assertNotNull(injector.getInstance(DatasetService.class));

@@ -30,18 +30,16 @@ export default class EntityListInfo extends Component {
   }
 
   showPagination() {
+    let plus = this.props.allEntitiesFetched ? '' : '+';
+    let entitiesLabel = T.translate('features.EntityListView.Info.entities');
     return (
       <span className="pagination">
+        <span className="total-entities">
+          {this.props.numberOfEntities} {plus} {entitiesLabel}
+        </span>
         {
-          this.props.numberOfPages <= 1 ?
-            <span className="total-entities">
-              {this.props.numberOfEntities} Entities
-            </span>
-          :
-            <span>
-              <span className="total-entities">
-                {this.props.numberOfEntities}+ Entities
-              </span>
+          this.props.numberOfPages > 1 ?
+            (
               <ReactPaginate
                 pageCount={this.props.numberOfPages}
                 pageRangeDisplayed={3}
@@ -57,18 +55,20 @@ export default class EntityListInfo extends Component {
                 containerClassName={"page-list"}
                 activeClassName={"current-page"}
               />
-            </span>
+            )
+          :
+            null
         }
       </span>
     );
   }
   render() {
-    let title = T.translate('features.EntityListView.Info.title');
+    let title = T.translate('features.EntityListView.Info.title', {namespace: this.props.namespace});
 
     return (
       <div className={this.props.className}>
         <span className="title">
-          <h3>{title} "{this.props.namespace}"</h3>
+          <h3>{title}</h3>
         </span>
         {
           this.props.numberOfEntities ?
@@ -87,7 +87,8 @@ EntityListInfo.propTypes = {
   numberOfPages: PropTypes.number,
   numberOfEntities: PropTypes.number,
   currentPage: PropTypes.number,
-  onPageChange: PropTypes.func
+  onPageChange: PropTypes.func,
+  allEntitiesFetched: PropTypes.bool
 };
 
 EntityListInfo.defaultProps = {
@@ -96,5 +97,6 @@ EntityListInfo.defaultProps = {
   numberOfPages: 1,
   numberOfEntities: 0,
   currentPage: 1,
-  onPageChange: () => {}
+  onPageChange: () => {},
+  allEntitiesFetched: false
 };

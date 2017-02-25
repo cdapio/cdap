@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Cask Data, Inc.
+ * Copyright 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
@@ -35,6 +36,7 @@ import co.cask.cdap.data2.metadata.indexer.InvertedValueIndexer;
 import co.cask.cdap.data2.metadata.indexer.SchemaIndexer;
 import co.cask.cdap.data2.metadata.indexer.ValueOnlyIndexer;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -126,15 +128,6 @@ public class MetadataDataset extends AbstractDataset {
   static final String INVERTED_ENTITY_NAME_INDEX_COLUMN = "in";    // column for entity name indexes in reverse order
   static final String CREATION_TIME_INDEX_COLUMN = "c";     // column for creation-time indexes
   static final String INVERTED_CREATION_TIME_INDEX_COLUMN = "ic"; // column for inverted creation-time based index
-
-  // TODO: CDAP-7835: This is required to be public only for UpgradeTool
-  public static final String COLUMNS_TO_INDEX = Joiner.on(",").join(
-    DEFAULT_INDEX_COLUMN,
-    ENTITY_NAME_INDEX_COLUMN,
-    INVERTED_ENTITY_NAME_INDEX_COLUMN,
-    CREATION_TIME_INDEX_COLUMN,
-    INVERTED_CREATION_TIME_INDEX_COLUMN
-  );
 
   public static final String TAGS_KEY = "tags";
   public static final String KEYVALUE_SEPARATOR = ":";
@@ -556,26 +549,29 @@ public class MetadataDataset extends AbstractDataset {
    *               the cursor. If {@code null}, the first row is used as the cursor
    * @param showHidden boolean which specifies whether to display hidden entities (entity whose name start with "_")
    *                    or not.
+   * @param entityScope a set which specifies which scope of entities to display.
    * @return a {@link SearchResults} object containing a list of {@link MetadataEntry} containing each matching
    *         {@link NamespacedEntityId} with its associated metadata. It also optionally contains a list of cursors
    *         for subsequent queries to start with, if the specified #sortInfo is not {@link SortInfo#DEFAULT}.
    */
   public SearchResults search(String namespaceId, String searchQuery, Set<EntityTypeSimpleName> types,
-                              SortInfo sortInfo, int offset, int limit, int numCursors,
-                              @Nullable String cursor, boolean showHidden) {
+                              SortInfo sortInfo, int offset, int limit, int numCursors, @Nullable String cursor,
+                              boolean showHidden, Set<EntityScope> entityScope) throws BadRequestException {
     if (!SortInfo.DEFAULT.equals(sortInfo)) {
       if (!"*".equals(searchQuery)) {
-        throw new IllegalArgumentException("Cannot search with non-default sort with any query other than '*'");
+        throw new BadRequestException("Cannot search with non-default sort with any query other than '*'");
       }
-      return searchByCustomIndex(namespaceId, types, sortInfo, offset, limit, numCursors, cursor, showHidden);
+      return searchByCustomIndex(namespaceId, types, sortInfo, offset, limit, numCursors, cursor, showHidden,
+                                 entityScope);
     }
-    return searchByDefaultIndex(namespaceId, searchQuery, types, showHidden);
+    return searchByDefaultIndex(namespaceId, searchQuery, types, showHidden, entityScope);
   }
 
   private SearchResults searchByDefaultIndex(String namespaceId, String searchQuery,
-                                             Set<EntityTypeSimpleName> types, boolean showHidden) {
+                                             Set<EntityTypeSimpleName> types, boolean showHidden,
+                                             Set<EntityScope> entityScope) {
     List<MetadataEntry> results = new LinkedList<>();
-    for (String searchTerm : getSearchTerms(namespaceId, searchQuery)) {
+    for (String searchTerm : getSearchTerms(namespaceId, searchQuery, entityScope)) {
       Scanner scanner;
       if (searchTerm.endsWith("*")) {
         // if prefixed search get start and stop key
@@ -605,15 +601,17 @@ public class MetadataDataset extends AbstractDataset {
 
   private SearchResults searchByCustomIndex(String namespaceId, Set<EntityTypeSimpleName> types,
                                             SortInfo sortInfo, int offset, int limit, int numCursors,
-                                            @Nullable String cursor, boolean showHidden) {
-    List<MetadataEntry> returnedResults = new LinkedList<>();
-    List<MetadataEntry> allResults = new LinkedList<>();
+                                            @Nullable String cursor, boolean showHidden,
+                                            Set<EntityScope> entityScope) {
+    List<MetadataEntry> resultsFromOffset = new LinkedList<>();
+    List<MetadataEntry> resultsFromBeginning = new LinkedList<>();
     String indexColumn = getIndexColumn(sortInfo.getSortBy(), sortInfo.getSortOrder());
     // we want to return the first chunk of 'limit' elements after offset
-    // in addition, we want to pre-fetch 'numCursors' chunks of size 'limit'
-    int fetchSize = offset + ((numCursors + 1) * limit);
+    // in addition, we want to pre-fetch 'numCursors' chunks of size 'limit'.
+    // Note that there's a potential for overflow so we account by limiting it to Integer.MAX_VALUE
+    int fetchSize = (int) Math.min(offset + ((numCursors + 1) * (long) limit), Integer.MAX_VALUE);
     List<String> cursors = new ArrayList<>(numCursors);
-    for (String searchTerm : getSearchTerms(namespaceId, "*")) {
+    for (String searchTerm : getSearchTerms(namespaceId, "*", entityScope)) {
       byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
       byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
       // if a cursor is provided, then start at the cursor
@@ -628,23 +626,22 @@ public class MetadataDataset extends AbstractDataset {
       int mod = (limit == 1) ? 0 : 1;
       try (Scanner scanner = indexedTable.scanByIndex(Bytes.toBytes(indexColumn), startKey, stopKey)) {
         Row next;
-        while ((next = scanner.next()) != null) {
+        while ((next = scanner.next()) != null && resultsFromBeginning.size() < fetchSize) {
           Optional<MetadataEntry> metadataEntry = parseRow(next, indexColumn, types, showHidden);
           if (!metadataEntry.isPresent()) {
             continue;
           }
-          allResults.add(metadataEntry.get());
+          resultsFromBeginning.add(metadataEntry.get());
 
           // skip until we reach offset
-          // skip if we have enough cursors
-          if (allResults.size() <= offset || allResults.size() > fetchSize) {
+          if (resultsFromBeginning.size() <= offset) {
             continue;
           }
 
-          if (returnedResults.size() < limit) {
-            returnedResults.add(metadataEntry.get());
+          if (resultsFromOffset.size() < limit) {
+            resultsFromOffset.add(metadataEntry.get());
           } else {
-            if ((allResults.size() - offset) % limit == mod) {
+            if ((resultsFromBeginning.size() - offset) % limit == mod) {
               // add the cursor, with the namespace removed.
               String cursorWithNamespace = Bytes.toString(next.get(indexColumn));
               cursors.add(cursorWithNamespace.substring(cursorWithNamespace.indexOf(KEYVALUE_SEPARATOR) + 1));
@@ -653,7 +650,7 @@ public class MetadataDataset extends AbstractDataset {
         }
       }
     }
-    return new SearchResults(returnedResults, cursors, allResults);
+    return new SearchResults(resultsFromOffset, cursors, resultsFromBeginning);
   }
 
   // there may not be a MetadataEntry in the row or it may for a different targetType (entityFilter),
@@ -697,9 +694,10 @@ public class MetadataDataset extends AbstractDataset {
    * @param namespaceId the namespaceId to search in
    * @param searchQuery the user specified search query. If {@code *}, returns a singleton list containing
    *                    {@code *} which matches everything.
+   * @param entityScope a set which specifies which scope of entities to display.
    * @return formatted search query which is namespaced
    */
-  private Iterable<String> getSearchTerms(String namespaceId, String searchQuery) {
+  private Iterable<String> getSearchTerms(String namespaceId, String searchQuery, Set<EntityScope> entityScope) {
     List<String> searchTerms = new LinkedList<>();
     for (String term : Splitter.on(SPACE_SEPARATOR_PATTERN).omitEmptyStrings().trimResults().split(searchQuery)) {
       String formattedSearchTerm = term.toLowerCase();
@@ -709,10 +707,13 @@ public class MetadataDataset extends AbstractDataset {
         String[] split = formattedSearchTerm.split(KEYVALUE_SEPARATOR, 2);
         formattedSearchTerm = split[0].trim() + KEYVALUE_SEPARATOR + split[1].trim();
       }
-      searchTerms.add(namespaceId + KEYVALUE_SEPARATOR + formattedSearchTerm);
+      if (entityScope.size() == 2 || !entityScope.contains(EntityScope.SYSTEM)) {
+        searchTerms.add(namespaceId + KEYVALUE_SEPARATOR + formattedSearchTerm);
+      }
       // for non-system namespaces, also add the system namespace, so entities from system namespace are surfaced
       // in the search results as well
-      if (!NamespaceId.SYSTEM.getEntityName().equals(namespaceId)) {
+      if (!NamespaceId.SYSTEM.getEntityName().equals(namespaceId) &&
+        (entityScope.size() == 2 || !entityScope.contains(EntityScope.USER))) {
         searchTerms.add(NamespaceId.SYSTEM.getEntityName() + KEYVALUE_SEPARATOR + formattedSearchTerm);
       }
     }
@@ -871,6 +872,20 @@ public class MetadataDataset extends AbstractDataset {
       }
     }
     return count;
+  }
+
+  /**
+   * Removes all metadata which is {@code null}.
+   *
+   * @param targetId the {@link NamespacedEntityId} for which to remove the {@code null} or empty tags
+   */
+  public void removeNullOrEmptyTags(final NamespacedEntityId targetId) {
+    removeMetadata(targetId, new Predicate<String>() {
+      @Override
+      public boolean apply(String input) {
+        return TAGS_KEY.equals(input) && Strings.isNullOrEmpty(getMetadata(targetId, input).getValue());
+      }
+    });
   }
 
   /**

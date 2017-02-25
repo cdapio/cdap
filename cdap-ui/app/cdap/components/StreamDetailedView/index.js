@@ -16,7 +16,6 @@
 
 import React, { Component, PropTypes } from 'react';
 import OverviewMetaSection from 'components/Overview/OverviewMetaSection';
-import OverviewHeader from 'components/Overview/OverviewHeader';
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import {fetchTables} from 'services/ExploreTables/ActionCreator';
 import {objectQuery} from 'services/helpers';
@@ -45,7 +44,7 @@ export default class StreamDetailedView extends Component {
     super(props);
 
     this.state = {
-      entityDetail: objectQuery(this.props, 'location', 'state', 'entityDetail') | {
+      entityDetail: objectQuery(this.props, 'location', 'state', 'entityDetail') || {
         schema: null,
         programs: []
       },
@@ -68,6 +67,49 @@ export default class StreamDetailedView extends Component {
       fetchTables(namespace)
     );
 
+    this.fetchEntityDetails(namespace, streamId);
+    this.fetchEntityMetadata(namespace, streamId);
+    if (
+      isNil(this.state.entityMetadata) ||
+      isEmpty(this.state.entityMetadata) ||
+      isNil(this.state.entity) ||
+      isEmpty(this.state.entity)
+    ) {
+      this.setState({
+        loading: true
+      });
+    }
+
+  }
+
+  componentWillReceiveProps(nextProps) {
+    let {namespace: currentNamespace, streamId: currentStreamId} = this.props.params;
+    let {namespace: nextNamespace, streamId: nextStreamId} = nextProps.params;
+    if (currentNamespace === nextNamespace && currentStreamId === nextStreamId) {
+      return;
+    }
+    let {namespace, streamId} = nextProps.params;
+    if (!namespace) {
+      namespace = NamespaceStore.getState().selectedNamespace;
+    }
+    ExploreTablesStore.dispatch(
+      fetchTables(namespace)
+    );
+
+    this.setState({
+      entityDetail: {
+        schema: null,
+        programs: []
+      },
+      loading: true,
+      entityMetadata: {}
+    }, () => {
+      this.fetchEntityDetails(namespace, streamId);
+      this.fetchEntityMetadata(namespace, streamId);
+    });
+  }
+
+  fetchEntityDetails(namespace, streamId) {
     if (!this.state.entityDetail.schema || this.state.entityDetail.programs.length === 0) {
       const streamParams = {
         namespace,
@@ -123,7 +165,9 @@ export default class StreamDetailedView extends Component {
           }
         );
     }
+  }
 
+  fetchEntityMetadata(namespace) {
     if (
       isNil(this.state.entityMetadata) ||
       isEmpty(this.state.entityMetadata)
@@ -143,25 +187,16 @@ export default class StreamDetailedView extends Component {
               notFound: true
             });
           } else {
+            let metadata = entityMetadata
+              .filter(en => en.type === 'stream')
+              .find( en => en.id === this.props.params.streamId);
             this.setState({
-              entityMetadata: entityMetadata[0],
+              entityMetadata: metadata,
               loading: false
             });
           }
         });
     }
-
-    if (
-      isNil(this.state.entityMetadata) ||
-      isEmpty(this.state.entityMetadata) ||
-      isNil(this.state.entity) ||
-      isEmpty(this.state.entity)
-    ) {
-      this.setState({
-        loading: true
-      });
-    }
-
   }
 
   goToHome(action) {
@@ -207,7 +242,6 @@ export default class StreamDetailedView extends Component {
       );
     }
 
-    const title = T.translate('commons.entity.stream.singular');
     let selectedNamespace = NamespaceStore.getState().selectedNamespace;
     let previousPathname = objectQuery(this.props, 'location', 'state', 'previousPathname')  || `/ns/${selectedNamespace}`;
     let previousPaths = [{
@@ -215,7 +249,7 @@ export default class StreamDetailedView extends Component {
       label: T.translate('commons.back')
     }];
     return (
-      <div className="app-detailed-view">
+      <div className="app-detailed-view streams-deatiled-view">
         <Helmet
           title={T.translate('features.StreamDetailedView.Title', {streamId: this.props.params.streamId})}
         />
@@ -225,16 +259,12 @@ export default class StreamDetailedView extends Component {
           currentStateIcon="icon-streams"
           currentStateLabel={T.translate('commons.stream')}
         />
-        <OverviewHeader
-          icon="icon-streams"
-          title={title}
-          successMessage={this.state.successMessage}
-        />
         <OverviewMetaSection
           entity={this.state.entityMetadata}
           onFastActionSuccess={this.goToHome.bind(this)}
           onFastActionUpdate={this.goToHome.bind(this)}
           fastActionToOpen={this.state.modalToOpen}
+          showFullCreationTime={true}
         />
         <StreamDetaildViewTab
           params={this.props.params}

@@ -76,7 +76,18 @@ export default class ProgramMetrics extends Component {
         </div>
         <div className="metric-item app-name">
           <p className="metric-header">{T.translate('commons.entity.program.application')}</p>
-          <p>{this.state.loading ? loading : this.state.appName}</p>
+          <p>
+            {
+              this.state.loading ?
+                loading
+              :
+                (
+                  <span title={this.state.appName}>
+                    {this.state.appName}
+                  </span>
+                )
+            }
+          </p>
         </div>
       </div>
     );

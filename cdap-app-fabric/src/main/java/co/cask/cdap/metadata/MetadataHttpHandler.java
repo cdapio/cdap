@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
@@ -57,6 +58,7 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -848,7 +850,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/metadata/search")
   public void searchMetadata(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
-                             @QueryParam("query") @DefaultValue("") String searchQuery,
+                             @QueryParam("query") String searchQuery,
                              @QueryParam("target") List<String> targets,
                              @QueryParam("sort") @DefaultValue("") String sort,
                              @QueryParam("offset") @DefaultValue("0") int offset,
@@ -856,7 +858,11 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @QueryParam("limit") @DefaultValue("2147483647") int limit,
                              @QueryParam("numCursors") @DefaultValue("0") int numCursors,
                              @QueryParam("cursor") @DefaultValue("") String cursor,
-                             @QueryParam("showHidden") @DefaultValue("false") boolean showHidden) throws Exception {
+                             @QueryParam("showHidden") @DefaultValue("false") boolean showHidden,
+                             @Nullable @QueryParam("entityScope") String entityScope) throws Exception {
+    if (searchQuery == null || searchQuery.isEmpty()) {
+      throw new BadRequestException("query is not specified");
+    }
     Set<EntityTypeSimpleName> types = Collections.emptySet();
     if (targets != null) {
       types = ImmutableSet.copyOf(Iterables.transform(targets, STRING_TO_TARGET_TYPE));
@@ -870,11 +876,11 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     try {
       MetadataSearchResponse response =
         metadataAdmin.search(namespaceId, URLDecoder.decode(searchQuery, "UTF-8"), types,
-                             sortInfo, offset, limit, numCursors, cursor, showHidden);
+                             sortInfo, offset, limit, numCursors, cursor, showHidden, validateEntityScope(entityScope));
       responder.sendJson(HttpResponseStatus.OK, response, MetadataSearchResponse.class, GSON);
     } catch (Exception e) {
       // if MetadataDataset throws an exception, it gets wrapped
-      if (Throwables.getRootCause(e) instanceof IllegalArgumentException) {
+      if (Throwables.getRootCause(e) instanceof BadRequestException) {
         throw new BadRequestException(e.getMessage(), e);
       }
       throw e;
@@ -908,6 +914,21 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(String.format("Invalid metadata scope '%s'. Expected '%s' or '%s'",
                                                   scope, MetadataScope.USER, MetadataScope.SYSTEM));
+    }
+  }
+
+  private Set<EntityScope> validateEntityScope(@Nullable String entityScope) throws BadRequestException {
+    if (entityScope == null) {
+      return EnumSet.allOf(EntityScope.class);
+    }
+
+    try {
+      return EnumSet.of(EntityScope.valueOf(entityScope.toUpperCase()));
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(String.format("Invalid entity scope '%s'. Expected '%s' or '%s' for entities " +
+                                                    "from specified scope, or just omit the parameter to get " +
+                                                    "entities from both scopes",
+                                                  entityScope, EntityScope.USER, EntityScope.SYSTEM));
     }
   }
 }

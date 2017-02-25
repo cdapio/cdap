@@ -539,6 +539,9 @@ metadata property or metadata tag, submit an HTTP GET request::
           * - ``showHidden``
             - By default, metadata search hides entities whose name starts with an ``_`` (underscore) from the search
               results. Set this to ``true`` to include these hidden entities in search results. Default is ``false``.
+          * - ``entityScope``
+            - The scope of entities for the metadata search. By default, all entities will be returned. Set this to
+              ``USER`` to include only user entities; set this to ``SYSTEM`` to include only system entities.
 
        Format for an option: ``&<option-name>=<option-value>``
 
@@ -552,6 +555,7 @@ Entities that match the specified query and entity type are returned in the body
     "showHidden": false,
     "sort": "creation-time DESC",
     "total": 2,
+    "entityScope": [ "SYSTEM" ]
     "results": [
         {
             "entityId": {
@@ -648,7 +652,7 @@ Search for properties and tags by specifying one of:
   either of the terms in their metadata.
 
 Since CDAP also annotates *system* metadata to entities by default as mentioned at
-:ref:`System Metadata <metadata-lineage-system-metadata>`, the following *special* search queries are also supported:
+:ref:`System Metadata <metadata-system-metadata>`, the following *special* search queries are also supported:
 
 - artifacts or applications containing a specific plugin: ``plugin:<plugin-name>``
 
@@ -736,7 +740,7 @@ For more information about collapsing lineage output, please refer to the sectio
 The lineage will be returned as a JSON string in the body of the response. The JSON describes lineage as a graph
 of connections between programs and datasets (or streams) in the specified time range. The number of
 levels of the request (``levels``) determines the depth of the graph. This impacts how far back the provenance of the
-data in the lineage chain is calculated, as described in the :ref:`Metadata and Lineage <metadata-lineage-lineage>`.
+data in the lineage chain is calculated, as described in the :ref:`Metadata and Lineage <metadata-lineage>`.
 
 Lineage JSON consists of three main sections:
 

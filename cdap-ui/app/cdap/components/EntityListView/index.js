@@ -114,9 +114,12 @@ class EntityListView extends Component {
       showSplash: true,
       userStoreObj : '',
       notFound: false,
-      numColumns: null
+      numColumns: null,
+      total: 0,
+      allEntitiesFetched: false
     };
 
+    // FIXME: @ajainarayanan: I'm not sure why this is outside of state :|
     this.retryCounter = 0; // being used for search API retry
 
     // By default, expect a single page -- update when search is performed and we can parse it
@@ -132,6 +135,7 @@ class EntityListView extends Component {
     this.eventEmitter.on(globalEvents.APPUPLOAD, this.refreshSearchByCreationTime);
     this.eventEmitter.on(globalEvents.STREAMCREATE, this.refreshSearchByCreationTime);
     this.eventEmitter.on(globalEvents.PUBLISHPIPELINE, this.refreshSearchByCreationTime);
+    this.eventEmitter.on(globalEvents.ARTIFACTUPLOAD, this.refreshSearchByCreationTime);
   }
 
   refreshSearchByCreationTime() {
@@ -149,6 +153,7 @@ class EntityListView extends Component {
     this.eventEmitter.off(globalEvents.APPUPLOAD, this.refreshSearchByCreationTime);
     this.eventEmitter.off(globalEvents.STREAMCREATE, this.refreshSearchByCreationTime);
     this.eventEmitter.off(globalEvents.PUBLISHPIPELINE, this.refreshSearchByCreationTime);
+    this.eventEmitter.off(globalEvents.ARTIFACTUPLOAD, this.refreshSearchByCreationTime);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -375,6 +380,7 @@ class EntityListView extends Component {
     currentPage = this.state.currentPage
   ) {
     let offset = (currentPage - 1) * this.pageSize;
+    const numCursors = 10;
 
     // TODO/FIXME: hack to not display programs when filter is empty (which means all
     // entities should be displayed). Maybe this should be a backend change?
@@ -395,11 +401,11 @@ class EntityListView extends Component {
     };
 
     if (typeof query === 'string' && query.length) {
-      params.query = `${query}*`;
+      params.query = query.charAt(query.length - 1) === '*' ? query : `${query}*`;
     } else {
       params.sort = sortObj.fullSort === 'none' ? this.sortOptions[3].fullSort : sortObj.fullSort;
       params.query = '*';
-      params.numCursors = 10;
+      params.numCursors = numCursors;
     }
 
     let total, limit;
@@ -422,13 +428,17 @@ class EntityListView extends Component {
             loading: false
           });
         } else {
+          // numCursors is the number of chunks after the first limit, so the
+          // total would be limit * (numCursors + 1)
+          let allEntitiesFetched = total < (limit * (numCursors + 1) + offset);
           this.setState({
             entities: res,
             total: total,
             loading: false,
             entityErr: false,
             errStatusCode: null,
-            numPages: Math.ceil(total / this.pageSize)
+            numPages: Math.ceil(total / this.pageSize),
+            allEntitiesFetched
           });
 
           this.retryCounter = 0;
@@ -439,6 +449,8 @@ class EntityListView extends Component {
         // On Error: render page as if there are no results found
         this.setState({
           loading: false,
+          entities: [],
+          total: 0,
           entityErr: typeof err === 'object' ? err.response : err,
           errStatusCode: err.statusCode
         });
@@ -584,13 +596,20 @@ class EntityListView extends Component {
     });
   }
 
-  openMarketModal() {
+  openAddEntityModal() {
     PlusButtonStore.dispatch({
       type: 'TOGGLE_PLUSBUTTON_MODAL',
       payload: {
         modalState: true
       }
     });
+
+    MyUserStoreApi
+      .get()
+      .subscribe(res => {
+        res.property['user-has-visited'] = true;
+        MyUserStoreApi.set({}, res.property);
+      });
   }
 
   onOverviewCloseAndRefresh() {
@@ -641,7 +660,7 @@ class EntityListView extends Component {
       return (
         <WelcomeScreen
           onClose={this.dismissSplash.bind(this)}
-          onMarketOpen={this.openMarketModal.bind(this)}
+          onAddEntity={this.openAddEntityModal.bind(this)}
         />
       );
     }
@@ -694,6 +713,7 @@ class EntityListView extends Component {
             numberOfPages={this.state.numPages}
             currentPage={this.state.currentPage}
             onPageChange={this.handlePageChange}
+            allEntitiesFetched={this.state.allEntitiesFetched}
           />
           <div className={classNames("entities-container")}>
             {
@@ -706,11 +726,7 @@ class EntityListView extends Component {
                   loading={this.state.loading}
                   onEntityClick={this.handleEntityClick.bind(this)}
                   onFastActionSuccess={this.onFastActionSuccess.bind(this)}
-                  errorMessage={this.state.entityErr}
-                  errorStatusCode={this.state.errStatusCode}
-                  animationDirection={this.state.animationDirection}
                   activeEntity={this.state.selectedEntity}
-                  retryCounter={this.retryCounter}
                   currentPage={this.state.currentPage}
                   activeFilter={this.state.filter}
                   filterOptions={this.filterOptions}

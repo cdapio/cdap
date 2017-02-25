@@ -73,4 +73,18 @@ public class SecurityUtilTest {
     String path = SecurityUtil.getKeytabURIforPrincipal(user, cConf);
     Assert.assertEquals(expectedPath, path);
   }
+
+  @Test
+  public void testNoKeytabPath() throws IOException {
+    String user = "alice";
+    CConfiguration cConf = CConfiguration.create();
+    // this should throw a null pointer exception with proper message as what to set
+    try {
+      SecurityUtil.getKeytabURIforPrincipal(user, cConf);
+      Assert.fail();
+    } catch (NullPointerException e) {
+      // expected
+      Assert.assertTrue(e.getMessage().contains(Constants.Security.KEYTAB_PATH));
+    }
+  }
 }

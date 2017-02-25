@@ -76,7 +76,7 @@ var loaders = [
 var webpackConfig = {
   context: __dirname + '/app/login',
   entry: {
-    'login': ['./login.js']
+    'login': ['babel-polyfill', './login.js']
   },
   module: {
     preLoaders: [

@@ -28,7 +28,11 @@ LITERAL_LINE = SPACES + ' | '
 SKIP_SECTIONS = []
 
 MISSING_FILE_TEMPLATE = "   **Missing Input File**,\"Missing input file %s\""
+
+# Positional parameters: section anchor, section title, section title underline
 SECTION_TABLE_HEADER = """
+.. _cli-available-commands-%s:
+
 %s
 %s
 
@@ -82,27 +86,42 @@ def create_parsed_line(line):
     """ Parses a line and changes single-quotes to a combination of literals and single-quotes.
         Handles closing literals with a backslash correctly for alpha-numerics.
         Any text that is enclosed with single-quotes will be converted to a literal with single-quotes.
-        'text' will become ``'text'``
+        'text' will become ``'text'``.
+        Any text that is enclosed in '<...>' or of the form '<...>...' will however have the single quotes removed
     """
     i = 0
     in_literal = False
+    stripping_quotes = False
     finished_literal = False
+    opening_literal = LITERAL
+    closing_literal = LITERAL
     opening_literal_quote = LITERAL + QUOTE
-    closing_literal_quote = QUOTE + LITERAL
+    closing_quote_literal = QUOTE + LITERAL
     new_line = ''
     i = -1
     for c in line:
         i +=1 
         if c == QUOTE:
             if not in_literal:
-                if i and line[i-1] not in (SPACE, "("): # Preceding character
+                if i and i < len(line) and line[i+1] in ('<'): # Following character
+                    new_line += opening_literal
+                    in_literal = not in_literal
+                    stripping_quotes = True
+                elif i and line[i-1] in ('>'): # Preceding character
+                    new_line += closing_literal
+                    in_literal = not in_literal                    
+                elif i and line[i-1] not in (SPACE, "("): # Preceding character
                     new_line += c
                 else:
                     new_line += opening_literal_quote
                     in_literal = not in_literal
-            else:
-                new_line += closing_literal_quote
+            else: # in_literal
+                if stripping_quotes or (i and line[i-1] in ('>')): # Preceding character
+                    new_line += closing_literal
+                else:
+                    new_line += closing_quote_literal
                 finished_literal = True
+                stripping_quotes = False
                 in_literal = not in_literal
         else:
             if finished_literal:
@@ -113,9 +132,10 @@ def create_parsed_line(line):
     return new_line
 
 def create_new_section(line):
-    sectionTitle = line.replace('**','').strip()
-    underline = len(sectionTitle) * '-'
-    return SECTION_TABLE_HEADER % (sectionTitle, underline)
+    section_title = line.replace('**','').strip()
+    section_title_anchor = section_title.lower().replace(' ', '-')
+    underline = len(section_title) * '-'
+    return SECTION_TABLE_HEADER % (section_title_anchor, section_title, underline)
 
 #
 # Create the table

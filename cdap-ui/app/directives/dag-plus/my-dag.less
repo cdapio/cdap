@@ -21,6 +21,7 @@
 @light-yellow: lighten(#ffff99, 10%);
 @brown: #988470;
 @yellow-shadow: lighten(#f1c40f, 20%);
+@error-transform: #e74c3c;
 
 my-dag-plus {
   .zoom-control {
@@ -108,16 +109,14 @@ my-dag-plus {
           border: 3px solid #4586f3;
         }
 
-        &.wrangler {
-          color: @wrangler-yellow;
+        &.errortransform {
+          color: @error-transform;
+          left: 30vw;
           .node {
-            border-color: @wrangler-yellow;
-          }
-          .plugin-name {
-            // Wrangler yellow makes the text unreadable
-            color: darken(@wrangler-yellow, 10%);
+            border: 3px solid @error-transform;
           }
         }
+
       }
       &.realtimesink,
       &.batchsink,
@@ -359,11 +358,12 @@ my-dag-plus {
           stroke: #4586f3;
         }
 
-        &.wrangler-anchor {
+        &.error-anchor {
           circle {
-            stroke: @wrangler-yellow;
+            stroke: @error-transform;
           }
         }
+
       }
       &-anchor-sinkAnchor {
         circle,
@@ -384,6 +384,10 @@ my-dag-plus {
     .metric-label-text {
       color: #397cf1;
       font-size: 12px;
+    }
+
+    .metric-error-label {
+      color: @brand-danger;
     }
   }
 

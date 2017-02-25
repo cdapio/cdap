@@ -130,6 +130,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   @Override
+  @Nullable
   public StreamConfig create(StreamId streamId) throws Exception {
     create(QueueName.fromStream(streamId));
     publishAudit(streamId, AuditType.CREATE);
@@ -137,6 +138,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   @Override
+  @Nullable
   public StreamConfig create(StreamId streamId, @Nullable Properties props) throws Exception {
     create(QueueName.fromStream(streamId), props);
     String description = (props != null) ? props.getProperty(Constants.Stream.DESCRIPTION) : null;

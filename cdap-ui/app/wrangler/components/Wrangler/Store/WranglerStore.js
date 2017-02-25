@@ -142,22 +142,22 @@ const visualization = (state = defaultInitialState.visualization, action = defau
 
   switch (action.type) {
     case WranglerActions.addChart:
-      stateCopy = Object.assign({}, state);
+      stateCopy = cloneDeep(state);
       stateCopy.chartOrder.unshift(action.payload.chart.id);
       stateCopy.charts[action.payload.chart.id] = action.payload.chart;
       stateCopy.charts[action.payload.chart.id].label = `Chart ${stateCopy.chartOrder.length}`;
       break;
     case WranglerActions.editChart:
-      stateCopy = Object.assign({}, state);
+      stateCopy = cloneDeep(state);
       stateCopy.charts[action.payload.chart.id] = action.payload.chart;
       break;
     case WranglerActions.deleteChart:
-      stateCopy = Object.assign({}, state);
+      stateCopy = cloneDeep(state);
       stateCopy.chartOrder.splice(stateCopy.chartOrder.indexOf(action.payload.id), 1);
       delete stateCopy.charts[action.payload.id];
       break;
     case WranglerActions.renameColumn:
-      stateCopy = Object.assign({}, state);
+      stateCopy = cloneDeep(state);
       for (let id in stateCopy.charts) {
         if (stateCopy.charts[id].x === action.payload.activeColumn) {
           stateCopy.charts[id].x = action.payload.newName;
@@ -170,7 +170,7 @@ const visualization = (state = defaultInitialState.visualization, action = defau
       }
       break;
     case WranglerActions.dropColumn:
-      stateCopy = Object.assign({}, state);
+      stateCopy = cloneDeep(state);
       for (let id in stateCopy.charts) {
         if (stateCopy.charts[id].x === action.payload.activeColumn) {
           stateCopy.charts[id].x = '##'; // revert to default

@@ -108,8 +108,8 @@ To check the Java version installed, run the command::
 
   $ java -version
   
-CDAP is tested with the Oracle JDKs; it may work with other JDKs such as 
-`Open JDK <http://openjdk.java.net>`__, but it has not been tested with them.
+CDAP is tested with both the `Oracle JDK <http://www.java.com/en/download/manual.jsp>`__ and the 
+`Open JDK <http://openjdk.java.net>`__; it may work with other JDKs but it has not been tested with them.
 
 Once you have installed the JDK, you'll need to set the JAVA_HOME environment variable.
 

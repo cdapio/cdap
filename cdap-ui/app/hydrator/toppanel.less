@@ -52,7 +52,7 @@ body.theme-cdap {
         border-left: 1px solid @table-border-color;
         transition: all 0.2s ease;
         span {
-          line-height: 29px;
+          line-height: 31px;
           &.icon-logview { font-size: 21px; }
           &.icon-runtimestart,
           &.icon-runtimestop { font-size: 24px; }
@@ -307,21 +307,11 @@ body.theme-cdap {
         .clearfix { padding: 10px; }
       }
       div.hydrator-metadata {
-        flex: 0.9;
         flex-wrap: wrap;
         display: flex;
         background-color: transparent;
         z-index: 999;
         box-shadow: none;
-        transition: all 0.2s ease;
-
-        @media (max-width: 700px) {
-          flex: 0.6
-        }
-
-        @media (min-width: 701px) and (max-width: 1200px) {
-          flex: 0.8;
-        }
         &:hover,
         &:focus { cursor: pointer; }
         div.pipeline-type {
@@ -411,6 +401,7 @@ body.theme-cdap {
           width: 100%;
           position: absolute;
           box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
+
           div.pipeline-type {
             span { line-height: 1; }
           }
@@ -440,21 +431,11 @@ body.theme-cdap {
         }
       }
       cask-resource-center-button {
+        width: 58px;
+        display: inline-block;
+        margin-left: 20px;
         .cask-resourcecenter-button {
-          top: 60px;
-          .button-container {
-            display: inline-flex;
-            align-items: end;
-            justify-content: center;
-            h1 {
-              color: white;
-              margin: 0;
-              border: 0;
-              font-size: 4rem;
-              line-height: 4rem;
-              margin-bottom: 0.5rem;
-            }
-          }
+          top: 64px;
         }
       }
       .btn-group {
@@ -483,11 +464,9 @@ body.theme-cdap {
       justify-content: space-between;
       .run-specific-section {
         display: flex;
-        flex: 1;
-        flex-basis: 60vw;
-        width: ~"calc(100vw - 288px)";
-        width: ~"-moz-calc(100vw - 288px)";
-        width: ~"-webkit-calc(100vw - 288px)";
+        width: ~"calc(100vw - 370px)";
+        width: ~"-moz-calc(100vw - 370px)";
+        width: ~"-webkit-calc(100vw - 370px)";
         border-right: 0;
         .hydrator-detail-metadata {
           display: flex;
@@ -661,6 +640,14 @@ body.theme-cdap {
           .fa.fa-expand { display: none; }
         }
       }
+      cask-resource-center-button {
+        width: 58px;
+        display: inline-block;
+        margin-left: 20px;
+        .cask-resourcecenter-button {
+          top: 65px;
+        }
+      }
     }
   }
   &.state-hydrator-list {
@@ -670,7 +657,7 @@ body.theme-cdap {
       z-index: 999;
       height: 60px;
       box-shadow: 0 7px 7px fade(black, 10%), 0 10px 59px fade(black, 25%);
-      h1 {
+      h1:not(.fa) {
         border-right: 1px solid @table-border-color;
         display: inline-block;
         font-size: 20px;
@@ -714,21 +701,11 @@ body.theme-cdap {
         }
       }
       cask-resource-center-button {
+        width: 58px;
+        display: inline-block;
+        margin-left: 20px;
         .cask-resourcecenter-button {
           top: 78px;
-          .button-container {
-            display: inline-flex;
-            align-items: end;
-            justify-content: center;
-            h1 {
-              color: white;
-              margin: 0;
-              border: 0;
-              font-size: 4rem;
-              line-height: 4rem;
-              margin-bottom: 0.5rem;
-            }
-          }
         }
       }
     }

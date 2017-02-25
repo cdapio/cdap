@@ -1,0 +1,60 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+@import '../../../../styles/variables.scss';
+
+.about-page-modal {
+  &.modal-dialog { margin-top: 100px; }
+
+  .modal-body {
+    padding: 50px 45px;
+
+    .close-section {
+      position: absolute;
+      right: 0.5rem;
+      top: 0.5rem;
+      cursor: pointer;
+      color: #cccccc;
+    }
+
+    .about-title {
+      display: flex;
+      justify-content: center;
+
+      .cdap-version {
+        font-weight: bold;
+        float: right;
+        margin-top: 0.5rem;
+      }
+    }
+
+    .about-content {
+      margin-top: 2rem;
+
+      .cdap-mode-security {
+        font-size: 14px;
+      }
+
+      .cdap-copyright {
+        font-size: 11px;
+        margin-top: 3.5rem;
+
+        a {
+          color: $cdap-orange;
+        }
+      }
+    }
+  }
+}

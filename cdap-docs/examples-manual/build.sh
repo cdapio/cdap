@@ -34,8 +34,8 @@ function guide_rewrite_sed() {
   local project_version=${PROJECT_SHORT_VERSION}
   
   local source1="https://raw.githubusercontent.com/cdap-guides"
-  if [ "x${GIT_BRANCH_CDAP_APPS}" != "x" ]; then
-    local source2="${GIT_BRANCH_CDAP_APPS}"
+  if [ "x${GIT_BRANCH_CDAP_GUIDES}" != "x" ]; then
+    local source2="${GIT_BRANCH_CDAP_GUIDES}"
   elif [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     local source2="develop"
   else
@@ -70,7 +70,7 @@ function guide_rewrite_sed() {
       ${includes_dir}/${guide}/${readme_source} > ${includes_dir}/${guide}/${readme}    
     fi
   else
-    local m="URL does not exist: {$url}"
+    local m="URL does not exist: ${url}"
     echo_red_bold "${m}"
     set_message "${m}"
   fi  

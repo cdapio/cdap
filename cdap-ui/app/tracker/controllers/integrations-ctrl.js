@@ -72,7 +72,7 @@ class TrackerIntegrationsController {
         }
       },
       color: {
-        pattern: ['#35c853'] // @tracker-green
+        pattern: ['#35c853']
       },
       isLive: true,
       interval: 1000,
@@ -84,6 +84,15 @@ class TrackerIntegrationsController {
     this.getNavigatorApp();
 
     this.pollId = null;
+
+    this.flowDetailUrl = window.getOldCDAPUrl({
+      stateName: 'flows.detail',
+      stateParams: {
+        namespace: $state.params.namespace,
+        appId: this.CDAP_UI_CONFIG.navigator.appId,
+        programId: this.CDAP_UI_CONFIG.navigator.programId
+      }
+    });
 
     $scope.$watch('IntegrationsController.navigatorSetup.isOpen', () => {
       if (!this.navigatorSetup.isOpen && this.navigatorSetup.isSetup) {

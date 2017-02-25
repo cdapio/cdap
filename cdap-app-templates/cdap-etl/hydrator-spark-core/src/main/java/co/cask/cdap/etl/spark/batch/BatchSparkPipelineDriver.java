@@ -41,6 +41,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.spark.api.java.JavaSparkContext;
+import scala.Tuple2;
 
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
@@ -71,7 +72,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner
   private transient int numOfRecordsPreview;
 
   @Override
-  protected SparkCollection<Object> getSource(StageInfo stageInfo) {
+  protected SparkCollection<Tuple2<Boolean, Object>> getSource(StageInfo stageInfo) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
     return new RDDCollection<>(sec, jsc, datasetContext, sinkFactory,
                                sourceFactory.createRDD(sec, jsc, stageInfo.getName(), Object.class, Object.class)

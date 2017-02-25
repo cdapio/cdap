@@ -23,7 +23,7 @@ export default function ServiceLabel() {
     <div className="service-label">
       <div className="service-label-text-container">
         <div className="service-label-text">
-          {T.translate('features.Management.Top.services')}
+          {T.translate('features.Administration.Top.services')}
         </div>
       </div>
     </div>

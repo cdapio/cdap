@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import kafka.common.Topic;
+import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,11 +62,25 @@ class ConfigurationCheck extends AbstractMasterCheck {
     checkKafkaTopic(problemKeys);
     checkMessagingTopics(problemKeys);
     checkLogPartitionKey(problemKeys);
+    checkPruningAndReplication(problemKeys);
 
     if (!problemKeys.isEmpty()) {
       throw new RuntimeException("Invalid configuration settings for keys: " + Joiner.on(',').join(problemKeys));
     }
     LOG.info("  Configuration successfully verified.");
+  }
+
+  // tx invalid list pruning is not allowed with replication
+  private void checkPruningAndReplication(Set<String> problemKeys) {
+    String hbaseDDLExtensionDir = cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
+    boolean pruningEnabled = cConf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE);
+    if (hbaseDDLExtensionDir != null && pruningEnabled) {
+      LOG.error("  Invalid transaction list cannot be automatically pruned when replication is in use. " +
+                  "Please disable pruning by setting {} to false, or remove your custom HBase DDL executor from {}.",
+                TxConstants.TransactionPruning.PRUNE_ENABLE, Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
+      problemKeys.add(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
+      problemKeys.add(TxConstants.TransactionPruning.PRUNE_ENABLE);
+    }
   }
 
   // checks that instances, max instances, memory, and vcores for system services are positive integers,

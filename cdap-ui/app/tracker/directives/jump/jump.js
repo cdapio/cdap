@@ -19,40 +19,15 @@ function JumpController ($scope, myJumpFactory, $state) {
 
   let vm = this;
 
+  vm.viewInCDAPLink = window.getAbsUIUrl({
+    namespaceId: $state.params.namespace,
+    entityType: $scope.entityType,
+    entityId: $scope.entityId
+  });
+  vm.exploreLink = vm.viewInCDAPLink + '?modalToOpen=explore';
+
   if ($scope.entityType === 'datasets') {
     vm.isAvailableDataset = myJumpFactory.isAvailableDataset($scope.datasetType);
-
-    vm.viewInCDAPLink = window.getOldCDAPUrl({
-      stateName: 'datasets.detail.overview.status',
-      stateParams: {
-        namespace: $state.params.namespace,
-        datasetId: $scope.entityId
-      }
-    });
-
-    vm.exploreLink = window.getOldCDAPUrl({
-      stateName: 'datasets.detail.overview.explore',
-      stateParams: {
-        namespace: $state.params.namespace,
-        datasetId: $scope.entityId
-      }
-    });
-  } else {
-    vm.viewInCDAPLink = window.getOldCDAPUrl({
-      stateName: 'streams.detail.overview.status',
-      stateParams: {
-        namespace: $state.params.namespace,
-        streamId: $scope.entityId
-      }
-    });
-
-    vm.exploreLink = window.getOldCDAPUrl({
-      stateName: 'streams.detail.overview.explore',
-      stateParams: {
-        namespace: $state.params.namespace,
-        streamId: $scope.entityId
-      }
-    });
   }
 
 

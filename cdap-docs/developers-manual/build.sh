@@ -18,6 +18,7 @@
 
 source ../vars
 source ../_common/common-build.sh
+source build-pipelines.sh
 
 CHECK_INCLUDES=${TRUE}
 
@@ -41,6 +42,9 @@ function download_readme_file_and_test() {
 }
 
 function download_includes() {
+  echo "Calling sourced pipelines_download_includes"
+  pipelines_download_includes ${1}
+  
   echo "Downloading source files to be included from GitHub..."
   local github_url="https://raw.githubusercontent.com/caskdata"
   local includes_dir=${1}

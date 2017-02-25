@@ -47,6 +47,14 @@
       &:focus {
         outline: none;
       }
+      &:active {
+        color: white;
+        background: transparent;
+      }
+      &:hover {
+        color: $cdap-light-orange;
+        background: transparent;
+      }
       &.active {
         &:hover,
         &:focus,
@@ -72,6 +80,7 @@
       line-height: 50px;
       display: block;
       margin-right: 5px;
+      color: inherit;
     }
     .dropdown-menu {
       background: #333333;

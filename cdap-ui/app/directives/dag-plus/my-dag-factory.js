@@ -208,7 +208,8 @@ angular.module(PKG.name + '.commons')
         'window': 'icon-window',
         'run': 'icon-Run',
         'oracleexport': 'icon-OracleDump',
-        'snapshottext': 'icon-SnapshotTextSink'
+        'snapshottext': 'icon-SnapshotTextSink',
+        'errorcollector': 'fa-exclamation-triangle'
       };
 
       var pluginName = plugin.toLowerCase();

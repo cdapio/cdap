@@ -43,6 +43,8 @@ export default class JustAddedSection extends Component {
     this.eventEmitter.on(globalEvents.APPUPLOAD, this.fetchEntities);
     this.eventEmitter.on(globalEvents.STREAMCREATE, this.fetchEntities);
     this.eventEmitter.on(globalEvents.PUBLISHPIPELINE, this.fetchEntities);
+    this.eventEmitter.on(globalEvents.DELETEENTITY, this.fetchEntities);
+    this.eventEmitter.on(globalEvents.ARTIFACTUPLOAD, this.fetchEntities);
     this.namespaceSub = NamespaceStore.subscribe(this.fetchEntities);
   }
 
@@ -54,6 +56,8 @@ export default class JustAddedSection extends Component {
     this.eventEmitter.off(globalEvents.APPUPLOAD, this.fetchEntities);
     this.eventEmitter.off(globalEvents.STREAMCREATE, this.fetchEntities);
     this.eventEmitter.off(globalEvents.PUBLISHPIPELINE, this.fetchEntities);
+    this.eventEmitter.off(globalEvents.DELETEENTITY, this.fetchEntities);
+    this.eventEmitter.off(globalEvents.ARTIFACTUPLOAD, this.fetchEntities);
     this.namespaceSub();
   }
 
@@ -109,6 +113,7 @@ export default class JustAddedSection extends Component {
             )
           }
           key={entity.uniqueId}
+          id={entity.uniqueId}
           onClick={this.props.clickHandler.bind(this, entity)}
           entity={entity}
           onFastActionSuccess={this.props.onFastActionSuccess}

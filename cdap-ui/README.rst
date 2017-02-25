@@ -65,7 +65,7 @@ This will build the pre-built library dlls that we use in CDAP
 
 Building a Running Backend
 ==========================
-UI work generally requires having a running CDAP-standalone instance. To build an instance::
+UI work generally requires having a running Standalone CDAP instance. To build an instance::
 
     $ git clone git@github.com:caskdata/cdap.git
     $ cd cdap
@@ -75,12 +75,12 @@ UI work generally requires having a running CDAP-standalone instance. To build a
     $ cd <cdap-sdk-folder>
     $ bin/cdap sdk start
 
-Once you have started the SDK, it starts the UI node server as part of its init script.
+Once you have started the Standalone CDAP, it starts the UI node server as part of its init script.
 
 To work on UI Code
 ------------------
-If you want to develop and test the UI against the SDK that was just built as above,
-you need to first kill the node server started by the SDK and follow this process:
+If you want to develop and test the UI against the Standalone CDAP that was just built as above,
+you need to first kill the node server started by the Standalone CDAP and follow this process:
 
 Start these processes, each in their own terminal tab or browser window:
 
@@ -100,7 +100,7 @@ then you need to build an additional ``common`` library that is used across all:
 License and Trademarks
 ======================
 
-Copyright © 2016 Cask Data, Inc.
+Copyright © 2016-2017 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 in compliance with the License. You may obtain a copy of the License at

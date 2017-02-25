@@ -31,13 +31,15 @@ import co.cask.cdap.etl.spark.streaming.DStreamCollection;
 import co.cask.cdap.etl.spark.streaming.DefaultStreamingContext;
 import co.cask.cdap.etl.spark.streaming.DynamicDriverContext;
 import co.cask.cdap.etl.spark.streaming.PairDStreamCollection;
-import co.cask.cdap.etl.spark.streaming.function.CountingTranformFunction;
+import co.cask.cdap.etl.spark.streaming.function.CountingTransformFunction;
 import co.cask.cdap.etl.spark.streaming.function.DynamicJoinMerge;
 import co.cask.cdap.etl.spark.streaming.function.DynamicJoinOn;
+import co.cask.cdap.etl.spark.streaming.function.WrapOutputTransformFunction;
 import co.cask.cdap.etl.spark.streaming.function.preview.LimitingFunction;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
+import scala.Tuple2;
 
 import java.util.List;
 
@@ -60,7 +62,7 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
   }
 
   @Override
-  protected SparkCollection<Object> getSource(StageInfo stageInfo) throws Exception {
+  protected SparkCollection<Tuple2<Boolean, Object>> getSource(StageInfo stageInfo) throws Exception {
     StreamingSource<Object> source;
     if (checkpointsDisabled) {
       PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
@@ -87,9 +89,10 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
       // it will create a new function for each RDD, which would limit each RDD but not the entire DStream.
       javaDStream = javaDStream.transform(new LimitingFunction<>(numOfRecordsPreview));
     }
-    javaDStream = javaDStream.transform(new CountingTranformFunction<>(stageInfo.getName(), sec.getMetrics(),
-                                                                       "records.out", dataTracer));
-    return new DStreamCollection<>(sec, javaDStream);
+    JavaDStream<Tuple2<Boolean, Object>> outputDStream = javaDStream
+      .transform(new CountingTransformFunction<>(stageInfo.getName(), sec.getMetrics(), "records.out", dataTracer))
+      .map(new WrapOutputTransformFunction<>());
+    return new DStreamCollection<>(sec, outputDStream);
   }
 
   @Override

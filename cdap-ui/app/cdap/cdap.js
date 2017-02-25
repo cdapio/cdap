@@ -14,6 +14,7 @@
  * the License.
  */
 
+require("babel-polyfill");
 import T from 'i18n-react';
 // Initialize i18n
 T.setTexts(require('./text/text-en.yaml'));

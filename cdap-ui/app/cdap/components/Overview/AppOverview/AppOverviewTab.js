@@ -20,6 +20,7 @@ import ProgramTab from 'components/Overview/Tabs/ProgramTab';
 import DatasetTab from 'components/Overview/Tabs/DatasetTab';
 import classnames from 'classnames';
 import isNil from 'lodash/isNil';
+import T from 'i18n-react';
 require('../Tabs/OverviewTab.scss');
 
 export default class AppOverviewTab extends Component {
@@ -62,7 +63,7 @@ export default class AppOverviewTab extends Component {
                 className={classnames({ active: this.state.activeTab === '2' })}
                 onClick={() => { this.toggleTab('2'); }}
               >
-                Datasets ({this.state.entity.datasets.length})
+                {T.translate('features.AppDetailedView.Tabs.datasetsLabel')} ({this.state.entity.datasets.length + this.state.entity.streams.length})
               </NavLink>
             </NavItem>
           </Nav>

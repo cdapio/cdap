@@ -32,9 +32,8 @@ import java.util.UUID;
  * Utility class for Replication Status Tool
  */
 public abstract class TableUpdater {
-
   private static final Logger LOG = LoggerFactory.getLogger(TableUpdater.class);
-  private HashMap<String, Long> cachedUpdates;
+  private Map<String, TimeValue> cachedUpdates;
   private final Object cachedUpdatesLock = new Object();
   private Timer updateTimer;
 
@@ -43,6 +42,16 @@ public abstract class TableUpdater {
   public final String rowType;
   public final Configuration conf;
   public boolean tableExists = false;
+
+  private class TimeValue {
+    private long time;
+    private boolean stale;
+
+    private TimeValue(long time) {
+      this.time = time;
+      this.stale = false;
+    }
+  }
 
   public TableUpdater(String rowType, final Configuration conf) {
     this.columnFamily = Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.TIME_FAMILY);
@@ -71,8 +80,12 @@ public abstract class TableUpdater {
    */
   public void updateTime(String regionName, long time) throws IOException {
     synchronized (cachedUpdatesLock) {
-      if (!cachedUpdates.containsKey(regionName) || time > cachedUpdates.get(regionName)) {
-        cachedUpdates.put(regionName, time);
+      TimeValue timeValue = cachedUpdates.get(regionName);
+      if (timeValue == null) {
+        cachedUpdates.put(regionName, new TimeValue(time));
+      } else if (time > timeValue.time) {
+        timeValue.time = time;
+        timeValue.stale = false;
       }
     }
   }
@@ -92,12 +105,10 @@ public abstract class TableUpdater {
             createTableIfNotExists(conf);
             tableExists = true;
           }
-          HashMap<String, Long> updatesToWrite;
+          Map<String, Long> updatesToWrite;
           synchronized (cachedUpdatesLock) {
-            // Make a copy so HBase write can happen outside of the synchronized block
-            updatesToWrite = cachedUpdates;
-            // Remove stale updates
-            cachedUpdates = new HashMap<>();
+            // Make a copy of new updates so HBase write can happen outside of the synchronized block
+            updatesToWrite = getNewEntries(cachedUpdates);
           }
           if (!updatesToWrite.isEmpty()) {
             LOG.debug("Update Replication State table now. {} entries.", updatesToWrite.size());
@@ -111,10 +122,21 @@ public abstract class TableUpdater {
     updateTimer.scheduleAtFixedRate(updateTask, delay, period);
   }
 
+  private Map<String, Long> getNewEntries(Map<String, TimeValue> updateMap) {
+    Map<String, Long> cleanMap = new HashMap<>();
+    for (Map.Entry<String, TimeValue> entry : updateMap.entrySet()) {
+      if (!entry.getValue().stale) {
+        cleanMap.put(entry.getKey(), entry.getValue().time);
+        entry.getValue().stale = true;
+      }
+    }
+    return cleanMap;
+  }
+
   public void cancelTimer() throws IOException {
     LOG.info("Cancelling Update Timer now.");
     synchronized (cachedUpdatesLock) {
-      writeState(cachedUpdates);
+      writeState(getNewEntries(cachedUpdates));
     }
     updateTimer.cancel();
   }

@@ -74,7 +74,7 @@ public abstract class StreamFileJanitorTestBase {
     // Simulate namespace create, since its an inmemory-namespace admin
     getNamespaceAdmin().create(NamespaceMeta.DEFAULT);
     getNamespacedLocationFactory().get(NamespaceId.DEFAULT.toId()).mkdirs();
-    impersonator = new DefaultImpersonator(cConf, new UnsupportedUGIProvider(), null);
+    impersonator = new DefaultImpersonator(cConf, new UnsupportedUGIProvider());
   }
 
   @Test

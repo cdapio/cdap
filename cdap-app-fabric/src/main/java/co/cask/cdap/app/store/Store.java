@@ -308,7 +308,7 @@ public interface Store extends RuntimeStore {
    * Deletes data for an application from the WorkflowDataset table
    * @param id id of application to be deleted
    */
-  void deleteWorkflowStats(final ApplicationId id);
+  void deleteWorkflowStats(ApplicationId id);
 
   /**
    * Deletes a schedules from a particular program

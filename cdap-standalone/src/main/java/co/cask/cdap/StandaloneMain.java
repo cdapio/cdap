@@ -56,7 +56,9 @@ import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.router.RouterModules;
 import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.logging.LoggingUtil;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
+import co.cask.cdap.logging.framework.LogPipelineLoader;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.MessagingService;
@@ -236,6 +238,9 @@ public class StandaloneMain {
     serviceStore.startAndWait();
     streamService.startAndWait();
 
+    // Validate the logging pipeline configuration.
+    // Do it explicitly as Standalone doesn't have a separate master check phase as the distributed does.
+    new LogPipelineLoader(cConf).validate();
     // It is recommended to initialize log appender after datasetService is started,
     // since log appender instantiates a dataset.
     logAppenderInitializer.initialize();
@@ -359,7 +364,10 @@ public class StandaloneMain {
   }
 
   public static void main(String[] args) throws Exception {
-    ClassLoader classLoader = MainClassLoader.createFromContext();
+    // Includes logging extension jars as part of the system classpath.
+    // It is needed to support custom appenders loaded from those extension jars.
+    ClassLoader classLoader = MainClassLoader.createFromContext(
+      LoggingUtil.getExtensionJarsAsURLs(CConfiguration.create()));
     if (classLoader == null) {
       LOG.warn("Failed to create CDAP system ClassLoader. Lineage record and Audit Log will not be updated.");
       doMain(args);

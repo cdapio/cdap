@@ -19,6 +19,7 @@ import T from 'i18n-react';
 require('./EntityCardHeader.scss');
 import classnames from 'classnames';
 import isEmpty from 'lodash/isEmpty';
+import {getType} from 'services/metadata-parser';
 
 const classNames = require('classnames');
 
@@ -27,20 +28,8 @@ export default class EntityCardHeader extends Component {
     super(props);
   }
 
-  getType() {
-    if (this.props.entity.type === 'program') {
-      return this.props.entity.programType.toLowerCase();
-    } else if (this.props.entity.type !== 'application') {
-      return this.props.entity.type;
-    }
-
-    if (this.props.systemTags.indexOf('cdap-data-pipeline') !== -1) {
-      return 'cdap-data-pipeline';
-    } else if (this.props.systemTags.indexOf('cdap-data-streams') !== -1) {
-      return 'cdap-data-streams';
-    } else {
-      return this.props.entity.type;
-    }
+  getEntityType() {
+    return getType(this.props.entity);
   }
 
   render() {
@@ -68,7 +57,7 @@ export default class EntityCardHeader extends Component {
                 <h4>
                   <span className={classNames('entity-icon', this.props.entity.icon)}></span>
                   <span className="entity-type">
-                    {T.translate(`commons.entity.${this.getType()}.singular`)}
+                    {T.translate(`commons.entity.${this.getEntityType()}.singular`)}
                   </span>
                 </h4>
               </div>

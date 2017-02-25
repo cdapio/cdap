@@ -15,9 +15,6 @@
 -->
 
 <div class="tracker-content">
-  <div ng-if="!$state.params.iframe">
-    <cask-resource-center-button></cask-resource-center-button>
-  </div>
   <div class="tracker-top-search"
        ng-if="!$state.params.iframe">
     <div class="tracker-search-bar">
@@ -29,6 +26,7 @@
         <span class="fa fa-search form-control-feedback"></span>
       </div>
     </div>
+    <cask-resource-center-button></cask-resource-center-button>
   </div>
 
   <div class="tracker-metrics">

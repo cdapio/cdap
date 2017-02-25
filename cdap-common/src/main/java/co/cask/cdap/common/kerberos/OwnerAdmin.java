@@ -91,20 +91,38 @@ public interface OwnerAdmin {
    * If a direct owner is not present then the namespace owner information will be returned if
    * one is present else returns null.
    * </p>
-   * <p>
-   * The returned {@link ImpersonationInfo} may have null as the keytab URI, if this owner admin does not
-   * have knowledge about that URI. In this case, it is the caller's responsibility to determine the keytab URI.
-   * </p>
-   *
    * @param entityId the {@link EntityId} whose owner principal information needs to be retrieved
-   * @param impersonatedOpType the type of operation which is being impersonated
-   * @return {@link ImpersonationInfo} of the effective owner for the given entity. Its keytab URI may be null.
+   * @return {@link ImpersonationInfo} of the effective owner for the given entity.
    * @throws IOException if  failed to get the store
    * @throws IllegalArgumentException if the given entity is not of supported type.
    */
   @Nullable
-  ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId,
-                                         ImpersonatedOpType impersonatedOpType) throws IOException;
+  ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) throws IOException;
+
+  /**
+   * <p>Delegates to {@link #getImpersonationInfo(NamespacedEntityId)}} to retrieve the owner information by tracing
+   * the entity hierarchy for the given {@link EntityId} and then return the principal of the entity as {@link String}
+   * by calling {@link ImpersonationInfo#getPrincipal()}.</p>
+   * <p>
+   * If an owner is present for this entity id then returns the information of that immediate owner.
+   * If a direct owner is not present then the namespace owner information will be returned if
+   * one is present else returns null.</p>
+   * <p>Note: a null return value does not indicate presence or absence of the given entity in the system.
+   * It only means that no explicit owner principal was specified during entity creation and it's owned by the system
+   * if its present</p>
+   *
+   * @param entityId the {@link EntityId} whose owner principal information needs to be retrieved
+   * @return {@link String} the principal of the {@link EntityId} owner if one was explicitly provided during entity
+   * creation or null if
+   * <ol>
+   * <li>the entity does not exists in the system</li>
+   * <li>entity exists in the system but no explicit owner principal was specified during creation</li>
+   * </ol>
+   * @throws IOException if failed to get the store
+   * @throws IllegalArgumentException if the given entity is not of supported type.
+   */
+  @Nullable
+  String getImpersonationPrincipal(NamespacedEntityId entityId) throws IOException;
 
   /**
    * Checks if owner information exists or not

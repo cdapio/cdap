@@ -38,7 +38,7 @@ You can make these changes during the configuration of your cluster `using Ambar
 
 .. HDFS Permissions
 .. ----------------
-.. include:: ../_includes/installation/hdfs-permissions.txt
+.. include:: /../target/_includes/ambari-hdfs-permissions.rst
 
 
 Downloading and Distributing Packages
@@ -158,7 +158,7 @@ Assign CDAP Services to Hosts
    #. **Router:** Serves HTTP endpoints for CDAP applications and REST API
    #. **Auth Server:** For managing authentication tokens on CDAP clusters with perimeter security enabled
    #. **Kafka Server:** For transporting CDAP metrics and CDAP system service log data
-   #. **UI:** Web interface to CDAP and :ref:`Cask Hydrator <cask-hydrator>`
+   #. **UI:** Web interface to CDAP and :ref:`CDAP Studio <cdap-studio>`
       (for CDAP 3.2.x and later installations)
  
    .. figure:: ../_images/ambari/ss03-assign-masters.png

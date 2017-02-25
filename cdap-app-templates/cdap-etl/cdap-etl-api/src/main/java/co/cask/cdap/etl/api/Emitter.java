@@ -33,7 +33,8 @@ public interface Emitter<T> {
   void emit(T value);
 
   /**
-   * Emit an Error object.
+   * Emit an Error object. If an {@link ErrorTransform} is placed after this stage, it will be able to consume
+   * the errors. Otherwise the errors are simply dropped.
    *
    * @param invalidEntry {@link InvalidEntry InvalidEntry&lt;T&gt;} representing the error.
    */

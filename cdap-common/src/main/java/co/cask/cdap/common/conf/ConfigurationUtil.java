@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
@@ -106,7 +107,7 @@ public final class ConfigurationUtil {
   /**
    * Retrieves all configurations that are prefixed with a particular prefix.
    *
-   * @see {@link #setNamedConfigurations(Configuration, String, Map)}.
+   * @see #setNamedConfigurations(Configuration, String, Map)
    *
    * @param conf the Configuration from which to get the configurations
    * @param confKeyPrefix the prefix to search for in the keys

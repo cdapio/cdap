@@ -263,6 +263,10 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
           new DeprecatedKeyInfo("log.pipeline.cdap.file.max.size.bytes"));
       put("log.saver.max.file.lifetime.ms",
           new DeprecatedKeyInfo("log.pipeline.cdap.file.max.lifetime.ms"));
+      put("log.retention.duration.days",
+          new DeprecatedKeyInfo("log.pipeline.cdap.file.retention.duration.days"));
+      put("log.cleanup.run.interval.mins",
+          new DeprecatedKeyInfo("log.pipeline.cdap.file.cleanup.interval.mins"));
     }
   };
 
@@ -289,6 +293,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
       put("log.pipeline.cdap.file.sync.interval.bytes", new String[] { "log.file.sync.interval.bytes" });
       put("log.pipeline.cdap.file.max.size.bytes", new String[] { "log.max.file.size.bytes" });
       put("log.pipeline.cdap.file.max.lifetime.ms", new String[] { "log.saver.max.file.lifetime.ms" });
+      put("log.pipeline.cdap.file.retention.duration.days", new String[] { "log.retention.duration.days" });
+      put("log.pipeline.cdap.file.cleanup.interval.mins", new String[] { "log.cleanup.run.interval.mins" });
     }
   };
 
@@ -1097,7 +1103,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   /**
    * Gets information about why a property was set.  Typically this is the
    * path to the resource objects (file, URL, etc.) the property came from, but
-   * it can also indicate that it was set programatically, or because of the
+   * it can also indicate that it was set programmatically, or because of the
    * command line.
    *
    * @param name - The property name to get the source of.

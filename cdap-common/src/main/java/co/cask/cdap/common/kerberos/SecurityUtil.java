@@ -222,6 +222,9 @@ public final class SecurityUtil {
    */
   static String getKeytabURIforPrincipal(String principal, CConfiguration cConf) throws IOException {
     String confPath = cConf.getRaw(Constants.Security.KEYTAB_PATH);
+    Preconditions.checkNotNull(confPath, String.format("Failed to get a valid keytab path. " +
+                                                         "Please ensure that you have specified %s in cdap-site.xml",
+                                                       Constants.Security.KEYTAB_PATH));
     String name = new KerberosName(principal).getShortName();
     return confPath.replace(Constants.USER_NAME_SPECIFIER, name);
   }
@@ -229,22 +232,16 @@ public final class SecurityUtil {
   /**
    * This has the logic to construct an impersonation info as follows:
    * <ul>
-   *   <li>If the ownerAdmin has an owner and a keytab URI, return this information</li>
-   *   <li>If the ownerAdmin has an owner, but no keytab, construct a keytab URI as configured in the cConf</li>
-   *   <li>Else the ownerAdmin does not have an owner for this entity.
-   *       Return the master impersonation info as found in the cConf</li>
+   * <li>If the ownerAdmin has an owner and a keytab URI, return this information</li>
+   * <li>Else the ownerAdmin does not have an owner for this entity.
+   * Return the master impersonation info as found in the cConf</li>
    * </ul>
    */
   public static ImpersonationInfo createImpersonationInfo(OwnerAdmin ownerAdmin, CConfiguration cConf,
-                                                          NamespacedEntityId entityId,
-                                                          ImpersonatedOpType impersonatedOpType) throws IOException {
-    ImpersonationInfo impersonationInfo = ownerAdmin.getImpersonationInfo(entityId, impersonatedOpType);
+                                                          NamespacedEntityId entityId) throws IOException {
+    ImpersonationInfo impersonationInfo = ownerAdmin.getImpersonationInfo(entityId);
     if (impersonationInfo == null) {
       return new ImpersonationInfo(getMasterPrincipal(cConf), getMasterKeytabURI(cConf));
-    }
-    if (impersonationInfo.getKeytabURI() == null) {
-      return new ImpersonationInfo(impersonationInfo.getPrincipal(),
-                                   getKeytabURIforPrincipal(impersonationInfo.getPrincipal(), cConf));
     }
     return impersonationInfo;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.tools.HBaseTableExporter;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -41,6 +42,8 @@ public class TwillRunnableTest {
                                                                             HBaseConfiguration.create());
     Store store = injector.getInstance(Store.class);
     Assert.assertNotNull(store);
+    NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
+    Assert.assertNotNull(namespaceQueryAdmin);
   }
 
   @Test

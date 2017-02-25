@@ -25,6 +25,7 @@ import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
@@ -166,9 +167,11 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   public MetadataSearchResponse search(String namespaceId, String searchQuery,
                                        Set<EntityTypeSimpleName> types,
                                        SortInfo sortInfo, int offset, int limit,
-                                       int numCursors, String cursor, boolean showHidden) throws Exception {
+                                       int numCursors, String cursor, boolean showHidden,
+                                       Set<EntityScope> entityScope) throws Exception {
     return filterAuthorizedSearchResult(
-      metadataStore.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor, showHidden)
+      metadataStore.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor, showHidden,
+                           entityScope)
     );
   }
 
@@ -192,7 +195,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
           }
         })
       ),
-      results.getCursors(), results.isShowHidden());
+      results.getCursors(), results.isShowHidden(), results.getEntityScope());
   }
 
   // Helper methods to validate the metadata entries.

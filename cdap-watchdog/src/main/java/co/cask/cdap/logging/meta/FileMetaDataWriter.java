@@ -22,7 +22,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManager;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.logging.framework.LogPathIdentifier;
+import co.cask.cdap.logging.appender.system.LogPathIdentifier;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +35,6 @@ import java.nio.charset.StandardCharsets;
 public class FileMetaDataWriter {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileMetaDataWriter.class);
-  private static final byte VERSION = 1;
 
   private final Transactional transactional;
   private final DatasetManager datasetManager;
@@ -58,23 +57,22 @@ public class FileMetaDataWriter {
                             final long currentTimeMs,
                             final Location location) throws Exception {
     LOG.debug("Writing meta data for logging context {} with startTimeMs {} sequence Id {} and location {}",
-              identifier.getRowKey(), eventTimeMs, currentTimeMs, location);
+              identifier.getRowkey(), eventTimeMs, currentTimeMs, location);
 
     transactional.execute(new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
-        // add column version prefix for new format
-        byte[] columnKey = new byte[1 + Bytes.SIZEOF_LONG * 2];
-        columnKey[0] = VERSION;
-        Bytes.putLong(columnKey, Bytes.putLong(columnKey, 1, eventTimeMs), currentTimeMs);
         Table table = LoggingStoreTableUtil.getMetadataTable(context, datasetManager);
-        table.put(getRowKey(identifier), columnKey, Bytes.toBytes(location.toURI().getPath()));
+        table.put(getRowKey(identifier, eventTimeMs, currentTimeMs),
+                  LoggingStoreTableUtil.META_TABLE_COLUMN_KEY, Bytes.toBytes(location.toURI().getPath()));
       }
     });
   }
 
-  private byte[] getRowKey(LogPathIdentifier identifier) {
-    return Bytes.concat(LoggingStoreTableUtil.FILE_META_ROW_KEY_PREFIX,
-                        identifier.getRowKey().getBytes(StandardCharsets.UTF_8));
+  private byte[] getRowKey(LogPathIdentifier identifier, long eventTime, long currentTime) {
+    return Bytes.concat(LoggingStoreTableUtil.NEW_FILE_META_ROW_KEY_PREFIX,
+                        identifier.getRowkey().getBytes(StandardCharsets.UTF_8),
+                        Bytes.toBytes(eventTime),
+                        Bytes.toBytes(currentTime));
   }
 }

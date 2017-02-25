@@ -119,6 +119,8 @@ public final class Constants {
   public static final class HBase {
     public static final String AUTH_KEY_UPDATE_INTERVAL = "hbase.auth.key.update.interval";
     public static final String MANAGE_COPROCESSORS = "master.manage.hbase.coprocessors";
+    public static final String CLIENT_RETRIES = "hbase.client.retries.number";
+    public static final String RPC_TIMEOUT = "hbase.rpc.timeout";
   }
 
   /**
@@ -477,6 +479,7 @@ public final class Constants {
     public static final String CLIENT_WORKER_THREADS = "router.client.worker.threads";
     public static final String CONNECTION_TIMEOUT_SECS = "router.connection.idle.timeout.secs";
     public static final String ROUTER_USERSERVICE_FALLBACK_STRAGEY = "router.userservice.fallback.strategy";
+    public static final String ROUTER_AUDIT_PATH_CHECK_ENABLED = "router.audit.path.check.enabled";
 
     /**
      * Defaults.
@@ -638,7 +641,8 @@ public final class Constants {
        * Logs metrics
        */
       public static final class Log {
-        public static final String PROCESS_DELAY = "log.process.delay";
+        public static final String PROCESS_MIN_DELAY = "log.process.min.delay";
+        public static final String PROCESS_MAX_DELAY = "log.process.max.delay";
         public static final String PROCESS_MESSAGES_COUNT = "log.process.message.count";
       }
     }
@@ -759,6 +763,8 @@ public final class Constants {
     public static final String TAG_WORKFLOW_SPARK_ID = ".workflowSparkId";
     public static final String TAG_WORKFLOW_PROGRAM_RUN_ID = ".workflowProgramRunId";
 
+    // cut-off time discount from actual transaction timeout
+    public static final int TX_TIMEOUT_DISCOUNT_SECS = 5;
   }
 
   /**
@@ -875,6 +881,10 @@ public final class Constants {
       public static final String USER_ID = "CDAP-UserId";
       /** User IP header passed from Router to downstream services */
       public static final String USER_IP = "CDAP-UserIP";
+      /** User principal passed from program container to cdap service containers */
+      public static final String USER_PRINCIPAL = "CDAP-User-Principal";
+      /** program id passed from program container to cdap service containers */
+      public static final String PROGRAM_ID = "CDAP-Program-Id";
     }
 
     /**
@@ -950,6 +960,16 @@ public final class Constants {
     public static final String STREAM_NAMESPACE = "explore.stream.namespace";
     public static final String PREVIEWS_DIR_NAME = "explore.previews.dir";
     public static final String CREDENTIALS_DIR_NAME = "explore.credentials.dir";
+
+    // Older hive versions don't have the following defined so we cannot use conf.getVar or conf.setVar and
+    // we need to hardcode it here so that we can use conf.get and conf.set instead.
+    public static final String HIVE_SERVER2_SPNEGO_KEYTAB = "hive.server2.authentication.spnego.keytab";
+    public static final String HIVE_SERVER2_SPNEGO_PRINCIPAL = "hive.server2.authentication.spnego.principal";
+    public static final String SUBMITLOCALTASKVIACHILD = "hive.exec.submit.local.task.via.child";
+    public static final String SUBMITVIACHILD = "hive.exec.submitviachild";
+    public static final String HIVE_AUTHORIZATION_SQL_STD_AUTH_CONFIG_WHITELIST_APPEND =
+      "hive.security.authorization.sqlstd.confwhitelist.append";
+
     // a marker so that we know which tables are created by CDAP
     public static final String CDAP_NAME = "cdap.name";
     public static final String CDAP_VERSION = "cdap.version";
@@ -1189,6 +1209,21 @@ public final class Constants {
     public static final String HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES = "cdap.messaging.table.prefix.num.bytes";
   }
 
+  // TODO: Remove these once CDAP-8678 when is fixed
+  /**
+   * Constants introduced in Tephra 0.11.0.
+   */
+  public static final class Tephra {
+    /**
+     * The maximum time in seconds that a transaction can be used for data writes.
+     */
+    public static final String CFG_TX_MAX_LIFETIME = "data.tx.max.lifetime";
+    /**
+     * The default value for the maximum transaction lifetime.
+     */
+    public static final int DEFAULT_TX_MAX_LIFETIME = (int) TimeUnit.HOURS.toSeconds(25);
+  }
+
   /**
    * Constants for operational stats
    */
@@ -1221,6 +1256,7 @@ public final class Constants {
     public static final String WORKER_PREFIX = "worker.";
     public static final String SERVICE_PREFIX = "service.";
     public static final String FLOW_PREFIX = "flow.";
+    public static final int RUN_RECORD_UPDATE_RETRY_DELAY_SECS = 5;
   }
 
   /**

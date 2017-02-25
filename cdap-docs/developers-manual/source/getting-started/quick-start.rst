@@ -38,7 +38,7 @@ Conventions
 
 In the examples and commands that follow, for brevity we will use these conventions:
 
-- ``<CDAP-SDK-HOME>`` is the directory that you have installed the CDAP Standalone SDK, either
+- ``<CDAP-SDK-HOME>`` is the directory that you have installed the Standalone CDAP of the CDAP SDK, either
   on a UNIX-type system or Windows.
   
 - The `CDAP Command Line Interface (CLI) <http://docs.cask.co/cdap/current/en/reference-manual/cli-api.html>`__

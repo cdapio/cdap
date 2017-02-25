@@ -364,6 +364,12 @@ pre {
     -moz-box-shadow: 1px 1px 1px #d8d8d8;
 }
 
+div.copyable.copyable-text.first.last.container pre,
+div.first.last.highlight-json-ellipsis pre {
+	  margin: 0.25em -0.5em 0.5em 0;
+	  padding: 5px;
+}
+
 tt {
     color: #222;
     font-size: 1.1em;
@@ -431,6 +437,11 @@ table.docutils p.last {
 
 table.docutils tbody td p {
 	line-height: 17px;
+}
+
+ul.first.last.simple li {
+    line-height: 1.3em;
+    line-height: 17px;
 }
 
 /* -- Table styles used in Introduction page -------------------------------------- */

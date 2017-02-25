@@ -280,7 +280,7 @@ a HTTP RESTful API call to :ref:`load system artifacts <http-restful-api-artifac
 can be made to load the artifacts. As described in the documentation on :ref:`artifacts`, only
 snapshot artifacts can be re-deployed without requiring that they first be deleted.
 
-Alternatively, the CDAP Standalone should be restarted for this change to take effect in Standalone
+Alternatively, the Standalone CDAP should be restarted for this change to take effect in Standalone
 mode, and ``cdap-master`` services should be restarted in the Distributed mode.
 
 .. _plugins-deployment-user:

@@ -13,7 +13,7 @@
     {%- set search_root = '../' %}
   {%- endif %}
 <div id="searchbox" style="display: none" role="search">
-  <h3>Search</h3>
+  <h3><a href="{{ search_root }}{{ pathto('search') }}">Search</a></h3>
     <form class="search" action="{{ search_root }}{{ pathto('search') }}" method="get">
       <input type="text" name="q" />
       <input type="submit" value="{{ _('Go') }}" />

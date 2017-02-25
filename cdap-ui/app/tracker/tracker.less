@@ -18,17 +18,16 @@
 @import '../../bower_components/bootstrap/less/mixins.less';
 @import '../styles/themes/cdap/mixins.less';
 
-@tracker-green: #35c853;
 @hydrator-blue: #098cf9;
 @cdap-orange: #ff6600;
 @tracker-banner-font-color: #1f293a;
 @tracker-grey: #999999;
 @border-color: #cdcdcd;
-@search-font-color: #666666;
+@search-font-color: #66666;
 @title-font-color: #333333;
 @active-font: #363945;
 @filter-sidebar-background-color: #eeeeee;
-@tag-bg: #464a57;
+@tag-bg: #b9c1d9;
 @preferred-tag-bg: #8a8c94;
 @well-bg: #d3d3d3;
 @search-top-bar-container-size: 60px;
@@ -36,6 +35,7 @@
 @entity-detail-top-bar-size: 50px;
 @light-grey: #cccccc;
 @very-light-grey: #dddddd;
+@tracker-blue: #0077dc;
 
 body { background-color: #e5e5e5; }
 
@@ -51,6 +51,9 @@ body[class*='state-tracker'] {
     margin-top: 50px;
     width: 100%;
     overflow-x: hidden;
+    // FIXME: ad-hoc - This is added here because of the resource center button.
+    min-height: 500px;
+    overflow-y: auto;
 
     h1,
     h2,
@@ -104,6 +107,9 @@ body.state-tracker-enable {
   .enable-tracker-container {
     margin-top: 150px;
     button { margin-top: 10px; }
+    .btn-success {
+      background-color: @tracker-blue;
+    }
   }
 }
 
@@ -234,13 +240,11 @@ body.state-tracker-home.state-tracker {
     }
   }
   cask-resource-center-button {
+    display: inline-block;
+    width: 58px;
     .cask-resourcecenter-button {
-      h1 {
-        margin: 0;
-        color: white;
-        font-size: 4rem;
-        margin-bottom: 0.5rem;
-      }
+      position: absolute;
+      top: 30px;
     }
   }
 }
@@ -256,6 +260,7 @@ body.state-tracker {
     display: flex;
     align-items: center;
     height: 60px;
+    position: relative;
 
     .tracker-search-bar {
       width: 500px;
@@ -328,7 +333,7 @@ body.state-tracker {
       .tracker-filters {
         .filter-show-all,
         .only-button {
-          color: @tracker-green;
+          color: @cdap-orange;
           text-decoration: underline;
         }
 
@@ -401,7 +406,8 @@ body.state-tracker {
 
         h4,
         h5 { font-weight: 500; }
-        p { color: @tracker-grey; }
+        p,
+        .creation-time { color: @tracker-grey; }
         h4,
         h4 a {
           font-size: 16px;
@@ -422,6 +428,13 @@ body.state-tracker {
           border-bottom: 1px solid @border-color;
           padding: 0 15px 15px;
         }
+
+        my-truth-meter {
+          display: inline-block;
+        }
+        .creation-time {
+          margin-top: 5px;
+        }
       }
     }
   }
@@ -439,7 +452,7 @@ body.state-tracker {
       span {
         background-color: transparent;
         border: 0;
-        color: @tracker-green;
+        color: @tracker-blue;
       }
       a,
       span { padding: 6px; }
@@ -547,13 +560,8 @@ body.state-tracker {
 
   cask-resource-center-button {
     .cask-resourcecenter-button {
-      top: 81px;
-      h1 {
-        margin: 0;
-        color: white;
-        font-size: 4rem;
-        margin-bottom: 0.5rem;
-      }
+      position: absolute;
+      top: 30px;
     }
   }
 }
@@ -616,7 +624,7 @@ body.state-tracker-detail-entity {
 
         &.active {
           a { color: @title-font-color; }
-          border-bottom: 4px solid @tracker-green;
+          border-bottom: 4px solid @cdap-orange;
         }
         a {
           color: @tracker-grey;
@@ -706,7 +714,7 @@ body.state-tracker-detail-entity {
     }
 
     .system-tags .tags-container div {
-      background-color: #cccccc;
+      background-color: #929fbc;
       color: @title-font-color;
     }
 
@@ -727,11 +735,11 @@ body.state-tracker-detail-entity {
 
     div.add-tag {
       a.btn {
-        .cask-btn(@background: #ffffff, @border: 1px solid @border-color, @border-radius: 4px, @color: @cdap-header, @font-size: 11px, @padding: 5px 8px);
+        .cask-btn(@background: #ffffff, @border: 1px solid @border-color, @border-radius: 4px, @color: @cdap-button, @font-size: 11px, @padding: 5px 8px);
         transition: all 0.2s ease-in-out;
         &:hover,
         &:focus {
-          background-color: @tracker-green;
+          background-color: @tracker-blue;
           color: #ffffff;
           outline: 0;
         }
@@ -884,7 +892,7 @@ body.state-tracker-detail-entity {
           border-radius: 0;
 
           &:focus {
-            border: 1px solid @tracker-green;
+            border: 1px solid @cdap-orange;
             box-shadow: none;
           }
         }
@@ -904,8 +912,9 @@ body.state-tracker-detail-entity {
 
   cask-resource-center-button {
     .cask-resourcecenter-button {
-      top: 81px;
-      right: 130px;
+      right: 110px;
+      position: absolute;
+      top: 30px;
     }
   }
 }
@@ -924,6 +933,47 @@ body.state-tracker-detail-entity-audit {
     margin-top: 20px;
 
     .table th { cursor: default; }
+    tr td:last-child a {
+      color: @tracker-blue;
+    }
+  }
+
+  .modal.tracker-modal.metadata-info-modal {
+    .modal-content {
+      border-radius: 0;
+    }
+    .modal-header {
+      background-color: black;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      padding: 15px;
+      border-radius: 0;
+      span.fa-times {
+        -webkit-text-stroke: 0;
+      }
+    }
+    table thead {
+      th {
+        color: black;
+        width: auto;
+        padding: 10px 8px;
+        vertical-align: middle;
+        text-align: left;
+      }
+      th:first-child {
+        min-width: 75px;
+      }
+      th:nth-child(2) {
+        min-width: 117px;
+      }
+      th:nth-child(3) {
+        min-width: 117px;
+      }
+      th:nth-child(4) {
+        min-width: 109px;
+      }
+    }
   }
 }
 
@@ -954,7 +1004,7 @@ body.state-tracker-detail-entity-compliance {
     color: #666666;
   }
   .check {
-    background-color: @tracker-green;
+    background-color: @cdap-orange;
     padding: 5px;
     border-radius: 15px;
     color: black;
@@ -965,7 +1015,7 @@ body.state-tracker-detail-entity-compliance {
     }
   }
   .not-exist {
-    color: @tracker-green;
+    color: @cdap-orange;
   }
   .not-matched {
     color: #fa4347;
@@ -1073,7 +1123,15 @@ body.state-tracker-integrations {
         padding-left: 15px;
       }
 
-      .configurations-buttons { margin-top: 10px; }
+      .configurations-buttons {
+        margin-top: 10px;
+
+        .btn-cdap {
+          &:hover {
+            background-color: #005ca8;
+          }
+        }
+      }
 
       div.arrow { display: none; }
     }
@@ -1123,7 +1181,7 @@ body.state-tracker-integrations {
         }
 
         &.enabled {
-          background-color: @tracker-green;
+          background-color: @tracker-blue;
           .switch-button {
             left: 2px;
             &:after {
@@ -1134,7 +1192,7 @@ body.state-tracker-integrations {
 
         }
         &.disabled {
-          background-color: @tracker-grey;
+          background-color: @cdap-button;
           .switch-button {
             right: 2px;
             &:before {
@@ -1183,7 +1241,12 @@ body.state-tracker-integrations {
       padding-bottom: 25px;
       h4 { font-weight: 500; }
     }
-    .modal-footer { padding-right: 35px; }
+    .modal-footer {
+      padding-right: 35px;
+      .btn.btn-primary {
+        background-color: @tracker-blue;
+      }
+    }
   }
 
   .integrations-log-viewer {
@@ -1211,11 +1274,12 @@ body.state-tracker-integrations {
       .btn {
         margin-right: 10px;
         font-weight: 500;
-        background-color: @tracker-green;
         color: white;
-
+        &.flows-detail-btn {
+          background-color: gray;
+        }
         &:hover,
-        &:focus { background-color: darken(@tracker-green, 10%); }
+        &:focus { background-color: @tracker-blue; }
 
         .fa { margin-left: 10px; }
       }
@@ -1338,7 +1402,7 @@ body.state-tracker-tags {
               font-size: 16px;
             }
             &.action-link {
-              color: @tracker-green;
+              color: @cdap-orange;
               font-size: 13px;
             }
             &:not(.tagged-entities) {

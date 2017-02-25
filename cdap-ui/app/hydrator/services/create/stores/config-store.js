@@ -464,7 +464,7 @@ class HydratorPlusPlusConfigStore {
       }
     });
 
-    let traverseMap = (node, outputSchema) => {
+    let traverseMap = (node, outputSchema, inputSchema) => {
       if (!node) {
         return;
       }
@@ -477,15 +477,24 @@ class HydratorPlusPlusConfigStore {
         if (nodesMap[n].implicitSchema) {
           return;
         }
-        nodesMap[n].outputSchema = outputSchema;
-        nodesMap[n].inputSchema = outputSchema;
-        if (nodesMap[n].outputSchemaProperty) {
-          nodesMap[n].plugin.properties[nodesMap[n].outputSchemaProperty] = outputSchema;
+
+        let schemaToPropagate = outputSchema;
+
+        if (nodesMap[n].type === 'errortransform') {
+          schemaToPropagate = inputSchema;
         }
-        traverseMap(adjacencyMap[n], outputSchema);
+
+        nodesMap[n].outputSchema = schemaToPropagate;
+        nodesMap[n].inputSchema = schemaToPropagate;
+        if (nodesMap[n].outputSchemaProperty) {
+          nodesMap[n].plugin.properties[nodesMap[n].outputSchemaProperty] = schemaToPropagate;
+        }
+        traverseMap(adjacencyMap[n], schemaToPropagate);
       });
     };
     outputSchema = nodesMap[pluginId].outputSchema;
+    let inputSchema = nodesMap[pluginId].inputSchema && Array.isArray(nodesMap[pluginId].inputSchema) ? nodesMap[pluginId].inputSchema[0].schema : nodesMap[pluginId].inputSchema;
+
     try {
       schema = JSON.parse(outputSchema);
       schema.fields = schema.fields.map(field => {
@@ -494,7 +503,7 @@ class HydratorPlusPlusConfigStore {
       });
       outputSchema = JSON.stringify(schema);
     } catch (e) {}
-    traverseMap(adjacencyMap[pluginId], outputSchema);
+    traverseMap(adjacencyMap[pluginId], outputSchema, inputSchema);
   }
   getNodes() {
     return this.getState().__ui__.nodes;

@@ -17,6 +17,8 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.inject.Guice;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ElectionHandler;
@@ -40,7 +42,9 @@ public class DistributedProgramRunnableModuleTest {
   public void createModule() throws Exception {
     DistributedProgramRunnableModule distributedProgramRunnableModule =
       new DistributedProgramRunnableModule(CConfiguration.create(), new Configuration());
-    Guice.createInjector(distributedProgramRunnableModule.createModule());
+    Guice.createInjector(distributedProgramRunnableModule.createModule(new ProgramId("ns", "app",
+                                                                                     ProgramType.MAPREDUCE, "program"),
+                                                                       "user/host@KDC.NET"));
     Guice.createInjector(distributedProgramRunnableModule.createModule(new TwillContext() {
       @Override
       public RunId getRunId() {
@@ -117,6 +121,6 @@ public class DistributedProgramRunnableModuleTest {
       public Cancellable announce(String serviceName, int port, byte[] payload) {
         return null;
       }
-    }));
+    }, new ProgramId("ns", "app", ProgramType.MAPREDUCE, "program"), "user/host@KDC.NET"));
   }
 }

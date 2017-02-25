@@ -20,10 +20,12 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Syncable;
 import co.cask.cdap.logging.framework.Loggers;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -32,6 +34,8 @@ import com.google.common.collect.Sets;
 
 import java.io.Flushable;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -39,14 +43,17 @@ import javax.annotation.Nullable;
 /**
  * A context object provide to log processor pipeline.
  */
-public class LogProcessorPipelineContext implements Flushable, Syncable {
+public class LogProcessorPipelineContext implements Flushable, Syncable, MetricsContext {
 
   private final String name;
   private final LoggerContext loggerContext;
   private final LoadingCache<String, Logger> effectiveLoggerCache;
   private final Set<Appender<ILoggingEvent>> appenders;
+  private final String metricsPrefix;
+  private final MetricsContext metricsContext;
 
-  public LogProcessorPipelineContext(CConfiguration cConf, String name, final LoggerContext context) {
+  public LogProcessorPipelineContext(CConfiguration cConf, String name, final LoggerContext context,
+                                     final MetricsContext metricsContext, int instanceId) {
     this.name = name;
     this.loggerContext = context;
     this.effectiveLoggerCache = CacheBuilder.newBuilder()
@@ -65,6 +72,11 @@ public class LogProcessorPipelineContext implements Flushable, Syncable {
       Iterators.addAll(appenders, logger.iteratorForAppenders());
     }
     this.appenders = appenders;
+    Map<String, String> logTags = new HashMap<>();
+    logTags.put(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace());
+    logTags.put(Constants.Metrics.Tag.COMPONENT, Constants.Service.LOGSAVER);
+    this.metricsContext = metricsContext.childContext(logTags);
+    this.metricsPrefix = String.format("%s.%s", name, instanceId);
   }
 
   /**
@@ -155,5 +167,30 @@ public class LogProcessorPipelineContext implements Flushable, Syncable {
     }
     exception.addSuppressed(newException);
     return exception;
+  }
+
+  @Override
+  public MetricsContext childContext(Map<String, String> tags) {
+    return metricsContext.childContext(tags);
+  }
+
+  @Override
+  public MetricsContext childContext(String tagName, String tagValue) {
+    return metricsContext.childContext(tagName, tagValue);
+  }
+
+  @Override
+  public Map<String, String> getTags() {
+    return metricsContext.getTags();
+  }
+
+  @Override
+  public void increment(String metricName, long value) {
+    metricsContext.increment(String.format("%s.%s", metricsPrefix, metricName), value);
+  }
+
+  @Override
+  public void gauge(String metricName, long value) {
+    metricsContext.gauge(String.format("%s.%s", metricsPrefix, metricName), value);
   }
 }

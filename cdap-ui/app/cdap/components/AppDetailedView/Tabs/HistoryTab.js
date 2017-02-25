@@ -19,6 +19,8 @@ import {MyProgramApi} from 'api/program';
 import {convertProgramToApi} from 'services/program-api-converter';
 import NamespaceStore from 'services/NamespaceStore';
 import {humanReadableDate} from 'services/helpers';
+import LogAction from 'components/FastAction/LogAction';
+import SortableTable from 'components/SortableTable';
 import T from 'i18n-react';
 import orderBy from 'lodash/orderBy';
 
@@ -32,6 +34,26 @@ export default class HistoryTab extends Component {
       entity: props.entity
     };
     this.pollSubscriptions = [];
+    this.tableHeaders = [
+      {
+        property: 'programName',
+        label: T.translate('features.AppDetailedView.History.nameLabel')
+      },
+      {
+        property: 'start',
+        label: T.translate('features.AppDetailedView.History.startLabel')
+      },
+      {
+        label: T.translate('features.AppDetailedView.History.runIDLabel')
+      },
+      {
+        property: 'status',
+        label: T.translate('features.AppDetailedView.History.statusLabel')
+      },
+      {
+        label: T.translate('features.FastAction.logLabel')
+      }
+    ];
   }
   componentWillMount() {
     this.state
@@ -64,9 +86,12 @@ export default class HistoryTab extends Component {
                 runRecord.end = runRecord.end !== runFromBackend.end ? runFromBackend.end : runRecord.end;
                 return runRecord;
               });
-              newRuns.map( r => {
-                r.programName = programId;
-                return r;
+              newRuns = newRuns.map( r => {
+                return Object.assign({}, r, {
+                  programName: programId,
+                  programType,
+                  appId
+                });
               });
               res = orderBy([
                 ...newRuns,
@@ -80,44 +105,57 @@ export default class HistoryTab extends Component {
           );
         });
   }
+
   componentWillUnmount() {
     this.pollSubscriptions
-        .forEach(subscription => {
-          subscription.dispose();
-        });
+      .forEach(subscription => {
+        subscription.dispose();
+      });
   }
+
+  renderTableBody(history) {
+    let historyState = history || this.state.history;
+    return (
+      <tbody>
+        {
+          historyState
+            .map( history => {
+              return (
+                <tr key={history.runid}>
+                  <td>{history.programName}</td>
+                  <td>{humanReadableDate(history.start)}</td>
+                  <td>{history.runid}</td>
+                  <td>{history.status}</td>
+                  <td>
+                    <LogAction
+                      entity={{
+                        id: history.programName,
+                        uniqueId: history.runid,
+                        runId: history.runid,
+                        applicationId: history.appId,
+                        programType: history.programType
+                      }}
+                    />
+                  </td>
+                </tr>
+              );
+            })
+        }
+      </tbody>
+    );
+  }
+
   render() {
     const renderHistoryRows = () => {
       if (Array.isArray(this.state.history)) {
         if (this.state.history.length) {
           return (
             <div className="history-tab">
-              <table className="table table-bordered">
-                <thead>
-                  <tr>
-                    <th>Program Name </th>
-                    <th>Start Time</th>
-                    <th>Run ID</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {
-                    this.state
-                      .history
-                      .map( history => {
-                        return (
-                          <tr key={history.runid}>
-                            <td>{history.programName}</td>
-                            <td>{humanReadableDate(history.start)}</td>
-                            <td>{history.runid}</td>
-                            <td>{history.status}</td>
-                          </tr>
-                        );
-                      })
-                  }
-                </tbody>
-              </table>
+              <SortableTable
+                entities={this.state.history}
+                tableHeaders={this.tableHeaders}
+                renderTableBody={this.renderTableBody}
+              />
             </div>
           );
         } else {

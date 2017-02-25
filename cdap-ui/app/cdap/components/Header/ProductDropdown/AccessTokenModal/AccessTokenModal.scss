@@ -1,0 +1,79 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../../../styles/variables.scss';
+
+.access-token-modal {
+  &.modal-dialog { margin-top: 100px; }
+
+  .modal-content {
+    width: 500px;
+
+    .modal-header {
+      padding: 0;
+      background: $modal-header-color;
+      color: white;
+      border: 0;
+      height: 40px;
+
+      h4 {
+        font-weight: normal;
+        font-size: 14px;
+
+        span {
+          line-height: 40px;
+          padding: 5px 10px;
+        }
+        .close-section {
+          span { padding: 0 10px; }
+          cursor: pointer;
+        }
+      }
+    }
+
+    .modal-body {
+      .username-password {
+        margin-top: 15px;
+
+        input {
+          border-top: 0;
+          border-right: 0;
+          border-left: 0;
+          border-radius: 0;
+
+          &.password {
+            margin-top: 10px;
+          }
+        }
+      }
+
+      .access-token {
+        word-wrap: break-word;
+      }
+
+      .submit-button,
+      .done-button {
+        margin-top: 20px;
+      }
+    }
+
+    .modal-footer {
+      padding: 0;
+      text-align: left;
+      border-top: 0;
+    }
+  }
+}

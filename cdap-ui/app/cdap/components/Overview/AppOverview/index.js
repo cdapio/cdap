@@ -25,9 +25,9 @@ import {objectQuery} from 'services/helpers';
 import shortid from 'shortid';
 import T from 'i18n-react';
 import FastActionToMessage from 'services/fast-action-message-helper';
-require('./AppOverview.scss');
 import {createRouterPath} from 'react-router/LocationUtils';
 import capitalize from 'lodash/capitalize';
+import {getType} from 'services/metadata-parser';
 
 export default class AppOverview extends Component {
   constructor(props) {
@@ -126,10 +126,9 @@ export default class AppOverview extends Component {
         <div className="fa fa-spinner fa-spin fa-3x"></div>
       );
     }
-    let title = this.state.entity.isHydrator ?
-      T.translate('commons.entity.cdap-data-pipeline.singular')
-    :
-      T.translate('commons.entity.application.singular');
+    let entityType = getType(this.state.entity);
+
+    let title = T.translate(`commons.entity.${entityType}.singular`);
 
     let namespace = NamespaceStore.getState().selectedNamespace;
     return (
@@ -145,6 +144,7 @@ export default class AppOverview extends Component {
               previousPathname: createRouterPath(location).replace(/\/cdap\//g, '/')
             }
           }}
+          entityType={entityType}
           successMessage={this.state.successMessage}
           onClose={this.props.onClose}
         />
@@ -152,6 +152,7 @@ export default class AppOverview extends Component {
           entity={this.state.entity}
           onFastActionSuccess={this.onFastActionSuccess.bind(this)}
           onFastActionUpdate={this.onFastActionUpdate.bind(this)}
+          showSeparator={true}
         />
         <AppOverviewTab entity={this.state.entityDetail} />
       </div>

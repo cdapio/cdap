@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Introduction to the Cask Data Application Platform
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 :hide-relations: true
 
@@ -816,13 +816,13 @@ Advanced Data Exploration
 
 Transforming Your Data
 ======================
-- CDAP Extensions such as :ref:`Cask Hydrator <cask-hydrator>` create applications that are
+- CDAP capabilities such as :ref:`CDAP pipelines <cdap-pipelines>` create applications that are
   reusable through the configuration of artifacts and can be used to create an application
   without writing any code at all
 - Built-in ETL (Extract, Transform, Load) and data pipeline applications
-- Hydrator includes over 30 plugins to build applications merely through configuration of parameters
+- CDAP pipelines includes over 30 plugins to build applications merely through configuration of parameters
 - Build your own custom plugins, using simple APIs
-- Hydrator Transformations provide pre-defined transformations to be applied on streams or other datasets
+- Pipeline Transformations provide pre-defined transformations to be applied on streams or other datasets
 - In this example, we will use the data pipeline system artifact to create a batch application to convert data in a stream to
   Avro-formatted files in a ``TimePartitionedFileSet`` that can be queried using either Hive or Impala
 

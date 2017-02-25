@@ -23,8 +23,9 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -92,7 +93,6 @@ public class LevelDBFileStreamAdminTest extends StreamAdminTest {
       new ExploreClientModule(),
       new ViewAdminModules().getInMemoryModules(),
       new AuditModule().getInMemoryModules(),
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getNoOpModule(),
@@ -104,6 +104,7 @@ public class LevelDBFileStreamAdminTest extends StreamAdminTest {
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
             bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
             bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+            bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
           }
         })
     );
@@ -117,7 +118,6 @@ public class LevelDBFileStreamAdminTest extends StreamAdminTest {
     authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
     ownerAdmin = injector.getInstance(OwnerAdmin.class);
     streamCoordinatorClient.startAndWait();
-
     setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
     txManager.startAndWait();
     authorizationEnforcementService.startAndWait();

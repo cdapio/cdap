@@ -29,11 +29,11 @@ import globalEvents from 'services/global-events';
 export default class ApplicationUploadWizard extends Component {
   constructor(props) {
     super(props);
-    this.eventEmitter = ee(ee);
     this.state = {
-      showWizard: props.isOpen || false
+      showWizard: props.isOpen || false,
+      successInfo: {}
     };
-    this.successInfo = {};
+    this.eventEmitter = ee(ee);
   }
   componentWillUnmount() {
     ApplicationUploadStore.dispatch({
@@ -59,14 +59,23 @@ export default class ApplicationUploadWizard extends Component {
     // uploadResponse has the format "Successfully deployed app {appName}"
     let appName = uploadResponse.slice(uploadResponse.indexOf('app') + 4);
     let namespace = NamespaceStore.getState().selectedNamespace;
-    let defaultSuccessMessage = T.translate('features.Wizard.ApplicationUpload.success');
+    let message = T.translate('features.Wizard.ApplicationUpload.success', {appName});
     let buttonLabel = T.translate('features.Wizard.ApplicationUpload.callToAction');
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
-    this.successInfo.message = `${defaultSuccessMessage} "${appName}".`;
-    this.successInfo.buttonLabel = buttonLabel;
-    this.successInfo.buttonUrl = `/cdap/ns/${namespace}/apps/${appName}`;
-    this.successInfo.linkLabel = linkLabel;
-    this.successInfo.linkUrl = `/cdap/ns/${namespace}`;
+    this.setState({
+      successInfo: {
+        message,
+        buttonLabel,
+        buttonUrl: window.getAbsUIUrl({
+          namespaceId: namespace,
+          appId: appName
+        }),
+        linkLabel,
+        linkUrl: window.getAbsUIUrl({
+          namespaceId: namespace
+        })
+      }
+    });
   }
   render() {
     let input = this.props.input;
@@ -84,7 +93,7 @@ export default class ApplicationUploadWizard extends Component {
           wizardType="ApplicationUpload"
           store={ApplicationUploadStore}
           onSubmit={this.onSubmit.bind(this)}
-          successInfo={this.successInfo}
+          successInfo={this.state.successInfo}
           onClose={this.toggleWizard.bind(this)}/>
       </WizardModal>
     );

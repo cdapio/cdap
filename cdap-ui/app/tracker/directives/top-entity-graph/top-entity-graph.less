@@ -15,7 +15,7 @@
  */
 
 @font-color: #333333;
-@tracker-green: #30c23e;
+@cdap-orange: #ff6600;
 @svg-background: #e8e8e8;
 @border-color: #cccccc;
 
@@ -61,7 +61,6 @@ my-top-entity-graph {
         text-align: left;
 
         &:hover {
-          color: @tracker-green;
           text-decoration: none;
         }
       }
@@ -92,7 +91,13 @@ my-top-entity-graph {
         line { display: none; }
       }
     }
-
-    .bar { fill: @tracker-green; }
   }
+}
+
+my-top-entity-graph[type=applications] .bar {
+  fill: #2c3e50;
+}
+
+my-top-entity-graph[type=programs] .bar {
+  fill: #29b19f;
 }

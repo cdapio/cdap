@@ -336,7 +336,7 @@ export default class Wrangler extends Component {
     };
 
     let properties = {
-      specification: spec,
+      directives: spec,
       schema: JSON.stringify(schema)
     };
 
@@ -431,7 +431,7 @@ export default class Wrangler extends Component {
 
         <div className="text-xs-center">
           <button
-            className="btn btn-wrangler wrangle-button"
+            className="btn btn-cdap wrangle-button"
             onClick={this.onWrangleClick}
           >
             {T.translate('features.Wrangler.wrangleButton')}

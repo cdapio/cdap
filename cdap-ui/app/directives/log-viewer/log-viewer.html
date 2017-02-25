@@ -95,8 +95,12 @@
               Level <span class="fa fa-caret-down"></span>
             </span>
             <ul uib-dropdown-menu ng-click="$event.stopPropagation();">
-              <li ng-repeat="option in LogViewer.logEvents">
-                <input type="checkbox" ng-click="LogViewer.includeEvent(option)"><span>{{option}}</span>
+              <li ng-repeat="option in LogViewer.logEvents"
+                  ng-click="LogViewer.includeEvent(option)">
+                <input
+                  type="checkbox"
+                  ng-model="LogViewer.activeLogLevels[option]"/>
+                  <span>{{option}}</span>
               </li>
             </ul>
           </span>
@@ -124,6 +128,7 @@
         </th>
       </thead>
       <tbody infinite-scroll="LogViewer.scrollFn()"
+             infinite-scroll-immediate-check="false"
              infinite-scroll-container="'.logs-table'"
              infinite-scroll-disabled="(LogViewer.statusType === 0 || LogViewer.statusType === 1) && LogViewer.displayData.length === LogViewer.totalCount"
              >

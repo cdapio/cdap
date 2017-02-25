@@ -35,6 +35,11 @@ public class RouterAuditLookUpTest {
   private static final AuditLogContent DEFAULT_AUDIT = new AuditLogContent(HttpMethod.PUT, true, false, EMPTY_HEADERS);
 
   @Test
+  public void testCorrectNumberInClassPath() throws Exception {
+    Assert.assertEquals(ExceptedNumberOfAuditPolicyPaths.EXPECTED_PATH_NUMBER, AUDIT_LOOK_UP.getNumberOfPaths());
+  }
+
+  @Test
   public void testDataFabricEndpoints() throws Exception {
     // endpoints from DatasetInstanceHandler
     assertContent("/v3/namespaces/default/data/datasets/myDataset", DEFAULT_AUDIT);

@@ -26,7 +26,6 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.logging.logback.TestLoggingContext;
 import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -36,6 +35,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -128,13 +128,10 @@ public class LoggingEventSerializerTest {
     mdcMap.put(ServiceLoggingContext.TAG_SERVICE_ID, "ser1");
 
     ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent();
-    iLoggingEvent.setCallerData(new StackTraceElement[]{
-      null
-    });
+    iLoggingEvent.setCallerData(new StackTraceElement[] { null });
     iLoggingEvent.setMDCPropertyMap(mdcMap);
-    LoggingEvent event = new LoggingEvent(iLoggingEvent);
 
-    Assert.assertTrue(LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap())
+    Assert.assertTrue(LoggingContextHelper.getLoggingContext(iLoggingEvent.getMDCPropertyMap())
                         instanceof ServiceLoggingContext);
   }
 
@@ -167,7 +164,25 @@ public class LoggingEventSerializerTest {
     assertLoggingEventEquals(iLoggingEvent, actualEvent);
   }
 
-  public static void assertLoggingEventEquals(ILoggingEvent expected, ILoggingEvent actual) {
+  @Test
+  public void testDecodeTimestamp() throws IOException {
+    long timestamp = System.currentTimeMillis();
+
+    ch.qos.logback.classic.spi.LoggingEvent event = new ch.qos.logback.classic.spi.LoggingEvent();
+    event.setLevel(Level.INFO);
+    event.setLoggerName("test.logger");
+    event.setMessage("Some test");
+    event.setTimeStamp(timestamp);
+
+    // Serialize it
+    LoggingEventSerializer serializer = new LoggingEventSerializer();
+    byte[] bytes = serializer.toBytes(event);
+
+    // Decode timestamp
+    Assert.assertEquals(timestamp, serializer.decodeEventTimestamp(ByteBuffer.wrap(bytes)));
+  }
+
+  static void assertLoggingEventEquals(ILoggingEvent expected, ILoggingEvent actual) {
     expected.getMDCPropertyMap().putAll(
       ImmutableMap.of(".namespaceId", "TEST_ACCT_ID1", ".applicationId", "TEST_APP_ID1", ".runId", "RUN1",
                       ".instanceId", "INSTANCE1"));
@@ -193,7 +208,7 @@ public class LoggingEventSerializerTest {
     assertThrowableProxyEquals(expected.getThrowableProxy(), actual.getThrowableProxy());
   }
 
-  public static void assertThrowableProxyEquals(IThrowableProxy expected, IThrowableProxy actual) {
+  private static void assertThrowableProxyEquals(IThrowableProxy expected, IThrowableProxy actual) {
     if (expected == actual) {
       return;
     }

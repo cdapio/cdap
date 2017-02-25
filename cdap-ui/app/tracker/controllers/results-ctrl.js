@@ -125,6 +125,7 @@ class TrackerResultsController {
       }
     ];
 
+    this.numMetadataFiltersMatched = 0;
     this.fetchResults();
   }
 
@@ -140,7 +141,7 @@ class TrackerResultsController {
     if (params.query === '*') {
       params.sort = 'creation-time desc';
       params.numCursors = 10;
-    } else {
+    } else if (params.query.charAt(params.query.length - 1) !== '*') {
       params.query = params.query + '*';
     }
 
@@ -148,6 +149,7 @@ class TrackerResultsController {
       .$promise
       .then( (res) => {
         this.fullResults = res.results.map(this.parseResult.bind(this));
+        this.numMetadataFiltersMatched = this.getMatchedFiltersCount();
         this.searchResults = angular.copy(this.fullResults);
         if (this.searchResults.length) {
           this.fetchTruthMeter();
@@ -286,13 +288,15 @@ class TrackerResultsController {
       return filter.indexOf(result.type) > -1 ? true : false;
     });
 
-
     let metadataFilter = [];
     angular.forEach(this.metadataFiltersList, (metadata) => {
       if (metadata.isActive) { metadataFilter.push(metadata.name); }
     });
 
     this.searchResults = entitySearchResults.filter( (result) => {
+      if (result.queryFound.length === 0) {
+        return true;
+      }
       return _.intersection(metadataFilter, result.queryFound).length > 0;
     });
   }
@@ -319,6 +323,14 @@ class TrackerResultsController {
     upperLimit = upperLimit > this.searchResults.length ? this.searchResults.length : upperLimit;
 
     return this.searchResults.length === 0 ? '0' : lowerLimit + '-' + upperLimit;
+  }
+
+  getMatchedFiltersCount() {
+    let metadataFilterCount = 0;
+    angular.forEach(this.metadataFiltersList, (metadata) => {
+      if (metadata.count > 0) { metadataFilterCount++; }
+    });
+    return metadataFilterCount;
   }
 
   fetchTruthMeter() {

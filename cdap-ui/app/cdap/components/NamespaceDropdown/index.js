@@ -173,7 +173,12 @@ export default class NamespaceDropdown extends Component {
     let baseurl = '';
     if (this.props.tag) {
       let basename = document.querySelector('base');
-      basename = basename.getAttribute('href') ? basename.getAttribute('href') : null;
+      let baseurlname = basename.getAttribute('href');
+      // FIXME: This is a one of thing (an interim solution) and that should go away in subsequent releases.
+      if (baseurlname.indexOf('logviewer') !== -1) {
+        baseurlname = '/cdap/';
+      }
+      basename = baseurlname ? baseurlname : null;
       LinkEl = this.props.tag;
       baseurl = `${basename}`;
     }
@@ -311,7 +316,7 @@ export default class NamespaceDropdown extends Component {
                         key={shortid.generate()}
                       >
                         <LinkEl
-                          href={baseurl + `/ns/${item.name}`}
+                          href={baseurl + `ns/${item.name}`}
                           to={baseurl + `/ns/${item.name}`}
                           className="namespace-link"
                         >

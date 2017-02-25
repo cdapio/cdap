@@ -19,6 +19,7 @@ package co.cask.cdap.test.base;
 import co.cask.cdap.common.test.TestSuite;
 import co.cask.cdap.partitioned.PartitionConsumingTestRun;
 import co.cask.cdap.partitioned.PartitionCorrectorTestRun;
+import co.cask.cdap.partitioned.PartitionRollbackTestRun;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.app.DummyBaseCloneTestRun;
 import co.cask.cdap.test.app.DummyBaseTestRun;
@@ -38,6 +39,7 @@ import org.junit.runners.Suite;
   DummyBaseCloneTestRun.class,
   PartitionConsumingTestRun.class,
   PartitionCorrectorTestRun.class,
+  PartitionRollbackTestRun.class,
   TestSQLQueryTestRun.class
 })
 public class TestFrameworkExploreTestSuite extends TestFrameworkTestBase {

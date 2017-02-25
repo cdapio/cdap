@@ -30,14 +30,12 @@ import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
 import java.util.Collection;
-import javax.annotation.Nullable;
 
 /**
  *
@@ -58,24 +56,31 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
   @Override
   public void process(ApplicationWithPrograms input) throws Exception {
     Collection<ApplicationId> allAppVersionsAppIds = store.getAllAppVersionsAppIds(input.getApplicationId());
-    // if allAppVersionsAppIds.isEmpty() is true that means this app is an entirely new app and no other version
-    // exists so we should add the owner information in owner store if one was provided
-    if (allAppVersionsAppIds.isEmpty() && input.getOwnerPrincipal() != null) {
-      addOwner(input.getApplicationId(), input.getOwnerPrincipal());
+    boolean ownerAdded = addOwnerIfRequired(input, allAppVersionsAppIds);
+    try {
+      store.addApplication(input.getApplicationId(), input.getSpecification());
+    } catch (Exception e) {
+      // if we failed to store the app spec cleanup the owner if it was added in this call
+      if (ownerAdded) {
+        ownerAdmin.delete(input.getApplicationId());
+      }
+      // propagate the exception
+      throw e;
     }
-
-    store.addApplication(input.getApplicationId(), input.getSpecification());
     registerDatasets(input);
     emit(input);
   }
 
-  /**
-   * Adds the application owner information to the owner store
-   */
-  private void addOwner(ApplicationId entityId,
-                        @Nullable KerberosPrincipalId specifiedOwnerPrincipal)
+  // adds owner information for the application if this is the first version of the application
+  private boolean addOwnerIfRequired(ApplicationWithPrograms input, Collection<ApplicationId> allAppVersionsAppIds)
     throws IOException, AlreadyExistsException {
-      ownerAdmin.add(entityId, specifiedOwnerPrincipal);
+    // if allAppVersionsAppIds.isEmpty() is true that means this app is an entirely new app and no other version
+    // exists so we should add the owner information in owner store if one was provided
+    if (allAppVersionsAppIds.isEmpty() && input.getOwnerPrincipal() != null) {
+      ownerAdmin.add(input.getApplicationId(), input.getOwnerPrincipal());
+      return true;
+    }
+    return false;
   }
 
   // Register dataset usage, based upon the program specifications.

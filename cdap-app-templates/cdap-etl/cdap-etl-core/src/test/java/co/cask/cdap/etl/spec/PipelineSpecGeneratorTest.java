@@ -23,10 +23,12 @@ import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.action.Action;
+import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.batch.BatchPipelineSpec;
@@ -59,6 +61,10 @@ public class PipelineSpecGeneratorTest {
     new ETLPlugin("mockB", Transform.PLUGIN_TYPE, ImmutableMap.<String, String>of(), null);
   private static final ETLPlugin MOCK_SINK =
     new ETLPlugin("mocksink", BatchSink.PLUGIN_TYPE, ImmutableMap.<String, String>of(), null);
+  private static final ETLPlugin MOCK_JOINER =
+    new ETLPlugin("mockjoiner", BatchJoiner.PLUGIN_TYPE, ImmutableMap.<String, String>of(), null);
+  private static final ETLPlugin MOCK_ERROR =
+    new ETLPlugin("mockerror", ErrorTransform.PLUGIN_TYPE, ImmutableMap.<String, String>of(), null);
   private static final ArtifactId ARTIFACT_ID =
     new ArtifactId("plugins", new ArtifactVersion("1.0.0"), ArtifactScope.USER);
   private static BatchPipelineSpecGenerator specGenerator;
@@ -69,10 +75,12 @@ public class PipelineSpecGeneratorTest {
     MockPluginConfigurer pluginConfigurer = new MockPluginConfigurer();
     Set<ArtifactId> artifactIds = ImmutableSet.of(ARTIFACT_ID);
     pluginConfigurer.addMockPlugin(BatchSource.PLUGIN_TYPE, "mocksource", new MockPlugin(SCHEMA_A), artifactIds);
-    pluginConfigurer.addMockPlugin(Transform.PLUGIN_TYPE, "mockA", new MockPlugin(SCHEMA_A), artifactIds);
+    pluginConfigurer.addMockPlugin(Transform.PLUGIN_TYPE, "mockA", new MockPlugin(SCHEMA_A, SCHEMA_B), artifactIds);
     pluginConfigurer.addMockPlugin(Transform.PLUGIN_TYPE, "mockB", new MockPlugin(SCHEMA_B), artifactIds);
     pluginConfigurer.addMockPlugin(BatchSink.PLUGIN_TYPE, "mocksink", new MockPlugin(), artifactIds);
     pluginConfigurer.addMockPlugin(Action.PLUGIN_TYPE, "mockaction", new MockPlugin(), artifactIds);
+    pluginConfigurer.addMockPlugin(BatchJoiner.PLUGIN_TYPE, "mockjoiner", new MockPlugin(), artifactIds);
+    pluginConfigurer.addMockPlugin(ErrorTransform.PLUGIN_TYPE, "mockerror", new MockPlugin(), artifactIds);
 
     specGenerator = new BatchPipelineSpecGenerator(pluginConfigurer,
                                                    ImmutableSet.of(BatchSource.PLUGIN_TYPE),
@@ -210,11 +218,13 @@ public class PipelineSpecGeneratorTest {
         StageSpec.builder("sink1", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
           .addInputSchema("t3", SCHEMA_B)
           .addInputs("t3")
+          .setErrorSchema(SCHEMA_B)
           .build())
       .addStage(
         StageSpec.builder("sink2", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
           .addInputSchemas(ImmutableMap.of("t1", SCHEMA_A, "t2", SCHEMA_A, "source", SCHEMA_A))
           .addInputs("t1", "t2", "source")
+          .setErrorSchema(SCHEMA_A)
           .build())
       .addStage(
         StageSpec.builder("t1", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
@@ -222,6 +232,7 @@ public class PipelineSpecGeneratorTest {
           .setOutputSchema(SCHEMA_A)
           .addInputs("source")
           .addOutputs("t2", "t3", "sink2")
+          .setErrorSchema(SCHEMA_B)
           .build())
       .addStage(
         StageSpec.builder("t2", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
@@ -229,6 +240,7 @@ public class PipelineSpecGeneratorTest {
           .setOutputSchema(SCHEMA_A)
           .addInputs("source", "t1")
           .addOutputs("t3", "sink2")
+          .setErrorSchema(SCHEMA_B)
           .build())
       .addStage(
         StageSpec.builder("t3", new PluginSpec(Transform.PLUGIN_TYPE, "mockB", emptyMap, ARTIFACT_ID))
@@ -236,6 +248,7 @@ public class PipelineSpecGeneratorTest {
           .setOutputSchema(SCHEMA_B)
           .addInputs("t1", "t2")
           .addOutputs("sink1")
+          .setErrorSchema(SCHEMA_A)
           .build())
       .addConnections(etlConfig.getConnections())
       .setResources(etlConfig.getResources())
@@ -286,12 +299,14 @@ public class PipelineSpecGeneratorTest {
           .addInputSchema("tA", SCHEMA_A)
           .addInputs("tA")
           .addOutputs("action")
+          .setErrorSchema(SCHEMA_A)
           .build())
       .addStage(
         StageSpec.builder("sinkB", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
           .addInputSchema("tB", SCHEMA_B)
           .addInputs("tB")
           .addOutputs("action")
+          .setErrorSchema(SCHEMA_B)
           .build())
       .addStage(
         StageSpec.builder("tA", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
@@ -299,6 +314,7 @@ public class PipelineSpecGeneratorTest {
           .setOutputSchema(SCHEMA_A)
           .addInputs("source")
           .addOutputs("sinkA")
+          .setErrorSchema(SCHEMA_B)
           .build())
       .addStage(
         StageSpec.builder("tB", new PluginSpec(Transform.PLUGIN_TYPE, "mockB", emptyMap, ARTIFACT_ID))
@@ -306,6 +322,7 @@ public class PipelineSpecGeneratorTest {
           .setOutputSchema(SCHEMA_B)
           .addInputs("source")
           .addOutputs("sinkB")
+          .setErrorSchema(SCHEMA_A)
           .build())
       .addStage(
         StageSpec.builder("action", new PluginSpec(Action.PLUGIN_TYPE, "mockaction", emptyMap, ARTIFACT_ID))
@@ -345,21 +362,73 @@ public class PipelineSpecGeneratorTest {
     specGenerator.generateSpec(etlConfig);
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testConflictingInputErrorSchemas() {
+    /*
+     *           ---- transformA
+     *           |        |
+     * source ---|        |------- error -- sink
+     *           |        |
+     *           ---- transformB
+     *
+     * error gets schema B from transformA and schema A from transformB, should fail
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MOCK_SOURCE))
+      .addStage(new ETLStage("sink", MOCK_SINK))
+      .addStage(new ETLStage("tA", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("tB", MOCK_TRANSFORM_B))
+      .addStage(new ETLStage("error", MOCK_ERROR))
+      .addConnection("source", "tA")
+      .addConnection("source", "tB")
+      .addConnection("tA", "error")
+      .addConnection("tB", "error")
+      .addConnection("error", "sink")
+      .build();
+    specGenerator.generateSpec(etlConfig);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testBadErrorTransformInput() {
+    /*
+     * source --> joiner --> error --> sink
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MOCK_SOURCE))
+      .addStage(new ETLStage("joiner", MOCK_JOINER))
+      .addStage(new ETLStage("error", MOCK_ERROR))
+      .addStage(new ETLStage("sink", MOCK_SINK))
+      .addConnection("source", "joiner")
+      .addConnection("joiner", "error")
+      .addConnection("error", "sink")
+      .build();
+    specGenerator.generateSpec(etlConfig);
+  }
+
   private static class MockPlugin implements PipelineConfigurable {
-    private final Schema schema;
+    private final Schema outputSchema;
+    private final Schema errorSchema;
 
     MockPlugin() {
-      this.schema = null;
+      this(null, null);
     }
 
-    MockPlugin(Schema schema) {
-      this.schema = schema;
+    MockPlugin(Schema outputSchema) {
+      this(outputSchema, null);
+    }
+
+    MockPlugin(Schema outputSchema, Schema errorSchema) {
+      this.outputSchema = outputSchema;
+      this.errorSchema = errorSchema;
     }
 
     @Override
     public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
-      if (schema != null) {
-        pipelineConfigurer.getStageConfigurer().setOutputSchema(schema);
+      if (outputSchema != null) {
+        pipelineConfigurer.getStageConfigurer().setOutputSchema(outputSchema);
+      }
+      if (errorSchema != null) {
+        pipelineConfigurer.getStageConfigurer().setErrorSchema(errorSchema);
       }
     }
   }

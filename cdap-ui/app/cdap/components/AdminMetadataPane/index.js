@@ -41,7 +41,7 @@ function AdminMetadataPane({ statObject }) {
 
         statsList.push (
           <StatContainer
-            label={T.translate(`features.Management.DetailPanel.labels.${stat.statName}`)}
+            label={T.translate(`features.Administration.DetailPanel.labels.${stat.statName}`)}
             number={stat.statNum}
             date={true}
             key={shortid.generate()}
@@ -50,7 +50,7 @@ function AdminMetadataPane({ statObject }) {
       } else {
         statsList.push (
           <StatContainer
-            label={T.translate(`features.Management.DetailPanel.labels.${stat.statName}`)}
+            label={T.translate(`features.Administration.DetailPanel.labels.${stat.statName}`)}
             number={stat.statNum}
             key={shortid.generate()}
           />
@@ -76,7 +76,7 @@ function AdminMetadataPane({ statObject }) {
     );
   }
 
-  let headerText = statObject.statsHeader ? T.translate(`features.Management.DetailPanel.headers.${statObject.statsHeader}`) : <span className="fa fa-spinner" />;
+  let headerText = statObject.statsHeader ? T.translate(`features.Administration.DetailPanel.headers.${statObject.statsHeader}`) : <span className="fa fa-spinner" />;
 
   // Return the rendered content
   return (

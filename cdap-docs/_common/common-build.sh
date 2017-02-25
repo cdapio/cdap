@@ -84,7 +84,8 @@ function usage() {
   echo "    build-web        Clean build of docs with extras (no Javadocs)"
   echo "    build-docs       Clean build of docs (no extras or Javadocs)"
   echo "    docs             alias for 'build-docs'"
-  echo "    docs-local       Clean build of docs (no extras or Javadocs), using local copies of downloaded files"
+  echo "    build-web-local  Clean build of docs with extras (no Javadocs), using local copies of downloaded files"
+  echo "    build-docs-local Clean build of docs (no extras or Javadocs), using local copies of downloaded files"
   echo
   echo "    check            Runs build without running Sphinx, to check all downloads and includes"
   echo "    license-pdfs     Clean build of License Dependency PDFs"
@@ -135,23 +136,50 @@ function build_docs() {
   fi  
   build_extras
   consolidate_messages
+  add_html_redirect
 }
 
 function build_docs_local() {
-  BELL="${TRUE}"
   LOCAL_INCLUDES="${TRUE}"
   export LOCAL_INCLUDES
   build_docs
 }
 
 function build_web() {
+  echo "common-build.sh build_web"
+  build_docs ${GOOGLE_TAG_MANAGER_CODE}
+}
+
+function build_web_local() {
+  LOCAL_INCLUDES="${TRUE}"
+  export LOCAL_INCLUDES
   build_docs ${GOOGLE_TAG_MANAGER_CODE}
 }
 
 function build_extras() {
   # Over-ride this function in guides where Javadocs or licenses are being built or copied.
-  # Currently performed in reference-manual
   echo "No extras being built or copied."
+}
+
+function add_html_redirect() {
+  local redirect_text=$(cat <<EOF
+<!DOCTYPE HTML>
+<html lang="en-US">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="refresh" content="0;url=html/index.html">
+        <script type="text/javascript">
+            window.location.href = "html/index.html"
+        </script>
+        <title></title>
+    </head>
+    <body>
+    </body>
+</html>
+EOF
+)
+  echo_set_message "Adding redirect"
+  echo ${redirect_text} >> ${TARGET}/redirect.html
 }
 
 function check() {
@@ -366,11 +394,11 @@ function set_version() {
   IFS="${OIFS}"
   
   if [[ ${GIT_BRANCH_TYPE:0:7} == "develop" ]]; then
-    GIT_BRANCH_CASK_HYDRATOR="develop"
-    GIT_BRANCH_CASK_TRACKER="develop"
+    GIT_BRANCH_CDAP_PIPELINES="develop"
+    GIT_BRANCH_CDAP_METADATA_MANAGEMENT="develop"
   fi
-  get_cask_hydrator_version ${GIT_BRANCH_CASK_HYDRATOR}
-  get_cask_tracker_version ${GIT_BRANCH_CASK_TRACKER}
+  get_cdap_pipelines_version ${GIT_BRANCH_CDAP_PIPELINES}
+  get_cdap_metadata_management_version ${GIT_BRANCH_CDAP_METADATA_MANAGEMENT}
 }
 
 function display_version() {
@@ -390,32 +418,42 @@ function display_version() {
   echo "CDAP Apps:"
   echo "  GIT_BRANCH_CDAP_APPS: ${GIT_BRANCH_CDAP_APPS}"
   echo "  GIT_VERSION_CDAP_APPS: ${GIT_VERSION_CDAP_APPS}"
-  echo "Hydrator:"
-  echo "  GIT_BRANCH_CASK_HYDRATOR: ${GIT_BRANCH_CASK_HYDRATOR}"
-  echo "  CASK_HYDRATOR_VERSION: ${CASK_HYDRATOR_VERSION}"
-  echo "Tracker:"
-  echo "  GIT_BRANCH_CASK_TRACKER: ${GIT_BRANCH_CASK_TRACKER}"
-  echo "  CASK_TRACKER_VERSION: ${CASK_TRACKER_VERSION}"
+  echo "CDAP Pipelines:"
+  echo "  GIT_BRANCH_CDAP_PIPELINES: ${GIT_BRANCH_CDAP_PIPELINES}"
+  echo "  CDAP_PIPELINES_VERSION: ${CDAP_PIPELINES_VERSION}"
+  echo "CDAP Metadata Management:"
+  echo "  GIT_BRANCH_CDAP_METADATA_MANAGEMENT: ${GIT_BRANCH_CDAP_METADATA_MANAGEMENT}"
+  echo "  CDAP_METADATA_MANAGEMENT_VERSION: ${CDAP_METADATA_MANAGEMENT_VERSION}"
 }
 
-function get_cask_hydrator_version() {
+function print_version() {
+  cd ${SCRIPT_PATH}/developers-manual
+  ./build.sh display-version
+}
+
+function set_and_display_version() {
+  set_version
+  display_version
+}
+
+function get_cdap_pipelines_version() {
   # $1 Branch of Hydrator to use
-  CASK_HYDRATOR_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/hydrator-plugins/${1}/pom.xml" | grep "<version>")
-  CASK_HYDRATOR_VERSION=${CASK_HYDRATOR_VERSION#*<version>}
-  CASK_HYDRATOR_VERSION=${CASK_HYDRATOR_VERSION%%</version>*}
-  export CASK_HYDRATOR_VERSION
+  CDAP_PIPELINES_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/hydrator-plugins/${1}/pom.xml" | grep "<version>")
+  CDAP_PIPELINES_VERSION=${CDAP_PIPELINES_VERSION#*<version>}
+  CDAP_PIPELINES_VERSION=${CDAP_PIPELINES_VERSION%%</version>*}
+  export CDAP_PIPELINES_VERSION
 }
 
-function get_cask_tracker_version() {
+function get_cdap_metadata_management_version() {
   # $1 Branch of Tracker to use
-  CASK_TRACKER_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/cask-tracker/${1}/pom.xml" | grep "<version>")
-  CASK_TRACKER_VERSION=${CASK_TRACKER_VERSION#*<version>}
-  CASK_TRACKER_VERSION=${CASK_TRACKER_VERSION%%</version>*}
-  if [[ -z ${CASK_TRACKER_VERSION} ]]; then
-    CASK_TRACKER_VERSION="0.2.0-SNAPSHOT"
-    echo "Using default CASK_TRACKER_VERSION ${CASK_TRACKER_VERSION}"
+  CDAP_METADATA_MANAGEMENT_VERSION=$(curl --silent "https://raw.githubusercontent.com/caskdata/cask-tracker/${1}/pom.xml" | grep "<version>")
+  CDAP_METADATA_MANAGEMENT_VERSION=${CDAP_METADATA_MANAGEMENT_VERSION#*<version>}
+  CDAP_METADATA_MANAGEMENT_VERSION=${CDAP_METADATA_MANAGEMENT_VERSION%%</version>*}
+  if [[ -z ${CDAP_METADATA_MANAGEMENT_VERSION} ]]; then
+    CDAP_METADATA_MANAGEMENT_VERSION="0.2.0-SNAPSHOT"
+    echo "Using default CDAP_METADATA_MANAGEMENT_VERSION ${CDAP_METADATA_MANAGEMENT_VERSION}"
   fi
-  export CASK_TRACKER_VERSION
+  export CDAP_METADATA_MANAGEMENT_VERSION 
 }
 
 function clear_messages_file() {
@@ -561,12 +599,15 @@ function rewrite() {
 function run_command() {
   set_version
   case ${1} in
-    build-web|build-docs)  "${1/-/_}";;
-    check|check-includes)  "${1/-/_}";;
+    build-docs|build-web)  "${1/-/_}";;
+    build-docs-local)      "${1//-/_}";;
+    build-web-local)       "${1//-/_}";;
     display-version)       "${1/-/_}";;
+    version)               "set_and_display_version";;
     license-pdfs)          "build_license_pdfs";;
     docs)                  "build_docs";;
     docs-local)            "build_docs_local";;
     *)                     usage;;
   esac
 }
+

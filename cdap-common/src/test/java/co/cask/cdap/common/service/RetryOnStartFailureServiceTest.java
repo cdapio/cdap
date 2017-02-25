@@ -20,7 +20,6 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.junit.Assert;
@@ -38,7 +37,7 @@ public class RetryOnStartFailureServiceTest {
   public void testRetrySucceed() throws InterruptedException {
     CountDownLatch startLatch = new CountDownLatch(1);
     Service service = new RetryOnStartFailureService(
-      createServiceSupplier(3, startLatch, new CountDownLatch(1)),
+      createServiceSupplier(3, startLatch, new CountDownLatch(1), false),
       RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
     service.startAndWait();
     Assert.assertTrue(startLatch.await(1, TimeUnit.SECONDS));
@@ -48,7 +47,7 @@ public class RetryOnStartFailureServiceTest {
   public void testRetryFail() throws InterruptedException {
     CountDownLatch startLatch = new CountDownLatch(1);
     Service service = new RetryOnStartFailureService(
-      createServiceSupplier(1000, startLatch, new CountDownLatch(1)),
+      createServiceSupplier(1000, startLatch, new CountDownLatch(1), false),
       RetryStrategies.limit(10, RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS)));
 
     final CountDownLatch failureLatch = new CountDownLatch(1);
@@ -64,22 +63,33 @@ public class RetryOnStartFailureServiceTest {
     Assert.assertFalse(startLatch.await(100, TimeUnit.MILLISECONDS));
   }
 
-  @Test (timeout = 5000)
-  public void testFailureStop() throws InterruptedException {
+  @Test
+  public void testStopWhileRetrying() throws InterruptedException {
     // This test the service can be stopped during failure retry
     CountDownLatch failureLatch = new CountDownLatch(1);
     Service service = new RetryOnStartFailureService(
-      createServiceSupplier(1000, new CountDownLatch(1), failureLatch),
+      createServiceSupplier(1000, new CountDownLatch(1), failureLatch, false),
       RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
     service.startAndWait();
     Assert.assertTrue(failureLatch.await(1, TimeUnit.SECONDS));
+    service.stopAndWait();
+  }
+
+  @Test
+  public void testStopFailurePropagate() throws InterruptedException {
+    // This test the underlying service stop state is propagated if the start was successful
+    CountDownLatch startLatch = new CountDownLatch(1);
+    Service service = new RetryOnStartFailureService(
+      createServiceSupplier(0, startLatch, new CountDownLatch(1), true),
+      RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
+    service.startAndWait();
+    // block until the underlying service started successfully
+    Assert.assertTrue(startLatch.await(1, TimeUnit.SECONDS));
     try {
       service.stopAndWait();
-      Assert.fail();
-    } catch (UncheckedExecutionException e) {
-      Throwable rootCause = Throwables.getRootCause(e);
-      Assert.assertEquals(RuntimeException.class, rootCause.getClass());
-      Assert.assertEquals("Fail", rootCause.getMessage());
+      Assert.fail("Expected failure in stopping");
+    } catch (Exception e) {
+      Assert.assertEquals("Intentional failure to shutdown", Throwables.getRootCause(e).getMessage());
     }
   }
 
@@ -89,7 +99,8 @@ public class RetryOnStartFailureServiceTest {
    */
   private Supplier<Service> createServiceSupplier(final int startFailures,
                                                   final CountDownLatch startLatch,
-                                                  final CountDownLatch failureLatch) {
+                                                  final CountDownLatch failureLatch,
+                                                  final boolean failureOnStop) {
     return new Supplier<Service>() {
 
       private int failures = 0;
@@ -108,7 +119,9 @@ public class RetryOnStartFailureServiceTest {
 
           @Override
           protected void shutDown() throws Exception {
-            // No-op
+            if (failureOnStop) {
+              throw new Exception("Intentional failure to shutdown");
+            }
           }
         };
       }

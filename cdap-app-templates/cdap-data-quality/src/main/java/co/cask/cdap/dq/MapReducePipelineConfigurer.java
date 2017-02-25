@@ -40,7 +40,7 @@ public class MapReducePipelineConfigurer implements PipelineConfigurer {
   public MapReducePipelineConfigurer(MapReduceConfigurer configurer, String stageName) {
     this.mrConfigurer = configurer;
     this.stageName = stageName;
-    this.stageConfigurer = new DefaultStageConfigurer(stageName);
+    this.stageConfigurer = new DefaultStageConfigurer();
   }
 
   @Override

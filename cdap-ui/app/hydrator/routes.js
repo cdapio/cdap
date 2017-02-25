@@ -51,7 +51,7 @@ angular.module(PKG.name + '.feature.hydrator')
         .state('hydrator.create', {
           url: '/studio?artifactType&draftId&configParams',
           onEnter: function() {
-            document.title = 'Hydrator Studio';
+            document.title = 'CDAP | Studio';
           },
           params: {
             data: null,
@@ -219,7 +219,7 @@ angular.module(PKG.name + '.feature.hydrator')
             highlightTab: 'hydratorList'
           },
           onEnter: function($stateParams) {
-            document.title = 'Pipeline - ' + $stateParams.pipelineId;
+            document.title = 'CDAP | Pipelines | ' + $stateParams.pipelineId;
           },
           resolve : {
             rPipelineDetail: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state) {
@@ -292,7 +292,7 @@ angular.module(PKG.name + '.feature.hydrator')
           url: '?page&sortBy&reverse',
           title: 'Published Pipelines',
           onEnter: function() {
-            document.title = 'Published Pipelines';
+            document.title = 'CDAP | Pipelines';
           },
           data: {
             authorizedRoles: MYAUTH_ROLE.all,

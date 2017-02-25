@@ -20,6 +20,7 @@ import T from 'i18n-react';
 import shortid from 'shortid';
 
 require('./Pagination.scss');
+require('./PaginationDropdown.scss');
 
 export default class PaginationDropdown extends Component {
   constructor(props) {
@@ -41,8 +42,8 @@ export default class PaginationDropdown extends Component {
 
     for (let i = 0; i < this.props.numberOfPages; i++) {
       dropdownItems.push(
-        <div className="dropdownItems">
-          {i + 1}
+        <div className="dropdownItems clearfix">
+          <span className="page-number float-xs-left">{i + 1}</span>
           {
             this.props.currentPage === (i + 1) ?
             <span className="fa fa-check float-xs-right"></span> :
@@ -54,6 +55,7 @@ export default class PaginationDropdown extends Component {
 
     return (
       <Dropdown
+        className="pagination-dropdown"
         isOpen={this.state.isPaginationExpanded}
         toggle={this.handleExpansionToggle}
       >

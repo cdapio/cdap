@@ -16,17 +16,20 @@
 package co.cask.cdap.internal.app.store.preview;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.app.store.preview.PreviewStore;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.inject.Inject;
 
@@ -46,7 +49,6 @@ public class DefaultPreviewStore implements PreviewStore {
   private static final byte[] PROPERTY = Bytes.toBytes("p");
   private static final byte[] VALUE = Bytes.toBytes("v");
 
-  private final Gson gson = new Gson();
   private final AtomicLong counter = new AtomicLong(0L);
 
   private final LevelDBTableCore table;
@@ -65,6 +67,8 @@ public class DefaultPreviewStore implements PreviewStore {
 
   @Override
   public void put(ApplicationId applicationId, String tracerName, String propertyName, Object value) {
+    // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
+    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
     MDSKey mdsKey = new MDSKey.Builder().add(applicationId.getNamespace())
       .add(applicationId.getApplication()).add(tracerName).add(counter.getAndIncrement()).build();
 
@@ -81,6 +85,8 @@ public class DefaultPreviewStore implements PreviewStore {
 
   @Override
   public Map<String, List<JsonElement>> get(ApplicationId applicationId, String tracerName) {
+    // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
+    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
     byte[] startRowKey = new MDSKey.Builder().add(applicationId.getNamespace())
       .add(applicationId.getApplication()).add(tracerName).build().getKey();
     byte[] stopRowKey = new MDSKey(Bytes.stopKeyForPrefix(startRowKey)).getKey();
