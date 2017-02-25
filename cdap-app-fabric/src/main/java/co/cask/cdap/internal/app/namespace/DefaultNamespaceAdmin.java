@@ -192,7 +192,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     if (SecurityUtil.isKerberosEnabled(cConf) && !NamespaceId.SYSTEM.equals(namespace)) {
       String namespacePrincipal = metadata.getConfig().getPrincipal();
       if (Strings.isNullOrEmpty(namespacePrincipal)) {
-        executionUserName = SecurityUtil.getMasterPrincipal(cConf);
+        executionUserName = new KerberosName(SecurityUtil.getMasterPrincipal(cConf)).getShortName();
       } else {
         executionUserName = new KerberosName(namespacePrincipal).getShortName();
       }
