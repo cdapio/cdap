@@ -22,7 +22,7 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.context.GenericLoggingContext;
+import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.proto.id.NamespaceId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +53,6 @@ public class KafkaLogPublisher {
     for (int eventTime = startTime; eventTime <= endTime; eventTime++) {
       events.add(createLoggingEvent("test.logger", Level.INFO, "Waiting for Kafka server to startup...", eventTime));
     }
-
     publishLog(events);
   }
 
@@ -79,7 +78,7 @@ public class KafkaLogPublisher {
    * Publishes multiple log events.
    */
   private static void publishLog(Iterable<ILoggingEvent> events) {
-    publishLog(events, new GenericLoggingContext(NamespaceId.DEFAULT.getNamespace(), "MirrorSUPERFAKEAPP", "WHATEVER"));
+    publishLog(events, new WorkflowLoggingContext(NamespaceId.DEFAULT.getNamespace(), "FAKEAPP", "WF", "FAKERUN"));
   }
 
   private static void publishLog(Iterable<ILoggingEvent> events, LoggingContext context) {

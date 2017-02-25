@@ -22,8 +22,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.GenericLoggingContext;
+import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Joiner;
 import com.google.inject.Guice;
@@ -43,7 +43,6 @@ import org.apache.twill.kafka.client.Compression;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.kafka.client.KafkaPublisher;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +60,7 @@ public class KafkaPerfTest {
   private static BrokerService brokerService;
   private static KafkaClientService kafkaClient;
 
-  private static  LoggingEventSerializer serializer;
+  private static LoggingEventSerializer serializer;
   private static CConfiguration cConf;
 
   private static final int PUBLISH_BATCH_SIZE = 1024;
@@ -169,7 +168,7 @@ public class KafkaPerfTest {
 
     LoggingEventSerializer serializer = new LoggingEventSerializer();
     for (ILoggingEvent event : events) {
-      byte[] payloadBytes = serializer.toBytes(event, context);
+      byte[] payloadBytes = serializer.toBytes(event);
 //      LOG.debug("Event size in bytes = {}", payloadBytes.length);
       preparer.add(ByteBuffer.wrap(payloadBytes), context.getLogPartition());
     }
