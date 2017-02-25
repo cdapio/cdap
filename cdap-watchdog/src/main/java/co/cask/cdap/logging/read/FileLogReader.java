@@ -149,8 +149,7 @@ public class FileLogReader implements LogReader {
         return new AbstractCloseableIterator<LogEvent>() {
           @Override
           protected LogEvent computeNext() {
-            endOfData();
-            return null;
+            return endOfData();
           }
 
           @Override
@@ -162,37 +161,38 @@ public class FileLogReader implements LogReader {
 
       final Iterator<LogLocation> filesIter = sortedFilesInRange.iterator();
 
-      CloseableIterator closeableIterator = new CloseableIterator() {
-        private CloseableIterator<LogEvent> curr = null;
+      CloseableIterator<CloseableIterator<LogEvent>> closeableIterator =
+        new CloseableIterator<CloseableIterator<LogEvent>>() {
+          private CloseableIterator<LogEvent> curr = null;
 
-        @Override
-        public void close() {
-          if (curr != null) {
-            curr.close();
+          @Override
+          public void close() {
+            if (curr != null) {
+              curr.close();
+            }
           }
-        }
 
-        @Override
-        public boolean hasNext() {
-          return filesIter.hasNext();
-        }
-
-        @Override
-        public CloseableIterator<LogEvent> next() {
-          if (curr != null) {
-            curr.close();
+          @Override
+          public boolean hasNext() {
+            return filesIter.hasNext();
           }
-          LogLocation file = filesIter.next();
-          LOG.trace("Reading file {}", file);
-          curr = file.readLog(logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE);
-          return curr;
-        }
 
-        @Override
-        public void remove() {
-          throw new UnsupportedOperationException("Remove not supported");
-        }
-      };
+          @Override
+          public CloseableIterator<LogEvent> next() {
+            if (curr != null) {
+              curr.close();
+            }
+            LogLocation file = filesIter.next();
+            LOG.trace("Reading file {}", file);
+            curr = file.readLog(logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE);
+            return curr;
+          }
+
+          @Override
+          public void remove() {
+            throw new UnsupportedOperationException("Remove not supported");
+          }
+        };
 
       return concat(closeableIterator);
     } catch (Throwable e) {
