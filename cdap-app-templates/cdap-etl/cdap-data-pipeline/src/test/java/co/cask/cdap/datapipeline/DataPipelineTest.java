@@ -30,6 +30,7 @@ import co.cask.cdap.datapipeline.mock.SpamMessage;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.mock.action.MockAction;
+import co.cask.cdap.etl.mock.batch.LookupTransform;
 import co.cask.cdap.etl.mock.batch.MockExternalSink;
 import co.cask.cdap.etl.mock.batch.MockExternalSource;
 import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSink;
@@ -65,6 +66,7 @@ import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkflowManager;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -1648,6 +1650,120 @@ public class DataPipelineTest extends HydratorTestBase {
     workflowManager.setRuntimeArgs(runtimeArguments);
     workflowManager.start();
     workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+  }
+
+  @Test
+  public void testKVTableLookup() throws Exception {
+    addDatasetInstance(KeyValueTable.class.getName(), "ageTable");
+    DataSetManager<KeyValueTable> lookupTable = getDataset("ageTable");
+    lookupTable.get().write("samuel".getBytes(Charsets.UTF_8), "12".getBytes(Charsets.UTF_8));
+    lookupTable.get().write("bob".getBytes(Charsets.UTF_8), "36".getBytes(Charsets.UTF_8));
+    lookupTable.get().write("jane".getBytes(Charsets.UTF_8), "25".getBytes(Charsets.UTF_8));
+    lookupTable.flush();
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin("inputTable")))
+      .addStage(new ETLStage("transform", LookupTransform.getPlugin("person", "age", "ageTable")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("outputTable")))
+      .addConnection("source", "transform")
+      .addConnection("transform", "sink")
+      .build();
+
+    ApplicationId appId = NamespaceId.DEFAULT.app("testKVTableLookup");
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // set up input data
+    Schema inputSchema = Schema.recordOf(
+      "person",
+      Schema.Field.of("person", Schema.of(Schema.Type.STRING))
+    );
+    StructuredRecord recordSamuel = StructuredRecord.builder(inputSchema).set("person", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(inputSchema).set("person", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(inputSchema).set("person", "jane").build();
+    DataSetManager<Table> inputTable = getDataset("inputTable");
+    MockSource.writeInput(inputTable, ImmutableList.of(recordSamuel, recordBob, recordJane));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME).start();
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    Schema schema = Schema.recordOf(
+      "person",
+      Schema.Field.of("person", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("age", Schema.of(Schema.Type.STRING))
+    );
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(schema).set("person", "samuel").set("age", "12").build());
+    expected.add(StructuredRecord.builder(schema).set("person", "bob").set("age", "36").build());
+    expected.add(StructuredRecord.builder(schema).set("person", "jane").set("age", "25").build());
+    DataSetManager<Table> outputTable = getDataset("outputTable");
+    Set<StructuredRecord> actual = new HashSet<>(MockSink.readOutput(outputTable));
+    Assert.assertEquals(expected, actual);
+    validateMetric(3, appId, "source.records.out");
+    validateMetric(3, appId, "sink.records.in");
+
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset("inputTable"));
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset("outputTable"));
+  }
+
+
+  @Test
+  public void testTableLookup() throws Exception {
+    addDatasetInstance(Table.class.getName(), "personTable");
+    DataSetManager<Table> lookupTableManager = getDataset("personTable");
+    Table lookupTable = lookupTableManager.get();
+    lookupTable.put("samuel".getBytes(Charsets.UTF_8), "age".getBytes(Charsets.UTF_8), "12".getBytes(Charsets.UTF_8));
+    lookupTable.put("samuel".getBytes(Charsets.UTF_8), "gender".getBytes(Charsets.UTF_8), "m".getBytes(Charsets.UTF_8));
+    lookupTable.put("bob".getBytes(Charsets.UTF_8), "age".getBytes(Charsets.UTF_8), "36".getBytes(Charsets.UTF_8));
+    lookupTable.put("bob".getBytes(Charsets.UTF_8), "gender".getBytes(Charsets.UTF_8), "m".getBytes(Charsets.UTF_8));
+    lookupTable.put("jane".getBytes(Charsets.UTF_8), "age".getBytes(Charsets.UTF_8), "25".getBytes(Charsets.UTF_8));
+    lookupTable.put("jane".getBytes(Charsets.UTF_8), "gender".getBytes(Charsets.UTF_8), "f".getBytes(Charsets.UTF_8));
+    lookupTableManager.flush();
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin("inputTable")))
+      .addStage(new ETLStage("transform", LookupTransform.getPlugin("person", "age", "personTable")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("outputTable")))
+      .addConnection("source", "transform")
+      .addConnection("transform", "sink")
+      .build();
+
+    ApplicationId appId = NamespaceId.DEFAULT.app("testTableLookup");
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // set up input data
+    Schema inputSchema = Schema.recordOf(
+      "person",
+      Schema.Field.of("person", Schema.of(Schema.Type.STRING))
+    );
+    StructuredRecord recordSamuel = StructuredRecord.builder(inputSchema).set("person", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(inputSchema).set("person", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(inputSchema).set("person", "jane").build();
+    DataSetManager<Table> inputTable = getDataset("inputTable");
+    MockSource.writeInput(inputTable, ImmutableList.of(recordSamuel, recordBob, recordJane));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME).start();
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    Schema schema = Schema.recordOf(
+      "person",
+      Schema.Field.of("person", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("age", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("gender", Schema.of(Schema.Type.STRING))
+    );
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(schema).set("person", "samuel").set("age", "12").set("gender", "m").build());
+    expected.add(StructuredRecord.builder(schema).set("person", "bob").set("age", "36").set("gender", "m").build());
+    expected.add(StructuredRecord.builder(schema).set("person", "jane").set("age", "25").set("gender", "f").build());
+    DataSetManager<Table> outputTable = getDataset("outputTable");
+    Set<StructuredRecord> actual = new HashSet<>(MockSink.readOutput(outputTable));
+    Assert.assertEquals(expected, actual);
+    validateMetric(3, appId, "source.records.out");
+    validateMetric(3, appId, "sink.records.in");
+
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset("inputTable"));
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset("outputTable"));
   }
 
   private void validateMetric(long expected, ApplicationId appId,
