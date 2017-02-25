@@ -22,8 +22,12 @@ import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.io.InputSupplier;
+import com.google.common.util.concurrent.AbstractIdleService;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -37,8 +41,6 @@ import org.apache.tephra.TxConstants;
 import org.apache.tephra.persist.TransactionSnapshot;
 import org.apache.tephra.persist.TransactionVisibilityState;
 import org.apache.tephra.util.TxUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -46,16 +48,18 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
  * Provides a RegionServer shared cache for all instances of {@code HBaseQueueRegionObserver} of the recent
  * queue consumer configuration.
  */
-public class ConsumerConfigCache {
-  private static final Logger LOG = LoggerFactory.getLogger(ConsumerConfigCache.class);
+public class ConsumerConfigCache extends AbstractIdleService {
+  private static final Log LOG = LogFactory.getLog(ConsumerConfigCache.class);
 
   // Number of bytes for consumer state column (groupId + instanceId)
   private static final int STATE_COLUMN_SIZE = Bytes.SIZEOF_LONG + Bytes.SIZEOF_INT;
@@ -73,6 +77,7 @@ public class ConsumerConfigCache {
   private Thread refreshThread;
   private long lastUpdated;
   private volatile Map<byte[], QueueConsumerConfig> configCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+  private volatile boolean stopped;
   private long configCacheUpdateFrequency = QueueConstants.DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY;
   private volatile CConfiguration conf;
   // timestamp of the last update from the configuration table
@@ -96,8 +101,35 @@ public class ConsumerConfigCache {
     this.txCodec = new TransactionCodec();
   }
 
+  @Override
+  protected void startUp() throws Exception {
+    LOG.info("Starting ConsumerConfigCache service.");
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    LOG.info("Stopping ConsumerConfigCache service.");
+    stopped = true;
+    Set<ConsumerConfigCache> caches = ImmutableSet.copyOf(INSTANCES.values());
+    for (ConsumerConfigCache cache : caches) {
+      try {
+        cache.stopRefreshThread();
+      } catch (InterruptedException ex) {
+        LOG.warn(String.format("Stopping of refresh thread of ConsumerConfigCache reading from config table %s " +
+                                 "threw an exception", queueConfigTableName), ex);
+      }
+    }
+  }
+
   private void init() {
     startRefreshThread();
+  }
+
+  private void stopRefreshThread() throws InterruptedException {
+    if (refreshThread != null) {
+      refreshThread.interrupt();
+      refreshThread.join(TimeUnit.SECONDS.toMillis(1));
+    }
   }
 
   public boolean isAlive() {
@@ -121,11 +153,11 @@ public class ConsumerConfigCache {
         CConfiguration conf = cConfReader.read();
         if (conf != null) {
           this.conf = conf;
-          LOG.info("Reloaded CConfiguration at {}", now);
+          LOG.info(String.format("Reloaded CConfiguration at %d", now));
           this.lastConfigUpdate = now;
           long configUpdateFrequency = conf.getLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY,
                                                     QueueConstants.DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY);
-          LOG.info("Will reload consumer config cache every {} seconds", configUpdateFrequency);
+          LOG.info(String.format("Will reload consumer config cache every %d seconds", configUpdateFrequency));
           this.configCacheUpdateFrequency = configUpdateFrequency * 1000;
         }
       } catch (IOException ioe) {
@@ -194,13 +226,13 @@ public class ConsumerConfigCache {
       this.configCache = newCache;
       this.lastUpdated = now;
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Updated consumer config cache with {} entries, took {} msec", configCnt, elapsed);
+        LOG.debug(String.format("Updated consumer config cache with %d entries, took %d msec", configCnt, elapsed));
       }
     } finally {
       try {
         table.close();
       } catch (IOException ioe) {
-        LOG.error("Error closing table {}", queueConfigTableName, ioe);
+        LOG.error(String.format("Error closing table %s", queueConfigTableName), ioe);
       }
     }
   }
@@ -209,7 +241,7 @@ public class ConsumerConfigCache {
     refreshThread = new Thread("queue-cache-refresh") {
       @Override
       public void run() {
-        while (!isInterrupted()) {
+        while ((!isInterrupted()) && !stopped) {
           updateConfig();
           long now = System.currentTimeMillis();
           if (now > (lastUpdated + configCacheUpdateFrequency)) {
@@ -219,7 +251,7 @@ public class ConsumerConfigCache {
               // This is expected when the namespace goes away since there is one config table per namespace
               // If the table is not found due to other situation, the region observer already
               // has logic to get a new one through the getInstance method
-              LOG.warn("Queue config table not found: {}", queueConfigTableName, e);
+              LOG.warn(String.format("Queue config table not found: %s", queueConfigTableName), e);
               break;
             } catch (IOException e) {
               LOG.warn("Error updating queue consumer config cache", e);
@@ -233,7 +265,7 @@ public class ConsumerConfigCache {
             break;
           }
         }
-        LOG.info("Config cache update for {} terminated.", queueConfigTableName);
+        LOG.info(String.format("Config cache update for %s terminated.", queueConfigTableName));
         INSTANCES.remove(queueConfigTableName, this);
       }
     };

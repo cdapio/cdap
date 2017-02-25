@@ -25,6 +25,7 @@ import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.SaltedHBaseQueueStrategy;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
+import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCacheSupplier;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfig;
 import co.cask.cdap.data2.util.TableId;
@@ -78,6 +79,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   private CConfigurationReader cConfReader;
   private Supplier<TransactionVisibilityState> txSnapshotSupplier;
   private TransactionStateCache txStateCache;
+  private ConsumerConfigCacheSupplier configCacheSupplier;
   private ConsumerConfigCache configCache;
   private CompactionState compactionState;
   private Boolean pruneEnable;
@@ -88,7 +90,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   private String flowName;
 
   @Override
-  public void start(CoprocessorEnvironment env) {
+  public void start(final CoprocessorEnvironment env) {
     if (env instanceof RegionCoprocessorEnvironment) {
       HTableDescriptor tableDesc = ((RegionCoprocessorEnvironment) env).getRegion().getTableDesc();
       String hTableName = tableDesc.getNameAsString();
@@ -122,7 +124,15 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       configTableName = HTableNameConverter.toTableName(hbaseNamespacePrefix,
                                                         TableId.from(namespaceId, queueConfigTableId));
       cConfReader = new CConfigurationReader(conf, sysConfigTablePrefix);
-      configCache = createConfigCache(env);
+      configCacheSupplier = new ConsumerConfigCacheSupplier(configTableName, cConfReader,
+                                                            txSnapshotSupplier, new InputSupplier<HTableInterface>() {
+        @Override
+        public HTableInterface getInput() throws IOException {
+          return env.getTable(configTableName);
+        }
+      });
+      // Get the queue config service.
+      configCache = configCacheSupplier.get();
     }
   }
 
@@ -131,6 +141,9 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     if (compactionState != null) {
       compactionState.stop();
     }
+
+    // Release the queue config service.
+    configCacheSupplier.release();
   }
 
   @Override
