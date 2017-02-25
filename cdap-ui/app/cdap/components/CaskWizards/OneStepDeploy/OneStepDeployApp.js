@@ -121,6 +121,10 @@ export default class OneStepDeployApp extends Component {
             res.text()
               .then((textResponse) => {
                 let successInfo = this.buildSuccessInfo(textResponse);
+
+                if (this.props.buildSuccessInfo) {
+                  successInfo = this.props.buildSuccessInfo();
+                }
                 this.eventEmitter.emit(globalEvents.APPUPLOAD);
                 observer.onNext(successInfo);
                 observer.onCompleted();
@@ -150,5 +154,6 @@ export default class OneStepDeployApp extends Component {
 OneStepDeployApp.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
+  buildSuccessInfo: PropTypes.func
 };
