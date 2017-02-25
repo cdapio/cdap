@@ -165,6 +165,8 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
           } catch (IOException e) {
             OUTAGE_LOG.warn("Failed to fetch or process messages from {}:{}. Will be retried in next iteration.",
                             topic, partition, e);
+            // to avoid busy wait during kafka server outage
+            TimeUnit.SECONDS.sleep(1);
           }
         }
 
