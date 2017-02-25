@@ -19,6 +19,7 @@ import UploadDataAction from 'services/WizardStores/UploadData/UploadDataActions
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import 'whatwg-fetch';
 import Rx from 'rx';
+import isNil from 'lodash/isNil';
 
 const fetchDefaultData = ({filename, packagename: entityName, packageversion: entityVersion}) => {
   UploadDataStore.dispatch({
@@ -48,7 +49,7 @@ const uploadData = ({url, fileContents, headers}) => {
   xhr.open('POST', path, true);
   xhr.setRequestHeader('Content-type', headers.filetype);
   xhr.setRequestHeader('X-Archive-Name', headers.filename);
-  if (headers.authToken) {
+  if (!isNil(headers.authToken)) {
     xhr.setRequestHeader('Authorization', 'Bearer ' + headers.authToken);
   }
   xhr.send(fileContents);

@@ -28,6 +28,9 @@ export default class DatasetStreamTable extends Component {
   constructor(props) {
     super(props);
 
+    this.state = {
+      dataEntities: props.dataEntities
+    };
     this.tableHeaders = [
       {
         property: 'name',
@@ -55,11 +58,24 @@ export default class DatasetStreamTable extends Component {
     ];
   }
 
-  renderTableBody() {
+  componentWillMount() {
+    this.setState({
+      dataEntities: this.props.dataEntities
+    });
+
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      dataEntities: nextProps.dataEntities
+    });
+  }
+
+  renderTableBody(entities) {
     return (
       <tbody>
         {
-          this.state.entities.map(dataEntity => {
+          entities.map(dataEntity => {
             let currentNamespace = NamespaceStore.getState().selectedNamespace;
             let icon = dataEntity.type === 'datasetinstance' ? 'icon-datasets' : 'icon-streams';
             let type = dataEntity.type === 'datasetinstance' ? 'Dataset' : 'Stream';
@@ -70,7 +86,12 @@ export default class DatasetStreamTable extends Component {
               // over the element.
               <tr key={dataEntity.uniqueId}>
                 <td>
-                  <Link to={link}>{dataEntity.name}</Link>
+                  <Link
+                    to={link}
+                     title={dataEntity.name}
+                  >
+                    {dataEntity.name}
+                  </Link>
                 </td>
                 <td>
                   <Link to={link}>
@@ -128,9 +149,9 @@ export default class DatasetStreamTable extends Component {
       <div className="dataentity-table">
         <SortableTable
           className="table-sm"
-          entities={this.props.dataEntities}
+          entities={this.state.dataEntities}
           tableHeaders={this.tableHeaders}
-          renderTableBody={this.renderTableBody}
+          renderTableBody={this.renderTableBody.bind(this)}
         />
       </div>
     );

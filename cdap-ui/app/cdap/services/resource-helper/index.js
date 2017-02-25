@@ -17,6 +17,7 @@
 export const apiCreator = createApi;
 export const apiCreatorAbsPath = createApiFromExactPath;
 import cookie from 'react-cookie';
+import isNil from 'lodash/isNil';
 
 function createApi (dataSrc, method, type, path, options = {}) {
   return (params = {}, body) => {
@@ -30,7 +31,9 @@ function createApi (dataSrc, method, type, path, options = {}) {
 
     if (cookie.load('CDAP_Auth_Token')) {
       reqObj.headers = reqObj.headers || {};
-      reqObj.headers.Authorization = `Bearer ${cookie.load('CDAP_Auth_Token')}`;
+      if (!isNil(cookie.load('CDAP_Auth_Token'))) {
+        reqObj.headers.Authorization = `Bearer ${cookie.load('CDAP_Auth_Token')}`;
+      }
     }
 
     if (type === 'REQUEST') {

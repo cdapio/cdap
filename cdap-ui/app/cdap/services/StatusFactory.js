@@ -19,6 +19,8 @@ import StatusAlertMessageStore from 'components/StatusAlertMessage/StatusAlertMe
 import debounce from 'lodash/debounce';
 import T from 'i18n-react';
 import cookie from 'react-cookie';
+import isNil from 'lodash/isNil';
+
 let isPollingEnabled = true;
 let pollCycleInProgress = false;
 let errorStateCount = 0;
@@ -27,10 +29,12 @@ const poll = () => {
   let fetchPromise;
   if (window.CDAP_CONFIG.securityEnabled) {
     let token = cookie.load('CDAP_Auth_Token');
-    headers.Authorization = 'Bearer ' +  token;
-    fetchPromise = fetch('/backendstatus', { headers });
+    if (!isNil(token)) {
+      headers.Authorization = 'Bearer ' +  token;
+    }
+    fetchPromise = fetch('/backendstatus', { headers, credentials: 'include' });
   } else {
-    fetchPromise = fetch('/backendstatus');
+    fetchPromise = fetch('/backendstatus', {credentials: 'include'});
   }
   fetchPromise
     .then(response => {
