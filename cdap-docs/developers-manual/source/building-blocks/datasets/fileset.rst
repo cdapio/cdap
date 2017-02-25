@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _datasets-fileset:
 
@@ -63,7 +63,8 @@ Input and output formats must be implementations of the standard Apache Hadoop
 `InputFormat <https://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/InputFormat.html>`_
 and
 `OutputFormat <https://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/OutputFormat.html>`_
-specifications.
+specifications. If you do not specify an input format, you will not be able to use this as the input for a
+MapReduce program; similarly for the output format.
 
 If you do not specify a base path, the dataset framework will generate a path based on the dataset name.
 This path |---| and any relative base path you specify |---| is relative to the data directory of the CDAP namespace
@@ -84,9 +85,16 @@ or deleting of files: it treats the contents of the base path as read-only::
         .setInputFormat(TextInputFormat.class)
         ...
 
-If you do not specify an input format, you will not be able to use this as the input for a
-MapReduce program; similarly for the output format.
+If you want to use an existing location and still be able to write to it, you have two options:
 
+- ``setUseExisting(true)``: This directs the FileSet to accept an existing location as its base
+  path. However, because the existing location may contain files prior to the FileSet creation,
+  the location will not be deleted when the dataset is dropped, and truncating the FileSet will
+  have no effect. This is to ensure that no pre-existing data is deleted.
+
+- ``setPossessExisting(true)``: Similarly, this allows reuse of an existing location.
+  The FileSet will assume ownership of existing files in that location, which means that these
+  files will be deleted when the dataset is dropped or truncated.
 
 Using a FileSet in MapReduce
 ============================
