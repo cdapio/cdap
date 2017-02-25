@@ -307,7 +307,7 @@ git_vars = {
     'GIT_CASK_MARKET_VERSION': 'cask-market-version',
     'GIT_PLUGINS_SPEC_VERSION': 'plugins-spec-version',
     'GIT_NODE_JS_MIN_VERSION': 'node-js-min-version',
-    'GIT_NODE_JS_MAX_VERSION': 'node-js-max-version',
+#     'GIT_NODE_JS_MAX_VERSION': 'node-js-max-version',
     }
 
 for h_key in git_vars.keys():
