@@ -279,6 +279,25 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  @Path("/transactions/prune/regions/block")
+  @GET
+  public void getRegionsToBeCompacted(HttpRequest request, HttpResponder responder) {
+    if (!initializePruningDebug(responder)) {
+      return;
+    }
+
+    try {
+      Method method = debugClazz.getMethod("getRegionsToBeCompacted");
+      method.setAccessible(true);
+      Object response = method.invoke(debugObject);
+      Set<String> regionNames = (Set<String>) response;
+      responder.sendJson(HttpResponseStatus.OK, regionNames);
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      LOG.debug("Exception while trying to get the regions that needs to be compacted.", e);
+    }
+  }
+
   private boolean initializePruningDebug(HttpResponder responder) {
     if (!pruneEnable) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid List Pruning is not enabled.");
