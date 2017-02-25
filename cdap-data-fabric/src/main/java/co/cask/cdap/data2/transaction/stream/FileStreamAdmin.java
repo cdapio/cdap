@@ -334,7 +334,7 @@ public class FileStreamAdmin implements StreamAdmin {
     // User should have any access on the stream to read its properties
     ensureAccess(streamId);
     // get the principal which will be used for impersonation to display as owner
-    String ownerPrincipal = ownerAdmin.getImpersonationPrincipal(streamId);
+    String ownerPrincipal = ownerAdmin.getOwnerPrincipal(streamId);
     StreamConfig config = getConfig(streamId);
     StreamSpecification spec = streamMetaStore.getStream(streamId);
     return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB(),
