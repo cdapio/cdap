@@ -2639,7 +2639,7 @@
     <value></value>
     <description>
       The location of Kerberos keytabs used for impersonation. The location can contain
-      ${name} which will be replaced by the short user name of the principal being
+      ${name}, which will be replaced by the short user name of the principal being
       impersonated.
     </description>
   </property>
