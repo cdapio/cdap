@@ -31,9 +31,16 @@ Cask Data, Inc.:
      - Common descriptive name for the goods or services
    * - Cask
      - Computer software and related services
+   * - Cask Hydrator
+     - Computer software
+   * - Cask Tracker
+     - Computer software
+   * - Coopr
+     - Computer software
+   * - Tephra
+     - Computer software
    * - Tigon
-     - Computer software and related services
-
+     - Computer software
 
 Our logos ("Logos") include any logos or illustrations used on these webpages.
 The unique visual styling of our website and packaging is referred to as the "Trade Dress".
@@ -50,16 +57,16 @@ Other product and company names mentioned herein, within our documentation or we
 may be the trademarks of their respective owners. Where the ownership or registration is
 known, the addition of appropriate symbols has been made.
 
-This product includes software developed by the Apache Software Foundation (http://www.apache.org/).
+This product includes software developed by the `Apache Software Foundation <https://www.apache.org>`__.
          
-Apache®, `Apache Hadoop <https://hadoop.apache.org>`__, `Hadoop®
-<https://hadoop.apache.org>`__, Avro, `Apache Avro <http://avro.apache.org/>`__,
+Apache®, `Apache Hadoop <https://hadoop.apache.org>`__, Hadoop®,
+Avro, `Apache Avro <http://avro.apache.org/>`__,
 `Apache Tephra <http://tephra.incubator.apache.org>`__,
 Spark, `Apache Spark <http://spark.apache.org>`__,
-Twill, `Apache Twill <http://tephra.incubator.apache.org>`__,
+Twill, `Apache Twill <http://twill.apache.org>`__,
 and `Apache ZooKeeper <https://zookeeper.apache.org/>`__, 
 are either registered trademarks or trademarks of the
-`Apache Software Foundation <https://www.apache.org>`__ in the United States and/or other
+Apache Software Foundation in the United States and/or other
 countries.
 
 Cloudera, Cloudera Impala, Cloudera Navigator, and Impala are trademarks of `Cloudera, Inc. <http://www.cloudera.com>`__ 

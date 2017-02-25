@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
-    :version: 4.0.0
+    :copyright: Copyright © 2017 Cask Data, Inc.
+    :version: 4.1.0
 
 =================================================
 Cask Data Application Platform |version|
@@ -91,6 +91,8 @@ Cask Data Application Platform Level 1 Dependencies
    "org.apache.hive","hive-jdbc","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hive","hive-metastore","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hive","hive-service","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.httpcomponents","httpclient","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.httpcomponents","httpcore","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.kafka","kafka_2.10","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.spark","spark-core_2.10","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.spark","spark-mllib_2.10","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -98,11 +100,6 @@ Cask Data Application Platform Level 1 Dependencies
    "org.apache.spark","spark-streaming_2.10","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.tephra","tephra-api","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.tephra","tephra-core","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.tephra","tephra-hbase-compat-0.96","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.tephra","tephra-hbase-compat-0.98","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.tephra","tephra-hbase-compat-1.0","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.tephra","tephra-hbase-compat-1.0-cdh","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.tephra","tephra-hbase-compat-1.1","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.thrift","libthrift","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.twill","twill-api","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.twill","twill-common","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
