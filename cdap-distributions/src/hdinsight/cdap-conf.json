@@ -7,7 +7,7 @@
       "explore.executor.container.memory.mb": "2304",
       "http.client.read.timeout.ms": "120000",
       "kafka.server.log.dirs": "/var/cdap/kafka-logs",
-      "log.saver.run.memory.megs": "1536",
+      "log.saver.container.memory.mb": "1536",
       "master.service.memory.mb": "1536",
       "metrics.memory.mb": "1536",
       "metrics.processor.memory.mb": "1536",
