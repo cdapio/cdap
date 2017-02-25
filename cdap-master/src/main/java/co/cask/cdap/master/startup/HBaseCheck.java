@@ -73,7 +73,7 @@ class HBaseCheck extends Check {
 
     if (hConf.getBoolean("hbase.security.authorization", false)) {
       if (cConf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE)) {
-        LOG.info("Transaction pruning is enabled. Checking global admin privileges for cdap.");
+        LOG.info("HBase authorization and transaction pruning are enabled. Checking global admin privileges for cdap.");
         try {
           boolean isGlobalAdmin = hBaseTableUtil.isGlobalAdmin(hConf);
           LOG.info("Global admin privileges check status: {}", isGlobalAdmin);
@@ -88,9 +88,9 @@ class HBaseCheck extends Check {
           }
           StringBuilder builder = new StringBuilder("Transaction pruning is enabled and cdap does not have global " +
                                                       "admin privileges in HBase. Global admin privileges for cdap " +
-                                                      "is required for transaction pruning. " +
+                                                      "are required for transaction pruning. " +
                                                       "Either disable transaction pruning or grant global admin " +
-                                                      "privilege to cdap in HBase or at your own risk override this " +
+                                                      "privilege to cdap in HBase or can override this " +
                                                       "check by setting ");
           builder.append(Constants.Startup.TX_PRUNE_ACL_CHECK);
           builder.append(" in cdap-site.xml.");
@@ -108,6 +108,6 @@ class HBaseCheck extends Check {
         }
       }
     }
-    LOG.info("Hbase authorization is disabled. Skipping global admin check.");
+    LOG.info("Hbase authorization is disabled. Skipping global admin check for transaction pruning.");
   }
 }
