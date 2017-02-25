@@ -69,7 +69,9 @@ export default class MarketActionsContainer extends Component {
       'one_step_deploy_app'
     ];
 
-    if (usecases.indexOf(actionType) !== -1) {
+    let isLastStep = actionIndex === this.props.actions.length - 1;
+
+    if (usecases.indexOf(actionType) !== -1 && !isLastStep) {
       actionType += '_usecase';
     }
     this.setState({
