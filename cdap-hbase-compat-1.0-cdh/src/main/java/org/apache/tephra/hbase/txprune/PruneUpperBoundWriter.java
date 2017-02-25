@@ -161,7 +161,7 @@ public class PruneUpperBoundWriter extends AbstractIdleService {
   private void handleException(Exception ex) {
     LOG.warn("Cannot record prune upper bound for a region to table " +
                tableName.getNamespaceAsString() + ":" + tableName.getNameAsString(), ex);
-    if (ex instanceof IOException) {
+    if (ex instanceof InterruptedException) {
       Thread.currentThread().interrupt();
     }
   }
