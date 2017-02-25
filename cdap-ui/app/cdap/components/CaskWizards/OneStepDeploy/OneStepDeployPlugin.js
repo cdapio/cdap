@@ -158,6 +158,10 @@ export default class OneStepDeployPlugin extends Component {
                 }, pluginJson.properties)
                 .subscribe(() => {
                   let successInfo = this.buildSuccessInfo(pluginName);
+
+                  if (this.props.buildSuccessInfo) {
+                    successInfo = this.props.buildSuccessInfo();
+                  }
                   this.eventEmitter.emit(globalEvents.ARTIFACTUPLOAD);
                   observer.onNext(successInfo);
                   observer.onCompleted();
@@ -193,5 +197,6 @@ export default class OneStepDeployPlugin extends Component {
 OneStepDeployPlugin.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
+  buildSuccessInfo: PropTypes.func
 };
