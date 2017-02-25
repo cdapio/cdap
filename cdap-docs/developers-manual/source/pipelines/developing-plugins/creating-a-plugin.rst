@@ -101,6 +101,19 @@ Example:
    :language: java
    :lines: 47-
 
+.. rubric:: Lineage
+
+For plugins that fetch data from non-CDAP sources, the lineage is registered using the ``inputName`` provided
+when ``setInput()`` is invoked on ``BatchSourceContext`` in ``prepareRun()``. Note that the ``inputName`` should
+be a valid ``DatasetId``. For example::
+
+  @Override
+  public void prepareRun(BatchSourceContext context) throws Exception {
+    ...
+    context.setInput(Input.of("myExternalSource", myInputFormatProvider));
+  }
+
+Lineage will be tracked using ``myExternalSource``.
 
 Batch Sink Plugin
 =================
@@ -144,6 +157,19 @@ Example:
    :language: java
    :lines: 46-
 
+.. rubric:: Lineage
+
+For plugins that write data to non-CDAP sinks, the lineage is registered using the ``outputName`` provided
+when ``addOutput()`` is invoked on ``BatchSinkContext`` in ``prepareRun()``. Note that the ``outputName`` should
+be a valid ``DatasetId``. For example::
+
+  @Override
+  public void prepareRun(BatchSinkContext context) throws Exception {
+    ...
+    context.addOutput(Output.of("myExternalSink", myOutputFormatProvider));
+  }
+
+Lineage will be tracked using ``myExternalSink``.
 
 .. highlight:: java
 
@@ -487,6 +513,8 @@ Example::
       private String accessToken;
 
       private String accessTokenSecret;
+
+      private String referenceName;
     }
 
     public TwitterStreamingSource(TwitterStreamingConfig config) {
@@ -501,6 +529,8 @@ Example::
     @Override
     public JavaDStream<StructuredRecord> getStream(StreamingContext context) throws Exception {
       JavaStreamingContext javaStreamingContext = context.getSparkStreamingContext();
+      // lineage for this source will be tracked with this reference name
+      context.registerLineage(config.referenceName);
 
       // Create authorization from user-provided properties
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
@@ -526,6 +556,10 @@ Example::
 
   }
 
+.. rubric:: Lineage
+
+The lineage is registered using the ``referenceName`` provided when invoking ``registerLineage()`` on
+``StreamingContext`` in ``getStream()``. Note that the ``referenceName`` should be a valid ``DatasetId``.
 
 .. highlight:: java
 
