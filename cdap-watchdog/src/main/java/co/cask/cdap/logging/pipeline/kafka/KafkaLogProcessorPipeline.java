@@ -180,8 +180,9 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
           if (!eventQueue.isEmpty()) {
             sleepMillis += eventQueue.first().getTimeStamp() - now;
           }
+          sleepMillis = Math.min(sleepMillis, nextCheckpointDelay);
           if (sleepMillis > 0) {
-            TimeUnit.MILLISECONDS.sleep(Math.min(sleepMillis, nextCheckpointDelay));
+            TimeUnit.MILLISECONDS.sleep(sleepMillis);
           }
         }
       }
@@ -449,7 +450,10 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
    * @return delay in millisecond till the next sync time.
    */
   private long trySyncAndPersistCheckpoints(long currentTimeMillis) {
-    if (currentTimeMillis - config.getCheckpointIntervalMillis() < lastCheckpointTime || unSyncedEvents <= 0) {
+    if (unSyncedEvents <= 0) {
+      return config.getCheckpointIntervalMillis();
+    }
+    if (currentTimeMillis - config.getCheckpointIntervalMillis() < lastCheckpointTime) {
       return config.getCheckpointIntervalMillis() - currentTimeMillis + lastCheckpointTime;
     }
 
