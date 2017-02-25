@@ -79,6 +79,7 @@ export default class MarketActionsContainer extends Component {
     if (!Array.isArray(this.props.actions)) {
       return null;
     }
+
     return (
       <div className="market-entity-actions">
         {
@@ -104,7 +105,10 @@ export default class MarketActionsContainer extends Component {
                     <div className="action-icon">
                       <div className={classnames("fa", actionIcon)}></div>
                     </div>
-                    <div className="action-description">
+                    <div
+                      className="action-description"
+                      title={action.label}
+                    >
                       {action.label}
                     </div>
                     <button
