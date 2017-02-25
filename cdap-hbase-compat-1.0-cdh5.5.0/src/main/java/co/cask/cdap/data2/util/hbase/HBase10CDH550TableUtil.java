@@ -40,6 +40,8 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.security.access.AccessControlClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -48,6 +50,8 @@ import java.util.List;
  *
  */
 public class HBase10CDH550TableUtil extends HBaseTableUtil {
+
+  private static final Logger LOG = LoggerFactory.getLogger(HBase10CDH550TableUtil.class);
 
   @Override
   public HTable createHTable(Configuration conf, TableId tableId) throws IOException {

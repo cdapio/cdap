@@ -90,7 +90,10 @@ class HBaseCheck extends Check {
                                                       "admin privileges in HBase. Global admin privileges for cdap " +
                                                       "is required for transaction pruning. " +
                                                       "Either disable transaction pruning or grant global admin " +
-                                                      "privilege to cdap in HBase.");
+                                                      "privilege to cdap in HBase or at your own risk override this " +
+                                                      "check by setting ");
+          builder.append(Constants.Startup.TX_PRUNE_ACL_CHECK);
+          builder.append(" in cdap-site.xml.");
           if (HBaseVersion.get().equals(HBaseVersion.Version.HBASE_96) ||
             HBaseVersion.get().equals(HBaseVersion.Version.HBASE_98)) {
             builder.append(" Detected HBase version ");
@@ -104,7 +107,7 @@ class HBaseCheck extends Check {
           throw new RuntimeException("Unable to determines cdap privileges as global admin in HBase.");
         }
       }
-      LOG.info("Hbase authorized is disabled. Skipping global admin check.");
     }
+    LOG.info("Hbase authorization is disabled. Skipping global admin check.");
   }
 }

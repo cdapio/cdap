@@ -83,7 +83,7 @@ public abstract class HBaseTableUtil {
     ROW, ROWCOL, NONE
   }
 
-  protected static final Logger LOG = LoggerFactory.getLogger(HBaseTableUtil.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseTableUtil.class);
   // 4Mb
   public static final int DEFAULT_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
