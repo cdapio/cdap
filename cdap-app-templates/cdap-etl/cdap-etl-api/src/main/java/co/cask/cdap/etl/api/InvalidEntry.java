@@ -16,19 +16,23 @@
 
 package co.cask.cdap.etl.api;
 
+import java.io.Serializable;
+
 /**
  * Represents a record that fails validation, with provided errorCode and errorMessage
  *
  * @param <T> Type of the object that failed validation.
  */
-public class InvalidEntry<T> {
+public class InvalidEntry<T> implements Serializable {
+  private static final long serialVersionUID = -1232949057204279740L;
   private final int errorCode;
   private final String errorMsg;
   private final T invalidRecord;
 
   public InvalidEntry(int errorCode, String errorMsg, T invalidRecord) {
     this.errorCode = errorCode;
-    this.errorMsg = errorMsg;
+    // since user code creates this object, just make sure it can't be null
+    this.errorMsg = errorMsg == null ? "" : errorMsg;
     this.invalidRecord = invalidRecord;
   }
 

@@ -124,17 +124,21 @@ public class LogHandler extends AbstractHttpHandler {
       ReadRange readRange = new ReadRange(timeRange.getFromMillis(), timeRange.getToMillis(),
                                           LogOffset.INVALID_KAFKA_OFFSET);
       readRange = adjustReadRange(readRange, runRecord, fromTimeSecsParam != -1);
-
+      AbstractChunkedLogProducer logsProducer = null;
       try {
         // the iterator is closed by the BodyProducer passed to the HttpResponder
         CloseableIterator<LogEvent> logIter = logReader.getLog(loggingContext, readRange.getFromMillis(),
                                                                readRange.getToMillis(), filter);
-
-        AbstractChunkedLogProducer logsProducer = getFullLogsProducer(format, logIter, fieldsToSuppress, escape);
-        responder.sendContent(HttpResponseStatus.OK, logsProducer, logsProducer.getResponseHeaders());
+        logsProducer = getFullLogsProducer(format, logIter, fieldsToSuppress, escape);
       } catch (Exception ex) {
         LOG.debug("Exception while reading logs for logging context {}", loggingContext, ex);
+        if (logsProducer != null) {
+          logsProducer.close();
+        }
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        return;
       }
+      responder.sendContent(HttpResponseStatus.OK, logsProducer, logsProducer.getResponseHeaders());
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {

@@ -24,6 +24,7 @@ import co.cask.cdap.data2.util.hbase.DefaultScanBuilder;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.TopicMetadataCache;
+import co.cask.cdap.messaging.TopicMetadataCacheSupplier;
 import com.google.common.base.Supplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -38,6 +39,7 @@ import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.filter.FilterBase;
+import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.KeyValueScanner;
 import org.apache.hadoop.hbase.regionserver.ScanType;
@@ -76,39 +78,37 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
 
   private int prefixLength;
   private TransactionStateCache txStateCache;
-
-  private String metadataTableNamespace;
-  private String hbaseNamespacePrefix;
-  private CConfigurationReader cConfReader;
   private TopicMetadataCache topicMetadataCache;
+
+  private TopicMetadataCacheSupplier topicMetadataCacheSupplier;
   private CompactionState compactionState;
   private Boolean pruneEnable;
 
   @Override
-  public void start(CoprocessorEnvironment env) throws IOException {
-    if (env instanceof RegionCoprocessorEnvironment) {
-      HTableDescriptor tableDesc = ((RegionCoprocessorEnvironment) env).getRegion().getTableDesc();
-      metadataTableNamespace = tableDesc.getValue(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE);
-      hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
+  public void start(CoprocessorEnvironment e) throws IOException {
+    if (e instanceof RegionCoprocessorEnvironment) {
+      RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
+      HTableDescriptor tableDesc = env.getRegion().getTableDesc();
+      String metadataTableNamespace = tableDesc.getValue(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE);
+      String hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
       prefixLength = Integer.valueOf(tableDesc.getValue(
         Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES));
 
       String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
-      cConfReader = new CConfigurationReader(env.getConfiguration(), sysConfigTablePrefix);
+      CConfigurationReader cConfReader = new CConfigurationReader(env.getConfiguration(), sysConfigTablePrefix);
 
       Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(hbaseNamespacePrefix,
                                                                                        env.getConfiguration());
       txStateCache = cacheSupplier.get();
-      topicMetadataCache = createTopicMetadataCache((RegionCoprocessorEnvironment) env);
+      topicMetadataCacheSupplier = new TopicMetadataCacheSupplier(env, cConfReader, hbaseNamespacePrefix,
+                                                                  metadataTableNamespace, new DefaultScanBuilder());
+      topicMetadataCache = topicMetadataCacheSupplier.get();
     }
   }
 
   @Override
   public void stop(CoprocessorEnvironment e) {
-    if (e instanceof RegionCoprocessorEnvironment) {
-      getTopicMetadataCache((RegionCoprocessorEnvironment) e).stop();
-    }
-
+    topicMetadataCacheSupplier.release();
     if (compactionState != null) {
       compactionState.stop();
     }
@@ -117,12 +117,11 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
   @Override
   public InternalScanner preFlushScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
                                              KeyValueScanner memstoreScanner, InternalScanner s) throws IOException {
-    TopicMetadataCache metadataCache = getTopicMetadataCache(c.getEnvironment());
     LOG.info("preFlush, filter using MessageDataFilter");
     TransactionVisibilityState txVisibilityState = txStateCache.getLatestState();
     Scan scan = new Scan();
     scan.setFilter(new MessageDataFilter(c.getEnvironment(), System.currentTimeMillis(),
-                                         prefixLength, metadataCache, txVisibilityState));
+                                         prefixLength, topicMetadataCache, txVisibilityState));
     return new LoggingInternalScanner("MessageDataFilter", "preFlush",
                                       new StoreScanner(store, store.getScanInfo(), scan,
                                                        Collections.singletonList(memstoreScanner),
@@ -131,40 +130,39 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
   }
 
   @Override
+  public void postFlush(ObserverContext<RegionCoprocessorEnvironment> e) throws IOException {
+    // Record whether the region is empty after a flush
+    HRegion region = e.getEnvironment().getRegion();
+    // After a flush, if the memstore size is zero and there are no store files for any stores in the region
+    // then the region must be empty
+    long numStoreFiles = numStoreFilesForRegion(e);
+    long memstoreSize = region.getMemstoreSize().get();
+    LOG.debug(String.format("Region %s: memstore size = %s, num store files = %s",
+                            region.getRegionInfo().getRegionNameAsString(), memstoreSize, numStoreFiles));
+    if (memstoreSize == 0 && numStoreFiles == 0) {
+      if (compactionState != null) {
+        compactionState.persistRegionEmpty(System.currentTimeMillis());
+      }
+    }
+  }
+
+  @Override
   public InternalScanner preCompactScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
                                                List<? extends KeyValueScanner> scanners, ScanType scanType,
                                                long earliestPutTs, InternalScanner s,
                                                CompactionRequest request) throws IOException {
-    TopicMetadataCache metadataCache = getTopicMetadataCache(c.getEnvironment());
     LOG.info("preCompact, filter using MessageDataFilter");
     TransactionVisibilityState txVisibilityState = txStateCache.getLatestState();
 
-    if (pruneEnable == null) {
-      CConfiguration cConf = metadataCache.getCConfiguration();
-      if (cConf != null) {
-        pruneEnable = cConf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE,
-                                       TxConstants.TransactionPruning.DEFAULT_PRUNE_ENABLE);
-        if (Boolean.TRUE.equals(pruneEnable)) {
-          String pruneTable = cConf.get(TxConstants.TransactionPruning.PRUNE_STATE_TABLE,
-                                        TxConstants.TransactionPruning.DEFAULT_PRUNE_STATE_TABLE);
-          long pruneFlushInterval = TimeUnit.SECONDS.toMillis(
-            cConf.getLong(TxConstants.TransactionPruning.PRUNE_FLUSH_INTERVAL,
-                          TxConstants.TransactionPruning.DEFAULT_PRUNE_FLUSH_INTERVAL));
-          compactionState = new CompactionState(c.getEnvironment(), TableName.valueOf(pruneTable), pruneFlushInterval);
-          LOG.debug("Automatic invalid list pruning is enabled. Compaction state will be recorded in table " +
-                      pruneTable);
-        }
-      }
-    }
-
-    if (Boolean.TRUE.equals(pruneEnable)) {
+    reloadPruneState(c.getEnvironment());
+    if (compactionState != null) {
       // Record tx state before the compaction
       compactionState.record(request, txVisibilityState);
     }
 
     Scan scan = new Scan();
     scan.setFilter(new MessageDataFilter(c.getEnvironment(), System.currentTimeMillis(),
-                                         prefixLength, metadataCache, txVisibilityState));
+                                         prefixLength, topicMetadataCache, txVisibilityState));
     return new LoggingInternalScanner("MessageDataFilter", "preCompact",
                                       new StoreScanner(store, store.getScanInfo(), scan, scanners, scanType,
                                                        store.getSmallestReadPoint(), earliestPutTs), txVisibilityState);
@@ -179,16 +177,58 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
     }
   }
 
-  private TopicMetadataCache getTopicMetadataCache(RegionCoprocessorEnvironment env) {
-    if (!topicMetadataCache.isAlive()) {
-      topicMetadataCache = createTopicMetadataCache(env);
+  private void reloadPruneState(RegionCoprocessorEnvironment env) {
+    if (pruneEnable == null) {
+      // If prune enable has never been initialized, try to do so now
+      initializePruneState(env);
+    } else {
+      CConfiguration conf = topicMetadataCache.getCConfiguration();
+      if (conf != null) {
+        boolean newPruneEnable = conf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE,
+                                                 TxConstants.TransactionPruning.DEFAULT_PRUNE_ENABLE);
+        if (newPruneEnable != pruneEnable) {
+          // pruning enable has been changed, resetting prune state
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(String.format("Transaction Invalid List pruning feature is set to %s now for region %s.",
+                                    newPruneEnable, env.getRegion().getRegionInfo().getRegionNameAsString()));
+          }
+          resetPruneState();
+          initializePruneState(env);
+        }
+      }
     }
-    return topicMetadataCache;
   }
 
-  private TopicMetadataCache createTopicMetadataCache(RegionCoprocessorEnvironment env) {
-    return new TopicMetadataCache(env, cConfReader, hbaseNamespacePrefix, metadataTableNamespace,
-                                  new DefaultScanBuilder());
+  private void initializePruneState(RegionCoprocessorEnvironment env) {
+    CConfiguration conf = topicMetadataCache.getCConfiguration();
+    if (conf != null) {
+      pruneEnable = conf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE,
+                                    TxConstants.TransactionPruning.DEFAULT_PRUNE_ENABLE);
+
+      if (Boolean.TRUE.equals(pruneEnable)) {
+        String pruneTable = conf.get(TxConstants.TransactionPruning.PRUNE_STATE_TABLE,
+                                     TxConstants.TransactionPruning.DEFAULT_PRUNE_STATE_TABLE);
+        long pruneFlushInterval = TimeUnit.SECONDS.toMillis(conf.getLong(
+          TxConstants.TransactionPruning.PRUNE_FLUSH_INTERVAL,
+          TxConstants.TransactionPruning.DEFAULT_PRUNE_FLUSH_INTERVAL));
+
+        compactionState = new CompactionState(env, TableName.valueOf(pruneTable), pruneFlushInterval);
+        if (LOG.isDebugEnabled()) {
+          TableName tableName = env.getRegion().getRegionInfo().getTable();
+          LOG.debug(String.format("Automatic invalid list pruning is enabled for table %s:%s. Compaction state " +
+                                    "will be recorded in table %s", tableName.getNamespaceAsString(),
+                                  tableName.getNameAsString(), pruneTable));
+        }
+      }
+    }
+  }
+
+  private void resetPruneState() {
+    pruneEnable = false;
+    if (compactionState != null) {
+      compactionState.stop();
+      compactionState = null;
+    }
   }
 
   private Supplier<TransactionStateCache> getTransactionStateCacheSupplier(String tablePrefix, Configuration conf) {
@@ -230,6 +270,14 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
       }
       delegate.close();
     }
+  }
+
+  private long numStoreFilesForRegion(ObserverContext<RegionCoprocessorEnvironment> c) {
+    long numStoreFiles = 0;
+    for (Store store : c.getEnvironment().getRegion().getStores().values()) {
+      numStoreFiles += store.getStorefiles().size();
+    }
+    return numStoreFiles;
   }
 
   private static final class MessageDataFilter extends FilterBase {

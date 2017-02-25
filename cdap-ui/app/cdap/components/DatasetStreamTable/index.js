@@ -13,58 +13,128 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React, {PropTypes} from 'react';
+import React, {Component, PropTypes} from 'react';
+import NamespaceStore from 'services/NamespaceStore';
+import SortableTable from 'components/SortableTable';
+import {Link} from 'react-router';
+import {convertEntityTypeToApi} from 'services/entity-type-api-converter';
 import classnames from 'classnames';
+import isNil from 'lodash/isNil';
 import FastActions from 'components/EntityCard/FastActions';
-require('./DatasetStreamTable.scss');
 import T from 'i18n-react';
-export default function DatasetStreamTable({dataEntities}) {
-  return (
-    <div className="dataentity-table">
-      <table className="table table-bordered table-sm">
-        <thead>
-          <tr>
-            <th>{T.translate('features.ViewSwitch.nameLabel')}</th>
-            <th>{T.translate('features.ViewSwitch.typeLabel')}</th>
-            <th>{T.translate('features.ViewSwitch.DatasetStreamTable.readsLabel')}</th>
-            <th>{T.translate('features.ViewSwitch.DatasetStreamTable.writesLabel')}</th>
-            <th>{T.translate('features.ViewSwitch.DatasetStreamTable.eventsLabel')}</th>
-            <th>{T.translate('features.ViewSwitch.DatasetStreamTable.sizeLabel')}</th>
-            <th>{T.translate('features.ViewSwitch.actionsLabel')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {
-            dataEntities.map(dataEntity => {
-              let icon = dataEntity.type === 'datasetinstance' ? 'icon-datasets' : 'icon-streams';
-              let type = dataEntity.type === 'datasetinstance' ? 'Dataset' : 'Stream';
-              return (
-                <tr key={dataEntity.uniqueId}>
-                  <td>{dataEntity.name}</td>
-                  <td>
+require('./DatasetStreamTable.scss');
+
+export default class DatasetStreamTable extends Component {
+  constructor(props) {
+    super(props);
+
+    this.tableHeaders = [
+      {
+        property: 'name',
+        label: T.translate('features.ViewSwitch.nameLabel')
+      },
+      {
+        property: 'type',
+        label: T.translate('features.ViewSwitch.typeLabel')
+      },
+      {
+        label: T.translate('features.ViewSwitch.DatasetStreamTable.readsLabel')
+      },
+      {
+        label: T.translate('features.ViewSwitch.DatasetStreamTable.writesLabel')
+      },
+      {
+        label: T.translate('features.ViewSwitch.DatasetStreamTable.eventsLabel')
+      },
+      {
+        label: T.translate('features.ViewSwitch.DatasetStreamTable.sizeLabel')
+      },
+      {
+        label: ''
+      }
+    ];
+  }
+
+  renderTableBody() {
+    return (
+      <tbody>
+        {
+          this.state.entities.map(dataEntity => {
+            let currentNamespace = NamespaceStore.getState().selectedNamespace;
+            let icon = dataEntity.type === 'datasetinstance' ? 'icon-datasets' : 'icon-streams';
+            let type = dataEntity.type === 'datasetinstance' ? 'Dataset' : 'Stream';
+            let link = `/ns/${currentNamespace}/${convertEntityTypeToApi(dataEntity.type)}/${dataEntity.id}`;
+            return (
+              // this is super ugly, but cannot wrap a link around a <tr> tag, so have to wrap it
+              // around every <td>. Javascript solutions won't show the link when the user hovers
+              // over the element.
+              <tr key={dataEntity.uniqueId}>
+                <td>
+                  <Link to={link}>{dataEntity.name}</Link>
+                </td>
+                <td>
+                  <Link to={link}>
                     <i className={classnames('fa', icon)}></i>
                     <span>{type}</span>
-                  </td>
-                  <td>{dataEntity.reads}</td>
-                  <td>{dataEntity.writes}</td>
-                  <td>{dataEntity.events}</td>
-                  <td>{dataEntity.bytes}</td>
-                  <td>
+                  </Link>
+                </td>
+                <td>
+                  <Link to={link}>{dataEntity.reads}</Link>
+                </td>
+                <td>
+                  <Link to={link}>{dataEntity.writes}</Link>
+                </td>
+                <td>
+                  <Link to={link}>{dataEntity.events}</Link>
+                </td>
+                <td>
+                  <Link to={link}>{dataEntity.bytes}</Link>
+                </td>
+                <td>
+                  <Link to={link}>
                     <div className="fast-actions-container">
                       <FastActions
                         className="text-xs-left"
                         entity={dataEntity}
                       />
                     </div>
-                  </td>
-                </tr>
-              );
-            })
-          }
-        </tbody>
-      </table>
-    </div>
-  );
+                  </Link>
+                </td>
+              </tr>
+            );
+          })
+        }
+      </tbody>
+    );
+  }
+
+  render() {
+    // we don't want to load until we have all these info
+    const isAllLoaded = () => {
+      return this.props.dataEntities.every(dataEntity => {
+        return !isNil(dataEntity.reads) && !isNil(dataEntity.writes) && !isNil(dataEntity.events) && !isNil(dataEntity.bytes);
+      });
+    };
+    if (!isAllLoaded()) {
+      return (
+        <div className="dataentity-table">
+          <h3 className="text-xs-center">
+            <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
+          </h3>
+        </div>
+      );
+    }
+    return (
+      <div className="dataentity-table">
+        <SortableTable
+          className="table-sm"
+          entities={this.props.dataEntities}
+          tableHeaders={this.tableHeaders}
+          renderTableBody={this.renderTableBody}
+        />
+      </div>
+    );
+  }
 }
 DatasetStreamTable.propTypes = {
   dataEntities: PropTypes.arrayOf(PropTypes.object)

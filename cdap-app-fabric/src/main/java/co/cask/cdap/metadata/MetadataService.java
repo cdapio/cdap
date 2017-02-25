@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,22 +49,26 @@ public class MetadataService extends AbstractIdleService {
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryService discoveryService;
   private final Set<HttpHandler> handlers;
+  private final MetadataUpgrader metadataUpgrader;
 
   private NettyHttpService httpService;
 
   @Inject
   MetadataService(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                   DiscoveryService discoveryService,
-                  @Named(Constants.Metadata.HANDLERS_NAME) Set<HttpHandler> handlers) {
+                  @Named(Constants.Metadata.HANDLERS_NAME) Set<HttpHandler> handlers,
+                  MetadataUpgrader metadataUpgrader) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
+    this.metadataUpgrader = metadataUpgrader;
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting Metadata Service");
+    metadataUpgrader.createOrUpgradeIfNecessary();
     httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METADATA_SERVICE)
       .addHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,

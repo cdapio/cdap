@@ -16,11 +16,10 @@
 
 package co.cask.cdap.logging.serialize;
 
+import co.cask.cdap.logging.LoggingUtil;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
-
-import static co.cask.cdap.logging.serialize.LogSerializerUtil.stringOrNull;
 
 /**
  * Serializer for StackTraceElement.
@@ -43,9 +42,9 @@ class StackTraceElementSerializer {
 
   static StackTraceElement decode(GenericRecord datum) {
     if (datum != null) {
-      String declaringClass =  stringOrNull(datum.get("declaringClass"));
-      String methodName = stringOrNull(datum.get("methodName"));
-      String fileName = stringOrNull(datum.get("fileName"));
+      String declaringClass = LoggingUtil.stringOrNull(datum.get("declaringClass"));
+      String methodName = LoggingUtil.stringOrNull(datum.get("methodName"));
+      String fileName = LoggingUtil.stringOrNull(datum.get("fileName"));
       int lineNumber = (Integer) datum.get("lineNumber");
       return new StackTraceElement(declaringClass, methodName, fileName, lineNumber);
     }

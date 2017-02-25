@@ -32,12 +32,13 @@ export default function AuditTab({entity}) {
   url += `&sourceUrl=${encodedSource}`;
 
   return (
-    <div className="iframe-container">
+    <div className="embed-responsive embed-responsive-16by9">
       <iframe
         src={url}
         frameBorder="0"
         width="100%"
         height="100%"
+        className="embed-responsive-item"
       >
       </iframe>
     </div>

@@ -22,6 +22,8 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
@@ -35,6 +37,12 @@ import java.util.Map;
 @Name("Double")
 public class DoubleTransform extends Transform<StructuredRecord, StructuredRecord> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
+
+  @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+    stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
+  }
 
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {

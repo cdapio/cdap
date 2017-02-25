@@ -14,9 +14,9 @@
 # the License.
 #
 
-co.cask.cdap.operations.cdap.CDAPConnections
 co.cask.cdap.operations.cdap.CDAPEntities
 co.cask.cdap.operations.cdap.CDAPInfo
+co.cask.cdap.operations.cdap.CDAPLoad
 co.cask.cdap.operations.cdap.CDAPTransactions
 co.cask.cdap.operations.hbase.HBaseEntities
 co.cask.cdap.operations.hbase.HBaseInfo

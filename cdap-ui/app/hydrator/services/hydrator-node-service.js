@@ -32,8 +32,15 @@ class HydratorPlusPlusNodeService {
     return promise.then((node) => this.configurePluginInfo(node, appType, sourceConn));
   }
   configurePluginInfo(node, appType, sourceConn) {
-    const getSchema = (node) => {
+    const getSchema = (node, targetNode) => {
       var schema = node.outputSchema;
+
+      if (targetNode.type === 'errortransform' && this.GLOBALS.pluginConvert[node.type] !== 'source') {
+        schema = node.inputSchema && Array.isArray(node.inputSchema) ? node.inputSchema[0].schema : node.inputSchema;
+      } else if (targetNode.type === 'errortransform' && this.GLOBALS.pluginConvert[node.type] === 'source') {
+        return null;
+      }
+
       var isStreamSource = false;
       var inputSchema;
       const isFieldExists = (field, schema) => {
@@ -88,7 +95,7 @@ class HydratorPlusPlusNodeService {
     if (['action', 'source'].indexOf(this.GLOBALS.pluginConvert[node.type]) === -1) {
       node.inputSchema = sourceConn.map( source => ({
         name: source.plugin.label,
-        schema: this.HydratorPlusPlusHydratorService.formatOutputSchemaToAvro(getSchema(source))
+        schema: this.HydratorPlusPlusHydratorService.formatOutputSchemaToAvro(getSchema(source, node))
       }));
     }
 

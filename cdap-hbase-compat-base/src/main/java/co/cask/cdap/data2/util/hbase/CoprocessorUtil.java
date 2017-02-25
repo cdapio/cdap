@@ -27,6 +27,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 
@@ -37,6 +38,23 @@ public final class CoprocessorUtil {
   private static final Logger LOG = LoggerFactory.getLogger(CoprocessorUtil.class);
   private CoprocessorUtil() {
 
+  }
+
+  /**
+   * @return all non-coprocessor properties.
+   */
+  public static Map<String, String> getNonCoprocessorProperties(HTableDescriptor tableDescriptor) {
+    Map<String, String> properties = new HashMap<>();
+    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> entry : tableDescriptor.getValues().entrySet()) {
+      String key = Bytes.toString(entry.getKey().get()).trim();
+      String val = Bytes.toString(entry.getValue().get()).trim();
+
+      if (HConstants.CP_HTD_ATTR_KEY_PATTERN.matcher(key).matches()) {
+        continue;
+      }
+      properties.put(key, val);
+    }
+    return properties;
   }
 
   /**

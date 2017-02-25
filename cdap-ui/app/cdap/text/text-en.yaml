@@ -84,17 +84,60 @@ commons:
   stream: Stream
   dataset: Dataset
 features:
+  AboutPage:
+    version: Version {version}
+    mode: "Mode: "
+    security: "Security: "
+    copyright:
+      firstLine: The Cask Data Application Platform (CDAP) product is copyrighted
+      secondLine: Copyright © 2014-2017 Cask Data, Inc.
+      thirdLine:
+        view: "View "
+        termsAndConditions: Terms and Conditions
+        and: " and "
+        privacyPolicy: Privacy Policy
+  AccessTokenModal:
+    modalHeader: Access Token
+    login:
+      textContent: Please enter your username and password to generate a new access token
+      usernamePlaceholder: Username
+      passwordPlaceholder: Password
+      submit: Generate access token
+      error: Login failed. Please check your username and password and try again.
+    accessToken: "Access Token: "
+    close: Close
   AppDetailedView:
-    Title: Application - {appId}
+    Title: CDAP | Applications | {appId}
     History:
       emptyMessage: No Runs found.
+      nameLabel: Program Name
+      startLabel: Start Time
+      runIDLabel: Run ID
+      statusLabel: Status
+    Tabs:
+      programsLabel: Programs
+      datasetsLabel: Datasets
+      historyLabel: Program Runs
+      propertiesLabel: Properties
+
+  AuthorizationMessage:
+    mainMessage: " You do not have authorization to access existing namespaces"
+    callToAction1: Please contact your system administrator to request access to a namespace
+    callToAction2:
+      message1: You are logged in as *{username}*.
+      loginLabel: " Login "
+      message2: as another user
+    callToAction3:
+      message1: "Create a new namespace "
+      message2: "(Note: You will require ADMIN privileges on CDAP for creating a namespace)"
   ConfirmationModal:
     confirmDefaultText: OK
     cancelDefaultText: Cancel
   EntityListView:
-    Title: CDAP - Home
+    Title: CDAP | Overview
     Info:
-      title: Entities in Namespace
+      entities: Entities
+      title: Entities in Namespace "{namespace}"
       subtitle:
         search: Search Results for
         filteredBy: filtered by
@@ -106,17 +149,16 @@ features:
       type: "Type: "
     Errors:
       retryNow: Retry now
+      retrying: Retrying...
       secondsLabel: seconds.
       tryAgain: Unable to communicate with CDAP services. Retrying in
       timeOut: Timed out while attempting to communicate with CDAP services. Please contact your system administrator.
     SplashScreen:
-      welcomeMessage: Welcome to CDAP 4.0
-      welcomeMessage1: New User Interface
-      introText: Introducing Cask Market
-      introText1: Cask's App Store for Big Data
-      caskmarket: Cask Market
-      gotoLabel: Go to CDAP
-      disclaimerMessage: For full feature parity, switch to original UI by clicking "VIEW ORIGINAL UI" in top navigation bar.
+      welcomeMessage1: Welcome To The New CDAP
+      welcomeMessage2: User Experience
+      addentity: Start by Adding Entities to CDAP
+      gotoLabel: Go to Overview page
+      disclaimerMessage: To access the classic view of the CDAP UI, please use the "Switch to Classic View" option from the CDAP dropdown on the top right.
     Header:
       filterBy: Filter by
       search-placeholder: Search
@@ -149,7 +191,7 @@ features:
 
   DetailView:
     PropertiesTab:
-      title: "{entityId} Properties"
+      title: Properties for {entityType} "{entityId}"
 
   FileDnD:
     uploadLabel: Drag-and-drop the file to be uploaded
@@ -196,14 +238,26 @@ features:
     stopConfirmation: "Are you sure you want to stop the program:  *_{entityId}_*?"
     stopProgramHeader: Stop Program
     startProgramHeader: Start Program
+    viewEvents:
+      button: View
+      failedMessage: Failed to view events
+      from: From
+      label: View Events
+      limit: Limit
+      modalHeader: "Filter and View Events for \"{entityId}\""
+      noResults: No Results
+      numEventsTitle: Set Number of Events
+      timeRangeTitle: Select Time Range
+      to: To
 
   JumpButton:
     buttonLabel: Jump
     viewHydrator: View in Hydrator
     viewTracker: View in Tracker
 
-  Management:
-    Title: Management
+  Administration:
+    Title: Administration
+    PageTitle: CDAP | Management
     Top:
       version-label: Version
       time-label: Uptime
@@ -252,7 +306,7 @@ features:
       headers:
         apps: Apps
         blocks: Blocks
-        connections: Connections
+        lasthourload: Load (last hour)
         entities: Entities
         load: Load
         nodes: Nodes
@@ -260,6 +314,7 @@ features:
         resources: Resources
         storage: Storage
         transactions: Transactions
+        connections: Connections
       labels:
         Accepted: Accepted
         RemainingBytes: Available
@@ -390,18 +445,18 @@ features:
     pipelinesLabel: Pipelines
     metadataLabel: Metadata
     ProductDropdown:
+      aboutLabel: About CDAP
+      accessToken: Access Token
+      documentationLabel: Documentation
       logout: Logout
+      olduilink: Switch to Classic View
       prodWebsiteLabel: Product Website
       supportLabel: Support
-      documentationLabel: Documentation
-      aboutLabel: About CDAP
     Metadata:
       searchLabel: Search
       integrationsLabel: Integrations
       tagsLabel: Tags
       dictionaryLabel: Dictionary
-    RightSection:
-      olduilink: View Original UI
     NamespaceDropdown:
       applications: Applications
       namespaceLabel: Namespace
@@ -415,7 +470,7 @@ features:
       runningProgramLabel: "Number of programs running: {programCount}"
       altTitle: "Programs using {entityType} \"{entityId}\""
     DatasetTab:
-      title: "Dataset Used by \"{appId}\""
+      title: "Datasets and Streams used by \"{appId}\""
     SchemaTab:
       emptyMessage: No Schema found.
       title: Schema of each record in the {entityType} "{entityId}"
@@ -497,14 +552,20 @@ features:
     registration-two: newsletters from Cask at this email address
     getUpdates: Get Updates
 
+  SpotlightSearch:
+    SpotlightModal:
+      headerTagResults: Entities with the tag "{tag}"
+      numResults: "{total} results"
+      numResult: "{total} result"
+
   SchemaEditor:
     Labels:
       fieldName: Field Name
       symbolName: Symbol Name
   StreamDetailedView:
-    Title: Stream - {streamId}
+    Title: CDAP | Stream | {streamId}
   DatasetDetailedView:
-    Title: Dataset - {datasetId}
+    Title: CDAP | Dataset | {datasetId}
   Wizard:
     ApplicationUpload:
       headerlabel: Upload Application
@@ -514,7 +575,7 @@ features:
         title: Upload JAR
         uploadHelperText: Upload the JAR for your application that you wish to deploy
         filePathLabel: Choose file
-      success: You have successfully deployed the application
+      success: You have successfully deployed the application "{appName}".
       callToAction: View Application Details
     ArtifactUpload:
       headerlabel: Add Third party Driver
@@ -537,7 +598,7 @@ features:
         typePlaceholder: Driver Type
         classnameLabel: Class Name
         classnamePlaceholder: Driver Class Name
-      success: You have successfully uploaded the driver
+      success: You have successfully uploaded the driver "{artifactName}".
       subtitle: You can now create a pipeline to extract data from Database using the driver.
       callToAction: Create a Pipeline
     Done: Done
@@ -554,10 +615,9 @@ features:
     OneStepDeploy:
       headerlabel: Deploy
       Step1:
-        description: One step deploy
-        shorttitle: Deploy
-        title: Deploy
-        content: Deploy
+        description: Deploy {entityType} using JAR file
+        shorttitle: Deploy {entityType}
+        title: Deploy JAR
     Skip: Skipped
     FailedMessage: Failed to {step}
     StreamCreate:
@@ -582,7 +642,7 @@ features:
         title: Upload Data
         description: Upload data to the stream you created.
       headerlabel: Create Stream
-      success: You have successfully created the stream
+      success: You have successfully created the stream "{streamName}".
       callToAction: View Stream Details
       secondaryCallToAction:
         uploadData: Upload Data to Stream
@@ -595,13 +655,14 @@ features:
       Step2:
         shorttitle: Select Destination
         title: Select a Destination
+        tooltiptext: The stream will be created if it does not exist
         description: Select the destination where the data needs to be uploaded.
         dataentitynameplaceholder: Dataset/Stream Name
         destinationtype: Destination Type
         destinationname: Destination Name
       headerlabel: Upload Data
-      success: You have successfully uploaded the datapack
-      subtitle: to the stream
+      success: You have successfully uploaded the datapack "{datapackName}"
+      subtitle: to the stream "{streamId}".
       callToAction: View Stream Details
     PublishPipeline:
       Step1:
@@ -610,8 +671,10 @@ features:
         description: Specify the name of the pipeline.
       pipelinenameplaceholder: Pipeline Name
       headerlabel: Publish Pipeline
-      success: You have successfully created the pipeline
-      callToAction: Customize Pipeline
+      success: You have successfully created the pipeline "{pipelineName}".
+      callToAction:
+        customize: Customize Pipeline
+        view: View Pipeline
     HydratorPipeline:
       title: Create a Data Pipeline
       message: Choose the pipeline type you would like to create.
@@ -630,7 +693,7 @@ features:
         description: Upload the plugin configuration JSON.
         errorMessage: Invalid plugin JSON. Plugin configuration should be in JSON format.
         errorMessageParentArtifacts: Invalid plugin JSON. Please specify parent artifacts.
-      success: You have successfully uploaded the plugin
+      success: You have successfully uploaded the plugin "{pluginName}".
       subtitle: Start creating a pipeline with the plugin.
       callToAction: Create a Pipeline
     Add-Namespace:
@@ -774,8 +837,8 @@ features:
       scatter: Scatter
     wrangleButton: Wrangle
     WrangleData:
-      applyToHydrator: Apply to Hydrator
-      addToHydrator: Add to Hydrator
+      applyToPipeline: Apply to Pipeline
+      addToPipeline: Add to Pipeline
       wrangling: "Wrangling..."
     Tooltips:
       actions: Actions
@@ -793,7 +856,7 @@ features:
     message: 'Services are back online'
   Tags:
     label: Tags
-    notags: No Tags added
+    notags: No tags found. Click to add a new business tag.
   Description:
     label: Description
     nodescription: No Description available
@@ -805,12 +868,12 @@ features:
       readsLabel: Reads
       writesLabel: Writes
       eventsLabel: Events
-      sizeLabel: Size
+      sizeLabel: Size(MB)
     ProgramTable:
       lastStartedLabel: Last Started
       statusLabel: Status
   Page404:
-    genericMessage: Sorry, we are are not able to find the page you are looking for.
+    genericMessage: Sorry, we are not able to find the page you are looking for.
     entityMessage: Sorry, we are not able to find {entityType}
     subtitleMessage1: Here are some options on where to go next
     subtitleMessage2: View all your entities in the

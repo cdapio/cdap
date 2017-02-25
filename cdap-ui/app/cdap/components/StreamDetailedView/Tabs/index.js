@@ -15,7 +15,7 @@
  */
 
 import React, { Component, PropTypes } from 'react';
-import { Nav, NavItem, NavLink} from 'reactstrap';
+import { Nav, NavItem, NavLink, TabContent} from 'reactstrap';
 import isNil from 'lodash/isNil';
 import Match from 'react-router/Match';
 import Link from 'react-router/Link';
@@ -119,55 +119,57 @@ export default class StreamDetailedViewTabs extends Component {
             </NavLink>
           </NavItem>
         </Nav>
-        <Match pattern={`${baseMatchPath}/`} render={
-          () => {
-            return (
-              <UsageTab entity={this.state.entity} />
-            );
-          }}
-        />
-        <Match pattern={`${baseMatchPath}/usage`} render={
-          () => {
-            return (
-              <UsageTab entity={this.state.entity} />
-            );
-          }}
-        />
-        <Match pattern={`${baseMatchPath}/schema`} render={
-          () => {
-            return (
-              <SchemaTab entity={this.state.entity} />
-            );
-          }}
-        />
-        <Match pattern={`${baseMatchPath}/programs`} render={
-          () => {
-            return (
-              <ProgramTab entity={this.state.entity} />
-            );
-          }}
-        />
-        <Match pattern={`${baseMatchPath}/lineage`} render={
-          () => {
-            return (
-              <LineageTab entity={this.state.entity} />
-            );
-          }}
-        />
-        <Match pattern={`${baseMatchPath}/audit`} render={
-          () => {
-            return (
-              <AuditTab entity={this.state.entity} />
-            );
-          }}
-        />
-        <Match pattern={`${baseMatchPath}/properties`} render={
-          () => {
-            return (
-              <PropertiesTab entity={this.state.entity} />
-            );
-          }}
-        />
+        <TabContent>
+          <Match pattern={`${baseMatchPath}/`} render={
+            () => {
+              return (
+                <UsageTab entity={this.state.entity} />
+              );
+            }}
+          />
+          <Match pattern={`${baseMatchPath}/usage`} render={
+            () => {
+              return (
+                <UsageTab entity={this.state.entity} />
+              );
+            }}
+          />
+          <Match pattern={`${baseMatchPath}/schema`} render={
+            () => {
+              return (
+                <SchemaTab entity={this.state.entity} />
+              );
+            }}
+          />
+          <Match pattern={`${baseMatchPath}/programs`} render={
+            () => {
+              return (
+                <ProgramTab entity={this.state.entity} />
+              );
+            }}
+          />
+          <Match pattern={`${baseMatchPath}/lineage`} render={
+            () => {
+              return (
+                <LineageTab entity={this.state.entity} />
+              );
+            }}
+          />
+          <Match pattern={`${baseMatchPath}/audit`} render={
+            () => {
+              return (
+                <AuditTab entity={this.state.entity} />
+              );
+            }}
+          />
+          <Match pattern={`${baseMatchPath}/properties`} render={
+            () => {
+              return (
+                <PropertiesTab entity={this.state.entity} />
+              );
+            }}
+          />
+        </TabContent>
       </div>
     );
   }
@@ -179,4 +181,3 @@ StreamDetailedViewTabs.propTypes = {
   pathname: PropTypes.string,
   params: PropTypes.object
 };
-

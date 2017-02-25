@@ -18,23 +18,37 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.MasterServiceManager;
+import co.cask.cdap.common.zookeeper.election.LeaderElectionInfoService;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.SystemServiceLiveInfo;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import java.net.InetAddress;
+import java.util.SortedMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * App Fabric Service Management in Distributed Mode.
  */
 public class AppFabricServiceManager implements MasterServiceManager {
 
+  private static final long ELECTION_PARTICIPANTS_TIMEOUT_MS = 2000L;
+
   private final InetAddress hostname;
+  private LeaderElectionInfoService electionInfoService;
 
   @Inject
   public AppFabricServiceManager(@Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname) {
     this.hostname = hostname;
+  }
+
+  @Inject(optional = true)
+  public void setLeaderElectionInfoService(LeaderElectionInfoService electionInfoService) {
+    // Use optional Guice injection to make setup easier.
+    // Currently all tools uses AppFabricServiceRuntimeModule().getDistributedModules() (which is bad),
+    // which pull in this class.
+    this.electionInfoService = electionInfoService;
   }
 
   @Override
@@ -51,10 +65,22 @@ public class AppFabricServiceManager implements MasterServiceManager {
   public SystemServiceLiveInfo getLiveInfo() {
     SystemServiceLiveInfo.Builder builder = SystemServiceLiveInfo.builder();
 
-    Containers.ContainerInfo containerInfo = new Containers.ContainerInfo(Containers.ContainerType.SYSTEM_SERVICE,
-                                                                          Constants.Service.APP_FABRIC_HTTP, null, null,
-                                                                          hostname.getHostName(), null, null, null);
-    builder.addContainer(containerInfo);
+    try {
+      SortedMap<Integer, LeaderElectionInfoService.Participant> participants =
+        electionInfoService.getParticipants(ELECTION_PARTICIPANTS_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
+      for (LeaderElectionInfoService.Participant participant : participants.values()) {
+        builder.addContainer(new Containers.ContainerInfo(Containers.ContainerType.SYSTEM_SERVICE,
+                                                          Constants.Service.APP_FABRIC_HTTP, null, null,
+                                                          participant.getHostname(), null, null, null));
+      }
+    } catch (Exception e) {
+      // If failed to get the leader election information, just return a static one with the current process
+      builder.addContainer(new Containers.ContainerInfo(Containers.ContainerType.SYSTEM_SERVICE,
+                                                        Constants.Service.APP_FABRIC_HTTP, null, null,
+                                                        hostname.getHostName(), null, null, null));
+    }
+
     return builder.build();
   }
 

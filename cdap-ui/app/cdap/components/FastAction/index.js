@@ -22,6 +22,7 @@ import ExploreAction from 'components/FastAction/ExploreAction';
 import SendEventAction from 'components/FastAction/SendEventAction';
 import SetPreferenceAction from 'components/FastAction/SetPreferenceAction';
 import LogAction from 'components/FastAction/LogAction';
+import ViewEventsAction from 'components/FastAction/ViewEventsAction';
 
 export default class FastAction extends Component {
   constructor(props) {
@@ -79,6 +80,12 @@ export default class FastAction extends Component {
       case 'log':
         return (
           <LogAction
+            entity={this.props.entity}
+          />
+        );
+      case 'viewEvents':
+        return (
+          <ViewEventsAction
             entity={this.props.entity}
           />
         );

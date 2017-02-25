@@ -15,7 +15,6 @@
  */
 
 @import "../../styles/variables.less";
-@import "../../../bower_components/bootstrap/less/mixins.less";
 
 body.theme-cdap {
   .modal.custom-loading-modal {
@@ -23,32 +22,7 @@ body.theme-cdap {
     .modal-body {
       .icon-fist {
         font-size: 84px;
-
-        @-webkit-keyframes color_change {
-          from { color: white; }
-          to { color: @cdap-orange; }
-        }
-
-        @-moz-keyframes color_change {
-          from { color: white; }
-          to { color: @cdap-orange; }
-        }
-
-        @-ms-keyframes color_change {
-          from { color: white; }
-          to { color: @cdap-orange; }
-        }
-
-        @-o-keyframes color_change {
-          from { color: white; }
-          to { color: @cdap-orange; }
-        }
-
-        @keyframes color_change {
-          from { color: white; }
-          to { color: @cdap-orange; }
-        }
-        .animation(color_change 0.2s infinite alternate);
+        color: @cdap-orange;
       }
     }
   }

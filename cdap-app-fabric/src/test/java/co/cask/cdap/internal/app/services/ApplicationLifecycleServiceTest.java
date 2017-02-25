@@ -16,12 +16,15 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.AppWithProgramsUsingGuava;
 import co.cask.cdap.MissingMapReduceWorkflowApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.ProgramResources;
 import co.cask.cdap.common.test.AppJarHelper;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -29,10 +32,13 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import org.apache.http.HttpResponse;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -41,6 +47,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.jar.Manifest;
 
 /**
  */
@@ -137,5 +149,82 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
                       ownerPrincipal);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
+  }
+
+  @Test
+  public void testMissingDependency() throws Exception {
+    // tests the fix for CDAP-2543, by having programs which fail to start up due to missing dependency jars
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("missing-guava-dependency", "1.0.0-SNAPSHOT");
+    Location appJar = createDeploymentJar(locationFactory, AppWithProgramsUsingGuava.class);
+    File appJarFile = new File(tmpFolder.newFolder(),
+                               String.format("%s-%s.jar", artifactId.getArtifact(), artifactId.getVersion()));
+    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    appJar.delete();
+
+    applicationLifecycleService.deployAppAndArtifact(NamespaceId.DEFAULT, "appName", artifactId.toId(), appJarFile,
+                                                     null, null, new ProgramTerminator() {
+      @Override
+      public void stop(ProgramId programId) throws Exception {
+        // no-op
+      }
+    });
+
+    ApplicationId appId = NamespaceId.DEFAULT.app("appName");
+
+    // run records for programs that have missing dependencies should be FAILED, instead of hanging in RUNNING
+
+    // fail the Worker#initialize
+    ProgramId worker = appId.worker(AppWithProgramsUsingGuava.NoOpWorker.NAME);
+    startProgram(worker.toId());
+    waitForRuns(1, worker, ProgramRunStatus.FAILED);
+
+    // fail the MapReduce#initialize
+    ProgramId mapreduce = appId.mr(AppWithProgramsUsingGuava.NoOpMR.NAME);
+    startProgram(mapreduce.toId());
+    waitForRuns(1, mapreduce, ProgramRunStatus.FAILED);
+
+    // fail the CustomAction#initialize
+    ProgramId workflow = appId.workflow(AppWithProgramsUsingGuava.NoOpWorkflow.NAME);
+    startProgram(workflow.toId());
+    waitForRuns(1, workflow, ProgramRunStatus.FAILED);
+
+    // fail the Workflow#initialize
+    appId.workflow(AppWithProgramsUsingGuava.NoOpWorkflow.NAME);
+    startProgram(workflow.toId(), ImmutableMap.of("fail.in.workflow.initialize", "true"));
+    waitForRuns(1, workflow, ProgramRunStatus.FAILED);
+  }
+
+  private void waitForRuns(int expected, final ProgramId programId, final ProgramRunStatus status) throws Exception {
+    Tasks.waitFor(expected, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return getProgramRuns(programId.toId(), status.toString()).size();
+      }
+    }, 5, TimeUnit.SECONDS);
+  }
+
+  // creates an application jar for the given application class, but excludes classes that begin with 'com.google.'
+  // similar to AppJarHelper#createDeploymentJar
+  public static Location createDeploymentJar(LocationFactory locationFactory, Class<?> clz,
+                                             File... bundleEmbeddedJars) throws IOException {
+    return AppJarHelper.createDeploymentJar(locationFactory, clz, new Manifest(), new ClassAcceptor() {
+      final Set<String> visibleResources = ProgramResources.getVisibleResources();
+
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        if (visibleResources.contains(className.replace('.', '/') + ".class")) {
+          return false;
+        }
+        // TODO: Fix it with CDAP-5800
+        if (className.startsWith("org.apache.spark.")) {
+          return false;
+        }
+        // exclude a necessary dependency
+        if (className.startsWith("com.google.")) {
+          return false;
+        }
+        return true;
+      }
+    }, bundleEmbeddedJars);
   }
 }

@@ -15,7 +15,8 @@
  */
 
 import React, { Component, PropTypes } from 'react';
-import OneStepDeployConfig from 'services/WizardConfigs/OneStepDeployConfig';
+import OneStepDeployAppConfig from 'services/WizardConfigs/OneStepDeployAppConfig';
+import OneStepDeployPluginConfig from 'services/WizardConfigs/OneStepDeployPluginConfig';
 import OneStepDeployStore from 'services/WizardStores/OneStepDeploy/OneStepDeployStore';
 import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
@@ -26,7 +27,7 @@ export default class OneStepDeployWizard extends Component {
     super(props);
 
     this.state = {
-      showWizard: this.props.isOpen,
+      showWizard: this.props.isOpen
     };
 
     this.publishApp = this.publishApp.bind(this);
@@ -42,20 +43,26 @@ export default class OneStepDeployWizard extends Component {
   }
 
   publishApp() {
-    return this.props.onPublish();
+    return this.props.onPublish().map(successInfo => {
+      this.setState({
+        successInfo
+      });
+    });
   }
 
   render() {
     let input = this.props.input;
     let pkg = input.package || {};
+    let actionType = input.action.type;
 
     const getWizardContent = () => {
       return (
         <Wizard
-          wizardConfig={OneStepDeployConfig}
+          wizardConfig={actionType === 'one_step_deploy_app' ? OneStepDeployAppConfig : OneStepDeployPluginConfig}
           wizardType="OneStepDeploy"
           store={OneStepDeployStore}
           onSubmit={this.publishApp.bind(this)}
+          successInfo={this.state.successInfo}
           onClose={this.toggleWizard.bind(this)}
         />
       );

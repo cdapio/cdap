@@ -38,6 +38,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -57,12 +58,15 @@ public final class MainClassLoader extends InterceptableClassLoader {
   private final Map<String, Boolean> cache;
 
   /**
+   * @param extraClasspath extra list of {@link URL} to be added to the end of the classpath for the
+   *                       {@link MainClassLoader} to be created
    * @return a new instance from the current context classloader or the system classloader. The returned
    * {@link MainClassLoader} will be the defining classloader for all classes available in the context classloader.
    * It will return {@code null} if it is not able to create a new instance due to lack of classpath information.
+   *
    */
   @Nullable
-  public static MainClassLoader createFromContext() {
+  public static MainClassLoader createFromContext(URL...extraClasspath) {
     return createFromContext(new FilterClassLoader.Filter() {
       @Override
       public boolean acceptResource(String resource) {
@@ -73,10 +77,13 @@ public final class MainClassLoader extends InterceptableClassLoader {
       public boolean acceptPackage(String packageName) {
         return false;
       }
-    });
+    }, extraClasspath);
   }
 
   /**
+   * @param filter A {@link FilterClassLoader.Filter} for filtering out classes from the
+   * @param extraClasspath extra list of {@link URL} to be added to the end of the classpath for the
+   *                       {@link MainClassLoader} to be created
    * @return a new instance from the current context classloader or the system classloader. The returned
    * {@link MainClassLoader} will be the defining classloader for classes in the context classloader
    * that the filter rejected. For classes that pass the filter, the defining classloader will be the original
@@ -84,26 +91,28 @@ public final class MainClassLoader extends InterceptableClassLoader {
    * It will return {@code null} if it is not able to create a new instance due to lack of classpath information.
    */
   @Nullable
-  public static MainClassLoader createFromContext(FilterClassLoader.Filter filter) {
+  public static MainClassLoader createFromContext(FilterClassLoader.Filter filter, URL...extraClasspath) {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     if (classLoader == null) {
       classLoader = ClassLoader.getSystemClassLoader();
     }
 
-    URL[] classpath;
+    List<URL> classpath = new ArrayList<>();
 
     if (classLoader instanceof URLClassLoader) {
-      classpath = ((URLClassLoader) classLoader).getURLs();
+      classpath.addAll(Arrays.asList(((URLClassLoader) classLoader).getURLs()));
     } else if (classLoader == ClassLoader.getSystemClassLoader()) {
-      classpath = getClassPath();
+      addClassPath(classpath);
     } else {
       // No able to create a new MainClassLoader
       return null;
     }
 
+    classpath.addAll(Arrays.asList(extraClasspath));
+
     ClassLoader filtered = new FilterClassLoader(classLoader, filter);
     ClassLoader parent = new CombineClassLoader(classLoader.getParent(), Collections.singleton(filtered));
-    return new MainClassLoader(classpath, parent);
+    return new MainClassLoader(classpath.toArray(new URL[classpath.size()]), parent);
   }
 
   /**
@@ -141,11 +150,9 @@ public final class MainClassLoader extends InterceptableClassLoader {
   }
 
   /**
-   * Returns an array of {@link URL} based on the system classpath.
+   * Adds {@link URL} to the given list based on the system classpath.
    */
-  private static URL[] getClassPath() {
-    List<URL> urls = new ArrayList<>();
-
+  private static void addClassPath(List<URL> urls) {
     String wildcardSuffix = File.pathSeparator + "*";
     // In case the system classloader is not a URLClassLoader, use the classpath property (maybe from non Oracle JDK)
     for (String path : Splitter.on(File.pathSeparatorChar).split(System.getProperty("java.class.path"))) {
@@ -160,8 +167,6 @@ public final class MainClassLoader extends InterceptableClassLoader {
         }
       }
     }
-
-    return urls.toArray(new URL[urls.size()]);
   }
 
   private boolean isRewriteNeeded(String className) throws IOException {

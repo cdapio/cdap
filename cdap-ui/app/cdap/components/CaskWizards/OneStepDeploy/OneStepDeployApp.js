@@ -23,11 +23,14 @@ import 'whatwg-fetch';
 import Rx from 'rx';
 import OneStepDeployWizard from 'components/CaskWizards/OneStepDeploy';
 import cookie from 'react-cookie';
+import T from 'i18n-react';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 export default class OneStepDeployApp extends Component {
   constructor(props) {
     super(props);
-
+    this.eventEmitter = ee(ee);
     this.publishApp = this.publishApp.bind(this);
   }
 
@@ -38,8 +41,30 @@ export default class OneStepDeployApp extends Component {
     });
   }
 
+  buildSuccessInfo(fetchResponse) {
+    // fetchResponse has the format "Successfully deployed app {appName}"
+    let appName = fetchResponse.slice(fetchResponse.indexOf('app') + 4);
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    let message = T.translate('features.Wizard.ApplicationUpload.success', {appName});
+    let buttonLabel = T.translate('features.Wizard.ApplicationUpload.callToAction');
+    let linkLabel = T.translate('features.Wizard.GoToHomePage');
+    let successInfo = {
+      message,
+      buttonLabel,
+      buttonUrl: window.getAbsUIUrl({
+        namespaceId: namespace,
+        appId: appName
+      }),
+      linkLabel,
+      linkUrl: window.getAbsUIUrl({
+        namespaceId: namespace
+      })
+    };
+    return successInfo;
+  }
+
   publishApp() {
-    const marketBasepath = `${window.CDAP_UI_CONFIG.market.path}/${window.CDAP_UI_CONFIG.market.version}`;
+    const marketBasepath = `${window.CDAP_CONFIG.marketUrl}`;
 
     const {
       name,
@@ -92,8 +117,14 @@ export default class OneStepDeployApp extends Component {
                 observer.onError(err);
               });
           } else {
-            observer.onNext();
-            observer.onCompleted();
+            // need to do this, because app name is returned in the response text
+            res.text()
+              .then((textResponse) => {
+                let successInfo = this.buildSuccessInfo(textResponse);
+                this.eventEmitter.emit(globalEvents.APPUPLOAD);
+                observer.onNext(successInfo);
+                observer.onCompleted();
+              });
           }
         })
         .catch((err) => {

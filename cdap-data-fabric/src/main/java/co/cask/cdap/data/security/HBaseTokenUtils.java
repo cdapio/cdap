@@ -22,8 +22,6 @@ import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 
@@ -31,8 +29,6 @@ import java.lang.reflect.Method;
  * Helper class for getting HBase security delegation token.
  */
 public final class HBaseTokenUtils {
-
-  private static final Logger LOG = LoggerFactory.getLogger(HBaseTokenUtils.class);
 
   /**
    * Gets a HBase delegation token and stores it in the given Credentials.
@@ -54,7 +50,6 @@ public final class HBaseTokenUtils {
       return credentials;
 
     } catch (Exception e) {
-      LOG.error("Failed to get secure token for HBase.", e);
       throw Throwables.propagate(e);
     }
   }

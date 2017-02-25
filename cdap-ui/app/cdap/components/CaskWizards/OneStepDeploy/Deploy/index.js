@@ -14,43 +14,28 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import React from 'react';
 import { connect, Provider } from 'react-redux';
 import OneStepDeployStore from 'services/WizardStores/OneStepDeploy/OneStepDeployStore';
-import T from 'i18n-react';
+import FileDnD from 'components/FileDnD';
 require('./Deploy.scss');
 
 const mapStateWithProps = (state) => {
   return {
-    name: state.oneStepDeploy.name
+    file: {name: state.oneStepDeploy.name}
   };
 };
 
-let ApplicationName = ({name}) => {
-  return (
-    <h3 className="text-xs-center">
-      {name}
-    </h3>
-  );
-};
-
-ApplicationName.propTypes = {
-  name: PropTypes.string
-};
-
-ApplicationName = connect(
+let ApplicationName = connect(
   mapStateWithProps,
   null
-)(ApplicationName);
+)(FileDnD);
 
 
 export default function Deploy() {
   return (
     <Provider store={OneStepDeployStore}>
       <div className="deploy-step">
-        <h3 className="text-xs-center">
-          {T.translate('features.Wizard.OneStepDeploy.Step1.content')}
-        </h3>
         <ApplicationName />
       </div>
     </Provider>

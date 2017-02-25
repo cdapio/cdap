@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,15 +16,19 @@
 
 package co.cask.cdap.data2.metadata.store;
 
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -177,12 +181,14 @@ public interface MetadataStore {
    *               the cursor. If {@code null}, the first row is used as the cursor
    * @param showHidden boolean which specifies whether to display hidden entities (entity whose name start with "_")
    *                    or not.
+   * @param entityScope a set which specifies which scope of entities to display.
    * @return the {@link MetadataSearchResponse} containing search results for the specified search query and filters
    */
   MetadataSearchResponse search(String namespaceId, String searchQuery,
                                 Set<EntityTypeSimpleName> types,
                                 SortInfo sortInfo, int offset, int limit,
-                                int numCursors, String cursor, boolean showHidden) throws BadRequestException;
+                                int numCursors, String cursor, boolean showHidden,
+                                Set<EntityScope> entityScope) throws BadRequestException;
 
   /**
    * Returns the snapshot of the metadata for entities on or before the given time in both {@link MetadataScope#USER}
@@ -209,10 +215,34 @@ public interface MetadataStore {
   /**
    * Rebuild stale metadata indexes.
    */
-  void rebuildIndexes();
+  void rebuildIndexes(MetadataScope scope, RetryStrategy retryStrategy);
 
   /**
    * Delete all existing metadata indexes.
    */
-  void deleteAllIndexes();
+  void deleteAllIndexes(MetadataScope scope) throws DatasetManagementException, IOException;
+
+  /**
+   * Creates the MetadataDataset if its not already created. Otherwise, upgrades it if required.
+   * @param scope of the MetadataDataset
+   * @throws DatasetManagementException when dataset service is not available
+   * @throws IOException when creation of dataset instance using its admin fails
+   */
+  void createOrUpgrade(MetadataScope scope) throws DatasetManagementException, IOException;
+
+  /**
+   * Creates a special tag in the MetadataDataset to mark the upgrade status of the MetadataDataset
+   * with the current CDAP Version
+   * @throws DatasetManagementException when dataset service is not available
+   * @throws IOException when creation of dataset instance using its admin fails
+   */
+  void markUpgradeComplete(MetadataScope scope) throws DatasetManagementException, IOException;
+
+  /**
+   * Uses MetadataDataset to check if the version of the MetadataDataset is same as the
+   * current CDAP version
+   * @return true if upgrade is required, false otherwise
+   * @throws DatasetManagementException when dataset service is not available
+   */
+  boolean isUpgradeRequired(MetadataScope scope) throws DatasetManagementException;
 }

@@ -85,6 +85,7 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
@@ -119,10 +120,10 @@ import java.net.URL;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -147,6 +148,7 @@ import javax.annotation.Nullable;
 final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceRuntimeService.class);
+  private static final String HADOOP_UMASK_PROPERTY = FsPermission.UMASK_LABEL; // fs.permissions.umask-mode
 
   /**
    * Do not remove: we need this variable for loading MRClientSecurityInfo class required for communicating with
@@ -154,10 +156,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    */
   @SuppressWarnings("unused")
   private org.apache.hadoop.mapreduce.v2.app.MRClientSecurityInfo mrClientSecurityInfo;
-
-  // Regex pattern for configuration source if it is set programmatically. This constant is not defined in Hadoop
-  // Hadoop 2.3.0 and before has a typo as 'programatically', while it is fixed later as 'programmatically'.
-  private static final Pattern PROGRAMATIC_SOURCE_PATTERN = Pattern.compile("program{1,2}atically");
 
   private final Injector injector;
   private final CConfiguration cConf;
@@ -348,6 +346,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         Transactions.invalidateQuietly(txClient, tx);
         throw t;
       }
+    } catch (LinkageError e) {
+      // Need to wrap LinkageError. Otherwise, listeners of this Guava Service may not be called if the initialization
+      // of the user program is missing dependencies (CDAP-2543)
+      throw new Exception(e.getMessage(), e);
     } catch (Throwable t) {
       cleanupTask.run();
       // don't log the error. It will be logged by the ProgramControllerServiceAdapter.failed()
@@ -405,6 +407,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         // invalids long running tx. All writes done by MR cannot be undone at this point.
         txClient.invalidate(transaction.getWritePointer());
       }
+    } catch (Throwable t) {
+      success = false;
+      throw t;
     } finally {
       // whatever happens we want to call this
       try {
@@ -632,8 +637,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         public void run(DatasetContext ctxt) throws Exception {
           ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
           try {
-            for (ProvidedOutput output : context.getOutputs().values()) {
-              commitOutput(succeeded, output.getAlias(), output.getOutputFormatProvider(), failureCause);
+            for (Map.Entry<String, ProvidedOutput> output : context.getOutputs().entrySet()) {
+              commitOutput(succeeded, output.getKey(), output.getValue().getOutputFormatProvider(), failureCause);
               if (succeeded && failureCause.get() != null) {
                 // mapreduce was successful but this output committer failed: call onFailure() for all committers
                 for (ProvidedOutput toFail : context.getOutputs().values()) {
@@ -641,6 +646,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                 }
                 break;
               }
+            }
+            // if there was a failure, we must throw an exception to fail the transaction
+            // this will roll back all the outputs and also make sure that postCommit() is not called
+            // throwing the failure cause: it will be wrapped in a TxFailure and handled in the outer catch()
+            Exception cause = failureCause.get();
+            if (cause != null) {
+              failureCause.set(null);
+              throw cause;
             }
           } finally {
             ClassLoaders.setContextClassLoader(oldClassLoader);
@@ -809,14 +822,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    */
   private void setOutputsIfNeeded(Job job) {
     Map<String, ProvidedOutput> outputsMap = context.getOutputs();
+    fixOutputPermissions(job, outputsMap);
     LOG.debug("Using as output for MapReduce Job: {}", outputsMap.keySet());
-    Collection<ProvidedOutput> outputs = outputsMap.values();
-    if (outputs.isEmpty()) {
+    if (outputsMap.isEmpty()) {
       // user is not going through our APIs to add output; leave the job's output format to user
       return;
-    } else if (outputs.size() == 1) {
+    } else if (outputsMap.size() == 1) {
       // If only one output is configured through the context, then set it as the root OutputFormat
-      ProvidedOutput output = outputs.iterator().next();
+      ProvidedOutput output = outputsMap.values().iterator().next();
       ConfigurationUtil.setAll(output.getOutputFormatConfiguration(), job.getConfiguration());
       job.getConfiguration().set(Job.OUTPUT_FORMAT_CLASS_ATTR, output.getOutputFormatClassName());
       return;
@@ -827,7 +840,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                                                          new HashMap<String, String>());
     job.setOutputFormatClass(MultipleOutputsMainOutputWrapper.class);
 
-    for (ProvidedOutput output : outputs) {
+    for (Map.Entry<String, ProvidedOutput> entry : outputsMap.entrySet()) {
+      ProvidedOutput output = entry.getValue();
       String outputName = output.getAlias();
       String outputFormatClassName = output.getOutputFormatClassName();
       Map<String, String> outputConfig = output.getOutputFormatConfiguration();
@@ -836,6 +850,58 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     }
   }
+
+  private void fixOutputPermissions(Job job, Map<String, ProvidedOutput> outputs) {
+    Configuration jobconf = job.getConfiguration();
+    Set<String> outputsWithUmask = new HashSet<>();
+    Set<String> outputUmasks = new HashSet<>();
+    for (Map.Entry<String, ProvidedOutput> entry : outputs.entrySet()) {
+      String umask = entry.getValue().getOutputFormatConfiguration().get(HADOOP_UMASK_PROPERTY);
+      if (umask != null) {
+        outputsWithUmask.add(entry.getKey());
+        outputUmasks.add(umask);
+      }
+    }
+    boolean allOutputsHaveUmask = outputsWithUmask.size() == outputs.size();
+    boolean allOutputsAgree = outputUmasks.size() == 1;
+    boolean jobConfHasUmask = isProgrammaticConfig(jobconf, HADOOP_UMASK_PROPERTY);
+    String jobConfUmask = jobconf.get(HADOOP_UMASK_PROPERTY);
+
+    boolean mustFixUmasks = false;
+    if (jobConfHasUmask) {
+      // case 1: job conf has a programmatic umask. It prevails.
+      mustFixUmasks = !outputsWithUmask.isEmpty();
+      if (mustFixUmasks) {
+        LOG.info("Overriding permissions of outputs {} because a umask of {} was set programmatically in the job " +
+                   "configuration.", outputsWithUmask, jobConfUmask);
+      }
+    } else if (allOutputsHaveUmask && allOutputsAgree) {
+      // case 2: no programmatic umask in job conf, all outputs want the same umask: set it in job conf
+      String umaskToUse = outputUmasks.iterator().next();
+      jobconf.set(HADOOP_UMASK_PROPERTY, umaskToUse);
+      LOG.debug("Setting umask of {} in job configuration because all outputs {} agree on it.",
+                umaskToUse, outputsWithUmask);
+    } else {
+      // case 3: some outputs configure a umask, but not all of them, or not all the same: use job conf default
+      mustFixUmasks = !outputsWithUmask.isEmpty();
+      if (mustFixUmasks) {
+        LOG.warn("Overriding permissions of outputs {} because they configure different permissions. Falling back " +
+                   "to default umask of {} in job configuration.", outputsWithUmask, jobConfUmask);
+      }
+    }
+
+    // fix all output configurations that have a umask by removing that property from their configs
+    if (mustFixUmasks) {
+      for (String outputName : outputsWithUmask) {
+        ProvidedOutput output = outputs.get(outputName);
+        Map<String, String> outputConfig = new HashMap<>(output.getOutputFormatConfiguration());
+        outputConfig.remove(HADOOP_UMASK_PROPERTY);
+        outputs.put(outputName, new ProvidedOutput(output.getAlias(), output.getOutputFormatProvider(),
+                                                   output.getOutputFormatClassName(), outputConfig));
+      }
+    }
+  }
+
 
   /**
    * Returns the input value type of the MR job based on the job Mapper/Reducer type.
@@ -1099,11 +1165,26 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
   }
 
+  // Regex pattern for configuration source if it is set programmatically. This constant is not defined in Hadoop
+  // Hadoop 2.3.0 and before has a typo as 'programatically', while it is fixed later as 'programmatically'.
+  private static final Pattern PROGRAMATIC_SOURCE_PATTERN = Pattern.compile("program{1,2}atically");
+
+  /**
+   * Returns, based on the sources of a configuration property, whether this property was set programmatically.
+   * This is the case if the first (that is, oldest) source is "programatic" or "programmatic" (depending on the
+   * Hadoop version).
+   *
+   * Note: the "program(m)atic" will always be the first source. If the configuration is written to a file and
+   * then loaded again, then the file name will become the second source, etc. This is the case, for example,
+   * in a mapper or reducer task.
+   *
+   * See {@link Configuration#getPropertySources(String)}.
+   */
   private boolean isProgrammaticConfig(Configuration conf, String name) {
     String[] sources = conf.getPropertySources(name);
-    return sources != null && sources.length > 0 &&
-      PROGRAMATIC_SOURCE_PATTERN.matcher(sources[sources.length - 1]).matches();
+    return sources != null && sources.length > 0 && PROGRAMATIC_SOURCE_PATTERN.matcher(sources[0]).matches();
   }
+
 
   /**
    * Copies a plugin archive jar to the target location.

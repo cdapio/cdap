@@ -128,6 +128,7 @@ export default class HomeListView extends Component {
                 { active: entity.uniqueId === objectQuery(this.state, 'activeEntity', 'uniqueId') }
               )
             }
+            id={entity.uniqueId}
             key={entity.uniqueId}
             onClick={this.onClick.bind(this, entity)}
             entity={entity}
@@ -174,12 +175,8 @@ HomeListView.propTypes = {
   onEntityClick: PropTypes.func,
   onUpdate: PropTypes.func,
   onFastActionSuccess: PropTypes.func,
-  errorMessage: PropTypes.string,
-  errorStatusCode: PropTypes.number,
   className: PropTypes.string,
-  animationDirection: PropTypes.string,
   activeEntity: PropTypes.object,
-  retryCounter: PropTypes.number,
   currentPage: PropTypes.number,
   activeFilter: PropTypes.array,
   filterOptions: PropTypes.array,

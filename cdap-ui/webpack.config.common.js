@@ -63,6 +63,7 @@ var webpackConfig = {
   entry: {
     'common': ['./cask-header.js'],
     'common-lib': [
+      'babel-polyfill',
       'classnames',
       'reactstrap',
       'i18n-react',

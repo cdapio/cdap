@@ -18,6 +18,8 @@ import React, {Component, PropTypes} from 'react';
 import {MySearchApi} from 'api/search';
 import NamespaceStore from 'services/NamespaceStore';
 import {parseMetadata} from 'services/metadata-parser';
+import {convertEntityTypeToApi} from 'services/entity-type-api-converter';
+import {Link} from 'react-router';
 import Mousetrap from 'mousetrap';
 import classnames from 'classnames';
 import shortid from 'shortid';
@@ -97,13 +99,17 @@ export default class SpotlightModal extends Component {
 
     let offset = (page - 1) * PAGE_SIZE;
 
+    let query = 'tags:' + this.props.tag;
+    let target = this.props.target ? this.props.target : [];
+
+    // removed sort, cannot search and sort at the same time
     MySearchApi.search({
       namespace: NamespaceStore.getState().selectedNamespace,
-      query: this.props.query + '*',
+      query,
+      target,
       limit: PAGE_SIZE,
-      sort: 'creation-time asc',
       offset
-    }).subscribe( (res) => {
+    }).subscribe((res) => {
       this.setState({
         searchResults: res,
         currentPage: page,
@@ -115,46 +121,63 @@ export default class SpotlightModal extends Component {
 
   render() {
     let bodyContent;
+    let currentNamespace = NamespaceStore.getState().selectedNamespace;
 
     let searchResultsToBeRendered = (
         this.state.searchResults.results
         .map(parseMetadata)
         .map((entity, index) => {
+          let entityTypeLabel = convertEntityTypeToApi(entity.type);
           return (
-            <div
-              key={shortid.generate()}
-              className={classnames('row search-results-item', {
-                active: index === this.state.focusIndex
-              })}
-            >
-              <Col xs="6">
-                <div className="entity-title">
-                  <span className="entity-icon">
-                    <span className={entity.icon} />
-                  </span>
-                  <span className="entity-name">
-                    {entity.id}
-                  </span>
-                </div>
-                <div className="entity-description">
-                  <span>
-                    {entity.metadata.metadata.SYSTEM.properties.description}
-                  </span>
-                </div>
-              </Col>
+            <Link to={`/ns/${currentNamespace}/${entityTypeLabel}/${entity.id}`}>
+              <div
+                key={shortid.generate()}
+                className={classnames('row search-results-item', {
+                  active: index === this.state.focusIndex
+                })}
+              >
+                <Col xs="6">
+                  <div className="entity-title">
+                    <span className="entity-icon">
+                      <span className={entity.icon} />
+                    </span>
+                    <span className="entity-name">
+                      {entity.id}
+                    </span>
+                  </div>
+                  <div className="entity-description">
+                    <span>
+                      {entity.metadata.metadata.SYSTEM.properties.description}
+                    </span>
+                  </div>
+                </Col>
 
-              <Col xs="6">
-                <div className="entity-tags-container text-xs-right">
-                  {
-                    entity.metadata.metadata.SYSTEM.tags.map((tag) => {
-                      return (
-                        <Tag key={shortid.generate()}>{tag}</Tag>
-                      );
-                    })
-                  }
-                </div>
-              </Col>
-            </div>
+                <Col xs="6">
+                  <div className="entity-tags-container text-xs-right">
+                    {
+                      entity.metadata.metadata.SYSTEM.tags.map((tag) => {
+                        return (
+                          <Tag key={shortid.generate()}>{tag}</Tag>
+                        );
+                      })
+                    }
+                    {
+                      entity.metadata.metadata.USER ?
+                        (
+                          entity.metadata.metadata.USER.tags.map((tag) => {
+                            return (
+                              <Tag key={shortid.generate()}>{tag}</Tag>
+                            );
+                          })
+                        )
+                      :
+                        null
+
+                    }
+                  </div>
+                </Col>
+              </div>
+            </Link>
           );
         })
       );
@@ -178,6 +201,7 @@ export default class SpotlightModal extends Component {
           handleSearch={this.handleSearch.bind(this)}
           currentPage={this.state.currentPage}
           query={this.props.query}
+          tag={this.props.tag}
           numPages={this.state.numPages}
           total={this.state.searchResults.total}
         />
@@ -198,6 +222,8 @@ export default class SpotlightModal extends Component {
 
 SpotlightModal.propTypes = {
   query: PropTypes.string,
+  tag: PropTypes.string,
+  target: PropTypes.array,
   isOpen: PropTypes.bool,
   toggle: PropTypes.func
 };

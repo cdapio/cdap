@@ -1,0 +1,188 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+$tab-header-height: 37px;
+
+.wrangler-container {
+  .wrangler-side-panel {
+    border-left: 1px solid #cccccc;
+    height: 100%;
+    padding: 0;
+
+    .tabs-headers {
+      height: $tab-header-height;
+      display: inline-flex;
+      width: 100%;
+
+      .tab {
+        flex-grow: 1;
+        padding: 0 10px;
+        line-height: $tab-header-height;
+        cursor: pointer;
+        background-color: #aaaaaa;
+        color: white;
+
+        &.active {
+          background-color: white;
+          color: #333333;
+        }
+
+        &:not(:last-child) {
+          border-right: 1px solid #cccccc;
+        }
+      }
+    }
+
+    .tabs {
+      height: 100%;
+
+      .empty-message { margin-top: 25px; }
+    }
+
+    .tab-content {
+      height: calc(100% - 37px);
+      overflow: auto;
+    }
+
+    .directives-tab {
+      .directives-tab-header,
+      .directives-row {
+        border-bottom: 1px solid #cccccc;
+        padding: 10px;
+
+        > span {
+          display: inline-block;
+
+          &:first-child {
+            width: 25px;
+          }
+
+          &:nth-child(2) {
+            width: calc(100% - 50px);
+            vertical-align: middle;
+            word-break: break-word;
+
+            &.expandable { cursor: pointer; }
+
+            &.truncate {
+              overflow: hidden;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+            }
+          }
+        }
+      }
+
+      .directives-tab-header {
+        font-weight: 500;
+
+        .fa.fa-download { cursor: pointer; }
+      }
+
+      .directives-row {
+        &.inactive {
+          background-color: #cccccc;
+          color: white;
+        }
+      }
+
+      .fa.fa-times { cursor: pointer; }
+    }
+
+    .columns-tab {
+      height: 100%;
+
+      .search-box {
+        height: 40px;
+        padding: 5px;
+        border-bottom: 1px solid #cccccc;
+        position: relative;
+
+        .form-control {
+          border-radius: 13px;
+          padding-right: 28px;
+          height: 26px;
+        }
+
+        .fa {
+          position: absolute;
+          right: 13px;
+          top: 11px;
+          color: #999999;
+          font-size: 14px;
+          &.fa-search { top: 10px; }
+          &.fa-times-circle { cursor: pointer; }
+        }
+      }
+
+      .columns-list {
+        height: calc(100% - 40px);
+        overflow-y: auto;
+      }
+
+      .columns-tab-row {
+        border-bottom: 1px solid #cccccc;
+
+        .row-header {
+          padding: 5px 10px;
+          cursor: pointer;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+
+          &.expanded {
+            background-color: #dedede;
+            white-space: pre-wrap;
+            word-break: break-all;
+          }
+
+          &.invalid {
+            background-color: #c0392b;
+            color: white;
+          }
+        }
+
+        .expanded-row {
+          background-color: #dedede;
+          padding: 10px;
+          border-bottom: 1px solid #999999;
+
+          .quality-bar {
+            border: 1px solid #999999;
+            border-radius: 4px;
+            height: 15px;
+            overflow: hidden;
+            margin-top: -10px;
+            margin-bottom: 10px;
+
+            > span {
+              height: 15px;
+              display: inline-block;
+
+              &.filled {
+                background-color: #2ecc71;
+                font-size: 8px;
+              }
+              &.empty { background-color: #e74c3c; }
+              &.null-cell { background-color: #95a5a6; }
+            }
+
+          }
+        }
+      }
+    }
+  }
+}

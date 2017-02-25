@@ -40,6 +40,7 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
@@ -174,7 +175,8 @@ public class ArtifactStore {
     this.datasetFramework = datasetFramework;
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
-                                                                   txClient, META_ID.getParent(),
+                                                                   new TransactionSystemClientAdapter(txClient),
+                                                                   META_ID.getParent(),
                                                                    Collections.<String, String>emptyMap(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );

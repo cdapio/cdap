@@ -17,9 +17,10 @@
 package co.cask.cdap.etl.spark.function;
 
 import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.TrackedTransform;
+import co.cask.cdap.etl.spark.CombinedEmitter;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import scala.Tuple2;
 
 /**
  * Function that uses a Transform to perform a flatmap.
@@ -28,26 +29,26 @@ import org.apache.spark.api.java.function.FlatMapFunction;
  * @param <T> type of input object
  * @param <U> type of output object
  */
-public class TransformFunction<T, U> implements FlatMapFunction<T, U> {
+public class TransformFunction<T, U> implements FlatMapFunction<T, Tuple2<Boolean, Object>> {
   private final PluginFunctionContext pluginFunctionContext;
   private transient TrackedTransform<T, U> transform;
-  private transient DefaultEmitter<U> emitter;
+  private transient CombinedEmitter<U> emitter;
 
   public TransformFunction(PluginFunctionContext pluginFunctionContext) {
     this.pluginFunctionContext = pluginFunctionContext;
   }
 
   @Override
-  public Iterable<U> call(T input) throws Exception {
+  public Iterable<Tuple2<Boolean, Object>> call(T input) throws Exception {
     if (transform == null) {
       Transform<T, U> plugin = pluginFunctionContext.createPlugin();
       plugin.initialize(pluginFunctionContext.createBatchRuntimeContext());
       transform = new TrackedTransform<>(plugin, pluginFunctionContext.createStageMetrics(),
                                          pluginFunctionContext.getDataTracer());
-      emitter = new DefaultEmitter<>();
+      emitter = new CombinedEmitter<>(pluginFunctionContext.getStageName());
     }
     emitter.reset();
     transform.transform(input, emitter);
-    return emitter.getEntries();
+    return emitter.getEmitted();
   }
 }

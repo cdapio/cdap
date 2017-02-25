@@ -28,6 +28,8 @@ import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
@@ -41,7 +43,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.logging.appender.ForwardingAppender;
 import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
@@ -51,6 +52,7 @@ import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManager;
 import co.cask.cdap.logging.pipeline.LogPipelineConfigurator;
 import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
+import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.proto.ProgramType;
@@ -111,6 +113,7 @@ public class KafkaLogProcessorPipelineTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+  private static final MetricsContext NO_OP_METRICS_CONTEXT = new NoopMetricsContext();
 
   @ClassRule
   public static final KafkaTester KAFKA_TESTER =
@@ -145,7 +148,8 @@ public class KafkaLogProcessorPipelineTest {
 
     loggerContext.start();
     KafkaLogProcessorPipeline pipeline = new KafkaLogProcessorPipeline(
-      new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext), checkpointManager,
+      new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext, NO_OP_METRICS_CONTEXT, 0),
+      checkpointManager,
       KAFKA_TESTER.getBrokerService(), config);
 
     pipeline.startAndWait();
@@ -221,7 +225,8 @@ public class KafkaLogProcessorPipelineTest {
 
     loggerContext.start();
     KafkaLogProcessorPipeline pipeline = new KafkaLogProcessorPipeline(
-      new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext), checkpointManager,
+      new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext, NO_OP_METRICS_CONTEXT, 0),
+      checkpointManager,
       KAFKA_TESTER.getBrokerService(), config);
 
     pipeline.startAndWait();
@@ -282,7 +287,9 @@ public class KafkaLogProcessorPipelineTest {
 
     loggerContext.start();
     KafkaLogProcessorPipeline pipeline = new KafkaLogProcessorPipeline(
-      new LogProcessorPipelineContext(CConfiguration.create(), "testMetricAppender", loggerContext), checkpointManager,
+      new LogProcessorPipelineContext(CConfiguration.create(), "testMetricAppender",
+                                      loggerContext, NO_OP_METRICS_CONTEXT, 0),
+      checkpointManager,
       KAFKA_TESTER.getBrokerService(), config);
 
     pipeline.startAndWait();
@@ -408,7 +415,9 @@ public class KafkaLogProcessorPipelineTest {
 
     loggerContext.start();
     KafkaLogProcessorPipeline pipeline = new KafkaLogProcessorPipeline(
-      new LogProcessorPipelineContext(CConfiguration.create(), "testMultiAppenders", loggerContext), checkpointManager,
+      new LogProcessorPipelineContext(CConfiguration.create(), "testMultiAppenders",
+                                      loggerContext, NO_OP_METRICS_CONTEXT, 0),
+      checkpointManager,
       KAFKA_TESTER.getBrokerService(), config);
 
     pipeline.startAndWait();

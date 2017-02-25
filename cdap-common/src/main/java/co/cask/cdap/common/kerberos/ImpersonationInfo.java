@@ -16,8 +16,9 @@
 
 package co.cask.cdap.common.kerberos;
 
+import com.google.common.base.Strings;
+
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
  * Encapsulates information necessary to impersonate a user - principal and keytab path.
@@ -29,7 +30,13 @@ public final class ImpersonationInfo {
   /**
    * Creates {@link ImpersonationInfo} using the specified principal and keytab path.
    */
-  public ImpersonationInfo(String principal, @Nullable String keytabURI) {
+  public ImpersonationInfo(String principal, String keytabURI) {
+    if (Strings.isNullOrEmpty(principal)) {
+      throw new IllegalArgumentException("A principal must be provided");
+    }
+    if (Strings.isNullOrEmpty(keytabURI)) {
+      throw new IllegalArgumentException("A keytabURI must be provided");
+    }
     this.principal = principal;
     this.keytabURI = keytabURI;
   }
@@ -38,7 +45,6 @@ public final class ImpersonationInfo {
     return principal;
   }
 
-  @Nullable
   public String getKeytabURI() {
     return keytabURI;
   }

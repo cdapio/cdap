@@ -16,12 +16,13 @@
 
 # Logic:
 # Get version
-# s3cmd ls to see if repo exists
-# - yes, sync repo local
-# - no, create repo dir
 # copy new parcel into repo dir
 # symlink parcels
 # create manifest
+# s3cmd ls to see if repo exists
+# - yes, sync repo manifest locally, merge
+# - no, do nothing
+
 
 # Find our location and base repo directory
 # Resolve links: $0 may be a link
@@ -62,11 +63,6 @@ function repo_exists() {
 
 function setup_repo_staging() {
   mkdir -p ${STAGE_DIR}/${__maj_min} || return 1
-  if repo_exists; then
-    echo "Found existing repository at s3://${S3_BUCKET}/${S3_REPO_PATH}/${__maj_min}... copying to staging directory"
-    s3cmd sync --no-preserve s3://${S3_BUCKET}/${S3_REPO_PATH}/${__maj_min} ${STAGE_DIR}
-    return $?
-  fi
   return 0
 }
 
@@ -101,10 +97,22 @@ function make_manifest_in_repo_staging() {
   make_manifest ${__maj_min}
 }
 
+# Sync current manifest from S3 to temp location, merge into built repo
+function merge_manifest() {
+  if repo_exists; then
+    echo "Found existing repository at s3://${S3_BUCKET}/${S3_REPO_PATH}/${__maj_min}... syncing manifest.json locally"
+    s3cmd sync --no-preserve s3://${S3_BUCKET}/${S3_REPO_PATH}/${__maj_min}/manifest.json ${TARGET_DIR}/s3manifest.json
+    ${DISTRIBUTIONS_HOME}/bin/merge_manifests.rb -m ${STAGE_DIR}/${__maj_min}/manifest.json -m ${TARGET_DIR}/s3manifest.json -o ${STAGE_DIR}/${__maj_min}/manifest.json || return 1
+    rm -f ${TARGET_DIR}/s3manifest.json
+    return $?
+  fi
+}
+
 # Here we go!
 setup_repo_staging || die "Something went wrong setting up the staging directory"
 add_parcels_to_repo_staging || die "Failed copying parcels to staging directory"
 make_manifest_in_repo_staging || die "Failed to create repository from staging directory"
+merge_manifest || die "Failed to merge in existing repository manifest"
 
 cp -f ${STAGE_DIR}/${__maj_min}/manifest.json ${TARGET_DIR}
 

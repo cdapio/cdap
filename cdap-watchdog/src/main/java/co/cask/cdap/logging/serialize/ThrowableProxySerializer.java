@@ -18,12 +18,11 @@ package co.cask.cdap.logging.serialize;
 
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
+import co.cask.cdap.logging.LoggingUtil;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
-
-import static co.cask.cdap.logging.serialize.LogSerializerUtil.stringOrNull;
 
 /**
  * Serializer for IThrowableProxy.
@@ -52,8 +51,8 @@ final class ThrowableProxySerializer {
 
   static IThrowableProxy decode(GenericRecord datum) {
     if (datum != null) {
-      String className = stringOrNull(datum.get("className"));
-      String message = stringOrNull(datum.get("message"));
+      String className = LoggingUtil.stringOrNull(datum.get("className"));
+      String message = LoggingUtil.stringOrNull(datum.get("message"));
       int commonFramesCount = (Integer) datum.get("commonFramesCount");
       @SuppressWarnings("unchecked") StackTraceElementProxy[] steArray =
         StackTraceElementProxyArraySerializer.decode(

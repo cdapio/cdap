@@ -15,15 +15,26 @@
  */
 
 .tags-holder {
-  margin-top: 8px;
-  .btn.btn-secondary {
-    background-color: lightgray;
+  .btn {
     padding: 3px 5px;
     font-size: 12px;
-    margin-right: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 
-    .fa.fa-times {
+    &.plus-button-container {
       margin-left: 5px;
     }
+  }
+
+  .tag-input {
+    height: 21px;
+    width: 120px;
+    display: inline-block;
+    padding: 3px 5px;
+    transform: translateY(1px);
+    margin-left: 5px;
+    margin-right: 3px;
   }
 }

@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _stream-exploration:
 
@@ -333,7 +333,7 @@ When creating your queries, keep these limitations in mind:
 - CDAP uses a custom storage handler to read streams through Hive. This means that queries must be run through
   CDAP and not directly through Hive unless you place CDAP jars in your Hive classpath. This also means that
   streams cannot be queried directly by Impala. If you wish to use Impala to explore data in a stream, you can
-  create a :ref:`Hydrator pipeline <cask-hydrator>` that converts stream data into a ``TimePartitionedFileSet``.
+  create a :ref:`CDAP pipeline <cdap-pipelines>` that converts stream data into a ``TimePartitionedFileSet``.
   This is also described in the section :ref:`Introduction to CDAP: Transforming Your Data <introduction-to-cdap-transforming-your-data>`.
 - Some versions of Hive may try to create a temporary staging directory at the table location when executing queries.
   If you are seeing permission errors, try setting ``hive.exec.stagingdir`` in your Hive configuration to ``/tmp/hive-staging``.

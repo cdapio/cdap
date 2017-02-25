@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
+import co.cask.cdap.etl.mock.batch.aggregator.GroupFilterAggregator;
 import co.cask.cdap.etl.mock.batch.joiner.DupeFlagger;
 import co.cask.cdap.etl.mock.batch.joiner.MockJoiner;
 import co.cask.cdap.etl.mock.spark.Window;
@@ -30,6 +31,9 @@ import co.cask.cdap.etl.mock.spark.compute.StringValueFilterCompute;
 import co.cask.cdap.etl.mock.spark.streaming.MockSource;
 import co.cask.cdap.etl.mock.test.HydratorTestBase;
 import co.cask.cdap.etl.mock.transform.FieldsPrefixTransform;
+import co.cask.cdap.etl.mock.transform.FilterErrorTransform;
+import co.cask.cdap.etl.mock.transform.FlattenErrorTransform;
+import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
 import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
@@ -574,10 +578,10 @@ public class DataStreamsTest extends HydratorTestBase {
       .addStage(new ETLStage("source1", MockSource.getPlugin(inputSchema1, input1)))
       .addStage(new ETLStage("source2", MockSource.getPlugin(inputSchema2, input2)))
       .addStage(new ETLStage("source3", MockSource.getPlugin(inputSchema3, input3)))
-      .addStage(new ETLStage("t1", FieldsPrefixTransform.getPlugin("", inputSchema1.toString())))
-      .addStage(new ETLStage("t2", FieldsPrefixTransform.getPlugin("", inputSchema2.toString())))
-      .addStage(new ETLStage("t3", FieldsPrefixTransform.getPlugin("", inputSchema3.toString())))
-      .addStage(new ETLStage("t4", FieldsPrefixTransform.getPlugin("", outSchema1.toString())))
+      .addStage(new ETLStage("t1", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("t2", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("t3", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("t4", IdentityTransform.getPlugin()))
       .addStage(new ETLStage("innerjoin", MockJoiner.getPlugin("t1.customer_id=t2.cust_id",
                                                                "t1,t2", "")))
       .addStage(new ETLStage("outerjoin", MockJoiner.getPlugin("t4.item_id=t3.i_id",
@@ -651,6 +655,115 @@ public class DataStreamsTest extends HydratorTestBase {
     validateMetric(appId, "outerjoin.records.in", 5);
     validateMetric(appId, "outerjoin.records.out", 3);
     validateMetric(appId, "multijoinSink.records.in", 3);
+  }
+
+  @Test
+  public void testErrorTransform() throws Exception {
+    String sourceTableName = "errTestIn";
+    String sink1TableName = "errTestOut1";
+    String sink2TableName = "errTestOut2";
+
+    Schema inputSchema = Schema.recordOf("user", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    List<StructuredRecord> input = ImmutableList.of(
+      StructuredRecord.builder(inputSchema).set("name", "Leo").build(),
+      StructuredRecord.builder(inputSchema).set("name", "Ralph").build(),
+      StructuredRecord.builder(inputSchema).set("name", "Don").build(),
+      StructuredRecord.builder(inputSchema).set("name", "Mike").build(),
+      StructuredRecord.builder(inputSchema).set("name", "April").build());
+    /*
+     *
+     * source--> filter1 --> filter2 --> agg1 --> agg2
+     *              |           |         |        |
+     *              |-----------|---------|--------|--------|--> flatten errors --> sink1
+     *                                                      |
+     *                                                      |--> filter errors --> sink2
+     * arrows coming out the right represent output records
+     * arrows coming out the bottom represent error records
+     * this will test multiple stages from multiple phases emitting errors to the same stage
+     * as well as errors from one stage going to multiple stages
+     */
+    DataStreamsConfig config = DataStreamsConfig.builder()
+      .setBatchInterval("5s")
+      .addStage(new ETLStage("source", MockSource.getPlugin(inputSchema, input)))
+      .addStage(new ETLStage("filter1", StringValueFilterTransform.getPlugin("name", "Leo")))
+      .addStage(new ETLStage("filter2", StringValueFilterTransform.getPlugin("name", "Ralph")))
+      .addStage(new ETLStage("agg1", GroupFilterAggregator.getPlugin("name", "Don")))
+      .addStage(new ETLStage("agg2", GroupFilterAggregator.getPlugin("name", "Mike")))
+      .addStage(new ETLStage("errorflatten", FlattenErrorTransform.getPlugin()))
+      .addStage(new ETLStage("errorfilter", FilterErrorTransform.getPlugin(3)))
+      .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1TableName)))
+      .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2TableName)))
+      .addConnection("source", "filter1")
+      .addConnection("filter1", "filter2")
+      .addConnection("filter2", "agg1")
+      .addConnection("agg1", "agg2")
+      .addConnection("filter1", "errorflatten")
+      .addConnection("filter1", "errorfilter")
+      .addConnection("filter2", "errorflatten")
+      .addConnection("filter2", "errorfilter")
+      .addConnection("agg1", "errorflatten")
+      .addConnection("agg1", "errorfilter")
+      .addConnection("agg2", "errorflatten")
+      .addConnection("agg2", "errorfilter")
+      .addConnection("errorflatten", "sink1")
+      .addConnection("errorfilter", "sink2")
+      .build();
+
+    AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app("ErrTransformTest");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
+    sparkManager.start();
+    sparkManager.waitForStatus(true, 10, 1);
+
+    Schema flattenSchema =
+      Schema.recordOf("erroruser",
+                      Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+                      Schema.Field.of("errMsg", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                      Schema.Field.of("errCode", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+                      Schema.Field.of("errStage", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    final Set<StructuredRecord> expected = ImmutableSet.of(
+      StructuredRecord.builder(flattenSchema)
+        .set("name", "Leo").set("errMsg", "bad string value").set("errCode", 1).set("errStage", "filter1").build(),
+      StructuredRecord.builder(flattenSchema)
+        .set("name", "Ralph").set("errMsg", "bad string value").set("errCode", 1).set("errStage", "filter2").build(),
+      StructuredRecord.builder(flattenSchema)
+        .set("name", "Don").set("errMsg", "bad val").set("errCode", 3).set("errStage", "agg1").build(),
+      StructuredRecord.builder(flattenSchema)
+        .set("name", "Mike").set("errMsg", "bad val").set("errCode", 3).set("errStage", "agg2").build());
+    final DataSetManager<Table> sink1Table = getDataset(sink1TableName);
+    Tasks.waitFor(
+      true,
+      new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          sink1Table.flush();
+          Set<StructuredRecord> outputRecords = new HashSet<>();
+          outputRecords.addAll(MockSink.readOutput(sink1Table));
+          return expected.equals(outputRecords);
+        }
+      },
+      4,
+      TimeUnit.MINUTES);
+
+    final Set<StructuredRecord> expected2 = ImmutableSet.of(
+      StructuredRecord.builder(inputSchema).set("name", "Leo").build(),
+      StructuredRecord.builder(inputSchema).set("name", "Ralph").build());
+    final DataSetManager<Table> sink2Table = getDataset(sink2TableName);
+    Tasks.waitFor(
+      true,
+      new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          sink2Table.flush();
+          Set<StructuredRecord> outputRecords = new HashSet<>();
+          outputRecords.addAll(MockSink.readOutput(sink2Table));
+          return expected2.equals(outputRecords);
+        }
+      },
+      4,
+      TimeUnit.MINUTES);
   }
 
   private void validateMetric(ApplicationId appId, String metric,

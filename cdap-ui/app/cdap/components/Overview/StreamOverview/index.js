@@ -135,7 +135,7 @@ export default class StreamOverview extends Component {
     let title = T.translate('commons.entity.stream.singular');
     let namespace = NamespaceStore.getState().selectedNamespace;
     return (
-      <div className="app-overview">
+      <div className="app-overview streams-overview">
         <OverviewHeader
           icon="icon-streams"
           title={title}
@@ -148,12 +148,14 @@ export default class StreamOverview extends Component {
             }
           }}
           onClose={this.props.onClose}
+          entityType="stream"
           successMessage={this.state.successMessage}
         />
         <OverviewMetaSection
           entity={this.state.entity}
           onFastActionSuccess={this.onFastActionSuccess.bind(this)}
           onFastActionUpdate={this.onFastActionUpdate.bind(this)}
+          showSeparator={true}
         />
         <StreamOverviewTab entity={this.state.entityDetail} />
       </div>

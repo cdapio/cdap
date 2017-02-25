@@ -102,7 +102,7 @@ var loaders = [
 var webpackConfig = {
   context: __dirname + '/app/wrangler',
   entry: {
-    'wrangler': ['./wrangler.js', 'rx', 'rx-dom']
+    'wrangler': ['babel-polyfill', './wrangler.js', 'rx', 'rx-dom']
   },
   module: {
     preLoaders: [

@@ -25,7 +25,7 @@ What platforms are supported by the Cask Data Application Platform SDK?
 -----------------------------------------------------------------------
 The CDAP SDK has been extensively tested on Mac OS X and Linux. CDAP on Windows has not
 been extensively tested. If you have any issues with CDAP on Windows, help us by 
-`filling a ticket <https://issues.cask.co/browse/CDAP>`__.
+`filing a ticket <https://issues.cask.co/browse/CDAP>`__.
 
 What programming languages are supported by CDAP?
 -------------------------------------------------
@@ -33,8 +33,9 @@ CDAP currently supports Java for developing applications.
 
 What version of Java SDK is required by CDAP?
 ---------------------------------------------
-The latest version of the JDK or JRE version 7 or version 8 must be installed
-in your environment; we recommend the Oracle JDK.
+The latest version of the JDK or JRE version 7 or version 8 must be installed in your
+environment. CDAP is tested on both the `Oracle JDK <http://www.java.com/en/download/manual.jsp>`__ 
+and the `OpenJDK <http://openjdk.java.net/>`__.
 
 What version of Node.js is required by CDAP?
 --------------------------------------------
@@ -44,12 +45,12 @@ We recommend a version of `Node.js <https://nodejs.org/>`__ beginning with |node
 
 I have a Hadoop cluster in my data center, can I run CDAP that uses my Hadoop cluster?
 --------------------------------------------------------------------------------------
-Yes. You can install CDAP Distributed on your Hadoop cluster. See the :ref:`Installation procedure <installation-index>`.
+Yes. You can install Distributed CDAP on your Hadoop cluster. See the :ref:`Installation procedure <installation-index>`.
 
 What Hadoop distributions can CDAP run on?
 ------------------------------------------
-CDAP |version| has been tested on and supports CDH 5.0.0 through 5.6.x; HDP 2.0 through 2.3.x; 
-MapR 4.x and 5.x, and Apache Bigtop 1.0. 
+CDAP |version| has been tested on and supports CDH |cdh-versions|, HDP |hdp-versions|, 
+MapR |mapr-versions|, Amazon Hadoop (EMR) |emr-versions|, and Apache Bigtop 1.0. 
 
 I'm seeing log messages about the failure to send audit log message while running the SDK. What's wrong?
 --------------------------------------------------------------------------------------------------------

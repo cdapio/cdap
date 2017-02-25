@@ -17,4 +17,20 @@
 .select-destination-step {
   height: calc(100% - 32px);
   padding: 10px;
+
+  .destination-input {
+    display: flex;
+    align-items: center;
+    input {
+      margin-right: 10px;
+    }
+    i.fa {
+      font-size: 16px;
+      cursor: pointer;
+      &.btn-link,
+      &.btn-link:hover {
+        text-decoration: none;
+      }
+    }
+  }
 }

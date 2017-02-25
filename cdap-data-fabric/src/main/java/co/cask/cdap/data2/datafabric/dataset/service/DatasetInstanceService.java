@@ -197,7 +197,7 @@ public class DatasetInstanceService {
     // (causing its own lookup) as the SystemDatasetInitiator.getDataset is called when CDAP starts
     String ownerPrincipal = null;
     if (!NamespaceId.SYSTEM.equals(instance.getNamespaceId())) {
-      ownerPrincipal = ownerAdmin.getOwnerPrincipal(instance);
+      ownerPrincipal = ownerAdmin.getImpersonationPrincipal(instance);
     }
     return new DatasetMeta(spec, typeMeta, null, ownerPrincipal);
   }
@@ -269,6 +269,8 @@ public class DatasetInstanceService {
       String ownerPrincipal = props.getOwnerPrincipal();
       // Store the owner principal first if one was provided since it will be used to impersonate while creating
       // dataset's files/tables in the underlying storage
+      // it has already been established that the dataset doesn't exists so no need to check if an owner principal
+      // exists or not
       if (ownerPrincipal != null) {
         KerberosPrincipalId owner = new KerberosPrincipalId(ownerPrincipal);
         ownerAdmin.add(datasetId, owner);

@@ -36,6 +36,30 @@
   </property>
 
   <property>
+    <name>log.cleanup.run.interval.mins</name>
+    <value>1440</value>
+    <description>
+      Log cleanup interval in minutes
+    </description>
+  </property>
+
+  <property>
+    <name>log.cleanup.max.num.files</name>
+    <value>1000</value>
+    <description>
+      Maximum number of files scanned in one iteration
+    </description>
+  </property>
+
+  <property>
+    <name>log.retention.duration.days</name>
+    <value>7</value>
+    <description>
+      Duration (the time-to-live) in days of saved log files in HDFS retention
+    </description>
+  </property>
+
+  <property>
     <name>dataset.service.bind.address</name>
     <value>0.0.0.0</value>
     <description>

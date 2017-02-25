@@ -18,6 +18,7 @@ package co.cask.cdap.etl.api;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.etl.api.batch.BatchSource;
 
 import javax.annotation.Nullable;
 
@@ -37,10 +38,19 @@ public interface StageConfigurer {
   Schema getInputSchema();
 
   /**
-   * set output schema for this stage, or null if its unknown
+   * set the output schema for this stage, or null if its unknown
    *
    * @param outputSchema output schema for this stage
    */
   void setOutputSchema(@Nullable Schema outputSchema);
+
+  /**
+   * set the error schema for this stage, or null if its unknown.
+   * If no error schema is set, it will default to the input schema for the stage. Note that since source
+   * plugins do not have an input schema, it will default to null for sources.
+   *
+   * @param errorSchema error schema for this stage
+   */
+  void setErrorSchema(@Nullable Schema errorSchema);
 
 }

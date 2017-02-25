@@ -28,6 +28,7 @@ import co.cask.cdap.logging.appender.LoggingTester;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.read.KafkaLogReader;
+import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Function;
 import com.google.common.collect.ArrayListMultimap;

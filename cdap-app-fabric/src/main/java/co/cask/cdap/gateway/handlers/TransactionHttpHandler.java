@@ -16,20 +16,27 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
+import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.http.ChunkResponder;
+import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.Closeables;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.InvalidTruncateTimeException;
+import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCouldNotTakeSnapshotException;
 import org.apache.tephra.TransactionSystemClient;
+import org.apache.tephra.TxConstants;
+import org.apache.tephra.txprune.RegionPruneInfo;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -38,29 +45,42 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
+import java.util.SortedSet;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Handler to for managing transaction states.
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
-
   private static final Logger LOG = LoggerFactory.getLogger(TransactionHttpHandler.class);
   private static final Type STRING_LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
   private static final Type STRING_LONG_SET_MAP_TYPE = new TypeToken<Map<String, Set<Long>>>() { }.getType();
 
+  private final CConfiguration cConf;
   private final TransactionSystemClient txClient;
+  private final boolean pruneEnable;
+  private Class<?> debugClazz;
+  private Object debugObject;
 
   @Inject
-  public TransactionHttpHandler(TransactionSystemClient txClient) {
-    this.txClient = txClient;
+  public TransactionHttpHandler(CConfiguration cConf, TransactionSystemClient txClient) {
+    this.cConf = cConf;
+    this.txClient = new TransactionSystemClientAdapter(txClient);
+    this.pruneEnable = cConf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE,
+                                        TxConstants.TransactionPruning.DEFAULT_PRUNE_ENABLE);
   }
 
   /**
@@ -166,6 +186,20 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of("size", invalidSize));
   }
 
+  @Path("/transactions/invalid")
+  @GET
+  public void invalidList(HttpRequest request, HttpResponder responder,
+                          @QueryParam("limit") @DefaultValue("-1") int limit) {
+    Transaction tx = txClient.startShort();
+    txClient.abort(tx);
+    long[] invalids = tx.getInvalids();
+    if (limit == -1) {
+      responder.sendJson(HttpResponseStatus.OK, invalids);
+      return;
+    }
+    responder.sendJson(HttpResponseStatus.OK, Arrays.copyOf(invalids, Math.min(limit, invalids.length)));
+  }
+
   /**
    * Reset the state of the transaction manager.
    */
@@ -174,5 +208,124 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   public void resetTxManagerState(HttpRequest request, HttpResponder responder) {
     txClient.resetState();
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @Path("/transactions/prune/regions/{region-name}")
+  @GET
+  public void getPruneInfo(HttpRequest request, HttpResponder responder, @PathParam("region-name") String regionName) {
+    if (!initializePruningDebug(responder)) {
+      return;
+    }
+
+    try {
+      Method method = debugClazz.getMethod("getRegionPruneInfo", String.class);
+      method.setAccessible(true);
+      Object response = method.invoke(debugObject, regionName);
+      if (response == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND,
+                             "No prune upper bound has been registered for this region yet.");
+        return;
+      }
+      RegionPruneInfo pruneInfo = (RegionPruneInfo) response;
+      responder.sendJson(HttpResponseStatus.OK, pruneInfo);
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      LOG.debug("Exception while trying to fetch the RegionPruneInfo.", e);
+    }
+  }
+
+  @Path("/transactions/prune/regions")
+  @GET
+  public void getTimeRegions(HttpRequest request, HttpResponder responder,
+                             @QueryParam("time") @DefaultValue("9223372036854775807") long time) {
+    if (!initializePruningDebug(responder)) {
+      return;
+    }
+
+    try {
+      Method method = debugClazz.getMethod("getRegionsOnOrBeforeTime", Long.class);
+      method.setAccessible(true);
+      Object response = method.invoke(debugObject, time);
+      if (response == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND,
+                             String.format("No regions have been registered on or before time %d", time));
+        return;
+      }
+      Map<Long, SortedSet<String>> timeRegionInfo = (Map<Long, SortedSet<String>>) response;
+      responder.sendJson(HttpResponseStatus.OK, timeRegionInfo);
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      LOG.debug("Exception while trying to fetch the time region.", e);
+    }
+  }
+
+  @Path("/transactions/prune/regions/idle")
+  @GET
+  public void getIdleRegions(HttpRequest request, HttpResponder responder,
+                             @QueryParam("limit") @DefaultValue("-1") int numRegions) {
+    if (!initializePruningDebug(responder)) {
+      return;
+    }
+
+    try {
+      Method method = debugClazz.getMethod("getIdleRegions", Integer.class);
+      method.setAccessible(true);
+      Object response = method.invoke(debugObject, numRegions);
+      Queue<RegionPruneInfo> pruneInfos = (Queue<RegionPruneInfo>) response;
+      responder.sendJson(HttpResponseStatus.OK, pruneInfos);
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      LOG.debug("Exception while trying to fetch the idle regions.", e);
+    }
+  }
+
+  private boolean initializePruningDebug(HttpResponder responder) {
+    if (!pruneEnable) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid List Pruning is not enabled.");
+      return false;
+    }
+
+    synchronized (this) {
+      if (debugClazz == null || debugObject == null) {
+        try {
+          this.debugClazz = getClass().getClassLoader()
+            .loadClass("org.apache.tephra.hbase.txprune.InvalidListPruningDebug");
+          this.debugObject = debugClazz.newInstance();
+          Configuration hConf = new Configuration();
+          for (Map.Entry<String, String> entry : cConf) {
+            hConf.set(entry.getKey(), entry.getValue());
+          }
+          Method initMethod = debugClazz.getMethod("initialize", Configuration.class);
+          initMethod.setAccessible(true);
+          initMethod.invoke(debugObject, hConf);
+        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException ex) {
+          LOG.debug("InvalidListPruningDebug class not found. Pruning Debug endpoints will not work.", ex);
+          this.debugClazz = null;
+        } catch (NoSuchMethodException | InvocationTargetException ex) {
+          LOG.debug("Initialize method was not found in InvalidListPruningDebug. Debug endpoints will not work.", ex);
+          this.debugClazz = null;
+        }
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public void destroy(HandlerContext context) {
+    super.destroy(context);
+    synchronized (this) {
+      if (debugClazz != null && debugObject != null) {
+        try {
+          Method destroyMethod = debugClazz.getMethod("destroy");
+          destroyMethod.setAccessible(true);
+          destroyMethod.invoke(debugObject);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+          LOG.debug("Destroy method was not found in InvalidListPruningDebug.", e);
+        } finally {
+          debugClazz = null;
+          debugObject = null;
+        }
+      }
+    }
   }
 }

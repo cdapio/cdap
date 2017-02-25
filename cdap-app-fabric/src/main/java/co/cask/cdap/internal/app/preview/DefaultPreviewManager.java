@@ -202,7 +202,6 @@ public class DefaultPreviewManager implements PreviewManager {
     java.nio.file.Path previewDir = Files.createDirectories(Paths.get(previewDirPath.toAbsolutePath().toString(),
                                                                       applicationId.getApplication()));
     previewcConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
-    previewcConf.set(Constants.Dataset.DATA_DIR, previewDir.toString());
     Configuration previewhConf = new Configuration(hConf);
     previewhConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
     previewcConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());

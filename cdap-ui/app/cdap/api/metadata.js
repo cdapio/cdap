@@ -23,5 +23,8 @@ export const MyMetadataApi = {
   getMetadata: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
   getProperties: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/properties`),
   addProperties: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/properties`),
-  deleteProperty: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/properties/:key`)
+  deleteProperty: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/properties/:key`),
+  getTags: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/tags`),
+  addTags: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/tags`),
+  deleteTags: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/tags/:key`)
 };

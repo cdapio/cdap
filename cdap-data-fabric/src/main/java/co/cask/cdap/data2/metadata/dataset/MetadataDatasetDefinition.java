@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Cask Data, Inc.
+ * Copyright 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@ import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.base.Joiner;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -70,16 +71,7 @@ public class MetadataDatasetDefinition
   public DatasetSpecification reconfigure(String instanceName,
                                           DatasetProperties newProperties,
                                           DatasetSpecification currentSpec) throws IncompatibleUpdateException {
-    // extract the column to index from the indexed table spec
-    DatasetSpecification indexSpec = currentSpec.getSpecification(METADATA_INDEX_TABLE_NAME);
-    // this should return a comma-separated string if there are multiple index columns
-    String indexColumn = indexSpec.getProperty(IndexedTable.INDEX_COLUMNS_CONF_KEY);
-    return DatasetSpecification.builder(instanceName, getName())
-      .properties(newProperties.getProperties())
-      .datasets(AbstractDatasetDefinition.reconfigure(indexedTableDef, METADATA_INDEX_TABLE_NAME,
-                                                      addIndexColumns(newProperties, indexColumn),
-                                                      indexSpec))
-      .build();
+    return configure(instanceName, newProperties);
   }
 
   private DatasetProperties addIndexColumns(DatasetProperties properties, String... indexColumns) {

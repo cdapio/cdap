@@ -60,6 +60,8 @@ angular.module(PKG.name + '.feature.hydrator')
           metricObj[key].recordsIn = metric.data[0].value;
         } else if (metric.metricName.indexOf(split[1] + '.records.out') !== -1) {
           metricObj[key].recordsOut = metric.data[0].value;
+        } else if (metric.metricName.indexOf(split[1] + '.records.error') !== -1) {
+          metricObj[key].recordsError = metric.data[0].value;
         }
 
       });

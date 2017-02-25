@@ -13,9 +13,6 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<div ng-if="!$state.params.iframe">
-  <cask-resource-center-button></cask-resource-center-button>
-</div>
 <div class="tracker-no-result text-center"
   ng-if="ResultsController.fullResults.length === 0 && !ResultsController.loading">
   <p>No results found for "{{ $state.params.searchQuery }}"</p>
@@ -71,7 +68,8 @@
 
 
       <h4 ng-mouseenter="ResultsController.metadataShowAllButton = true"
-          ng-mouseleave="ResultsController.metadataShowAllButton = false">
+          ng-mouseleave="ResultsController.metadataShowAllButton = false"
+          ng-if="ResultsController.numMetadataFiltersMatched > 0">
         <span>Metadata</span>
         <span class="filter-show-all pull-right"
               ng-click="ResultsController.showAll('METADATA')"
@@ -148,33 +146,22 @@
           <h5>
             <span class="{{entity.icon}}"></span>
             <span>{{ entity.type }}</span>
-
-            <span class="pull-right">
-              <span class="text-dark">Created: </span>
-              <span ng-if="entity.createDate">
-                {{ entity.createDate | amDateFormat:'MMM DD, YYYY' }}
-              </span>
-              <span ng-if="!entity.createDate">
-                &mdash;
-              </span>
-            </span>
           </h5>
-
+          <div class="creation-time">
+            <span class="text-dark">Created: </span>
+            <span ng-if="entity.createDate">
+              {{ entity.createDate | amDateFormat:'MMM DD, YYYY' }}
+            </span>
+            <span ng-if="!entity.createDate">
+              &mdash;
+            </span>
+          </div>
           <p>{{ entity.description }}</p>
         </div>
 
-        <div class="col-xs-4">
+        <div class="col-xs-6 text-right">
           <my-truth-meter score="ResultsController.truthMeterMap[entity.entityTypeState][entity.name]"
                           width="190"></my-truth-meter>
-        </div>
-
-        <div class="col-xs-2 text-right">
-          <my-jump-button
-            entity-type="entity.entityTypeState"
-            entity-id="entity.name"
-            dataset-type="entity.datasetType"
-            dataset-explorable="entity.datasetExplorable">
-          </my-jump-button>
         </div>
       </div>
 

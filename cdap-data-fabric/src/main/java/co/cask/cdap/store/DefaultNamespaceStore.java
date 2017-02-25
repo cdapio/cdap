@@ -27,6 +27,7 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -34,7 +35,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 
 import java.io.IOException;
@@ -55,7 +55,8 @@ public class DefaultNamespaceStore implements NamespaceStore {
   DefaultNamespaceStore(TransactionSystemClient txClient, DatasetFramework framework) {
     this.dsFramework = framework;
     this.transactional = Transactions.createTransactional(
-      new MultiThreadDatasetCache(new SystemDatasetInstantiator(dsFramework), txClient,
+      new MultiThreadDatasetCache(new SystemDatasetInstantiator(dsFramework),
+                                  new TransactionSystemClientAdapter(txClient),
                                   NamespaceId.SYSTEM, null, null, null)
     );
   }
@@ -70,91 +71,71 @@ public class DefaultNamespaceStore implements NamespaceStore {
   @Nullable
   public NamespaceMeta create(final NamespaceMeta metadata) {
     Preconditions.checkArgument(metadata != null, "Namespace metadata cannot be null.");
-    try {
-      return Transactions.execute(transactional, new TxCallable<NamespaceMeta>() {
-        @Override
-        public NamespaceMeta call(DatasetContext context) throws Exception {
-          NamespaceMDS mds = getNamespaceMDS(context);
-          NamespaceMeta existing = mds.get(metadata.getNamespaceId());
-          if (existing != null) {
-            return existing;
-          }
-          mds.create(metadata);
-          return null;
+    return Transactions.executeUnchecked(transactional, new TxCallable<NamespaceMeta>() {
+      @Override
+      public NamespaceMeta call(DatasetContext context) throws Exception {
+        NamespaceMDS mds = getNamespaceMDS(context);
+        NamespaceMeta existing = mds.get(metadata.getNamespaceId());
+        if (existing != null) {
+          return existing;
         }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e);
-    }
+        mds.create(metadata);
+        return null;
+      }
+    });
   }
 
   @Override
   public void update(final NamespaceMeta metadata) {
     Preconditions.checkArgument(metadata != null, "Namespace metadata cannot be null.");
-    try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          NamespaceMDS mds = getNamespaceMDS(context);
-          NamespaceMeta existing = mds.get(metadata.getNamespaceId());
-          if (existing != null) {
-            mds.create(metadata);
-          }
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        NamespaceMDS mds = getNamespaceMDS(context);
+        NamespaceMeta existing = mds.get(metadata.getNamespaceId());
+        if (existing != null) {
+          mds.create(metadata);
         }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e);
-    }
+      }
+    });
   }
 
   @Override
   @Nullable
   public NamespaceMeta get(final NamespaceId id) {
     Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
-    try {
-      return Transactions.execute(transactional, new TxCallable<NamespaceMeta>() {
-        @Override
-        public NamespaceMeta call(DatasetContext context) throws Exception {
-          return getNamespaceMDS(context).get(id);
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e);
-    }
+    return Transactions.executeUnchecked(transactional, new TxCallable<NamespaceMeta>() {
+      @Override
+      public NamespaceMeta call(DatasetContext context) throws Exception {
+        return getNamespaceMDS(context).get(id);
+      }
+    });
   }
 
   @Override
   @Nullable
   public NamespaceMeta delete(final NamespaceId id) {
     Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
-    try {
-      return Transactions.execute(transactional, new TxCallable<NamespaceMeta>() {
-        @Override
-        public NamespaceMeta call(DatasetContext context) throws Exception {
-          NamespaceMDS mds = getNamespaceMDS(context);
-          NamespaceMeta existing = mds.get(id);
-          if (existing != null) {
-            mds.delete(id);
-          }
-          return existing;
+    return Transactions.executeUnchecked(transactional, new TxCallable<NamespaceMeta>() {
+      @Override
+      public NamespaceMeta call(DatasetContext context) throws Exception {
+        NamespaceMDS mds = getNamespaceMDS(context);
+        NamespaceMeta existing = mds.get(id);
+        if (existing != null) {
+          mds.delete(id);
         }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e);
-    }
+        return existing;
+      }
+    });
   }
 
   @Override
   public List<NamespaceMeta> list() {
-    try {
-      return Transactions.execute(transactional, new TxCallable<List<NamespaceMeta>>() {
-        @Override
-        public List<NamespaceMeta> call(DatasetContext context) throws Exception {
-          return getNamespaceMDS(context).list();
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e);
-    }
+    return Transactions.executeUnchecked(transactional, new TxCallable<List<NamespaceMeta>>() {
+      @Override
+      public List<NamespaceMeta> call(DatasetContext context) throws Exception {
+        return getNamespaceMDS(context).list();
+      }
+    });
   }
 }

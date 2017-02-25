@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.framework;
 
+import co.cask.cdap.api.logging.AppenderContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import org.apache.tephra.TransactionSystemClient;

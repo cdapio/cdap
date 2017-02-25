@@ -69,10 +69,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.tephra</groupId>
-      <artifactId>tephra-hbase-compat-1.0-cdh</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
     </dependency>
@@ -207,7 +203,7 @@
                 </goals>
                 <configuration>
                   <excludeArtifactIds>*</excludeArtifactIds>
-                  <includeArtifactIds>tephra-hbase-compat-1.0-cdh</includeArtifactIds>
+                  <includeArtifactIds>${project.artifactId}</includeArtifactIds>
                   <silent>true</silent>
                   <includeScope>compile</includeScope>
                 </configuration>

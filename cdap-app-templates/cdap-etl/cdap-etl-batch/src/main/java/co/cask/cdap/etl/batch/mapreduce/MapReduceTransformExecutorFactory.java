@@ -36,9 +36,9 @@ import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
 import co.cask.cdap.etl.batch.join.Join;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
-import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
+import co.cask.cdap.etl.common.NoErrorEmitter;
 import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.common.preview.LimitingTransform;
 import co.cask.cdap.etl.planner.StageInfo;
@@ -243,7 +243,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
   private static class MapperAggregatorTransformation<GROUP_KEY, GROUP_VAL, OUT_KEY extends Writable,
     OUT_VAL extends Writable> implements Transformation<GROUP_VAL, KeyValue<OUT_KEY, OUT_VAL>> {
     private final Aggregator<GROUP_KEY, GROUP_VAL, ?> aggregator;
-    private final DefaultEmitter<GROUP_KEY> groupKeyEmitter;
+    private final NoErrorEmitter<GROUP_KEY> groupKeyEmitter;
     private final WritableConversion<GROUP_KEY, OUT_KEY> keyConversion;
     private final WritableConversion<GROUP_VAL, OUT_VAL> valConversion;
 
@@ -251,7 +251,8 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
                                    String groupKeyClassName,
                                    String groupValClassName) {
       this.aggregator = aggregator;
-      this.groupKeyEmitter = new DefaultEmitter<>();
+      this.groupKeyEmitter =
+        new NoErrorEmitter<>("Error records cannot be emitted from the groupBy method of an aggregator");
       WritableConversion<GROUP_KEY, OUT_KEY> keyConversion = WritableConversions.getConversion(groupKeyClassName);
       WritableConversion<GROUP_VAL, OUT_VAL> valConversion = WritableConversions.getConversion(groupValClassName);
       // if the conversion is null, it means the user is using a Writable already

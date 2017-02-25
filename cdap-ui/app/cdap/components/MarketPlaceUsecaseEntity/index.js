@@ -20,6 +20,7 @@ import moment from 'moment';
 require('./MarketPlaceUsecaseEntity.scss');
 import MarketActionsContainer from 'components/MarketActionsContainer';
 import MarketStore from 'components/Market/store/market-store.js';
+import classnames from 'classnames';
 
 export default class MarketPlaceUsecaseEntity extends Component {
   constructor(props) {
@@ -27,7 +28,9 @@ export default class MarketPlaceUsecaseEntity extends Component {
     this.state = {
       showActions: false,
       loadingActions: false,
-      entityDetail: {}
+      entityDetail: {},
+      imageError: false,
+      logoIcon: null
     };
     this.unsub = MarketStore.subscribe(() => {
       let state = MarketStore.getState();
@@ -45,6 +48,13 @@ export default class MarketPlaceUsecaseEntity extends Component {
   }
   componentWillUnmount() {
     this.unsub();
+  }
+
+  imageError() {
+    this.setState({
+      imageError: true,
+      logoIcon: `icon-${this.props.entity.label[0].toUpperCase()}`
+    });
   }
 
   getVersion() {
@@ -106,7 +116,15 @@ export default class MarketPlaceUsecaseEntity extends Component {
         </div>
         <div className="entity-information">
           <div className="entity-modal-image">
-            <img src={MyMarketApi.getIcon(this.props.entity)} />
+            {
+              this.state.imageError ?
+                <span className={classnames("fa", this.state.logoIcon)}></span>
+              :
+                <img
+                  src={MyMarketApi.getIcon(this.props.entity)}
+                  onError={this.imageError.bind(this)}
+                />
+            }
           </div>
           <div className="entity-content">
             <div className="entity-description">

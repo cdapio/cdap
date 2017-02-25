@@ -84,7 +84,8 @@ export default class TableItem extends Component {
           columns,
           preview,
           queryHandle,
-          loading: false
+          loading: false,
+          fieldSelected: columns.length > 0 ? columns[0].raw : ''
         });
 
       });

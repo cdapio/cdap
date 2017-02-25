@@ -132,7 +132,7 @@ export default class DatasetOverview extends Component {
     let title = T.translate('commons.entity.dataset.singular');
     let namespace = NamespaceStore.getState().selectedNamespace;
     return (
-      <div className="app-overview">
+      <div className="app-overview dataset-overview">
         <OverviewHeader
           icon="icon-datasets"
           title={title}
@@ -145,12 +145,14 @@ export default class DatasetOverview extends Component {
             }
           }}
           onClose={this.props.onClose}
+          entityType="datasetinstance"
           successMessage={this.state.successMessage}
         />
         <OverviewMetaSection
           entity={this.state.entity}
           onFastActionSuccess={this.onFastActionSuccess.bind(this)}
           onFastActionUpdate={this.onFastActionUpdate.bind(this)}
+          showSeparator={true}
         />
         <DatasetOverviewTab entity={this.state.entityDetail} />
       </div>

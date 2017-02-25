@@ -17,7 +17,7 @@ DOCS_LOCAL="docs-local"
 DOCS_OUTER="docs-outer"
 
 CDAP_MANUALS="introduction developers-manual admin-manual integrations examples-manual reference-manual faqs"
-EXTENSION_MANUALS="hydrator-manual tracker-manual"
+EXTENSION_MANUALS=""
 MANUALS="${CDAP_MANUALS} ${EXTENSION_MANUALS}"
 
 # Used to monitor any changes in scripts or commands for the building of Javadocs
@@ -29,36 +29,45 @@ BUILD_RST_HASH="5db96f8c4866f62b2f28b4ca3c99448c"
 # All "GIT_" variables are loaded by the Sphinx build and need to be static as they are not sourced
 #
 
+GIT_CDH_VERSIONS="5.1 through 5.9"
+GIT_HDP_VERSIONS="2.0 through 2.5"
+GIT_MAPR_VERSIONS="4.1 through 5.2"
+GIT_EMR_VERSIONS="4.6 through 4.8"
+
 GIT_PREVIOUS_SHORT_VERSION="3.6"
 
 GIT_NODE_JS_MIN_VERSION="v4.5.0"
 # GIT_NODE_JS_MAX_VERSION="" # not currently known
 
 # This needs to be explicitly set as Git has trouble identifying it
-GIT_BRANCH_PARENT="develop"
+GIT_BRANCH_PARENT="release/4.1"
 
 # Used by admin-manual
-GIT_BRANCH_CDAP_SECURITY_EXTN="develop"
+GIT_BRANCH_CDAP_SECURITY_EXTN="release/0.4"
+
+# Used for metadata management documentation in admin-manual
+GIT_BRANCH_CDAP_METADATA_MANAGEMENT="release/0.4"
 
 # Used by developers-manual
-GIT_BRANCH_CDAP_CLIENTS="develop"
-GIT_BRANCH_CDAP_INGEST="develop"
+GIT_BRANCH_CDAP_CLIENTS="release/1.3.0"
+GIT_BRANCH_CDAP_INGEST="release/1.4.0"
 
-GIT_BRANCH_CDAP_APPS="develop"
+GIT_BRANCH_CDAP_APPS="release/cdap-4.1-compatible"
 GIT_VERSION_CDAP_APPS="0.8.0"
 
+# Used for pipelines documentation in developers-manual
+# From https://github.com/caskdata/hydrator-plugins
+GIT_BRANCH_CDAP_PIPELINES="release/1.6"
+GIT_BRANCH_HYDRATOR_PLUGINS="release/1.2"
+GIT_PLUGINS_SPEC_VERSION="1.3"
+
 # Used by examples manual
-GIT_BRANCH_CDAP_GUIDES="develop"
+GIT_BRANCH_CDAP_GUIDES="release/cdap-4.1-compatible"
 
 # Used by integrations-manual
-GIT_BRANCH_CDAP_PACKS="develop"
+GIT_BRANCH_CDAP_PACKS="release/cdap-4.1-compatible"
 GIT_VERSION_NAVIGATOR="0.1.0"
-
-# Used for Hydrator documentation
-GIT_BRANCH_CASK_HYDRATOR="develop"
-
-# Used for Tracker documentation
-GIT_BRANCH_CASK_TRACKER="develop"
+GIT_CASK_MARKET_VERSION="v2"
 
 # Google Analytics Code
 GOOGLE_TAG_MANAGER_CODE="GTM-KWLFGH"

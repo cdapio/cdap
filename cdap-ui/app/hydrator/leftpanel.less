@@ -297,11 +297,39 @@ body.theme-cdap.state-hydrator-create {
           max-width: ~"-moz-calc(100% - 290px)";
           max-width: ~"-webkit-calc(100% - 290px)";
         }
+        div.side-panel.top {
+          .hydrator-metadata {
+            width: ~"calc(100vw - 660px)"; // 370px for pipeline level buttons + 290 for left panel
+            width: ~"-moz-calc(100vw - 660px)";
+            width: ~"-webkit-calc(100vw - 660px)";
+            &.expanded {
+              width: ~"calc(100vw - 290px)"; // 370px for pipeline level buttons + 130 for sidepanel
+              width: ~"-moz-calc(100vw - 290px)";
+              width: ~"-webkit-calc(100vw - 290px)";
+            }
+          }
+        }
       }
       ~ .right-wrapper {
         margin-left: 290px;
       }
 
+    }
+
+    ~.top-panel {
+      div.side-panel.top {
+        .hydrator-metadata {
+          width: ~"calc(100vw - 500px)"; // 370px for pipeline level buttons + 130 for sidepanel
+          width: ~"-moz-calc(100vw - 500px)";
+          width: ~"-webkit-calc(100vw - 500px)";
+
+          &.expanded {
+            width: ~"calc(100vw - 130px)"; // 370px for pipeline level buttons + 130 for sidepanel
+            width: ~"-moz-calc(100vw - 130px)";
+            width: ~"-webkit-calc(100vw - 130px)";
+          }
+        }
+      }
     }
 
     ~ .right-wrapper {
@@ -598,6 +626,11 @@ body.theme-cdap.state-hydrator-create {
           .fa.fa-cloud-upload,
           .fa.fa-refresh.fa-spin {
             font-size: 64px;
+          }
+          .upload-file-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
           }
           .upload-message {
             margin-top: 20px;

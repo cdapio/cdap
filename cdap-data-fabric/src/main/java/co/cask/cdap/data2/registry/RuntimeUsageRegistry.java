@@ -33,7 +33,7 @@ public interface RuntimeUsageRegistry {
    * @param users the users of the stream
    * @param streamId the stream
    */
-  void registerAll(final Iterable<? extends EntityId> users, final StreamId streamId);
+  void registerAll(Iterable<? extends EntityId> users, StreamId streamId);
 
   /**
    * Register usage of a stream by an id.
@@ -49,7 +49,7 @@ public interface RuntimeUsageRegistry {
    * @param users the users of the stream
    * @param datasetId the stream
    */
-  void registerAll(final Iterable<? extends EntityId> users, final DatasetId datasetId);
+  void registerAll(Iterable<? extends EntityId> users, DatasetId datasetId);
 
   /**
    * Registers usage of a dataset by multiple ids.
@@ -65,7 +65,7 @@ public interface RuntimeUsageRegistry {
    * @param programId program
    * @param datasetInstanceId dataset
    */
-  void register(final ProgramId programId, final DatasetId datasetInstanceId);
+  void register(ProgramId programId, DatasetId datasetInstanceId);
 
   /**
    * Registers usage of a stream by a program.
@@ -73,5 +73,5 @@ public interface RuntimeUsageRegistry {
    * @param programId program
    * @param streamId  stream
    */
-  void register(final ProgramId programId, final StreamId streamId);
+  void register(ProgramId programId, StreamId streamId);
 }

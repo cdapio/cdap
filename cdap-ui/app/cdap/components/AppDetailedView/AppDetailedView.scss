@@ -17,9 +17,11 @@
 @import "../../styles/variables.scss";
 
 .app-detailed-view {
-  height: calc(100vh - 100px);
+  height: calc(100vh - 104px);
   background: rgba(238, 238, 238, 1);
   color: rgba(51, 51, 51, 1);
+  overflow-y: auto;
+  position: relative;
 
   @media (min-width: 1701px) {
     .entity-cards {
@@ -52,7 +54,8 @@
   }
 
   .cask-resourcecenter-button {
-    top: 58px;
+    top: 8px;
+    position: absolute;
   }
   .overview-tab {
     > .nav-tabs {
@@ -85,5 +88,16 @@
     top: 50%;
     transform: translate(-50%, -50%);
     color: gray;
+  }
+
+  .properties-container {
+    height: 100%;
+    padding: 15px 10px;
+    overflow: auto;
+
+    .message-section {
+      padding: 0 10px;
+      margin-bottom: 15px;
+    }
   }
 }

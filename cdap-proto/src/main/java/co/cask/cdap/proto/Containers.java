@@ -55,7 +55,7 @@ public interface Containers {
     private final Integer debugPort;
 
     public ContainerInfo(ContainerType type, String name,
-                         @Nullable Integer instance, @Nullable String container, String host,
+                         @Nullable Integer instance, @Nullable String container, @Nullable String host,
                          @Nullable Integer memory, @Nullable Integer virtualCores, @Nullable Integer debugPort) {
       this.type = type.name().toLowerCase();
       this.name = name;
@@ -100,6 +100,7 @@ public interface Containers {
       return container;
     }
 
+    @Nullable
     public String getHost() {
       return host;
     }

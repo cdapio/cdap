@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+require("babel-polyfill");
 import T from 'i18n-react';
 // Initialize i18n
 T.setTexts(require('../cdap/text/text-en.yaml'));

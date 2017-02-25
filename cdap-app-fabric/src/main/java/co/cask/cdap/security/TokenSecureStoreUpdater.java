@@ -134,7 +134,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
     String renewer = YarnUtils.getYarnTokenRenewer(config);
 
     Token<?>[] tokens = fileSystem.addDelegationTokens(renewer, credentials);
-    LOG.info("Added HDFS DelegationTokens: {}", Arrays.toString(tokens));
+    LOG.debug("Added HDFS DelegationTokens: {}", Arrays.toString(tokens));
 
     return tokens == null ? ImmutableList.<Token<?>>of() : ImmutableList.copyOf(tokens);
   }
@@ -244,7 +244,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
    */
   public SecureStore update() {
     Credentials credentials = refreshCredentials();
-    LOG.info("Updated credentials {}", credentials.getAllTokens());
+    LOG.debug("Updated credentials {}", credentials.getAllTokens());
     try {
       return YarnSecureStore.create(credentials, UserGroupInformation.getCurrentUser());
     } catch (IOException e) {

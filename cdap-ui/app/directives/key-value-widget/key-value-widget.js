@@ -30,7 +30,7 @@ angular.module(PKG.name + '.commons')
     };
   });
 
-function KeyValueController(myHelpers, $scope) {
+function KeyValueController(myHelpers, $scope, $filter) {
   this.keyPlaceholder = myHelpers.objectQuery(this.config, 'widget-attributes', 'key-placeholder') || 'key';
   this.valuePlaceholder = myHelpers.objectQuery(this.config, 'widget-attributes', 'value-placeholder') || 'value';
 
@@ -53,6 +53,7 @@ function KeyValueController(myHelpers, $scope) {
         value: map[key]
       });
     });
+    this.properties = $filter('orderBy')(this.properties, ['key', 'value']);
   }
 
   initialize.call(this);

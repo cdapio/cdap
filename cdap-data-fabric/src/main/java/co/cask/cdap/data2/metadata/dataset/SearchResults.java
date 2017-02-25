@@ -23,26 +23,26 @@ import java.util.List;
  * list of cursors to start subsequent searches from.
  */
 public class SearchResults {
-  private final List<MetadataEntry> results;
+  private final List<MetadataEntry> resultsFromOffset;
   private final List<String> cursors;
-  private final List<MetadataEntry> allResults;
+  private final List<MetadataEntry> resultsFromBeginning;
 
 
   SearchResults(List<MetadataEntry> results, List<String> cursors, List<MetadataEntry> allResults) {
-    this.results = results;
+    this.resultsFromOffset = results;
     this.cursors = cursors;
-    this.allResults = allResults;
+    this.resultsFromBeginning = allResults;
   }
 
-  public List<MetadataEntry> getResults() {
-    return results;
+  public List<MetadataEntry> getResultsFromOffset() {
+    return resultsFromOffset;
   }
 
   public List<String> getCursors() {
     return cursors;
   }
 
-  public List<MetadataEntry> getAllResults() {
-    return allResults;
+  public List<MetadataEntry> getResultsFromBeginning() {
+    return resultsFromBeginning;
   }
 }

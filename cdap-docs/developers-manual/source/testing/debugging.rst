@@ -47,7 +47,7 @@ to debug a container, you need to start the component with debugging enabled by 
 an HTTP request to the component’s URL. For example, the following will start a flow for debugging::
 
   POST /v3/namespaces/default/apps/WordCount/flows/WordCounter/debug
-  
+
 Using ``curl``:
 
 .. tabbed-parsed-literal::
@@ -55,7 +55,7 @@ Using ``curl``:
   $ curl -w"\n" -X POST "http://<hostname>:11015/v3/namespaces/default/apps/WordCount/flows/WordCounter/debug"
 
 Note that this URL differs from the URL for starting the flow only by the last path
-component (``debug`` instead of ``start``; see the :ref:`http-restful-api-lifecycle`). 
+component (``debug`` instead of ``start``; see the :ref:`http-restful-api-lifecycle`).
 You can pass in runtime arguments in the exact same way as you normally would start a flow.
 
 Once the flow is running, each flowlet will detect an available port in its container
@@ -64,7 +64,7 @@ To find out the address of a container’s host and the container’s debug port
 the CDAP for a flow or service’s live info via HTTP::
 
   GET /v3/namespaces/default/apps/WordCount/flows/WordCounter/live-info
-  
+
 or, using the CDAP CLI:
 
 .. tabbed-parsed-literal::
@@ -167,7 +167,7 @@ You may need to adjust them for your installation or version.
 
 #. Enter the host name, for example, ``localhost`` or ``node-1003.my.cluster.net``
    in the Host field.
-   
+
 #. Enter the debugging port, for example, ``5005`` in the Port field.
 
 #. In your project, click ``Debug`` to start the debugger.
@@ -188,7 +188,7 @@ Debugging the Transaction Manager (Advanced Use)
 In this advanced use section, we will explain in depth how transactions work internally.
 Transactions are introduced in the :ref:`Transaction System <transaction-system>`.
 
-A transaction is defined by an identifier, which contains the time stamp, in milliseconds,
+A transaction is defined by an identifier, which contains the timestamp, in milliseconds,
 of its creation. This identifier—also called the `write pointer`—represents the version
 that this transaction will use for all of its writes. It is also used to determine
 the order between transactions. A transaction with a smaller write pointer than
@@ -295,11 +295,11 @@ To download a snapshot of the state of the TM of the CDAP, use the command:
 .. tabbed-parsed-literal::
 
   .. Linux
-  
+
   $ cdap debug transactions view --host <name> [--save <filename>]
 
   .. Windows
-  
+
   > tx-debugger.bat view --host <name> [--save <filename>]
 
 where `name` is the host name of your CDAP instance, and the optional `filename`
@@ -312,11 +312,11 @@ with the command:
 .. tabbed-parsed-literal::
 
   .. Linux
-  
+
   $ cdap debug transactions view --filename <filename>
 
   .. Windows
-  
+
   > tx-debugger.bat view --filename <filename>
 
 where `filename` specifies the location where the snapshot has been saved.
@@ -343,11 +343,11 @@ use this command to invalidate it:
 .. tabbed-parsed-literal::
 
   .. Linux
-  
+
   $ cdap debug transactions invalidate --host <name> --transaction <writePtr>
 
   .. Windows
-  
+
   > tx-debugger.bat invalidate --host <name> --transaction <writePtr>
 
 Invalidating a transaction when we know for sure that its writes should

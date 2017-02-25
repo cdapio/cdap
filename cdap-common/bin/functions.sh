@@ -142,6 +142,9 @@ cdap_home() {
   if [[ ${__comp_home%/*} == /opt/cdap ]] && [[ ${__comp_home} != /opt/cdap/sdk* ]]; then
     __app_home=${__comp_home}
     __cdap_home=/opt/cdap
+  elif [[ ${__comp_home##*/} == cli ]]; then
+    __app_home=${__comp_home}
+    __cdap_home=${__comp_home%/*}
   else
     __app_home=$(dirname "${__script_bin}")
     __cdap_home=${__app_home}
@@ -187,6 +190,28 @@ cdap_stop_pidfile() {
     echo -n "$(date) Stopping ${__label} ..."
     if kill -0 ${__pid} >/dev/null 2>&1; then
       kill ${__pid} >/dev/null 2>&1
+      while kill -0 ${__pid} >/dev/null 2>&1; do
+        echo -n .
+        sleep 1
+      done
+      rm -f ${__pidfile}
+      echo
+      __ret=0
+    else
+      __ret=${?}
+    fi
+    echo
+  fi
+  return ${__ret}
+}
+
+cdap_kill_pidfile() {
+  local readonly __ret __pidfile=${1} __label=${2:-Process}
+  if [[ -f ${__pidfile} ]]; then
+    local readonly __pid=$(<${__pidfile})
+    echo -n "$(date) Killing ${__label} ..."
+    if kill -0 ${__pid} >/dev/null 2>&1; then
+      kill -9 ${__pid} >/dev/null 2>&1
       while kill -0 ${__pid} >/dev/null 2>&1; do
         echo -n .
         sleep 1
@@ -560,7 +585,7 @@ cdap_service() {
   cdap_create_log_dir
 
   case ${__action} in
-    status|stop) cdap_${__action}_pidfile ${__pidfile} "CDAP ${__name}"; __ret=${?} ;;
+    status|stop|kill) cdap_${__action}_pidfile ${__pidfile} "CDAP ${__name}"; __ret=${?} ;;
     start|restart|condrestart)
       if [[ ${__action} == condrestart ]]; then
         cdap_status_pidfile ${__pidfile} "CDAP ${__name}" >/dev/null && \

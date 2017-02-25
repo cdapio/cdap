@@ -23,6 +23,9 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.InvalidEntry;
+import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
@@ -44,10 +47,18 @@ public class IntValueFilterTransform extends Transform<StructuredRecord, Structu
   }
 
   @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+    stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
+  }
+
+  @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
     Integer value = input.get(config.field);
     if (value != config.value) {
       emitter.emit(input);
+    } else {
+      emitter.emitError(new InvalidEntry<>(2, "bad int value", input));
     }
   }
 

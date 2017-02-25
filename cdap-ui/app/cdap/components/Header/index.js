@@ -24,7 +24,10 @@ import MetadataDropdown from 'components/Header/MetadataDropdown';
 import CaskMarketButton from 'components/Header/CaskMarketButton';
 import {MyNamespaceApi} from 'api/namespace';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
+import find from 'lodash/find';
 import classnames from 'classnames';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 require('./Header.scss');
 
@@ -37,6 +40,7 @@ export default class Header extends Component {
       metadataDropdown: false
     };
     this.namespacesubscription = null;
+    this.eventEmitter = ee(ee);
   }
   componentWillMount() {
     // Polls for namespace data
@@ -51,12 +55,15 @@ export default class Header extends Component {
               }
             });
           } else {
-            // To-Do: No namespaces returned ; throw error / redirect
+            // TL;DR - This is emitted for Authorization in main.js
+            // This means there is no namespace for the user to work on.
+            // which indicates she/he have no authorization for any namesapce in the system.
+            this.eventEmitter.emit(globalEvents.NONAMESPACE);
           }
         }
       );
     this.nsSubscription = NamespaceStore.subscribe(() => {
-      let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+      let selectedNamespace = this.getDefaultNamespace();
       if (selectedNamespace !== this.state.currentNamespace) {
         this.setState({
           currentNamespace: selectedNamespace
@@ -69,6 +76,30 @@ export default class Header extends Component {
     if (this.namespacesubscription) {
       this.namespacesubscription.dispose();
     }
+  }
+  findNamespace(list, name) {
+    return find(list, {name: name});
+  }
+  getDefaultNamespace() {
+    let list = NamespaceStore.getState().namespaces;
+    if (list.length === 0) { return; }
+    let selectedNamespace;
+    let defaultNamespace = localStorage.getItem('DefaultNamespace');
+    let defaultNsFromBackend = list.filter(ns => ns.name === defaultNamespace);
+    if (defaultNsFromBackend.length) {
+      selectedNamespace = defaultNsFromBackend[0];
+    }
+    // Check #2
+    if (!selectedNamespace) {
+      selectedNamespace = this.findNamespace(list, 'default');
+    }
+    // Check #3
+    if (!selectedNamespace) {
+      selectedNamespace = list[0].name;
+    } else {
+      selectedNamespace = selectedNamespace.name;
+    }
+    return selectedNamespace;
   }
   toggleNavbar() {
     this.setState({
@@ -86,15 +117,8 @@ export default class Header extends Component {
       stateParams: {
         namespace: this.state.currentNamespace
       }
-    }),
-    pipelinesStudioUrl =  window.getHydratorUrl({
-      stateName: 'hydrator.create',
-      stateParams: {
-        namespace: this.state.currentNamespace
-      }
     });
-    let isPipelinesViewActive = pipelinesListUrl.indexOf(location.pathname)  !== -1 || pipelinesStudioUrl.indexOf(location.pathname) !== -1;
-    let oldUIUrl = `/oldcdap/ns/${this.state.currentNamespace}`;
+    let isPipelinesViewActive = location.pathname.indexOf('/pipelines/') !== -1;
     return (
       <div className="global-navbar">
         <div
@@ -109,7 +133,18 @@ export default class Header extends Component {
           }
         </div>
         <div className="brand-section">
-          <img src="/cdap_assets/img/company_logo.png" />
+          {
+            !this.props.nativeLink ?
+              <Link
+                to={`/ns/${this.state.currentNamespace}`}
+              >
+                <img src="/cdap_assets/img/company_logo.png" />
+              </Link>
+            :
+              <a href={window.getAbsUIUrl({namespaceId: this.state.currentNamespace})}>
+                <img src="/cdap_assets/img/company_logo.png" />
+              </a>
+          }
         </div>
         <ul className="navbar-list-section">
           <li>
@@ -144,11 +179,6 @@ export default class Header extends Component {
           })}>
           <div className="navbar-right-section">
             <ul>
-              <li>
-                <a href={oldUIUrl}>
-                  {T.translate('features.Navbar.RightSection.olduilink')}
-                </a>
-              </li>
               <li className="with-shadow">
                 <CaskMarketButton>
                   <span className="fa icon-CaskMarket"></span>

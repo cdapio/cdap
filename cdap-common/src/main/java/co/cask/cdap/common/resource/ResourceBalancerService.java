@@ -189,6 +189,7 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
           } catch (Throwable t) {
             LOG.error("Failed to change partitions, service: {}.", serviceName, t);
             completion.setException(t);
+            stop();
           }
         }
 
@@ -207,6 +208,7 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
               cause.addSuppressed(t);
             }
             completion.setException(t);
+            // No need to call stop as this callback only happen during shutdown of this service
           }
         }
       };

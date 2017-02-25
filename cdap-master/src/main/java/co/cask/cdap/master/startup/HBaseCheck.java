@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.startup.Check;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.HBaseVersion;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import com.google.inject.Inject;
 import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
@@ -58,7 +57,7 @@ class HBaseCheck extends Check {
     LOG.info("  HBase version successfully verified.");
 
     LOG.info("Checking HBase availability.");
-    try (final HConnection hbaseConnection = HConnectionManager.createConnection(hConf)) {
+    try (HConnection hbaseConnection = HConnectionManager.createConnection(hConf)) {
       hbaseConnection.listTables();
       LOG.info("  HBase availability successfully verified.");
     } catch (IOException e) {

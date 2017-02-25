@@ -16,6 +16,8 @@
 
 package co.cask.cdap.proto.metadata;
 
+import co.cask.cdap.proto.EntityScope;
+
 import java.util.List;
 import java.util.Set;
 
@@ -31,9 +33,11 @@ public class MetadataSearchResponse {
   private final Set<MetadataSearchResultRecord> results;
   private final List<String> cursors;
   private final boolean showHidden;
+  private final Set<EntityScope> entityScope;
 
   public MetadataSearchResponse(String sort, int offset, int limit, int numCursors, int total,
-                                Set<MetadataSearchResultRecord> results, List<String> cursors, boolean showHidden) {
+                                Set<MetadataSearchResultRecord> results, List<String> cursors, boolean showHidden,
+                                Set<EntityScope> entityScope) {
     this.sort = sort;
     this.offset = offset;
     this.limit = limit;
@@ -42,6 +46,7 @@ public class MetadataSearchResponse {
     this.results = results;
     this.cursors = cursors;
     this.showHidden = showHidden;
+    this.entityScope = entityScope;
   }
 
   public String getSort() {
@@ -74,5 +79,9 @@ public class MetadataSearchResponse {
 
   public boolean isShowHidden() {
     return showHidden;
+  }
+
+  public Set<EntityScope> getEntityScope() {
+    return entityScope;
   }
 }

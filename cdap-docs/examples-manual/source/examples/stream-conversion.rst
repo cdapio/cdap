@@ -39,7 +39,7 @@ of the application are tied together by the class ``StreamConversionApp``:
 The interesting part is the creation of the dataset *converted*:
 
 - It is a ``TimePartitionedFileSet``. This dataset manages the files in a ``FileSet`` by
-  associating each file with a time stamp.
+  associating each file with a timestamp.
 - The properties are divided in two sections:
 
   - The first set of properties configures the underlying FileSet, as documented in the
@@ -60,7 +60,7 @@ and it configures the *events* stream as its input and the *converted* dataset a
      :language: java
      :lines: 65-70
      :dedent: 4
-     
+
 - Based on the logical start time, the MapReduce determines the range of events to read from the stream:
 
   .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
@@ -121,11 +121,11 @@ to send 10000 events at a rate of roughly two per second (one per second in the 
 .. tabbed-parsed-literal::
 
   .. Linux
-  
+
   $ examples/StreamConversion/bin/send-events.sh --events 10000 --delay 0.5
 
   .. Windows
-  
+
   > examples\StreamConversion\bin\send-events.bat 10000 1
 
 You can now wait for the workflow to run, after which you can query the partitions in the
@@ -134,7 +134,7 @@ You can now wait for the workflow to run, after which you can query the partitio
 .. tabbed-parsed-literal::
 
   $ cdap cli execute "\"show partitions dataset_converted\""
-  
+
   +============================================+
   | partition: STRING                          |
   +============================================+
@@ -151,7 +151,7 @@ You can also query the data in the dataset. For example, to find the five most f
 .. tabbed-parsed-literal::
 
   $ cdap cli execute "\"select count(*) as count, body from dataset_converted group by body order by count desc limit 5\""
-  
+
   +==============================+
   | count: BIGINT | body: STRING |
   +==============================+

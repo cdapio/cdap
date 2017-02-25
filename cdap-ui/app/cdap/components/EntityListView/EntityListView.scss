@@ -48,6 +48,7 @@
     padding: 0 0 0 5px;
     display: flex;
     flex-wrap: wrap;
+    width: 100%;
 
     .entities-all-list-container {
       display: inline-flex;
@@ -165,7 +166,6 @@
             width: calc(100% - 20px - 10px);
           }
         }
-
       }
     }
     .entity-cards {

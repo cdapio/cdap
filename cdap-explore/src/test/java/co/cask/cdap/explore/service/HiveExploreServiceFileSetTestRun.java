@@ -687,7 +687,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
   }
 
   @Test
-    public void testPartitionedTextFileUpdate() throws Exception {
+  public void testPartitionedTextFileUpdate() throws Exception {
     final DatasetId datasetId = NAMESPACE_ID.dataset("txtupd");
     final String tableName = getDatasetHiveName(datasetId);
 
@@ -1030,8 +1030,8 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     });
   }
 
-  private void doTransaction(Dataset tpfs, final Runnable runnable) throws Exception {
-    TransactionExecutor executor = new DefaultTransactionExecutor(transactionSystemClient, (TransactionAware) tpfs);
+  private void doTransaction(Dataset dataset, final Runnable runnable) throws Exception {
+    TransactionExecutor executor = new DefaultTransactionExecutor(transactionSystemClient, (TransactionAware) dataset);
     executor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {

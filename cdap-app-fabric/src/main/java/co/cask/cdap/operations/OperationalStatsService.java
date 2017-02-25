@@ -16,12 +16,14 @@
 
 package co.cask.cdap.operations;
 
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,6 +99,10 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
     while (isRunning()) {
       try {
         collectOperationalStats();
+        if (!isRunning()) {
+          // Need to check here before sleep as the collectOperationStats may swallow interrupted exception
+          break;
+        }
         TimeUnit.SECONDS.sleep(statsRefreshInterval);
       } catch (InterruptedException e) {
         // Expected on stopping. So just break the loop
@@ -109,20 +115,25 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
    * Collects stats from all {@link OperationalStats}.
    */
   private void collectOperationalStats() throws InterruptedException {
-    LOG.debug("Running operational stats extension service iteration");
+    LOG.trace("Running operational stats extension service iteration");
     for (Map.Entry<OperationalExtensionId, OperationalStats> entry : operationalStatsLoader.getAll().entrySet()) {
       if (!isRunning()) {
         return;
       }
 
       OperationalStats stats = entry.getValue();
-      LOG.debug("Collecting stats for service {} of type {}", stats.getServiceName(), stats.getStatType());
+      LOG.trace("Collecting stats for service {} of type {}", stats.getServiceName(), stats.getStatType());
       try {
         stats.collect();
-      } catch (InterruptedException e) {
-        throw e;
       } catch (Throwable t) {
+        Throwables.propagateIfInstanceOf(t, InterruptedException.class);
         Throwable rootCause = Throwables.getRootCause(t);
+        if (rootCause instanceof ServiceUnavailableException || rootCause instanceof TException) {
+          // Required service (for example DatasetService in case of ServiceUnavailableException
+          // or Transaction Service in case of TException) is not running yet.
+          // Return without logging.
+          return;
+        }
         if (rootCause instanceof InterruptedException) {
           throw (InterruptedException) rootCause;
         }
@@ -159,7 +170,7 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
       try {
         mbs.unregisterMBean(objectName);
       } catch (InstanceNotFoundException e) {
-        LOG.debug("MBean {} not found while un-registering. Ignoring.", objectName);
+        LOG.warn("MBean {} not found while un-registering. Ignoring.", objectName);
       } catch (MBeanRegistrationException e) {
         LOG.warn("Error while un-registering MBean {}.", e);
       }

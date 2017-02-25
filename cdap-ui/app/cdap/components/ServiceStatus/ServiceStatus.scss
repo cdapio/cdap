@@ -21,7 +21,7 @@ $circle-top-offset: 2px;
 .service-status {
   padding-top: 5px;
   margin-left: 15px;
-  width: 209px;
+  width: 225px;
   display: inline-block;
   cursor: pointer;
   position: relative;
@@ -76,13 +76,14 @@ $circle-top-offset: 2px;
       outline: none;
       color: #333333;
       position: absolute;
-      left: -202.5px;
-      top: -8px;
+      left: -195.5px;
+      top: 0;
       border: none;
       margin: 0;
-      width: 200px;
+      width: 220px;
       padding-top: 0;
       padding-bottom: 0;
+      z-index: 1501;
 
       a {
         text-decoration: inherit;
@@ -124,7 +125,7 @@ $circle-top-offset: 2px;
       outline: 0;
     }
     .service-dropdown-item {
-      height: 30px;
+      min-height: 30px;
       width: 100%;
       outline: 0;
       cursor: auto;
@@ -141,7 +142,6 @@ $circle-top-offset: 2px;
       .status-label {
         color: #000000;
         font-weight: bold;
-        margin-left: 19px;
       }
 
       .fa-file-text {
@@ -151,6 +151,10 @@ $circle-top-offset: 2px;
       &:hover {
         background-color: #cccccc;
       }
+    }
+
+    div.service-dropdown {
+      height: 100%;
     }
   }
 
@@ -216,5 +220,11 @@ $circle-top-offset: 2px;
     font-size: 14px;
     font-weight: bold;
     color: #ffffff;
+    max-width: 200px;
+    word-wrap: break-word;
+  }
+
+  > div {
+    vertical-align: top;
   }
 }

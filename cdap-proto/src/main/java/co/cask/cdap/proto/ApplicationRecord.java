@@ -18,8 +18,10 @@ package co.cask.cdap.proto;
 
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
+import com.google.gson.annotations.SerializedName;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Represents item in the list from /apps
@@ -31,15 +33,23 @@ public class ApplicationRecord {
   private final String version;
   private final String description;
   private final ArtifactSummary artifact;
+  @SerializedName("principal")
+  private final String ownerPrincipal;
 
 
   public ApplicationRecord(ArtifactSummary artifact, ApplicationId appId, String description) {
+    this(artifact, appId, description, null);
+  }
+
+  public ApplicationRecord(ArtifactSummary artifact, ApplicationId appId, String description,
+                           @Nullable String ownerPrincipal) {
     this.type = "App";
     this.artifact = artifact;
     this.name = appId.getApplication();
     this.description = description;
     this.version = appId.getVersion();
     this.id = appId.getApplication();
+    this.ownerPrincipal = ownerPrincipal;
   }
 
   public ArtifactSummary getArtifact() {
@@ -67,6 +77,11 @@ public class ApplicationRecord {
     return description;
   }
 
+  @Nullable
+  public String getOwnerPrincipal() {
+    return ownerPrincipal;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -82,12 +97,13 @@ public class ApplicationRecord {
       Objects.equals(name, that.name) &&
       Objects.equals(version, that.version) &&
       Objects.equals(description, that.description) &&
-      Objects.equals(artifact, that.artifact);
+      Objects.equals(artifact, that.artifact) &&
+      Objects.equals(ownerPrincipal, that.ownerPrincipal);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, name, version, description, artifact);
+    return Objects.hash(type, name, version, description, artifact, ownerPrincipal);
   }
 
   @Override
@@ -98,6 +114,7 @@ public class ApplicationRecord {
       ", version='" + version + '\'' +
       ", description='" + description + '\'' +
       ", artifact=" + artifact +
+      ", ownerPrincipal=" + ownerPrincipal +
       '}';
   }
 }

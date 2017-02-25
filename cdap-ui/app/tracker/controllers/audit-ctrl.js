@@ -15,12 +15,13 @@
  */
 
 class TrackerAuditController {
-  constructor($state, $scope, myTrackerApi, myAlertOnValium) {
+  constructor($state, $scope, myTrackerApi, myAlertOnValium, $uibModal) {
 
     this.$state = $state;
     this.$scope = $scope;
     this.myTrackerApi = myTrackerApi;
     this.myAlertOnValium = myAlertOnValium;
+    this.$uibModal = $uibModal;
 
     this.timeRangeOptions = [
       {
@@ -118,9 +119,123 @@ class TrackerAuditController {
         });
       });
   }
+
+  isMetadataChanged(type, payload) {
+
+    if (type !== 'METADATA_CHANGE') {
+      return false;
+    }
+
+    for (let key in payload) {
+
+      if (payload.hasOwnProperty(key)) {
+
+        if (_.get(payload[key], 'SYSTEM.tags') && _.get(payload[key], 'SYSTEM.tags').length > 0 ) {
+          return true;
+        }
+        if (_.get(payload[key], 'USER.tags') && _.get(payload[key], 'USER.tags').length > 0 ) {
+          return true;
+        }
+        if (_.get(payload[key], 'USER.properties') && !_.isEmpty(_.get(payload, 'USER.properties'))) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  showMetadataChangeInfo(logData) {
+    this.$uibModal.open({
+      templateUrl: '/assets/features/tracker/templates/partial/metadata-change-info.html',
+      size: 'lg',
+      backdrop: true,
+      keyboard: true,
+      windowTopClass: 'tracker-modal metadata-info-modal',
+      controller: metadataChangeInformation,
+      controllerAs: 'MetadataInfo',
+      resolve: {
+        logDataObj: () => {
+          return logData;
+        }
+      }
+    });
+  }
 }
 
-TrackerAuditController.$inject = ['$state', '$scope', 'myTrackerApi', 'myAlertOnValium'];
+function metadataChangeInformation(logDataObj, avsc, SchemaHelper) {
+  'ngInject';
+
+  let allFormattedData = {},
+    tags= {},
+    schema= {},
+    properties = {};
+
+  let getSchemaArray = (schemaToParse) => {
+    if (!schemaToParse) {
+      return [];
+    }
+
+    let schemArr = [], parsed;
+
+    try {
+      parsed = avsc.parse(schemaToParse, { wrapUnions: true });
+    } catch (e) {
+      console.log('Error', e);
+    }
+
+    parsed.getFields().map((field) => {
+      let type = field.getType();
+      let partialObj = SchemaHelper.parseType(type);
+      return Object.assign({}, partialObj, {
+        id: uuid.v4(),
+        name: field.getName()
+      });
+    }).filter((obj) => {
+      if (obj) {
+        schemArr.push(obj.name + ' ' + obj.displayType);
+      }
+    });
+
+    return schemArr;
+  };
+
+  let setTags = (userType) => {
+    tags.previousValues = logDataObj.previous[userType].tags;
+    tags.addedValues = logDataObj.additions[userType].tags;
+    tags.deletedValues = logDataObj.deletions[userType].tags;
+  };
+
+  if (logDataObj.previous.USER) {
+    setTags('USER');
+
+    properties.previousValues = _.map(logDataObj.previous.USER.properties, (value, key) => {
+      return key + ':' + value;
+    });
+    properties.addedValues = _.map(logDataObj.additions.USER.properties, (value, key) => {
+      return key + ':' + value;
+    });
+    properties.deletedValues = _.map(logDataObj.deletions.USER.properties, (value, key) => {
+      return key + ':' + value;
+    });
+  }
+
+  if (logDataObj.previous.SYSTEM) {
+    setTags('SYSTEM');
+
+    schema.previousValues = getSchemaArray(logDataObj.previous.SYSTEM.properties.schema);
+    schema.addedValues = getSchemaArray(logDataObj.additions.SYSTEM.properties.schema);
+    schema.deletedValues = getSchemaArray(logDataObj.deletions.SYSTEM.properties.schema);
+  }
+
+  allFormattedData.tags = tags;
+  allFormattedData.schema = schema;
+  allFormattedData.properties = properties;
+
+  this.formattedData = allFormattedData;
+}
+
+TrackerAuditController.$inject = ['$state', '$scope', 'myTrackerApi', 'myAlertOnValium', '$uibModal'];
 
 angular.module(PKG.name + '.feature.tracker')
 .controller('TrackerAuditController', TrackerAuditController);

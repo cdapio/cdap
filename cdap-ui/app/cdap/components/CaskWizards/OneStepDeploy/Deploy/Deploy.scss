@@ -17,4 +17,13 @@
 .deploy-step {
   height: calc(100% - 45px);
   width: 100%;
+  margin-bottom: 10px;
+
+  .file-drop-container {
+    pointer-events: none;
+
+    .fa-upload {
+      opacity: 0.5;
+    }
+  }
 }

@@ -427,5 +427,39 @@ public final class Transactions {
     return null;
   }
 
+  /**
+   * Executes the given callable with a transaction. Think twice before you call this. Usages of this method
+   * likely indicate poor exception handling.
+   *
+   * @param transactional the {@link Transactional} used to submit the task
+   * @param callable the task
+   * @param <V> type of result
+   * @return value returned by the given {@link TxCallable}.
+   * @throws RuntimeException for any errors that occur
+   */
+  public static <V> V executeUnchecked(Transactional transactional, final TxCallable<V> callable) {
+    try {
+      return execute(transactional, callable);
+    } catch (TransactionFailureException e) {
+      throw propagate(e);
+    }
+  }
 
+  /**
+   * Executes the given runnable with a transaction. Think twice before you call this. Usages of this method
+   * likely indicate poor exception handling.
+   *
+   * @param transactional the {@link Transactional} used to submit the task
+   * @param runnable task
+   * @throws RuntimeException for errors that occur
+   */
+  public static void executeUnchecked(Transactional transactional, final TxRunnable runnable) {
+    executeUnchecked(transactional, new TxCallable<Void>() {
+      @Override
+      public Void call(DatasetContext context) throws Exception {
+        runnable.run(context);
+        return null;
+      }
+    });
+  }
 }

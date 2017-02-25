@@ -14,47 +14,102 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import React, {Component, PropTypes} from 'react';
 import FastActions from 'components/EntityCard/FastActions';
+import SortableTable from 'components/SortableTable';
 import shortid from 'shortid';
 import {humanReadableDate} from 'services/helpers';
-require('./ProgramTable.scss');
+import EntityIconMap from 'services/entity-icon-map';
 import T from 'i18n-react';
 import isEmpty from 'lodash/isEmpty';
+import classnames from 'classnames';
+import moment from 'moment';
+require('./ProgramTable.scss');
 
-export default function ProgramTable({programs}) {
-  let entities = programs.map(prog => {
-    return Object.assign({}, prog, {
-      applicationId: prog.app,
-      programType: prog.type,
-      type: 'program',
-      id: prog.id,
-      uniqueId: shortid.generate()
+export default class ProgramTable extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      entities: []
+    };
+
+    this.tableHeaders = [
+      {
+        property: 'name',
+        label: T.translate('features.ViewSwitch.nameLabel')
+      },
+      {
+        property: 'programType',
+        label: T.translate('features.ViewSwitch.typeLabel')
+      },
+      // have to convert latestRun back from string to seconds from epoch
+      {
+        property: 'latestRun',
+        label: T.translate('features.ViewSwitch.ProgramTable.lastStartedLabel'),
+        sortFunc: (entity) => { return moment(entity.latestRun.start).valueOf(); }
+      },
+      {
+        property: 'status',
+        label: T.translate('features.ViewSwitch.ProgramTable.statusLabel')
+      },
+      // empty header label for Actions column
+      {
+        label: ''
+      }
+    ];
+  }
+
+  componentWillMount() {
+    let entities = this.updateEntities(this.props.programs);
+    this.setState({
+      entities
     });
-  });
-  return (
-    <div className="program-table">
-      <table className="table table-bordered">
-      <thead>
-        <tr>
-          <th>{T.translate('features.ViewSwitch.nameLabel')}</th>
-          <th>{T.translate('features.ViewSwitch.typeLabel')}</th>
-          <th>{T.translate('features.ViewSwitch.ProgramTable.lastStartedLabel')}</th>
-          <th>{T.translate('features.ViewSwitch.ProgramTable.statusLabel')}</th>
-          <th>{T.translate('features.ViewSwitch.actionsLabel')}</th>
-        </tr>
-      </thead>
+  }
+
+  componentWillReceiveProps(nextProps) {
+    let entities = this.updateEntities(nextProps.programs);
+    this.setState({
+      entities
+    });
+  }
+
+  updateEntities(programs) {
+    let entities = programs.map(prog => {
+      return Object.assign({}, prog, {
+        applicationId: prog.app,
+        programType: prog.type,
+        type: 'program',
+        id: prog.id,
+        uniqueId: shortid.generate()
+      });
+    });
+    return entities;
+  }
+
+  renderTableBody() {
+    return (
       <tbody>
         {
-          entities.map(program => {
+          this.state.entities.map(program => {
+            let icon = EntityIconMap[program.programType];
+            let statusClass = program.status === 'RUNNING' ? 'text-success' : '';
             return (
-              <tr key={program.name}>
+              <tr key={program.uniqueId}>
                 <td>{program.name}</td>
-                <td>{program.type}</td>
-                <td>{
-                  !isEmpty(program.latestRun) ? humanReadableDate(program.latestRun.start) : 'n/a'
-                }</td>
-                <td>{program.status}</td>
+                <td>
+                  <i className={classnames('fa', icon)} />
+                  {program.programType}
+                </td>
+                <td>
+                  {
+                    !isEmpty(program.latestRun) ? humanReadableDate(program.latestRun.start) : 'n/a'
+                  }
+                </td>
+                <td className={statusClass}>
+                  {
+                    !isEmpty(program.status) ? program.status : 'n/a'
+                  }
+                </td>
                 <td>
                   <div className="fast-actions-container">
                     <FastActions
@@ -68,9 +123,40 @@ export default function ProgramTable({programs}) {
           })
         }
       </tbody>
-      </table>
-    </div>
-  );
+    );
+  }
+
+  render() {
+
+    if (this.state.entities && Array.isArray(this.state.entities)) {
+      if (this.state.entities.length) {
+        return (
+          <div className="program-table">
+            <SortableTable
+              entities={this.state.entities}
+              tableHeaders={this.tableHeaders}
+              renderTableBody={this.renderTableBody}
+            />
+          </div>
+        );
+      } else {
+        return (
+          <div className="history-tab">
+            <i>
+              {T.translate('features.Overview.ProgramTab.emptyMessage')}
+            </i>
+          </div>
+        );
+      }
+    }
+    return (
+      <div className="program-table">
+        <h3 className="text-xs-center">
+          <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
+        </h3>
+      </div>
+    );
+  }
 }
 ProgramTable.propTypes = {
   programs: PropTypes.arrayOf(PropTypes.object)

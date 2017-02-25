@@ -21,6 +21,9 @@ angular.module(PKG.name + '.feature.logviewer')
       .state('logviewerhome', {
         url: '/view?namespace&appId&programType&programId&runId',
         templateUrl: '/assets/features/logviewer/templates/home.html',
+        onEnter: function($stateParams) {
+          document.title = 'CDAP | Logs | ' + $stateParams.programId;
+        },
         controller: 'LogsAppHomeController',
         controllerAs: 'Home'
       });

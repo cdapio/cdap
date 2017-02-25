@@ -42,7 +42,7 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer, MultiInput
   public DefaultPipelineConfigurer(PluginConfigurer configurer, String stageName) {
     this.configurer = configurer;
     this.stageName = stageName;
-    this.stageConfigurer = new DefaultStageConfigurer(stageName);
+    this.stageConfigurer = new DefaultStageConfigurer();
   }
 
   @Override

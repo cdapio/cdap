@@ -22,6 +22,7 @@ import co.cask.cdap.data2.util.hbase.DefaultScanBuilder;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.TopicMetadataCache;
+import co.cask.cdap.messaging.TopicMetadataCacheSupplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
@@ -63,40 +64,39 @@ public class PayloadTableRegionObserver extends BaseRegionObserver {
 
   private int prefixLength;
 
-  private String metadataTableNamespace;
-  private String hbaseNamespacePrefix;
-  private CConfigurationReader cConfReader;
+  private TopicMetadataCacheSupplier topicMetadataCacheSupplier;
   private TopicMetadataCache topicMetadataCache;
 
   @Override
-  public void start(CoprocessorEnvironment env) throws IOException {
-    if (env instanceof RegionCoprocessorEnvironment) {
-      HTableDescriptor tableDesc = ((RegionCoprocessorEnvironment) env).getRegion().getTableDesc();
-      metadataTableNamespace = tableDesc.getValue(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE);
-      hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
+  public void start(CoprocessorEnvironment e) throws IOException {
+    if (e instanceof RegionCoprocessorEnvironment) {
+      RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
+      HTableDescriptor tableDesc = env.getRegion().getTableDesc();
+      String metadataTableNamespace = tableDesc.getValue(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE);
+      String hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
       prefixLength = Integer.valueOf(tableDesc.getValue(
         Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES));
 
       String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
-      cConfReader = new CConfigurationReader(env.getConfiguration(), sysConfigTablePrefix);
-      topicMetadataCache = createTopicMetadataCache((RegionCoprocessorEnvironment) env);
+      CConfigurationReader cConfReader = new CConfigurationReader(env.getConfiguration(), sysConfigTablePrefix);
+      topicMetadataCacheSupplier = new TopicMetadataCacheSupplier(env, cConfReader, hbaseNamespacePrefix,
+                                                                  metadataTableNamespace, new DefaultScanBuilder());
+      topicMetadataCache = topicMetadataCacheSupplier.get();
     }
   }
 
   @Override
   public void stop(CoprocessorEnvironment e) throws IOException {
-    if (e instanceof RegionCoprocessorEnvironment) {
-      getTopicMetadataCache((RegionCoprocessorEnvironment) e).stop();
-    }
+    topicMetadataCacheSupplier.release();
   }
 
   @Override
   public InternalScanner preFlushScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
                                              KeyValueScanner memstoreScanner, InternalScanner s) throws IOException {
-    TopicMetadataCache metadataCache = getTopicMetadataCache(c.getEnvironment());
     LOG.info("preFlush, filter using PayloadDataFilter");
     Scan scan = new Scan();
-    scan.setFilter(new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength, metadataCache));
+    scan.setFilter(new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength,
+                                         topicMetadataCache));
     return new StoreScanner(store, store.getScanInfo(), scan, Collections.singletonList(memstoreScanner),
                             ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(), HConstants.OLDEST_TIMESTAMP);
   }
@@ -106,24 +106,12 @@ public class PayloadTableRegionObserver extends BaseRegionObserver {
                                                List<? extends KeyValueScanner> scanners, ScanType scanType,
                                                long earliestPutTs, InternalScanner s,
                                                CompactionRequest request) throws IOException {
-    TopicMetadataCache metadataCache = getTopicMetadataCache(c.getEnvironment());
     LOG.info("preCompact, filter using PayloadDataFilter");
     Scan scan = new Scan();
-    scan.setFilter(new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength, metadataCache));
+    scan.setFilter(new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength,
+                                         topicMetadataCache));
     return new StoreScanner(store, store.getScanInfo(), scan, scanners, scanType, store.getSmallestReadPoint(),
                             earliestPutTs);
-  }
-
-  private TopicMetadataCache getTopicMetadataCache(RegionCoprocessorEnvironment env) {
-    if (!topicMetadataCache.isAlive()) {
-      topicMetadataCache = createTopicMetadataCache(env);
-    }
-    return topicMetadataCache;
-  }
-
-  private TopicMetadataCache createTopicMetadataCache(RegionCoprocessorEnvironment env) {
-    return new TopicMetadataCache(env, cConfReader, hbaseNamespacePrefix, metadataTableNamespace,
-                                  new DefaultScanBuilder());
   }
 
   private static final class PayloadDataFilter extends FilterBase {

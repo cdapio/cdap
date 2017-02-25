@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -323,26 +323,53 @@ public class UnitTestManager extends AbstractTestManager {
       } else {
         txContext = null;
       }
-      return new DataSetManager<T>() {
-        @Override
-        public T get() {
-          return dataSet;
-        }
-
-        @Override
-        public void flush() {
-          try {
-            if (txContext != null) {
-              txContext.finish();
-              txContext.start();
-            }
-          } catch (TransactionFailureException e) {
-            throw Throwables.propagate(e);
-          }
-        }
-      };
+      return new UnitTestDatasetManager<>(dataSet, txContext);
     } catch (Exception e) {
       throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Dataset manager used in unit tests. Allows to execute a runnable in a transaction.
+   *
+   * @param <T> type of the dataset
+   */
+  // TODO (CDAP-3792): remove this hack when TestBase has better support for transactions
+  public class UnitTestDatasetManager<T> implements DataSetManager<T> {
+    private final T dataset;
+    private final TransactionContext txContext;
+
+    UnitTestDatasetManager(T dataset, TransactionContext txContext) {
+      this.dataset = dataset;
+      this.txContext = txContext;
+    }
+
+    @Override
+    public T get() {
+      return dataset;
+    }
+
+    @Override
+    public void flush() {
+      try {
+        if (txContext != null) {
+          txContext.finish();
+          txContext.start();
+        }
+      } catch (TransactionFailureException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    public void execute(Runnable runnable) throws TransactionFailureException {
+      TransactionContext txCtx = new TransactionContext(txSystemClient, (TransactionAware) dataset);
+      txCtx.start();
+      try {
+        runnable.run();
+      } catch (Throwable t) {
+        txCtx.abort(new TransactionFailureException("runnable failed", t));
+      }
+      txCtx.finish();
     }
   }
 

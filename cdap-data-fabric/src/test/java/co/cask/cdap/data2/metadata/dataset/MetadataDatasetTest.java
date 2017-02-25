@@ -19,11 +19,13 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.data2.metadata.indexer.InvertedValueIndexer;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -677,6 +679,55 @@ public class MetadataDatasetTest {
   }
 
   @Test
+  public void testSearchDifferentEntityScope() throws InterruptedException, TransactionFailureException {
+    final ArtifactId sysArtifact = NamespaceId.SYSTEM.artifact("artifact", "1.0");
+    final ArtifactId nsArtifact = new ArtifactId("ns1", "artifact", "1.0");
+    final String multiWordKey = "multiword";
+    final String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
+
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        dataset.setProperty(nsArtifact, multiWordKey, multiWordValue);
+        dataset.setProperty(sysArtifact, multiWordKey, multiWordValue);
+      }
+    });
+
+    final MetadataEntry systemArtifactEntry = new MetadataEntry(sysArtifact, multiWordKey, multiWordValue);
+    final MetadataEntry nsArtifactEntry = new MetadataEntry(nsArtifact, multiWordKey, multiWordValue);
+
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        List<MetadataEntry> results = dataset.search("ns1", "aV5", ImmutableSet.of(EntityTypeSimpleName.ALL),
+                                                     SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null,
+                                                     false, EnumSet.of(EntityScope.USER)).getResultsFromOffset();
+        // the result should not contain system entities
+        Assert.assertEquals(Sets.newHashSet(nsArtifactEntry), Sets.newHashSet(results));
+        results = dataset.search("ns1", "aV5", ImmutableSet.of(EntityTypeSimpleName.ALL),
+                                 SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null,
+                                 false, EnumSet.of(EntityScope.SYSTEM)).getResultsFromOffset();
+        // the result should not contain user entities
+        Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
+        results = dataset.search("ns1", "aV5", ImmutableSet.of(EntityTypeSimpleName.ALL),
+                                 SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null,
+                                 false, EnumSet.allOf(EntityScope.class)).getResultsFromOffset();
+        // the result should contain both entity scopes
+        Assert.assertEquals(Sets.newHashSet(nsArtifactEntry, systemArtifactEntry), Sets.newHashSet(results));
+      }
+    });
+
+    // clean up
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        dataset.removeProperties(nsArtifact);
+        dataset.removeProperties(sysArtifact);
+      }
+    });
+  }
+
+  @Test
   public void testUpdateSearch() throws Exception {
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -1071,80 +1122,98 @@ public class MetadataDatasetTest {
       public void apply() throws Exception {
         // since no sort is to be performed by the dataset, we return all (ignore limit and offset)
         SearchResults searchResults = dataset.search(namespaceId, "name*", targets, SortInfo.DEFAULT, 0, 3, 1, null,
-                                                     false);
+                                                     false, EnumSet.allOf(EntityScope.class));
         Assert.assertEquals(
           // since default indexer is used:
           // 1 index for flow: 'name11'
           // 3 indexes for dataset: 'name21', 'name21 name22', 'name22'
           // 4 indexes for app: 'name31', 'name31 name32 name33', 'name32', 'name33'
           ImmutableList.of(flowEntry, dsEntry, dsEntry, dsEntry, appEntry, appEntry, appEntry, appEntry),
-          searchResults.getResults()
+          searchResults.getResultsFromOffset()
         );
         // ascending sort by name. offset and limit should be respected.
         SortInfo nameAsc = new SortInfo(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, SortInfo.SortOrder.ASC);
         // first 2 in ascending order
-        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 0, 2, 0, null, false);
-        Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry), searchResults.getResults());
-        Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry, appEntry), searchResults.getAllResults());
+        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 0, 2, 0, null, false,
+                                       EnumSet.allOf(EntityScope.class));
+        Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry), searchResults.getResultsFromOffset());
+        Assert.assertEquals(2, searchResults.getResultsFromBeginning().size());
         // return 2 with offset 1 in ascending order
-        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 1, 2, 0, null, false);
-        Assert.assertEquals(ImmutableList.of(dsEntry, appEntry), searchResults.getResults());
-        Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry, appEntry), searchResults.getAllResults());
+        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 1, 2, 0, null, false,
+                                       EnumSet.allOf(EntityScope.class));
+        Assert.assertEquals(ImmutableList.of(dsEntry, appEntry), searchResults.getResultsFromOffset());
+        Assert.assertEquals(3, searchResults.getResultsFromBeginning().size());
         // descending sort by name. offset and filter should be respected.
         SortInfo nameDesc = new SortInfo(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, SortInfo.SortOrder.DESC);
         // first 2 in descending order
-        searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 0, 2, 0, null, false);
-        Assert.assertEquals(ImmutableList.of(appEntry, dsEntry), searchResults.getResults());
-        Assert.assertEquals(ImmutableList.of(appEntry, dsEntry, flowEntry), searchResults.getAllResults());
+        searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 0, 2, 0, null, false,
+                                       EnumSet.allOf(EntityScope.class));
+        Assert.assertEquals(ImmutableList.of(appEntry, dsEntry), searchResults.getResultsFromOffset());
+        Assert.assertEquals(2, searchResults.getResultsFromBeginning().size());
         // last 1 in descending order
-        searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 2, 1, 0, null, false);
-        Assert.assertEquals(ImmutableList.of(flowEntry), searchResults.getResults());
-        Assert.assertEquals(ImmutableList.of(appEntry, dsEntry, flowEntry), searchResults.getAllResults());
+        searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 2, 1, 0, null, false,
+                                       EnumSet.allOf(EntityScope.class));
+        Assert.assertEquals(ImmutableList.of(flowEntry), searchResults.getResultsFromOffset());
+        Assert.assertEquals(3, searchResults.getResultsFromBeginning().size());
         // limit 0 should return empty
-        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 2, 0, 0, null, false);
-        Assert.assertTrue(searchResults.getResults().isEmpty());
-        Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry, appEntry), searchResults.getAllResults());
-        searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 1, 0, 0, null, false);
-        Assert.assertTrue(searchResults.getResults().isEmpty());
-        Assert.assertEquals(ImmutableList.of(appEntry, dsEntry, flowEntry), searchResults.getAllResults());
+        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 2, 0, 0, null, false,
+                                       EnumSet.allOf(EntityScope.class));
+        Assert.assertTrue(searchResults.getResultsFromOffset().isEmpty());
+        Assert.assertEquals(2, searchResults.getResultsFromBeginning().size());
+        searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 1, 0, 0, null, false,
+                                       EnumSet.allOf(EntityScope.class));
+        Assert.assertTrue(searchResults.getResultsFromOffset().isEmpty());
+        Assert.assertEquals(1, searchResults.getResultsFromBeginning().size());
         // offset greater than total search results should return empty
-        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 4, 0, 0, null, false);
-        Assert.assertTrue(searchResults.getResults().isEmpty());
-        Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry, appEntry), searchResults.getAllResults());
-        searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 100, 0, 0, null, false);
-        Assert.assertTrue(searchResults.getResults().isEmpty());
-        Assert.assertEquals(ImmutableList.of(appEntry, dsEntry, flowEntry), searchResults.getAllResults());
+        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 4, 0, 0, null, false,
+                                       EnumSet.allOf(EntityScope.class));
+        Assert.assertTrue(searchResults.getResultsFromOffset().isEmpty());
+        Assert.assertEquals(3, searchResults.getResultsFromBeginning().size());
+        searchResults = dataset.search(namespaceId, "*", targets, nameDesc, 100, 0, 0, null, false,
+                                       EnumSet.allOf(EntityScope.class));
+        Assert.assertTrue(searchResults.getResultsFromOffset().isEmpty());
+        Assert.assertEquals(3, searchResults.getResultsFromBeginning().size());
 
         // test cursors
-        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 0, 1, 3, null, false);
-        Assert.assertEquals(ImmutableList.of(flowEntry), searchResults.getResults());
+        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 0, 1, 3, null, false,
+                                       EnumSet.allOf(EntityScope.class));
+        Assert.assertEquals(ImmutableList.of(flowEntry), searchResults.getResultsFromOffset());
         // only 2 cursors are returned even though we requested 3 because we do not have enough data to return
         Assert.assertEquals(ImmutableList.of(dsName, appName), searchResults.getCursors());
+        Assert.assertEquals(3, searchResults.getResultsFromBeginning().size());
 
         // use first cursor returned in the previous query. the rest of the parameters stay the same
         searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 0, 1, 3, searchResults.getCursors().get(0),
-                                       false);
-        Assert.assertEquals(ImmutableList.of(dsEntry), searchResults.getResults());
+                                       false,
+                                       EnumSet.allOf(EntityScope.class));
+        Assert.assertEquals(ImmutableList.of(dsEntry), searchResults.getResultsFromOffset());
         // only 1 cursor is returned even though we requested 3 because we do not have enough data to return
         Assert.assertEquals(ImmutableList.of(appName), searchResults.getCursors());
+        Assert.assertEquals(2, searchResults.getResultsFromBeginning().size());
 
         // use first cursor returned in the previous query. the rest of the parameters stay the same
         searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 0, 1, 3, searchResults.getCursors().get(0),
-                                       false);
-        Assert.assertEquals(ImmutableList.of(appEntry), searchResults.getResults());
+                                       false,
+                                       EnumSet.allOf(EntityScope.class));
+        Assert.assertEquals(ImmutableList.of(appEntry), searchResults.getResultsFromOffset());
         // no cursors are returned even though we requested 3 because we do not have enough data
         Assert.assertEquals(ImmutableList.of(), searchResults.getCursors());
+        Assert.assertEquals(1, searchResults.getResultsFromBeginning().size());
 
-        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 0, 2, 3, null, false);
-        Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry), searchResults.getResults());
+        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 0, 2, 3, null, false,
+                                       EnumSet.allOf(EntityScope.class));
+        Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry), searchResults.getResultsFromOffset());
         // only 1 cursor is returned even though we requested 3 because we do not have enough data to return
         Assert.assertEquals(ImmutableList.of(appName), searchResults.getCursors());
+        Assert.assertEquals(3, searchResults.getResultsFromBeginning().size());
 
-        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 3, 1, 2, null, false);
+        searchResults = dataset.search(namespaceId, "*", targets, nameAsc, 3, 1, 2, null, false,
+                                       EnumSet.allOf(EntityScope.class));
         // limit is 1, we return 0 because offset is too high
-        Assert.assertEquals(ImmutableList.of(), searchResults.getResults());
+        Assert.assertEquals(ImmutableList.of(), searchResults.getResultsFromOffset());
         // only 1 cursor is returned even though we requested 3 because we do not have enough data to return
         Assert.assertEquals(ImmutableList.of(), searchResults.getCursors());
+        Assert.assertEquals(3, searchResults.getResultsFromBeginning().size());
       }
     });
   }
@@ -1433,16 +1502,17 @@ public class MetadataDatasetTest {
   // should be called inside a transaction. This method does not start a transaction on its own, so that you can
   // have multiple invocations in the same transaction.
   private List<MetadataEntry> searchByDefaultIndex(String namespaceId, String searchQuery,
-                                                   Set<EntityTypeSimpleName> types) {
+                                                   Set<EntityTypeSimpleName> types) throws BadRequestException {
     return searchByDefaultIndex(dataset, namespaceId, searchQuery, types);
   }
 
   // should be called inside a transaction. This method does not start a transaction on its own, so that you can
   // have multiple invocations in the same transaction.
   private List<MetadataEntry> searchByDefaultIndex(MetadataDataset dataset, String namespaceId, String searchQuery,
-                                                   Set<EntityTypeSimpleName> types) {
+                                                   Set<EntityTypeSimpleName> types) throws BadRequestException {
     return dataset.search(namespaceId, searchQuery, types,
-                          SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null, false).getResults();
+                          SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null, false,
+                          EnumSet.allOf(EntityScope.class)).getResultsFromOffset();
   }
 
   private static MetadataDataset getDataset(DatasetId instance) throws Exception {

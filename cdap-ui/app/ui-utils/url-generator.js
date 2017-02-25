@@ -177,8 +177,11 @@ window.getOldCDAPUrl = function(navigationObj = {}) {
     'apps.detail.overview.programs': '/apps/:appId/overview/programs',
     'mapreduce.detail': '/apps/:appId/programs/mapreduce/:programId/runs',
     'workflows.detail': '/apps/:appId/programs/workflows/:programId/runs',
+    'workflows.detail.run': '/apps/:appId/programs/workflows/:programId/runs/:runId',
     'workers.detail': '/apps/:appId/programs/workers/:programId/runs',
+    'workers.detail.run': '/apps/:appId/programs/workers/:programId/runs/:runId',
     'spark.detail': '/apps/:appId/programs/spark/:programId/runs',
+    'spark.detail.run': '/apps/:appId/programs/spark/:programId/runs/:runId',
     'flows.detail': '/apps/:appId/programs/flows/:programId/runs',
     'services.detail': '/apps/:appId/programs/services/:programId/runs'
   };

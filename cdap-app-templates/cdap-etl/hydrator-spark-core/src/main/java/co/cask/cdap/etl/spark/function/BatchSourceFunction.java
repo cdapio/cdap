@@ -19,9 +19,9 @@ package co.cask.cdap.etl.spark.function;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.common.preview.LimitingTransform;
+import co.cask.cdap.etl.spark.CombinedEmitter;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import scala.Tuple2;
 
@@ -29,11 +29,11 @@ import scala.Tuple2;
  * Function that uses a BatchSource to transform a pair of objects into a single object.
  * Non-serializable fields are lazily created since this is used in a Spark closure.
  */
-public class BatchSourceFunction implements FlatMapFunction<Tuple2<Object, Object>, Object> {
+public class BatchSourceFunction implements FlatMapFunction<Tuple2<Object, Object>, Tuple2<Boolean, Object>> {
   private final PluginFunctionContext pluginFunctionContext;
   private final int numOfRecordsPreview;
   private transient Transformation<KeyValue<Object, Object>, Object> transform;
-  private transient DefaultEmitter<Object> emitter;
+  private transient CombinedEmitter<Object> emitter;
 
   public BatchSourceFunction(PluginFunctionContext pluginFunctionContext, int numOfRecordsPreview) {
     this.pluginFunctionContext = pluginFunctionContext;
@@ -41,7 +41,7 @@ public class BatchSourceFunction implements FlatMapFunction<Tuple2<Object, Objec
   }
 
   @Override
-  public Iterable<Object> call(Tuple2<Object, Object> input) throws Exception {
+  public Iterable<Tuple2<Boolean, Object>> call(Tuple2<Object, Object> input) throws Exception {
     if (transform == null) {
       BatchSource<Object, Object, Object> batchSource = pluginFunctionContext.createPlugin();
       batchSource.initialize(pluginFunctionContext.createBatchRuntimeContext());
@@ -50,11 +50,11 @@ public class BatchSourceFunction implements FlatMapFunction<Tuple2<Object, Objec
                                            batchSource,
                                          pluginFunctionContext.createStageMetrics(),
                                          pluginFunctionContext.getDataTracer());
-      emitter = new DefaultEmitter<>();
+      emitter = new CombinedEmitter<>(pluginFunctionContext.getStageName());
     }
     emitter.reset();
     KeyValue<Object, Object> inputKV = new KeyValue<>(input._1(), input._2());
     transform.transform(inputKV, emitter);
-    return emitter.getEntries();
+    return emitter.getEmitted();
   }
 }

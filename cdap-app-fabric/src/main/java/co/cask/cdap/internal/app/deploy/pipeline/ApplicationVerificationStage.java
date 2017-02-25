@@ -35,6 +35,7 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.verification.Verifier;
 import co.cask.cdap.app.verification.VerifyResult;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.kerberos.SecurityUtil;
@@ -133,7 +134,8 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
 
   protected void verifyData(ApplicationId appId,
                             ApplicationSpecification specification,
-                            @Nullable KerberosPrincipalId specifiedOwnerPrincipal) throws DatasetManagementException {
+                            @Nullable KerberosPrincipalId specifiedOwnerPrincipal)
+    throws DatasetManagementException, ConflictException {
     // NOTE: no special restrictions on dataset module names, etc
     VerifyResult result;
     for (DatasetCreationSpec dataSetCreateSpec : specification.getDatasets().values()) {
@@ -169,18 +171,20 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
     }
   }
 
-  private void verifyOwner(NamespacedEntityId entityId,
-                           @Nullable KerberosPrincipalId specifiedOwnerPrincipal) throws DatasetManagementException {
-    KerberosPrincipalId existingOwnerPrincipal;
+  private void verifyOwner(NamespacedEntityId entityId, @Nullable KerberosPrincipalId specifiedOwnerPrincipal)
+    throws DatasetManagementException, ConflictException {
+    String ownerPrincipal;
     try {
-      existingOwnerPrincipal = ownerAdmin.getOwner(entityId);
-      boolean equals = Objects.equals(existingOwnerPrincipal, specifiedOwnerPrincipal);
-      // Not giving existing owner information as it might be unacceptable under some security scenarios
-      Preconditions.checkArgument(equals, String.format("'%s' already exists and the specified '%s' : '%s' is " +
-                                                          "not same as existing one. '%s' of an entity cannot " +
-                                                          "be updated.", entityId,
-                                                        Constants.Security.PRINCIPAL, specifiedOwnerPrincipal,
-                                                        Constants.Security.PRINCIPAL));
+      ownerPrincipal = ownerAdmin.getImpersonationPrincipal(entityId);
+      if (!Objects.equals(ownerPrincipal,
+                         specifiedOwnerPrincipal == null ? null : specifiedOwnerPrincipal.getPrincipal())) {
+        // Not giving existing owner information as it might be unacceptable under some security scenarios
+        throw new ConflictException(String.format("%s '%s' already exists and the specified %s '%s' is not the same " +
+                                                    "as the existing one. The %s of an entity cannot be changed.",
+                                                  entityId.getEntityType(), entityId.getEntityName(),
+                                                  Constants.Security.PRINCIPAL, specifiedOwnerPrincipal,
+                                                  Constants.Security.PRINCIPAL));
+      }
     } catch (IOException e) {
       throw new DatasetManagementException(e.getMessage(), e);
     }

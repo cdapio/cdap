@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
+import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.PreferencesClient;
 import co.cask.common.cli.Arguments;
@@ -47,9 +48,18 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream printStream) throws Exception {
-    String runtimeArgs = arguments.get(ArgumentName.RUNTIME_ARGS.toString());
-    Map<String, String> args = ArgumentParser.parseMap(runtimeArgs, ArgumentName.RUNTIME_ARGS.toString());
-    setPreferences(arguments, printStream, args);
+    String[] programIdParts = new String[0];
+    // If program ID and preferences are in the wrong order, this will return invalid command format instead of
+    // invalid preferences format
+    if (arguments.hasArgument(type.getArgumentName().toString())) {
+      programIdParts = arguments.get(type.getArgumentName().toString()).split("\\.");
+      if (programIdParts.length < 2) {
+        throw new CommandInputError(this);
+      }
+    }
+    String preferences = arguments.get(ArgumentName.PREFERENCES.toString());
+    Map<String, String> args = ArgumentParser.parseMap(preferences, ArgumentName.PREFERENCES.toString());
+    setPreferences(arguments, printStream, args, programIdParts);
   }
 
   @Override
@@ -60,6 +70,6 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
   @Override
   public String getDescription() {
     return String.format("Sets the preferences of %s. '<%s>' is specified in the format 'key1=v1 key2=v2'.",
-      Fragment.of(Article.A, type.getName()), ArgumentName.RUNTIME_ARGS);
+                         Fragment.of(Article.A, type.getName()), ArgumentName.PREFERENCES);
   }
 }

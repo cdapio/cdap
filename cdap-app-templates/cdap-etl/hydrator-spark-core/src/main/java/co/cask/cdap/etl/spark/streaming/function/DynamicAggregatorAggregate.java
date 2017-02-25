@@ -22,6 +22,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.streaming.Time;
+import scala.Tuple2;
 
 /**
  * Serializable function that can be used to perform the aggregate part of an Aggregator. Dynamically instantiates
@@ -32,7 +33,7 @@ import org.apache.spark.streaming.Time;
  * @param <OUT> type of output object
  */
 public class DynamicAggregatorAggregate<GROUP_KEY, GROUP_VAL, OUT>
-  implements Function2<JavaPairRDD<GROUP_KEY, Iterable<GROUP_VAL>>, Time, JavaRDD<OUT>> {
+  implements Function2<JavaPairRDD<GROUP_KEY, Iterable<GROUP_VAL>>, Time, JavaRDD<Tuple2<Boolean, Object>>> {
   private final DynamicDriverContext dynamicDriverContext;
   private transient AggregatorAggregateFunction<GROUP_KEY, GROUP_VAL, OUT> function;
 
@@ -41,7 +42,8 @@ public class DynamicAggregatorAggregate<GROUP_KEY, GROUP_VAL, OUT>
   }
 
   @Override
-  public JavaRDD<OUT> call(JavaPairRDD<GROUP_KEY, Iterable<GROUP_VAL>> input, Time batchTime) throws Exception {
+  public JavaRDD<Tuple2<Boolean, Object>> call(JavaPairRDD<GROUP_KEY, Iterable<GROUP_VAL>> input,
+                                               Time batchTime) throws Exception {
     if (function == null) {
       function = new AggregatorAggregateFunction<>(dynamicDriverContext.getPluginFunctionContext());
     }

@@ -20,224 +20,254 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
-import ch.qos.logback.classic.spi.ThrowableProxyVO;
-import org.apache.avro.Schema;
+import co.cask.cdap.logging.LoggingUtil;
 import org.apache.avro.generic.GenericArray;
-import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.reflect.Nullable;
 import org.slf4j.Marker;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
 * Class used to serialize/de-serialize ILoggingEvent.
 */
 public final class LoggingEvent implements ILoggingEvent {
 
+  private final ByteBuffer encoded;
+  private final GenericRecord record;
+
+  private boolean threadNamePreserved;
   private String threadName;
-  private int level;
+
+  private boolean levelPreserved;
+  private Level level;
+
+  private boolean messagePreserved;
   private String message;
-  @Nullable
+
+  private boolean argumentArrayPreserved;
   private String[] argumentArray;
-  @Nullable
+
+  private boolean formattedMessagePreserved;
   private String formattedMessage;
-  @Nullable
+
+  private boolean loggerNamePreserved;
   private String loggerName;
-  @Nullable
+
+  private boolean loggerContextVOPreserved;
   private LoggerContextVO loggerContextVO;
-  @Nullable
+
+  private boolean throwableProxyPreserved;
   private IThrowableProxy throwableProxy;
-  @Nullable
+
+  private boolean callerDataPreserved;
   private StackTraceElement[] callerData;
+
+  private boolean hasCallerDataPreserved;
   private boolean hasCallerData;
-  @Nullable
-  private Marker marker;
-  @Nullable
+
+  private boolean mdcPreserved;
   private Map<String, String> mdc;
+
+  private boolean timestampPreserved;
   private long timestamp;
 
-  private LoggingEvent() {}
+  private boolean deferredProcessingPrepared;
 
-  public LoggingEvent(ILoggingEvent loggingEvent) {
-    this.threadName = loggingEvent.getThreadName();
-    this.level = loggingEvent.getLevel() == null ? Level.ERROR_INT : loggingEvent.getLevel().toInt();
-    this.message = loggingEvent.getMessage();
+  public LoggingEvent(GenericRecord record) {
+    this(record, null);
+  }
 
-    if (loggingEvent.getArgumentArray() != null) {
-      this.argumentArray = new String[loggingEvent.getArgumentArray().length];
-      int i = 0;
-      for (Object obj : loggingEvent.getArgumentArray()) {
-        this.argumentArray[i++] = obj == null ? null : obj.toString();
-      }
-    }
+  public LoggingEvent(GenericRecord record, @Nullable ByteBuffer encoded) {
+    this.record = record;
+    this.encoded = encoded;
+  }
 
-    this.formattedMessage = loggingEvent.getFormattedMessage();
-    this.loggerName = loggingEvent.getLoggerName();
-    this.loggerContextVO = loggingEvent.getLoggerContextVO();
-    this.throwableProxy = ThrowableProxyVO.build(loggingEvent.getThrowableProxy());
-    this.hasCallerData = loggingEvent.hasCallerData();
-    if (hasCallerData) {
-      this.callerData = loggingEvent.getCallerData();
-    }
-    this.marker = loggingEvent.getMarker();
-    this.mdc = loggingEvent.getMDCPropertyMap();
-    this.timestamp = loggingEvent.getTimeStamp();
+  /**
+   * Returns the {@link ByteBuffer} that this event is decoded from or {@code null} if
+   * the original encoded buffer is unknown.
+   */
+  @Nullable
+  public ByteBuffer getEncoded() {
+    return encoded;
+  }
+
+  /**
+   * Returns the {@link GenericRecord} that this event is constructed from.
+   */
+  public GenericRecord getRecord() {
+    return record;
   }
 
   @Override
   public String getThreadName() {
+    if (!threadNamePreserved) {
+      threadName = LoggingUtil.stringOrNull(record.get("threadName"));
+      threadNamePreserved = true;
+    }
     return threadName;
   }
 
   @Override
   public Level getLevel() {
-    return Level.toLevel(level);
+    if (!levelPreserved) {
+      level = Level.toLevel((Integer) record.get("level"));
+      levelPreserved = true;
+    }
+    return level;
   }
 
   @Override
   public String getMessage() {
+    if (!messagePreserved) {
+      message = LoggingUtil.stringOrNull(record.get("message"));
+      messagePreserved = true;
+    }
     return message;
   }
 
   @Override
   public Object[] getArgumentArray() {
+    if (!argumentArrayPreserved) {
+      GenericArray<?> argArray = (GenericArray<?>) record.get("argumentArray");
+      if (argArray != null) {
+        argumentArray = new String[argArray.size()];
+        int i = 0;
+        for (Object obj : argArray) {
+          argumentArray[i++] = obj == null ? null : obj.toString();
+        }
+      }
+      argumentArrayPreserved = true;
+    }
     return argumentArray;
   }
 
   @Override
   public String getFormattedMessage() {
+    if (!formattedMessagePreserved) {
+      formattedMessage = LoggingUtil.stringOrNull(record.get("formattedMessage"));
+      formattedMessagePreserved = true;
+    }
     return formattedMessage;
   }
 
   @Override
   public String getLoggerName() {
+    if (!loggerNamePreserved) {
+      loggerName = LoggingUtil.stringOrNull(record.get("loggerName"));
+      loggerNamePreserved = true;
+    }
     return loggerName;
   }
 
   @Override
   public LoggerContextVO getLoggerContextVO() {
+    if (!loggerContextVOPreserved) {
+      loggerContextVO =  LoggerContextSerializer.decode((GenericRecord) record.get("loggerContextVO"));
+      loggerContextVOPreserved = true;
+    }
     return loggerContextVO;
   }
 
   @Override
   public IThrowableProxy getThrowableProxy() {
+    if (!throwableProxyPreserved) {
+      throwableProxy = ThrowableProxySerializer.decode((GenericRecord) record.get("throwableProxy"));
+      throwableProxyPreserved = true;
+    }
     return throwableProxy;
   }
 
   @Override
   public StackTraceElement[] getCallerData() {
+    if (!callerDataPreserved) {
+      //noinspection unchecked
+      callerData = CallerDataSerializer.decode((GenericArray<GenericRecord>) record.get("callerData"));
+      callerDataPreserved = true;
+    }
     return callerData;
   }
 
   @Override
   public boolean hasCallerData() {
+    if (!hasCallerDataPreserved) {
+      hasCallerData = (Boolean) record.get("hasCallerData");
+      hasCallerDataPreserved = true;
+    }
     return hasCallerData;
   }
 
   @Override
   public Marker getMarker() {
-    return marker;
+    // We don't support marker in serialization, hence no need to deserializer
+    return null;
   }
 
   @Override
   public Map<String, String> getMDCPropertyMap() {
+    if (!mdcPreserved) {
+      mdc = LoggingUtil.decodeMDC((Map<?, ?>) record.get("mdc"));
+      mdcPreserved = true;
+    }
     return mdc;
   }
 
   @Override
   public Map<String, String> getMdc() {
-    return mdc;
+    return getMDCPropertyMap();
   }
 
   @Override
   public long getTimeStamp() {
+    if (!timestampPreserved) {
+      timestamp = (Long) record.get("timestamp");
+      timestampPreserved = true;
+    }
     return timestamp;
   }
 
   @Override
   public void prepareForDeferredProcessing() {
-    // Nothing to do!
-  }
-
-  public static GenericRecord encode(Schema schema, ILoggingEvent event) {
-    event.prepareForDeferredProcessing();
-
-    LoggingEvent loggingEvent = new LoggingEvent(event);
-    GenericRecord datum = new GenericData.Record(schema);
-    datum.put("threadName", loggingEvent.threadName);
-    datum.put("level", loggingEvent.level);
-    datum.put("message", loggingEvent.message);
-
-    if (loggingEvent.argumentArray != null) {
-      GenericArray<String> argArray =
-        new GenericData.Array<>(loggingEvent.argumentArray.length,
-                                schema.getField("argumentArray").schema().getTypes().get(1));
-      Collections.addAll(argArray, loggingEvent.argumentArray);
-      datum.put("argumentArray", argArray);
+    if (deferredProcessingPrepared) {
+      return;
     }
 
-    datum.put("formattedMessage", loggingEvent.formattedMessage);
-    datum.put("loggerName", loggingEvent.loggerName);
-    datum.put("loggerContextVO", LoggerContextSerializer.encode(schema.getField("loggerContextVO").schema(),
-                                                                loggingEvent.loggerContextVO));
-    datum.put("throwableProxy", ThrowableProxySerializer.encode(schema.getField("throwableProxy").schema(),
-                                                                loggingEvent.throwableProxy));
-    if (loggingEvent.hasCallerData) {
-      datum.put("callerData", CallerDataSerializer.encode(schema.getField("callerData").schema(),
-                                                          loggingEvent.callerData));
-    }
-    datum.put("hasCallerData", loggingEvent.hasCallerData);
-    //datum.put("marker", marker);
-    datum.put("mdc", LogSerializerUtil.encodeMDC(loggingEvent.getMDCPropertyMap()));
-    datum.put("timestamp", loggingEvent.timestamp);
-    return datum;
-  }
+    // Call all the method to capture values
+    getThreadName();
+    getLevel();
+    getMessage();
+    getArgumentArray();
+    getFormattedMessage();
+    getLoggerName();
+    getLoggerContextVO();
+    getThrowableProxy();
+    getCallerData();
+    hasCallerData();
+    getMDCPropertyMap();
+    getTimeStamp();
 
-  @SuppressWarnings("unchecked")
-  public static ILoggingEvent decode(GenericRecord datum) {
-    LoggingEvent loggingEvent = new LoggingEvent();
-    loggingEvent.threadName = LogSerializerUtil.stringOrNull(datum.get("threadName"));
-    loggingEvent.level = (Integer) datum.get("level");
-    loggingEvent.message = LogSerializerUtil.stringOrNull(datum.get("message"));
-
-    GenericArray<?> argArray = (GenericArray<?>) datum.get("argumentArray");
-    if (argArray != null) {
-      loggingEvent.argumentArray = new String[argArray.size()];
-      for (int i = 0; i < argArray.size(); ++i) {
-        loggingEvent.argumentArray[i] = argArray.get(i) == null ? null : argArray.get(i).toString();
-      }
-    }
-    loggingEvent.formattedMessage = LogSerializerUtil.stringOrNull(datum.get("formattedMessage"));
-    loggingEvent.loggerName = LogSerializerUtil.stringOrNull(datum.get("loggerName"));
-    loggingEvent.loggerContextVO = LoggerContextSerializer.decode((GenericRecord) datum.get("loggerContextVO"));
-    loggingEvent.throwableProxy = ThrowableProxySerializer.decode((GenericRecord) datum.get("throwableProxy"));
-    loggingEvent.callerData = CallerDataSerializer.decode((GenericArray<GenericRecord>) datum.get("callerData"));
-    loggingEvent.hasCallerData = (Boolean) datum.get("hasCallerData");
-    loggingEvent.mdc = LogSerializerUtil.decodeMDC((Map<?, ?>) datum.get("mdc"));
-    loggingEvent.timestamp = (Long) datum.get("timestamp");
-    return loggingEvent;
+    deferredProcessingPrepared = true;
   }
 
   @Override
   public String toString() {
     return "LoggingEvent{" +
-      "timestamp=" + timestamp +
-      ", formattedMessage='" + formattedMessage + '\'' +
-      ", threadName='" + threadName + '\'' +
-      ", level=" + Level.toLevel(level) +
-      ", message='" + message + '\'' +
-      ", argumentArray=" + (argumentArray == null ? null : Arrays.asList(argumentArray)) +
-      ", formattedMessage='" + formattedMessage + '\'' +
-      ", loggerName='" + loggerName + '\'' +
-      ", loggerContextVO=" + loggerContextVO +
-      ", throwableProxy=" + throwableProxy +
-      ", callerData=" + (callerData == null ? null : Arrays.asList(callerData)) +
-      ", hasCallerData=" + hasCallerData +
-      ", marker=" + marker +
-      ", mdc=" + mdc +
+      "timestamp=" + getTimeStamp() +
+      ", formattedMessage='" + getFormattedMessage() + '\'' +
+      ", threadName='" + getThreadName() + '\'' +
+      ", level=" + getLevel() +
+      ", message='" + getMessage() + '\'' +
+      ", argumentArray=" + (getArgumentArray() == null ? null : Arrays.toString(getArgumentArray())) +
+      ", formattedMessage='" + getFormattedMessage() + '\'' +
+      ", loggerName='" + getLoggerName() + '\'' +
+      ", loggerContextVO=" + getLoggerContextVO() +
+      ", throwableProxy=" + getThrowableProxy() +
+      ", callerData=" + (getCallerData() == null ? null : Arrays.toString(getCallerData())) +
+      ", hasCallerData=" + hasCallerData() +
+      ", marker=" + getMarker() +
+      ", mdc=" + getMDCPropertyMap() +
       '}';
   }
 }

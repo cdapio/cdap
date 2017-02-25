@@ -23,20 +23,31 @@ export default class HomeErrorMessage extends Component {
     super(props);
     this.state = {
       errorMessage: this.props.errorMessage || '',
-      errorStatusCode: this.props.errorStatusCode || 200
+      errorStatusCode: this.props.errorStatusCode || 200,
+      retrying: false,
+      retryCounter: this.props.retryCounter
     };
     this.resetRetryCounter = this.resetRetryCounter.bind(this);
-    this.retryCounter = this.props.retryCounter;
   }
   componentWillReceiveProps(nextProps) {
-    this.setState({
-      errorMessage: nextProps.errorMessage || '',
-      errorStatusCode: nextProps.errorStatusCode || 200
-    });
+    if (
+      this.props.errorMessage !== nextProps.errorMessage ||
+      this.props.errorStatusCode !== nextProps.errorStatusCode ||
+      this.props.retryCounter !== nextProps.retryCounter
+    ) {
+      this.setState({
+        errorMessage: nextProps.errorMessage || '',
+        errorStatusCode: nextProps.errorStatusCode || 200,
+        retrying: false,
+        retryCounter: nextProps.retryCounter
+      });
+    }
   }
   resetRetryCounter() {
-    this.retryCounter = this.props.retryCounter;
-    this.props.onRetry();
+    this.setState({
+      retrying: true,
+      retryCounter: 0
+    }, this.props.onRetry);
   }
   render() {
     const retryMap = {
@@ -57,9 +68,15 @@ export default class HomeErrorMessage extends Component {
     const retryNow = (
       <button
         className="btn btn-primary retry-now"
-        onClick={this.props.onRetry}
+        onClick={this.resetRetryCounter}
+        disabled={this.state.retrying ? 'disabled' : false}
       >
-        {T.translate('features.EntityListView.Errors.retryNow')}
+        {
+          this.state.retrying ?
+            T.translate('features.EntityListView.Errors.retrying')
+          :
+            T.translate('features.EntityListView.Errors.retryNow')
+        }
       </button>
     );
 
@@ -69,7 +86,7 @@ export default class HomeErrorMessage extends Component {
         <span>
           {T.translate('features.EntityListView.Errors.tryAgain')}
           <Timer
-            time={retryMap[this.retryCounter]}
+            time={retryMap[this.state.retryCounter]}
             onDone={this.resetRetryCounter}
           />
           {T.translate('features.EntityListView.Errors.secondsLabel')}
@@ -90,7 +107,7 @@ export default class HomeErrorMessage extends Component {
 
     const CHECK_ERROR_CODE = 500;
 
-    if (this.retryCounter > 5 && this.state.errorStatusCode >= CHECK_ERROR_CODE) {
+    if (this.state.retryCounter > 5 && this.state.errorStatusCode >= CHECK_ERROR_CODE) {
       return timeOut;
     } else if (this.state.errorStatusCode >= CHECK_ERROR_CODE) {
       return tryAgainError;

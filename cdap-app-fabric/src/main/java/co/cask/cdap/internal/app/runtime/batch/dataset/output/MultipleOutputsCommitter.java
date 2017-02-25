@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.OutputCommitter;
@@ -33,7 +32,8 @@ public class MultipleOutputsCommitter extends OutputCommitter {
   private final Map<String, OutputCommitter> committers;
 
   public MultipleOutputsCommitter(Map<String, OutputCommitter> committers) {
-    this.committers = ImmutableMap.copyOf(committers);
+    // do not copy the committers map to preserve its order: committers are called in the order the outputs were added
+    this.committers = committers;
   }
 
   @Override

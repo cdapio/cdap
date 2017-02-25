@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _cloudera-ingesting:
 
@@ -15,10 +15,10 @@ Integrating CDAP with Impala
 
 When using CDAP with Impala:
 
-.. |hydrator| replace:: **Data Pipelines:**
-.. _hydrator: ../../../hydrator-manual/index.html
+.. |cdap-pipelines| replace:: **Data Pipelines:**
+.. _cdap-pipelines: ../../../developers-manual/pipelines/index.html
 
-- |hydrator|_ Using **Hydrator** and **plugins** to create either real-time or batch data pipelines
+- |cdap-pipelines|_ Using **CDAP pipelines** and **plugins** to create either real-time or batch data pipelines
 
 
 .. |stream| replace:: **Stream Exploration:**

@@ -33,7 +33,7 @@ export default class FastActions extends Component {
         fastActionTypes = ['setPreferences', 'delete'];
         break;
       case 'stream':
-        fastActionTypes = ['truncate', 'delete', 'explore', 'sendEvents'];
+        fastActionTypes = ['truncate', 'delete', 'explore', 'sendEvents', 'viewEvents'];
         break;
       case 'datasetinstance':
         fastActionTypes = ['truncate', 'delete', 'explore'];
@@ -69,33 +69,31 @@ export default class FastActions extends Component {
     let className = this.props.className || 'text-xs-center';
     return (
       <h4 className={className}>
-        <span>
-          {
-            fastActions.map((action) => {
-              if (this.props.actionToOpen && this.props.actionToOpen === action) {
-                return (
-                  <FastAction
-                    key={action}
-                    type={action}
-                    entity={this.props.entity}
-                    opened={true}
-                    onSuccess={this.onSuccess.bind(this, action)}
-                  />
-                );
-              }
-              else {
-                return (
-                  <FastAction
-                    key={action}
-                    type={action}
-                    entity={this.props.entity}
-                    onSuccess={this.onSuccess.bind(this, action)}
-                  />
-                );
-              }
-            })
-          }
-        </span>
+        {
+          fastActions.map((action) => {
+            if (this.props.actionToOpen && this.props.actionToOpen === action) {
+              return (
+                <FastAction
+                  key={action}
+                  type={action}
+                  entity={this.props.entity}
+                  opened={true}
+                  onSuccess={this.onSuccess.bind(this, action)}
+                />
+              );
+            }
+            else {
+              return (
+                <FastAction
+                  key={action}
+                  type={action}
+                  entity={this.props.entity}
+                  onSuccess={this.onSuccess.bind(this, action)}
+                />
+              );
+            }
+          })
+        }
       </h4>
     );
   }

@@ -16,7 +16,6 @@
 
 import React, { Component, PropTypes } from 'react';
 import OverviewMetaSection from 'components/Overview/OverviewMetaSection';
-import OverviewHeader from 'components/Overview/OverviewHeader';
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import {fetchTables} from 'services/ExploreTables/ActionCreator';
 import {objectQuery} from 'services/helpers';
@@ -37,7 +36,6 @@ import Page404 from 'components/404';
 import BreadCrumb from 'components/BreadCrumb';
 import ResourceCenterButton from 'components/ResourceCenterButton';
 import Helmet from 'react-helmet';
-
 require('./DatasetDetailedView.scss');
 
 export default class DatasetDetailedView extends Component {
@@ -54,7 +52,8 @@ export default class DatasetDetailedView extends Component {
       isInvalid: false,
       routeToHome: false,
       successMessage: null,
-      notFound: false
+      notFound: false,
+      modalToOpen: objectQuery(this.props, 'location', 'query', 'modalToOpen') || ''
     };
   }
 
@@ -67,6 +66,49 @@ export default class DatasetDetailedView extends Component {
       fetchTables(namespace)
     );
 
+    this.fetchEntityDetails(namespace, datasetId);
+    this.fetchEntitiesMetadata(namespace);
+    if (
+      isNil(this.state.entityMetadata) ||
+      isEmpty(this.state.entityMetadata) ||
+      isNil(this.state.entity) ||
+      isEmpty(this.state.entity)
+    ) {
+      this.setState({
+        loading: true
+      });
+    }
+
+  }
+
+  componentWillReceiveProps(nextProps) {
+    let {namespace: currentNamespace, datasetId: currentDatasetId} = this.props.params;
+    let {namespace: nextNamespace, datasetId: nextDatasetId} = nextProps.params;
+    if (currentNamespace === nextNamespace && currentDatasetId === nextDatasetId) {
+      return;
+    }
+    let {namespace, datasetId} = nextProps.params;
+    if (!namespace) {
+      namespace = NamespaceStore.getState().selectedNamespace;
+    }
+    ExploreTablesStore.dispatch(
+      fetchTables(namespace)
+    );
+
+    this.setState({
+      entityDetail: {
+        schema: null,
+        programs: []
+      },
+      loading: true,
+      entityMetadata: {}
+    }, () => {
+      this.fetchEntityDetails(namespace, datasetId);
+      this.fetchEntitiesMetadata(namespace, datasetId);
+    });
+  }
+
+  fetchEntityDetails(namespace, datasetId) {
     if (!this.state.entityDetail.schema || this.state.entityDetail.programs.length === 0) {
       const datasetParams = {
         namespace,
@@ -122,7 +164,9 @@ export default class DatasetDetailedView extends Component {
           }
         );
     }
+  }
 
+  fetchEntitiesMetadata(namespace) {
     if (
       isNil(this.state.entityMetadata) ||
       isEmpty(this.state.entityMetadata)
@@ -142,25 +186,16 @@ export default class DatasetDetailedView extends Component {
               notFound: true
             });
           } else {
+            let metadata = entityMetadata
+              .filter(en => en.type === 'datasetinstance')
+              .find( en => en.id === this.props.params.datasetId);
             this.setState({
-              entityMetadata: entityMetadata[0],
+              entityMetadata: metadata,
               loading: false
             });
           }
         });
     }
-
-    if (
-      isNil(this.state.entityMetadata) ||
-      isEmpty(this.state.entityMetadata) ||
-      isNil(this.state.entity) ||
-      isEmpty(this.state.entity)
-    ) {
-      this.setState({
-        loading: true
-      });
-    }
-
   }
 
   goToHome(action) {
@@ -197,8 +232,6 @@ export default class DatasetDetailedView extends Component {
       );
     }
 
-    const title = T.translate('commons.entity.dataset.singular');
-
     if (this.state.notFound) {
       return (
         <Page404
@@ -214,25 +247,22 @@ export default class DatasetDetailedView extends Component {
       label: T.translate('commons.back')
     }];
     return (
-      <div className="app-detailed-view">
+      <div className="app-detailed-view dataset-detailed-view">
         <Helmet
           title={T.translate('features.DatasetDetailedView.Title', {datasetId: this.props.params.datasetId})}
         />
         <ResourceCenterButton />
         <BreadCrumb
           previousPaths={previousPaths}
-          currentStateIcon="icon-streams"
+          currentStateIcon="icon-datasets"
           currentStateLabel={T.translate('commons.dataset')}
-        />
-        <OverviewHeader
-          icon="icon-datasets"
-          title={title}
-          successMessage={this.state.successMessage}
         />
         <OverviewMetaSection
           entity={this.state.entityMetadata}
           onFastActionSuccess={this.goToHome.bind(this)}
           onFastActionUpdate={this.goToHome.bind(this)}
+          fastActionToOpen={this.state.modalToOpen}
+          showFullCreationTime={true}
         />
         <DatasetDetaildViewTab
           params={this.props.params}

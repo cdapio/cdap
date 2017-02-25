@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Cask Data, Inc.
+ * Copyright 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,9 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategy;
+import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.audit.payload.builder.MetadataPayloadBuilder;
@@ -32,6 +35,7 @@ import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.data2.metadata.dataset.SearchResults;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.DatasetId;
@@ -75,9 +79,12 @@ public class DefaultMetadataStore implements MetadataStore {
   private static final Set<String> EMPTY_TAGS = ImmutableSet.of();
   private static final int BATCH_SIZE = 1000;
 
-  // TODO: Can be made private after CDAP-7835 is fixed
-  public static final DatasetId BUSINESS_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("business.metadata");
-  public static final DatasetId SYSTEM_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("system.metadata");
+  private static final DatasetId BUSINESS_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("business.metadata");
+  private static final DatasetId SYSTEM_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("system.metadata");
+
+  //Special tag in the Metadata Dataset to mark Upgrade Status
+  private static final String NEEDS_UPGRADE_TAG = "cdap.metadatadataset.needs_upgrade";
+  private static final String VERSION_TAG_PREFIX = "cdap.version:";
 
   private static final Comparator<Map.Entry<NamespacedEntityId, Integer>> SEARCH_RESULT_DESC_SCORE_COMPARATOR =
     new Comparator<Map.Entry<NamespacedEntityId, Integer>>() {
@@ -376,7 +383,8 @@ public class DefaultMetadataStore implements MetadataStore {
   public MetadataSearchResponse search(String namespaceId, String searchQuery,
                                        Set<EntityTypeSimpleName> types,
                                        SortInfo sortInfo, int offset, int limit,
-                                       int numCursors, String cursor, boolean showHidden) throws BadRequestException {
+                                       int numCursors, String cursor, boolean showHidden,
+                                       Set<EntityScope> entityScope) throws BadRequestException {
     Set<MetadataScope> searchScopes = EnumSet.allOf(MetadataScope.class);
     if ("*".equals(searchQuery)) {
       if (SortInfo.DEFAULT.equals(sortInfo)) {
@@ -392,13 +400,14 @@ public class DefaultMetadataStore implements MetadataStore {
       }
     }
     return search(searchScopes, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor,
-                  showHidden);
+                  showHidden, entityScope);
   }
 
   private MetadataSearchResponse search(Set<MetadataScope> scopes, String namespaceId,
                                         String searchQuery, Set<EntityTypeSimpleName> types,
                                         SortInfo sortInfo, int offset, int limit,
-                                        int numCursors, String cursor, boolean showHidden) throws BadRequestException {
+                                        int numCursors, String cursor, boolean showHidden,
+                                        Set<EntityScope> entityScope) throws BadRequestException {
     if (offset < 0) {
       throw new IllegalArgumentException("offset must not be negative");
     }
@@ -407,21 +416,21 @@ public class DefaultMetadataStore implements MetadataStore {
       throw new IllegalArgumentException("limit must not be negative");
     }
 
-    List<MetadataEntry> results = new LinkedList<>();
+    List<MetadataEntry> resultsFromOffset = new LinkedList<>();
     List<String> cursors = new LinkedList<>();
-    List<MetadataEntry> allResults = new LinkedList<>();
+    List<MetadataEntry> resultsFromBeginning = new LinkedList<>();
     for (MetadataScope scope : scopes) {
       SearchResults searchResults =
         getSearchResults(scope, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor,
-                         showHidden);
-      results.addAll(searchResults.getResults());
+                         showHidden, entityScope);
+      resultsFromOffset.addAll(searchResults.getResultsFromOffset());
       cursors.addAll(searchResults.getCursors());
-      allResults.addAll(searchResults.getAllResults());
+      resultsFromBeginning.addAll(searchResults.getResultsFromBeginning());
     }
 
     // sort if required
-    Set<NamespacedEntityId> sortedEntities = getSortedEntities(results, sortInfo);
-    int total = getSortedEntities(allResults, sortInfo).size();
+    Set<NamespacedEntityId> sortedEntities = getSortedEntities(resultsFromOffset, sortInfo);
+    int total = getSortedEntities(resultsFromBeginning, sortInfo).size();
 
     // pagination is not performed at the dataset level, because:
     // 1. scoring is needed for DEFAULT sort info. So perform it here for now.
@@ -446,20 +455,22 @@ public class DefaultMetadataStore implements MetadataStore {
 
     return new MetadataSearchResponse(
       sortInfo.getSortBy() + " " + sortInfo.getSortOrder(), offset, limit, numCursors, total,
-      addMetadataToEntities(sortedEntities, systemMetadata, userMetadata), cursors, showHidden
-    );
+      addMetadataToEntities(sortedEntities, systemMetadata, userMetadata), cursors, showHidden,
+      entityScope);
   }
 
   private SearchResults getSearchResults(final MetadataScope scope, final String namespaceId,
                                          final String searchQuery, final Set<EntityTypeSimpleName> types,
                                          final SortInfo sortInfo, final int offset,
                                          final int limit, final int numCursors,
-                                         final String cursor, final boolean showHidden) throws BadRequestException {
+                                         final String cursor, final boolean showHidden,
+                                         final Set<EntityScope> entityScope) throws BadRequestException {
     return execute(
       new TransactionExecutor.Function<MetadataDataset, SearchResults>() {
         @Override
         public SearchResults apply(MetadataDataset input) throws Exception {
-          return input.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor, showHidden);
+          return input.search(namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor, showHidden,
+                              entityScope);
         }
       }, scope);
   }
@@ -470,10 +481,7 @@ public class DefaultMetadataStore implements MetadataStore {
     if (SortInfo.SortOrder.WEIGHTED != sortInfo.getSortOrder()) {
       Set<NamespacedEntityId> entities = new LinkedHashSet<>(results.size());
       for (MetadataEntry metadataEntry : results) {
-        //TODO Remove this null check after CDAP-7228 resolved. Since previous CDAP version may have null value.
-        if (metadataEntry != null) {
-          entities.add(metadataEntry.getTargetId());
-        }
+        entities.add(metadataEntry.getTargetId());
       }
       return entities;
     }
@@ -481,12 +489,9 @@ public class DefaultMetadataStore implements MetadataStore {
     // Score results
     final Map<NamespacedEntityId, Integer> weightedResults = new HashMap<>();
     for (MetadataEntry metadataEntry : results) {
-      //TODO Remove this null check after CDAP-7228 resolved. Since previous CDAP version may have null value.
-      if (metadataEntry != null) {
-        Integer score = weightedResults.get(metadataEntry.getTargetId());
-        score = (score == null) ? 0 : score;
-        weightedResults.put(metadataEntry.getTargetId(), score + 1);
-      }
+      Integer score = weightedResults.get(metadataEntry.getTargetId());
+      score = (score == null) ? 0 : score;
+      weightedResults.put(metadataEntry.getTargetId(), score + 1);
     }
 
     // Sort the results by score
@@ -571,23 +576,36 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   @Override
-  public void rebuildIndexes() {
+  public void rebuildIndexes(MetadataScope scope,
+                             RetryStrategy retryStrategy) {
     byte[] row = null;
-    while ((row = rebuildIndex(row, MetadataScope.SYSTEM)) != null) {
-      LOG.debug("Completed a batch for rebuilding system metadata indexes.");
-    }
-    while ((row = rebuildIndex(row, MetadataScope.USER)) != null) {
-      LOG.debug("Completed a batch for rebuilding business metadata indexes.");
+    while ((row = rebuildIndexesWithRetries(scope, row, retryStrategy)) != null) {
+      LOG.debug("Completed a batch for rebuilding {} metadata indexes.", scope);
     }
   }
 
-  @Override
-  public void deleteAllIndexes() {
-    while (deleteBatch(MetadataScope.SYSTEM) != 0) {
-      LOG.debug("Deleted a batch of system metadata indexes.");
+  private byte[] rebuildIndexesWithRetries(final MetadataScope scope,
+                             final byte[] row, RetryStrategy retryStrategy) {
+    byte[] returnRow;
+    try {
+      returnRow = Retries.callWithRetries(new Retries.Callable<byte[], Exception>() {
+        @Override
+        public byte[] call() throws Exception {
+          // Run data migration
+          return rebuildIndex(row, scope);
+        }
+      }, retryStrategy);
+    } catch (Exception e) {
+      LOG.error("Failed to reIndex while Upgrading Metadata Dataset.", e);
+      throw new RuntimeException(e);
     }
-    while (deleteBatch(MetadataScope.USER) != 0) {
-      LOG.debug("Deleted a batch of business metadata indexes.");
+    return returnRow;
+  }
+
+  @Override
+  public void deleteAllIndexes(MetadataScope scope) {
+    while (deleteBatch(scope) != 0) {
+      LOG.debug("Deleted a batch of {} metadata indexes.", scope);
     }
   }
 
@@ -640,6 +658,33 @@ public class DefaultMetadataStore implements MetadataStore {
     }
   }
 
+  public void removeNullOrEmptyTags(final DatasetId metadataDatasetInstance, final MetadataScope scope) {
+    execute(new TransactionExecutor.Procedure<MetadataDataset>() {
+      @Override
+      public void apply(MetadataDataset dataset) throws Exception {
+        dataset.removeNullOrEmptyTags(metadataDatasetInstance);
+      }
+    }, scope);
+  }
+
+  public void createOrUpgrade(MetadataScope scope) throws DatasetManagementException, IOException {
+    DatasetId metadataDatasetInstance = getMetadataDatasetInstance(scope);
+    if (dsFramework.hasInstance(metadataDatasetInstance)) {
+      if (isUpgradeRequired(scope)) {
+        dsFramework.updateInstance(
+          metadataDatasetInstance,
+          DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build()
+        );
+        removeNullOrEmptyTags(metadataDatasetInstance, scope);
+      }
+    } else {
+      DatasetsUtil.createIfNotExists(
+        dsFramework, metadataDatasetInstance, MetadataDataset.class.getName(),
+        DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build());
+      markUpgradeComplete(scope);
+    }
+  }
+
   private DatasetId getMetadataDatasetInstance(MetadataScope scope) {
     return MetadataScope.USER == scope ? BUSINESS_METADATA_INSTANCE_ID : SYSTEM_METADATA_INSTANCE_ID;
   }
@@ -653,5 +698,51 @@ public class DefaultMetadataStore implements MetadataStore {
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
     framework.addInstance(MetadataDataset.class.getName(), BUSINESS_METADATA_INSTANCE_ID, DatasetProperties.EMPTY);
     framework.addInstance(MetadataDataset.class.getName(), SYSTEM_METADATA_INSTANCE_ID, DatasetProperties.EMPTY);
+  }
+
+  @Override
+  public void markUpgradeComplete(MetadataScope scope) throws DatasetManagementException, IOException {
+    DatasetId datasetId = getMetadataDatasetInstance(scope);
+    LOG.info("Add Upgrade tag with version {} to {}", ProjectInfo.getVersion().toString(), datasetId);
+    addTags(scope, datasetId, getTagWithVersion(ProjectInfo.getVersion().toString()));
+    removeTags(scope, datasetId, NEEDS_UPGRADE_TAG);
+  }
+
+  @Override
+  public boolean isUpgradeRequired(MetadataScope scope) throws DatasetManagementException {
+    DatasetId datasetId = getMetadataDatasetInstance(scope);
+    Set<String> tags = getTags(scope, datasetId);
+    // Check if you are in the process of an Upgrade
+    if (tags.contains(NEEDS_UPGRADE_TAG)) {
+      LOG.debug("NEEDS_UPGRADE_TAG found on Metadata Dataset. Upgrade is required.");
+      return true;
+    }
+    // If no tag was found or Version tag does not match current version
+    boolean versionTagFound = false;
+    for (String tag: tags) {
+      if (tag.startsWith(VERSION_TAG_PREFIX)) {
+        versionTagFound = true;
+        String datasetVersion = getVersionFromVersionTag(tag);
+        if (!datasetVersion.equals(ProjectInfo.getVersion().toString())) {
+          LOG.debug("Metadata Dataset version mismatch. Needs Upgrade");
+          removeTags(scope, datasetId, tag);
+          addTags(scope, datasetId, NEEDS_UPGRADE_TAG);
+          return true;
+        }
+      }
+    }
+    if (!versionTagFound) {
+      addTags(scope, datasetId, NEEDS_UPGRADE_TAG);
+      return true;
+    }
+    return false;
+  }
+
+  private String getVersionFromVersionTag(String tag) {
+    return tag.substring(VERSION_TAG_PREFIX.length());
+  }
+
+  private String getTagWithVersion(String version) {
+    return new String (VERSION_TAG_PREFIX + version);
   }
 }

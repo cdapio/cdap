@@ -13,12 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React from 'react';
+import React, {PropTypes} from 'react';
 import { connect, Provider } from 'react-redux';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import UploadDataActions from 'services/WizardStores/UploadData/UploadDataActions';
 import SelectWithOptions from 'components/SelectWithOptions';
 import {Input, Form, FormGroup, Col, Label} from 'reactstrap';
+import {UncontrolledTooltip} from 'components/UncontrolledComponents';
 require('./SelectDestination.scss');
 import T from 'i18n-react';
 
@@ -59,6 +60,30 @@ const mapDispatchToDestinationNameProps = (dispatch) => {
   };
 };
 
+let DestinationInput = ({value, placeholder, onChange}) => (
+  <div className="destination-input">
+    <Input
+      value={value}
+      placeholder={placeholder}
+      onChange={onChange}
+    />
+    <i
+      id="upload-data-destination-tooltip"
+      className="fa fa-exclamation-circle btn-link"
+    />
+    <UncontrolledTooltip
+      target="upload-data-destination-tooltip"
+    >
+      {T.translate('features.Wizard.UploadData.Step2.tooltiptext')}
+    </UncontrolledTooltip>
+  </div>
+);
+DestinationInput.propTypes = {
+  value: PropTypes.string,
+  placeholder: PropTypes.string,
+  onChange: PropTypes.func
+};
+
 let DestinationType = connect(
   mapStateToDestinationTypeProps,
   mapDispatchToDestinationTypeProps
@@ -66,13 +91,14 @@ let DestinationType = connect(
 let DestinationName = connect(
   mapStateToDestinationNameProps,
   mapDispatchToDestinationNameProps
-)(Input);
+)(DestinationInput);
 
 export default function SelectDestination() {
   return (
     <Provider store={UploadDataStore}>
       <Form
         className="form-horizontal select-destination-step"
+         onSubmit={(e) => {e.stopPropagation(); e.preventDefault();}}
       >
       <FormGroup row>
         <Col xs="3">

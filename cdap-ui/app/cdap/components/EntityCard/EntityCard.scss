@@ -113,6 +113,7 @@ $jump-button-container-size: 80px;
     width: 100%;
     padding-left: 10px;
     margin-top: 3px;
+    position: relative;
 
     &.with-version {
       margin-top: 0;
@@ -123,11 +124,13 @@ $jump-button-container-size: 80px;
       font-size: 15px;
       margin: 0;
       vertical-align: middle;
-      width: 100%;
+      width: 90%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
       line-height: 18px;
+      position: absolute;
+      bottom: -5px;
 
       &.with-version { line-height: initial; }
     }
@@ -137,6 +140,7 @@ $jump-button-container-size: 80px;
       color: #999999;
       display: block;
       margin-top: 2px;
+      position: absolute;
     }
   }
 
@@ -186,7 +190,7 @@ $jump-button-container-size: 80px;
       color: #4f5050;
       padding: 0;
       vertical-align: top;
-      span { margin: 0 20px; }
+      span { margin: 0 15px; }
     }
 
     h4 {

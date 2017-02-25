@@ -106,6 +106,31 @@
     </description>
   </property>
 
+  <property>
+    <name>log.process.pipeline.lib.dir</name>
+    <value>ext/logging/lib</value>
+    <description>
+      Semicolon-separated list of local directories on the CDAP Master scanned
+      for additional library JAR files to be included for log processing
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.permissions</name>
+    <value> </value>
+    <description>
+      we don't want to use set permissions in standalone, as posix permissions are not supported on windows FS.
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.dir.permissions</name>
+    <value> </value>
+    <description>
+      we don't want to use set permissions in standalone, as posix permissions are not supported on windows FS.
+    </description>
+  </property>
+
   <!-- Metrics Configuration -->
   
   <property>
@@ -127,6 +152,15 @@
     </description>
   </property>
 
+
+  <!-- Tephra Configuration -->
+  <property>
+    <name>data.tx.prune.enable</name>
+    <value>false</value>
+    <description>
+      Disable invalid list transaction pruning
+    </description>
+  </property>
 
   <!-- Router Configuration -->
   

@@ -18,34 +18,45 @@ package co.cask.cdap.data2.transaction.coprocessor;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
+import com.google.common.util.concurrent.AbstractIdleService;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
  * {@link Thread} that refreshes {@link CConfiguration} periodically.
  */
-public class CConfigurationCache {
-  private static final Logger LOG = LoggerFactory.getLogger(CConfigurationCache.class);
+public class CConfigurationCache extends AbstractIdleService {
+  private static final Log LOG = LogFactory.getLog(CConfigurationCache.class);
+
   private static final String CCONF_UPDATE_PERIOD = "cdap.transaction.coprocessor.configuration.update.period.secs";
   private static final Long DEFAULT_CCONF_UPDATE_PERIOD = TimeUnit.MINUTES.toMillis(5);
 
-
   private final CConfigurationReader cConfReader;
+  private final String maxLifetimeProperty;
+  private final int defaultMaxLifetime;
 
-  private Thread refreshThread;
+  private volatile Thread refreshThread;
   private volatile CConfiguration cConf;
+  private volatile boolean stopped;
+
+  private volatile Configuration conf;
+  private volatile Long txMaxLifetimeMillis;
+
   private long cConfUpdatePeriodInMillis = DEFAULT_CCONF_UPDATE_PERIOD;
   private long lastUpdated;
 
-  public CConfigurationCache(Configuration hConf, String sysConfigTablePrefix) {
+  public CConfigurationCache(Configuration hConf, String sysConfigTablePrefix, String maxLifetimeProperty,
+                             int defaultMaxLifetime) {
     this.cConfReader = new CConfigurationReader(hConf, sysConfigTablePrefix);
-    startRefreshThread();
+    this.maxLifetimeProperty = maxLifetimeProperty;
+    this.defaultMaxLifetime = defaultMaxLifetime;
   }
 
   @Nullable
@@ -53,13 +64,33 @@ public class CConfigurationCache {
     return cConf;
   }
 
-  public boolean isAlive() {
-    return refreshThread.isAlive();
+  @Nullable
+  public Configuration getConf() {
+    return conf;
   }
 
-  public void stop() {
+  @Nullable
+  public Long getTxMaxLifetimeMillis() {
+    return txMaxLifetimeMillis;
+  }
+
+  public boolean isAlive() {
+    return refreshThread != null && refreshThread.isAlive();
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    LOG.info("Starting CConfiguration Refresh Thread.");
+    startRefreshThread();
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    LOG.info("Stopping CConfiguration Refresh Thread.");
+    stopped = true;
     if (refreshThread != null) {
       refreshThread.interrupt();
+      refreshThread.join(TimeUnit.SECONDS.toMillis(1));
     }
   }
 
@@ -67,18 +98,27 @@ public class CConfigurationCache {
     refreshThread = new Thread("cdap-configuration-cache-refresh") {
       @Override
       public void run() {
-        while (!isInterrupted()) {
+        while ((!isInterrupted()) && !stopped) {
           long now = System.currentTimeMillis();
           if (now > (lastUpdated + cConfUpdatePeriodInMillis)) {
             try {
               CConfiguration newCConf = cConfReader.read();
               if (newCConf != null) {
+                Configuration newConf = new Configuration();
+                newConf.clear();
+                for (Map.Entry<String, String> entry : newCConf) {
+                  newConf.set(entry.getKey(), entry.getValue());
+                }
+
+                // Make the cConf properties available in both formats
                 cConf = newCConf;
+                conf = newConf;
+                txMaxLifetimeMillis = TimeUnit.SECONDS.toMillis(conf.getInt(maxLifetimeProperty, defaultMaxLifetime));
                 lastUpdated = now;
                 cConfUpdatePeriodInMillis = cConf.getLong(CCONF_UPDATE_PERIOD, DEFAULT_CCONF_UPDATE_PERIOD);
               }
             } catch (TableNotFoundException ex) {
-              LOG.warn("CConfiguration table not found : {}", ex.getMessage(), ex);
+              LOG.warn("CConfiguration table not found.", ex);
               break;
             } catch (IOException ex) {
               LOG.warn("Error updating cConf", ex);

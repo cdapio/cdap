@@ -19,6 +19,7 @@ package co.cask.cdap.logging.framework;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.dataset.DatasetManager;
+import co.cask.cdap.api.logging.AppenderContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;

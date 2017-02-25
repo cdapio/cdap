@@ -1,13 +1,13 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Introduction to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _developer-index:
 
-==================================================
+=======================
 CDAP Developers’ Manual
-==================================================
+=======================
 
 .. |getting-started| replace:: **Getting Started Developing:**
 .. _getting-started: getting-started/index.html
@@ -33,6 +33,22 @@ CDAP Developers’ Manual
   *datasets*, and *views*. *Application* abstraction is accomplished using *flows* and *flowlets*, *MapReduce*, *Spark*,
   *workers*, *workflows*, *schedules*, and *services*. Details are provided on working with these abstractions to
   build Big Data applications.
+
+
+.. |metadata| replace:: **Metadata:**
+.. _metadata: metadata/index.html
+
+- |metadata|_ A CDAP capability that automatically captures *metadata* and lets you see
+  **how data is flowing** into and out of datasets, streams, and stream views.
+  :ref:`Audit logging <audit-logging>` provides a chronological ledger containing evidence
+  of operations or changes on CDAP entities.
+  
+
+.. |pipelines| replace:: **Pipelines:**
+.. _pipelines: pipelines/index.html
+
+- |pipelines|_ A capability of CDAP that combines a user interface with back-end services
+  to enable the **building, deploying, and managing of data pipelines.**
 
 
 .. |security| replace:: **Security:**
@@ -70,4 +86,4 @@ CDAP Developers’ Manual
 - |advanced|_ Covers **advanced topics on CDAP** that will be of interest to
   developers who want a deeper dive into CDAP, including **adding a custom logback** to a
   CDAP application, suggested **best practices for CDAP development**, **class loading in
-  CDAP**, and on **configuring program resources** of a CDAP application.
+  CDAP**, and on **configuring program resources** and **program retry policies** of a CDAP application.

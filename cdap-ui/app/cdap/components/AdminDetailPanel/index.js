@@ -90,7 +90,7 @@ class AdminDetailPanel extends Component {
     }
 
     let translatedApplicationName = this.props.applicationName ?
-        T.translate(`features.Management.Component-Overview.headers.${this.props.applicationName}`)
+        T.translate(`features.Administration.Component-Overview.headers.${this.props.applicationName}`)
         :
         <span className="fa fa-spinner" />;
 
