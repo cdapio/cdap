@@ -105,35 +105,27 @@ Consider a workflow that modifies a dataset, and at the same time publishes a no
 a topic.
 
 If it were to **publish to a topic non-transactionally,** a problem can arise as there is
-no guarantee that the notification will be published only after the dataset commit:
-
-.. figure:: /_images/tms_illustrations_1.png
-  :figwidth: 100%
-  :width: 800px
-  :align: center
-
-  **Non-transactional Example**
-
+no guarantee that the notification will be published only after the dataset commit. 
 If it were to **publish transactionally to a TMS topic,** there is the guarantee that
 transaction consumers will only see the notification if the write to the dataset is
 successfully committed:
 
-.. figure:: /_images/tms_illustrations_2.png
+.. figure:: /_images/tms-diagram.png
   :figwidth: 100%
-  :width: 800px
+  :width: 600px
   :align: center
 
   **Transactional Example**
 
+
 Currently, TMS:
 
-- Only supports explicit transactions 
+- Only supports explicit transactions; and
 - Does not support publishing from a long-running transaction, such as a mapper, reducer, or Spark executor.
 
 
 Code Examples
-=================
-
+=============
 These examples all run in a `worker <workers>`. For fetching messages, they use a common
 method to fetch and block until either a message is received or a timeout is reached.
 
