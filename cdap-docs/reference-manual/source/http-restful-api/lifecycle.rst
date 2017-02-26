@@ -66,14 +66,16 @@ and an optional application configuration. For example:
       "config": {
         "stream": "purchaseStream"
       },
-      "principal":"user/somehost.net@somekdc.net"
+      "principal":"user/example.net@examplekdc.net"
     } 
 
-will create an application named ``purchaseWordCount`` from the example ``WordCount`` artifact. The application
-will receive the specified config, which will configure the application to create a stream named
-``purchaseStream`` instead of using the default stream name. Optionally, you can also specify a Kerberos principal with
-which the application should be deployed. If a Kerberos principal is specified for an application then all the streams
-and dataset created by the application will be created with applications's Kerberos principal.
+will create an application named ``purchaseWordCount`` from the example ``WordCount`` artifact.
+The application will receive the specified ``config``, which will configure the application
+to create a stream named ``purchaseStream`` instead of using the default stream name. 
+
+Optionally, you can specify a Kerberos principal with which the application should be deployed.
+If a Kerberos principal is specified, then all the streams and datasets created by the
+application will be created with application's Kerberos principal.
 
 Update an Application
 ---------------------
@@ -97,15 +99,17 @@ config. For example, a request body of:
       "config": {
         "stream": "logStream";
       },
-      "principal":"user/somehost.net@somekdc.net"
+      "principal":"user/example.net@examplekdc.net"
     }
 
 will update the ``purchaseWordCount`` application to use version |release| of the ``WordCount`` artifact,
 and update the name of the stream to ``logStream``. If no artifact is given, the current artifact will be
-used. Only changes to artifact version are supported; changes to the artifact name are not allowed. If no
-config is given, the current config will be used. If the config key is present, the current config will be
-overwritten by the config specified in the request. The principal of an application cannot be updated, during update
-the principal should either be the same or absent.
+used. 
+
+Only changes to artifact version are supported; changes to the artifact name are not allowed. If no
+``config`` is given, the current ``config`` will be used. If the ``config`` key is present, the current
+``config`` will be overwritten by the ``config`` specified in the request. As the principal of an
+application cannot be updated, during an update the principal should either be the same or absent.
 
 Deploy an Artifact and Application
 ----------------------------------
@@ -118,7 +122,7 @@ with the name of the JAR file as a header::
 
   X-Archive-Name: <JAR filename>
 
-and Kerberos principal with which the application need to be deployed if required ::
+and Kerberos principal with which the application need to be deployed (if required)::
 
   X-Principal: <Kerberos Principal>
 
@@ -178,8 +182,8 @@ For detailed information on an application that has been deployed in the namespa
   GET /v3/namespaces/<namespace-id>/apps/<app-id>
 
 The information will be returned in the body of the response. It includes the name and description
-of the application; the artifact, streams, and datasets that it uses, all of its programs; and Kerberos principal if
-was provided during the deployment.
+of the application; the artifact, streams, and datasets that it uses, all of its programs; and the
+Kerberos principal, if that was provided during the deployment.
 
 .. list-table::
    :widths: 20 80
