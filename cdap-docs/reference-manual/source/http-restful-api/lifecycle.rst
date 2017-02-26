@@ -75,7 +75,7 @@ to create a stream named ``purchaseStream`` instead of using the default stream 
 
 Optionally, you can specify a Kerberos principal with which the application should be deployed.
 If a Kerberos principal is specified, then all the streams and datasets created by the
-application will be created with application's Kerberos principal.
+application will be created with the application's Kerberos principal.
 
 Update an Application
 ---------------------
