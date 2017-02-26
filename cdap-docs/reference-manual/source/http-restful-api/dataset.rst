@@ -70,9 +70,11 @@ with JSON-formatted name of the dataset type, properties, and description in a b
 
   {
      "typeName":"<type-name>",
-     "properties":{<properties>},
+     "properties":{
+        "<properties>"
+      },
      "description":"Dataset Description"
-     "principal":"user/somehost.net@somekdc.net"
+     "principal":"user/example.net@examplekdc.net"
   }
 
 .. highlight:: console
@@ -90,11 +92,11 @@ with JSON-formatted name of the dataset type, properties, and description in a b
    * - ``type-name``
      - Type of the new dataset
    * - ``properties``
-     - Dataset properties, map of String to String.
+     - Dataset properties, map of String to String
    * - ``description``
      - Dataset description
    * - ``principal``
-     - Kerberos principal with which dataset should be created
+     - Kerberos principal with which the dataset should be created
 
 .. rubric:: HTTP Responses
 .. list-table::
