@@ -462,4 +462,21 @@ public final class Transactions {
       }
     });
   }
+
+  /**
+   * Executes the given runnable with a transaction and timeout in seconds. Think twice before you call this.
+   * Usages of this method likely indicates poor exception handling.
+   *
+   * @param transactional the {@link Transactional} used to submit the task
+   * @param timeoutInSeconds transaction timeout in seconds
+   * @param runnable task
+   * @throws RuntimeException for errors that occur
+   */
+  public static void executeUnchecked(Transactional transactional, int timeoutInSeconds, final TxRunnable runnable) {
+    try {
+      transactional.execute(timeoutInSeconds, runnable);
+    } catch (TransactionFailureException e) {
+      throw propagate(e);
+    }
+  }
 }

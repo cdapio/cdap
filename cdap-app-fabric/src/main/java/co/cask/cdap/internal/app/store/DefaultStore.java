@@ -863,7 +863,8 @@ public class DefaultStore implements Store {
   }
 
   public void upgradeAppVersion() throws Exception {
-    Transactions.executeUnchecked(transactional, new TxRunnable() {
+    Transactions.executeUnchecked(transactional, configuration.getInt(Constants.APP_META_UPGRADE_TIMEOUT_SECS),
+                                  new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         getAppMetadataStore(context).upgradeVersionKeys();
