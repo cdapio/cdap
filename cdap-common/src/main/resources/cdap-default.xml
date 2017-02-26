@@ -664,7 +664,7 @@
 
   <property>
     <name>data.tx.prune.enable</name>
-    <value>true</value>
+    <value>false</value>
     <description>
       Enable invalid transaction list pruning
     </description>
