@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _tx-maintenance:
 
@@ -10,57 +10,85 @@ Transaction Service Maintenance
 
 .. highlight:: console
 
+.. _tx-maintenance-pruning-invalid-transactions:
+
 Pruning Invalid Transactions
 ============================
-The Transaction Service keeps track of all invalid transactions so as to exclude their writes from all future reads. 
-Over time, this *invalid* list can grow and lead to performance degradation. To avoid that, you can prune the *invalid*
-list after the data of invalid transactions has been removed |---| the removal of which happens during major HBase 
-compactions of the transactional tables.
+The Transaction Service keeps track of all invalid transactions so as to exclude their
+writes from all future reads. Over time, this *invalid* list can grow and lead to
+performance degradation. To avoid that, you can prune the *invalid* list after the data of
+invalid transactions has been removed |---| the removal of which happens during major
+HBase compactions of the transactional tables.
 
 To prune the invalid list manually, follow these steps:
 
-- Run a major compaction on all CDAP transactional tables.
+1. Find the minimum transaction state cache reload time across all region servers,
+   by finding the last occurrence of ``Transaction state reloaded with snapshot`` in the
+   HBase region server logs. This can be done by running the following command on each
+   region server::
+ 
+     grep "Transaction state reloaded with snapshot" <region-server-log-file> | tail -1
+   
+   This should give lines as shown below. Each line below represents one line from each
+   region server::
+ 
+     15/08/22 00:22:34 INFO coprocessor.TransactionStateCache: Transaction state reloaded with snapshot from 1440202895873
+     15/08/22 00:22:42 INFO coprocessor.TransactionStateCache: Transaction state reloaded with snapshot from 1440202956306
+     15/08/22 00:22:44 INFO coprocessor.TransactionStateCache: Transaction state reloaded with snapshot from 1440202956306
+     15/08/22 00:22:47 INFO coprocessor.TransactionStateCache: Transaction state reloaded with snapshot from 1440202956306
+     15/08/22 00:23:34 INFO coprocessor.TransactionStateCache: Transaction state reloaded with snapshot from 1440202956306
+ 
+   Pick the minimum time across all region servers. In this case, ``1440202895873``.
+ 
+#. Run a flush and a major compaction on all CDAP transactional tables.
+ 
+#. Wait for the major compaction to complete.
+ 
+#. Find the minimum prune time across all queues by running the tool
+   ``SimpleHBaseQueueDebugger`` (note that authorization is disabled when running the tool
+   so that CDAP can read all users' queue tables)::
+ 
+ 
+     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.SimpleHBaseQueueDebugger
+ 
+     Results for queue queue:///ns1/WordCount/WordCounter/counter/queue: min tx timestamp: 1440198510309
+     Results for queue queue:///ns1/WordCount/WordCounter/splitter/wordArrayOut: min tx timestamp: 1440198510280
+     Results for queue queue:///ns2/WordCount/WordCounter/counter/queue: min tx timestamp: n/a
+     Results for queue queue:///ns2/WordCount/WordCounter/splitter/wordArrayOut: min tx timestamp: n/a
+     Results for queue queue:///default/WordCount/WordCounter/counter/queue: min tx timestamp: 1440194184568
+     Results for queue queue:///default/WordCount/WordCounter/splitter/wordArrayOut: min tx timestamp: 1440194184476
+     Results for queue queue:///default/WordCount/WordCounter/splitter/wordOut: min tx timestamp: 1440194184476
+     Total results for all queues: min tx timestamp: 1440194184476
+ 
+   Pick the timestamp from the line beginning ``Total results for all queues``. In this case, ``1440194184476``.
+ 
+#. Get the minimum time from the above two steps, to obtain the ``pruneTime``. In this case, ``1440194184476``.
+ 
+#. If the CDAP tables are replicated to other clusters, see the section below
+   (:ref:`tx-maintenance-pruning-replicated`) to obtain the ``pruneTime`` for the slave
+   clusters.
+ 
+#. The final ``pruneTime`` is the minimum ``pruneTime`` across all replicated clusters (if
+   any); let this be time ``t``.
 
-- Find the minimum transaction state cache reload time across all region servers before the major compaction started.
-  This can be done by grepping for ``Transaction state reloaded with snapshot`` in the HBase region server logs.
-  
-  This should give lines such as::
+Now, the invalid transaction list can be safely pruned until ``(t - 1 day)`` using a call
+to :ref:`truncate invalid transactions before a specific time
+<http-restful-api-transactions-truncate>`.
 
-    15/08/22 00:22:34 INFO coprocessor.TransactionStateCache: Transaction state reloaded with snapshot from 1440202895873
-    15/08/22 00:22:42 INFO coprocessor.TransactionStateCache: Transaction state reloaded with snapshot from 1440202956306
-    15/08/22 00:22:44 INFO coprocessor.TransactionStateCache: Transaction state reloaded with snapshot from 1440202956306
-    15/08/22 00:22:47 INFO coprocessor.TransactionStateCache: Transaction state reloaded with snapshot from 1440202956306
-    15/08/22 00:23:34 INFO coprocessor.TransactionStateCache: Transaction state reloaded with snapshot from 1440202956306
+The current length of the invalid transaction list can be obtained using a call to
+:ref:`retrieve the number of invalid transactions <http-restful-api-transactions-number>`.
 
-  Pick the minimum time across all region servers. In this case, ``1440202895873``.
+.. _tx-maintenance-pruning-replicated:
 
-- Find the minimum prune time across all queues by running the tool ``SimpleHBaseQueueDebugger``
-  (note that authorization is disabled when running the tool so that CDAP can read all users' tables)::
+Pruning Invalid Transactions in a Replicated Cluster
+----------------------------------------------------
+1. Copy over the latest transaction snapshots from the master cluster to the slave cluster.
 
-    $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.SimpleHBaseQueueDebugger
-    
-  This should print lines such as::
-    
-    Results for queue queue:///ns1/WordCount/WordCounter/counter/queue: min tx timestamp: 1440198510309
-    Results for queue queue:///ns1/WordCount/WordCounter/splitter/wordArrayOut: min tx timestamp: 1440198510280
-    Results for queue queue:///ns2/WordCount/WordCounter/counter/queue: min tx timestamp: n/a
-    Results for queue queue:///ns2/WordCount/WordCounter/splitter/wordArrayOut: min tx timestamp: n/a
-    Results for queue queue:///default/WordCount/WordCounter/counter/queue: min tx timestamp: 1440194184568
-    Results for queue queue:///default/WordCount/WordCounter/splitter/wordArrayOut: min tx timestamp: 1440194184476
-    Results for queue queue:///default/WordCount/WordCounter/splitter/wordOut: min tx timestamp: 1440194184476
-    Total results for all queues: min tx timestamp: 1440194184476
+#. Wait for three to four minutes for the latest transaction state to be reloaded from the
+   snapshot.
 
-  Pick the timestamp from the line beginning ``Total results for all queues``. In this case, ``1440194184476``.
-
-- Get the minimum time from the above two steps, let this be time ``t``. In this case, ``1440194184476``.
-
-Now, the invalid transaction list can be safely pruned
-until ``(t - 1 day)`` using :ref:`a call <http-restful-api-transactions-truncate>`
-with the :ref:`Transaction Service HTTP RESTful API <http-restful-api-transactions-truncate>`.
-
-The current length of the invalid transaction list can be obtained using 
-:ref:`a call <http-restful-api-transactions-number>` 
-with the :ref:`Transaction Service HTTP RESTful API <http-restful-api-transactions-number>`.
+#. Run steps 1 to 5 from the above section (:ref:`tx-maintenance-pruning-invalid-transactions`)
+   on the slave cluster to find the ``pruneTime`` for that slave cluster.
 
 
 Using the Queue Debugger Tool
