@@ -64,6 +64,7 @@ final class BasicMessagePublisher extends AbstractMessagePublisher implements Tr
     StoreRequestBuilder builder = txPublishRequests.get(topicId);
     if (builder == null) {
       builder = StoreRequestBuilder.of(topicId);
+      builder.setTransaction(transaction.getWritePointer());
       txPublishRequests.put(topicId, builder);
     }
     builder.addPayloads(payloads);
