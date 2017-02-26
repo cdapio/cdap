@@ -50,6 +50,8 @@ A stream can be created with an HTTP PUT method to the URL::
      - Description
    * - ``200 OK``
      - The event either successfully created a stream or the stream already exists
+   * - ``403 FORBIDDEN``
+     - The stream already exist with a different Kerberos principal
 
 .. rubric:: Example
 .. list-table::
@@ -91,6 +93,9 @@ be retrieved and modified afterwards using the ``/properties`` endpoint.
    * - ``description``
      - ``null``
      - Description of the stream
+   * - ``principal``
+     - ``null``
+     - Kerberos principal with which stream should be created
 
 If a property is not given in the request body, the default value will be used instead.
 
@@ -432,7 +437,8 @@ Stream properties can be retrieved with an HTTP PUT method to the URL::
              "settings": {}
            },
            "notification.threshold.mb" : 1024,
-           "description" : "Web access logs"
+           "description" : "Web access logs",
+           "principal" : "user/somehost.net@somekdc.net"
          }
      
    * - Description
@@ -474,6 +480,8 @@ New properties are passed in the JSON request body.
        publishing a notification.
    * - ``description``
      - Description of the stream
+   * - ``principal``
+     - Kerberos principal of a stream cannot be updated. This should be the same as the existing principal or null.
 
 If a property is not given in the request body, no change will be made to the value.
 For example, setting format but not TTL will preserve the current value for TTL.
@@ -492,6 +500,8 @@ the stream and re-create it with the new schema.
    * - ``400 Bad Request``
      - The TTL value is not a non-negative integer, the format was not known,
        the schema was malformed, or the schema is not supported by the format
+   * - ``403 Forbidden``
+     - The Kerberos principal was different than the existing one
    * - ``404 Not Found``
      - The stream does not exist
 
