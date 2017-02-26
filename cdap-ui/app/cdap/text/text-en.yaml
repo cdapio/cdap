@@ -403,6 +403,7 @@ features:
       pipelines: Pipelines
       plugins: Plugins
       useCases: Use Cases
+      edwOffload: EDW Offload
       emptyTab: No Entities found
     action-types:
       create_stream:
