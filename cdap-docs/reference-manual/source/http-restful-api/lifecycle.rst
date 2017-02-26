@@ -122,7 +122,7 @@ with the name of the JAR file as a header::
 
   X-Archive-Name: <JAR filename>
 
-and Kerberos principal with which the application need to be deployed (if required)::
+and Kerberos principal with which the application is to be deployed (if required)::
 
   X-Principal: <Kerberos Principal>
 
