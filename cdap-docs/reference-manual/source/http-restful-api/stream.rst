@@ -51,7 +51,7 @@ A stream can be created with an HTTP PUT method to the URL::
    * - ``200 OK``
      - The event either successfully created a stream or the stream already exists
    * - ``403 FORBIDDEN``
-     - The stream already exist with a different Kerberos principal
+     - The stream already exists with a different Kerberos principal
 
 .. rubric:: Example
 .. list-table::
@@ -95,7 +95,7 @@ be retrieved and modified afterwards using the ``/properties`` endpoint.
      - Description of the stream
    * - ``principal``
      - ``null``
-     - Kerberos principal with which stream should be created
+     - Kerberos principal with which the stream should be created
 
 If a property is not given in the request body, the default value will be used instead.
 
@@ -260,12 +260,16 @@ Reading events from an existing stream is performed with an HTTP GET method to t
    * - ``404 Not Found``
      - The stream does not exist
 
+.. highlight:: json-ellipsis
+
 The response body is a JSON array with the stream event objects as array elements::
 
    [ 
      {"timestamp" : ... , "headers": { ... }, "body" : ... }, 
      {"timestamp" : ... , "headers": { ... }, "body" : ... } 
    ]
+
+.. highlight:: console
 
 .. list-table::
    :widths: 20 80
@@ -421,6 +425,9 @@ Stream properties can be retrieved with an HTTP PUT method to the URL::
 
    * - HTTP Method
      - ``GET /v3/namespaces/default/streams/who``
+     
+       .. highlight:: json-ellipsis
+       
        ::
 
          { 
@@ -438,11 +445,13 @@ Stream properties can be retrieved with an HTTP PUT method to the URL::
            },
            "notification.threshold.mb" : 1024,
            "description" : "Web access logs",
-           "principal" : "user/somehost.net@somekdc.net"
+           "principal" : "user/example.net@examplekdc.net"
          }
      
    * - Description
      - Retrieves the properties of the ``who`` stream of the :ref:`HelloWorld example <examples-hello-world>`. 
+
+.. highlight:: console
 
 .. rubric:: Setting Stream Properties
 
@@ -481,7 +490,8 @@ New properties are passed in the JSON request body.
    * - ``description``
      - Description of the stream
    * - ``principal``
-     - Kerberos principal of a stream cannot be updated. This should be the same as the existing principal or null.
+     - The Kerberos principal of a stream cannot be updated. This should be the same as 
+       the existing principal or absent.
 
 If a property is not given in the request body, no change will be made to the value.
 For example, setting format but not TTL will preserve the current value for TTL.
@@ -512,6 +522,9 @@ the stream and re-create it with the new schema.
 
    * - HTTP Method
      - ``PUT /v3/namespaces/default/streams/mystream/properties``
+     
+       .. highlight:: json-ellipsis
+       
        ::
 
          { 
@@ -536,6 +549,8 @@ the stream and re-create it with the new schema.
      - Change the TTL property of the stream named *mystream* in the namespace *default* to 1 day,
        and the format to CSV (comma-separated values) with a three field schema
        that uses a space delimiter instead of a comma delimiter. 
+
+.. highlight:: console
 
 Streams used by an Application
 ==============================
