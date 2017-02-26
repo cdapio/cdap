@@ -74,6 +74,13 @@ const TabConfig = {
       icon: 'icon-artifacts',
       name: T.translate('features.Market.tabs.artifacts'),
       content: <AllTabContents />
+    },
+    {
+      id: 10,
+      filter: 'EDW Offloading',
+      icon: 'fa fa-database',
+      name: T.translate('features.Market.tabs.edwOffload'),
+      content: <AllTabContents />
     }
   ]
 };
