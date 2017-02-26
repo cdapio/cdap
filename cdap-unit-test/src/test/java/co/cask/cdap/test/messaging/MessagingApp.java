@@ -203,6 +203,27 @@ public class MessagingApp extends AbstractApplication {
                 }
                 // Signal publish tx to commit
                 publishCommitLatch.countDown();
+
+                // Even after publish, we won't see the message, since the message should still excluded
+                try {
+                  fetchMessage(fetcher, getContext().getNamespace(), TOPIC, null, 3, TimeUnit.SECONDS);
+                  throw new IllegalStateException("Expected timeout");
+                } catch (TimeoutException e) {
+                  LOG.info("Expected timeout exception raised");
+                }
+              }
+            });
+
+
+            // Start a new transaction, should be able to see the new message
+            getContext().execute(new TxRunnable() {
+              @Override
+              public void run(DatasetContext context) throws Exception {
+                MessageFetcher fetcher = fetcherRef.get();
+                if (fetcher == null) {
+                  LOG.info("Get fetcher inside of TX");
+                  fetcher = getContext().getMessageFetcher();
+                }
                 // Now should be able to fetch a message
                 Message message = fetchMessage(fetcher, getContext().getNamespace(), TOPIC, null, 3, TimeUnit.SECONDS);
                 LOG.info("Message fetched {}", message);
