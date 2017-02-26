@@ -36,26 +36,29 @@ Cask Data Application Platform Release Notes
 New Features
 ------------
 
-- :cask-issue:`CDAP-4556` - CDAP now uses environment variables in the ``spark-env.sh`` and
-  properties in the ``spark-defaults.conf`` when launching Spark programs.
-
-- :cask-issue:`CDAP-7596` - Added the ability to reuse an existing file system location
-  and Hive table when creating a partitioned file set.
-
-- :cask-issue:`CDAP-7597` - Added configuring the CDAP Explore database and table name for
-  a dataset using dataset properties.
+Revamped Log System
+...................
 
 - :cask-issue:`CDAP-7676` - Added a prototype implementation for a rolling HDFS log
   appender.
 
-- :cask-issue:`CDAP-7683` - Added a tool that pre-builds and loads the HBase coprocessors
-  required by CDAP onto HDFS.
+- :cask-issue:`CDAP-8108` - Revised the CDAP Log Appender to use `Logback
+  <http://logback.qos.ch/>`__\ 's Appender interface.
 
-- :cask-issue:`CDAP-7685` - Provided SPI hooks that users can implement for performing
-  HBase DDL operations.
+- :cask-issue:`CDAP-8231` - The log file cleaner thread will remove metadata and, for
+  successfully deleted metadata entries, it will delete the corresponding log files. The log
+  file cleaner thread will only remove the metadata entries for the old (pre-4.1.0) log
+  format.
 
-- :cask-issue:`CDAP-8021` - Added the management of preferences at the application and
-  program levels.
+- :cask-issue:`CDAP-8261` - Logs collected by the CDAP Log Appender will be stored at a
+  common ``<cdap>/logs`` path, owned by the cdap user. For security, it is readable only by
+  the cdap user.
+
+- :cask-issue:`CDAP-8428` - Added additional metrics about the status of the log
+  framework.
+
+Replication, Resiliency, and Zero-downtime
+..........................................
 
 - :cask-issue:`CDAP-8025` - Added a tool to check a cluster's replication status.
 
@@ -68,54 +71,56 @@ New Features
 - :cask-issue:`CDAP-8037` - Added a ``master.manage.hbase.coprocessors`` setting that can be
   set to false on clusters where the CDAP coprocessors are deployed on every HBase node.
 
-- :cask-issue:`CDAP-8061` - Moved the Cask Market Path to the ``cdap-defaults.xml`` file.
+Dataset Improvements
+....................
+- :cask-issue:`CDAP-7596` - Added the ability to reuse an existing file system location
+  and Hive table when creating a partitioned file set.
+
+- :cask-issue:`CDAP-7597` - Added configuring the CDAP Explore database and table name for
+  a dataset using dataset properties.
+
+- :cask-issue:`CDAP-7683` - Added a tool that pre-builds and loads the HBase coprocessors
+  required by CDAP onto HDFS.
+
+- :cask-issue:`CDAP-7685` - Provided SPI hooks that users can implement for performing
+  HBase DDL operations.
 
 - :cask-issue:`CDAP-8070` - Added control of group ownership and permissions through
   dataset properties.
 
-- :cask-issue:`CDAP-8075` - The CDAP UI added one-step deploy wizards for the Cask Market.
-
-- :cask-issue:`CDAP-8108` - Refactored the CDAP Log Appender to use Logback's Appender
-  interface.
-
+Secure Impersonation and Authorization
+......................................
 - :cask-issue:`CDAP-8110` - Added support for fine-grained impersonation at the CDAP
   application, dataset, and stream level.
 
-- :cask-issue:`CDAP-8122` - Made headers and the request/response bodies available in
-  audit logs for certain RESTful endpoints.
+- :cask-issue:`CDAP-8355` - Impersonated namespaces can be configured to disallow the
+  impersonation of the namespace owner when running CDAP Explore queries.
 
-- :cask-issue:`CDAP-8198` - The CDAP UI added a dataset detail view.
+Brand-new CDAP UI
+.................
 
-- :cask-issue:`CDAP-8199` - The CDAP UI added a stream detail view.
+- :cask-issue:`CDAP-8075` - The CDAP UI added one-step deploy wizards for the Cask Market.
 
-- :cask-issue:`CDAP-8203` - The CDAP UI added a "call-to-action" modal dialog after entity
-  creation.
+- :cask-issue:`CDAP-8198`, :cask-issue:`CDAP-8199`, :cask-issue:`CDAP-8214`,
+  :cask-issue:`CDAP-8217` - The CDAP UI added dataset and stream detail and overviews.
 
-- :cask-issue:`CDAP-8214` - The CDAP UI added a dataset overview.
+- :cask-issue:`CDAP-8203` - The CDAP UI added a "call-to-action" dialog after entity
+  creation, so users can easily perform actions on the newly-created entities.
 
-- :cask-issue:`CDAP-8217` - The CDAP UI added a stream overview.
+- :cask-issue:`CDAP-8282`, :cask-issue:`CDAP-8376` - Users can now view events and logs of
+  programs in the new CDAP UI using the events and log view "fast-action" dialogs.
 
-- :cask-issue:`CDAP-8231` - The log file cleaner thread will remove metadata and, for
-  successfully deleted metadata entries, it will delete the corresponding log files. The log
-  file cleaner thread will only remove the metadata entries for the old (pre-4.1.0) log
-  format.
+- :cask-issue:`CDAP-8398` - Users now see on the CDAP UI homepage a "Just Added" section,
+  listing and highlighting any entities added in the last five minutes. 
 
-- :cask-issue:`CDAP-8261` - Logs collected by the CDAP Log Appender will be stored at a
-  common ``<cdap>/logs`` path, owned by the cdap user. For security, it is readable only by
-  the cdap user.
+- :cask-issue:`HYDRATOR-208` - The CDAP UI added a duration timer to CDAP pipelines.
 
-- :cask-issue:`CDAP-8282` - CDAP UI now has a View Events "fast-action" dialog for
-  streams.
 
-- :cask-issue:`CDAP-8292` - Added support for CDH 5.10.0.
 
-- :cask-issue:`CDAP-8355` - Impersonated namespace can be configured to disallow
-  impersonating the namespace owner for CDAP Explore queries.
 
-- :cask-issue:`CDAP-8376` - The CDAP UI added a log view "fast-action".
 
-- :cask-issue:`CDAP-8428` - Added additional metrics about the status of the log
-  framework.
+Additional Plugins for CDAP Pipelines
+.....................................
 
 - :cask-issue:`HYDRATOR-235` - The Kinesis Spark Streaming source plugin is available in
   its own repository at `github.com/hydrator/kinesis-spark-streaming-source <https://github.com/hydrator/kinesis-spark-streaming-source>`__.
@@ -163,12 +168,27 @@ New Features
 - :cask-issue:`HYDRATOR-1398` - Support added for Table datasets for lookups in plugins
   and pipelines.
 
+Additional Plugins for CDAP Pipelines
+.....................................
+
+- :cask-issue:`CDAP-4556` - CDAP now uses environment variables in the ``spark-env.sh`` and
+  properties in the ``spark-defaults.conf`` when launching Spark programs.
+
+- :cask-issue:`CDAP-8021` - Added the management of preferences at the application and
+  program levels.
+
+- :cask-issue:`CDAP-8122` - Made headers and the request/response bodies available in
+  audit logs for certain RESTful endpoints.
+
+- :cask-issue:`CDAP-8292` - Added support for CDH 5.10.0.
+
 
 Improvements
 ------------
 
 - :cask-issue:`CDAP-3383` - Enabled in CDAP invalid transaction list pruning, a new
-  feature introduced in Apache Tephra.
+  feature introduced in Apache Tephra. This automates the pruning of the invalid transaction
+  list after data for the invalid transaction has been dropped.
 
 - :cask-issue:`CDAP-6046` - Added an easier, additional syntax for the CDAP CLI
   ``set/get/load/delete <type> preferences`` commands, with the preferences at the end of the
@@ -181,6 +201,8 @@ Improvements
   name, and program type, are now available in the MDC property of each ILoggingEvent
   emitted from a program container.
 
+- :cask-issue:`CDAP-8061` - Moved the Cask Market Path to the ``cdap-defaults.xml`` file.
+
 - :cask-issue:`CDAP-8152` - StreamingSource plugins now have access to the CDAP
   SparkExecutionContext to read from datasets and streams.
 
@@ -190,18 +212,15 @@ Improvements
 - :cask-issue:`CDAP-8250` - Reduced non-informative stacktrace information in the log when
   a connection to the CDAP Router is closed prematurely.
 
-- :cask-issue:`CDAP-8398` - The CDAP UI added a "Just Added" section to the home page.
-
 - :cask-issue:`CDAP-8565` - Improved the master process stop procedure to support fast
   failover when running with HA. Added a new kill command to force-kill CDAP processes.
-
-- :cask-issue:`HYDRATOR-208` - The CDAP UI added a duration timer to CDAP pipelines.
 
 - :cask-issue:`HYDRATOR-282` - Updated the CSVParser plugin to change "PDL" to "Pipe
   Delimited" and "TDF" to "Tab Delimited".
 
-- :cask-issue:`HYDRATOR-577` - Changed the Table sink plugin to make using the row key
-  easier.
+- :cask-issue:`HYDRATOR-577` - Changed the Table sink plugin to make using the
+  ``schema.row.field`` optional, and to allow the ``schema.row.field`` be used as the source
+  a column in the output.
 
 - :cask-issue:`HYDRATOR-1006` - Updated the Tokenizer plugin to be more forgiving when
   parsing tokens.
