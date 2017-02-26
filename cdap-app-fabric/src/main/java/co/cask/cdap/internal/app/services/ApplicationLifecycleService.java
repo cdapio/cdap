@@ -222,7 +222,7 @@ ApplicationLifecycleService extends AbstractIdleService {
       ArtifactSummary artifactSummary = artifactId == null ?
         new ArtifactSummary(appSpec.getName(), null) : ArtifactSummary.from(artifactId);
       ApplicationRecord record = new ApplicationRecord(artifactSummary, appId, appSpec.getDescription(),
-                                                       ownerAdmin.getImpersonationPrincipal(appId));
+                                                       ownerAdmin.getOwnerPrincipal(appId));
       if (predicate.apply(record)) {
         appRecords.add(record);
       }
@@ -251,7 +251,7 @@ ApplicationLifecycleService extends AbstractIdleService {
       throw new ApplicationNotFoundException(appId);
     }
     ensureAccess(appId);
-    String ownerPrincipal = ownerAdmin.getImpersonationPrincipal(appId);
+    String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
     return ApplicationDetail.fromSpec(appSpec, ownerPrincipal);
   }
 
