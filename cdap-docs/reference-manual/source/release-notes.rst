@@ -115,21 +115,20 @@ Brand-new CDAP UI
 
 - :cask-issue:`HYDRATOR-208` - The CDAP UI added a duration timer to CDAP pipelines.
 
-
-
-
-
 Additional Plugins for CDAP Pipelines
 .....................................
 
 - :cask-issue:`HYDRATOR-235` - The Kinesis Spark Streaming source plugin is available in
-  its own repository at `github.com/hydrator/kinesis-spark-streaming-source <https://github.com/hydrator/kinesis-spark-streaming-source>`__.
+  its own repository at `github.com/hydrator/kinesis-spark-streaming-source 
+  <https://github.com/hydrator/kinesis-spark-streaming-source>`__.
 
 - :cask-issue:`HYDRATOR-552` - Added a plugin for sampling data from a source, available
-  at `github.com/hydrator/sampling-aggregator <https://github.com/hydrator/sampling-aggregator>`__.
+  at `github.com/hydrator/sampling-aggregator
+  <https://github.com/hydrator/sampling-aggregator>`__.
 
 - :cask-issue:`HYDRATOR-585` - The HTTP Sink plugin (for posting data from a pipeline to
-  an external endpoint) has been added at `github.com/hydrator/http-sink <https://github.com/hydrator/http-sink>`__.
+  an external endpoint) has been added at `github.com/hydrator/http-sink 
+  <https://github.com/hydrator/http-sink>`__.
 
 - :cask-issue:`HYDRATOR-954` - The Kinesis Source plugin now works in realtime pipelines.
 
@@ -141,38 +140,62 @@ Additional Plugins for CDAP Pipelines
 - :cask-issue:`HYDRATOR-1050` - Added a DynamoDB Batch Source plugin, available at
   `github.com/hydrator/dynamodb-source <https://github.com/hydrator/dynamodb-source>`__.
 
+- :cask-issue:`HYDRATOR-1073` - Added a "Fail This Pipeline" sink plugin in a repo at
+  `github.com/hydrator/failpipeline-sink <https://github.com/hydrator/failpipeline-sink>`__;
+  this is a sink where, if any records flow to the sink, the pipeline is marked as failed,
+  triggering any post-actions that might be scheduled.
+
+- :cask-issue:`HYDRATOR-1074` - Added a plugin for fetching data from an external HTTP
+  site and writing the response to HDFS, available at
+  `github.com/hydrator/httptohdfs-action <https://github.com/hydrator/httptohdfs-action>`__.
+
 - :cask-issue:`HYDRATOR-1172` - Added a Realtime Stream Source plugin, available at
-  `github.com/hydrator/realtime-stream-source <https://github.com/hydrator/realtime-stream-source>`__.
+  `github.com/hydrator/realtime-stream-source
+  <https://github.com/hydrator/realtime-stream-source>`__.
 
 - :cask-issue:`HYDRATOR-1249` - The Tokenizer plugin is now available in it own repository
-  at `github.com/hydrator/tokenizer-analytics <https://github.com/hydrator/tokenizer-analytics>`__.
+  at `github.com/hydrator/tokenizer-analytics
+  <https://github.com/hydrator/tokenizer-analytics>`__.
 
 - :cask-issue:`HYDRATOR-1250` - The NGramTransform plugin is now available in its own
-  repository at `github.com/hydrator/ngram-analytics <https://github.com/hydrator/ngram-analytics>`__.
+  repository at `github.com/hydrator/ngram-analytics
+  <https://github.com/hydrator/ngram-analytics>`__.
 
 - :cask-issue:`HYDRATOR-1251` - The DecisionTree Regression plugins are now available in
-  their own repository at `github.com/hydrator/decision-tree-analytics <https://github.com/hydrator/decision-tree-analytics>`__.
+  their own repository at `github.com/hydrator/decision-tree-analytics 
+  <https://github.com/hydrator/decision-tree-analytics>`__.
 
 - :cask-issue:`HYDRATOR-1252` - The SKipGram Feature Generator plugin is now available in
-  its own repository at `github.com/hydrator/skipgram-analytics <https://github.com/hydrator/skipgram-analytics>`__.
+  its own repository at `github.com/hydrator/skipgram-analytics 
+  <https://github.com/hydrator/skipgram-analytics>`__.
 
 - :cask-issue:`HYDRATOR-1253` - The Naive Bayes Analytics plugin is now available in its
-  own repository at `github.com/hydrator/naive-bayes-analytics <https://github.com/hydrator/naive-bayes-analytics>`__.
+  own repository at `github.com/hydrator/naive-bayes-analytics
+  <https://github.com/hydrator/naive-bayes-analytics>`__.
 
 - :cask-issue:`HYDRATOR-1254` - The HashingTF Feature Generator plugin is now available in
-  its own repository at `github.com/hydrator/hashing-tf-feature-generator <https://github.com/hydrator/hashing-tf-feature-generator>`__.
+  its own repository at `github.com/hydrator/hashing-tf-feature-generator
+  <https://github.com/hydrator/hashing-tf-feature-generator>`__.
 
 - :cask-issue:`HYDRATOR-1255` - The LogisticRegression plugins are now available in their
-  own repository at `github.com/hydrator/logistic-regression-analytics <https://github.com/hydrator/logistic-regression-analytics>`__.
+  own repository at `github.com/hydrator/logistic-regression-analytics
+  <https://github.com/hydrator/logistic-regression-analytics>`__.
+
+- :cask-issue:`HYDRATOR-1323` - Added a new ErrorTransform plugin-type that can be placed
+  after a pipeline stage to consume errors emitted by that stage.
 
 - :cask-issue:`HYDRATOR-1398` - Support added for Table datasets for lookups in plugins
   and pipelines.
 
-Additional Plugins for CDAP Pipelines
-.....................................
+
+Additional New Features
+.......................
 
 - :cask-issue:`CDAP-4556` - CDAP now uses environment variables in the ``spark-env.sh`` and
   properties in the ``spark-defaults.conf`` when launching Spark programs.
+
+- :cask-issue:`CDAP-5107` - Added an HTTP RESTful endpoint to retrieve a specific property
+  for a specific version of an artifact in the ``system`` scope.
 
 - :cask-issue:`CDAP-8021` - Added the management of preferences at the application and
   program levels.
@@ -181,7 +204,6 @@ Additional Plugins for CDAP Pipelines
   audit logs for certain RESTful endpoints.
 
 - :cask-issue:`CDAP-8292` - Added support for CDH 5.10.0.
-
 
 Improvements
 ------------
@@ -200,6 +222,9 @@ Improvements
 - :cask-issue:`CDAP-7962` - Program context information, including namespace, program
   name, and program type, are now available in the MDC property of each ILoggingEvent
   emitted from a program container.
+
+- :cask-issue:`CDAP-8019` - Added a configuration to control the timeout of CDAP Explore
+  operations.
 
 - :cask-issue:`CDAP-8061` - Moved the Cask Market Path to the ``cdap-defaults.xml`` file.
 
@@ -223,17 +248,12 @@ Improvements
   a column in the output.
 
 - :cask-issue:`HYDRATOR-1006` - Updated the Tokenizer plugin to be more forgiving when
-  parsing tokens.
+  parsing tokens by accepting regex with white spaces; the output schema now contains all
+  the fields that were in the input schema and not only the column that is being tokenized.
 
 - :cask-issue:`HYDRATOR-1028` - Changed the Data Generator configuration to be easier to
-  use.
-
-- :cask-issue:`HYDRATOR-1073` - Added a "Fail This Pipeline" sink plugin in a repo at
-  `github.com/hydrator/failpipeline-sink <https://github.com/hydrator/failpipeline-sink>`__.
-
-- :cask-issue:`HYDRATOR-1074` - Added a plugin for fetching data from an external HTTP
-  site and writing the response to HDFS, available at
-  `github.com/hydrator/httptohdfs-action <https://github.com/hydrator/httptohdfs-action>`__.
+  use; as the type parameter can only be one of "stream" or "table", changed to using a
+  select widget to configure it.
 
 - :cask-issue:`HYDRATOR-1144` - Updated the use of "true/false" select boxes to be
   consistent in their ordering.
@@ -247,9 +267,6 @@ Improvements
 - :cask-issue:`HYDRATOR-1177` - Plugins can now retrieve the input and output schema of
   their stage in their initialize methods.
 
-- :cask-issue:`HYDRATOR-1323` - Added a new ErrorTransform plugin-type that can be placed
-  after a pipeline stage to consume errors emitted by that stage.
-
 - :cask-issue:`WRANGLER-3` - The CDAP UI's Wrangler modal dialog will give a warning when
   you try to close or exit out of it without confirmation.
 
@@ -260,10 +277,7 @@ Bug Fixes
   user program JAR is missing dependencies.
 
 - :cask-issue:`CDAP-4739` - Fixed an issue to make artifact, datasets, logs, and
-  coprocessor jar locations resilient to an HA upgrade.
-
-- :cask-issue:`CDAP-5107` - Added an HTTP RESTful endpoint to retrieve a specific property
-  for a specific version of an artifact in the 'system' scope.
+  coprocessor JAR locations resilient to an HDFS Namenode HA upgrade.
 
 - :cask-issue:`CDAP-5717` - Fixed an issue with starting the CDAP CLI and the CDAP
   Standalone when the on-disk path has a space in it.
@@ -272,11 +286,11 @@ Bug Fixes
   namespace (that previously returned a 200, even though the artifact was not deleted) will
   now return a 404, as that combination of system and user will never occur.
 
-- :cask-issue:`CDAP-6690` - Improved the formatting of dataset instance properties in the
-  output of the CDAP CLI.
+- :cask-issue:`CDAP-6690` - Fixed issues with the formatting of dataset instance
+  properties in the output of the CDAP CLI.
 
-- :cask-issue:`CDAP-6704` - Improved and clarified certain of the CDAP CLI help text and
-  its error messages.
+- :cask-issue:`CDAP-6704` - Fixed issues with and clarified certain of the CDAP CLI help
+  text and its error messages.
 
 - :cask-issue:`CDAP-7155` - Fixed a problem where the Dataset Service failed to start up
   if authorization was enabled and the authorization plugin was slow to respond.
@@ -308,11 +322,8 @@ Bug Fixes
 - :cask-issue:`CDAP-8001` - Fixed an issue with logs when a namespace was deleted and then
   recreated with same name.
 
-- :cask-issue:`CDAP-8019` - Added a configuration to control the timeout of CDAP Explore
-  operations.
-
 - :cask-issue:`CDAP-8041` - Fixed an issue where the CDAP Master process would hang during
-  a graceful shutdown.
+  a shutdown.
 
 - :cask-issue:`CDAP-8086` - Removed an obsolete Update Dataset Specifications step in the
   CDAP Upgrade tool. This step was required only for upgrading from CDAP versions lower than
@@ -345,20 +356,15 @@ Bug Fixes
   container running as a user were impersonating the namespace owner. Now they impersonate
   the respective program container users.
 
-- :cask-issue:`CDAP-8367` - Fixed an issue with "Hive-on-Spark" on newer versions of CDH.
+- :cask-issue:`CDAP-8367` - Fixed issues with "Hive-on-Spark" on newer versions of CDH
+  failing to run Spark jobs due to permission and configuration errors.
 
 - :cask-issue:`CDAP-8442` - Fixed an issue in the CDAP UI where the "Stop Program" modal
   dialog kept loading (showing a spinning wheel) even after the program had been stopped.
 
-- :cask-issue:`CDAP-8445` - The stream endpoint to enqueue messages now returns a 503
-  instead of a 500 if it failed because the dataset service was unavailable.
-
 - :cask-issue:`CDAP-8446` - Fixed an issue where the Transactional.run method could throw
   the wrong exception if the transaction service was unavailable when it was finishing a
   transaction.
-
-- :cask-issue:`CDAP-8448` - In general, fixed the HTTP RESTful endpoints to return a 503
-  instead of 500 when the transaction service was unavailable.
 
 - :cask-issue:`CDAP-8509` - Fixed an issue in the Transactional Messaging System (TMS)
   table upgrade, where the TMS table could be left in a disabled state if the upgrade tool
@@ -387,8 +393,6 @@ Bug Fixes
 - :cask-issue:`CDAP-8694` - Fixed an issue with properly-locating CDAP_HOME in Distributed
   CDAP instances outside the default ``/opt/cdap`` directory.
 
-- :cask-issue:`CDAP-8753` - Deprecated the ``waitForFinish()`` method in the ProgramManager.
-
 - :cask-issue:`HYDRATOR-1085` - Fixed an issue where the File Sink plugin was failing when
   writing byte array records.
 
@@ -399,12 +403,12 @@ Bug Fixes
   present for a nullable field.
 
 - :cask-issue:`HYDRATOR-1212` - Fixed an issue where runtime arguments were not being
-  passed correctly for the preview run in the CDAP UI.
+  passed correctly for the pipeline preview run in the CDAP UI.
 
 - :cask-issue:`HYDRATOR-1219` - Fixed an issue in the Wrangler transform with the handling
   of escaped characters.
 
-- :cask-issue:`HYDRATOR-1226` - Fixed an issue where previews would not run in a
+- :cask-issue:`HYDRATOR-1226` - Fixed an issue where pipeline previews would not run in a
   non-default namespace.
 
 - :cask-issue:`HYDRATOR-1238` - Fixed an issue where the RunTransform plugin was not
@@ -429,16 +433,26 @@ Known Issues
   ``hive.compute.query.using.stats`` is ``true`` in HDP 2.5.x clusters, CDAP Explore
   queries that trigger a MapReduce program can fail.
 
+- :cask-issue:`HYDRATOR-1389` - On Windows, users of CDAP Studio must double-click plugin icons
+  in order for their node configuration panels to open.
 
 API Changes
 -----------
+
+- :cask-issue:`CDAP-8445` - The stream endpoint to enqueue messages now returns a 503
+  instead of a 500 if it failed because the dataset service was unavailable.
+
+- :cask-issue:`CDAP-8448` - In general, changed the HTTP RESTful endpoints to return a 503
+  instead of a 500 when the transaction service was unavailable.
 
 .. _release-notes-cdap-8606:
 
 - :cask-issue:`CDAP-8606` - Among other new properties added to CDAP, new log saver
   properties have been added to CDAP, replacing the previous properties. As a consequence,
-  previous properties will no longer work.
-  
+  previous properties will no longer work. See the `Appendix: cdap-site.xml
+  <http://docs.cask.co/cdap/4.1.0/en/admin-manual/appendices/cdap-site.html>`__ for
+  details on these properties.
+
   **Old Properties**
   
   - ``log.cleanup.max.num.files``
@@ -532,6 +546,10 @@ Deprecated and Removed Features
 -------------------------------
 
 - See :ref:`API Changes, CDAP-8606 <release-notes-cdap-8606>` above for removed properties.
+
+- :cask-issue:`CDAP-8753` - Deprecated the ``waitForFinish()`` method in the ProgramManager and
+  added the method ``waitForRun()`` to replace it which will wait for the actual run
+  records of the given status.
 
 
 `Release 4.0.1 <http://docs.cask.co/cdap/4.0.1/index.html>`__
