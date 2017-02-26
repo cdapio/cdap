@@ -17,18 +17,11 @@ Transactional Messaging System
 Overview
 ========
 The Transactional Messaging System (TMS) is a CDAP service that provides a
-"publish-and-subscribe" messaging system that understands transactions.
+"publish-and-subscribe" messaging system that understands transactions, and that
+guarantees the ordering and persistence of messages.
 
 It uses HBase for the persistent and durable storage of messages, and supports both
 transactional and non-transactional message publishing and consumption.
-
-TMS provides ACID *(atomicity, consistency, isolation,* and *durability)* guarantees,
-using `Apache Tephra <http://tephra.incubator.apache.org>`__ for the ACI portion. TMS
-doesn't interact directly with Tephra; instead, the client provides the transaction, as
-described below.
-
-TMS is similar to `Apache Kafka <https://kafka.apache.org>`__ but with added guarantees as
-to ordering and persistence of messages.
 
 
 Topics
@@ -44,15 +37,14 @@ to all topics in all namespaces (except the `system` namespace, as noted above) 
 from all topics in all namespaces.
 
 
-Message Publishing
-==================
+Messages
+========
 Messages in TMS are published as either `non-transactional <Non-transactional Messages>`__
 or `transactional <Transactional Messages>`__ messages.
 
-Non-transactional Message Publishing
-------------------------------------
-Non-transactional messaging in TMS works in a manner very similar to `Apache Kafka
-<https://kafka.apache.org>`__: 
+Non-transactional Messaging
+---------------------------
+Non-transactional messaging in TMS works in a manner very similar to other messaging systems:
 
 - **publish** a message (also called a *payload*) to a topic
 - **fetch** (also called *subscribe* or *consume*) from a topic
@@ -66,8 +58,9 @@ TMS provides strong ordering guarantees for the consumers of a topic:
   see the topics in the exact same order.
 
 Each message has a timestamp, which can be thought of as the published time, or the time
-the system persisted the message. Each message ID, combined with a topic, uniquely
-identifies each message.
+the system persisted the message. Messages are uniquely identified by a concatenation of
+the timestamp, the topic, and a sequence ID (for distinguishing messages published
+in the same millisecond).
 
 Under a high-concurrent load, the actual ordering of messages will be arbitrary, but is
 guaranteed to be consistent when fetched. With non-transactional messages, messages are
@@ -76,8 +69,8 @@ available for consumption (fetching) as soon as the method call that publishes t
 Note that non-transactional consumers see *all* messages of a topic, including messages that
 are currently in a transaction.
 
-Transactional Message Publishing
---------------------------------
+Transactional Messaging
+-----------------------
 With transactional messages, messages are not available (published) until the transaction
 has been successfully committed.
 
@@ -98,6 +91,7 @@ including the messages that were published and are currently in a transaction.
 With transactional publishing, all the work in a transaction will appear atomically to
 downstream consumers who are also transactional. It is not necessary that those consumers
 be in the *same* transaction; instead, they merely need to be in a transaction themselves.
+
 
 Example Publish and Subscribe
 =============================
@@ -120,8 +114,8 @@ successfully committed:
 
 Currently, TMS:
 
-- Only supports explicit transactions; and
-- Does not support publishing from a long-running transaction, such as a mapper, reducer, or Spark executor.
+- only supports explicit transactions; and
+- does not support publishing from a long-running transaction, such as a mapper, reducer, or Spark executor.
 
 
 Code Examples
@@ -147,7 +141,6 @@ method to fetch and block until either a message is received or a timeout is rea
         throw new TimeoutException("Failed to get any messages from " + topic +
                                      " in " + timeout + " " + unit.name().toLowerCase());
       }
-      // The payload contains the message to publish in next step
       return iterator.next();
     } finally {
       iterator.close();
