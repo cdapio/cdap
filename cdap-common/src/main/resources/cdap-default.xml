@@ -276,6 +276,14 @@
   </property>
 
   <property>
+    <name>app.meta.upgrade.timeout.secs</name>
+    <value>60</value>
+    <description>
+      Timeout value in seconds while upgrading application versions
+    </description>
+  </property>
+
+  <property>
     <name>master.services.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -416,14 +424,6 @@
     <description>
       Maximum allowed size in megabytes of a workflow token; if the
       workflow token exceeds this size, no further updates are allowed
-    </description>
-  </property>
-
-  <property>
-    <name>app.meta.upgrade.timeout.secs</name>
-    <value>60</value>
-    <description>
-      Timeout value in seconds while upgrading application versions
     </description>
   </property>
 

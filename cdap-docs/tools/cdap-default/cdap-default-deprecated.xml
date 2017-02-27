@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
-  Copyright © 2016 Cask Data, Inc.
+  Copyright © 2014-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,8 @@
     <name>app.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      App Fabric service bind address (deprecated; use ${master.services.bind.address} instead)
+      App Fabric service bind address (deprecated; use
+      ${master.services.bind.address} instead)
     </description>
   </property>
 
@@ -36,37 +37,14 @@
   </property>
 
   <property>
-    <name>log.cleanup.run.interval.mins</name>
-    <value>1440</value>
-    <description>
-      Log cleanup interval in minutes
-    </description>
-  </property>
-
-  <property>
-    <name>log.cleanup.max.num.files</name>
-    <value>1000</value>
-    <description>
-      Maximum number of files scanned in one iteration
-    </description>
-  </property>
-
-  <property>
-    <name>log.retention.duration.days</name>
-    <value>7</value>
-    <description>
-      Duration (the time-to-live) in days of saved log files in HDFS retention
-    </description>
-  </property>
-
-  <property>
     <name>dataset.service.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-       Dataset service bind address (deprecated; use ${master.services.bind.address} instead)
+      Dataset service bind address (deprecated; use
+      ${master.services.bind.address} instead)
     </description>
   </property>
- 
+
   <property>
     <name>explore.executor.container.instances</name>
     <value>1</value>
@@ -89,7 +67,8 @@
     <name>kafka.bind.address</name>
     <value>${kafka.server.host.name}</value>
     <description>
-      CDAP Kafka service bind port (deprecated; use ${kafka.server.host.name} instead)
+      CDAP Kafka service bind port (deprecated; use
+      ${kafka.server.host.name} instead)
     </description>
   </property>
 
@@ -97,7 +76,8 @@
     <name>kafka.bind.port</name>
     <value>${kafka.server.port}</value>
     <description>
-      CDAP Kafka service bind port (deprecated; use ${kafka.server.port} instead)
+      CDAP Kafka service bind port (deprecated; use ${kafka.server.port}
+      instead)
     </description>
   </property>
 
@@ -114,8 +94,8 @@
     <name>kafka.log.dir</name>
     <value>${kafka.server.log.dirs}</value>
     <description>
-      CDAP Kafka service log storage directory (deprecated; use ${kafka.server.log.dirs}
-      instead)
+      CDAP Kafka service log storage directory (deprecated; use
+      ${kafka.server.log.dirs} instead)
     </description>
   </property>
 
@@ -148,11 +128,36 @@
   </property>
 
   <property>
+    <name>log.cleanup.max.num.files</name>
+    <value>1000</value>
+    <description>
+      Maximum number of files scanned in one iteration
+    </description>
+  </property>
+
+  <property>
+    <name>log.cleanup.run.interval.mins</name>
+    <value>1440</value>
+    <description>
+      Log cleanup interval in minutes
+    </description>
+  </property>
+
+  <property>
+    <name>log.retention.duration.days</name>
+    <value>7</value>
+    <description>
+      Duration (the time-to-live) in days of saved log files in HDFS
+      retention
+    </description>
+  </property>
+
+  <property>
     <name>log.saver.checkpoint.interval.ms</name>
     <value>60000</value>
     <description>
-      The time between log saver checkpoints in milliseconds
-      (deprecated: use ${log.process.pipeline.checkpoint.interval.ms} instead)
+      The time between log saver checkpoints in milliseconds (deprecated:
+      use ${log.process.pipeline.checkpoint.interval.ms} instead)
     </description>
   </property>
 
@@ -195,8 +200,8 @@
     <name>security.auth.server.address</name>
     <value>0.0.0.0</value>
     <description>
-      CDAP Authentication service bind address
-      (deprecated; use ${security.auth.server.bind.address} instead)
+      CDAP Authentication service bind address (deprecated; use
+      ${security.auth.server.bind.address} instead)
     </description>
   </property>
 
@@ -204,8 +209,8 @@
     <name>ssl.enabled</name>
     <value>false</value>
     <description>
-      Determines if SSL is enabled
-      (deprecated; use ${ssl.external.enabled} instead)
+      Determines if SSL is enabled (deprecated; use ${ssl.external.enabled}
+      instead)
     </description>
   </property>
 
