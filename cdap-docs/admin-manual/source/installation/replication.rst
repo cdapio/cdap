@@ -69,13 +69,13 @@ HBase
 
     export HBASE_CLASSPATH="$HBASE_CLASSPATH:/<cdap-home>/<hbase-compat-version>/coprocessor/*"
     
-    # <cdap-home> will vary depending on your distibution and installation
-    # For CM/CDH: ${PARCEL_ROOT}/CDAP where ${PARCEL_ROOT} is your configured "Parcel Directory"
-    # Ambari/HDP, MapR, packages: /opt/cdap
+    # <cdap-home> will vary depending on your distribution and installation
+    # For Cloudera Manager/CDH: it is "${PARCEL_ROOT}/CDAP" where ${PARCEL_ROOT} is your configured "Parcel Directory"
+    # Ambari/HDP, MapR, packages: it is "/opt/cdap"
     #
-    # <hbase-compat-version> is the HBase compact package 
+    # <hbase-compat-version> is the HBase package compatible with the distribution
  
-    # For example, if you're on CDH 5.5.x and have installed the cdap-hbase-compat-1.0-cdh5.5.0 package:
+    # For example, if you are on a Cloudera Manager cluster with CDH 5.5.x:
     export HBASE_CLASSPATH="$HBASE_CLASSPATH:/opt/cloudera/parcels/CDAP/hbase-compat-1.0-cdh5.5.0/coprocessor/*"
 
 - Restart HBase master and regionservers.
@@ -84,14 +84,14 @@ HBase
     master_hbase_shell> add_peer '[slave-name]', '[slave-zookeeper-quorum]:/[slave-zk-node]'
  
     # For example:
-    master_hbase_shell> add_peer 'hbase2', 'hbase2-master.example.com:2181:/hbase'
+    master_hbase_shell> add_peer 'slave', 'slave.example.com:2181:/hbase'
 
 - Enable replication from slave to master::
 
     slave_hbase_shell> add_peer '[master-name]', '[master-zookeeper-quorum]:/[master-zk-node]'
  
     # For example:
-    slave_hbase_shell> add_peer 'hbase1', 'hbase1-master.example.com:2181:/hbase'
+    slave_hbase_shell> add_peer 'master', 'master.example.com:2181:/hbase'
     
 - Confirm that HBase replication is working::
 
@@ -153,7 +153,8 @@ used with replication.
 .. highlight:: console
 
 To deploy your extension (once compiled and packaged as a JAR file, such as
-*my-extension.jar*), run these steps on **both** your master and slave clusters:
+*my-extension.jar*), run these steps on **both** your master and slave clusters.
+These steps assume ``<cdap-home>`` is ``/opt/cdap``:
 
 1. Create an extension directory, such as::
 
@@ -178,7 +179,7 @@ To deploy your extension (once compiled and packaged as a JAR file, such as
 
     <property>
       <name>cdap.hbase.spi.hbase.zookeeper.quorum</name>
-      <value>hbase-master-example.com:2181/cdap</value>
+      <value>slave.example.com:2181/cdap</value>
     </property>
     <property>
       <name>cdap.hbase.spi.hbase.zookeeper.session.timeout</name>
