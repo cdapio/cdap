@@ -36,33 +36,17 @@ Cask Data Application Platform Release Notes
 New Features
 ------------
 
-Revamped Log System
-...................
+Secure Impersonation
+....................
 
-- :cask-issue:`CDAP-7676` - Added a prototype implementation for a rolling HDFS log
-  appender.
+- :cask-issue:`CDAP-8110` - Added support for fine-grained impersonation at the CDAP
+  application, dataset, and stream level.
 
-- :cask-issue:`CDAP-7962` - Program context information, including namespace, program
-  name, and program type, are now available in the MDC property of each ILoggingEvent
-  emitted from a program container.
+- :cask-issue:`CDAP-8355` - Impersonated namespaces can be configured to disallow the
+  impersonation of the namespace owner when running CDAP Explore queries.
 
-- :cask-issue:`CDAP-8108` - Revised the CDAP Log Appender to use `Logback
-  <http://logback.qos.ch/>`__\ 's Appender interface.
-
-- :cask-issue:`CDAP-8231` - The log file cleaner thread will remove metadata and, for
-  successfully deleted metadata entries, it will delete the corresponding log files. The log
-  file cleaner thread will only remove the metadata entries for the old (pre-4.1.0) log
-  format.
-
-- :cask-issue:`CDAP-8261` - Logs collected by the CDAP Log Appender will be stored at a
-  common ``<cdap>/logs`` path, owned by the cdap user. For security, it is readable only by
-  the cdap user.
-
-- :cask-issue:`CDAP-8428` - Added additional metrics about the status of the log
-  framework: ``log.process.min.delay`` and ``log.process.max.delay``.
-
-Replication, Resiliency, and Zero-downtime
-..........................................
+Replication and Resiliency
+..........................
 
 - :cask-issue:`CDAP-7685` - Provided SPI hooks that users can implement for performing
   HBase DDL operations.
@@ -119,30 +103,8 @@ Replication, Resiliency, and Zero-downtime
 - :cask-issue:`CDAP-8037` - Added a ``master.manage.hbase.coprocessors`` setting that can be
   set to false on clusters where the CDAP coprocessors are deployed on every HBase node.
 
-Dataset Improvements
-....................
-- :cask-issue:`CDAP-7596` - Added the ability to reuse an existing file system location
-  and Hive table when creating a partitioned file set.
-
-- :cask-issue:`CDAP-7597` - Added configuring the CDAP Explore database and table name for
-  a dataset using dataset properties.
-
-- :cask-issue:`CDAP-7683` - Added a tool that pre-builds and loads the HBase coprocessors
-  required by CDAP onto HDFS.
-
-- :cask-issue:`CDAP-8070` - Added control of group ownership and permissions through
-  dataset properties.
-
-Secure Impersonation and Authorization
-......................................
-- :cask-issue:`CDAP-8110` - Added support for fine-grained impersonation at the CDAP
-  application, dataset, and stream level.
-
-- :cask-issue:`CDAP-8355` - Impersonated namespaces can be configured to disallow the
-  impersonation of the namespace owner when running CDAP Explore queries.
-
-Brand-new CDAP UI
-.................
+Enhancements to the new CDAP UI
+...............................
 
 - :cask-issue:`CDAP-8021` - Added the management of preferences at the application and
   program levels.
@@ -157,12 +119,37 @@ Brand-new CDAP UI
   programs in the new CDAP UI using the events and log view "fast-action" dialogs.
 
 - :cask-issue:`CDAP-8398` - Users now see on the CDAP UI homepage a "Just Added" section,
-  listing and highlighting any entities added in the last five minutes. 
+  listing and highlighting any entities added in the last five minutes.
 
 - :cask-issue:`HYDRATOR-208` - The CDAP UI added a duration timer to CDAP pipelines.
 
-Additional Plugins for CDAP Pipelines
-.....................................
+Logs
+....
+
+- :cask-issue:`CDAP-7676`, :cask-issue:`CDAP-9999` - Added a prototype implementation for a rolling HDFS log
+  appender.
+
+- :cask-issue:`CDAP-7962` - Program context information, including namespace, program
+  name, and program type, are now available in the MDC property of each ILoggingEvent
+  emitted from a program container.
+
+- :cask-issue:`CDAP-8108` - Revised the CDAP Log Appender to use `Logback
+  <http://logback.qos.ch/>`__\ 's Appender interface.
+
+- :cask-issue:`CDAP-8231` - The log file cleaner thread will remove metadata and, for
+  successfully deleted metadata entries, it will delete the corresponding log files. The log
+  file cleaner thread will only remove the metadata entries for the old (pre-4.1.0) log
+  format.
+
+- :cask-issue:`CDAP-8261` - Logs collected by the CDAP Log Appender will be stored at a
+  common ``<cdap>/logs`` path, owned by the cdap user. For security, it is readable only by
+  the cdap user.
+
+- :cask-issue:`CDAP-8428` - Added additional metrics about the status of the log
+  framework: ``log.process.min.delay`` and ``log.process.max.delay``.
+
+New CDAP Pipeline Plugins
+.........................
 
 - :cask-issue:`HYDRATOR-235` - The Kinesis Spark Streaming source plugin is available in
   its own repository at `github.com/hydrator/kinesis-spark-streaming-source 
@@ -233,9 +220,23 @@ Additional Plugins for CDAP Pipelines
 - :cask-issue:`HYDRATOR-1398` - Support added for Table datasets for lookups in plugins
   and pipelines.
 
+Dataset Improvements
+....................
 
-Additional New Features
-.......................
+- :cask-issue:`CDAP-7596` - Added the ability to reuse an existing file system location
+  and Hive table when creating a partitioned file set.
+
+- :cask-issue:`CDAP-7597` - Added configuring the CDAP Explore database and table name for
+  a dataset using dataset properties.
+
+- :cask-issue:`CDAP-7683` - Added a tool that pre-builds and loads the HBase coprocessors
+  required by CDAP onto HDFS.
+
+- :cask-issue:`CDAP-8070` - Added control of group ownership and permissions through
+  dataset properties.
+
+Other New Features
+..................
 
 - :cask-issue:`CDAP-4556` - CDAP now uses environment variables in the ``spark-env.sh`` and
   properties in the ``spark-defaults.conf`` when launching Spark programs.
