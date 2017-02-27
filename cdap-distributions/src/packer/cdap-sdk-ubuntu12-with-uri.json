@@ -59,8 +59,8 @@
     },
     {
       "type": "chef-solo",
+      "install_command": "curl -L https://www.chef.io/chef/install.sh | {{if .Sudo}}sudo{{end}} bash -s -- -v 12.19.36",
       "remote_cookbook_paths": "/var/chef/cookbooks",
-      "install_command": "curl -L https://www.chef.io/chef/install.sh | {{if .Sudo}}sudo{{end}} bash -s -- -v 12.4.3",
       "pause_before": "10s"
     },
     {
