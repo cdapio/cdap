@@ -9,7 +9,7 @@
 Transactional Messaging System
 ==============================
 
-.. topic::  **Note: Beta Feature** 
+.. topic::  **Note:** 
 
     TMS is currently a **beta** feature of CDAP |release|, and is subject to change without notice.
 
