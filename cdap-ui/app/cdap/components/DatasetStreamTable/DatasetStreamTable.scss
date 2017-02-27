@@ -20,6 +20,7 @@ $border-color: #bbbbbb;
 
 .dataentity-table {
   padding-top: 10px;
+  overflow: auto;
   .table {
     border: 1px solid $border-color;
 
@@ -39,7 +40,7 @@ $border-color: #bbbbbb;
         }
 
         &:last-child {
-          padding-left: 5%;
+          padding-left: 1%;
         }
 
         &:nth-child(3),
@@ -52,6 +53,12 @@ $border-color: #bbbbbb;
 
       th {
         line-height: 30px;
+        &:nth-child(2) {
+          min-width: 75px;
+        }
+        &:last-child {
+          min-width: 215px;
+        }
       }
 
       td {
@@ -70,7 +77,8 @@ $border-color: #bbbbbb;
 
         a {
           color: inherit;
-          display: block;
+          display: inline-block;
+          vertical-align: top;
 
           &:hover {
             text-decoration: none;
@@ -85,12 +93,14 @@ $border-color: #bbbbbb;
               overflow: hidden;
               text-overflow: ellipsis;
               white-space: nowrap;
+              width: 100%;
             }
           }
 
           &:last-child {
+            min-width: 215px;
             .fast-actions-container {
-              min-width: 175px;
+              min-width: 215px;
               max-width: 400px;
             }
           }
@@ -102,8 +112,6 @@ $border-color: #bbbbbb;
 
           .fast-actions-container .btn-link {
             color: #4f5050;
-            padding-left: 5%;
-            padding-right: 5%;
             max-width: 40px;
           }
         }

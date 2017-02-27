@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _http-restful-api-dataset:
 
@@ -36,6 +36,8 @@ You can list all datasets in CDAP by issuing an HTTP GET request to the URL::
    * - ``namespace-id``
      - Namespace ID
 
+.. highlight:: json-ellipsis
+
 The response body will contain a JSON-formatted list of the existing datasets::
 
   {
@@ -51,6 +53,8 @@ The response body will contain a JSON-formatted list of the existing datasets::
      }
    }
 
+.. highlight:: console
+
 .. _http-restful-api-dataset-creating:
 
 Creating a Dataset
@@ -60,14 +64,20 @@ You can create a dataset by issuing an HTTP PUT request to the URL::
 
   PUT /v3/namespaces/<namespace-id>/data/datasets/<dataset-name>
 
+.. highlight:: json-ellipsis
+
 with JSON-formatted name of the dataset type, properties, and description in a body::
 
   {
      "typeName":"<type-name>",
-     "properties":{<properties>},
+     "properties":{
+        "<properties>"
+      },
      "description":"Dataset Description"
+     "principal":"user/example.net@examplekdc.net"
   }
 
+.. highlight:: console
 
 .. list-table::
    :widths: 20 80
@@ -82,9 +92,11 @@ with JSON-formatted name of the dataset type, properties, and description in a b
    * - ``type-name``
      - Type of the new dataset
    * - ``properties``
-     - Dataset properties, map of String to String.
+     - Dataset properties, map of String to String
    * - ``description``
      - Dataset description
+   * - ``principal``
+     - Kerberos principal with which the dataset should be created
 
 .. rubric:: HTTP Responses
 .. list-table::
@@ -95,6 +107,8 @@ with JSON-formatted name of the dataset type, properties, and description in a b
      - Description
    * - ``200 OK``
      - Requested dataset was successfully created
+   * - ``403 Forbidden``
+     - The dataset already exist with a different Kerberos principal
    * - ``404 Not Found``
      - Requested dataset type was not found
    * - ``409 Conflict``
@@ -109,7 +123,7 @@ with JSON-formatted name of the dataset type, properties, and description in a b
      - ``PUT /v3/namespaces/default/data/datasets/mydataset``
    * - Body
      - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"dataset.table.ttl":"3600"},``
-       ``"description":"My Dataset Description"}``
+       ``"description":"My Dataset Description",`` ``"principal":"user/somehost.net@somekdc.net"}``
    * - Description
      - Creates a dataset named *mydataset* of the type ``Table`` in the namespace *default*
        with the time-to-live property set to 1 hour and a description of ``My Dataset Description``
@@ -147,6 +161,8 @@ the URL::
    * - ``404 Not Found``
      - Requested dataset instance was not found
 
+.. highlight:: json-ellipsis
+
 The response |---| if successful |---| will contain the JSON-formatted properties::
 
   {
@@ -155,9 +171,76 @@ The response |---| if successful |---| will contain the JSON-formatted propertie
      ...
   }
 
+.. highlight:: console
+
 Note that this will return the original properties that were submitted when the dataset was created or updated.
 You can use these properties to create a clone of the dataset, or as a basis for updating some properties of this
 dataset without modifying the remaining properties.
+
+.. _http-restful-api-dataset-meta:
+
+Metadata of an Existing Dataset
+===============================
+
+You can retrieve the metadata with which a dataset was created by issuing an HTTP GET
+request to the URL::
+
+	GET /v3/namespaces/<namespace-id>/data/datasets/<dataset-name>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``dataset-name``
+     - Name of the existing dataset
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Metadata for the requested dataset instance was successfully returned
+   * - ``404 Not Found``
+     - Requested dataset instance was not found
+
+.. highlight:: json-ellipsis
+
+The response body will contain JSON-formatted metadata of the existing dataset::
+
+   {
+     "spec": {
+       "name": "ownedDataset",
+       "type": "datasetType1",
+       "originalProperties": {},
+       "properties": {},
+       "datasetSpecs": {}
+     },
+     "type": {
+       "name": "datasetType1",
+       "modules": [
+         {
+           "name": "module1",
+           "className": "co.cask.cdap.data2.datafabric.dataset.service.TestModule1",
+           "jarLocationPath": "/path/data/module1/archive/module1.jar",
+           "types": [
+             "datasetType1"
+           ],
+           "usesModules": [],
+           "usedByModules": []
+         }
+       ]
+     },
+     "principal": "user/somehost.net@somekdc.net"
+   }
+
+.. highlight:: console
 
 .. _http-restful-api-dataset-updating:
 
@@ -168,6 +251,8 @@ You can update an existing dataset's table and properties by issuing an HTTP PUT
 
 	PUT /v3/namespaces/<namespace-id>/data/datasets/<dataset-name>/properties
 
+.. highlight:: json-ellipsis
+
 with JSON-formatted properties in the body::
 
   {
@@ -175,6 +260,8 @@ with JSON-formatted properties in the body::
      "key2":"value2",
      ...
   }
+
+.. highlight:: console
 
 **Notes:** 
 

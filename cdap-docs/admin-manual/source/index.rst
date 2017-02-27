@@ -73,7 +73,14 @@ installation and its security configuration.
     .. |packages| replace:: **Manual Installation using Packages**
     .. _packages: installation/packages.html
 
-    - |packages|_
+    - |packages|_ Installing on generic Apache Hadoop clusters, CDH (Cloudera
+      Distribution of Apache Hadoop) clusters *not managed* with Cloudera Manager, or HDP
+      (Hortonworks Data Platform) clusters *not managed* with Apache Ambari
+
+    .. |replication| replace:: **Replication**
+    .. _replication: installation/replication.html
+
+    - |replication|_ Covers the replication of CDAP clusters from a master to one or more slave clusters
 
 
 .. |verification| replace:: **Verification:**
@@ -146,9 +153,9 @@ installation and its security configuration.
 .. |appendices| replace:: **Appendices:**
 .. _appendices: appendices/index.html
 
-- |appendices|_ Two XML files are used to configure a CDAP installation: ``cdap-site.xml`` and
-  ``cdap-security.xml``:
+- |appendices|_
 
-  - :ref:`Minimal cdap-site.xml <appendix-minimal-cdap-site.xml>`
-  - :ref:`Complete list of cdap-site.xml properties <appendix-cdap-site.xml>`
-  - :ref:`List of cdap-security.xml properties <appendix-cdap-security.xml>`
+  - :ref:`Appendix: Minimal cdap-site.xml <appendix-minimal-cdap-site.xml>`: Minimal required configuration for a CDAP installation
+  - :ref:`Appendix: cdap-site.xml <appendix-cdap-site.xml>`: Default properties for a CDAP installation
+  - :ref:`Appendix: cdap-security.xml <appendix-cdap-security.xml>`: Default security properties for a CDAP installation
+  - :ref:`Appendix: HBaseDDLExecutor <appendix-hbase-ddl-executor>`: Example implementation and description for replication

@@ -63,7 +63,15 @@ export default class MarketActionsContainer extends Component {
   openWizard(actionIndex, actionType, action) {
     // have to do this because the type returned from the backend is the same,
     // whether this action is in an usecase or in the 'Datapacks' tab
-    if (actionType === 'load_datapack') {
+    let usecases = [
+      'load_datapack',
+      'one_step_deploy_plugin',
+      'one_step_deploy_app'
+    ];
+
+    let isLastStep = actionIndex === this.props.actions.length - 1;
+
+    if (usecases.indexOf(actionType) !== -1 && !isLastStep) {
       actionType += '_usecase';
     }
     this.setState({
@@ -79,6 +87,7 @@ export default class MarketActionsContainer extends Component {
     if (!Array.isArray(this.props.actions)) {
       return null;
     }
+
     return (
       <div className="market-entity-actions">
         {
@@ -104,7 +113,10 @@ export default class MarketActionsContainer extends Component {
                     <div className="action-icon">
                       <div className={classnames("fa", actionIcon)}></div>
                     </div>
-                    <div className="action-description">
+                    <div
+                      className="action-description"
+                      title={action.label}
+                    >
                       {action.label}
                     </div>
                     <button

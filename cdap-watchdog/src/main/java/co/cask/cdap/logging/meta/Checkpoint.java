@@ -23,17 +23,32 @@ import com.google.common.base.Objects;
  */
 public class Checkpoint {
   private final long nextOffset;
+  private final long nextEventTime;
   private final long maxEventTime;
 
-  public Checkpoint(long nextOffset, long maxEventTime) {
+  public Checkpoint(long nextOffset, long nextEventTime, long maxEventTime) {
     this.nextOffset = nextOffset;
+    this.nextEventTime = nextEventTime;
     this.maxEventTime = maxEventTime;
   }
 
+  /**
+   * Returns the next Kafka offset to restart reading from.
+   */
   public long getNextOffset() {
     return nextOffset;
   }
 
+  /**
+   * Returns the log event time of the message fetched with the previous offset of {@code nextOffset}.
+   */
+  public long getNextEventTime() {
+    return nextEventTime;
+  }
+
+  /**
+   * Returns the max event time of persisted messages.
+   */
   public long getMaxEventTime() {
     return maxEventTime;
   }

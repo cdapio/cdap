@@ -19,13 +19,13 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.stream.CoordinatorStreamProperties;
@@ -334,7 +334,7 @@ public class FileStreamAdmin implements StreamAdmin {
     // User should have any access on the stream to read its properties
     ensureAccess(streamId);
     // get the principal which will be used for impersonation to display as owner
-    String ownerPrincipal = ownerAdmin.getImpersonationPrincipal(streamId);
+    String ownerPrincipal = ownerAdmin.getOwnerPrincipal(streamId);
     StreamConfig config = getConfig(streamId);
     StreamSpecification spec = streamMetaStore.getStream(streamId);
     return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB(),
@@ -354,7 +354,7 @@ public class FileStreamAdmin implements StreamAdmin {
     });
 
     Preconditions.checkArgument(streamLocation.isDirectory(), "Stream '%s' does not exist.", streamId);
-    verifyOwner(streamId, properties.getOwnerPrincipal());
+    SecurityUtil.verifyOwnerPrincipal(streamId, properties.getOwnerPrincipal(), ownerAdmin);
 
     streamCoordinatorClient.updateProperties(
       streamId, new Callable<CoordinatorStreamProperties>() {
@@ -416,12 +416,12 @@ public class FileStreamAdmin implements StreamAdmin {
     ensureAccess(streamNamespace, Action.WRITE);
 
     final Properties properties = (props == null) ? new Properties() : props;
-    String ownerPrincipal = properties.containsKey(Constants.Security.PRINCIPAL) ?
+    String specifiedOwnerPrincipal = properties.containsKey(Constants.Security.PRINCIPAL) ?
       properties.getProperty(Constants.Security.PRINCIPAL) : null;
 
     if (exists(streamId)) {
       // if stream exists then make sure owner for this create request is same
-      verifyOwner(streamId, ownerPrincipal);
+      SecurityUtil.verifyOwnerPrincipal(streamId, specifiedOwnerPrincipal, ownerAdmin);
       // stream create is an idempotent operation as of now so just return null and don't do anything
       return null;
     }
@@ -435,8 +435,8 @@ public class FileStreamAdmin implements StreamAdmin {
                  "orphaned privileges for {} they will be enforced. ");
     }
     // if the stream didn't exist then add the owner information
-    if (ownerPrincipal != null) {
-      ownerAdmin.add(streamId, new KerberosPrincipalId(ownerPrincipal));
+    if (specifiedOwnerPrincipal != null) {
+      ownerAdmin.add(streamId, new KerberosPrincipalId(specifiedOwnerPrincipal));
     }
     try {
       // Grant All access to the stream created to the User
@@ -863,19 +863,6 @@ public class FileStreamAdmin implements StreamAdmin {
     Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
     if (!filter.apply(entityId)) {
       throw new UnauthorizedException(principal, entityId);
-    }
-  }
-
-  private void verifyOwner(StreamId streamId,
-                           @Nullable String specifiedOwnerPrincipal) throws IOException, ConflictException {
-    // verify  owner with the effective owner principal
-    if (!Objects.equals(specifiedOwnerPrincipal, ownerAdmin.getImpersonationPrincipal(streamId))) {
-      // Not giving existing owner information as it might be unacceptable under some security scenarios
-      throw new ConflictException(String.format("%s '%s' already exists and the specified %s '%s' is not the same as " +
-                                                  "the existing one. The %s of an entity cannot be changed.",
-                                                streamId.getEntityType(), streamId.getStream(),
-                                                Constants.Security.PRINCIPAL, specifiedOwnerPrincipal,
-                                                Constants.Security.PRINCIPAL));
     }
   }
 }

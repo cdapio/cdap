@@ -276,6 +276,14 @@
   </property>
 
   <property>
+    <name>app.meta.upgrade.timeout.secs</name>
+    <value>60</value>
+    <description>
+      Timeout value in seconds while upgrading application versions
+    </description>
+  </property>
+
+  <property>
     <name>master.services.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -656,7 +664,7 @@
 
   <property>
     <name>data.tx.prune.enable</name>
-    <value>true</value>
+    <value>false</value>
     <description>
       Enable invalid transaction list pruning
     </description>

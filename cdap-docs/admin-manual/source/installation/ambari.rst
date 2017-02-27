@@ -25,6 +25,9 @@ Installation using Apache Ambari
   - select `CDAP metrics <https://issues.cask.co/browse/CDAP-4108>`__ and
   - a full `smoke test of CDAP functionality <https://issues.cask.co/browse/CDAP-4105>`__ after installation.
 
+- If you are installing CDAP with the intention of using *replication,* see these
+  instructions on :ref:`CDAP Replication <installation-replication>` *before* installing or starting CDAP.
+  
 
 Preparing the Cluster
 =====================

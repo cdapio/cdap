@@ -37,6 +37,7 @@ import Page404 from 'components/404';
 import PageErrorMessage from 'components/EntityListView/ErrorMessage/PageErrorMessage';
 import HomeErrorMessage from 'components/EntityListView/ErrorMessage';
 import isEqual from 'lodash/isEqual';
+import isObject from 'lodash/isObject';
 require('./EntityListView.scss');
 import ee from 'event-emitter';
 
@@ -588,6 +589,12 @@ class EntityListView extends Component {
     MyUserStoreApi
       .get()
       .subscribe(res => {
+        if (isNil(res)) {
+          res = {};
+        }
+        if (!isObject(res.property)) {
+          res.property = {};
+        }
         res.property['user-has-visited'] = true;
         MyUserStoreApi.set({}, res.property);
       });
@@ -607,6 +614,12 @@ class EntityListView extends Component {
     MyUserStoreApi
       .get()
       .subscribe(res => {
+        if (isNil(res)) {
+          res = {};
+        }
+        if (!isObject(res.property)) {
+          res.property = {};
+        }
         res.property['user-has-visited'] = true;
         MyUserStoreApi.set({}, res.property);
       });

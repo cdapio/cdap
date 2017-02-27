@@ -22,8 +22,8 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
@@ -106,7 +106,7 @@ public class PruneUpperBoundWriter extends AbstractIdleService {
           if (now > (lastChecked + pruneFlushInterval)) {
             // should flush data
             try {
-              User.runAsLoginUser(new PrivilegedExceptionAction<Void>() {
+              UserGroupInformation.getLoginUser().doAs(new PrivilegedExceptionAction<Void>() {
                 @Override
                 public Void run() throws Exception {
                   // Record prune upper bound
@@ -128,9 +128,9 @@ public class PruneUpperBoundWriter extends AbstractIdleService {
                   return null;
                 }
               });
-            } catch (IOException ex) {
-              LOG.warn("Cannot record prune upper bound for a region to table " +
-                         tableName.getNamespaceAsString() + ":" + tableName.getNameAsString(), ex);
+            } catch (IOException | InterruptedException ex) {
+              // Handle any exception that might be thrown during HBase operation
+              handleException(ex);
             }
             lastChecked = now;
           }
@@ -155,6 +155,14 @@ public class PruneUpperBoundWriter extends AbstractIdleService {
     if (!isRunning() || !isAlive()) {
       LOG.warn(String.format("Trying to persist prune upper bound for region %s when writer is not %s!",
                              Bytes.toStringBinary(regionName), isRunning() ? "alive" : "running"));
+    }
+  }
+
+  private void handleException(Exception ex) {
+    LOG.warn("Cannot record prune upper bound for a region to table " +
+               tableName.getNamespaceAsString() + ":" + tableName.getNameAsString(), ex);
+    if (ex instanceof InterruptedException) {
+      Thread.currentThread().interrupt();
     }
   }
 }

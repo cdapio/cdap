@@ -40,6 +40,9 @@ with our other :ref:`distribution instructions <installation-index>`.
 
 - All services run as the ``'cdap'`` user installed by the package manager.
 
+- If you are installing CDAP with the intention of using *replication,* see these
+  instructions on :ref:`CDAP Replication <installation-replication>` *before* installing or starting CDAP.
+
 
 Preparing the Cluster
 =============================

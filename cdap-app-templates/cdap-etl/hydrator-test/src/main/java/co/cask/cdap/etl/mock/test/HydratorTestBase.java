@@ -25,6 +25,7 @@ import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.mock.action.MockAction;
+import co.cask.cdap.etl.mock.batch.LookupTransform;
 import co.cask.cdap.etl.mock.batch.MockExternalSink;
 import co.cask.cdap.etl.mock.batch.MockExternalSource;
 import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSink;
@@ -129,7 +130,7 @@ public class HydratorTestBase extends TestBase {
                       IntValueFilterTransform.class, StringValueFilterTransform.class,
                       FieldCountAggregator.class, IdentityAggregator.class, FieldsPrefixTransform.class,
                       StringValueFilterCompute.class,
-                      NodeStatesAction.class);
+                      NodeStatesAction.class, LookupTransform.class);
   }
 
   protected static void setupStreamingArtifacts(ArtifactId artifactId, Class<?> appClass) throws Exception {

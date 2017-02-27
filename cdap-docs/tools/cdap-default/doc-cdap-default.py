@@ -54,6 +54,7 @@ from optparse import OptionParser
 SOURCE_PATH = os.path.dirname(os.path.abspath(__file__))
 RELATIVE_PATH = '../../..'
 CDAP_DEFAULT_XML = 'cdap-common/src/main/resources/cdap-default.xml'
+CDAP_DEFAULT_DEPRECATED_XML = 'cdap-default-deprecated.xml'
 CDAP_DEFAULT_EXCLUSIONS = 'cdap-default-exclusions.txt'
 
 OTHER_CDAP_XML_SDL_FILES = 'cdap-xml-sdl-files.txt'
@@ -460,6 +461,16 @@ def parse_options():
              'a file at the same location with \'_revised.xml\'',
         default=False)
 
+    # Editing: rebuilding the deprecated XML file
+
+    parser.add_option(
+        '-e', '--buildDep',
+        dest='build_deprecated',
+        action='store_true',
+        help='Loads the existing deprecated XML and builds it in the correct order to '
+             'a file at the same location with \'_revised.xml\'',
+        default=False)
+
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(1)
@@ -476,6 +487,9 @@ def is_string_type(var):
 def default_xml_filepath(extra_path=''):
     return os.path.join(SOURCE_PATH, RELATIVE_PATH, CDAP_DEFAULT_XML + extra_path)
     
+def deprecated_xml_filepath(extra_path=''):
+    return os.path.join(SOURCE_PATH, CDAP_DEFAULT_DEPRECATED_XML + extra_path)
+
 def load_exclusions():
     func = 'load_exclusions'
     exclusions_path = os.path.join(SOURCE_PATH, CDAP_DEFAULT_EXCLUSIONS)
@@ -670,6 +684,89 @@ def rebuild(filepath=''):
         print XML_HEADER.encode('utf8')
         for line in xml.split('\n'):
             print line
+
+def resort(filepath, revised_filepath):
+    """Loads an XML, and sorts it according to these rules
+    - Properties within a section alphabetical
+    - Descriptions wrapped to a 70 character line-length
+    """
+    
+    print "Resorting %s" % filepath
+    items, tree = load_xml(filepath, include_exclusions=True)
+    in_section = True
+    defaults = {}
+    section = []
+    section_counter = 0
+    properties_counter = 0
+    section_name = ''
+    for item in items:
+        if str(item.__class__) == '__main__.Section':
+            if section: # End old section
+                if not section_name:
+                    section_name = "Section %s" % section_counter
+                defaults[section_name] = section
+                section = []
+                
+            # Start new section
+            section_counter += 1
+            section_name = item.name
+        else:
+            properties_counter += 1
+            section.append(item)
+    if section: # End old section
+        defaults[section_name] = section
+        section = []  
+    
+    print "Sections: %d Keys: %d Properties: %d" % (section_counter, len(defaults.keys()), properties_counter)
+
+    # Build XML file
+    prop_names = {}
+    xml = XML_CONFIG_OPEN
+    keys = defaults.keys()
+            
+    keys.sort()
+
+    section_counter = 0
+    properties_counter = 0
+    for key in keys:
+        section_counter += 1
+        xml += XML_SECTION_SUB % key
+        props = defaults[key]
+        props.sort(key = lambda p: p.name)
+        for prop in props:
+            if prop_names.has_key(prop.name):
+                print ("WARNING: Duplicate entry for property \"%s\" in sections \"%s\" and \"%s\"" 
+                    % (prop.name, key, prop_names[prop.name]))
+            else:
+                prop_names[prop.name] = key
+            xml += XML_PROP_OPEN
+            xml += XML_NAME_SUB % prop.name
+            xml += XML_VALUE_SUB % prop.value
+            xml += XML_DESCRIP_OPEN
+            if prop.description:
+                for line in textwrap.wrap(prop.description):
+                    xml += XML_DESCRIP_SUB % line
+            else:
+                print "WARNING: No description for property \"%s\"" % prop.name
+            xml += XML_DESCRIP_CLOSE
+            if prop.final:
+                xml += XML_FINAL
+            xml += XML_PROP_CLOSE
+            properties_counter += 1
+    xml += XML_CONFIG_CLOSE
+    
+    if revised_filepath:
+        f = open(revised_filepath, 'wb')
+        f.write(XML_HEADER.encode('utf8'))
+        f.write(xml)
+        f.close()
+        print "New XML file in %s" % revised_filepath
+    else:
+        print XML_HEADER.encode('utf8')
+        for line in xml.split('\n'):
+            print line
+    print "Sections: %d Keys: %d Properties: %d" % (section_counter, len(defaults.keys()), properties_counter)
+    
 
 def load_create_rst(filesource='', filepath='', ignore=False):
     defaults, tree = load_xml(filesource, include_exclusions=ignore)
@@ -964,6 +1061,9 @@ def main():
         if options.build:
             print "Building XML file..."
             rebuild(filepath = default_xml_filepath('_revised.xml'))
+        if options.build_deprecated:
+            print "Sorting Deprecated XML file..."
+            resort(filepath = CDAP_DEFAULT_DEPRECATED_XML, revised_filepath = deprecated_xml_filepath('_revised.xml'))
         if options.load_props:
             print "Loading XML file and printing properties..."
             load_summary(source=options.source, props_only=True, ignore=options.ignore)

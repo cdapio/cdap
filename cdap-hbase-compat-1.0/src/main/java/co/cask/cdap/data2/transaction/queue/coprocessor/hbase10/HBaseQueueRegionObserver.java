@@ -344,18 +344,20 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
           consumerConfig = getConfigCache(env).getConsumerConfig(currentQueue);
         }
 
-        if (consumerConfig == null) {
-          // no config is present yet, so cannot evict
-          return hasNext;
-        }
-
         invalidTxData = false;
         if (state != null) {
-          long txId = QueueEntryRow.getWritePointer(cell.getRowArray(), currentQueueRowPrefix.length);
+          long txId = QueueEntryRow.getWritePointer(cell.getRowArray(),
+                                                    cell.getRowOffset() + prefixBytes + currentQueueRowPrefix.length);
           if (txId > 0 && state.getInvalid().contains(txId)) {
             invalidTxData = true;
           }
         }
+
+        if (consumerConfig == null && !invalidTxData) {
+          // no config is present yet and not invalid data, so cannot evict
+          return hasNext;
+        }
+
 
         if (invalidTxData || canEvict(consumerConfig, results)) {
           rowsEvicted++;

@@ -403,6 +403,7 @@ features:
       pipelines: Pipelines
       plugins: Plugins
       useCases: Use Cases
+      edwOffload: EDW Offload
       emptyTab: No Entities found
     action-types:
       create_stream:
@@ -546,7 +547,6 @@ features:
     intro-message: Unified Integration Platform for Big Data
     title: Welcome to
     titleTwo: Cask Data Application Platform
-    version-label: Version 4.0
     registration-zero: I
     registration-one: would like to receive product updates and
     registration-two: newsletters from Cask at this email address

@@ -26,6 +26,7 @@ import cookie from 'react-cookie';
 import T from 'i18n-react';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
+import isNil from 'lodash/isNil';
 
 export default class OneStepDeployApp extends Component {
   constructor(props) {
@@ -100,7 +101,9 @@ export default class OneStepDeployApp extends Component {
 
     if (window.CDAP_CONFIG.securityEnabled) {
       let token = cookie.load('CDAP_Auth_Token');
-      headers.Authorization = `Bearer ${token}`;
+      if (!isNil(token)) {
+        headers.Authorization = `Bearer ${token}`;
+      }
     }
 
     let fetchUrl = `/forwardMarketToCdap?source=${marketPath}&target=${cdapPath}`;
@@ -108,7 +111,8 @@ export default class OneStepDeployApp extends Component {
     return Rx.Observable.create((observer) => {
       fetch(fetchUrl, {
         method: 'GET',
-        headers
+        headers,
+        credentials: 'include'
       })
         .then((res) => {
           if (res.status > 299) {
@@ -121,6 +125,10 @@ export default class OneStepDeployApp extends Component {
             res.text()
               .then((textResponse) => {
                 let successInfo = this.buildSuccessInfo(textResponse);
+
+                if (this.props.buildSuccessInfo) {
+                  successInfo = this.props.buildSuccessInfo();
+                }
                 this.eventEmitter.emit(globalEvents.APPUPLOAD);
                 observer.onNext(successInfo);
                 observer.onCompleted();
@@ -150,5 +158,6 @@ export default class OneStepDeployApp extends Component {
 OneStepDeployApp.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
+  buildSuccessInfo: PropTypes.func
 };

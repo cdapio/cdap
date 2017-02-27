@@ -72,6 +72,8 @@ public final class Constants {
     public static final String CHECK_CLASSES = "master.startup.checks.classes";
     public static final String YARN_CONNECT_TIMEOUT_SECONDS = "master.startup.checks.yarn.connect.timeout.seconds";
     public static final String STARTUP_SERVICE_TIMEOUT = "master.startup.service.timeout.seconds";
+    /* Used by transaction pruning to determine if cdap is global admin or not for hbase version 0.96 and 0.98 */
+    public static final String TX_PRUNE_ACL_CHECK = "data.tx.prune.acl.check.override";
   }
 
   /**
@@ -1062,6 +1064,7 @@ public final class Constants {
    * Used for upgrade and backwards compatability
    */
   public static final String DEVELOPER_ACCOUNT = "developer";
+  public static final String APP_META_UPGRADE_TIMEOUT_SECS = "app.meta.upgrade.timeout.secs";
 
   /**
    * Constants related to external systems.

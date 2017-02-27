@@ -37,11 +37,11 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.CannotBeDeletedException;
-import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -80,6 +80,7 @@ import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;
+import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -100,9 +101,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /**
@@ -221,7 +222,7 @@ ApplicationLifecycleService extends AbstractIdleService {
       ArtifactSummary artifactSummary = artifactId == null ?
         new ArtifactSummary(appSpec.getName(), null) : ArtifactSummary.from(artifactId);
       ApplicationRecord record = new ApplicationRecord(artifactSummary, appId, appSpec.getDescription(),
-                                                       ownerAdmin.getImpersonationPrincipal(appId));
+                                                       ownerAdmin.getOwnerPrincipal(appId));
       if (predicate.apply(record)) {
         appRecords.add(record);
       }
@@ -250,7 +251,7 @@ ApplicationLifecycleService extends AbstractIdleService {
       throw new ApplicationNotFoundException(appId);
     }
     ensureAccess(appId);
-    String ownerPrincipal = ownerAdmin.getImpersonationPrincipal(appId);
+    String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
     return ApplicationDetail.fromSpec(appSpec, ownerPrincipal);
   }
 
@@ -337,14 +338,7 @@ ApplicationLifecycleService extends AbstractIdleService {
 
     // ownerAdmin.getImpersonationPrincipal will give the owner which will be impersonated for the application
     // irrespective of the version
-    if (!Objects.equals(ownerAdmin.getImpersonationPrincipal(appId), appRequest.getOwnerPrincipal())) {
-      // Not giving existing owner information as it might be unacceptable under some security scenarios
-      throw new ConflictException(String.format("%s '%s' already exists and the specified %s '%s' is not the same as " +
-                                                  "the existing one. The %s of an entity cannot be changed.",
-                                                appId.getEntityType(), appId.getApplication(),
-                                                Constants.Security.PRINCIPAL, appRequest.getOwnerPrincipal(),
-                                                Constants.Security.PRINCIPAL));
-    }
+    SecurityUtil.verifyOwnerPrincipal(appId, appRequest.getOwnerPrincipal(), ownerAdmin);
 
     Object requestedConfigObj = appRequest.getConfig();
     // if config is null, use the previous config. Shouldn't use a static GSON since the request Config object can
@@ -609,7 +603,13 @@ ApplicationLifecycleService extends AbstractIdleService {
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
-    ApplicationWithPrograms applicationWithPrograms = manager.deploy(deploymentInfo).get();
+    ApplicationWithPrograms applicationWithPrograms;
+    try {
+      applicationWithPrograms = manager.deploy(deploymentInfo).get();
+    } catch (ExecutionException e) {
+      Throwables.propagateIfPossible(e.getCause(), Exception.class);
+      throw Throwables.propagate(e.getCause());
+    }
     // Deployment successful. Grant all privileges on this app to the current principal.
     privilegesManager.grant(applicationWithPrograms.getApplicationId(),
                             authenticationContext.getPrincipal(), EnumSet.allOf(Action.class));

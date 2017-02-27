@@ -284,6 +284,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
       checkpointManagerFactory.create(kafkaTopic, Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX);
     long checkpointTime = events.get(numExpectedEvents - 1).getLoggingEvent().getTimeStamp();
     checkpointManager.saveCheckpoints(ImmutableMap.of(stringPartitioner.partition(loggingContext.getLogPartition(), -1),
-                                                      new Checkpoint(numExpectedEvents, checkpointTime)));
+                                                      new Checkpoint(numExpectedEvents, checkpointTime,
+                                                                     checkpointTime)));
   }
 }

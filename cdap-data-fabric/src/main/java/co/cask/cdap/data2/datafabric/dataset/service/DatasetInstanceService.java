@@ -197,7 +197,7 @@ public class DatasetInstanceService {
     // (causing its own lookup) as the SystemDatasetInitiator.getDataset is called when CDAP starts
     String ownerPrincipal = null;
     if (!NamespaceId.SYSTEM.equals(instance.getNamespaceId())) {
-      ownerPrincipal = ownerAdmin.getImpersonationPrincipal(instance);
+      ownerPrincipal = ownerAdmin.getOwnerPrincipal(instance);
     }
     return new DatasetMeta(spec, typeMeta, null, ownerPrincipal);
   }

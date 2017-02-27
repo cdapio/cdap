@@ -102,7 +102,7 @@ public abstract class AbstractClientProvider implements ThriftClientProvider {
     } else {
       Discoverable endpoint = endpointStrategy.pick();
       if (endpoint == null) {
-        LOG.error("Unable to discover tx service.");
+        LOG.debug("Unable to discover tx service.");
         throw new TException("Unable to discover tx service.");
       }
       address = endpoint.getSocketAddress().getHostName();

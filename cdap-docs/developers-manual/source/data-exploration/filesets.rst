@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _fileset-exploration:
 
@@ -112,6 +112,18 @@ the first Dataset example above would result in this "create table" statement be
 Please see the `Hive Language Manual
 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL#LanguageManualDDL-Create/Drop/TruncateTable>`__
 for more information about input formats, output format, SerDes, and table properties.
+
+Note that the ``setUseExisting()`` and ``setPossessExisting()`` methods of FileSet properties
+|---| as described in :ref:`datasets-fileset` |---| also apply to the explore table. This is
+especially important for PartitionedFileSets:
+
+- ``setUseExisting(true)`` has the effect that an existing Hive table can be used. But when the
+  dataset is dropped or truncated, or when explore is disabled for the dataset, the Hive table
+  will remain unaffected.
+
+- ``setPossessExisting(true)`` directs the dataset to take possession of an existing Hive table.
+  That means that when the dataset is dropped or truncated, or when exploration is disabled for the dataset,
+  the Hive table will be dropped or cleared from all partitions.
 
 Limitations
 -----------

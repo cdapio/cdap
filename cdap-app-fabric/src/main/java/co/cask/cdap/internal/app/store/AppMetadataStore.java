@@ -679,44 +679,159 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return batches;
   }
 
-  public void upgradeVersionKeys() {
-    MDSKey startKey = new MDSKey.Builder().add(TYPE_APP_META).build();
-    Map<MDSKey, ApplicationMeta> appMetas = listKV(startKey, ApplicationMeta.class);
-    Map<MDSKey, ApplicationMeta> newAppMetas = new HashMap<>();
-    for (Map.Entry<MDSKey, ApplicationMeta> oldKey : appMetas.entrySet()) {
-      MDSKey newKey = appendDefaultVersion(oldKey.getKey());
-      newAppMetas.put(newKey, oldKey.getValue());
+  /**
+   * Upgrades the keys in table to include version if it is not already present.
+   */
+  void upgradeVersionKeys() {
+    upgradeVersionKeys(TYPE_APP_META, ApplicationMeta.class);
+    upgradeVersionKeys(TYPE_RUN_RECORD_COMPLETED, RunRecordMeta.class);
+    upgradeVersionKeys(TYPE_WORKFLOW_NODE_STATE, WorkflowNodeStateDetail.class);
+    upgradeVersionKeys(TYPE_WORKFLOW_TOKEN, BasicWorkflowToken.class);
+  }
+
+  /**
+   * Upgrades the rowkeys for the given record type.
+   *
+   * @param recordType type of the record
+   * @param typeOfT    content type of the record
+   * @param <T>        type param
+   */
+  private <T> void upgradeVersionKeys(String recordType, Type typeOfT) {
+    LOG.info("Upgrading {}", recordType);
+    MDSKey startKey = new MDSKey.Builder().add(recordType).build();
+    Map<MDSKey, T> oldMap = listKV(startKey, typeOfT);
+    Map<MDSKey, T> newMap = new HashMap<>();
+    for (Map.Entry<MDSKey, T> oldEntry : oldMap.entrySet()) {
+      MDSKey newKey = appendDefaultVersion(recordType, typeOfT, oldEntry.getKey());
+      newMap.put(newKey, oldEntry.getValue());
     }
 
     //Delete old rows
     deleteAll(startKey);
 
     // Write new rows
-    for (Map.Entry<MDSKey, ApplicationMeta> newMeta : newAppMetas.entrySet()) {
-      write(newMeta.getKey(), newMeta.getValue());
+    for (Map.Entry<MDSKey, T> newEntry : newMap.entrySet()) {
+      write(newEntry.getKey(), newEntry.getValue());
     }
   }
 
-  // Append version only if it doesn't have version at the end
-  private static MDSKey appendDefaultVersion(MDSKey oldKey) {
-    MDSKey.Splitter splitter = oldKey.split();
-    int keyParts = 0;
+  private static MDSKey getUpgradedAppMetaKey(MDSKey originalKey) {
+    // Key format after upgrade: appMeta.namespace.appName.appVersion
+    MDSKey.Splitter splitter = originalKey.split();
+    String recordType = splitter.getString();
+    String namespace = splitter.getString();
+    String appName = splitter.getString();
+    String appVersion;
     try {
-      // max parts = 4 => appMeta.ns.app.version
-      for (int i = 0; i < 4; i++) {
-        splitter.skipString();
-        keyParts++;
-      }
-    } catch (BufferUnderflowException ex) {
-      // expected when the version is not part of the key
+      appVersion = splitter.getString();
+    } catch (BufferUnderflowException e) {
+      appVersion = ApplicationId.DEFAULT_VERSION;
     }
+    LOG.trace("Upgrade AppMeta key to {}.{}.{}.{}", recordType, namespace, appName, appVersion);
+    return new MDSKey.Builder()
+      .add(recordType)
+      .add(namespace)
+      .add(appName)
+      .add(appVersion)
+      .build();
+  }
 
-    if (keyParts == 4) {
-      // Key already is versioned, then return old key
-      return oldKey;
+  private static MDSKey getUpgradedCompletedRunRecordKey(MDSKey originalKey) {
+    // Key format after upgrade:
+    // runRecordCompleted.namespace.appName.appVersion.programType.programName.invertedTs.runId
+    MDSKey.Splitter splitter = originalKey.split();
+    String recordType = splitter.getString();
+    String namespace = splitter.getString();
+    String appName = splitter.getString();
+    String programType = splitter.getString();
+    // If nextValue is programType then we need to upgrade the key
+    try {
+      ProgramType.valueOf(programType);
+    } catch (IllegalArgumentException e) {
+      // Version is already part of the key. So return the original key
+      LOG.trace("No need to upgrade completed RunRecord key starting with {}.{}.{}.{}.{}",
+                recordType, namespace, appName, ApplicationId.DEFAULT_VERSION, programType);
+      return originalKey;
     }
-    // Otherwise, append the key with default version.
-    return new MDSKey.Builder(oldKey).add(ApplicationId.DEFAULT_VERSION).build();
+    String programName = splitter.getString();
+    long invertedTs = splitter.getLong();
+    String runId = splitter.getString();
+    LOG.trace("Upgrade completed RunRecord key to {}.{}.{}.{}.{}.{}.{}.{}", recordType, namespace, appName,
+              ApplicationId.DEFAULT_VERSION, programType, programName, invertedTs, runId);
+    return new MDSKey.Builder()
+      .add(recordType)
+      .add(namespace)
+      .add(appName)
+      .add(ApplicationId.DEFAULT_VERSION)
+      .add(programType)
+      .add(programName)
+      .add(invertedTs)
+      .add(runId)
+      .build();
+  }
+
+  private static MDSKey.Builder getUpgradedWorkflowRunKey(MDSKey.Splitter splitter) {
+    // Key format after upgrade: recordType.namespace.appName.appVersion.WORKFLOW.workflowName.workflowRun
+    String recordType = splitter.getString();
+    String namespace = splitter.getString();
+    String appName = splitter.getString();
+    String nextString = splitter.getString();
+    String appVersion;
+    String programType;
+    if ("WORKFLOW".equals(nextString)) {
+      appVersion = ApplicationId.DEFAULT_VERSION;
+      programType = nextString;
+    } else {
+      // App version is already present in the key.
+      LOG.trace("App version exists in workflow run id starting with {}.{}.{}.{}", recordType, namespace,
+                appName, nextString);
+      appVersion = nextString;
+      programType = splitter.getString();
+    }
+    String workflowName = splitter.getString();
+    String workflowRun = splitter.getString();
+    LOG.trace("Upgrade workflow run id to {}.{}.{}.{}.{}.{}.{}", recordType, namespace, appName,
+              ApplicationId.DEFAULT_VERSION, programType, workflowName, workflowRun);
+    return new MDSKey.Builder()
+      .add(recordType)
+      .add(namespace)
+      .add(appName)
+      .add(appVersion)
+      .add(programType)
+      .add(workflowName)
+      .add(workflowRun);
+  }
+
+  private static MDSKey getUpgradedWorkflowNodeStateRecordKey(MDSKey originalKey) {
+    // Key format after upgrade: wns.namespace.appName.appVersion.WORKFLOW.workflowName.workflowRun.workflowNodeId
+    MDSKey.Splitter splitter = originalKey.split();
+    MDSKey.Builder builder = getUpgradedWorkflowRunKey(splitter);
+    String workflowNodeId = splitter.getString();
+    LOG.trace("Upgrade workflow node state record with WorkflowNodeId {}", workflowNodeId);
+    return builder.add(workflowNodeId)
+      .build();
+  }
+
+  private static MDSKey getUpgradedWorkflowTokenRecordKey(MDSKey originalKey) {
+    // Key format after upgrade: wft.namespace.appName.appVersion.WORKFLOW.workflowName,workflowRun
+    MDSKey.Splitter splitter = originalKey.split();
+    return getUpgradedWorkflowRunKey(splitter).build();
+  }
+
+  // Append version only if it doesn't have version in the key
+  private static MDSKey appendDefaultVersion(String recordType, Type typeOfT, MDSKey originalKey) {
+    switch (recordType) {
+      case TYPE_APP_META:
+        return getUpgradedAppMetaKey(originalKey);
+      case TYPE_RUN_RECORD_COMPLETED:
+        return getUpgradedCompletedRunRecordKey(originalKey);
+      case TYPE_WORKFLOW_NODE_STATE:
+        return getUpgradedWorkflowNodeStateRecordKey(originalKey);
+      case TYPE_WORKFLOW_TOKEN:
+        return getUpgradedWorkflowTokenRecordKey(originalKey);
+      default:
+        throw new IllegalArgumentException(String.format("Invalid row key type '%s'", recordType));
+    }
   }
 
   private static class ScanFunction implements Function<MetadataStoreDataset.KeyValue<RunRecordMeta>, Boolean> {

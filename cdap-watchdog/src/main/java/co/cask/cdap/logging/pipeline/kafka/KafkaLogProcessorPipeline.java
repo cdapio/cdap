@@ -28,25 +28,21 @@ import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
 import co.cask.cdap.logging.pipeline.TimeEventQueue;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import kafka.api.FetchRequest;
-import kafka.api.FetchRequestBuilder;
 import kafka.api.OffsetRequest$;
-import kafka.api.PartitionOffsetRequestInfo;
-import kafka.common.ErrorMapping;
-import kafka.common.OffsetOutOfRangeException;
-import kafka.common.TopicAndPartition;
-import kafka.javaapi.FetchResponse;
-import kafka.javaapi.OffsetRequest;
-import kafka.javaapi.OffsetResponse;
 import kafka.javaapi.consumer.SimpleConsumer;
 import kafka.javaapi.message.ByteBufferMessageSet;
 import kafka.message.MessageAndOffset;
+import org.apache.kafka.common.KafkaException;
+import org.apache.kafka.common.errors.LeaderNotAvailableException;
+import org.apache.kafka.common.errors.NotLeaderForPartitionException;
+import org.apache.kafka.common.errors.OffsetOutOfRangeException;
+import org.apache.kafka.common.errors.UnknownServerException;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.apache.twill.common.Threads;
 import org.apache.twill.kafka.client.BrokerInfo;
 import org.apache.twill.kafka.client.BrokerService;
@@ -55,6 +51,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -90,9 +88,10 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
   private final Int2ObjectMap<MutableCheckpoint> checkpoints;
   private final LoggingEventSerializer serializer;
   private final KafkaPipelineConfig config;
-  private final TimeEventQueue<ILoggingEvent, Long> eventQueue;
+  private final TimeEventQueue<ILoggingEvent, OffsetTime> eventQueue;
   private final Map<BrokerInfo, KafkaSimpleConsumer> kafkaConsumers;
   private final MetricsContext metricsContext;
+  private final KafkaOffsetResolver offsetResolver;
 
   private ExecutorService fetchExecutor;
   private volatile Thread runThread;
@@ -100,8 +99,9 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
   private long lastCheckpointTime;
   private int unSyncedEvents;
 
-  public KafkaLogProcessorPipeline(LogProcessorPipelineContext context, CheckpointManager checkpointManager,
-                                   BrokerService brokerService, KafkaPipelineConfig config) {
+  public KafkaLogProcessorPipeline(LogProcessorPipelineContext context,
+                                   CheckpointManager checkpointManager, BrokerService brokerService,
+                                   KafkaPipelineConfig config) {
     this.name = context.getName();
     this.context = context;
     this.checkpointManager = checkpointManager;
@@ -113,6 +113,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     this.serializer = new LoggingEventSerializer();
     this.kafkaConsumers = new HashMap<>();
     this.metricsContext = context;
+    this.offsetResolver = new KafkaOffsetResolver(brokerService, config);
   }
 
   @Override
@@ -124,7 +125,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     for (Map.Entry<Integer, Checkpoint> entry : checkpointManager.getCheckpoint(partitions).entrySet()) {
       Checkpoint checkpoint = entry.getValue();
       // Skip the partition that doesn't have previous checkpoint.
-      if (checkpoint.getNextOffset() >= 0 && checkpoint.getMaxEventTime() >= 0) {
+      if (checkpoint.getNextOffset() >= 0 && checkpoint.getNextEventTime() >= 0 && checkpoint.getMaxEventTime() >= 0) {
         checkpoints.put(entry.getKey(), new MutableCheckpoint(checkpoint));
       }
     }
@@ -162,7 +163,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
             if (processMessages(topic, partition, entry.getValue())) {
               hasMessageProcessed = true;
             }
-          } catch (IOException e) {
+          } catch (IOException | KafkaException e) {
             OUTAGE_LOG.warn("Failed to fetch or process messages from {}:{}. Will be retried in next iteration.",
                             topic, partition, e);
           }
@@ -179,8 +180,9 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
           if (!eventQueue.isEmpty()) {
             sleepMillis += eventQueue.first().getTimeStamp() - now;
           }
+          sleepMillis = Math.min(sleepMillis, nextCheckpointDelay);
           if (sleepMillis > 0) {
-            TimeUnit.MILLISECONDS.sleep(Math.min(sleepMillis, nextCheckpointDelay));
+            TimeUnit.MILLISECONDS.sleep(sleepMillis);
           }
         }
       }
@@ -235,25 +237,35 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
    */
   private void initializeOffsets() throws InterruptedException {
     // Setup initial offsets
-    Set<Integer> partitions = config.getPartitions();
-    while (offsets.size() != partitions.size() && !stopped) {
-      for (int partition : partitions) {
-        Checkpoint checkpoint = checkpoints.get(partition);
-        if (checkpoint != null) {
-          // TODO: (CDAP-7684) Deal with wrong offset issue
-          offsets.put(partition, checkpoint.getNextOffset());
-          continue;
-        }
+    Set<Integer> partitions = new HashSet<>();
+    partitions.addAll(config.getPartitions());
 
+    while (!partitions.isEmpty() && !stopped) {
+      Iterator<Integer> iterator = partitions.iterator();
+      boolean failed = false;
+      while (iterator.hasNext()) {
+        int partition = iterator.next();
+        Checkpoint checkpoint = checkpoints.get(partition);
         try {
-          // If no checkpoint, fetch from the beginning.
-          offsets.put(partition, getLastOffset(partition, kafka.api.OffsetRequest.EarliestTime()));
+          if (checkpoint == null || checkpoint.getNextOffset() <= 0) {
+            // If no checkpoint, fetch from the beginning.
+            offsets.put(partition, getLastOffset(partition, kafka.api.OffsetRequest.EarliestTime()));
+          } else {
+            // Otherwise, validate and find the offset if not valid
+            offsets.put(partition, offsetResolver.getStartOffset(checkpoint, partition));
+          }
+          // Remove the partition successfully stored in offsets to avoid unnecessary retry for this partition
+          iterator.remove();
         } catch (Exception e) {
-          OUTAGE_LOG.info("Failed to get Kafka earliest offset in {}:{} for pipeline {}. Will be retried",
-                          config.getTopic(), partition, name);
-          TimeUnit.SECONDS.sleep(1);
-          break;
+          OUTAGE_LOG.warn("Failed to get a valid offset from Kafka to start consumption for {}:{}",
+                          config.getTopic(), partition);
+          failed = true;
         }
+      }
+
+      // Should keep finding valid offsets for all partitions
+      if (failed && !stopped) {
+        TimeUnit.SECONDS.sleep(2L);
       }
     }
   }
@@ -262,7 +274,8 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
    * Process messages fetched from a given partition.
    */
   private boolean processMessages(String topic, int partition,
-                                  Future<Iterable<MessageAndOffset>> future) throws InterruptedException, IOException {
+                                  Future<Iterable<MessageAndOffset>> future) throws InterruptedException,
+                                                                                    KafkaException, IOException {
     Iterable<MessageAndOffset> messages;
     try {
       messages = future.get();
@@ -275,7 +288,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
         // hence just fetching from the beginning should be fine
         offsets.put(partition, getLastOffset(partition, kafka.api.OffsetRequest.EarliestTime()));
         return false;
-      } catch (IOException cause) {
+      } catch (KafkaException | IOException cause) {
         throw cause;
       } catch (Throwable t) {
         // For other type of exceptions, just throw an IOException. It will be handled by caller.
@@ -303,11 +316,11 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
         // Use the message payload size as the size estimate of the logging event
         // Although it's not the same as the in memory object size, it should be just a constant factor, hence
         // it is proportional to the actual object size.
-        eventQueue.add(loggingEvent, loggingEvent.getTimeStamp(),
-                       message.message().payloadSize(), partition, message.nextOffset());
+        eventQueue.add(loggingEvent, loggingEvent.getTimeStamp(), message.message().payloadSize(), partition,
+                       new OffsetTime(message.nextOffset(), loggingEvent.getTimeStamp()));
       } catch (IOException e) {
         // This shouldn't happen. In case it happens (e.g. someone published some garbage), just skip the message.
-        LOG.debug("Fail to decode logging event from {}:{} at offset {}. Skipping it.",
+        LOG.trace("Fail to decode logging event from {}:{} at offset {}. Skipping it.",
                   topic, partition, message.offset(), e);
       }
       processed = true;
@@ -348,7 +361,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     long minEventTime = currentTimeMillis - config.getEventDelayMillis();
     long maxRetainSize = forced ? (long) (config.getMaxBufferSize() * MIN_FREE_FACTOR) : Long.MAX_VALUE;
 
-    TimeEventQueue.EventIterator<ILoggingEvent, Long> iterator = eventQueue.iterator();
+    TimeEventQueue.EventIterator<ILoggingEvent, OffsetTime> iterator = eventQueue.iterator();
 
     int eventsAppended = 0;
     long minDelay = Long.MAX_VALUE;
@@ -382,12 +395,15 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       // Updates the Kafka offset before removing the current event
       int partition = iterator.getPartition();
       MutableCheckpoint checkpoint = checkpoints.get(partition);
+      // Get the smallest offset and corresponding timestamp from the event queue
+      OffsetTime offsetTime = eventQueue.getSmallestOffset(partition);
       if (checkpoint == null) {
-        checkpoint = new MutableCheckpoint(eventQueue.getSmallestOffset(partition), event.getTimeStamp());
+        checkpoint = new MutableCheckpoint(offsetTime.getOffset(), offsetTime.getEventTime(), event.getTimeStamp());
         checkpoints.put(partition, checkpoint);
       } else {
         checkpoint
-          .setNextOffset(eventQueue.getSmallestOffset(partition))
+          .setNextOffset(offsetTime.getOffset())
+          .setNextEvenTime(offsetTime.getEventTime())
           .setMaxEventTime(event.getTimeStamp());
       }
 
@@ -434,7 +450,10 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
    * @return delay in millisecond till the next sync time.
    */
   private long trySyncAndPersistCheckpoints(long currentTimeMillis) {
-    if (currentTimeMillis - config.getCheckpointIntervalMillis() < lastCheckpointTime || unSyncedEvents <= 0) {
+    if (unSyncedEvents <= 0) {
+      return config.getCheckpointIntervalMillis();
+    }
+    if (currentTimeMillis - config.getCheckpointIntervalMillis() < lastCheckpointTime) {
       return config.getCheckpointIntervalMillis() - currentTimeMillis + lastCheckpointTime;
     }
 
@@ -494,36 +513,26 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
    * @param partition the partition for fetching the offset from.
    * @param timestamp the timestamp to use for fetching last offset before it
    * @return the latest offset
-   * @throws IOException if there is error in fetching the offset.
+   *
+   * @throws LeaderNotAvailableException if no leading broker is available for the given partition
+   * @throws NotLeaderForPartitionException if the broker that the consumer is talking to is not the leader
+   *                                        for the given topic and partition.
+   * @throws UnknownTopicOrPartitionException if the topic or partition is not known by the Kafka server
+   * @throws UnknownServerException if the Kafka server responded with error.
    */
-  private long getLastOffset(int partition, long timestamp) throws IOException {
+  private long getLastOffset(int partition, long timestamp) throws KafkaException {
     String topic = config.getTopic();
     KafkaSimpleConsumer consumer = getKafkaConsumer(topic, partition);
     if (consumer == null) {
-      throw new IOException("No broker to fetch offsets for " + topic + ":" + partition);
+      throw new LeaderNotAvailableException("No broker to fetch offsets for " + topic + ":" + partition);
     }
-
-    // Fire offset request
-    OffsetRequest request = new OffsetRequest(ImmutableMap.of(
-      new TopicAndPartition(topic, partition),
-      new PartitionOffsetRequestInfo(timestamp, 1)
-    ), kafka.api.OffsetRequest.CurrentVersion(), consumer.clientId());
-
-    OffsetResponse response = consumer.getOffsetsBefore(request);
-
-    // Retrieve offsets from response
-    long[] offsets = response.hasError() ? null : response.offsets(topic, partition);
-    if (offsets == null || offsets.length <= 0) {
-      short errorCode = response.errorCode(topic, partition);
-
+    try {
+      return KafkaUtil.getOffsetByTimestamp(consumer, topic, partition, timestamp);
+    } catch (KafkaException e) {
       // On error, clear the consumer cache
       kafkaConsumers.remove(consumer.getBrokerInfo());
-      throw new IOException(String.format("Failed to fetch offset for %s:%s with timestamp %d. Error: %d.",
-                                          topic, partition, timestamp, errorCode));
+      throw e;
     }
-
-    LOG.debug("Offset {} fetched for {}:{} with timestamp {}.", offsets[0], topic, partition, timestamp);
-    return offsets[0];
   }
 
   /**
@@ -533,42 +542,33 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
    * @param offset the Kafka offset to fetch from
    * @return An {@link Iterable} of {@link MessageAndOffset}.
    *
+   * @throws LeaderNotAvailableException if there is no Kafka broker to talk to.
    * @throws OffsetOutOfRangeException if the given offset is out of range.
-   * @throws IOException if failed to fetch from Kafka.
+   * @throws NotLeaderForPartitionException if the broker that the consumer is talking to is not the leader
+   *                                        for the given topic and partition.
+   * @throws UnknownTopicOrPartitionException if the topic or partition is not known by the Kafka server
+   * @throws UnknownServerException if the Kafka server responded with error.
    */
-  private Iterable<MessageAndOffset> fetchMessages(int partition, long offset) throws IOException {
+  private Iterable<MessageAndOffset> fetchMessages(int partition, long offset) throws KafkaException {
     String topic = config.getTopic();
     KafkaSimpleConsumer consumer = getKafkaConsumer(topic, partition);
     if (consumer == null) {
-      throw new IOException("No broker to fetch messages for " + topic + ":" + partition);
+      throw new LeaderNotAvailableException("No broker to fetch messages for " + topic + ":" + partition);
+
     }
 
     LOG.trace("Fetching messages from Kafka on {}:{} for pipeline {} with offset {}", topic, partition, name, offset);
+    try {
+      ByteBufferMessageSet result = KafkaUtil.fetchMessages(consumer, topic, partition,
+                                                            config.getKafkaFetchBufferSize(), offset);
+      LOG.trace("Fetched {} bytes from Kafka on {}:{} for pipeline {}", result.sizeInBytes(), topic, partition, name);
 
-    FetchRequest request = new FetchRequestBuilder()
-      .clientId(consumer.clientId())
-      .addFetch(topic, partition, offset, config.getKafkaFetchBufferSize())
-      .build();
-    FetchResponse response = consumer.fetch(request);
-
-    if (response.hasError()) {
-      short errorCode = response.errorCode(topic, partition);
-
-      if (errorCode == ErrorMapping.OffsetOutOfRangeCode()) {
-        throw new OffsetOutOfRangeException(String.format("Kafka offset %d out of range for %s:%d",
-                                                          offset, topic, partition));
-      }
-
-      // On all other errors, clear the consumer cache
+      return result;
+    } catch (OffsetOutOfRangeException e) {
+      // If the error is not offset out of range, clear the consumer cache
       kafkaConsumers.remove(consumer.getBrokerInfo());
-      throw new IOException(String.format("Failed to fetch message on %s:%d from %s",
-                                          topic, partition, consumer.getBrokerInfo()));
+      throw e;
     }
-
-    ByteBufferMessageSet result = response.messageSet(topic, partition);
-    LOG.trace("Fetched {} bytes from Kafka on {}:{} for pipeline {}", result.sizeInBytes(), topic, partition, name);
-
-    return result;
   }
 
   /**
@@ -596,20 +596,48 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
   }
 
   /**
+   * A class that stores a message's next offset and log event time. Implements {@link Comparable} by comparing offsets.
+   */
+  private static final class OffsetTime implements Comparable<OffsetTime> {
+    private final long offset;
+    private final long eventTime;
+
+    OffsetTime(long offset, long eventTime) {
+      this.offset = offset;
+      this.eventTime = eventTime;
+    }
+
+    @Override
+    public int compareTo(OffsetTime o) {
+      return Long.compare(this.offset, o.offset);
+    }
+
+    long getOffset() {
+      return offset;
+    }
+
+    long getEventTime() {
+      return eventTime;
+    }
+  }
+
+  /**
    * A mutable implementation of {@link Checkpoint}.
    */
   private static final class MutableCheckpoint extends Checkpoint {
 
     private long nextOffset;
+    private long nextEventTime;
     private long maxEventTime;
 
     MutableCheckpoint(Checkpoint other) {
-      this(other.getNextOffset(), other.getMaxEventTime());
+      this(other.getNextOffset(), other.getNextEventTime(), other.getMaxEventTime());
     }
 
-    MutableCheckpoint(long nextOffset, long maxEventTime) {
-      super(nextOffset, maxEventTime);
+    MutableCheckpoint(long nextOffset, long nextEventTime, long maxEventTime) {
+      super(nextOffset, nextEventTime, maxEventTime);
       this.nextOffset = nextOffset;
+      this.nextEventTime = nextEventTime;
       this.maxEventTime = maxEventTime;
     }
 
@@ -620,6 +648,16 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
 
     MutableCheckpoint setNextOffset(long nextOffset) {
       this.nextOffset = nextOffset;
+      return this;
+    }
+
+    @Override
+    public long getNextEventTime() {
+      return nextEventTime;
+    }
+
+    MutableCheckpoint setNextEvenTime(long nextEventTime) {
+      this.nextEventTime = nextEventTime;
       return this;
     }
 

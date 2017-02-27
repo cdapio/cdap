@@ -13,13 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.lookup.KeyValueTableLookup;
+import co.cask.cdap.etl.api.lookup.TableLookup;
 
 import javax.annotation.Nullable;
 
@@ -36,6 +39,8 @@ public abstract class AbstractLookupProvider implements LookupProvider {
 
     if (dataset instanceof KeyValueTable) {
       return (Lookup<T>) new KeyValueTableLookup((KeyValueTable) dataset);
+    } else if (dataset instanceof Table) {
+      return (Lookup<T>) new TableLookup((Table) dataset);
     } else {
       throw new RuntimeException(String.format("Dataset %s does not support lookup", table));
     }

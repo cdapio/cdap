@@ -24,6 +24,7 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
@@ -348,6 +349,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.OK, "Update complete.");
     } catch (InvalidArtifactException e) {
       throw new BadRequestException(e.getMessage());
+    } catch (ConflictException e) {
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
     } catch (NotFoundException | UnauthorizedException e) {
       throw e;
     } catch (Exception e) {
@@ -387,6 +390,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (ArtifactNotFoundException e) {
           responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+        } catch (ConflictException e) {
+          responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+        } catch (UnauthorizedException e) {
+          responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
         } catch (InvalidArtifactException e) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (IOException e) {
@@ -478,6 +485,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  "the same artifact occur simultaneously. Please try again.");
         } catch (UnauthorizedException e) {
           responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+        } catch (ConflictException e) {
+          responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
         } catch (Exception e) {
           LOG.error("Deploy failure", e);
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());

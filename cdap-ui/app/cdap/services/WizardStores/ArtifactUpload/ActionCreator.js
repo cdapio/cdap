@@ -18,6 +18,7 @@ import UploadFile from 'services/upload-file';
 import cookie from 'react-cookie';
 import NamespaceStore from 'services/NamespaceStore';
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
+import isNil from 'lodash/isNil';
 
 // FIXME: Extract it out???
 const uploadArtifact = () => {
@@ -62,7 +63,9 @@ const uploadArtifact = () => {
   };
   if (window.CDAP_CONFIG.securityEnabled) {
     let token = cookie.load('CDAP_Auth_Token');
-    headers.Authorization = `Bearer ${token}`;
+    if (!isNil(token)) {
+      headers.Authorization = `Bearer ${token}`;
+    }
   }
   return UploadFile({url, fileContents: state.upload.file, headers});
 };

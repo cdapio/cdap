@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _datasets-index:
 
@@ -17,6 +17,7 @@ Datasets
     Partitioned FileSets <partitioned-fileset>
     TimePartitioned FileSets <time-partitioned-fileset>
     System and Custom Datasets <system-custom>
+    Dataset Permissions <permissions>
     Cube Dataset <cube>
 
 *Datasets* store and retrieve data. Datasets are your means of reading
