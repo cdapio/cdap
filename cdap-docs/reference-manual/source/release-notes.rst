@@ -42,6 +42,10 @@ Revamped Log System
 - :cask-issue:`CDAP-7676` - Added a prototype implementation for a rolling HDFS log
   appender.
 
+- :cask-issue:`CDAP-7962` - Program context information, including namespace, program
+  name, and program type, are now available in the MDC property of each ILoggingEvent
+  emitted from a program container.
+
 - :cask-issue:`CDAP-8108` - Revised the CDAP Log Appender to use `Logback
   <http://logback.qos.ch/>`__\ 's Appender interface.
 
@@ -55,15 +59,62 @@ Revamped Log System
   the cdap user.
 
 - :cask-issue:`CDAP-8428` - Added additional metrics about the status of the log
-  framework.
+  framework: ``log.process.min.delay`` and ``log.process.max.delay``.
 
 Replication, Resiliency, and Zero-downtime
 ..........................................
 
+- :cask-issue:`CDAP-7685` - Provided SPI hooks that users can implement for performing
+  HBase DDL operations.
+
 - :cask-issue:`CDAP-8025` - Added a tool to check a cluster's replication status.
 
 - :cask-issue:`CDAP-8032` - CDAP context methods will now be retried according to a
-  program's retry policy.
+  program's retry policy. These are governed by these properties:
+  
+  - ``custom.action.retry.policy.base.delay.ms``
+  - ``custom.action.retry.policy.max.delay.ms``
+  - ``custom.action.retry.policy.max.retries``
+  - ``custom.action.retry.policy.max.time.secs``
+  - ``custom.action.retry.policy.type``
+  - ``flow.retry.policy.base.delay.ms``
+  - ``flow.retry.policy.max.delay.ms``
+  - ``flow.retry.policy.max.retries``
+  - ``flow.retry.policy.max.time.secs``
+  - ``flow.retry.policy.type``
+  - ``mapreduce.retry.policy.base.delay.ms``
+  - ``mapreduce.retry.policy.max.delay.ms``
+  - ``mapreduce.retry.policy.max.retries``
+  - ``mapreduce.retry.policy.max.time.secs``
+  - ``mapreduce.retry.policy.type``
+  - ``service.retry.policy.base.delay.ms``
+  - ``service.retry.policy.max.delay.ms``
+  - ``service.retry.policy.max.retries``
+  - ``service.retry.policy.max.time.secs``
+  - ``service.retry.policy.type``
+  - ``spark.retry.policy.base.delay.ms``
+  - ``spark.retry.policy.max.delay.ms``
+  - ``spark.retry.policy.max.retries``
+  - ``spark.retry.policy.max.time.secs``
+  - ``spark.retry.policy.type``
+  - ``system.log.process.retry.policy.base.delay.ms``
+  - ``system.log.process.retry.policy.max.retries``
+  - ``system.log.process.retry.policy.max.time.secs``
+  - ``system.log.process.retry.policy.type``
+  - ``system.metrics.retry.policy.base.delay.ms``
+  - ``system.metrics.retry.policy.max.retries``
+  - ``system.metrics.retry.policy.max.time.secs``
+  - ``system.metrics.retry.policy.type``
+  - ``worker.retry.policy.base.delay.ms``
+  - ``worker.retry.policy.max.delay.ms``
+  - ``worker.retry.policy.max.retries``
+  - ``worker.retry.policy.max.time.secs``
+  - ``worker.retry.policy.type``
+  - ``workflow.retry.policy.base.delay.ms``
+  - ``workflow.retry.policy.max.delay.ms``
+  - ``workflow.retry.policy.max.retries``
+  - ``workflow.retry.policy.max.time.secs``
+  - ``workflow.retry.policy.type``
 
 - :cask-issue:`CDAP-8037` - Added a ``master.manage.hbase.coprocessors`` setting that can be
   set to false on clusters where the CDAP coprocessors are deployed on every HBase node.
@@ -79,9 +130,6 @@ Dataset Improvements
 - :cask-issue:`CDAP-7683` - Added a tool that pre-builds and loads the HBase coprocessors
   required by CDAP onto HDFS.
 
-- :cask-issue:`CDAP-7685` - Provided SPI hooks that users can implement for performing
-  HBase DDL operations.
-
 - :cask-issue:`CDAP-8070` - Added control of group ownership and permissions through
   dataset properties.
 
@@ -96,7 +144,8 @@ Secure Impersonation and Authorization
 Brand-new CDAP UI
 .................
 
-- :cask-issue:`CDAP-8075` - The CDAP UI added one-step deploy wizards for the Cask Market.
+- :cask-issue:`CDAP-8021` - Added the management of preferences at the application and
+  program levels.
 
 - :cask-issue:`CDAP-8198`, :cask-issue:`CDAP-8199`, :cask-issue:`CDAP-8214`,
   :cask-issue:`CDAP-8217` - The CDAP UI added dataset and stream detail and overviews.
@@ -162,7 +211,7 @@ Additional Plugins for CDAP Pipelines
   their own repository at `github.com/hydrator/decision-tree-analytics 
   <https://github.com/hydrator/decision-tree-analytics>`__.
 
-- :cask-issue:`HYDRATOR-1252` - The SKipGram Feature Generator plugin is now available in
+- :cask-issue:`HYDRATOR-1252` - The SkipGram Feature Generator plugin is now available in
   its own repository at `github.com/hydrator/skipgram-analytics 
   <https://github.com/hydrator/skipgram-analytics>`__.
 
@@ -194,9 +243,6 @@ Additional New Features
 - :cask-issue:`CDAP-5107` - Added an HTTP RESTful endpoint to retrieve a specific property
   for a specific version of an artifact in the ``system`` scope.
 
-- :cask-issue:`CDAP-8021` - Added the management of preferences at the application and
-  program levels.
-
 - :cask-issue:`CDAP-8122` - Made headers and the request/response bodies available in
   audit logs for certain RESTful endpoints.
 
@@ -216,14 +262,16 @@ Improvements
 - :cask-issue:`CDAP-7835` - The Metadata Service upgrades the metadata dataset to reduce
   the time required by the upgrade tool during a CDAP upgrade.
 
-- :cask-issue:`CDAP-7962` - Program context information, including namespace, program
-  name, and program type, are now available in the MDC property of each ILoggingEvent
-  emitted from a program container.
-
 - :cask-issue:`CDAP-8019` - Added a configuration to control the timeout of CDAP Explore
   operations.
 
 - :cask-issue:`CDAP-8061` - Moved the Cask Market Path to the ``cdap-defaults.xml`` file.
+  Users can now configure the path to a private Cask Market using the configuration
+  setting ``market.base.url``.
+
+- :cask-issue:`CDAP-8075` - The CDAP UI added one-step deploy wizards for the Cask Market.
+  Users can now deploy applications and plugins from the Cask Market with a single click,
+  instead of downloading them from the market and then uploading them.
 
 - :cask-issue:`CDAP-8152` - StreamingSource plugins now have access to the CDAP
   SparkExecutionContext to read from datasets and streams.
@@ -241,8 +289,8 @@ Improvements
   Delimited" and "TDF" to "Tab Delimited".
 
 - :cask-issue:`HYDRATOR-577` - Changed the Table sink plugin to make using the
-  ``schema.row.field`` optional, and to allow the ``schema.row.field`` be used as the source
-  a column in the output.
+  ``schema.row.field`` optional, which allows the ``schema.row.field`` to be used as a
+  column in the output.
 
 - :cask-issue:`HYDRATOR-1006` - Updated the Tokenizer plugin to be more forgiving when
   parsing tokens by accepting regex with white spaces; the output schema now contains all
@@ -424,14 +472,16 @@ Known Issues
 
 - :cask-issue:`CDAP-7770` - The current CDAP UI build process does not work on Microsoft Windows.
 
-- :cask-issue:`CDAP-8375` - Invalid Transaction Pruning does not work on a replicated cluster.
+- :cask-issue:`CDAP-8375` - Invalid Transaction Pruning does not work on a replicated
+  cluster. and needs to be disabled by setting the configuration parameter
+  ``data.tx.prune.enable`` to ``false`` in the ``cdap-site.xml`` file.
 
 - :cask-issue:`CDAP-8494` - If users navigate to the classic CDAP UI, they cannot come
-  back to the new CDAP UI if they click the back button.
+  back to the new CDAP UI if they click the browser back button.
 
-- :cask-issue:`CDAP-8531`, :cask-issue:`CDAP-8659` - If the property
-  ``hive.compute.query.using.stats`` is ``true`` in HDP 2.5.x clusters, CDAP Explore
-  queries that trigger a MapReduce program can fail.
+- :cask-issue:`CDAP-8531`, :cask-issue:`CDAP-8659`, :cask-issue:`CDAP-8791` - If the
+  property ``hive.compute.query.using.stats`` is ``true`` in HDP 2.5.x clusters, CDAP
+  Explore queries that trigger a MapReduce program can fail.
 
 - :cask-issue:`CDAP-8663` - If a user revokes a privilege on a namespace, the privilege on
   all entities in that namespace are also revoked.
