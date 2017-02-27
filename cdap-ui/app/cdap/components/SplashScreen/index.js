@@ -152,12 +152,7 @@ class SplashScreen extends Component {
                       <span className="fa fa-book btn-icon"></span>{T.translate('features.SplashScreen.buttons.getStarted')}
                     </div>
                   </a>
-                  <div
-                    className={'btn btn-secondary spash-screen-btn'}
-                    onClick={this.toggleVideo}
-                  >
-                    <span className="fa fa-youtube-play btn-icon"></span>{T.translate('features.SplashScreen.buttons.introduction')}
-                  </div>
+
                   <a target="_blank" href="http://cask.co/company/contact/#mailing-list">
                     <div
                       className={'btn btn-secondary spash-screen-btn'}
