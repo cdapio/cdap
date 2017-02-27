@@ -264,7 +264,7 @@ Improvements
   the time required by the upgrade tool during a CDAP upgrade.
 
 - :cask-issue:`CDAP-8019` - Added a configuration to control the timeout of CDAP Explore
-  operations.
+  operations: set ``explore.http.timeout`` in the ``cdap-site.xml`` file.
 
 - :cask-issue:`CDAP-8061` - Moved the Cask Market Path to the ``cdap-defaults.xml`` file.
   Users can now configure the path to a private Cask Market using the configuration
