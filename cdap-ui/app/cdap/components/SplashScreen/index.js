@@ -139,16 +139,13 @@ class SplashScreen extends Component {
                   :
                     <div>
                       <img width="150px" src="cdap_assets/img/cdaplogo_white.svg" />
-                      <div className="version-label">
-                        {T.translate('features.SplashScreen.version-label')}
-                      </div>
                       <h4>
                         {T.translate('features.SplashScreen.intro-message')}
                       </h4>
                     </div>
                 }
                 </div>
-                <br />
+
                 <div className={'group'}>
                   <a className="spash-screen-btn" target="_blank" href={`http://docs.cask.co/cdap/${this.state.version}/en/index.html`}>
                     <div className="btn btn-secondary">
