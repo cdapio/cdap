@@ -44,6 +44,12 @@ CDAP Reference Manual: APIs, Licenses, and Dependencies
 - |java|_ Javadocs of the Java APIs for writing CDAP applications.
 
 
+.. |release-notes| replace:: **Release Notes:**
+.. _release-notes: release-notes.html
+
+- |release-notes|_ Complete notes for this release and the preceding releases it descends from.
+
+
 .. |licenses| replace:: **Trademarks, Licenses, and Dependencies:**
 .. _licenses: licenses/index.html
 
