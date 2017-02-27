@@ -33,6 +33,7 @@ knife cookbook site install build-essential 7.0.3 || die "Cannot fetch build-ess
 knife cookbook site install yum 4.2.0 || die "Cannot fetch yum 4.2.0"
 knife cookbook site install apt 5.1.0 || die "Cannot fetch apt 5.1.0"
 knife cookbook site install ohai 4.2.3 || die "Cannot fetch ohai 4.2.3"
+knife cookbook site install selinux 0.9.0 || die "Cannot fetch selinux 0.9.0"
 
 # Do not change HOME for cdap user
 sed -i '/ home /d' /var/chef/cookbooks/cdap/recipes/sdk.rb
