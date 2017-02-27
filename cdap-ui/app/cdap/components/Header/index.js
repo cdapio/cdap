@@ -63,7 +63,7 @@ export default class Header extends Component {
         }
       );
     this.nsSubscription = NamespaceStore.subscribe(() => {
-      let selectedNamespace = this.getDefaultNamespace();
+      let selectedNamespace = NamespaceStore.getState().selectedNamespace || this.getDefaultNamespace();
       if (selectedNamespace !== this.state.currentNamespace) {
         this.setState({
           currentNamespace: selectedNamespace
