@@ -103,7 +103,7 @@ Replication and Resiliency
 - :cask-issue:`CDAP-8037` - Added a ``master.manage.hbase.coprocessors`` setting that can be
   set to false on clusters where the CDAP coprocessors are deployed on every HBase node.
 
-Enhancements to the new CDAP UI
+Enhancements to the New CDAP UI
 ...............................
 
 - :cask-issue:`CDAP-8021` - Added the management of preferences at the application and
