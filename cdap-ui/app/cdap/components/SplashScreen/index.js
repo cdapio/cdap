@@ -139,28 +139,20 @@ class SplashScreen extends Component {
                   :
                     <div>
                       <img width="150px" src="cdap_assets/img/cdaplogo_white.svg" />
-                      <div className="version-label">
-                        {T.translate('features.SplashScreen.version-label')}
-                      </div>
                       <h4>
                         {T.translate('features.SplashScreen.intro-message')}
                       </h4>
                     </div>
                 }
                 </div>
-                <br />
+
                 <div className={'group'}>
                   <a className="spash-screen-btn" target="_blank" href={`http://docs.cask.co/cdap/${this.state.version}/en/index.html`}>
                     <div className="btn btn-secondary">
                       <span className="fa fa-book btn-icon"></span>{T.translate('features.SplashScreen.buttons.getStarted')}
                     </div>
                   </a>
-                  <div
-                    className={'btn btn-secondary spash-screen-btn'}
-                    onClick={this.toggleVideo}
-                  >
-                    <span className="fa fa-youtube-play btn-icon"></span>{T.translate('features.SplashScreen.buttons.introduction')}
-                  </div>
+
                   <a target="_blank" href="http://cask.co/company/contact/#mailing-list">
                     <div
                       className={'btn btn-secondary spash-screen-btn'}
