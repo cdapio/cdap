@@ -17,6 +17,7 @@ Installation
     Apache Ambari <ambari>
     MapR <mapr>
     Packages <packages>
+    Replication <replication>
 
 .. these are redirects for deleted pages
 
@@ -29,7 +30,10 @@ Installation
 
     
 Installation and configuration instructions for either **specific distributions** or
-**generic Apache Hadoop** clusters using RPM or Debian Package Managers:
+**generic Apache Hadoop** clusters using RPM or Debian Package Managers.
+
+**Note:** For setting up CDAP Replication (a cluster that is replicated to other clusters), 
+see the :ref:`CDAP Replication instructions <installation-replication>` *before installing CDAP*.
 
 - :ref:`Installation using Cloudera Manager <admin-installation-cloudera>`
 

@@ -16,19 +16,21 @@ Installation using Cloudera Manager
 
 This section describes installing CDAP on Hadoop clusters managed by Cloudera Manager.
 
-The CDAP integration with Cloudera Manager is provided in the form of a Custom Service
-Descriptor (CSD), which *must be installed into Cloudera Manager* prior to installing CDAP.  The CSD
-contains service definitions and configurations to make Cloudera Manager "CDAP-aware."
+- The CDAP integration with Cloudera Manager is provided in the form of a Custom Service
+  Descriptor (CSD), which *must be installed into Cloudera Manager* prior to installing CDAP.  The CSD
+  contains service definitions and configurations to make Cloudera Manager "CDAP-aware."
 
-After the CDAP CSD has been :ref:`downloaded and installed <cloudera-installation-download>`, the CDAP service
-can then be installed via the usual Cloudera Manager methods. CDAP parcels will be available from the
-preconfigured CDAP parcel repository, and the CDAP service can be added to a cluster using the
-"Add Service" wizard.
+  After the CDAP CSD has been :ref:`downloaded and installed <cloudera-installation-download>`, the CDAP service
+  can then be installed via the usual Cloudera Manager methods. CDAP parcels will be available from the
+  preconfigured CDAP parcel repository, and the CDAP service can be added to a cluster using the
+  "Add Service" wizard.
 
-A new CDAP CSD is released with each CDAP minor version (for example: 4.0, 4.1, etc.) with patch
-releases as needed. The installed CSD version should always match the ``major.minor`` version of the
-CDAP Parcel.  For example, the |short-version| CSD can be used with CDAP |short-version-x|.
+  A new CDAP CSD is released with each CDAP minor version (for example: 4.0, 4.1, etc.) with patch
+  releases as needed. The installed CSD version should always match the ``major.minor`` version of the
+  CDAP Parcel.  For example, the |short-version| CSD can be used with CDAP |short-version-x|.
 
+- If you are installing CDAP with the intention of using *replication,* see these
+  instructions on :ref:`CDAP Replication <installation-replication>` *before* installing or starting CDAP.
 
 Preparing the Cluster
 =====================
