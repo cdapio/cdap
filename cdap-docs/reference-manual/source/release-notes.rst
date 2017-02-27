@@ -65,9 +65,6 @@ Replication, Resiliency, and Zero-downtime
 - :cask-issue:`CDAP-8032` - CDAP context methods will now be retried according to a
   program's retry policy.
 
-- :cask-issue:`CDAP-8036` - Added "fat" JARs containing all of the coprocessor classes and
-  dependencies to the cdap-hbase-compat packages.
-
 - :cask-issue:`CDAP-8037` - Added a ``master.manage.hbase.coprocessors`` setting that can be
   set to false on clusters where the CDAP coprocessors are deployed on every HBase node.
 
@@ -282,10 +279,6 @@ Bug Fixes
 - :cask-issue:`CDAP-5717` - Fixed an issue with starting the CDAP CLI and the CDAP
   Standalone when the on-disk path has a space in it.
 
-- :cask-issue:`CDAP-6642` - Attempting to delete a system artifact by specifying a user
-  namespace (that previously returned a 200, even though the artifact was not deleted) will
-  now return a 404, as that combination of system and user will never occur.
-
 - :cask-issue:`CDAP-6690` - Fixed issues with the formatting of dataset instance
   properties in the output of the CDAP CLI.
 
@@ -319,8 +312,8 @@ Bug Fixes
 - :cask-issue:`CDAP-7991` - The Cask Market now shows only those entities that are valid
   for the specific version of CDAP viewing them.
 
-- :cask-issue:`CDAP-8001` - Fixed an issue with logs when a namespace was deleted and then
-  recreated with same name.
+- :cask-issue:`CDAP-8001` - Fixed an issue with the retrieving of logs when a namespace
+  was deleted and then recreated with same name.
 
 - :cask-issue:`CDAP-8041` - Fixed an issue where the CDAP Master process would hang during
   a shutdown.
@@ -429,15 +422,39 @@ Bug Fixes
 Known Issues
 ------------
 
+- :cask-issue:`CDAP-7770` - The current CDAP UI build process does not work on Microsoft Windows.
+
+- :cask-issue:`CDAP-8375` - Invalid Transaction Pruning does not work on a replicated cluster.
+
+- :cask-issue:`CDAP-8494` - If users navigate to the classic CDAP UI, they cannot come
+  back to the new CDAP UI if they click the back button.
+
 - :cask-issue:`CDAP-8531`, :cask-issue:`CDAP-8659` - If the property
   ``hive.compute.query.using.stats`` is ``true`` in HDP 2.5.x clusters, CDAP Explore
   queries that trigger a MapReduce program can fail.
+
+- :cask-issue:`CDAP-8663` - If a user revokes a privilege on a namespace, the privilege on
+  all entities in that namespace are also revoked.
+
+- :cask-issue:`CDAP-8789` - On the CDAP UI, program logs show error logs correctly. When
+  switched to "Raw Logs", the error logs are missing. (The same behavior is seen in the
+  classic CDAP UI.) CDAP CLI shows all logs correctly.
+
+- :cask-issue:`CDAP-8812` - Long plugin names don't show up in the left sidebar of the
+  CDAP Studio when running on Microsoft Windows.
+
+- :cask-issue:`CDAP-8818` - Local datasets appear on the CDAP UI overview page even though
+  they are temporary datasets that should be filtered out.
 
 - :cask-issue:`HYDRATOR-1389` - On Windows, users of CDAP Studio must double-click plugin icons
   in order for their node configuration panels to open.
 
 API Changes
 -----------
+
+- :cask-issue:`CDAP-6642` - Attempting to delete a system artifact by specifying a user
+  namespace (that previously returned a 200, even though the artifact was not deleted) will
+  now return a 404, as that combination of system and user will never occur.
 
 - :cask-issue:`CDAP-8445` - The stream endpoint to enqueue messages now returns a 503
   instead of a 500 if it failed because the dataset service was unavailable.
