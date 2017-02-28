@@ -14,11 +14,20 @@
  * the License.
 */
 import React, {PropTypes} from 'react';
+import PlusButtonStore from 'services/PlusButtonStore';
 import classnames from 'classnames';
 
 require('./ResourceCenterEntity.scss');
 
-export default function ResourceCenterEntity({className, iconClassName, title, description, actionLabel, onClick, disabled}) {
+export default function ResourceCenterEntity({className, iconClassName, title, description, actionLabel, onClick, disabled, actionLink}) {
+  const closeResourceCenter = () => {
+    PlusButtonStore.dispatch({
+      type: 'TOGGLE_PLUSBUTTON_MODAL',
+      payload: {
+        modalState: false
+      }
+    });
+  };
   return (
     <div className={classnames('resourcecenter-entity-card', className)}>
       <div className="image-button-container">
@@ -27,13 +36,30 @@ export default function ResourceCenterEntity({className, iconClassName, title, d
             <div className={classnames("entity-image", iconClassName)}/> :
             <div className="entity-image empty"></div>
         }
-        <button
-          className={classnames("btn btn-primary")}
-          onClick={onClick}
-          disabled={disabled}
-        >
-          {actionLabel}
-        </button>
+        {
+          actionLink ?
+            (
+              <a href={actionLink}>
+                <button
+                  className={classnames("btn btn-primary")}
+                  onClick={closeResourceCenter}
+                  disabled={disabled}
+                >
+                  {actionLabel}
+                </button>
+              </a>
+            )
+          :
+            (
+              <button
+                className={classnames("btn btn-primary")}
+                onClick={onClick}
+                disabled={disabled}
+              >
+                {actionLabel}
+              </button>
+            )
+        }
       </div>
       <div className="content-container">
         <div className="content-text">
@@ -51,5 +77,6 @@ ResourceCenterEntity.propTypes = {
   actionLabel: PropTypes.string,
   onClick: PropTypes.func.isRequired,
   className: PropTypes.string,
-  disabled: PropTypes.bool
+  disabled: PropTypes.bool,
+  actionLink: PropTypes.string
 };
