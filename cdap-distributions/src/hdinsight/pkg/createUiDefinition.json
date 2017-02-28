@@ -5,5 +5,20 @@
     "types": [ "HBase" ],
     "tiers": [ "Standard" ],
     "versions": [ "3.4", "3.5" ]
+  },
+  "parameters": {
+    "basics": [
+      {
+        "name": "testUsername",
+        "type": "Microsoft.Compute.UserNameTextBox",
+        "label": "Username",
+        "defaultValue": "azureuser",
+        "toolTip": "Just a test.",
+        "osPlatform": "Linux"
+      }
+    ],
+    "outputs": {
+      "testUsername": "[basics('adminUsername')]"
+    }
   }
 }
