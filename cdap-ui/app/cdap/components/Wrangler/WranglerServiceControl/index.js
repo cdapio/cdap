@@ -129,12 +129,8 @@ export default class WranglerServiceControl extends Component {
   render() {
     return (
       <div className="wrangler-container error">
-        <h3 className="text-danger text-xs-center">
-          Error
-        </h3>
-
-        <h4 className="text-danger text-xs-center">
-          Unable to connect to Data Preparation Service
+        <h4 className="text-xs-center">
+          Data Preparation (Beta) is not enabled. Please enable it.
         </h4>
         <br/>
         <div className="text-xs-center">
