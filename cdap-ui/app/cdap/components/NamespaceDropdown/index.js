@@ -52,6 +52,9 @@ export default class NamespaceDropdown extends Component {
           namespaceList : sortBy(NamespaceStore.getState().namespaces, this.lowerCaseNamespace)
         });
       } else {
+        // have to set this, because the Namespace store gets reset when we visit other apps
+        // e.g. Hydrator or Tracker
+        localStorage.setItem('CurrentNamespace', selectedNamespace);
         this.setState({
           currentNamespace : NamespaceStore.getState().selectedNamespace,
           namespaceList : sortBy(NamespaceStore.getState().namespaces, this.lowerCaseNamespace)
