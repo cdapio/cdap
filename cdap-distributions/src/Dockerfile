@@ -45,7 +45,7 @@ COPY packer/scripts /tmp/scripts
 COPY packer/files /tmp/files
 
 # Install Chef, setup APT, run Chef cdap::sdk recipe, then clean up
-RUN curl -vL http://chef.io/chef/install.sh | bash -s -- -v 12.4.3 && \
+RUN curl -vL http://chef.io/chef/install.sh | bash -s -- -v 12.19.36 && \
     for i in apt-setup.sh cookbook-dir.sh cookbook-setup.sh ; do /tmp/scripts/$i ; done && \
     chef-solo -o cdap::sdk -j /tmp/files/cdap-sdk.json && \
     for i in remove-chef.sh sdk-cleanup.sh apt-cleanup.sh ; do /tmp/scripts/$i ; done && \
