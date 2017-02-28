@@ -660,15 +660,15 @@ with the arguments as a JSON string in the body. The format of the JSON follows 
 structure (pretty-printed)::
 
   { “query1”: {
-        tags: {“namespace”: “default”, “app”: “PurchaseHistory”}, 
-        metrics: [“metric1”, “metric2”],
-        groupBy: [“app”, “dataset”],
-        timeRange: {“aggregate”: “true”}
+        "tags": {“namespace”: “default”, “app”: “PurchaseHistory”}, 
+        "metrics": [“metric1”, “metric2”],
+        "groupBy": [“app”, “dataset”],
+        "timeRange": {“aggregate”: “true”}
         },
     “query2”: {
-        tags: {“namespace”: “default”},
-        metrics: [“metric1”, “metric2”],
-        timeRange: {“start”: “now­2s”, “end”: “now”}
+        "tags": {“namespace”: “default”},
+        "metrics": [“metric1”, “metric2”],
+        "timeRange": {“start”: “now­2s”, “end”: “now”}
         }
   }
 
