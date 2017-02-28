@@ -337,7 +337,7 @@ public class FileStreamAdmin implements StreamAdmin {
     StreamConfig config = getConfig(streamId);
     StreamSpecification spec = streamMetaStore.getStream(streamId);
     return StreamProperties.builder()
-      .setTTL(config.getTTL())
+      .setTTL(StreamUtils.ttlToSeconds(config.getTTL())) // config is in millis, properties are in seconds
       .setFormatSpec(config.getFormat())
       .setNotificatonThreshold(config.getNotificationThresholdMB())
       .setDescription(spec.getDescription())
@@ -622,7 +622,9 @@ public class FileStreamAdmin implements StreamAdmin {
           FormatSpecification formatSpec = props == null ? null : props.getFormat();
 
           final StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
-                                                       ttl, streamLocation, formatSpec, threshold);
+                                                       // StreamProperties are in seconds, StreamConfig in millis
+                                                       StreamUtils.ttlToMillis(ttl),
+                                                       streamLocation, formatSpec, threshold);
           impersonator.doAs(streamId, new Callable<Void>() {
             @Override
             public Void call() throws Exception {
@@ -747,7 +749,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
     StreamConfig.Builder builder = StreamConfig.builder(config);
     if (properties.getTTL() != null) {
-      builder.setTTL(properties.getTTL());
+      builder.setTTL(StreamUtils.ttlToMillis(properties.getTTL()));
     }
     if (properties.getFormat() != null) {
       builder.setFormatSpec(properties.getFormat());

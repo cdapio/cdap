@@ -470,7 +470,7 @@ public final class StreamHandler extends AbstractHttpHandler {
     public JsonElement serialize(StreamProperties src, Type typeOfSrc, JsonSerializationContext context) {
       JsonObject json = new JsonObject();
       if (src.getTTL() != null) {
-        json.addProperty("ttl", TimeUnit.MILLISECONDS.toSeconds(src.getTTL()));
+        json.addProperty("ttl", src.getTTL());
       }
       if (src.getFormat() != null) {
         json.add("format", context.serialize(src.getFormat(), FormatSpecification.class));
@@ -496,7 +496,7 @@ public final class StreamHandler extends AbstractHttpHandler {
       JsonObject jsonObj = json.getAsJsonObject();
 
       if (jsonObj.has("ttl")) {
-        builder.setTTL(TimeUnit.SECONDS.toMillis(jsonObj.get("ttl").getAsLong()));
+        builder.setTTL(jsonObj.get("ttl").getAsLong());
       }
       if (jsonObj.has("format")) {
         FormatSpecification formatSpec = context.deserialize(jsonObj.get("format"), FormatSpecification.class);

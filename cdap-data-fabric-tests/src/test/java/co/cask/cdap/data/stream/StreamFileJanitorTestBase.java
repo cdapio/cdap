@@ -127,7 +127,7 @@ public abstract class StreamFileJanitorTestBase {
                                                       impersonator);
 
     StreamProperties properties = StreamProperties.builder()
-      .setTTL(5000).addProperty(Constants.Stream.PARTITION_DURATION, "2000").build();
+      .setTTL(5).addProperty(Constants.Stream.PARTITION_DURATION, "2000").build();
     streamAdmin.create(streamId, properties);
 
     // Truncate to increment generation to 1. This make verification condition easier (won't affect correctness).
