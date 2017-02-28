@@ -468,6 +468,17 @@ class EntityListView extends Component {
     this.updateQueryString();
   }
 
+  resetFilters() {
+    let filters = defaultFilter;
+    this.setState({
+      filter : filters,
+      selectedEntity: null,
+      currentPage: 1
+    }, () => {
+      this.search(this.state.query, filters, this.state.sortObj);
+    });
+  }
+
   handleFilterClick(option) {
     let filters = [...this.state.filter];
     if (this.state.filter.indexOf(option.id) !== -1) {
@@ -739,6 +750,8 @@ class EntityListView extends Component {
                   loading={this.state.loading}
                   onEntityClick={this.handleEntityClick.bind(this)}
                   onFastActionSuccess={this.onFastActionSuccess.bind(this)}
+                  onSearch={this.handleSearch.bind(this)}
+                  onFiltersCleared={this.resetFilters.bind(this)}
                   activeEntity={this.state.selectedEntity}
                   currentPage={this.state.currentPage}
                   activeFilter={this.state.filter}

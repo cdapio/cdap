@@ -20,6 +20,7 @@ import classnames from 'classnames';
 import {objectQuery} from 'services/helpers';
 import T from 'i18n-react';
 import JustAddedSection from 'components/EntityListView/JustAddedSection';
+import NoEntitiesMessage from 'components/EntityListView/NoEntitiesMessage';
 
 export default class HomeListView extends Component {
   constructor(props) {
@@ -30,6 +31,7 @@ export default class HomeListView extends Component {
       selectedEntity: {}
     };
   }
+
   componentWillReceiveProps(nextProps) {
     this.setState({
       list: nextProps.list,
@@ -40,50 +42,6 @@ export default class HomeListView extends Component {
       errorStatusCode: nextProps.errorStatusCode,
       retryCounter: nextProps.retryCounter
     });
-  }
-
-  getActiveFilterStrings() {
-    return this.props.activeFilter.map(filter => {
-      if (filter === 'app') {
-        filter = 'application';
-      }
-      return T.translate(`commons.entity.${filter}.plural`);
-    });
-  }
-
-  getSubstitle() {
-    let text = {
-      search: T.translate('features.EntityListView.Info.subtitle.search'),
-      filteredBy: T.translate('features.EntityListView.Info.subtitle.filteredBy'),
-      sortedBy: T.translate('features.EntityListView.Info.subtitle.sortedBy'),
-      displayAll: T.translate('features.EntityListView.Info.subtitle.displayAll'),
-      displaySome: T.translate('features.EntityListView.Info.subtitle.displaySome'),
-    };
-
-    let activeFilters = this.getActiveFilterStrings();
-    let allFiltersSelected = (activeFilters.length === 0 || activeFilters.length === this.props.filterOptions.length);
-    let activeFilterString = activeFilters.join(', ');
-    let activeSort = this.props.activeSort;
-    let searchText = this.props.searchText;
-    let subtitle;
-
-    if (searchText) {
-      subtitle = `${text.search} "${searchText}"`;
-      if (!allFiltersSelected) {
-        subtitle += `, ${text.filteredBy} ${activeFilterString}`;
-      }
-    } else {
-      if (allFiltersSelected) {
-        subtitle = `${text.displayAll}`;
-      } else {
-        subtitle = `${text.displaySome} ${activeFilterString}`;
-      }
-      if (activeSort) {
-        subtitle += `, ${text.sortedBy} ${activeSort.displayName}`;
-      }
-    }
-
-    return subtitle;
   }
 
   onClick(entity) {
@@ -97,6 +55,60 @@ export default class HomeListView extends Component {
       this.props.onEntityClick(entity);
     }
   }
+
+  filtersAreApplied() {
+    return this.props.activeFilter.length > 0 && this.props.activeFilter.length < this.props.filterOptions.length;
+  }
+
+  clearSearchAndFilters() {
+    this.props.onSearch('');
+    this.props.onFiltersCleared();
+  }
+
+  getActiveFilterStrings() {
+    return this.props.activeFilter.map(filter => {
+      if (filter === 'app') {
+        filter = 'application';
+      }
+      return T.translate(`commons.entity.${filter}.plural`);
+    });
+  }
+
+  getSubtitle() {
+    let text = {
+      search: T.translate('features.EntityListView.Info.subtitle.search'),
+      filteredBy: T.translate('features.EntityListView.Info.subtitle.filteredBy'),
+      sortedBy: T.translate('features.EntityListView.Info.subtitle.sortedBy'),
+      displayAll: T.translate('features.EntityListView.Info.subtitle.displayAll'),
+      displaySome: T.translate('features.EntityListView.Info.subtitle.displaySome'),
+    };
+
+    let filtersAreApplied = this.filtersAreApplied();
+    let activeFilters = this.getActiveFilterStrings();
+    let activeFilterString = activeFilters.join(', ');
+    let activeSort = this.props.activeSort;
+    let searchText = this.props.searchText;
+    let subtitle;
+
+    if (searchText) {
+      subtitle = `${text.search} "${searchText}"`;
+      if (filtersAreApplied) {
+        subtitle += `, ${text.filteredBy} ${activeFilterString}`;
+      }
+    } else {
+      if (!filtersAreApplied) {
+        subtitle = `${text.displayAll}`;
+      } else {
+        subtitle = `${text.displaySome} ${activeFilterString}`;
+      }
+      if (activeSort) {
+        subtitle += `, ${text.sortedBy} ${activeSort.displayName}`;
+      }
+    }
+
+    return subtitle;
+  }
+
   render() {
     let content;
     if (this.state.loading) {
@@ -107,17 +119,13 @@ export default class HomeListView extends Component {
       );
     }
 
-    const empty = (
-      <h3 className="text-xs-center empty-message">
-        {T.translate('features.EntityListView.emptyMessage')}
-      </h3>
-    );
     if (!this.state.loading && !this.state.list.length) {
-      content = (
-        <div className="entities-container">
-          {empty}
-        </div>
-      );
+      content = <NoEntitiesMessage
+                  searchText={this.props.searchText}
+                  filtersAreApplied={this.filtersAreApplied.bind(this)}
+                  clearSearchAndFilters={this.clearSearchAndFilters.bind(this)}
+                />;
+
     }
     if (!this.state.loading && this.state.list.length) {
       content = this.state.list.map(entity => {
@@ -157,7 +165,7 @@ export default class HomeListView extends Component {
 
         <div className="subtitle">
           <span>
-            {this.getSubstitle()}
+            {this.getSubtitle()}
           </span>
         </div>
 
@@ -175,6 +183,8 @@ HomeListView.propTypes = {
   onEntityClick: PropTypes.func,
   onUpdate: PropTypes.func,
   onFastActionSuccess: PropTypes.func,
+  onSearch: PropTypes.func,
+  onFiltersCleared: PropTypes.func,
   className: PropTypes.string,
   activeEntity: PropTypes.object,
   currentPage: PropTypes.number,
