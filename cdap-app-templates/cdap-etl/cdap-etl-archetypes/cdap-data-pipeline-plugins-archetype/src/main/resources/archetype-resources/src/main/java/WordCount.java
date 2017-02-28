@@ -77,7 +77,7 @@ public class WordCount implements Serializable {
   private static class SplitFunction implements FlatMapFunction<StructuredRecord, String> {
     private final String field;
 
-    public SplitFunction(String field) {
+    SplitFunction(String field) {
       this.field = field;
     }
 

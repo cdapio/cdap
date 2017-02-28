@@ -19,6 +19,7 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
@@ -27,7 +28,6 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
@@ -66,11 +66,8 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
       settings = ArgumentParser.parseMap(arguments.get(ArgumentName.SETTINGS.toString()),
                                          ArgumentName.SETTINGS.toString());
     }
-    FormatSpecification formatSpecification = new FormatSpecification(formatName, schema, settings);
-    StreamProperties streamProperties = new StreamProperties(currentProperties.getTTL(),
-                                                             formatSpecification,
-                                                             currentProperties.getNotificationThresholdMB(),
-                                                             currentProperties.getDescription());
+    FormatSpecification formatSpec = new FormatSpecification(formatName, schema, settings);
+    StreamProperties streamProperties = StreamProperties.builder(currentProperties).setFormatSpec(formatSpec).build();
     streamClient.setStreamProperties(streamId, streamProperties);
     output.printf("Successfully set format of stream '%s'\n", streamId.getEntityName());
   }

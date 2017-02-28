@@ -18,6 +18,7 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
@@ -29,7 +30,6 @@ import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamDetail;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.authentication.client.AccessToken;

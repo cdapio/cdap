@@ -17,7 +17,7 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
-import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.api.data.stream.StreamProperties;
 import com.google.common.base.Objects;
 
 import javax.annotation.Nullable;

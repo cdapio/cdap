@@ -18,6 +18,7 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
@@ -29,7 +30,6 @@ import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryResult;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Preconditions;

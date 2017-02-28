@@ -18,6 +18,7 @@ package co.cask.cdap.cli;
 
 import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.cli.command.NamespaceCommandUtils;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
@@ -45,7 +46,6 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -316,7 +316,8 @@ public class CLIMainTest extends CLITestBase {
     String streamId = PREFIX + "sdf123";
 
     File file = new File(TMP_FOLDER.newFolder(), "test1.txt");
-    StreamProperties streamProperties = new StreamProperties(2L, null, 10, "Golden Stream");
+    StreamProperties streamProperties = StreamProperties.builder()
+      .setTTL(2L).setNotificatonThreshold(10).setDescription("Golden Stream").build();
     try (BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8)) {
       writer.write(GSON.toJson(streamProperties));
     }

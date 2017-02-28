@@ -30,7 +30,7 @@ public interface LocationTriggeringPolicy extends TriggeringPolicy<ILoggingEvent
    * @param event which {@link LocationTriggeringPolicy#setLocation(Location)}
    * @return true if a roll-over should occur.
    */
-  boolean isTriggeringEvent(final ILoggingEvent event);
+  boolean isTriggeringEvent(ILoggingEvent event);
 
   /**
    * set location of Rolling policy

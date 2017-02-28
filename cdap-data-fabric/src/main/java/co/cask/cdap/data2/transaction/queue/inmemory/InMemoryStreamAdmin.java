@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.transaction.queue.inmemory;
 
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.conf.Constants;
@@ -30,7 +31,6 @@ import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;

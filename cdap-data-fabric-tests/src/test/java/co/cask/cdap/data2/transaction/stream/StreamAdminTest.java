@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data2.transaction.stream;
 
-import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.app.RunIds;
@@ -30,7 +30,6 @@ import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
@@ -77,8 +76,8 @@ public abstract class StreamAdminTest {
   private static final Principal USER = new Principal(System.getProperty("user.name"), Principal.PrincipalType.USER);
 
   protected static CConfiguration cConf = CConfiguration.create();
-  protected static final NamespaceId FOO_NAMESPACE = new NamespaceId("fooNamespace");
-  protected static final NamespaceId OTHER_NAMESPACE = new NamespaceId("otherNamespace");
+  private static final NamespaceId FOO_NAMESPACE = new NamespaceId("fooNamespace");
+  private static final NamespaceId OTHER_NAMESPACE = new NamespaceId("otherNamespace");
 
   protected abstract StreamAdmin getStreamAdmin();
 
@@ -248,7 +247,7 @@ public abstract class StreamAdminTest {
       streamAdmin.drop(stream);
       Assert.fail("User should not be able to drop the stream without ADMIN permission.");
     } catch (UnauthorizedException e) {
-      // expdcted
+      // expected
     }
 
     grantAndAssertSuccess(stream, USER, ImmutableSet.of(Action.ADMIN));
@@ -279,7 +278,7 @@ public abstract class StreamAdminTest {
 
     // updating stream owner should fail
     try {
-      streamAdmin.updateConfig(stream, new StreamProperties(1L, null, null, null, "user/somekdc.net"));
+      streamAdmin.updateConfig(stream, StreamProperties.builder().setPrincipal("user/somekdc.net").build());
       Assert.fail();
     } catch (UnauthorizedException e) {
       // expected
@@ -410,7 +409,8 @@ public abstract class StreamAdminTest {
     expectedMessages.add(new AuditMessage(0, stream1, "", AuditType.TRUNCATE,
                                           AuditPayload.EMPTY_PAYLOAD));
 
-    streamAdmin.updateConfig(stream1, new StreamProperties(100L, new FormatSpecification("f", null), 100));
+    streamAdmin.updateConfig(stream1, StreamProperties.builder()
+      .setTTL(100L).setFormat("f").setNotificatonThreshold(100).build());
     expectedMessages.add(new AuditMessage(0, stream1, "", AuditType.UPDATE,
                                           AuditPayload.EMPTY_PAYLOAD));
 
