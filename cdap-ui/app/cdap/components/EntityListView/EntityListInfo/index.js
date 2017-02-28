@@ -68,7 +68,9 @@ export default class EntityListInfo extends Component {
     return (
       <div className={this.props.className}>
         <span className="title">
-          <h3>{title}</h3>
+          <h3 title={this.props.namespace}>
+            {title}
+          </h3>
         </span>
         {
           this.props.numberOfEntities ?

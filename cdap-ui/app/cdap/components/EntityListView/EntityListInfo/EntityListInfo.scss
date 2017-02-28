@@ -23,6 +23,13 @@ $hovered-page-background-color: rgba(219, 219, 219, 1);
 
   .title {
     display: inline-block;
+    max-width: 85%;
+
+    h3 {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   .pagination {
