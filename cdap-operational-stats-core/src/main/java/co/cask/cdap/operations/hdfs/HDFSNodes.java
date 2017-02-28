@@ -19,11 +19,21 @@ package co.cask.cdap.operations.hdfs;
 import co.cask.cdap.operations.OperationalStats;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
+import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.HAUtil;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,6 +42,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
+
 /**
  * {@link OperationalStats} for HDFS nodes.
  */
@@ -39,8 +50,10 @@ import javax.annotation.Nullable;
 public class HDFSNodes extends AbstractHDFSStats implements HDFSNodesMXBean {
   @VisibleForTesting
   static final String STAT_TYPE = "nodes";
+  private static final Gson GSON = new Gson();
 
   private int namenodes;
+  private int datanodes;
 
   public HDFSNodes() {
     this(new Configuration());
@@ -62,8 +75,14 @@ public class HDFSNodes extends AbstractHDFSStats implements HDFSNodesMXBean {
   }
 
   @Override
-  public void collect() throws IOException {
+  public int getDatanodes() {
+    return datanodes;
+  }
+
+  @Override
+  public void collect() throws IOException, JSONException {
     namenodes = getNameNodes().size();
+    datanodes = getNumDataNodes();
   }
 
   private List<String> getNameNodes() throws IOException {
@@ -78,6 +97,26 @@ public class HDFSNodes extends AbstractHDFSStats implements HDFSNodesMXBean {
       namenodes.add(DFSUtil.getNamenodeServiceAddr(conf, nameService, nnId));
     }
     return namenodes;
+  }
+
+  private int getNumDataNodes() throws IOException, JSONException {
+    int dataNodes = 0;
+    HttpClient client = new DefaultHttpClient();
+
+    HttpGet httpGet = new HttpGet(getWebURL() + "/jmx");
+    HttpResponse response = client.execute(httpGet);
+
+    HttpEntity entity = response.getEntity();
+    JSONObject myObject = new JSONObject(EntityUtils.toString(entity, "UTF-8"));
+    JSONArray array = myObject.getJSONArray("beans");
+    for (int idx = 0; idx < array.length(); ++idx) {
+      if (array.getJSONObject(idx).get("name").equals("Hadoop:service=NameNode,name=FSNamesystemState")) {
+        dataNodes = array.getJSONObject(idx).getInt("NumLiveDataNodes");
+        break;
+      }
+    }
+
+    return dataNodes;
   }
 
   @Nullable

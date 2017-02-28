@@ -18,30 +18,12 @@ package co.cask.cdap.operations.hdfs;
 
 import co.cask.cdap.operations.OperationalStats;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.CommonConfigurationKeys;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.ha.HAServiceProtocol;
-import org.apache.hadoop.ha.HAServiceStatus;
-import org.apache.hadoop.ha.HAServiceTarget;
-import org.apache.hadoop.hdfs.DFSConfigKeys;
-import org.apache.hadoop.hdfs.DFSUtil;
-import org.apache.hadoop.hdfs.HAUtil;
-import org.apache.hadoop.hdfs.HdfsConfiguration;
-import org.apache.hadoop.hdfs.tools.NNHAServiceTarget;
-import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.VersionInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.util.Collection;
-import javax.annotation.Nullable;
 
 /**
  * {@link OperationalStats} representing HDFS information.
@@ -51,8 +33,6 @@ public class HDFSInfo extends AbstractHDFSStats implements HDFSInfoMXBean {
 
   @VisibleForTesting
   static final String STAT_TYPE = "info";
-
-  private boolean lastCollectFailed = false;
 
   @SuppressWarnings("unused")
   public HDFSInfo() {
@@ -75,33 +55,6 @@ public class HDFSInfo extends AbstractHDFSStats implements HDFSInfoMXBean {
   }
 
   @Override
-  public String getWebURL() {
-    try {
-      if (HAUtil.isHAEnabled(conf, getNameService())) {
-        URL haWebURL = getHAWebURL();
-        if (haWebURL != null) {
-          return haWebURL.toString();
-        }
-      } else {
-        try (FileSystem fs = FileSystem.get(conf)) {
-          URL webUrl = rpcToHttpAddress(fs.getUri());
-          if (webUrl != null) {
-            return webUrl.toString();
-          }
-        }
-      }
-      lastCollectFailed = false;
-    } catch (Exception e) {
-      // TODO: remove once CDAP-7887 is fixed
-      if (!lastCollectFailed) {
-        LOG.warn("Error in determining HDFS URL. Web URL of HDFS will not be available in HDFS operational stats.", e);
-      }
-      lastCollectFailed = true;
-    }
-    return null;
-  }
-
-  @Override
   public String getLogsURL() {
     String webURL = getWebURL();
     if (webURL == null) {
@@ -113,60 +66,5 @@ public class HDFSInfo extends AbstractHDFSStats implements HDFSInfoMXBean {
   @Override
   public void collect() throws IOException {
     // No need to refresh static information
-  }
-
-  @Nullable
-  private String getNameService() {
-    Collection<String> nameservices = conf.getTrimmedStringCollection(DFSConfigKeys.DFS_NAMESERVICES);
-    if (nameservices.isEmpty()) {
-      // we want to return null from this method if nameservices are not configured, so it can be used in methods like
-      // HAUtil.isHAEnabled()
-      return null;
-    }
-    if (1 == nameservices.size()) {
-      return Iterables.getOnlyElement(nameservices);
-    }
-    throw new IllegalStateException("Found multiple nameservices configured in HDFS. CDAP currently does not support " +
-                                      "HDFS Federation.");
-  }
-
-  @Nullable
-  private URL getHAWebURL() throws IOException {
-    String activeNamenode = null;
-    String nameService = getNameService();
-    HdfsConfiguration hdfsConf = new HdfsConfiguration(conf);
-    String nameNodePrincipal = conf.get(DFSConfigKeys.DFS_NAMENODE_USER_NAME_KEY, "");
-
-    hdfsConf.set(CommonConfigurationKeys.HADOOP_SECURITY_SERVICE_USER_NAME_KEY, nameNodePrincipal);
-
-    for (String nnId : DFSUtil.getNameNodeIds(conf, nameService)) {
-      HAServiceTarget haServiceTarget = new NNHAServiceTarget(hdfsConf, nameService, nnId);
-      HAServiceProtocol proxy = haServiceTarget.getProxy(hdfsConf, 10000);
-      HAServiceStatus serviceStatus = proxy.getServiceStatus();
-      if (HAServiceProtocol.HAServiceState.ACTIVE != serviceStatus.getState()) {
-        continue;
-      }
-      activeNamenode = DFSUtil.getNamenodeServiceAddr(hdfsConf, nameService, nnId);
-    }
-    if (activeNamenode == null) {
-      throw new IllegalStateException("Could not find an active namenode");
-    }
-    return rpcToHttpAddress(URI.create(activeNamenode));
-  }
-
-  @Nullable
-  private URL rpcToHttpAddress(URI rpcURI) throws MalformedURLException {
-    String host = rpcURI.getHost();
-    if (host == null) {
-      return null;
-    }
-    boolean httpsEnabled = conf.getBoolean(DFSConfigKeys.DFS_HTTPS_ENABLE_KEY, DFSConfigKeys.DFS_HTTPS_ENABLE_DEFAULT);
-    String namenodeWebAddress = httpsEnabled ?
-      conf.get(DFSConfigKeys.DFS_NAMENODE_HTTPS_ADDRESS_KEY, DFSConfigKeys.DFS_NAMENODE_HTTPS_ADDRESS_DEFAULT) :
-      conf.get(DFSConfigKeys.DFS_NAMENODE_HTTP_ADDRESS_KEY, DFSConfigKeys.DFS_NAMENODE_HTTP_ADDRESS_DEFAULT);
-    InetSocketAddress socketAddress = NetUtils.createSocketAddr(namenodeWebAddress);
-    int namenodeWebPort = socketAddress.getPort();
-    String protocol = httpsEnabled ? "https" : "http";
-    return new URL(protocol, host, namenodeWebPort, "");
   }
 }

@@ -26,4 +26,9 @@ public interface HDFSNodesMXBean {
    * Returns number of namenodes
    */
   int getNamenodes();
+
+  /**
+   * Returns number of datanodes
+   */
+  int getDatanodes();
 }
