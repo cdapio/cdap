@@ -23,6 +23,7 @@ import MyWranglerApi from 'api/wrangler';
 import cookie from 'react-cookie';
 import WranglerStore from 'components/Wrangler/store';
 import WranglerActions from 'components/Wrangler/store/WranglerActions';
+import WranglerServiceControl from 'components/Wrangler/WranglerServiceControl';
 import ee from 'event-emitter';
 
 require('./Wrangler.scss');
@@ -91,19 +92,9 @@ export default class Wrangler extends Component {
     if (!this.state.backendDown) { return null; }
 
     return (
-      <div className="wrangler-container error">
-        <h3 className="text-danger text-xs-center">
-          Error
-        </h3>
-
-        <h4 className="text-danger text-xs-center">
-          Unable to connect to Wrangler Service
-        </h4>
-
-        <p className="text-danger text-xs-center">
-          Please deploy and start Wrangler Service
-        </p>
-      </div>
+      <WranglerServiceControl
+        onEnable={this.toggleBackendDown}
+      />
     );
   }
 

@@ -27,7 +27,12 @@ export default class Experimental extends Component {
     };
   }
 
+  componentDidMount() {
+    document.querySelector('#header-namespace-dropdown').style.display = 'none';
+  }
+
   componentWillUnmount() {
+    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
     window.onbeforeunload = null;
   }
 
