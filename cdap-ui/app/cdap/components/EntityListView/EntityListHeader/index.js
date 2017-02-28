@@ -20,6 +20,8 @@ import CustomDropdownMenu from 'components/CustomDropdownMenu';
 import T from 'i18n-react';
 import debounce from 'lodash/debounce';
 import ResourceCenterButton from 'components/ResourceCenterButton';
+import {isDescendant} from 'services/helpers';
+import Rx from 'rx';
 
 require('./EntityListHeader.scss');
 
@@ -48,8 +50,31 @@ export default class EntityListHeader extends Component {
     });
   }
 
+  componentWillUnmount() {
+    if (this.documentClick$ && this.documentClick$.dispose) {
+      this.documentClick$.dispose();
+    }
+  }
+
   handleFilterToggle() {
-    this.setState({isFilterExpanded: !this.state.isFilterExpanded});
+    let newState = !this.state.isFilterExpanded;
+
+    this.setState({isFilterExpanded: newState});
+
+    if (newState) {
+      let element = document.getElementById('app-container');
+
+      this.documentClick$ = Rx.Observable.fromEvent(element, 'click')
+        .subscribe((e) => {
+          if (isDescendant(this.dropdownButtonRef, e.target) || !this.state.isFilterExpanded) {
+            return;
+          }
+
+          this.handleFilterToggle();
+        });
+    } else {
+      this.documentClick$.dispose();
+    }
   }
 
   handleSortToggle() {
@@ -75,13 +100,14 @@ export default class EntityListHeader extends Component {
       this.setState({sortDropdownTooltip: !this.state.sortDropdownTooltip});
     }
   }
-  onFilterClick(option) {
+  onFilterClick(option, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation();
+
     if (this.props.onFilterClick) {
       this.props.onFilterClick(option);
     }
-    this.setState({
-      isFilterExpanded: false
-    });
   }
   render() {
     let tooltipId = 'filter-tooltip-target-id';
@@ -127,7 +153,8 @@ export default class EntityListHeader extends Component {
     const filterDropdown = (
       <Dropdown
         isOpen={this.state.isFilterExpanded}
-        toggle={this.handleFilterToggle.bind(this)}
+        toggle={() => {}}
+        onClick={this.handleFilterToggle.bind(this)}
       >
         <DropdownToggle
           tag='div'
@@ -182,7 +209,7 @@ export default class EntityListHeader extends Component {
               onChange={this.onSearchChange.bind(this)}
             />
           </div>
-          <div className="filter">
+          <div className="filter" ref={(ref) => this.dropdownButtonRef = ref}>
             {filterDropdown}
           </div>
           <div className="sort">
