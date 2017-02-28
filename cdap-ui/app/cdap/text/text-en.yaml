@@ -448,6 +448,7 @@ features:
     ProductDropdown:
       aboutLabel: About CDAP
       accessToken: Access Token
+      dataPrep: Data Preparation
       documentationLabel: Documentation
       logout: Logout
       olduilink: Switch to Classic View
