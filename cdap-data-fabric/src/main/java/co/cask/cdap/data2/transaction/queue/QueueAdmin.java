@@ -20,9 +20,6 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
 
-import java.util.Properties;
-import javax.annotation.Nullable;
-
 /**
  *
  */
@@ -69,14 +66,6 @@ public interface QueueAdmin {
    * @throws Exception if creation fails
    */
   void create(QueueName queueName) throws Exception;
-
-  /**
-   * Creates queue if doesn't exist. If queue exists does nothing.
-   * @param queueName Name of the queue
-   * @param props additional properties
-   * @throws Exception if creation fails
-   */
-  void create(QueueName queueName, @Nullable Properties props) throws Exception;
 
   /**
    * Wipes out queue data.

@@ -16,14 +16,13 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.gson.Gson;
 
-import java.util.Properties;
 import javax.annotation.Nullable;
 
 /**
@@ -48,14 +47,14 @@ final class StreamCreator {
   void createStreams(NamespaceId namespaceId, Iterable<StreamSpecification> streamSpecs,
                      @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
     for (StreamSpecification spec : streamSpecs) {
-      Properties props = new Properties();
+      StreamProperties.Builder builder = StreamProperties.builder();
       if (spec.getDescription() != null) {
-        props.put(Constants.Stream.DESCRIPTION, spec.getDescription());
+        builder.setDescription(spec.getDescription());
       }
       if (ownerPrincipal != null) {
-        props.put(Constants.Security.PRINCIPAL, ownerPrincipal.getPrincipal());
+        builder.setPrincipal(ownerPrincipal.getPrincipal());
       }
-      streamAdmin.create(namespaceId.stream(spec.getName()), props);
+      streamAdmin.create(namespaceId.stream(spec.getName()), builder.build());
     }
   }
 }

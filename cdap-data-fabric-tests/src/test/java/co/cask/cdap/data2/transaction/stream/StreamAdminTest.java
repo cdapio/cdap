@@ -69,7 +69,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 public abstract class StreamAdminTest {
@@ -264,9 +263,8 @@ public abstract class StreamAdminTest {
     OwnerAdmin ownerAdmin = getOwnerAdmin();
     grantAndAssertSuccess(FOO_NAMESPACE, USER, ImmutableSet.of(Action.WRITE));
     StreamId stream = FOO_NAMESPACE.stream("stream");
-    Properties properties = new Properties();
     String ownerPrincipal = "user/somehost@somekdc.net";
-    properties.put(Constants.Security.PRINCIPAL, ownerPrincipal);
+    StreamProperties properties = StreamProperties.builder().setPrincipal(ownerPrincipal).build();
     streamAdmin.create(stream, properties);
     Assert.assertTrue(streamAdmin.exists(stream));
 
@@ -285,9 +283,9 @@ public abstract class StreamAdminTest {
     }
 
     // trying to create same stream with different owner should fail
-    properties.put(Constants.Security.PRINCIPAL, "someOtherUser/someHost@somekdc.net");
+    String otherPrincipal = "someOtherUser/someHost@somekdc.net";
     try {
-      streamAdmin.create(stream, properties);
+      streamAdmin.create(stream, StreamProperties.builder().setPrincipal(otherPrincipal).build());
       Assert.fail("Should have failed to add the same stream with different owner");
     } catch (UnauthorizedException e) {
       // expected

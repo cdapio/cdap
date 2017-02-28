@@ -19,7 +19,6 @@ package co.cask.cdap.data2.transaction.queue.inmemory;
 import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.StreamNotFoundException;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.view.ViewAdmin;
@@ -46,7 +45,6 @@ import com.google.inject.Singleton;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import javax.annotation.Nullable;
 
 /**
@@ -139,9 +137,9 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
 
   @Override
   @Nullable
-  public StreamConfig create(StreamId streamId, @Nullable Properties props) throws Exception {
-    create(QueueName.fromStream(streamId), props);
-    String description = (props != null) ? props.getProperty(Constants.Stream.DESCRIPTION) : null;
+  public StreamConfig create(StreamId streamId, @Nullable StreamProperties props) throws Exception {
+    create(QueueName.fromStream(streamId));
+    String description = (props != null) ? props.getDescription() : null;
     streamMetaStore.addStream(streamId, description);
     publishAudit(streamId, AuditType.CREATE);
     return null;

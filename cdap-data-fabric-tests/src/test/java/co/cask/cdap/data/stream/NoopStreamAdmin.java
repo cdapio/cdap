@@ -32,7 +32,6 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import javax.annotation.Nullable;
 
 /**
@@ -88,7 +87,7 @@ public class NoopStreamAdmin implements StreamAdmin {
 
   @Override
   @Nullable
-  public StreamConfig create(StreamId streamId, @Nullable Properties props) throws Exception {
+  public StreamConfig create(StreamId streamId, @Nullable StreamProperties props) throws Exception {
     return null;
   }
 

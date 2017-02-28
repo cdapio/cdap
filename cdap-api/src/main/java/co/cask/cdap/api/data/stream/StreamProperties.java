@@ -19,6 +19,7 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -36,17 +37,21 @@ public class StreamProperties {
   private final String description;
   @SerializedName("principal")
   private final String ownerPrincipal;
+  private final Map<String, String> properties;
 
   protected StreamProperties(@Nullable Long ttl,
                              @Nullable FormatSpecification format,
                              @Nullable Integer notificationThresholdMB,
                              @Nullable String description,
-                             @Nullable String ownerPrincipal) {
+                             @Nullable String ownerPrincipal,
+                             @Nullable Map<String, String> properties) {
     this.ttl = ttl;
     this.format = format;
     this.ownerPrincipal = ownerPrincipal;
     this.notificationThresholdMB = notificationThresholdMB;
     this.description = description;
+    this.properties = properties == null || properties.isEmpty()
+      ? Collections.<String, String>emptyMap() : Collections.unmodifiableMap(new HashMap<>(properties));
   }
 
   public static Builder builder() {
@@ -98,6 +103,21 @@ public class StreamProperties {
     return ownerPrincipal;
   }
 
+  /**
+   * @return The additional properties as a map
+   */
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
+  /**
+   * @return a specific property
+   */
+  @Nullable
+  public String getProperty(String key) {
+    return properties.get(key);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -113,12 +133,13 @@ public class StreamProperties {
       Objects.equals(format, that.format) &&
       Objects.equals(notificationThresholdMB, that.notificationThresholdMB) &&
       Objects.equals(description, that.description) &&
-      Objects.equals(ownerPrincipal, that.ownerPrincipal);
+      Objects.equals(ownerPrincipal, that.ownerPrincipal) &&
+      Objects.equals(properties, that.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(ttl, format, notificationThresholdMB, description, ownerPrincipal);
+    return Objects.hash(ttl, format, notificationThresholdMB, description, ownerPrincipal, properties);
   }
 
   @Override
@@ -126,9 +147,10 @@ public class StreamProperties {
     return "StreamProperties{" +
       "ttl=" + ttl +
       ", format=" + format +
-      ", ownerPrincipal='" + ownerPrincipal + '\'' +
       ", notificationThresholdMB=" + notificationThresholdMB +
       ", description='" + description + '\'' +
+      ", ownerPrincipal='" + ownerPrincipal + '\'' +
+      ", properties=" + properties +
       '}';
   }
 
@@ -139,12 +161,13 @@ public class StreamProperties {
     Long ttl;
     String format;
     Schema schema;
-    Map<String, String> settings = new HashMap<>();
+    Map<String, String> formatSettings = new HashMap<>();
     Integer notificatonThreshold;
     String description;
     String principal;
     String groupName;
     String permissions;
+    Map<String, String> properties = new HashMap<>();
 
     private Builder() { }
 
@@ -153,11 +176,12 @@ public class StreamProperties {
       if (props.getFormat() != null) {
         format = props.getFormat().getName();
         schema = props.getFormat().getSchema();
-        settings.putAll(props.getFormat().getSettings());
+        formatSettings.putAll(props.getFormat().getSettings());
       }
       notificatonThreshold = props.getNotificationThresholdMB();
       description = props.getDescription();
       principal = props.getOwnerPrincipal();
+      properties.putAll(props.properties);
     }
 
     public Builder setTTL(long ttl) {
@@ -175,8 +199,8 @@ public class StreamProperties {
       return this;
     }
 
-    public Builder addSetting(String key, String value) {
-      this.settings.put(key, value);
+    public Builder addFormatSetting(String key, String value) {
+      this.formatSettings.put(key, value);
       return this;
     }
 
@@ -186,7 +210,7 @@ public class StreamProperties {
       }
       this.format = spec.getName();
       this.schema = spec.getSchema();
-      this.settings = new HashMap<>(spec.getSettings());
+      this.formatSettings = new HashMap<>(spec.getSettings());
       return this;
     }
 
@@ -215,16 +239,21 @@ public class StreamProperties {
       return this;
     }
 
+    public Builder addProperty(String key, String value) {
+      properties.put(key, value);
+      return this;
+    }
+
     public StreamProperties build() {
-      if (format == null && !settings.isEmpty()) {
-        throw new IllegalArgumentException("A format name is required if format settings are given.");
+      if (format == null && !formatSettings.isEmpty()) {
+        throw new IllegalArgumentException("A format name is required if format formatSettings are given.");
       }
       if (format == null && schema != null) {
         throw new IllegalArgumentException("A format name is required if a schema is given.");
       }
       return new StreamProperties(
-        ttl, format == null ? null : new FormatSpecification(format, schema, new HashMap<>(settings)),
-        notificatonThreshold, description, principal);
+        ttl, format == null ? null : new FormatSpecification(format, schema, new HashMap<>(formatSettings)),
+        notificatonThreshold, description, principal, properties);
     }
   }
 }

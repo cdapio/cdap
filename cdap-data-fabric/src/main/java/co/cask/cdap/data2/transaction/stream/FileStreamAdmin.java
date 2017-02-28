@@ -89,7 +89,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
@@ -409,19 +408,17 @@ public class FileStreamAdmin implements StreamAdmin {
   @Override
   @Nullable
   public StreamConfig create(StreamId streamId) throws Exception {
-    return create(streamId, new Properties());
+    return create(streamId, null);
   }
 
   @Override
   @Nullable
-  public StreamConfig create(final StreamId streamId, @Nullable final Properties props) throws Exception {
+  public StreamConfig create(final StreamId streamId, @Nullable final StreamProperties props) throws Exception {
     // User should have write access to the namespace
     NamespaceId streamNamespace = streamId.getParent();
     ensureAccess(streamNamespace, Action.WRITE);
 
-    final Properties properties = (props == null) ? new Properties() : props;
-    String specifiedOwnerPrincipal = properties.containsKey(Constants.Security.PRINCIPAL) ?
-      properties.getProperty(Constants.Security.PRINCIPAL) : null;
+    String specifiedOwnerPrincipal = props == null ? null : props.getOwnerPrincipal();
 
     if (exists(streamId)) {
       // if stream exists then make sure owner for this create request is same
@@ -455,16 +452,24 @@ public class FileStreamAdmin implements StreamAdmin {
             return streamLocation;
           }
         });
-        return createStream(streamId, properties, streamLocation);
-      } catch (Exception e) {
+        return createStream(streamId, props, streamLocation);
+      } catch (Throwable t) {
         // clean up privileges
-        privilegesManager.revoke(streamId);
-        throw e;
+        try {
+          privilegesManager.revoke(streamId);
+        } catch (Throwable t1) {
+          t.addSuppressed(t1);
+        }
+        throw t;
       }
-    } catch (Exception e) {
+    } catch (Throwable t) {
       // there was a problem creating the stream so delete owner information
-      ownerAdmin.delete(streamId); // safe to call even if entry doesn't exists
-      throw e;
+      try {
+        ownerAdmin.delete(streamId); // safe to call even if entry doesn't exists
+      } catch (Throwable t1) {
+        t.addSuppressed(t1);
+      }
+      throw t;
     }
   }
 
@@ -588,7 +593,7 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Nullable
-  private StreamConfig createStream(final StreamId streamId, final Properties properties,
+  private StreamConfig createStream(final StreamId streamId, @Nullable final StreamProperties props,
                                     final Location streamLocation) throws Exception {
     try {
       return streamCoordinatorClient.createStream(streamId, new Callable<StreamConfig>() {
@@ -602,20 +607,19 @@ public class FileStreamAdmin implements StreamAdmin {
             return null;
           }
           long createTime = System.currentTimeMillis();
-          long partitionDuration = Long.parseLong(properties.getProperty(
-            Constants.Stream.PARTITION_DURATION, cConf.get(Constants.Stream.PARTITION_DURATION)));
-          long indexInterval = Long.parseLong(properties.getProperty(
-            Constants.Stream.INDEX_INTERVAL, cConf.get(Constants.Stream.INDEX_INTERVAL)));
-          long ttl = Long.parseLong(properties.getProperty(
-            Constants.Stream.TTL, cConf.get(Constants.Stream.TTL)));
-          int threshold = Integer.parseInt(properties.getProperty(
-            Constants.Stream.NOTIFICATION_THRESHOLD, cConf.get(Constants.Stream.NOTIFICATION_THRESHOLD)));
-          String description = properties.getProperty(Constants.Stream.DESCRIPTION);
-          FormatSpecification formatSpec = null;
-          if (properties.containsKey(Constants.Stream.FORMAT_SPECIFICATION)) {
-            formatSpec = GSON.fromJson(properties.getProperty(Constants.Stream.FORMAT_SPECIFICATION),
-                                       FormatSpecification.class);
-          }
+          @SuppressWarnings("ConstantConditions")
+          long partitionDuration = props != null && props.getProperty(Constants.Stream.PARTITION_DURATION) != null
+            ? Long.parseLong(props.getProperty(Constants.Stream.PARTITION_DURATION))
+            : cConf.getLong(Constants.Stream.PARTITION_DURATION);
+          @SuppressWarnings("ConstantConditions")
+          long indexInterval = props != null && props.getProperty(Constants.Stream.INDEX_INTERVAL) != null
+            ? Long.parseLong(props.getProperty(Constants.Stream.INDEX_INTERVAL))
+            : cConf.getLong(Constants.Stream.INDEX_INTERVAL);
+          long ttl = props != null && props.getTTL() != null ? props.getTTL() : cConf.getLong(Constants.Stream.TTL);
+          int threshold = props != null && props.getNotificationThresholdMB() != null
+            ? props.getNotificationThresholdMB() : cConf.getInt(Constants.Stream.NOTIFICATION_THRESHOLD);
+          String description = props == null ? null : props.getDescription();
+          FormatSpecification formatSpec = props == null ? null : props.getFormat();
 
           final StreamConfig config = new StreamConfig(streamId, partitionDuration, indexInterval,
                                                        ttl, streamLocation, formatSpec, threshold);

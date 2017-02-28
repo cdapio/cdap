@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.api.data.stream.StreamProperties;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -40,7 +41,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import java.util.Properties;
 
 /**
  * Base test class for stream file janitor.
@@ -126,10 +126,8 @@ public abstract class StreamFileJanitorTestBase {
                                                       getNamespacedLocationFactory(), getNamespaceAdmin(),
                                                       impersonator);
 
-    Properties properties = new Properties();
-    properties.setProperty(Constants.Stream.PARTITION_DURATION, "2000");
-    properties.setProperty(Constants.Stream.TTL, "5000");
-
+    StreamProperties properties = StreamProperties.builder()
+      .setTTL(5000).addProperty(Constants.Stream.PARTITION_DURATION, "2000").build();
     streamAdmin.create(streamId, properties);
 
     // Truncate to increment generation to 1. This make verification condition easier (won't affect correctness).
