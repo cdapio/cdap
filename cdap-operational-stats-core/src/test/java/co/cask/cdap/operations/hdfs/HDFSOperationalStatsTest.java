@@ -19,6 +19,7 @@ package co.cask.cdap.operations.hdfs;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.json.JSONException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -52,7 +53,7 @@ public class HDFSOperationalStatsTest {
   }
 
   @Test
-  public void test() throws IOException {
+  public void test() throws IOException, JSONException {
     final DistributedFileSystem dfs = dfsCluster.getFileSystem();
     HDFSInfo hdfsInfo = new HDFSInfo(dfs.getConf());
     Assert.assertEquals(AbstractHDFSStats.SERVICE_NAME, hdfsInfo.getServiceName());
@@ -73,8 +74,10 @@ public class HDFSOperationalStatsTest {
     Assert.assertEquals(AbstractHDFSStats.SERVICE_NAME, hdfsNodes.getServiceName());
     Assert.assertEquals(HDFSNodes.STAT_TYPE, hdfsNodes.getStatType());
     Assert.assertEquals(0, hdfsNodes.getNamenodes());
+    Assert.assertEquals(0, hdfsNodes.getDatanodes());
     hdfsNodes.collect();
     Assert.assertEquals(1, hdfsNodes.getNamenodes());
+    Assert.assertEquals(2, hdfsNodes.getDatanodes());
     HDFSStorage hdfsStorage = new HDFSStorage(dfs.getConf());
     Assert.assertEquals(AbstractHDFSStats.SERVICE_NAME, hdfsStorage.getServiceName());
     Assert.assertEquals(HDFSStorage.STAT_TYPE, hdfsStorage.getStatType());
