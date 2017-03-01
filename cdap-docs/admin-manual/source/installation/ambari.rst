@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 :section-numbering: true
 
@@ -65,9 +65,7 @@ Cask repository on your Ambari server.
 
 The **repository version** (shown in the commands below as ``"cdap/``\ |literal-short-version|\ ``"``) 
 must match the **CDAP series** which you’d like installed on your cluster. To install the
-**latest** version of the *CDAP 3.0 series,* you would install the *CDAP 3.0 repository.*
-The default (in the commands below) is to use **cdap/3.3**, which has the widest
-compatibility with the Ambari-supported Hadoop distributions.
+**latest** version of the *CDAP 3.4 series,* you would install the *CDAP 3.4 repository.*
 
 Replace |---| in the commands that follow on this page |---| all references to 
 ``"cdap/``\ |literal-short-version|\ ``"`` 
