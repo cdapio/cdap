@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Longs;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.ChangeId;
@@ -137,6 +138,10 @@ public abstract class AbstractTransactionStateStorageTest {
       // TODO: replace with new persistence tests
       final byte[] a = { 'a' };
       final byte[] b = { 'b' };
+      // CDAP-8855 - fix invalidArray on recovering state test
+      // Start and invalidate a transaction
+      Transaction invalid = txManager.startShort();
+      txManager.invalidate(invalid.getTransactionId());
       // start a tx1, add a change A and commit
       Transaction tx1 = txManager.startShort();
       Assert.assertTrue(txManager.canCommit(tx1, Collections.singleton(a)));
@@ -161,6 +166,13 @@ public abstract class AbstractTransactionStateStorageTest {
       TransactionSnapshot newState = txManager.getCurrentState();
       LOG.info("New state: " + newState);
       assertEquals(origState, newState);
+
+      // CDAP-8855 - fix invalidArray on recovering state test
+      // Verify that the invalid transaction list matches
+      Transaction checkTx = txManager.startShort();
+      Assert.assertEquals(origState.getInvalid(), Longs.asList(checkTx.getInvalids()));
+      txManager.abort(checkTx);
+      txManager.abort(invalid);
 
       // commit tx2
       Assert.assertTrue(txManager.commit(tx2));

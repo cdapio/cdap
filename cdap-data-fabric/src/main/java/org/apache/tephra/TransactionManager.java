@@ -501,6 +501,9 @@ public class TransactionManager extends AbstractService {
     readPointer = snapshot.getReadPointer();
     lastWritePointer = snapshot.getWritePointer();
     invalid.addAll(snapshot.getInvalid());
+    // CDAP-8855 - fix invalidArray on recovering state
+    Collections.sort(invalid);
+    invalidArray = invalid.toLongArray();
     inProgress.putAll(txnBackwardsCompatCheck(defaultLongTimeout, longTimeoutTolerance, snapshot.getInProgress()));
     committingChangeSets.putAll(snapshot.getCommittingChangeSets());
     committedChangeSets.putAll(snapshot.getCommittedChangeSets());
@@ -1268,7 +1271,8 @@ public class TransactionManager extends AbstractService {
   private abstract static class DaemonThreadExecutor extends Thread {
     private AtomicBoolean stopped = new AtomicBoolean(false);
 
-    public DaemonThreadExecutor(String name) {
+    // CDAP-8855 - fix checkstyle
+    DaemonThreadExecutor(String name) {
       super(name);
       setDaemon(true);
     }
