@@ -18,14 +18,13 @@ package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
-import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link NamespacedLocationFactory} to be only used in unit tests. This implementation does not
@@ -44,8 +43,8 @@ public class NamespacedLocationFactoryTestClient implements NamespacedLocationFa
   }
 
   @Override
-  public Location get(Id.Namespace namespaceId) throws IOException {
-    return get(namespaceId, null);
+  public Location get(NamespaceId namespaceId) throws IOException {
+    return locationFactory.create(namespaceDir).append(namespaceId.getNamespace());
   }
 
   @Override
@@ -53,20 +52,7 @@ public class NamespacedLocationFactoryTestClient implements NamespacedLocationFa
     if (namespaceMeta.getConfig().getRootDirectory() != null) {
       return locationFactory.create(namespaceMeta.getConfig().getRootDirectory());
     }
-    return get(namespaceMeta.getNamespaceId().toId(), null);
+    return get(namespaceMeta.getNamespaceId());
   }
 
-  @Override
-  public Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException {
-    Location namespaceLocation = locationFactory.create(namespaceDir).append(namespaceId.getId());
-    if (subPath != null) {
-      namespaceLocation = namespaceLocation.append(subPath);
-    }
-    return namespaceLocation;
-  }
-
-  @Override
-  public Location getBaseLocation() throws IOException {
-    return locationFactory.create("/");
-  }
 }

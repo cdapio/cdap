@@ -268,7 +268,7 @@ public class BaseHiveExploreServiceTest {
    * Create a namespace because app fabric is not started in explore tests.
    */
   protected static void createNamespace(NamespaceId namespaceId) throws Exception {
-    namespacedLocationFactory.get(namespaceId.toId()).mkdirs();
+    namespacedLocationFactory.get(namespaceId).mkdirs();
     NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(namespaceId.toId()).build();
     namespaceAdmin.create(namespaceMeta);
     if (!NamespaceId.DEFAULT.equals(namespaceId)) {
@@ -280,7 +280,7 @@ public class BaseHiveExploreServiceTest {
    * Delete a namespace because app fabric is not started in explore tests.
    */
   protected static void deleteNamespace(NamespaceId namespaceId) throws Exception {
-    namespacedLocationFactory.get(namespaceId.toId()).delete(true);
+    namespacedLocationFactory.get(namespaceId).delete(true);
     if (!NamespaceId.DEFAULT.equals(namespaceId)) {
       exploreService.deleteNamespace(namespaceId);
     }

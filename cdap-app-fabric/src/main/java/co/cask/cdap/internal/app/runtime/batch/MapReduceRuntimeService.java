@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -66,6 +66,7 @@ import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -509,13 +510,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * Creates a temporary directory through the {@link LocationFactory} provided to this class.
    */
   private Location createTempLocationDirectory() throws IOException {
-    Id.Program programId = context.getProgram().getId().toId();
+    ProgramId programId = context.getProgram().getId();
 
     String tempLocationName = String.format("%s/%s.%s.%s.%s.%s", cConf.get(Constants.AppFabric.TEMP_DIR),
                                             programId.getType().name().toLowerCase(),
-                                            programId.getNamespaceId(), programId.getApplicationId(),
-                                            programId.getId(), context.getRunId().getId());
-    Location location = locationFactory.get(programId.getNamespace(), tempLocationName);
+                                            programId.getNamespaceId(), programId.getApplication(),
+                                            programId.getProgram(), context.getRunId().getId());
+    Location location = locationFactory.get(programId.getNamespaceId()).append(tempLocationName);
     location.mkdirs();
     return location;
   }

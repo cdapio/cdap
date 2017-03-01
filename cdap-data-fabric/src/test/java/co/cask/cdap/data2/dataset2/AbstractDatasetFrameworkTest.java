@@ -455,8 +455,8 @@ public abstract class AbstractDatasetFrameworkTest {
     NamespaceId namespace2 = new NamespaceId("ns2");
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace1).build());
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace2).build());
-    namespacedLocationFactory.get(namespace1.toId()).mkdirs();
-    namespacedLocationFactory.get(namespace2.toId()).mkdirs();
+    namespacedLocationFactory.get(namespace1).mkdirs();
+    namespacedLocationFactory.get(namespace2).mkdirs();
 
     // create 2 tables, one in each namespace. both tables have the same name.
     DatasetId table1ID = namespace1.dataset("table");
@@ -506,7 +506,7 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertTrue(framework.hasInstance(table2ID));
 
     // delete one namespace and make sure the other still exists
-    namespacedLocationFactory.get(namespace1.toId()).delete(true);
+    namespacedLocationFactory.get(namespace1).delete(true);
     Assert.assertTrue(framework.hasInstance(table2ID));
   }
 
@@ -519,8 +519,8 @@ public abstract class AbstractDatasetFrameworkTest {
     NamespaceId namespace2 = new NamespaceId("ns2");
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace1).build());
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace2).build());
-    namespacedLocationFactory.get(namespace1.toId()).mkdirs();
-    namespacedLocationFactory.get(namespace2.toId()).mkdirs();
+    namespacedLocationFactory.get(namespace1).mkdirs();
+    namespacedLocationFactory.get(namespace2).mkdirs();
 
     // add modules in each namespace, with one module that shares the same name
     DatasetModuleId simpleModuleNs1 = namespace1.datasetModule(SimpleKVTable.class.getName());

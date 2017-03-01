@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,6 @@ import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.upgrade.DataMigrationException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.AbstractModule;
@@ -51,7 +50,6 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
-import javax.annotation.Nullable;
 
 /**
  * Command line tool to migrate data between different versions of CDAP.
@@ -244,33 +242,20 @@ public class DataMigration {
     }
 
     @Override
-    public Location get(Id.Namespace namespaceId) throws IOException {
-      return get(namespaceId, null);
-    }
-
-    @Override
-    public Location get(NamespaceMeta namespaceMeta) throws IOException {
-      return get(namespaceMeta.getNamespaceId().toId(), null);
-    }
-
-    @Override
-    public Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException {
-      // Only allow operates on system namespace
-      if (!Id.Namespace.SYSTEM.equals(namespaceId)) {
+    public Location get(NamespaceId namespaceId) throws IOException {
+      // Only allow operations on system namespace
+      if (!NamespaceId.SYSTEM.equals(namespaceId)) {
         throw new IllegalArgumentException("Location operation on namespace " + namespaceId +
                                              " is not allowed. Only SYSTEM namespace is supported.");
       }
 
-      Location namespaceLocation = locationFactory.create(namespaceDir).append(namespaceId.getId());
-      if (subPath != null) {
-        namespaceLocation = namespaceLocation.append(subPath);
-      }
-      return namespaceLocation;
+      return locationFactory.create(namespaceDir).append(namespaceId.getNamespace());
     }
 
     @Override
-    public Location getBaseLocation() throws IOException {
-      return locationFactory.create("/");
+    public Location get(NamespaceMeta namespaceMeta) throws IOException {
+      return get(namespaceMeta.getNamespaceId());
     }
+
   }
 }

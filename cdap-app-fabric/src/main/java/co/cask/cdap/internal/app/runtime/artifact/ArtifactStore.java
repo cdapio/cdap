@@ -702,8 +702,8 @@ public class ArtifactStore {
 
   private Location copyFile(Id.Artifact artifactId,
                             InputSupplier<? extends InputStream> artifactContentSupplier) throws IOException {
-    Location fileDirectory = namespacedLocationFactory.get(artifactId.getNamespace(),
-                                                           ARTIFACTS_PATH).append(artifactId.getName());
+    Location fileDirectory = namespacedLocationFactory.get(artifactId.getNamespace().toEntityId())
+                                                      .append(ARTIFACTS_PATH).append(artifactId.getName());
     Location destination = fileDirectory.append(artifactId.getVersion().getVersion()).getTempFile(".jar");
     Locations.mkdirsIfNotExists(fileDirectory);
     // write the file contents
@@ -751,7 +751,7 @@ public class ArtifactStore {
   @VisibleForTesting
   void clear(final NamespaceId namespace) throws IOException {
     final Id.Namespace namespaceId = namespace.toId();
-    namespacedLocationFactory.get(namespaceId, ARTIFACTS_PATH).delete(true);
+    namespacedLocationFactory.get(namespace).append(ARTIFACTS_PATH).delete(true);
 
     try {
       transactional.execute(new TxRunnable() {

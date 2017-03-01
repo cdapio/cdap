@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -91,8 +91,8 @@ public abstract class StreamAdminTest {
   protected abstract OwnerAdmin getOwnerAdmin();
 
   protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
-    namespacedLocationFactory.get(FOO_NAMESPACE.toId()).mkdirs();
-    namespacedLocationFactory.get(OTHER_NAMESPACE.toId()).mkdirs();
+    namespacedLocationFactory.get(FOO_NAMESPACE).mkdirs();
+    namespacedLocationFactory.get(OTHER_NAMESPACE).mkdirs();
   }
 
   @ClassRule

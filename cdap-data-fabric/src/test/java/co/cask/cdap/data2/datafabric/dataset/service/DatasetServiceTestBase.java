@@ -254,7 +254,7 @@ public abstract class DatasetServiceTestBase {
     waitForService(Constants.Service.DATASET_EXECUTOR);
     waitForService(Constants.Service.DATASET_MANAGER);
     // this usually happens while creating a namespace, however not doing that in data fabric tests
-    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(NamespaceId.DEFAULT.toId()));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(NamespaceId.DEFAULT));
   }
 
   private static void waitForService(String service) {
