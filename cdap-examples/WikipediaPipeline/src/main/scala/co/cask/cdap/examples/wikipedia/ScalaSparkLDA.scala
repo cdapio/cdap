@@ -38,10 +38,21 @@ class ScalaSparkLDA extends SparkMain {
     val sc = new SparkContext
 
     val arguments = sec.getRuntimeArguments
+    System.out.println(sec.getSpecification.getProperties);
+    println(sec.getSpecification.getProperties)
+       System.out.println(arguments);
+        println(arguments)
+
+    val inputNamespace = arguments.get("input_namespace")
+    val outputNamespace = arguments.get("output_namespace")
+
+    println(s"inputNamespace=$inputNamespace outputNamespace=$outputNamespace")
 
     // Pre-process data for LDA
     val (corpus, vocabArray, _) = ClusteringUtils.preProcess(
-      sc.fromDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET), sec.getRuntimeArguments.toMap)
+      if (inputNamespace != null) sc.fromDataset(inputNamespace, WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET)
+      else sc.fromDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET),
+      sec.getRuntimeArguments.toMap)
     corpus.cache()
 
     // Run LDA
@@ -55,7 +66,8 @@ class ScalaSparkLDA extends SparkMain {
       }
     }
 
-    ClusteringUtils.storeResults(sc, sec, topics, WikipediaPipelineApp.SPARK_CLUSTERING_OUTPUT_DATASET)
+    ClusteringUtils.storeResults(sc, sec, topics, outputNamespace,
+            WikipediaPipelineApp.SPARK_CLUSTERING_OUTPUT_DATASET)
   }
 
   private def runLDA(corpus: RDD[(Long, Vector)],

@@ -61,6 +61,10 @@ public class StreamToDataset extends AbstractMapReduce {
   @Override
   public void initialize() throws Exception {
     MapReduceContext context = getContext();
+    String inputNamespace = context.getRuntimeArguments().get("input_namespace");
+    String outputNamespace = context.getRuntimeArguments().get("output_namespace");
+    System.out.println("ARGS input_namespace=" +  inputNamespace +  " output_namespace=" + outputNamespace);
+
     Job job = context.getHadoopJob();
     job.setNumReduceTasks(0);
     WorkflowToken workflowToken = context.getWorkflowToken();
@@ -79,8 +83,18 @@ public class StreamToDataset extends AbstractMapReduce {
     }
     LOG.info("Using '{}' as the input stream and '{}' as the output dataset.", inputStream, outputDataset);
     job.setMapperClass(mapper);
-    context.addInput(Input.ofStream(inputStream));
-    context.addOutput(Output.ofDataset(outputDataset));
+    if (inputNamespace != null) {
+      LOG.info("Using {} as input namespace", inputNamespace);
+      context.addInput(Input.ofStream(inputStream).fromNamespace(inputNamespace));
+    } else {
+      context.addInput(Input.ofStream(inputStream));
+    }
+    if (outputNamespace != null) {
+      LOG.info("Using {} as output namespace", outputNamespace);
+      context.addOutput(Output.ofDataset(outputDataset).fromNamespace(outputNamespace));
+    } else {
+      context.addOutput(Output.ofDataset(outputDataset));
+    }
   }
 
   @Override

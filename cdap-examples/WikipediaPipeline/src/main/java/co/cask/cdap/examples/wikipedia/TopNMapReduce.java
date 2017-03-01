@@ -60,6 +60,10 @@ public class TopNMapReduce extends AbstractMapReduce {
   public void initialize() throws Exception {
     MapReduceContext context = getContext();
     Map<String, String> runtimeArguments = context.getRuntimeArguments();
+    String inputNamespace = context.getRuntimeArguments().get("input_namespace");
+    String outputNamespace = context.getRuntimeArguments().get("output_namespace");
+    System.out.println("ARGS input_namespace=" +  inputNamespace +  " output_namespace=" + outputNamespace);
+
     Job job = context.getHadoopJob();
     WorkflowToken workflowToken = context.getWorkflowToken();
     int topNRank = 10;
@@ -76,8 +80,17 @@ public class TopNMapReduce extends AbstractMapReduce {
     job.setNumReduceTasks(numReduceTasks);
     job.setMapperClass(TokenizerMapper.class);
     job.setReducerClass(TopNReducer.class);
-    context.addInput(Input.ofDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET));
-    context.addOutput(Output.ofDataset(WikipediaPipelineApp.MAPREDUCE_TOPN_OUTPUT));
+    if (inputNamespace != null) {
+      context.addInput(Input.ofDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET)
+                         .fromNamespace(inputNamespace));
+    } else {
+      context.addInput(Input.ofDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET));
+    }
+    if (outputNamespace != null) {
+      context.addOutput(Output.ofDataset(WikipediaPipelineApp.MAPREDUCE_TOPN_OUTPUT).fromNamespace(outputNamespace));
+    } else {
+      context.addOutput(Output.ofDataset(WikipediaPipelineApp.MAPREDUCE_TOPN_OUTPUT));
+    }
   }
 
   @Override

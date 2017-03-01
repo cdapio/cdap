@@ -29,7 +29,7 @@ import java.util.Map;
  * {@link DatasetDefinition} for {@link KeyValueTable}.
  */
 @Beta
-public class KeyValueTableDefinition
+public class   KeyValueTableDefinition
   extends CompositeDatasetDefinition<KeyValueTable> {
 
   public KeyValueTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {

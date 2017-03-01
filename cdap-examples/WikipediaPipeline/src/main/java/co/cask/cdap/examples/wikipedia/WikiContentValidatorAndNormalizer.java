@@ -65,11 +65,24 @@ public class WikiContentValidatorAndNormalizer extends AbstractMapReduce {
   @Override
   public void initialize() throws Exception {
     MapReduceContext context = getContext();
+    String inputNamespace = context.getRuntimeArguments().get("input_namespace");
+    String outputNamespace = context.getRuntimeArguments().get("output_namespace");
+    System.out.println("ARGS input_namespace=" +  inputNamespace +  " output_namespace=" + outputNamespace);
+
     Job job = context.getHadoopJob();
     job.setMapperClass(FilterNormalizerMapper.class);
     job.setNumReduceTasks(0);
-    context.addInput(Input.ofDataset(WikipediaPipelineApp.RAW_WIKIPEDIA_DATASET));
-    context.addOutput(Output.ofDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET));
+    if (inputNamespace != null) {
+      context.addInput(Input.ofDataset(WikipediaPipelineApp.RAW_WIKIPEDIA_DATASET).fromNamespace(inputNamespace));
+    } else {
+      context.addInput(Input.ofDataset(WikipediaPipelineApp.RAW_WIKIPEDIA_DATASET));
+    }
+    if (outputNamespace != null) {
+      context.addOutput(Output.ofDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET)
+                          .fromNamespace(outputNamespace));
+    } else {
+      context.addOutput(Output.ofDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET));
+    }
   }
 
   @Override

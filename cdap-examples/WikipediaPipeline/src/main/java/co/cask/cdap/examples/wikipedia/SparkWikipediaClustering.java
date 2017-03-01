@@ -18,6 +18,10 @@ package co.cask.cdap.examples.wikipedia;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.spark.AbstractSpark;
+import com.google.common.collect.ImmutableMap;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Spark program that executes in a workflow and analyzes wikipedia data
@@ -34,6 +38,7 @@ public class SparkWikipediaClustering extends AbstractSpark {
   @Override
   protected void configure() {
     if ("lda".equals(appConfig.clusteringAlgorithm)) {
+      setProperties(ImmutableMap.<String, String>of("input_namespace", "fake_namespace"));
       setDescription("A Spark program that analyzes wikipedia data using Latent Dirichlet Allocation (LDA).");
       setMainClass(ScalaSparkLDA.class);
     } else if ("kmeans".equals(appConfig.clusteringAlgorithm)) {
