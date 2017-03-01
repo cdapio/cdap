@@ -659,16 +659,16 @@ context for each metric. Use an HTTP POST request::
 with the arguments as a JSON string in the body. The format of the JSON follows this
 structure (pretty-printed)::
 
-  { “query1”: {
-        "tags": {“namespace”: “default”, “app”: “PurchaseHistory”}, 
-        "metrics": [“metric1”, “metric2”],
-        "groupBy": [“app”, “dataset”],
-        "timeRange": {“aggregate”: “true”}
+  { "query1": {
+        "tags": {"namespace": "default", "app": "PurchaseHistory"}, 
+        "metrics": ["metric1", "metric2"],
+        "groupBy": ["app", "dataset"],
+        "timeRange": {"aggregate": "true"}
         },
-    “query2”: {
-        "tags": {“namespace”: “default”},
-        "metrics": [“metric1”, “metric2”],
-        "timeRange": {“start”: “now­2s”, “end”: “now”}
+    "query2": {
+        "tags": {"namespace": "default"},
+        "metrics": ["metric1", "metric2"],
+        "timeRange": {"start": "now-2s", "end": "now"}
         }
   }
 
@@ -897,7 +897,7 @@ the time of the query) something similar to::
 Query Tips
 ----------
 
-- To retrieve the number of input data objects (“events”) processed by the flowlet named *splitter*,
+- To retrieve the number of input data objects ("events") processed by the flowlet named *splitter*,
   in the flow *CountRandom* of the example application *CountRandom*, over the last 5 seconds, you can issue an HTTP
   POST method::
 
