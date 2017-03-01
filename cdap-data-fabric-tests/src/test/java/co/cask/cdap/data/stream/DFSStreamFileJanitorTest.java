@@ -21,7 +21,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.kerberos.OwnerStore;
@@ -91,8 +90,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
     dfsCluster.waitClusterUp();
     namespaceAdmin = new InMemoryNamespaceClient();
     final LocationFactory lf = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
-    final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, new RootLocationFactory(lf), lf,
-                                                                               namespaceAdmin);
+    final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf, namespaceAdmin);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),

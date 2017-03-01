@@ -25,10 +25,10 @@ import co.cask.cdap.api.dataset.Reconfigurable;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -42,7 +42,7 @@ import java.util.Objects;
 public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmin>, Reconfigurable {
 
   @Inject
-  private RootLocationFactory absoluteLocationFactory;
+  private LocationFactory locationFactory;
 
   @Inject
   private NamespacedLocationFactory namespacedLocationFactory;
@@ -115,13 +115,13 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmi
   @Override
   public FileSetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
-    return new FileSetAdmin(datasetContext, cConf, absoluteLocationFactory, namespacedLocationFactory, spec);
+    return new FileSetAdmin(datasetContext, cConf, locationFactory, namespacedLocationFactory, spec);
   }
 
   @Override
   public FileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> arguments,
                             ClassLoader classLoader) throws IOException {
-    return new FileSetDataset(datasetContext, cConf, spec, absoluteLocationFactory, namespacedLocationFactory,
+    return new FileSetDataset(datasetContext, cConf, spec, locationFactory, namespacedLocationFactory,
                               arguments == null ? Collections.<String, String>emptyMap() : arguments);
   }
 }

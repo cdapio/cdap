@@ -18,7 +18,7 @@ package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.RootLocationFactory;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Strings;
@@ -34,21 +34,16 @@ import javax.annotation.Nullable;
  */
 public class DefaultNamespacedLocationFactory implements NamespacedLocationFactory {
 
-  // we need the RootLocationFactory because we want to work with the root of filesystem for custom namespace mapping
-  // for example if the custom mapping is /user/someuser/ this requires a locationfactory which works with root of
-  // the filesystem
-  private final RootLocationFactory rootLocationFactory;
   private final LocationFactory locationFactory;
   private final String namespaceDir;
 
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
-  public DefaultNamespacedLocationFactory(CConfiguration cConf, RootLocationFactory rootLocationFactory,
+  public DefaultNamespacedLocationFactory(CConfiguration cConf,
                                           LocationFactory locationFactory,
                                           NamespaceQueryAdmin namespaceQueryAdmin) {
     this.namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
-    this.rootLocationFactory = rootLocationFactory;
     this.locationFactory = locationFactory;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
@@ -61,16 +56,11 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
   @Override
   public Location get(NamespaceMeta namespaceMeta) throws IOException {
     String rootDirectory = namespaceMeta.getConfig().getRootDirectory();
-    Location namespaceLocation;
     if (Strings.isNullOrEmpty(rootDirectory)) {
       // if no custom mapping was specified the use the default namespaces location
-      namespaceLocation = getNonCustomMappedLocation(namespaceMeta.getNamespaceId().toId());
-    } else {
-      // custom mapping are expected to be given from the root of the filesystem.
-      // so here use the rootlocationfactory
-      namespaceLocation = rootLocationFactory.create("/").append(rootDirectory);
+      return getNonCustomMappedLocation(namespaceMeta.getNamespaceId().toId());
     }
-    return namespaceLocation;
+    return Locations.getLocationFromAbsolutePath(locationFactory, rootDirectory);
   }
 
   @Override

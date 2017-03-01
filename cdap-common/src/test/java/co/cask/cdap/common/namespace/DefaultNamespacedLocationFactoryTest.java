@@ -18,7 +18,7 @@ package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.RootLocationFactory;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -43,8 +43,6 @@ public class DefaultNamespacedLocationFactoryTest {
   @Test
   public void testGet() throws Exception {
     File rootLocationFactoryPath = TEMP_FOLDER.newFolder();
-    RootLocationFactory rootLocationFactory =
-      new RootLocationFactory(new LocalLocationFactory(rootLocationFactoryPath));
 
     File locationFactoryPath = TEMP_FOLDER.newFolder();
     LocationFactory locationFactory = new LocalLocationFactory(locationFactoryPath);
@@ -60,7 +58,7 @@ public class DefaultNamespacedLocationFactoryTest {
 
     CConfiguration cConf = CConfiguration.create();
     NamespacedLocationFactory namespacedLocationFactory =
-      new DefaultNamespacedLocationFactory(cConf, rootLocationFactory, locationFactory, nsAdmin);
+      new DefaultNamespacedLocationFactory(cConf, locationFactory, nsAdmin);
 
     Location defaultLoc = namespacedLocationFactory.get(Id.Namespace.DEFAULT);
     Location ns1Loc = namespacedLocationFactory.get(ns1);
@@ -69,7 +67,7 @@ public class DefaultNamespacedLocationFactoryTest {
     Location expectedLocation = locationFactory.create(cConf.get(Constants.Namespace.NAMESPACES_DIR))
       .append(NamespaceId.DEFAULT.getNamespace());
     Assert.assertEquals(expectedLocation, defaultLoc);
-    expectedLocation = rootLocationFactory.create("/ns1");
+    expectedLocation = Locations.getLocationFromAbsolutePath(locationFactory, "/ns1");
     Assert.assertEquals(expectedLocation, ns1Loc);
 
     // test these are not the same

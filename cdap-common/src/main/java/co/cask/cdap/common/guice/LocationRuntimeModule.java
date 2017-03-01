@@ -17,7 +17,6 @@ package co.cask.cdap.common.guice;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.runtime.RuntimeModule;
@@ -71,12 +70,6 @@ public final class LocationRuntimeModule extends RuntimeModule {
     private LocalLocationFactory providesLocalLocationFactory(CConfiguration cConf) {
       return new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
     }
-
-    @Provides
-    @Singleton
-    private RootLocationFactory providesRootLocationFactory(CConfiguration cConf) {
-      return new RootLocationFactory(new LocalLocationFactory());
-    }
   }
 
   private static final class HDFSLocationModule extends PrivateModule {
@@ -85,10 +78,8 @@ public final class LocationRuntimeModule extends RuntimeModule {
     protected void configure() {
       bind(NamespacedLocationFactory.class).to(DefaultNamespacedLocationFactory.class);
       bind(FileContext.class).toProvider(FileContextProvider.class).in(Scopes.SINGLETON);
-      bind(RootLocationFactory.class).toProvider(RootLocationFactoryProvider.class).in(Scopes.SINGLETON);
 
       expose(LocationFactory.class);
-      expose(RootLocationFactory.class);
       expose(NamespacedLocationFactory.class);
     }
 
