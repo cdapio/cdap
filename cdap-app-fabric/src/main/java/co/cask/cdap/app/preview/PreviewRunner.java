@@ -17,6 +17,7 @@
 package co.cask.cdap.app.preview;
 
 import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.gson.JsonElement;
 import org.apache.twill.api.logging.LogEntry;
 
@@ -33,9 +34,10 @@ public interface PreviewRunner {
   /**
    * Start the preview of an application.
    * @param request the {@link PreviewRequest} with which preview to be started
+   * @return the {@link ProgramRunId} assigned to the preview run
    * @throws Exception if there were any error during starting preview
    */
-  void startPreview(PreviewRequest<?> request) throws Exception;
+  ProgramRunId startPreview(PreviewRequest<?> request) throws Exception;
 
   /**
    * Get the status of the preview represented by this {@link PreviewRunner}.
@@ -67,10 +69,4 @@ public interface PreviewRunner {
    * @return the {@link List} of metrics emitted during the preview run
    */
   List<MetricTimeSeries> getMetrics();
-
-  /**
-   * Get the logs for the preview run represented by this {@link PreviewRunner}.
-   * @return the logs
-   */
-  List<LogEntry> getLogs();
 }

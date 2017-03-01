@@ -24,7 +24,6 @@ import co.cask.cdap.app.preview.PreviewRunner;
 import co.cask.cdap.app.preview.PreviewRunnerModule;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -51,6 +50,7 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecurityModules;
@@ -92,6 +92,8 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public class DefaultPreviewManager implements PreviewManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewManager.class);
+  private static final String PREFIX = "preview-";
+
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final DiscoveryService discoveryService;
@@ -165,19 +167,18 @@ public class DefaultPreviewManager implements PreviewManager {
   }
 
   @Override
-  public ApplicationId start(NamespaceId namespace, AppRequest<?> appRequest) throws Exception {
+  public ProgramRunId start(NamespaceId namespace, AppRequest<?> appRequest) throws Exception {
     Set<String> realDatasets = appRequest.getPreview() == null ? new HashSet<String>()
       : appRequest.getPreview().getRealDatasets();
 
-    ApplicationId previewApp = namespace.app(RunIds.generate().getId());
+    ApplicationId previewApp = namespace.app(PREFIX + System.currentTimeMillis());
     Injector injector = createPreviewInjector(previewApp, realDatasets);
     appInjectors.put(previewApp, injector);
     PreviewRunner runner = injector.getInstance(PreviewRunner.class);
     if (runner instanceof Service) {
       ((Service) runner).startAndWait();
     }
-    runner.startPreview(new PreviewRequest<>(getProgramIdFromRequest(previewApp, appRequest), appRequest));
-    return previewApp;
+    return runner.startPreview(new PreviewRequest<>(getProgramIdFromRequest(previewApp, appRequest), appRequest));
   }
 
   @Override

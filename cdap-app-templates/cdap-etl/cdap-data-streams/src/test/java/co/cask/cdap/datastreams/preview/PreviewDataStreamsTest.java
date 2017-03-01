@@ -112,7 +112,8 @@ public class PreviewDataStreamsTest extends HydratorTestBase {
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig, previewConfig);
 
     // Start the preview and get the corresponding PreviewRunner.
-    final PreviewRunner previewRunner = previewManager.getRunner(previewManager.start(NamespaceId.DEFAULT, appRequest));
+    final PreviewRunner previewRunner =
+      previewManager.getRunner(previewManager.start(NamespaceId.DEFAULT, appRequest).getParent().getParent());
 
     // Wait for the preview to be running and wait until the records are processed in the sink.
     Tasks.waitFor(true, new Callable<Boolean>() {
