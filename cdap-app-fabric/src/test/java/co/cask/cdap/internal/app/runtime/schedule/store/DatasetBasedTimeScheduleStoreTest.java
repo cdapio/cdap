@@ -309,6 +309,5 @@ public class DatasetBasedTimeScheduleStoreTest {
   @AfterClass
   public static void cleanup() throws SchedulerException, InterruptedException {
     schedulerTearDown();
-    Thread.sleep(10000);
   }
 }
