@@ -59,3 +59,10 @@
   ng-if="PreviewController.previewData.length === 0 && !PreviewController.loading">
   <p>No data</p>
 </div>
+
+<div class="tracker-no-result text-center"
+  ng-if="!PreviewController.previewData && PreviewController.previewNotAvailable">
+  <h3>
+    <span>Preview is not available for this {{PreviewController.entityType}}</span>
+  </h3>
+</div>

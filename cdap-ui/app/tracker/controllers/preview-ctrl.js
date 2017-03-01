@@ -22,6 +22,7 @@ class TrackerPreviewController {
     this.dataSrc = new MyCDAPDataSource($scope);
     this.loading = true;
     this.viewLimit = 10;
+    this.previewNotAvailable = false;
 
     this.entityExploreUrl = window.getAbsUIUrl({
       namespaceId: $state.params.namespace,
@@ -38,19 +39,22 @@ class TrackerPreviewController {
       scope: this.$scope
     };
 
-    let entityType;
     if (this.$state.params.entityType === 'streams') {
-      entityType = 'stream';
+      this.entityType = 'stream';
     } else if (this.$state.params.entityType === 'datasets') {
-      entityType = 'dataset';
+      this.entityType = 'dataset';
     }
 
-    let query = 'SELECT * FROM ' + entityType + '_' + this.$state.params.entityId + ' LIMIT 500';
+    let query = 'SELECT * FROM ' + this.entityType + '_' + this.$state.params.entityId + ' LIMIT 500';
 
     this.myTrackerApi.postQuery(params, { query: query })
       .$promise
       .then((res) => {
         this.pollQueryStatus(res.handle);
+      }, (err) => {
+        this.loading = false;
+        this.previewNotAvailable = true;
+        console.log('Error', err);
       });
   }
 
