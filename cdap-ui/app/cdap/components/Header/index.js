@@ -24,10 +24,10 @@ import MetadataDropdown from 'components/Header/MetadataDropdown';
 import CaskMarketButton from 'components/Header/CaskMarketButton';
 import {MyNamespaceApi} from 'api/namespace';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
-import find from 'lodash/find';
 import classnames from 'classnames';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
+import getDefaultNamespace from 'services/get-default-namespace';
 
 require('./Header.scss');
 
@@ -63,7 +63,7 @@ export default class Header extends Component {
         }
       );
     this.nsSubscription = NamespaceStore.subscribe(() => {
-      let selectedNamespace = this.getDefaultNamespace();
+      let selectedNamespace = NamespaceStore.getState().selectedNamespace || getDefaultNamespace();
       if (selectedNamespace !== this.state.currentNamespace) {
         this.setState({
           currentNamespace: selectedNamespace
@@ -76,30 +76,6 @@ export default class Header extends Component {
     if (this.namespacesubscription) {
       this.namespacesubscription.dispose();
     }
-  }
-  findNamespace(list, name) {
-    return find(list, {name: name});
-  }
-  getDefaultNamespace() {
-    let list = NamespaceStore.getState().namespaces;
-    if (list.length === 0) { return; }
-    let selectedNamespace;
-    let defaultNamespace = localStorage.getItem('DefaultNamespace');
-    let defaultNsFromBackend = list.filter(ns => ns.name === defaultNamespace);
-    if (defaultNsFromBackend.length) {
-      selectedNamespace = defaultNsFromBackend[0];
-    }
-    // Check #2
-    if (!selectedNamespace) {
-      selectedNamespace = this.findNamespace(list, 'default');
-    }
-    // Check #3
-    if (!selectedNamespace) {
-      selectedNamespace = list[0].name;
-    } else {
-      selectedNamespace = selectedNamespace.name;
-    }
-    return selectedNamespace;
   }
   toggleNavbar() {
     this.setState({
