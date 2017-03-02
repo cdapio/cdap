@@ -23,7 +23,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>3.5.4-SNAPSHOT</version>
+    <version>3.5.4</version>
   </parent>
 
   <artifactId>cdap-app-fabric</artifactId>
@@ -223,7 +223,7 @@
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api-spark</artifactId>
-      <version>3.5.4-SNAPSHOT</version>
+      <version>3.5.4</version>
       <scope>test</scope>
     </dependency>
     <dependency>
