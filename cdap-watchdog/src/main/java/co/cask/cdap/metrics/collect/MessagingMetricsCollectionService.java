@@ -84,7 +84,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
   @Override
   protected void publish(Iterator<MetricValues> metrics) throws Exception {
     int size = topicPayloads.size();
-    while (metrics.hasNext() && isRunning()) {
+    while (metrics.hasNext()) {
       encoderOutputStream.reset();
       MetricValues metricValues = metrics.next();
       // Encode MetricValues into bytes
@@ -129,7 +129,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
       int failureCount = 0;
       long startTime = -1L;
       boolean done = false;
-      while (!done && isRunning()) {
+      while (!done) {
         try {
           messagingService.publish(StoreRequestBuilder.of(topicId).addPayloads(payloads.iterator()).build());
           payloads.clear();
@@ -139,16 +139,14 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
           if (startTime < 0) {
             startTime = System.currentTimeMillis();
           }
-          long retryMillis = retryStrategy.nextRetry(++failureCount, startTime);
+          long retryMillis = getRetryStrategy().nextRetry(++failureCount, startTime);
           if (retryMillis < 0) {
             throw new IOException("Failed to publish messages to TMS and exceeded retry limit.", e);
           }
           LOG.debug("Failed to publish messages to TMS due to {}. Will be retried in {} ms.",
                     e.getMessage(), retryMillis);
           try {
-            if (isRunning()) {
-              TimeUnit.MILLISECONDS.sleep(retryMillis);
-            }
+            TimeUnit.MILLISECONDS.sleep(retryMillis);
           } catch (InterruptedException e1) {
             // Something explicitly stopping this thread. Simply just break and reset the interrupt flag.
             Thread.currentThread().interrupt();
@@ -156,6 +154,14 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
           }
         }
       }
+    }
+
+    private RetryStrategy getRetryStrategy() {
+      if (isRunning()) {
+        return retryStrategy;
+      }
+      // If failure happen during shutdown, use a retry strategy that only retry fixed number of times
+      return RetryStrategies.timeLimit(5, TimeUnit.SECONDS, RetryStrategies.fixDelay(200, TimeUnit.MILLISECONDS));
     }
   }
 }
