@@ -48,9 +48,6 @@ Improvements
 - :cask-issue:`CDAP-8250` - Reduced non-informative stacktrace information in the log when
   a connection to the CDAP Router is closed prematurely.
 
-- :cask-issue:`CDAP-8291` - Improved the master process stop procedure to support fast
-  failover when running with HA. Added a new kill command to force-kill CDAP processes.
-
 - :cask-issue:`CDAP-8565` - Improved the master process stop procedure to support fast
   failover when running with HA. Added a new kill command to force-kill CDAP processes.
 
