@@ -20,6 +20,7 @@ import {MyArtifactApi} from 'api/artifact';
 import find from 'lodash/find';
 import MyWranglerApi from 'api/wrangler';
 import WranglerStore from 'components/Wrangler/store';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class AddToHydratorModal extends Component {
   constructor(props) {
@@ -45,11 +46,13 @@ export default class AddToHydratorModal extends Component {
   }
 
   generateLinks() {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+
     let state = WranglerStore.getState().wrangler;
     let workspaceId = state.workspaceId;
 
     let requestObj = {
-      namespace: 'default',
+      namespace,
       workspaceId
     };
 
@@ -58,7 +61,7 @@ export default class AddToHydratorModal extends Component {
       requestObj.directive = directives;
     }
 
-    MyArtifactApi.list({namespace: 'default'})
+    MyArtifactApi.list({ namespace })
       .combineLatest(MyWranglerApi.getSchema(requestObj))
       .subscribe((res) => {
         let batchArtifact = find(res[0], { 'name': 'cdap-data-pipeline' });
@@ -101,7 +104,7 @@ export default class AddToHydratorModal extends Component {
         let realtimeUrl = window.getHydratorUrl({
           stateName: 'hydrator.create',
           stateParams: {
-            namespace: 'default',
+            namespace,
             configParams: realtimeConfig
           }
         });
@@ -109,7 +112,7 @@ export default class AddToHydratorModal extends Component {
         let batchUrl = window.getHydratorUrl({
           stateName: 'hydrator.create',
           stateParams: {
-            namespace: 'default',
+            namespace,
             configParams: batchConfig
           }
         });

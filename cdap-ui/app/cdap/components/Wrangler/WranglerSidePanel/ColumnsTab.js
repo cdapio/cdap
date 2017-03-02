@@ -20,6 +20,7 @@ import MyWranglerApi from 'api/wrangler';
 import shortid from 'shortid';
 import ColumnsTabRow from 'components/Wrangler/WranglerSidePanel/ColumnsTabRow';
 import {objectQuery} from 'services/helpers';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class ColumnsTab extends Component {
   constructor(props) {
@@ -48,9 +49,10 @@ export default class ColumnsTab extends Component {
   getSummary() {
     let state = WranglerStore.getState().wrangler;
     if (!state.workspaceId) { return; }
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
-      namespace: 'default',
+      namespace,
       workspaceId: state.workspaceId,
       limit: 100,
       directive: state.directives

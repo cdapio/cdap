@@ -23,6 +23,7 @@ import WranglerActions from 'components/Wrangler/store/WranglerActions';
 import CardActionFeedback from 'components/CardActionFeedback';
 import cookie from 'react-cookie';
 import isNil from 'lodash/isNil';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class WorkspaceModal extends Component {
   constructor(props) {
@@ -70,9 +71,10 @@ export default class WorkspaceModal extends Component {
   setWorkspace() {
     if (!this.state.workspaceId) { return; }
     let workspaceId = this.state.workspaceId;
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
-      namespace: 'default',
+      namespace,
       workspaceId: workspaceId,
       limit: 100
     };
@@ -101,9 +103,10 @@ export default class WorkspaceModal extends Component {
   createWorkspace() {
     if (!this.state.workspaceId) { return; }
     let workspaceId = this.state.workspaceId;
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
     MyWranglerApi.create({
-      namespace: 'default',
+      namespace,
       workspaceId
     }).subscribe((res) => {
       this.setState({
@@ -131,9 +134,10 @@ export default class WorkspaceModal extends Component {
   deleteWorkspace() {
     if (!this.state.workspaceId) { return; }
     let workspaceId = this.state.workspaceId;
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
     MyWranglerApi.delete({
-      namespace: 'default',
+      namespace,
       workspaceId
     }).subscribe((res) => {
       console.log(res);
@@ -175,8 +179,9 @@ export default class WorkspaceModal extends Component {
     if (!this.state.file) { return; }
 
     let delimiter = this.state.recordDelimiter;
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
-    let url = `/namespaces/default/apps/wrangler/services/service/methods/workspaces/${this.state.activeWorkspace}/upload`;
+    let url = `/namespaces/${namespace}/apps/wrangler/services/service/methods/workspaces/${this.state.activeWorkspace}/upload`;
 
     let headers = {
       'Content-Type': 'application/octet-stream',
@@ -200,7 +205,7 @@ export default class WorkspaceModal extends Component {
         console.log(res);
 
         let params = {
-          namespace: 'default',
+          namespace,
           workspaceId: this.state.activeWorkspace,
           limit: 100
         };

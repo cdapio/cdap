@@ -18,6 +18,7 @@ import React, { Component } from 'react';
 import MyWranglerApi from 'api/wrangler';
 import {MyArtifactApi} from 'api/artifact';
 import find from 'lodash/find';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class WranglerServiceControl extends Component {
   constructor(props) {
@@ -48,7 +49,9 @@ export default class WranglerServiceControl extends Component {
      *  4. Poll until service starts, then reload page
      **/
 
-    MyWranglerApi.getWranglerApp({ namespace: 'default' })
+    let namespace = NamespaceStore.getState().selectedNamespace;
+
+    MyWranglerApi.getWranglerApp({ namespace })
       .subscribe(() => {
         // Wrangler app already exist
         // Just start service
@@ -63,12 +66,14 @@ export default class WranglerServiceControl extends Component {
   }
 
   createApp() {
-    MyArtifactApi.list({ namespace: 'default' })
+    let namespace = NamespaceStore.getState().selectedNamespace;
+
+    MyArtifactApi.list({ namespace })
       .subscribe((res) => {
         console.log('Finding wrangler artifact');
         let artifact = find(res, { 'name': 'wrangler-service' });
 
-        MyWranglerApi.createApp({ namespace: 'default' }, { artifact })
+        MyWranglerApi.createApp({ namespace }, { artifact })
           .subscribe(() => {
             console.log('Wrangler app created. Starting service');
             this.startService();
@@ -82,7 +87,9 @@ export default class WranglerServiceControl extends Component {
   }
 
   startService() {
-    MyWranglerApi.startService({ namespace: 'default' })
+    let namespace = NamespaceStore.getState().selectedNamespace;
+
+    MyWranglerApi.startService({ namespace })
       .subscribe(() => {
         console.log('Service started. Polling for service status');
         this.pollServiceStatus();
@@ -95,7 +102,9 @@ export default class WranglerServiceControl extends Component {
   }
 
   pollServiceStatus() {
-    this.servicePoll = MyWranglerApi.pollServiceStatus({ namespace: 'default' })
+    let namespace = NamespaceStore.getState().selectedNamespace;
+
+    this.servicePoll = MyWranglerApi.pollServiceStatus({ namespace })
       .subscribe((res) => {
         if (res.status === 'RUNNING') {
           console.log('Service is RUNNING. Going into wrangler');

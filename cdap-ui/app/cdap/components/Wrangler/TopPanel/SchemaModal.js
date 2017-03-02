@@ -22,6 +22,7 @@ import {getParsedSchema} from 'components/SchemaEditor/SchemaHelpers';
 import MyWranglerApi from 'api/wrangler';
 import WranglerStore from 'components/Wrangler/store';
 import fileDownload from 'react-file-download';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class SchemaModal extends Component {
   constructor(props) {
@@ -46,8 +47,10 @@ export default class SchemaModal extends Component {
     let state = WranglerStore.getState().wrangler;
     let workspaceId = state.workspaceId;
 
+    let namespace = NamespaceStore.getState().selectedNamespace;
+
     let requestObj = {
-      namespace: 'default',
+      namespace,
       workspaceId
     };
 
