@@ -350,7 +350,12 @@ public final class Locations {
   public static Location getLocationFromAbsolutePath(LocationFactory locationFactory, String absolutePath) {
     URI homeURI = locationFactory.getHomeLocation().toURI();
     try {
-      return locationFactory.create(new URI(homeURI.getScheme(), homeURI.getAuthority(), absolutePath, null, null));
+      // Make the path absolute and normalize it so that it follows URI spec RFC-2396 before passing to location factory
+      // Also replace multiple "/" with one "/" since URI spec actually doesn't allow multiples and it can messes
+      // up the URI parsing
+      String path = URI.create("/").resolve(absolutePath.replaceAll("/+", "/")).normalize().getPath();
+      URI uri = new URI(homeURI.getScheme(), homeURI.getAuthority(), path, null, null);
+      return locationFactory.create(uri);
     } catch (URISyntaxException e) {
       // Should not happen.
       throw Throwables.propagate(e);
