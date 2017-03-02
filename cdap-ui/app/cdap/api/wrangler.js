@@ -18,8 +18,10 @@ import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
-const wranglerServicePath = '/namespaces/:namespace/apps/wrangler/services/service/methods';
-const basepath = `${wranglerServicePath}/workspaces/:workspaceId`;
+
+const wranglerAppPath = '/namespaces/:namespace/apps/wrangler';
+const baseServicePath = `${wranglerAppPath}/services/service`;
+const basepath = `${baseServicePath}/methods/workspaces/:workspaceId`;
 
 const MyWranglerApi = {
   create: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath),
@@ -28,7 +30,13 @@ const MyWranglerApi = {
   execute: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/execute`),
   summary: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/summary`),
   getSchema: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/schema`),
-  getUsage: apiCreator(dataSrc, 'GET', 'REQUEST', `${wranglerServicePath}/usage`)
+  getUsage: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/usage`),
+
+  // WRANGLER SERVICE MANAGEMENT
+  getWranglerApp: apiCreator(dataSrc, 'GET', 'REQUEST', `${wranglerAppPath}`),
+  startService: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/start`),
+  pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${baseServicePath}/status`),
+  createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${wranglerAppPath}`)
 };
 
 export default MyWranglerApi;

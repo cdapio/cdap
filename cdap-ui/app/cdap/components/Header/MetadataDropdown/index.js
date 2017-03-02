@@ -17,9 +17,9 @@ import React, {Component} from 'react';
 import {Dropdown, DropdownToggle, DropdownItem} from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
 import NamespaceStore from 'services/NamespaceStore';
-import find from 'lodash/find';
 import T from 'i18n-react';
 import classnames from 'classnames';
+import getLastSelectedNamespace from 'services/get-last-selected-namespace';
 
 require('./MetadataDropdown.scss');
 
@@ -39,7 +39,7 @@ export default class MetadataDropdown extends Component {
 
   componentWillMount() {
     this.nsSubscription = NamespaceStore.subscribe(() => {
-      let selectedNamespace = this.getDefaultNamespace();
+      let selectedNamespace = getLastSelectedNamespace();
       if (selectedNamespace !== this.state.currentNamespace) {
         this.setState({
           currentNamespace: selectedNamespace
@@ -49,30 +49,6 @@ export default class MetadataDropdown extends Component {
   }
   componentWillUnmount() {
     this.nsSubscription();
-  }
-  findNamespace(list, name) {
-    return find(list, {name: name});
-  }
-  getDefaultNamespace() {
-    let list = NamespaceStore.getState().namespaces;
-    if (list.length === 0) { return; }
-    let selectedNamespace;
-    let defaultNamespace = localStorage.getItem('DefaultNamespace');
-    let defaultNsFromBackend = list.filter(ns => ns.name === defaultNamespace);
-    if (defaultNsFromBackend.length) {
-      selectedNamespace = defaultNsFromBackend[0];
-    }
-    // Check #2
-    if (!selectedNamespace) {
-      selectedNamespace = this.findNamespace(list, 'default');
-    }
-    // Check #3
-    if (!selectedNamespace) {
-      selectedNamespace = list[0].name;
-    } else {
-      selectedNamespace = selectedNamespace.name;
-    }
-    return selectedNamespace;
   }
   render() {
     let searchHomeUrl = window.getTrackerUrl({
