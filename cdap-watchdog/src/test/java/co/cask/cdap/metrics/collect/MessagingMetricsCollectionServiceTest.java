@@ -45,7 +45,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Testing the basic properties of the {@link MessagingMetricsCollectionService}.
@@ -71,9 +70,6 @@ public class MessagingMetricsCollectionServiceTest extends MetricsTestBase {
     for (int i = 1; i <= 3; i++) {
       collectionService.getContext(ImmutableMap.of("tag", "" + i)).increment("processed", i);
     }
-
-    // Sleep to make sure metrics get published
-    TimeUnit.SECONDS.sleep(2);
 
     collectionService.stopAndWait();
 
