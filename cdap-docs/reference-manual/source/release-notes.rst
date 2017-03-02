@@ -30,6 +30,52 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.5.4 <http://docs.cask.co/cdap/3.5.4/index.html>`__
+=============================================================
+
+New Features
+------------
+
+- :cask-issue:`CDAP-7731` - Added fetch size and transaction flush interval configurations
+  to the Kafka Consumer Flowlet.
+
+- :cask-issue:`CDAP-8343` - Fixed an issue to make artifact, datasets, logs, and
+  coprocessor JAR locations resilient to an HDFS Namenode HA upgrade.
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-8250` - Reduced non-informative stacktrace information in the log when
+  a connection to the CDAP Router is closed prematurely.
+
+- :cask-issue:`CDAP-8291` - Improved the master process stop procedure to support fast
+  failover when running with HA. Added a new kill command to force-kill CDAP processes.
+
+- :cask-issue:`CDAP-8565` - Improved the master process stop procedure to support fast
+  failover when running with HA. Added a new kill command to force-kill CDAP processes.
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-7090` - Fixed an issue where DefaultNamespaceEnsurer sometimes
+  prevented CDAP Master shutdown.
+
+- :cask-issue:`CDAP-7829` - Fixed an issue with CDAP Master starting in a Microsoft
+  Windows environment.
+
+- :cask-issue:`CDAP-8229` - Fix the CDAP UpgradeTool to not rely on the existence of a
+  'default' namespace.
+
+- :cask-issue:`CDAP-8260` - Added back the CDAP UI health-check end point to determine the
+  status of the CDAP UI service.
+
+- :cask-issue:`CDAP-8798` - Fixed an issue where a major compaction was not evicting
+  invalid queue entries.
+
+- :cask-issue:`CDAP-8855` - Fixed an issue with transactions started after a snapshot
+  restore having an incorrect invalid transaction list.
+
+
 `Release 3.5.3 <http://docs.cask.co/cdap/3.5.3/index.html>`__
 =============================================================
 
