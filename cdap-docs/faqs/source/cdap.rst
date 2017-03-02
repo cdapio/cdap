@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Frequently Asked Questions about starting the Cask Data Application Platform
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 :titles-only-global-toc: true
 
