@@ -35,7 +35,9 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
+import co.cask.cdap.logging.gateway.handlers.store.ProgramStore;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -45,12 +47,12 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.inject.Inject;
-import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.common.Threads;
 
 import java.util.ArrayList;
@@ -82,9 +84,11 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final PreviewStore previewStore;
   private final DataTracerFactory dataTracerFactory;
   private final NamespaceAdmin namespaceAdmin;
+  private final ProgramStore programStore;
 
   private volatile PreviewStatus status;
   private ProgramId programId;
+  private ProgramRunId runId;
 
   @Inject
   DefaultPreviewRunner(DatasetService datasetService, LogAppenderInitializer logAppenderInitializer,
@@ -92,7 +96,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        SystemArtifactLoader systemArtifactLoader, ProgramRuntimeService programRuntimeService,
                        ProgramLifecycleService programLifecycleService,
                        PreviewStore previewStore, DataTracerFactory dataTracerFactory,
-                       NamespaceAdmin namespaceAdmin) {
+                       NamespaceAdmin namespaceAdmin, ProgramStore programStore) {
     this.datasetService = datasetService;
     this.logAppenderInitializer = logAppenderInitializer;
     this.applicationLifecycleService = applicationLifecycleService;
@@ -103,6 +107,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.status = null;
     this.dataTracerFactory = dataTracerFactory;
     this.namespaceAdmin = namespaceAdmin;
+    this.programStore = programStore;
   }
 
   @Override
@@ -143,18 +148,22 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       @Override
       public void completed() {
         setStatus(new PreviewStatus(PreviewStatus.Status.COMPLETED, null));
+        shutDownUnrequiredServices();
       }
 
       @Override
       public void killed() {
         setStatus(new PreviewStatus(PreviewStatus.Status.KILLED, null));
+        shutDownUnrequiredServices();
       }
 
       @Override
       public void error(Throwable cause) {
         setStatus(new PreviewStatus(PreviewStatus.Status.RUN_FAILED, new BasicThrowable(cause)));
+        shutDownUnrequiredServices();
       }
     }, Threads.SAME_THREAD_EXECUTOR);
+    runId = controller.getProgramRunId();
   }
 
   private void setStatus(PreviewStatus status) {
@@ -187,8 +196,13 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   }
 
   @Override
-  public List<LogEntry> getLogs() {
-    return new ArrayList<>();
+  public ProgramRunId getProgramRunId() {
+    return runId;
+  }
+
+  @Override
+  public RunRecordMeta getRunRecord() {
+    return programStore.getRun(programId, runId.getRun());
   }
 
   @Override
@@ -212,11 +226,15 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
   @Override
   protected void shutDown() throws Exception {
+    shutDownUnrequiredServices();
+    datasetService.stopAndWait();
+  }
+
+  private void shutDownUnrequiredServices() {
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
     systemArtifactLoader.stopAndWait();
-    programLifecycleService.stopAndWait();
     logAppenderInitializer.close();
-    datasetService.stopAndWait();
+    programLifecycleService.stopAndWait();
   }
 }

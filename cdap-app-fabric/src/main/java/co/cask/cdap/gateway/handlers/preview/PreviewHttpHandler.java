@@ -18,13 +18,19 @@ package co.cask.cdap.gateway.handlers.preview;
 
 import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.logging.context.LoggingContextHelper;
+import co.cask.cdap.logging.gateway.handlers.AbstractLogHandler;
+import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.codec.BasicThrowableCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
@@ -44,17 +50,19 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * {@link co.cask.http.HttpHandler} to manage preview lifecycle for v3 REST APIs
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
-public class PreviewHttpHandler extends AbstractAppFabricHttpHandler {
+public class PreviewHttpHandler extends AbstractLogHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
   private static final Type STRING_LIST_MAP_TYPE = new TypeToken<Map<String, List<String>>>() { }.getType();
@@ -62,7 +70,9 @@ public class PreviewHttpHandler extends AbstractAppFabricHttpHandler {
   private final PreviewManager previewManager;
 
   @Inject
-  PreviewHttpHandler(PreviewManager previewManager) {
+  PreviewHttpHandler(PreviewManager previewManager,
+                     LogReader logReader, CConfiguration cConfig) {
+    super(logReader, cConfig);
     this.previewManager = previewManager;
   }
 
@@ -125,8 +135,8 @@ public class PreviewHttpHandler extends AbstractAppFabricHttpHandler {
     NamespaceId namespace = new NamespaceId(namespaceId);
     ApplicationId application = namespace.app(previewId);
     Map<String, List<String>> previewRequest;
-    try {
-      previewRequest = parseBody(request, STRING_LIST_MAP_TYPE);
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+      previewRequest = GSON.fromJson(reader, STRING_LIST_MAP_TYPE);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());
     }
@@ -146,4 +156,70 @@ public class PreviewHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(result));
   }
 
+  @GET
+  @Path("/previews/{preview-id}/logs")
+  public void getPreviewLogs(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId, @PathParam("preview-id") String previewId,
+                             @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
+                             @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
+                             @QueryParam("escape") @DefaultValue("true") boolean escape,
+                             @QueryParam("filter") @DefaultValue("") String filterStr,
+                             @QueryParam("format") @DefaultValue("text") String format,
+                             @QueryParam("suppress") List<String> suppress) throws Exception {
+    ProgramRunId runId = getProgramRunId(namespaceId, previewId);
+    RunRecordMeta runRecord = getRunRecord(namespaceId, previewId);
+    LoggingContext loggingContext =
+      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, previewId, runId.getProgram(), runId.getType(),
+                                                      runId.getRun(), runRecord.getSystemArgs());
+
+    doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, runRecord, format,
+              suppress);
+  }
+
+  @GET
+  @Path("/previews/{preview-id}/logs/prev")
+  public void getPreviewLogsPrev(HttpRequest request, HttpResponder responder,
+                                 @PathParam("namespace-id") String namespaceId,
+                                 @PathParam("preview-id") String previewId,
+                                 @QueryParam("max") @DefaultValue("50") int maxEvents,
+                                 @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
+                                 @QueryParam("escape") @DefaultValue("true") boolean escape,
+                                 @QueryParam("filter") @DefaultValue("") String filterStr,
+                                 @QueryParam("format") @DefaultValue("text") String format,
+                                 @QueryParam("suppress") List<String> suppress) throws Exception {
+    ProgramRunId runId = getProgramRunId(namespaceId, previewId);
+    RunRecordMeta runRecord = getRunRecord(namespaceId, previewId);
+    LoggingContext loggingContext =
+      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, previewId, runId.getProgram(), runId.getType(),
+                                                      runId.getRun(), runRecord.getSystemArgs());
+    doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord, format, suppress);
+  }
+
+  @GET
+  @Path("/previews/{preview-id}/logs/next")
+  public void getPreviewLogsNext(HttpRequest request, HttpResponder responder,
+                                 @PathParam("namespace-id") String namespaceId,
+                                 @PathParam("preview-id") String previewId,
+                                 @QueryParam("max") @DefaultValue("50") int maxEvents,
+                                 @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
+                                 @QueryParam("escape") @DefaultValue("true") boolean escape,
+                                 @QueryParam("filter") @DefaultValue("") String filterStr,
+                                 @QueryParam("format") @DefaultValue("text") String format,
+                                 @QueryParam("suppress") List<String> suppress) throws Exception {
+    ProgramRunId runId = getProgramRunId(namespaceId, previewId);
+    RunRecordMeta runRecord = getRunRecord(namespaceId, previewId);
+    LoggingContext loggingContext =
+      LoggingContextHelper.getLoggingContextWithRunId(namespaceId, previewId, runId.getProgram(), runId.getType(),
+                                                      runId.getRun(), runRecord.getSystemArgs());
+    doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord, format, suppress);
+  }
+
+
+  private ProgramRunId getProgramRunId(String namespaceId, String previewId) throws Exception {
+     return previewManager.getRunner(new ApplicationId(namespaceId, previewId)).getProgramRunId();
+  }
+
+  private RunRecordMeta getRunRecord(String namespaceId, String previewId) throws Exception {
+    return previewManager.getRunner(new ApplicationId(namespaceId, previewId)).getRunRecord();
+  }
 }
