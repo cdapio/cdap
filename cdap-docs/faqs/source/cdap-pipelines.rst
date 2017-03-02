@@ -32,12 +32,10 @@ Customers have CDAP running in AWS and GCE, with support for running on Azure fo
 
 Do CDAP Pipelines integrate with Apache Sentry for authorization?
 -----------------------------------------------------------------
-CDAP pipelines are built using CDAP. The current stable version of CDAP is not yet
-integrated with Sentry for authorization. Active work is being done on integrating CDAP
-with Apache Sentry. More information about the design can be found here. The first phase
-of Sentry integration is available as of CDAP 3.4. This initial phase includes integration of
-authorization for runtime components. CDAP 3.5 adds authorization for Datasets.
- 
+CDAP supports :ref:`integration with Sentry <apache-sentry>` for authorization. Since CDAP
+pipelines are built using CDAP, the :ref:`same authorization policies
+<admin-authorization>` can and are applied as in CDAP.
+
 If I have a question about a data pipeline I am building, how can I get help?
 -----------------------------------------------------------------------------
 CDAP has an open source support system. It has a Google group where developers and users
