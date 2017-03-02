@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2015-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -25,9 +25,16 @@ cd /var/chef/cookbooks
 # Initialize Git repository
 touch .gitignore
 
-which git || (echo "Cannot locate git" && exit 1)
-git init
-git add .gitignore
-git commit -m 'Initial commit'
+if [[ $(which apt-get 2>/dev/null) ]]; then
+  apt-get update
+  apt-get install -y --no-install-recommends git || exit 1
+else
+  yum install -y git || exit 1
+fi
+git config --global user.email "ops@cask.co"
+git config --global user.name "Cask Ops"
+git init || exit 1
+git add .gitignore || exit 1
+git commit -m 'Initial commit' || exit 1
 
 exit 0
