@@ -21,6 +21,7 @@ import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.artifact.DeleteArtifactCommand;
 import co.cask.cdap.cli.command.artifact.DescribeArtifactCommand;
 import co.cask.cdap.cli.command.artifact.DescribeArtifactPluginCommand;
+import co.cask.cdap.cli.command.artifact.GetArtifactParentsCommand;
 import co.cask.cdap.cli.command.artifact.GetArtifactPropertiesCommand;
 import co.cask.cdap.cli.command.artifact.ListArtifactPluginTypesCommand;
 import co.cask.cdap.cli.command.artifact.ListArtifactPluginsCommand;
@@ -46,6 +47,7 @@ public class ArtifactCommands extends CommandSet<Command> implements Categorized
         .add(injector.getInstance(DeleteArtifactCommand.class))
         .add(injector.getInstance(DescribeArtifactCommand.class))
         .add(injector.getInstance(DescribeArtifactPluginCommand.class))
+        .add(injector.getInstance(GetArtifactParentsCommand.class))
         .add(injector.getInstance(GetArtifactPropertiesCommand.class))
         .add(injector.getInstance(ListArtifactsCommand.class))
         .add(injector.getInstance(ListArtifactPluginTypesCommand.class))
