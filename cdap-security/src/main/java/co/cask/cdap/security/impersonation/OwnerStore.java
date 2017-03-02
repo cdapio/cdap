@@ -14,18 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.common.kerberos;
+package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import com.google.common.collect.Sets;
 
 import java.io.IOException;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Interface to manage owner's principal information of CDAP entities.
+ * Class to manage owner's principal information of CDAP entities.
  * <p>
  * Currently: Owner information is stored for the following entities:
  * <ul>
@@ -44,7 +47,43 @@ import javax.annotation.Nullable;
  * </p>
  * <p>
  */
-public interface OwnerStore {
+public abstract class OwnerStore {
+
+  private static final Set<EntityType> SUPPORTED_ENTITY_TYPES = Sets.immutableEnumSet(EntityType.NAMESPACE,
+                                                                                      EntityType.APPLICATION,
+                                                                                      EntityType.DATASET,
+                                                                                      EntityType.STREAM,
+                                                                                      EntityType.ARTIFACT);
+
+  /**
+   * Validates the given {@link NamespacedEntityId} to be supported by the {@link OwnerStore}
+   * i.e. the entity can be associated with an owner.
+   * Validated the given {@link KerberosPrincipalId} to be valid i.e. it can be used to create a
+   * {@link org.apache.hadoop.security.authentication.util.KerberosName}.
+   * See {@link SecurityUtil#validateKerberosPrincipal(KerberosPrincipalId)}
+   *
+   * @param entityId {@link NamespacedEntityId} to be validated
+   * @param principalId {@link KerberosPrincipalId} to be validated
+   */
+  protected final void validate(NamespacedEntityId entityId, KerberosPrincipalId principalId) {
+    validate(entityId);
+    SecurityUtil.validateKerberosPrincipal(principalId);
+  }
+
+  /**
+   * Validates the given {@link NamespacedEntityId} to be supported by the {@link OwnerStore}
+   * i.e. the entity can be associated with an owner.
+   *
+   * @param entityId {@link NamespacedEntityId} to be validated
+   */
+  protected final void validate(NamespacedEntityId entityId) {
+    if (!SUPPORTED_ENTITY_TYPES.contains(entityId.getEntityType())) {
+      throw new IllegalArgumentException(String.format("The given entity '%s' is of unsupported types '%s'. " +
+                                                         "Entity ownership is only supported for '%s'.",
+                                                       entityId.getEntityName(), entityId.getEntityType(),
+                                                       SUPPORTED_ENTITY_TYPES));
+    }
+  }
 
   /**
    * Store the owner's kerberosPrincipalId for the given {@link EntityId}
@@ -56,8 +95,8 @@ public interface OwnerStore {
    * @throws IllegalArgumentException if the given KerberosPrincipalId is not valid or the entity is not of
    * supported type.
    */
-  void add(NamespacedEntityId entityId, KerberosPrincipalId kerberosPrincipalId)
-    throws IOException, AlreadyExistsException;
+  public abstract void add(NamespacedEntityId entityId,
+                           KerberosPrincipalId kerberosPrincipalId) throws IOException, AlreadyExistsException;
 
   /**
    * Retrieves the owner information for the given {@link EntityId}
@@ -68,7 +107,7 @@ public interface OwnerStore {
    * @throws IllegalArgumentException if the given entity is not of supported type.
    */
   @Nullable
-  KerberosPrincipalId getOwner(NamespacedEntityId entityId) throws IOException;
+  public abstract KerberosPrincipalId getOwner(NamespacedEntityId entityId) throws IOException;
 
   /**
    * Checks if owner information exists or not
@@ -78,7 +117,7 @@ public interface OwnerStore {
    * @throws IOException if failed to get the store
    * @throws IllegalArgumentException if the given entity is not of supported type.
    */
-  boolean exists(NamespacedEntityId entityId) throws IOException;
+  public abstract boolean exists(NamespacedEntityId entityId) throws IOException;
 
   /**
    * Deletes the owner principal for the given {@link EntityId}
@@ -87,5 +126,5 @@ public interface OwnerStore {
    * @throws IOException if failed to get the owner store
    * @throws IllegalArgumentException if the given entity is not of supported type.
    */
-  void delete(NamespacedEntityId entityId) throws IOException;
+  public abstract void delete(NamespacedEntityId entityId) throws IOException;
 }

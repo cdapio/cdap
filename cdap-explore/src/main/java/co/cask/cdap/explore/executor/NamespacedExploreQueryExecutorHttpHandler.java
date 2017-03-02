@@ -17,7 +17,6 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.kerberos.ImpersonatedOpType;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.explore.service.ExploreException;
@@ -25,6 +24,7 @@ import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.impersonation.ImpersonatedOpType;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMap;

@@ -25,7 +25,7 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.security.auth.AccessToken;
 import co.cask.cdap.security.auth.AccessTokenCodec;
-import co.cask.cdap.security.guice.InMemorySecurityModule;
+import co.cask.cdap.security.guice.SecurityModules;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.JsonObject;
@@ -97,7 +97,7 @@ public abstract class ExternalAuthenticationServerTestBase {
   protected void setup() throws Exception {
     Assert.assertNotNull("CConfiguration needs to be set by derived classes", configuration);
 
-    Module securityModule = Modules.override(new InMemorySecurityModule()).with(
+    Module securityModule = Modules.override(new SecurityModules().getInMemoryModules()).with(
       new AbstractModule() {
         @Override
         protected void configure() {

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.kerberos;
+package co.cask.cdap.security.impersonation;
 
 import com.google.common.base.Strings;
 

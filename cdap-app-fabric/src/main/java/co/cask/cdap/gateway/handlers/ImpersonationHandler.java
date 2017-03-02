@@ -17,14 +17,14 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.kerberos.ImpersonationRequest;
-import co.cask.cdap.common.kerberos.PrincipalCredentials;
-import co.cask.cdap.common.kerberos.UGIWithPrincipal;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
+import co.cask.cdap.security.impersonation.ImpersonationRequest;
 import co.cask.cdap.security.impersonation.ImpersonationUtils;
+import co.cask.cdap.security.impersonation.PrincipalCredentials;
 import co.cask.cdap.security.impersonation.UGIProvider;
+import co.cask.cdap.security.impersonation.UGIWithPrincipal;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;

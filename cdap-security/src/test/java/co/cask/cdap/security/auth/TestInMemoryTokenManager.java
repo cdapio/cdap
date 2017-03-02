@@ -21,7 +21,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.security.guice.InMemorySecurityModule;
+import co.cask.cdap.security.guice.SecurityModules;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -33,8 +33,8 @@ public class TestInMemoryTokenManager extends TestTokenManager {
 
   @Override
   protected ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec() {
-    Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(), new ConfigModule(),
-                                             new DiscoveryRuntimeModule().getInMemoryModules());
+    Injector injector = Guice.createInjector(new IOModule(), new SecurityModules().getInMemoryModules(),
+                                             new ConfigModule(), new DiscoveryRuntimeModule().getInMemoryModules());
     TokenManager tokenManager = injector.getInstance(TokenManager.class);
     tokenManager.startAndWait();
     Codec<AccessToken> tokenCodec = injector.getInstance(AccessTokenCodec.class);

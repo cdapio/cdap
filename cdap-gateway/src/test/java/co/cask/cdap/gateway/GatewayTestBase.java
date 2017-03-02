@@ -19,8 +19,6 @@ package co.cask.cdap.gateway;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
-import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
@@ -45,7 +43,9 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.guice.InMemorySecurityModule;
+import co.cask.cdap.security.guice.SecurityModules;
+import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.collect.Maps;
@@ -160,7 +160,7 @@ public abstract class GatewayTestBase {
                                       ("localhost", 0).getAddress());
           }
         },
-        new InMemorySecurityModule(),
+        new SecurityModules().getInMemoryModules(),
         new NotificationServiceRuntimeModule().getInMemoryModules(),
         new AppFabricTestModule(conf)
       ).with(new AbstractModule() {
