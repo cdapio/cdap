@@ -22,6 +22,7 @@ import WranglerStore from 'components/Wrangler/store';
 import WranglerActions from 'components/Wrangler/store/WranglerActions';
 import CardActionFeedback from 'components/CardActionFeedback';
 import cookie from 'react-cookie';
+import isNil from 'lodash/isNil';
 
 export default class WorkspaceModal extends Component {
   constructor(props) {
@@ -176,10 +177,19 @@ export default class WorkspaceModal extends Component {
     let delimiter = this.state.recordDelimiter;
 
     let url = `/namespaces/default/apps/wrangler/services/service/methods/workspaces/${this.state.activeWorkspace}/upload`;
+
     let headers = {
       'Content-Type': 'application/octet-stream',
       'X-Archive-Name': name
     };
+
+    // add authorization headers!!!
+    if (window.CDAP_CONFIG.securityEnabled) {
+      let token = cookie.load('CDAP_Auth_Token');
+      if (!isNil(token)) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+    }
 
     if (delimiter) {
       headers['recorddelimiter'] = delimiter;
