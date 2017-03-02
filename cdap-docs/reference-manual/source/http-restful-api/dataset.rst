@@ -73,7 +73,7 @@ with JSON-formatted name of the dataset type, properties, and description in a b
      "properties":{
         "<properties>"
       },
-     "description":"Dataset Description"
+     "description":"Dataset Description",
      "principal":"user/example.net@examplekdc.net"
   }
 
@@ -95,8 +95,9 @@ with JSON-formatted name of the dataset type, properties, and description in a b
      - Dataset properties, map of String to String
    * - ``description``
      - Dataset description
-   * - ``principal``
-     - Kerberos principal with which the dataset should be created
+   * - ``principal`` *(optional)*
+     - Kerberos principal with which the dataset should be created; once a dataset has
+       been created, this cannot be changed *(optional)*
 
 .. rubric:: HTTP Responses
 .. list-table::
@@ -123,10 +124,11 @@ with JSON-formatted name of the dataset type, properties, and description in a b
      - ``PUT /v3/namespaces/default/data/datasets/mydataset``
    * - Body
      - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"dataset.table.ttl":"3600"},``
-       ``"description":"My Dataset Description",`` ``"principal":"user/somehost.net@somekdc.net"}``
+       ``"description":"My Dataset Description",`` ``"principal":"user/example.net@examplekdc.net"}``
    * - Description
      - Creates a dataset named *mydataset* of the type ``Table`` in the namespace *default*
-       with the time-to-live property set to 1 hour and a description of ``My Dataset Description``
+       with the time-to-live property set to 1 hour, a description of ``My Dataset Description``,
+       owned by the principal identified by ``user/example.net@examplekdc.net``.
 
 .. _http-restful-api-dataset-properties:
 
@@ -237,7 +239,7 @@ The response body will contain JSON-formatted metadata of the existing dataset::
          }
        ]
      },
-     "principal": "user/somehost.net@somekdc.net"
+     "principal": "user/example.net@examplekdc.net"
    }
 
 .. highlight:: console
@@ -270,7 +272,8 @@ with JSON-formatted properties in the body::
   have set other properties for this table, such as time-to-live (``dataset.table.ttl``),
   you must also include those properties in the update request.
 - You can retrieve the existing properties using the :ref:`http-restful-api-dataset-properties`
-  and use that as the basis for constructing your request. 
+  and use that as the basis for constructing your request.
+- Once a dataset has been created, the ``principal`` cannot be changed.
 
 .. list-table::
    :widths: 20 80

@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _streams:
 
@@ -17,6 +17,10 @@ using the :ref:`CDAP Command Line Interface. <cli>`
 
 Data written to a stream can be consumed in real time by :ref:`flows <flows>` or in batch
 by :ref:`MapReduce programs. <mapreduce>`.
+
+.. include:: /security/index.rst
+    :start-after: .. impersonation-start
+    :end-before: .. impersonation-end
 
 
 Creating a Stream
