@@ -24,6 +24,7 @@ import cookie from 'react-cookie';
 import VersionStore from 'services/VersionStore';
 import AboutPageModal from 'components/Header/ProductDropdown/AboutPageModal';
 import AccessTokenModal from 'components/Header/ProductDropdown/AccessTokenModal';
+import getLastSelectedNamespace from 'services/get-last-selected-namespace';
 import T from 'i18n-react';
 
 require('./ProductDropdown.scss');
@@ -35,12 +36,24 @@ export default class ProductDropdown extends Component {
       toggleDropdown: false,
       aboutPageOpen: false,
       accessTokenModalOpen: false,
-      username: NamespaceStore.getState().username
+      username: NamespaceStore.getState().username,
+      currentNamespace: null
     };
     this.logout = this.logout.bind(this);
     this.toggleCdapMenuDropdown = this.toggleCdapMenuDropdown.bind(this);
     this.toggleAboutPage = this.toggleAboutPage.bind(this);
     this.toggleAccessTokenModal = this.toggleAccessTokenModal.bind(this);
+  }
+
+  componentWillMount() {
+    this.nsSubscription = NamespaceStore.subscribe(() => {
+      let selectedNamespace = getLastSelectedNamespace();
+      if (selectedNamespace !== this.state.currentNamespace) {
+        this.setState({
+          currentNamespace: selectedNamespace
+        });
+      }
+    });
   }
 
   toggleCdapMenuDropdown() {
@@ -79,8 +92,7 @@ export default class ProductDropdown extends Component {
     let docsUrl = `http://docs.cask.co/cdap/${cdapVersion}/en/index.html`;
     let administrationURL = `${baseCDAPURL}/administration`;
     let dataprepUrl = `${baseCDAPURL}/dataprep`;
-    let currentNamespace = NamespaceStore.getState().selectedNamespace;
-    let oldUIUrl = `/oldcdap/ns/${currentNamespace}`;
+    let oldUIUrl = `/oldcdap/ns/${this.state.currentNamespace}`;
     let userSection;
     if (this.state.username && window.CDAP_CONFIG.securityEnabled) {
       userSection = (

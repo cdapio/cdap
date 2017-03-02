@@ -91,7 +91,9 @@ export default class Header extends Component {
     let pipelinesListUrl =  window.getHydratorUrl({
       stateName: 'hydrator.list',
       stateParams: {
-        namespace: this.state.currentNamespace
+        namespace: this.state.currentNamespace,
+        page: 1,
+        sortBy: '_stats.lastStartTime'
       }
     });
     let isPipelinesViewActive = location.pathname.indexOf('/pipelines/') !== -1;
