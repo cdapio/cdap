@@ -123,13 +123,13 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
                                        new NoopMetricsContext());
     kafkaMetricsProcessorService.startAndWait();
 
-    // Intentionally set fetcher persist threshold to a small value, so that MessagingMetricsProcessorService
+    // Intentionally set queue size to a small value, so that MessagingMetricsProcessorService
     // internally can persist metrics when more messages are to be fetched
     MessagingMetricsProcessorService messagingMetricsProcessorService =
       new MessagingMetricsProcessorService(injector.getInstance(MetricDatasetFactory.class), TOPIC_PREFIX,
                                            messagingService, injector.getInstance(SchemaGenerator.class),
                                            injector.getInstance(DatumReaderFactory.class),
-                                           metricStore, 1, partitions, new NoopMetricsContext(), 50);
+                                           metricStore, 1000L, 5, partitions, new NoopMetricsContext(), 50);
     messagingMetricsProcessorService.startAndWait();
 
     // Publish metrics with messaging service and record expected metrics
@@ -140,13 +140,13 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
     Thread.sleep(500);
     // Stop and restart messagingMetricsProcessorService
     messagingMetricsProcessorService.stopAndWait();
-    // Intentionally set fetcher persist threshold to a large value, so that MessagingMetricsProcessorService
+    // Intentionally set queue size to a large value, so that MessagingMetricsProcessorService
     // internally only persists metrics during terminating.
     messagingMetricsProcessorService =
       new MessagingMetricsProcessorService(injector.getInstance(MetricDatasetFactory.class), TOPIC_PREFIX,
                                            messagingService, injector.getInstance(SchemaGenerator.class),
                                            injector.getInstance(DatumReaderFactory.class),
-                                           metricStore, 100, partitions, new NoopMetricsContext(), 50);
+                                           metricStore, 1000L, 100, partitions, new NoopMetricsContext(), 50);
     messagingMetricsProcessorService.startAndWait();
 
     // Publish metrics after MessagingMetricsProcessorService restarts and record expected metrics

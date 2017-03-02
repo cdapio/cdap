@@ -1824,17 +1824,6 @@
   </property>
 
   <property>
-    <name>metrics.messaging.fetcher.limit</name>
-    <value>200</value>
-    <description>
-      Maximum number of metrics messages to be fetched from the messaging
-      fetcher at a time. It is also the maximum number of metric values to
-      be persisted in the metrics store after the number of fetched messages
-      reaches the limit.
-    </description>
-  </property>
-
-  <property>
     <name>metrics.messaging.meta.table</name>
     <value>metrics.messaging.meta</value>
     <description>
@@ -1943,6 +1932,23 @@
     <value>${http.service.worker.threads}</value>
     <description>
       Number of Netty service worker threads for metrics HTTP services
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.processor.queue.size</name>
+    <value>20000</value>
+    <description>
+      The maximum size of a queue where metrics processor temporarily stores newly fetched metrics in memory
+      before persisting them
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.processor.max.delay.ms</name>
+    <value>3000</value>
+    <description>
+      The maximum delay allowed between the latest metrics timestamp and the time when it is processed
     </description>
   </property>
 

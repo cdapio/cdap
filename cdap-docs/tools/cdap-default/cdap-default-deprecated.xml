@@ -180,6 +180,17 @@
   </property>
 
   <property>
+    <name>metrics.messaging.fetcher.limit</name>
+    <value>2000</value>
+    <description>
+      Maximum number of metrics messages to be fetched from the messaging
+      fetcher at a time. It is also the maximum number of metric values to
+      be persisted in the metrics store after the number of fetched messages
+      reaches the limit.
+    </description>
+  </property>
+
+  <property>
     <name>notification.kafka.topic</name>
     <value>notifications</value>
     <description>
