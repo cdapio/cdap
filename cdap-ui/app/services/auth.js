@@ -38,13 +38,16 @@ module.constant('MYAUTH_ROLE', {
 });
 
 
-module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
+module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE, MY_CONFIG) {
 
   $rootScope.$on('$stateChangeStart', function (event, next, nextParams) {
 
     var authorizedRoles = next.data && next.data.authorizedRoles;
     if (!authorizedRoles) { return; } // no role required, anyone can access
 
+    if(!MY_CONFIG.securityEnabled) {
+      return;
+    }
     var user = myAuth.isAuthenticated();
     if (user) { // user is logged in
       if (authorizedRoles === MYAUTH_ROLE.all) { return; } // any logged-in user is welcome
@@ -98,7 +101,7 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
         persist(user);
 
         $cookies.put('CDAP_Auth_Token', user.token, {path: '/'});
-        $cookies.put('CDAP_Auth_User', user.username);
+        $cookies.put('CDAP_Auth_User', user.username, {path: '/'});
         $localStorage.remember = cred.remember && user.storable();
         $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
       },
@@ -129,10 +132,10 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
       return !!this.currentUser;
     }
 
-    if ($cookies.get('CDAP_Auth_Token') && $cookies.get('CDAP_Auth_User')) {
+    if ($cookies.get('CDAP_Auth_Token', {path: '/'}) && $cookies.get('CDAP_Auth_User', {path: '/'})) {
       var user = new MyAuthUser({
-        access_token: $cookies.get('CDAP_Auth_Token'),
-        username: $cookies.get('CDAP_Auth_User')
+        access_token: $cookies.get('CDAP_Auth_Token', {path: '/'}),
+        username: $cookies.get('CDAP_Auth_User', {path: '/'})
       });
       persist(user);
       return !!this.currentUser;
