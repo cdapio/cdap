@@ -25,7 +25,8 @@ angular.module(PKG.name + '.commons')
         myconfig: '=',
         properties: '=',
         widgetDisabled: '=',
-        inputSchema: '='
+        inputSchema: '=',
+        isFieldRequired: '='
       },
       replace: false,
       link: function (scope, element) {
