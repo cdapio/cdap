@@ -51,7 +51,8 @@ public class ResolvingDiscoverable implements Discoverable {
 
   private InetSocketAddress resolve(InetSocketAddress bindAddress) {
     try {
-      if (bindAddress.getAddress().isAnyLocalAddress()) {
+      // If domain of bindAddress is not resolvable, address of bindAddress is null.
+      if (bindAddress.getAddress() != null && bindAddress.getAddress().isAnyLocalAddress()) {
         return new InetSocketAddress(InetAddress.getLocalHost().getHostName(), bindAddress.getPort());
       }
     } catch (Exception e) {

@@ -104,6 +104,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
 
   /**
    * Intercepts the HttpMessage for getting the access token in authorization header
+   *
    * @param ctx channel handler context delegated from MessageReceived callback
    * @param msg intercepted HTTP message
    * @param inboundChannel
@@ -139,20 +140,20 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       JsonObject jsonObject = new JsonObject();
       if (tokenState == TokenState.MISSING) {
         httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
-                                 String.format("Bearer realm=\"%s\"", realm));
+                               String.format("Bearer realm=\"%s\"", realm));
         LOG.debug("Authentication failed due to missing token");
 
       } else {
         httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
-                                 String.format("Bearer realm=\"%s\" error=\"invalid_token\"" +
-                                                 " error_description=\"%s\"", realm, tokenState.getMsg()));
+                               String.format("Bearer realm=\"%s\" error=\"invalid_token\"" +
+                                               " error_description=\"%s\"", realm, tokenState.getMsg()));
         jsonObject.addProperty("error", "invalid_token");
         jsonObject.addProperty("error_description", tokenState.getMsg());
         LOG.debug("Authentication failed due to invalid token, reason={};", tokenState);
       }
       JsonArray externalAuthenticationURIs = new JsonArray();
 
-      //Waiting for service to get discovered
+      // Waiting for service to get discovered
       stopWatchWait(externalAuthenticationURIs);
 
       jsonObject.add("auth_uri", externalAuthenticationURIs);
@@ -182,7 +183,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
   }
 
   /**
-   *
    * @param externalAuthenticationURIs the list that should be populated with discovered with
    *                                   external auth servers URIs
    * @throws Exception
@@ -191,6 +191,18 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     boolean done = false;
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
+
+    String[] announceURLs = configuration.getTrimmedStrings(Constants.Security.AUTH_SERVER_ANNOUNCE_URLS);
+    // If the announceURLs is set in configuration, add the URL's to the list
+    if (announceURLs.length > 0) {
+      for (String url : announceURLs) {
+        String urlWithToken = String.format("%s/%s", url, GrantAccessToken.Paths.GET_TOKEN);
+        LOG.info("AUTH_SERVER_ANNOUNCE_URLS contains {}", urlWithToken);
+        externalAuthenticationURIs.add(new JsonPrimitive(urlWithToken));
+      }
+      return;
+    }
+
     String protocol;
     int port;
     if (configuration.getBoolean(Constants.Security.SSL_ENABLED)) {
@@ -200,11 +212,24 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       protocol = "http";
       port = configuration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
     }
+    String announceAddress = configuration.get(Constants.Security.AUTH_SERVER_ANNOUNCE_ADDRESS_DEPRECATED);
+    if (announceAddress != null) {
+      String url;
+      if (announceAddress.matches(".+:[0-9]+")) {
+        // announceAddress already contains port
+        url = String.format("%s://%s/%s", protocol, announceAddress, GrantAccessToken.Paths.GET_TOKEN);
+      } else {
+        url = String.format("%s://%s:%d/%s", protocol, announceAddress, port, GrantAccessToken.Paths.GET_TOKEN);
+      }
+      LOG.info("AUTH_SERVER_ANNOUNCE_ADDRESS_DEPRECATED contains {}", url);
+      externalAuthenticationURIs.add(new JsonPrimitive(url));
+      return;
+    }
 
     do {
-      for (Discoverable d : discoverables)  {
+      for (Discoverable d : discoverables) {
         String url = String.format("%s://%s:%d/%s", protocol, d.getSocketAddress().getHostName(), port,
-                                                                        GrantAccessToken.Paths.GET_TOKEN);
+                                   GrantAccessToken.Paths.GET_TOKEN);
         externalAuthenticationURIs.add(new JsonPrimitive(url));
         done = true;
       }
