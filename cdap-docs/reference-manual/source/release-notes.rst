@@ -57,7 +57,7 @@ Bug Fixes
 - :cask-issue:`CDAP-7090` - Fixed an issue where DefaultNamespaceEnsurer sometimes
   prevented CDAP Master shutdown.
 
-- :cask-issue:`CDAP-7829` - Fixed an issue with CDAP Master starting in a Microsoft
+- :cask-issue:`CDAP-7829` - Fixed an issue with CDAP Standalone starting in a Microsoft
   Windows environment.
 
 - :cask-issue:`CDAP-8229` - Fix the CDAP UpgradeTool to not rely on the existence of a
