@@ -91,7 +91,7 @@ export default class LogAction extends Component {
     const renderLog = (
       <a
         href={link}
-        target="_tab"
+        target="_blank"
         className="btn btn-link"
       >
         <span className="fa fa-file-text-o" />
