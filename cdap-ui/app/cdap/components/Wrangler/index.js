@@ -25,7 +25,7 @@ import WranglerStore from 'components/Wrangler/store';
 import WranglerActions from 'components/Wrangler/store/WranglerActions';
 import WranglerServiceControl from 'components/Wrangler/WranglerServiceControl';
 import ee from 'event-emitter';
-import NamespaceStore from 'services/NamespaceStore';
+// import NamespaceStore from 'services/NamespaceStore';
 
 require('./Wrangler.scss');
 
@@ -45,7 +45,7 @@ export default class Wrangler extends Component {
 
   componentWillMount() {
     let workspaceId = cookie.load('WRANGLER_WORKSPACE');
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = 'default';
 
     let params = {
       namespace,

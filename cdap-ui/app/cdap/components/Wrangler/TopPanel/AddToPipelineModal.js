@@ -20,7 +20,7 @@ import {MyArtifactApi} from 'api/artifact';
 import find from 'lodash/find';
 import MyWranglerApi from 'api/wrangler';
 import WranglerStore from 'components/Wrangler/store';
-import NamespaceStore from 'services/NamespaceStore';
+// import NamespaceStore from 'services/NamespaceStore';
 
 export default class AddToHydratorModal extends Component {
   constructor(props) {
@@ -46,7 +46,7 @@ export default class AddToHydratorModal extends Component {
   }
 
   generateLinks() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = 'default';
 
     let state = WranglerStore.getState().wrangler;
     let workspaceId = state.workspaceId;

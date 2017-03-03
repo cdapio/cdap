@@ -18,7 +18,7 @@ import React, { Component } from 'react';
 import MyWranglerApi from 'api/wrangler';
 import {MyArtifactApi} from 'api/artifact';
 import find from 'lodash/find';
-import NamespaceStore from 'services/NamespaceStore';
+// import NamespaceStore from 'services/NamespaceStore';
 
 export default class WranglerServiceControl extends Component {
   constructor(props) {
@@ -49,7 +49,7 @@ export default class WranglerServiceControl extends Component {
      *  4. Poll until service starts, then reload page
      **/
 
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = 'default';
 
     MyWranglerApi.getWranglerApp({ namespace })
       .subscribe(() => {
@@ -66,7 +66,7 @@ export default class WranglerServiceControl extends Component {
   }
 
   createApp() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = 'default';
 
     MyArtifactApi.list({ namespace })
       .subscribe((res) => {
@@ -87,7 +87,7 @@ export default class WranglerServiceControl extends Component {
   }
 
   startService() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = 'default';
 
     MyWranglerApi.startService({ namespace })
       .subscribe(() => {
@@ -102,7 +102,7 @@ export default class WranglerServiceControl extends Component {
   }
 
   pollServiceStatus() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = 'default';
 
     this.servicePoll = MyWranglerApi.pollServiceStatus({ namespace })
       .subscribe((res) => {

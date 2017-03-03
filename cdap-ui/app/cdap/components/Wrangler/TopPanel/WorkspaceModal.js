@@ -23,7 +23,7 @@ import WranglerActions from 'components/Wrangler/store/WranglerActions';
 import CardActionFeedback from 'components/CardActionFeedback';
 import cookie from 'react-cookie';
 import isNil from 'lodash/isNil';
-import NamespaceStore from 'services/NamespaceStore';
+// import NamespaceStore from 'services/NamespaceStore';
 
 export default class WorkspaceModal extends Component {
   constructor(props) {
@@ -71,7 +71,7 @@ export default class WorkspaceModal extends Component {
   setWorkspace() {
     if (!this.state.workspaceId) { return; }
     let workspaceId = this.state.workspaceId;
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = 'default';
 
     let params = {
       namespace,
@@ -103,7 +103,7 @@ export default class WorkspaceModal extends Component {
   createWorkspace() {
     if (!this.state.workspaceId) { return; }
     let workspaceId = this.state.workspaceId;
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = 'default';
 
     MyWranglerApi.create({
       namespace,
@@ -134,7 +134,7 @@ export default class WorkspaceModal extends Component {
   deleteWorkspace() {
     if (!this.state.workspaceId) { return; }
     let workspaceId = this.state.workspaceId;
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = 'default';
 
     MyWranglerApi.delete({
       namespace,
@@ -179,7 +179,7 @@ export default class WorkspaceModal extends Component {
     if (!this.state.file) { return; }
 
     let delimiter = this.state.recordDelimiter;
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    let namespace = 'default';
 
     let url = `/namespaces/${namespace}/apps/wrangler/services/service/methods/workspaces/${this.state.activeWorkspace}/upload`;
 
