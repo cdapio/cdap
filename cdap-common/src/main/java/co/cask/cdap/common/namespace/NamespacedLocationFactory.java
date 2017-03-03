@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,13 +16,11 @@
 
 package co.cask.cdap.common.namespace;
 
-
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
-import javax.annotation.Nullable;
 
 /**
  * Interface for managing locations in a namespace
@@ -35,7 +33,7 @@ public interface NamespacedLocationFactory {
    * @param namespaceId the namespace for which base location is desired
    * @return {@link Location} for the specified namespace on the filesystem
    */
-  Location get(Id.Namespace namespaceId) throws IOException;
+  Location get(NamespaceId namespaceId) throws IOException;
 
   /**
    * Returns the base {@link Location} for the specified namespace on the filesystem
@@ -44,19 +42,4 @@ public interface NamespacedLocationFactory {
    * @return {@link Location} for the specified namespace on the filesystem
    */
   Location get(NamespaceMeta namespaceMeta) throws IOException;
-
-  /**
-   * Returns a {@link Location} for the specified sub-path in the specified namespace
-   *
-   * @param namespaceId the namespace for which the {@link Location} is desired
-   * @param subPath the sub-path under the base location of the specified namespace
-   * @return {@link Location} for the specified sub-path in the specified namespace
-   */
-  Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException;
-
-  /**
-   * Returns the base {@link Location} for all CDAP data.
-   */
-  Location getBaseLocation() throws IOException;
-
 }

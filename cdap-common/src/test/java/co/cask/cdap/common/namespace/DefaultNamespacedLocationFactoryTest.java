@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,14 +42,12 @@ public class DefaultNamespacedLocationFactoryTest {
 
   @Test
   public void testGet() throws Exception {
-    File rootLocationFactoryPath = TEMP_FOLDER.newFolder();
-
     File locationFactoryPath = TEMP_FOLDER.newFolder();
     LocationFactory locationFactory = new LocalLocationFactory(locationFactoryPath);
 
     NamespaceAdmin nsAdmin = new InMemoryNamespaceClient();
 
-    Id.Namespace ns1 = Id.Namespace.from("ns1");
+    NamespaceId ns1 = new NamespaceId("ns1");
     NamespaceMeta defaultNSMeta = new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build();
     NamespaceMeta ns1NSMeta = new NamespaceMeta.Builder().setName(ns1).setRootDirectory("/ns1").build();
 
@@ -60,7 +58,7 @@ public class DefaultNamespacedLocationFactoryTest {
     NamespacedLocationFactory namespacedLocationFactory =
       new DefaultNamespacedLocationFactory(cConf, locationFactory, nsAdmin);
 
-    Location defaultLoc = namespacedLocationFactory.get(Id.Namespace.DEFAULT);
+    Location defaultLoc = namespacedLocationFactory.get(NamespaceId.DEFAULT);
     Location ns1Loc = namespacedLocationFactory.get(ns1);
 
     // check if location was as expected
@@ -74,8 +72,8 @@ public class DefaultNamespacedLocationFactoryTest {
     Assert.assertNotEquals(defaultLoc, ns1Loc);
 
     // test subdirectories in a namespace
-    Location sub1 = namespacedLocationFactory.get(ns1, "sub1");
-    Location sub2 = namespacedLocationFactory.get(ns1, "sub2");
+    Location sub1 = namespacedLocationFactory.get(ns1).append("sub1");
+    Location sub2 = namespacedLocationFactory.get(ns1).append("sub2");
     Assert.assertNotEquals(sub1, sub2);
   }
 }

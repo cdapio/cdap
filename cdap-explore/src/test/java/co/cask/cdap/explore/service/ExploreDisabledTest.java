@@ -117,7 +117,7 @@ public class ExploreDisabledTest {
     namespaceAdmin.create(namespaceMeta);
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
     // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
-    namespacedLocationFactory.get(namespaceId.toId()).mkdirs();
+    namespacedLocationFactory.get(namespaceId).mkdirs();
     exploreClient.addNamespace(namespaceMeta);
   }
 

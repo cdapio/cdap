@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -145,7 +145,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
                    "To disable this message, upgrade the dataset properties with a relative path. ",
                  spec.getName(), basePath);
       } else {
-        String topLevelPath = namespacedLocationFactory.getBaseLocation().toURI().getPath();
+        String topLevelPath = locationFactory.create("/").toURI().getPath();
         topLevelPath = topLevelPath.endsWith("/") ? topLevelPath : topLevelPath + "/";
         Location baseLocation = Locations.getLocationFromAbsolutePath(locationFactory, basePath);
         if (baseLocation.toURI().getPath().startsWith(topLevelPath)) {
@@ -157,7 +157,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     }
     NamespaceId namespaceId = new NamespaceId(datasetContext.getNamespaceId());
     String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
-    return namespacedLocationFactory.get(namespaceId.toId()).append(dataDir).append(basePath);
+    return namespacedLocationFactory.get(namespaceId).append(dataDir).append(basePath);
   }
 
   private Location determineOutputLocation() {

@@ -22,7 +22,6 @@ import co.cask.cdap.common.logging.ComponentLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.logging.appender.system.LogPathIdentifier;
 import co.cask.cdap.logging.filter.AndFilter;
 import co.cask.cdap.logging.filter.Filter;
@@ -31,16 +30,13 @@ import co.cask.cdap.logging.filter.OrFilter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.apache.twill.filesystem.Location;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -66,18 +62,6 @@ public final class LoggingContextHelper {
     .build();
 
   private LoggingContextHelper() {}
-
-  public static Location getNamespacedBaseDirLocation(final NamespacedLocationFactory namespacedLocationFactory,
-                                                      final String logBaseDir, final NamespaceId namespaceId,
-                                                      Impersonator impersonator) throws Exception {
-    Preconditions.checkArgument(logBaseDir != null, "Log Base dir cannot be null");
-    return impersonator.doAs(namespaceId, new Callable<Location>() {
-      @Override
-      public Location call() throws Exception {
-        return namespacedLocationFactory.get(namespaceId.toId()).append(logBaseDir);
-      }
-    });
-  }
 
   /**
    * Gives the {@link NamespaceId} for  the given logging context.
