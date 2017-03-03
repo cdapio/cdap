@@ -31,6 +31,8 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Tests {@link OperationalStats} for Yarn.
@@ -62,15 +64,29 @@ public abstract class AbstractYarnOperationalStatsTest {
 
   @Test
   public void test() throws Exception {
-    YarnInfo info = new YarnInfo(conf);
+    final YarnInfo info = new YarnInfo(conf);
     Assert.assertEquals(AbstractYarnStats.SERVICE_NAME, info.getServiceName());
     Assert.assertEquals("info", info.getStatType());
     Assert.assertNotNull(info.getVersion());
     Assert.assertNull(info.getWebURL());
     Assert.assertNull(info.getLogsURL());
-    info.collect();
-    Assert.assertNotNull(info.getWebURL());
-    Assert.assertNotNull(info.getLogsURL());
+    final AtomicReference<String> webURL = new AtomicReference<>();
+    final AtomicReference<String> logsURL = new AtomicReference<>();
+    try {
+      Tasks.waitFor(true, new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          info.collect();
+          webURL.set(info.getWebURL());
+          logsURL.set(info.getLogsURL());
+          return webURL.get() != null && logsURL.get() != null;
+        }
+      }, 60, TimeUnit.SECONDS);
+    } catch (TimeoutException e) {
+      // this will show us which of the two is null
+      Assert.assertNotNull(webURL.get());
+      Assert.assertNotNull(logsURL.get());
+    }
     Assert.assertEquals(info.getWebURL() + "/logs", info.getLogsURL());
     YarnApps apps = new YarnApps(conf);
     Assert.assertEquals(AbstractYarnStats.SERVICE_NAME, apps.getServiceName());
