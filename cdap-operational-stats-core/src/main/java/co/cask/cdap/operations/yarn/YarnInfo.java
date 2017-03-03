@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -123,17 +124,22 @@ public class YarnInfo extends AbstractYarnStats implements YarnInfoMXBean {
       throw new IllegalStateException("Resource Manager HA web URL requested in non-HA mode.");
     }
     for (String rmId : rmIds) {
-      YarnConfiguration yarnConf = new YarnConfiguration(conf);
-      yarnConf.set(YarnConfiguration.RM_HA_ID, rmId);
-      yarnConf.set(CommonConfigurationKeys.HADOOP_SECURITY_SERVICE_USER_NAME_KEY,
-                   conf.get(YarnConfiguration.RM_PRINCIPAL, ""));
-      RMHAServiceTarget rmhaServiceTarget = new RMHAServiceTarget(yarnConf);
-      HAServiceProtocol proxy = rmhaServiceTarget.getProxy(yarnConf, 10000);
-      HAServiceStatus serviceStatus = proxy.getServiceStatus();
-      if (HAServiceProtocol.HAServiceState.ACTIVE != serviceStatus.getState()) {
-        continue;
+      try {
+        YarnConfiguration yarnConf = new YarnConfiguration(conf);
+        yarnConf.set(YarnConfiguration.RM_HA_ID, rmId);
+        yarnConf.set(CommonConfigurationKeys.HADOOP_SECURITY_SERVICE_USER_NAME_KEY,
+                     conf.get(YarnConfiguration.RM_PRINCIPAL, ""));
+        RMHAServiceTarget rmhaServiceTarget = new RMHAServiceTarget(yarnConf);
+        HAServiceProtocol proxy = rmhaServiceTarget.getProxy(yarnConf, 10000);
+        HAServiceStatus serviceStatus = proxy.getServiceStatus();
+        if (HAServiceProtocol.HAServiceState.ACTIVE != serviceStatus.getState()) {
+          continue;
+        }
+        activeRM = rmhaServiceTarget.getAddress();
+      } catch (ConnectException e) {
+        LOG.trace("Connection refused when attempting to connect to ResourceManager {}. " +
+                    "Assuming that it is not available.", rmId);
       }
-      activeRM = rmhaServiceTarget.getAddress();
     }
     if (activeRM == null) {
       throw new IllegalStateException("Could not find an active resource manager");
