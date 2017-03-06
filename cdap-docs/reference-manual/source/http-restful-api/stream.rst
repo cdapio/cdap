@@ -69,9 +69,9 @@ A stream can be created with an HTTP PUT method to the URL::
 - If the stream already exists, no error is returned, and the existing stream remains in place.
 
 Optionally, properties for the stream can be set by providing them in the body of the
-request. These properties can later be :ref:`retrieved
-<http-restful-api-stream-getting-properties>`>` or :ref:`modified
-<http-restful-api-stream-setting-properties>` (with the exception of the ``principal``)
+request. These properties can later be 
+:ref:`retrieved <http-restful-api-stream-getting-properties>` or 
+:ref:`modified <http-restful-api-stream-setting-properties>` (with the exception of the ``principal``)
 using :ref:`appropriate calls  <http-restful-api-stream-getting-setting-properties>`.
 
 .. list-table::
