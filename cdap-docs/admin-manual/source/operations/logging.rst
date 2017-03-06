@@ -17,8 +17,8 @@ monitoring information through RESTful APIs as well as a Java Client.
 
 See the :ref:`Logging <http-restful-api-logging>`, :ref:`Metrics <http-restful-api-metrics>`, 
 and :ref:`Monitoring <http-restful-api-monitor>` HTTP RESTful APIs, the :ref:`Java Client
-<reference:java-client-api>`, and the :ref:`master-service-logging-configuration` for
-additional information.
+<reference:java-client-api>`, :ref:`master-service-logging-configuration`, and the 
+:ref:`application-logback` for additional information.
 
 
 Log Location of CDAP System Services
@@ -73,6 +73,8 @@ Application logs are stored in locations specified by properties in the
   CDAP.
 
 - For Distributed CDAP: tbd
+
+
 
 
 .. _master-service-logging-configuration:
