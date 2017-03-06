@@ -18,6 +18,7 @@ import React, {PropTypes} from 'react';
 import T from 'i18n-react';
 import PlusButtonStore from 'services/PlusButtonStore';
 require('./NoEntitiesMessage.scss');
+import {DEFAULT_SEARCH_QUERY} from 'components/EntityListView/SearchStore/SearchConstants';
 
 export default function NoEntitiesMessage({searchText, filtersAreApplied, clearSearchAndFilters}) {
   const openAddEntityModal = () => {
@@ -32,7 +33,7 @@ export default function NoEntitiesMessage({searchText, filtersAreApplied, clearS
   let emptyMessage = T.translate('features.EntityListView.emptyMessage.default');
   let clearText;
 
-  if (searchText) {
+  if (searchText !== DEFAULT_SEARCH_QUERY) {
     emptyMessage = T.translate('features.EntityListView.emptyMessage.search', {searchText});
     clearText = T.translate('features.EntityListView.emptyMessage.clearText.search');
   } else if (filtersAreApplied && filtersAreApplied()) {

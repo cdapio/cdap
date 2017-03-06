@@ -14,24 +14,21 @@
  * the License.
  */
 
-.just-added-container {
-  width: 100%;
-  margin-bottom: 15px;
-
-  .entity-cards { outline: 3px solid #2ecc71; }
-  .subtitle.just-added {
+.list-view-header {
+  &.subtitle {
     color: #999999;
     border-bottom: 1px solid #dddddd;
     height: 11px;
     clear: both;
     margin-right: 20px;
     margin-left: 5px;
-    margin-bottom: 15px;
+    width: 100%;
 
     span {
+      background-color: #ffffff;
       padding-right: 15px;
-      background: white;
     }
+
+    margin-bottom: 15px;
   }
-  .just-added-entities-list { width: 100%; }
 }
