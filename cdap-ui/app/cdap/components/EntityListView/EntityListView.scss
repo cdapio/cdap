@@ -19,23 +19,7 @@
 .entity-list-view {
   height: calc(100vh - 155px);
   align-items: flex-start;
-
-  .subtitle {
-    color: #999999;
-    border-bottom: 1px solid #dddddd;
-    height: 11px;
-    clear: both;
-    margin-right: 20px;
-    margin-left: 5px;
-    width: 100%;
-
-    span {
-      background-color: #ffffff;
-      padding-right: 15px;
-    }
-
-    margin-bottom: 15px;
-  }
+  overflow-x: hidden;
 
   .namespace-not-found {
     .open-namespace-wizard-link {
@@ -50,6 +34,11 @@
     flex-wrap: wrap;
     width: 100%;
 
+    &.error-holder {
+      height: 100%;
+      align-items: center;
+      justify-content: center;
+    }
     .entities-all-list-container {
       display: inline-flex;
       flex-wrap: wrap;

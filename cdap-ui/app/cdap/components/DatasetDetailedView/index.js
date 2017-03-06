@@ -41,7 +41,6 @@ require('./DatasetDetailedView.scss');
 export default class DatasetDetailedView extends Component {
   constructor(props) {
     super(props);
-
     this.state = {
       entityDetail: objectQuery(this.props, 'location', 'state', 'entityDetail') | {
         schema: null,
@@ -53,15 +52,21 @@ export default class DatasetDetailedView extends Component {
       routeToHome: false,
       successMessage: null,
       notFound: false,
-      modalToOpen: objectQuery(this.props, 'location', 'query', 'modalToOpen') || ''
+      modalToOpen: objectQuery(this.props, 'location', 'query', 'modalToOpen') || '',
+      previousPathName: null
     };
   }
 
   componentWillMount() {
+    let selectedNamespace = NamespaceStore.getState().selectedNamespace;
     let {namespace, datasetId} = this.props.params;
+    let previousPathName = objectQuery(this.props, 'location', 'state', 'previousPathname')  || `/ns/${selectedNamespace}?overviewid=${datasetId}&overviewtype=dataset`;
     if (!namespace) {
       namespace = NamespaceStore.getState().selectedNamespace;
     }
+    this.setState({
+      previousPathName
+    });
     ExploreTablesStore.dispatch(
       fetchTables(namespace)
     );
@@ -240,10 +245,8 @@ export default class DatasetDetailedView extends Component {
         />
       );
     }
-    let selectedNamespace = NamespaceStore.getState().selectedNamespace;
-    let previousPathname = objectQuery(this.props, 'location', 'state', 'previousPathname')  || `/ns/${selectedNamespace}`;
     let previousPaths = [{
-      pathname: previousPathname,
+      pathname: this.state.previousPathName,
       label: T.translate('commons.back')
     }];
     return (

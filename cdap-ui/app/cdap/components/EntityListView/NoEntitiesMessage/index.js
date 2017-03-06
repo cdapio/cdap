@@ -21,6 +21,7 @@ import PlusButtonStore from 'services/PlusButtonStore';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 require('./NoEntitiesMessage.scss');
+import {DEFAULT_SEARCH_QUERY} from 'components/EntityListView/SearchStore/SearchConstants';
 
 export default function NoEntitiesMessage({searchText, filtersAreApplied, clearSearchAndFilters}) {
   let eventEmitter = ee(ee);
@@ -42,7 +43,7 @@ export default function NoEntitiesMessage({searchText, filtersAreApplied, clearS
   let emptyMessage = T.translate('features.EntityListView.emptyMessage.default', {namespace});
   let clearText;
 
-  if (searchText) {
+  if (searchText !== DEFAULT_SEARCH_QUERY) {
     emptyMessage = T.translate('features.EntityListView.emptyMessage.search', {searchText});
     clearText = T.translate('features.EntityListView.emptyMessage.clearText.search');
   } else if (filtersAreApplied && filtersAreApplied()) {
