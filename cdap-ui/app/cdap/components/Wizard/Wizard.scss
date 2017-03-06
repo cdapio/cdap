@@ -17,7 +17,7 @@
   height: 100%;
   .wizard-body {
     display: flex;
-    height: 90%;
+    height: 100%;
     border: 0;
 
     .wizard-steps-header {
@@ -65,9 +65,10 @@
     &.success {
       width: 100%;
       position: relative;
-      top: -100%;
+      // 40px: height of modal header
+      top: calc(-100% - 40px);
       right: 0;
-      height: 100%;
+      height: calc(100% + 40px);
       background: rgba(0, 0, 0, 0.8);
       color: white;
 
@@ -85,15 +86,24 @@
         top: 35%;
         left: 10%;
         font-size: 18px;
+        max-width: 80%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
 
         .clearfix {
           margin-top: 25px;
 
           .call-to-action {
             font-size: 18px;
+            max-width: 60%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
           }
 
           .secondary-call-to-action {
+            color: white;
             margin-left: 50px;
             font-size: 14px;
           }

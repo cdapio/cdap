@@ -261,13 +261,17 @@ export default class Wizard extends Component {
           <span className="fa fa-times" />
         </div>
         <div className="result-container">
-          <span className="success-message">
+          <span
+            className="success-message"
+            title={callToActionInfo.message}
+          >
             {callToActionInfo.message}
             <p>{callToActionInfo.subtitle}</p>
           </span>
           <div className="clearfix">
             <a
               href={callToActionInfo.buttonUrl}
+              title={callToActionInfo.buttonLabel}
               className="call-to-action btn btn-primary"
               onClick={this.handleCallToActionClick}
             >

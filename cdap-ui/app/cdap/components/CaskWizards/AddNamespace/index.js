@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,14 +19,17 @@ import Wizard from 'components/Wizard';
 import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
 import AddNamespaceActions from 'services/WizardStores/AddNamespace/AddNamespaceActions';
 import AddNamespaceWizardConfig from 'services/WizardConfigs/AddNamespaceWizardConfig';
+import NamespaceStore from 'services/NamespaceStore';
 import { PublishNamespace, PublishPreferences } from 'services/WizardStores/AddNamespace/ActionCreator';
+import T from 'i18n-react';
 import Rx from 'rx';
 
 export default class AddNamespaceWizard extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showWizard: this.props.isOpen
+      showWizard: this.props.isOpen,
+      successInfo: {}
     };
   }
   componentWillReceiveProps({isOpen}) {
@@ -41,6 +44,7 @@ export default class AddNamespaceWizard extends Component {
           if (res.includes('already exists')) {
             return Rx.Observable.throw(res);
           } else {
+            this.buildSuccessInfo(res);
             return PublishPreferences();
           }
         }
@@ -51,7 +55,27 @@ export default class AddNamespaceWizard extends Component {
       type: AddNamespaceActions.onReset
     });
   }
-
+  buildSuccessInfo(responseText) {
+    // responseText has the format "Namespace '{namespace}' created successfully."
+    let newNamespaceId = responseText.split("'")[1];
+    let currentNamespaceId = NamespaceStore.getState().selectedNamespace;
+    let message = T.translate('features.Wizard.Add-Namespace.Status.creation-success-desc', {namespaceId: newNamespaceId});
+    let buttonLabel = T.translate('features.Wizard.Add-Namespace.callToAction', {namespaceId: newNamespaceId});
+    let linkLabel = T.translate('features.Wizard.GoToHomePage');
+    this.setState({
+      successInfo: {
+        message,
+        buttonLabel,
+        buttonUrl: window.getAbsUIUrl({
+          namespaceId: newNamespaceId,
+        }),
+        linkLabel,
+        linkUrl: window.getAbsUIUrl({
+          namespaceId: currentNamespaceId
+        })
+      }
+    });
+  }
   render() {
     return (
       <div>
@@ -67,6 +91,7 @@ export default class AddNamespaceWizard extends Component {
                 wizardConfig={AddNamespaceWizardConfig}
                 wizardType="Add-Namespace"
                 onSubmit={this.createNamespace.bind(this)}
+                successInfo={this.state.successInfo}
                 onClose={this.props.onClose}
                 store={AddNamespaceStore}
               />

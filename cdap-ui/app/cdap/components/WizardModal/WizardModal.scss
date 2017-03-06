@@ -43,7 +43,7 @@ $wizard-modal-margin-top: 180px;
       .modal-body {
         padding: 0;
         height: calc(100% - 51px); // 100% - 51px for modal header
-        max-height: 400px;
+        max-height: 360px;
         overflow: visible;
 
         > div {
