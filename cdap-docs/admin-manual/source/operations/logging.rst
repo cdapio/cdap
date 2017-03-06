@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _logging-monitoring:
 
@@ -21,19 +21,27 @@ and :ref:`Monitoring <http-restful-api-monitor>` HTTP RESTful APIs, the :ref:`Ja
 additional information.
 
 
-Log Location
-============
-The location of logs depends on the mode of CDAP and the Hadoop distribution.
+Log Location of CDAP System Services
+====================================
+The location of CDAP system service logs depends on the mode of CDAP and the Hadoop distribution.
 
-- With **Standalone CDAP** (the CDAP SDK), logs are located in ``<CDAP-SDK-HOME>/logs``.
+- With **Standalone CDAP** (the CDAP SDK), system logs are located in ``<CDAP-SDK-HOME>/logs``.
 
-- For **Distributed CDAP**, with the exception of Cloudera Manager, logs are located in
-  ``/var/log/cdap``. With Cloudera Manager installations, log files are located in
+- For **Distributed CDAP**, with the exception of Cloudera Manager, system logs are located in
+  ``/var/log/cdap``. With Cloudera Manager installations, system log files are located in
   directories under ``/var/run/cloudera-scm-agent/process``.
 
+These logs are emitted by the CDAP System Services:
 
-Logging Messages
-================
+- CDAP Master
+- CDAP Router
+- CDAP UI
+- CDAP Auth Server
+- CDAP Kafka Server
+
+
+Application Logging Messages
+============================
 
 .. highlight:: java
 
@@ -56,6 +64,15 @@ The log messages emitted by your application code can be viewed in different way
   details the available contexts that can be called to retrieve different messages.
 - Log messages of an application can be viewed in the :ref:`CDAP UI <cdap-ui>`
   by clicking the *Logs* tab of an application.
+  
+Application logs are stored in locations specified by properties in the
+:ref:`cdap-site.xml <appendix-cdap-default-logging>` file:
+
+- For CDAP Standalone: the property ``log.collection.root`` (default
+  ``${local.data.dir}/logs``) is the root location for collecting logs when in Standalone
+  CDAP.
+
+- For Distributed CDAP: tbd
 
 
 .. _master-service-logging-configuration:
@@ -65,8 +82,8 @@ Master Service Logging Configuration
 
 :term:`Master Services <master services>` use ``logback-container.xml``, packaged with the CDAP distribution,
 for logging configuration. This logback does log rotation once a day at midnight and expires logs older than
-14 days. Changes can be made to ``logback-container.xml``, and the ``cdap-master`` process will need to be restarted
-for the modified logback to take effect.
+14 days. Changes can be made to ``logback-container.xml``; afterwards, the ``cdap-master``
+process will need to be restarted for the modified logback to take effect.
 
 
 Monitoring Utilities
