@@ -58,8 +58,10 @@ public class WikipediaDataDownloader extends AbstractMapReduce {
     Job job = context.getHadoopJob();
     job.setMapperClass(WikipediaDataDownloaderMapper.class);
     job.setNumReduceTasks(0);
-    context.addInput(Input.ofDataset(WikipediaPipelineApp.PAGE_TITLES_DATASET));
-    context.addOutput(Output.ofDataset(WikipediaPipelineApp.RAW_WIKIPEDIA_DATASET));
+    String dataNamespace = context.getRuntimeArguments().get(WikipediaPipelineApp.NAMESPACE_ARG);
+    dataNamespace = dataNamespace == null ? getContext().getNamespace() : dataNamespace;
+    context.addInput(Input.ofDataset(WikipediaPipelineApp.PAGE_TITLES_DATASET).fromNamespace(dataNamespace));
+    context.addOutput(Output.ofDataset(WikipediaPipelineApp.RAW_WIKIPEDIA_DATASET).fromNamespace(dataNamespace));
   }
 
   @Override
