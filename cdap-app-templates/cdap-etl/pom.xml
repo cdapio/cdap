@@ -42,6 +42,7 @@
     <module>cdap-etl-tools</module>
     <module>hydrator-spark-core</module>
     <module>hydrator-test</module>
+    <module>cdap-spark-notification-workflow</module>
   </modules>
 
   <properties>
