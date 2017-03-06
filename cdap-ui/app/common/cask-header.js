@@ -15,6 +15,7 @@
  */
 
  import T from 'i18n-react';
+ import {fetchTables} from '../cdap/services/ExploreTables/ActionCreator';
  T.setTexts(require('../cdap/text/text-en.yaml'));
  var Store = require('../cdap/services/NamespaceStore').default;
  var Header = require('../cdap/components/Header').default;
@@ -25,6 +26,7 @@
  var VersionStore = require('../cdap/services/VersionStore').default;
  var VersionActions = require('../cdap/services/VersionStore/VersionActions').default;
  var Version = require('../cdap/services/VersionRange/Version').default;
+ var ExploreTablesStore = require('../cdap/services/ExploreTables/ExploreTablesStore').default;
  export {
   Store,
   Header,
@@ -34,5 +36,7 @@
   VersionStore,
   VersionActions,
   Version,
-  ResourceCenterButton
+  ResourceCenterButton,
+  ExploreTablesStore,
+  fetchTables
 };

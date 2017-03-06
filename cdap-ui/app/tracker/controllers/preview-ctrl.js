@@ -15,7 +15,7 @@
  */
 
 class TrackerPreviewController {
-  constructor($state, myTrackerApi, $scope, MyCDAPDataSource) {
+  constructor($state, myTrackerApi, $scope, MyCDAPDataSource, $timeout) {
     this.$state = $state;
     this.myTrackerApi = myTrackerApi;
     this.$scope = $scope;
@@ -23,6 +23,7 @@ class TrackerPreviewController {
     this.loading = true;
     this.viewLimit = 10;
     this.previewNotAvailable = false;
+    this.$timeout = $timeout;
 
     this.entityExploreUrl = window.getAbsUIUrl({
       namespaceId: $state.params.namespace,
@@ -30,6 +31,10 @@ class TrackerPreviewController {
       entityId: $state.params.entityId
     });
     this.entityExploreUrl += '?modalToOpen=explore';
+
+    window.CaskCommon.ExploreTablesStore.dispatch(
+      window.CaskCommon.fetchTables(this.$state.params.namespace)
+    );
     this.generatePreview();
   }
 
@@ -45,17 +50,31 @@ class TrackerPreviewController {
       this.entityType = 'dataset';
     }
 
-    let query = 'SELECT * FROM ' + this.entityType + '_' + this.$state.params.entityId + ' LIMIT 500';
+    this.$timeout(() => {
+      let {tables: explorableTables} = window.CaskCommon.ExploreTablesStore.getState(),
+        databaseName,
+        tableName;
 
-    this.myTrackerApi.postQuery(params, { query: query })
-      .$promise
-      .then((res) => {
-        this.pollQueryStatus(res.handle);
-      }, (err) => {
-        this.loading = false;
-        this.previewNotAvailable = true;
-        console.log('Error', err);
+      let match = explorableTables.filter(db => {
+        return db.table === this.entityType + '_' + this.$state.params.entityId.toLowerCase() || db.table === this.$state.params.entityId.toLowerCase();
       });
+
+      if (match.length) {
+        tableName = match[0].table;
+        databaseName = match[0].database;
+      }
+
+      let query = 'SELECT * FROM ' + databaseName + '.' + tableName + ' LIMIT 500';
+
+      this.myTrackerApi.postQuery(params, { query: query })
+        .$promise
+        .then((res) => {
+          this.pollQueryStatus(res.handle);
+        }, (err) => {
+          this.loading = false;
+          this.previewNotAvailable = true;
+        });
+    });
   }
 
   pollQueryStatus(handle) {
@@ -104,7 +123,7 @@ class TrackerPreviewController {
   }
 }
 
-TrackerPreviewController.$inject = ['$state', 'myTrackerApi', '$scope','MyCDAPDataSource'];
+TrackerPreviewController.$inject = ['$state', 'myTrackerApi', '$scope','MyCDAPDataSource', '$timeout'];
 
 angular.module(PKG.name + '.feature.tracker')
  .controller('TrackerPreviewController', TrackerPreviewController);
