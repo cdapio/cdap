@@ -1120,7 +1120,7 @@
     <value>7</value>
     <description>
       Maximum time in days a file is kept before it can be deleted by log
-      cleanup.
+      cleanup
     </description>
   </property>
 
@@ -1245,8 +1245,8 @@
     <value>1024</value>
     <description>
       Memory in megabytes for each log saver instance to run in YARN. This
-      is explicitly set differently than ${master.service.memory.mb} as Log
-      saver requires more memory to run than the CDAP Master service.
+      is explicitly set differently than ${master.service.memory.mb} as the
+      log saver requires more memory to run than the CDAP Master service.
     </description>
   </property>
 
@@ -1278,7 +1278,7 @@
     <name>log.saver.status.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Log Saver HTTP service bind address
+      Log saver HTTP service bind address
     </description>
   </property>
 
@@ -1867,7 +1867,7 @@
     <name>metrics.processor.status.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Metrics Processor HTTP service bind address
+      Metrics processor HTTP service bind address
     </description>
   </property>
 
@@ -1875,7 +1875,7 @@
     <name>metrics.query.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Metrics Query service bind address
+      Metrics query service bind address
     </description>
   </property>
 
@@ -1883,7 +1883,7 @@
     <name>metrics.query.bind.port</name>
     <value>45005</value>
     <description>
-      Metrics Query service bind port
+      Metrics query service bind port
     </description>
   </property>
 
