@@ -112,7 +112,7 @@ To configure Hive to be able to impersonate other users, set in ``hive-site.xml`
 
 Note that the CDAP Explore service ignores this setting and needs to be able to
 impersonate users who can create and access entities in CDAP. This can by done by adding
-properties in your ``core-site.xml``. The first property allows CDAP to impersonate users
+properties in your ``core-site.xml``. The first property allows Hive to impersonate users
 belonging to ``group1`` and ``group2`` and the second property allows Hive to impersonate
 on all hosts::
 

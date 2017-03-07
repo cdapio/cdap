@@ -74,7 +74,7 @@ with JSON-formatted name of the dataset type, properties, and description in a b
         "<properties>"
       },
      "description":"Dataset Description",
-     "principal":"user/example.net@examplekdc.net"
+     "principal":"user/example.net@EXAMPLEKDC.NET"
   }
 
 .. highlight:: console
@@ -124,11 +124,11 @@ with JSON-formatted name of the dataset type, properties, and description in a b
      - ``PUT /v3/namespaces/default/data/datasets/mydataset``
    * - Body
      - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"dataset.table.ttl":"3600"},``
-       ``"description":"My Dataset Description",`` ``"principal":"user/example.net@examplekdc.net"}``
+       ``"description":"My Dataset Description",`` ``"principal":"user/example.net@EXAMPLEKDC.NET"}``
    * - Description
      - Creates a dataset named *mydataset* of the type ``Table`` in the namespace *default*
        with the time-to-live property set to 1 hour, a description of ``My Dataset Description``,
-       owned by the principal identified by ``user/example.net@examplekdc.net``.
+       owned by the principal identified by ``user/example.net@EXAMPLEKDC.NET``.
 
 .. _http-restful-api-dataset-properties:
 
@@ -239,7 +239,7 @@ The response body will contain JSON-formatted metadata of the existing dataset::
          }
        ]
      },
-     "principal": "user/example.net@examplekdc.net"
+     "principal": "user/example.net@EXAMPLEKDC.NET"
    }
 
 .. highlight:: console
