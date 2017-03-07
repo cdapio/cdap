@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright © 2014-2016 Cask Data, Inc.
+  Copyright © 2014-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -16,18 +16,15 @@
   the License.
   -->
 
-<!--                                                                         -->
-<!-- AppFabric Logging Configuration                                         -->
-<!--                                                                         -->
-<!-- We use the LogBack project for logging in AppFabric. The manual for     -->
-<!-- Logback can be found here: http://logback.qos.ch/manual                 -->
-<!--                                                                         -->
+<!--                                                                                      -->
+<!-- AppFabric Logging Configuration                                                      -->
+<!--                                                                                      -->
+<!-- The LogBack project (http://logback.qos.ch/manual) is used for logging in AppFabric. -->
+<!--                                                                                      -->
 
 <configuration>
 
-  <!--
-    Disabling some chatty loggers.
-  -->
+  <!-- Disabling some chatty loggers -->
   <logger name="org.apache.commons.beanutils" level="ERROR"/>
   <logger name="org.apache.zookeeper.server" level="ERROR"/>
   <logger name="org.apache.zookeeper" level="ERROR"/>
@@ -36,7 +33,7 @@
   <logger name="org.spark-project" level="WARN"/>
   <logger name="org.apache.hadoop" level="WARN"/>
   <logger name="org.apache.hive" level="WARN"/>
-  <!--TODO Remove suppressing of Tephra logs once CDAP-8806 is fixed. -->
+  <!-- TODO Remove suppressing of Tephra logs once CDAP-8806 is fixed. -->
   <logger name="org.apache.tephra.TransactionManager" level="WARN"/>
   <logger name="org.quartz.core" level="WARN"/>
   <logger name="org.eclipse.jetty" level="WARN"/>
@@ -45,49 +42,47 @@
   <logger name="co.cask.cdap.extension.AbstractExtensionLoader" level="ERROR"/>
 
   <appender name="Rolling" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs/cdap.log</file>
+    <encoder>
+      <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>WARN</level>
+    </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+      <maxIndex>10</maxIndex>
+      <FileNamePattern>logs/cdap.log.%i</FileNamePattern>
+    </rollingPolicy>
+    <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+      <MaxFileSize>50000KB</MaxFileSize>
+    </triggeringPolicy>
+  </appender>
 
-        <file>logs/cdap.log</file>
-        <encoder>
-            <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>WARN</level>
-        </filter>
-        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <maxIndex>10</maxIndex>
-            <FileNamePattern>logs/cdap.log.%i</FileNamePattern>
-        </rollingPolicy>
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <MaxFileSize>50000KB</MaxFileSize>
-        </triggeringPolicy>
-    </appender>
+  <appender name="Debug" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs/cdap-debug.log</file>
+    <encoder>
+      <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>DEBUG</level>
+    </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+      <maxIndex>10</maxIndex>
+      <FileNamePattern>logs/cdap-debug.log.%i</FileNamePattern>
+    </rollingPolicy>
+    <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+      <MaxFileSize>50000KB</MaxFileSize>
+    </triggeringPolicy>
+  </appender>
 
-    <appender name="Debug" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/cdap-debug.log</file>
-        <encoder>
-            <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>DEBUG</level>
-        </filter>
-        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <maxIndex>10</maxIndex>
-            <FileNamePattern>logs/cdap-debug.log.%i</FileNamePattern>
-        </rollingPolicy>
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <MaxFileSize>50000KB</MaxFileSize>
-        </triggeringPolicy>
-    </appender>
-
-
-    <appender name="Error" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>ERROR</level>
-        </filter>
-    </appender>
+  <appender name="Error" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>ERROR</level>
+    </filter>
+  </appender>
 
   <appender name="AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>logs/access.log</file>
@@ -117,10 +112,10 @@
     <appender-ref ref="EXTERNAL_AUTH_AUDIT" />
   </logger>
 
-    <root level="DEBUG">
-        <appender-ref ref="Rolling"/>
-        <appender-ref ref="Debug"/>
-        <appender-ref ref="Error"/>
-    </root>
+  <root level="DEBUG">
+    <appender-ref ref="Rolling"/>
+    <appender-ref ref="Debug"/>
+    <appender-ref ref="Error"/>
+  </root>
 
 </configuration>
