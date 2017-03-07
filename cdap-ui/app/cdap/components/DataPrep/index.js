@@ -15,7 +15,7 @@
  */
 
 import React, { Component } from 'react';
-// import DataPrepTopPanel from 'components/DataPrep/TopPanel';
+import DataPrepTopPanel from 'components/DataPrep/TopPanel';
 // import DataPrepTable from 'components/DataPrep/DataPrepTable';
 // import DataPrepSidePanel from 'components/DataPrep/DataPrepSidePanel';
 // import DataPrepCLI from 'components/DataPrep/DataPrepCLI';
@@ -106,7 +106,7 @@ export default class DataPrep extends Component {
 
     return (
       <div className="dataprep-container">
-        <h4>DataPrep</h4>
+        <DataPrepTopPanel />
       </div>
     );
   }
