@@ -22,7 +22,7 @@ of *appenders* and *logging pipelines*:
 - A **logging pipeline** is a single-threaded process that reads log events from Kafka and invokes
   the appender defined in its configuration.
 
-The framework is configured using ``logback.xml`` files at a specified location. For every file
+The *LogFramework* is configured using ``logback.xml`` files at a specified location. For every file
 configured, a separate logging pipeline is created, providing isolation from other logging pipelines:
 
 .. figure:: /_images/logging-framework.png
@@ -58,8 +58,7 @@ the :ref:`cdap-site.xml <appendix-cdap-site.xml>` file.
 
 In particular, these properties:
 
-[Note: as all these props are doc'd at the above link, what subset of these would be
-appropriate? It doesn't seem to make sense to repeat all of them.]
+[Note: as all these props are doc'd at the above link, what subset of these would be appropriate? It doesn't seem to make sense to repeat all of them.]
 
 log.pipeline.cdap.dir.permissions
 log.pipeline.cdap.file.cleanup.interval.mins
@@ -69,6 +68,8 @@ log.pipeline.cdap.file.max.size.bytes
 log.pipeline.cdap.file.permissions
 log.pipeline.cdap.file.retention.duration.days
 log.pipeline.cdap.file.sync.interval.bytes
+
+
 log.process.pipeline.auto.buffer.ratio
 log.process.pipeline.buffer.size
 log.process.pipeline.checkpoint.interval.ms
@@ -78,9 +79,12 @@ log.process.pipeline.kafka.fetch.size
 log.process.pipeline.lib.dir
 log.process.pipeline.logger.cache.expiration.ms
 log.process.pipeline.logger.cache.size
+
 log.publish.num.partitions
 log.publish.partition.key
 
+These properties (``log.process.pipeline.*``) can be specified at the pipeline level by
+providing a value in a pipeline's ``logback.xml`` file for any of these properties.
 
 Example Logback.xml File
 ------------------------
@@ -166,6 +170,19 @@ Custom Appender
 If you need an appender beyond what is offered here, you can write and implement your own
 custom appender. See the Logback documentation at
 https://logback.qos.ch/manual/appenders.html for information on how to do this.
+
+You can use any existing `logback <https://logback.qos.ch/manual/appenders.html>`__
+appender. The ``RollingLocationLogAppender`` |---| an extension of the
+``RollingFileLogAppender`` |---| lets you use HDFS locations in your logging pipelines. 
+
+As the CDAP LogFramework uses the logback's Appender API, your custom appender needs to
+implement the same Appender interface. Access to CDAP's system components (such as
+datasets, metrics, ``LocationFactory``) are made available to the ``AppenderContext``, an
+extension of logback's ``LoggerContext``.
+
+Adding a dependency on the ``cdap-watch-dog`` API will allow you to access the
+:cdap-java-source-github:`cdap-watchdog-api/src/main/java/co/cask/cdap/api/logging/AppenderContext.java`
+in your application.
 
 
 .. _application-logback:
