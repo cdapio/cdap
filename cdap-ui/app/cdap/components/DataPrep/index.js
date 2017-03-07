@@ -15,7 +15,7 @@
  */
 
 import React, { Component } from 'react';
-// import DataPrepTopPanel from 'components/DataPrep/TopPanel';
+import DataPrepTopPanel from 'components/DataPrep/TopPanel';
 // import DataPrepTable from 'components/DataPrep/DataPrepTable';
 // import DataPrepSidePanel from 'components/DataPrep/DataPrepSidePanel';
 // import DataPrepCLI from 'components/DataPrep/DataPrepCLI';
@@ -36,7 +36,8 @@ export default class DataPrep extends Component {
     super(props);
 
     this.state = {
-      backendDown: false
+      backendDown: false,
+      loading: true
     };
 
     this.toggleBackendDown = this.toggleBackendDown.bind(this);
@@ -66,20 +67,24 @@ export default class DataPrep extends Component {
             workspaceId
           }
         });
+
+        this.setState({loading: false});
       }, (err) => {
+        this.setState({loading: false});
         if (err.statusCode === 503) {
           console.log('backend not started');
           this.eventEmitter.emit('DATAPREP_BACKEND_DOWN');
           return;
         }
 
-        cookie.remove('DATAPREP_WORKSPACE');
+        cookie.remove('DATAPREP_WORKSPACE', { path: '/' });
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setInitialized
         });
         this.eventEmitter.emit('DATAPREP_NO_WORKSPACE_ID');
       });
+
   }
 
   componentWillUnmount() {
@@ -102,9 +107,19 @@ export default class DataPrep extends Component {
   render() {
     if (this.state.backendDown) { return this.renderBackendDown(); }
 
+    if (this.state.loading) {
+      return (
+        <div className="dataprep-container">
+          <h3 className="text-xs-center">
+            <span className="fa fa-spin fa-spinner" />
+          </h3>
+        </div>
+      );
+    }
+
     return (
       <div className="dataprep-container">
-        <h4>DataPrep</h4>
+        <DataPrepTopPanel />
       </div>
     );
   }
