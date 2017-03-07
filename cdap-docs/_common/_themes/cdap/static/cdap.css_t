@@ -77,18 +77,20 @@ div.related {
     color: #fff;
     font-size: 1.0em;
     line-height: 32px;
-    padding-left: 170px;
     padding-left: 290px;
     position: fixed;
     text-shadow: 0 1px 0 #444;
     width: 100%;
-    width: auto;
     z-index: 1;
 }
 
 div.related a {
     color: #FFFFFF;
     font-weight: bold;
+}
+
+div.related li.right a {
+    font-weight: normal;
 }
 
 div.section {
