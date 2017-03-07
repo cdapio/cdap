@@ -73,7 +73,6 @@ export default class DataPrep extends Component {
           return;
         }
 
-        console.log('Init Error', err);
         cookie.remove('DATAPREP_WORKSPACE');
 
         DataPrepStore.dispatch({

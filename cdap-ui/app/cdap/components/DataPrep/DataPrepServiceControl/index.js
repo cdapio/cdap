@@ -75,7 +75,7 @@ export default class DataPrepServiceControl extends Component {
             this.startService();
           }, (err) => {
             this.setState({
-              error: 'Failed to start service',
+              error: 'Failed to enable data preparation',
               extendedMessage: err.data || err,
               loading: false
             });
@@ -91,7 +91,7 @@ export default class DataPrepServiceControl extends Component {
         this.pollServiceStatus();
       }, (err) => {
         this.setState({
-          error: 'Failed to start service',
+          error: 'Failed to enable data preparation',
           extendedMessage: err.data || err,
           loading: false
         });
@@ -104,12 +104,11 @@ export default class DataPrepServiceControl extends Component {
     this.servicePoll = MyDataPrepApi.pollServiceStatus({ namespace })
       .subscribe((res) => {
         if (res.status === 'RUNNING') {
-          window.onbeforeunload = null;
           window.location.reload();
         }
       }, (err) => {
         this.setState({
-          error: 'Failed to get service status',
+          error: 'Failed to enable data preparation',
           extendedMessage: err.data || err,
           loading: false
         });

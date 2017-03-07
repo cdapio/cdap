@@ -15,7 +15,6 @@
  */
 
 import React, { Component } from 'react';
-import NavigationPrompt from 'react-router/NavigationPrompt';
 import DataPrep from 'components/DataPrep';
 
 /**
@@ -25,13 +24,6 @@ export default class DataPrepHome extends Component {
   constructor(props) {
     super(props);
 
-    window.onbeforeunload = function() {
-      return "Are you sure you want to leave this page?";
-    };
-  }
-
-  componentWillUnmount() {
-    window.onbeforeunload = null;
   }
 
   render() {
@@ -39,10 +31,6 @@ export default class DataPrepHome extends Component {
       <div>
         <DataPrep />
 
-        <NavigationPrompt
-          when={true}
-          message="Are you sure you want to leave this page?"
-        />
       </div>
     );
   }
