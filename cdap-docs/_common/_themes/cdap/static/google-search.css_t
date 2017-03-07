@@ -24,7 +24,7 @@ td.gsib_a {
 }
 
 input#gsc-i-id1.gsc-input {
-  font-size: 13px;
+  font-size: 1.0em;
 }
 
 div.gsc-result-info {
@@ -41,5 +41,5 @@ div.gsc-result-info,
 div.gsc-orderby-label.gsc-inline-block,
 td.gcsc-branding-text,
 div.gcsc-branding-text {
-  font-family: 'Source Sans Pro', "Helvetica", "Arial", sans-serif;
+  font-family: "Open Sans", "Helvetica", "Arial", sans-serif;
 }

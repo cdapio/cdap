@@ -4,21 +4,21 @@
  *
  * Sphinx stylesheet -- cdap theme.
  *
- * :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
- * :license: BSD, see LICENSE for details.
+ * :copyright: Copyright 2017 Cask Data, Inc.
+ * :license: Apache 2.0 License, see LICENSE for details.
  *
  */
 
 @import url("basic.css");
 
-@import url(http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700,400italic,700italic);
+@import url(http://fonts.googleapis.com/css?family=Open+Sans:400,700,400italic,700italic);
 
 @import url("tabbed-parsed-literal.css");
 
 /* -- page layout ----------------------------------------------------------- */
 
 body {
-    font-family: 'Source Sans Pro', "Helvetica", "Arial", sans-serif; font-weight: 400;
+    font-family: "Open Sans", "Helvetica", "Arial", sans-serif;
     font-size: 100%;
     background-color: #4B5258;
     color: #555;
@@ -48,7 +48,7 @@ div.body {
     background-color: #ffffff;
     color: #3E4349;
     padding: 0 30px 30px 30px;
-    font-size: 0.9em;
+    font-size: 1.0em;
     min-height: 1300px;
 }
 
@@ -73,7 +73,7 @@ div.related {
     line-height: 32px;
     color: #fff;
     text-shadow: 0 1px 0 #444;
-    font-size: 0.9em;
+    font-size: 1.0em;
     width: auto;
     background-image: url(./doc_logo.png);
     background-repeat: no-repeat;
@@ -95,8 +95,11 @@ div.section {
 	clear: both;
 }
 
+/* -- Left Sidebar ----------------------------------------------------------- */
+
 div.sphinxsidebar {
     font-size: 0.75em;
+    font-size: 0.9em;
     line-height: 1.5em;
     width: 270px;
     top: 32px;
@@ -164,7 +167,7 @@ div.sphinxsidebar a:hover {
 }
 
 div.sphinxsidebar a tt.docutils.literal {
-    font-family: 'Source Sans Pro', "Helvetica", "Arial", sans-serif;
+    font-family: "Open Sans", "Helvetica", "Arial", sans-serif;
     font-style: italic;
     font-weight: normal;
     font-size: 1.0em;
@@ -172,7 +175,7 @@ div.sphinxsidebar a tt.docutils.literal {
 
 div.sphinxsidebar input {
     border: 1px solid #ccc;
-    font-family: sans-serif;
+    font-family: "Open Sans", "Helvetica", "Arial", sans-serif;
     font-size: 1em;
 }
 
@@ -198,7 +201,7 @@ div.body h6 {
 
 div.body h1 { border-top: 20px solid white; margin-top: 0; font-size: 180%; font-weight:bold;}
 div.body h2 { font-size: 150%; font-weight:bold;}
-div.body h3 { font-size: 120%; font-weight:bold;}
+div.body h3 { font-size: 120%; font-weight:normal;}
 div.body h4 { font-size: 110%; font-weight:normal;}
 div.body h5 { font-size: 100%; font-weight:normal;}
 div.body h6 { font-size: 100%; font-weight:normal;}
@@ -356,9 +359,9 @@ pre {
     background-color: #ecf0f3;
     background-color: #F9FAFB;
     color: #222;
-    line-height: 1.2em;
+    line-height: 1.5em;
     border: 1px solid #C6C9CB;
-    font-size: 1.1em;
+    font-size: 1.2em;
     margin: 1.5em 0 1.5em 15px;
     -webkit-box-shadow: 1px 1px 1px #d8d8d8;
     -moz-box-shadow: 1px 1px 1px #d8d8d8;
@@ -372,12 +375,12 @@ div.first.last.highlight-json-ellipsis pre {
 
 tt {
     color: #222;
-    font-size: 1.1em;
+    font-size: 1.2em;
     font-family: monospace;
 }
 
 .viewcode-back {
-    font-family: Arial, sans-serif;
+    font-family: "Open Sans", "Helvetica", "Arial", sans-serif;
 }
 
 div.viewcode-block:target {
@@ -410,10 +413,12 @@ ul.simple {
 }
 
 /* -- Literals ---------------------------------------------------------- */
+/* See also (and keep in sync) the styles pre tt */
 
 .docutils.literal {
   background: #F3F3F3;
   border-radius: 3px;
+  font-size: 1.2em;
   padding: 1px 3px;
 }
 
@@ -428,20 +433,23 @@ td .docutils.literal {
 
 table.docutils p.first {
 	line-height: 17px;
+  line-height: 1.3em;
 }
 
 table.docutils p.last {
-	line-height: 17px;
-	margin-bottom: 0;
+  line-height: 17px;
+  line-height: 1.3em;
+  margin-bottom: 0;
 }
 
 table.docutils tbody td p {
-	line-height: 17px;
+  line-height: 17px;
+  line-height: 1.3em;
 }
 
 ul.first.last.simple li {
-    line-height: 1.3em;
-    line-height: 17px;
+  line-height: 17px;
+  line-height: 1.3em;
 }
 
 /* -- Table styles used in Introduction page -------------------------------------- */
@@ -463,6 +471,8 @@ div.table-block.container table.docutils tr.row-odd {
   background-color: #E0E0E0;
 }
  
+/* -- Triple-table ------------------------------- */
+
 /* Triple-table: Make even row with white border */
 
 div.table-block.container table.triple-table.docutils tr.row-even td {
@@ -471,6 +481,7 @@ div.table-block.container table.triple-table.docutils tr.row-even td {
 
 div.table-block.container table.triple-table.docutils th.stub {
   border-bottom: 1px solid white;
+  padding-top: 8px;
 }
 
 /* Triple-table: Make odd row with White background */
@@ -491,6 +502,11 @@ div.table-block.container table.triple-table.docutils tr:first-of-type {
 
 div.table-block.container table.triple-table.docutils tr:first-of-type th.stub {
   border-bottom: 1px solid #aaa;
+  padding-top: 8px;
+}
+
+div.table-block.container table.triple-table.docutils ul.first.last.simple {
+  padding-top: 6px;
 }
 
 /* -- Table styles used on RESTful pages -------------------------------------- */
@@ -518,7 +534,7 @@ div.table-block-example.container table.triple-table.docutils th.stub {
   border-bottom: 1px solid white;
 }
 
-/* Triple-table: Make odd row with White background */
+/* Triple-table: Make odd row with white background */
 
 div.table-block-example.container table.triple-table.docutils tr.row-odd {
   background-color: white;
