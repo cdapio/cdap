@@ -36,7 +36,7 @@ const poll = () => {
     fetchNamespace = fetch('/namespacestatus', { headers, credentials: 'include' });
     fetchServiceStatus = fetch('/servicestatus', { headers, credentials: 'include' });
   } else {
-    fetchNamespace = fetch('/namespacestatus', {credentials: 'include'});
+    fetchNamespace = fetch('/namespacestatus', { credentials: 'include' });
     fetchServiceStatus = fetch('/servicestatus', { credentials: 'include' });
   }
   Promise.all([fetchNamespace, fetchServiceStatus])
