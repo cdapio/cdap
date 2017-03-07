@@ -158,7 +158,7 @@
       "^api": "<rootDir>/api",
       "^lib": "<rootDir>/../lib",
       "^mocks": "<rootDir>/__mocks__",
-      "^.+\\.less$": "<rootDir>/__mocks__/styleMocks.js"
+      "^.+\\.scss$": "<rootDir>/__mocks__/styleMocks.js"
     }
   }
 }
