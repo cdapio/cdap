@@ -33,10 +33,10 @@ const poll = () => {
     if (!isNil(token)) {
       headers.Authorization = 'Bearer ' +  token;
     }
-    fetchNamespace = fetch('/backendstatus', { headers, credentials: 'include' });
+    fetchNamespace = fetch('/namespacestatus', { headers, credentials: 'include' });
     fetchServiceStatus = fetch('/servicestatus', { headers, credentials: 'include' });
   } else {
-    fetchNamespace = fetch('/backendstatus', {credentials: 'include'});
+    fetchNamespace = fetch('/namespacestatus', {credentials: 'include'});
     fetchServiceStatus = fetch('/servicestatus', { credentials: 'include' });
   }
   Promise.all([fetchNamespace, fetchServiceStatus])

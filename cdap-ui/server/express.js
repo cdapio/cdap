@@ -404,7 +404,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   */
   app.post('/login', authentication);
 
-  app.get('/backendstatus', [
+  app.get('/namespacestatus', [
     function (req, res) {
       var protocol,
           port;
