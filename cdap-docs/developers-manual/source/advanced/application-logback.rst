@@ -60,31 +60,34 @@ In particular, these properties:
 
 [Note: as all these props are doc'd at the above link, what subset of these would be appropriate? It doesn't seem to make sense to repeat all of them.]
 
-log.pipeline.cdap.dir.permissions
-log.pipeline.cdap.file.cleanup.interval.mins
-log.pipeline.cdap.file.cleanup.transaction.timeout
-log.pipeline.cdap.file.max.lifetime.ms
-log.pipeline.cdap.file.max.size.bytes
-log.pipeline.cdap.file.permissions
-log.pipeline.cdap.file.retention.duration.days
-log.pipeline.cdap.file.sync.interval.bytes
+- log.pipeline.cdap.dir.permissions
+- log.pipeline.cdap.file.cleanup.interval.mins
+- log.pipeline.cdap.file.cleanup.transaction.timeout
+- log.pipeline.cdap.file.max.lifetime.ms
+- log.pipeline.cdap.file.max.size.bytes
+- log.pipeline.cdap.file.permissions
+- log.pipeline.cdap.file.retention.duration.days
+- log.pipeline.cdap.file.sync.interval.bytes
 
+These properties control ...
 
-log.process.pipeline.auto.buffer.ratio
-log.process.pipeline.buffer.size
-log.process.pipeline.checkpoint.interval.ms
-log.process.pipeline.config.dir
-log.process.pipeline.event.delay.ms
-log.process.pipeline.kafka.fetch.size
-log.process.pipeline.lib.dir
-log.process.pipeline.logger.cache.expiration.ms
-log.process.pipeline.logger.cache.size
-
-log.publish.num.partitions
-log.publish.partition.key
+- log.process.pipeline.auto.buffer.ratio
+- log.process.pipeline.buffer.size
+- log.process.pipeline.checkpoint.interval.ms
+- log.process.pipeline.config.dir
+- log.process.pipeline.event.delay.ms
+- log.process.pipeline.kafka.fetch.size
+- log.process.pipeline.lib.dir
+- log.process.pipeline.logger.cache.expiration.ms
+- log.process.pipeline.logger.cache.size
 
 These properties (``log.process.pipeline.*``) can be specified at the pipeline level by
 providing a value in a pipeline's ``logback.xml`` file for any of these properties.
+
+These properties control ...
+
+- log.publish.num.partitions
+- log.publish.partition.key
 
 Example Logback.xml File
 ------------------------
