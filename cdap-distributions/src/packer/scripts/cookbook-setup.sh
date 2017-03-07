@@ -23,13 +23,5 @@ for cb in hadoop idea maven nodejs cdap ; do
   knife cookbook site install $cb
 done
 
-### TODO: remove this hack when chef-cookbooks/ark#181 is solved
-knife cookbook site install ark 2.1.0 || die "Cannot fetch ark cookbook 2.1.0"
-
-# Due to limitations on the Chef version required, pull these manually
-knife cookbook site install build-essential 7.0.3 || die "Cannot fetch build-essential 7.0.3"
-knife cookbook site install yum 4.2.0 || die "Cannot fetch yum 4.2.0"
-knife cookbook site install apt 5.1.0 || die "Cannot fetch apt 5.1.0"
-
 # Do not change HOME for cdap user
 sed -i '/ home /d' /var/chef/cookbooks/cdap/recipes/sdk.rb
