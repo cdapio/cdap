@@ -26,25 +26,29 @@ let pollCycleInProgress = false;
 let errorStateCount = 0;
 const poll = () => {
   let headers = {};
-  let fetchPromise;
+  let fetchNamespace;
+  let fetchServiceStatus;
   if (window.CDAP_CONFIG.securityEnabled) {
     let token = cookie.load('CDAP_Auth_Token');
     if (!isNil(token)) {
       headers.Authorization = 'Bearer ' +  token;
     }
-    fetchPromise = fetch('/backendstatus', { headers, credentials: 'include' });
+    fetchNamespace = fetch('/backendstatus', { headers, credentials: 'include' });
+    fetchServiceStatus = fetch('/servicestatus', { headers, credentials: 'include' });
   } else {
-    fetchPromise = fetch('/backendstatus', {credentials: 'include'});
+    fetchNamespace = fetch('/backendstatus', {credentials: 'include'});
+    fetchServiceStatus = fetch('/servicestatus', { credentials: 'include' });
   }
-  fetchPromise
-    .then(response => {
+  Promise.all([fetchNamespace, fetchServiceStatus])
+    .then(responses => {
       /*
         We handle,
           - 1XX Information
           - 2XX Success
           - 3XX Redirection Status codes
       */
-      if (response.status <= 399) {
+      let [namespaceRes, serviceStatusRes] = responses;
+      if (namespaceRes.status <= 399 && serviceStatusRes.status <= 399) {
         let loadingState = LoadingIndicatorStore.getState().loading;
         if ([BACKENDSTATUS.NODESERVERDOWN].indexOf(loadingState.status) !== -1) {
           window.location.reload();
