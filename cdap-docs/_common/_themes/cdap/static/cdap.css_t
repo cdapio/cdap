@@ -48,7 +48,7 @@ div.body {
     background-color: #ffffff;
     color: #3E4349;
     padding: 0 30px 30px 30px;
-    font-size: 1.0em;
+    font-size: 0.95em;
     min-height: 1300px;
 }
 
@@ -69,20 +69,20 @@ div.footer a {
 }
 
 div.related {
-    background-color: #303840;
-    line-height: 32px;
-    color: #fff;
-    text-shadow: 0 1px 0 #444;
-    font-size: 1.0em;
-    width: auto;
+    background-color: #464A57;
     background-image: url(./doc_logo.png);
-    background-repeat: no-repeat;
     background-position: left middle;
+    background-repeat: no-repeat;
+    box-sizing: border-box;
+    color: #fff;
+    font-size: 1.0em;
+    line-height: 32px;
     padding-left: 170px;
     padding-left: 290px;
-    box-sizing: border-box;
-    width: 100%;
     position: fixed;
+    text-shadow: 0 1px 0 #444;
+    width: 100%;
+    width: auto;
     z-index: 1;
 }
 
@@ -98,17 +98,16 @@ div.section {
 /* -- Left Sidebar ----------------------------------------------------------- */
 
 div.sphinxsidebar {
-    font-size: 0.75em;
-    font-size: 0.9em;
-    line-height: 1.5em;
-    width: 270px;
-    top: 32px;
-    bottom: 0;
-    margin: 0;
-    position: fixed;
-    overflow: auto;
-    height: auto;
     background-color: #eee;
+    bottom: 0;
+    font-size: 0.8em;
+    height: auto;
+    line-height: 1.5em;
+    margin: 0;
+    overflow: auto;
+    position: fixed;
+    top: 32px;
+    width: 270px;
 }
 
 div.sphinxsidebarwrapper{
@@ -117,12 +116,12 @@ div.sphinxsidebarwrapper{
 
 div.sphinxsidebar h3,
 div.sphinxsidebar h4 {
+    background-color: #ddd;
     color: #222;
-    font-size: 1.2em;
+    font-size: 1.1em;
     font-weight: normal;
     margin: 0;
     padding: 5px 10px;
-    background-color: #ddd;
     text-shadow: 1px 1px 0 white
 }
 
@@ -168,9 +167,9 @@ div.sphinxsidebar a:hover {
 
 div.sphinxsidebar a tt.docutils.literal {
     font-family: "Open Sans", "Helvetica", "Arial", sans-serif;
+    font-size: 1.0em;
     font-style: italic;
     font-weight: normal;
-    font-size: 1.0em;
 }
 
 div.sphinxsidebar input {
@@ -206,9 +205,9 @@ div.body h4 { font-size: 110%; font-weight:normal;}
 div.body h5 { font-size: 100%; font-weight:normal;}
 div.body h6 { font-size: 100%; font-weight:normal;}
 
-div.body h1 { background-color: #E0E0E0; }
-div.body h2 { background-color: #E0E0E0; }
-div.body h3 { background-color: #E0E0E0; margin: 30px 0 10px 0; }
+div.body h1 { background-color: #E4E7F0; }
+div.body h2 { background-color: #E4E7F0; }
+div.body h3 { background-color: #E4E7F0; margin: 30px 0 10px 0; }
 div.body h4 { background-color: #EDEDED; margin: 30px 0 10px 0; }
 div.body h5 { background-color: #F2F2F2; margin: 30px 0 10px 0; }
 div.body h6 { background-color: #F2F2F2; }
@@ -355,9 +354,7 @@ a em {
 
 pre {
     padding: 10px;
-    background-color: White;
-    background-color: #ecf0f3;
-    background-color: #F9FAFB;
+    background-color: #FFF7EA;
     color: #222;
     line-height: 1.5em;
     border: 1px solid #C6C9CB;
@@ -413,7 +410,7 @@ ul.simple {
 }
 
 /* -- Literals ---------------------------------------------------------- */
-/* See also (and keep in sync) the styles pre tt */
+/* See also (and keep in sync) these styles: pre tt */
 
 .docutils.literal {
   background: #F3F3F3;
@@ -432,24 +429,20 @@ td .docutils.literal {
 /* -- General Table styles --------------------------------------------- */
 
 table.docutils p.first {
-	line-height: 17px;
   line-height: 1.3em;
 }
 
 table.docutils p.last {
-  line-height: 17px;
   line-height: 1.3em;
   margin-bottom: 0;
 }
 
 table.docutils tbody td p {
-  line-height: 17px;
   line-height: 1.3em;
 }
 
 ul.first.last.simple li {
-  line-height: 17px;
-  line-height: 1.3em;
+  line-height: 1.5em;
 }
 
 /* -- Table styles used in Introduction page -------------------------------------- */
@@ -468,7 +461,7 @@ div.table-block.container {
 /* Make first table dark background */
 
 div.table-block.container table.docutils tr.row-odd {
-  background-color: #E0E0E0;
+  background-color: #E4E7F0;
 }
  
 /* -- Triple-table ------------------------------- */
@@ -512,16 +505,16 @@ div.table-block.container table.triple-table.docutils ul.first.last.simple {
 /* -- Table styles used on RESTful pages -------------------------------------- */
 
 div.table-block-example.container {
+  border-color: #aaa;
   border-style: solid;
   border-width: 1px;
   margin-left: 0;
   margin-top: 20px;
   margin-bottom: 30px;
-  border-color: #aaa;
 }
 
 div.table-block-example.container table.docutils tr.row-odd {
-  background-color: #E0E0E0;
+  background-color: #E4E7F0;
 }
 
 /* -- Triple-table: Make even row with white border --------------------------- */
