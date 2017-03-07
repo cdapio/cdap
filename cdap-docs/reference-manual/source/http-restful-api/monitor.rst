@@ -274,11 +274,11 @@ can be queried and changed by using these commands::
   GET /v3/system/services/<service-id>/instances
   PUT /v3/system/services/<service-id>/instances
 
-.. highlight:: json-ellipsis
+.. highlight:: json
 
 with the arguments as a JSON string in the body::
 
-        { "instances" : "<quantity>" }
+        { "instances" : <quantity> }
 
 .. highlight:: console
 
