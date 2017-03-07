@@ -11,14 +11,15 @@ CDAP Logging Framework
 .. highlight:: console
 
 CDAP collects logs of both its internal services and user applications. To do so, CDAP
-uses a logging framework consisting of *appenders* and *logging pipelines*:
+uses a logging framework, based on `Logback <https://logback.qos.ch/manual>`__, consisting
+of *appenders* and *logging pipelines*:
 
-- **An appender** is a Java class, responsible for writing log events to persistent storage and
+- An **appender** is a Java class, responsible for writing log events to persistent storage and
   maintaining metadata about that storage.  
   CDAP implements a ``RollingLocationLogAppender`` class that <tbd>.
   To create an appender, implement the <> and <> interfaces.
 
-- **A logging pipeline** is a single-threaded process that reads log events from Kafka and invokes
+- A **logging pipeline** is a single-threaded process that reads log events from Kafka and invokes
   the appender defined in its configuration.
 
 The framework is configured using ``logback.xml`` files at a specified location. For every file
@@ -31,17 +32,34 @@ configured, a separate logging pipeline is created, providing isolation from oth
 
     **CDAP Logging Framework:** Custom Log Pipeline and CDAP Log Pipeline, showing appenders
 
-
-
-
+As indicated in the diagram above, each pipeline requires a unique name, which is used for
+persisting the data and the retrieving of metadata. As they have separate Kafka consumers,
+each pipeline has a different offset, and a slowly-processing pipeline doesn't affect the
+performance of other logging pipelines.
 
 Default Configuration
 =====================
-In the default configuration, CDAP uses ...
-For many cases, this may be sufficient.
+In the default configuration, CDAP uses <?>...
+
+For many uses, this may be sufficient.
+
+The default ``logback.xml`` file is located either in:
+
+- For Standalone CDAP: ``<cdap-sdk-home>/conf/logback.xml``
+- For Distributed CDAP: ``/opt/cdap/master/ext/logging/config``, as set by the property
+  ``log.process.pipeline.config.dir`` in the ``cdap-default.xml`` file
+
 
 Configuration Properties
 ------------------------
+Configuration properties for logging pipelines and appenders are shown in the
+documentation of the :ref:`logging properties <appendix-cdap-default-logging>` section of
+the :ref:`cdap-site.xml <appendix-cdap-site.xml>` file.
+
+In particular, these properties:
+
+[Note: as all these props are doc'd at the above link, what subset of these would be
+appropriate? It doesn't seem to make sense to repeat all of them.]
 
 log.pipeline.cdap.dir.permissions
 log.pipeline.cdap.file.cleanup.interval.mins
@@ -64,9 +82,13 @@ log.publish.num.partitions
 log.publish.partition.key
 
 
+Example Logback.xml File
+------------------------
+
 .. highlight:: xml
 
-Example ``logback.xml`` file::
+Here is an example ``logback.xml`` file, using two appenders (``STDOUT`` and
+``rollingAppender``)::
 
   <?xml version="1.0" encoding="UTF-8"?>
   <configuration>
@@ -130,8 +152,9 @@ Example ``logback.xml`` file::
 
 Custom Logging Pipeline
 =======================
-For a custom logging pipeline, you can take the previous example ``logback.xml`` file,
-modify it,and place it in the <>. 
+For a custom logging pipeline, you would create and configure a ``logback.xml`` file,
+configuring loggers and appenders based on your requirements, and place the file at the
+path specified by ``log.process.pipeline.config.dir``.
 
 For every file configured, a separate logging pipeline is created. Though CDAP has been
 tested with multiple logging pipelines and appenders, the fewer of each that are specified
@@ -143,9 +166,6 @@ Custom Appender
 If you need an appender beyond what is offered here, you can write and implement your own
 custom appender. See the Logback documentation at
 https://logback.qos.ch/manual/appenders.html for information on how to do this.
-
-
-
 
 
 .. _application-logback:
@@ -161,7 +181,7 @@ the use case, the default configuration may be sufficient. As long as the contai
 running, these policies will apply. (As the lifetime of many containers is often less than
 14 days, these limits may never be reached.)
 
-**Note:** In the case of the CDAP Standalone, the logback used is ``logback.xml``, located
+**Note:** In the case of the CDAP Standalone, the logback file used is ``logback.xml``, located
 in the ``<cdap-sdk-home>/conf`` directory.
 
 You can specify a custom ``logback.xml`` for a CDAP application by packaging
