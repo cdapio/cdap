@@ -180,7 +180,7 @@ first container listed being the CDAP Master::
       "containers":[
                     {"type":"system_service","name":"appfabric","host":"host1.example.com"},
                     {"type":"system_service","name":"appfabric","host":"host2.example.com"}
-                    ]
+                   ]
   }    
 
 
