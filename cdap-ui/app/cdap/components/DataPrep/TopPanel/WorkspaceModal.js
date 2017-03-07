@@ -75,7 +75,7 @@ export default class WorkspaceModal extends Component {
 
     let params = {
       namespace,
-      workspaceId: workspaceId,
+      workspaceId,
       limit: 100
     };
 
@@ -248,7 +248,7 @@ export default class WorkspaceModal extends Component {
 
     return (
       <div>
-        <hr/>
+        <hr />
 
         <div>
           <h5>Upload Data</h5>
@@ -331,7 +331,7 @@ export default class WorkspaceModal extends Component {
                 <h5>
                   Current Active Workspace: <em>{this.state.activeWorkspace}</em>
                 </h5>
-                <hr/>
+                <hr />
               </div>
             ) : null
           }
