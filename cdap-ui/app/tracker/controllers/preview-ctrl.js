@@ -70,7 +70,7 @@ class TrackerPreviewController {
         .$promise
         .then((res) => {
           this.pollQueryStatus(res.handle);
-        }, (err) => {
+        }, () => {
           this.loading = false;
           this.previewNotAvailable = true;
         });
