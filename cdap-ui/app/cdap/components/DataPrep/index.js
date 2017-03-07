@@ -29,7 +29,7 @@ import NamespaceStore from 'services/NamespaceStore';
 
 /**
  *  Data Prep requires a container component (DataPrepHome) that will handle routing within React.
- *  This is beacause DataPrep component will be included in Pipelines,
+ *  This is beacause DataPrep component will be included in Pipelines.
  **/
 export default class DataPrep extends Component {
   constructor(props) {
@@ -94,8 +94,6 @@ export default class DataPrep extends Component {
   }
 
   renderBackendDown() {
-    if (!this.state.backendDown) { return null; }
-
     return (
       <DataPrepServiceControl />
     );
