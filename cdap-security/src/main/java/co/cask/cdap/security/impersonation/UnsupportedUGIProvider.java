@@ -16,9 +16,6 @@
 
 package co.cask.cdap.security.impersonation;
 
-import co.cask.cdap.common.kerberos.ImpersonationRequest;
-import co.cask.cdap.common.kerberos.UGIWithPrincipal;
-
 import java.io.IOException;
 
 /**

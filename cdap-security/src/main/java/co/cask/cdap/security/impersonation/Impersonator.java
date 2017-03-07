@@ -16,7 +16,6 @@
 
 package co.cask.cdap.security.impersonation;
 
-import co.cask.cdap.common.kerberos.ImpersonatedOpType;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.inject.ImplementedBy;

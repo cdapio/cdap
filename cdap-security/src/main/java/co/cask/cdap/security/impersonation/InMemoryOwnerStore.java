@@ -14,10 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.store;
+package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.kerberos.OwnerStore;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 
@@ -29,13 +28,13 @@ import javax.annotation.Nullable;
 /**
  * In-memory implementation of {@link OwnerStore} used in test cases.
  */
-public class InMemoryOwnerStore extends AbstractOwnerStore {
+public class InMemoryOwnerStore extends OwnerStore {
 
   private final Map<NamespacedEntityId, KerberosPrincipalId> ownerInfo = new HashMap<>();
 
   @Override
-  public synchronized void add(NamespacedEntityId entityId, KerberosPrincipalId kerberosPrincipalId)
-    throws AlreadyExistsException {
+  public synchronized void add(NamespacedEntityId entityId,
+                               KerberosPrincipalId kerberosPrincipalId) throws AlreadyExistsException {
     validate(entityId, kerberosPrincipalId);
     if (ownerInfo.containsKey(entityId)) {
       throw new AlreadyExistsException(entityId,
@@ -53,11 +52,13 @@ public class InMemoryOwnerStore extends AbstractOwnerStore {
 
   @Override
   public synchronized boolean exists(NamespacedEntityId entityId) throws IOException {
+    validate(entityId);
     return ownerInfo.containsKey(entityId);
   }
 
   @Override
   public synchronized void delete(NamespacedEntityId entityId) throws IOException {
+    validate(entityId);
     ownerInfo.remove(entityId);
   }
 }

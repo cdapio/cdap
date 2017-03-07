@@ -26,7 +26,6 @@ import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.security.guice.SecurityModules;
 import com.google.common.base.Stopwatch;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -129,16 +128,12 @@ public class DistributedKeyManagerTest extends TestTokenManager {
   }
 
   @Override
-  protected ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec() {
-    try {
-      DistributedKeyManager keyManager = getKeyManager(injector1, true);
-      TokenManager tokenManager = new TokenManager(keyManager, injector1.getInstance(AccessTokenIdentifierCodec.class));
-      tokenManager.startAndWait();
-      return new ImmutablePair<TokenManager, Codec<AccessToken>>(tokenManager,
-                                                                 injector1.getInstance(AccessTokenCodec.class));
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+  protected ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec() throws Exception {
+    DistributedKeyManager keyManager = getKeyManager(injector1, true);
+    TokenManager tokenManager = new TokenManager(keyManager, injector1.getInstance(AccessTokenIdentifierCodec.class));
+    tokenManager.startAndWait();
+    return new ImmutablePair<TokenManager, Codec<AccessToken>>(tokenManager,
+                                                               injector1.getInstance(AccessTokenCodec.class));
   }
 
   private DistributedKeyManager getKeyManager(Injector injector, boolean expectLeader) throws Exception {

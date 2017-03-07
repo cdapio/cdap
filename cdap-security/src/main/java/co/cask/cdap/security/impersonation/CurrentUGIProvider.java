@@ -16,8 +16,6 @@
 
 package co.cask.cdap.security.impersonation;
 
-import co.cask.cdap.common.kerberos.ImpersonationRequest;
-import co.cask.cdap.common.kerberos.UGIWithPrincipal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
