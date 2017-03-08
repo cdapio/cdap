@@ -51,6 +51,16 @@
   }
 }
 
+.workspace-management-modal,
+.add-to-pipeline-dataprep-modal {
+  .close-section {
+    cursor: pointer;
+  }
+  .modal-body {
+    overflow-y: auto;
+  }
+}
+
 .workspace-management-modal.modal-dialog {
   .modal-body {
     .button-container {
@@ -65,5 +75,48 @@
       margin-top: 10px;
       .label-control { margin-right: 10px; }
     }
+  }
+}
+
+.add-to-pipeline-dataprep-modal.modal-dialog {
+  .modal-body {
+    padding: 0;
+
+    .message { padding: 15px; }
+
+    .action-buttons {
+      margin-top: 10px;
+      width: 100%;
+      display: inline-flex;
+
+      .btn {
+        width: 50%;
+        border-radius: 0;
+        border: none;
+        border-top: 1px solid #cccccc;
+        padding: 10px 0;
+
+        &:first-child { border-right: 1px solid #cccccc; }
+        .fa { margin-right: 10px; }
+      }
+
+    }
+  }
+}
+
+.dataprep-schema-modal.modal-dialog {
+  .modal-header {
+    .fa {
+      cursor: pointer;
+    }
+
+    .fa.fa-download {
+      margin-right: 50px;
+    }
+
+  }
+  .modal-body {
+    overflow-y: auto;
+    max-height: 75vh;
   }
 }
