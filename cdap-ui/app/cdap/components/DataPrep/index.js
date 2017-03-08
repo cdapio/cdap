@@ -18,7 +18,7 @@ import React, { Component } from 'react';
 import DataPrepTopPanel from 'components/DataPrep/TopPanel';
 import DataPrepTable from 'components/DataPrep/DataPrepTable';
 import DataPrepSidePanel from 'components/DataPrep/DataPrepSidePanel';
-// import DataPrepCLI from 'components/DataPrep/DataPrepCLI';
+import DataPrepCLI from 'components/DataPrep/DataPrepCLI';
 import MyDataPrepApi from 'api/dataprep';
 import cookie from 'react-cookie';
 import DataPrepStore from 'components/DataPrep/store';
@@ -128,6 +128,7 @@ export default class DataPrep extends Component {
         <div className="row dataprep-body">
           <div className="dataprep-main col-xs-9">
             <DataPrepTable />
+            <DataPrepCLI />
           </div>
 
           <DataPrepSidePanel />
