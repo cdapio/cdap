@@ -17,6 +17,8 @@
 import React, { Component } from 'react';
 import WorkspaceModal from 'components/DataPrep/TopPanel/WorkspaceModal';
 import DataPrepStore from 'components/DataPrep/store';
+import SchemaModal from 'components/DataPrep/TopPanel/SchemaModal';
+import AddToPipelineModal from 'components/DataPrep/TopPanel/AddToPipelineModal';
 import ee from 'event-emitter';
 
 require('./TopPanel.scss');
@@ -29,9 +31,13 @@ export default class DataPrepTopPanel extends Component {
     this.state = {
       workspaceId: initialWorkspace,
       workspaceModal: false,
+      schemaModal: false,
+      addToPipelineModal: false
     };
 
     this.toggleWorkspaceModal = this.toggleWorkspaceModal.bind(this);
+    this.toggleSchemaModal = this.toggleSchemaModal.bind(this);
+    this.toggleAddToPipelineModal = this.toggleAddToPipelineModal.bind(this);
     this.eventEmitter = ee(ee);
 
     this.eventEmitter.on('DATAPREP_NO_WORKSPACE_ID', this.toggleWorkspaceModal);
@@ -51,6 +57,30 @@ export default class DataPrepTopPanel extends Component {
 
   toggleWorkspaceModal() {
     this.setState({workspaceModal: !this.state.workspaceModal});
+  }
+
+  toggleSchemaModal() {
+    this.setState({schemaModal: !this.state.schemaModal});
+  }
+
+  toggleAddToPipelineModal() {
+    this.setState({addToPipelineModal: !this.state.addToPipelineModal});
+  }
+
+  renderSchemaModal() {
+    if (!this.state.schemaModal) { return null; }
+
+    return (
+      <SchemaModal toggle={this.toggleSchemaModal} />
+    );
+  }
+
+  renderAddToPipelineModal() {
+    if (!this.state.addToPipelineModal) { return null; }
+
+    return (
+      <AddToPipelineModal toggle={this.toggleAddToPipelineModal} />
+    );
   }
 
   renderWorkspaceModal() {
@@ -85,17 +115,19 @@ export default class DataPrepTopPanel extends Component {
         <div className="action-buttons float-xs-right">
           <button
             className="btn btn-primary"
-            disabled
+            onClick={this.toggleAddToPipelineModal}
           >
             Add to Pipeline
           </button>
+          {this.renderAddToPipelineModal()}
 
           <button
             className="btn btn-secondary"
-            disabled
+            onClick={this.toggleSchemaModal}
           >
             View Schema
           </button>
+          {this.renderSchemaModal()}
         </div>
       </div>
     );
