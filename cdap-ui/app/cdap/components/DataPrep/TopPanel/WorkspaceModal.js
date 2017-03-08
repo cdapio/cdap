@@ -81,7 +81,7 @@ export default class WorkspaceModal extends Component {
 
     MyDataPrepApi.execute(params)
       .subscribe((res) => {
-        cookie.save('DATAPREP_WORKSPACE', workspaceId);
+        cookie.save('DATAPREP_WORKSPACE', workspaceId, { path: '/' });
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setWorkspace,
@@ -114,7 +114,7 @@ export default class WorkspaceModal extends Component {
         message: res.message
       });
 
-      cookie.save('DATAPREP_WORKSPACE', workspaceId);
+      cookie.save('DATAPREP_WORKSPACE', workspaceId, { path: '/' });
 
       DataPrepStore.dispatch({
         type: DataPrepActions.setWorkspace,
@@ -154,7 +154,7 @@ export default class WorkspaceModal extends Component {
           }
         });
 
-        cookie.remove('DATAPREP_WORKSPACE');
+        cookie.remove('DATAPREP_WORKSPACE', { path: '/' });
       }
     }, (err) => {
       console.log(err);

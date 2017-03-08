@@ -77,7 +77,7 @@ export default class DataPrep extends Component {
           return;
         }
 
-        cookie.remove('DATAPREP_WORKSPACE');
+        cookie.remove('DATAPREP_WORKSPACE', { path: '/' });
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setInitialized
