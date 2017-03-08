@@ -22,7 +22,8 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'ng-model': 'model',
           'data-config': 'myconfig',
-          'disabled': 'disabled'
+          'disabled': 'disabled',
+          'is-field-required': 'isFieldRequired'
         }
       },
       'textbox': {
