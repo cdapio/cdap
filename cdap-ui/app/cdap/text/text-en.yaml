@@ -446,7 +446,6 @@ features:
       author: Author
       company: Company
       created: Created
-      cdapversion: CDAP Version
     doneLabel: Done
     closeLabel: Close
   MarketEntityModal:
