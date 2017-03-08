@@ -1086,6 +1086,65 @@ cdap_config_tool() {
 }
 
 #
+# cdap_upgrade [component] [arguments]
+#
+cdap_upgrade() {
+  local __component=${1}
+
+  if [[ ${__component} != 'ui' ]]; then
+    __component='tool'
+  else
+    shift
+  fi
+
+  cdap_upgrade_${__component} ${@}
+  return $?
+}
+
+#
+# cdap_upgrade_ui [arguments]
+#
+cdap_upgrade_ui() {
+  local readonly __ret __preview_pack=${1} __date=$(date +%s)
+
+  if ! [[ -e ${__preview_pack} ]]; then
+    die "Upgrade UI must supply a preview pack zip file"
+  fi
+
+  # Validation, ensure it is a *.zip file, etc
+
+  # Ensure SDK is stopped
+  # ${__pidfile} not defined.  perhaps upgrade should be a function under "cdap sdk"
+  #cdap_status_pidfile ${__pidfile} >/dev/null && die "Please stop SDK first"
+
+  echo "Upgrading to ${__preview_pack}"
+
+  echo "Backing up current UI to ${CDAP_HOME}/ui-preview/ui.${__date}.zip"
+  mkdir -p ${CDAP_HOME}/ui-preview
+
+
+  #tar cf ${CDAP_HOME}/ui.${__date}.tgz -C ${CDAP_HOME} ui
+  # -q quiet, -m moves (deletes after createion), -r recursive, no -C equivalent (must cd)
+  cd ${CDAP_HOME} && zip -q -m -r ${CDAP_HOME}/ui-preview/ui.${__date}.zip ui
+  if [[ ! ${?} ]]; then
+    die "Failed to backup current UI, executing zip -q -m -r ${CDAP_HOME}/ui-preview/ui.${__date}.zip ui"
+  fi
+
+  #echo "removing current UI"
+  #rm -rf ${CDAP_HOME}/ui
+
+  echo "extracting Preview Pack ${__preview_pack}"
+
+  #tar xf ${__preview_pack} -C ${CDAP_HOME}
+  # -d extraction directory
+  unzip -q -d ${CDAP_HOME} ${__preview_pack}
+  if [[ ! ${?} ]]; then
+    die "Failed to extract preview pack, executing unzip -q -d ${CDAP_HOME} ${__preview_pack}"
+  fi
+
+}
+
+#
 # cdap_upgrade_tool [arguments]
 #
 cdap_upgrade_tool() {
