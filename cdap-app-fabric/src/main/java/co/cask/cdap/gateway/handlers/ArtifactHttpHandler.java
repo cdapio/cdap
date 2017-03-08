@@ -474,7 +474,12 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       } else if (e.getCause() instanceof javax.ws.rs.BadRequestException) {
         throw new BadRequestException(e.getCause());
       } else {
-        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while invoking plugin method");
+        Throwable rootCause = Throwables.getRootCause(e);
+        String message = "Error while invoking plugin method.";
+        if (rootCause != null && rootCause.getMessage() != null) {
+          message = String.format("%s %s", message, rootCause.getMessage());
+        }
+        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, message);
       }
     }
   }
