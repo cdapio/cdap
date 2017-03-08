@@ -19,8 +19,8 @@
 
   .dataprep-body.row {
     // height calculations
-    // 100vh - height of navbar - top panel - dataprep cli - footer
-    // 100vh - 50px - 50px - 50px - 54px
+    // 100vh - height of navbar - top panel - footer
+    // 100vh - 50px - 50px - 54px
     margin-right: 0;
     margin-left: 0;
     height: calc(100vh - 154px);
