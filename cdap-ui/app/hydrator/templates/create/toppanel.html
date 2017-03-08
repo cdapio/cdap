@@ -72,11 +72,11 @@
   <div class="btn-group action-buttons"
        ng-if="!HydratorPlusPlusTopPanelCtrl.previewMode">
     <div class="btn"
-         ng-click="HydratorPlusPlusTopPanelCtrl.togglePreviewMode()"
-         ng-if="HydratorPlusPlusTopPanelCtrl.isPreviewEnabled"
+         ng-click="HydratorPlusPlusTopPanelCtrl.isPreviewEnabled && HydratorPlusPlusTopPanelCtrl.togglePreviewMode()"
          uib-tooltip="Preview"
          tooltip-placement="bottom"
-         tooltip-class="toppanel-tooltip">
+         tooltip-class="toppanel-tooltip"
+         ng-disabled="!HydratorPlusPlusTopPanelCtrl.isPreviewEnabled">
       <span class="fa icon-eye"></span>
     </div>
     <div class="btn"
