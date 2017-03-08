@@ -35,6 +35,14 @@ class AdminDetailPanel extends Component {
 
   constructor(props) {
     super(props);
+    this.statsWithUnits = [
+      'RemainingBytes',
+      'TotalBytes',
+      'UsedBytes',
+      'FreeMemory',
+      'TotalMemory',
+      'UsedMemory'
+    ];
   }
 
   render() {
@@ -52,7 +60,7 @@ class AdminDetailPanel extends Component {
         Object.keys(this.props.serviceData[key]).map((item) => {
           let humanReadableNum;
 
-          if (key === 'storage' || key === 'memory') {
+          if (this.statsWithUnits.indexOf(item) > -1) {
             humanReadableNum = humanReadableNumber(this.props.serviceData[key][item], 'STORAGE');
           } else {
             humanReadableNum = humanReadableNumber(this.props.serviceData[key][item]);
