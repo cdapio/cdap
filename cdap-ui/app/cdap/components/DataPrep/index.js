@@ -16,8 +16,8 @@
 
 import React, { Component } from 'react';
 import DataPrepTopPanel from 'components/DataPrep/TopPanel';
-// import DataPrepTable from 'components/DataPrep/DataPrepTable';
-// import DataPrepSidePanel from 'components/DataPrep/DataPrepSidePanel';
+import DataPrepTable from 'components/DataPrep/DataPrepTable';
+import DataPrepSidePanel from 'components/DataPrep/DataPrepSidePanel';
 // import DataPrepCLI from 'components/DataPrep/DataPrepCLI';
 import MyDataPrepApi from 'api/dataprep';
 import cookie from 'react-cookie';
@@ -26,6 +26,8 @@ import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
 import ee from 'event-emitter';
 import NamespaceStore from 'services/NamespaceStore';
+
+require('./DataPrep.scss');
 
 /**
  *  Data Prep requires a container component (DataPrepHome) that will handle routing within React.
@@ -122,6 +124,14 @@ export default class DataPrep extends Component {
     return (
       <div className="dataprep-container">
         <DataPrepTopPanel />
+
+        <div className="row dataprep-body">
+          <div className="dataprep-main col-xs-9">
+            <DataPrepTable />
+          </div>
+
+          <DataPrepSidePanel />
+        </div>
       </div>
     );
   }
