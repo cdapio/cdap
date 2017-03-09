@@ -90,4 +90,8 @@ export default class Version {
     // for invalid comparison
     return null;
   }
+
+  toString() {
+    return this.version;
+  }
 }

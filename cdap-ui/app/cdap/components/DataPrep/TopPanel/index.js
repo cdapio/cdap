@@ -19,6 +19,7 @@ import WorkspaceModal from 'components/DataPrep/TopPanel/WorkspaceModal';
 import DataPrepStore from 'components/DataPrep/store';
 import SchemaModal from 'components/DataPrep/TopPanel/SchemaModal';
 import AddToPipelineModal from 'components/DataPrep/TopPanel/AddToPipelineModal';
+import UpgradeModal from 'components/DataPrep/TopPanel/UpgradeModal';
 import ee from 'event-emitter';
 
 require('./TopPanel.scss');
@@ -27,25 +28,29 @@ export default class DataPrepTopPanel extends Component {
   constructor(props) {
     super(props);
 
-    let initialWorkspace = DataPrepStore.getState().dataprep.workspaceId;
+    let initialState = DataPrepStore.getState().dataprep;
     this.state = {
-      workspaceId: initialWorkspace,
+      workspaceId: initialState.workspaceId,
       workspaceModal: false,
       schemaModal: false,
-      addToPipelineModal: false
+      addToPipelineModal: false,
+      upgradeModal: false,
+      higherVersion: initialState.higherVersion
     };
 
     this.toggleWorkspaceModal = this.toggleWorkspaceModal.bind(this);
     this.toggleSchemaModal = this.toggleSchemaModal.bind(this);
     this.toggleAddToPipelineModal = this.toggleAddToPipelineModal.bind(this);
+    this.toggleUpgradeModal = this.toggleUpgradeModal.bind(this);
     this.eventEmitter = ee(ee);
 
     this.eventEmitter.on('DATAPREP_NO_WORKSPACE_ID', this.toggleWorkspaceModal);
 
     this.sub = DataPrepStore.subscribe(() => {
-      let storeWorkspace = DataPrepStore.getState().dataprep.workspaceId;
+      let state = DataPrepStore.getState().dataprep;
       this.setState({
-        workspaceId: storeWorkspace
+        workspaceId: state.workspaceId,
+        higherVersion: state.higherVersion
       });
     });
   }
@@ -65,6 +70,10 @@ export default class DataPrepTopPanel extends Component {
 
   toggleAddToPipelineModal() {
     this.setState({addToPipelineModal: !this.state.addToPipelineModal});
+  }
+
+  toggleUpgradeModal() {
+    this.setState({upgradeModal: !this.state.upgradeModal});
   }
 
   renderSchemaModal() {
@@ -91,6 +100,14 @@ export default class DataPrepTopPanel extends Component {
     );
   }
 
+  renderUpgradeModal() {
+    if (!this.state.upgradeModal) { return null; }
+
+    return (
+      <UpgradeModal toggle={this.toggleUpgradeModal} />
+    );
+  }
+
   render() {
     return (
       <div className="top-panel clearfix">
@@ -113,6 +130,18 @@ export default class DataPrepTopPanel extends Component {
         </div>
 
         <div className="action-buttons float-xs-right">
+          {
+            this.state.higherVersion ? (
+              <button
+                className="btn btn-primary"
+                onClick={this.toggleUpgradeModal}
+              >
+                Upgrade Data Preparation
+              </button>
+            ) : null
+          }
+          {this.renderUpgradeModal()}
+
           <button
             className="btn btn-primary"
             onClick={this.toggleAddToPipelineModal}
