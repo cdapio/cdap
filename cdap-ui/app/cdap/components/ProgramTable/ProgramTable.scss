@@ -71,10 +71,18 @@ $border-color: #bbbbbb;
           padding-right: 0;
         }
 
-        .fast-actions-container .btn-link {
-          color: #4f5050;
-          padding-left: 5%;
-          padding-right: 5%;
+        .fast-actions-container {
+          h4 {
+            > span {
+              border: 0;
+            }
+          }
+          .btn-link {
+            color: #4f5050;
+            margin-left: 5px;
+            padding: 5px;
+            border: 0;
+          }
         }
       }
     }

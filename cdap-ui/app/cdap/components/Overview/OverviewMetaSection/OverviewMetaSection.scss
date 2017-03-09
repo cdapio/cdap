@@ -44,6 +44,21 @@
     justify-content: space-between;
     align-items: center;
 
+    h4 {
+      vertical-align: top;
+      > span {
+        padding: 0;
+        vertical-align: top;
+        display: inline-block;
+        background: transparent;
+        &:hover,
+        &:focus {
+          background: transparent;
+          outline: none;
+        }
+      }
+    }
+
     .btn-group {
       .dropdown-toggle {
         font-weight: bold;
@@ -63,11 +78,11 @@
       color: rgba(102, 102, 102, 1);
     }
     .overview-fast-actions {
-      border: 1px solid rgba(219, 219, 219, 1);
       margin: 0;
       border-radius: 4px;
 
       > span {
+        display: inline-block;
         &:last-child {
           .btn.btn-link {
             border-right: 0;
@@ -80,7 +95,6 @@
         color: #4f5050;
         padding: 0;
         vertical-align: top;
-        border-right: 1px solid rgba(219, 219, 219, 1);
 
         &:hover {
           background-color: $cdap-gray;

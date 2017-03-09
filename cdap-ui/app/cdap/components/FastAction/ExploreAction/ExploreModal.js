@@ -225,24 +225,47 @@ export default class ExploreModal extends Component {
       });
     }
   }
+  onModalToggle() {
+    let runningQueries = this.state.queries.filter(query => query.status === 'RUNNING');
+    this.props.onClose(runningQueries.length);
+  }
 
   render() {
     const renderQueryRow = (query) => {
       return (
         <tr key={shortid.generate()}>
           <td> {humanReadableDate(query.timestamp, true)} </td>
-          <td> {query.status} </td>
           <td> {query.statement} </td>
           <td>
+            {
+              query.status === 'RUNNING' ?
+                <span>
+                  <span className="query-status-value">{query.status}</span>
+                  <i className="fa fa-spinner fa-spin"></i>
+                </span>
+              :
+                <span>{query.status}</span>
+            }
+          </td>
+          <td>
             <div className="btn-group">
-              <a
-                href={this.getDownloadUrl(query)}
-                onClick={this.updateQueryState.bind(this, query)}
-                className="btn btn-secondary"
-                disabled={!query.is_active || query.status !== 'FINISHED' ? 'disabled' : null}
-              >
-                <i className="fa fa-download"></i>
-              </a>
+              {
+                !query.is_active || query.status !== 'FINISHED' ?
+                  <button
+                    className="btn btn-secondary"
+                    disabled="disabled"
+                    >
+                    <i className="fa fa-download"></i>
+                  </button>
+                :
+                  <a
+                    href={this.getDownloadUrl(query)}
+                    onClick={this.updateQueryState.bind(this, query)}
+                    className="btn btn-secondary"
+                  >
+                    <i className="fa fa-download"></i>
+                  </a>
+              }
               <button
                 className="btn btn-secondary"
                 onClick={this.showPreview.bind(this, query)}
@@ -317,14 +340,14 @@ export default class ExploreModal extends Component {
     return (
       <Modal
         className="explore-modal confirmation-modal"
-        toggle={this.props.onClose}
+        toggle={this.onModalToggle.bind(this)}
         isOpen={this.props.isOpen}
         backdrop='static'
       >
         <ModalHeader>
           Explore Dataset
           <div
-           onClick={this.props.onClose}
+           onClick={this.onModalToggle.bind(this)}
            className="float-xs-right"
           >
             <span className="fa fa-times" />
@@ -365,8 +388,8 @@ export default class ExploreModal extends Component {
                 <thead>
                   <tr>
                     <th className="query-timestamp">Start time</th>
-                    <th className="query-status">Status</th>
                     <th>SQL Query</th>
+                    <th className="query-status">Status</th>
                     <th className="query-actions">Actions</th>
                   </tr>
                 </thead>
