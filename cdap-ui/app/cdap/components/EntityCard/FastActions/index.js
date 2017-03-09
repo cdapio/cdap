@@ -16,6 +16,8 @@
 
 import React, {Component, PropTypes} from 'react';
 import FastAction from 'components/FastAction';
+import {objectQuery} from 'services/helpers';
+import isNil from 'lodash/isNil';
 
 export default class FastActions extends Component {
   constructor(props) {
@@ -79,6 +81,7 @@ export default class FastActions extends Component {
                   entity={this.props.entity}
                   opened={true}
                   onSuccess={this.onSuccess.bind(this, action)}
+                  argsToAction={isNil(objectQuery(this.props.argsToActions, action)) ? {} : this.props.argsToActions[action]}
                 />
               );
             }
@@ -89,6 +92,7 @@ export default class FastActions extends Component {
                   type={action}
                   entity={this.props.entity}
                   onSuccess={this.onSuccess.bind(this, action)}
+                  argsToAction={isNil(objectQuery(this.props.argsToActions, action)) ? {} : this.props.argsToActions[action]}
                 />
               );
             }
@@ -104,5 +108,15 @@ FastActions.propTypes = {
   onUpdate: PropTypes.func,
   className: PropTypes.string,
   onSuccess: PropTypes.func,
-  actionToOpen: PropTypes.string
+  actionToOpen: PropTypes.string,
+  argsToActions: PropTypes.shape({
+    delete: PropTypes.object,
+    setPreferences: PropTypes.object,
+    truncate: PropTypes.object,
+    explore: PropTypes.object,
+    sendEvents: PropTypes.object,
+    viewEvents: PropTypes.object,
+    startStop: PropTypes.object,
+    log: PropTypes.object
+  })
 };

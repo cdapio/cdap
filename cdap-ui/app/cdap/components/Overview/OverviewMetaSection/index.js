@@ -119,7 +119,7 @@ export default class OverviewMetaSection extends Component {
         <h2 title={this.props.entity.id}>
           {this.props.entity.id}
         </h2>
-        <div className="fast-actions-container">
+        <div className="fast-actions-container text-xs-center">
           <div>
             {
               this.props.entity.type === 'application' ?
@@ -143,11 +143,16 @@ export default class OverviewMetaSection extends Component {
             </small>
           </div>
           <FastActions
-            className="overview-fast-actions"
+            className="overview-fast-actions btn-group"
             entity={entity}
             onSuccess={this.onFastActionSuccess.bind(this)}
             onUpdate={this.onFastActionUpdate.bind(this)}
             actionToOpen={this.props.fastActionToOpen}
+            argsToActions={{
+              explore: {
+                showQueriesCount: true
+              }
+            }}
           />
         </div>
 

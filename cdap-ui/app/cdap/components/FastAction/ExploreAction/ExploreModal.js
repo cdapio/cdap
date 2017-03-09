@@ -231,8 +231,8 @@ export default class ExploreModal extends Component {
       return (
         <tr key={shortid.generate()}>
           <td> {humanReadableDate(query.timestamp, true)} </td>
-          <td> {query.status} </td>
           <td> {query.statement} </td>
+          <td> {query.status} </td>
           <td>
             <div className="btn-group">
               <a
@@ -365,8 +365,8 @@ export default class ExploreModal extends Component {
                 <thead>
                   <tr>
                     <th className="query-timestamp">Start time</th>
-                    <th className="query-status">Status</th>
                     <th>SQL Query</th>
+                    <th className="query-status">Status</th>
                     <th className="query-actions">Actions</th>
                   </tr>
                 </thead>

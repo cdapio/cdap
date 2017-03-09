@@ -112,7 +112,7 @@ export default class DeleteAction extends Component {
     const tooltipID = `${this.props.entity.uniqueId}-delete`;
 
     return (
-      <span>
+      <span className="btn btn-secondary btn-sm">
         <FastActionButton
           icon="fa fa-trash"
           action={this.toggleModal}
