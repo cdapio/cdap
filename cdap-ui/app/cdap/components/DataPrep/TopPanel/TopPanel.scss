@@ -52,7 +52,8 @@
 }
 
 .workspace-management-modal,
-.add-to-pipeline-dataprep-modal {
+.add-to-pipeline-dataprep-modal,
+.dataprep-upgrade-modal {
   .close-section {
     cursor: pointer;
   }
@@ -78,11 +79,18 @@
   }
 }
 
-.add-to-pipeline-dataprep-modal.modal-dialog {
+.add-to-pipeline-dataprep-modal.modal-dialog,
+.dataprep-upgrade-modal.modal-dialog {
+  margin-top: 100px;
+
   .modal-body {
     padding: 0;
 
     .message { padding: 15px; }
+
+    .loading-container {
+      padding: 25px;
+    }
 
     .action-buttons {
       margin-top: 10px;

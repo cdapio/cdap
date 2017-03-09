@@ -21,6 +21,7 @@ import find from 'lodash/find';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepStore from 'components/DataPrep/store';
 import NamespaceStore from 'services/NamespaceStore';
+import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
 
 export default class AddToHydratorModal extends Component {
   constructor(props) {
@@ -41,6 +42,61 @@ export default class AddToHydratorModal extends Component {
   generateLinks() {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
+    MyDataPrepApi.getInfo({ namespace })
+      .subscribe((res) => {
+        let pluginVersion = res.value[0]['plugin.version'];
+
+        this.constructProperties(pluginVersion);
+      }, (err) => {
+        if (err.statusCode === 404) {
+          console.log('cannot find method');
+          // can't find method; use latest wrangler-transform
+          this.constructProperties();
+        }
+      });
+  }
+
+  findWranglerArtifacts(artifacts, pluginVersion) {
+    let wranglerArtifacts = artifacts.filter((artifact) => {
+      if (pluginVersion) {
+        return artifact.name === 'wrangler-transform' && artifact.version === pluginVersion;
+      }
+
+      return artifact.name === 'wrangler-transform';
+    });
+
+    if (wranglerArtifacts.length === 0) {
+      // cannot find plugin. Error out
+      this.setState({
+        error: 'Cannot find wrangler-transform plugin. Please load wrangler transform from Cask Market'
+      });
+
+      return null;
+    }
+
+    let filteredArtifacts = wranglerArtifacts;
+
+    if (!pluginVersion) {
+      let highestVersion = findHighestVersion(wranglerArtifacts.map((artifact) => {
+        return artifact.version;
+      }), true);
+
+      filteredArtifacts = wranglerArtifacts.filter((artifact) => {
+        return artifact.version === highestVersion;
+      });
+    }
+
+    let returnArtifact = filteredArtifacts[0];
+
+    if (filteredArtifacts.length > 1) {
+      returnArtifact.scope = 'USER';
+    }
+
+    return returnArtifact;
+  }
+
+  constructProperties(pluginVersion) {
+    let namespace = NamespaceStore.getState().selectedNamespace;
     let state = DataPrepStore.getState().dataprep;
     let workspaceId = state.workspaceId;
 
@@ -59,7 +115,7 @@ export default class AddToHydratorModal extends Component {
       .subscribe((res) => {
         let batchArtifact = find(res[0], { 'name': 'cdap-data-pipeline' });
         let realtimeArtifact = find(res[0], { 'name': 'cdap-data-streams' });
-        let wranglerArtifact = find(res[0], { 'name': 'wrangler-transform' });
+        let wranglerArtifact = this.findWranglerArtifacts(res[0], pluginVersion);
 
         let tempSchema = {
           name: 'avroSchema',
@@ -130,7 +186,7 @@ export default class AddToHydratorModal extends Component {
 
     if (this.state.loading) {
       content = (
-        <div>
+        <div className="loading-container">
           <h4 className="text-xs-center">
             <span className="fa fa-spin fa-spinner" />
           </h4>
@@ -139,7 +195,7 @@ export default class AddToHydratorModal extends Component {
     } else if (this.state.error) {
       content = (
         <div>
-          <h4 className="text-danger text-xs-center">
+          <h4 className="text-danger text-xs-center loading-container">
             {this.state.error}
           </h4>
         </div>
