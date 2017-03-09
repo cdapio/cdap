@@ -45,6 +45,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.gson.Gson;
@@ -74,7 +75,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   };
 
   private final DatasetService datasetService;
-  private final LogAppenderInitializer logAppenderInitializer;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final SystemArtifactLoader systemArtifactLoader;
   private final ProgramRuntimeService programRuntimeService;
@@ -94,7 +94,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        PreviewStore previewStore, DataTracerFactory dataTracerFactory,
                        NamespaceAdmin namespaceAdmin) {
     this.datasetService = datasetService;
-    this.logAppenderInitializer = logAppenderInitializer;
     this.applicationLifecycleService = applicationLifecycleService;
     this.systemArtifactLoader = systemArtifactLoader;
     this.programRuntimeService = programRuntimeService;
@@ -106,7 +105,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   }
 
   @Override
-  public void startPreview(PreviewRequest<?> previewRequest) throws Exception {
+  public ProgramRunId startPreview(PreviewRequest<?> previewRequest) throws Exception {
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(previewRequest.getProgram().getNamespaceId()).build());
     programId = previewRequest.getProgram();
     AppRequest<?> request = previewRequest.getAppRequest();
@@ -155,6 +154,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
         setStatus(new PreviewStatus(PreviewStatus.Status.RUN_FAILED, new BasicThrowable(cause)));
       }
     }, Threads.SAME_THREAD_EXECUTOR);
+    return controller.getProgramRunId();
   }
 
   private void setStatus(PreviewStatus status) {
@@ -187,17 +187,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   }
 
   @Override
-  public List<LogEntry> getLogs() {
-    return new ArrayList<>();
-  }
-
-  @Override
   protected void startUp() throws Exception {
     datasetService.startAndWait();
-
-    // It is recommended to initialize log appender after datasetService is started,
-    // since log appender instantiates a dataset.
-    logAppenderInitializer.initialize();
 
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
@@ -216,7 +207,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     applicationLifecycleService.stopAndWait();
     systemArtifactLoader.stopAndWait();
     programLifecycleService.stopAndWait();
-    logAppenderInitializer.close();
     datasetService.stopAndWait();
   }
 }

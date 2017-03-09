@@ -125,7 +125,8 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig, previewConfig);
 
     // Start the preview and get the corresponding PreviewRunner.
-    final PreviewRunner previewRunner = previewManager.getRunner(previewManager.start(NamespaceId.DEFAULT, appRequest));
+    final PreviewRunner previewRunner =
+      previewManager.getRunner(previewManager.start(NamespaceId.DEFAULT, appRequest).getParent().getParent());
 
     // Wait for the preview status go into COMPLETED.
     Tasks.waitFor(PreviewStatus.Status.COMPLETED, new Callable<PreviewStatus.Status>() {

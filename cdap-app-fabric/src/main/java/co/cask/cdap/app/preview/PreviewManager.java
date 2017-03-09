@@ -19,6 +19,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramRunId;
 
 /**
  * Interface used for managing the preview runs.
@@ -29,10 +30,10 @@ public interface PreviewManager {
    * Start the preview of an application config provided as an input in a given namespace.
    * @param namespace the id of the namespace in which preview to be run
    * @param request the {@link AppRequest} with which preview need to be started
-   * @return the {@link ApplicationId} assigned to the preview run
+   * @return the {@link ProgramRunId} assigned to the preview run
    * @throws Exception if there were any error during starting preview
    */
-  ApplicationId start(NamespaceId namespace, AppRequest<?> request) throws Exception;
+  ProgramRunId start(NamespaceId namespace, AppRequest<?> request) throws Exception;
 
   /**
    * Get the {@link PreviewRunner} responsible for managing the given preview.
