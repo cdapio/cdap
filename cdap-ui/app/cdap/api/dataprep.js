@@ -31,12 +31,15 @@ const MyDataPrepApi = {
   summary: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/summary`),
   getSchema: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/schema`),
   getUsage: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/usage`),
+  getInfo: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/info`),
 
   // WRANGLER SERVICE MANAGEMENT
   getApp: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}`),
   startService: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/start`),
+  stopService: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/stop`),
   pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${baseServicePath}/status`),
-  createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${appPath}`)
+  createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${appPath}`),
+  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/usage`, { interval: 2000 })
 };
 
 export default MyDataPrepApi;

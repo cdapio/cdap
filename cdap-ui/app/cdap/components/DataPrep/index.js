@@ -26,6 +26,9 @@ import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
 import ee from 'event-emitter';
 import NamespaceStore from 'services/NamespaceStore';
+import {MyArtifactApi} from 'api/artifact';
+import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
+import Version from 'services/VersionRange/Version';
 
 require('./DataPrep.scss');
 
@@ -58,6 +61,28 @@ export default class DataPrep extends Component {
       workspaceId: workspaceId,
       limit: 100
     };
+
+    MyArtifactApi.list({ namespace })
+      .combineLatest(MyDataPrepApi.getApp({ namespace }))
+      .subscribe((res) => {
+        let wranglerArtifactVersions = res[0].filter((artifact) => {
+          return artifact.name === 'wrangler-service';
+        }).map((artifact) => {
+          return artifact.version;
+        });
+
+        let highestVersion = findHighestVersion(wranglerArtifactVersions);
+        let currentAppArtifactVersion = new Version(res[1].artifact.version);
+
+        if (highestVersion.compareTo(currentAppArtifactVersion) === 1) {
+          DataPrepStore.dispatch({
+            type: DataPrepActions.setHigherVersion,
+            payload: {
+              higherVersion: highestVersion.toString()
+            }
+          });
+        }
+      });
 
     MyDataPrepApi.execute(params)
       .subscribe((res) => {
