@@ -50,10 +50,10 @@ const poll = () => {
       let [namespaceRes, serviceStatusRes] = responses;
       if (namespaceRes.status <= 399 && serviceStatusRes.status <= 399) {
         let loadingState = LoadingIndicatorStore.getState().loading;
-        if ([BACKENDSTATUS.NODESERVERDOWN].indexOf(loadingState.status) !== -1) {
+        if (loadingState.status === BACKENDSTATUS.NODESERVERDOWN) {
           window.location.reload();
         }
-        if ([BACKENDSTATUS.BACKENDDOWN].indexOf(loadingState.status) !== -1) {
+        if (loadingState.status === BACKENDSTATUS.BACKENDDOWN) {
           StatusAlertMessageStore.dispatch({
             type: 'VIEWUPDATE',
             payload: {
@@ -80,8 +80,9 @@ const poll = () => {
               subtitle: T.translate('features.LoadingIndicator.backendDownSubtitle')
             }
           });
+        } else {
+          errorStateCount += 1;
         }
-        errorStateCount += 1;
       }
       pollCycleInProgress = false;
       startPolling();
