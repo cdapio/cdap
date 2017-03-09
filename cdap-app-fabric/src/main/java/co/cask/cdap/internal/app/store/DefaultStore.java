@@ -37,6 +37,7 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -60,6 +61,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
@@ -738,21 +740,37 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void addSchedule(final ProgramId program, final ScheduleSpecification scheduleSpecification) {
-    Transactions.executeUnchecked(transactional, new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        AppMetadataStore metaStore = getAppMetadataStore(context);
-        ApplicationSpecification appSpec = getAppSpecOrFail(metaStore, program);
-        Map<String, ScheduleSpecification> schedules = Maps.newHashMap(appSpec.getSchedules());
-        String scheduleName = scheduleSpecification.getSchedule().getName();
-        Preconditions.checkArgument(!schedules.containsKey(scheduleName), "Schedule with the name '" +
-          scheduleName + "' already exists.");
-        schedules.put(scheduleSpecification.getSchedule().getName(), scheduleSpecification);
-        ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
-        metaStore.updateAppSpec(program.getNamespace(), program.getApplication(), program.getVersion(), newAppSpec);
+  public void addSchedule(final ProgramId program, final ScheduleSpecification scheduleSpecification,
+                          final boolean allowOverwrite) throws AlreadyExistsException {
+    try {
+      Transactions.executeUnchecked(transactional, new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          AppMetadataStore metaStore = getAppMetadataStore(context);
+          ApplicationSpecification appSpec = getAppSpecOrFail(metaStore, program);
+          Map<String, ScheduleSpecification> existingSchedules = appSpec.getSchedules();
+          String scheduleName = scheduleSpecification.getSchedule().getName();
+          if (!allowOverwrite && existingSchedules.containsKey(scheduleName)) {
+            throw new AlreadyExistsException(
+              new ScheduleId(program.getNamespace(), program.getApplication(), scheduleName));
+          }
+
+          Map<String, ScheduleSpecification> schedules = Maps.newHashMap(existingSchedules);
+          schedules.put(scheduleSpecification.getSchedule().getName(), scheduleSpecification);
+          ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
+          metaStore.updateAppSpec(program.getNamespace(), program.getApplication(), program.getVersion(), newAppSpec);
+          LOG.debug("{} schedule for program {} - {}",
+                    existingSchedules.containsKey(scheduleName) ? "Added" : "Updated", program, scheduleSpecification);
+        }
+      });
+    } catch (Exception e) {
+      // Transactions.executeUnchecked wraps all exceptions in RuntimeException
+      if (e.getCause() instanceof AlreadyExistsException) {
+        throw (AlreadyExistsException) e.getCause();
+      } else {
+        throw e;
       }
-    });
+    }
   }
 
   @Override
@@ -773,6 +791,7 @@ public class DefaultStore implements Store {
 
         ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
         metaStore.updateAppSpec(program.getNamespace(), program.getApplication(), program.getVersion(), newAppSpec);
+        LOG.debug("Deleted schedule for program {} - {}", program, removed);
       }
     });
   }

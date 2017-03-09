@@ -27,6 +27,7 @@ import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
@@ -298,11 +299,15 @@ public interface Store extends RuntimeStore {
 
   /**
    * Adds a schedule for a particular program. If the schedule with the name already exists, the method will
-   * throw RuntimeException.
+   * throw AlreadyExistsException unless overwrite is true. If overwrite is true then the existing schedule is updated.
+   *
    * @param program defines program to which a schedule is being added
    * @param scheduleSpecification defines the schedule to be added for the program
+   * @param allowOverwrite whether to overwrite an existing schedule
+   * @throws AlreadyExistsException when schedule already exists and overwrite is false
    */
-  void addSchedule(ProgramId program, ScheduleSpecification scheduleSpecification);
+  void addSchedule(ProgramId program, ScheduleSpecification scheduleSpecification, boolean allowOverwrite)
+    throws AlreadyExistsException;
 
   /**
    * Deletes data for an application from the WorkflowDataset table
