@@ -36,6 +36,7 @@ public class FakeWorkflow implements Workflow {
 
   public static final String NAME = "FakeWorkflow";
   public static final String FAKE_LOG = "Running " + NAME;
+  public static final String SCHEDULE = "FakeSchedule";
 
   @Override
   public void configure(WorkflowConfigurer configurer) {

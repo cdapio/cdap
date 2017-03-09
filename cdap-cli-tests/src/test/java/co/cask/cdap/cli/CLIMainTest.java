@@ -814,8 +814,7 @@ public class CLIMainTest extends CLITestBase {
                               Joiner.on(",").join(FakeWorkflow.FakeAction.TOKEN_KEY, GSON.toJson(tokenValues)));
     testCommandOutputNotContains(cli, String.format("get workflow token %s %s scope system", workflow, runId),
                                  Joiner.on(",").join(FakeWorkflow.FakeAction.TOKEN_KEY, GSON.toJson(tokenValues)));
-    testCommandOutputContains(
-      cli, String.format("get workflow token %s %s scope user key %s", workflow, runId,
+    testCommandOutputContains(cli, String.format("get workflow token %s %s scope user key %s", workflow, runId,
                          FakeWorkflow.FakeAction.TOKEN_KEY),
       Joiner.on(",").join(FakeWorkflow.FakeAction.TOKEN_KEY, GSON.toJson(tokenValues)));
 
@@ -832,6 +831,27 @@ public class CLIMainTest extends CLITestBase {
                          FakeWorkflow.FakeAction.ANOTHER_FAKE_NAME, FakeWorkflow.FakeAction.TOKEN_KEY), fakeNodeValue);
 
     testCommandOutputContains(cli, "get workflow logs " + workflow, FakeWorkflow.FAKE_LOG);
+
+    // Test schedule
+    testCommandOutputContains(
+      cli, String.format("add time schedule %s for workflow %s at \"0 4 * * *\"", FakeWorkflow.SCHEDULE, workflow),
+      String.format("Successfully added schedule '%s' in app '%s'", FakeWorkflow.SCHEDULE, FakeApp.NAME));
+    testCommandOutputContains(cli, String.format("get workflow schedules %s", workflow), "0 4 * * *");
+
+    testCommandOutputContains(
+      cli, String.format("update time schedule %s for workflow %s description \"testdesc\" at \"* * * * *\" " +
+                           "concurrency 4 properties \"key=value\"", FakeWorkflow.SCHEDULE, workflow),
+      String.format("Successfully updated schedule '%s' in app '%s'", FakeWorkflow.SCHEDULE, FakeApp.NAME));
+    testCommandOutputContains(cli, String.format("get workflow schedules %s", workflow), "* * * * *");
+    testCommandOutputContains(cli, String.format("get workflow schedules %s", workflow), "testdesc");
+    testCommandOutputContains(cli, String.format("get workflow schedules %s", workflow), "{\"key\":\"value\"}");
+
+    testCommandOutputContains(
+      cli, String.format("delete schedule %s.%s", FakeApp.NAME, FakeWorkflow.SCHEDULE),
+      String.format("Successfully deleted schedule '%s' in app '%s'", FakeWorkflow.SCHEDULE, FakeApp.NAME));
+    testCommandOutputNotContains(cli, String.format("get workflow schedules %s", workflow), "* * * * *");
+    testCommandOutputNotContains(cli, String.format("get workflow schedules %s", workflow), "testdesc");
+    testCommandOutputNotContains(cli, String.format("get workflow schedules %s", workflow), "{\"key\":\"value\"}");
 
     // stop workflow
     testCommandOutputContains(cli, "stop workflow " + workflow,
