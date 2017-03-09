@@ -145,8 +145,6 @@ my-log-viewer {
       word-break: break-all;
       text-overflow: inherit;
     }
-
-    background-color: @selected-row-color;
   }
 
   .dropdown-menu {
@@ -429,19 +427,25 @@ my-log-viewer {
 
     table.scroll thead {
       border-bottom: 1px solid #cccccc;
+      display: block;
     }
 
     .logs-table {
-      overflow: auto;
       height: ~"-moz-calc(100vh - 356px)";
       height: ~"-webkit-calc(100vh - 356px)";
       height: ~"calc(100vh - 356px)";
 
-      tbody td {
-        color: #666666;
-        font-size: 11px;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+      tbody {
+        height: ~"-moz-calc(100vh - 356px - 46px)";
+        height: ~"-webkit-calc(100vh - 356px - 46px)";
+        height: ~"calc(100vh - 356px - 46px)";
+
+        td {
+          color: #666666;
+          font-size: 11px;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
       }
 
       .has-stack-trace {
@@ -454,64 +458,78 @@ my-log-viewer {
         height: 100%;
         width: 10px;
       }
-      tr td {
-        line-height: 18px;
 
-        .fa-chevron-right {
-          color: #393939;
+      tr {
+        width: 100%;
+        display: table;
+        background-color: @table-background-color;
+
+        &.display-time {
           position: relative;
-          font-size: 8px;
-          bottom: 1px;
-          margin-left: 4px;
-          margin-right: 2px;
-        }
-        .fa-chevron-down {
-          color: #393939;
-          position: relative;
-          top: -12px;
-          font-size: 8px;
-          bottom: 1px;
-          margin-left: 4px;
-          margin-right: 0;
-        }
-      }
-
-      tr .log-message {
-        padding-right: 5px;
-      }
-
-      tr.display-time {
-        position: relative;
-        top: 0;
-      }
-      tr.level {
-        position: relative;
-        top: 0;
-      }
-
-      tr.row-selected {
-        white-space: normal;
-        background-color: @selected-row-color;
-
-        .display-time,
-        .level {
-          position: relative;
-          top: -9px;
+          top: 0;
         }
 
-        td,
-        span {
+        &.level {
+          position: relative;
+          top: 0;
+        }
+
+        &.row-expanded {
+          background-color: @selected-row-color;
+        }
+
+        &.row-selected {
           white-space: normal;
-          border-bottom: none;
+          background-color: @selected-row-color;
 
-          .source {
-            word-break: break-all;
-            text-overflow: inherit;
+          .display-time,
+          .level {
+            position: relative;
+            top: -9px;
+          }
+
+          td,
+          span {
+            white-space: normal;
+            border-bottom: none;
+
+            .source {
+              word-break: break-all;
+              text-overflow: inherit;
+            }
           }
         }
-      }
-      tr.well i {
-        font-size: 12px;
+
+        &.well i {
+          font-size: 12px;
+        }
+
+        td {
+          line-height: 18px;
+          border-top: 0;
+
+          .fa-chevron-right {
+            color: #393939;
+            position: relative;
+            font-size: 8px;
+            bottom: 1px;
+            margin-left: 4px;
+            margin-right: 2px;
+          }
+          .fa-chevron-down {
+            color: #393939;
+            position: relative;
+            top: -12px;
+            font-size: 8px;
+            bottom: 1px;
+            margin-left: 4px;
+            margin-right: 0;
+          }
+        }
+
+        .log-message {
+          padding-right: 5px;
+        }
       }
 
       .stack-trace {
@@ -554,6 +572,8 @@ my-log-viewer {
         background-color: @selected-row-color;
       }
       tr.message-holder {
+        background-color: @table-background-color;
+
         &:hover {
           background-color: transparent;
         }
@@ -586,12 +606,13 @@ my-log-viewer {
       }
       .table {
         &.table-bordered {
-          border-color: #cccccc;
+          border-color: @border-color;
           margin-bottom: 0;
+          height: 100%;
+          table-layout: fixed;
         }
         margin-top: 0;
         background-color: @table-background-color;
-        overflow: visible;
         font-size: 12px;
         border: 1px solid @border-color;
 
@@ -627,6 +648,9 @@ my-log-viewer {
       }
 
       tbody {
+        overflow: auto;
+        display: block;
+        background-color: @selected-row-color;
         .message {
           padding-left: 10px;
         }
@@ -636,17 +660,13 @@ my-log-viewer {
         background: blue;
       }
 
-      thead tr {
-        width: 100%;
-      }
-
       .log-header {
         font-size: 14px;
       }
 
       .time {
-        width: 4%;
-        min-width: 130px;
+        width: 130px;
+        max-width: initial;
         padding-left: 15px;
       }
       .time.log-header {
@@ -665,7 +685,8 @@ my-log-viewer {
       .level-header {
         padding-right: 10px;
         padding-left: 15px;
-        min-width: 80px;
+        width: 80px;
+        max-width: initial;
 
         .dropdown-menu {
           min-width: 88px;
@@ -678,7 +699,7 @@ my-log-viewer {
 
       .source,
       .source-header {
-        width: 20%;
+        width: 18%;
       }
 
       .source {
@@ -689,8 +710,6 @@ my-log-viewer {
       }
 
       .message-header {
-        width: 100%;
-
         .fa {
           position: relative;
           bottom: 1px;
