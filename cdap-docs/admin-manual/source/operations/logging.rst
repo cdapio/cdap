@@ -13,12 +13,210 @@ Logs and Metrics
 CDAP collects logs and metrics for all of its internal services and and user applications.
 Being able to view these details can be very helpful in debugging CDAP applications as
 well as analyzing their performance. CDAP gives access to its logs, metrics, and other
-monitoring information through RESTful APIs as well as a Java Client.
+monitoring information through RESTful APIs, the CDAP UI, as well as a Java Client.
 
 See the :ref:`Logging <http-restful-api-logging>`, :ref:`Metrics <http-restful-api-metrics>`, 
 and :ref:`Monitoring <http-restful-api-monitor>` HTTP RESTful APIs, the :ref:`Java Client
 <reference:java-client-api>`, :ref:`master-service-logging-configuration`, and the 
 :ref:`application-logback` for additional information.
+
+Logging Framework
+=================
+
+.. highlight:: console
+
+CDAP collects logs of both its internal services and user applications. To do so, CDAP
+uses a logging framework, as shown in this diagram:
+
+.. figure:: /_images/logging-framework.png
+    :figwidth: 100%
+    :width: 800px
+    :align: center
+
+    **CDAP Logging Framework:** System and User Application Logs
+
+
+
+
+based on `Logback <https://logback.qos.ch/manual>`__, consisting
+of *appenders* and *logging pipelines*:
+
+- An **appender** is a Java class, responsible for writing log events to persistent storage and
+  maintaining metadata about that storage.  
+  CDAP implements a ``RollingLocationLogAppender`` class that <tbd>.
+  To create an appender, implement the <> and <> interfaces.
+
+- A **logging pipeline** is a single-threaded process that reads log events from Kafka and invokes
+  the appender defined in its configuration.
+
+The *LogFramework* is configured using ``logback.xml`` files at a specified location. For every file
+configured, a separate logging pipeline is created, providing isolation from other logging pipelines:
+
+.. figure:: /_images/logging-framework.png
+    :figwidth: 100%
+    :width: 800px
+    :align: center
+
+    **CDAP Logging Framework:** Custom Log Pipeline and CDAP Log Pipeline, showing appenders
+
+As indicated in the diagram above, each pipeline requires a unique name, which is used for
+persisting the data and the retrieving of metadata. As they have separate Kafka consumers,
+each pipeline has a different offset, and a slowly-processing pipeline doesn't affect the
+performance of other logging pipelines.
+
+Default Configuration
+=====================
+In the default configuration, CDAP uses <?>...
+
+For many uses, this may be sufficient.
+
+The default ``logback.xml`` file is located either in:
+
+- For Standalone CDAP: ``<cdap-sdk-home>/conf/logback.xml``
+- For Distributed CDAP: ``/opt/cdap/master/ext/logging/config``, as set by the property
+  ``log.process.pipeline.config.dir`` in the ``cdap-default.xml`` file
+
+
+Configuration Properties
+------------------------
+Configuration properties for logging pipelines and appenders are shown in the
+documentation of the :ref:`logging properties <appendix-cdap-default-logging>` section of
+the :ref:`cdap-site.xml <appendix-cdap-site.xml>` file.
+
+In particular, these properties:
+
+[Note: as all these props are doc'd at the above link, what subset of these would be appropriate? It doesn't seem to make sense to repeat all of them.]
+
+- log.pipeline.cdap.dir.permissions
+- log.pipeline.cdap.file.cleanup.interval.mins
+- log.pipeline.cdap.file.cleanup.transaction.timeout
+- log.pipeline.cdap.file.max.lifetime.ms
+- log.pipeline.cdap.file.max.size.bytes
+- log.pipeline.cdap.file.permissions
+- log.pipeline.cdap.file.retention.duration.days
+- log.pipeline.cdap.file.sync.interval.bytes
+
+These properties control ...
+
+- log.process.pipeline.auto.buffer.ratio
+- log.process.pipeline.buffer.size
+- log.process.pipeline.checkpoint.interval.ms
+- log.process.pipeline.config.dir
+- log.process.pipeline.event.delay.ms
+- log.process.pipeline.kafka.fetch.size
+- log.process.pipeline.lib.dir
+- log.process.pipeline.logger.cache.expiration.ms
+- log.process.pipeline.logger.cache.size
+
+These properties (``log.process.pipeline.*``) can be specified at the pipeline level by
+providing a value in a pipeline's ``logback.xml`` file for any of these properties.
+
+These properties control ...
+
+- log.publish.num.partitions
+- log.publish.partition.key
+
+Example Logback.xml File
+------------------------
+
+.. highlight:: xml
+
+Here is an example ``logback.xml`` file, using two appenders (``STDOUT`` and
+``rollingAppender``)::
+
+  <?xml version="1.0" encoding="UTF-8"?>
+  <configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder>
+        <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
+      </encoder>
+    </appender>
+
+    <property name="cdap.log.saver.instance.id" value="instanceId"/>
+
+    <appender name="rollingAppender" class="co.cask.cdap.logging.plugins.RollingLocationLogAppender">
+  
+      <!-- log file path will be created by the appender as: <basePath>/<namespace-id>/<application-id>/<filePath> -->
+      <basePath>plugins/applogs</basePath>
+      <filePath>securityLogs/logFile-${cdap.log.saver.instance.id}.log</filePath>
+    
+      <!-- cdap is the owner of the log files directory, so cdap will get read/write/execute permissions.
+      Log files will be read-only for others. -->
+      <dirPermissions>744</dirPermissions>
+    
+      <!-- cdap is the owner of the log files, so cdap will get read/write permissions.
+      Log files will be read-only for others -->
+      <filePermissions>644</filePermissions>
+
+      <!-- It is an optional parameter, which takes number of miliseconds.
+      Appender will close a file if it is not modified for fileMaxInactiveTimeMs
+      period of time. Here it is set for thirty minutes. -->
+      <fileMaxInactiveTimeMs>1800000</fileMaxInactiveTimeMs>
+
+      <rollingPolicy class="co.cask.cdap.logging.plugins.FixedWindowRollingPolicy">
+        <!-- Only specify the file name without a directory, as the appender will use the
+        appropriate directory specified in filePath -->
+        <fileNamePattern>logFile-${cdap.log.saver.instance.id}.log.%i</fileNamePattern>
+        <minIndex>1</minIndex>
+        <maxIndex>9</maxIndex>
+      </rollingPolicy>
+
+      <triggeringPolicy class="co.cask.cdap.logging.plugins.SizeBasedTriggeringPolicy">
+        <!-- Set the maximum file size appropriately to avoid a large number of small files -->
+        <maxFileSize>100MB</maxFileSize>
+      </triggeringPolicy>
+
+      <encoder>
+        <pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
+        <!-- Do not flush on every event -->
+        <immediateFlush>false</immediateFlush>
+      </encoder>
+    </appender>
+
+    <logger name="co.cask.cdap.logging.plugins.RollingLocationLogAppenderTest" level="INFO">
+      <appender-ref ref="rollingAppender"/>
+    </logger>
+
+    <root level="INFO">
+      <appender-ref ref="STDOUT"/>
+    </root>
+
+  </configuration>
+
+
+Custom Logging Pipeline
+=======================
+For a custom logging pipeline, you would create and configure a ``logback.xml`` file,
+configuring loggers and appenders based on your requirements, and place the file at the
+path specified by ``log.process.pipeline.config.dir``.
+
+For every file configured, a separate logging pipeline is created. Though CDAP has been
+tested with multiple logging pipelines and appenders, the fewer of each that are specified
+will provide better performance.
+
+
+Custom Appender
+===============
+If you need an appender beyond what is offered here, you can write and implement your own
+custom appender. See the Logback documentation at
+https://logback.qos.ch/manual/appenders.html for information on how to do this.
+
+You can use any existing `logback <https://logback.qos.ch/manual/appenders.html>`__
+appender. The ``RollingLocationLogAppender`` |---| an extension of the
+``RollingFileLogAppender`` |---| lets you use HDFS locations in your logging pipelines. 
+
+As the CDAP LogFramework uses the logback's Appender API, your custom appender needs to
+implement the same Appender interface. Access to CDAP's system components (such as
+datasets, metrics, ``LocationFactory``) are made available to the ``AppenderContext``, an
+extension of logback's ``LoggerContext``.
+
+Adding a dependency on the ``cdap-watch-dog`` API will allow you to access the
+:cdap-java-source-github:`cdap-watchdog-api/src/main/java/co/cask/cdap/api/logging/AppenderContext.java`
+in your application.
+
+
+
+
 
 
 Log Location of CDAP System Services
