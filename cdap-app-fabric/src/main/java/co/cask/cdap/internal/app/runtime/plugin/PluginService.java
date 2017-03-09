@@ -119,29 +119,19 @@ public class PluginService extends AbstractIdleService {
 
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
     return getPluginEndpoint(namespace, artifactDetail, pluginType, pluginName,
-                             pickParentArtifact(artifactDetail, artifactId), methodName);
+                             getParentArtifactDescriptor(artifactDetail, artifactId),
+                             artifactDetail.getMeta().getUsableBy(), methodName);
   }
 
-  private ArtifactDescriptor pickParentArtifact(ArtifactDetail artifactDetail, Id.Artifact artifact)
+  private ArtifactDescriptor getParentArtifactDescriptor(ArtifactDetail artifactDetail, Id.Artifact artifact)
     throws Exception {
-
-    // get parent artifacts
+    // get parent artifact range
     Set<ArtifactRange> parentArtifactRanges = artifactDetail.getMeta().getUsableBy();
     if (parentArtifactRanges.isEmpty()) {
       throw new ArtifactNotFoundException(artifact.toEntityId());
     }
-
-    // just pick the first parent artifact from the set.
-    ArtifactRange parentArtifactRange = parentArtifactRanges.iterator().next();
-
-    List<ArtifactDetail> artifactDetails = artifactRepository.getArtifacts(parentArtifactRange);
-    if (artifactDetails.isEmpty()) {
-      // should not happen
-      throw new ArtifactNotFoundException(artifact.toEntityId());
-    }
-
-    // return the first one from the artifact details list.
-    return artifactDetails.get(0).getDescriptor();
+    List<ArtifactDetail> artifactDetails = artifactRepository.getArtifacts(parentArtifactRanges.iterator().next());
+    return artifactDetails.iterator().next().getDescriptor();
   }
 
   @Override
@@ -257,12 +247,11 @@ public class PluginService extends AbstractIdleService {
     }
   }
 
-
   private PluginEndpoint getPluginEndpoint(NamespaceId namespace, ArtifactDetail artifactDetail, String pluginType,
                                            String pluginName, ArtifactDescriptor parentArtifactDescriptor,
+                                           Set<ArtifactRange> parentArtifactRanges,
                                            String methodName)
     throws NotFoundException, IOException, ClassNotFoundException {
-
     Id.Artifact artifactId = Id.Artifact.from(namespace.toId(), artifactDetail.getDescriptor().getArtifactId());
     Set<PluginClass> pluginClasses = artifactDetail.getMeta().getClasses().getPlugins();
     PluginClass pluginClass = null;
@@ -292,8 +281,7 @@ public class PluginService extends AbstractIdleService {
     // we pass the parent artifact to endpoint plugin context,
     // as plugin method will use this context to load other plugins.
     DefaultEndpointPluginContext defaultEndpointPluginContext =
-      new DefaultEndpointPluginContext(namespace, artifactRepository, pluginInstantiator,
-                                       Id.Artifact.from(namespace.toId(), parentArtifactDescriptor.getArtifactId()));
+      new DefaultEndpointPluginContext(namespace, artifactRepository, pluginInstantiator, parentArtifactRanges);
 
     return getPluginEndpoint(pluginInstantiator, artifactId,
                              pluginClass, methodName, defaultEndpointPluginContext);

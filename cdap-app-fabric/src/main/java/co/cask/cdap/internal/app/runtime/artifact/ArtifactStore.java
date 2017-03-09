@@ -236,26 +236,30 @@ public class ArtifactStore {
       return Transactions.execute(transactional, new TxCallable<List<ArtifactDetail>>() {
         @Override
         public List<ArtifactDetail> call(DatasetContext context) throws Exception {
-          List<ArtifactDetail> artifacts = Lists.newArrayList();
-          ArtifactKey artifactKey = new ArtifactKey(range.getNamespace(), range.getName());
-
-          Row row = getMetaTable(context).get(artifactKey.getRowKey());
-          for (Map.Entry<byte[], byte[]> columnEntry : row.getColumns().entrySet()) {
-            String version = Bytes.toString(columnEntry.getKey());
-            if (range.versionIsInRange(new ArtifactVersion(version))) {
-              ArtifactData data = GSON.fromJson(Bytes.toString(columnEntry.getValue()), ArtifactData.class);
-              Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace.toId(), artifactKey.name, version);
-              artifacts.add(new ArtifactDetail(new ArtifactDescriptor(
-                artifactId.toArtifactId(),
-                Locations.getLocationFromAbsolutePath(locationFactory, data.getLocationPath())), data.meta));
-            }
-          }
-          return Collections.unmodifiableList(artifacts);
+          return getArtifacts(getMetaTable(context), range);
         }
       });
     } catch (TransactionFailureException e) {
       throw Transactions.propagate(e);
     }
+  }
+
+  private List<ArtifactDetail> getArtifacts(Table metaTable, ArtifactRange range) {
+    List<ArtifactDetail> artifacts = Lists.newArrayList();
+    ArtifactKey artifactKey = new ArtifactKey(range.getNamespace(), range.getName());
+
+    Row row = metaTable.get(artifactKey.getRowKey());
+    for (Map.Entry<byte[], byte[]> columnEntry : row.getColumns().entrySet()) {
+      String version = Bytes.toString(columnEntry.getKey());
+      if (range.versionIsInRange(new ArtifactVersion(version))) {
+        ArtifactData data = GSON.fromJson(Bytes.toString(columnEntry.getValue()), ArtifactData.class);
+        Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace.toId(), artifactKey.name, version);
+        artifacts.add(new ArtifactDetail(new ArtifactDescriptor(
+          artifactId.toArtifactId(),
+          Locations.getLocationFromAbsolutePath(locationFactory, data.getLocationPath())), data.meta));
+      }
+    }
+    return Collections.unmodifiableList(artifacts);
   }
 
   /**
@@ -512,57 +516,66 @@ public class ArtifactStore {
                                                                      final Id.Artifact parentArtifactId,
                                                                      final String type, final String name)
     throws IOException, ArtifactNotFoundException, PluginNotExistsException {
+    return getPluginClasses(namespace, new ArtifactRange(parentArtifactId.getNamespace(), parentArtifactId.getName(),
+                                                         parentArtifactId.getVersion(), true,
+                                                         parentArtifactId.getVersion(), true), type, name);
+  }
 
+  /**
+   * Get all plugin classes of the given type and name that extend the given parent artifact.
+   * Results are returned as a map from plugin artifact to plugins in that artifact.
+   *
+   * @param parentArtifactRange the parent artifact range to find plugins for
+   * @param type the type of plugin to look for
+   * @param name the name of the plugin to look for
+   * @return an unmodifiable map of plugin artifact to plugin classes of the given type and name, accessible by the
+   *         given artifact. The map will never be null, and will never be empty.
+   * @throws PluginNotExistsException if no plugin with the given type and name exists in the namespace
+   * @throws IOException if there was an exception reading metadata from the metastore
+   */
+  public SortedMap<ArtifactDescriptor, PluginClass> getPluginClasses(final NamespaceId namespace,
+                                                                     final ArtifactRange parentArtifactRange,
+                                                                     final String type, final String name)
+    throws IOException, ArtifactNotFoundException, PluginNotExistsException {
     try {
       SortedMap<ArtifactDescriptor, PluginClass> result =
         Transactions.execute(transactional, new TxCallable<SortedMap<ArtifactDescriptor, PluginClass>>() {
           @Override
           public SortedMap<ArtifactDescriptor, PluginClass> call(DatasetContext context) throws Exception {
             Table metaTable = getMetaTable(context);
+            List<ArtifactDetail> parentArtifactDetails = getArtifacts(metaTable, parentArtifactRange);
 
-            // check parent exists
-            ArtifactCell parentCell = new ArtifactCell(parentArtifactId);
-            byte[] parentDataBytes = metaTable.get(parentCell.rowkey, parentCell.column);
-            if (parentDataBytes == null) {
-              throw new ArtifactNotFoundException(parentArtifactId.toEntityId());
+            if (parentArtifactDetails.isEmpty()) {
+              throw new ArtifactNotFoundException(parentArtifactRange.getNamespace(), parentArtifactRange.getName());
             }
 
             SortedMap<ArtifactDescriptor, PluginClass> plugins = new TreeMap<>();
+            List<Id.Artifact> parentArtifacts = new ArrayList<>();
+            for (ArtifactDetail parentArtifactDetail : parentArtifactDetails) {
+              Id.Artifact parentArtifactId =
+                Id.Artifact.from(namespace.toId(), parentArtifactDetail.getDescriptor().getArtifactId());
+              parentArtifacts.add(parentArtifactId);
 
-            // check if any plugins of that type and name exist in the parent artifact already
-            ArtifactData parentData = GSON.fromJson(Bytes.toString(parentDataBytes), ArtifactData.class);
-            Set<PluginClass> parentPlugins = parentData.meta.getClasses().getPlugins();
-            for (PluginClass pluginClass : parentPlugins) {
-              if (pluginClass.getName().equals(name) && pluginClass.getType().equals(type)) {
-                ArtifactDescriptor parentDescriptor = new ArtifactDescriptor(
-                  parentArtifactId.toArtifactId(),
-                  Locations.getLocationFromAbsolutePath(locationFactory, parentData.getLocationPath()));
-                plugins.put(parentDescriptor, pluginClass);
-                break;
-              }
-            }
-
-            PluginKey pluginKey = new PluginKey(parentArtifactId.getNamespace(),
-                                                parentArtifactId.getName(), type, name);
-            Row row = metaTable.get(pluginKey.getRowKey());
-            if (!row.isEmpty()) {
-              // column is the artifact name and version, value is the serialized PluginClass
-              for (Map.Entry<byte[], byte[]> column : row.getColumns().entrySet()) {
-                ImmutablePair<ArtifactDescriptor, PluginClass> pluginEntry =
-                  getPluginEntry(namespace, parentArtifactId, column);
-
-                if (pluginEntry != null) {
-                  plugins.put(pluginEntry.getFirst(), pluginEntry.getSecond());
+              Set<PluginClass> parentPlugins = parentArtifactDetail.getMeta().getClasses().getPlugins();
+              for (PluginClass pluginClass : parentPlugins) {
+                if (pluginClass.getName().equals(name) && pluginClass.getType().equals(type)) {
+                  plugins.put(parentArtifactDetail.getDescriptor(), pluginClass);
+                  break;
                 }
               }
             }
-
+            PluginKey pluginKey = new PluginKey(parentArtifactRange.getNamespace().toId(),
+                                                parentArtifactRange.getName(), type, name);
+            Row row = metaTable.get(pluginKey.getRowKey());
+            if (!row.isEmpty()) {
+              addPluginsInRangeToMap(namespace, parentArtifacts, row.getColumns(), plugins);
+            }
             return Collections.unmodifiableSortedMap(plugins);
           }
         });
 
       if (result.isEmpty()) {
-        throw new PluginNotExistsException(parentArtifactId.getNamespace(), type, name);
+        throw new PluginNotExistsException(parentArtifactRange.getNamespace().toId(), type, name);
       }
       return result;
     } catch (TransactionFailureException e) {
@@ -571,13 +584,13 @@ public class ArtifactStore {
   }
 
   /**
-   * Update artifact properties using an update function. Functions will receive an immutable map.
-   *
-   * @param artifactId the id of the artifact to add
-   * @param updateFunction the function used to update existing properties
-   * @throws ArtifactNotFoundException if the artifact does not exist
-   * @throws IOException if there was an exception writing the properties to the metastore
-   */
+     * Update artifact properties using an update function. Functions will receive an immutable map.
+     *
+     * @param artifactId the id of the artifact to add
+     * @param updateFunction the function used to update existing properties
+     * @throws ArtifactNotFoundException if the artifact does not exist
+     * @throws IOException if there was an exception writing the properties to the metastore
+     */
   public void updateArtifactProperties(final Id.Artifact artifactId,
                                        final Function<Map<String, String>, Map<String, String>> updateFunction)
     throws ArtifactNotFoundException, IOException {
@@ -974,6 +987,32 @@ public class ArtifactStore {
       return ImmutablePair.of(artifactDescriptor, pluginData.pluginClass);
     }
     return null;
+  }
+
+  private void addPluginsInRangeToMap(NamespaceId namespace, List<Id.Artifact> parentArtifacts,
+                                      Map<byte[], byte[]> columns,
+                                      SortedMap<ArtifactDescriptor, PluginClass> plugins) {
+    for (Map.Entry<byte[], byte[]> column : columns.entrySet()) {
+      // column is the artifact namespace, name, and version. value is the serialized PluginData
+      ArtifactColumn artifactColumn = ArtifactColumn.parse(column.getKey());
+      Id.Namespace artifactNamespace = artifactColumn.artifactId.getNamespace();
+      // filter out plugins whose artifacts are not in the system namespace and not in this namespace
+      if (!Id.Namespace.SYSTEM.equals(artifactNamespace) && !artifactNamespace.equals(namespace.toId())) {
+        continue;
+      }
+      PluginData pluginData = GSON.fromJson(Bytes.toString(column.getValue()), PluginData.class);
+
+      // filter out plugins that don't extend this version of the parent artifact
+      for (Id.Artifact parentArtifactId : parentArtifacts) {
+        if (pluginData.usableBy.versionIsInRange(parentArtifactId.getVersion())) {
+          plugins.put(new ArtifactDescriptor(
+            artifactColumn.artifactId.toArtifactId(),
+            Locations.getLocationFromAbsolutePath(locationFactory, pluginData.getArtifactLocationPath())),
+                      pluginData.pluginClass);
+          break;
+        }
+      }
+    }
   }
 
   private Scan scanArtifacts(NamespaceId namespace) {
