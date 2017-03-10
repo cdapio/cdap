@@ -861,10 +861,9 @@ features:
     parsing: "Parsing..."
   LoadingIndicator:
     defaultMessage: 'Loading...'
-    backendDown: 'CDAP Services are not available'
-    # backendDown: 'Unable to connect to CDAP Router'
-    backendDownSubtitle: 'Attempting to connect...'
-    nodeserverDown: 'User interface service is down'
+    backendDown: Unable to communicate with CDAP services
+    backendDownSubtitle: Retrying
+    nodeserverDown: User interface service is down
   StatusAlertMessage:
     message: 'Services are back online'
   Tags:
