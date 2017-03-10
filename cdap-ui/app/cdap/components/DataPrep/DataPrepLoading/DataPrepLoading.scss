@@ -14,15 +14,25 @@
  * the License.
  */
 
-const DataPrepActions = {
-  setData: 'DATAPREP_SET_DATA',
-  setDirectives: 'DATAPREP_SET_DIRECTIVES',
-  setWorkspace: 'DATAPREP_SET_WORKSPACE',
-  setInitialized: 'DATAPREP_SET_INITIALIZED',
-  setHigherVersion: 'DATAPREP_SET_HIGHER_VERSION',
-  enableLoading: 'DATAPREP_ENABLE_LOADING',
-  disableLoading: 'DATAPREP_DISABLE_LOADING',
-  reset: 'DATAPREP_RESET'
-};
+.dataprep-container {
+  .dataprep-loading {
+    position: absolute;
+    top: 50px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(255, 255, 255, 0.7);
+    color: #666666;
+    font-size: 72px;
 
-export default DataPrepActions;
+    > .loading-bar {
+      position: absolute;
+      top: 35%;
+      transform: translateY(-50%) scale(1.7);
+
+      rect {
+        fill: #ff6600;
+      }
+    }
+  }
+}

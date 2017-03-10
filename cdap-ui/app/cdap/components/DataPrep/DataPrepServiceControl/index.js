@@ -68,7 +68,7 @@ export default class DataPrepServiceControl extends Component {
 
   render() {
     return (
-      <div className="wrangler-container error">
+      <div className="dataprep-container error">
         <h4 className="text-xs-center">
           Data Preparation (Beta) is not enabled. Please enable it.
         </h4>
