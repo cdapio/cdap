@@ -69,13 +69,13 @@ export default class DatasetDetailedView extends Component {
     this.fetchEntityDetails(namespace, datasetId);
     this.fetchEntitiesMetadata(namespace);
     if (
-      isNil(this.state.entityMetadata) ||
-      isEmpty(this.state.entityMetadata) ||
-      isNil(this.state.entity) ||
-      isEmpty(this.state.entity)
+      !isNil(this.state.entityMetadata) &&
+      !isEmpty(this.state.entityMetadata) &&
+      !isNil(this.state.entityDetail) &&
+      !isEmpty(this.state.entityDetail)
     ) {
       this.setState({
-        loading: true
+        loading: false
       });
     }
 
