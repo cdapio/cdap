@@ -28,6 +28,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
@@ -47,6 +48,7 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
@@ -56,6 +58,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ScheduleType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
@@ -800,6 +803,127 @@ public class ProgramLifecycleService extends AbstractIdleService {
         }
         break;
     }
+  }
+
+  /**
+   * Add a schedule to an application.
+   *
+   * @param applicationId the application id for which the schedule needs to be added
+   * @param scheduleSpec the schedule specification
+   * @throws NotFoundException when application is not found
+   * @throws SchedulerException on an exception when updating the schedule
+   * @throws BadRequestException if the program type is not workflow
+   */
+  public void addSchedule(ApplicationId applicationId, ScheduleSpecification scheduleSpec)
+    throws NotFoundException, SchedulerException, AlreadyExistsException, BadRequestException {
+    ApplicationSpecification appSpec = store.getApplication(applicationId);
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(applicationId);
+    }
+
+    String scheduleName = scheduleSpec.getSchedule().getName();
+    ScheduleSpecification existingScheduleSpec = appSpec.getSchedules().get(scheduleName);
+    if (existingScheduleSpec != null) {
+      throw new AlreadyExistsException(
+        new ScheduleId(applicationId.getNamespace(), applicationId.getApplication(), scheduleName));
+    }
+
+    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+    String programName = scheduleSpec.getProgram().getProgramName();
+    ProgramId programId = applicationId.program(programType, programName);
+
+    if (!programType.equals(ProgramType.WORKFLOW)) {
+      throw new BadRequestException("Only workflows can be scheduled");
+    }
+
+    // TODO: CDAP-8907 Make the scheduler update and store update transactional
+    // TODO: CDAP-8908 reduce redundant parameters in the scheduler call
+    scheduler.schedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
+                       scheduleSpec.getProperties());
+    store.addSchedule(programId, scheduleSpec, false);
+  }
+
+  /**
+   * Update the schedule in an application.
+   *
+   * @param applicationId the application containing the schedule
+   * @param scheduleSpecUpdate updated schedule specification
+   * @throws NotFoundException when application is not found
+   * @throws SchedulerException on an exception when updating the schedule
+   * @throws BadRequestException when existing schedule type does not match the updated schedule type
+   */
+  public void updateSchedule(ApplicationId applicationId, ScheduleSpecification scheduleSpecUpdate)
+    throws NotFoundException, SchedulerException, AlreadyExistsException, BadRequestException {
+    ApplicationSpecification appSpec = store.getApplication(applicationId);
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(applicationId);
+    }
+
+    String scheduleName = scheduleSpecUpdate.getSchedule().getName();
+    ScheduleSpecification existingScheduleSpec = appSpec.getSchedules().get(scheduleName);
+    if (existingScheduleSpec == null) {
+      throw new NotFoundException(new ScheduleId(applicationId.getNamespace(), applicationId.getApplication(),
+                                                 scheduleName));
+    }
+
+    ScheduleType existingType = ScheduleType.fromSchedule(existingScheduleSpec.getSchedule());
+    ScheduleType newType = ScheduleType.fromSchedule(scheduleSpecUpdate.getSchedule());
+    if (!existingType.equals(newType)) {
+      throw new BadRequestException(
+        String.format("The updated schedule has different type (%s) then the existing schedule type (%s)",
+                      newType, existingType));
+    }
+
+    ProgramType existingProgramType =
+      ProgramType.valueOfSchedulableType(existingScheduleSpec.getProgram().getProgramType());
+
+    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpecUpdate.getProgram().getProgramType());
+    String programName = scheduleSpecUpdate.getProgram().getProgramName();
+    ProgramId programId = applicationId.program(programType, programName);
+
+    // The below check also makes sure that only workflows can be scheduled
+    if (!existingProgramType.equals(programType)) {
+      throw new BadRequestException(
+        String.format("The updated schedule has a different program type (%s) than the existing program type (%s)",
+                      programType, existingProgramType));
+    }
+
+    // TODO: CDAP-8907 Make the scheduler update and store update transactional
+    // TODO: CDAP-8908 reduce redundant parameters in the scheduler call
+    scheduler.updateSchedule(programId, scheduleSpecUpdate.getProgram().getProgramType(),
+                             scheduleSpecUpdate.getSchedule(), scheduleSpecUpdate.getProperties());
+    store.addSchedule(programId, scheduleSpecUpdate, true);
+  }
+
+  /**
+   * Delete a given schedule in an application.
+   *
+   * @param applicationId the application containing the schedule
+   * @param scheduleName the schedule name to be deleted
+   * @throws NotFoundException when application is not found, or when the schdule is not found
+   * @throws SchedulerException on an exception when updating the schedule
+   */
+  public void deleteSchedule(ApplicationId applicationId, String scheduleName)
+    throws NotFoundException, SchedulerException {
+    ApplicationSpecification appSpec = store.getApplication(applicationId);
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(applicationId);
+    }
+
+    ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
+    if (scheduleSpec == null) {
+      throw new NotFoundException(new ScheduleId(applicationId.getNamespace(), applicationId.getApplication(),
+                                                 scheduleName));
+    }
+
+    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+    String programName = scheduleSpec.getProgram().getProgramName();
+    ProgramId programId = applicationId.program(programType, programName);
+
+    // TODO: CDAP-8907 Make the scheduler update and store update transactional
+    // TODO: CDAP-8908 reduce redundant parameters in the scheduler call
+    scheduler.deleteSchedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleName);
+    store.deleteSchedule(programId, scheduleName);
   }
 
   /**
