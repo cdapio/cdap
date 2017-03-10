@@ -21,7 +21,8 @@ angular.module(PKG.name + '.commons')
       scope: {
         disabled: '=',
         model: '=ngModel',
-        config: '='
+        config: '=',
+        isFieldRequired: '='
       },
       templateUrl: 'widget-container/widget-number/widget-number.html',
       controller: function($scope, myHelpers) {
@@ -43,6 +44,10 @@ angular.module(PKG.name + '.commons')
           maxValueFromWidgetJSON = maxValueFromWidgetJSON.toString();
         }
         var checkForBounds = function(newValue) {
+          if (!$scope.isFieldRequired && !newValue) {
+            $scope.error = '';
+            return true;
+          }
           if ($scope.disabled) {
             return true;
           }
@@ -79,7 +84,7 @@ angular.module(PKG.name + '.commons')
             return;
           }
           $scope.model = (typeof $scope.internalModel === 'number' && !Number.isNaN($scope.internalModel) && $scope.internalModel) || '';
-          if (!$scope.convertToInteger) {
+          if (!$scope.convertToInteger && $scope.internalModel) {
             $scope.model = $scope.internalModel.toString();
           }
         });

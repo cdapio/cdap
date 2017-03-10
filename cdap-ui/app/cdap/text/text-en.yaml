@@ -144,7 +144,17 @@ features:
         sortedBy: sorted by
         displayAll: Displaying All Entities
         displaySome: Displaying
-    emptyMessage: No entities found in the system.
+    emptyMessage:
+      default: No entities found in this namespace
+      search: No results found for "{searchText}"
+      filter: No entities found for your selection
+      suggestion: "You can try to:"
+      clearText:
+        clear: Clear
+        search: " your search or"
+        filter: " your filters or"
+        add: Add
+        entities: " new entities"
     Cards:
       type: "Type: "
     Errors:
@@ -436,7 +446,6 @@ features:
       author: Author
       company: Company
       created: Created
-      cdapversion: CDAP Version
     doneLabel: Done
     closeLabel: Close
   MarketEntityModal:
@@ -733,7 +742,9 @@ features:
        headerlabel: Add Namespace
        Status:
          creation-error-desc: "Failed to create namespace '%s'."
-         creation-success-desc: "Successfully created namespace '%s'."
+         creation-success-desc: Successfully created namespace '{namespaceId}'.
+       callToAction:
+         primary: Switch to '{namespaceId}'
 
   Wrangler:
     Actions:

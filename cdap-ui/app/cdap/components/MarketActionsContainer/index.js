@@ -152,8 +152,7 @@ MarketActionsContainer.contextTypes = {
     author: PropTypes.string,
     description: PropTypes.string,
     org: PropTypes.string,
-    created: PropTypes.number,
-    cdapVersion: PropTypes.string
+    created: PropTypes.number
   })
 };
 
