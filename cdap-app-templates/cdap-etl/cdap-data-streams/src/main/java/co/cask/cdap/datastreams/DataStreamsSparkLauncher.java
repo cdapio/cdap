@@ -108,6 +108,14 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     if (isUnitTest) {
       sparkConf.setMaster(String.format("local[%d]", numSources + 1));
     }
+
+    for (Map.Entry<String, String> runtimeArg : context.getRuntimeArguments().entrySet()) {
+      String key = runtimeArg.getKey();
+      String val = runtimeArg.getValue();
+      if (key.startsWith("spark.")) {
+        sparkConf.set(key, val);
+      }
+    }
     context.setSparkConf(sparkConf);
 
     boolean checkpointsDisabled = Boolean.valueOf(programProperties.get(CHECKPOINTS_DISABLED));
