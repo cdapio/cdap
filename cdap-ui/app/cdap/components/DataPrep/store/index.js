@@ -27,7 +27,8 @@ const defaultInitialState = {
   workspaceId: '',
   data: [],
   headers: [],
-  directives: []
+  directives: [],
+  higherVersion: null
 };
 
 const dataprep = (state = defaultInitialState, action = defaultAction) => {
@@ -58,6 +59,11 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
       break;
     case DataPrepActions.setInitialized:
       stateCopy = Object.assign({}, state, { initialized: true });
+      break;
+    case DataPrepActions.setHigherVersion:
+      stateCopy = Object.assign({}, state, {
+        higherVersion: action.payload.higherVersion
+      });
       break;
     case DataPrepActions.reset:
       return defaultInitialState;

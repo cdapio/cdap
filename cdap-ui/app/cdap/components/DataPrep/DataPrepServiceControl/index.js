@@ -15,10 +15,7 @@
  */
 
 import React, { Component } from 'react';
-import MyDataPrepApi from 'api/dataprep';
-import {MyArtifactApi} from 'api/artifact';
-import find from 'lodash/find';
-import NamespaceStore from 'services/NamespaceStore';
+import enableDataPreparationService from 'components/DataPrep/DataPrepServiceControl/ServiceEnablerUtilities';
 
 export default class DataPrepServiceControl extends Component {
   constructor(props) {
@@ -42,74 +39,13 @@ export default class DataPrepServiceControl extends Component {
   enableService() {
     this.setState({loading: true});
 
-    /**
-     *  1. Get Wrangler Service App
-     *  2. If not found, create app
-     *  3. Start Wrangler Service
-     *  4. Poll until service starts, then reload page
-     **/
-
-    let namespace = NamespaceStore.getState().selectedNamespace;
-
-    MyDataPrepApi.getApp({ namespace })
+    enableDataPreparationService(false)
       .subscribe(() => {
-        // Wrangler app already exist
-        // Just start service
-        this.startService();
-      }, () => {
-        // App does not exist
-        // Go to create app
-        this.createApp();
-      });
-  }
-
-  createApp() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
-
-    MyArtifactApi.list({ namespace })
-      .subscribe((res) => {
-        let artifact = find(res, { 'name': 'wrangler-service' });
-
-        MyDataPrepApi.createApp({ namespace }, { artifact })
-          .subscribe(() => {
-            this.startService();
-          }, (err) => {
-            this.setState({
-              error: 'Failed to enable data preparation',
-              extendedMessage: err.data || err,
-              loading: false
-            });
-          });
-      });
-  }
-
-  startService() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
-
-    MyDataPrepApi.startService({ namespace })
-      .subscribe(() => {
-        this.pollServiceStatus();
+        console.log('success');
       }, (err) => {
         this.setState({
-          error: 'Failed to enable data preparation',
-          extendedMessage: err.data || err,
-          loading: false
-        });
-      });
-  }
-
-  pollServiceStatus() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
-
-    this.servicePoll = MyDataPrepApi.pollServiceStatus({ namespace })
-      .subscribe((res) => {
-        if (res.status === 'RUNNING') {
-          window.location.reload();
-        }
-      }, (err) => {
-        this.setState({
-          error: 'Failed to enable data preparation',
-          extendedMessage: err.data || err,
+          error: err.error,
+          extendedMessage: err.extendedMessage,
           loading: false
         });
       });

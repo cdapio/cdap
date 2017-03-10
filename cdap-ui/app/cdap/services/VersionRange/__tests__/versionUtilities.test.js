@@ -14,13 +14,25 @@
  * the License.
  */
 
-const DataPrepActions = {
-  setData: 'DATAPREP_SET_DATA',
-  setDirectives: 'DATAPREP_SET_DIRECTIVES',
-  setWorkspace: 'DATAPREP_SET_WORKSPACE',
-  setInitialized: 'DATAPREP_SET_INITIALIZED',
-  setHigherVersion: 'DATAPREP_SET_HIGHER_VERSION',
-  reset: 'DATAPREP_RESET'
-};
+import {
+  findHighestVersion,
+  findLowestVersion
+} from 'services/VersionRange/VersionUtilities';
 
-export default DataPrepActions;
+describe('Version Utilities', () => {
+  const versionsArray = [
+    '1.0.0',
+    '1.2.0-SNAPSHOT',
+    '1.1.0',
+    '1.2.1',
+    '1.1.5'
+  ];
+
+  it('should find highest version', () => {
+    expect(findHighestVersion(versionsArray, true)).toBe('1.2.1');
+  });
+
+  it('should find lowest version', () => {
+    expect(findLowestVersion(versionsArray, true)).toBe('1.0.0');
+  });
+});
