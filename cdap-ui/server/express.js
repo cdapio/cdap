@@ -495,7 +495,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
           }
           res.status(500).send(err);
         } else {
-          res.status(response.statusCode).send('OK');
+          res.status(response.statusCode).send(response);
         }
       }).on('error', function (err) {
         try {

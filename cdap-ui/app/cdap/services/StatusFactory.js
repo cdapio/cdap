@@ -41,51 +41,54 @@ const poll = () => {
   }
   Promise.all([fetchNamespace, fetchServiceStatus])
     .then(responses => {
-      /*
-        We handle,
-          - 1XX Information
-          - 2XX Success
-          - 3XX Redirection Status codes
-      */
       let [namespaceRes, serviceStatusRes] = responses;
-      if (namespaceRes.status <= 399 && serviceStatusRes.status <= 399) {
-        let loadingState = LoadingIndicatorStore.getState().loading;
-        if (loadingState.status === BACKENDSTATUS.NODESERVERDOWN) {
-          window.location.reload();
-        }
-        if (loadingState.status === BACKENDSTATUS.BACKENDDOWN) {
-          StatusAlertMessageStore.dispatch({
-            type: 'VIEWUPDATE',
-            payload: {
-              view: true
+      serviceStatusRes.json()
+        .then(serviceStatuses => {
+          /*
+            Check for 3 things
+              1. /v3/namespaces returns a non-error response
+              2. /v3/system/services/status returns a non-error response
+              3. All the system services have status of 'OK'
+          */
+          if (namespaceRes.status < 500 && serviceStatusRes.status < 500 && serviceStatuses.body.indexOf('NOTOK') === -1) {
+            let loadingState = LoadingIndicatorStore.getState().loading;
+            if (loadingState.status === BACKENDSTATUS.NODESERVERDOWN) {
+              window.location.reload();
             }
-          });
-        }
-        errorStateCount = 0;
-        LoadingIndicatorStore.dispatch({
-          type: BACKENDSTATUS.STATUSUPDATE,
-          payload: {
-            status: BACKENDSTATUS.BACKENDUP
+            if (loadingState.status === BACKENDSTATUS.BACKENDDOWN) {
+              StatusAlertMessageStore.dispatch({
+                type: 'VIEWUPDATE',
+                payload: {
+                  view: true
+                }
+              });
+            }
+            errorStateCount = 0;
+            LoadingIndicatorStore.dispatch({
+              type: BACKENDSTATUS.STATUSUPDATE,
+              payload: {
+                status: BACKENDSTATUS.BACKENDUP
+              }
+            });
+          } else {
+            // This is to sort of avoid the flipping of hiding and showing the
+            // backend down message. Just verify twice before showing that the backend is down.
+            if (errorStateCount === 2) {
+              LoadingIndicatorStore.dispatch({
+                type: BACKENDSTATUS.STATUSUPDATE,
+                payload: {
+                  status: BACKENDSTATUS.BACKENDDOWN,
+                  message: T.translate('features.LoadingIndicator.backendDown'),
+                  subtitle: T.translate('features.LoadingIndicator.backendDownSubtitle')
+                }
+              });
+            } else {
+              errorStateCount += 1;
+            }
           }
+          pollCycleInProgress = false;
+          startPolling();
         });
-      } else {
-        // This is to sort of avoid the flipping of hiding and showing the
-        // backend down message. Just verify twice before showing that the backend is down.
-        if (errorStateCount === 2) {
-          LoadingIndicatorStore.dispatch({
-            type: BACKENDSTATUS.STATUSUPDATE,
-            payload: {
-              status: BACKENDSTATUS.BACKENDDOWN,
-              message: T.translate('features.LoadingIndicator.backendDown'),
-              subtitle: T.translate('features.LoadingIndicator.backendDownSubtitle')
-            }
-          });
-        } else {
-          errorStateCount += 1;
-        }
-      }
-      pollCycleInProgress = false;
-      startPolling();
     })
     .catch(() => {
       LoadingIndicatorStore.dispatch({
