@@ -15,19 +15,19 @@
  */
 
 import React, { Component } from 'react';
-import WranglerStore from 'components/Wrangler/store';
-import WranglerActions from 'components/Wrangler/store/WranglerActions';
+import DataPrepStore from 'components/DataPrep/store';
+import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import shortid from 'shortid';
-import MyWranglerApi from 'api/wrangler';
-import DirectivesTabRow from 'components/Wrangler/WranglerSidePanel/DirectivesTabRow';
+import MyDataPrepApi from 'api/dataprep';
+import DirectivesTabRow from 'components/DataPrep/DataPrepSidePanel/DirectivesTab/DirectivesTabRow';
 import fileDownload from 'react-file-download';
-// import NamespaceStore from 'services/NamespaceStore';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class DirectivesTab extends Component {
   constructor(props) {
     super(props);
 
-    let store = WranglerStore.getState().wrangler;
+    let store = DataPrepStore.getState().dataprep;
 
     this.state = {
       deleteHover: null,
@@ -42,8 +42,8 @@ export default class DirectivesTab extends Component {
 
     this.download = this.download.bind(this);
 
-    this.sub = WranglerStore.subscribe(() => {
-      let state = WranglerStore.getState().wrangler;
+    this.sub = DataPrepStore.subscribe(() => {
+      let state = DataPrepStore.getState().dataprep;
 
       this.setState({
         directives: state.directives.map((directive) => {
@@ -70,12 +70,12 @@ export default class DirectivesTab extends Component {
   }
 
   deleteDirective(index) {
-    let state = WranglerStore.getState().wrangler;
+    let state = DataPrepStore.getState().dataprep;
     let directives = state.directives;
 
     let newDirectives = directives.slice(0, index);
 
-    let namespace = 'default';
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
       namespace,
@@ -84,14 +84,14 @@ export default class DirectivesTab extends Component {
       directive: newDirectives
     };
 
-    MyWranglerApi.execute(params)
+    MyDataPrepApi.execute(params)
       .subscribe((res) => {
         this.setState({
           deleteHover: null
         });
 
-        WranglerStore.dispatch({
-          type: WranglerActions.setDirectives,
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setDirectives,
           payload: {
             data: res.value,
             headers: res.header,
@@ -106,7 +106,7 @@ export default class DirectivesTab extends Component {
   }
 
   download() {
-    let state = WranglerStore.getState().wrangler;
+    let state = DataPrepStore.getState().dataprep;
     let workspaceId = state.workspaceId,
         directives = state.directives;
 

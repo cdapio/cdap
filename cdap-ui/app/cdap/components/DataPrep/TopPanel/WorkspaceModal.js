@@ -16,20 +16,20 @@
 
 import React, { Component, PropTypes } from 'react';
 import {Modal, ModalHeader, ModalBody} from 'reactstrap';
-import MyWranglerApi from 'api/wrangler';
+import MyDataPrepApi from 'api/dataprep';
 import UploadFile from 'services/upload-file';
-import WranglerStore from 'components/Wrangler/store';
-import WranglerActions from 'components/Wrangler/store/WranglerActions';
+import DataPrepStore from 'components/DataPrep/store';
+import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import CardActionFeedback from 'components/CardActionFeedback';
 import cookie from 'react-cookie';
 import isNil from 'lodash/isNil';
-// import NamespaceStore from 'services/NamespaceStore';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class WorkspaceModal extends Component {
   constructor(props) {
     super(props);
 
-    let initialWorkspace = WranglerStore.getState().wrangler.workspaceId;
+    let initialWorkspace = DataPrepStore.getState().dataprep.workspaceId;
 
     this.state = {
       activeWorkspace: initialWorkspace,
@@ -49,9 +49,9 @@ export default class WorkspaceModal extends Component {
     this.attemptModalClose = this.attemptModalClose.bind(this);
     this.handleRecordDelimiterChange = this.handleRecordDelimiterChange.bind(this);
 
-    this.sub = WranglerStore.subscribe(() => {
+    this.sub = DataPrepStore.subscribe(() => {
       this.setState({
-        activeWorkspace: WranglerStore.getState().wrangler.workspaceId
+        activeWorkspace: DataPrepStore.getState().dataprep.workspaceId
       });
     });
   }
@@ -71,20 +71,20 @@ export default class WorkspaceModal extends Component {
   setWorkspace() {
     if (!this.state.workspaceId) { return; }
     let workspaceId = this.state.workspaceId;
-    let namespace = 'default';
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
       namespace,
-      workspaceId: workspaceId,
+      workspaceId,
       limit: 100
     };
 
-    MyWranglerApi.execute(params)
+    MyDataPrepApi.execute(params)
       .subscribe((res) => {
-        cookie.save('WRANGLER_WORKSPACE', workspaceId);
+        cookie.save('DATAPREP_WORKSPACE', workspaceId, { path: '/' });
 
-        WranglerStore.dispatch({
-          type: WranglerActions.setWorkspace,
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setWorkspace,
           payload: {
             workspaceId,
             data: res.value,
@@ -103,9 +103,9 @@ export default class WorkspaceModal extends Component {
   createWorkspace() {
     if (!this.state.workspaceId) { return; }
     let workspaceId = this.state.workspaceId;
-    let namespace = 'default';
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
-    MyWranglerApi.create({
+    MyDataPrepApi.create({
       namespace,
       workspaceId
     }).subscribe((res) => {
@@ -114,10 +114,10 @@ export default class WorkspaceModal extends Component {
         message: res.message
       });
 
-      cookie.save('WRANGLER_WORKSPACE', workspaceId);
+      cookie.save('DATAPREP_WORKSPACE', workspaceId, { path: '/' });
 
-      WranglerStore.dispatch({
-        type: WranglerActions.setWorkspace,
+      DataPrepStore.dispatch({
+        type: DataPrepActions.setWorkspace,
         payload: {
           workspaceId
         }
@@ -134,9 +134,9 @@ export default class WorkspaceModal extends Component {
   deleteWorkspace() {
     if (!this.state.workspaceId) { return; }
     let workspaceId = this.state.workspaceId;
-    let namespace = 'default';
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
-    MyWranglerApi.delete({
+    MyDataPrepApi.delete({
       namespace,
       workspaceId
     }).subscribe((res) => {
@@ -147,14 +147,14 @@ export default class WorkspaceModal extends Component {
       });
 
       if (this.state.workspaceId === this.state.activeWorkspace) {
-        WranglerStore.dispatch({
-          type: WranglerActions.setWorkspace,
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setWorkspace,
           payload: {
             workspaceId: ''
           }
         });
 
-        cookie.remove('WRANGLER_WORKSPACE');
+        cookie.remove('DATAPREP_WORKSPACE', { path: '/' });
       }
     }, (err) => {
       console.log(err);
@@ -179,7 +179,7 @@ export default class WorkspaceModal extends Component {
     if (!this.state.file) { return; }
 
     let delimiter = this.state.recordDelimiter;
-    let namespace = 'default';
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
     let url = `/namespaces/${namespace}/apps/wrangler/services/service/methods/workspaces/${this.state.activeWorkspace}/upload`;
 
@@ -188,7 +188,6 @@ export default class WorkspaceModal extends Component {
       'X-Archive-Name': name
     };
 
-    // add authorization headers!!!
     if (window.CDAP_CONFIG.securityEnabled) {
       let token = cookie.load('CDAP_Auth_Token');
       if (!isNil(token)) {
@@ -210,12 +209,12 @@ export default class WorkspaceModal extends Component {
           limit: 100
         };
 
-        MyWranglerApi.execute(params)
+        MyDataPrepApi.execute(params)
           .subscribe((response) => {
             console.log('res', response);
 
-            WranglerStore.dispatch({
-              type: WranglerActions.setWorkspace,
+            DataPrepStore.dispatch({
+              type: DataPrepActions.setWorkspace,
               payload: {
                 workspaceId: this.state.activeWorkspace,
                 data: response.value,
@@ -249,7 +248,7 @@ export default class WorkspaceModal extends Component {
 
     return (
       <div>
-        <hr/>
+        <hr />
 
         <div>
           <h5>Upload Data</h5>
@@ -332,7 +331,7 @@ export default class WorkspaceModal extends Component {
                 <h5>
                   Current Active Workspace: <em>{this.state.activeWorkspace}</em>
                 </h5>
-                <hr/>
+                <hr />
               </div>
             ) : null
           }

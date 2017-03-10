@@ -15,14 +15,14 @@
  */
 
 import React, { Component } from 'react';
-import WranglerStore from 'components/Wrangler/store';
-import WranglerActions from 'components/Wrangler/store/WranglerActions';
-import MyWranglerApi from 'api/wrangler';
-import WranglerAutoComplete from 'components/Wrangler/AutoComplete';
-// import NamespaceStore from 'services/NamespaceStore';
-require('./WranglerCLI.scss');
+import DataPrepStore from 'components/DataPrep/store';
+import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+import MyDataPrepApi from 'api/dataprep';
+import DataPrepAutoComplete from 'components/DataPrep/AutoComplete';
+import NamespaceStore from 'services/NamespaceStore';
+require('./DataPrepCLI.scss');
 
-export default class WranglerCLI extends Component {
+export default class DataPrepCLI extends Component {
   constructor(props) {
     super(props);
 
@@ -59,28 +59,28 @@ export default class WranglerCLI extends Component {
   execute(addDirective) {
     if (addDirective.length === 0) { return; }
 
-    let store = WranglerStore.getState().wrangler;
+    let store = DataPrepStore.getState().dataprep;
     let updatedDirectives = store.directives.concat(addDirective);
 
     let workspaceId = store.workspaceId;
-    let namespace = 'default';
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
       namespace,
-      workspaceId: workspaceId,
+      workspaceId,
       limit: 100,
       directive: updatedDirectives
     };
 
-    MyWranglerApi.execute(params)
+    MyDataPrepApi.execute(params)
       .subscribe((res) => {
         this.setState({
           error: null,
           directiveInput: ''
         });
 
-        WranglerStore.dispatch({
-          type: WranglerActions.setDirectives,
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setDirectives,
           payload: {
             data: res.value,
             headers: res.header,
@@ -132,11 +132,11 @@ export default class WranglerCLI extends Component {
 
   render() {
     return (
-      <div className="wrangler-cli">
+      <div className="dataprep-cli">
 
         {this.renderError()}
 
-        <WranglerAutoComplete
+        <DataPrepAutoComplete
           input={this.state.directiveInput}
           onRowClick={this.handleDirectiveChange}
           inputRef={this.directiveRef}

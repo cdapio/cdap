@@ -15,12 +15,12 @@
  */
 
 import React, { Component } from 'react';
-import WranglerStore from 'components/Wrangler/store';
-import MyWranglerApi from 'api/wrangler';
+import DataPrepStore from 'components/DataPrep/store';
+import MyDataPrepApi from 'api/dataprep';
 import shortid from 'shortid';
-import ColumnsTabRow from 'components/Wrangler/WranglerSidePanel/ColumnsTabRow';
+import ColumnsTabRow from 'components/DataPrep/DataPrepSidePanel/ColumnsTab/ColumnsTabRow';
 import {objectQuery} from 'services/helpers';
-// import NamespaceStore from 'services/NamespaceStore';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class ColumnsTab extends Component {
   constructor(props) {
@@ -37,7 +37,7 @@ export default class ColumnsTab extends Component {
     this.handleChangeSearch = this.handleChangeSearch.bind(this);
     this.clearSearch = this.clearSearch.bind(this);
 
-    this.sub = WranglerStore.subscribe(this.getSummary.bind(this));
+    this.sub = DataPrepStore.subscribe(this.getSummary.bind(this));
 
     this.getSummary();
   }
@@ -47,9 +47,9 @@ export default class ColumnsTab extends Component {
   }
 
   getSummary() {
-    let state = WranglerStore.getState().wrangler;
+    let state = DataPrepStore.getState().dataprep;
     if (!state.workspaceId) { return; }
-    let namespace = 'default';
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
       namespace,
@@ -58,7 +58,7 @@ export default class ColumnsTab extends Component {
       directive: state.directives
     };
 
-    MyWranglerApi.summary(params)
+    MyDataPrepApi.summary(params)
       .subscribe((res) => {
         let columns = {};
 

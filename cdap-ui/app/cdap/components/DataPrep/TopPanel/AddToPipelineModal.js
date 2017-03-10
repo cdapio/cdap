@@ -18,9 +18,9 @@ import React, { Component, PropTypes } from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import {MyArtifactApi} from 'api/artifact';
 import find from 'lodash/find';
-import MyWranglerApi from 'api/wrangler';
-import WranglerStore from 'components/Wrangler/store';
-// import NamespaceStore from 'services/NamespaceStore';
+import MyDataPrepApi from 'api/dataprep';
+import DataPrepStore from 'components/DataPrep/store';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class AddToHydratorModal extends Component {
   constructor(props) {
@@ -36,19 +36,12 @@ export default class AddToHydratorModal extends Component {
 
   componentWillMount() {
     this.generateLinks();
-    window.onbeforeunload = null;
-  }
-
-  componentWillUnmount() {
-    window.onbeforeunload = function() {
-      return "Are you sure you want to leave this page?";
-    };
   }
 
   generateLinks() {
-    let namespace = 'default';
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
-    let state = WranglerStore.getState().wrangler;
+    let state = DataPrepStore.getState().dataprep;
     let workspaceId = state.workspaceId;
 
     let requestObj = {
@@ -62,7 +55,7 @@ export default class AddToHydratorModal extends Component {
     }
 
     MyArtifactApi.list({ namespace })
-      .combineLatest(MyWranglerApi.getSchema(requestObj))
+      .combineLatest(MyDataPrepApi.getSchema(requestObj))
       .subscribe((res) => {
         let batchArtifact = find(res[0], { 'name': 'cdap-data-pipeline' });
         let realtimeArtifact = find(res[0], { 'name': 'cdap-data-streams' });
@@ -153,7 +146,7 @@ export default class AddToHydratorModal extends Component {
       );
     } else {
       content = (
-        <div className="hydrator-pipeline-content-container">
+        <div>
           <div className="message">
             Choose the type of pipeline to create
           </div>
@@ -182,7 +175,7 @@ export default class AddToHydratorModal extends Component {
         isOpen={true}
         toggle={this.props.toggle}
         zIndex="1070"
-        className="add-to-hydrator-wrangler-modal"
+        className="add-to-pipeline-dataprep-modal"
       >
         <ModalHeader>
           <span>

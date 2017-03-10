@@ -19,10 +19,10 @@ import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import SchemaStore from 'components/SchemaEditor/SchemaStore';
 import SchemaEditor from 'components/SchemaEditor';
 import {getParsedSchema} from 'components/SchemaEditor/SchemaHelpers';
-import MyWranglerApi from 'api/wrangler';
-import WranglerStore from 'components/Wrangler/store';
+import MyDataPrepApi from 'api/dataprep';
+import DataPrepStore from 'components/DataPrep/store';
 import fileDownload from 'react-file-download';
-// import NamespaceStore from 'services/NamespaceStore';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class SchemaModal extends Component {
   constructor(props) {
@@ -44,10 +44,10 @@ export default class SchemaModal extends Component {
   }
 
   componentDidMount() {
-    let state = WranglerStore.getState().wrangler;
+    let state = DataPrepStore.getState().dataprep;
     let workspaceId = state.workspaceId;
 
-    let namespace = 'default';
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
     let requestObj = {
       namespace,
@@ -60,7 +60,7 @@ export default class SchemaModal extends Component {
       requestObj.directive = directives;
     }
 
-    MyWranglerApi.getSchema(requestObj)
+    MyDataPrepApi.getSchema(requestObj)
       .subscribe((res) => {
         let tempSchema = {
           name: 'avroSchema',
@@ -91,7 +91,7 @@ export default class SchemaModal extends Component {
   }
 
   download() {
-    let workspaceId = WranglerStore.getState().wrangler.workspaceId;
+    let workspaceId = DataPrepStore.getState().dataprep.workspaceId;
     let filename = `${workspaceId}-schema.json`;
 
     let data = JSON.stringify(this.state.schema, null, 4);
@@ -129,7 +129,7 @@ export default class SchemaModal extends Component {
         isOpen={true}
         toggle={this.props.toggle}
         zIndex="1070"
-        className="wrangler-schema-modal"
+        className="dataprep-schema-modal"
       >
         <ModalHeader>
           <span>
