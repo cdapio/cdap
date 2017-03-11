@@ -70,13 +70,13 @@ export default class StreamDetailedView extends Component {
     this.fetchEntityDetails(namespace, streamId);
     this.fetchEntityMetadata(namespace, streamId);
     if (
-      isNil(this.state.entityMetadata) ||
-      isEmpty(this.state.entityMetadata) ||
-      isNil(this.state.entity) ||
-      isEmpty(this.state.entity)
+      !isNil(this.state.entityMetadata) &&
+      !isEmpty(this.state.entityMetadata) &&
+      !isNil(this.state.entityDetail) &&
+      !isEmpty(this.state.entityDetail)
     ) {
       this.setState({
-        loading: true
+        loading: false
       });
     }
 
