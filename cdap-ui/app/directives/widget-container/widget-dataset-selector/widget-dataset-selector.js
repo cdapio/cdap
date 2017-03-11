@@ -20,10 +20,17 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       scope: {
         model: '=ngModel',
+        config: '=',
         datasetType: '@'
       },
       templateUrl: 'widget-container/widget-dataset-selector/widget-dataset-selector.html',
       controller: function ($scope, myDatasetApi, myStreamApi, $state, EventPipe) {
+
+        $scope.textPlaceholder = '';
+        if ($scope.config['widget-attributes'] && $scope.config['widget-attributes']['placeholder']) {
+          $scope.textPlaceholder = $scope.config['widget-attributes']['placeholder'];
+        }
+
         var resource;
         $scope.list = [];
 
