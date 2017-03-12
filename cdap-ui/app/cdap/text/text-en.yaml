@@ -145,16 +145,18 @@ features:
         displayAll: Displaying All Entities
         displaySome: Displaying
     emptyMessage:
-      default: No entities found in this namespace
+      default: No entities found in namespace "{namespace}"
       search: No results found for "{searchText}"
       filter: No entities found for your selection
       suggestion: "You can try to:"
       clearText:
         clear: Clear
-        search: " your search or"
-        filter: " your filters or"
+        search: " your search; or"
+        filter: " your filters; or"
         add: Add
-        entities: " new entities"
+        entities: " new entities; or"
+        browse: Browse
+        Market: " Cask Market"
     Cards:
       type: "Type: "
     Errors:
