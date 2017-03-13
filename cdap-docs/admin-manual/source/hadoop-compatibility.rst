@@ -42,6 +42,8 @@ installed.
 
 .. rubric:: Hadoop/HBase Environment
 
+.. _admin-manual-hadoop-compatibility-matrix-required:
+
 For a Distributed CDAP cluster, version |release|, you **must** install these Hadoop components
 (see notes following the tables):
 
@@ -93,6 +95,8 @@ For a Distributed CDAP cluster, version |release|, you **must** install these Ha
 +                +---------------------------------+---------------------------------------+
 |                | Amazon Hadoop (EMR)             | |emr-versions|                        |
 +----------------+---------------------------------+---------------------------------------+
+
+.. _admin-manual-hadoop-compatibility-matrix-optional:
 
 For a Distributed CDAP cluster, version |release|, you *can* (optionally) install these
 Hadoop components, as required:

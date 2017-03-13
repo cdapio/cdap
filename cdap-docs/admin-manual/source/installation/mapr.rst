@@ -43,10 +43,47 @@ packages installed, and can be configured using the MapR `configure.sh
 .. --------------------
 .. include:: ../_includes/installation/hadoop-configuration.txt
 
+
+Create the "cdap" User
+----------------------
+
+.. highlight:: console
+   
+To prepare your cluster for CDAP, manually create a ``cdap`` user on all nodes of the
+cluster. As "...MapR uses each node's native operating system configuration to authenticate
+users and groups for access to the cluster...[MapR documentation]", make sure that the UID
+for the ``cdap`` user is the same on each node of the cluster::
+
+  $ useradd ... cdap
+  $ id cdap
+  uid=503(cdap) gid=504(cdap) groups=504(cdap),2300(sysadmin)
+  
+*Note:* The values returned by ``id cdap`` may differ from these shown depending on your system.
+
+
 .. HDFS Permissions
 .. ----------------
 .. include:: /../target/_includes/mapr-hdfs-permissions.rst
-      
+
+Ensure the Hive DB directory is configured properly to allow CDAP to create Hive tables. 
+The Hive DB directory (default ``/user/hive/``) by default is only accessible to the ``mapr`` user.
+Change the permissions on this directory::
+
+  $ su mapr
+  $ hadoop fs -chmod 1777 /user/hive/
+
+When changing HDFS permissions on MapR, always use the ``mapr`` user as shown above.
+
+
+Install CDAP-compatible Spark
+-----------------------------
+If MapR is installed using MapR's installer, the default Spark is version 2.0.1. This
+version is not currently supported by CDAP. We :ref:`currently support
+<admin-manual-hadoop-compatibility-matrix-optional>` the latest 1.x version of Spark. In
+order to use Spark, it needs to be manually installed through packages, as described in
+the `MapR documentation
+<http://maprdocs.mapr.com/home/AdvancedInstallation/InstallSparkonYARN.html>`__.
+
 
 Downloading and Distributing Packages
 =====================================
@@ -58,9 +95,17 @@ Downloading and Distributing Packages
 +----------------+-------------------------------+
 | CDAP Series    | MapR Distributions            |
 +================+===============================+
-| CDAP 3.4.x     | MapR 4.1, MapR 5.0, MapR 5.1  |
+| CDAP 4.1.x     | MapR 4.1 through MapR 5.2     |
 +----------------+-------------------------------+
-| CDAP 3.3.x     | MapR 4.1, MapR 5.0, MapR 5.1  |
+| CDAP 4.0.x     | MapR 4.1 through MapR 5.2     |
++----------------+-------------------------------+
+| CDAP 3.6.x     | MapR 4.1 through MapR 5.2     |
++----------------+-------------------------------+
+| CDAP 3.5.x     | MapR 4.1 through MapR 5.2     |
++----------------+-------------------------------+
+| CDAP 3.4.x     | MapR 4.1 through MapR 5.1     |
++----------------+-------------------------------+
+| CDAP 3.3.x     | MapR 4.1 through MapR 5.1     |
 +----------------+-------------------------------+
 | CDAP 3.2.x     | MapR 4.1, MapR 5.0            |
 +----------------+-------------------------------+
