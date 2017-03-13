@@ -627,15 +627,28 @@ body.theme-cdap {
           .macro-error-container { width: 70%; }
         }
         &.pipeline-logs-section {
-          height: ~"calc(100vh - 147px)";
-          height: ~"-moz-calc(100vh - 147px)";
-          height: ~"-webkit-calc(100vh - 147px)";
+          height: ~"calc(100vh - 146px)";
+          height: ~"-moz-calc(100vh - 146px)";
+          height: ~"-webkit-calc(100vh - 146px)";
           box-shadow: none;
 
           .logs-table {
             height: ~"calc(100vh - 263px)";
             height: ~"-moz-calc(100vh - 263px)";
             height: ~"-webkit-calc(100vh - 263px)";
+
+            /* 46px: header */
+            tbody {
+              height: ~"calc(100vh - 263px - 46px)";
+              height: ~"-moz-calc(100vh - 263px - 46px)";
+              height: ~"-webkit-calc(100vh - 263px - 46px)";
+
+              .message-holder {
+                td {
+                  border-bottom: 0;
+                }
+              }
+            }
           }
           .fa.fa-expand { display: none; }
         }
