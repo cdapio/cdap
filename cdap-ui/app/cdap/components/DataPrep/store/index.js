@@ -28,7 +28,8 @@ const defaultInitialState = {
   data: [],
   headers: [],
   directives: [],
-  higherVersion: null
+  higherVersion: null,
+  loading: false
 };
 
 const dataprep = (state = defaultInitialState, action = defaultAction) => {
@@ -38,14 +39,16 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
     case DataPrepActions.setData:
       stateCopy = Object.assign({}, state, {
         data: action.payload.data,
-        headers: action.payload.headers
+        headers: action.payload.headers,
+        loading: false
       });
       break;
     case DataPrepActions.setDirectives:
       stateCopy = Object.assign({}, state, {
         data: action.payload.data,
         headers: action.payload.headers,
-        directives: action.payload.directives
+        directives: action.payload.directives,
+        loading: false
       });
       break;
     case DataPrepActions.setWorkspace:
@@ -54,7 +57,8 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         headers: action.payload.headers || [],
         directives: [],
         data: action.payload.data || [],
-        initialized: true
+        initialized: true,
+        loading: false
       });
       break;
     case DataPrepActions.setInitialized:
@@ -63,6 +67,16 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
     case DataPrepActions.setHigherVersion:
       stateCopy = Object.assign({}, state, {
         higherVersion: action.payload.higherVersion
+      });
+      break;
+    case DataPrepActions.enableLoading:
+      stateCopy = Object.assign({}, state, {
+        loading: true
+      });
+      break;
+    case DataPrepActions.disableLoading:
+      stateCopy = Object.assign({}, state, {
+        loading: false
       });
       break;
     case DataPrepActions.reset:

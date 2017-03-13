@@ -18,6 +18,7 @@ import React, { Component } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
 import shortid from 'shortid';
 import ee from 'event-emitter';
+import ColumnActionsDropdown from 'components/DataPrep/ColumnActionsDropdown';
 
 require('./DataPrepTable.scss');
 
@@ -94,7 +95,7 @@ export default class DataPrepTable extends Component {
     }
 
     return (
-      <div className="dataprep-table">
+      <div className="dataprep-table" id="dataprep-table-id">
         <table className="table table-bordered table-striped">
           <thead className="thead-inverse">
             {
@@ -104,7 +105,15 @@ export default class DataPrepTable extends Component {
                     id={`column-${head}`}
                     key={head}
                   >
-                    {head}
+                    <span className="header-text">
+                      {head}
+                    </span>
+
+                    <span className="float-xs-right directives-dropdown-button">
+                      <ColumnActionsDropdown
+                        column={head}
+                      />
+                    </span>
                   </th>
                 );
               })

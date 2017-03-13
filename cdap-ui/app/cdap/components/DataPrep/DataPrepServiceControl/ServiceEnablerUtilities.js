@@ -140,6 +140,7 @@ export default function enableDataPreparationService(shouldStopService) {
       MyDataPrepApi.ping({ namespace })
         .subscribe(() => {
           observer.onCompleted();
+          window.onbeforeunload = null;
           window.location.reload();
         }, () => {
           setTimeout(() => {
