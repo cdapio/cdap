@@ -65,6 +65,9 @@ $exploremodalwidth: 80vw;
 
       .btn-group {
         .btn.btn-secondary {
+          &:first-child {
+            padding-left: 0;
+          }
           padding: 7px;
           border: 0;
           background: transparent;
@@ -74,7 +77,7 @@ $exploremodalwidth: 80vw;
         width: 185px;
       }
       .query-status {
-        width: 105px;
+        width: 115px;
       }
       .query-status-value {
         margin-right: 10px;
