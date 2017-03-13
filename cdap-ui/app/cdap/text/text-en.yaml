@@ -261,6 +261,7 @@ features:
       numEventsTitle: Set Number of Events
       timeRangeTitle: Select Time Range
       to: To
+    doneLabel: Done
 
   JumpButton:
     buttonLabel: Jump

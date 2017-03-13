@@ -105,7 +105,7 @@ export default class TruncateAction extends Component {
     const tooltipID = `${this.props.entity.uniqueId}-truncate`;
     let truncateActionClassNames = 'fa fa-scissors';
     return (
-      <span>
+      <span className="btn btn-secondary btn-sm">
         <FastActionButton
           icon={classnames(truncateActionClassNames, {'text-success': this.state.success})}
           action={this.toggleModal}

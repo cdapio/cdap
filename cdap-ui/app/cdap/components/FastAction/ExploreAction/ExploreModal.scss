@@ -35,6 +35,12 @@ $exploremodalwidth: 80vw;
     .fa.fa-spinner {
       margin-right: 10px;
     }
+    .clearfix {
+      .text-danger {
+        word-wrap: break-word;
+        word-break: break-all;
+      }
+    }
     .queries-table-wrapper {
       margin-top: 10px;
       // FIXME: MAGIC NUMBER Alert. This is BS and we need to figure out how to nest tables.
@@ -43,22 +49,41 @@ $exploremodalwidth: 80vw;
     }
     .queries-table {
       background-color: #f6f6f6;
+      border: 1px solid #bbbbbb;
 
       th,
       td {
-        border-color: #dddddd;
+        border: 0;
+        vertical-align: middle;
+      }
+      tbody,
+      thead {
+        tr {
+          border-bottom: 1px solid #bbbbbb;
+        }
       }
 
       .btn-group {
         .btn.btn-secondary {
+          &:first-child {
+            padding-left: 0;
+          }
           padding: 7px;
+          border: 0;
+          background: transparent;
         }
       }
       .query-timestamp {
-        width: 165px;
+        width: 185px;
       }
       .query-status {
-        width: 80px;
+        width: 115px;
+      }
+      .query-status-value {
+        margin-right: 10px;
+        ~ .fa-spinner {
+          margin: 0;
+        }
       }
       .query-actions {
         width: 105px;

@@ -43,6 +43,18 @@ $focused-input-color: #66afe9;
 }
 
 .fast-actions-container {
+  h4 {
+    vertical-align: middle;
+    > span {
+      padding: 0;
+      vertical-align: top;
+      display: inline-block;
+      background: transparent;
+      &:hover {
+        background: transparent;
+      }
+    }
+  }
   .fa-wrench {
     &.saved-success {
       color: $success-message-bg;
