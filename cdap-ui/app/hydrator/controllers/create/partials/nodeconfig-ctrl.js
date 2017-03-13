@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory) {
+  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc) {
     'ngInject';
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -35,6 +35,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.myPipelineApi = myPipelineApi;
     this.previewStore = HydratorPlusPlusPreviewStore;
     this.HydratorPlusPlusOrderingFactory = HydratorPlusPlusOrderingFactory;
+    this.avsc = avsc;
     this.setDefaults(rPlugin);
     this.tabs = [
       {
@@ -122,8 +123,18 @@ class HydratorPlusPlusNodeConfigCtrl {
 
       type: config.appType || null,
       watchers: [],
-      outputSchemaUpdate: 0
+      outputSchemaUpdate: 0,
+      schemaAdvance: false
     };
+
+    if (this.state.isSink && this.state.node.outputSchema && this.state.node.outputSchema.length > 0) {
+      try {
+        this.avsc.parse(this.state.node.outputSchema);
+      } catch (e) {
+        this.state.schemaAdvance = true;
+      }
+    }
+
     this.showPropagateConfirm = false;
   }
   propagateSchemaDownStream() {
@@ -441,6 +452,19 @@ class HydratorPlusPlusNodeConfigCtrl {
         }
       }
     });
+  }
+
+  // MACRO ENABLED SCHEMA
+  toggleAdvance() {
+    if (this.state.node.outputSchema.length > 0) {
+      try {
+        this.avsc.parse(this.state.node.outputSchema);
+      } catch (e) {
+        this.state.node.outputSchema = '';
+      }
+    }
+
+    this.state.schemaAdvance = !this.state.schemaAdvance;
   }
 
 }
