@@ -225,6 +225,10 @@ export default class ExploreModal extends Component {
       });
     }
   }
+  onModalToggle() {
+    let runningQueries = this.state.queries.filter(query => query.status === 'RUNNING');
+    this.props.onClose(runningQueries.length);
+  }
 
   render() {
     const renderQueryRow = (query) => {
@@ -336,14 +340,14 @@ export default class ExploreModal extends Component {
     return (
       <Modal
         className="explore-modal confirmation-modal"
-        toggle={this.props.onClose}
+        toggle={this.onModalToggle.bind(this)}
         isOpen={this.props.isOpen}
         backdrop='static'
       >
         <ModalHeader>
           Explore Dataset
           <div
-           onClick={this.props.onClose}
+           onClick={this.onModalToggle.bind(this)}
            className="float-xs-right"
           >
             <span className="fa fa-times" />

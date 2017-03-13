@@ -34,15 +34,22 @@ export default class ExploreAction extends Component {
       showModal: false,
       tooltipOpen: false,
       entity: this.props.entity || {},
-      runningQueries: null
+      runningQueries: null,
+      showRunningQueriesDoneLabel: false
     };
     this.subscription = null;
     this.toggleTooltip = this.toggleTooltip.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
   }
-  toggleModal() {
+  toggleModal(runningQueries) {
+    let showRunningQueriesDoneLabel = false;
+    if (runningQueries && this.state.showModal) {
+      showRunningQueriesDoneLabel = true;
+    }
     this.setState({
-      showModal: !this.state.showModal
+      showModal: !this.state.showModal,
+      showRunningQueriesDoneLabel,
+      runningQueries: !showRunningQueriesDoneLabel ? null : runningQueries,
     });
   }
   toggleTooltip() {
@@ -109,15 +116,21 @@ export default class ExploreAction extends Component {
   }
   render() {
     let tooltipID = `${this.props.entity.uniqueId}-explore`;
+    let showRunningQueriesNotification = this.state.showRunningQueriesDoneLabel && this.state.runningQueries;
     return (
-      <span className={classnames("btn btn-secondary btn-sm", {'fast-action-with-popover': this.state.runningQueries})}>
+      <span className={classnames("btn btn-secondary btn-sm", {'fast-action-with-popover': showRunningQueriesNotification})}>
         <FastActionButton
           icon="fa fa-eye"
           action={this.toggleModal}
           disabled={this.state.disabled}
           id={tooltipID}
         />
-        <span className="fast-action-popover-container">{this.state.runningQueries}</span>
+        {
+          showRunningQueriesNotification ?
+            <span className="fast-action-popover-container">{this.state.runningQueries}</span>
+          :
+            null
+        }
         <Tooltip
           placement="top"
           className="fast-action-tooltip"
