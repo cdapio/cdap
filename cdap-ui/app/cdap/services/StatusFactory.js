@@ -50,7 +50,7 @@ const poll = () => {
               2. /v3/system/services/status returns a non-error response
               3. All the system services have status of 'OK'
           */
-          if (namespaceRes.status < 500 && serviceStatusRes.status < 500 && serviceStatuses.body.indexOf('NOTOK') === -1) {
+          if (namespaceRes.status < 400 && serviceStatusRes.status < 400 && serviceStatuses.body.indexOf('NOTOK') === -1) {
             let loadingState = LoadingIndicatorStore.getState().loading;
             if (loadingState.status === BACKENDSTATUS.NODESERVERDOWN) {
               window.location.reload();
