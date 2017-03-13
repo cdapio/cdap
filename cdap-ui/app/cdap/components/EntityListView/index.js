@@ -20,7 +20,6 @@ import {search, updateQueryString} from 'components/EntityListView/SearchStore/A
 import HomeListView from 'components/EntityListView/ListView';
 import MyUserStoreApi from 'api/userstore';
 import isNil from 'lodash/isNil';
-import classNames from 'classNames';
 import EntityListHeader from 'components/EntityListView/EntityListHeader';
 import EntityListInfo from 'components/EntityListView/EntityListInfo';
 import NamespaceStore from 'services/NamespaceStore';
@@ -324,7 +323,7 @@ export default class EntityListView extends Component {
                 <HomeListView
                   id="home-list-view-container"
                   loading={this.state.loading}
-                  className={classNames("home-list-view-container", {"show-overview-main-container": this.state.overview})}
+                  className={classnames("home-list-view-container", {"show-overview-main-container": this.state.overview})}
                   list={this.state.entities}
                   pageSize={this.state.limit}
                   showJustAddedSection={searchText === DEFAULT_SEARCH_QUERY}
