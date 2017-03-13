@@ -53,9 +53,12 @@ export default class EntityListInfo extends Component {
           searchLoading ?
             null
           :
-            <span className="total-entities">
-              {this.props.numberOfEntities} {plus} {entitiesLabel}
-            </span>
+            /* have to wrap this in an ul to be consistent with ReactPaginate html */
+            <ul className="total-entities">
+              <span>
+                {this.props.numberOfEntities} {plus} {entitiesLabel}
+              </span>
+            </ul>
         }
         {
           !searchLoading && this.props.numberOfPages > 1 ?

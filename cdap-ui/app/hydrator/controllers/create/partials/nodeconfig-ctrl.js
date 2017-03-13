@@ -438,22 +438,6 @@ class HydratorPlusPlusNodeConfigCtrl {
     };
   }
 
-
-  // Wrangler
-  openWranglerModal() {
-    this.$uibModal.open({
-      controller: 'WranglerModalController',
-      controllerAs: 'Wrangler',
-      windowClass: 'wrangler-modal',
-      templateUrl: '/assets/features/hydrator/templates/create/Wrangler/wrangler-modal.html',
-      resolve: {
-        rPlugin: () => {
-          return this.state.node;
-        }
-      }
-    });
-  }
-
   // MACRO ENABLED SCHEMA
   toggleAdvance() {
     if (this.state.node.outputSchema.length > 0) {
@@ -466,7 +450,6 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     this.state.schemaAdvance = !this.state.schemaAdvance;
   }
-
 }
 
 angular.module(PKG.name + '.feature.hydrator')
