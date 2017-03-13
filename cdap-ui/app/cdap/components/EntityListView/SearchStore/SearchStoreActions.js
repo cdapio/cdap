@@ -14,24 +14,18 @@
  * the License.
  */
 
-.just-added-container {
-  width: 100%;
-  margin-bottom: 15px;
-
-  .entity-cards { outline: 3px solid #2ecc71; }
-  .subtitle.just-added {
-    color: #999999;
-    border-bottom: 1px solid #dddddd;
-    height: 11px;
-    clear: both;
-    margin-right: 20px;
-    margin-left: 5px;
-    margin-bottom: 15px;
-
-    span {
-      padding-right: 15px;
-      background: white;
-    }
-  }
-  .just-added-entities-list { width: 100%; }
-}
+export default {
+  SETACTIVEFILTERS: 'SET_ACTIVE_FILTER',
+  SETACTIVESORT: 'SET_SORT',
+  SETQUERY: 'SET_QUERY',
+  SETRESULTS: 'SET_REULTS',
+  LOADING: 'LOADING',
+  SETPAGESIZE: 'SET_PAGE_SIZE',
+  SETCURRENTPAGE: 'SET_CURRENT_PAGE',
+  SETERROR: 'SET_ERROR',
+  RESETERROR: 'RESET_ERROR',
+  SETOVERVIEWENTITY: 'SET_OVERVIEW_ENTITY',
+  RESETOVERVIEWENTITY: 'RESET_OVERVIEW_ENTITY',
+  SETSORTFILTERSEARCHCURRENTPAGE: 'SET_SORT_FITLER_SEARCH_CURRENTPAGE',
+  RESETSTORE: 'RESET_STORE'
+};
