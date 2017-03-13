@@ -29,8 +29,8 @@ To address these issues, the CDAP log framework was designed:
 
 - to make logs persistent and available for later use and analysis; and
 
-- to use a pluggable system that can be adapted for individual requirements at both the
-  application and cluster levels.
+- to use a system that can be adapted for individual requirements at both the application
+  and cluster levels.
 
 
 Logging Framework
@@ -46,14 +46,30 @@ This diagram shows the steps CDAP follows with its logging framework:
 
   #. CDAP logs are published to Kafka topics.
 
-  #. The Kafka topics are consumed by the Log Saver Service. Each instance of the service
-     has one or more logging pipelines. Each pipeline buffers log messages in-memory and
-     sorts them based on their timestamp. Custom pipelines can be configured by adding an
-     XML file in a prescribed location.
+  #. The Log Saver Service (*Log.saver*) is configured to read log messages for the ``logs.user-v2``
+     Kafka topic. The number of log saver instances can be scaled to process the Kafka
+     partitions in parallel, if needed. Log.saver reads the messages from Kafka, buffers
+     and sorts them in-memory, before persisting them to HDFS. These messages are written
+     to files corresponding to the programs the log messages belong to.
+
+     *Note:* These files are configured to rotate based on time and size; they can be
+     changed using the properties ``log.pipeline.cdap.file.max.size.bytes`` and
+     ``log.pipeline.cdap.file.max.lifetime.ms`` in the :ref:`cdap-site.xml
+     <appendix-cdap-default-logging>` file as described in 
+     :ref:`logging-monitoring-logging-pipeline-configuration`.
+
+  #. Custom pipelines can be configured by adding an XML file in a prescribed location.
+     Each pipeline buffers log messages in-memory and sorts them based on their timestamp. 
    
   #. Metrics are created based on the results of the pipelines, and passed to the Metrics Service.
    
-  #. Logs are written out to persistent storage in HDFS by the logging pipelines.
+  #. Logs are written out to persistent storage in HDFS by the logging pipelines. For
+     security, the files are written with permissions set such that they are accessible only
+     by the ``cdap`` user.
+
+  #. Log.saver also emits metrics for each *info, debug,* or *error* message received. This
+     helps in monitoring the amount of logs emitted by applications, application's programs,
+     system services, etc. by querying the :ref:`CDAP metrics system <http-restful-api-metrics>`.
 
 .. figure:: /_images/logging-framework.png
     :figwidth: 100%
@@ -61,28 +77,37 @@ This diagram shows the steps CDAP follows with its logging framework:
     :align: center
 
     **CDAP Logging Framework:** From YARN containers, through Kafka and the Log Saver Service, to HDFS
-    
-The actual logging uses standard `SLF4J (Simple Logging Facade for Java)
+
+Logging uses standard `SLF4J (Simple Logging Facade for Java)
 <http://www.slf4j.org/manual.html>`__ APIs and `Logback
 <https://logback.qos.ch/manual>`__, and consists of *logging pipelines* with *appenders*:
 
   - A **logging pipeline** is a process that consumes log events from Kafka, invokes
-    an *appender* defined in its configuration, buffering, sorting, and then persisting the log messages.
+    *logback appenders* defined in its configuration, buffering, sorting, and then
+    persisting the log messages.
 
-  - An **appender** is a Java class, responsible for writing the log events to persistent storage and
-    maintaining metadata about that storage.
+  - A **logback appender** (or *appender*) is a Java class, responsible for writing the
+    log events to persistent storage and maintaining metadata about that storage.
 
-The *Logging Framework* is configured using Logback's ``logback.xml`` files:
+Logging is configured using Logback's ``logback.xml`` files:
 
 - The ``logback-container.xml`` controls the program containers, both locally and to Kafka.
+- The ``logback.xml`` controls the :ref:`CDAP System Services logs <logging-monitoring-system-services-logs>`.
+- Both of these files are, in Distributed CDAP, located in ``/etc/cdap/conf``.
+- In the case of :ref:`Standalone CDAP <modes-data-application-platform>`, as containers
+  are replaced with Java threads, only a single file (``logback.xml``, located in
+  ``<cdap-sdk-home>/conf``) is used, replacing the ``logback.xml`` and
+  ``logback-container.xml`` of Distributed CDAP.
 - The ``cdap-site.xml`` controls the CDAP Log Pipeline for CDAP System Services, and the
   reading, buffering, and memory allocated.
-- A ``custom-pipeline.xml``, if present, triggers the creation of a custom pipeline, with
+- Custom XML files, if present in a specified directory, trigger the creation of custom pipelines, with
   a pipeline created for each custom file.
 
 
 Log Locations
 =============
+
+.. _logging-monitoring-system-services-logs:
 
 CDAP System Services Logs
 -------------------------
@@ -170,7 +195,11 @@ Writing Logs to Kafka
 These properties control the writing of logs to Kafka:
 
 - ``log.publish.num.partitions`` (default 10)
-- ``log.publish.partition.key``
+- ``log.publish.partition.key`` (default ``program``) Publish logs from an application or
+  a program to the same partition. Valid values are 'application' or 'program'. If set to
+  'application', logs from all the programs of an application go to the same partition. If
+  set to 'program', logs from the same program go to the same partition. Changes to this
+  property requires restarting of all CDAP applications.
 
 Log Saver Service
 .................
@@ -184,6 +213,8 @@ These properties control the Log Saver Service:
 
 Log saver instances should be from a minimum of one to a maximum of ten. The maximum is
 set by the number of Kafka partitions (``log.publish.num.partitions``), in the default instance 10.
+
+.. _logging-monitoring-logging-pipeline-configuration:
 
 Logging Pipeline Configuration
 ..............................
