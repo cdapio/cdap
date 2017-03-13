@@ -74,7 +74,13 @@ $exploremodalwidth: 80vw;
         width: 185px;
       }
       .query-status {
-        width: 80px;
+        width: 105px;
+      }
+      .query-status-value {
+        margin-right: 10px;
+        ~ .fa-spinner {
+          margin: 0;
+        }
       }
       .query-actions {
         width: 105px;

@@ -232,17 +232,36 @@ export default class ExploreModal extends Component {
         <tr key={shortid.generate()}>
           <td> {humanReadableDate(query.timestamp, true)} </td>
           <td> {query.statement} </td>
-          <td> {query.status} </td>
+          <td>
+            {
+              query.status === 'RUNNING' ?
+                <span>
+                  <span className="query-status-value">{query.status}</span>
+                  <i className="fa fa-spinner fa-spin"></i>
+                </span>
+              :
+                <span>{query.status}</span>
+            }
+          </td>
           <td>
             <div className="btn-group">
-              <a
-                href={this.getDownloadUrl(query)}
-                onClick={this.updateQueryState.bind(this, query)}
-                className="btn btn-secondary"
-                disabled={!query.is_active || query.status !== 'FINISHED' ? 'disabled' : null}
-              >
-                <i className="fa fa-download"></i>
-              </a>
+              {
+                !query.is_active || query.status !== 'FINISHED' ?
+                  <button
+                    className="btn btn-secondary"
+                    disabled="disabled"
+                    >
+                    <i className="fa fa-download"></i>
+                  </button>
+                :
+                  <a
+                    href={this.getDownloadUrl(query)}
+                    onClick={this.updateQueryState.bind(this, query)}
+                    className="btn btn-secondary"
+                  >
+                    <i className="fa fa-download"></i>
+                  </a>
+              }
               <button
                 className="btn btn-secondary"
                 onClick={this.showPreview.bind(this, query)}
