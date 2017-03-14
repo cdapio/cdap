@@ -206,6 +206,9 @@ $jump-button-container-size: 80px;
       padding: 0;
       vertical-align: top;
       span { margin: 0 15px; }
+      &[disabled] {
+        color: #818a91;
+      }
     }
 
     h4 {
