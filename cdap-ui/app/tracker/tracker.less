@@ -20,7 +20,6 @@
 
 @hydrator-blue: #098cf9;
 @cdap-orange: #ff6600;
-@tracker-banner-font-color: #1f293a;
 @tracker-grey: #999999;
 @border-color: #cdcdcd;
 @search-font-color: #66666;
@@ -28,7 +27,6 @@
 @active-font: #363945;
 @filter-sidebar-background-color: #eeeeee;
 @tag-bg: #b9c1d9;
-@preferred-tag-bg: #8a8c94;
 @well-bg: #d3d3d3;
 @search-top-bar-container-size: 60px;
 @navbar-size: 50px;
@@ -538,18 +536,21 @@ body.state-tracker {
     padding: 5px 10px;
     &:focus { outline: 0; }
     &.preferred {
-      background-color: @preferred-tag-bg;
-      span.fa-times { -webkit-text-stroke: 1px @preferred-tag-bg; }
+      border: 2px solid #5D6789;
     }
     &.user {
       background-color: @tag-bg;
-      span.fa-times { -webkit-text-stroke: 1px @tag-bg; }
+      color: @title-font-color;
+      span.fa-times {
+        -webkit-text-stroke: 1px @tag-bg;
+        color: @title-font-color;
+      }
     }
     span.fa-times {
       color: @well-bg;
       font-size: 11px;
       position: relative;
-      bottom: -2px;
+      bottom: -1px;
     }
   }
 
@@ -723,7 +724,7 @@ body.state-tracker-detail-entity {
       div.tag {
         border-radius: 4px;
         display: inline-block;
-        line-height: 1.3;
+        line-height: 1.1;
         margin-right: 5px;
         margin-bottom: 5px;
         max-width: 48%;
@@ -1427,7 +1428,7 @@ body.state-tracker-tags {
             }
           }
           a.tag {
-            color: white;
+            color: black;
             display: inline-block;
             line-height: 1.1;
           }
