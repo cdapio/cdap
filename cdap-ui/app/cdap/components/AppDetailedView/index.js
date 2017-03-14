@@ -53,18 +53,24 @@ export default class AppDetailedView extends Component {
       },
       loading: true,
       entityMetadata: objectQuery(this.props, 'location', 'state', 'entityMetadata') || {},
-      isInvalid: false
+      isInvalid: false,
+      previousPathName: null
     };
   }
   componentWillMount() {
+    let selectedNamespace = NamespaceStore.getState().selectedNamespace;
     let {namespace, appId} = this.props.params;
+    let previousPathName = objectQuery(this.props, 'location', 'state', 'previousPathname') ||
+      `/ns/${selectedNamespace}?overviewid=${appId}&overviewtype=application`;
     if (!namespace) {
       namespace = NamespaceStore.getState().selectedNamespace;
     }
     ExploreTablesStore.dispatch(
       fetchTables(namespace)
     );
-
+    this.setState({
+      previousPathName
+    });
     if (this.state.entityDetail.programs.length === 0) {
       MyAppApi
         .get({
@@ -198,10 +204,8 @@ export default class AppDetailedView extends Component {
         </div>
       );
     }
-    let selectedNamespace = NamespaceStore.getState().selectedNamespace;
-    let previousPathname = objectQuery(this.props, 'location', 'state', 'previousPathname')  || `/ns/${selectedNamespace}`;
     let previousPaths = [{
-      pathname: previousPathname,
+      pathname: this.state.previousPathName,
       label: T.translate('commons.back')
     }];
     return (
