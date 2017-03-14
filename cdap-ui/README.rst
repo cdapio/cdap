@@ -34,10 +34,10 @@ Unix/Linux Flavors
 
 ::
 
-  $ cd ${CDAP_HOME}
+  $ cd ${CDAP_HOME}                        # (usually /opt/cdap)
   $ /etc/init.d/cdap-ui stop
   $ zip -m -r ui-backup.zip ui
-  $ unzip /path/to/download/cdap-ui-preview-pack.zip
+  $ unzip /path/to/download/cdap-ui-pack-4.1.0_p1.zip
   $ /etc/init.d/cdap-ui start
 
 
@@ -45,7 +45,8 @@ Unix/Linux Flavors
 Windows
 -------
 
-**Note:** Currently, installation of the UI pack on Windows requires a zip utility - we recommend 7zip or equivalent.
+**Note:** Currently, installation of the UI pack on Windows requires a zip utility - we recommend
+`7zip <http://www.7-zip.org/>`__ or equivalent.
 
 1. Using the command prompt, stop the CDAP SDK
 
