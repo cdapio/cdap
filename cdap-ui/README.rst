@@ -64,7 +64,7 @@ Windows
 
 ::
 
-  $ cd $(CDAP_HOME}
+  $ cd ${CDAP_HOME}
   $ bin\cdap sdk start
 
 
@@ -83,38 +83,38 @@ Release Notes
 
 New Features
 ------------
-* HYDRATOR-163 - Add Placeholders to input boxes in node configuration
-* WRANGLER-77 - Added a dropdown on each column to provide click-through experience for directives in Data Preparation
-* WRANGLER-49 - Added click-through experience for split column directive in Data Preparation
-* WRANGLER-54 - Added click-through experience for filling null or empty cells in Data Preparation
+* `HYDRATOR-163 <http://issues.cask.co/browse/HYDRATOR-163>`__ - Add Placeholders to input boxes in node configuration
+* `WRANGLER-77 <http://issues.cask.co/browse/WRANGLER-77>`__ - Added a dropdown on each column to provide click-through experience for directives in Data Preparation
+* `WRANGLER-49 <http://issues.cask.co/browse/WRANGLER-49>`__ - Added click-through experience for split column directive in Data Preparation
+* `WRANGLER-54 <http://issues.cask.co/browse/WRANGLER-54>`__ - Added click-through experience for filling null or empty cells in Data Preparation
 
 Improvements
 ------------
-* CDAP-8501 - Disabled preview button on clusters since preview is not supported in distributed env
-* CDAP-8861 - Removed CDAP Version Range in market entities display
-* CDAP-8430 - Improved "No Entities Found" message in the Overview to show Call(s) to Action
-* CDAP-8403 - Added labels to CDAP Studio actions
-* CDAP-8900 - Added the ability to update to a newer version of data preparation libraries if available
-* CDAP-7352 - Made logviewer header row sticky
-* CDAP-4798 - Improved user experience in explore page
-* CDAP-8964 - Made Output Schema for sinks macro enabled
-* HYDRATOR-1364 - Removed most of __ui__ field
-* CDAP-8494 - Fixed browser back button after switching to classic UI
-* CDAP-8828 - Removed dialog to select pipeline type upon pipeline creation
-* CDAP-8396 - Added call to action for namespace creation
+* `CDAP-8501 <http://issues.cask.co/browse/CDAP-8501>`__ - Disabled preview button on clusters since preview is not supported in distributed env
+* `CDAP-8861 <http://issues.cask.co/browse/CDAP-8861>`__ - Removed CDAP Version Range in market entities display
+* `CDAP-8430 <http://issues.cask.co/browse/CDAP-8430>`__ - Improved "No Entities Found" message in the Overview to show Call(s) to Action
+* `CDAP-8403 <http://issues.cask.co/browse/CDAP-8403>`__ - Added labels to CDAP Studio actions
+* `CDAP-8900 <http://issues.cask.co/browse/CDAP-8900>`__ - Added the ability to update to a newer version of data preparation libraries if available
+* `CDAP-7352 <http://issues.cask.co/browse/CDAP-7352>`__ - Made logviewer header row sticky
+* `CDAP-4798 <http://issues.cask.co/browse/CDAP-4798>`__ - Improved user experience in explore page
+* `CDAP-8964 <http://issues.cask.co/browse/CDAP-8964>`__ - Made Output Schema for sinks macro enabled
+* `HYDRATOR-1364 <http://issues.cask.co/browse/HYDRATOR-1364>`__ - Removed most of __ui__ field
+* `CDAP-8494 <http://issues.cask.co/browse/CDAP-8494>`__ - Fixed browser back button after switching to classic UI
+* `CDAP-8828 <http://issues.cask.co/browse/CDAP-8828>`__ - Removed dialog to select pipeline type upon pipeline creation
+* `CDAP-8396 <http://issues.cask.co/browse/CDAP-8396>`__ - Added call to action for namespace creation
 
 Bugs
 ----
-* CDAP-8554 - Fixed styling issues while showing Call(s) to actions in Application create wizard
-* CDAP-8412 - Fixed overflow in namespace creation confirmation modal
-* CDAP-8433 - Added units for memory for YARN stats on management page
-* CDAP-8950 - Fixed link from stream overview to stream deatils
-* CDAP-8933 - Added namespace name to the No entities found message
-* CDAP-8461 - Clicking back from the Detail page view now opens the overview page with the overview pane opened
-* CDAP-8638 - Opened each log in a new tab
-* CDAP-8668 - Fixed UI to show ERROR, WARN and INFO logs by default
-* CDAP-8965 - Removed Wrangle button from Wrangler Transform. Please use the Data Preparation UI for wrangling.
-* HYDRATOR-1419 - Fixed browser back button behavior after switching namespace.
+* `CDAP-8554 <http://issues.cask.co/browse/CDAP-8554>`__ - Fixed styling issues while showing Call(s) to actions in Application create wizard
+* `CDAP-8412 <http://issues.cask.co/browse/CDAP-8412>`__ - Fixed overflow in namespace creation confirmation modal
+* `CDAP-8433 <http://issues.cask.co/browse/CDAP-8433>`__ - Added units for memory for YARN stats on management page
+* `CDAP-8950 <http://issues.cask.co/browse/CDAP-8950>`__ - Fixed link from stream overview to stream deatils
+* `CDAP-8933 <http://issues.cask.co/browse/CDAP-8933>`__ - Added namespace name to the No entities found message
+* `CDAP-8461 <http://issues.cask.co/browse/CDAP-8461>`__ - Clicking back from the Detail page view now opens the overview page with the overview pane opened
+* `CDAP-8638 <http://issues.cask.co/browse/CDAP-8638>`__ - Opened each log in a new tab
+* `CDAP-8668 <http://issues.cask.co/browse/CDAP-8668>`__ - Fixed UI to show ERROR, WARN and INFO logs by default
+* `CDAP-8965 <http://issues.cask.co/browse/CDAP-8965>`__ - Removed Wrangle button from Wrangler Transform. Please use the Data Preparation UI for wrangling.
+* `HYDRATOR-1419 <http://issues.cask.co/browse/HYDRATOR-1419>`__ - Fixed browser back button behavior after switching namespace.
 
 
 ======================
