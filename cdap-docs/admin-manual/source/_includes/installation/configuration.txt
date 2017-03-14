@@ -68,16 +68,35 @@ for CDAP to run successfully.
 
    i. Check that the ``zookeeper.quorum`` property in ``conf/cdap-site.xml`` is set to the
       **ZooKeeper quorum string**, a comma-delimited list of fully-qualified domain names for 
-      the ZooKeeper quorum::
+      the ZooKeeper quorum:
 
-         <property>
-           <name>zookeeper.quorum</name>
-           <value>FQDN1:2181,FQDN2:2181/${root.namespace}</value>
-           <description>
-             ZooKeeper quorum string; specifies the ZooKeeper host:port; 
-             substitute the quorum for the components shown here (FQDN1:2181,FQDN2:2181)
-           </description>
-         </property>
+      .. ifconfig:: "|distribution|" != "mapr"
+  
+        ::
+        
+           <property>
+             <name>zookeeper.quorum</name>
+             <value>FQDN1:2181,FQDN2:2181/${root.namespace}</value>
+             <description>
+               ZooKeeper quorum string; specifies the ZooKeeper host:port; 
+               substitute the quorum for the components shown here (FQDN1:2181,FQDN2:2181)
+             </description>
+           </property>
+
+      .. ifconfig:: "|distribution|" == "mapr"
+  
+        ::
+        
+           <property>
+             <name>zookeeper.quorum</name>
+             <value>FQDN1:5181,FQDN2:5181/${root.namespace}</value>
+             <description>
+               ZooKeeper quorum string; specifies the ZooKeeper host:port; 
+               substitute the quorum for the components shown here (FQDN1:5181,FQDN2:5181)
+             </description>
+           </property>
+  
+        *Note:* The MapR default ZooKeeper port of 5181 is different than the ZooKeeper default of 2181.
   
    #. Check that the ``router.server.address`` property in ``conf/cdap-site.xml`` is set to the
       **hostname of the CDAP Router**. The CDAP UI uses this property to connect to the Router::
@@ -95,7 +114,7 @@ for CDAP to run successfully.
       
         .. parsed-literal::
         
-          |$| su hdfs
+          |$| |su_hdfs|
           |$| hadoop fs -mkdir -p /user/|hdfs-user| && hadoop fs -chown |hdfs-user|:|hdfs-user| /user/|hdfs-user|
 
    #. If you want to use **an HDFS directory** with a name other than ``/cdap``:
@@ -130,7 +149,7 @@ for CDAP to run successfully.
        
            .. parsed-literal::
          
-             |$| su hdfs
+             |$| |su_hdfs|
              |$| hadoop fs -mkdir -p /user/|my_username| && hadoop fs -chown |my_username|:|my_username| /user/|my_username|
       
       #. If you use an HDFS user other than |hdfs-user|, you must use either a secure
@@ -328,7 +347,7 @@ A. In order to configure **CDAP for Kerberos authentication:**
       that by running the following command as the ``hdfs`` user (change the ownership in the 
       command from ``cdap`` to whatever is the ``<cdap-principal>``)::
    
-        $ su hdfs && hadoop fs -mkdir -p /cdap && hadoop fs -chown cdap /cdap
+        $ |su_hdfs| && hadoop fs -mkdir -p /cdap && hadoop fs -chown cdap /cdap
      
    #. When running on a secure HBase cluster, as the ``hbase`` user, issue the command::
 
