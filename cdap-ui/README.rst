@@ -68,6 +68,16 @@ Windows
   $ bin\cdap sdk start
 
 
+Steps to update Data Preparation capability
+===========================================
+
+1. Upon installing the UI Pack, go to Cask Market
+2. From the **Solutions** category, follow the steps for the **Data Preparation** solution
+3. Go to Data Preparation by clicking on the CDAP menu and then choosing **Data Preparation**
+4. If newer version of the Data Preparation libraries have been installed, the UI will show an **Update** button.
+5. Click the **Update** button to enable the newer version of Data Preparation.
+
+
 Release Notes
 =============
 
