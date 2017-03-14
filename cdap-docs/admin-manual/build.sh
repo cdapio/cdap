@@ -78,7 +78,6 @@ function download_includes() {
     type="ha-installation"
     rewrite_references_sed "${source_rst}/${type}.txt" "${target_includes_dir}/${dist}-${type}.rst" "${pattern}" "${dist}"
   done
-    
   echo
 }
 
