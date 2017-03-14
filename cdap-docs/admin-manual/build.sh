@@ -91,6 +91,10 @@ function download_includes() {
 EOF
 )
   rewrite_references_in_place_sed "${target_includes_dir}/mapr-configuration.rst" "${source_pattern}" "${target_pattern}"
+
+  source_pattern="FQDN1:2181,FQDN2:2181"
+  target_pattern="FQDN1:5181,FQDN2:5181"
+  rewrite_references_in_place_sed "${target_includes_dir}/mapr-configuration.rst" "${source_pattern}" "${target_pattern}"
   
   echo
 }
