@@ -57,7 +57,7 @@ export default class SendEventAction extends Component {
   render() {
     let tooltipID = `${this.props.entity.uniqueId}-sendevents`;
     return (
-      <span>
+      <span className="btn btn-secondary btn-sm">
         <FastActionButton
           icon="fa fa-upload"
           action={this.toggleModal}

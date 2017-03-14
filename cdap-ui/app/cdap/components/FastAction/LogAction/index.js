@@ -99,7 +99,7 @@ export default class LogAction extends Component {
     );
 
     return (
-      <span>
+      <span className="btn btn-secondary btn-sm">
         <span id={tooltipID}>
           {this.state.runId ? renderLog : renderDisabled}
         </span>

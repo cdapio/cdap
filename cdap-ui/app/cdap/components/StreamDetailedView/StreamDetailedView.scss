@@ -32,6 +32,19 @@
     .overview-meta-section {
       .fast-actions-container {
         align-items: flex-start;
+
+        h4 {
+          vertical-align: top;
+          > span {
+            padding: 0;
+            vertical-align: top;
+            display: inline-block;
+            background: transparent;
+            &:hover {
+              background: transparent;
+            }
+          }
+        }
       }
     }
     .overview-tab {

@@ -102,6 +102,20 @@ $border-color: #bbbbbb;
             .fast-actions-container {
               min-width: 215px;
               max-width: 400px;
+
+              h4 {
+                vertical-align: top;
+                > span {
+                  border: 0;
+                  padding: 0;
+                  vertical-align: top;
+                  display: inline-block;
+                  background: transparent;
+                  &:hover {
+                    background: transparent;
+                  }
+                }
+              }
             }
           }
 

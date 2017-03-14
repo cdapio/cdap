@@ -80,7 +80,7 @@ export default class SetPreferenceAction extends Component {
       tooltipID = `${this.props.entity.uniqueId}-setpreferences`;
     }
     return (
-      <span>
+      <span className="btn btn-secondary btn-sm">
         <FastActionButton
           icon={wrenchClasses}
           action={this.toggleModal}
