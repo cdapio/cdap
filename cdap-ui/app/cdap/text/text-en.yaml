@@ -212,6 +212,7 @@ features:
     deleteLabel: Delete
     deleteFailed: Failed to delete {entityId}.
     logLabel: Logs
+    logNotAvailable: No logs available
     truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
     truncateLabel: Truncate
     truncateSuccess: Truncated Successfully

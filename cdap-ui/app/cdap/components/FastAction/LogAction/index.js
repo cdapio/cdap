@@ -112,7 +112,7 @@ export default class LogAction extends Component {
           toggle={this.toggleTooltip}
           delay={0}
         >
-          {T.translate('features.FastAction.logLabel')}
+          {this.state.runId ? T.translate('features.FastAction.logLabel') : T.translate('features.FastAction.logNotAvailable')}
         </Tooltip>
       </span>
     );
