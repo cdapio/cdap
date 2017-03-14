@@ -415,7 +415,7 @@ features:
       examples: Applications
       pipelines: Pipelines
       plugins: Plugins
-      useCases: Use Cases
+      useCases: Solutions
       edwOffload: EDW Offload
       emptyTab: No Entities found
     action-types:
