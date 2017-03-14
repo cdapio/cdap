@@ -81,7 +81,40 @@ Steps to update Data Preparation capability
 Release Notes
 =============
 
-<Placeholder>
+New Features
+------------
+* HYDRATOR-163 - Add Placeholders to input boxes in node configuration
+* WRANGLER-77 - Added a dropdown on each column to provide click-through experience for directives in Data Preparation
+* WRANGLER-49 - Added click-through experience for split column directive in Data Preparation
+* WRANGLER-54 - Added click-through experience for filling null or empty cells in Data Preparation
+
+Improvements
+------------
+* CDAP-8501 - Disabled preview button on clusters since preview is not supported in distributed env
+* CDAP-8861 - Removed CDAP Version Range in market entities display
+* CDAP-8430 - Improved "No Entities Found" message in the Overview to show Call(s) to Action
+* CDAP-8403 - Added labels to CDAP Studio actions
+* CDAP-8900 - Added the ability to update to a newer version of data preparation libraries if available
+* CDAP-7352 - Made logviewer header row sticky
+* CDAP-4798 - Improved user experience in explore page
+* CDAP-8964 - Made Output Schema for sinks macro enabled
+* HYDRATOR-1364 - Removed most of __ui__ field
+* CDAP-8494 - Fixed browser back button after switching to classic UI
+* CDAP-8828 - Removed dialog to select pipeline type upon pipeline creation
+* CDAP-8396 - Added call to action for namespace creation
+
+Bugs
+----
+* CDAP-8554 - Fixed styling issues while showing Call(s) to actions in Application create wizard
+* CDAP-8412 - Fixed overflow in namespace creation confirmation modal
+* CDAP-8433 - Added units for memory for YARN stats on management page
+* CDAP-8950 - Fixed link from stream overview to stream deatils
+* CDAP-8933 - Added namespace name to the No entities found message
+* CDAP-8461 - Clicking back from the Detail page view now opens the overview page with the overview pane opened
+* CDAP-8638 - Opened each log in a new tab
+* CDAP-8668 - Fixed UI to show ERROR, WARN and INFO logs by default
+* CDAP-8965 - Removed Wrangle button from Wrangler Transform. Please use the Data Preparation UI for wrangling.
+* HYDRATOR-1419 - Fixed browser back button behavior after switching namespace.
 
 
 ======================
