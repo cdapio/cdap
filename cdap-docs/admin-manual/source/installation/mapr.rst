@@ -159,6 +159,8 @@ that value instead for ``/cdap/tx.snapshot``.
 
 .. |hdfs-user| replace:: ``cdap``
 
+.. |su_hdfs| replace:: su mapr
+
 .. include:: /../target/_includes/mapr-configuration.rst
     :end-before:   .. _mapr-configuration-options-may-need:
 
