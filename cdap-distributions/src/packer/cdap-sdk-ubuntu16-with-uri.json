@@ -154,7 +154,7 @@
       "json": {
         "cdap": {
           "comment": "DO NOT PUT SNAPHOT IN THE VERSION BELOW, THIS CONTROLS CDAP COOKBOOK CODE",
-          "version": "4.1.0-1",
+          "version": "4.1.1-1",
           "sdk": {
             "comment": "COPY SDK ZIP TO files/cdap-sdk.zip BEFORE RUNNING ME",
             "url": "file:///tmp/cdap-sdk.zip"
