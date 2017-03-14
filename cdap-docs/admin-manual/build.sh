@@ -42,7 +42,9 @@ function rewrite_references_in_place_sed() {
   local source_rst=${1}
   local source_pattern=${2}
   local target_pattern=${3}
-  sed -e "s|${source_pattern}|${target_pattern}|g" -i_bu ${source_rst}
+  local target_pattern_escaped=$(printf '%s\n' "${target_pattern}" | sed 's,[\/&],\\&,g;s/$/\\/')
+  target_pattern_escaped=${target_pattern_escaped%?}
+  sed -e "s|${source_pattern}|${target_pattern_escaped}|g" -i_bu ${source_rst}
   echo "Rewrote file ${source_rst} changing '${source_pattern}' to '${target_pattern}'"
 }
 
@@ -80,8 +82,15 @@ function download_includes() {
   types="configuration hdfs-permissions"
   for type in ${types}; do
     rewrite_references_in_place_sed "${target_includes_dir}/mapr-${type}.rst" " su hdfs" " su mapr"
-    rewrite_references_in_place_sed "${target_includes_dir}/mapr-${type}.rst" "FQDN1:2181,FQDN2:2181" "FQDN1:5181,FQDN2:5181"
   done
+  
+  local source_pattern="(FQDN1:2181,FQDN2:2181)"
+  local target_pattern=$(cat <<EOF
+(FQDN1:5181,FQDN2:5181);
+             note that the MapR default of 5181 is different than the ZooKeeper default of 2181
+EOF
+)
+  rewrite_references_in_place_sed "${target_includes_dir}/mapr-configuration.rst" "${source_pattern}" "${target_pattern}"
   
   echo
 }

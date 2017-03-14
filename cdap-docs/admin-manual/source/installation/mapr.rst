@@ -51,15 +51,17 @@ Create the "cdap" User
    
 To prepare your cluster for CDAP, manually create a ``cdap`` user on all nodes of the
 cluster. As "...MapR uses each node's native operating system configuration to authenticate
-users and groups for access to the cluster...[MapR documentation]", make sure that the UID
+users and groups for access to the cluster...[MapR documentation]", make sure that the GID and UID
 for the ``cdap`` user is the same on each node of the cluster::
 
-  $ useradd ... cdap
   $ id cdap
-  uid=503(cdap) gid=504(cdap) groups=504(cdap),2300(sysadmin)
+  uid=503(cdap) gid=504(cdap) groups=504(cdap)
   
 *Note:* The values returned by ``id cdap`` may differ from these shown depending on your system.
 
+See the MapR documentation (`Common Users 
+<http://maprdocs.mapr.com/home/AdvancedInstallation/PreparingEachNode-connectivity.html>`__)
+for more information.
 
 .. HDFS Permissions
 .. ----------------
