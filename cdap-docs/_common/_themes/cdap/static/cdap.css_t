@@ -15,20 +15,28 @@
 
 @import url("tabbed-parsed-literal.css");
 
+html {
+    font-family: "Open Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+    font-size: 62.5%;
+}
+
 /* -- page layout ----------------------------------------------------------- */
 
 body {
-    font-family: "Open Sans", "Helvetica", "Arial", sans-serif;
-    font-size: 100%;
-    background-color: #4B5258;
-    color: #555;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: .2px;
+    text-rendering: optimizeLegibility; 
+    font-size: 1.6rem;
+    background-color: white;
+    color: #333;
+    line-height: 1.7;
     margin: 0;
     padding: 0;
 }
 
-div.document {
-    background-color: #eee;
-}
+#div.document {
+#    background-color: #eee;
+#}
 
 div.documentwrapper {
     float: left;
@@ -45,10 +53,15 @@ hr {
 }
 
 div.body {
-    background-color: #ffffff;
+#    background-color: #ffffff;
     color: #3E4349;
+    color: #333;
+    color: rgb(51, 51, 51);
+    
     padding: 0 30px 30px 30px;
     font-size: 0.95em;
+    font-size: 1.6rem;
+    
     min-height: 1300px;
 }
 
@@ -99,12 +112,19 @@ div.section {
 
 /* -- Left Sidebar ----------------------------------------------------------- */
 
+/*
+div.sidebar {
+    background-color: white
+}
+*/
+
 div.sphinxsidebar {
-    background-color: #eee;
+/*     background-color: #eee; */
+    background-color: white;
     bottom: 0;
     font-size: 0.8em;
     height: auto;
-    line-height: 1.5em;
+    line-height: 2em;
     margin: 0;
     overflow: auto;
     position: fixed;
@@ -118,13 +138,17 @@ div.sphinxsidebarwrapper{
 
 div.sphinxsidebar h3,
 div.sphinxsidebar h4 {
-    background-color: #ddd;
+/*     background-color: #ddd; */
+    background-color: white;
     color: #222;
     font-size: 1.1em;
     font-weight: normal;
     margin: 0;
-    padding: 5px 10px;
-    text-shadow: 1px 1px 0 white
+/*    padding: 5px 10px; */
+    padding-top: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+/*     text-shadow: 1px 1px 0 white */
 }
 
 div.sphinxsidebar h4{
@@ -146,11 +170,19 @@ div.sphinxsidebar p {
     padding: 5px 20px;
 }
 
+div.sphinxsidebar p.pagenav-toc {
+    -webkit-margin-before: 0px;
+    -webkit-margin-after: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
+
+
 div.sphinxsidebar p.topless {
 }
 
 div.sphinxsidebar ul {
-    margin-top:    5px;
+    margin-top:    0px;
     margin-bottom: 10px;
     margin-right:  10px;
     margin-left:   20px;
@@ -168,7 +200,6 @@ div.sphinxsidebar a:hover {
 }
 
 div.sphinxsidebar a tt.docutils.literal {
-    font-family: "Open Sans", "Helvetica", "Arial", sans-serif;
     font-size: 1.0em;
     font-style: italic;
     font-weight: normal;
@@ -176,7 +207,6 @@ div.sphinxsidebar a tt.docutils.literal {
 
 div.sphinxsidebar input {
     border: 1px solid #ccc;
-    font-family: "Open Sans", "Helvetica", "Arial", sans-serif;
     font-size: 1em;
 }
 
@@ -193,6 +223,7 @@ div.body h4,
 div.body h5,
 div.body h6 {
     background-color: #EEE;
+    background-color: white;
     font-weight: normal;
     color: #111;
     margin: 30px 0 10px -15px;
@@ -207,12 +238,21 @@ div.body h4 { font-size: 110%; font-weight:normal;}
 div.body h5 { font-size: 100%; font-weight:normal;}
 div.body h6 { font-size: 100%; font-weight:normal;}
 
+div.body h3,
+div.body h4,
+div.body h5 { 
+    background-color: #F2F2F2; 
+    margin: 30px 0 10px 0;
+}
+
+/*
 div.body h1 { background-color: #E4E7F0; }
 div.body h2 { background-color: #E4E7F0; }
 div.body h3 { background-color: #E4E7F0; margin: 30px 0 10px 0; }
 div.body h4 { background-color: #EDEDED; margin: 30px 0 10px 0; }
 div.body h5 { background-color: #F2F2F2; margin: 30px 0 10px 0; }
 div.body h6 { background-color: #F2F2F2; }
+*/
 
 a {
     color: #ff6600;
@@ -253,7 +293,7 @@ h2>a.reference.external {
 }
 
 div.body p, div.body dd, div.body li {
-    line-height: 1.5em;
+    line-height: 1.7em;
 }
 
 div.admonition p.admonition-title + p {
@@ -327,7 +367,7 @@ p.admonition-title:after {
 }
 
 p.rubric {
-    background-color: #EDEDED; 
+#    background-color: #EDEDED; 
     color: #111;
     font-size: 110%; 
     font-weight: normal;
@@ -378,9 +418,11 @@ tt {
     font-family: monospace;
 }
 
+/*
 .viewcode-back {
     font-family: "Open Sans", "Helvetica", "Arial", sans-serif;
 }
+*/
 
 div.viewcode-block:target {
     background-color: #f4debf;
@@ -408,8 +450,23 @@ ul.first.last.simple {
 }
 
 ul.simple {
-  margin-bottom: 1em;
+    margin-bottom: 1em;
 }
+
+li blockquote {
+    margin-left: 0;
+    margin-right: 0;
+
+}
+
+li blockquote div ul.simple {
+    padding-left: 20px;
+}
+
+ul.simple li ul {
+    padding-left: 20px;
+}
+
 
 /* -- Literals ---------------------------------------------------------- */
 /* See also (and keep in sync) these styles: pre tt */
@@ -529,7 +586,7 @@ div.table-block-example.container table.triple-table.docutils th.stub {
   border-bottom: 1px solid white;
 }
 
-/* Triple-table: Make odd row with white background */
+/* -- Triple-table: Make odd row with white background */
 
 div.table-block-example.container table.triple-table.docutils tr.row-odd {
   background-color: white;
@@ -539,7 +596,7 @@ div.table-block-example.container table.triple-table.docutils tr.row-odd th.stub
   border-bottom: 1px solid #aaa;
 }
 
-/* Triple-table: Make first row light-grey background with bottom border */
+/* -- Triple-table: Make first row light-grey background with bottom border */
 
 div.table-block-example.container table.triple-table.docutils tr:first-of-type {
   background-color: #F9FAFB;
