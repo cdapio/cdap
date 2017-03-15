@@ -8,8 +8,6 @@
 Logging and Monitoring
 ======================
 
-Logs and Metrics
-================
 CDAP collects logs and metrics for all of its internal services and on user applications.
 Being able to view these details can be very helpful in debugging CDAP applications as
 well as analyzing their performance. CDAP gives access to its logs, metrics, and other
@@ -204,17 +202,12 @@ Configuring System Service Logs
 
 Configuring the Log Saver Service
 =================================
-The Log Saver Service is the CDAP service that reads log messages from Kafka, processes them in 
-*log pipelines*, persists them to HDFS, and sends metrics on logging to the Metrics Service.
+The Log Saver Service is the CDAP service that reads log messages from Kafka, processes
+them in *log pipelines*, persists them to HDFS, and sends metrics on logging to the
+Metrics Service.
 
-Properties and configurations that control the Log Saver Service are located in
-the :ref:`cdap-site.xml <appendix-cdap-site.xml>` file.
-
-In the default configuration, CDAP uses "logback" files located:
-
-- For **Standalone CDAP:** ``<cdap-sdk-home>/conf/logback.xml``
-- For **Distributed CDAP:** ``/opt/cdap/master/ext/logging/config``, as set by the property
-  ``log.process.pipeline.config.dir`` in the ``cdap-default.xml`` file
+Properties and configurations that control the Log Saver Service are located in the
+:ref:`cdap-site.xml <appendix-cdap-site.xml>` file.
 
 CDAP Site XML File
 ------------------
