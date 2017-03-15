@@ -45,19 +45,29 @@ body.theme-cdap {
       }
 
       div.btn {
-        .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 5px 15px);
+        .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 3px 0);
         border-top: 1px solid transparent;
         border-right: 1px solid transparent;
         border-bottom: 1px solid transparent;
         border-left: 1px solid @table-border-color;
         transition: all 0.2s ease;
+        width: 55px;
+        > span:first-child {
+          line-height: 15px;
+        }
         span {
-          line-height: 31px;
-          &.icon-logview { font-size: 21px; }
-          &.icon-runtimestart,
-          &.icon-runtimestop { font-size: 24px; }
-          &.icon-runtimestarttime,
-          &.icon-runtimestoptime { font-size: 13px; }
+          &.fa-play,
+          &.fa-stop {
+            font-size: 18px;
+          }
+
+          &.fa-info-circle {
+            color: #666666;
+          }
+
+          &.fa-spinner {
+            line-height: 30px;
+          }
         }
         &:hover,
         &:focus,
@@ -92,6 +102,7 @@ body.theme-cdap {
           color: @hydrator-blue;
           font-size: 20px;
           font-weight: 500;
+          height: 43px;
           &:hover { background-color: white; }
           &:active,
           &:focus {
@@ -101,6 +112,10 @@ body.theme-cdap {
             border-right-color: transparent;
             background-color: white;
           }
+        }
+
+        div.button-label {
+          font-size: 11px;
         }
 
         @media (max-width: @screen-xs-max) {
@@ -443,7 +458,7 @@ body.theme-cdap {
           .fa-caret-down {
             position: absolute;
             top: 25px;
-            left: 18px;
+            left: 32px;
             line-height: 1;
           }
         }
@@ -464,9 +479,9 @@ body.theme-cdap {
       justify-content: space-between;
       .run-specific-section {
         display: flex;
-        width: ~"calc(100vw - 370px)";
-        width: ~"-moz-calc(100vw - 370px)";
-        width: ~"-webkit-calc(100vw - 370px)";
+        width: ~"calc(100vw - 390px)";
+        width: ~"-moz-calc(100vw - 390px)";
+        width: ~"-webkit-calc(100vw - 390px)";
         border-right: 0;
         .hydrator-detail-metadata {
           display: flex;
@@ -578,28 +593,35 @@ body.theme-cdap {
       div.btn {
         align-items: center;
         height: 45px;
+        padding: 5px 0;
+
         .fa.fa-caret-down {
           position: absolute;
           top: 17px;
           left: 18px;
         }
-        .icon-double {
-          position: relative;
-          span {
-            &:last-child {
-              position: absolute;
-              top: -6px;
-            }
-            &.icon-runtimestarttime { left: 7px; }
-            &.icon-runtimestoptime { left: 13px; }
+
+        &.scheduler {
+          padding-top: 0;
+
+          .icon-runtimestarttime {
+            font-size: 22px;
+          }
+
+          .button-label {
+            line-height: 10px;
+            margin-top: -6px;
+          }
+
+          .fa-spinner {
+            line-height: 40px;
           }
         }
       }
       .pipeline-specific-section {
-        justify-content: flex-end;
         border-left: 0;
         display: flex;
-        width: 288px;
+        width: 370px;
         span.metric-value {
           color: #636363;
           font-size: 13px;

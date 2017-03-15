@@ -73,47 +73,39 @@
        ng-if="!HydratorPlusPlusTopPanelCtrl.previewMode">
     <div class="btn"
          ng-click="HydratorPlusPlusTopPanelCtrl.isPreviewEnabled && HydratorPlusPlusTopPanelCtrl.togglePreviewMode()"
-         uib-tooltip="{{HydratorPlusPlusTopPanelCtrl.isPreviewEnabled ? 'Preview' : 'Pipeline preview is not available in distributed mode.' }}"
+         uib-tooltip="Pipeline preview is not available in distributed mode."
          tooltip-placement="bottom"
          tooltip-class="toppanel-tooltip"
+         tooltip-enable="!HydratorPlusPlusTopPanelCtrl.isPreviewEnabled"
          ng-disabled="!HydratorPlusPlusTopPanelCtrl.isPreviewEnabled">
       <span class="fa icon-eye"></span>
+      <div class="button-label">Preview</div>
     </div>
     <div class="btn"
          ng-click="HydratorPlusPlusTopPanelCtrl.showSettings()"
-         uib-tooltip="Settings"
-         tooltip-placement="bottom"
-         tooltip-class="toppanel-tooltip">
+         ng-class="{'active': HydratorPlusPlusTopPanelCtrl.state.viewSettings}">
       <span class="fa fa-sliders"></span>
-      <span class="fa fa-caret-down" ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings"></span>
+      <div class="button-label">Settings</div>
     </div>
     <div class="btn"
-         ng-click="HydratorPlusPlusTopPanelCtrl.onExport()"
-         uib-tooltip="Export"
-         tooltip-placement="bottom"
-         tooltip-class="toppanel-tooltip">
+         ng-click="HydratorPlusPlusTopPanelCtrl.onExport()">
       <span class="fa icon-export"></span>
+      <div class="button-label">Export</div>
     </div>
     <div class="btn"
-         ng-click="HydratorPlusPlusTopPanelCtrl.onSaveDraft()"
-         uib-tooltip="Save"
-         tooltip-placement="bottom"
-         tooltip-class="toppanel-tooltip">
+         ng-click="HydratorPlusPlusTopPanelCtrl.onSaveDraft()">
       <span class="fa icon-savedraft"></span>
+      <div class="button-label">Save</div>
     </div>
     <div class="btn"
-         ng-click="HydratorPlusPlusTopPanelCtrl.onValidate()"
-         uib-tooltip="Validate"
-         tooltip-placement="bottom"
-         tooltip-class="toppanel-tooltip">
+         ng-click="HydratorPlusPlusTopPanelCtrl.onValidate()">
       <span class="fa icon-validate"></span>
+      <div class="button-label">Validate</div>
     </div>
     <div class="btn"
-         ng-click="HydratorPlusPlusTopPanelCtrl.onPublish()"
-         uib-tooltip="Publish"
-         tooltip-placement="bottom"
-         tooltip-class="toppanel-tooltip">
+         ng-click="HydratorPlusPlusTopPanelCtrl.onPublish()">
       <span class="fa icon-publish"></span>
+      <div class="button-label">Publish</div>
     </div>
   </div>
 
@@ -123,6 +115,7 @@
     <div class="btn active"
          ng-click="HydratorPlusPlusTopPanelCtrl.togglePreviewMode()">
       <span class="fa icon-eye"></span>
+      <div class="button-label">Preview</div>
     </div>
     <div class="btn"
          ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.toggleRuntimeArguments()"
@@ -130,12 +123,20 @@
       <span class="fa fa-play"
             ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && !HydratorPlusPlusTopPanelCtrl.previewRunning">
       </span>
+      <div class="button-label"
+           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && !HydratorPlusPlusTopPanelCtrl.previewRunning">Start</div>
+
       <span class="fa fa-stop text-danger"
             ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.previewRunning">
       </span>
+      <div class="button-label"
+           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.previewRunning">Stop</div>
+
       <span ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading">
         <span class="fa fa-refresh fa-spin"></span>
       </span>
+      <div class="button-label"
+           ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading">Starting</div>
     </div>
     <div class="btn run-time">
       <span>
