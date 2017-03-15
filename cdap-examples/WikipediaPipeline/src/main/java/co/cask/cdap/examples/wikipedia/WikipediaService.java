@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.examples.wikipedia;
 
-import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValue;
@@ -26,6 +25,7 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
@@ -34,6 +34,7 @@ import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -56,14 +57,17 @@ public class WikipediaService extends AbstractService {
    */
   @Path("/v1/functions")
   public static final class WikipediaHandler extends AbstractHttpServiceHandler {
-
-    @SuppressWarnings("unused")
-    @UseDataSet(WikipediaPipelineApp.SPARK_CLUSTERING_OUTPUT_DATASET)
     private Table clusteringTable;
-
-    @SuppressWarnings("unused")
-    @UseDataSet(WikipediaPipelineApp.MAPREDUCE_TOPN_OUTPUT)
     private KeyValueTable topNKVTable;
+
+    @Override
+    public void initialize(HttpServiceContext context) throws Exception {
+      super.initialize(context);
+      String dataNamespace = context.getRuntimeArguments().get(WikipediaPipelineApp.NAMESPACE_ARG);
+      dataNamespace = dataNamespace != null ? dataNamespace : context.getNamespace();
+      clusteringTable = getContext().getDataset(dataNamespace, WikipediaPipelineApp.SPARK_CLUSTERING_OUTPUT_DATASET);
+      topNKVTable = getContext().getDataset(dataNamespace, WikipediaPipelineApp.MAPREDUCE_TOPN_OUTPUT);
+    }
 
     /**
      * The {@link SparkWikipediaClustering} program generates a list of topics for the input data. This API returns the
