@@ -32,7 +32,7 @@ angular.module(PKG.name + '.commons')
           'class': 'form-control',
           'ng-trim': 'false',
           'ng-model': 'model',
-          placeholder: '{{ ::myconfig["widget-attributes"].default}}'
+          placeholder: '{{ ::myconfig["widget-attributes"].placeholder}}'
         }
       },
       'textarea': {
@@ -42,7 +42,7 @@ angular.module(PKG.name + '.commons')
           'ng-trim': 'false',
           'ng-model': 'model',
           'rows': '{{myconfig["widget-attributes"].rows}}',
-          placeholder: '{{::myconfig["widget-attributes"].default}}'
+          placeholder: '{{::myconfig["widget-attributes"].placeholder}}'
         }
       },
       'password': {
@@ -167,14 +167,16 @@ angular.module(PKG.name + '.commons')
         element: '<my-dataset-selector></my-dataset-selector>',
         attributes: {
           'ng-model': 'model',
-          'dataset-type': 'stream'
+          'dataset-type': 'stream',
+          'config': 'myconfig'
         }
       },
       'dataset-selector': {
         element: '<my-dataset-selector></my-dataset-selector>',
         attributes: {
           'ng-model': 'model',
-          'dataset-type': 'dataset'
+          'dataset-type': 'dataset',
+          'config': 'myconfig'
         }
       },
       'sql-select-fields': {
