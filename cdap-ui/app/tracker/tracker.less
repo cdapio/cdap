@@ -544,7 +544,10 @@ body.state-tracker {
     &.user {
       background-color: @tag-bg;
       color: @title-font-color;
-      span.fa-times { -webkit-text-stroke: 1px @tag-bg; }
+      span.fa-times {
+        -webkit-text-stroke: 1px @tag-bg;
+        color: @title-font-color;
+      }
     }
     span.fa-times {
       color: @well-bg;
