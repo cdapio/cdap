@@ -89,7 +89,15 @@ $tab-header-height: 37px;
       .directives-tab-header {
         font-weight: 500;
 
-        .fa.fa-download { cursor: pointer; }
+        .btn-link {
+          padding: 0;
+          color: #373a3c;
+
+          &:focus,
+          &:active {
+            outline: none;
+          }
+        }
       }
 
       .directives-row {
@@ -165,7 +173,6 @@ $tab-header-height: 37px;
             border-radius: 4px;
             height: 15px;
             overflow: hidden;
-            margin-top: -10px;
             margin-bottom: 10px;
 
             > span {

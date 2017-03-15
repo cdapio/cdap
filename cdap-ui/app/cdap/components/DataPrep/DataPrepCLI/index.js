@@ -118,8 +118,8 @@ export default class DataPrepCLI extends Component {
           execute={this.execute}
         />
 
-        <div className="input-container">
-          <strong>$</strong>
+        <div className="input-container clearfix">
+          <strong className="float-xs-left">$</strong>
           <div className="directive-input">
             <input
               type="text"

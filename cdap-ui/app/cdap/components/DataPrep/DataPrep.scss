@@ -15,6 +15,8 @@
  */
 
 .dataprep-container {
+  overflow: hidden;
+
   &.error { padding-top: 25px; }
 
   .dataprep-body.row {
