@@ -35,7 +35,8 @@ const defaultConfigureState = Object.assign({
   classname: '',
   parentArtifact: [
     'system:cdap-data-pipeline[3.0.0,10.0.0]',
-    'system:cdap-data-streams[3.0.0,10.0.0]'
+    'system:cdap-data-streams[3.0.0,10.0.0]',
+    'system:cdap-etl-batch[3.0.0,10.0.0]'
   ]
 }, defaultState);
 
@@ -100,11 +101,6 @@ const configure = (state = defaultConfigureState, action = defaultAction) => {
     case ArtifactUploadActions.setType:
       stateCopy = Object.assign({}, state, {
         type: action.payload.type
-      });
-      break;
-    case ArtifactUploadActions.setParentArtifact:
-      stateCopy = Object.assign({}, state, {
-        parentArtifact: action.payload.parentArtifact
       });
       break;
     case ArtifactUploadActions.onReset:
