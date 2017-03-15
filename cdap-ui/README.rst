@@ -23,7 +23,7 @@ Unix/Linux Flavors
 
 ::
 
-  $ cd ${CDAP_HOME}
+  $ cd <CDAP_HOME>
   $ ./bin/cdap sdk stop
   $ zip -m -r ui-backup.zip ui
   $ unzip /path/to/download/cdap-ui-pack.zip
@@ -34,7 +34,7 @@ Unix/Linux Flavors
 
 ::
 
-  $ cd ${CDAP_HOME}                        # (usually /opt/cdap)
+  $ cd <CDAP_HOME>                        # (usually /opt/cdap)
   $ /etc/init.d/cdap-ui stop
   $ zip -m -r ui-backup.zip ui
   $ unzip /path/to/download/cdap-ui-pack-4.1.0_p1.zip
@@ -52,19 +52,21 @@ Windows
 
 ::
 
-  $ cd ${CDAP_HOME}
+  $ cd ``<CDAP_HOME>``
   $ bin\cdap sdk stop
 
-2. Open the ${CDAP_HOME} directory in Explorer
-3. Compress the ``ui`` to save a backup, say ui-backup.zip
+2. Open the ``<CDAP_HOME>`` directory in Explorer
+3. Compress the ``ui`` to save a backup, by right clicking on the ``ui`` directory and
+   choosing **Send To** -> **Compressed (zipped) folder**
 4. Delete the ``ui`` directory after the backup is completed
-5. Extract the UI pack (cdap-ui-pack-4.1.0_p1.zip) in the ${CDAP_HOME} directory
+5. Extract the UI pack (cdap-ui-pack-4.1.0_p1.zip) in the ``<CDAP_HOME>`` directory, by right clicking on the file,
+   choosing **Extract All**, and specifying the path to the ``<CDAP_HOME>`` directory
 6. A new ``ui`` directory should be created
 7. Using the command prompt, start the CDAP SDK
 
 ::
 
-  $ cd ${CDAP_HOME}
+  $ cd ``<CDAP_HOME>``
   $ bin\cdap sdk start
 
 
