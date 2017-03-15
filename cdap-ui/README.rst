@@ -6,10 +6,10 @@ The CDAP UI Pack is a UI-only release that can be applied on top of a released C
 
 Details
 =======
-Release Date: 03/13/2017
-Base CDAP Version: 4.1
-Release branch: release/4.1
-Git Tag: <TBD>
+- Release Date: <TBD>
+- Base CDAP Version: 4.1
+- Release branch: release/4.1
+- Git Tag: <TBD>
 
 Installation
 ============
