@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -181,6 +181,21 @@
     left: 50%;
     transform: translate(-50%, -50%);
     color: gray;
+  }
+
+  .empty-message {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    font-weight: 500;
+
+    &.text-danger {
+      .fa-exclamation-triangle {
+        margin-right: 5px;
+      }
+    }
   }
 
   .retry-now { margin-top: 10px; }
