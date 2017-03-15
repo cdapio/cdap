@@ -54,6 +54,7 @@ import org.apache.tephra.persist.TransactionVisibilityState;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * RegionObserver for queue table. This class should only have JSE and HBase classes dependencies only.
@@ -125,7 +126,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     }
 
     LOG.info("preFlush, creates EvictionInternalScanner");
-    return new EvictionInternalScanner("flush", e.getEnvironment(), scanner);
+    return new EvictionInternalScanner("flush", e.getEnvironment(), scanner, null);
   }
 
   @Override
@@ -137,7 +138,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     }
 
     LOG.info("preCompact, creates EvictionInternalScanner");
-    return new EvictionInternalScanner("compaction", e.getEnvironment(), scanner);
+    return new EvictionInternalScanner("compaction", e.getEnvironment(), scanner, txStateCache.getLatestState());
   }
 
   // needed for queue unit-test
@@ -179,6 +180,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     private final String triggeringAction;
     private final RegionCoprocessorEnvironment env;
     private final InternalScanner scanner;
+    private final TransactionVisibilityState state;
     // This is just for object reused to reduce objects creation.
     private final ConsumerInstance consumerInstance;
     private byte[] currentQueue;
@@ -188,11 +190,14 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     private long rowsEvicted = 0;
     // couldn't be evicted due to incomplete view of row
     private long skippedIncomplete = 0;
+    private boolean invalidTxData;
 
-    private EvictionInternalScanner(String action, RegionCoprocessorEnvironment env, InternalScanner scanner) {
+    private EvictionInternalScanner(String action, RegionCoprocessorEnvironment env, InternalScanner scanner,
+                                    @Nullable TransactionVisibilityState state) {
       this.triggeringAction = action;
       this.env = env;
       this.scanner = scanner;
+      this.state = state;
       this.consumerInstance = new ConsumerInstance(0, 0);
     }
 
@@ -229,12 +234,21 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
           consumerConfig = getConfigCache(env).getConsumerConfig(currentQueue);
         }
 
-        if (consumerConfig == null) {
-          // no config is present yet, so cannot evict
+        invalidTxData = false;
+        if (state != null) {
+          long txId = QueueEntryRow.getWritePointer(cell.getRowArray(),
+                                                    cell.getRowOffset() + prefixBytes + currentQueueRowPrefix.length);
+          if (txId > 0 && state.getInvalid().contains(txId)) {
+            invalidTxData = true;
+          }
+        }
+
+        if (consumerConfig == null && !invalidTxData) {
+          // no config is present yet and not invalid data, so cannot evict
           return hasNext;
         }
 
-        if (canEvict(consumerConfig, results)) {
+        if (invalidTxData || canEvict(consumerConfig, results)) {
           rowsEvicted++;
           results.clear();
           hasNext = scanner.next(results, scannerContext);
