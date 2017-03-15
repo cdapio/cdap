@@ -102,7 +102,7 @@ To download logs for a program run, send an HTTP GET request::
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 
 
-.. _http-restful-api-logging_downloading_system_logs:
+.. _http-restful-api-logging-downloading-system-logs:
 
 Downloading System Logs
 =======================
@@ -162,6 +162,8 @@ Filtering
 A filter string can be supplied as an optional parameter. It will filter the returned log entries
 to those that match the supplied string.
 
+
+.. _http-restful-api-logging-changing-program-log-levels:
 
 Changing Program Log Levels
 ===========================
