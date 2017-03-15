@@ -347,9 +347,11 @@ if short_version:
 .. |previous-short-version| replace:: %(previous_short_version)s
 .. |bold-previous-short-version| replace:: **%(previous_short_version)s**
 .. |literal-previous-short-version| replace:: ``%(previous_short_version)s``
-.. |previous_version| replace:: %(previous_version)s
-""" % {'short_version': short_version, 'previous_short_version': previous_short_version,
-       'previous_version': previous_version}
+.. |previous-version| replace:: %(previous_version)s
+""" % {'short_version': short_version,
+       'previous_short_version': previous_short_version,
+       'previous_version': previous_version,
+      }
 
 if version_tuple:
     rst_epilog += """
