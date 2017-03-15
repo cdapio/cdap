@@ -333,11 +333,6 @@ if short_version:
         previous_short_version = git_build_vars['GIT_PREVIOUS_SHORT_VERSION']
     else:
         previous_short_version = float(short_version) -0.1
-    if git_build_vars.has_key('GIT_PREVIOUS_VERSION'):
-        previous_version = git_build_vars['GIT_PREVIOUS_VERSION']
-    else:
-        previous_version = "%s.%s" % (previous_short_version, '0')
-        
     rst_epilog += """
 .. |short-version| replace:: %(short_version)s
 .. |short-version-x| replace:: %(short_version)s.x
@@ -347,9 +342,8 @@ if short_version:
 .. |previous-short-version| replace:: %(previous_short_version)s
 .. |bold-previous-short-version| replace:: **%(previous_short_version)s**
 .. |literal-previous-short-version| replace:: ``%(previous_short_version)s``
-.. |previous_version| replace:: %(previous_version)s
-""" % {'short_version': short_version, 'previous_short_version': previous_short_version,
-       'previous_version': previous_version}
+
+""" % {'short_version': short_version, 'previous_short_version': previous_short_version}
 
 if version_tuple:
     rst_epilog += """
