@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform Wikipedia Pipeline Application
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _examples-wikipedia-data-pipeline:
 
@@ -63,7 +63,7 @@ of the application are tied together by the class ``WikipediaPipelineApp``:
 
 .. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/WikipediaPipelineApp.java
    :language: java
-   :lines: 28-82
+   :lines: 28-83
 
 This application demonstrates:
 
