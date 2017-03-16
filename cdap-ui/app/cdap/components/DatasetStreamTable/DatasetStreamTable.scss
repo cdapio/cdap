@@ -104,7 +104,7 @@ $border-color: #bbbbbb;
               max-width: 400px;
 
               h4 {
-                vertical-align: top;
+                margin: 0;
                 > span {
                   border: 0;
                   padding: 0;
@@ -127,6 +127,9 @@ $border-color: #bbbbbb;
           .fast-actions-container .btn-link {
             color: #4f5050;
             max-width: 40px;
+            > span {
+              vertical-align: top;
+            }
           }
         }
       }

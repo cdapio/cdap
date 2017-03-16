@@ -21,8 +21,10 @@ import isObject from 'lodash/isObject';
 import shortid from 'shortid';
 import 'whatwg-fetch';
 import {contructUrl, insertAt, removeAt, humanReadableDate} from 'services/helpers';
+import {UncontrolledTooltip} from 'components/UncontrolledComponents';
 require('./ExploreModal.scss');
 import NamespaceStore from 'services/NamespaceStore';
+import T from 'i18n-react';
 
 export default class ExploreModal extends Component {
   constructor(props) {
@@ -232,8 +234,9 @@ export default class ExploreModal extends Component {
 
   render() {
     const renderQueryRow = (query) => {
+      let id = shortid.generate();
       return (
-        <tr key={shortid.generate()}>
+        <tr key={id}>
           <td> {humanReadableDate(query.timestamp, true)} </td>
           <td> {query.statement} </td>
           <td>
@@ -255,7 +258,24 @@ export default class ExploreModal extends Component {
                     className="btn btn-secondary"
                     disabled="disabled"
                     >
-                    <i className="fa fa-download"></i>
+                    <i
+                      id={`${id}-download`}
+                      className="fa fa-download"
+                    ></i>
+                    {
+                      !query.is_active ?
+                        <UncontrolledTooltip
+                          target={`${id}-download`}
+                          placement="left"
+                          delay={300}
+                        >
+                          <div className="text-xs-left">
+                            {T.translate('features.FastAction.downloadDisabledMessage')}
+                          </div>
+                        </UncontrolledTooltip>
+                      :
+                        null
+                    }
                   </button>
                 :
                   <a
@@ -271,7 +291,24 @@ export default class ExploreModal extends Component {
                 onClick={this.showPreview.bind(this, query)}
                 disabled={!query.is_active || query.status !== 'FINISHED' ? 'disabled' : null}
               >
-                <i className="fa fa-eye"></i>
+                <i
+                  className="fa fa-eye"
+                  id={`${id}-explore`}
+                  delay={300}
+                ></i>
+              {
+                !query.is_active?
+                  <UncontrolledTooltip
+                      target={`${id}-explore`}
+                      placement="top"
+                    >
+                      <div className="text-xs-left">
+                        {T.translate('features.FastAction.previewDisabledMessage')}
+                      </div>
+                    </UncontrolledTooltip>
+                  :
+                    null
+              }
               </button>
               <button className="btn btn-secondary" onClick={this.setQueryString.bind(this, query)}>
                 <i className="fa fa-clone"></i>
