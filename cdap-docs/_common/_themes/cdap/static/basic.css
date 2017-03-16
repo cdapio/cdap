@@ -61,7 +61,7 @@ div.sphinxsidebar ul {
 div.sphinxsidebar ul ul,
 div.sphinxsidebar ul.want-points {
     margin-left: 20px;
-    list-style: square;
+    list-style: none;
 }
 
 div.sphinxsidebar ul ul {

@@ -493,7 +493,7 @@ html_theme = 'cdap'
 #
 # icon: "" for none, "new-icon" for the ico_new.png
 
-cdap_manuals_list = [
+manuals_list = [
     ['introduction',        'introduction', 'Introduction to CDAP',            '',],
     ['developers-manual',   'developers',  u'Developers’ Manual',              '',],
     ['admin-manual',        'admin',        'Administration Manual',           '',],
@@ -502,11 +502,6 @@ cdap_manuals_list = [
     ['reference-manual',    'reference',    'Reference Manual',                '',],
     ['faqs',                'faqs',         'FAQs',                            '',],
 ]
-
-cdap_extension_manuals_list = [
-]
-
-manuals_list = cdap_manuals_list + cdap_extension_manuals_list
 
 manual_intersphinx_mapping = {}
 manuals_dict = {}
@@ -520,17 +515,12 @@ for m in manuals_list:
     manual_titles_list.append(m[2])
     manual_icons_list.append(m[3])
 
-cdap_manuals = []
-for m in cdap_manuals_list:
-    cdap_manuals.append(m[0])
-    
-cdap_extension_manuals = []
-for m in cdap_extension_manuals_list:
-    cdap_extension_manuals.append(m[0])
+manuals = []
+for m in manuals_list:
+    manuals.append(m[0])
 
 html_theme_options = {
-  'cdap_manuals': cdap_manuals,
-  'cdap_extension_manuals': cdap_extension_manuals,
+  'manuals': manuals,
   'docs_url': 'http://docs.cask.co/cdap',
   'json_versions_js': 'http://docs.cask.co/cdap/json-versions.js',
   'language': 'en',
@@ -611,7 +601,7 @@ html_static_path = ['../../_common/_static']
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {'**': [
     'manuals.html',
-    'globaltoc.html',
+#     'globaltoc.html',
     'searchbox.html',
     'downloads.html',
     'casksites.html',
