@@ -56,6 +56,10 @@ export default class ColumnActionsDropdown extends Component {
     ];
   }
 
+  componentWillMount() {
+    this.dropdownId = shortid.generate();
+  }
+
   componentWillUnmount() {
     if (this.documentClick$ && this.documentClick$.dispose) {
       this.documentClick$.dispose();
@@ -114,7 +118,7 @@ export default class ColumnActionsDropdown extends Component {
       <Popover
         placement="bottom right"
         isOpen={this.state.dropdownOpen}
-        target={`dataprep-action-${this.props.column}`}
+        target={`dataprep-action-${this.dropdownId}`}
         className="dataprep-columns-action-dropdown"
         tether={tetherOption}
       >
@@ -156,7 +160,7 @@ export default class ColumnActionsDropdown extends Component {
             'expanded': this.state.dropdownOpen
           })}
           onClick={this.toggleDropdown}
-          id={`dataprep-action-${this.props.column}`}
+          id={`dataprep-action-${this.dropdownId}`}
         />
 
         {this.renderMenu()}

@@ -139,10 +139,12 @@ export default class SchemaModal extends Component {
           <div
             className="close-section float-xs-right"
           >
-            <span
-              className="fa fa-download"
+            <button
+              className="btn btn-link"
               onClick={this.download}
-            />
+            >
+              <span className="fa fa-download" />
+            </button>
             <span
               className="fa fa-times"
               onClick={this.props.toggle}

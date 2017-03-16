@@ -127,10 +127,17 @@
       cursor: pointer;
     }
 
-    .fa.fa-download {
+    .btn.btn-link {
+      padding: 0;
       margin-right: 50px;
-    }
+      color: inherit;
+      font-size: inherit;
 
+      &:focus,
+      &:active {
+        outline: none;
+      }
+    }
   }
   .modal-body {
     overflow-y: auto;
