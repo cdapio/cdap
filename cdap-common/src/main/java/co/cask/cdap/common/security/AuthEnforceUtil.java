@@ -28,9 +28,16 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Iterables;
+import org.objectweb.asm.Type;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Class used by {@link AuthEnforceRewriter} to rewrite classes with {@link AuthEnforce} annotation and call
@@ -46,6 +53,9 @@ public final class AuthEnforceUtil {
     // no-op
   }
 
+  private static final Map<Class<? extends EntityId>, Constructor<? extends EntityId>> CONS_CACHE =
+    new ConcurrentHashMap<>();
+
   /**
    * Performs authorization enforcement
    *
@@ -57,51 +67,92 @@ public final class AuthEnforceUtil {
    * @throws Exception {@link UnauthorizedException} if the given authenticationContext is not authorized to perform
    * the specified actions on the entity
    */
-  public static void enforce(AuthorizationEnforcer authorizationEnforcer, Object[] entities, Class enforceOn,
-                             AuthenticationContext authenticationContext, Set<Action> actions) throws Exception {
-    authorizationEnforcer.enforce(getEntityId(entities, enforceOn), authenticationContext.getPrincipal(), actions);
+  public static void enforce(AuthorizationEnforcer authorizationEnforcer, Object[] entities,
+                             Class<? extends EntityId> entityClass, AuthenticationContext authenticationContext,
+                             Set<Action> actions) throws Exception {
+    authorizationEnforcer.enforce(getEntityId(entities, entityClass), authenticationContext.getPrincipal(), actions);
   }
 
-  private static EntityId getEntityId(Object[] entities, Class enforceOn) {
+  private static EntityId getEntityId(Object[] entities, Class<? extends EntityId> entityClass)
+    throws IllegalAccessException, InstantiationException, InvocationTargetException {
     if (entities.length == 1 && entities[0] instanceof EntityId) {
       // If EntityId was passed in then the size of the array should be one
-      return (EntityId) entities[0];
-    } else {
-      // If the size of the array is more than one we expect all the specified parameters to be String
-      String[] entityParts;
-      try {
-        entityParts = Arrays.copyOf(entities, entities.length, String[].class);
-      } catch (ArrayStoreException e) {
-        // Arrays.copyOf will throw ArrayStoreException if an element copied from original array is not a String
-        throw new IllegalArgumentException(String.format("%s annotation can be used for multiple part entities of " +
-                                                                 "String type only.", AuthEnforce.class.getName()), e);
+      // if entities length is 1 and the first element is an instance of EntityId then we know that the enforcement is
+      // being done the specified entities itself. Check that the entity class (the one which was provided in the
+      // enforceOn) is same and return the EntityId
+      EntityId entityId = (EntityId) entities[0];
+      if (entityId.getClass() == entityClass) {
+        return entityId;
       }
-      return EntityIdFactory.getEntityId(entityParts, enforceOn);
+      throw new IllegalArgumentException(String.format("Enforcement was specified on %s but an instance of %s was " +
+                                                         "provided.", entityClass, entityId.getClass()));
+    } else {
+      return createEntityId(entityClass, entities);
     }
   }
 
-  private static class EntityIdFactory {
-    public static EntityId getEntityId(String[] entityParts, Class enforceOn) {
-      if (enforceOn.equals(InstanceId.class)) {
-        return new InstanceId(entityParts[0]);
-      } else if (enforceOn.equals(NamespaceId.class)) {
-        return new NamespaceId(entityParts[0]);
-      } else if (enforceOn.equals(ArtifactId.class)) {
-        return new ArtifactId(entityParts[0], entityParts[1], entityParts[2]);
-      } else if (enforceOn.equals(DatasetId.class)) {
-        return new DatasetId(entityParts[0], entityParts[1]);
-      } else if (enforceOn.equals(StreamId.class)) {
-        return new StreamId(entityParts[0], entityParts[1]);
-      } else if (enforceOn.equals(ApplicationId.class)) {
-        return new ApplicationId(entityParts[0], entityParts[1]);
-      } else if (enforceOn.equals(ProgramId.class)) {
-        return new ProgramId(entityParts[0], entityParts[1], entityParts[2], entityParts[3]);
-      } else {
-        // safeguard: this should not happen since we have already verified all that the entity id can be created from
-        // the given parts
-        throw new IllegalArgumentException(String.format("Failed to create an %s from the the given entity parts %s",
-                                                         enforceOn, Arrays.toString(entityParts)));
+
+  private static EntityId createEntityId(Class<? extends EntityId> entityClass, Object[] args)
+    throws IllegalAccessException, InvocationTargetException, InstantiationException {
+    Constructor<? extends EntityId> constructor = getConstructor(entityClass);
+
+    // its okay to call with object [] without checking that all of these are string because if one of them is not
+    // then newInstance call will throw IllegalArgumentException.
+    return constructor.newInstance(args);
+  }
+
+  /**
+   * Return the required size of entity parts to create the {@link EntityId} on which authorization enforcement
+   * needs to be done as specified in {@link AuthEnforce#enforceOn()}
+   *
+   * @param enforceOn the {@link Type} of {@link EntityId} on which enforcement needs to be done
+   * @return the size of entity parts needed to create the above {@link EntityId}
+   * @throws IllegalArgumentException of the given enforceOn is not of supported {@link EntityId} type
+   */
+  static int verifyAndGetRequiredSize(Type enforceOn) {
+    if (enforceOn.equals(Type.getType(InstanceId.class))) {
+      return getConstructor(InstanceId.class).getParameterTypes().length;
+    } else if (enforceOn.equals(Type.getType(NamespaceId.class))) {
+      return getConstructor(NamespaceId.class).getParameterTypes().length;
+    } else if (enforceOn.equals(Type.getType(StreamId.class))) {
+      return getConstructor(StreamId.class).getParameterTypes().length;
+    } else if (enforceOn.equals(Type.getType(DatasetId.class))) {
+      return getConstructor(DatasetId.class).getParameterTypes().length;
+    } else if (enforceOn.equals(Type.getType(ApplicationId.class))) {
+      return getConstructor(ApplicationId.class).getParameterTypes().length;
+    } else if (enforceOn.equals(Type.getType(ArtifactId.class))) {
+      return getConstructor(ArtifactId.class).getParameterTypes().length;
+    } else if (enforceOn.equals(Type.getType(ProgramId.class))) {
+      return getConstructor(ProgramId.class).getParameterTypes().length;
+    } else {
+      throw new IllegalArgumentException(String.format("Failed to determine required number of entity parts " +
+                                                         "needed for %s. Please make sure its a valid %s class " +
+                                                         "for authorization enforcement",
+                                                       enforceOn.getClassName(), EntityId.class.getSimpleName()));
+    }
+  }
+
+  private static Constructor<? extends EntityId> getConstructor(Class<? extends EntityId> entityClass) {
+    Constructor<? extends EntityId> constructor = CONS_CACHE.get(entityClass);
+    if (constructor != null) {
+      return constructor;
+    }
+
+    // Find the constructor with all String parameters
+    for (Constructor<?> curConstructor : entityClass.getConstructors()) {
+      if (Iterables.all(Arrays.asList(curConstructor.getParameterTypes()),
+                        Predicates.<Class<?>>equalTo(String.class))) {
+        constructor = (Constructor<? extends EntityId>) curConstructor;
+        break;
       }
     }
+    if (constructor != null) {
+      // It's ok to just put. If there are concurrent calls, both of them should end up with the same constructor.
+      CONS_CACHE.put(entityClass, constructor);
+      return constructor;
+    }
+    // since constructor was not found throw an exception
+    throw new IllegalStateException(String.format("Failed to find constructor for %s whose parameters are only of " +
+                                                    "String type", entityClass.getName()));
   }
 }
