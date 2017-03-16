@@ -18,14 +18,6 @@ package co.cask.cdap.common.security;
 
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.common.lang.ClassRewriter;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.InstanceId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -136,6 +128,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
   private static final Type AUTHORIZATION_ENFORCER_TYPE = Type.getType(AuthorizationEnforcer.class);
   private static final Type AUTHENTICATION_CONTEXT_TYPE = Type.getType(AuthenticationContext.class);
   private static final Type ACTION_TYPE = Type.getType(Action.class);
+  private static final Type NAME_TYPE = Type.getType(Name.class);
   private static final Type AUTH_ENFORCE_UTIL_TYPE = Type.getType(AuthEnforceUtil.class);
   private static final Set<String> SUPPORTED_PARAMETER_ANNOTATIONS = Sets.newHashSet(Name.class.getName(),
                                                                                      QueryParam.class.getName(),
@@ -164,7 +157,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
     // in second pass we COMPUTE_FRAMES and visit classes with EXPAND_FRAMES
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
     cr.accept(new AuthEnforceAnnotationRewriter(className, cw, classVisitor.getFieldDetails(), methodAnnotations),
-            ClassReader.EXPAND_FRAMES);
+              ClassReader.EXPAND_FRAMES);
     return cw.toByteArray();
   }
 
@@ -318,14 +311,13 @@ public class AuthEnforceRewriter implements ClassRewriter {
                                        Map<Integer, ParameterDetail> parameterAnnotationNode,
                                        Map<String, Integer> paramAnnotation) {
           Type entityPartType = getEntityPartType(parameterAnnotationNode, paramAnnotation, entityPartDetails.get(0));
+          // if the first entity part is not string then it should be of same type specified in enforce on
           // TODO: Later change this to even work with parent type as we will support enforceOn parent type
-          // if the first entity part is not string then it should be on same type specified in enforce on
           if (!entityPartType.equals(Type.getType(String.class))) {
             Preconditions.checkArgument(entityPartType.equals(enforceOn), "Found invalid entity type '%s' for " +
                                           "enforceOn '%s' in annotation on '%s' method in '%s' class.",
                                         entityPartType.getClassName(), enforceOn.getClassName(), methodName, className);
-            Preconditions.checkArgument(getRequiredSize(enforceOn) != 0, "Invalid enforceOn %s provided.",
-                                        enforceOn.getClassName());
+            AuthEnforceUtil.verifyAndGetRequiredSize(enforceOn);
           } else {
             // Since the entity part/parts provided is of String type so validate that we have sufficient part for
             // EntityId creation
@@ -337,10 +329,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
                                             "AuthEnforce. Only String is supported in multiple parts.",
                                           entityPartDetail.getEntityName(), entityPartType);
             }
-            int requiredSize = getRequiredSize(enforceOn);
-            Preconditions.checkArgument(requiredSize != 0, "Failed to determine required number of entity parts " +
-              "needed for %s. Please make sure its a valid %s class for authorization enforcement",
-                                        enforceOn.getClassName(), EntityId.class.getSimpleName());
+            int requiredSize = AuthEnforceUtil.verifyAndGetRequiredSize(enforceOn);
             Preconditions.checkArgument(requiredSize == entityPartDetails.size(), "Found %s entity parts in " +
                                           "AuthEnforce annotation on method %s in class %s to do enforcement on %s " +
                                           "which requires %s entity parts or an %s", entityPartDetails.size(),
@@ -353,29 +342,6 @@ public class AuthEnforceRewriter implements ClassRewriter {
                                        Map<String, Integer> paramAnnotation, EntityPartDetail entityPartDetail) {
           return entityPartDetail.isField() ? fieldDetails.get(entityPartDetail.getEntityName()) :
             parameterAnnotationNode.get(paramAnnotation.get(entityPartDetail.getEntityName())).getParameterType();
-        }
-
-        /**
-         * Return the required size of entity parts to create the {@link EntityId} on which authorization enforcement
-         * needs to be done as specified in {@link AuthEnforce#enforceOn()}
-         *
-         * @param enforceOn the {@link Type} of {@link EntityId} on which enforcement needs to be done
-         * @return the size of entity parts needed to create the above {@link EntityId} or 0 if found an invalid
-         * {@link EntityId} type.
-         */
-        private int getRequiredSize(Type enforceOn) {
-          if (enforceOn.equals(Type.getType(InstanceId.class)) || enforceOn.equals(Type.getType(NamespaceId.class))) {
-            return 1;
-          } else if (enforceOn.equals(Type.getType(StreamId.class)) ||
-            enforceOn.equals(Type.getType(DatasetId.class)) || enforceOn.equals(Type.getType(ApplicationId.class))) {
-            return 2;
-          } else if (enforceOn.equals(Type.getType(ArtifactId.class))) {
-            return 3;
-          } else if (enforceOn.equals(Type.getType(ProgramId.class))) {
-            return 4;
-          } else {
-            return 0;
-          }
         }
       };
     }
@@ -564,18 +530,19 @@ public class AuthEnforceRewriter implements ClassRewriter {
 
   private static int getPreferredParameter(ParameterDetail previousDetails, int prevPosition,
                                            ParameterDetail currentDetails, int currentPosition) {
-    if (Name.class.getName().equals(Type.getType(previousDetails.getAnnotationNode().desc).getClassName()) ||
-            Name.class.getName().equals(Type.getType(currentDetails.getAnnotationNode().desc).getClassName())) {
+    if (NAME_TYPE.equals(Type.getType(previousDetails.getAnnotationNode().desc)) ||
+      NAME_TYPE.equals(Type.getType(currentDetails.getAnnotationNode().desc))) {
       // if only one of them have Name annotation then give preference to that
-      if (!(Name.class.getName().equals(Type.getType(previousDetails.getAnnotationNode().desc).getClassName()) &&
-              Name.class.getName().equals(Type.getType(currentDetails.getAnnotationNode().desc).getClassName()))) {
-        return Name.class.getName().equals(Type.getType(previousDetails.getAnnotationNode().desc).getClassName()) ?
-                prevPosition : currentPosition;
+      if (!(NAME_TYPE.equals(Type.getType(previousDetails.getAnnotationNode().desc)) &&
+        NAME_TYPE.equals(Type.getType(currentDetails.getAnnotationNode().desc)))) {
+        return NAME_TYPE.equals(Type.getType(previousDetails.getAnnotationNode().desc)) ?
+          prevPosition : currentPosition;
       }
     }
     throw new IllegalArgumentException(String.format("Found conflicting annotation %s and %s. If possible please " +
-                    "give preference to a parameter through %s annotation or use unique names.",
-            previousDetails.getAnnotationNode(), currentDetails.getAnnotationNode(), Name.class.getName()));
+                                                       "give preference to a parameter through %s annotation or " +
+                                                       "use unique names.", previousDetails.getAnnotationNode(),
+                                                     currentDetails.getAnnotationNode(), Name.class.getName()));
   }
 
   /**
