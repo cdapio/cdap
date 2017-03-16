@@ -41,6 +41,22 @@ public class CConfigurationUtil extends Configuration {
   }
 
   /**
+   * Copies the prefixed properties from {@link CConfiguration} into {@link org.apache.hadoop.conf.Configuration}.
+   * @param prefix the prefix for the property which need to be copied
+   * @param cConf source config
+   * @param destination destination config
+   */
+  public static void copyPrefixedProperties(String prefix, CConfiguration cConf,
+                                            org.apache.hadoop.conf.Configuration destination) {
+    Properties props = cConf.getProps();
+    for (String property : props.stringPropertyNames()) {
+      if (property.startsWith(prefix)) {
+        destination.set(property, cConf.get(property));
+      }
+    }
+  }
+
+  /**
    * Get extra jars set in {@link CConfiguration} as a list of {@link URI}.
    *
    * @param cConf {@link CConfiguration} containing the extra jars

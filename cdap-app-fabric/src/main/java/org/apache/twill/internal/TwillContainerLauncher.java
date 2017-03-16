@@ -133,7 +133,11 @@ public final class TwillContainerLauncher {
       firstCommand = "$JAVA_HOME/bin/java";
     }
 
-    int memory = Resources.computeMaxHeapSize(containerInfo.getMemoryMB(), reservedMemory, Constants.HEAP_MIN_RATIO);
+    // Back-porting the feature introduced in TWILL-216
+    String heapMinRatioStr = System.getenv().get(co.cask.cdap.common.conf.Constants.ENV_TWILL_HEAP_RESERVED_MIN_RATIO);
+    double heapMinRatio = heapMinRatioStr == null ? Constants.HEAP_MIN_RATIO : Double.parseDouble(heapMinRatioStr);
+
+    int memory = Resources.computeMaxHeapSize(containerInfo.getMemoryMB(), reservedMemory, heapMinRatio);
     commandBuilder.add("-Djava.io.tmpdir=tmp",
                        "-Dyarn.container=$" + EnvKeys.YARN_CONTAINER_ID,
                        "-Dtwill.runnable=$" + EnvKeys.TWILL_APP_NAME + ".$" + EnvKeys.TWILL_RUNNABLE_NAME,
