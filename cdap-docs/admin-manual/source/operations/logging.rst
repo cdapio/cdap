@@ -139,6 +139,9 @@ restarted for the modified logback file to take effect.
 - For **Distributed CDAP:** the ``logback-container.xml`` file is located in ``/etc/cdap/conf``.
 - For **Standalone CDAP:** the file ``logback.xml`` file, located in  ``<cdap-sdk-home>/conf``,
   configures both "container" and CDAP system service logging.
+  
+You can also use a custom "logback" file with your application, as described in the
+Developers' Manual section :ref:`application-logback`.
 
 Changing Program Log Levels
 ---------------------------
@@ -147,8 +150,25 @@ The CDAP :ref:`Logging HTTP RESTful API
 for a particular run of a program. Once changed, they can be reset back to what they
 started with by using the :ref:`reset endpoint <http-restful-api-logging-resetting>`.
 
+To change the log level before an application starts, you can add the logger name as the
+key and log level as the value in the preferences. The logger name should be prefixed with
+``system.log.level``. 
+
+For example, if you want to change the log level of the ``HelloWorld`` class of the
+:ref:`Hello World example <examples-hello-world>` to ``DEBUG``, you would use
+``system.log.level.co.cask.cdap.examples.helloworld.HelloWorld`` as the key and ``DEBUG``
+as the value. This can be applied to any package or classes. If the logger name is
+omitted, it will change the log level of ROOT.
+
+To change the log level of a program dynamically (for a worker, flow, or service which are
+running), see :ref:`Logging HTTP RESTful API
+<http-restful-api-logging-changing-program-log-levels>`. You can change the log level at
+run level of a worker, flow, or service.
+
 **Note:** The log levels can only be changed for programs that are running under
-Distributed CDAP.
+Distributed CDAP. Changing the log levels for programs in the CDAP Standalone is not
+supported. You have to either modify the ``logback.xml`` or :ref:`provide
+<application-logback>` a ``logback.xml`` for your application. 
 
 
 .. _logging-monitoring-system-services-logs:
