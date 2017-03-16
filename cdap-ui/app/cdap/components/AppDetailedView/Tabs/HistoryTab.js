@@ -127,15 +127,19 @@ export default class HistoryTab extends Component {
                   <td>{history.runid}</td>
                   <td>{history.status}</td>
                   <td>
-                    <LogAction
-                      entity={{
-                        id: history.programName,
-                        uniqueId: history.runid,
-                        runId: history.runid,
-                        applicationId: history.appId,
-                        programType: history.programType
-                      }}
-                    />
+                    <div className="fast-actions-container">
+                      <h4 className="text-xs-left btn-group">
+                        <LogAction
+                          entity={{
+                            id: history.programName,
+                            uniqueId: history.runid,
+                            runId: history.runid,
+                            applicationId: history.appId,
+                            programType: history.programType
+                          }}
+                        />
+                      </h4>
+                    </div>
                   </td>
                 </tr>
               );
