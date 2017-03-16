@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _workflows:
 
@@ -325,7 +325,7 @@ Here is an example, taken from the
 
 .. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
    :language: java
-   :lines: 110-128
+   :lines: 112-130
 
 **Note:** The test of ``workflowToken != null`` is only required because this Reducer could
 be used outside of a workflow. When run from within a workflow, the token is guaranteed to
@@ -393,7 +393,7 @@ the :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example's ``Clu
 
 .. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ClusteringUtils.scala
    :language: scala
-   :lines: 121-126
+   :lines: 121-125
    :dedent: 4
 
 Persisting the WorkflowToken
