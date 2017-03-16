@@ -823,7 +823,7 @@
 
   <property>
     <name>explore.executor.container.memory.mb</name>
-    <value>1024</value>
+    <value>2048</value>
     <description>
       Memory in megabytes for each CDAP Explore executor instance. This is
       explicitly set differently than ${master.service.memory.mb} as Explore
