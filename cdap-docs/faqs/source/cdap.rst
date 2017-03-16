@@ -43,7 +43,7 @@ The only one you should need to configure initially is ``router.server.address``
 used by the UI to connect to the router.  As an example, ideally routers running in
 production would have a load balancer in front, which is what you would set
 ``router.server.address`` to. Alternatively, you could configure each UI instance to point
-to a particular router, and if you have both UI and router running on each node, you could
+to a particular router, and if you have both the UI and router running on the same node, you could
 use ``'127.0.0.1'``.
 
 
@@ -138,7 +138,8 @@ This is indicative that the UI cannot connect to the CDAP system service contain
   The CDAP Master, once it starts, starts the other CDAP system service containers, so if it isn't running,
   the others won't be able to start or work correctly. It can take several minutes for everything to start up.
 
-- If this doesn't resolve the issue, then it means the CDAP system services were unable to launch.
+- If the CDAP Master service container shows as RUNNING in YARN, then it means the CDAP
+  system services were unable to launch.
   Ensure :ref:`YARN has enough spare memory and vcore capacity <faq-installation-startup-memory-core-requirements>`.  
   CDAP attempts to launch between 8 and 11 containers, depending on the configuration. Check
   the master container (Application Master) logs to see if it was able to launch all containers.
@@ -312,27 +313,11 @@ values that can be adjusted.
 
 .. rubric:: Upgrading CDAP
 
-
 Can a CDAP installation be upgraded more than one version?
 ----------------------------------------------------------
-In general, no. (The exception is an upgrade from 2.8.x to 3.0.x.)
-This table lists the upgrade paths available for different CDAP versions:
-
-+---------+---------------------+
-| Version | Upgrade Directly To |
-+=========+=====================+
-| 3.2.x   | 3.3.x               |
-+---------+---------------------+
-| 3.1.x   | 3.2.x               |
-+---------+---------------------+
-| 3.0.x   | 3.1.x               |
-+---------+---------------------+
-| 2.8.x   | 3.0.x               |
-+---------+---------------------+
-| 2.6.3   | 2.8.2               |
-+---------+---------------------+
-
-If you are doing a new installation, we recommend using the current version of CDAP.
+In general, yes. Details on upgrading are available for the `different supported
+distributions <upgrading-index>`. If you are doing a new installation, we recommend using
+the current version of CDAP.
 
 
 .. _faqs-cloudera-troubleshooting-upgrade-cdh:
