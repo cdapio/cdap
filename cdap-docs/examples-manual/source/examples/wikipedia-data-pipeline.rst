@@ -86,6 +86,8 @@ This application demonstrates:
   and the other using K-Means. The application is packaged with the two possible application config JSON files at
   *resources/wikipedia-kmeans.json* and *resources/wikipedia-lda.json* in the application directory.
 
+- **The use of runtime arguments** in programs to customize for specific use cases. A namespace runtime argument can be
+  provided to access datasets from a different namespace than the one where the application is deployed.
 
 .. Building and Starting
 .. =====================
