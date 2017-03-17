@@ -17,7 +17,6 @@
 import React, {Component} from 'react';
 import {Provider} from 'react-redux';
 require('./SchemaEditor.scss');
-import {getParsedSchema} from 'components/SchemaEditor/SchemaHelpers';
 import RecordSchemaRow from 'components/SchemaEditor/RecordSchemaRow';
 import SchemaStore from 'components/SchemaEditor/SchemaStore';
 import cdapavsc from 'cdap-avsc';
@@ -41,7 +40,7 @@ export default class SchemaEditor extends Component {
       let state = SchemaStore.getState();
       let rows;
       try {
-        rows = getParsedSchema(state.schema);
+        rows = cdapavsc.parse(state.schema, { wrapUnions: true });
       } catch (e) {
         return;
       }
