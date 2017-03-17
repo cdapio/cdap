@@ -240,7 +240,7 @@ export default class DatasetDetailedView extends Component {
     if (this.state.notFound) {
       return (
         <Page404
-          entityType="Dataset"
+          entityType="dataset"
           entityName={this.props.params.datasetId}
         />
       );

@@ -241,7 +241,7 @@ export default class StreamDetailedView extends Component {
     if (this.state.notFound) {
       return (
         <Page404
-          entityType="Stream"
+          entityType="stream"
           entityName={this.props.params.streamId}
         />
       );
