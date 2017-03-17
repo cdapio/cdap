@@ -46,6 +46,7 @@ else:
     print "Unable to build property tables from the cdap-defaults.xml file"
 
 writing_logs_to_kafka = [
+    "log.kafka.topic",
     "log.publish.num.partitions",
     "log.publish.partition.key",
     ]
