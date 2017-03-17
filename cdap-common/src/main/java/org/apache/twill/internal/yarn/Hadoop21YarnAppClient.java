@@ -29,6 +29,7 @@ import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.client.api.YarnClientApplication;
 import org.apache.twill.api.TwillSpecification;
+import org.apache.twill.internal.Configs;
 import org.apache.twill.internal.Constants;
 import org.apache.twill.internal.ProcessController;
 import org.apache.twill.internal.ProcessLauncher;
@@ -92,9 +93,12 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
         appSubmissionContext.setQueue(schedulerQueue);
       }
 
-      // TODO: Make it adjustable through TwillSpec (TWILL-90)
       // Set the resource requirement for AM
-      final Resource capability = adjustMemory(response, Resource.newInstance(Constants.APP_MASTER_MEMORY_MB, 1));
+      // This is back-port from TWILL-90. Since we don't have a copy of twill Configs class, the name of the config
+      // is defined as a string
+      int memoryMB = configuration.getInt(co.cask.cdap.common.conf.Constants.CFG_TWILL_YARN_AM_MEMORY_MB,
+                                          co.cask.cdap.common.conf.Constants.DEFAULT_TWILL_YARN_AM_MEMORY_MB);
+      final Resource capability = adjustMemory(response, Resource.newInstance(memoryMB, 1));
       ApplicationMasterInfo appMasterInfo = new ApplicationMasterInfo(appId, capability.getMemory(),
                                                                       capability.getVirtualCores());
 

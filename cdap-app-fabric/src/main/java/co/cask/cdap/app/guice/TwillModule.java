@@ -67,9 +67,8 @@ public class TwillModule extends PrivateModule {
     public TwillRunnerService get() {
       String zkConnectStr = cConf.get(Constants.Zookeeper.QUORUM) + cConf.get(Constants.CFG_TWILL_ZK_NAMESPACE);
 
-      // Copy the yarn config and set the max heap ratio.
+      // Copy the yarn config
       YarnConfiguration yarnConfig = new YarnConfiguration(yarnConf);
-      yarnConfig.set(Constants.CFG_TWILL_RESERVED_MEMORY_MB, cConf.get(Constants.CFG_TWILL_RESERVED_MEMORY_MB));
       YarnTwillRunnerService runner = new YarnTwillRunnerService(yarnConfig,
                                                                  zkConnectStr,
                                                                  LocationFactories.namespace(locationFactory, "twill"));

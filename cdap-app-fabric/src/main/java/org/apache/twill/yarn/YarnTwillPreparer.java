@@ -132,6 +132,7 @@ final class YarnTwillPreparer implements TwillPreparer {
   private final List<String> applicationClassPaths = Lists.newArrayList();
   private final Credentials credentials;
   private final int reservedMemory;
+  private final double heapMinRatio;
   private String user;
   private String schedulerQueue;
   private String extraOptions;
@@ -158,6 +159,9 @@ final class YarnTwillPreparer implements TwillPreparer {
     this.credentials = createCredentials();
     this.reservedMemory = yarnConfig.getInt(Configs.Keys.JAVA_RESERVED_MEMORY_MB,
                                             Configs.Defaults.JAVA_RESERVED_MEMORY_MB);
+    // Back-porting the feature introduced in TWILL-216
+    this.heapMinRatio = yarnConfig.getDouble(co.cask.cdap.common.conf.Constants.CFG_TWILL_HEAP_RESERVED_MIN_RATIO,
+                                             Constants.HEAP_MIN_RATIO);
     this.user = System.getProperty("user.name");
     this.extraOptions = extraOptions;
     this.logLevel = logLevel;
@@ -393,9 +397,14 @@ final class YarnTwillPreparer implements TwillPreparer {
             LOG.debug("Log level is set to {} for the Twill application.", logLevel);
             builder.put(EnvKeys.TWILL_APP_LOG_LEVEL, logLevel.toString());
 
-            int memory = Resources.computeMaxHeapSize(appMasterInfo.getMemoryMB(),
-                                                      Constants.APP_MASTER_RESERVED_MEMORY_MB,
-                                                      Constants.HEAP_MIN_RATIO);
+            // Back-porting the feature introduced in TWILL-216
+            builder.put(co.cask.cdap.common.conf.Constants.ENV_TWILL_HEAP_RESERVED_MIN_RATIO,
+                        Double.toString(heapMinRatio));
+
+            int reservedMemoryMB = yarnConfig.getInt(
+              co.cask.cdap.common.conf.Constants.CFG_TWILL_YARN_AM_RESERVED_MEMORY_MB,
+              co.cask.cdap.common.conf.Constants.DEFAULT_TWILL_YARN_AM_RESERVED_MEMORY_MB);
+            int memory = Resources.computeMaxHeapSize(appMasterInfo.getMemoryMB(), reservedMemoryMB, heapMinRatio);
             return launcher.prepareLaunch(builder.build(), localFiles.values(), credentials)
               .addCommand(
                 "$JAVA_HOME/bin/java",

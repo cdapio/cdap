@@ -882,8 +882,19 @@ public final class Constants {
   public static final String CFG_HDFS_LIB_DIR = "hdfs.lib.dir";
 
   public static final String CFG_TWILL_ZK_NAMESPACE = "twill.zookeeper.namespace";
-  public static final String CFG_TWILL_RESERVED_MEMORY_MB = "twill.java.reserved.memory.mb";
   public static final String CFG_TWILL_NO_CONTAINER_TIMEOUT = "twill.no.container.timeout";
+
+  // These are for back-porting of TWILL-90
+  public static final String CFG_TWILL_YARN_AM_MEMORY_MB = "twill.yarn.am.memory.mb";
+  public static final int DEFAULT_TWILL_YARN_AM_MEMORY_MB = 512;
+  public static final String CFG_TWILL_YARN_AM_RESERVED_MEMORY_MB = "twill.yarn.am.reserved.memory.mb";
+  public static final int DEFAULT_TWILL_YARN_AM_RESERVED_MEMORY_MB = 150;
+  // End back-porting of TWILL-90
+
+  // Back-porting of TWILL-216
+  public static final String CFG_TWILL_HEAP_RESERVED_MIN_RATIO = "twill.java.heap.memory.ratio";
+  public static final String ENV_TWILL_HEAP_RESERVED_MIN_RATIO = "TWILL_HEAP_MIN_RATIO";
+  // End back-porting of TWILL-216
 
   /**
    * Data Fabric.
