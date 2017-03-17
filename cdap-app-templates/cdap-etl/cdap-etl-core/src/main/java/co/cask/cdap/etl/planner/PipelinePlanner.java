@@ -16,7 +16,6 @@
 
 package co.cask.cdap.etl.planner;
 
-import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.proto.Connection;
@@ -42,11 +41,14 @@ public class PipelinePlanner {
   private final Set<String> reduceTypes;
   private final Set<String> isolationTypes;
   private final Set<String> supportedPluginTypes;
+  private final Set<String> actionTypes;
 
-  public PipelinePlanner(Set<String> supportedPluginTypes, Set<String> reduceTypes, Set<String> isolationTypes) {
+  public PipelinePlanner(Set<String> supportedPluginTypes, Set<String> reduceTypes, Set<String> isolationTypes,
+                         Set<String> actionTypes) {
     this.reduceTypes = ImmutableSet.copyOf(reduceTypes);
     this.isolationTypes = ImmutableSet.copyOf(isolationTypes);
     this.supportedPluginTypes = ImmutableSet.copyOf(supportedPluginTypes);
+    this.actionTypes = ImmutableSet.copyOf(actionTypes);
   }
 
   /**
@@ -78,14 +80,16 @@ public class PipelinePlanner {
     Set<String> actionNodes = new HashSet<>();
     Map<String, StageSpec> specs = new HashMap<>();
 
+
     for (StageSpec stage : spec.getStages()) {
-      if (reduceTypes.contains(stage.getPlugin().getType())) {
+      String pluginType = stage.getPlugin().getType();
+      if (reduceTypes.contains(pluginType)) {
         reduceNodes.add(stage.getName());
       }
-      if (isolationTypes.contains(stage.getPlugin().getType())) {
+      if (isolationTypes.contains(pluginType)) {
         isolationNodes.add(stage.getName());
       }
-      if (Action.PLUGIN_TYPE.equals(stage.getPlugin().getType())) {
+      if (actionTypes.contains(pluginType)) {
         // Collect all Action nodes from spec
         actionNodes.add(stage.getName());
       }
@@ -199,7 +203,8 @@ public class PipelinePlanner {
     // Create single stage phases for the Action nodes
     for (String node : actionNodes) {
       StageSpec actionStageSpec = specs.get(node);
-      StageInfo actionStageInfo = StageInfo.builder(node, Action.PLUGIN_TYPE)
+      String type = specs.get(node).getPlugin().getType();
+      StageInfo actionStageInfo = StageInfo.builder(node, type)
         .addInputs(actionStageSpec.getInputs())
         .addInputSchemas(actionStageSpec.getInputSchemas())
         .addOutputs(actionStageSpec.getOutputs())

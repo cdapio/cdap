@@ -21,12 +21,16 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
 import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.datapipeline.mock.SpamMessage;
+import co.cask.cdap.datapipeline.spark.LineFilterProgram;
+import co.cask.cdap.datapipeline.spark.WordCount;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.mock.action.MockAction;
@@ -48,7 +52,6 @@ import co.cask.cdap.etl.mock.transform.FilterErrorTransform;
 import co.cask.cdap.etl.mock.transform.FlattenErrorTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
-import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
@@ -77,7 +80,10 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -98,6 +104,9 @@ public class DataPipelineTest extends HydratorTestBase {
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
                                                                        Constants.Security.Store.PROVIDER, "file");
+  private static final String WORDCOUNT_PLUGIN = "wordcount";
+  private static final String FILTER_PLUGIN = "filterlines";
+  private static final String SPARK_TYPE = co.cask.cdap.etl.common.Constants.SPARK_PROGRAM_PLUGIN_TYPE;
 
   @BeforeClass
   public static void setupTest() throws Exception {
@@ -106,14 +115,101 @@ public class DataPipelineTest extends HydratorTestBase {
     }
     setupBatchArtifacts(APP_ARTIFACT_ID, DataPipelineApp.class);
 
+    // external spark programs must be explicitly specified
+    Map<String, PluginPropertyField> emptyMap = ImmutableMap.of();
+    Set<PluginClass> extraPlugins = ImmutableSet.of(
+      new PluginClass(SPARK_TYPE, WORDCOUNT_PLUGIN, "", WordCount.class.getName(), null, emptyMap));
     // add some test plugins
-    addPluginArtifact(NamespaceId.DEFAULT.artifact("spark-plugins", "1.0.0"), APP_ARTIFACT_ID,
-                      NaiveBayesTrainer.class, NaiveBayesClassifier.class);
+    addPluginArtifact(NamespaceId.DEFAULT.artifact("spark-plugins", "1.0.0"), APP_ARTIFACT_ID, extraPlugins,
+                      NaiveBayesTrainer.class, NaiveBayesClassifier.class, WordCount.class, LineFilterProgram.class);
   }
 
   @After
   public void cleanupTest() throws Exception {
     getMetricsManager().resetAll();
+  }
+
+  @Test
+  public void testExternalSparkProgramPipelines() throws Exception {
+    File testDir = TMP_FOLDER.newFolder("sparkProgramTest");
+
+    File input = new File(testDir, "poem.txt");
+    try (PrintWriter writer = new PrintWriter(input.getAbsolutePath())) {
+      writer.println("this is a poem");
+      writer.println("it is a bad poem");
+    }
+    File wordCountOutput = new File(testDir, "poem_counts");
+    File filterOutput = new File(testDir, "poem_filtered");
+
+    String args = String.format("%s %s", input.getAbsolutePath(), wordCountOutput.getAbsolutePath());
+    Map<String, String> wordCountProperties = ImmutableMap.of("program.args", args);
+    Map<String, String> filterProperties = ImmutableMap.of(
+      "inputPath", input.getAbsolutePath(),
+      "outputPath", filterOutput.getAbsolutePath(),
+      "filterStr", "bad");
+
+    ETLBatchConfig etlConfig = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("wordcount", new ETLPlugin(WORDCOUNT_PLUGIN, SPARK_TYPE, wordCountProperties, null)))
+      .addStage(new ETLStage("filter", new ETLPlugin(FILTER_PLUGIN, SPARK_TYPE, filterProperties, null)))
+      .addConnection("wordcount", "filter")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("sparkProgramTest");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    manager.start();
+    manager.waitForRun(ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
+
+    // check wordcount output
+    /*
+        this is a poem
+        it is a bad poem
+     */
+    Map<String, Integer> expected = new HashMap<>();
+    expected.put("this", 1);
+    expected.put("is", 2);
+    expected.put("a", 2);
+    expected.put("poem", 2);
+    expected.put("it", 1);
+    expected.put("bad", 1);
+    Map<String, Integer> counts = new HashMap<>();
+    File[] files = wordCountOutput.listFiles();
+    Assert.assertNotNull("No output files for wordcount found.", files);
+    for (File file : files) {
+      String fileName = file.getName();
+      if (fileName.startsWith(".") || fileName.equals("_SUCCESS")) {
+        continue;
+      }
+      try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+          String[] fields = line.split(" ");
+          counts.put(fields[0], Integer.parseInt(fields[1]));
+        }
+      }
+    }
+    Assert.assertEquals(expected, counts);
+
+    // check filter output
+    files = filterOutput.listFiles();
+    Assert.assertNotNull("No output files for filter program found.", files);
+    List<String> expectedLines = ImmutableList.of("this is a poem");
+    List<String> actualLines = new ArrayList<>();
+    for (File file : files) {
+      String fileName = file.getName();
+      if (fileName.startsWith(".") || fileName.equals("_SUCCESS")) {
+        continue;
+      }
+      try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+          actualLines.add(line);
+        }
+      }
+    }
+    Assert.assertEquals(expectedLines, actualLines);
   }
 
   @Test
