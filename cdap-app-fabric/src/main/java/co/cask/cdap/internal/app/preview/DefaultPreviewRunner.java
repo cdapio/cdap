@@ -54,6 +54,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,13 +63,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.annotation.Nullable;
 
 /**
  * Default implementation of the {@link PreviewRunner}.
  */
 public class DefaultPreviewRunner extends AbstractIdleService implements PreviewRunner {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewRunner.class);
   private static final Gson GSON = new Gson();
+
   private static final ProgramTerminator NOOP_PROGRAM_TERMINATOR = new ProgramTerminator() {
     @Override
     public void stop(ProgramId programId) throws Exception {
@@ -87,8 +94,10 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final ProgramStore programStore;
 
   private volatile PreviewStatus status;
+  private volatile boolean killedByTimer;
   private ProgramId programId;
   private ProgramRunId runId;
+  private Timer timer;
 
   @Inject
   DefaultPreviewRunner(DatasetService datasetService, LogAppenderInitializer logAppenderInitializer,
@@ -130,7 +139,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       applicationLifecycleService.deployApp(preview.getParent(), preview.getApplication(), preview.getVersion(),
                                             artifactId.toId(), config, NOOP_PROGRAM_TERMINATOR);
     } catch (Exception e) {
-      this.status = new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED, new BasicThrowable(e));
+      this.status = new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED, new BasicThrowable(e), null, null);
       throw e;
     }
 
@@ -139,27 +148,53 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       programId, previewConfig == null ? Collections.<String, String>emptyMap() : previewConfig.getRuntimeArgs(),
       false);
 
+    // Only have timer if there is a timeout setting.
+    if (previewConfig.getTimeout() != null) {
+      timer = new Timer();
+      final int timeout =  previewConfig.getTimeout();
+      timer.schedule(new TimerTask() {
+        @Override
+        public void run() {
+          try {
+            LOG.info("Stopping the preview since it has reached running time: {} mins.", timeout);
+            stopPreview();
+            killedByTimer = true;
+          } catch (Exception e) {
+            LOG.debug("Error shutting down the preview run with id: {}", programId);
+          }
+        }
+      }, timeout * 60 * 1000);
+    }
+
     controller.addListener(new AbstractListener() {
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
-        setStatus(new PreviewStatus(PreviewStatus.Status.RUNNING, null));
+        setStatus(new PreviewStatus(PreviewStatus.Status.RUNNING, null, System.currentTimeMillis(), null));
       }
 
       @Override
       public void completed() {
-        setStatus(new PreviewStatus(PreviewStatus.Status.COMPLETED, null));
+        setStatus(new PreviewStatus(PreviewStatus.Status.COMPLETED, null, status.getStartTime(),
+                                    System.currentTimeMillis()));
         shutDownUnrequiredServices();
       }
 
       @Override
       public void killed() {
-        setStatus(new PreviewStatus(PreviewStatus.Status.KILLED, null));
+        if (!killedByTimer) {
+          setStatus(new PreviewStatus(PreviewStatus.Status.KILLED, null, status.getStartTime(),
+                                      System.currentTimeMillis()));
+        } else {
+          setStatus(new PreviewStatus(PreviewStatus.Status.KILLED_BY_TIMER, null, status.getStartTime(),
+                                      System.currentTimeMillis()));
+        }
         shutDownUnrequiredServices();
       }
 
       @Override
       public void error(Throwable cause) {
-        setStatus(new PreviewStatus(PreviewStatus.Status.RUN_FAILED, new BasicThrowable(cause)));
+        setStatus(new PreviewStatus(PreviewStatus.Status.RUN_FAILED, new BasicThrowable(cause), status.getStartTime(),
+                                    System.currentTimeMillis()));
         shutDownUnrequiredServices();
       }
     }, Threads.SAME_THREAD_EXECUTOR);
@@ -231,6 +266,9 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   }
 
   private void shutDownUnrequiredServices() {
+    if (timer != null) {
+      timer.cancel();
+    }
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
     systemArtifactLoader.stopAndWait();
