@@ -125,13 +125,9 @@ public class DataPipelineTest extends HydratorTestBase {
   public void testMacroEvaluationActionPipeline(Engine engine) throws Exception {
     ETLStage action1 = new ETLStage("action1", MockAction.getPlugin("actionTable", "action1.row", "action1.column",
                                                                     "${value}"));
-    ETLStage action2 = new ETLStage("action2", MockAction.getPlugin("actionTable", "action2.row", "action2.column",
-                                                                    "action2.value"));
 
     ETLBatchConfig etlConfig = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder("* * * * *")
       .addStage(action1)
-      .addStage(action2)
-      .addConnection(new Connection(action1.getName(), action2.getName()))
       .setEngine(engine)
       .build();
 
