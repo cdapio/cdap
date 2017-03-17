@@ -661,34 +661,39 @@ features:
     scope: Scope
 
   Resource-Center:
-    Stream:
-      label: Stream
-      description: A stream is used to ingest data into HDFS in real-time or batch.
-      actionbtn0: Create
     Application:
       label: Application
       description: Upload a custom application artifact or create an instance of an application from an existing artifact.
       actionbtn0: Upload
       actionbtn-1: Create
       modalheadertitle: Upload Application
-    Stream-View:
-      label: Stream View
-      description: A stream view is non-materialized view over a stream with schema-on-read capability. Creates a view over an existing stream.
-      actionbtn0: Create
+    Artifact:
+      label: Driver
+      description: A driver is a JAR file that contains third-party code to communicate with systems such as MySQL, Oracle, and PostgreSQL using JDBC.
+      actionbtn0: Upload
+      modalheadertitle: Add Driver
     HydratorPipeline:
       label: Pipeline
       description: A pipeline allows you to ingest, egress, and process data either to, from, or within Hadoop.
       actionbtn0: Create
-    Artifact:
-      label: Driver
-      description: A driver is a JAR file that contains third-party code to talk to external systems, such as MySQL, Oracle, and PostgreSQL.
+    Library:
+      label: Library
+      description: A library is a JAR file that can contains reusable third-party code (e.g. External Spark Programs).
       actionbtn0: Upload
-      modalheadertitle: Add Driver
+      modalheadertitle: Add Library
     Plugins:
       label: Plugin
       description: A plugin is an easy way to extend the functionality of an application.
       actionbtn0: Upload
       modalheadertitle: Upload Plugin Artifact
+    Stream:
+      label: Stream
+      description: A stream is used to ingest data into HDFS in real-time or batch.
+      actionbtn0: Create
+    Stream-View:
+      label: Stream View
+      description: A stream view is non-materialized view over a stream with schema-on-read capability. Creates a view over an existing stream.
+      actionbtn0: Create
 
   SplashScreen:
     dontShow: Don't show this again
@@ -719,18 +724,57 @@ features:
   DatasetDetailedView:
     Title: CDAP | Dataset | {datasetId}
   Wizard:
+    Add-Namespace:
+      callToAction:
+        primary: Switch to '{namespaceId}'
+      headerlabel: Add Namespace
+      Status:
+        creation-error-desc: "Failed to create namespace '%s'."
+        creation-success-desc: Successfully created namespace '{namespaceId}'.
+      Step1:
+        description-label: "Description"
+        description-placeholder: "Namespace description"
+        name-label: "Name"
+        name-placeholder: "Namespace name"
+        scheduler-queue-label: "Scheduler Queue"
+        scheduler-queue-placeholder: "Specify the YARN queue name to be associated with this namespace"
+        sld-desc:  "Specify the name and the description of the namespace."
+        ssd-label: "General Information"
+      Step2:
+        hbase-nm-name-label: "HBase Namespace Name"
+        hbase-nm-name-placeholder: "Existing namespace in HBase for new namespace"
+        hdfs-root-directory-label: "HDFS Root Directory"
+        hdfs-root-directory-placeholder: "Root directory of HDFS for new namespace root"
+        hive-db-name-label: "Hive Database Name"
+        hive-db-name-placeholder: "Hive db name for the new namespace."
+        sld-label: "Specify mapping of namespace resources to the underlying existing storage resources."
+        ssd-label: "Namespace Mapping"
+      Step3:
+        keytab-uri-label: "Keytab URI"
+        keytab-uri-placeholder: "Location of keytab file associated with the principal"
+        principal-label: "Principal"
+        principal-placeholder: "User to be impersonated-as for jobs in the new namespace"
+        sld-label: "Specify credentials for securely impersonating programs running as a specified user."
+        ssd-label: "Security"
+      Step4:
+        name-label: "Name"
+        name-placeholder: "Preference name"
+        sld-label: "Specify preferences to be applied at the namespace level."
+        ssd-label: "Preferences"
+        value-label: "Value"
+        value-placeholder: "Preference value"
     ApplicationUpload:
+      callToAction: View Application Details
       headerlabel: Upload Application
       Step1:
         description: Upload your application JAR
+        filePathLabel: Choose file
         shorttitle: Upload Application
         title: Upload JAR
         uploadHelperText: Upload the JAR for your application that you wish to deploy
-        filePathLabel: Choose file
       success: You have successfully deployed the application "{appName}".
-      callToAction: View Application Details
     ArtifactUpload:
-      headerlabel: Add Third party Driver
+      headerlabel: Add Third Party Driver
       footertitle: Add Driver
       Step1:
         description: Upload your Driver
@@ -747,25 +791,53 @@ features:
         namePlaceholder: Driver Name
         descriptionLabel: Description
         decriptionPlaceholder: Driver Description
-        typeLabel: Type
-        typePlaceholder: Driver Type
         classnameLabel: Class Name
-        classnamePlaceholder: Driver Class Name
+        classnamePlaceholder: Driver Class Name. E.g. com.example.MyClass
       success: You have successfully uploaded the driver "{artifactName}".
       subtitle: You can now create a pipeline to extract data from Database using the driver.
       callToAction: Create a Pipeline
     Done: Done
+    FailedMessage: Failed to {step}
     GoToHomePage: Go to Home Page
+    HydratorPipeline:
+      batchLinkLabel: Batch Pipeline
+      message: Choose the pipeline type you would like to create.
+      realtimeLinkLabel: Realtime Pipeline
+      title: Create a Data Pipeline
     Informational:
+      headerlabel: Download Information
       Step1:
         description: Please follow the steps specified below to download and configure
         shorttitle: Download Information
         title: Information
-      headerlabel: Download Information
+    LibraryUpload:
+      headerlabel: Add Library
+      footertitle: Add Library
+      Step1:
+        description: Upload your Library
+        shorttitle: Upload Library
+        title: Upload JAR
+        filePathLabel: Choose file
+      Step2:
+        description: Configure the settings for your library
+        shorttitle: Library Configuration
+        title: Configure Library
+        parentArtifactLabel: Parent Artifact
+        nameLabel: Name
+        namePlaceholder: Library Name
+        descriptionLabel: Description
+        decriptionPlaceholder: Library Description
+        typeLabel: Type
+        typePlaceholder: Library Type. E.g. sparkprogram
+        classnameLabel: Class Name
+        classnamePlaceholder: Library Class Name. E.g. com.example.MyClass
+      success: You have successfully uploaded the library "{artifactName}".
+      subtitle: You can now create a pipeline using the library.
+      callToAction: Create a Pipeline
     licenseStep:
-      termsandconditions: Terms and Conditions
       agreeAndActionBtnLabel: Agree
       backToCaskBtnLabel: Back to Cask Market
+      termsandconditions: Terms and Conditions
     MarketHydratorPluginUpload:
       headerlabel: Add Hydrator Plugin
     OneStepDeploy:
@@ -774,125 +846,79 @@ features:
         description: Deploy {entityType} using JAR file
         shorttitle: Deploy {entityType}
         title: Deploy JAR
-    Skip: Skipped
-    FailedMessage: Failed to {step}
-    StreamCreate:
-      Step1:
-        shorttitle: General Information
-        title: General
-        description: Provide information about the stream you want to create.
-        ttllabel: TTL
-        ttl-placeholder: Specify the time-to-live for events in seconds
-      Step2:
-        shorttitle: Setup Format and Schema
-        title: Set Format and Schema
-        description: Setting format and schema allows you to perform schema-on-read.
-      Step3:
-        shorttitle: Trigger Setup
-        title: Setup a Trigger
-        description: Setting up a trigger configures CDAP to notify systems observing to start processing.
-        thresholdlabel: The stream will notify any observers upon reaching this threshold to start processing the data in this stream.
-        mblabel: Megabytes (MB)
-      Step4:
-        shorttitle: Upload Data
-        title: Upload Data
-        description: Upload data to the stream you created.
-      headerlabel: Create Stream
-      success: You have successfully created the stream "{streamName}".
-      callToAction: View Stream Details
-      secondaryCallToAction:
-        uploadData: Upload Data to Stream
-        queryStream: Query Stream
-    UploadData:
-      Step1:
-        shorttitle: View Data
-        title: View Data
-        description: Shows the data for your reference that would be uploaded to a destination.
-      Step2:
-        shorttitle: Select Destination
-        title: Select a Destination
-        tooltiptext: The stream will be created if it does not exist
-        description: Select the destination where the data needs to be uploaded.
-        dataentitynameplaceholder: Dataset/Stream Name
-        destinationtype: Destination Type
-        destinationname: Destination Name
-      headerlabel: Upload Data
-      success: You have successfully uploaded the datapack "{datapackName}"
-      subtitle: to the stream "{streamId}".
-      callToAction: View Stream Details
-    PublishPipeline:
-      Step1:
-        shorttitle: Configure Pipeline
-        title: Configure a Pipeline
-        description: Specify the name of the pipeline.
-      pipelinenameplaceholder: Pipeline Name
-      headerlabel: Deploy Pipeline
-      success: You have successfully created the pipeline "{pipelineName}".
-      callToAction:
-        customize: Customize Pipeline
-        view: View Pipeline
-    HydratorPipeline:
-      title: Create a Data Pipeline
-      message: Choose the pipeline type you would like to create.
-      batchLinkLabel: Batch Pipeline
-      realtimeLinkLabel: Realtime Pipeline
     PluginArtifact:
       callToAction: Create a Pipeline
       footertitle: Upload Plugin Artifact
       Step1:
+        description: Upload your plugin JAR.
+        errorMessage: Invalid plugin. Plugin must be a JAR file.
+        filePathLabel: Choose File
         shorttitle: Upload Plugin JAR
         title: Upload Plugin JAR
-        description: Upload your plugin JAR.
-        filePathLabel: Choose File
-        errorMessage: Invalid plugin. Plugin must be a JAR file.
       Step2:
-        shorttitle: Upload Plugin Configuration JSON
-        title: Upload Plugin Configuration JSON
         description: Upload the plugin configuration JSON.
         errorMessage: Invalid plugin JSON. Plugin configuration should be in JSON format.
         errorMessageParentArtifacts: Invalid plugin JSON. Please specify parent artifacts.
-      success: You have successfully uploaded the plugin "{pluginName}".
+        shorttitle: Upload Plugin Configuration JSON
+        title: Upload Plugin Configuration JSON
       subtitle: Start creating a pipeline with the plugin.
-    Add-Namespace:
-       Step1:
-         ssd-label: "General Information"
-         sld-desc:  "Specify the name and the description of the namespace."
-         name-label: "Name"
-         name-placeholder: "Namespace name"
-         description-label: "Description"
-         description-placeholder: "Namespace description"
-         scheduler-queue-label: "Scheduler Queue"
-         scheduler-queue-placeholder: "Specify the YARN queue name to be associated with this namespace"
-       Step2:
-         ssd-label: "Namespace Mapping"
-         sld-label: "Specify mapping of namespace resources to the underlying existing storage resources."
-         hdfs-root-directory-label: "HDFS Root Directory"
-         hdfs-root-directory-placeholder: "Root directory of HDFS for new namespace root"
-         hive-db-name-label: "Hive Database Name"
-         hive-db-name-placeholder: "Hive db name for the new namespace."
-         hbase-nm-name-label: "HBase Namespace Name"
-         hbase-nm-name-placeholder: "Existing namespace in HBase for new namespace"
-       Step3:
-         ssd-label: "Security"
-         sld-label: "Specify credentials for securely impersonating programs running as a specified user."
-         principal-label: "Principal"
-         principal-placeholder: "User to be impersonated-as for jobs in the new namespace"
-         keytab-uri-label: "Keytab URI"
-         keytab-uri-placeholder: "Location of keytab file associated with the principal"
-       Step4:
-         ssd-label: "Preferences"
-         sld-label: "Specify preferences to be applied at the namespace level."
-         name-label: "Name"
-         name-placeholder: "Preference name"
-         value-label: "Value"
-         value-placeholder: "Preference value"
-       headerlabel: Add Namespace
-       Status:
-         creation-error-desc: "Failed to create namespace '%s'."
-         creation-success-desc: Successfully created namespace '{namespaceId}'.
-       callToAction:
-         primary: Switch to '{namespaceId}'
-
+      success: You have successfully uploaded the plugin "{pluginName}".
+    PublishPipeline:
+      callToAction:
+        customize: Customize Pipeline
+        view: View Pipeline
+      headerlabel: Deploy Pipeline
+      pipelinenameplaceholder: Pipeline Name
+      Step1:
+        description: Specify the name of the pipeline.
+        shorttitle: Configure Pipeline
+        title: Configure a Pipeline
+      success: You have successfully created the pipeline "{pipelineName}".
+    Skip: Skipped
+    StreamCreate:
+      callToAction: View Stream Details
+      headerlabel: Create Stream
+      secondaryCallToAction:
+        uploadData: Upload Data to Stream
+        queryStream: Query Stream
+      Step1:
+        description: Provide information about the stream you want to create.
+        shorttitle: General Information
+        title: General
+        ttl-placeholder: Specify the time-to-live for events in seconds
+        ttllabel: TTL
+      Step2:
+        description: Setting format and schema allows you to perform schema-on-read.
+        shorttitle: Setup Format and Schema
+        title: Set Format and Schema
+      Step3:
+        description: Setting up a trigger configures CDAP to notify systems observing to start processing.
+        mblabel: Megabytes (MB)
+        shorttitle: Trigger Setup
+        thresholdlabel: The stream will notify any observers upon reaching this threshold to start processing the data in this stream.
+        title: Setup a Trigger
+      Step4:
+        description: Upload data to the stream you created.
+        shorttitle: Upload Data
+        title: Upload Data
+      success: You have successfully created the stream "{streamName}".
+    UploadData:
+      callToAction: View Stream Details
+      headerlabel: Upload Data
+      Step1:
+        description: Shows the data for your reference that would be uploaded to a destination.
+        shorttitle: View Data
+        title: View Data
+      Step2:
+        dataentitynameplaceholder: Dataset/Stream Name
+        description: Select the destination where the data needs to be uploaded.
+        destinationname: Destination Name
+        destinationtype: Destination Type
+        shorttitle: Select Destination
+        title: Select a Destination
+        tooltiptext: The stream will be created if it does not exist
+      subtitle: to the stream "{streamId}".
+      success: You have successfully uploaded the datapack "{datapackName}"
   Wrangler:
     Actions:
       WRANGLER_DROP_COLUMN: drop

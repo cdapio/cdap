@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,7 @@
 import React, { Component, PropTypes } from 'react';
 import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
-import ArtifactUploadWizardConfig from 'services/WizardConfigs/ArtifactUploadWizardConfig';
-import MarketArtifactUploadWizardConfig from 'services/WizardConfigs/MarketArtifactUploadWizardConfig';
+import LibraryUploadWizardConfig from 'services/WizardConfigs/LibraryUploadWizardConfig';
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
 import ArtifactUploadActionCreator from 'services/WizardStores/ArtifactUpload/ActionCreator';
@@ -26,9 +25,9 @@ import T from 'i18n-react';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 
-require('./ArtifactUpload.scss');
+require('components/CaskWizards/ArtifactUpload/ArtifactUpload.scss');
 
-export default class ArtifactUploadWizard extends Component {
+export default class LibraryUploadWizard extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -37,15 +36,6 @@ export default class ArtifactUploadWizard extends Component {
     };
     this.eventEmitter = ee(ee);
   }
-  componentWillMount() {
-    ArtifactUploadStore.dispatch({
-      type: ArtifactUploadActions.setType,
-      payload: {
-        type: 'jdbc'
-      }
-    });
-  }
-
   componentWillUnmount() {
     ArtifactUploadStore.dispatch({
       type: ArtifactUploadActions.onReset
@@ -72,19 +62,14 @@ export default class ArtifactUploadWizard extends Component {
       showWizard: !this.state.showWizard
     });
   }
-  // TODO: shouldn't do this, replace in 4.2
-  getChildContext() {
-    return {
-      isMarket: this.props.buildSuccessInfo
-    };
-  }
+
   buildSuccessInfo() {
     let state = ArtifactUploadStore.getState();
     let artifactName = state.configure.name;
     let namespace = NamespaceStore.getState().selectedNamespace;
-    let message = T.translate('features.Wizard.ArtifactUpload.success', {artifactName});
-    let subtitle = T.translate('features.Wizard.ArtifactUpload.subtitle');
-    let buttonLabel = T.translate('features.Wizard.ArtifactUpload.callToAction');
+    let message = T.translate('features.Wizard.LibraryUpload.success', {artifactName});
+    let subtitle = T.translate('features.Wizard.LibraryUpload.subtitle');
+    let buttonLabel = T.translate('features.Wizard.LibraryUpload.callToAction');
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
     this.setState({
       successInfo: {
@@ -109,7 +94,7 @@ export default class ArtifactUploadWizard extends Component {
     let pkg = input.package || {};
     let headerLabel = input.headerLabel;
 
-    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + (headerLabel ? headerLabel : T.translate('features.Wizard.ArtifactUpload.headerlabel'));
+    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + (headerLabel ? headerLabel : T.translate('features.Wizard.LibraryUpload.headerlabel'));
     return (
       <WizardModal
         title={wizardModalTitle}
@@ -118,8 +103,8 @@ export default class ArtifactUploadWizard extends Component {
         className="artifact-upload-wizard"
       >
         <Wizard
-          wizardConfig={this.props.buildSuccessInfo ? MarketArtifactUploadWizardConfig : ArtifactUploadWizardConfig}
-          wizardType="ArtifactUpload"
+          wizardConfig={LibraryUploadWizardConfig}
+          wizardType="LibraryUpload"
           store={ArtifactUploadStore}
           onSubmit={this.onSubmit.bind(this)}
           successInfo={this.state.successInfo}
@@ -130,7 +115,7 @@ export default class ArtifactUploadWizard extends Component {
   }
 }
 
-ArtifactUploadWizard.defaultProps = {
+LibraryUploadWizard.defaultProps = {
   input: {
     action: {
       arguments: {}
@@ -138,10 +123,8 @@ ArtifactUploadWizard.defaultProps = {
     package: {},
   }
 };
-ArtifactUploadWizard.childContextTypes = {
-  isMarket: PropTypes.bool
-};
-ArtifactUploadWizard.propTypes = {
+
+LibraryUploadWizard.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
   onClose: PropTypes.func,
