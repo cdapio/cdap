@@ -16,18 +16,23 @@
 
 @import "../../styles/variables.scss";
 
-.entity-list-view {
-  height: calc(100vh - 155px);
-  align-items: flex-start;
-  overflow-x: hidden;
-
+.page-not-found {
   .namespace-not-found {
+    font-size: 14px;
+
     .open-namespace-wizard-link {
       color: $cdap_orange;
       cursor: pointer;
       margin: 0 5px;
     }
   }
+}
+
+.entity-list-view {
+  height: calc(100vh - 155px);
+  align-items: flex-start;
+  overflow-x: hidden;
+
   .entities-container {
     padding: 0 0 0 5px;
     display: flex;

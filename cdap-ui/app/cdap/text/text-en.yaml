@@ -193,9 +193,10 @@ features:
       suggestionMessage1: "Go back to:"
       suggestionMessage2: Page 1
     NamespaceNotFound:
-      createMessage: Would like to
-      createLinkLabel: create a new one?
-      switchMessage: Or select a different namespace from the namespace dropdown.
+      optionsSubtitle: Here are some options on what to do next
+      createMessage: Create a
+      createLinkLabel: new namespace
+      switchMessage: Select a different namespace from the namespace dropdown
     JustAddedSection:
       subtitle: Just added
   Dashboard:
@@ -893,7 +894,7 @@ features:
       statusLabel: Status
   Page404:
     genericMessage: Sorry, we are not able to find the page you are looking for.
-    entityMessage: Sorry, we are not able to find {entityType}
+    entityMessage: Sorry, we are not able to find {entityType} "{entityName}"
     subtitleMessage1: Here are some options on where to go next
     subtitleMessage2: View all your entities in the
     overviewLabel: Overview

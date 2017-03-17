@@ -37,7 +37,9 @@ import isEmpty from 'lodash/isEmpty';
 import intersection from 'lodash/intersection';
 import {objectQuery} from 'services/helpers';
 import WelcomeScreen from 'components/EntityListView/WelcomeScreen';
+import Page404 from 'components/404';
 import classnames from 'classnames';
+import T from 'i18n-react';
 import {
   DEFAULT_SEARCH_FILTERS, DEFAULT_SEARCH_SORT,
   DEFAULT_SEARCH_QUERY, DEFAULT_SEARCH_SORT_OPTIONS,
@@ -56,7 +58,8 @@ export default class EntityListView extends Component {
       total: 0,
       overview: true, // Start showing spinner until we get a response from backend.
       userStoreObj: null,
-      showSplash: true
+      showSplash: true,
+      namespaceNotFound: false
     };
     this.eventEmitter = ee(ee);
     // Maintaining a retryCounter outside the state as it doesn't affect the state/view directly.
@@ -79,6 +82,31 @@ export default class EntityListView extends Component {
     });
   }
   componentDidMount() {
+    let namespaces = NamespaceStore.getState().namespaces.map(ns => ns.name);
+    // for when we are already on the non-existing namespace
+    if (namespaces.length) {
+      let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+      if (namespaces.indexOf(selectedNamespace) === -1) {
+        this.setState({
+          namespaceNotFound: true
+        });
+      }
+    } else {
+      this.namespaceStoreSubscription = NamespaceStore.subscribe(() => {
+        let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+        let namespaces = NamespaceStore.getState().namespaces.map(ns => ns.name);
+        if (namespaces.length && namespaces.indexOf(selectedNamespace) === -1) {
+          this.setState({
+            namespaceNotFound: true
+          });
+        } else {
+          this.setState({
+            namespaceNotFound: false
+          });
+        }
+      });
+    }
+
     this.searchStoreSubscription = SearchStore.subscribe(() => {
       let {
         results:entities,
@@ -158,6 +186,9 @@ export default class EntityListView extends Component {
     });
     if (this.searchStoreSubscription) {
       this.searchStoreSubscription();
+    }
+    if (this.namespaceStoreSubscription) {
+      this.namespaceStoreSubscription();
     }
     this.eventEmitter.off(globalEvents.APPUPLOAD, this.refreshSearchByCreationTime);
     this.eventEmitter.off(globalEvents.STREAMCREATE, this.refreshSearchByCreationTime);
@@ -276,6 +307,36 @@ export default class EntityListView extends Component {
         <WelcomeScreen
           onClose={this.dismissSplash.bind(this)}
         />
+      );
+    }
+    if (this.state.namespaceNotFound) {
+      return (
+        <Page404
+          entityType="namespace"
+          entityName={namespace}
+        >
+          <div className="namespace-not-found">
+            <h4>
+              <strong>
+                {T.translate('features.EntityListView.NamespaceNotFound.optionsSubtitle')}
+              </strong>
+            </h4>
+            <div>
+              {T.translate('features.EntityListView.NamespaceNotFound.createMessage')}
+              <span
+                className="open-namespace-wizard-link"
+                onClick={() => {
+                  this.eventEmitter.emit(globalEvents.CREATENAMESPACE);
+                }}
+              >
+                {T.translate('features.EntityListView.NamespaceNotFound.createLinkLabel')}
+              </span>
+            </div>
+            <div>
+              {T.translate('features.EntityListView.NamespaceNotFound.switchMessage')}
+            </div>
+          </div>
+        </Page404>
       );
     }
     if (!isNil(errorStatusCode)) {

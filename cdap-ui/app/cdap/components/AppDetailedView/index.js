@@ -192,7 +192,7 @@ export default class AppDetailedView extends Component {
     if (this.state.notFound) {
       return (
         <Page404
-          entityType="Application"
+          entityType="application"
           entityName={this.props.params.appId}
         />
       );
