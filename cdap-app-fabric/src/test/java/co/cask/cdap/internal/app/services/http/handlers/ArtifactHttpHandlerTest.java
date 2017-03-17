@@ -488,6 +488,9 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
                         addAppArtifact(wordCount1Id, WordCountApp.class).getStatusLine().getStatusCode());
 
+    Id.Artifact wordCount2Id = Id.Artifact.from(Id.Namespace.DEFAULT, "testartifact", "1.0.0");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                        addAppArtifact(wordCount2Id, WordCountApp.class).getStatusLine().getStatusCode());
     // add some plugins.
     // plugins-3.0.0 extends wordcount[1.0.0,2.0.0)
     Manifest manifest = new Manifest();
@@ -514,8 +517,14 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, CallingPlugin.class.getPackage().getName());
     Id.Artifact plugins4Id = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins4", "1.0.0");
+    // we also add test artifact as parent for calling plugin,
+    // when callable plugin is loaded by calling plugin's method,
+    // it will try with "testArtifact" parent - wouldn't be able to load
+    // then it will load using "wordcount" parent  and succeed
     Set<ArtifactRange> plugins4Parents = Sets.newHashSet(new ArtifactRange(
-      NamespaceId.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")),
+                                                         new ArtifactRange(
+      NamespaceId.DEFAULT, "testartifact", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
                         addPluginArtifact(plugins4Id, CallingPlugin.class, manifest,
                                           plugins4Parents).getStatusLine().getStatusCode());

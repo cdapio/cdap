@@ -398,8 +398,11 @@ public class ArtifactRepositoryTest {
   @Test
   public void testPluginSelector() throws Exception {
     // No plugin yet
+    ArtifactRange appArtifactRange = new ArtifactRange(APP_ARTIFACT_ID.getNamespace(), APP_ARTIFACT_ID.getName(),
+                                                       APP_ARTIFACT_ID.getVersion(), true,
+                                                       APP_ARTIFACT_ID.getVersion(), true);
     try {
-      artifactRepository.findPlugin(NamespaceId.DEFAULT, APP_ARTIFACT_ID,
+      artifactRepository.findPlugin(NamespaceId.DEFAULT, appArtifactRange,
                                     "plugin", "TestPlugin2", new PluginSelector());
       Assert.fail();
     } catch (PluginNotExistsException e) {
@@ -421,7 +424,7 @@ public class ArtifactRepositoryTest {
 
     // Should get the only version.
     Map.Entry<ArtifactDescriptor, PluginClass> plugin =
-      artifactRepository.findPlugin(NamespaceId.DEFAULT, APP_ARTIFACT_ID,
+      artifactRepository.findPlugin(NamespaceId.DEFAULT, appArtifactRange,
                                     "plugin", "TestPlugin2", new PluginSelector());
     Assert.assertNotNull(plugin);
     Assert.assertEquals(new ArtifactVersion("1.0"), plugin.getKey().getArtifactId().getVersion());
@@ -435,7 +438,7 @@ public class ArtifactRepositoryTest {
     artifactRepository.addArtifact(artifact2Id, jarFile, parents);
 
     // Should select the latest version
-    plugin = artifactRepository.findPlugin(NamespaceId.DEFAULT, APP_ARTIFACT_ID,
+    plugin = artifactRepository.findPlugin(NamespaceId.DEFAULT, appArtifactRange,
                                            "plugin", "TestPlugin2", new PluginSelector());
     Assert.assertNotNull(plugin);
     Assert.assertEquals(new ArtifactVersion("2.0"), plugin.getKey().getArtifactId().getVersion());
@@ -449,7 +452,7 @@ public class ArtifactRepositoryTest {
       Class<?> pluginClass = pluginClassLoader.loadClass(TestPlugin2.class.getName());
 
       // Use a custom plugin selector to select with smallest version
-      plugin = artifactRepository.findPlugin(NamespaceId.DEFAULT, APP_ARTIFACT_ID,
+      plugin = artifactRepository.findPlugin(NamespaceId.DEFAULT, appArtifactRange,
                                              "plugin", "TestPlugin2", new PluginSelector() {
           @Override
           public Map.Entry<ArtifactId, PluginClass> select(SortedMap<ArtifactId, PluginClass> plugins) {
