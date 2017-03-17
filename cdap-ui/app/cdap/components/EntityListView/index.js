@@ -91,22 +91,20 @@ export default class EntityListView extends Component {
           namespaceNotFound: true
         });
       }
-    } else {
-      this.namespaceStoreSubscription = NamespaceStore.subscribe(() => {
-        let selectedNamespace = NamespaceStore.getState().selectedNamespace;
-        let namespaces = NamespaceStore.getState().namespaces.map(ns => ns.name);
-        if (namespaces.length && namespaces.indexOf(selectedNamespace) === -1) {
-          this.setState({
-            namespaceNotFound: true
-          });
-        } else {
-          this.setState({
-            namespaceNotFound: false
-          });
-        }
-      });
     }
-
+    this.namespaceStoreSubscription = NamespaceStore.subscribe(() => {
+      let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+      let namespaces = NamespaceStore.getState().namespaces.map(ns => ns.name);
+      if (namespaces.length && namespaces.indexOf(selectedNamespace) === -1) {
+        this.setState({
+          namespaceNotFound: true
+        });
+      } else {
+        this.setState({
+          namespaceNotFound: false
+        });
+      }
+    });
     this.searchStoreSubscription = SearchStore.subscribe(() => {
       let {
         results:entities,
