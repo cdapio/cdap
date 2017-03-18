@@ -151,10 +151,9 @@ export default function enableDataPreparationService(shouldStopService) {
           }
 
           observer.onError({
-            error: 'Service is not fully functioning',
+            error: 'Error while communicating with Data Preparation Service',
             extendedMessage: err.data || err
           });
-
         });
     }
 
