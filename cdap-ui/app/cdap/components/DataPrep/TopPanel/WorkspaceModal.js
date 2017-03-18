@@ -126,7 +126,7 @@ export default class WorkspaceModal extends Component {
     }, (err) => {
       this.setState({
         messageType: 'DANGER',
-        message: err.message
+        message: err.message || err.data || err
       });
     });
   }

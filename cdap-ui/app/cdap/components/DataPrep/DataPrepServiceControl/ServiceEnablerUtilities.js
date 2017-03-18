@@ -142,10 +142,18 @@ export default function enableDataPreparationService(shouldStopService) {
           observer.onCompleted();
           window.onbeforeunload = null;
           window.location.reload();
-        }, () => {
-          setTimeout(() => {
-            ping();
-          }, 2000);
+        }, (err) => {
+          if (err.statusCode === 503) {
+            setTimeout(() => {
+              ping();
+            }, 2000);
+            return;
+          }
+
+          observer.onError({
+            error: 'Error while communicating with Data Preparation Service',
+            extendedMessage: err.data || err
+          });
         });
     }
 
