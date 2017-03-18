@@ -479,9 +479,9 @@ body.theme-cdap {
       justify-content: space-between;
       .run-specific-section {
         display: flex;
-        width: ~"calc(100vw - 390px)";
-        width: ~"-moz-calc(100vw - 390px)";
-        width: ~"-webkit-calc(100vw - 390px)";
+        width: ~"calc(100vw - 428px)"; // 100vw - (pipeline-specifiction(370px) + resource center button (58px))
+        width: ~"-moz-calc(100vw - 428px)";
+        width: ~"-webkit-calc(100vw - 428px)";
         border-right: 0;
         .hydrator-detail-metadata {
           display: flex;
@@ -503,10 +503,6 @@ body.theme-cdap {
           max-width: ~"calc(100% - 412px)";
           max-width: ~"-moz-calc(100% - 412px)";
           max-width: ~"-webkit-calc(100% - 412px)";
-
-          @media (min-width: @screen-md-min) {
-            min-width: 200px;
-          }
 
           div.pipeline-type {
             line-height: 1;
@@ -583,10 +579,16 @@ body.theme-cdap {
         }
         .app-status-container {
           display: flex;
-          min-width: 400px;
+          min-width: 425px; // To accomadate the long datetime we show for pipeline run start time.
           position: relative;
           .btn.log-viewer,
-          .btn.scheduler { border-right: 1px solid #dddddd; }
+          .btn.scheduler {
+            border-right: 1px solid #dddddd;
+          }
+          .btn.scheduler {
+            width: 70px; // to accomadate Unscheduled. 0-0
+            padding-top: 0;
+          }
         }
         .last-run { margin: 3px 3px 3px 0; }
       }
@@ -602,10 +604,14 @@ body.theme-cdap {
         }
 
         &.scheduler {
-          padding-top: 0;
 
           .icon-runtimestarttime {
-            font-size: 22px;
+            // This is because the schedule icon is not filling up its content which leads to some empty space around the font.
+            // This will cause this icon alone to be rendered differently compared to the icons from font-awesome which occupies
+            // its full width. So to compensate that this hack.
+            font-size: 24px;
+            line-height: 29px;
+            padding-bottom: 5px;
           }
 
           .button-label {
@@ -622,6 +628,7 @@ body.theme-cdap {
         border-left: 0;
         display: flex;
         width: 370px;
+        justify-content: flex-end;
         span.metric-value {
           color: #636363;
           font-size: 13px;
