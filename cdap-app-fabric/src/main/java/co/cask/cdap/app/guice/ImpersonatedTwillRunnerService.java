@@ -26,15 +26,17 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
-import org.apache.twill.api.SecureStore;
 import org.apache.twill.api.SecureStoreUpdater;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.api.security.SecureStoreRenewer;
+import org.apache.twill.api.security.SecureStoreWriter;
 import org.apache.twill.common.Cancellable;
 
+import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -124,7 +126,14 @@ final class ImpersonatedTwillRunnerService implements TwillRunnerService {
   @Override
   public Cancellable scheduleSecureStoreUpdate(SecureStoreUpdater updater, long initialDelay,
                                                long delay, TimeUnit unit) {
-    return delegate.scheduleSecureStoreUpdate(wrapSecureStoreUpdater(updater), initialDelay, delay, unit);
+    throw new UnsupportedOperationException("The scheduleSecureStoreUpdate method is deprecated, " +
+                                              "it shouldn't be used.");
+  }
+
+  @Override
+  public Cancellable setSecureStoreRenewer(SecureStoreRenewer renewer, long initialDelay,
+                                           long delay, long retryDelay, TimeUnit unit) {
+    return delegate.setSecureStoreRenewer(wrapSecureStoreRenewer(renewer), initialDelay, delay, retryDelay, unit);
   }
 
   private Iterable<TwillController> wrapControllers(Iterable<TwillController> controllers, String applicationName) {
@@ -146,12 +155,14 @@ final class ImpersonatedTwillRunnerService implements TwillRunnerService {
     }
   }
 
-  private SecureStoreUpdater wrapSecureStoreUpdater(final SecureStoreUpdater updater) {
-    return new SecureStoreUpdater() {
+  private SecureStoreRenewer wrapSecureStoreRenewer(final SecureStoreRenewer renewer) {
+    return new SecureStoreRenewer() {
       @Override
-      public SecureStore update(final String application, final RunId runId) {
+      public void renew(final String application, final RunId runId,
+                        final SecureStoreWriter secureStoreWriter) throws IOException {
         if (isMasterService(application)) {
-          return updater.update(application, runId);
+          renewer.renew(application, runId, secureStoreWriter);
+          return;
         }
 
         ProgramId programId;
@@ -159,13 +170,17 @@ final class ImpersonatedTwillRunnerService implements TwillRunnerService {
           programId = TwillAppNames.fromTwillAppName(application);
         } catch (IllegalArgumentException e) {
           // If the conversion from twill app name to programId failed, just delegate
-          return updater.update(application, runId);
+          renewer.renew(application, runId, secureStoreWriter);
+          return;
         }
+
         try {
-          return impersonator.doAs(programId, new Callable<SecureStore>() {
+          // Impersonate as the program owner and call the renewer
+          impersonator.doAs(programId, new Callable<Void>() {
             @Override
-            public SecureStore call() throws Exception {
-              return updater.update(application, runId);
+            public Void call() throws Exception {
+              renewer.renew(application, runId, secureStoreWriter);
+              return null;
             }
           });
         } catch (Exception e) {

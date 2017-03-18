@@ -171,6 +171,14 @@
   </property>
 
   <property>
+    <name>twill.java.heap.memory.ratio</name>
+    <value>0.7</value>
+    <description>
+      The minimum ratio of heap to non-heap memory for Apache Twill container
+    </description>
+  </property>
+
+  <property>
     <name>twill.java.reserved.memory.mb</name>
     <value>250</value>
     <description>
@@ -206,6 +214,22 @@
     <description>
       Duration in milliseconds to wait for at least one container for Apache
       Twill runnable
+    </description>
+  </property>
+
+  <property>
+    <name>twill.yarn.am.memory.mb</name>
+    <value>512</value>
+    <description>
+      The memory size in megabytes of the Apache Twill application master container
+    </description>
+  </property>
+
+  <property>
+    <name>twill.yarn.am.reserved.memory.mb</name>
+    <value>${twill.java.reserved.memory.mb}</value>
+    <description>
+      Reserved non-heap memory in megabytes for Apache Twill application master container
     </description>
   </property>
 

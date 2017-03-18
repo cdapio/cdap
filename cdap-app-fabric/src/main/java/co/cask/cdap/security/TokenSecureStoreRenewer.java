@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security;
 
+import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.security.DelegationTokensUpdater;
@@ -25,25 +26,19 @@ import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.security.hive.HiveTokenUtils;
 import co.cask.cdap.security.hive.JobHistoryServerTokenUtils;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hive.thrift.HadoopThriftAuthBridge;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
-import org.apache.twill.api.SecureStore;
-import org.apache.twill.api.SecureStoreUpdater;
-import org.apache.twill.filesystem.FileContextLocationFactory;
-import org.apache.twill.filesystem.ForwardingLocationFactory;
-import org.apache.twill.filesystem.HDFSLocationFactory;
+import org.apache.twill.api.security.SecureStoreRenewer;
+import org.apache.twill.api.security.SecureStoreWriter;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.yarn.YarnUtils;
 import org.apache.twill.yarn.YarnSecureStore;
@@ -51,35 +46,68 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
- * A {@link SecureStoreUpdater} that updates all secure tokens used by the platform.
+ * A {@link SecureStoreRenewer} implementation that renew delegation tokens for
+ * YARN applications that are launched by CDAP.
  */
-public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
-  private static final Logger LOG = LoggerFactory.getLogger(TokenSecureStoreUpdater.class);
+public class TokenSecureStoreRenewer extends SecureStoreRenewer {
+
+  private static final Logger LOG = LoggerFactory.getLogger(TokenSecureStoreRenewer.class);
 
   private final YarnConfiguration hConf;
   private final LocationFactory locationFactory;
-  private final co.cask.cdap.api.security.store.SecureStore secureStore;
+  private final SecureStore secureStore;
   private final boolean secureExplore;
   private Long updateInterval;
 
   @Inject
-  TokenSecureStoreUpdater(YarnConfiguration hConf, CConfiguration cConf,
+  TokenSecureStoreRenewer(YarnConfiguration hConf, CConfiguration cConf,
                           LocationFactory locationFactory,
-                          co.cask.cdap.api.security.store.SecureStore secureStore) {
+                          SecureStore secureStore) {
     this.hConf = hConf;
     this.locationFactory = locationFactory;
     this.secureStore = secureStore;
-    secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) && UserGroupInformation.isSecurityEnabled();
+    this.secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)
+      && UserGroupInformation.isSecurityEnabled();
   }
 
-  private Credentials refreshCredentials() {
+  /**
+   * Returns the minimum update interval for the delegation tokens.
+   * @return The update interval in milliseconds.
+   */
+  public long getUpdateInterval() {
+    if (updateInterval == null) {
+      // we want to lazily call this (as opposed to in the constructor), because sometimes we use an instance of
+      // TokenSecureStoreRenewer without scheduling updates. For instance, when launching a program or from
+      // ImpersonationHandler.
+      updateInterval = calculateUpdateInterval();
+    }
+    return updateInterval;
+  }
+
+  @Override
+  public void renew(String application, RunId runId, SecureStoreWriter secureStoreWriter) throws IOException {
+    Credentials credentials = createCredentials();
+    UserGroupInformation currentUser = null;
+    try {
+      currentUser = UserGroupInformation.getCurrentUser();
+    } catch (IOException e) {
+      // this shouldn't happen
+      LOG.debug("Cannot determine current user", e);
+    }
+    LOG.debug("Updating credentials for application {}, run {}, tokens {}, with current user {}",
+              application, runId, credentials.getAllTokens(), currentUser);
+    secureStoreWriter.write(YarnSecureStore.create(credentials));
+  }
+
+  /**
+   * Creates a {@link Credentials} that contains delegation tokens of the current user for all services that CDAP uses.
+   */
+  public Credentials createCredentials() {
     try {
       Credentials refreshedCredentials = new Credentials();
 
@@ -101,78 +129,12 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
         ((DelegationTokensUpdater) secureStore).addDelegationTokens(renewer, refreshedCredentials);
       }
 
-      addDelegationTokens(hConf, locationFactory, refreshedCredentials);
+      YarnUtils.addDelegationTokens(hConf, locationFactory, refreshedCredentials);
 
       return refreshedCredentials;
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);
     }
-  }
-
-  /**
-   * Helper method to get delegation tokens for the given LocationFactory.
-   * @param config The hadoop configuration.
-   * @param locationFactory The LocationFactory for generating tokens.
-   * @param credentials Credentials for storing tokens acquired.
-   * @return List of delegation Tokens acquired.
-   * TODO: copied from Twill 0.6 YarnUtils for CDAP-5350. Remove after this fix is moved to Twill.
-   */
-  private static List<Token<?>> addDelegationTokens(Configuration config,
-                                                    LocationFactory locationFactory,
-                                                    Credentials credentials) throws IOException {
-    if (!UserGroupInformation.isSecurityEnabled()) {
-      LOG.debug("Security is not enabled");
-      return ImmutableList.of();
-    }
-
-    try (FileSystem fileSystem = getFileSystem(locationFactory, config)) {
-      if (fileSystem == null) {
-        LOG.warn("Unexpected: LocationFactory is not HDFS. Not getting delegation tokens.");
-        return ImmutableList.of();
-      }
-
-      String renewer = YarnUtils.getYarnTokenRenewer(config);
-
-      Token<?>[] tokens = fileSystem.addDelegationTokens(renewer, credentials);
-      LOG.debug("Added HDFS DelegationTokens: {}", Arrays.toString(tokens));
-
-      return tokens == null ? ImmutableList.<Token<?>>of() : ImmutableList.copyOf(tokens);
-    }
-  }
-
-  /**
-   * Returns a new the Hadoop FileSystem from LocationFactory.
-   * TODO: copied from Twill 0.6 YarnUtils for CDAP-5350. Remove after this fix is moved to Twill.
-   */
-  @Nullable
-  private static FileSystem getFileSystem(LocationFactory locationFactory, Configuration config) throws IOException {
-    LOG.debug("getFileSystem(): locationFactory is a {}", locationFactory.getClass());
-
-    if (locationFactory instanceof ForwardingLocationFactory) {
-      return getFileSystem(((ForwardingLocationFactory) locationFactory).getDelegate(), config);
-    }
-
-    // This method will be ported back to Twill, hence copying the logic from Locations instead of refactoring
-    // to use a common method
-    Configuration hConf = null;
-    if (locationFactory instanceof HDFSLocationFactory) {
-      hConf = ((HDFSLocationFactory) locationFactory).getFileSystem().getConf();
-    } else if (locationFactory instanceof FileContextLocationFactory) {
-      hConf = ((FileContextLocationFactory) locationFactory).getConfiguration();
-    }
-
-    if (hConf == null) {
-      return null;
-    }
-
-    // Disable the FileSystem cache. The FileSystem will be closed when the InputStream is closed
-    String scheme = locationFactory.getHomeLocation().toURI().getScheme();
-    hConf = new Configuration(hConf);
-    hConf.set(String.format("fs.%s.impl.disable.cache", scheme), "true");
-
-    // CDAP-5350: For encrypted file systems, FileContext does not acquire the KMS delegation token
-    // Since we know we are in Yarn, it is safe to get the FileSystem directly, bypassing LocationFactory.
-    return FileSystem.get(hConf);
   }
 
   /**
@@ -234,37 +196,5 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
     }
     LOG.info("Setting token renewal time to: {} ms", delay);
     return delay;
-  }
-
-  /**
-   * Returns the minimum update interval for the delegation tokens.
-   * @return The update interval in milliseconds.
-   */
-  public long getUpdateInterval() {
-    if (updateInterval == null) {
-      // we want to lazily call this (as opposed to in the constructor), because sometimes we use an instance of
-      // TokenSecureStoreUpdater without scheduling updates. For instance, when launching a program or from
-      // ImpersonationHandler.
-      updateInterval = calculateUpdateInterval();
-    }
-    return updateInterval;
-  }
-
-  @Override
-  public SecureStore update(String application, RunId runId) {
-    return update();
-  }
-
-  /**
-   * Invoked when an update to secure store is needed.
-   */
-  public SecureStore update() {
-    Credentials credentials = refreshCredentials();
-    LOG.debug("Updated credentials {}", credentials.getAllTokens());
-    try {
-      return YarnSecureStore.create(credentials, UserGroupInformation.getCurrentUser());
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
   }
 }
