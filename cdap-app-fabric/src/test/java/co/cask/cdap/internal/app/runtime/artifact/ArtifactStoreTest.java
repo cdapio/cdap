@@ -684,6 +684,115 @@ public class ArtifactStoreTest {
   }
 
   @Test
+  public void testGetPluginsByParentArtifactRanges() throws Exception {
+    ArtifactRange parentArtifacts1 = new ArtifactRange(
+      NamespaceId.DEFAULT, "parent1", new ArtifactVersion("1.0.0"), new ArtifactVersion("5.0.0"));
+
+    // we have 2 plugins of type A and 2 plugins of type B
+    PluginClass pluginA1 = new PluginClass(
+      "A", "p1", "desc", "c.p1", "cfg",
+      ImmutableMap.of(
+        "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
+        "retry", new PluginPropertyField("retries", "description", "int", false, false)
+      )
+    );
+    PluginClass pluginA2 = new PluginClass(
+      "A", "p2", "desc", "c.p2", "conf",
+      ImmutableMap.of(
+        "stream", new PluginPropertyField("stream", "description", "string", true, false)
+      )
+    );
+
+    // add artifacts
+
+    // not interested in artifact contents for this test, using some dummy value
+    String contents = "0";
+
+    // write parent artifacts
+    List<String> parentArtifactsVersions = ImmutableList.of("1.0.0", "1.2.1", "2.0.0", "3.0.0", "4.0.0");
+    for (String artifactVersion : parentArtifactsVersions) {
+      Id.Artifact parentArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "parent1", artifactVersion);
+      ArtifactMeta parentMeta = new ArtifactMeta(ArtifactClasses.builder().build());
+      writeArtifact(parentArtifactId, parentMeta, contents);
+    }
+
+    // artifact artifactX-1.0.0 contains plugin A1
+    Id.Artifact artifactXv100 = Id.Artifact.from(Id.Namespace.DEFAULT, "artifactX", "1.0.0");
+    ArtifactMeta metaXv100 = new ArtifactMeta(
+      ArtifactClasses.builder().addPlugin(pluginA1).build(), ImmutableSet.of(parentArtifacts1));
+    writeArtifact(artifactXv100, metaXv100, contents);
+    ArtifactDescriptor artifactXv100Info = artifactStore.getArtifact(artifactXv100).getDescriptor();
+
+    // artifact artifactX-1.1.0 contains plugin A1
+    Id.Artifact artifactXv110 = Id.Artifact.from(Id.Namespace.DEFAULT, "artifactX", "1.1.0");
+    ArtifactMeta metaXv110 = new ArtifactMeta(
+      ArtifactClasses.builder().addPlugin(pluginA1).build(), ImmutableSet.of(parentArtifacts1));
+    writeArtifact(artifactXv110, metaXv110, contents);
+    ArtifactDescriptor artifactXv110Info = artifactStore.getArtifact(artifactXv110).getDescriptor();
+
+    // artifact artifactX-2.0.0 contains plugins A1 and A2
+    Id.Artifact artifactXv200 = Id.Artifact.from(Id.Namespace.DEFAULT, "artifactX", "2.0.0");
+    ArtifactMeta metaXv200 = new ArtifactMeta(
+      ArtifactClasses.builder().addPlugins(pluginA1, pluginA2).build(), ImmutableSet.of(parentArtifacts1));
+    writeArtifact(artifactXv200, metaXv200, contents);
+    ArtifactDescriptor artifactXv200Info = artifactStore.getArtifact(artifactXv200).getDescriptor();
+
+    ArtifactRange parentArtifactsrange1 = new ArtifactRange(
+      NamespaceId.DEFAULT, "parent1", new ArtifactVersion("3.0.0"), new ArtifactVersion("5.0.0"));
+
+    // artifact artifactZ-2.0.0 contains plugins A1, A2
+    Id.Artifact artifactZv200 = Id.Artifact.from(Id.Namespace.DEFAULT, "artifactZ", "2.0.0");
+    ArtifactMeta metaZv200 = new ArtifactMeta(
+      ArtifactClasses.builder().addPlugins(pluginA1, pluginA2).build(),
+      ImmutableSet.of(parentArtifactsrange1));
+    writeArtifact(artifactZv200, metaZv200, contents);
+    ArtifactDescriptor artifactZv200Info = artifactStore.getArtifact(artifactZv200).getDescriptor();
+
+    // artifact written with this range should not come up as their parent range is out of the parent artifact range.
+    ArtifactRange parentArtifactsOutOfRange1 = new ArtifactRange(
+      NamespaceId.DEFAULT, "parent1", new ArtifactVersion("5.0.0"), new ArtifactVersion("8.0.0"));
+
+    // artifact artifactZ-2.0.0 contains plugins A1, A2, B1, and B2
+    Id.Artifact artifactZv300 = Id.Artifact.from(Id.Namespace.DEFAULT, "artifactZ", "3.0.0");
+    ArtifactMeta metaZv300 = new ArtifactMeta(
+      ArtifactClasses.builder().addPlugins(pluginA1, pluginA2).build(),
+      ImmutableSet.of(parentArtifactsOutOfRange1));
+    writeArtifact(artifactZv300, metaZv300, contents);
+
+    Map<ArtifactDescriptor, PluginClass> expectedMap = Maps.newHashMap();
+    expectedMap.put(artifactXv100Info, pluginA1);
+    expectedMap.put(artifactXv110Info, pluginA1);
+    expectedMap.put(artifactXv200Info, pluginA1);
+    expectedMap.put(artifactZv200Info, pluginA1);
+    Assert.assertEquals(expectedMap, artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifacts1, "A", "p1"));
+
+    ArtifactRange parentArtifactsSub1 = new ArtifactRange(
+      NamespaceId.DEFAULT, "parent1", new ArtifactVersion("1.1.0"), new ArtifactVersion("2.0.0"));
+    expectedMap = Maps.newHashMap();
+    expectedMap.put(artifactXv100Info, pluginA1);
+    expectedMap.put(artifactXv110Info, pluginA1);
+    expectedMap.put(artifactXv200Info, pluginA1);
+
+    //artifactZv200Info wont be here, as the parent range 3.0.0-5.0.0 for artifactZv200 plugin
+    // wont match the 1.2.1 parent artifact version
+    Assert.assertEquals(expectedMap, artifactStore.getPluginClasses(NamespaceId.DEFAULT,
+                                                                    parentArtifactsSub1, "A", "p1"));
+    expectedMap = Maps.newHashMap();
+    expectedMap.put(artifactXv200Info, pluginA2);
+    expectedMap.put(artifactZv200Info, pluginA2);
+    Assert.assertEquals(expectedMap, artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifacts1, "A", "p2"));
+
+    ArtifactRange parentArtifactsSub2 = new ArtifactRange(
+      NamespaceId.DEFAULT, "parent1", new ArtifactVersion("5.0.0"), new ArtifactVersion("10.0.0"));
+    try {
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactsSub2, "A", "p1");
+      Assert.fail("Get plugin class for invalid range should not retrun result");
+    } catch (ArtifactNotFoundException e) {
+      //no-op
+    }
+  }
+
+  @Test
   public void testSamePluginDifferentArtifacts() throws Exception {
     ArtifactRange parentArtifacts = new ArtifactRange(
       NamespaceId.DEFAULT, "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));

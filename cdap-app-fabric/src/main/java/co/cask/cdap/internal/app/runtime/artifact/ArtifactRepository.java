@@ -318,7 +318,7 @@ public class ArtifactRepository {
    * Returns a {@link Map.Entry} representing the plugin information for the plugin being requested.
    *
    * @param namespace the namespace to get plugins from
-   * @param artifactId the id of the artifact to get plugins for
+   * @param artifactRange the artifact range to get plugins for
    * @param pluginType plugin type name
    * @param pluginName plugin name
    * @param selector for selecting which plugin to use
@@ -327,19 +327,25 @@ public class ArtifactRepository {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws PluginNotExistsException if no plugins of the given type and name are available to the given artifact
    */
-  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(NamespaceId namespace, Id.Artifact artifactId,
+  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(NamespaceId namespace, ArtifactRange artifactRange,
                                                                String pluginType, String pluginName,
                                                                PluginSelector selector)
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     SortedMap<ArtifactDescriptor, PluginClass> pluginClasses = artifactStore.getPluginClasses(
-      namespace, artifactId, pluginType, pluginName);
+      namespace, artifactRange, pluginType, pluginName);
+    return getPluginEntries(pluginClasses, selector, artifactRange.getNamespace().toId(), pluginType, pluginName);
+  }
+
+  private Map.Entry<ArtifactDescriptor, PluginClass> getPluginEntries(
+    SortedMap<ArtifactDescriptor, PluginClass> pluginClasses, PluginSelector selector, Id.Namespace namespace,
+    String pluginType, String pluginName) throws PluginNotExistsException {
     SortedMap<ArtifactId, PluginClass> artifactIds = Maps.newTreeMap();
     for (Map.Entry<ArtifactDescriptor, PluginClass> pluginClassEntry : pluginClasses.entrySet()) {
       artifactIds.put(pluginClassEntry.getKey().getArtifactId(), pluginClassEntry.getValue());
     }
     Map.Entry<ArtifactId, PluginClass> chosenArtifact = selector.select(artifactIds);
     if (chosenArtifact == null) {
-      throw new PluginNotExistsException(artifactId, pluginType, pluginName);
+      throw new PluginNotExistsException(namespace, pluginType, pluginName);
     }
 
     for (Map.Entry<ArtifactDescriptor, PluginClass> pluginClassEntry : pluginClasses.entrySet()) {
@@ -347,7 +353,7 @@ public class ArtifactRepository {
         return pluginClassEntry;
       }
     }
-    throw new PluginNotExistsException(artifactId, pluginType, pluginName);
+    throw new PluginNotExistsException(namespace, pluginType, pluginName);
   }
 
   /**
