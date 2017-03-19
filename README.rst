@@ -5,9 +5,14 @@
 =====================================
 Cask Data Application Platform - CDAP
 =====================================
-
 .. image:: cdap-docs/developers-manual/source/_images/CDAP.png
 
+.. image:: https://cdap-users.herokuapp.com/badge.svg?t=1
+    :target: https://cdap-users.herokuapp.com
+ 
+.. image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
+    :target: https://opensource.org/licenses/Apache-2.0
+    
 
 Introduction
 ============
@@ -74,6 +79,7 @@ For more build options, please refer to the `build instructions <BUILD.rst>`__.
 
 .. image:: https://travis-ci.org/caskdata/cdap.svg?branch=release/4.1
     :target: https://travis-ci.org/caskdata/cdap
+    
 
 
 Introductory Tutorial
