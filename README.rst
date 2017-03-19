@@ -12,6 +12,9 @@ Cask Data Application Platform - CDAP
  
 .. image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
     :target: https://opensource.org/licenses/Apache-2.0
+
+.. image:: https://travis-ci.org/caskdata/cdap.svg?branch=release/4.1
+    :target: https://travis-ci.org/caskdata/cdap
     
 
 Introduction
@@ -75,11 +78,7 @@ You can get started with CDAP by building directly from the latest source code::
 
 After the build completes, you will have built all modules for CDAP.
 
-For more build options, please refer to the `build instructions <BUILD.rst>`__.
-
-.. image:: https://travis-ci.org/caskdata/cdap.svg?branch=release/4.1
-    :target: https://travis-ci.org/caskdata/cdap
-    
+For more build options, please refer to the `build instructions <BUILD.rst>`__.    
 
 
 Introductory Tutorial
