@@ -6,27 +6,42 @@
     {
       "type": "virtualbox-iso",
       "guest_os_type": "Ubuntu_64",
-      "iso_url": "http://releases.ubuntu.com/12.04/ubuntu-12.04.5-server-amd64.iso",
-      "iso_checksum": "769474248a3897f4865817446f9a4a53",
+      "iso_url": "http://releases.ubuntu.com/16.04/ubuntu-16.04.2-server-amd64.iso",
+      "iso_checksum": "2bce60d18248df9980612619ff0b34e6",
       "iso_checksum_type": "md5",
-      "ssh_username": "root",
+      "ssh_username": "cdap",
       "ssh_password": "cdap",
       "ssh_wait_timeout": "30m",
-      "shutdown_command": "shutdown -P now",
+      "shutdown_command": "sudo shutdown -P now",
       "format": "ova",
       "headless": true,
       "guest_additions_mode": "upload",
       "http_directory": "files",
       "boot_command": [
-        "<esc><esc><enter><wait>",
-        "/install/vmlinuz noapic ",
-        "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
-        "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
-        "hostname={{ .Name }}.cask.co ",
-        "fb=false debconf/frontend=noninteractive ",
-        "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",
-        "keyboard-configuration/variant=USA console-setup/ask_detect=false ",
-        "initrd=/install/initrd.gz -- <enter>"
+        "<enter><wait><f6><esc><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "/install/vmlinuz<wait>",
+        " auto<wait>",
+        " console-setup/ask_detect=false<wait>",
+        " console-setup/layoutcode=us<wait>",
+        " console-setup/modelcode=pc105<wait>",
+        " debconf/frontend=noninteractive<wait>",
+        " debian-installer=en_US<wait>",
+        " fb=false<wait>",
+        " initrd=/install/initrd.gz<wait>",
+        " kbd-chooser/method=us<wait>",
+        " keyboard-configuration/layout=USA<wait>",
+        " keyboard-configuration/variant=USA<wait>",
+        " locale=en_US<wait>",
+        " netcfg/get_domain=cask.co<wait>",
+        " netcfg/get_hostname={{ .Name }}<wait>",
+        " grub-installer/bootdev=/dev/sda<wait>",
+        " noapic<wait>",
+        " preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg",
+        " -- <wait>",
+        "<enter><wait>"
       ],
       "vboxmanage": [
         ["modifyvm", "{{ .Name }}", "--memory", "4096"],
@@ -46,7 +61,7 @@
       "ami_name": "CDAP SDK {{user `sdk_version`}} ({{timestamp}})",
       "instance_type": "m4.large",
       "region": "us-east-1",
-      "source_ami": "ami-42d6fb55",
+      "source_ami": "ami-1ac0120c",
       "ssh_username": "ubuntu",
       "name": "cdap-sdk-ami"
     }
@@ -62,17 +77,9 @@
       "pause_before": "10s"
     },
     {
-      "type": "shell",
-      "inline": [
-        "reboot"
-      ],
-      "only": ["cdap-sdk-vm"]
-    },
-    {
       "type": "chef-solo",
       "install_command": "curl -L https://www.chef.io/chef/install.sh | {{if .Sudo}}sudo{{end}} bash -s -- -v 12.19.36",
-      "remote_cookbook_paths": "/var/chef/cookbooks",
-      "pause_before": "10s"
+      "remote_cookbook_paths": "/var/chef/cookbooks"
     },
     {
       "type": "shell",
@@ -81,6 +88,7 @@
     },
     {
       "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
       "scripts": "scripts/eclipse-cookbook.sh",
       "only": ["cdap-sdk-vm"]
     },
@@ -100,7 +108,6 @@
       "type": "chef-solo",
       "remote_cookbook_paths": "/var/chef/cookbooks",
       "run_list": "recipe[maven],recipe[hadoop::flume_agent],recipe[idea],recipe[eclipse]",
-      "prevent_sudo": true,
       "skip_install": true,
       "json": {
         "eclipse": {
@@ -177,6 +184,7 @@
     },
     {
       "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
       "scripts": [
         "scripts/motd.sh",
         "scripts/xorg.sh",
@@ -205,6 +213,7 @@
     },
     {
       "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
       "scripts": [
         "scripts/random-root-password.sh",
         "scripts/zero-disk.sh"
