@@ -22,8 +22,7 @@ import {MyNamespaceApi} from 'api/namespace';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import RouteToNamespace from 'components/RouteToNamespace';
-import Match from 'react-router/Match';
-import Router from 'react-router/BrowserRouter';
+import {BrowserRouter, Route} from 'react-router-dom';
 import Home from 'wrangler/components/Home';
 import MyCDAPVersionApi from 'api/version.js';
 import VersionStore from 'services/VersionStore';
@@ -70,18 +69,18 @@ class WranglerParent extends Component {
   render () {
     return (
 
-      <Router basename="/wrangler" history={history}>
+      <BrowserRouter basename="/wrangler" history={history}>
         <div className="cdap-container">
 
           <Header />
 
           <div className="container-fluid">
-            <Match exactly pattern="/" component={RouteToNamespace} />
-            <Match exactly pattern="/ns" component={RouteToNamespace} />
-            <Match exactly pattern="/ns/:namespace" history={history} component={Home} />
+            <Route exact path="/" component={RouteToNamespace} />
+            <Route exact path="/ns" component={RouteToNamespace} />
+            <Route exact path="/ns/:namespace" history={history} component={Home} />
           </div>
         </div>
-      </Router>
+      </BrowserRouter>
     );
   }
 }
