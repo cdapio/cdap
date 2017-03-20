@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,15 +16,19 @@
 
 @import '../../styles/variables.scss';
 $wizard-header-color: #464a57;
-$wizard-modal-margin-top: 180px;
+$wizard-modal-height: 85vh;
+$wizard-modal-width: 60vw;
+$wizard-modal-margin-top: 12.5vh;
+$wizard-modal-body-max-height: 360px;
+$wizard-modal-max-width: 1050px;
 
 .wizard-modal {
   overflow-x: hidden;
   &.modal-dialog {
-    height: 65vh;
-    width: 60vw;
+    height: $wizard-modal-height;
+    width: $wizard-modal-width;
     margin-top: $wizard-modal-margin-top;
-    max-width: 1050px;
+    max-width: $wizard-modal-max-width;
 
     .modal-content {
       border-radius: 0;
@@ -43,7 +47,7 @@ $wizard-modal-margin-top: 180px;
       .modal-body {
         padding: 0;
         height: calc(100% - 51px); // 100% - 51px for modal header
-        max-height: 360px;
+        max-height: $wizard-modal-body-max-height;
         overflow: visible;
 
         > div {
