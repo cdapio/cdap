@@ -96,8 +96,6 @@
             <span class="double-line" ng-if="(TopPanelCtrl.scheduleStatus === 'SUSPENDED' || TopPanelCtrl.scheduleStatus.error) && !TopPanelCtrl.scheduleLoading">
               <span class="fa icon-runtimestarttime"></span>
               <div class="button-label">
-                <span>Start</span>
-                <br />
                 <span>Schedule</span>
               </div>
             </span>
@@ -113,9 +111,7 @@
             <span class="double-line" ng-if="TopPanelCtrl.scheduleStatus ==='SCHEDULED' && !TopPanelCtrl.scheduleLoading">
               <span class="fa icon-runtimestarttime text-primary"></span>
               <div class="button-label">
-                <span>Stop</span>
-                <br />
-                <span>Schedule</span>
+                <span>Unschedule</span>
               </div>
             </span>
             <span ng-if="TopPanelCtrl.scheduleLoading">

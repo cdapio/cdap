@@ -17,6 +17,8 @@
 import React, { Component } from 'react';
 import DataPrep from 'components/DataPrep';
 import NavigationPrompt from 'react-router/NavigationPrompt';
+import Helmet from 'react-helmet';
+import T from 'i18n-react';
 
 /**
  *  Routing container for DataPrep for React
@@ -37,6 +39,9 @@ export default class DataPrepHome extends Component {
   render() {
     return (
       <div>
+        <Helmet
+          title={T.translate('features.DataPrep.pageTitle')}
+        />
         <DataPrep />
 
         <NavigationPrompt
