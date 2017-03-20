@@ -22,6 +22,8 @@ import shortid from 'shortid';
 import 'whatwg-fetch';
 import {contructUrl, insertAt, removeAt, humanReadableDate} from 'services/helpers';
 import {UncontrolledTooltip} from 'components/UncontrolledComponents';
+import {objectQuery} from 'services/helpers';
+import isNil from 'lodash/isNil';
 require('./ExploreModal.scss');
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
@@ -34,6 +36,7 @@ export default class ExploreModal extends Component {
       queryString: `SELECT * FROM ${this.props.entity.databaseName}.${this.props.entity.tableName} LIMIT 500`,
       queries: [],
       error: null,
+      previewError: null,
       loading: false
     };
     // Show any queries that were executed when the modal is open, like `show tables`.
@@ -171,7 +174,7 @@ export default class ExploreModal extends Component {
       }
       return q;
     });
-    if (queries[matchIndex + 1 ] && queries[matchIndex + 1 ].preview) {
+    if (queries[matchIndex + 1 ] && (queries[matchIndex + 1 ].preview || queries[matchIndex + 1].previewError)) {
       queries = removeAt(queries, matchIndex + 1);
       this.updateState({queries});
       return;
@@ -192,17 +195,30 @@ export default class ExploreModal extends Component {
         });
         return myExploreApi.getQueryPreview({queryHandle});
       })
-      .subscribe(res => {
-        let matchIndex;
-        queries.forEach((q, index) => {
-          if (q.query_handle === queryHandle) {
-            matchIndex = index;
-          }
-          return q;
-        });
-        queries[matchIndex + 1] = Object.assign(queries[matchIndex + 1], {preview: res});
-        this.updateState({ queries });
-      });
+      .subscribe(
+        res => {
+          let matchIndex;
+          queries.forEach((q, index) => {
+            if (q.query_handle === queryHandle) {
+              matchIndex = index;
+            }
+            return q;
+          });
+          queries[matchIndex + 1] = Object.assign(queries[matchIndex + 1], {preview: res});
+          this.updateState({ queries });
+        },
+        err => {
+          let matchIndex;
+          queries.forEach((q, index) => {
+            if (q.query_handle === queryHandle) {
+              matchIndex = index;
+            }
+            return q;
+          });
+          queries[matchIndex + 1] = Object.assign(queries[matchIndex + 1], {previewError: objectQuery(err, 'response')});
+          this.updateState({ queries });
+        }
+      );
     this.subscriptions.push(previewSubscription$);
   }
 
@@ -361,6 +377,17 @@ export default class ExploreModal extends Component {
             </div>
         );
       };
+      if (!isNil(query.previewError)) {
+        return (
+          <tr key={shortid.generate()}>
+            <td colSpan="4">
+              <div className="text-xs-center text-danger">
+                {query.previewError}
+              </div>
+            </td>
+          </tr>
+        );
+      }
       return (
         <tr key={shortid.generate()}>
           <td colSpan="4" className="preview-cell">
