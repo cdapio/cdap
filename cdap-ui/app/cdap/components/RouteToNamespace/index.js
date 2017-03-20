@@ -17,7 +17,7 @@
 import React, {Component} from 'react';
 import find from 'lodash/find';
 import NamespaceStore from 'services/NamespaceStore';
-import Redirect from 'react-router/Redirect';
+import {Redirect} from 'react-router-dom';
 
 export default class RouteToNamespace extends Component {
   constructor(props) {
