@@ -199,6 +199,8 @@ features:
       switchMessage: Select a different namespace from the namespace dropdown
     JustAddedSection:
       subtitle: Just added
+  DataPrep:
+    pageTitle: CDAP | Data Preparation
   Dashboard:
     Title: Dashboard
 
