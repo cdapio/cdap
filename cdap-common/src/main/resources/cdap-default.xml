@@ -457,8 +457,7 @@
     <name>audit.topic</name>
     <value>audit</value>
     <description>
-      Topic name in the messaging system to which audit messages are
-      published
+      Topic name used to publish audit messages in the messaging system
     </description>
   </property>
 
@@ -1445,7 +1444,7 @@
     <name>messaging.coprocessor.dir</name>
     <value>tms</value>
     <description>
-      Directory to store Messaging Service Table coprocessors. This path is
+      Directory to store messaging service table coprocessors. This path is
       relative to ${hdfs.namespace}.
     </description>
   </property>
@@ -1922,7 +1921,7 @@
     <name>notification.topic</name>
     <value>notifications</value>
     <description>
-      Topic name used to publish notifications
+      Topic name used to publish notifications in the messaging system
     </description>
   </property>
 
