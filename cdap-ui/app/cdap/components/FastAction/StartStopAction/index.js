@@ -143,7 +143,7 @@ export default class StartStopAction extends Component {
     let tooltipID = `${this.props.entity.uniqueId}-${this.startStop}`;
 
     return (
-      <span>
+      <span className="btn btn-secondary btn-sm">
         {
           this.state.modal ? (
             <ConfirmationModal

@@ -102,6 +102,20 @@ $border-color: #bbbbbb;
             .fast-actions-container {
               min-width: 215px;
               max-width: 400px;
+
+              h4 {
+                margin: 0;
+                > span {
+                  border: 0;
+                  padding: 0;
+                  vertical-align: top;
+                  display: inline-block;
+                  background: transparent;
+                  &:hover {
+                    background: transparent;
+                  }
+                }
+              }
             }
           }
 
@@ -113,6 +127,9 @@ $border-color: #bbbbbb;
           .fast-actions-container .btn-link {
             color: #4f5050;
             max-width: 40px;
+            > span {
+              vertical-align: top;
+            }
           }
         }
       }

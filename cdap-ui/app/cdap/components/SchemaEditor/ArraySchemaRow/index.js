@@ -39,7 +39,7 @@ export default class ArraySchemaRow extends Component {
         showAbstractSchemaRow: true,
         error: ''
       };
-      this.parsedType = itemsType;
+      this.parsedType = parsedItemsType.type;
     } else {
       this.state = {
         displayType: {
@@ -96,8 +96,6 @@ export default class ArraySchemaRow extends Component {
     if (error) {
       this.setState({error});
       return;
-    } else {
-      this.setState({error: ''});
     }
     this.parsedType = this.state.displayType.nullable ? [cloneDeep(itemsState): 'null'] : cloneDeep(itemsState);
     this.updateParent();

@@ -18,13 +18,15 @@ package co.cask.cdap.api.dataset.table;
 
 import co.cask.cdap.api.common.Bytes;
 
+import java.io.Serializable;
 import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link co.cask.cdap.api.dataset.table.Row}
  */
-public class Result implements Row {
+public class Result implements Row, Serializable {
+  private static final long serialVersionUID = 5364952213472173082L;
   private final byte[] row;
   private final Map<byte[], byte[]> columns;
 

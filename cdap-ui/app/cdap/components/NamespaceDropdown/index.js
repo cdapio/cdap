@@ -296,11 +296,14 @@ export default class NamespaceDropdown extends Component {
                       </div>
                     </div>
                     <div className="current-namespace-preferences text-xs-center">
-                      <SetPreferenceAction
-                        setAtNamespaceLevel={true}
-                        modalIsOpen={this.preferenceWizardIsOpen.bind(this)}
-                        onSuccess={this.preferencesAreSaved.bind(this)}
-                        savedMessageState={this.state.preferencesSavedMessage}/>
+                      <h4 className="btn-group">
+                        <SetPreferenceAction
+                          setAtNamespaceLevel={true}
+                          modalIsOpen={this.preferenceWizardIsOpen.bind(this)}
+                          onSuccess={this.preferencesAreSaved.bind(this)}
+                          savedMessageState={this.state.preferencesSavedMessage}
+                        />
+                      </h4>
                     </div>
                   </div>
                 )

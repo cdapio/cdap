@@ -375,19 +375,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
           String branchInfo = retValue.getKey();
           WorkflowToken branchToken = retValue.getValue();
           ((BasicWorkflowToken) token).mergeToken(branchToken);
-          LOG.info("Execution of branch {} for fork {} completed", branchInfo, fork);
-        } catch (Throwable t) {
-          Throwable rootCause = Throwables.getRootCause(t);
-          if (rootCause instanceof ExecutionException) {
-            LOG.error("Exception occurred in the execution of the fork node {}.", fork, rootCause);
-            throw (ExecutionException) rootCause;
-          }
-          if (rootCause instanceof InterruptedException) {
-            LOG.error("Workflow execution aborted.", rootCause);
-            break;
-          }
-          Throwables.propagateIfPossible(rootCause, Exception.class);
-          throw Throwables.propagate(rootCause);
+          LOG.trace("Execution of branch {} for fork {} completed.", branchInfo, fork);
+        } catch (InterruptedException e) {
+          // Due to workflow abortion, so just break the loop
+          break;
+        } catch (ExecutionException e) {
+          // Unwrap the cause
+          Throwables.propagateIfPossible(e.getCause(), Exception.class);
+          throw Throwables.propagate(e.getCause());
         }
       }
     } finally {
@@ -542,14 +537,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   @Override
   protected void run() throws Exception {
     LOG.info("Start workflow execution for {} with run id {}.", workflowSpec.getName(), workflowRunId.getRun());
-    LOG.debug("Workflow specification is {}", workflowSpec);
+    LOG.trace("Workflow specification is {}", workflowSpec);
     basicWorkflowContext.setState(new ProgramState(ProgramStatus.RUNNING, null));
     executeAll(workflowSpec.getNodes().iterator(), program.getApplicationSpecification(),
                new InstantiatorFactory(false), program.getClassLoader(), basicWorkflowToken);
     if (runningThread != null) {
       basicWorkflowContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
     }
-    LOG.info("Workflow execution succeeded for {}", workflowSpec.getName());
+    LOG.info("Execution of workflow {} with run id {} is completed.", workflowSpec.getName(), workflowRunId.getRun());
   }
 
   private void executeAll(Iterator<WorkflowNode> iterator, ApplicationSpecification appSpec,
@@ -562,7 +557,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       } catch (Throwable t) {
         Throwable rootCause = Throwables.getRootCause(t);
         if (rootCause instanceof InterruptedException) {
-          LOG.error("Workflow execution aborted.", rootCause);
+          LOG.debug("Execution of workflow {} with run id {} is aborted.", workflowSpec.getName(),
+                    workflowRunId.getRun());
           basicWorkflowContext.setState(new ProgramState(ProgramStatus.KILLED, rootCause.getMessage()));
           break;
         }

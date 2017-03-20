@@ -1303,12 +1303,25 @@ body.state-tracker-integrations {
         height: ~"-moz-calc(100vh - 530px)";
         height: ~"-webkit-calc(100vh - 530px)";
         height: ~"calc(100vh - 530px)";
+
+        /* 46px: header */
+        tbody {
+          height: ~"-moz-calc(100vh - 530px - 46px)";
+          height: ~"-webkit-calc(100vh - 530px - 46px)";
+          height: ~"calc(100vh - 530px - 46px)";
+        }
       }
       .log-viewer-container.full-screen {
         .logs-table {
           height: ~"-moz-calc(100vh - 180px)";
           height: ~"-webkit-calc(100vh - 180px)";
           height: ~"calc(100vh - 180px)";
+
+          tbody {
+            height: ~"-moz-calc(100vh - 180px - 46px)";
+            height: ~"-webkit-calc(100vh - 180px - 46px)";
+            height: ~"calc(100vh - 180px - 46px)";
+          }
         }
       }
     }

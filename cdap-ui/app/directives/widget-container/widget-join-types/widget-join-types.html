@@ -26,14 +26,23 @@
          ng-if="JoinTypes.joinType === 'Outer'">
       <div class="subtitle">Required Inputs</div>
 
+      <div class="text-warning"
+           ng-if="JoinTypes.selectedCount === JoinTypes.inputs.length">
+        <span>Setting all stages as required inputs will be treated as Inner Join.</span>
+      </div>
+
       <div class="row checkboxes">
         <div class="col-xs-6 clearfix" ng-repeat="input in JoinTypes.inputs">
-          <span class="input-name">{{ input.name }}</span>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox"
+                     class="checkbox"
+                     ng-model="input.selected"
+                     ng-change="JoinTypes.formatOutput()">
 
-          <input type="checkbox"
-                 class="checkbox"
-                 ng-model="input.selected"
-                 ng-change="JoinTypes.formatOutput()">
+              {{ input.name }}
+            </label>
+          </div>
         </div>
       </div>
     </div>

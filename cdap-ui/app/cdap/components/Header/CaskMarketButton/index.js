@@ -27,18 +27,27 @@ export default class CaskMarketButton extends Component {
       showMarketPlace: false
     };
 
+    this.openCaskMarketModal = this.openCaskMarketModal.bind(this);
     this.closeCaskMarketModal = this.closeCaskMarketModal.bind(this);
     this.eventEmitter = ee(ee);
+    this.eventEmitter.on(globalEvents.OPENMARKET, this.openCaskMarketModal);
     this.eventEmitter.on(globalEvents.CLOSEMARKET, this.closeCaskMarketModal);
   }
 
   componentWillUnmount() {
+    this.eventEmitter.off(globalEvents.OPENMARKET, this.openCaskMarketModal);
     this.eventEmitter.off(globalEvents.CLOSEMARKET, this.closeCaskMarketModal);
   }
 
   onClickHandler() {
     this.setState({
       showMarketPlace: !this.state.showMarketPlace
+    });
+  }
+
+  openCaskMarketModal () {
+    this.setState({
+      showMarketPlace: true
     });
   }
 

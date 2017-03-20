@@ -1,12 +1,13 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 .. _admin-authorization:
 
 =============
 Authorization
 =============
+
 Authorization allows users to enforce fine-grained access control on CDAP entities:
 namespaces, artifacts, applications, programs, datasets, streams, and secure keys. All
 operations on these entities |---| listing, viewing, creating, updating, managing,

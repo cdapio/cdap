@@ -21,11 +21,13 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.MethodNotAllowedException;
@@ -45,6 +47,7 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.BatchProgram;
@@ -65,6 +68,7 @@ import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
+import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -137,6 +141,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Gson GSON = ApplicationSpecificationAdapter
     .addTypeAdapters(new GsonBuilder())
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
+    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .create();
 
   private static final Function<RunRecordMeta, RunRecord> CONVERT_TO_RUN_RECORD =
@@ -539,6 +544,138 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new NotFoundException(programId);
     }
     responder.sendJson(HttpResponseStatus.OK, specification);
+  }
+
+  @PUT
+  @Path("apps/{app-name}/schedules/{schedule-name}")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
+  public void addSchedule(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId,
+                          @PathParam("app-name") String appName,
+                          @PathParam("schedule-name") String scheduleName)
+    throws SchedulerException, BadRequestException, NotFoundException, IOException, AlreadyExistsException {
+    doAddSchedule(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+  }
+
+  @PUT
+  @Path("apps/{app-name}/versions/{app-version}/schedules/{schedule-name}")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
+  public void addSchedule(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId,
+                          @PathParam("app-name") String appName,
+                          @PathParam("app-version") String appVersion,
+                          @PathParam("schedule-name") String scheduleName)
+    throws SchedulerException, BadRequestException, NotFoundException, IOException, AlreadyExistsException {
+    doAddSchedule(request, responder, namespaceId, appName, appVersion, scheduleName);
+  }
+
+  private void doAddSchedule(HttpRequest request, HttpResponder responder, String namespaceId, String appId,
+                             String appVersion, String scheduleName)
+    throws IOException, BadRequestException, NotFoundException, SchedulerException, AlreadyExistsException {
+    ApplicationId applicationId = new ApplicationId(namespaceId, appId, appVersion);
+    ScheduleSpecification scheduleSpecFromRequest;
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+      // The schedule spec in the request body does not contain the program information
+      scheduleSpecFromRequest = GSON.fromJson(reader, ScheduleSpecification.class);
+    } catch (IOException e) {
+      LOG.debug("Error reading schedule specification from request body", e);
+      throw new IOException("Error reading request body");
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Request body is invalid json: " + e.getMessage());
+    }
+
+    // If the schedule name is present in the request body, it should match the name in path params
+    if (scheduleSpecFromRequest.getSchedule().getName() != null &&
+      !scheduleName.equals(scheduleSpecFromRequest.getSchedule().getName())) {
+      throw new BadRequestException(
+        String.format(
+          "schedule name in the body of the request (%s) does not match the schedule name in the path parameter (%s)",
+          scheduleSpecFromRequest.getSchedule().getName(), scheduleName));
+    }
+
+    lifecycleService.addSchedule(applicationId, scheduleSpecFromRequest);
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @POST
+  @Path("apps/{app-name}/schedules/{schedule-name}/update")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
+  public void updateSchedule(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("app-name") String appName,
+                             @PathParam("schedule-name") String scheduleName)
+    throws SchedulerException, BadRequestException, NotFoundException, IOException, AlreadyExistsException {
+    doUpdateSchedule(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+  }
+
+  @POST
+  @Path("apps/{app-name}/versions/{app-version}/schedules/{schedule-name}/update")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
+  public void updateSchedule(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("app-name") String appName,
+                             @PathParam("app-version") String appVersion,
+                             @PathParam("schedule-name") String scheduleName)
+    throws SchedulerException, BadRequestException, NotFoundException, IOException, AlreadyExistsException {
+    doUpdateSchedule(request, responder, namespaceId, appName, appVersion, scheduleName);
+  }
+
+  // TODO: refactor doAddSchedule and doUpdateSchedule to reduce code duplication
+  private void doUpdateSchedule(HttpRequest request, HttpResponder responder, String namespaceId, String appId,
+                                String appVersion, String scheduleName)
+    throws IOException, BadRequestException, NotFoundException, SchedulerException, AlreadyExistsException {
+    ApplicationId applicationId = new ApplicationId(namespaceId, appId, appVersion);
+    ScheduleSpecification scheduleSpecFromRequest;
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+      // The schedule spec in the request body can contain only the changed information or more, but should always
+      // contain the schedule type for deserialization
+      scheduleSpecFromRequest = GSON.fromJson(reader, ScheduleSpecification.class);
+    } catch (IOException e) {
+      LOG.debug("Error reading schedule specification from request body", e);
+      throw new IOException("Error reading request body");
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Request body is invalid json: " + e.getMessage());
+    }
+
+    // If the schedule name is present in the request body, it should match the name in path params
+    if (!scheduleName.equals(scheduleSpecFromRequest.getSchedule().getName())) {
+      throw new BadRequestException(
+        String.format(
+          "schedule name in the body of the request (%s) does not match the schedule name in the path parameter (%s)",
+          scheduleSpecFromRequest.getSchedule().getName(), scheduleName));
+    }
+
+    lifecycleService.updateSchedule(applicationId, scheduleSpecFromRequest);
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @DELETE
+  @Path("apps/{app-name}/schedules/{schedule-name}")
+  public void deleteSchedule(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("app-name") String appName,
+                             @PathParam("schedule-name") String scheduleName)
+    throws NotFoundException, SchedulerException {
+    doDeleteSchedule(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+  }
+
+  @DELETE
+  @Path("apps/{app-name}/versions/{app-version}/schedules/{schedule-name}")
+  public void deleteSchedule(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("app-name") String appName,
+                             @PathParam("app-version") String appVersion,
+                             @PathParam("schedule-name") String scheduleName)
+    throws NotFoundException, SchedulerException {
+    doDeleteSchedule(responder, namespaceId, appName, appVersion, scheduleName);
+  }
+
+  private void doDeleteSchedule(HttpResponder responder, String namespaceId, String appName,
+                                String appVersion, String scheduleName)
+    throws NotFoundException, SchedulerException {
+    ApplicationId applicationId = new ApplicationId(namespaceId, appName, appVersion);
+    lifecycleService.deleteSchedule(applicationId, scheduleName);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**

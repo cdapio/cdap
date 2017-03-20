@@ -65,6 +65,8 @@ public class PipelineSpecGeneratorTest {
     new ETLPlugin("mockjoiner", BatchJoiner.PLUGIN_TYPE, ImmutableMap.<String, String>of(), null);
   private static final ETLPlugin MOCK_ERROR =
     new ETLPlugin("mockerror", ErrorTransform.PLUGIN_TYPE, ImmutableMap.<String, String>of(), null);
+  private static final ETLPlugin MOCK_ACTION =
+    new ETLPlugin("mockaction", Action.PLUGIN_TYPE, ImmutableMap.<String, String>of(), null);
   private static final ArtifactId ARTIFACT_ID =
     new ArtifactId("plugins", new ArtifactVersion("1.0.0"), ArtifactScope.USER);
   private static BatchPipelineSpecGenerator specGenerator;
@@ -270,14 +272,13 @@ public class PipelineSpecGeneratorTest {
      *
      * sink gets schema A and schema B as input, should fail
      */
-    ETLPlugin mockAction = new ETLPlugin("mockaction", Action.PLUGIN_TYPE, ImmutableMap.<String, String>of(), null);
     ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("tA", MOCK_TRANSFORM_A))
       .addStage(new ETLStage("tB", MOCK_TRANSFORM_B))
       .addStage(new ETLStage("sinkA", MOCK_SINK))
       .addStage(new ETLStage("sinkB", MOCK_SINK))
-      .addStage(new ETLStage("action", mockAction))
+      .addStage(new ETLStage("action", MOCK_ACTION))
       .addConnection("source", "tA")
       .addConnection("source", "tB")
       .addConnection("tA", "sinkA")
@@ -329,6 +330,26 @@ public class PipelineSpecGeneratorTest {
           .addInputs("sinkA", "sinkB")
           .build())
       .addConnections(config.getConnections())
+      .setResources(config.getResources())
+      .setDriverResources(config.getDriverResources())
+      .setClientResources(config.getClientResources())
+      .setStageLoggingEnabled(config.isStageLoggingEnabled())
+      .build();
+
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testSingleAction() {
+    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("action", MOCK_ACTION))
+      .build();
+    PipelineSpec actual = specGenerator.generateSpec(config);
+
+    Map<String, String> emptyMap = ImmutableMap.of();
+    PipelineSpec expected = BatchPipelineSpec.builder()
+      .addStage(
+        StageSpec.builder("action", new PluginSpec(Action.PLUGIN_TYPE, "mockaction", emptyMap, ARTIFACT_ID)).build())
       .setResources(config.getResources())
       .setDriverResources(config.getDriverResources())
       .setClientResources(config.getClientResources())

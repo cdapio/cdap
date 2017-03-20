@@ -42,7 +42,6 @@ require('./StreamDetailedView.scss');
 export default class StreamDetailedView extends Component {
   constructor(props) {
     super(props);
-
     this.state = {
       entityDetail: objectQuery(this.props, 'location', 'state', 'entityDetail') || {
         schema: null,
@@ -54,12 +53,15 @@ export default class StreamDetailedView extends Component {
       routeToHome: false,
       successMessage: null,
       notFound: false,
-      modalToOpen: objectQuery(this.props, 'location', 'query', 'modalToOpen') || ''
+      modalToOpen: objectQuery(this.props, 'location', 'query', 'modalToOpen') || '',
+      previousPathName: null
     };
   }
 
   componentWillMount() {
     let {namespace, streamId} = this.props.params;
+    let selectedNamespace = NamespaceStore.getState().selectedNamespace;
+    let previousPathName = objectQuery(this.props, 'location', 'state', 'previousPathname')  || `/ns/${selectedNamespace}?overviewid=${streamId}&overviewtype=stream`;
     if (!namespace) {
       namespace = NamespaceStore.getState().selectedNamespace;
     }
@@ -67,16 +69,19 @@ export default class StreamDetailedView extends Component {
       fetchTables(namespace)
     );
 
+    this.setState({
+      previousPathName
+    });
     this.fetchEntityDetails(namespace, streamId);
     this.fetchEntityMetadata(namespace, streamId);
     if (
-      isNil(this.state.entityMetadata) ||
-      isEmpty(this.state.entityMetadata) ||
-      isNil(this.state.entity) ||
-      isEmpty(this.state.entity)
+      !isNil(this.state.entityMetadata) &&
+      !isEmpty(this.state.entityMetadata) &&
+      !isNil(this.state.entityDetail) &&
+      !isEmpty(this.state.entityDetail)
     ) {
       this.setState({
-        loading: true
+        loading: false
       });
     }
 
@@ -236,16 +241,13 @@ export default class StreamDetailedView extends Component {
     if (this.state.notFound) {
       return (
         <Page404
-          entityType="Stream"
+          entityType="stream"
           entityName={this.props.params.streamId}
         />
       );
     }
-
-    let selectedNamespace = NamespaceStore.getState().selectedNamespace;
-    let previousPathname = objectQuery(this.props, 'location', 'state', 'previousPathname')  || `/ns/${selectedNamespace}`;
     let previousPaths = [{
-      pathname: previousPathname,
+      pathname: this.state.previousPathName,
       label: T.translate('commons.back')
     }];
     return (

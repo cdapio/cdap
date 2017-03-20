@@ -1,8 +1,11 @@
 CDAP Smoke Test
 ---------------
 The CDAP UI may initially show errors while all of the CDAP YARN containers are
-starting up. Allow for up to a few minutes for this. The *System Health* link in the CDAP
-UI in the left side shows the status of the CDAP services. 
+starting up. Allow for up to a few minutes for this. 
+
+The *Administration* page of the CDAP UI shows the status of the CDAP services.
+It can be reached at ``http://<cdap-host>:11011/cdap/administration``, substituting for
+``<cdap-host>`` the host name or IP address of the CDAP server:
 
 .. figure:: ../../../admin-manual/source/_images/console/console-distributed.png
    :figwidth: 100%
@@ -10,6 +13,6 @@ UI in the left side shows the status of the CDAP services.
    :align: center
    :class: bordered-image
 
-   **CDAP UI:** Showing started-up before data or applications are deployed.
+   **CDAP UI:** Showing started-up, *Administration* page.
 
 Further instructions for verifying your installation are contained in :ref:`admin-manual-verification`.

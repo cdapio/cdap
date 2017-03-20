@@ -73,6 +73,10 @@
        ng-if="!HydratorPlusPlusTopPanelCtrl.previewMode">
     <div class="btn"
          ng-click="HydratorPlusPlusTopPanelCtrl.isPreviewEnabled && HydratorPlusPlusTopPanelCtrl.togglePreviewMode()"
+         uib-tooltip="Pipeline preview is not available in distributed mode."
+         tooltip-placement="bottom"
+         tooltip-class="toppanel-tooltip"
+         tooltip-enable="!HydratorPlusPlusTopPanelCtrl.isPreviewEnabled"
          ng-disabled="!HydratorPlusPlusTopPanelCtrl.isPreviewEnabled">
       <span class="fa icon-eye"></span>
       <div class="button-label">Preview</div>

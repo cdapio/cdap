@@ -173,6 +173,7 @@ export default class UnionSchemaRow extends Component {
                     <div className="btn btn-link">
                       <Input
                         type="checkbox"
+                        addon={true}
                         checked={displayType.nullable}
                         onChange={this.onNullableChange.bind(this, index)}
                       />

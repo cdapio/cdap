@@ -19,7 +19,7 @@
 # copy new parcel into repo dir
 # symlink parcels
 # create manifest
-# s3cmd ls to see if repo exists
+# optionally (set MERGE_REPO=true) s3cmd ls to see if repo exists
 # - yes, sync repo manifest locally, merge
 # - no, do nothing
 
@@ -112,7 +112,9 @@ function merge_manifest() {
 setup_repo_staging || die "Something went wrong setting up the staging directory"
 add_parcels_to_repo_staging || die "Failed copying parcels to staging directory"
 make_manifest_in_repo_staging || die "Failed to create repository from staging directory"
-merge_manifest || die "Failed to merge in existing repository manifest"
+if [[ -n ${MERGE_REPO} ]]; then
+  merge_manifest || die "Failed to merge in existing repository manifest"
+fi
 
 cp -f ${STAGE_DIR}/${__maj_min}/manifest.json ${TARGET_DIR}
 

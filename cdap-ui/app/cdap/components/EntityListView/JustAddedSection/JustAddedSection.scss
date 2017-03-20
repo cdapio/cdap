@@ -19,6 +19,19 @@
   margin-bottom: 15px;
 
   .entity-cards { outline: 3px solid #2ecc71; }
-  .subtitle.just-added { width: initial; }
+  .subtitle.just-added {
+    color: #999999;
+    border-bottom: 1px solid #dddddd;
+    height: 11px;
+    clear: both;
+    margin-right: 20px;
+    margin-left: 5px;
+    margin-bottom: 15px;
+
+    span {
+      padding-right: 15px;
+      background: white;
+    }
+  }
   .just-added-entities-list { width: 100%; }
 }

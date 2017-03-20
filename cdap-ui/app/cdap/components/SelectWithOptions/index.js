@@ -15,7 +15,6 @@
  */
 import React, {PropTypes} from 'react';
 import {Input} from 'reactstrap';
-import shortid from 'shortid';
 
 export default function SelectWithOptions({className, value, onChange, options}) {
   return (
@@ -29,14 +28,14 @@ export default function SelectWithOptions({className, value, onChange, options})
         if (typeof o === 'object') {
           return (
             <option
-              key={shortid.generate()}
+              key={o.id}
               value={o.id}
             >
               {o.value}
             </option>
           );
         }
-        return (<option key={shortid.generate()}>{o}</option>);
+        return (<option key={o}>{o}</option>);
       })}
     </Input>
   );

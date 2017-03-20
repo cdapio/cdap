@@ -113,9 +113,9 @@ export default class DatasetStreamTable extends Component {
                 </td>
                 <td>
                   <Link to={link}>
-                    <div className="fast-actions-container">
+                    <div className="fast-actions-container text-xs-center">
                       <FastActions
-                        className="text-xs-left"
+                        className="text-xs-left btn-group"
                         entity={dataEntity}
                       />
                     </div>

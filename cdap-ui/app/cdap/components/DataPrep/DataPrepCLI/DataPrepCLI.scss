@@ -1,0 +1,75 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+$cli-color: #27ae60;
+$cli-font: "Courier New", Courier, monospace;
+
+.dataprep-container {
+  .dataprep-cli {
+    position: fixed;
+    bottom: 54px;
+    height: 30px;
+    width: 75%;
+    border-top: 1px solid #cccccc;
+
+    .error-bar {
+      background-color: #c0392b;
+      color: white;
+      padding: 0 10px;
+      position: absolute;
+      width: 100%;
+      bottom: 29px;
+      z-index: 1000;
+
+      .content {
+        width: calc(100% - 30px);
+        display: inline-block;
+        word-break: break-word;
+      }
+
+      .fa.fa-times {
+        cursor: pointer;
+        position: absolute;
+        top: 3px;
+        right: 5px;
+      }
+    }
+
+    .input-container {
+      background-color: black;
+      color: $cli-color;
+      font-family: $cli-font;
+      strong {
+        margin-left: 10px;
+        user-select: none;
+        line-height: 30px;
+      }
+
+      .directive-input {
+        width: calc(100% - 25px);
+        display: inline-block;
+
+        .form-control {
+          border: 0;
+          background-color: black;
+          color: $cli-color;
+          font-family: $cli-font;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+}

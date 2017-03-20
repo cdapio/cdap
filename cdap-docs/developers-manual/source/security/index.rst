@@ -73,3 +73,24 @@ If the standard authentication mechanisms are not sufficient, you can provide a
 :doc:`Authorization Extensions: <authorization-extensions>` Authorization backends for CDAP
 are implemented as extensions. Extensions run in their own, isolated classloader so that
 there are no conflicts with the system classloader of CDAP Master.
+
+
+.. impersonation-start
+
+.. rubric:: Impersonation
+
+Impersonation allows users to run programs and access datasets, streams, and other
+resources as pre-configured users (a *principal*). Currently, CDAP supports configuring
+impersonation at a namespace and at an application level, with application level
+configuration having a higher precedence than namespace level.
+
+If impersonation is enabled, and you don't specify a principal for an application, stream,
+or dataset, then the namespace owner's principal is used. If there is no namespace owner
+or you are using the default namespace, then the default principal is used (as set by the
+properties ``cdap.master.kerberos.keytab`` and ``cdap.master.kerberos.principal`` in the
+``cdap-site.xml``).
+
+Details on the system configurations required are in the Administration Manual's section
+on :ref:`admin-impersonation`.
+
+.. impersonation-end

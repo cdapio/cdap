@@ -9,9 +9,21 @@ Impersonation
 =============
 
 Impersonation allows users to run programs and access datasets, streams, and other
-resources as pre-configured users. Currently, CDAP supports configuring impersonation
-at a namespace level, which means that every namespace has a single user that all
+resources as pre-configured users (a *principal*). Currently, CDAP supports configuring
+impersonation at a namespace and at an application level, with application level
+configuration having a higher precedence than namespace level.
+
+Namespace-level impersonation means that every namespace has a single principal that all
 programs in that namespace run as, and that resources are accessed as.
+
+Application-level impersonation which means that every application has a single principal
+that all programs in that application run as, and that resources are accessed as. Any
+streams or datasets created by the application would be owned by that user.
+
+Streams and datasets created outside of an application can be created with a principal;
+otherwise, they would be owned by the principal defined for the namespace in which they
+are created.
+
 
 Requirements
 ============
@@ -27,14 +39,15 @@ and the local file system is used, the keytab must be on all local file systems 
 the CDAP Master instances.
 
 If these are not specified, the principal and keytab of the CDAP Master user will be used
-instead.
+instead. These are defined by the properties ``cdap.master.kerberos.principal`` and
+``cdap.master.kerberos.keytab`` respectively in the :ref:`cdap-site.xml file
+<appendix-cdap-default-security>`.
 
 The configured Kerberos principal must have been granted permissions for the operations
-that will occur in that namespace. For instance, if
-a :ref:`custom HBase namespace <namespaces-custom-mapping>` is configured, the configured
-principal must have privileges to create tables within that HBase namespace. If no
-custom HBase namespace is specified, the configured principal must have privileges to
-create namespaces.
+that will occur in that namespace. For instance, if a :ref:`custom HBase namespace
+<namespaces-custom-mapping>` is configured, the configured principal must have privileges
+to create tables within that HBase namespace. If no custom HBase namespace is specified,
+the configured principal must have privileges to create namespaces.
 
 Because of this, it is simplest to specify a custom mapping for ``root.directory`` and
 ``hbase.namespace`` when using impersonation so that the privileges granted to the
@@ -47,6 +60,113 @@ their corresponding HDFS ``/user/<username>`` directory. The commands for this a
 described in the installation section for each distribution (:ref:`Cloudera Manager
 <cloudera-hdfs-permissions>`, :ref:`Ambari <ambari-hdfs-permissions>`, 
 :ref:`MapR <mapr-hdfs-permissions>`, and :ref:`packages <packages-hdfs-permissions>`).
+
+Application-level Impersonation
+-------------------------------
+To use application-level impersonation in CDAP |---| where applications, datasets, and streams have
+their own owner and the operations performed in CDAP impersonate their respective
+owners |---| CDAP needs to have access to the owner principal and their associated keytabs.
+
+.. highlight:: xml
+
+For user's keytab access, CDAP uses these conventions:
+
+- All keytabs must be present on the local filesystem of nodes on which the CDAP Master is running. 
+- These keytabs must be present under a path which can be in one of these formats
+  and the ``cdap`` system user should have read access to all of the keytabs::
+
+    /<dir-1>/<dir-2>/${name}.keytab
+    /<dir-1>/<dir-2>/${name}/${name}.keytab
+
+- The above path is provided to CDAP as a configuration parameter in the ``cdap-site.xml``
+  file, such as::
+
+    <property>
+        <name>security.keytab.path</name>
+        <value>/etc/security/keytabs/${name}.keytab</value>
+    </property>
+
+  where ``${name}`` will be replaced by CDAP by the short user name of the Kerberos
+  principal CDAP is impersonating.
+  
+  **Note:** You will need to restart CDAP for this configuration change to take effect.
+
+Owner principal of an entity is provided either when an entity is created using the CDAP
+CLI or the RESTful APIs or when an application creates them.
+
+Hive Configuration
+------------------
+In order for Hive to work with impersonation, one of the following approaches can be used:
+
+- Hive Proxy Users; or
+- Hive SQL-based Authorization
+
+**Hive Proxy Users**
+
+To configure Hive to be able to impersonate other users, set in ``hive-site.xml`` the property::
+
+  <property>
+      <name>hive.server2.enable.doAs</name>
+      <value>true</value>
+  </property>
+
+Note that the CDAP Explore service ignores this setting and needs to be able to
+impersonate users who can create and access entities in CDAP. This can by done by adding
+properties in your ``core-site.xml``. The first property allows Hive to impersonate users
+belonging to ``group1`` and ``group2`` and the second property allows Hive to impersonate
+on all hosts::
+
+  <property>
+      <name>hadoop.proxyuser.hive.groups</name>
+      <value>group1,group2</value>
+  </property>
+ 
+  <property>
+      <name>hadoop.proxyuser.hive.hosts</name>
+      <value>*</value>
+  </property>
+
+See `Cloudera documentation
+<http://www.cloudera.com/documentation/enterprise/latest/topics/cdh_sg_hive_metastore_security.html>`__
+for additional details.
+
+**Hive SQL-based Authorization**
+
+An alternative to the above is to use SQL-based authorization. Add these properties to
+your ``hive-site.xml``::
+
+  <property>
+      <name>hive.server2.enable.doAs</name>
+      <value>false</value>
+  </property>
+  <property>
+      <name>hive.security.authorization.manager</name>
+      <value>org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory</value>
+  </property>
+  <property>
+      <name>hive.security.authorization.enabled</name>
+      <value>true</value>
+  </property>
+  <property>
+      <name>hive.security.authenticator.manager</name>
+      <value>org.apache.hadoop.hive.ql.security.ProxyUserAuthenticator</value>
+  </property>
+
+Note your hive-site.xml should also be configured to support modifying properties at
+runtime. Specifically, you will need this configuration in your ``hive-site.xml``::
+
+  <property>
+      <name>hive.security.authorization.sqlstd.confwhitelist.append</name>
+      <value>explore.*|mapreduce.job.queuename|mapreduce.job.complete.cancel.delegation.tokens|spark.hadoop.mapreduce.job.complete.cancel.delegation.tokens|mapreduce.job.credentials.binary|hive.exec.submit.local.task.via.child|hive.exec.submitviachild|hive.lock.*</value>
+  </property>
+
+After adding these properties to your ``hive-site.xml`` file, restart Hive.
+
+CDAP Authorization
+------------------
+Impersonation works with CDAP Authorization, and if it is enabled, it will be enforced.
+For details, see the sections on enabling on :ref:`enabling authorization in CDAP and
+managing privileges <admin-authorization>`.
 
 
 Limitations
