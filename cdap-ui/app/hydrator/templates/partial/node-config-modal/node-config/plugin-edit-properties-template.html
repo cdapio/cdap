@@ -28,7 +28,9 @@
 
   <div ng-repeat="group in HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.groups">
     <div class="widget-group-container">
-      <h4>{{::group.display}}</h4>
+      <div class="field-header subtitle">
+        <h4>{{::group.display}}</h4>
+      </div>
       <div ng-repeat="field in group.fields">
         <div ng-if="field.name !== HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperty">
 

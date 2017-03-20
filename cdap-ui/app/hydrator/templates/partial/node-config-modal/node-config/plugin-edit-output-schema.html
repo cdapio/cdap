@@ -21,12 +21,14 @@
       <li class="text-danger" ng-repeat="error in HydratorPlusPlusNodeConfigCtrl.state.errors">{{ error }}</li>
     </ul>
   </div>
-  <h4>
-    <span ng-if="!HydratorPlusPlusNodeConfigCtrl.state.isSink">Output Schema</span>
-    <span ng-if="HydratorPlusPlusNodeConfigCtrl.state.isSink">Schema</span>
+    <div class="field-header subtitle">
+      <h4>
+        <span ng-if="!HydratorPlusPlusNodeConfigCtrl.state.isSink">Output Schema</span>
+        <span ng-if="HydratorPlusPlusNodeConfigCtrl.state.isSink">Schema</span>
 
-    <span class="fa fa-asterisk ng-scope" ng-if="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.isOutputSchemaRequired"></span>
-
+        <span class="fa fa-asterisk ng-scope" ng-if="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.isOutputSchemaRequired"></span>
+      </h4>
+    </div>
     <div class="pull-right" uib-dropdown>
       <button class="btn btn-default" uib-dropdown-toggle>
         <span>Actions</span>
@@ -53,7 +55,7 @@
         </li>
       </ul>
     </div>
-  </h4>
+
   <fieldset class="clearfix" ng-disabled="isDisabled">
     <div class="schema-propagation-confirm">
       <div class="well well-xs" ng-if="HydratorPlusPlusNodeConfigCtrl.showPropagateConfirm">
