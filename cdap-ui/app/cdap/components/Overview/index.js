@@ -131,5 +131,12 @@ export default class Overview extends Component {
 }
 
 Overview.propTypes = {
-  onCloseAndRefresh: PropTypes.func
+  onCloseAndRefresh: PropTypes.func,
+};
+Overview.contextTypes = {
+  router: PropTypes.shape({
+     history: PropTypes.object.isRequired,
+     route: PropTypes.object.isRequired,
+     staticContext: PropTypes.object
+   })
 };
