@@ -51,6 +51,7 @@ import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionExecutor.Subroutine;
 import org.apache.tephra.TransactionExecutorFactory;
+import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,8 +88,8 @@ public class HBaseQueueClientFactory implements QueueClientFactory, ProgramConte
     this.queueUtil = new HBaseQueueUtilFactory().get();
     this.hBaseTableUtil = hBaseTableUtil;
     this.txExecutorFactory = txExecutorFactory;
-    this.txMaxLifeTimeInMillis = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tephra.CFG_TX_MAX_LIFETIME,
-                                                                         Constants.Tephra.DEFAULT_TX_MAX_LIFETIME));
+    this.txMaxLifeTimeInMillis = TimeUnit.SECONDS.toMillis(cConf.getLong(TxConstants.Manager.CFG_TX_MAX_LIFETIME,
+                                                                         TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME));
   }
 
   @Override
