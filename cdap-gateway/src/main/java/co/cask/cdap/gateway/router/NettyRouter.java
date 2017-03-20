@@ -201,16 +201,10 @@ public class NettyRouter extends AbstractIdleService {
   protected Executor executor(final State state) {
     final AtomicInteger id = new AtomicInteger();
     //noinspection NullableProblems
-    final Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
-      @Override
-      public void uncaughtException(Thread t, Throwable e) {
-      }
-    };
     return new Executor() {
       @Override
       public void execute(Runnable runnable) {
         Thread t = new Thread(runnable, String.format("NettyRouter-%d", id.incrementAndGet()));
-        t.setUncaughtExceptionHandler(h);
         t.start();
       }
     };
