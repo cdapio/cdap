@@ -30,7 +30,7 @@ import DatasetDetaildViewTab from 'components/DatasetDetailedView/Tabs';
 import {MySearchApi} from 'api/search';
 import {parseMetadata} from 'services/metadata-parser';
 import FastActionToMessage from 'services/fast-action-message-helper';
-import Redirect from 'react-router/Redirect';
+import {Redirect} from 'react-router-dom';
 import capitalize from 'lodash/capitalize';
 import Page404 from 'components/404';
 import BreadCrumb from 'components/BreadCrumb';
@@ -59,7 +59,7 @@ export default class DatasetDetailedView extends Component {
 
   componentWillMount() {
     let selectedNamespace = NamespaceStore.getState().selectedNamespace;
-    let {namespace, datasetId} = this.props.params;
+    let {namespace, datasetId} = this.props.match.params;
     let previousPathName = objectQuery(this.props, 'location', 'state', 'previousPathname')  || `/ns/${selectedNamespace}?overviewid=${datasetId}&overviewtype=dataset`;
     if (!namespace) {
       namespace = NamespaceStore.getState().selectedNamespace;
@@ -87,12 +87,12 @@ export default class DatasetDetailedView extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    let {namespace: currentNamespace, datasetId: currentDatasetId} = this.props.params;
-    let {namespace: nextNamespace, datasetId: nextDatasetId} = nextProps.params;
+    let {namespace: currentNamespace, datasetId: currentDatasetId} = this.props.match.params;
+    let {namespace: nextNamespace, datasetId: nextDatasetId} = nextProps.match.params;
     if (currentNamespace === nextNamespace && currentDatasetId === nextDatasetId) {
       return;
     }
-    let {namespace, datasetId} = nextProps.params;
+    let {namespace, datasetId} = nextProps.match.params;
     if (!namespace) {
       namespace = NamespaceStore.getState().selectedNamespace;
     }
@@ -181,7 +181,7 @@ export default class DatasetDetailedView extends Component {
       MySearchApi
         .search({
           namespace,
-          query: this.props.params.datasetId
+          query: this.props.match.params.datasetId
         })
         .map(res => res.results.map(parseMetadata))
         .subscribe(entityMetadata => {
@@ -193,7 +193,7 @@ export default class DatasetDetailedView extends Component {
           } else {
             let metadata = entityMetadata
               .filter(en => en.type === 'datasetinstance')
-              .find( en => en.id === this.props.params.datasetId);
+              .find( en => en.id === this.props.match.params.datasetId);
             this.setState({
               entityMetadata: metadata,
               loading: false
@@ -241,7 +241,7 @@ export default class DatasetDetailedView extends Component {
       return (
         <Page404
           entityType="dataset"
-          entityName={this.props.params.datasetId}
+          entityName={this.props.match.params.datasetId}
         />
       );
     }
@@ -252,7 +252,7 @@ export default class DatasetDetailedView extends Component {
     return (
       <div className="app-detailed-view dataset-detailed-view">
         <Helmet
-          title={T.translate('features.DatasetDetailedView.Title', {datasetId: this.props.params.datasetId})}
+          title={T.translate('features.DatasetDetailedView.Title', {datasetId: this.props.match.params.datasetId})}
         />
         <ResourceCenterButton />
         <BreadCrumb
@@ -268,7 +268,7 @@ export default class DatasetDetailedView extends Component {
           showFullCreationTime={true}
         />
         <DatasetDetaildViewTab
-          params={this.props.params}
+          params={this.props.match.params}
           pathname={this.props.location.pathname}
           entity={this.state.entityDetail}
         />
@@ -284,9 +284,14 @@ export default class DatasetDetailedView extends Component {
 }
 
 DatasetDetailedView.propTypes = {
-  params: PropTypes.shape({
-    datasetId: PropTypes.string,
-    namespace: PropTypes.string
-  }),
-  location: PropTypes.any
+  match: PropTypes.object,
+  location: PropTypes.object,
+};
+
+DatasetDetailedView.contextTypes = {
+  router: PropTypes.shape({
+     history: PropTypes.object.isRequired,
+     route: PropTypes.object.isRequired,
+     staticContext: PropTypes.object
+   })
 };

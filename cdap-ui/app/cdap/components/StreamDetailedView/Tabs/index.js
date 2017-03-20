@@ -17,8 +17,7 @@
 import React, { Component, PropTypes } from 'react';
 import { Nav, NavItem, NavLink, TabContent} from 'reactstrap';
 import isNil from 'lodash/isNil';
-import Match from 'react-router/Match';
-import Link from 'react-router/Link';
+import {Route, NavLink as RouterNavLink} from 'react-router-dom';
 import ProgramTab from 'components/Overview/Tabs/ProgramTab';
 import SchemaTab from 'components/Overview/Tabs/SchemaTab';
 import UsageTab from 'components/StreamDetailedView/Tabs/UsageTab';
@@ -51,118 +50,118 @@ export default class StreamDetailedViewTabs extends Component {
         <Nav tabs>
           <NavItem>
             <NavLink>
-              <Link
+              <RouterNavLink
                 to={`${baseLinkPath}/usage`}
                 activeClassName="active"
-                isActive={(location) => {
+                isActive={(match, location) => {
                   let basepath = `^${baseLinkPath}(/usage)?$`;
                    return location.pathname.match(basepath);
                 }}
               >
                 Usage
-              </Link>
+              </RouterNavLink>
             </NavLink>
           </NavItem>
 
           <NavItem>
             <NavLink>
-              <Link
+              <RouterNavLink
                 to={`${baseLinkPath}/schema`}
                 activeClassName="active"
               >
                 Schema
-              </Link>
+              </RouterNavLink>
             </NavLink>
           </NavItem>
 
           <NavItem>
             <NavLink>
-              <Link
+              <RouterNavLink
                 to={`${baseLinkPath}/programs`}
                 activeClassName="active"
               >
                 Programs ({this.state.entity.programs.length})
-              </Link>
+              </RouterNavLink>
             </NavLink>
           </NavItem>
 
           <NavItem>
             <NavLink>
-              <Link
+              <RouterNavLink
                 to={`${baseLinkPath}/lineage`}
                 activeClassName="active"
               >
                 Lineage
-              </Link>
+              </RouterNavLink>
             </NavLink>
           </NavItem>
 
           <NavItem>
             <NavLink>
-              <Link
+              <RouterNavLink
                 to={`${baseLinkPath}/audit`}
                 activeClassName="active"
               >
                 Audit Log
-              </Link>
+              </RouterNavLink>
             </NavLink>
           </NavItem>
 
           <NavItem>
             <NavLink>
-              <Link
+              <RouterNavLink
                 to={`${baseLinkPath}/properties`}
                 activeClassName="active"
               >
                 Properties
-              </Link>
+              </RouterNavLink>
             </NavLink>
           </NavItem>
         </Nav>
         <TabContent>
-          <Match pattern={`${baseMatchPath}/`} render={
+          <Route exact path={`${baseMatchPath}/`} render={
             () => {
               return (
                 <UsageTab entity={this.state.entity} />
               );
             }}
           />
-          <Match pattern={`${baseMatchPath}/usage`} render={
+        <Route exact path={`${baseMatchPath}/usage`} render={
             () => {
               return (
                 <UsageTab entity={this.state.entity} />
               );
             }}
           />
-          <Match pattern={`${baseMatchPath}/schema`} render={
+          <Route path={`${baseMatchPath}/schema`} render={
             () => {
               return (
                 <SchemaTab entity={this.state.entity} />
               );
             }}
           />
-          <Match pattern={`${baseMatchPath}/programs`} render={
+        <Route exact path={`${baseMatchPath}/programs`} render={
             () => {
               return (
                 <ProgramTab entity={this.state.entity} />
               );
             }}
           />
-          <Match pattern={`${baseMatchPath}/lineage`} render={
+        <Route exact path={`${baseMatchPath}/lineage`} render={
             () => {
               return (
                 <LineageTab entity={this.state.entity} />
               );
             }}
           />
-          <Match pattern={`${baseMatchPath}/audit`} render={
+        <Route exact path={`${baseMatchPath}/audit`} render={
             () => {
               return (
                 <AuditTab entity={this.state.entity} />
               );
             }}
           />
-          <Match pattern={`${baseMatchPath}/properties`} render={
+        <Route exact path={`${baseMatchPath}/properties`} render={
             () => {
               return (
                 <PropertiesTab entity={this.state.entity} />
