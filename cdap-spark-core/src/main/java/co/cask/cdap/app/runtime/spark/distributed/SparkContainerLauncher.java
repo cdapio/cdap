@@ -21,6 +21,7 @@ import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider;
 import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.logging.StandardOutErrorRedirector;
+import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +45,7 @@ public final class SparkContainerLauncher {
    */
   @SuppressWarnings("unused")
   public static void launch(String mainClassName, String[] args) {
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
     List<URL> urls = ClassLoaders.getClassLoaderURLs(systemClassLoader, new ArrayList<URL>());
 
