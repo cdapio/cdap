@@ -15,12 +15,12 @@
  */
 
 import React, { Component } from 'react';
-import MyWranglerApi from 'api/wrangler';
+import MyDataPrepApi from 'api/dataprep';
 import {MyArtifactApi} from 'api/artifact';
 import find from 'lodash/find';
-// import NamespaceStore from 'services/NamespaceStore';
+import NamespaceStore from 'services/NamespaceStore';
 
-export default class WranglerServiceControl extends Component {
+export default class DataPrepServiceControl extends Component {
   constructor(props) {
     super(props);
 
@@ -30,7 +30,7 @@ export default class WranglerServiceControl extends Component {
       extendedMessage: null
     };
 
-    this.enableWranglerService = this.enableWranglerService.bind(this);
+    this.enableService = this.enableService.bind(this);
   }
 
   componentWillUnmount() {
@@ -39,9 +39,9 @@ export default class WranglerServiceControl extends Component {
     }
   }
 
-  enableWranglerService() {
+  enableService() {
     this.setState({loading: true});
-    console.log('Enabling Wrangler Service');
+
     /**
      *  1. Get Wrangler Service App
      *  2. If not found, create app
@@ -49,73 +49,68 @@ export default class WranglerServiceControl extends Component {
      *  4. Poll until service starts, then reload page
      **/
 
-    let namespace = 'default';
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
-    MyWranglerApi.getWranglerApp({ namespace })
+    MyDataPrepApi.getApp({ namespace })
       .subscribe(() => {
         // Wrangler app already exist
         // Just start service
-        console.log('Wrangler app already found. Starting service');
         this.startService();
       }, () => {
         // App does not exist
         // Go to create app
-        console.log('Wrangler app not found. Creating app');
         this.createApp();
       });
   }
 
   createApp() {
-    let namespace = 'default';
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
     MyArtifactApi.list({ namespace })
       .subscribe((res) => {
-        console.log('Finding wrangler artifact');
         let artifact = find(res, { 'name': 'wrangler-service' });
 
-        MyWranglerApi.createApp({ namespace }, { artifact })
+        MyDataPrepApi.createApp({ namespace }, { artifact })
           .subscribe(() => {
-            console.log('Wrangler app created. Starting service');
             this.startService();
           }, (err) => {
             this.setState({
-              error: 'Failed to start service',
-              extendedMessage: err.data || err
+              error: 'Failed to enable data preparation',
+              extendedMessage: err.data || err,
+              loading: false
             });
           });
       });
   }
 
   startService() {
-    let namespace = 'default';
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
-    MyWranglerApi.startService({ namespace })
+    MyDataPrepApi.startService({ namespace })
       .subscribe(() => {
-        console.log('Service started. Polling for service status');
         this.pollServiceStatus();
       }, (err) => {
         this.setState({
-          error: 'Failed to start service',
-          extendedMessage: err.data || err
+          error: 'Failed to enable data preparation',
+          extendedMessage: err.data || err,
+          loading: false
         });
       });
   }
 
   pollServiceStatus() {
-    let namespace = 'default';
+    let namespace = NamespaceStore.getState().selectedNamespace;
 
-    this.servicePoll = MyWranglerApi.pollServiceStatus({ namespace })
+    this.servicePoll = MyDataPrepApi.pollServiceStatus({ namespace })
       .subscribe((res) => {
         if (res.status === 'RUNNING') {
-          console.log('Service is RUNNING. Going into wrangler');
-          window.onbeforeunload = null;
           window.location.reload();
         }
-        console.log('Current service status: ', res.status);
       }, (err) => {
         this.setState({
-          error: 'Failed to get service status',
-          extendedMessage: err.data || err
+          error: 'Failed to enable data preparation',
+          extendedMessage: err.data || err,
+          loading: false
         });
       });
   }
@@ -145,7 +140,7 @@ export default class WranglerServiceControl extends Component {
         <div className="text-xs-center">
           <button
             className="btn btn-primary"
-            onClick={this.enableWranglerService}
+            onClick={this.enableService}
             disabled={this.state.loading}
           >
             {

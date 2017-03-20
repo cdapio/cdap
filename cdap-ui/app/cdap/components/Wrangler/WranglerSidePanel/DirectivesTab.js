@@ -21,6 +21,7 @@ import shortid from 'shortid';
 import MyWranglerApi from 'api/wrangler';
 import DirectivesTabRow from 'components/Wrangler/WranglerSidePanel/DirectivesTabRow';
 import fileDownload from 'react-file-download';
+// import NamespaceStore from 'services/NamespaceStore';
 
 export default class DirectivesTab extends Component {
   constructor(props) {
@@ -74,8 +75,10 @@ export default class DirectivesTab extends Component {
 
     let newDirectives = directives.slice(0, index);
 
+    let namespace = 'default';
+
     let params = {
-      namespace: 'default',
+      namespace,
       workspaceId: state.workspaceId,
       limit: 100,
       directive: newDirectives
