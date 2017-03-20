@@ -15,7 +15,7 @@
  */
 import React, {PropTypes} from 'react';
 import NamespaceStore from 'services/NamespaceStore';
-import Link from 'react-router/Link';
+import {Link} from 'react-router-dom';
 import T from 'i18n-react';
 
 require('./PageErrorMessage.scss');

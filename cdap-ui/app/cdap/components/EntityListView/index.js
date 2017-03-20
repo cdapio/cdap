@@ -40,6 +40,8 @@ import WelcomeScreen from 'components/EntityListView/WelcomeScreen';
 import Page404 from 'components/404';
 import classnames from 'classnames';
 import T from 'i18n-react';
+import queryString from 'query-string';
+
 import {
   DEFAULT_SEARCH_FILTERS, DEFAULT_SEARCH_SORT,
   DEFAULT_SEARCH_QUERY, DEFAULT_SEARCH_SORT_OPTIONS,
@@ -131,7 +133,7 @@ export default class EntityListView extends Component {
   }
   parseUrlAndUpdateStore(nextProps) {
     let props = nextProps || this.props;
-    let queryObject = this.getQueryObject(props.location.query);
+    let queryObject = this.getQueryObject(queryString.parse(props.location.search));
     let pageSize = SearchStore.getState().search.limit;
     SearchStore.dispatch({
       type: SearchStoreActions.SETSORTFILTERSEARCHCURRENTPAGE,
@@ -151,13 +153,13 @@ export default class EntityListView extends Component {
     if (nextProps.currentPage !== searchState.currentPage) {
       // To enable explore fastaction on each card in entity list page.
       ExploreTablesStore.dispatch(
-       fetchTables(nextProps.params.namespace)
+       fetchTables(nextProps.match.params.namespace)
      );
     }
 
-    let queryObject = this.getQueryObject(nextProps.location.query);
+    let queryObject = this.getQueryObject(queryString.parse(nextProps.location.search));
     if (
-      (nextProps.params.namespace !== this.props.params.namespace) ||
+      (nextProps.match.params.namespace !== this.props.match.params.namespace) ||
       (
         !isEqual(queryObject.filters, searchState.activeFilters) ||
         queryObject.sort.fullSort !== searchState.activeSort.fullSort ||
@@ -167,11 +169,11 @@ export default class EntityListView extends Component {
         objectQuery(queryObject, 'overview', 'type') !== objectQuery(searchState, 'overviewEntity', 'type')
       )
     ) {
-      if ((nextProps.params.namespace !== this.props.params.namespace)) {
+      if ((nextProps.match.params.namespace !== this.props.match.params.namespace)) {
         NamespaceStore.dispatch({
           type: NamespaceActions.selectNamespace,
           payload: {
-            selectedNamespace: nextProps.params.namespace
+            selectedNamespace: nextProps.match.params.namespace
           }
         });
       }
@@ -390,6 +392,7 @@ export default class EntityListView extends Component {
                 />
             }
             <Overview
+              history={this.props.history}
               onCloseAndRefresh={this.onOverviewCloseAndRefresh.bind(this)}
             />
           </div>
@@ -400,9 +403,7 @@ export default class EntityListView extends Component {
 }
 
 EntityListView.propTypes = {
-  params: PropTypes.shape({
-    namespace : PropTypes.string
-  }),
+  match: PropTypes.object,
   location: PropTypes.object,
   history: PropTypes.object,
   pathname: PropTypes.string
