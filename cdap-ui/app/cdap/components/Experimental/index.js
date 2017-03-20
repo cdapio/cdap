@@ -16,7 +16,7 @@
 
 import React, { Component } from 'react';
 import Wrangler from 'components/Wrangler';
-import NavigationPrompt from 'react-router/NavigationPrompt';
+import {Prompt} from 'react-router-rom';
 
 export default class Experimental extends Component {
   constructor(props) {
@@ -41,7 +41,7 @@ export default class Experimental extends Component {
       <div>
         <Wrangler />
 
-        <NavigationPrompt
+        <Prompt
           when={true}
           message="Are you sure you want to leave this page?"
         />
