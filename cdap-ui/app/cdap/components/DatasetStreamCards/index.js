@@ -18,7 +18,7 @@ import EntityCard from 'components/EntityCard';
 import NamespaceStore from 'services/NamespaceStore';
 import {parseMetadata} from 'services/metadata-parser';
 import {convertEntityTypeToApi} from 'services/entity-type-api-converter';
-import {Link} from 'react-router';
+import {Link} from 'react-router-dom';
 import shortid from 'shortid';
 require('./DataStreamCards.scss');
 
