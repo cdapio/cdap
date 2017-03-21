@@ -2,7 +2,7 @@
 CDAP UI Pack 1
 ==============
 
-The CDAP UI Pack is a UI-only release that can be applied on top of a released CDAP.
+The CDAP UI Pack is a UI-only release that can be applied on top of an existing CDAP installation.
 
 Details
 =======
@@ -13,10 +13,10 @@ Details
 
 Installation
 ============
-Currently, the following manual steps need to be performed to install a UI pack. These steps will be automated in a
-later CDAP release
+Currently, the following manual steps need to be performed to install the CDAP UI Pack. 
+These steps will be automated in a later CDAP release.
 
-Unix/Linux Flavors
+UNIX/Linux Flavors
 ------------------
 
 **Standalone CDAP**
@@ -30,54 +30,53 @@ Unix/Linux Flavors
   $ ./bin/cdap sdk start
 
 
-**CDAP Cluster**
+**Distributed CDAP**
 
 ::
 
-  $ cd <CDAP_HOME>                        # (usually /opt/cdap)
+  $ cd <CDAP_HOME>                        # Note: usually /opt/cdap
   $ /etc/init.d/cdap-ui stop
   $ zip -m -r ui-backup.zip ui
   $ unzip /path/to/download/cdap-ui-pack-4.1.0_p1.zip
   $ /etc/init.d/cdap-ui start
 
-
-
 Windows
 -------
+1. Using the command prompt, stop the CDAP SDK::
 
-**Note:** Currently, installation of the UI pack on Windows requires a zip utility - we recommend
-`7zip <http://www.7-zip.org/>`__ or equivalent.
+    > cd <CDAP_HOME>
+    > bin\cdap sdk stop
+  
+2. Compress the existing ``ui`` directory to save as a backup::
 
-1. Using the command prompt, stop the CDAP SDK
+    > jar cf cdap-ui.zip ui
 
-::
+3. Delete the ``ui`` directory after the backup is completed::
 
-  $ cd ``<CDAP_HOME>``
-  $ bin\cdap sdk stop
+    > rmdir /S ui
+  
+4. Copy the CDAP UI Pack into the ``<CDAP_HOME>`` directory::
 
-2. Open the ``<CDAP_HOME>`` directory in Explorer
-3. Compress the ``ui`` to save a backup, by right clicking on the ``ui`` directory and
-   choosing **Send To** -> **Compressed (zipped) folder**
-4. Delete the ``ui`` directory after the backup is completed
-5. Extract the UI pack (cdap-ui-pack-4.1.0_p1.zip) in the ``<CDAP_HOME>`` directory, by right clicking on the file,
-   choosing **Extract All**, and specifying the path to the ``<CDAP_HOME>`` directory
+    > cp "<PATH_TO_CDAP_UI_PACK>" cdap-ui-pack-4.1.0_p1.zip
+
+5. Extract the CDAP UI Pack in the ``<CDAP_HOME>`` directory::
+
+    > jar xf cdap-ui-pack-4.1.0_p1.zip
+  
 6. A new ``ui`` directory should be created
-7. Using the command prompt, start the CDAP SDK
+7. Using the command prompt, start the CDAP SDK::
 
-::
-
-  $ cd ``<CDAP_HOME>``
-  $ bin\cdap sdk start
+    > cd <CDAP_HOME>
+    > bin\cdap sdk start
 
 
-Steps to update Data Preparation capability
+Steps to Update Data Preparation Capability
 ===========================================
-
-1. Upon installing the UI Pack, go to Cask Market
+1. After installing the CDAP UI Pack and restarting CDAP, from within the CDAP UI go to Cask Market
 2. From the **Solutions** category, follow the steps for the **Data Preparation** solution
-3. Go to Data Preparation by clicking on the CDAP menu and then choosing **Data Preparation**
-4. If newer version of the Data Preparation libraries have been installed, the UI will show an **Update** button.
-5. Click the **Update** button to enable the newer version of Data Preparation.
+3. Go to *Data Preparation* by clicking on the CDAP menu and then choosing *Data Preparation*
+4. If a newer version of the *Data Preparation* libraries has been released, the UI will show an **Update** button
+5. Click the *Update* button to update to the newer version of *Data Preparation*
 
 
 Release Notes
@@ -100,7 +99,7 @@ Improvements
 * `CDAP-7352 <http://issues.cask.co/browse/CDAP-7352>`__ - Made logviewer header row sticky
 * `CDAP-4798 <http://issues.cask.co/browse/CDAP-4798>`__ - Improved user experience in explore page
 * `CDAP-8964 <http://issues.cask.co/browse/CDAP-8964>`__ - Made Output Schema for sinks macro enabled
-* `HYDRATOR-1364 <http://issues.cask.co/browse/HYDRATOR-1364>`__ - Removed most of __ui__ field
+* `HYDRATOR-1364 <http://issues.cask.co/browse/HYDRATOR-1364>`__ - Removed most of "__ui__" field
 * `CDAP-8494 <http://issues.cask.co/browse/CDAP-8494>`__ - Fixed browser back button after switching to classic UI
 * `CDAP-8828 <http://issues.cask.co/browse/CDAP-8828>`__ - Removed dialog to select pipeline type upon pipeline creation
 * `CDAP-8396 <http://issues.cask.co/browse/CDAP-8396>`__ - Added call to action for namespace creation
@@ -115,15 +114,15 @@ Bugs
 * `CDAP-8461 <http://issues.cask.co/browse/CDAP-8461>`__ - Clicking back from the Detail page view now opens the overview page with the overview pane opened
 * `CDAP-8638 <http://issues.cask.co/browse/CDAP-8638>`__ - Opened each log in a new tab
 * `CDAP-8668 <http://issues.cask.co/browse/CDAP-8668>`__ - Fixed UI to show ERROR, WARN and INFO logs by default
-* `CDAP-8965 <http://issues.cask.co/browse/CDAP-8965>`__ - Removed Wrangle button from Wrangler Transform. Please use the Data Preparation UI for wrangling.
-* `HYDRATOR-1419 <http://issues.cask.co/browse/HYDRATOR-1419>`__ - Fixed browser back button behavior after switching namespace.
+* `CDAP-8965 <http://issues.cask.co/browse/CDAP-8965>`__ - Removed Wrangle button from Wrangler Transform. Please use the Data Preparation UI for wrangling
+* `HYDRATOR-1419 <http://issues.cask.co/browse/HYDRATOR-1419>`__ - Fixed browser back button behavior after switching namespace
 
 
 ======================
 License and Trademarks
 ======================
 
-Copyright © 2016-2017 Cask Data, Inc.
+Copyright © 2017 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 in compliance with the License. You may obtain a copy of the License at
