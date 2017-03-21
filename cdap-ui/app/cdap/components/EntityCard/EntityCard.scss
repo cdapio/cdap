@@ -35,6 +35,19 @@ $jump-button-container-size: 80px;
     }
     .fast-actions-container {
       background: $color;
+      h4 {
+        vertical-align: top;
+        > span {
+          border: 0;
+          padding: 0;
+          vertical-align: top;
+          display: inline-block;
+          background: transparent;
+          &:hover {
+            background: transparent;
+          }
+        }
+      }
       .btn-link {
         color: white;
       }
@@ -197,6 +210,13 @@ $jump-button-container-size: 80px;
 
     h4 {
       margin: 0;
+      vertical-align: top;
+      > span {
+        border: 0;
+        padding: 0;
+        vertical-align: top;
+        display: inline-block;
+      }
     }
   }
 }

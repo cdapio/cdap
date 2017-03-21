@@ -81,6 +81,8 @@ Installing CDAP Services
 
 .. |hdfs-user| replace:: ``yarn``
 
+.. |su_hdfs| replace:: su hdfs
+
 .. include:: /../target/_includes/packages-configuration.rst
     :end-before: .. configuration-enabling-kerberos:
 

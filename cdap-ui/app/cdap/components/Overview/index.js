@@ -21,15 +21,18 @@ import StreamOverview from 'components/Overview/StreamOverview';
 import {objectQuery} from 'services/helpers';
 import isNil from 'lodash/isNil';
 import classnames from 'classnames';
+import SearchStore from 'components/EntityListView/SearchStore';
+import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
+import {updateQueryString} from 'components/EntityListView/SearchStore/ActionCreator';
 require('./Overview.scss');
 
 export default class Overview extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      toggleOverview: this.props.toggleOverview,
-      entity: this.props.entity,
-      tag: null
+      tag: null,
+      entity: null,
+      showOverview: false
     };
     this.typeToComponentMap = {
       'application': AppOverview,
@@ -37,35 +40,69 @@ export default class Overview extends Component {
       'stream': StreamOverview
     };
   }
-  componentWillReceiveProps(nextProps) {
-    let {toggleOverview, entity } = nextProps;
-    let hasEntityChanged = !isNil(entity) && objectQuery(this.props.entity, 'id') !== objectQuery(entity, 'id');
-    if (
-      this.props.toggleOverview !== toggleOverview ||
-      hasEntityChanged
-    ) {
-      let tag = this.typeToComponentMap[objectQuery(entity, 'type')];
-      this.setState({
-        toggleOverview,
-        entity,
-        tag
-      });
+  componentWillMount() {
+    this.searchStoreSubscription = SearchStore.subscribe(() => {
+      let searchState = SearchStore.getState().search;
+      let overviewEntity = searchState.overviewEntity;
+      if (isNil(overviewEntity)) {
+        this.setState({
+          entity: null,
+          showOverview: false,
+          tag: null
+        });
+        return;
+      }
+      if (overviewEntity.id !== objectQuery(this.state, 'entity', 'id')) {
+        let entity = searchState.results.find(searchEntitiy => searchEntitiy.id === overviewEntity.id && searchEntitiy.type === overviewEntity.type);
+        if (!isNil(entity)) {
+          if (overviewEntity.uniqueId) {
+            entity = Object.assign({}, entity, {uniqueId: overviewEntity.uniqueId});
+          }
+          this.setState({
+            entity,
+            showOverview: true,
+            tag: this.typeToComponentMap[objectQuery(overviewEntity, 'type')]
+          }, this.scrollEntityToView.bind(this));
+        }
+      }
+    });
+  }
+  scrollEntityToView() {
+    if (isNil(this.state.entity) || !objectQuery(this.state, 'entity', 'uniqueId')) {
+      return;
+    }
+    let el = document.getElementById(this.state.entity.uniqueId);
+    if (isNil(el)) {
+      return;
+    }
+    let paginationContainer = document.querySelector('.entity-list-view');
+    el.scrollIntoView();
+    if (paginationContainer.scrollTop < paginationContainer.scrollHeight - paginationContainer.offsetHeight) {
+      paginationContainer.scrollTop -= 120;
     }
   }
+  componentDidMount() {
+    this.scrollEntityToView();
+  }
   componentDidUpdate() {
-    if (this.props.entity) {
-      let el = document.getElementById(this.props.entity.uniqueId);
-      let paginationContainer = document.querySelector('.pagination-container');
-      el.scrollIntoView();
-      paginationContainer.scrollTop -= 63;
+    this.scrollEntityToView();
+  }
+  componentWillUnmount() {
+    if (this.searchStoreSubscription) {
+      this.searchStoreSubscription();
     }
   }
   hideOverview() {
-    if (this.props.onClose) {
-      this.props.onClose();
-    }
+    this.setState({
+      showOverview: false
+    });
+    SearchStore.dispatch({
+      type: SearchStoreActions.RESETOVERVIEWENTITY
+    });
+    updateQueryString();
   }
   closeAndRefresh(action) {
+    this.hideOverview();
     if (action === 'delete') {
       if (this.props.onCloseAndRefresh) {
         this.props.onCloseAndRefresh();
@@ -75,7 +112,7 @@ export default class Overview extends Component {
   render() {
     let Tag = this.state.tag || 'div';
     return (
-      <div className={classnames("overview-container", {"show-overview": this.state.toggleOverview })}>
+      <div className={classnames("overview-container", {"show-overview": this.state.showOverview })}>
         <div className="overview-wrapper" >
           {
             React.createElement(
@@ -94,8 +131,5 @@ export default class Overview extends Component {
 }
 
 Overview.propTypes = {
-  toggleOverview: PropTypes.bool,
-  entity: PropTypes.object,
-  onClose: PropTypes.func,
   onCloseAndRefresh: PropTypes.func
 };

@@ -208,6 +208,7 @@ export default class MapSchemaRow extends Component {
               <div className="btn btn-link">
                 <Input
                   type="checkbox"
+                  addon={true}
                   checked={this.state.keysTypeNullable}
                   onChange={this.onKeysTypeNullableChange.bind(this)}
                 />
@@ -250,6 +251,7 @@ export default class MapSchemaRow extends Component {
               <div className="btn btn-link">
                 <Input
                   type="checkbox"
+                  addon={true}
                   checked={this.state.valuesTypeNullable}
                   onChange={this.onValuesTypeNullableChange.bind(this)}
                 />

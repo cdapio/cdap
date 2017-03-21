@@ -191,10 +191,41 @@ $star-color: #373a3c;
       .current-namespace-preferences {
         line-height: 20px;
         padding: 0;
+        height: 26px;
+
+        .btn-group {
+          margin-top: 3px;
+          margin-bottom: 3px;
+        }
+
+        .btn.btn-sm {
+          padding: 0;
+          border: none;
+        }
+
+        .btn-link {
+          text-decoration: none;
+          padding: 0;
+          vertical-align: top;
+        }
+
+        h4 {
+          vertical-align: middle;
+          > span {
+            padding: 0;
+            vertical-align: top;
+            display: inline-block;
+            background: transparent;
+            &:hover {
+              background: transparent;
+            }
+          }
+        }
 
         .fa-wrench {
           width: 100%;
           color: #333333;
+          font-size: 16px;
 
           &.saved-success {
             color: $success-color;

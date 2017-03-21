@@ -145,16 +145,18 @@ features:
         displayAll: Displaying All Entities
         displaySome: Displaying
     emptyMessage:
-      default: No entities found in this namespace
+      default: No entities found in namespace "{namespace}"
       search: No results found for "{searchText}"
       filter: No entities found for your selection
       suggestion: "You can try to:"
       clearText:
         clear: Clear
-        search: " your search or"
-        filter: " your filters or"
+        search: " your search; or"
+        filter: " your filters; or"
         add: Add
-        entities: " new entities"
+        entities: " new entities; or"
+        browse: Browse
+        Market: " Cask Market"
     Cards:
       type: "Type: "
     Errors:
@@ -191,11 +193,14 @@ features:
       suggestionMessage1: "Go back to:"
       suggestionMessage2: Page 1
     NamespaceNotFound:
-      createMessage: Would like to
-      createLinkLabel: create a new one?
-      switchMessage: Or select a different namespace from the namespace dropdown.
+      optionsSubtitle: Here are some options on what to do next
+      createMessage: Create a
+      createLinkLabel: new namespace
+      switchMessage: Select a different namespace from the namespace dropdown
     JustAddedSection:
       subtitle: Just added
+  DataPrep:
+    pageTitle: CDAP | Data Preparation
   Dashboard:
     Title: Dashboard
 
@@ -210,6 +215,8 @@ features:
     deleteConfirmation: Are you sure you want to delete *_{entityId}_*?
     exploreLabel: Explore
     deleteLabel: Delete
+    downloadDisabledMessage: Results have already been downloaded once. Please run the query to download them again.
+    previewDisabledMessage: Results have already been downloaded once. Please run the query to preview them again.
     deleteFailed: Failed to delete {entityId}.
     logLabel: Logs
     truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
@@ -259,6 +266,7 @@ features:
       numEventsTitle: Set Number of Events
       timeRangeTitle: Select Time Range
       to: To
+    doneLabel: Done
 
   JumpButton:
     buttonLabel: Jump
@@ -412,7 +420,7 @@ features:
       examples: Applications
       pipelines: Pipelines
       plugins: Plugins
-      useCases: Use Cases
+      useCases: Solutions
       edwOffload: EDW Offload
       emptyTab: No Entities found
     action-types:
@@ -446,7 +454,6 @@ features:
       author: Author
       company: Company
       created: Created
-      cdapversion: CDAP Version
     doneLabel: Done
     closeLabel: Close
   MarketEntityModal:
@@ -590,6 +597,7 @@ features:
       callToAction: View Application Details
     ArtifactUpload:
       headerlabel: Add Third party Driver
+      footertitle: Add Driver
       Step1:
         description: Upload your Driver
         shorttitle: Upload Driver
@@ -692,6 +700,8 @@ features:
       batchLinkLabel: Batch Pipeline
       realtimeLinkLabel: Realtime Pipeline
     PluginArtifact:
+      callToAction: Create a Pipeline
+      footertitle: Upload Plugin Artifact
       Step1:
         shorttitle: Upload Plugin JAR
         title: Upload Plugin JAR
@@ -706,7 +716,6 @@ features:
         errorMessageParentArtifacts: Invalid plugin JSON. Please specify parent artifacts.
       success: You have successfully uploaded the plugin "{pluginName}".
       subtitle: Start creating a pipeline with the plugin.
-      callToAction: Create a Pipeline
     Add-Namespace:
        Step1:
          ssd-label: "General Information"
@@ -887,7 +896,7 @@ features:
       statusLabel: Status
   Page404:
     genericMessage: Sorry, we are not able to find the page you are looking for.
-    entityMessage: Sorry, we are not able to find {entityType}
+    entityMessage: Sorry, we are not able to find {entityType} "{entityName}"
     subtitleMessage1: Here are some options on where to go next
     subtitleMessage2: View all your entities in the
     overviewLabel: Overview

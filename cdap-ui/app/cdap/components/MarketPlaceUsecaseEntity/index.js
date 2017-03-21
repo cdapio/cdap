@@ -57,18 +57,6 @@ export default class MarketPlaceUsecaseEntity extends Component {
     });
   }
 
-  getVersion() {
-    const versionElem = (
-      <span>
-        <strong>
-          {this.props.entity.cdapVersion}
-        </strong>
-      </span>
-    );
-
-    return this.props.entity.cdapVersion ? versionElem : null;
-  }
-
   fetchEntityDetail() {
     if (this.state.showActions) {
       this.setState({ showActions: false });
@@ -149,8 +137,6 @@ export default class MarketPlaceUsecaseEntity extends Component {
                   {(moment(this.props.entity.created * 1000)).format('MM-DD-YYYY HH:mm A')}
                 </strong>
               </span>
-              {this.props.entity.cdapVersion ? <div>CDAP Version</div> : null}
-              {this.getVersion()}
             </div>
           </div>
         </div>
@@ -204,7 +190,6 @@ MarketPlaceUsecaseEntity.propTypes = {
     description: PropTypes.string,
     org: PropTypes.string,
     created: PropTypes.number,
-    cdapVersion: PropTypes.string,
     beta: PropTypes.bool
   })
 };

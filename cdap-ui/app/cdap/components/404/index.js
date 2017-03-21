@@ -34,8 +34,7 @@ export default function Page404({entityName, entityType, children}) {
             :
               (
                 <span>
-                  {T.translate('features.Page404.entityMessage', {entityType})}
-                  <i> {entityName} </i>
+                  {T.translate('features.Page404.entityMessage', {entityType, entityName})}
                 </span>
               )
           }
@@ -51,7 +50,7 @@ export default function Page404({entityName, entityType, children}) {
                 {T.translate('features.Page404.subtitleMessage1')}
               </strong>
             </h4>
-            <div className="navigation-section text-xs-center">
+            <div className="navigation-section">
               <div>
                 {T.translate('features.Page404.subtitleMessage2')}
                 <Link to={`/ns/${namespace}/`}>

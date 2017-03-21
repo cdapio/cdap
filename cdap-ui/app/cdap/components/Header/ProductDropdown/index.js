@@ -91,7 +91,7 @@ export default class ProductDropdown extends Component {
     let cdapVersion = VersionStore.getState().version;
     let docsUrl = `http://docs.cask.co/cdap/${cdapVersion}/en/index.html`;
     let administrationURL = `${baseCDAPURL}/administration`;
-    let dataprepUrl = `${baseCDAPURL}/dataprep`;
+    let dataprepUrl = `${baseCDAPURL}/ns/${this.state.currentNamespace}/dataprep`;
     let oldUIUrl = `/oldcdap/ns/${this.state.currentNamespace}`;
     let userSection;
     if (this.state.username && window.CDAP_CONFIG.securityEnabled) {
@@ -167,7 +167,7 @@ export default class ProductDropdown extends Component {
             <DropdownItem tag="li">
               {
                 !this.props.nativeLink ?
-                  <Link to={`/dataprep`}>
+                  <Link to={`/ns/${this.state.currentNamespace}/dataprep`}>
                     {T.translate('features.Navbar.ProductDropdown.dataPrep')}
                     <span className="beta-badge">BETA</span>
                   </Link>

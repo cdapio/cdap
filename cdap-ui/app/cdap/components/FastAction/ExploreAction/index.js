@@ -20,6 +20,11 @@ import FastActionButton from '../FastActionButton';
 import {Tooltip} from 'reactstrap';
 import ExploreModal from 'components/FastAction/ExploreAction/ExploreModal';
 import T from 'i18n-react';
+import {objectQuery} from 'services/helpers';
+import myExploreApi from 'api/explore';
+import NamespaceStore from 'services/NamespaceStore';
+import classnames from 'classnames';
+require('./ExploreAction.scss');
 
 export default class ExploreAction extends Component {
   constructor(props) {
@@ -28,15 +33,23 @@ export default class ExploreAction extends Component {
       disabled: true,
       showModal: false,
       tooltipOpen: false,
-      entity: this.props.entity || {}
+      entity: this.props.entity || {},
+      runningQueries: null,
+      showRunningQueriesDoneLabel: false
     };
     this.subscription = null;
     this.toggleTooltip = this.toggleTooltip.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
   }
-  toggleModal() {
+  toggleModal(runningQueries) {
+    let showRunningQueriesDoneLabel = false;
+    if (runningQueries && this.state.showModal) {
+      showRunningQueriesDoneLabel = true;
+    }
     this.setState({
-      showModal: !this.state.showModal
+      showModal: !this.state.showModal,
+      showRunningQueriesDoneLabel,
+      runningQueries: !showRunningQueriesDoneLabel ? null : runningQueries,
     });
   }
   toggleTooltip() {
@@ -67,20 +80,57 @@ export default class ExploreAction extends Component {
     };
     this.subscription = ExploreTablesStore.subscribe(updateDisabledProp.bind(this));
     updateDisabledProp();
+    if (objectQuery(this.props.argsToAction, 'showQueriesCount')) {
+      let namespace = NamespaceStore.getState().selectedNamespace;
+      this.explroeQueriesSubscription$ = myExploreApi
+        .fetchQueries({namespace})
+        .subscribe((res) => {
+          let runningQueries = res
+            .filter(q => {
+              let tablename = `${this.state.entity.databaseName}.${this.state.entity.tableName}`;
+              return (
+                (
+                  q.statement.indexOf(tablename) !== -1 || q.statement.indexOf(this.props.entity.id) !== -1
+                )
+                &&
+                q.status === 'RUNNING'
+              );
+            }).length;
+          if (runningQueries) {
+            this.setState({ runningQueries });
+            return;
+          }
+          if (this.state.runningQueries) {
+            this.setState({
+              runningQueries: T.translate('features.FastAction.doneLabel')
+            });
+          }
+        });
+    }
   }
   componentWillUnmount() {
     this.subscription();
+    if (this.explroeQueriesSubscription$) {
+      this.explroeQueriesSubscription$.dispose();
+    }
   }
   render() {
     let tooltipID = `${this.props.entity.uniqueId}-explore`;
+    let showRunningQueriesNotification = this.state.showRunningQueriesDoneLabel && this.state.runningQueries && objectQuery(this.props.argsToAction, 'showQueriesCount');
     return (
-      <span>
+      <span className={classnames("btn btn-secondary btn-sm", {'fast-action-with-popover': showRunningQueriesNotification})}>
         <FastActionButton
           icon="fa fa-eye"
           action={this.toggleModal}
           disabled={this.state.disabled}
           id={tooltipID}
         />
+        {
+          showRunningQueriesNotification ?
+            <span className="fast-action-popover-container">{this.state.runningQueries}</span>
+          :
+            null
+        }
         <Tooltip
           placement="top"
           className="fast-action-tooltip"
@@ -113,5 +163,6 @@ ExploreAction.propTypes = {
     scope: PropTypes.oneOf(['SYSTEM', 'USER']),
     type: PropTypes.oneOf(['application', 'artifact', 'datasetinstance', 'stream']).isRequired,
   }),
-  opened: PropTypes.bool
+  opened: PropTypes.bool,
+  argsToAction: PropTypes.object
 };

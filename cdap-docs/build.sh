@@ -388,6 +388,7 @@ function build_docs_package() {
   local zip_dir_name="${PROJECT}-docs-${PROJECT_VERSION}-web"
   cd ${TARGET_PATH}
   docs_change_py="${SCRIPT_PATH}/tools/docs-change.py"
+  sitemap_xml_py="${SCRIPT_PATH}/tools/sitemap-xml.py"
   echo "Removing old directories and zips"
   rm -rf ${PROJECT_VERSION} *.zip
   echo "Creating ${PROJECT_VERSION}"
@@ -430,6 +431,13 @@ function build_docs_package() {
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not copy zipped doc set into ${TARGET_PATH}/${PROJECT_VERSION}"
+      return ${errors}   
+  fi
+  echo "Building sitemap.xml"
+  python ${sitemap_xml_py} -i ${TARGET_PATH}/${PROJECT_VERSION} -o ${TARGET_PATH}/${PROJECT_VERSION}/sitemap.xml -v ${PROJECT_VERSION}
+  errors=$?
+  if [[ ${errors} -ne 0 ]]; then
+      echo "Could not build sitemap for ${TARGET_PATH}/${PROJECT_VERSION}"
       return ${errors}   
   fi
   display_end_title ${title}

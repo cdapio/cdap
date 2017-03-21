@@ -150,11 +150,12 @@ export default class EntityCard extends Component {
 
           {this.renderEntityStatus()}
 
-          <div className="fast-actions-container">
+          <div className="fast-actions-container text-xs-center">
             <FastActions
               entity={this.props.entity}
               onUpdate={this.onFastActionUpdate.bind(this)}
               onSuccess={this.props.onFastActionSuccess}
+              className="btn-group"
             />
           </div>
         </Card>

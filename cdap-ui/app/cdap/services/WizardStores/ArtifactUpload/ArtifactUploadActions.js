@@ -19,7 +19,6 @@ const ArtifactUploadActions = {
   setDescription: 'SET-ARTIFACT-DESCRIPTION',
   setClassname: 'SET-ARTIFACT-CLASSNAME',
   setType: 'SET-ARTIFACT-TYPE',
-  setParentArtifact: 'SET-ARTIFACT-PARENTS',
   setFilePath: 'SET-ARTIFACT-PATH',
   onReset: 'RESET-STORE'
 };

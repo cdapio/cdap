@@ -296,7 +296,13 @@ export default class Wizard extends Component {
       wizardFooter = this.getCallsToAction();
     }
     if (this.state.error) {
-      let step = T.translate(`features.Wizard.${this.props.wizardType}.headerlabel`);
+      let footertitle = this.props.wizardConfig.footertitle;
+      let step;
+      if (!footertitle) {
+        step = T.translate(`features.Wizard.${this.props.wizardType}.headerlabel`);
+      } else {
+        step = footertitle;
+      }
       wizardFooter = (
         <CardActionFeedback
           type='DANGER'
