@@ -313,8 +313,9 @@ public class CLIMain {
   }
 
   private static boolean parseBooleanOption(CommandLine command, Option option, boolean defaultValue) {
-    String value = command.getOptionValue(option.getOpt(), Boolean.toString(defaultValue));
-    return "true".equals(value);
+    return command.hasOption(option.getOpt())
+      ? Boolean.parseBoolean(command.getOptionValue(option.getOpt()))
+      : defaultValue;
   }
 
   @VisibleForTesting
