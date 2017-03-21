@@ -44,30 +44,30 @@ Windows
 -------
 1. Using the command prompt, stop the CDAP SDK::
 
-  > cd ``<CDAP_HOME>``
-  > bin\cdap sdk stop
+    > cd <CDAP_HOME>
+    > bin\cdap sdk stop
   
 2. Compress the existing ``ui`` directory to save as a backup::
 
-  > jar cf cdap-ui.zip ui
+    > jar cf cdap-ui.zip ui
 
 3. Delete the ``ui`` directory after the backup is completed::
 
-  > rmdir /S ui
+    > rmdir /S ui
   
 4. Copy the CDAP UI Pack into the ``<CDAP_HOME>`` directory::
 
-  > cp <PATH_TO_CDAP_UI_PACK> cdap-ui-pack-4.1.0_p1.zip
+    > cp "<PATH_TO_CDAP_UI_PACK>" cdap-ui-pack-4.1.0_p1.zip
 
 5. Extract the CDAP UI Pack in the ``<CDAP_HOME>`` directory::
 
-  > jar xf cdap-ui-pack-4.1.0_p1.zip
+    > jar xf cdap-ui-pack-4.1.0_p1.zip
   
 6. A new ``ui`` directory should be created
 7. Using the command prompt, start the CDAP SDK::
 
-  > cd ``<CDAP_HOME>``
-  > bin\cdap sdk start
+    > cd <CDAP_HOME>
+    > bin\cdap sdk start
 
 
 Steps to Update Data Preparation Capability
