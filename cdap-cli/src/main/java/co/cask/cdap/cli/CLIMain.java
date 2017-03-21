@@ -105,6 +105,9 @@ public class CLIMain {
   private static final Option SCRIPT_OPTION = new Option(
     "s", "script", true, "Execute a file containing a series of CLI commands, line-by-line.");
 
+  private static final Option TIMEOUT_OPTION = new Option(
+    "t", "timeout", true, "Set HTTP read timeout of the CLI in seconds.");
+
   private final CLI cli;
   private final Iterable<CommandSet<Command>> commands;
   private final CLIConfig cliConfig;
@@ -268,7 +271,7 @@ public class CLIMain {
       try {
         ClientConfig clientConfig = ClientConfig.builder()
           .setConnectionConfig(null)
-          .setDefaultReadTimeout(60 * 1000)
+          .setDefaultReadTimeout(parseIntegerOption(command, TIMEOUT_OPTION, 60) * 1000)
           .build();
         final CLIConfig cliConfig = new CLIConfig(clientConfig, output, new AltStyleTableRenderer());
         CLIMain cliMain = new CLIMain(launchOptions, cliConfig);
@@ -318,6 +321,12 @@ public class CLIMain {
       : defaultValue;
   }
 
+  private static int parseIntegerOption(CommandLine command, Option option, int defaultValue) {
+    return command.hasOption(option.getOpt())
+      ? Integer.parseInt(command.getOptionValue(option.getOpt()))
+      : defaultValue;
+  }
+
   @VisibleForTesting
   public static Options getOptions() {
     Options options = new Options();
@@ -327,6 +336,7 @@ public class CLIMain {
     addOptionalOption(options, AUTOCONNECT_OPTION);
     addOptionalOption(options, DEBUG_OPTION);
     addOptionalOption(options, SCRIPT_OPTION);
+    addOptionalOption(options, TIMEOUT_OPTION);
     return options;
   }
 
