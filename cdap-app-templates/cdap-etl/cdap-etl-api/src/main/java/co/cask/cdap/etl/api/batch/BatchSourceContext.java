@@ -31,4 +31,11 @@ public interface BatchSourceContext extends BatchContext {
    * @param input the input to be used
    */
   void setInput(Input input);
+
+  /**
+   * Indicates whether the pipeline is running in preview.
+   *
+   * @return a boolean value which indicates the pipeline is running in preview mode.
+   */
+  boolean isPreviewEnabled();
 }
