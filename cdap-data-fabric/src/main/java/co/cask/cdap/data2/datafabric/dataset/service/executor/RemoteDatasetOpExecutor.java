@@ -26,7 +26,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
-import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
@@ -39,6 +38,7 @@ import co.cask.common.http.ObjectResponse;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.Discoverable;
@@ -60,7 +60,7 @@ import javax.annotation.Nullable;
 /**
  * Executes Dataset operations by querying a {@link DatasetOpExecutorService} via REST.
  */
-public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleService implements DatasetOpExecutor {
+public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implements DatasetOpExecutor {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteDatasetOpExecutor.class);
 
   private static final Gson GSON = new Gson();
@@ -196,10 +196,5 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
       throw new HandlerException(HttpResponseStatus.valueOf(httpResponse.getResponseCode()),
                                  httpResponse.getResponseBodyAsString(Charsets.UTF_8));
     }
-  }
-
-  @Override
-  protected Logger getUncaughtExceptionLogger() {
-    return LOG;
   }
 }

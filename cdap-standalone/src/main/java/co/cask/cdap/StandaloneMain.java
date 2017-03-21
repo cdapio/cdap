@@ -33,6 +33,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.URLConnections;
+import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
 import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.OSDetector;
@@ -142,6 +143,7 @@ public class StandaloneMain {
 
 
   private StandaloneMain(List<Module> modules, CConfiguration cConf) {
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     this.cConf = cConf;
 
     injector = Guice.createInjector(modules);

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.batch.distributed;
 
+import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
+
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -54,8 +56,8 @@ public class MapReduceContainerLauncher {
    */
   public static void launch(String classPath, String mainClassLoaderName, String classLoaderName,
                             String mainClassName, String[] args) throws Exception {
-
     System.out.println("Launcher classpath: " + classPath);
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
 
     // Expands the classpath
     List<URL> urls = new ArrayList<>();
@@ -94,8 +96,10 @@ public class MapReduceContainerLauncher {
 
     Thread.currentThread().setContextClassLoader(classLoader);
 
+
     // Invoke MapReduceClassLoader.getTaskContextProvider()
     classLoader.getClass().getDeclaredMethod("getTaskContextProvider").invoke(classLoader);
+
     // Invoke StandardOutErrorRedirector.redirectToLogger()
     classLoader.loadClass("co.cask.cdap.common.logging.StandardOutErrorRedirector")
       .getDeclaredMethod("redirectToLogger", String.class)

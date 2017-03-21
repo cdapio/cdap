@@ -30,6 +30,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -144,6 +145,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   @Override
   public void initialize(TwillContext context) {
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     System.setSecurityManager(new RunnableSecurityManager(System.getSecurityManager()));
 
     runlatch = new CountDownLatch(1);
