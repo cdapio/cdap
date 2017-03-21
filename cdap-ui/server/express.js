@@ -428,13 +428,19 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         '/v3/namespaces'
       ].join('');
 
+      // FIXME: The reason for doing this is here: https://issues.cask.co/browse/CDAP-9059
+      // TL;DR - The source of this issue is because of large browser urls
+      // which gets added to headers while making /backendstatus http call.
+      // That is the reason we are temporarily stripping out referer from the headers.
+      var headers = req.headers;
+      delete headers.referer;
       request({
         method: 'GET',
         url: link,
         rejectUnauthorized: false,
         requestCert: true,
         agent: false,
-        headers: req.headers
+        headers: headers
       }, function (err, response) {
         if (err) {
           if (err.code === 'ECONNREFUSED') {
