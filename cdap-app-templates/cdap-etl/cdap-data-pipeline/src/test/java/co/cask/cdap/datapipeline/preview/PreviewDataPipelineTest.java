@@ -111,7 +111,6 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     // Construct the preview config with the program name and program type, also, mark the mock table as a real dataset.
     // Otherwise, no data will be emitted in the preview run.
     PreviewConfig previewConfig = new PreviewConfig(SmartWorkflow.NAME, ProgramType.WORKFLOW,
-                                                    ImmutableSet.of(sourceTableName),
                                                     Collections.<String, String>emptyMap(), 10);
 
     // Create the table for the mock source

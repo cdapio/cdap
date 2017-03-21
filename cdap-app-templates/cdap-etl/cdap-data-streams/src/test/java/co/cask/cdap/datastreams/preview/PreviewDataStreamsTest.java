@@ -103,10 +103,8 @@ public class PreviewDataStreamsTest extends HydratorTestBase {
       .setBatchInterval("1s")
       .build();
 
-    // Construct the preview config with the program name and program type, also, mark the mock table as a real dataset.
-    // Otherwise, no data will be emitted in the preview run.
+    // Construct the preview config with the program name and program type.
     PreviewConfig previewConfig = new PreviewConfig(DataStreamsSparkLauncher.NAME, ProgramType.SPARK,
-                                                    Collections.<String>emptySet(),
                                                     Collections.<String, String>emptyMap(), 1);
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig, previewConfig);

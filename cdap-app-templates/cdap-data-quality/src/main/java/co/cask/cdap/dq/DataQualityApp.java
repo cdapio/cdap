@@ -187,7 +187,8 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
       String sourceName = "batchsource:" + context.getSpecification().getProperty("sourceName") + ":0";
       StageInfo stageInfo = StageInfo.builder(sourceName, BatchSource.PLUGIN_TYPE).build();
       BatchSourceContext sourceContext = new MapReduceSourceContext(
-        context, metrics, new DatasetContextLookupProvider(context), context.getRuntimeArguments(), stageInfo);
+        context, metrics, new DatasetContextLookupProvider(context), context.getRuntimeArguments(), stageInfo,
+        context.getDataTracer(sourceName).isEnabled());
       batchSource.prepareRun(sourceContext);
       context.addOutput(Output.ofDataset(context.getSpecification().getProperty("datasetName")));
     }
