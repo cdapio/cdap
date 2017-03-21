@@ -94,6 +94,9 @@ public final class FilterParser {
     } else if (key.equals("loglevel")) {
       // Log level
       return new LogLevelExpression(value);
+    } else if (key.equals("userLogs")) {
+      // User logs
+      return new UserLogsFilter(value);
     } else {
       throw new IllegalArgumentException(String.format("Unknown expression of type %s", key));
     }

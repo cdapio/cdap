@@ -358,6 +358,14 @@ public class MockLogReader implements LogReader {
     String entityId = LoggingContextHelper.getEntityId(loggingContext).getValue();
     RunId runId = null;
     Long stopTs = null;
+    int testLineNumber = 100;
+    // Using class that CDAP system classloader can load
+    StackTraceElement[] callerDataArrayCDAP = {new StackTraceElement("co.cask.http.NettyHttpService", "testMethod",
+                                                                     "testFile", testLineNumber)};
+    // Using class that CDAP system classloader can not load
+    StackTraceElement[] callerDataArrayNonCDAP =
+      {new StackTraceElement("co.cask.hydrator.plugin.batch.source.StreamBatchSource", "testMethod",
+                                                                     "testFile", testLineNumber)};
     for (int i = 0; i < MAX; ++i) {
       // Setup run id for event with ids >= 20
       if (i == 20) {
@@ -372,6 +380,12 @@ public class MockLogReader implements LogReader {
                          (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME),
                          i % 2 == 0 ? Level.ERROR : Level.WARN, entityId + "<img>-" + i, null, null);
       event.setTimeStamp(TimeUnit.SECONDS.toMillis(getMockTimeSecs(i)));
+
+      if (i % 2 == 0) {
+        event.setCallerData(callerDataArrayNonCDAP);
+      } else {
+        event.setCallerData(callerDataArrayCDAP);
+      }
 
       // Add runid to logging context
       Map<String, String> tagMap = Maps.newHashMap(Maps.transformValues(loggingContext.getSystemTagsMap(),
