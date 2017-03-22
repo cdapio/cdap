@@ -36,11 +36,13 @@ import Page404 from 'components/404';
 import BreadCrumb from 'components/BreadCrumb';
 import ResourceCenterButton from 'components/ResourceCenterButton';
 import Helmet from 'react-helmet';
+import queryString from 'query-string';
 require('./DatasetDetailedView.scss');
 
 export default class DatasetDetailedView extends Component {
   constructor(props) {
     super(props);
+    let searchObj = queryString.parse(objectQuery(this.props, 'location', 'search'));
     this.state = {
       entityDetail: objectQuery(this.props, 'location', 'state', 'entityDetail') | {
         schema: null,
@@ -52,7 +54,7 @@ export default class DatasetDetailedView extends Component {
       routeToHome: false,
       successMessage: null,
       notFound: false,
-      modalToOpen: objectQuery(this.props, 'location', 'query', 'modalToOpen') || '',
+      modalToOpen: objectQuery(searchObj, 'modalToOpen') || '',
       previousPathName: null
     };
   }
