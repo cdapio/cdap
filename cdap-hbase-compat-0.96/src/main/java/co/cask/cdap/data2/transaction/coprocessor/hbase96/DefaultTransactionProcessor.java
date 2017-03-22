@@ -23,7 +23,6 @@ import co.cask.cdap.data2.transaction.coprocessor.CConfigurationCache;
 import co.cask.cdap.data2.transaction.coprocessor.CConfigurationCacheSupplier;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
-import com.google.common.base.Supplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -42,6 +41,7 @@ import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TxConstants;
+import org.apache.tephra.coprocessor.CacheSupplier;
 import org.apache.tephra.coprocessor.TransactionStateCache;
 import org.apache.tephra.hbase.coprocessor.CellSkipFilter;
 import org.apache.tephra.hbase.coprocessor.TransactionProcessor;
@@ -180,7 +180,7 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
   }
 
   @Override
-  protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(RegionCoprocessorEnvironment env) {
+  protected CacheSupplier<TransactionStateCache> getTransactionStateCacheSupplier(RegionCoprocessorEnvironment env) {
     return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, env.getConfiguration());
   }
 

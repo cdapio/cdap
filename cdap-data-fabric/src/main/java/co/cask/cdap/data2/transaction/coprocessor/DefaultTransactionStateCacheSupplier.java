@@ -16,39 +16,23 @@
 
 package co.cask.cdap.data2.transaction.coprocessor;
 
+import com.google.common.base.Supplier;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.coprocessor.TransactionStateCache;
 import org.apache.tephra.coprocessor.TransactionStateCacheSupplier;
 
 /**
- * Provides a single shared instance of
- * {@link DefaultTransactionStateCache} for use by transaction
- * coprocessors.
+ * Provides a single shared instance of {@link DefaultTransactionStateCache} for use by transaction coprocessors.
  */
 public class DefaultTransactionStateCacheSupplier extends TransactionStateCacheSupplier {
-  private final String sysConfigTablePrefix;
-
-  public DefaultTransactionStateCacheSupplier(String sysConfigTablePrefix, Configuration conf) {
-    super(conf);
-    this.sysConfigTablePrefix = sysConfigTablePrefix;
-  }
-
-  /**
-   * Returns a singleton instance of the transaction state cache, performing lazy initialization if necessary.
-   * @return A shared instance of the transaction state cache.
-   */
-  @Override
-  public TransactionStateCache get() {
-    if (instance == null) {
-      synchronized (lock) {
-        if (instance == null) {
-          instance = new DefaultTransactionStateCache(sysConfigTablePrefix);
-          instance.setConf(conf);
-          instance.start();
-        }
+  public DefaultTransactionStateCacheSupplier(final String sysConfigTablePrefix, final Configuration conf) {
+    super(new Supplier<TransactionStateCache>() {
+      @Override
+      public TransactionStateCache get() {
+        DefaultTransactionStateCache cache = new DefaultTransactionStateCache(sysConfigTablePrefix);
+        cache.setConf(conf);
+        return cache;
       }
-    }
-    return instance;
+    });
   }
-
 }
