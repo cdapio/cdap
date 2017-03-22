@@ -1,0 +1,45 @@
+{
+  "id": "prod_test",
+  "viewports": [
+    {
+      "name": "laptop",
+      "width": 1680,
+      "height": 950
+    }
+  ],
+  "scenarios": [
+    {
+      "label": "CDAP Homepage",
+      "url": "http://localhost:11011/",
+      "hideSelectors": [],
+      "removeSelectors": [],
+      "selectorExpansion": true,
+      "selectors": [
+	".global-navbar",
+	".global-navbar .brand-section",
+	".global-navbar .navbar-list-section li",
+	".global-navbar .navbar-list-section li .active",
+	".global-navbar .navbar-right-section",
+	".global-navbar .navbar-right-section .with-shadow",
+	".global-navbar .navbar-right-section #header-namespace-dropdown",
+	".global-navbar .navbar-right-section .with-shadow.cdap-menu"
+      ],
+      "readyEvent": null,
+      "delay": 500,
+      "misMatchThreshold" : 0.1,
+      "onBeforeScript": "onBefore.js",
+      "onReadyScript": "onReady.js"
+    }
+  ],
+  "paths": {
+    "bitmaps_reference": "backstop_data/bitmaps_reference",
+    "bitmaps_test": "backstop_data/bitmaps_test",
+    "casper_scripts": "backstop_data/casper_scripts",
+    "html_report": "backstop_data/html_report",
+    "ci_report": "backstop_data/ci_report"
+  },
+  "casperFlags": [],
+  "engine": "phantomjs",
+  "report": ["browser"],
+  "debug": false
+}
