@@ -99,6 +99,13 @@
 
     .loading-container {
       padding: 25px;
+      &.error-message-container {
+        padding: 15px;
+        .fa.fa-exclamation-triangle {
+          font-size: 15px;
+          margin-right: 5px;
+        }
+      }
     }
 
     .action-buttons {
@@ -122,6 +129,7 @@
 }
 
 .dataprep-schema-modal.modal-dialog {
+  margin-top: 100px;
   .modal-header {
     .fa {
       cursor: pointer;
@@ -133,6 +141,12 @@
       color: inherit;
       font-size: inherit;
 
+      &[disabled] {
+        .fa.fa-download {
+          cursor: inherit;
+        }
+      }
+
       &:focus,
       &:active {
         outline: none;
@@ -142,5 +156,9 @@
   .modal-body {
     overflow-y: auto;
     max-height: 75vh;
+    .fa.fa-exclamation-triangle {
+      margin-right: 5px;
+      font-size: 15px;
+    }
   }
 }

@@ -309,7 +309,6 @@ export default class WorkspaceModal extends Component {
       <Modal
         isOpen={true}
         toggle={this.attemptModalClose}
-        zIndex="1070"
         className="workspace-management-modal"
       >
         <ModalHeader>

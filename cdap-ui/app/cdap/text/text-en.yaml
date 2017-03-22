@@ -201,6 +201,11 @@ features:
       subtitle: Just added
   DataPrep:
     pageTitle: CDAP | Data Preparation
+    TopPanel:
+      SchemaModal:
+        defaultErrorMessage: Error generating schema.
+      PipelineModal:
+        defaultErrorMessage: Error adding to pipeline
   Dashboard:
     Title: Dashboard
 

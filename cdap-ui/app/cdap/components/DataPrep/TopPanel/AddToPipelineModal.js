@@ -22,7 +22,8 @@ import MyDataPrepApi from 'api/dataprep';
 import DataPrepStore from 'components/DataPrep/store';
 import NamespaceStore from 'services/NamespaceStore';
 import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
-
+import {objectQuery} from 'services/helpers';
+import T from 'i18n-react';
 export default class AddToHydratorModal extends Component {
   constructor(props) {
     super(props);
@@ -180,9 +181,8 @@ export default class AddToHydratorModal extends Component {
         });
 
       }, (err) => {
-        console.log('Failed to fetch schema', err);
         this.setState({
-          error: err.message,
+          error: objectQuery(err, 'response', 'message')  || T.translate('features.DataPrep.TopPanel.PipelineModal.defaultErrorMessage'),
           loading: false
         });
       });
@@ -202,9 +202,10 @@ export default class AddToHydratorModal extends Component {
     } else if (this.state.error) {
       content = (
         <div>
-          <h4 className="text-danger loading-container">
-            {this.state.error}
-          </h4>
+          <div className="text-danger error-message-container loading-container">
+            <span className="fa fa-exclamation-triangle"></span>
+            <span>{this.state.error}</span>
+          </div>
         </div>
       );
     } else {
@@ -237,7 +238,7 @@ export default class AddToHydratorModal extends Component {
       <Modal
         isOpen={true}
         toggle={this.props.toggle}
-        zIndex="1070"
+        size="lg"
         className="add-to-pipeline-dataprep-modal"
       >
         <ModalHeader>
@@ -263,4 +264,3 @@ export default class AddToHydratorModal extends Component {
 AddToHydratorModal.propTypes = {
   toggle: PropTypes.func
 };
-
