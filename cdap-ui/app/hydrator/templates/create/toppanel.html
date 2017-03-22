@@ -88,6 +88,11 @@
       <div class="button-label">Settings</div>
     </div>
     <div class="btn"
+         ng-click="HydratorPlusPlusTopPanelCtrl.onImport()">
+      <span class="fa icon-import"></span>
+      <div class="button-label">Import</div>
+    </div>
+    <div class="btn"
          ng-click="HydratorPlusPlusTopPanelCtrl.onExport()">
       <span class="fa icon-export"></span>
       <div class="button-label">Export</div>
@@ -203,3 +208,9 @@
   </my-log-viewer-preview>
 </div>
 
+<my-file-select class="sr-only"
+                id="pipeline-import-config-link"
+                data-button-icon="fa-upload"
+                on-file-select="HydratorPlusPlusTopPanelCtrl.importFile($files)"
+                data-button-label="Import">
+</my-file-select>

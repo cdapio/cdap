@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl {
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $window ) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -39,6 +39,9 @@ class HydratorPlusPlusTopPanelCtrl {
     this.$window = $window;
     this.showRunTimeArguments = false;
     this.viewLogs = false;
+    this.$q = $q;
+    this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
+    this.artifacts = rArtifacts;
     // This is for now run time arguments. It will be a map of macroMap
     // in the future once we get list of macros for a pipeline config.
     this.macrosMap = {};
@@ -141,6 +144,17 @@ class HydratorPlusPlusTopPanelCtrl {
       // Reset if the user hits ESC key.
       this.resetMetadata();
     }
+  }
+
+  onImport() {
+    let fileBrowserClickCB = () => {
+      document.getElementById('pipeline-import-config-link').click();
+    };
+    // This is not using the promise pattern as browsers NEED to have the click on the call stack to generate the click on input[type=file] button programmatically in like line:115.
+    // When done in promise we go into the promise ticks and the then callback is called in the next tick which prevents the browser to open the file dialog
+    // as a file dialog is opened ONLY when manually clicked by the user OR transferring the click to another button in the same call stack
+    // TL;DR Can't open file dialog programmatically. If we need to, we need to transfer the click from a user on a button directly into the input file dialog button.
+    this._checkAndShowConfirmationModalOnDirtyState(fileBrowserClickCB);
   }
 
   onExport() {
@@ -361,7 +375,155 @@ class HydratorPlusPlusTopPanelCtrl {
       this.previewActions.togglePreviewMode(!this.previewMode)
     );
   }
+
+  importFile(files) {
+    if (files[0].name.indexOf('.json') === -1) {
+      this.myAlertOnValium.show({
+        type: 'danger',
+        content: 'Pipeline configuration should be JSON.'
+      });
+      return;
+    }
+    let generateLinearConnections = (config) => {
+      let nodes = config.stages;
+      let connections = [];
+      let i;
+
+      for (i=0; i<nodes.length - 1 ; i++) {
+        connections.push({ from: nodes[i].name, to: nodes[i+1].name });
+      }
+      return connections;
+    };
+
+    let isValidArtifact = (importArtifact) => {
+      let isVersionExists = [];
+      let isScopeExists = [];
+      let isNameExists = this.artifacts.filter( artifact => artifact.name === importArtifact.name );
+      isVersionExists = isNameExists.filter( artifact => artifact.version === importArtifact.version );
+      isScopeExists = isNameExists.filter( artifact => artifact.scope.toUpperCase() === importArtifact.scope.toUpperCase() );
+      return {
+        name: isNameExists.length > 0,
+        version: isVersionExists.length > 0,
+        scope: isScopeExists.length > 0
+      };
+    };
+
+    var reader = new FileReader();
+    reader.readAsText(files[0], 'UTF-8');
+
+    reader.onload =  (evt) => {
+      var data = evt.target.result;
+      var jsonData;
+      try {
+        jsonData = JSON.parse(data);
+      } catch(e) {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: 'Syntax Error. Ill-formed pipeline configuration.'
+        });
+        return;
+      }
+
+      let isNotValid = this.NonStorePipelineErrorFactory.validateImportJSON(jsonData);
+
+      if (isNotValid) {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: isNotValid
+        });
+        return;
+      }
+
+      if (!jsonData.config.connections) {
+        jsonData.config.connections = generateLinearConnections(jsonData.config);
+      }
+
+      let validArtifact = isValidArtifact(jsonData.artifact);
+      if (!validArtifact.name || !validArtifact.version || !validArtifact.scope) {
+        let invalidFields = [];
+        if (!validArtifact.name) {
+          invalidFields.push('Artifact name');
+        } else {
+          if (!validArtifact.version) {
+            invalidFields.push('Artifact version');
+          }
+          if (!validArtifact.scope) {
+            invalidFields.push('Artifact scope');
+          }
+        }
+        invalidFields = invalidFields.length === 1 ? invalidFields[0] : invalidFields.join(', ');
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: `Imported pipeline has invalid artifact information: ${invalidFields}.`
+        });
+      } else {
+        if (!jsonData.config.connections) {
+          jsonData.config.connections = generateLinearConnections(jsonData.config);
+        }
+        this.HydratorPlusPlusConfigStore.setState(this.HydratorPlusPlusConfigStore.getDefaults());
+        this.$state.go('hydrator.create', { data: jsonData });
+      }
+    };
+  }
+
+  _checkAndShowConfirmationModalOnDirtyState(proceedCb) {
+    let goTonextStep = true;
+    let isStoreDirty = this.HydratorPlusPlusConfigStore.getIsStateDirty();
+    if (isStoreDirty) {
+      return this.$uibModal.open({
+          templateUrl: '/assets/features/hydrator/templates/create/popovers/canvas-overwrite-confirmation.html',
+          size: 'lg',
+          backdrop: 'static',
+          keyboard: false,
+          windowTopClass: 'confirm-modal hydrator-modal center',
+          controller: ['$scope', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', function($scope, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions) {
+            $scope.isSaving = false;
+            $scope.discard = () => {
+              goTonextStep = true;
+              if (proceedCb) {
+                proceedCb();
+              }
+              $scope.$close();
+            };
+            $scope.save = () => {
+              let pipelineName = HydratorPlusPlusConfigStore.getName();
+              if (!pipelineName.length) {
+                HydratorPlusPlusConfigActions.saveAsDraft();
+                goTonextStep = false;
+                $scope.$close();
+                return;
+              }
+              var unsub = HydratorPlusPlusConfigStore.registerOnChangeListener( () => {
+                let isStateDirty = HydratorPlusPlusConfigStore.getIsStateDirty();
+                // This is solely used for showing the spinner icon until the modal is closed.
+                if(!isStateDirty) {
+                  unsub();
+                  goTonextStep = true;
+                  $scope.$close();
+                }
+              });
+              HydratorPlusPlusConfigActions.saveAsDraft();
+              $scope.isSaving = true;
+            };
+            $scope.cancel = () => {
+              $scope.$close();
+              goTonextStep = false;
+            };
+          }]
+        })
+        .closed
+        .then(() => {
+          return goTonextStep;
+        });
+    } else {
+      if (proceedCb) {
+        proceedCb();
+      }
+      return this.$q.when(goTonextStep);
+    }
+  }
 }
 
+HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', '$interval', 'myPipelineApi', '$state', 'MyCDAPDataSource', 'myAlertOnValium', 'MY_CONFIG', 'PREVIEWSTORE_ACTIONS', '$q', 'NonStorePipelineErrorFactory', 'rArtifacts', '$window'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);
