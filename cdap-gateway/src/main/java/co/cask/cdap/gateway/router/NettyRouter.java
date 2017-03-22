@@ -60,7 +60,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -131,8 +130,8 @@ public class NettyRouter extends AbstractIdleService {
         keystore = new File(sConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
       } catch (Throwable e) {
         throw new RuntimeException("SSL is enabled but the keystore file could not be read. Please verify that the " +
-                                   "keystore file exists and the path is set correctly : "
-                                   + sConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
+                                     "keystore file exists and the path is set correctly : "
+                                     + sConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
       }
       this.sslHandlerFactory = new SSLHandlerFactory(keystore,
                                                      sConf.get(Constants.Security.Router.SSL_KEYSTORE_TYPE,
@@ -191,16 +190,10 @@ public class NettyRouter extends AbstractIdleService {
   @Override
   protected Executor executor(final State state) {
     final AtomicInteger id = new AtomicInteger();
-    final Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
-      @Override
-      public void uncaughtException(Thread t, Throwable e) {
-      }
-    };
     return new Executor() {
       @Override
       public void execute(Runnable runnable) {
         Thread t = new Thread(runnable, String.format("NettyRouter-%d", id.incrementAndGet()));
-        t.setUncaughtExceptionHandler(h);
         t.start();
       }
     };

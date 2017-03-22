@@ -16,7 +16,6 @@
 
 package co.cask.cdap.notifications.service;
 
-import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.notifications.NotificationFeedInfoDeserializer;
@@ -30,6 +29,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -47,7 +47,7 @@ import java.util.concurrent.Executor;
  * Common implementation of the the {@link NotificationService} that handles the subscriptions to all the notification
  * feeds for the current process and that has the ability to push notifications to subscribers.
  */
-public abstract class AbstractNotificationService extends UncaughtExceptionIdleService implements NotificationService {
+public abstract class AbstractNotificationService extends AbstractIdleService implements NotificationService {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryNotificationService.class);
   protected static final Gson GSON = new GsonBuilder()
     .enableComplexMapKeySerialization()
@@ -120,11 +120,6 @@ public abstract class AbstractNotificationService extends UncaughtExceptionIdleS
     NotificationCaller<N> caller = new NotificationCaller<>(feed, handler, executor);
     subscribers.put(feed, caller);
     return caller;
-  }
-
-  @Override
-  protected Logger getUncaughtExceptionLogger() {
-    return LOG;
   }
 
   /**
