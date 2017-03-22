@@ -18,13 +18,29 @@ import React, { Component, PropTypes } from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import SchemaStore from 'components/SchemaEditor/SchemaStore';
 import SchemaEditor from 'components/SchemaEditor';
-import {getParsedSchema} from 'components/SchemaEditor/SchemaHelpers';
+import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepStore from 'components/DataPrep/store';
 import fileDownload from 'react-file-download';
 import NamespaceStore from 'services/NamespaceStore';
 import {objectQuery} from 'services/helpers';
 import T from 'i18n-react';
+
+const mapErrorToMessage = (e) => {
+  let message = e.message;
+  if (message.indexOf('invalid field name') !== -1) {
+    let splitMessage = e.message.split("field name: ");
+    let fieldName = objectQuery(splitMessage, 1) || e.message;
+    return {
+      message: T.translate('features.DataPrep.TopPanel.invalidFieldNameMessage', {fieldName}),
+      remedies: `
+${T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies1')}
+${T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies2')}
+      `
+    };
+  }
+  return {message: e.message};
+};
 
 export default class SchemaModal extends Component {
   constructor(props) {
@@ -70,7 +86,16 @@ export default class SchemaModal extends Component {
           fields: res
         };
 
-        let fields = getParsedSchema(tempSchema);
+        let fields;
+        try {
+          fields = getParsedSchemaForDataPrep(tempSchema);
+        } catch (e) {
+          let {message, remedies = null} = mapErrorToMessage(e);
+          this.setState({
+            error: {message, remedies},
+            loading: false
+          });
+        }
         SchemaStore.dispatch({
           type: 'FIELD_UPDATE',
           payload: {
@@ -114,7 +139,14 @@ export default class SchemaModal extends Component {
       content = (
         <div className="text-danger">
           <span className="fa fa-exclamation-triangle"></span>
-          <span>{this.state.error}</span>
+          <span>
+            {typeof this.state.error === 'object' ? this.state.error.message : this.state.error}
+          </span>
+          <pre>
+            {
+              objectQuery(this.state, 'error', 'remedies') ? this.state.error.remedies : null
+            }
+          </pre>
         </div>
       );
     } else {

@@ -202,6 +202,9 @@ features:
   DataPrep:
     pageTitle: CDAP | Data Preparation
     TopPanel:
+      invalidFieldNameMessage: Invalid field name "{fieldName}"
+      invalidFieldNameRemedies1: "Your field name contains an invalid character: no space or special character other than - or _ are allowed"
+      invalidFieldNameRemedies2: Try to apply directive “cleanse-column-names”
       SchemaModal:
         defaultErrorMessage: Error generating schema.
       PipelineModal:

@@ -118,6 +118,47 @@ function getParsedSchema(schema) {
   return parsedSchema;
 }
 
+// FIXME: This is solely added for showing schema in data prep
+// We shouldn't have two copies of the same function
+function getParsedSchemaForDataPrep(schema) {
+  let defaultSchema = {
+    name: '',
+    type: 'string',
+    displayType: 'string',
+    nullable: false,
+    id: 'a' + uuid.v4().split('-').join(''),
+    nested: false
+  };
+  const isEmptySchema = (schema) => {
+    if (!schema && !(schema.fields || (schema.getFields && schema.getFields().length))) {
+      return true;
+    }
+    return false;
+  };
+
+  if (isEmptySchema(schema) || (!schema || schema === 'record')) {
+    return defaultSchema;
+  }
+  let parsed;
+
+  // Manually catch it outside.
+  parsed = cdapavsc.parse(schema, { wrapUnions: true });
+
+  let parsedSchema = parsed.getFields().map((field) => {
+    let type = field.getType();
+
+    let partialObj = parseType(type);
+
+    return Object.assign({}, partialObj, {
+      id: 'a' + uuid.v4().split('-').join(''),
+      name: field.getName()
+    });
+
+  });
+
+  return parsedSchema;
+}
+
 function checkComplexType(displayType) {
   let complexTypes = ['array', 'enum', 'map', 'record', 'union'];
   return complexTypes.indexOf(displayType) !== -1 ? true : false;
@@ -138,5 +179,6 @@ export {
   parseType,
   checkComplexType,
   getParsedSchema,
+  getParsedSchemaForDataPrep,
   checkParsedTypeForError
 };

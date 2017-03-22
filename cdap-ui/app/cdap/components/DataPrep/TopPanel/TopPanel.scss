@@ -101,6 +101,9 @@
       padding: 25px;
       &.error-message-container {
         padding: 15px;
+        pre {
+          margin: 0;
+        }
         .fa.fa-exclamation-triangle {
           font-size: 15px;
           margin-right: 5px;
@@ -156,6 +159,9 @@
   .modal-body {
     overflow-y: auto;
     max-height: 75vh;
+    pre {
+      margin: 0;
+    }
     .fa.fa-exclamation-triangle {
       margin-right: 5px;
       font-size: 15px;
