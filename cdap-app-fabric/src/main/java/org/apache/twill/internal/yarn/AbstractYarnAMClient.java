@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -44,18 +45,19 @@ import javax.annotation.Nullable;
  * Abstract base for implementing YarnAMClient for different versions of hadoop.
  *
  * @param <T> Type of container request.
+ *
+ * TODO: CDAP-8842. Copied from fixes for TWILL-186.
  */
 public abstract class AbstractYarnAMClient<T> extends AbstractIdleService implements YarnAMClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractYarnAMClient.class);
 
   // Map from a unique ID to inflight requests
-  private final Multimap<String, T> containerRequests;
-
-  // List of requests pending to send through allocate call
-  private final List<T> requests;
+  private final Multimap<String, T> inflightRequests;
+  // Map from a unique ID to pending requests that are not yet submitted to YARN
+  private final Multimap<String, T> pendingRequests;
   // List of requests pending to remove through allocate call
-  private final List<T> removes;
+  private final List<T> pendingRemoves;
   //List of pending blacklist additions for the next allocate call
   private final List<String> blacklistAdditions;
   //List of pending blacklist removals for the next allocate call
@@ -81,9 +83,9 @@ public abstract class AbstractYarnAMClient<T> extends AbstractIdleService implem
     Preconditions.checkArgument(masterContainerId != null,
                                 "Missing %s from environment", containerIdEnvName);
     this.containerId = ConverterUtils.toContainerId(masterContainerId);
-    this.containerRequests = ArrayListMultimap.create();
-    this.requests = Lists.newLinkedList();
-    this.removes = Lists.newLinkedList();
+    this.inflightRequests = ArrayListMultimap.create();
+    this.pendingRequests = ArrayListMultimap.create();
+    this.pendingRemoves = Lists.newLinkedList();
     this.blacklistAdditions = Lists.newArrayList();
     this.blacklistRemovals = Lists.newArrayList();
     this.blacklistedResources = Lists.newArrayList();
@@ -109,21 +111,17 @@ public abstract class AbstractYarnAMClient<T> extends AbstractIdleService implem
     // With bug YARN-314, if we mix the allocate call with new container request of the same priority,
     // in some cases the RM would not see the new request (based on sorting of resource capability),
     // but rather only see the one with size = 0.
-    if (removes.isEmpty()) {
-      for (T request : requests) {
-        addContainerRequest(request);
+    if (pendingRemoves.isEmpty()) {
+      for (Map.Entry<String, T> entry : pendingRequests.entries()) {
+        addContainerRequest(entry.getValue());
       }
-      requests.clear();
+      inflightRequests.putAll(pendingRequests);
+      pendingRequests.clear();
     } else {
-      for (T request : removes) {
-        try {
-          removeContainerRequest(request);
-        } catch (NullPointerException e) {
-          // workaround for TWILL-186
-          LOG.info("Got exception.", e);
-        }
+      for (T request : pendingRemoves) {
+        removeContainerRequest(request);
       }
-      removes.clear();
+      pendingRemoves.clear();
     }
 
     if (!blacklistAdditions.isEmpty() || !blacklistRemovals.isEmpty()) {
@@ -136,7 +134,12 @@ public abstract class AbstractYarnAMClient<T> extends AbstractIdleService implem
     List<RunnableProcessLauncher> launchers = allocateResponse.getLaunchers();
 
     if (!launchers.isEmpty()) {
-      handler.acquired(launchers);
+      // Only call handler acquire if there is actually inflight requests.
+      // This is to workaround the YARN behavior that it can return more containers being asked,
+      // such that it causes us to launch process in the pending requests with the wrong container size
+      if (!inflightRequests.isEmpty()) {
+        handler.acquired(launchers);
+      }
 
       // If no process has been launched through the given launcher, return the container.
       for (ProcessLauncher<YarnContainerInfo> l : launchers) {
@@ -145,7 +148,7 @@ public abstract class AbstractYarnAMClient<T> extends AbstractIdleService implem
         if (!launcher.isLaunched()) {
           YarnContainerInfo containerInfo = launcher.getContainerInfo();
           // Casting is needed in Java 8, otherwise it complains about ambiguous method over the info(String, Throwable)
-          LOG.info("Nothing to run in container, releasing it: {}", (Object) containerInfo.getContainer());
+          LOG.info("Nothing to run in container, releasing it: {}", containerInfo.getContainer());
           releaseAssignedContainer(containerInfo);
         }
       }
@@ -155,11 +158,6 @@ public abstract class AbstractYarnAMClient<T> extends AbstractIdleService implem
     if (!completed.isEmpty()) {
       handler.completed(completed);
     }
-  }
-
-  @Override
-  public final ContainerRequestBuilder addContainerRequest(Resource capability) {
-    return addContainerRequest(capability, 1);
   }
 
   @Override
@@ -175,8 +173,7 @@ public abstract class AbstractYarnAMClient<T> extends AbstractIdleService implem
 
           for (int i = 0; i < count; i++) {
             T request = createContainerRequest(priority, capability, hosts, racks, relaxLocality);
-            containerRequests.put(id, request);
-            requests.add(request);
+            pendingRequests.put(id, request);
           }
 
           return id;
@@ -213,8 +210,8 @@ public abstract class AbstractYarnAMClient<T> extends AbstractIdleService implem
 
   @Override
   public final synchronized void completeContainerRequest(String id) {
-    for (T request : containerRequests.removeAll(id)) {
-      removes.add(request);
+    for (T request : inflightRequests.removeAll(id)) {
+      pendingRemoves.add(request);
     }
   }
 
