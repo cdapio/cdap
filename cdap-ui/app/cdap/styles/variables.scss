@@ -41,12 +41,11 @@ $brand-warning:         rgb(244, 180, 0);   // #f4b400
 $brand-danger:          rgb(209, 86, 104);  // #d15668
 
 
-
 // ALERT
 $alert-info-bg:         $brand-primary;     // #5a84e4
 $alert-danger-bg:       rgb(250, 67, 71);   // #FA4347
 $alert-success-bg:      $brand-success;     // #4ab63c
-$alert-warning-bg:      $brand-warning;     // #f4b400
+$alert-warning-bg:      rgb(255, 234, 0);     // #ffea00
 
 // MODALS/WIZARDS
 $modal-header-color: rgba(70, 74, 87, 1);

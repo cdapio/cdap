@@ -29,6 +29,7 @@ import FillNullOrEmpty from 'components/DataPrep/Directives/FillNullOrEmpty';
 import DropColumn from 'components/DataPrep/Directives/DropColumn';
 import FilterDirective from 'components/DataPrep/Directives/Filter';
 import FindAndReplaceDirective from 'components/DataPrep/Directives/FindAndReplace';
+import CopyColumnDirective from 'components/DataPrep/Directives/CopyColumn';
 
 require('./ColumnActionsDropdown.scss');
 
@@ -47,6 +48,10 @@ export default class ColumnActionsDropdown extends Component {
       {
         id: shortid.generate(),
         tag: FilterDirective
+      },
+      {
+        id: shortid.generate(),
+        tag: CopyColumnDirective
       },
       {
         id: shortid.generate(),
