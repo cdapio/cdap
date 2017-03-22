@@ -23,6 +23,8 @@ import MyDataPrepApi from 'api/dataprep';
 import DataPrepStore from 'components/DataPrep/store';
 import fileDownload from 'react-file-download';
 import NamespaceStore from 'services/NamespaceStore';
+import {objectQuery} from 'services/helpers';
+import T from 'i18n-react';
 
 export default class SchemaModal extends Component {
   constructor(props) {
@@ -81,11 +83,9 @@ export default class SchemaModal extends Component {
           schema: res
         });
       }, (err) => {
-        console.log('Error fetching Schema', err);
-
         this.setState({
           loading: false,
-          error: err.message
+          error: objectQuery(err, 'response', 'message') || T.translate('features.DataPrep.TopPanel.SchemaModal.defaultErrorMessage')
         });
       });
   }
@@ -112,8 +112,9 @@ export default class SchemaModal extends Component {
       );
     } else if (this.state.error) {
       content = (
-        <div className="text-xs-center text-danger">
-          {this.state.error}
+        <div className="text-danger">
+          <span className="fa fa-exclamation-triangle"></span>
+          <span>{this.state.error}</span>
         </div>
       );
     } else {
@@ -128,7 +129,7 @@ export default class SchemaModal extends Component {
       <Modal
         isOpen={true}
         toggle={this.props.toggle}
-        zIndex="1070"
+        size="lg"
         className="dataprep-schema-modal"
       >
         <ModalHeader>
@@ -140,6 +141,7 @@ export default class SchemaModal extends Component {
             className="close-section float-xs-right"
           >
             <button
+              disabled={this.state.error ? 'disabled' : null}
               className="btn btn-link"
               onClick={this.download}
             >
@@ -162,4 +164,3 @@ export default class SchemaModal extends Component {
 SchemaModal.propTypes = {
   toggle: PropTypes.func
 };
-
