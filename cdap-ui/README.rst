@@ -64,7 +64,7 @@ Steps to Update Data Preparation Capability
 1. After installing the CDAP UI Pack and restarting CDAP, from within the CDAP UI go to the Cask Market
 2. From the **Solutions** category, follow the steps for the **Data Preparation** solution
 3. Go to *Data Preparation* by clicking on the CDAP menu and then choosing *Data Preparation*
-4. If a newer version of the *Data Preparation* libraries has been released, the UI will show an **Update** button
+4. If a newer version of the *Data Preparation* libraries has been installed, the UI will show an **Update** button
 5. Click the *Update* button to update to the newer version of *Data Preparation*
 
 
