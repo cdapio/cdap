@@ -593,6 +593,7 @@ public final class Constants {
       public static final class Log {
         public static final String PROCESS_DELAY = "log.process.delay";
         public static final String PROCESS_MESSAGES_COUNT = "log.process.message.count";
+        public static final String NUM_BUCKETS = "log.num.buckets";
       }
     }
 

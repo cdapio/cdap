@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.save;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -33,23 +34,26 @@ public class KafkaLogWriterPluginFactory implements KafkaLogProcessorFactory {
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final CheckpointManagerFactory checkpointManagerFactory;
   private final Impersonator impersonator;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
   public KafkaLogWriterPluginFactory(CConfiguration cConfig, FileMetaDataManager fileMetaDataManager,
                                      RootLocationFactory rootLocationFactory,
                                      NamespacedLocationFactory namespacedLocationFactory,
-                                     CheckpointManagerFactory checkpointManagerFactory, Impersonator impersonator) {
+                                     CheckpointManagerFactory checkpointManagerFactory, Impersonator impersonator,
+                                     MetricsCollectionService metricsCollectionService) {
     this.cConfig = cConfig;
     this.fileMetaDataManager = fileMetaDataManager;
     this.rootLocationFactory = rootLocationFactory;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.checkpointManagerFactory = checkpointManagerFactory;
     this.impersonator = impersonator;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
   public KafkaLogProcessor create() throws Exception {
     return new KafkaLogWriterPlugin(cConfig, fileMetaDataManager, checkpointManagerFactory, rootLocationFactory,
-                                    namespacedLocationFactory, impersonator);
+                                    namespacedLocationFactory, impersonator, metricsCollectionService);
   }
 }

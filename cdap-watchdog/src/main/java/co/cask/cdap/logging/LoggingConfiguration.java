@@ -38,6 +38,7 @@ public final class LoggingConfiguration {
   public static final String KAFKA_SEED_BROKERS = "kafka.seed.brokers";
   public static final String LOG_SAVER_EVENT_BUCKET_INTERVAL_MS = "log.saver.event.bucket.interval.ms";
   public static final String LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS = "log.saver.event.max.inmemory.buckets";
+  public static final String LOG_SAVER_MAXIMUM_INMEMORY_EVENTS = "log.saver.max.inmemory.events";
   public static final String LOG_SAVER_INACTIVE_FILE_INTERVAL_MS = "log.saver.inactive.file.interval.ms";
   public static final String LOG_SAVER_MAX_FILE_LIFETIME = "log.saver.max.file.lifetime.ms";
   public static final String LOG_SAVER_CHECKPOINT_INTERVAL_MS = "log.saver.checkpoint.interval.ms";
@@ -59,6 +60,7 @@ public final class LoggingConfiguration {
   public static final int DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS = 24 * 60;
 
   public static final long DEFAULT_LOG_SAVER_EVENT_BUCKET_INTERVAL_MS = 1 * 1000;
+  public static final long DEFAULT_LOG_SAVER_MAXIMUM_INMEMORY_EVENTS = 10000;
   public static final long DEFAULT_LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS = 4;
   public static final long DEFAULT_LOG_SAVER_MAX_FILE_LIFETIME_MS = TimeUnit.HOURS.toMillis(6);
   public static final long DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS = 60 * 1000;
