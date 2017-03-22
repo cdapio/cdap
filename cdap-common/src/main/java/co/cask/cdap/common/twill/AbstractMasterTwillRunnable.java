@@ -18,6 +18,7 @@ package co.cask.cdap.common.twill;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -75,6 +76,7 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
 
   @Override
   public final void initialize(TwillContext context) {
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     super.initialize(context);
 
     name = context.getSpecification().getName();
