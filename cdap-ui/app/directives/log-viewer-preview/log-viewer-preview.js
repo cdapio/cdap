@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $q, moment, myAlertOnValium) {
+function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $q, moment, myAlertOnValium) {
   'ngInject';
 
   /**
@@ -29,7 +29,6 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   var collapseCount = 0;
   var vm = this;
 
-
   vm.viewLimit = 100;
   vm.errorRetrievingLogs = false;
 
@@ -37,7 +36,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     vm.programStatus = status;
 
     if(!vm.entityName) {
-      vm.entityName = vm.programId;
+      vm.entityName = vm.runId;
     }
 
     switch(status){
@@ -132,19 +131,10 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     vm.errorCount = logViewerState.totalErrors;
 
     vm.fullScreen = logViewerState.fullScreen;
-    if (vm.logStartTime === logViewerState.startTime){
+
+    if (vm.startedTimeRequest) {
       return;
     }
-
-    vm.logStartTime = logViewerState.startTime;
-
-    if (!vm.logStartTime || vm.startTimeMs === vm.logStartTime){
-      return;
-    }
-
-    vm.startTimeMs = (vm.logStartTime instanceof Date) ? vm.logStartTime.getTime() : vm.logStartTime;
-
-    vm.fromOffset = -10000 + '.' + vm.startTimeMs;
 
     vm.endRequest = false;
     startTimeRequest();
@@ -189,22 +179,17 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     }
   };
 
-  if (vm.runId) {
+  if (vm.previewId) {
     // Get Initial Status
-    myLogsApi.getLogsMetadata({
+    myPreviewLogsApi.getLogsStatus({
       namespace : vm.namespaceId,
-      appId : vm.appId,
-      programType : vm.programType,
-      programId : vm.programId,
-      runId : vm.runId
+      previewId : vm.previewId
     }).$promise.then(
       (statusRes) => {
         LogViewerStore.dispatch({
           type: LOGVIEWERSTORE_ACTIONS.SET_STATUS,
           payload: {
             status: statusRes.status,
-            startTime: statusRes.start,
-            endTime: statusRes.end
           }
         });
         vm.setProgramMetadata(statusRes.status);
@@ -318,7 +303,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   };
 
   function validUrl() {
-    return vm.namespaceId && vm.appId && vm.programType && vm.runId && vm.fromOffset;
+    return vm.namespaceId && vm.previewId;
   }
 
   function requestWithOffset() {
@@ -336,12 +321,9 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
       pollPromise = null;
     }
 
-    myLogsApi.nextLogsJsonOffset({
+    myPreviewLogsApi.nextLogsJsonOffset({
       'namespace' : vm.namespaceId,
-      'appId' : vm.appId,
-      'programType' : vm.programType,
-      'programId' : vm.programId,
-      'runId' : vm.runId,
+      'previewId' : vm.previewId,
       'fromOffset' : vm.fromOffset,
       filter: `loglevel=${vm.selectedLogLevel}`
     }).$promise.then(
@@ -384,20 +366,15 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   }
 
   function getStatus () {
-    myLogsApi.getLogsMetadata({
+    myPreviewLogsApi.getLogsStatus({
       namespace : vm.namespaceId,
-      appId : vm.appId,
-      programType : vm.programType,
-      programId : vm.programId,
-      runId : vm.runId
+      previewId : vm.previewId
     }).$promise.then(
       (statusRes) => {
         LogViewerStore.dispatch({
           type: LOGVIEWERSTORE_ACTIONS.SET_STATUS,
           payload: {
             status: statusRes.status,
-            startTime: statusRes.start,
-            endTime: statusRes.end
           }
         });
         vm.setProgramMetadata(statusRes.status);
@@ -419,7 +396,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
 
   function pollForNewLogs () {
     pollPromise = dataSrc.poll({
-      _cdapPath: '/namespaces/' + vm.namespaceId + '/apps/' + vm.appId + '/' + vm.programType + '/' + vm.programId + '/runs/' + vm.runId + '/logs/next?format=json&max=100&fromOffset=' + vm.fromOffset + '&filter=loglevel=' + vm.selectedLogLevel,
+      _cdapPath: '/namespaces/' + vm.namespaceId + '/previews/' + vm.previewId + '/logs/next?format=json&max=100&fromOffset=' + vm.fromOffset + '&filter=loglevel=' + vm.selectedLogLevel,
       method: 'GET'
     },
     (res) => {
@@ -457,8 +434,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   vm.getDownloadUrl = (type = 'download') => {
 
     // Generate backend path
-    let startTime = Math.floor(vm.startTimeMs/1000);
-    let path = `/namespaces/${vm.namespaceId}/apps/${vm.appId}/${vm.programType}/${vm.programId}/runs/${vm.runId}/logs?start=${startTime}&escape=false`;
+    let path = `/namespaces/${vm.namespaceId}/previews/${vm.previewId}/logs?&escape=false`;
     path = encodeURIComponent(myCdapUrl.constructUrl({_cdapPath: path}));
 
     let url = `/downloadLogs?backendUrl=${path}&type=${type}`;
@@ -467,9 +443,9 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
       // Generate filename
       let filename = '';
       if ('undefined' !== typeof this.getDownloadFilename()) {
-        filename = this.getDownloadFilename() + '-' + formatDate(new Date(this.startTimeMs), true);
+        filename = this.getDownloadFilename();
       } else {
-         filename = this.namespaceId + '-' + this.appId + '-' + this.programType + '-' + this.programId + '-' + formatDate(new Date(this.startTimeMs), true);
+         filename = this.namespaceId + '-' + this.previewId;
       }
 
       url = `${url}&filename=${filename}.log`;
@@ -483,7 +459,6 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
        vm.loading = false;
        return;
     }
-
     vm.loading = true;
     vm.data = [];
     vm.renderData();
@@ -497,25 +472,21 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     // binds window element to check whether scrollbar has appeared on resize event
     angular.element($window).bind('resize', checkForScrollbar);
 
-    myLogsApi.nextLogsJsonOffset({
+    myPreviewLogsApi.nextLogsJson({
       namespace : vm.namespaceId,
-      appId : vm.appId,
-      programType : vm.programType,
-      programId : vm.programId,
-      runId : vm.runId,
-      fromOffset: vm.fromOffset,
+      previewId : vm.previewId,
       filter: `loglevel=${vm.selectedLogLevel}`
     }).$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
         vm.loading = false;
         vm.data = res;
+        vm.startedTimeRequest = true;
 
         if(res.length === 0){
           //Update with start-time
           getStatus();
           if(vm.statusType !== 0){
-            // vm.loading = false;
             vm.displayData = [];
           }
           vm.renderData();
@@ -547,31 +518,6 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
         vm.errorRetrievingLogs = true;
         console.log('ERROR: ', err);
       });
-  }
-
-  function formatDate(date, isDownload) {
-    let dateObj = {
-      month: date.getMonth() + 1,
-      day: date.getDate(),
-      year: date.getFullYear(),
-      hours: date.getHours(),
-      minutes: date.getMinutes(),
-      seconds: date.getSeconds()
-    };
-
-    angular.forEach(dateObj, (value, key) => {
-      if(value < 10){
-        dateObj[key] = '0' + value;
-      } else {
-        dateObj[key] = value.toString();
-      }
-    });
-
-    if(isDownload){
-      return dateObj.year + dateObj.day + dateObj.month + dateObj.hours + dateObj.minutes + dateObj.seconds;
-    }
-
-    return dateObj.month + '/' + dateObj.day + '/' + dateObj.year + ' ' + dateObj.hours + ':' + dateObj.minutes + ':' + dateObj.seconds;
   }
 
   vm.toggleLogExpansion = function() {
@@ -642,7 +588,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     // Whenever we change the log level filter, the data needs
     // to start from scratch
     vm.data = [];
-    vm.fromOffset = -10000 + '.' + vm.startTimeMs;
+    // vm.fromOffset = -10000 + '.' + vm.startTimeMs;
 
     vm.selectedLogLevel = eventType;
     startTimeRequest();
@@ -751,18 +697,15 @@ const link = (scope) => {
 
 angular.module(PKG.name + '.commons')
   .value('THROTTLE_MILLISECONDS', 250) // throttle infinite scroll
-  .directive('myLogViewer', function () {
+  .directive('myLogViewerPreview', function () {
     return {
-      templateUrl: 'log-viewer/log-viewer.html',
-      controller: LogViewerController,
-      controllerAs: 'LogViewer',
+      templateUrl: 'log-viewer-preview/log-viewer-preview.html',
+      controller: LogViewerPreviewController,
+      controllerAs: 'LogViewerPreview',
       scope: {
         displayOptions: '=?',
         namespaceId: '@',
-        appId: '@',
-        programType: '@',
-        programId: '@',
-        runId: '@',
+        previewId: '@',
         getDownloadFilename: '&',
         entityName: '@'
       },
