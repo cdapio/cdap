@@ -24,7 +24,7 @@
 
 <configuration>
 
-  <!-- Quieting some chatty loggers; Errors and Warnings still come through -->
+  <!-- Quieting some chatty loggers -->
   <logger name="org.apache.commons.beanutils" level="ERROR"/>
   <logger name="org.apache.zookeeper.server" level="ERROR"/>
   <logger name="org.apache.zookeeper" level="ERROR"/>
