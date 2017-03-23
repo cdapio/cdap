@@ -214,6 +214,9 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
           oldestBucketKey = numBuckets == 0 ? System.currentTimeMillis() / eventBucketIntervalMs : rowKeySet.first();
           long latestBucketKey = numBuckets == 0 ? oldestBucketKey : rowKeySet.last();
 
+          // emitting number of buckets as metrics
+          metricsContext.gauge(numBucketsMetric, numBuckets);
+
           // If the number of buckets in memory are less than maxBuckets or
           // if the current event falls in the bucket number which is in
           // the window [oldestBucketKey, oldestBucketKey+maxBuckets]
@@ -221,10 +224,10 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
           // We try to limit in-memory buckets to prevent OOM.
           // Note that we can still have more than maxBuckets in memory if buckets are not consecutive, or
           // we get an event older than oldest bucket
-          // We will limit max number of events held in memory to prevent OOM. We do not add more events if we have
-          // reached maxNumberOfEvents
           long messageTableTotalEvents = getMessageTableTotalEvents();
           if (numBuckets < maxNumberOfBucketsInTable || firstKey <= latestBucketKey) {
+            // We will limit max number of events held in memory to prevent OOM. We do not add more events if we have
+            // reached maxNumberOfEvents
             while (messageTableTotalEvents < maxNumberOfEvents && peekingIterator.hasNext()) {
               KafkaLogEvent event = peekingIterator.next();
               LoggingContext loggingContext = event.getLoggingContext();
@@ -254,7 +257,6 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
         // sleep for the time duration till event falls in the window
         LOG.trace("key={}, oldestBucketKey={}, maxNumberOfBucketsInTable={}, buckets={}. Sleeping for {} ms.",
                   firstKey, oldestBucketKey, maxNumberOfBucketsInTable, numBuckets, SLEEP_TIME_MS);
-        metricsContext.gauge(numBucketsMetric, numBuckets);
 
         if (countDownLatch.await(SLEEP_TIME_MS, TimeUnit.MILLISECONDS)) {
           // if count down occurred return
@@ -271,7 +273,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
     long totalEvents = 0;
 
     for (Map.Entry<Long, List<KafkaLogEvent>> eventArrivalTimeBucket : messageTable.values()) {
-      totalEvents = totalEvents + eventArrivalTimeBucket.getValue().size();
+      totalEvents += eventArrivalTimeBucket.getValue().size();
     }
 
     return totalEvents;
