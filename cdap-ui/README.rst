@@ -28,9 +28,15 @@ UNIX/Linux Flavors
 
 
 **Distributed CDAP**
+
+*Note:* In the instructions below, ``<CDAP_HOME>`` is either:
+
+- ``/opt/cdap`` on RPM (manual or Apache Ambari) installations; or
+- the **CDAP** sub-directory of the **Parcel Directory** on Cloudera Manager installations (e.g. ``/opt/cloudera/parcels/CDAP``)
+
 ::
 
-  $ cd <CDAP_HOME>                        # Note: usually /opt/cdap
+  $ cd <CDAP_HOME>                         
   $ /etc/init.d/cdap-ui stop
   $ zip -m -r ui-backup.zip ui
   $ unzip /path/to/download/cdap-ui-pack-4.1.0_p1.zip
