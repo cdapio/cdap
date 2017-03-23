@@ -25,7 +25,6 @@ import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.TopicMetadataCache;
 import co.cask.cdap.messaging.TopicMetadataCacheSupplier;
-import com.google.common.base.Supplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -50,6 +49,7 @@ import org.apache.hadoop.hbase.regionserver.StoreScanner;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.tephra.TxConstants;
+import org.apache.tephra.coprocessor.CacheSupplier;
 import org.apache.tephra.coprocessor.TransactionStateCache;
 import org.apache.tephra.hbase.txprune.CompactionState;
 import org.apache.tephra.persist.TransactionVisibilityState;
@@ -80,6 +80,7 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
   private int prefixLength;
   private TransactionStateCache txStateCache;
   private TopicMetadataCache topicMetadataCache;
+  private CacheSupplier<TransactionStateCache> txStateCacheSupplier;
 
   private TopicMetadataCacheSupplier topicMetadataCacheSupplier;
   private CompactionState compactionState;
@@ -98,17 +99,19 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
       String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
       CConfigurationReader cConfReader = new CConfigurationReader(env.getConfiguration(), sysConfigTablePrefix);
 
-      Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(hbaseNamespacePrefix,
-                                                                                       env.getConfiguration());
-      txStateCache = cacheSupplier.get();
+      txStateCacheSupplier = getTransactionStateCacheSupplier(hbaseNamespacePrefix, env.getConfiguration());
+      txStateCache = txStateCacheSupplier.get();
       topicMetadataCacheSupplier = new TopicMetadataCacheSupplier(env, cConfReader, hbaseNamespacePrefix,
                                                                   metadataTableNamespace, new HBase11ScanBuilder());
       topicMetadataCache = topicMetadataCacheSupplier.get();
+      LOG.info("Starting MessageTablle Region Observer!");
     }
   }
 
   @Override
   public void stop(CoprocessorEnvironment e) {
+    LOG.info("Calling Stop on MessageTable Region Observer!");
+    txStateCacheSupplier.release();
     topicMetadataCacheSupplier.release();
     if (compactionState != null) {
       compactionState.stop();
@@ -231,7 +234,8 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
     }
   }
 
-  private Supplier<TransactionStateCache> getTransactionStateCacheSupplier(String tablePrefix, Configuration conf) {
+  private CacheSupplier<TransactionStateCache> getTransactionStateCacheSupplier(String tablePrefix,
+                                                                                Configuration conf) {
     String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(tablePrefix);
     return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
   }

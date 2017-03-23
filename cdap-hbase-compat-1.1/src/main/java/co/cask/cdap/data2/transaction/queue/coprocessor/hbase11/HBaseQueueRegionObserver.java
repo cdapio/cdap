@@ -52,6 +52,7 @@ import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.tephra.TxConstants;
+import org.apache.tephra.coprocessor.CacheSupplier;
 import org.apache.tephra.coprocessor.TransactionStateCache;
 import org.apache.tephra.hbase.txprune.CompactionState;
 import org.apache.tephra.persist.TransactionVisibilityState;
@@ -77,6 +78,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   private TableName configTableName;
   private CConfigurationReader cConfReader;
   private Supplier<TransactionVisibilityState> txSnapshotSupplier;
+  private CacheSupplier<TransactionStateCache> txStateCacheSupplier;
   private TransactionStateCache txStateCache;
   private ConsumerConfigCache configCache;
   private CompactionState compactionState;
@@ -111,7 +113,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       Configuration conf = env.getConfiguration();
       String hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
       final String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
-      txStateCache = new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf).get();
+      txStateCacheSupplier = new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
+      txStateCache = txStateCacheSupplier.get();
       txSnapshotSupplier = new Supplier<TransactionVisibilityState>() {
         @Override
         public TransactionVisibilityState get() {
@@ -128,6 +131,10 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
   @Override
   public void stop(CoprocessorEnvironment e) {
+    if (txStateCacheSupplier != null) {
+      txStateCacheSupplier.release();
+    }
+
     if (compactionState != null) {
       compactionState.stop();
     }
