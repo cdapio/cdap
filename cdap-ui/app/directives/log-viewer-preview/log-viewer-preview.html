@@ -1,0 +1,215 @@
+<!--
+  Copyright © 2017 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<div class="log-viewer-container" ng-class="{'full-screen': LogViewerPreview.fullScreen}">
+  <!-- LOGS HEADERBAR -->
+  <div class="logs-headerbar">
+    <div class="log-stats-container">
+      <div class="logs-status-container" ng-if="LogViewerPreview.fullScreen">
+        <span class="application-name" ng-bind="LogViewerPreview.entityName"></span>
+        <span class="application-status" ng-class="{'program-primary' : LogViewerPreview.statusType === 0, 'program-secondary' : LogViewerPreview.statusType === 1, 'program-completed' : LogViewerPreview.statusType === 2, 'program-default' : LogViewerPreview.statusType === 3}">
+          <div class="status-circle" ng-class="{'program-primary-circle' : LogViewerPreview.statusType === 0, 'program-secondary-circle' : LogViewerPreview.statusType === 1, 'program-completed-circle' : LogViewerPreview.statusType === 2, 'program-default-circle' : LogViewerPreview.statusType === 3}">
+          </div>
+          {{LogViewerPreview.programStatus}}
+        </span>
+      </div>
+      <div class="log-stats-total log-stats text-center">
+          <span class="stat-name">Total Messages</span>
+          <div class="stat-count total-num">
+            <span class="stat-count-number">{{LogViewerPreview.totalCount}}</span></div>
+      </div>
+      <div class="log-stats-errors log-stats text-center">
+        <span class="stat-name log-stats-errors-text">Error</span>
+          <div class="stat-count errors-num"><span class="stat-count-number">{{LogViewerPreview.errorCount}}</span></div>
+      </div>
+      <div class="log-stats-warnings log-stats text-center">
+        <span class="stat-name log-stats-warnings-text">Warning</span>
+        <div class="stat-count warnings-num">
+          <span class="stat-count-number">{{LogViewerPreview.warningCount}}</span>
+        </div>
+      </div>
+    </div>
+    <div class="log-actions">
+      <div class="log-action-container">
+        <a href="{{LogViewerPreview.getDownloadUrl('raw')}}"
+          target="_blank"
+          class="log-action-btn view-raw btn btn-default"
+          ng-disabled="!LogViewerPreview.displayData.length || LogViewerPreview.loading"
+          ng-click="LogViewerPreview.preventClick($event)">
+          <span>View Raw Logs</span>
+        </a>
+
+        <a href="{{LogViewerPreview.getDownloadUrl('download')}}"
+          target="_blank"
+          class="log-action-btn download-all btn btn-default"
+          ng-disabled="!LogViewerPreview.displayData.length || LogViewerPreview.loading"
+          ng-click="LogViewerPreview.preventClick($event)">
+          <span>Download All</span>
+        </a>
+        <div class="search">
+          <input type="text" class="log-searchbar" placeholder="Search" ng-model="LogViewerPreview.searchText" ng-model-options="{ debounce: 500 }" ng-change="LogViewerPreview.filterSearch()">
+          <span class="fa fa-search"></span>
+        </div>
+        <i class="fa fa-expand" aria-hidden="true" ng-click="LogViewerPreview.updateScreenChangeInStore(!LogViewerPreview.fullScreen)"></i>
+      </div>
+    </div>
+  </div>
+
+  <a class="sr-only" id="logs-export-link" href="{{LogViewerPreview.url}}" download="{{LogViewerPreview.exportFileName}}.log">Export</a>
+
+  <!-- LOGS TIMELINE
+  <my-timeline
+    namespace-id="{{LogViewerPreview.namespaceId}}"
+    app-id="{{LogViewerPreview.appId}}"
+    program-type="{{LogViewerPreview.programType}}"
+    program-id="{{LogViewerPreview.programId}}"
+    run-id="{{LogViewerPreview.runId}}">
+  </my-timeline>
+  -->
+
+  <!-- LOGS TABLE -->
+  <div class="logs-table">
+    <table class="table table-bordered scroll scroll-table">
+      <thead>
+        <tr ng-style="LogViewerPreview.headerRowStyle">
+          <th class="time time-header log-header"
+              ng-if="LogViewerPreview.configOptions.time && !LogViewerPreview.hiddenColumns.time">
+            Time
+          </th>
+
+          <th class='level level-header'
+              ng-if="LogViewerPreview.configOptions.level && !LogViewerPreview.hiddenColumns.level">
+            <span uib-dropdown class="dropdown">
+              <span uib-dropdown-toggle>
+                Level <span class="fa fa-caret-down"></span>
+              </span>
+              <ul uib-dropdown-menu ng-click="$event.stopPropagation();">
+                <li ng-repeat="option in LogViewerPreview.logEvents"
+                    ng-click="LogViewerPreview.includeEvent($event, option)">
+                  <input
+                    type="checkbox"
+                    ng-model="LogViewerPreview.activeLogLevels[option]"/>
+                    <span>{{option}}</span>
+                </li>
+              </ul>
+            </span>
+          </th>
+
+          <th class="source source-header log-header"
+              ng-if="LogViewerPreview.configOptions.source && !LogViewerPreview.hiddenColumns.source">
+            Source
+          </th>
+
+          <th class="message-header"
+              ng-if="LogViewerPreview.configOptions.message && !LogViewerPreview.hiddenColumns.message"
+              ng-class="{'expanded': LogViewerPreview.isMessageExpanded }">
+            <span class="fa"
+                  ng-class="{ 'fa-arrow-left': !LogViewerPreview.isMessageExpanded,
+                    'fa-arrow-right': LogViewerPreview.isMessageExpanded}"
+                  ng-click="LogViewerPreview.collapseColumns()"></span>
+            <span>Message</span>
+            <button class="btn btn-default pull-right"
+                    ng-click="LogViewerPreview.toggleLogExpansion()"
+                    ng-disabled="LogViewerPreview.displayData.length === 0">
+              <span ng-if="!LogViewerPreview.toggleExpandAll">Expand All</span>
+              <span ng-if="LogViewerPreview.toggleExpandAll">Collapse All</span>
+            </button>
+          </th>
+        </tr>
+      </thead>
+      <tbody class="logs-table-body"
+             infinite-scroll="LogViewerPreview.scrollFn()"
+             infinite-scroll-immediate-check="false"
+             infinite-scroll-container="'.logs-table-body'"
+             infinite-scroll-disabled="(LogViewerPreview.statusType === 0 || LogViewerPreview.statusType === 1) && LogViewerPreview.displayData.length === LogViewerPreview.totalCount"
+             in-view-container
+             >
+
+        <tr ng-class="{'has-stack-trace' : entry.log.stackTrace.length > 0, 'row-selected' : $index+1  < LogViewerPreview.displayData.length && LogViewerPreview.displayData[$index + 1].stackTrace, 'row-expanded' : !entry.stackTrace && entry.selected }"
+            ng-repeat="entry in LogViewerPreview.displayData track by $index"
+            ng-click="LogViewerPreview.toggleStackTrace($index)"
+            in-view="LogViewerPreview.inViewScrollUpdate($index, $inview, $event)"
+            in-view-options="{ debounce : 500}">
+
+          <td class="time time-stack-trace"
+              ng-if="!entry.stackTrace && entry.log.stackTrace.length > 0 && LogViewerPreview.configOptions.time && !LogViewerPreview.hiddenColumns.time">
+            <span class="indicator-arrow" ng-if="entry.log.stackTrace.length > 0">
+              <i ng-if="($index+1 < LogViewerPreview.displayData.length) && (LogViewerPreview.displayData[$index +1].stackTrace )" class="fa fa-chevron-down"></i>
+              <i ng-if="($index+1 >= LogViewerPreview.displayData.length) || !LogViewerPreview.displayData[$index +1].stackTrace" class="fa fa-chevron-right"></i>
+            </span>
+            <span class="display-time" ng-bind="entry.log.displayTime"></span>
+          </td>
+
+          <td class="time"
+              ng-if="!entry.stackTrace && entry.log.stackTrace.length === 0 && LogViewerPreview.configOptions.time && !LogViewerPreview.hiddenColumns.time">
+            <span class="display-time" ng-bind="entry.log.displayTime"></span>
+          </td>
+
+          <td class="level"
+              ng-if="!entry.stackTrace && LogViewerPreview.configOptions.level && !LogViewerPreview.hiddenColumns.level"
+              ng-bind="entry.log.logLevel"></td>
+
+          <td class="source"
+              ng-if="!entry.stackTrace && LogViewerPreview.configOptions.source && !LogViewerPreview.hiddenColumns.source"
+              uib-tooltip="{{entry.log.threadName}}:{{entry.log.className}}#{{entry.log.lineNumber}}"
+              tooltip-append-to-body="true"
+              tooltip-placement="top"
+              tooltip-popup-delay="500"
+              tooltip-class="source-tooltip">
+              <span
+                ng-bind="(entry.log.threadName)+':'+(entry.log.className)+'#'+(entry.log.lineNumber)"></span>
+          </td>
+          <td class="log-message"
+              ng-if="!entry.stackTrace && LogViewerPreview.configOptions.message && !LogViewerPreview.hiddenColumns.message"
+              uib-tooltip="{{entry.log.message}}"
+              tooltip-append-to-body="true"
+              tooltip-placement="top"
+              tooltip-popup-delay="500"
+              tooltip-class="message-tooltip">
+            <span ng-bind-html="LogViewerPreview.highlight(entry.log.message)"></span>
+          </td>
+          <td class="stack-trace" ng-if="entry.stackTrace" colspan="4">
+            <pre ng-bind="entry.log.stackTrace"></pre>
+          </td>
+        </tr>
+
+        <tr class="message-holder">
+          <td colspan="4">
+            <div class="well well-sm text-center"
+                 ng-if="!LogViewerPreview.errorRetrievingLogs && !LogViewerPreview.loading && !LogViewerPreview.displayData.length && LogViewerPreview.statusType !== 0">
+              <h4>
+                No logs to display.
+              </h4>
+            </div>
+            <div class="well well-sm text-center"
+                 ng-if="LogViewerPreview.errorRetrievingLogs && !LogViewerPreview.loading">
+              <h4>
+                Error Retrieving Logs.
+              </h4>
+            </div>
+            <div class="well well-sm text-center"
+                 ng-if="!LogViewerPreview.errorRetrievingLogs && LogViewerPreview.statusType === 0 || LogViewerPreview.loading">
+              <h4 ng-if="!LogViewerPreview.displayData.length">Loading ...</h4>
+              <h6 ng-if="LogViewerPreview.displayData.length">
+                <span class="fa fa-spin fa-refresh"></span>
+              </h6>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="empty-buffer"></div>
+  </div>
+</div>

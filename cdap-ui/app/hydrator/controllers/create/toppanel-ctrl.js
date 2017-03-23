@@ -37,6 +37,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.myAlertOnValium = myAlertOnValium;
     this.currentPreviewId = null;
     this.showRunTimeArguments = false;
+    this.viewLogs = false;
     // This is for now run time arguments. It will be a map of macroMap
     // in the future once we get list of macros for a pipeline config.
     this.macrosMap = {};
@@ -261,6 +262,7 @@ class HydratorPlusPlusTopPanelCtrl {
 
     this.myPipelineApi.runPreview(params, pipelineConfig).$promise
       .then((res) => {
+        console.log(res);
         this.previewStore.dispatch(
           this.previewActions.setPreviewId(res.application)
         );

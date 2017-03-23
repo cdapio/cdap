@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2015-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -143,6 +143,12 @@
         {{ HydratorPlusPlusTopPanelCtrl.displayDuration.minutes }}:{{ HydratorPlusPlusTopPanelCtrl.displayDuration.seconds }}
       </span>
     </div>
+    <div class="btn log-viewer"
+         ng-class="{'btn-select': HydratorPlusPlusTopPanelCtrl.viewLogs}"
+         ng-click="HydratorPlusPlusTopPanelCtrl.viewLogs = !HydratorPlusPlusTopPanelCtrl.viewLogs">
+      <span class="fa fa-file-text-o"></span>
+      <div class="button-label">Logs</div>
+    </div>
     <div class="pipeline-run-section text-left" ng-if="HydratorPlusPlusTopPanelCtrl.showRunTimeArguments">
       <h5>
         <strong>Runtime Arguments</strong>
@@ -155,8 +161,6 @@
       </div>
       <div class="clearfix">
         <div class="pull-right">
-
-
           <button class="btn btn-blue"
             ng-click="HydratorPlusPlusTopPanelCtrl.runPreview()">
             Start Now
@@ -181,3 +185,11 @@
     my-pipeline-settings>
   </div>
 </div>
+<div class="pipeline-settings pipeline-logs-section" ng-if="HydratorPlusPlusTopPanelCtrl.viewLogs">
+  <my-log-viewer-preview
+    namespace-id="{{HydratorPlusPlusTopPanelCtrl.$state.params.namespace}}"
+    preview-id="{{HydratorPlusPlusTopPanelCtrl.currentPreviewId}}"
+    entity-name="{{HydratorPlusPlusTopPanelCtrl.state.metadata['name']}}">
+  </my-log-viewer-preview>
+</div>
+
