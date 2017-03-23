@@ -6,7 +6,7 @@ The CDAP UI Pack is a UI-only release that can be applied on top of an existing 
 
 Details
 =======
-- Release Date: 03/22/2017
+- Release Date: 03/23/2017
 - Base CDAP Version: 4.1
 - Release branch: release/4.1
 
@@ -42,8 +42,8 @@ Windows
 -------
 1. Using the command prompt, stop the CDAP SDK::
 
-  > cd <CDAP_HOME>
-  > bin\cdap sdk stop
+    > cd <CDAP_HOME>
+    > bin\cdap sdk stop
 
 2. Open the ``<CDAP_HOME>`` directory in Explorer
 3. Compress the ``ui`` to save a backup, by right-clicking on the ``ui`` directory and
@@ -54,8 +54,8 @@ Windows
 6. A new ``ui`` directory should be created
 7. Using the command prompt, start the CDAP SDK::
 
-  > cd <CDAP_HOME>
-  > bin\cdap sdk start
+    > cd <CDAP_HOME>
+    > bin\cdap sdk start
 
 
 Steps to Update Data Preparation Capability
