@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers.log;
 
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.metrics.MetricsSuiteTestBase;
 import co.cask.cdap.logging.gateway.handlers.FormattedTextLogEvent;
@@ -245,14 +246,32 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
                   ImmutableList.of("logLevel", "threadName"));
   }
 
+
   private List<LogLine> getLogs(String namespaceId, String appId, String programType, String programName, String runId,
-                                String endPoint) throws Exception {
+                                String endPoint, int expectedStatusCode) throws Exception {
     String path = String.format("apps/%s/%s/%s/runs/%s/logs/%s?max=1000", appId, programType, programName, runId,
                                 endPoint);
     HttpResponse response = doGet(getVersionedAPIPath(path, namespaceId));
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
+    if (response.getStatusLine().getStatusCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
+      return ImmutableList.of();
+    }
     String out = EntityUtils.toString(response.getEntity());
     return GSON.fromJson(out, LIST_LOGLINE_TYPE);
+  }
+
+  private List<LogLine> getLogs(String namespaceId, String appId, String programType, String programName, String runId,
+                                String endPoint) throws Exception {
+    return getLogs(namespaceId, appId, programType, programName, runId, endPoint, HttpResponseStatus.OK.getCode());
+  }
+
+  @Test
+  public void testNonExistenceRunLogs() throws Exception {
+    getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP, "workflows",
+            MockLogReader.SOME_WORKFLOW, RunIds.generate().getId(), "next", HttpResponseStatus.NOT_FOUND.getCode());
+
+    getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP, "workflows",
+            MockLogReader.SOME_WORKFLOW, RunIds.generate().getId(), "prev", HttpResponseStatus.NOT_FOUND.getCode());
   }
 
   @Test
