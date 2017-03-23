@@ -17,14 +17,14 @@
   -->
 
 <!--                                                                                      -->
-<!-- AppFabric Logging Configuration                                                      -->
+<!-- Logging configuration for CDAP System Services on CDAP Master or edge nodes          -->
 <!--                                                                                      -->
-<!-- The LogBack project (http://logback.qos.ch/manual) is used for logging in AppFabric. -->
+<!-- The LogBack project (http://logback.qos.ch/manual) is used for CDAP logging          -->
 <!--                                                                                      -->
 
 <configuration>
 
-  <!-- Disabling some chatty loggers -->
+  <!-- Quieting some chatty loggers; Errors and Warnings still come through -->
   <logger name="org.apache.commons.beanutils" level="ERROR"/>
   <logger name="org.apache.zookeeper.server" level="ERROR"/>
   <logger name="org.apache.zookeeper" level="ERROR"/>
