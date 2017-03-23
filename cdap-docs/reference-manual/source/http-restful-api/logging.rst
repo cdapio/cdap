@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _http-restful-api-logging:
 
@@ -171,6 +171,7 @@ Log levels can be set for a particular run of a program. Once changed, they can 
 they started with by using the :ref:`reset endpoint <http-restful-api-logging-resetting>` shown below.
 
 **Note:** The log levels can only be changed for programs that are running under Distributed CDAP.
+Currently, only flows, services, or workers are supported.
 
 Setting Program Log Levels
 --------------------------
@@ -207,7 +208,7 @@ and, in all cases, with a JSON map in the request body consisting of a map of lo
    * - ``version-id``
      - Version of the application
    * - ``program-type``
-     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
+     - One of ``flows``, ``services``, or ``workers``
    * - ``program-id``
      - Name of the program
    * - ``flow-id``
@@ -262,7 +263,7 @@ If the body is not provided or is empty, it will reset the log levels of all log
    * - ``version-id``
      - Version of the application
    * - ``program-type``
-     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
+     - One of ``flows``, ``services``, or ``workers``
    * - ``program-id``
      - Name of the program
    * - ``flow-id``
