@@ -16,6 +16,8 @@
 
 package co.cask.cdap.logging.save;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.RootLocationFactory;
@@ -29,9 +31,11 @@ import co.cask.cdap.logging.write.AvroFileWriter;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.logging.write.LogCleanup;
 import co.cask.cdap.logging.write.LogFileWriter;
+import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.PeekingIterator;
@@ -39,7 +43,6 @@ import com.google.common.collect.RowSortedTable;
 import com.google.common.collect.TreeBasedTable;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,21 +73,22 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   private final long eventBucketIntervalMs;
   private final int logCleanupIntervalMins;
   private final long maxNumberOfBucketsInTable;
-  private final LoggingEventSerializer serializer;
   private final LogCleanup logCleanup;
   private final CheckpointManager checkpointManager;
+  private final long maxNumberOfEvents;
+  private final MetricsContext metricsContext;
 
   private ListeningScheduledExecutorService scheduledExecutor;
   private CountDownLatch countDownLatch;
   private int partition;
+  private String numBucketsMetric;
 
-  @Inject
   KafkaLogWriterPlugin(CConfiguration cConf, FileMetaDataManager fileMetaDataManager,
                        CheckpointManagerFactory checkpointManagerFactory, RootLocationFactory rootLocationFactory,
-                       NamespacedLocationFactory namespacedLocationFactory, Impersonator impersonator)
-    throws Exception {
+                       NamespacedLocationFactory namespacedLocationFactory, Impersonator impersonator,
+                       MetricsCollectionService metricsCollectionService) throws Exception {
 
-    this.serializer = new LoggingEventSerializer();
+    LoggingEventSerializer serializer = new LoggingEventSerializer();
     this.messageTable = TreeBasedTable.create();
 
     this.logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
@@ -92,7 +96,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
     LOG.debug(String.format("Log base dir is %s", this.logBaseDir));
 
     long retentionDurationDays = cConf.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS,
-                                                 LoggingConfiguration.DEFAULT_LOG_RETENTION_DURATION_DAYS);
+                                               LoggingConfiguration.DEFAULT_LOG_RETENTION_DURATION_DAYS);
     Preconditions.checkArgument(retentionDurationDays > 0,
                                 "Log file retention duration is invalid: %s", retentionDurationDays);
 
@@ -107,7 +111,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
                                 "Log file sync interval is invalid: %s", syncIntervalBytes);
 
     long checkpointIntervalMs = cConf.getLong(LoggingConfiguration.LOG_SAVER_CHECKPOINT_INTERVAL_MS,
-                                                LoggingConfiguration.DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS);
+                                              LoggingConfiguration.DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS);
     Preconditions.checkArgument(checkpointIntervalMs > 0,
                                 "Checkpoint interval is invalid: %s", checkpointIntervalMs);
 
@@ -123,9 +127,18 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
     }
 
     this.eventBucketIntervalMs = cConf.getLong(LoggingConfiguration.LOG_SAVER_EVENT_BUCKET_INTERVAL_MS,
-                                                 LoggingConfiguration.DEFAULT_LOG_SAVER_EVENT_BUCKET_INTERVAL_MS);
+                                               LoggingConfiguration.DEFAULT_LOG_SAVER_EVENT_BUCKET_INTERVAL_MS);
     Preconditions.checkArgument(this.eventBucketIntervalMs > 0,
                                 "Event bucket interval is invalid: %s", this.eventBucketIntervalMs);
+
+    this.maxNumberOfEvents = cConf.getLong(LoggingConfiguration.LOG_SAVER_MAXIMUM_INMEMORY_EVENTS,
+                                           LoggingConfiguration.DEFAULT_LOG_SAVER_MAXIMUM_INMEMORY_EVENTS);
+    Preconditions.checkArgument(this.maxNumberOfEvents > 0,
+                                "Max number of events is invalid: %s", this.maxNumberOfEvents);
+
+    this.metricsContext = metricsCollectionService.getContext(
+      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
+                      Constants.Metrics.Tag.COMPONENT, Constants.Service.LOGSAVER));
 
     this.maxNumberOfBucketsInTable = cConf.getLong
       (LoggingConfiguration.LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS,
@@ -135,7 +148,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
                                 this.maxNumberOfBucketsInTable);
 
     long topicCreationSleepMs = cConf.getLong(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS,
-                                                LoggingConfiguration.DEFAULT_LOG_SAVER_TOPIC_WAIT_SLEEP_MS);
+                                              LoggingConfiguration.DEFAULT_LOG_SAVER_TOPIC_WAIT_SLEEP_MS);
     Preconditions.checkArgument(topicCreationSleepMs > 0,
                                 "Topic creation wait sleep is invalid: %s", topicCreationSleepMs);
 
@@ -159,6 +172,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   @Override
   public void init(int partition) throws Exception {
     this.partition = partition;
+    numBucketsMetric = Constants.Metrics.Name.Log.NUM_BUCKETS + "." + partition;
     Checkpoint checkpoint = checkpointManager.getCheckpoint(partition);
     super.init(checkpoint);
 
@@ -197,8 +211,11 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
         synchronized (messageTable) {
           SortedSet<Long> rowKeySet = messageTable.rowKeySet();
           numBuckets = rowKeySet.size();
-          oldestBucketKey = numBuckets == 0 ? System.currentTimeMillis() : rowKeySet.first();
+          oldestBucketKey = numBuckets == 0 ? System.currentTimeMillis() / eventBucketIntervalMs : rowKeySet.first();
           long latestBucketKey = numBuckets == 0 ? oldestBucketKey : rowKeySet.last();
+
+          // emitting number of buckets as metrics
+          metricsContext.gauge(numBucketsMetric, numBuckets);
 
           // If the number of buckets in memory are less than maxBuckets or
           // if the current event falls in the bucket number which is in
@@ -207,8 +224,11 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
           // We try to limit in-memory buckets to prevent OOM.
           // Note that we can still have more than maxBuckets in memory if buckets are not consecutive, or
           // we get an event older than oldest bucket
+          long messageTableTotalEvents = getMessageTableTotalEvents();
           if (numBuckets < maxNumberOfBucketsInTable || firstKey <= latestBucketKey) {
-            while (peekingIterator.hasNext()) {
+            // We will limit max number of events held in memory to prevent OOM. We do not add more events if we have
+            // reached maxNumberOfEvents
+            while (messageTableTotalEvents < maxNumberOfEvents && peekingIterator.hasNext()) {
               KafkaLogEvent event = peekingIterator.next();
               LoggingContext loggingContext = event.getLoggingContext();
               long key = event.getLogEvent().getTimeStamp() / eventBucketIntervalMs;
@@ -226,6 +246,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
               }
               msgList.add(new KafkaLogEvent(event.getGenericRecord(), event.getLogEvent(), loggingContext,
                                             event.getPartition(), event.getNextOffset()));
+              messageTableTotalEvents++;
             }
             break;
           }
@@ -247,6 +268,17 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
       LOG.warn("Exception while processing message with nextOffset {}. Skipping it.", firstEvent.getNextOffset(), th);
     }
   }
+
+  private long getMessageTableTotalEvents() {
+    long totalEvents = 0;
+
+    for (Map.Entry<Long, List<KafkaLogEvent>> eventArrivalTimeBucket : messageTable.values()) {
+      totalEvents += eventArrivalTimeBucket.getValue().size();
+    }
+
+    return totalEvents;
+  }
+
 
   @Override
   public void stop() {
