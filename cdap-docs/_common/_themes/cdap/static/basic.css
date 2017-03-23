@@ -4,6 +4,8 @@
  *
  * Sphinx stylesheet -- basic theme.
  *
+ * Modified by Cask Data,Inc. 2017
+ *
  * :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
  * :license: BSD, see LICENSE for details.
  *
@@ -49,7 +51,7 @@ div.sphinxsidebarwrapper {
 
 div.sphinxsidebar {
     float: left;
-    width: 230px;
+    width: 300px;
     margin-left: -100%;
     font-size: 90%;
 }

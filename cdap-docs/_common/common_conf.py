@@ -602,7 +602,7 @@ html_static_path = ['../../_common/_static']
 html_sidebars = {'**': [
     'manuals.html',
 #     'globaltoc.html',
-    'searchbox.html',
+#     'searchbox.html',
     'downloads.html',
     'casksites.html',
      ],}

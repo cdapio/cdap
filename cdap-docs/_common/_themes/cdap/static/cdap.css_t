@@ -32,9 +32,11 @@ body {
     padding: 0;
 }
 
-#div.document {
-#    background-color: #eee;
-#}
+/*
+div.document {
+    background-color: #eee;
+}
+*/
 
 div.documentwrapper {
     float: left;
@@ -43,7 +45,7 @@ div.documentwrapper {
 }
 
 div.bodywrapper {
-    margin: 0 0 0 270px;
+    margin: 0 0 0 {{ theme_sidebarwidth|toint }}px;
 }
 
 hr {
@@ -51,7 +53,6 @@ hr {
 }
 
 div.body {
-#    background-color: #ffffff;
     color: #333;
     
     padding: 0 30px 30px 30px;
@@ -67,7 +68,7 @@ div.figure.align-left {
 
 div.footer {
     color: #888;
-    padding: 13px 0 13px 270px;
+    padding: 13px 0 13px {{ theme_sidebarwidth|toint }}px;
     text-align: center;
     font-size: 75%;
 }
@@ -98,6 +99,10 @@ div.related a {
     font-weight: bold;
 }
 
+div.related li.right {
+    margin-right: 20px;
+}
+
 div.related li.right a {
     font-weight: normal;
 }
@@ -125,7 +130,7 @@ div.sphinxsidebar {
     overflow: auto;
     position: fixed;
     top: 32px;
-    width: 270px;
+    width: {{ theme_sidebarwidth|toint }}px;
 }
 
 div.sphinxsidebarwrapper{
@@ -208,6 +213,11 @@ div.sphinxsidebar input {
 
 div.sphinxsidebar input[type=text]{
     margin-left: 20px;
+}
+
+div.sphinxsidebar li.toctree-l4 {
+    margin-left: 20px;
+    text-indent: -20px;
 }
 
 /* -- body styles ----------------------------------------------------------- */
@@ -391,7 +401,6 @@ p.admonition-title:after {
 }
 
 p.rubric {
-#    background-color: #EDEDED; 
     color: #111;
     font-size: 110%; 
     font-weight: normal;
