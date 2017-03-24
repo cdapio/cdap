@@ -617,6 +617,16 @@
         <groupId>org.apache.thrift</groupId>
         <artifactId>libthrift</artifactId>
         <version>${thrift.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -1304,6 +1314,7 @@
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
         <version>${http.component.version}</version>
+        <scope>test</scope>
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>
@@ -1315,6 +1326,7 @@
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpcore</artifactId>
         <version>${http.component.version}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
