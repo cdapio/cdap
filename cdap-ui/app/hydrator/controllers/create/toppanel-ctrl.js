@@ -216,6 +216,7 @@ class HydratorPlusPlusTopPanelCtrl {
   }
   runPreview() {
     this.previewLoading = true;
+    this.loadingLabel = 'Starting';
     this.showRunTimeArguments = false;
 
     this.displayDuration = {
@@ -312,6 +313,7 @@ class HydratorPlusPlusTopPanelCtrl {
       previewId: this.currentPreviewId
     };
     this.previewLoading = true;
+    this.loadingLabel = 'Stopping';
     this.stopTimer();
     this.myPipelineApi
         .stopPreview(params, {})

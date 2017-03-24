@@ -120,7 +120,7 @@
     <div class="btn"
          ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.toggleRuntimeArguments()"
          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading">
-      <span class="fa fa-play"
+      <span class="fa fa-play text-success"
             ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && !HydratorPlusPlusTopPanelCtrl.previewRunning">
       </span>
       <div class="button-label"
@@ -139,7 +139,7 @@
       </span>
       <div class="button-label"
            ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading">
-           Starting
+           {{HydratorPlusPlusTopPanelCtrl.loadingLabel}}
       </div>
     </div>
     <div class="btn run-time">
