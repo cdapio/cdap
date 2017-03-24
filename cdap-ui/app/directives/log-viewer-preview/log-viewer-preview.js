@@ -378,7 +378,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
           }
         });
         vm.setProgramMetadata(statusRes.status);
-        if(vm.statusType === 0){
+        if(vm.statusType === 0 || vm.statusType === 3){
           if (!pollPromise) {
             pollForNewLogs();
           }
