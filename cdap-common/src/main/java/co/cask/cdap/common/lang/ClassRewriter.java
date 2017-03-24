@@ -24,5 +24,13 @@ import java.io.InputStream;
  */
 public interface ClassRewriter {
 
+  /**
+   * Rewrites a class with the original byte code provided from the given {@link InputStream}.
+   *
+   * @param className name of the class
+   * @param input an {@link InputStream} to provide the original bytecode of the class
+   * @return the bytecode of the rewritten class
+   * @throws IOException if failed in rewriting the class
+   */
   byte[] rewriteClass(String className, InputStream input) throws IOException;
 }
