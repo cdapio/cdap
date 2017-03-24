@@ -72,9 +72,6 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
   private Server server;
   private InetAddress bindAddress;
 
-  @Nullable
-  private String announceAddress;
-
   /**
    * Constants for a valid JSON response.
    */
@@ -98,7 +95,6 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
                                       DiscoveryService discoveryService,
                                       @Named("security.handlers") Map<String, Object> handlers,
                                       @Named(NAMED_EXTERNAL_AUTH) AuditLogHandler auditLogHandler) {
-    this.announceAddress = configuration.get(Constants.Security.AUTH_SERVER_ANNOUNCE_ADDRESS);
     this.port = configuration.getBoolean(Constants.Security.SSL_ENABLED) ?
       configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT) :
       configuration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
@@ -114,6 +110,7 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
 
   /**
    * Get the InetSocketAddress of the server.
+   *
    * @return InetSocketAddress of server.
    */
   public InetSocketAddress getSocketAddress() {
@@ -217,9 +214,6 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
 
       @Override
       public InetSocketAddress getSocketAddress() throws RuntimeException {
-        if (announceAddress != null) {
-          return new InetSocketAddress(announceAddress, connector.getLocalPort());
-        }
         return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
       }
     }));
