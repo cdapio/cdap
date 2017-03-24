@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -197,7 +197,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     if (announceURLs.length > 0) {
       for (String url : announceURLs) {
         String urlWithToken = String.format("%s/%s", url, GrantAccessToken.Paths.GET_TOKEN);
-        LOG.info("AUTH_SERVER_ANNOUNCE_URLS contains {}", urlWithToken);
         externalAuthenticationURIs.add(new JsonPrimitive(urlWithToken));
       }
       return;
@@ -221,7 +220,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       } else {
         url = String.format("%s://%s:%d/%s", protocol, announceAddress, port, GrantAccessToken.Paths.GET_TOKEN);
       }
-      LOG.info("AUTH_SERVER_ANNOUNCE_ADDRESS_DEPRECATED contains {}", url);
       externalAuthenticationURIs.add(new JsonPrimitive(url));
       return;
     }
