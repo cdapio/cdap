@@ -30,9 +30,9 @@ public class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler
     StackTraceElement[] stackTrace = e.getStackTrace();
     if (stackTrace.length > 0) {
       Logger logger = LoggerFactory.getLogger(stackTrace[0].getClassName());
-      logger.error("Uncaught exception in thread {}", t, e);
+      logger.debug("Uncaught exception in thread {}", t, e);
     } else {
-      LOG.error("Uncaught exception in thread {}", t, e);
+      LOG.debug("Uncaught exception in thread {}", t, e);
     }
   }
 }
