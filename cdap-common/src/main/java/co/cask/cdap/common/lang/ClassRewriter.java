@@ -18,11 +18,21 @@ package co.cask.cdap.common.lang;
 
 import java.io.IOException;
 import java.io.InputStream;
+import javax.annotation.Nullable;
 
 /**
  * Represents classes that can rewrite class bytecode.
  */
 public interface ClassRewriter {
 
+  /**
+   * Rewrites a class with the original byte code provided from the given {@link InputStream}.
+   *
+   * @param className name of the class
+   * @param input an {@link InputStream} to provide the original bytecode of the class
+   * @return the bytecode of the rewritten class or {@code null} to indicate no rewriting is needed
+   * @throws IOException if failed in rewriting the class
+   */
+  @Nullable
   byte[] rewriteClass(String className, InputStream input) throws IOException;
 }

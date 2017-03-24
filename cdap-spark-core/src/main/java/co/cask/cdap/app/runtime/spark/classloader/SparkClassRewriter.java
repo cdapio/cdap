@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package co.cask.cdap.app.runtime.spark.classloader;
 
-import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.common.internal.guava.ClassPath;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.ClassPathResources;
+import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
+import co.cask.cdap.common.lang.ClassRewriter;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.internal.asm.Classes;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -41,23 +39,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
- * A special {@link ClassLoader} for defining and loading all cdap-spark-core classes and Spark classes.
- *
- * IMPORTANT: Due to discovery in CDAP-5822, don't use getResourceAsStream in this class.
+ * A {@link ClassRewriter} for rewriting Spark related classes.
  */
-public final class SparkRunnerClassLoader extends URLClassLoader {
+public class SparkClassRewriter implements ClassRewriter {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SparkRunnerClassLoader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SparkClassRewriter.class);
 
   // Define some of the class types used for bytecode rewriting purpose. Cannot be referred with .class since
   // those classes may not be available to the ClassLoader of this class (they are loadable from this ClassLoader).
@@ -73,7 +64,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
   private static final Type SPARK_SUBMIT_TYPE = Type.getObjectType("org/apache/spark/deploy/SparkSubmit$");
   private static final Type SPARK_YARN_CLIENT_TYPE = Type.getObjectType("org/apache/spark/deploy/yarn/Client");
   private static final Type SPARK_DSTREAM_GRAPH_TYPE = Type.getObjectType("org/apache/spark/streaming/DStreamGraph");
-  private static final Type YARNSPARKHADOOPUTIL_TYPE =
+  private static final Type YARN_SPARK_HADOOP_UTIL_TYPE =
     Type.getObjectType("org/apache/spark/deploy/yarn/YarnSparkHadoopUtil");
 
   // Don't refer akka Remoting with the ".class" because in future Spark version, akka dependency is removed and
@@ -90,126 +81,61 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
   // File entry name of the SparkConf properties file inside the Spark conf zip
   private static final String SPARK_CONF_FILE = "__spark_conf__.properties";
 
-  // Set of resources that are in cdap-api. They should be loaded by the parent ClassLoader
-  private static final Set<String> API_CLASSES;
-
+  private final Function<String, URL> resourceLookup;
   private final boolean rewriteYarnClient;
 
-  static {
-    Set<String> apiClasses = new HashSet<>();
-    try {
-      Iterables.addAll(
-        apiClasses, Iterables.transform(
-          Iterables.filter(ClassPathResources.getClassPathResources(Spark.class.getClassLoader(), Spark.class),
-                           ClassPath.ClassInfo.class),
-          ClassPathResources.CLASS_INFO_TO_CLASS_NAME
-        )
-      );
-    } catch (IOException e) {
-      // Shouldn't happen, because Spark.class is in cdap-api and it should always be there.
-      LOG.error("Unable to find cdap-api classes.", e);
-    }
-
-    API_CLASSES = Collections.unmodifiableSet(apiClasses);
-  }
-
-  private static URL[] getClassloaderURLs(ClassLoader classLoader) throws IOException {
-    List<URL> urls = ClassLoaders.getClassLoaderURLs(classLoader, new ArrayList<URL>());
-
-    // If Spark classes are not available in the given ClassLoader, try to locate the Spark assembly jar
-    // This class cannot have dependency on Spark directly, hence using the class resource to discover if SparkContext
-    // is there
-    if (classLoader.getResource("org/apache/spark/SparkContext.class") == null) {
-      urls.add(SparkUtils.locateSparkAssemblyJar().toURI().toURL());
-    }
-    return urls.toArray(new URL[urls.size()]);
-  }
-
-  public SparkRunnerClassLoader(ClassLoader parent, boolean rewriteYarnClient) throws IOException {
-    this(getClassloaderURLs(parent), parent, rewriteYarnClient);
-  }
-
-  public SparkRunnerClassLoader(URL[] urls, @Nullable ClassLoader parent, boolean rewriteYarnClient) {
-    super(urls, parent);
+  public SparkClassRewriter(Function<String, URL> resourceLookup, boolean rewriteYarnClient) {
+    this.resourceLookup = resourceLookup;
     this.rewriteYarnClient = rewriteYarnClient;
   }
 
+  @Nullable
   @Override
-  protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-    // We won't define the class with this ClassLoader for the following classes since they should
-    // come from the parent ClassLoader
-    // cdap-api-classes
-    // Any class that is not from cdap-api-spark or cdap-spark-core
-    // Any class that is not from Spark
-    // We also need to define the org.spark-project., fastxml and akka classes in this ClassLoader
-    // to avoid reference/thread leakage due to Spark assumption on process terminating after execution
-    if (API_CLASSES.contains(name) || (!name.startsWith("co.cask.cdap.api.spark.")
-        && !name.startsWith("co.cask.cdap.app.runtime.spark.")
-        && !name.startsWith("org.apache.spark.") && !name.startsWith("org.spark-project.")
-        && !name.startsWith("com.fasterxml.jackson.module.scala.")
-        && !name.startsWith("akka.") && !name.startsWith("com.typesafe."))) {
-      return super.loadClass(name, resolve);
+  public byte[] rewriteClass(String className, InputStream input) throws IOException {
+    if (className.equals(SPARK_CONTEXT_TYPE.getClassName())) {
+      // Rewrite the SparkContext class by rewriting the constructor to save the context to SparkRuntimeEnv
+      return rewriteContext(SPARK_CONTEXT_TYPE, input);
+    }
+    if (className.equals(SPARK_STREAMING_CONTEXT_TYPE.getClassName())) {
+      // Rewrite the StreamingContext class by rewriting the constructor to save the context to SparkRuntimeEnv
+      return rewriteContext(SPARK_STREAMING_CONTEXT_TYPE, input);
+    }
+    if (className.equals(SPARK_CONF_TYPE.getClassName())) {
+      // Define the SparkConf class by rewriting the class to put all properties from
+      // SparkRuntimeEnv to the SparkConf in the constructors
+      return rewriteSparkConf(SPARK_CONF_TYPE, input);
+    }
+    if (className.startsWith(SPARK_SUBMIT_TYPE.getClassName())) {
+      // Rewrite System.setProperty call to SparkRuntimeEnv.setProperty for SparkSubmit and all inner classes
+      return rewriteSetProperties(input);
+    }
+    if (className.equals(SPARK_YARN_CLIENT_TYPE.getClassName()) && rewriteYarnClient) {
+      // Rewrite YarnClient for workaround SPARK-13441.
+      return rewriteClient(input);
+    }
+    if (className.equals(SPARK_DSTREAM_GRAPH_TYPE.getClassName())) {
+      // Rewrite DStreamGraph to set TaskSupport on parallel array usage to avoid Thread leak
+      return rewriteDStreamGraph(input);
+    }
+    if (className.equals(AKKA_REMOTING_TYPE.getClassName())) {
+      // Define the akka.remote.Remoting class to avoid thread leakage
+      return rewriteAkkaRemoting(input);
+    }
+    if (className.equals(YARN_SPARK_HADOOP_UTIL_TYPE.getClassName())) {
+      // CDAP-8636 Rewrite methods of YarnSparkHadoopUtil to avoid acquiring delegation token, because when we execute
+      // spark submit, we don't have keytab login
+      return rewriteSparkHadoopUtil(className, input);
     }
 
-    // If the class is already loaded, return it
-    Class<?> cls = findLoadedClass(name);
-    if (cls != null) {
-      return cls;
-    }
-
-    // Define the class with this ClassLoader
-    try (InputStream is = openResource(name.replace('.', '/') + ".class")) {
-      if (is == null) {
-        throw new ClassNotFoundException("Failed to find resource for class " + name);
-      }
-
-      if (name.equals(SPARK_CONTEXT_TYPE.getClassName())) {
-        // Define the SparkContext class by rewriting the constructor to save the context to SparkRuntimeEnv
-        cls = defineContext(SPARK_CONTEXT_TYPE, is);
-      } else if (name.equals(SPARK_STREAMING_CONTEXT_TYPE.getClassName())) {
-        // Define the StreamingContext class by rewriting the constructor to save the context to SparkRuntimeEnv
-        cls = defineContext(SPARK_STREAMING_CONTEXT_TYPE, is);
-      } else if (name.equals(SPARK_CONF_TYPE.getClassName())) {
-        // Define the SparkConf class by rewriting the class to put all properties from
-        // SparkRuntimeEnv to the SparkConf in the constructors
-        cls = defineSparkConf(SPARK_CONF_TYPE, is);
-      } else if (name.startsWith(SPARK_SUBMIT_TYPE.getClassName())) {
-        // Rewrite System.setProperty call to SparkRuntimeEnv.setProperty for SparkSubmit and all inner classes
-        cls = rewriteSetPropertiesAndDefineClass(name, is);
-      } else if (name.equals(SPARK_YARN_CLIENT_TYPE.getClassName()) && rewriteYarnClient) {
-        // Rewrite YarnClient for workaround SPARK-13441.
-        cls = defineClient(name, is);
-      } else if (name.equals(SPARK_DSTREAM_GRAPH_TYPE.getClassName())) {
-        // Rewrite DStreamGraph to set TaskSupport on parallel array usage to avoid Thread leak
-        cls = defineDStreamGraph(name, is);
-      } else if (name.equals(AKKA_REMOTING_TYPE.getClassName())) {
-        // Define the akka.remote.Remoting class to avoid thread leakage
-        cls = defineAkkaRemoting(name, is);
-      } else if (name.equals(YARNSPARKHADOOPUTIL_TYPE.getClassName())) {
-        // CDAP-8636 Rewrite methods of YarnSparkHadoopUtil to avoid acquiring delegation token, because when we execute
-        // spark submit, we don't have keytab login
-        cls = defineHadoopSparkHadoopUtil(name, is);
-      } else {
-        // Otherwise, just define it with this ClassLoader
-        cls = findClass(name);
-      }
-
-      if (resolve) {
-        resolveClass(cls);
-      }
-      return cls;
-    } catch (IOException e) {
-      throw new ClassNotFoundException("Failed to read class definition for class " + name, e);
-    }
+    return null;
   }
 
   /**
-   * Defines the class by rewriting the constructor to call
-   * SparkRuntimeEnv#setContext(SparkContext) or SparkRuntimeEnv#setContext(StreamingContext),
-   * depending on the class type.
+   * Rewrites the constructor to call SparkRuntimeEnv#setContext(SparkContext)
+   * or SparkRuntimeEnv#setContext(StreamingContext), depending on the class type.
    */
-  private Class<?> defineContext(final Type contextType, InputStream byteCodeStream) throws IOException {
-    return rewriteConstructorAndDefineClass(contextType, byteCodeStream, new ConstructorRewriter() {
+  private byte[] rewriteContext(final Type contextType, InputStream byteCodeStream) throws IOException {
+    return rewriteConstructor(contextType, byteCodeStream, new ConstructorRewriter() {
       @Override
       public void onMethodExit(GeneratorAdapter generatorAdapter) {
         generatorAdapter.loadThis();
@@ -220,10 +146,10 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
   }
 
   /**
-   * Defines the SparkConf class by rewriting the constructor to call SparkRuntimeEnv#setupSparkConf(SparkConf).
+   * Rewrites the SparkConf class constructor to call SparkRuntimeEnv#setupSparkConf(SparkConf).
    */
-  private Class<?> defineSparkConf(final Type sparkConfType, InputStream byteCodeStream) throws IOException {
-    return rewriteConstructorAndDefineClass(sparkConfType, byteCodeStream, new ConstructorRewriter() {
+  private byte[] rewriteSparkConf(final Type sparkConfType, InputStream byteCodeStream) throws IOException {
+    return rewriteConstructor(sparkConfType, byteCodeStream, new ConstructorRewriter() {
       @Override
       public void onMethodExit(GeneratorAdapter generatorAdapter) {
         generatorAdapter.loadThis();
@@ -234,10 +160,10 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
   }
 
   /**
-   * Defines the DStreamGraph class by rewriting calls to parallel array with a call to
+   * Rewrites the DStreamGraph class for calls to parallel array with a call to
    * SparkRuntimeUtils#setTaskSupport(ParArray).
    */
-  private Class<?> defineDStreamGraph(String name, InputStream byteCodeStream) throws IOException {
+  private byte[] rewriteDStreamGraph(InputStream byteCodeStream) throws IOException {
     ClassReader cr = new ClassReader(byteCodeStream);
     ClassWriter cw = new ClassWriter(0);
 
@@ -253,8 +179,8 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
             //INVOKEVIRTUAL scala/collection/mutable/ ArrayBuffer.par ()Lscala/collection/parallel/mutable/ParArray;
             Type returnType = Type.getReturnType(desc);
             if (opcode == Opcodes.INVOKEVIRTUAL && name.equals("par")
-                && owner.equals("scala/collection/mutable/ArrayBuffer")
-                && returnType.getClassName().equals("scala.collection.parallel.mutable.ParArray")) {
+              && owner.equals("scala/collection/mutable/ArrayBuffer")
+              && returnType.getClassName().equals("scala.collection.parallel.mutable.ParArray")) {
               super.visitMethodInsn(Opcodes.INVOKESTATIC, SPARK_RUNTIME_UTILS_TYPE.getInternalName(),
                                     "setTaskSupport", Type.getMethodDescriptor(returnType, returnType), false);
             }
@@ -263,8 +189,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
       }
     }, ClassReader.EXPAND_FRAMES);
 
-    byte[] byteCode = cw.toByteArray();
-    return defineClass(name, byteCode, 0, byteCode.length);
+    return cw.toByteArray();
   }
 
   /**
@@ -276,8 +201,8 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
    * @param rewriter a {@link ConstructorRewriter} for rewriting the constructor
    * @return a defined Class
    */
-  private Class<?> rewriteConstructorAndDefineClass(final Type classType, InputStream byteCodeStream,
-                                                    final ConstructorRewriter rewriter) throws IOException {
+  private byte[] rewriteConstructor(final Type classType, InputStream byteCodeStream,
+                                    final ConstructorRewriter rewriter) throws IOException {
     ClassReader cr = new ClassReader(byteCodeStream);
     ClassWriter cw = new ClassWriter(0);
 
@@ -322,19 +247,19 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
       }
     }, ClassReader.EXPAND_FRAMES);
 
-    byte[] byteCode = cw.toByteArray();
-    return defineClass(classType.getClassName(), byteCode, 0, byteCode.length);
+    return cw.toByteArray();
   }
 
+
+
   /**
-   * Defines a class by rewriting all calls to {@link System#setProperty(String, String)} to
+   * Rewrites a class by rewriting all calls to {@link System#setProperty(String, String)} to
    * {@link SparkRuntimeEnv#setProperty(String, String)}.
    *
-   * @param name name of the class to define
    * @param byteCodeStream {@link InputStream} for reading in the original bytecode.
    * @return a defined class
    */
-  private Class<?> rewriteSetPropertiesAndDefineClass(String name, InputStream byteCodeStream) throws IOException {
+  private byte[] rewriteSetProperties(InputStream byteCodeStream) throws IOException {
     final Type systemType = Type.getType(System.class);
     ClassReader cr = new ClassReader(byteCodeStream);
     ClassWriter cw = new ClassWriter(0);
@@ -348,7 +273,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
           public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
             // If we see a call to System.setProperty, change it to SparkRuntimeEnv.setProperty
             if (opcode == Opcodes.INVOKESTATIC && name.equals("setProperty")
-                && owner.equals(systemType.getInternalName())) {
+              && owner.equals(systemType.getInternalName())) {
               super.visitMethodInsn(opcode, SPARK_RUNTIME_ENV_TYPE.getInternalName(), name, desc, false);
             } else {
               super.visitMethodInsn(opcode, owner, name, desc, itf);
@@ -358,22 +283,23 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
       }
     }, ClassReader.EXPAND_FRAMES);
 
-    byte[] byteCode = cw.toByteArray();
-    return defineClass(name, byteCode, 0, byteCode.length);
+    return cw.toByteArray();
   }
 
   /**
-   * Define the akka.remote.Remoting by rewriting usages of scala.concurrent.ExecutionContext.Implicits.global
+   * Rewrites the akka.remote.Remoting by rewriting usages of scala.concurrent.ExecutionContext.Implicits.global
    * to Remoting.system().dispatcher() in the shutdown() method for fixing the Akka thread/permgen leak bug in
-   * https://github.com/akka/akka/issues/17729
+   * https://github.com/akka/akka/issues/17729.
+   *
+   * @return the rewritten bytes or {@code null} if no rewriting is needed
    */
-  private Class<?> defineAkkaRemoting(String name,
-                                      InputStream byteCodeStream) throws IOException, ClassNotFoundException {
+  @Nullable
+  private byte[] rewriteAkkaRemoting(InputStream byteCodeStream) throws IOException {
     final Type dispatcherReturnType = determineAkkaDispatcherReturnType();
     if (dispatcherReturnType == null) {
       LOG.warn("Failed to determine ActorSystem.dispatcher() return type. " +
                  "No rewriting of akka.remote.Remoting class. ClassLoader leakage might happen in SDK.");
-      return findClass(name);
+      return null;
     }
 
     ClassReader cr = new ClassReader(byteCodeStream);
@@ -402,9 +328,9 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
             // INVOKEVIRTUAL scala/concurrent/ExecutionContext$Implicits$.global
             //           ()Lscala/concurrent/ExecutionContextExecutor;
             if (opcode == Opcodes.INVOKEVIRTUAL
-                && "global".equals(name)
-                && "scala/concurrent/ExecutionContext$Implicits$".equals(owner)
-                && Type.getMethodDescriptor(EXECUTION_CONTEXT_EXECUTOR_TYPE).equals(desc)) {
+              && "global".equals(name)
+              && "scala/concurrent/ExecutionContext$Implicits$".equals(owner)
+              && Type.getMethodDescriptor(EXECUTION_CONTEXT_EXECUTOR_TYPE).equals(desc)) {
               // Discard the GETSTATIC result from the stack by popping it
               super.visitInsn(Opcodes.POP);
               // Make the call "import system.dispatch", which translate to Java code as
@@ -428,8 +354,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
       }
     }, ClassReader.EXPAND_FRAMES);
 
-    byte[] byteCode = cw.toByteArray();
-    return defineClass(name, byteCode, 0, byteCode.length);
+    return cw.toByteArray();
   }
 
   /**
@@ -441,10 +366,12 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
    */
   @Nullable
   private Type determineAkkaDispatcherReturnType() {
-    try (InputStream is = openResource("akka/actor/ActorSystem.class")) {
-      if (is == null) {
-        return null;
-      }
+    URL resource = resourceLookup.apply("akka/actor/ActorSystem.class");
+    if (resource == null) {
+      return null;
+    }
+
+    try (InputStream is = resource.openStream()) {
       final AtomicReference<Type> result = new AtomicReference<>();
       ClassReader cr = new ClassReader(is);
       cr.accept(new ClassVisitor(Opcodes.ASM5) {
@@ -475,7 +402,8 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
    * Defines the org.apache.spark.deploy.yarn.Client class with rewriting of the createConfArchive method to
    * workaround the SPARK-13441 bug.
    */
-  private Class<?> defineClient(String name, InputStream createConfArchive) throws IOException, ClassNotFoundException {
+  @Nullable
+  private byte[] rewriteClient(InputStream byteCodeStream) throws IOException {
     // We only need to rewrite if listing either HADOOP_CONF_DIR or YARN_CONF_DIR return null.
     boolean needRewrite = false;
     for (String env : ImmutableList.of("HADOOP_CONF_DIR", "YARN_CONF_DIR")) {
@@ -491,10 +419,10 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
 
     // If rewrite is not needed
     if (!needRewrite) {
-      return findClass(name);
+      return null;
     }
 
-    ClassReader cr = new ClassReader(createConfArchive);
+    ClassReader cr = new ClassReader(byteCodeStream);
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
     cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
       @Override
@@ -559,8 +487,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
       }
     }, ClassReader.EXPAND_FRAMES);
 
-    byte[] byteCode = cw.toByteArray();
-    return defineClass(name, byteCode, 0, byteCode.length);
+    return cw.toByteArray();
   }
 
   /**
@@ -568,18 +495,10 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
    * spark submit, we don't have keytab login. Because of that and the change in SPARK-12241, the attempt to acquire
    * delegation tokens causes a spark program submission failure.
    */
-  private Class<?> defineHadoopSparkHadoopUtil(String name,
-                                               InputStream byteCodeStream) throws IOException, ClassNotFoundException {
+  private byte[] rewriteSparkHadoopUtil(String name, InputStream byteCodeStream) throws IOException {
     Set<String> methods =
       ImmutableSet.of("obtainTokensForNamenodes", "obtainTokenForHiveMetastore", "obtainTokenForHBase");
-    byte[] byteCode = Classes.rewriteMethodToNoop(name, byteCodeStream, methods);
-    return defineClass(name, byteCode, 0, byteCode.length);
-  }
-
-  @Nullable
-  private InputStream openResource(String resourceName) throws IOException {
-    URL resource = findResource(resourceName);
-    return resource == null ? null : resource.openStream();
+    return Classes.rewriteMethodToNoop(name, byteCodeStream, methods);
   }
 
   /**
