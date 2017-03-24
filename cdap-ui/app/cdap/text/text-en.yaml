@@ -200,6 +200,30 @@ features:
     JustAddedSection:
       subtitle: Just added
   DataPrep:
+    Directives:
+      apply: Apply
+      cancel: Cancel
+      FilterBy:
+        ByCondition:
+          textPlaceholder: Input Value
+          title: Filter by Condition
+        ByValue:
+          clearAll: Clear All
+          searchPlaceholder: Search
+          selectAll: Select All
+          title: Filter by Value
+        Conditions:
+          EMPTY: Cell is empty
+          NONE: None
+          NOTEMPTY: Cell is not empty
+          TEXTCONTAINS: Text contains
+          TEXTENDSWITH: Text ends with
+          TEXTEXACTLY: Text is exactly
+          TEXTNOTCONTAIN: "Text doesn't contain"
+          TEXTSTARTSWITH: Text starts with
+        title: Filter by
+      save: Save
+
     pageTitle: CDAP | Data Preparation
     TopPanel:
       invalidFieldNameMessage: Invalid field name "{fieldName}"

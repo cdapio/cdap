@@ -26,6 +26,7 @@ import Mousetrap from 'mousetrap';
 import SplitColumn from 'components/DataPrep/Directives/SplitColumn';
 import FillNullOrEmpty from 'components/DataPrep/Directives/FillNullOrEmpty';
 import DropColumn from 'components/DataPrep/Directives/DropColumn';
+import FilterByDirective from 'components/DataPrep/Directives/FilterBy';
 
 require('./ColumnActionsDropdown.scss');
 
@@ -41,6 +42,10 @@ export default class ColumnActionsDropdown extends Component {
     this.toggleDropdown = this.toggleDropdown.bind(this);
 
     this.directives = [
+      {
+        id: shortid.generate(),
+        tag: FilterByDirective
+      },
       {
         id: shortid.generate(),
         tag: DropColumn
