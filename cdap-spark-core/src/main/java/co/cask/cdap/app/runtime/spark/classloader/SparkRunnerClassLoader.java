@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package co.cask.cdap.app.runtime.spark.classloader;
 
 import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.app.runtime.spark.classloader.SparkClassRewriter;
-import co.cask.cdap.app.runtime.spark.classloader.SparkContainerClassLoader;
 import co.cask.cdap.common.internal.guava.ClassPath;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.ClassPathResources;
