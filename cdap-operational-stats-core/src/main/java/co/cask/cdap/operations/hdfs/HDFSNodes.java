@@ -17,6 +17,9 @@
 package co.cask.cdap.operations.hdfs;
 
 import co.cask.cdap.operations.OperationalStats;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
@@ -25,17 +28,12 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.HAUtil;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -101,14 +99,13 @@ public class HDFSNodes extends AbstractHDFSStats implements HDFSNodesMXBean {
 
   private int getNumDataNodes() throws IOException, JSONException {
     int dataNodes = 0;
-    HttpClient client = new DefaultHttpClient();
 
-    HttpGet httpGet = new HttpGet(getWebURL() + "/jmx");
-    HttpResponse response = client.execute(httpGet);
+    URL url = new URL(getWebURL() + "/jmx");
+    HttpRequest request = HttpRequest.get(url).build();
+    HttpResponse response = HttpRequests.execute(request);
 
-    HttpEntity entity = response.getEntity();
-    JSONObject myObject = new JSONObject(EntityUtils.toString(entity, "UTF-8"));
-    JSONArray array = myObject.getJSONArray("beans");
+    JSONObject responseJSON = new JSONObject(response.getResponseBodyAsString());
+    JSONArray array = responseJSON.getJSONArray("beans");
     for (int idx = 0; idx < array.length(); ++idx) {
       if (array.getJSONObject(idx).get("name").equals("Hadoop:service=NameNode,name=FSNamesystemState")) {
         dataNodes = array.getJSONObject(idx).getInt("NumLiveDataNodes");

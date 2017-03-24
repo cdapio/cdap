@@ -28,10 +28,6 @@
   <artifactId>cdap-operational-stats-core</artifactId>
   <name>CDAP Operational Stats Core</name>
 
-  <properties>
-    <httpclient.version>4.5.2</httpclient.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -125,12 +121,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpcore</artifactId>
+      <groupId>co.cask.common</groupId>
+      <artifactId>common-http</artifactId>
     </dependency>
   </dependencies>
 
