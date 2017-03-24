@@ -20,7 +20,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.logging.filter.CondensedLogFilter;
 
 /**
  * CDAP log appender interface.
@@ -39,7 +38,7 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
       }
     }
     // Check if this is a User Log and add appropriate tag
-    CondensedLogFilter.addUserLogTag(eventObject);
+    LogUserTags.addUserLogTag(eventObject);
 
     appendEvent(new LogMessage(eventObject, loggingContext));
   }

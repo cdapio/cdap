@@ -472,6 +472,17 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
                                          entityType, entityId, startTime, stopTime);
     HttpResponse response = doGet(getVersionedAPIPath(logsFilterUrl, namespace));
     verifyLogs(response, entityId, "text", true, true, true, 8, 20);
+
+    // Test UserLogs filter
+    String userLogsFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&filter=userLogs=on", appId,
+                                             entityType, entityId, startTime, stopTime);
+    response = doGet(getVersionedAPIPath(userLogsFilterUrl, namespace));
+    verifyLogs(response, entityId, "text", true, true, true, 8, 20);
+
+    userLogsFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&filter=userLogs=off", appId,
+                                      entityType, entityId, startTime, stopTime);
+    response = doGet(getVersionedAPIPath(userLogsFilterUrl, namespace));
+    verifyLogs(response, entityId, "text", false, true, true, 15, 20);
   }
 
   /**

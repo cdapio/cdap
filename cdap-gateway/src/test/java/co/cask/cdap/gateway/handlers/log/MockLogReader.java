@@ -30,6 +30,7 @@ import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
+import co.cask.cdap.logging.filter.CondensedLogFilter;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
@@ -378,6 +379,10 @@ public class MockLogReader implements LogReader {
                                                                          TAG_TO_STRING_FUNCTION));
       if (runId != null && stopTs == null && i % 2 == 0) {
         tagMap.put(ApplicationLoggingContext.TAG_RUN_ID, runId.getId());
+      }
+      // Add User Log tag
+      if (i % 2 == 0) {
+        tagMap.put(CondensedLogFilter.USER_LOG_TAG, CondensedLogFilter.TRUE_VALUE);
       }
       event.setMDCPropertyMap(tagMap);
       logEvents.add(new LogEvent(event, new LogOffset(i, i)));
