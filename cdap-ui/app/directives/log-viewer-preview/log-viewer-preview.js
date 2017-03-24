@@ -40,7 +40,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     }
 
     switch(status){
-      case 'fNING':
+      case 'RUNNING':
       case 'STARTED':
         vm.statusType = 0;
         break;
@@ -378,7 +378,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
           }
         });
         vm.setProgramMetadata(statusRes.status);
-        if(vm.statusType === 0 || vm.statusType === 3){
+        if(vm.statusType === 0){
           if (!pollPromise) {
             pollForNewLogs();
           }
