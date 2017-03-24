@@ -137,6 +137,7 @@ public class MainClassLoader extends InterceptableClassLoader {
     }
   }
 
+  @Nullable
   @Override
   public byte[] rewriteClass(String className, InputStream input) throws IOException {
     byte[] rewrittenCode = null;
