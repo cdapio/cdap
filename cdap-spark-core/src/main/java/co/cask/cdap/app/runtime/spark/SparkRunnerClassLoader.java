@@ -18,6 +18,7 @@ package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.app.runtime.spark.classloader.SparkClassRewriter;
+import co.cask.cdap.app.runtime.spark.classloader.SparkContainerClassLoader;
 import co.cask.cdap.common.internal.guava.ClassPath;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.ClassPathResources;
@@ -40,6 +41,9 @@ import javax.annotation.Nullable;
 
 /**
  * A special {@link ClassLoader} for defining and loading all cdap-spark-core classes and Spark classes.
+ * This {@link ClassLoader} is used for Spark execution in SDK as well as the client container in
+ * distributed mode. For Spark containers (driver and executors), the {@link SparkContainerClassLoader} is used
+ * instead.
  *
  * IMPORTANT: Due to discovery in CDAP-5822, don't use getResourceAsStream in this class.
  */
