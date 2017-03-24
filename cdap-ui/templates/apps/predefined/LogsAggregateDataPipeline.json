@@ -1,7 +1,7 @@
 {
     "artifact": {
         "name": "cdap-data-pipeline",
-        "version": "3.5.4",
+        "version": "3.5.5-SNAPSHOT",
         "scope": "SYSTEM"
     },
     "description": "Reads access logs, stores the raw logs and computes aggregates",
