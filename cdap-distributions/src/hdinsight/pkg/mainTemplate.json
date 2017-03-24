@@ -50,7 +50,7 @@
       },
       "installScriptActions": [{
         "name": "[concat('cdap-pageblob-configure-v0','-' ,uniquestring(variables('applicationName')))]",
-        "uri": "http://downloads.cask.co/hdinsight/pageblob-configure-3.5.4.sh",
+        "uri": "http://downloads.cask.co/hdinsight/pageblob-configure-3.5.5.sh",
         "roles": ["edgenode"]
       },
       {
