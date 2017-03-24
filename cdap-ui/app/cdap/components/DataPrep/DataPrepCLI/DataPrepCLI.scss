@@ -14,6 +14,8 @@
  * the License.
  */
 
+@import "../../../styles/variables.scss";
+
 $cli-color: #27ae60;
 $cli-font: "Courier New", Courier, monospace;
 
@@ -26,7 +28,7 @@ $cli-font: "Courier New", Courier, monospace;
     border-top: 1px solid #cccccc;
 
     .error-bar {
-      background-color: #c0392b;
+      background-color: $alert-danger-bg;
       color: white;
       padding: 0 10px;
       position: absolute;

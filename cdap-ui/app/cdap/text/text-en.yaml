@@ -200,6 +200,30 @@ features:
     JustAddedSection:
       subtitle: Just added
   DataPrep:
+    Directives:
+      apply: Apply
+      cancel: Cancel
+      Filter:
+        Conditions:
+          CUSTOMCONDITION: Custom condition
+          EMPTY: value is empty
+          TEXTCONTAINS: value contains
+          TEXTENDSWITH: value ends with
+          TEXTEXACTLY: value is
+          TEXTREGEX: value matches regex
+          TEXTSTARTSWITH: value starts with
+        if: If
+        KEEP: Keep rows
+        Placeholders:
+          CUSTOMCONDITION: "e.g. {columnName} < 30"
+          TEXTCONTAINS: Enter contained value
+          TEXTENDSWITH: Enter suffix
+          TEXTEXACTLY: Enter value
+          TEXTREGEX: Enter regex
+          TEXTSTARTSWITH: Enter prefix
+        REMOVE: Remove rows
+        title: Filter
+
     pageTitle: CDAP | Data Preparation
     TopPanel:
       invalidFieldNameMessage: Invalid field name "{fieldName}"

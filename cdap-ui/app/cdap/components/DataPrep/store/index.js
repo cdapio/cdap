@@ -32,6 +32,11 @@ const defaultInitialState = {
   loading: false
 };
 
+const errorInitialState = {
+  showError: false,
+  message: ''
+};
+
 const dataprep = (state = defaultInitialState, action = defaultAction) => {
   let stateCopy;
 
@@ -88,9 +93,35 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
   return Object.assign({}, state, stateCopy);
 };
 
+const error = (state = errorInitialState, action = defaultAction) => {
+  let stateCopy;
+
+  switch (action.type) {
+    case DataPrepActions.setError:
+      stateCopy = Object.assign({}, state, {
+        showError: true,
+        message: action.payload.message
+      });
+      break;
+    case DataPrepActions.dismissError:
+      stateCopy = Object.assign({}, state, {
+        showError: false,
+        message: ''
+      });
+      break;
+    case DataPrepActions.reset:
+      return errorInitialState;
+    default:
+      return state;
+  }
+
+  return Object.assign({}, state, stateCopy);
+};
+
 const DataPrepStore = createStore(
   combineReducers({
-    dataprep
+    dataprep,
+    error
   }),
   defaultInitialState,
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
