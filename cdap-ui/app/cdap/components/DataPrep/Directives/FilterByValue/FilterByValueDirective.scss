@@ -14,7 +14,7 @@
  * the License.
  */
 
-.filterby-column-directive {
+.filterby-value-directive {
   .filter-value {
     .value-options {
       max-height: 100px;
@@ -24,6 +24,7 @@
         white-space: nowrap;
         text-overflow: ellipsis;
         overflow-x: hidden;
+        cursor: pointer;
       }
     }
   }

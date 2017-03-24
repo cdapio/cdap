@@ -141,6 +141,7 @@ export default class SplitColumnDirective extends Component {
               <div
                 key={option}
                 onClick={this.handleSplitByClick.bind(this, option)}
+                className="cursor-pointer"
               >
                 <span className={classnames('fa fa-fw', {
                   'fa-circle-o': option !== this.state.delimiterSelection,

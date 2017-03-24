@@ -22,35 +22,22 @@ import DataPrepStore from 'components/DataPrep/store';
 import uniq from 'lodash/uniq';
 import T from 'i18n-react';
 
-require('./FilterByDirective.scss');
+require('./FilterByValueDirective.scss');
 
-const SUFFIX = 'features.DataPrep.Directives.FilterBy';
+const SUFFIX = 'features.DataPrep.Directives.FilterByValue';
 
-export default class FilterByDirective extends Component {
+export default class FilterByValueDirective extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      selectedCondition: 'NONE',
-      textFilter: '',
       filterValueSearch: '',
       valueSelections: {}
     };
 
-    this.handleConditionSelect = this.handleConditionSelect.bind(this);
-    this.handleTextFilterChange = this.handleTextFilterChange.bind(this);
     this.applyDirective = this.applyDirective.bind(this);
     this.handleFilterSearchChange = this.handleFilterSearchChange.bind(this);
-
-    this.conditionsOptions = [
-      'EMPTY',
-      'NOTEMPTY',
-      'TEXTCONTAINS',
-      'TEXTNOTCONTAIN',
-      'TEXTSTARTSWITH',
-      'TEXTENDSWITH',
-      'TEXTEXACTLY'
-    ];
+    this.preventPropagation = this.preventPropagation.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -80,14 +67,6 @@ export default class FilterByDirective extends Component {
     e.stopPropagation();
     e.nativeEvent.stopImmediatePropagation();
     e.preventDefault();
-  }
-
-  handleConditionSelect(e) {
-    this.setState({selectedCondition: e.target.value});
-  }
-
-  handleTextFilterChange(e) {
-    this.setState({textFilter: e.target.value});
   }
 
   handleFilterSearchChange(e) {
@@ -123,41 +102,8 @@ export default class FilterByDirective extends Component {
   }
 
   applyDirective() {
-    let condition;
     let column = this.props.column;
-    let textValue = this.state.textFilter;
 
-    switch (this.state.selectedCondition) {
-      case 'EMPTY':
-        condition = `filter-row-if-not-matched ${column} ^\s*$`;
-        break;
-      case 'NOTEMPTY':
-        condition = `filter-row-if-matched ${column} ^\s*$`;
-        break;
-      case 'TEXTCONTAINS':
-        condition = `filter-row-if-not-matched ${column} .*${textValue}.*`;
-        break;
-      case 'TEXTNOTCONTAIN':
-        condition = `filter-row-if-matched ${column} .*${textValue}.*`;
-        break;
-      case 'TEXTSTARTSWITH':
-        condition = `filter-row-if-false ${column} =^ "${textValue}"`;
-        break;
-      case 'TEXTENDSWITH':
-        condition = `filter-row-if-false ${column} =$ "${textValue}"`;
-        break;
-      case 'TEXTEXACTLY':
-        condition = `filter-row-if-not-matched ${column} ${textValue}`;
-        break;
-      case 'NONE':
-        condition = this.createFilterValueCondition();
-        break;
-    }
-
-    this.execute([condition]);
-  }
-
-  createFilterValueCondition() {
     let valueArray = Object.keys(this.state.valueSelections)
       .filter((row) => {
         return this.state.valueSelections[row];
@@ -167,11 +113,9 @@ export default class FilterByDirective extends Component {
       })
       .join(', ');
 
-    let column = this.props.column;
+    let directive = `filter-row-if-false ${column} =~ [${valueArray}]`;
 
-    let condition = `filter-row-if-false ${column} =~ [${valueArray}]`;
-
-    return condition;
+    this.execute([directive]);
   }
 
   execute(addDirective) {
@@ -185,73 +129,6 @@ export default class FilterByDirective extends Component {
           error: err.message || err.response.message
         });
       });
-  }
-
-  renderTextFilter() {
-    if (this.state.selectedCondition.substr(0, 4) !== 'TEXT') { return null; }
-
-    return (
-      <div>
-        <br />
-        <input
-          type="text"
-          className="form-control"
-          value={this.state.textFilter}
-          onChange={this.handleTextFilterChange}
-          placeholder={T.translate(`${SUFFIX}.ByCondition.textPlaceholder`)}
-        />
-      </div>
-    );
-  }
-
-  renderCondition() {
-    let filterConditions = this.conditionsOptions.map((filter) => {
-      return {
-        filter: filter,
-        displayText: T.translate(`${SUFFIX}.Conditions.${filter}`)
-      };
-    });
-
-    return (
-      <div>
-        <h5>{T.translate(`${SUFFIX}.ByCondition.title`)}</h5>
-
-        <div className="filter-condition">
-          <div>
-            <select
-              className="form-control"
-              value={this.state.selectedCondition}
-              onChange={this.handleConditionSelect}
-            >
-              <option value="NONE">
-                {T.translate(`${SUFFIX}.Conditions.NONE`)}
-              </option>
-              <option
-                disabled="disabled"
-                role="separator"
-              >
-                &#x2500;&#x2500;&#x2500;&#x2500;
-              </option>
-              {
-                filterConditions.map((condition) => {
-                  return (
-                    <option
-                      value={condition.filter}
-                      key={condition.id}
-                    >
-                      {condition.displayText}
-                    </option>
-                  );
-                })
-              }
-            </select>
-          </div>
-
-          {this.renderTextFilter()}
-
-        </div>
-      </div>
-    );
   }
 
   renderValue() {
@@ -268,7 +145,7 @@ export default class FilterByDirective extends Component {
 
     return (
       <div>
-        <h5>{T.translate(`${SUFFIX}.ByValue.title`)}</h5>
+        <h5>{T.translate(`${SUFFIX}.title`)}</h5>
 
         <div className="filter-value">
           <div>
@@ -277,20 +154,22 @@ export default class FilterByDirective extends Component {
               className="form-control"
               value={this.state.filterValueSearch}
               onChange={this.handleFilterSearchChange}
-              placeholder={T.translate(`${SUFFIX}.ByValue.searchPlaceholder`)}
+              placeholder={T.translate(`${SUFFIX}.searchPlaceholder`)}
             />
           </div>
-          <div className="filter-selects">
+          <div>
             <span
               onClick={this.filterSelectAll.bind(this, filteredValueList)}
+              className="cursor-pointer"
             >
-              {T.translate(`${SUFFIX}.ByValue.selectAll`)}
+              {T.translate(`${SUFFIX}.selectAll`)}
             </span>
             <span> | </span>
             <span
               onClick={this.filterClearAll.bind(this, filteredValueList)}
+              className="cursor-pointer"
             >
-              {T.translate(`${SUFFIX}.ByValue.clearAll`)}
+              {T.translate(`${SUFFIX}.clearAll`)}
             </span>
           </div>
 
@@ -328,10 +207,6 @@ export default class FilterByDirective extends Component {
         className="filterby-detail second-level-popover"
         onClick={this.preventPropagation}
       >
-        {this.renderCondition()}
-
-        <hr />
-
         {this.renderValue()}
 
         <hr />
@@ -341,7 +216,7 @@ export default class FilterByDirective extends Component {
             className="btn btn-primary float-xs-left"
             onClick={this.applyDirective}
           >
-            {T.translate('features.DataPrep.Directives.save')}
+            {T.translate('features.DataPrep.Directives.apply')}
           </button>
 
           <button
@@ -351,16 +226,14 @@ export default class FilterByDirective extends Component {
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </div>
-
       </div>
     );
-
   }
 
   render() {
     return (
       <div
-        className={classnames('filterby-column-directive clearfix action-item', {
+        className={classnames('filterby-value-directive clearfix action-item', {
           'active': this.props.isOpen
         })}
       >
@@ -376,7 +249,7 @@ export default class FilterByDirective extends Component {
   }
 }
 
-FilterByDirective.propTypes = {
+FilterByValueDirective.propTypes = {
   column: PropTypes.string,
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,

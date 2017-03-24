@@ -203,15 +203,7 @@ features:
     Directives:
       apply: Apply
       cancel: Cancel
-      FilterBy:
-        ByCondition:
-          textPlaceholder: Input Value
-          title: Filter by Condition
-        ByValue:
-          clearAll: Clear All
-          searchPlaceholder: Search
-          selectAll: Select All
-          title: Filter by Value
+      FilterByCondition:
         Conditions:
           EMPTY: Cell is empty
           NONE: None
@@ -221,8 +213,13 @@ features:
           TEXTEXACTLY: Text is exactly
           TEXTNOTCONTAIN: "Text doesn't contain"
           TEXTSTARTSWITH: Text starts with
-        title: Filter by
-      save: Save
+        textPlaceholder: Input Value
+        title: Filter by Condition
+      FilterByValue:
+        clearAll: Clear All
+        searchPlaceholder: Search
+        selectAll: Select All
+        title: Filter by Value
 
     pageTitle: CDAP | Data Preparation
     TopPanel:
