@@ -107,7 +107,7 @@ public class PreviewDataStreamsTest extends HydratorTestBase {
     // Otherwise, no data will be emitted in the preview run.
     PreviewConfig previewConfig = new PreviewConfig(DataStreamsSparkLauncher.NAME, ProgramType.SPARK,
                                                     Collections.<String>emptySet(),
-                                                    Collections.<String, String>emptyMap());
+                                                    Collections.<String, String>emptyMap(), 1);
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig, previewConfig);
 
@@ -127,9 +127,9 @@ public class PreviewDataStreamsTest extends HydratorTestBase {
     checkPreviewStore(previewRunner, "source", 2);
     checkPreviewStore(previewRunner, "transform", 2);
 
-    // Stop the preview and wait for status to be KILLED.
-    previewRunner.stopPreview();
-    Tasks.waitFor(PreviewStatus.Status.KILLED, new Callable<PreviewStatus.Status>() {
+    // Wait for the pipeline to be shutdown by timer.
+    TimeUnit.MINUTES.sleep(1);
+    Tasks.waitFor(PreviewStatus.Status.KILLED_BY_TIMER, new Callable<PreviewStatus.Status>() {
       @Override
       public PreviewStatus.Status call() throws Exception {
         return previewRunner.getStatus().getStatus();

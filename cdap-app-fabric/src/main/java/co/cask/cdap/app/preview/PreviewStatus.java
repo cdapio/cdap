@@ -33,15 +33,21 @@ public class PreviewStatus {
     COMPLETED,
     DEPLOY_FAILED,
     RUN_FAILED,
-    KILLED
+    KILLED,
+    KILLED_BY_TIMER
   }
 
   private final Status status;
   private final BasicThrowable throwable;
+  private final Long startTime;
+  private final Long endTime;
 
-  public PreviewStatus(Status status, @Nullable BasicThrowable throwable) {
+  public PreviewStatus(Status status, @Nullable BasicThrowable throwable, @Nullable Long startTime,
+                       @Nullable Long endTime) {
     this.status = status;
     this.throwable = throwable;
+    this.startTime = startTime;
+    this.endTime = endTime;
   }
 
   public Status getStatus() {
@@ -54,6 +60,16 @@ public class PreviewStatus {
   @Nullable
   public BasicThrowable getThrowable() {
     return throwable;
+  }
+
+  @Nullable
+  public Long getStartTime() {
+    return startTime;
+  }
+
+  @Nullable
+  public Long getEndTime() {
+    return endTime;
   }
 
   @Override
