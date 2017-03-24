@@ -51,8 +51,12 @@ class HydratorPlusPlusTopPanelCtrl {
       this.openMetadata();
     }
 
-    if (this.$window.localStorage.getItem('LastDraftId') === this.HydratorPlusPlusConfigStore.getDraftId()) {
-      this.currentPreviewId = this.$window.localStorage.getItem('LastPreviewId');
+    if (this.HydratorPlusPlusConfigStore.getDraftId()) {
+      if (this.HydratorPlusPlusConfigStore.getDraftId() === this.$window.localStorage.getItem('LastDraftId')) {
+        this.currentPreviewId = this.$window.localStorage.getItem('LastPreviewId');
+      } else {
+        this.$window.localStorage.setItem('LastDraftId', this.HydratorPlusPlusConfigStore.getDraftId());
+      }
     }
 
     this.isPreviewEnabled = angular.isObject(MY_CONFIG.hydrator) &&

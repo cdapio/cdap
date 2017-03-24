@@ -132,7 +132,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
 
     vm.fullScreen = logViewerState.fullScreen;
 
-    if (vm.data.length > 0) {
+    if (vm.startedTimeRequest) {
       return;
     }
 
@@ -472,23 +472,21 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     // binds window element to check whether scrollbar has appeared on resize event
     angular.element($window).bind('resize', checkForScrollbar);
 
-    // myPreviewLogsApi.nextLogsJsonOffset({
     myPreviewLogsApi.nextLogsJson({
       namespace : vm.namespaceId,
       previewId : vm.previewId,
-      // fromOffset: vm.fromOffset,
       filter: `loglevel=${vm.selectedLogLevel}`
     }).$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
         vm.loading = false;
         vm.data = res;
+        vm.startedTimeRequest = true;
 
         if(res.length === 0){
           //Update with start-time
           getStatus();
           if(vm.statusType !== 0){
-            // vm.loading = false;
             vm.displayData = [];
           }
           vm.renderData();
