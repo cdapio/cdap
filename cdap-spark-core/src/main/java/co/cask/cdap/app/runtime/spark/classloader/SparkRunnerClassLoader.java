@@ -18,9 +18,7 @@ package co.cask.cdap.app.runtime.spark.classloader;
 
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.common.internal.guava.ClassPath;
-import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.ClassPathResources;
-import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
@@ -30,10 +28,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -70,22 +66,6 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
     }
 
     API_CLASSES = Collections.unmodifiableSet(apiClasses);
-  }
-
-  private static URL[] getClassloaderURLs(ClassLoader classLoader) throws IOException {
-    List<URL> urls = ClassLoaders.getClassLoaderURLs(classLoader, new ArrayList<URL>());
-
-    // If Spark classes are not available in the given ClassLoader, try to locate the Spark assembly jar
-    // This class cannot have dependency on Spark directly, hence using the class resource to discover if SparkContext
-    // is there
-    if (classLoader.getResource("org/apache/spark/SparkContext.class") == null) {
-      urls.add(SparkUtils.locateSparkAssemblyJar().toURI().toURL());
-    }
-    return urls.toArray(new URL[urls.size()]);
-  }
-
-  public SparkRunnerClassLoader(ClassLoader parent, boolean rewriteYarnClient) throws IOException {
-    this(getClassloaderURLs(parent), parent, rewriteYarnClient);
   }
 
   public SparkRunnerClassLoader(URL[] urls, @Nullable ClassLoader parent, boolean rewriteYarnClient) {
