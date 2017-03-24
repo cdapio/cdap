@@ -379,6 +379,10 @@ public class MockLogReader implements LogReader {
       if (runId != null && stopTs == null && i % 2 == 0) {
         tagMap.put(ApplicationLoggingContext.TAG_RUN_ID, runId.getId());
       }
+      // Add User Log tag
+      if (i % 2 == 0) {
+        tagMap.put(".userLog", "true");
+      }
       event.setMDCPropertyMap(tagMap);
       logEvents.add(new LogEvent(event, new LogOffset(i, i)));
     }
