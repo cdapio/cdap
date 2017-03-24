@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,9 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.app.runtime.schedule.DefaultSchedulerService;
 import co.cask.cdap.proto.id.ApplicationId;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -33,6 +35,7 @@ import org.apache.commons.lang.SerializationUtils;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionExecutorFactory;
+import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.JobPersistenceException;
@@ -152,7 +155,6 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     }
   }
 
-
   @Override
   public boolean removeJob(JobKey jobKey) {
     try {
@@ -165,11 +167,15 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   }
 
   private void executeDelete(final TriggerKey triggerKey) {
+    final TriggerKey versionLessTriggerKey = removeAppVersion(triggerKey);
     try {
       factory.createExecutor(ImmutableList.of((TransactionAware) table))
         .execute(new TransactionExecutor.Subroutine() {
           @Override
           public void apply() throws Exception {
+            if (versionLessTriggerKey != null) {
+              removeTrigger(table, versionLessTriggerKey);
+            }
             removeTrigger(table, triggerKey);
           }
         });
@@ -179,16 +185,20 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   }
 
   private void executeDelete(final JobKey jobKey) {
+    final JobKey versionLessJobKey = removeAppVersion(jobKey);
     try {
       factory.createExecutor(ImmutableList.of((TransactionAware) table))
         .execute(new TransactionExecutor.Subroutine() {
           @Override
           public void apply() throws Exception {
+            if (versionLessJobKey != null) {
+              removeJob(table, versionLessJobKey);
+            }
             removeJob(table, jobKey);
           }
         });
-    } catch (Throwable th) {
-      throw Throwables.propagate(th);
+    } catch (Throwable t) {
+      throw Throwables.propagate(t);
     }
   }
 
@@ -251,17 +261,16 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     table.put(JOB_KEY, cols, values);
   }
 
+  private void removeJob(Table table, JobKey key) {
+    byte[][] col = new byte[1][];
+    col[0] = Bytes.toBytes(key.toString());
+    table.delete(JOB_KEY, col);
+  }
+
   private void removeTrigger(Table table, TriggerKey key) {
     byte[][] col = new byte[1][];
     col[0] = Bytes.toBytes(key.getName());
     table.delete(TRIGGER_KEY, col);
-  }
-
-
-  private void removeJob(Table table, JobKey key) {
-    byte[][] col = new byte[1][];
-    col[0] = Bytes.toBytes(key.getName());
-    table.delete(JOB_KEY, col);
   }
 
   private TriggerStatusV2 readTrigger(TriggerKey key) {
@@ -305,6 +314,9 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
           if (!result.isEmpty()) {
             for (byte[] bytes : result.getColumns().values()) {
               JobDetail jobDetail = (JobDetail) SerializationUtils.deserialize(bytes);
+              // If the job detail doesn't contain version id, add one.
+              jobDetail = addDefaultAppVersionIfNeeded(jobDetail);
+
               LOG.debug("Schedule: Job with key {} found", jobDetail.getKey());
               jobs.add(jobDetail);
             }
@@ -316,6 +328,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
           if (!result.isEmpty()) {
             for (byte[] bytes : result.getColumns().values()) {
               TriggerStatusV2 trigger = (TriggerStatusV2) SerializationUtils.deserialize(bytes);
+              addDefaultAppVersionIfNeeded(trigger);
               if (trigger.state.equals(Trigger.TriggerState.NORMAL) ||
                 trigger.state.equals(Trigger.TriggerState.PAUSED)) {
                 triggers.add(trigger);
@@ -328,8 +341,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
           } else {
             LOG.debug("Schedule: No triggers found in job store");
           }
-      }
-    });
+        }
+      });
 
     for (JobDetail job : jobs) {
       super.storeJob(job, true);
@@ -365,30 +378,91 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
       });
   }
 
+  @VisibleForTesting
+  TriggerKey removeAppVersion(TriggerKey key) {
+    // New TriggerKey name has format = namespace:application:version:type:program:schedule
+    String versionLessJobName = ScheduleUpgradeUtil.splitAndRemoveDefaultVersion(key.getName(), 6, 2);
+    if (versionLessJobName == null) {
+      return null;
+    }
+    return new TriggerKey(versionLessJobName, key.getGroup());
+  }
+
+  @VisibleForTesting
+  JobKey removeAppVersion(JobKey origJobKey) {
+    // New JobKey name has format = namespace:application:version:type:program
+    String versionLessJobName = ScheduleUpgradeUtil.splitAndRemoveDefaultVersion(origJobKey.getName(), 5, 2);
+    if (versionLessJobName == null) {
+      return null;
+    }
+    return new JobKey(versionLessJobName, origJobKey.getGroup());
+  }
+
+
+
+  private JobDetail addDefaultAppVersionIfNeeded(JobDetail origJobDetail) {
+    String jobName = origJobDetail.getKey().getName();
+    String[] splits = jobName.split(":");
+    if (splits.length != 4) {
+      // It already has version string in the job key. Hence return the origJobDetail
+      return origJobDetail;
+    }
+
+    // Old TriggerKey name has format = namespace:application:type:program
+    String newJobName = getNameWithVersion(splits);
+    return JobBuilder.newJob(DefaultSchedulerService.ScheduledJob.class)
+      .withIdentity(newJobName, origJobDetail.getKey().getGroup())
+      .storeDurably(origJobDetail.isDurable())
+      .build();
+  }
+
+  private boolean addDefaultAppVersionIfNeeded(TriggerStatusV2 oldTrigger) {
+    TriggerKey oldTriggerKey = oldTrigger.trigger.getKey();
+    JobKey oldTriggerJobKey = oldTrigger.trigger.getJobKey();
+
+    String[] triggerSplits = oldTriggerKey.getName().split(":");
+    String[] oldJobNameSplits = oldTriggerJobKey.getName().split(":");
+
+    // Old TriggerKey name has format = namespace:application:type:program:schedule
+    // Old JobKey name has format = namespace:application:type:program
+    // If TriggerKey and JobKey have the new format, then return
+    if (triggerSplits.length == 6 && oldJobNameSplits.length == 5) {
+      return false;
+    }
+
+    if (triggerSplits.length == 5) {
+      // This trigger key has the old format. So replace it with new format.
+      // New TriggerKey name has format = namespace:application:version:type:program:schedule
+      String newTriggerName = getNameWithVersion(triggerSplits);
+      oldTrigger.trigger.setKey(new TriggerKey(newTriggerName, oldTriggerKey.getGroup()));
+    }
+
+    if (oldJobNameSplits.length == 4) {
+      // This job key has the old format. So replace it with new format.
+      // New JobKey name has format = namespace:application:version:type:program
+      String newJobName = getNameWithVersion(oldJobNameSplits);
+      oldTrigger.trigger.setJobKey(new JobKey(newJobName, oldTriggerJobKey.getGroup()));
+    } else {
+      LOG.error("TriggerKey {} has application version in it but JobKey {} didn't.", oldTrigger.trigger.getKey(),
+                oldTrigger.trigger.getJobKey());
+    }
+    return true;
+  }
+
   private void upgradeJobs() throws Exception {
     Row result = table.get(JOB_KEY);
-
     if (result.isEmpty()) {
       return;
     }
 
     for (byte[] column : result.getColumns().values()) {
-      JobDetail jobDetail = (JobDetail) SerializationUtils.deserialize(column);
-      JobKey oldJobKey = jobDetail.getKey();
-      String oldJobKeyName = oldJobKey.getName();
-      String[] splits = oldJobKeyName.split(":");
-      // Old JobKey name has format = namespace:application:type:program
-      if (splits.length != 4) {
-        LOG.debug("Skip upgrading Job {}. Expected Job key format 'namespace:application:type:program'", oldJobKey);
-        continue;
+      JobDetail oldJobDetail = (JobDetail) SerializationUtils.deserialize(column);
+      JobDetail jobDetail = addDefaultAppVersionIfNeeded(oldJobDetail);
+
+      if (!jobDetail.equals(oldJobDetail)) {
+        persistJob(table, jobDetail);
+        removeJob(table, oldJobDetail.getKey());
       }
-
-      // New JobKey name has format = namespace:application:version:type:program
-      String newJobName = getNameWithVersion(splits);
-
-      JobDetail newJobDetail = jobDetail.getJobBuilder().withIdentity(newJobName, oldJobKey.getGroup()).build();
-      persistJob(table, newJobDetail);
-      removeJob(table, oldJobKey);
     }
   }
 
@@ -401,32 +475,12 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     for (byte[] column : result.getColumns().values()) {
       TriggerStatusV2 triggerStatus = (TriggerStatusV2) SerializationUtils.deserialize(column);
       TriggerKey oldTriggerKey = triggerStatus.trigger.getKey();
-      JobKey oldTriggerJobKey = triggerStatus.trigger.getJobKey();
+      boolean modified = addDefaultAppVersionIfNeeded(triggerStatus);
 
-      String[] splits = oldTriggerKey.getName().split(":");
-      // Old TriggerKey name has format = namespace:application:type:program:schedule
-      if (splits.length != 5) {
-        LOG.debug("Skip upgrading Trigger {}. Expected trigger key " +
-                    "format 'namespace:application:type:program:schedule'", oldTriggerKey);
-        continue;
+      if (modified) {
+        persistTrigger(table, triggerStatus.trigger, triggerStatus.state);
+        removeTrigger(table, oldTriggerKey);
       }
-      // New TriggerKey name has format = namespace:application:version:type:program:schedule
-      String newTriggerName = getNameWithVersion(splits);
-      triggerStatus.trigger.setKey(new TriggerKey(newTriggerName, oldTriggerKey.getGroup()));
-
-      String[] oldJobNameSplits = oldTriggerJobKey.getName().split(":");
-      // Old JobKey name has format = namespace:application:type:program
-      if (oldJobNameSplits.length != 4) {
-        LOG.debug("Skip upgrading Trigger {} with Job {}. Expected job key format " +
-                    "'namespace:application:type:program'", oldTriggerKey, oldTriggerJobKey);
-        continue;
-      }
-
-      // New JobKey name has format = namespace:version:application:type:program
-      String newJobName = getNameWithVersion(oldJobNameSplits);
-      triggerStatus.trigger.setJobKey(new JobKey(newJobName, oldTriggerJobKey.getGroup()));
-      persistTrigger(table, triggerStatus.trigger, triggerStatus.state);
-      removeTrigger(table, oldTriggerKey);
     }
   }
 
