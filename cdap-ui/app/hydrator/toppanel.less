@@ -99,10 +99,11 @@ body.theme-cdap {
 
         &.run-time {
           cursor: default;
-          color: @hydrator-blue;
-          font-size: 20px;
-          font-weight: 500;
-          height: 43px;
+          > span {
+            font-size: 18px;
+            font-weight: 500;
+            color: @hydrator-blue;
+          }
           &:hover { background-color: white; }
           &:active,
           &:focus {
@@ -260,9 +261,6 @@ body.theme-cdap {
       left: 130px;
       transition: all 0.2s ease;
       display: flex;
-    }
-    .pipeline-settings-backdrop {
-      z-index: 998;
     }
     .side-panel.top {
       .pipeline-run-section {

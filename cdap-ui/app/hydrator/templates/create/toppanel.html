@@ -124,24 +124,29 @@
             ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && !HydratorPlusPlusTopPanelCtrl.previewRunning">
       </span>
       <div class="button-label"
-           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && !HydratorPlusPlusTopPanelCtrl.previewRunning">Start</div>
-
+           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && !HydratorPlusPlusTopPanelCtrl.previewRunning">
+           Start
+      </div>
       <span class="fa fa-stop text-danger"
             ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.previewRunning">
       </span>
       <div class="button-label"
-           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.previewRunning">Stop</div>
-
+           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.previewRunning">
+           Stop
+      </div>
       <span ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading">
         <span class="fa fa-refresh fa-spin"></span>
       </span>
       <div class="button-label"
-           ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading">Starting</div>
+           ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading">
+           Starting
+      </div>
     </div>
     <div class="btn run-time">
       <span>
         {{ HydratorPlusPlusTopPanelCtrl.displayDuration.minutes }}:{{ HydratorPlusPlusTopPanelCtrl.displayDuration.seconds }}
       </span>
+      <div class="button-label">Duration</div>
     </div>
     <div class="btn log-viewer"
          ng-class="{'btn-select': HydratorPlusPlusTopPanelCtrl.viewLogs}"
@@ -173,8 +178,11 @@
   <cask-resource-center-button></cask-resource-center-button>
 </div>
 <div class="pipeline-settings-backdrop"
-     ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings || HydratorPlusPlusTopPanelCtrl.showRunTimeArguments"
-     ng-click="HydratorPlusPlusTopPanelCtrl.state.viewSettings = HydratorPlusPlusTopPanelCtrl.showRunTimeArguments = false"></div>
+     ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings ||
+     HydratorPlusPlusTopPanelCtrl.viewLogs"
+     ng-click="HydratorPlusPlusTopPanelCtrl.state.viewSettings =
+     HydratorPlusPlusTopPanelCtrl.viewLogs = false">
+</div>
 <div class="pipeline-settings">
   <div
     store="HydratorPlusPlusTopPanelCtrl.HydratorPlusPlusConfigStore"
