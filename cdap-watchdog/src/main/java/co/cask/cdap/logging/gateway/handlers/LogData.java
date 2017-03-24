@@ -37,9 +37,11 @@ public final class LogData {
   private final String message;
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
   private final String stackTrace;
+  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
+  private final String loggerName;
 
   LogData(Long timestamp, String logLevel, String threadName, String className, String simpleClassName,
-          Integer lineNumber, String message, String stackTrace) {
+          Integer lineNumber, String message, String stackTrace, String loggerName) {
     this.timestamp = timestamp;
     this.logLevel = logLevel;
     this.threadName = threadName;
@@ -48,6 +50,7 @@ public final class LogData {
     this.lineNumber = lineNumber;
     this.message = message;
     this.stackTrace = stackTrace;
+    this.loggerName = loggerName;
   }
 
   public Long getTimestamp() {
@@ -80,5 +83,9 @@ public final class LogData {
 
   public String getStackTrace() {
     return stackTrace;
+  }
+
+  public String getLoggerName() {
+    return loggerName;
   }
 }
