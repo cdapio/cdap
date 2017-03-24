@@ -51,6 +51,10 @@ class HydratorPlusPlusTopPanelCtrl {
       this.openMetadata();
     }
 
+    if (this.$window.localStorage.getItem('LastDraftId') === this.HydratorPlusPlusConfigStore.getDraftId()) {
+      this.currentPreviewId = this.$window.localStorage.getItem('LastPreviewId');
+    }
+
     this.isPreviewEnabled = angular.isObject(MY_CONFIG.hydrator) &&
                             MY_CONFIG.hydrator.previewEnabled === true;
 
@@ -147,6 +151,8 @@ class HydratorPlusPlusTopPanelCtrl {
   onSaveDraft() {
     this.HydratorPlusPlusConfigActions.saveAsDraft();
     this.checkNameError();
+    this.$window.localStorage.setItem('LastDraftId', this.HydratorPlusPlusConfigStore.getDraftId());
+    this.$window.localStorage.setItem('LastPreviewId', this.currentPreviewId);
   }
   checkNameError() {
     let messages = this.consoleStore.getMessages() || [];
@@ -279,6 +285,9 @@ class HydratorPlusPlusTopPanelCtrl {
           this.previewActions.setPreviewStartTime(startTime)
         );
         this.currentPreviewId = res.application;
+        if (this.$window.localStorage.getItem('LastDraftId') === this.HydratorPlusPlusConfigStore.getDraftId()) {
+          this.$window.localStorage.setItem('LastPreviewId', this.currentPreviewId);
+        }
         this.startPollPreviewStatus(res.application);
       }, (err) => {
         this.previewLoading = false;
