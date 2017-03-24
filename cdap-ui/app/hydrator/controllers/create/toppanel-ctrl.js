@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl {
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS ) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $window ) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -36,6 +36,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.dataSrc = new MyCDAPDataSource($scope);
     this.myAlertOnValium = myAlertOnValium;
     this.currentPreviewId = null;
+    this.$window = $window;
     this.showRunTimeArguments = false;
     this.viewLogs = false;
     // This is for now run time arguments. It will be a map of macroMap
@@ -73,10 +74,16 @@ class HydratorPlusPlusTopPanelCtrl {
       this.stopPreview();
       this.$interval.cancel(this.previewTimerInterval);
       this.$timeout.cancel(this.focusTimeout);
-
       this.previewStore.dispatch({ type: this.PREVIEWSTORE_ACTIONS.PREVIEW_RESET });
     });
+
+    // have to add this event handler because the $destroy event here
+    // is not triggered on page refresh
+    this.$window.onbeforeunload = function() {
+      $scope.$destroy();
+    };
   }
+
   setMetadata(metadata) {
     this.state.metadata = metadata;
   }
@@ -191,7 +198,7 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   toggleRuntimeArguments() {
-    if (!this.currentPreviewId) {
+    if (!this.previewRunning) {
       this.showRunTimeArguments = !this.showRunTimeArguments;
     } else {
       this.stopPreview();
@@ -262,7 +269,6 @@ class HydratorPlusPlusTopPanelCtrl {
 
     this.myPipelineApi.runPreview(params, pipelineConfig).$promise
       .then((res) => {
-        console.log(res);
         this.previewStore.dispatch(
           this.previewActions.setPreviewId(res.application)
         );
@@ -276,7 +282,6 @@ class HydratorPlusPlusTopPanelCtrl {
         this.startPollPreviewStatus(res.application);
       }, (err) => {
         this.previewLoading = false;
-        this.currentPreviewId = null;
         this.myAlertOnValium.show({
           type: 'danger',
           content: err.data
@@ -299,7 +304,6 @@ class HydratorPlusPlusTopPanelCtrl {
         .stopPreview(params, {})
         .$promise
         .then(() => {
-          this.currentPreviewId = null;
           this.previewLoading = false;
           this.previewRunning = false;
         });
@@ -316,7 +320,6 @@ class HydratorPlusPlusTopPanelCtrl {
         this.stopTimer();
         this.previewRunning = false;
         this.dataSrc.stopPoll(res.__pollId__);
-        this.currentPreviewId = null;
         if (res.status === 'COMPLETED') {
           this.myAlertOnValium.show({
             type: 'success',
@@ -324,17 +327,16 @@ class HydratorPlusPlusTopPanelCtrl {
           });
         } else {
           this.myAlertOnValium.show({
-            type: 'danger',
-            content: 'Pipeline preview stopped with status: ' + res.status
+            type: 'success',
+            content: 'Pipeline preview was stopped successfully.'
           });
         }
       }
     }, (err) => {
-      this.currentPreviewId = null;
       this.stopTimer();
         this.myAlertOnValium.show({
           type: 'danger',
-          content: err
+          content: 'Pipeline preview failed : ' + err
         });
       this.previewRunning = false;
       this.dataSrc.stopPoll(poll.__pollId__);

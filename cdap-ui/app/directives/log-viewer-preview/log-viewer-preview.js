@@ -135,19 +135,6 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     if (vm.data.length > 0) {
       return;
     }
-    // if (vm.logStartTime === logViewerState.startTime){
-    //   return;
-    // }
-
-    // vm.logStartTime = logViewerState.startTime;
-
-    // if (!vm.logStartTime || vm.startTimeMs === vm.logStartTime){
-    //   return;
-    // }
-
-    // vm.startTimeMs = (vm.logStartTime instanceof Date) ? vm.logStartTime.getTime() : vm.logStartTime;
-
-    // vm.fromOffset = -10000 + '.' + vm.startTimeMs;
 
     vm.endRequest = false;
     startTimeRequest();
@@ -447,8 +434,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
   vm.getDownloadUrl = (type = 'download') => {
 
     // Generate backend path
-    let startTime = Math.floor(vm.startTimeMs/1000);
-    let path = `/namespaces/${vm.namespaceId}/previews/${vm.previewId}/logs?start=${startTime}&escape=false`;
+    let path = `/namespaces/${vm.namespaceId}/previews/${vm.previewId}/logs?&escape=false`;
     path = encodeURIComponent(myCdapUrl.constructUrl({_cdapPath: path}));
 
     let url = `/downloadLogs?backendUrl=${path}&type=${type}`;
@@ -457,9 +443,9 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
       // Generate filename
       let filename = '';
       if ('undefined' !== typeof this.getDownloadFilename()) {
-        filename = this.getDownloadFilename() + '-' + formatDate(new Date(this.startTimeMs), true);
+        filename = this.getDownloadFilename();
       } else {
-         filename = this.namespaceId + '-' + this.previewId + formatDate(new Date(this.startTimeMs), true);
+         filename = this.namespaceId + '-' + this.previewId;
       }
 
       url = `${url}&filename=${filename}.log`;
@@ -509,7 +495,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
           return;
         }
 
-        // vm.fromOffset = res[res.length-1].offset;
+        vm.fromOffset = res[res.length-1].offset;
         vm.displayData = [];
 
         angular.forEach(res, (element, index) => {
@@ -534,31 +520,6 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
         vm.errorRetrievingLogs = true;
         console.log('ERROR: ', err);
       });
-  }
-
-  function formatDate(date, isDownload) {
-    let dateObj = {
-      month: date.getMonth() + 1,
-      day: date.getDate(),
-      year: date.getFullYear(),
-      hours: date.getHours(),
-      minutes: date.getMinutes(),
-      seconds: date.getSeconds()
-    };
-
-    angular.forEach(dateObj, (value, key) => {
-      if(value < 10){
-        dateObj[key] = '0' + value;
-      } else {
-        dateObj[key] = value.toString();
-      }
-    });
-
-    if(isDownload){
-      return dateObj.year + dateObj.day + dateObj.month + dateObj.hours + dateObj.minutes + dateObj.seconds;
-    }
-
-    return dateObj.month + '/' + dateObj.day + '/' + dateObj.year + ' ' + dateObj.hours + ':' + dateObj.minutes + ':' + dateObj.seconds;
   }
 
   vm.toggleLogExpansion = function() {
@@ -629,7 +590,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     // Whenever we change the log level filter, the data needs
     // to start from scratch
     vm.data = [];
-    vm.fromOffset = -10000 + '.' + vm.startTimeMs;
+    // vm.fromOffset = -10000 + '.' + vm.startTimeMs;
 
     vm.selectedLogLevel = eventType;
     startTimeRequest();
