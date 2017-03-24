@@ -331,11 +331,6 @@ public class MetadataStoreDataset extends AbstractDataset {
     }
   }
 
-  public void delete(MDSKey id) {
-    byte[] key = id.getKey();
-    table.delete(key);
-  }
-
   public void deleteAll(MDSKey id) {
     deleteAll(id, Predicates.<MDSKey>alwaysTrue());
   }
@@ -360,6 +355,14 @@ public class MetadataStoreDataset extends AbstractDataset {
           table.delete(new Delete(next.getRow()).add(COLUMN));
         }
       }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public void delete(MDSKey id) {
+    try {
+      table.delete(id.getKey(), COLUMN);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
