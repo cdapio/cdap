@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -65,13 +66,34 @@ public class AppMetadataStore extends MetadataStoreDataset {
   /**
    * @return run records for runs that do not have start time in mds key for the run record.
    */
-  private RunRecordMeta getUnfinishedRun(ProgramId program, String recordType, String runid) {
-    MDSKey runningKey = getProgramKeyBuilder(recordType, program).add(runid).build();
-    return get(runningKey, RunRecordMeta.class);
+  private RunRecordMeta getUnfinishedRun(ProgramId programId, String recordType, String runid) {
+    MDSKey runningKey = getProgramKeyBuilder(recordType, programId)
+      .add(runid)
+      .build();
+
+    RunRecordMeta runRecordMeta = get(runningKey, RunRecordMeta.class);
+
+    if (runRecordMeta == null && programId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
+      runningKey = getVersionLessProgramKeyBuilder(recordType, programId).add(runid).build();
+      return get(runningKey, RunRecordMeta.class);
+    }
+
+    return runRecordMeta;
   }
 
-  private RunRecordMeta getCompletedRun(ProgramId program, final String runid) {
-    MDSKey completedKey = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, program).build();
+  private RunRecordMeta getCompletedRun(ProgramId programId, final String runid) {
+    MDSKey completedKey = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programId).build();
+    RunRecordMeta runRecordMeta = getCompletedRun(completedKey, runid);
+
+    if (runRecordMeta == null && programId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
+      completedKey = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programId).build();
+      return getCompletedRun(completedKey, runid);
+    }
+
+    return runRecordMeta;
+  }
+
+  private RunRecordMeta getCompletedRun(MDSKey completedKey, final String runid) {
     // Get start time from RunId
     long programStartSecs = RunIds.getTime(RunIds.fromString(runid), TimeUnit.SECONDS);
     if (programStartSecs > -1) {
