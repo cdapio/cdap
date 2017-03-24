@@ -154,34 +154,17 @@
       <span class="fa fa-file-text-o"></span>
       <div class="button-label">Logs</div>
     </div>
-    <div class="pipeline-run-section text-left" ng-if="HydratorPlusPlusTopPanelCtrl.showRunTimeArguments">
-      <h5>
-        <strong>Runtime Arguments</strong>
-      </h5>
-      <div class="arguments-container">
-        <key-value-widget
-          ng-model="HydratorPlusPlusTopPanelCtrl.macrosMap"
-          data-config="HydratorPlusPlusTopPanelCtrl.runTimeWidgetConfig"
-        ></key-value-widget>
-      </div>
-      <div class="clearfix">
-        <div class="pull-right">
-          <button class="btn btn-blue"
-            ng-click="HydratorPlusPlusTopPanelCtrl.runPreview()">
-            Start Now
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <cask-resource-center-button></cask-resource-center-button>
 </div>
 <div class="pipeline-settings-backdrop"
      ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings ||
-     HydratorPlusPlusTopPanelCtrl.viewLogs"
+     HydratorPlusPlusTopPanelCtrl.viewLogs ||
+     HydratorPlusPlusTopPanelCtrl.showRunTimeArguments"
      ng-click="HydratorPlusPlusTopPanelCtrl.state.viewSettings =
-     HydratorPlusPlusTopPanelCtrl.viewLogs = false">
+     HydratorPlusPlusTopPanelCtrl.viewLogs =
+     HydratorPlusPlusTopPanelCtrl.showRunTimeArguments = false">
 </div>
 <div class="pipeline-settings">
   <div
@@ -191,6 +174,25 @@
     is-disabled="false"
     template-type="{{HydratorPlusPlusTopPanelCtrl.state.artifact.name}}"
     my-pipeline-settings>
+  </div>
+</div>
+<div class="pipeline-run-section text-left" ng-if="HydratorPlusPlusTopPanelCtrl.showRunTimeArguments">
+  <h5>
+    <strong>Runtime Arguments</strong>
+  </h5>
+  <div class="arguments-container">
+    <key-value-widget
+      ng-model="HydratorPlusPlusTopPanelCtrl.macrosMap"
+      data-config="HydratorPlusPlusTopPanelCtrl.runTimeWidgetConfig"
+    ></key-value-widget>
+  </div>
+  <div class="clearfix">
+    <div class="pull-right">
+      <button class="btn btn-blue"
+        ng-click="HydratorPlusPlusTopPanelCtrl.runPreview()">
+        Start Now
+      </button>
+    </div>
   </div>
 </div>
 <div class="pipeline-settings pipeline-logs-section" ng-if="HydratorPlusPlusTopPanelCtrl.viewLogs">
