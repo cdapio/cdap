@@ -204,7 +204,10 @@ public class ArtifactRepository {
    */
   public List<ArtifactDetail> getArtifacts(final ArtifactRange range) throws Exception {
     List<ArtifactDetail> artifacts = artifactStore.getArtifacts(range);
-
+    // No authorization for system artifacts
+    if (NamespaceId.SYSTEM.equals(range.getNamespace())) {
+      return artifacts;
+    }
     Principal principal = authenticationContext.getPrincipal();
     final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
     return Lists.newArrayList(

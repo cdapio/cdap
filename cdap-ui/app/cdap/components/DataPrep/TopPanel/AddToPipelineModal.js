@@ -22,6 +22,25 @@ import MyDataPrepApi from 'api/dataprep';
 import DataPrepStore from 'components/DataPrep/store';
 import NamespaceStore from 'services/NamespaceStore';
 import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
+import {objectQuery} from 'services/helpers';
+import T from 'i18n-react';
+import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers';
+
+const mapErrorToMessage = (e) => {
+  let message = e.message;
+  if (message.indexOf('invalid field name') !== -1) {
+    let splitMessage = e.message.split("field name: ");
+    let fieldName = objectQuery(splitMessage, 1) || e.message;
+    return {
+      message: T.translate('features.DataPrep.TopPanel.invalidFieldNameMessage', {fieldName}),
+      remedies: `
+${T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies1')}
+${T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies2')}
+      `
+    };
+  }
+  return {message: e.message};
+};
 
 export default class AddToHydratorModal extends Component {
   constructor(props) {
@@ -136,6 +155,17 @@ export default class AddToHydratorModal extends Component {
           schema: JSON.stringify(tempSchema)
         };
 
+        try {
+          getParsedSchemaForDataPrep(tempSchema);
+        } catch (e) {
+          let {message, remedies = null} = mapErrorToMessage(e);
+          this.setState({
+            error: {message, remedies},
+            loading: false
+          });
+          return;
+        }
+
         // Generate hydrator config as URL parameters
         let config = {
           config: {
@@ -180,9 +210,8 @@ export default class AddToHydratorModal extends Component {
         });
 
       }, (err) => {
-        console.log('Failed to fetch schema', err);
         this.setState({
-          error: err.message,
+          error: objectQuery(err, 'response', 'message')  || T.translate('features.DataPrep.TopPanel.PipelineModal.defaultErrorMessage'),
           loading: false
         });
       });
@@ -202,9 +231,17 @@ export default class AddToHydratorModal extends Component {
     } else if (this.state.error) {
       content = (
         <div>
-          <h4 className="text-danger loading-container">
-            {this.state.error}
-          </h4>
+          <div className="text-danger error-message-container loading-container">
+            <span className="fa fa-exclamation-triangle"></span>
+            <span>
+              {typeof this.state.error === 'object' ? this.state.error.message : this.state.error}
+            </span>
+            <pre>
+              {
+                objectQuery(this.state, 'error', 'remedies') ? this.state.error.remedies : null
+              }
+            </pre>
+          </div>
         </div>
       );
     } else {
@@ -237,7 +274,7 @@ export default class AddToHydratorModal extends Component {
       <Modal
         isOpen={true}
         toggle={this.props.toggle}
-        zIndex="1070"
+        size="lg"
         className="add-to-pipeline-dataprep-modal"
       >
         <ModalHeader>
@@ -263,4 +300,3 @@ export default class AddToHydratorModal extends Component {
 AddToHydratorModal.propTypes = {
   toggle: PropTypes.func
 };
-

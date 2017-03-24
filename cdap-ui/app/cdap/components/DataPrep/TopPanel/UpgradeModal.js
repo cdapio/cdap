@@ -107,7 +107,6 @@ export default class UpgradeModal extends Component {
       <Modal
         isOpen={true}
         toggle={this.attemptClose}
-        zIndex="1070"
         className="dataprep-upgrade-modal"
       >
         <ModalHeader>
@@ -139,4 +138,3 @@ export default class UpgradeModal extends Component {
 UpgradeModal.propTypes = {
   toggle: PropTypes.func
 };
-

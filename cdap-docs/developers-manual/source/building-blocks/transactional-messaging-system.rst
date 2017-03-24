@@ -36,6 +36,11 @@ not require the name of the current namespace to create a topic. However, you ca
 to all topics in all namespaces (except the `system` namespace, as noted above) and fetch
 from all topics in all namespaces.
 
+A valid topic name can only contain characters from the
+:ref:`supported-characters-alphanumeric-extra-extended-character-set`, as described in the
+:ref:`supported-characters`: alphanumeric characters, underscores (``_``), or hyphens
+(``-``).
+
 
 Messages
 ========

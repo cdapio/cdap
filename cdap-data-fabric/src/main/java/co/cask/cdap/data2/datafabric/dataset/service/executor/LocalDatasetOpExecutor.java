@@ -45,15 +45,12 @@ public class LocalDatasetOpExecutor extends RemoteDatasetOpExecutor {
   @Override
   protected void startUp() throws Exception {
     executorServer.startAndWait();
+    LOG.debug("Local dataset executor started");
   }
 
   @Override
   protected void shutDown() throws Exception {
     executorServer.stopAndWait();
-  }
-
-  @Override
-  protected Logger getUncaughtExceptionLogger() {
-    return LOG;
+    LOG.debug("Local dataset executor stopped");
   }
 }
