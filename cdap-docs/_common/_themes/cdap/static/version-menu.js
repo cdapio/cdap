@@ -64,7 +64,7 @@
   window.versionscallback = (function(data){
     var ess;
     if (data) {
-      document.write('<li class="versions">');
+      document.write('<li class="versionsmenu">');
       document.write('<select id="' + versionID + '" onmousedown="window.currentversion=this.value;" onchange="window.gotoVersion(\'' + versionID + '\')">');
     }
     
