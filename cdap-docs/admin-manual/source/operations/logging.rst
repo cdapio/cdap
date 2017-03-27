@@ -148,8 +148,9 @@ of CDAP (Standalone or Distributed):
   ``${local.data.dir}/logs``) is the root location for collecting program logs when in
   Standalone CDAP.
 
-- For **Distributed CDAP:** the property ``log.base.dir`` (default ``/logs/avro``) is the
-  base directory in HDFS for program logs
+- For **Distributed CDAP:** the property ``hdfs.namespace`` (default ``/cdap``) is the
+  base directory in HDFS; program logs are stored in ``${hdfs.namespace}/logs`` (by default, 
+  ``/cdap/logs``).
 
 .. _configuring-user-application-program-logging:
 
