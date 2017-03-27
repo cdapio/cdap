@@ -27,7 +27,6 @@ import java.io.StringReader;
  * Parses string expression into a @{link Filter}.
  */
 public final class FilterParser {
-  private static final String USER_LOGS_FILTER = "userLogs";
   private enum Operator {
     AND, OR
   }
@@ -86,10 +85,7 @@ public final class FilterParser {
     String value = parseString(tokenizer);
 
     // Generate expression
-    if (key.equals(USER_LOGS_FILTER)) {
-      // User Logs
-      return new CondensedLogFilter(value);
-    } else if (key.startsWith(".")) {
+    if (key.startsWith(".")) {
       // System tag
       return new MdcExpression(key, value);
     } else if (key.startsWith("MDC:")) {
