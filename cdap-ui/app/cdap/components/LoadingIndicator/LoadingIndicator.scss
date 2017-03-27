@@ -18,7 +18,12 @@
 
 .loading-indicator {
   &.modal-dialog {
-    top: 36%;
+    margin-top: 0;
+    margin-bottom: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 
     .modal-content {
       padding: 10px;

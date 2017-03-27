@@ -60,6 +60,7 @@ export default class LoadingIndicator extends Component {
           toggle={() =>{}}
           className="loading-indicator"
         >
+        
           <div className="text-xs-center">
             <div className={classnames('fa', this.props.icon)}></div>
             <h2> {this.state.message} </h2>
