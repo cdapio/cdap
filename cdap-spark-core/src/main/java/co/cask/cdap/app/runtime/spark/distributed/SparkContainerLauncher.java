@@ -16,8 +16,9 @@
 
 package co.cask.cdap.app.runtime.spark.distributed;
 
+import co.cask.cdap.app.runtime.spark.SparkRunnerClassLoader;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider;
-import co.cask.cdap.app.runtime.spark.classloader.SparkContainerClassLoader;
+import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.logging.StandardOutErrorRedirector;
 import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
@@ -30,14 +31,14 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * This class launches Spark YARN containers with classes loaded through the {@link SparkContainerClassLoader}.
+ * This class launches Spark YARN containers with classes loaded through the {@link SparkRunnerClassLoader}.
  */
 public final class SparkContainerLauncher {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkContainerLauncher.class);
 
   /**
-   * Launches the given main class. The main class will be loaded through the {@link SparkContainerClassLoader}.
+   * Launches the given main class. The main class will be loaded through the {@link SparkRunnerClassLoader}.
    *
    * @param mainClassName the main class to launch
    * @param args arguments for the main class
@@ -64,7 +65,8 @@ public final class SparkContainerLauncher {
     // Use the extension classloader as the parent instead of the system classloader because
     // Spark classes are in the system classloader which we want to rewrite.
     URL[] classLoaderUrls = urls.toArray(new URL[urls.size()]);
-    ClassLoader classLoader = new SparkContainerClassLoader(classLoaderUrls, systemClassLoader.getParent());
+    ClassLoader classLoader = new SparkRunnerClassLoader(
+      classLoaderUrls, new MainClassLoader(classLoaderUrls, systemClassLoader.getParent()), false);
 
     // Sets the context classloader and launch the actual Spark main class.
     Thread.currentThread().setContextClassLoader(classLoader);

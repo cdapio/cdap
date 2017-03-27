@@ -106,7 +106,7 @@ public final class Classes {
   /**
    * Rewrites methods in the given class bytecode to noop methods.
    */
-  public static byte[] rewriteMethodToNoop(final String className,
+  public static byte[] rewriteMethodToNoop(final String classFile,
                                            InputStream byteCodeStream, final Set<String> methods) throws IOException {
     ClassReader cr = new ClassReader(byteCodeStream);
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
@@ -122,7 +122,7 @@ public final class Classes {
 
         // We can only rewrite method that returns void
         if (!Type.getReturnType(desc).equals(Type.VOID_TYPE)) {
-          LOG.warn("Cannot patch method {} in {} due to non-void return type: {}", name, className, desc);
+          LOG.warn("Cannot patch method {} in {} due to non-void return type: {}", name, classFile, desc);
           return methodVisitor;
         }
 
