@@ -27,8 +27,6 @@ import SplitColumn from 'components/DataPrep/Directives/SplitColumn';
 import FillNullOrEmpty from 'components/DataPrep/Directives/FillNullOrEmpty';
 import DropColumn from 'components/DataPrep/Directives/DropColumn';
 import FilterDirective from 'components/DataPrep/Directives/Filter';
-// import FilterByConditionDirective from 'components/DataPrep/Directives/FilterByCondition';
-// import FilterByValueDirective from 'components/DataPrep/Directives/FilterByValue';
 
 require('./ColumnActionsDropdown.scss');
 
@@ -44,14 +42,6 @@ export default class ColumnActionsDropdown extends Component {
     this.toggleDropdown = this.toggleDropdown.bind(this);
 
     this.directives = [
-      // {
-      //   id: shortid.generate(),
-      //   tag: FilterByConditionDirective
-      // },
-      // {
-      //   id: shortid.generate(),
-      //   tag: FilterByValueDirective
-      // },
       {
         id: shortid.generate(),
         tag: FilterDirective
