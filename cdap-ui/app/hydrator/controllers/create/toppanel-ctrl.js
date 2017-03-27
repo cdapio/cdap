@@ -253,7 +253,8 @@ class HydratorPlusPlusTopPanelCtrl {
       pipelineConfig.preview = Object.assign({}, previewConfig, {
         'realDatasets' :[],
         'programName' : 'DataStreamsSparkStreaming',
-        'programType': 'Spark'
+        'programType': 'Spark',
+        'timeout': '15'
       });
     }
     // Get start stages and end stages
