@@ -46,6 +46,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.setState();
     this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
     this.focusTimeout = null;
+    this.timeoutInMinutes = 15;
 
     if ($stateParams.isClone) {
       this.openMetadata();
@@ -254,7 +255,7 @@ class HydratorPlusPlusTopPanelCtrl {
         'realDatasets' :[],
         'programName' : 'DataStreamsSparkStreaming',
         'programType': 'Spark',
-        'timeout': '15'
+        'timeout': this.timeoutInMinutes
       });
     }
     // Get start stages and end stages

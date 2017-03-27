@@ -698,7 +698,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     // has to do timeout here for Firefox
     timeout = $timeout(function(){
       let tbodyEl = angular.element(document.querySelector('.logs-table-body'))[0];
-      if (tbodyEl.clientHeight < tbodyEl.scrollHeight) {
+      if (tbodyEl && tbodyEl.clientHeight < tbodyEl.scrollHeight) {
         let bodyRowEl = angular.element(document.querySelector('.logs-table-body tr'))[0];
         vm.headerRowStyle = {
           width: bodyRowEl.offsetWidth + 'px'
