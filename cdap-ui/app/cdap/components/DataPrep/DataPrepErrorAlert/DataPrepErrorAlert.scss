@@ -14,17 +14,28 @@
  * the License.
  */
 
-const DataPrepActions = {
-  setData: 'DATAPREP_SET_DATA',
-  setDirectives: 'DATAPREP_SET_DIRECTIVES',
-  setWorkspace: 'DATAPREP_SET_WORKSPACE',
-  setInitialized: 'DATAPREP_SET_INITIALIZED',
-  setHigherVersion: 'DATAPREP_SET_HIGHER_VERSION',
-  enableLoading: 'DATAPREP_ENABLE_LOADING',
-  disableLoading: 'DATAPREP_DISABLE_LOADING',
-  reset: 'DATAPREP_RESET',
-  setError: 'DATAPREP_SET_ERROR',
-  dismissError: 'DATAPREP_DISMISS_ERROR'
-};
+.dataprep-error-alert-container {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  width: 100%;
+  background-color: #c0392b;
+  color: white;
+  padding: 7px 10px;
 
-export default DataPrepActions;
+  .error-content,
+  .close-icon {
+    display: inline-block;
+  }
+
+  .error-content { width: calc(100% - 35px); }
+
+  .close-icon {
+    width: 35px;
+    text-align: right;
+    font-size: 16px;
+    line-height: 16px;
+
+    .fa.fa-times { cursor: pointer; }
+  }
+}

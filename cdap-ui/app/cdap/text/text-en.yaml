@@ -203,23 +203,26 @@ features:
     Directives:
       apply: Apply
       cancel: Cancel
-      FilterByCondition:
+      Filter:
         Conditions:
-          EMPTY: Cell is empty
-          NONE: None
-          NOTEMPTY: Cell is not empty
-          TEXTCONTAINS: Text contains
-          TEXTENDSWITH: Text ends with
-          TEXTEXACTLY: Text is exactly
-          TEXTNOTCONTAIN: "Text doesn't contain"
-          TEXTSTARTSWITH: Text starts with
-        textPlaceholder: Input Value
-        title: Filter by Condition
-      FilterByValue:
-        clearAll: Clear All
-        searchPlaceholder: Search
-        selectAll: Select All
-        title: Filter by Value
+          CUSTOMCONDITION: Custom condition
+          EMPTY: value is empty
+          TEXTCONTAINS: value contains
+          TEXTENDSWITH: value ends with
+          TEXTEXACTLY: value is
+          TEXTREGEX: value match regex
+          TEXTSTARTSWITH: value starts with
+        if: If
+        KEEP: Keep rows
+        Placeholders:
+          CUSTOMCONDITION: "e.g. {columnName} < 30"
+          TEXTCONTAINS: Enter contained value
+          TEXTENDSWITH: Enter suffix
+          TEXTEXACTLY: Enter value
+          TEXTREGEX: Enter regex
+          TEXTSTARTSWITH: Enter prefix
+        REMOVE: Remove rows
+        title: Filter
 
     pageTitle: CDAP | Data Preparation
     TopPanel:

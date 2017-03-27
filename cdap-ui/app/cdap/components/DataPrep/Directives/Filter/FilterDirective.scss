@@ -14,17 +14,30 @@
  * the License.
  */
 
-.filterby-value-directive {
-  .filter-value {
-    .value-options {
-      max-height: 100px;
-      overflow-y: auto;
+.filter-directive {
+  .filter-detail {
+    .row-filter-container { margin-bottom: 10px; }
 
-      .value-row {
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow-x: hidden;
-        cursor: pointer;
+    .filter-condition {
+      .condition-select {
+        span,
+        div {
+          display: inline-block;
+        }
+
+        span {
+          font-weight: 600;
+          width: 15px;
+        }
+
+        div { width: calc(100% - 15px); }
+      }
+    }
+
+    .row-filter {
+      &.active {
+        font-weight: 600;
+        text-decoration: underline;
       }
     }
   }
