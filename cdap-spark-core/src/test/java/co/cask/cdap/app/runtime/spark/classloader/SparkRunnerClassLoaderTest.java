@@ -16,7 +16,6 @@
 
 package co.cask.cdap.app.runtime.spark.classloader;
 
-import co.cask.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader;
 import co.cask.cdap.common.lang.ClassLoaders;
 import com.google.common.io.Closeables;
 import org.junit.Test;
