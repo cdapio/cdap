@@ -18,12 +18,11 @@ package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
-import co.cask.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader;
 import co.cask.cdap.app.runtime.spark.distributed.DistributedSparkProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
+import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -40,8 +39,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A {@link ProgramRuntimeProvider} that provides runtime system support for {@link ProgramType#SPARK} program.
@@ -100,7 +97,7 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
   private synchronized ClassLoader getDistributedRunnerClassLoader() {
     try {
       if (distributedRunnerClassLoader == null) {
-        // Never needs to rewrite yarn client in CDAP master, which is the only place using distributed program runner
+        // Never needs to rewrite yarn client in Spark
         distributedRunnerClassLoader = createClassLoader(false);
       }
       return distributedRunnerClassLoader;
@@ -193,9 +190,11 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
   private synchronized SparkRunnerClassLoader createClassLoader(boolean rewriteYarnClient) throws IOException {
     SparkRunnerClassLoader classLoader;
     if (classLoaderUrls == null) {
-      classLoaderUrls = getSparkClassloaderURLs(getClass().getClassLoader());
+      classLoader = new SparkRunnerClassLoader(getClass().getClassLoader(), rewriteYarnClient);
+      classLoaderUrls = classLoader.getURLs();
+    } else {
+      classLoader = new SparkRunnerClassLoader(classLoaderUrls, getClass().getClassLoader(), rewriteYarnClient);
     }
-    classLoader = new SparkRunnerClassLoader(classLoaderUrls, getClass().getClassLoader(), rewriteYarnClient);
 
     // CDAP-8087: Due to Scala 2.10 bug in not able to support runtime reflection from multiple threads,
     // we create the runtime mirror from this synchronized method
@@ -225,21 +224,5 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
     }
 
     return classLoader;
-  }
-
-  /**
-   * Returns an array of URLs to be used for creation of classloader for Spark, based on the urls used by the
-   * given {@link ClassLoader}.
-   */
-  private URL[] getSparkClassloaderURLs(ClassLoader classLoader) throws IOException {
-    List<URL> urls = ClassLoaders.getClassLoaderURLs(classLoader, new ArrayList<URL>());
-
-    // If Spark classes are not available in the given ClassLoader, try to locate the Spark assembly jar
-    // This class cannot have dependency on Spark directly, hence using the class resource to discover if SparkContext
-    // is there
-    if (classLoader.getResource("org/apache/spark/SparkContext.class") == null) {
-      urls.add(SparkUtils.locateSparkAssemblyJar().toURI().toURL());
-    }
-    return urls.toArray(new URL[urls.size()]);
   }
 }
