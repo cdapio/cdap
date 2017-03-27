@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _http-restful-api-metrics:
 
@@ -218,6 +218,9 @@ Reducer context is desired, as shown above):
      - Number of entries read in by the Map or Reduce phase
    * - ``system.process.entries.out``
      - Number of entries written out by the Map or Reduce phase
+
+.. These tables are copied to cdap-docs/admin-manual/source/operations/logging.rst
+.. and are not guarded.
 
 These metrics are available in a service context:
 
