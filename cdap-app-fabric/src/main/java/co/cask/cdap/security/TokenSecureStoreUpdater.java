@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,6 +55,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * A {@link SecureStoreUpdater} that updates all secure tokens used by the platform.
@@ -125,39 +126,54 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
       return ImmutableList.of();
     }
 
-    FileSystem fileSystem = getFileSystem(locationFactory, config);
+    try (FileSystem fileSystem = getFileSystem(locationFactory, config)) {
+      if (fileSystem == null) {
+        LOG.warn("Unexpected: LocationFactory is not HDFS. Not getting delegation tokens.");
+        return ImmutableList.of();
+      }
 
-    if (fileSystem == null) {
-      LOG.warn("Unexpected: LocationFactory is not HDFS. Not getting delegation tokens.");
-      return ImmutableList.of();
+      String renewer = YarnUtils.getYarnTokenRenewer(config);
+
+      Token<?>[] tokens = fileSystem.addDelegationTokens(renewer, credentials);
+      LOG.debug("Added HDFS DelegationTokens: {}", Arrays.toString(tokens));
+
+      return tokens == null ? ImmutableList.<Token<?>>of() : ImmutableList.copyOf(tokens);
     }
-
-    String renewer = YarnUtils.getYarnTokenRenewer(config);
-
-    Token<?>[] tokens = fileSystem.addDelegationTokens(renewer, credentials);
-    LOG.info("Added HDFS DelegationTokens: {}", Arrays.toString(tokens));
-
-    return tokens == null ? ImmutableList.<Token<?>>of() : ImmutableList.copyOf(tokens);
   }
 
   /**
-   * Gets the Hadoop FileSystem from LocationFactory.
+   * Returns a new the Hadoop FileSystem from LocationFactory.
    * TODO: copied from Twill 0.6 YarnUtils for CDAP-5350. Remove after this fix is moved to Twill.
    */
+  @Nullable
   private static FileSystem getFileSystem(LocationFactory locationFactory, Configuration config) throws IOException {
     LOG.debug("getFileSystem(): locationFactory is a {}", locationFactory.getClass());
-    if (locationFactory instanceof HDFSLocationFactory) {
-      return ((HDFSLocationFactory) locationFactory).getFileSystem();
-    }
+
     if (locationFactory instanceof ForwardingLocationFactory) {
       return getFileSystem(((ForwardingLocationFactory) locationFactory).getDelegate(), config);
     }
+
+    // This method will be ported back to Twill, hence copying the logic from Locations instead of refactoring
+    // to use a common method
+    Configuration hConf = null;
+    if (locationFactory instanceof HDFSLocationFactory) {
+      hConf = ((HDFSLocationFactory) locationFactory).getFileSystem().getConf();
+    } else if (locationFactory instanceof FileContextLocationFactory) {
+      hConf = ((FileContextLocationFactory) locationFactory).getConfiguration();
+    }
+
+    if (hConf == null) {
+      return null;
+    }
+
+    // Disable the FileSystem cache. The FileSystem will be closed when the InputStream is closed
+    String scheme = locationFactory.getHomeLocation().toURI().getScheme();
+    hConf = new Configuration(hConf);
+    hConf.set(String.format("fs.%s.impl.disable.cache", scheme), "true");
+
     // CDAP-5350: For encrypted file systems, FileContext does not acquire the KMS delegation token
     // Since we know we are in Yarn, it is safe to get the FileSystem directly, bypassing LocationFactory.
-    if (locationFactory instanceof FileContextLocationFactory) {
-      return FileSystem.get(config);
-    }
-    return null;
+    return FileSystem.get(hConf);
   }
 
   /**
