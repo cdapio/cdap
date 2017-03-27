@@ -279,7 +279,8 @@ These metrics are available in a stream context:
      - Number of bytes collected by the stream
 
 
-These metrics are available for services, for the system services component context or the user services context:
+These metrics are available for services, for the system services component context or the
+user services context:
 
 .. list-table::
    :header-rows: 1
@@ -304,10 +305,11 @@ These metrics are available for every application context:
    * - Application Logging Metric
      - Description
    * - ``system.app.log.{error, info, warn}``
-     - Number of ``error``, ``info``, or ``warn`` log messages logged by the application
+     - Number of ``error``, ``info``, or ``warn`` log messages logged by an application or
+       applications
 
 
-These metrics are available for the system services, in the system component context:
+These metrics are available for system services, in the system component context:
 
 .. list-table::
    :header-rows: 1
@@ -316,7 +318,8 @@ These metrics are available for the system services, in the system component con
    * - System Services Logging Metric
      - Description
    * - ``system.services.log.{error, info, warn}``
-     - Number of ``error``, ``info``, or ``warn`` log messages logged by the system services
+     - Number of ``error``, ``info``, or ``warn`` log messages logged by a system service
+       or system services
 
 These metrics are available for the CDAP transaction service:
 
@@ -716,12 +719,12 @@ status 200 (OK) with JSON formed following the above description, with an empty 
 
 .. _http-restful-api-metrics-groupby:
 
-Querying for Multiple Time-series
+Querying for Multiple Time Series
 ---------------------------------
 
 In a query, the optional ``groupBy`` parameter defines a list of tags whose values are
-used to build multiple timeseries. All data points that have the same values in tags
-specified in the ``groupBy`` parameter will form a single timeseries. You can define
+used to build multiple time series. All data points that have the same values in tags
+specified in the ``groupBy`` parameter will form a single time series. You can define
 multiple tags for grouping by providing a list, similar to a tag combination list.
 
 .. list-table::
@@ -944,7 +947,7 @@ Query Tips
     }
     
 - If a run-ID is not specified, CDAP aggregates the events processed for all the runs of a flow.
-  The resulting timeseries will represent aggregated values for the context specified.
+  The resulting time series will represent aggregated values for the context specified.
   Currently, summation is used as the aggregation function.
   
   For example, if you query for the ``system.process.events.processed`` metric for a flow

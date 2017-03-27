@@ -48,8 +48,8 @@ This diagram shows the steps CDAP follows when logging a program of an applicati
   
   - In addition, CDAP programs publish these messages to Kafka.
 
-  - The Log Saver Service (*Log.saver*) is configured to read log messages from Kafka.
-    Log.saver reads the messages from Kafka, groups them by program or application,
+  - The Log Saver Service is configured to read log messages from Kafka.
+    *Log Saver* reads the messages from Kafka, groups them by program or application,
     buffers and sorts them in memory, and finally persists them to files in HDFS. Each of
     these files corresponds to one program or application, depending on how the grouping
     is configured. (This is set by the property :ref:`log.publish.partition.key
@@ -381,12 +381,12 @@ programs of an application and system services with the logging framework:
   YARN containers. Where they run determines the file that configures that service's
   logging.
 
-- The Log Saver Service (*Log.saver*) is configured to read log messages for the
+- The Log Saver Service (*log.saver*) is configured to read log messages for the
   ``logs.user-v2`` Kafka topic (set by the property ``log.kafka.topic``). The number of
   log saver instances can be scaled to process the Kafka partitions in parallel, if
   needed.
   
-  *Log.saver*, by default, runs only the CDAP Log Pipeline: it reads the messages from
+  *Log Saver*, by default, runs only the CDAP Log Pipeline: it reads the messages from
   Kafka, groups them by program or application, buffers and sorts them in memory, and
   finally persists them to files in HDFS. Each of these files corresponds to one program
   or application, depending on how the grouping is configured. (This is set by the
@@ -406,7 +406,7 @@ programs of an application and system services with the logging framework:
   prescribed location. Each pipeline buffers log messages in memory and sorts them based
   on their timestamp. 
  
-- In addition to persisting logs to files, the *Log.saver* also emits metrics about the
+- In addition to persisting logs to files, the *Log Saver* also emits metrics about the
   number of log messages emitted by each program. These metrics can be retrieved by
   querying the :ref:`CDAP metrics system <http-restful-api-metrics>`.
   
@@ -419,30 +419,16 @@ programs of an application and system services with the logging framework:
   .. list-table::
      :widths: 50 50
 
-     * - **Service Metric**
-       - **Description**
-     * - ``system.requests.count``
-       - Number of requests made to the service
-     * - ``system.response.successful.count``
-       - Number of successful requests completed by the service
-     * - ``system.response.server.error.count``
-       - Number of failures seen by the service
-     * - **Request and Response Metric**
-       - 
-     * - ``system.request.received``
-       - Number of requests received for the service
-     * - ``system.response.successful``
-       - Number of successful responses sent
-     * - ``system.response.{server-error, client-error}``
-       - Number of ``server-error`` or ``client-error`` responses sent
      * - **Application Logging Metric**
-       - 
+       - **Description**
      * - ``system.app.log.{error, info, warn}``
-       - Number of ``error``, ``info``, or ``warn`` log messages logged by the application
+       - Number of ``error``, ``info``, or ``warn`` log messages logged by an application or
+         applications
      * - **System Services Logging Metric**
-       - 
+       - **Description**
      * - ``system.services.log.{error, info, warn}``
-       - Number of ``error``, ``info``, or ``warn`` log messages logged by the system services
+       - Number of ``error``, ``info``, or ``warn`` log messages logged by a system service
+         or system services
 
 
 .. _logging-monitoring-custom-log-pipelines:
