@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,20 +16,18 @@
 
 package co.cask.cdap.common.io;
 
+import com.google.common.io.Closeables;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Seekable;
 import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * Implementation of {@link SeekableInputStream} for {@link Location}.
  */
 final class DFSSeekableInputStream extends SeekableInputStream {
-
-  private static final Logger LOG = LoggerFactory.getLogger(DFSSeekableInputStream.class);
 
   private final Seekable seekable;
   private final StreamSizeProvider sizeProvider;
@@ -64,5 +62,16 @@ final class DFSSeekableInputStream extends SeekableInputStream {
   @Override
   public boolean seekToNewSource(long targetPos) throws IOException {
     return seekable.seekToNewSource(targetPos);
+  }
+
+  @Override
+  public void close() throws IOException {
+    try {
+      super.close();
+    } finally {
+      if (sizeProvider instanceof Closeable) {
+        Closeables.closeQuietly((Closeable) sizeProvider);
+      }
+    }
   }
 }
