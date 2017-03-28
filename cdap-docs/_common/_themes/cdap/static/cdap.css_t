@@ -114,8 +114,8 @@ li.versionsmenu {
 
 .sitefooter {
     background-color: white;
-    bottom: 0; 
-    height: 60px; 
+    bottom: 0;
+    clear: both;
     position: fixed;
     width: 100%;
     z-index: 2;
@@ -134,7 +134,7 @@ div.footer a {
 }
 
 div.footerclearer {
-    height: 10px;
+    height: 0;
 }
 
 /* -- Left Sidebar ----------------------------------------------------------- */

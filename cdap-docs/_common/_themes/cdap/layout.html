@@ -134,9 +134,8 @@
 {%- endmacro %}
 
 {%- macro css() %}
-    <link rel="stylesheet" href="{{ pathto('_static/' + style, 1) }}" type="text/css" />
-    <link rel="stylesheet" href="{{ pathto('_static/pygments.css', 1) }}" type="text/css" />
-    <link rel="stylesheet" href="{{ pathto('_static/annotator.min.css', 1) }}" type="text/css" />
+    {% set css_files = css_files + ['_static/' + style] %}
+    {% set css_files = css_files + ['_static/pygments.css'] %}
     {%- for cssfile in css_files %}
     <link rel="stylesheet" href="{{ pathto(cssfile, 1) }}" type="text/css" />
     {%- endfor %}
@@ -188,8 +187,7 @@
     {{ googletagmanager() }}
     <meta http-equiv="Content-Type" content="text/html; charset={{ encoding }}" />
     {{ metatags }}
-    {# Code to add custom theme values as meta_tags #}
-    {# Used to add the Git release, hash, timestamp values #}
+    {# Code to add custom theme values as meta_tags; used to add the Git release, hash, timestamp values #}
     {%- for tag, tag_value in theme_meta_git.iteritems() %}
     <meta name="{{ tag }}" content="{{ tag_value }}">
     {%- endfor %}
@@ -271,9 +269,9 @@
 .tg {border-collapse:collapse;border-spacing:0;margin:0px auto;padding:0;table-layout:fixed;}
 .tg td{border-width:0;overflow:hidden;padding:0;word-break:normal;font-weight:normal;}
 .tg th{border-width:0;overflow:hidden;padding:0;word-break:normal;font-weight:normal;}
-.tg .tg-031e{padding-left:20px;text-align:left;}
-.tg .tg-s6z2{text-align:center;}
-.tg .tg-0ord{padding-right:20px;text-align:right;}
+.tg .ftr-lft{padding-left:20px;text-align:left;vertical-align:top;}
+.tg .ftr-cntr{text-align:center;}
+.tg .ftr-rght{padding-right:20px;text-align:right;vertical-align:top;}
 .tg a{font-weight:bold;}
 </style>
 <table class="tg" width="100%">
@@ -287,11 +285,11 @@
 {%- endif %}
   <tr>
     {%- if not hiderel %}
-    <th class="tg-031e">
+    <th class="ftr-lft">
     Previous Topic:
     </th>    
     {%- endif %}
-    <th class="tg-s6z2" colspan="4">
+    <th class="ftr-cntr" colspan="4">
     {%- if show_copyright %}
       {%- if hasdoc('copyright') %}
         {% trans path=pathto('copyright'), copyright=copyright|e %}<a href="{{ path }}">Copyright</a> &copy; {{ copyright }}{% endtrans %}
@@ -307,21 +305,21 @@
     {%- endif %}
     </th>
     {%- if not hiderel %}
-    <th class="tg-0ord">
+    <th class="ftr-rght">
     Next Topic:
     </th>
     {%- endif %}
   </tr>
   <tr>
     {%- if not hiderel %}
-    <td class="tg-031e" colspan="3">
+    <td class="ftr-lft" colspan="3">
     {%- if prev and prev.title|striptags|e != '&lt;no title&gt;' %}
     <a title="{{ prev.title|striptags|e }}" href="{{ prev.link|e }}" />{{ prev.title }}</a>
     {%- else %}
     &mdash;
     {%- endif %}
     </td>    
-    <td class="tg-0ord" colspan="3">
+    <td class="ftr-rght" colspan="3">
     {%- if next and next.title|striptags|e != '&lt;no title&gt;' %}
     <a title="{{ next.title|striptags|e }}" href="{{ next.link|e }}" />{{ next.title }}</a>
     {%- else %}
