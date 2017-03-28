@@ -24,6 +24,7 @@ import Mousetrap from 'mousetrap';
 
 // Directives List
 import SplitColumn from 'components/DataPrep/Directives/SplitColumn';
+import ParseDirective from 'components/DataPrep/Directives/Parse';
 import FillNullOrEmpty from 'components/DataPrep/Directives/FillNullOrEmpty';
 import DropColumn from 'components/DataPrep/Directives/DropColumn';
 import FilterDirective from 'components/DataPrep/Directives/Filter';
@@ -57,6 +58,10 @@ export default class ColumnActionsDropdown extends Component {
       {
         id: shortid.generate(),
         tag: SplitColumn
+      },
+      {
+        id: shortid.generate(),
+        tag: ParseDirective
       }
     ];
   }
