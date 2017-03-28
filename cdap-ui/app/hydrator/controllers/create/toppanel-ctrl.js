@@ -289,9 +289,8 @@ class HydratorPlusPlusTopPanelCtrl {
           this.previewActions.setPreviewStartTime(startTime)
         );
         this.currentPreviewId = res.application;
-        if (this.$window.localStorage.getItem('LastDraftId') === this.HydratorPlusPlusConfigStore.getDraftId()) {
-          this.$window.localStorage.setItem('LastPreviewId', this.currentPreviewId);
-        }
+        this.$window.localStorage.setItem('LastDraftId', this.HydratorPlusPlusConfigStore.getDraftId());
+        this.$window.localStorage.setItem('LastPreviewId', this.currentPreviewId);
         this.startPollPreviewStatus(res.application);
       }, (err) => {
         this.previewLoading = false;
