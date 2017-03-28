@@ -21,12 +21,51 @@ import NamespaceStore from 'services/NamespaceStore';
 import SearchStore from 'components/EntityListView/SearchStore';
 import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
 import {search, updateQueryString} from 'components/EntityListView/SearchStore/ActionCreator';
+import Mousetrap from 'mousetrap';
 
 require('./EntityListInfo.scss');
 
 export default class EntityListInfo extends Component {
   constructor(props) {
     super(props);
+  }
+  componentWillMount() {
+    Mousetrap.bind('right', this.goToNextPage.bind(this));
+    Mousetrap.bind('left', this.goToPreviousPage.bind(this));
+  }
+  componentWillUnmount() {
+    Mousetrap.unbind('left');
+    Mousetrap.unbind('right');
+  }
+  goToNextPage() {
+    let {currentPage, total, limit} = SearchStore.getState().search;
+    if (currentPage === Math.ceil(total / limit)) {
+      return;
+    }
+    SearchStore.dispatch({
+      type: SearchStoreActions.SETCURRENTPAGE,
+      payload: {
+        currentPage: currentPage + 1,
+        offset: (currentPage) * limit
+      }
+    });
+    search();
+    updateQueryString();
+  }
+  goToPreviousPage() {
+    let {currentPage, limit} = SearchStore.getState().search;
+    if (currentPage === 1) {
+      return;
+    }
+    SearchStore.dispatch({
+      type: SearchStoreActions.SETCURRENTPAGE,
+      payload: {
+        currentPage: currentPage - 1,
+        offset: (currentPage - 2) * limit
+      }
+    });
+    search();
+    updateQueryString();
   }
   handlePageChange(data) {
     let currentPage = data.selected + 1;
