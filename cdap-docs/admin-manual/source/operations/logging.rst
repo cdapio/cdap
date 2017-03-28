@@ -48,8 +48,8 @@ This diagram shows the steps CDAP follows when logging a program of an applicati
   
   - In addition, CDAP programs publish these messages to Kafka.
 
-  - The Log Saver Service is configured to read log messages from Kafka.
-    *Log Saver* reads the messages from Kafka, groups them by program or application,
+  - The CDAP Log Saver Service is configured to read log messages from Kafka.
+    Log saver reads the messages from Kafka, groups them by program or application,
     buffers and sorts them in memory, and finally persists them to files in HDFS. Each of
     these files corresponds to one program or application, depending on how the grouping
     is configured. (This is set by the property :ref:`log.publish.partition.key
@@ -68,7 +68,7 @@ This diagram shows the steps CDAP follows when logging a program of an applicati
     :width: 800px
     :align: center
 
-    **CDAP Logging Example:** From a YARN container, through Kafka and the Log Saver Service, to HDFS
+    **CDAP Logging Example:** From a YARN container, through Kafka and the CDAP Log Saver Service, to HDFS
 
 Logging uses the standard `SLF4J (Simple Logging Facade for Java)
 <http://www.slf4j.org/manual.html>`__ APIs and `Logback
@@ -285,11 +285,11 @@ them in *log pipelines*, persists them to HDFS, and sends metrics on logging to 
 Metrics Service.
 
 In addition to the default *CDAP Log Pipeline*, you can specify :ref:`custom log pipelines
-<logging-monitoring-custom-log-pipelines>` that are run by the Log Saver Service and
+<logging-monitoring-custom-log-pipelines>` that are run by the log saver service and
 perform custom actions.
 
 The :ref:`cdap-site.xml <appendix-cdap-site.xml>` file has properties that control the
-writing of logs to Kafka, the CDAP Log Saver Service, the CDAP log pipeline, and any
+writing of logs to Kafka, the log saver service, the CDAP log pipeline, and any
 :ref:`custom log pipelines <logging-monitoring-custom-log-pipelines>` that have been defined.
 
 .. _logging-monitoring-writing-logs-to-kafka:
@@ -387,7 +387,7 @@ programs of an application and system services with the logging framework:
   log saver instances can be scaled to process the Kafka partitions in parallel, if
   needed.
   
-  *Log Saver*, by default, runs only the CDAP Log Pipeline: it reads the messages from
+  Log saver, by default, runs only the CDAP Log Pipeline: it reads the messages from
   Kafka, groups them by program or application, buffers and sorts them in memory, and
   finally persists them to files in HDFS. Each of these files corresponds to one program
   or application, depending on how the grouping is configured. (This is set by the
@@ -407,7 +407,7 @@ programs of an application and system services with the logging framework:
   prescribed location. Each pipeline buffers log messages in memory and sorts them based
   on their timestamp. 
  
-- In addition to persisting logs to files, the *Log Saver* also emits metrics about the
+- In addition to persisting logs to files, the log saver also emits metrics about the
   number of log messages emitted by each program. These metrics can be retrieved by
   querying the :ref:`CDAP metrics system <http-restful-api-metrics>`.
   
