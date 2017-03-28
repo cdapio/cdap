@@ -23,6 +23,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.FileStatus;
@@ -38,6 +39,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -48,7 +50,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.PrivilegedExceptionAction;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -102,7 +103,7 @@ public final class Locations {
       public SeekableInputStream getInput() throws IOException {
         FSDataInputStream input = fs.open(path);
         try {
-          return new DFSSeekableInputStream(input, createDFSStreamSizeProvider(fs, path, input));
+          return new DFSSeekableInputStream(input, createDFSStreamSizeProvider(fs, false, path, input));
         } catch (Throwable t) {
           Closeables.closeQuietly(input);
           Throwables.propagateIfInstanceOf(t, IOException.class);
@@ -131,23 +132,25 @@ public final class Locations {
             FSDataInputStream dataInput = (FSDataInputStream) input;
             LocationFactory locationFactory = location.getLocationFactory();
 
-            FileSystem fs = null;
+            // Get the FileSystem so that we can determine if the file is currently opened or not
+            Configuration hConf = null;
             if (locationFactory instanceof HDFSLocationFactory) {
-              fs = ((HDFSLocationFactory) locationFactory).getFileSystem();
+              hConf = ((HDFSLocationFactory) locationFactory).getFileSystem().getConf();
             } else if (locationFactory instanceof FileContextLocationFactory) {
-              final FileContextLocationFactory lf = (FileContextLocationFactory) locationFactory;
-              fs = lf.getFileContext().getUgi().doAs(new PrivilegedExceptionAction<FileSystem>() {
-                @Override
-                public FileSystem run() throws IOException {
-                  return FileSystem.get(lf.getConfiguration());
-                }
-              });
+              hConf = ((FileContextLocationFactory) locationFactory).getConfiguration();
             }
 
-            if (fs != null) {
-              return new DFSSeekableInputStream(dataInput, createDFSStreamSizeProvider(fs, new Path(location.toURI()),
+            if (hConf != null) {
+              // Disable the FileSystem cache. The FileSystem will be closed when the InputStream is closed
+              String scheme = locationFactory.getHomeLocation().toURI().getScheme();
+              hConf = new Configuration(hConf);
+              hConf.set(String.format("fs.%s.impl.disable.cache", scheme), "true");
+              FileSystem fs = FileSystem.get(hConf);
+              return new DFSSeekableInputStream(dataInput, createDFSStreamSizeProvider(fs, true,
+                                                                                       new Path(location.toURI()),
                                                                                        dataInput));
             }
+
             // This shouldn't happen
             return new DFSSeekableInputStream(dataInput, new StreamSizeProvider() {
               @Override
@@ -405,23 +408,8 @@ public final class Locations {
   /**
    * Creates a {@link StreamSizeProvider} for determining the size of the given {@link FSDataInputStream}.
    */
-  private static StreamSizeProvider createDFSStreamSizeProvider(final FileSystem fs,
+  private static StreamSizeProvider createDFSStreamSizeProvider(final FileSystem fs, final boolean ownFileSystem,
                                                                 final Path path, FSDataInputStream input) {
-    // This is the default provider to use. It will try to determine if the file is closed and return the size of it.
-    final StreamSizeProvider defaultSizeProvider = new StreamSizeProvider() {
-      @Override
-      public long size() throws IOException {
-        if (fs instanceof DistributedFileSystem) {
-          if (((DistributedFileSystem) fs).isFileClosed(path)) {
-            return fs.getFileStatus(path).getLen();
-          } else {
-            return -1L;
-          }
-        }
-        // If the the underlying file system is not DistributedFileSystem, just assume the file length tells the size
-        return fs.getFileStatus(path).getLen();
-      }
-    };
 
     // This supplier is to abstract out the logic for getting the DFSInputStream#getFileLength method using reflection
     // Reflection is used to avoid ClassLoading error if the DFSInputStream class is moved or method get renamed
@@ -449,11 +437,11 @@ public final class Locations {
       }
     });
 
-    return new StreamSizeProvider() {
+    return new CloseableStreamSizeProvider() {
       @Override
       public long size() throws IOException {
         // Try to determine the size using default provider
-        long size = defaultSizeProvider.size();
+        long size = sizeFromFileSystem();
         if (size >= 0) {
           return size;
         }
@@ -465,7 +453,37 @@ public final class Locations {
           return size;
         }
       }
+
+      @Override
+      public void close() throws IOException {
+        if (ownFileSystem) {
+          fs.close();
+        }
+      }
+
+      /**
+       * @return the size of the file path as reported by the {@link FileSystem} or {@link -1} if the file is still
+       *         opened.
+       */
+      private long sizeFromFileSystem() throws IOException {
+        if (fs instanceof DistributedFileSystem) {
+          if (((DistributedFileSystem) fs).isFileClosed(path)) {
+            return fs.getFileStatus(path).getLen();
+          } else {
+            return -1L;
+          }
+        }
+        // If the the underlying file system is not DistributedFileSystem, just assume the file length tells the size
+        return fs.getFileStatus(path).getLen();
+      }
     };
+  }
+
+  /**
+   * A tagging interface that extends from both {@link StreamSizeProvider} and {@link Closeable}.
+   */
+  private interface CloseableStreamSizeProvider extends StreamSizeProvider, Closeable {
+    // no method defined in this interface
   }
 
   private Locations() {
