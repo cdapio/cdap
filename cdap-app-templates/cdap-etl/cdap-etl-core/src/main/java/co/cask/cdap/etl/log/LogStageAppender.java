@@ -22,6 +22,7 @@ import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.AppenderBase;
+import co.cask.cdap.etl.common.Constants;
 import org.slf4j.Marker;
 
 import java.util.List;
@@ -77,7 +78,7 @@ public class LogStageAppender extends AppenderBase<ILoggingEvent> {
     StageEvent(ILoggingEvent event) {
       this.event = event;
       Map<String, String> mdcMap = event.getMDCPropertyMap();
-      String stage = mdcMap.get(LogContext.STAGE);
+      String stage = mdcMap.get(Constants.MDC_STAGE_KEY);
       this.eventMessage = stage == null ? event.getMessage() : stage + " - " + event.getMessage();
       this.formattedMessage = stage == null ? event.getFormattedMessage() : stage + " - " + event.getFormattedMessage();
     }

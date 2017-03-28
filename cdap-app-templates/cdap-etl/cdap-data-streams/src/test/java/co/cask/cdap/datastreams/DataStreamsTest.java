@@ -30,10 +30,10 @@ import co.cask.cdap.etl.mock.spark.Window;
 import co.cask.cdap.etl.mock.spark.compute.StringValueFilterCompute;
 import co.cask.cdap.etl.mock.spark.streaming.MockSource;
 import co.cask.cdap.etl.mock.test.HydratorTestBase;
-import co.cask.cdap.etl.mock.transform.FieldsPrefixTransform;
 import co.cask.cdap.etl.mock.transform.FilterErrorTransform;
 import co.cask.cdap.etl.mock.transform.FlattenErrorTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
+import co.cask.cdap.etl.mock.transform.SleepTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
 import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
@@ -107,7 +107,9 @@ public class DataStreamsTest extends HydratorTestBase {
       .addStage(new ETLStage("sink", MockSink.getPlugin("${output}")))
       .addStage(new ETLStage("filter1", StringValueFilterTransform.getPlugin("${field}", "${val1}")))
       .addStage(new ETLStage("filter2", StringValueFilterCompute.getPlugin("${field}", "${val2}")))
-      .addConnection("source", "filter1")
+      .addStage(new ETLStage("sleep", SleepTransform.getPlugin(2L)))
+      .addConnection("source", "sleep")
+      .addConnection("sleep", "filter1")
       .addConnection("filter1", "filter2")
       .addConnection("filter2", "sink")
       .setBatchInterval("1s")
@@ -123,11 +125,14 @@ public class DataStreamsTest extends HydratorTestBase {
 
     testTransformComputeRun(appManager, expected, "dwayne", "johnson", "macroOutput1");
     validateMetric(appId, "source.records.out", 4);
+    validateMetric(appId, "sleep.records.in", 4);
+    validateMetric(appId, "sleep.records.out", 4);
     validateMetric(appId, "filter1.records.in", 4);
     validateMetric(appId, "filter1.records.out", 3);
     validateMetric(appId, "filter2.records.in", 3);
     validateMetric(appId, "filter2.records.out", 2);
     validateMetric(appId, "sink.records.in", 2);
+    Assert.assertTrue(getMetric(appId, "sleep." + co.cask.cdap.etl.common.Constants.Metrics.TOTAL_TIME) > 0L);
 
     expected.clear();
     expected.add(dwayneRecord);
@@ -527,16 +532,6 @@ public class DataStreamsTest extends HydratorTestBase {
       Schema.Field.of("i_id", Schema.of(Schema.Type.STRING))
     );
 
-    Schema outSchema1 = Schema.recordOf(
-      "join.output",
-      Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("customer_name", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("item_id", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("item_price", Schema.of(Schema.Type.LONG)),
-      Schema.Field.of("cust_id", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("cust_name", Schema.of(Schema.Type.STRING))
-    );
-
     Schema outSchema2 = Schema.recordOf(
       "join.output",
       Schema.Field.of("t_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
@@ -659,7 +654,6 @@ public class DataStreamsTest extends HydratorTestBase {
 
   @Test
   public void testErrorTransform() throws Exception {
-    String sourceTableName = "errTestIn";
     String sink1TableName = "errTestOut1";
     String sink2TableName = "errTestOut2";
 
@@ -777,5 +771,12 @@ public class DataStreamsTest extends HydratorTestBase {
     metricsManager.waitForTotalMetricCount(tags, metricName, expected, 10, TimeUnit.SECONDS);
     // wait for won't throw an exception if the metric count is greater than expected
     Assert.assertEquals(expected, metricsManager.getTotalMetric(tags, metricName));
+  }
+
+  private long getMetric(ApplicationId appId, String metric) {
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, appId.getNamespace(),
+                                               Constants.Metrics.Tag.APP, appId.getEntityName(),
+                                               Constants.Metrics.Tag.SPARK, DataStreamsSparkLauncher.NAME);
+    return getMetricsManager().getTotalMetric(tags, "user." + metric);
   }
 }

@@ -49,10 +49,9 @@ public class LogStageInjector {
       return;
     }
 
-    LogContext.enable();
     ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
     if (!(loggerFactory instanceof LoggerContext)) {
-      LOG.warn("LoggerFactory is not a logback LoggerContext. ETLStage names will not be injected into log messages.");
+      LOG.warn("LoggerFactory is not a logback LoggerContext. Stage names will not be injected into log messages.");
       return;
     }
 

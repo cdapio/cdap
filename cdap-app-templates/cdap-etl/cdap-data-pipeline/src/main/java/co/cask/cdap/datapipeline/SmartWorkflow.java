@@ -21,6 +21,7 @@ import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowContext;
@@ -45,6 +46,7 @@ import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
 import co.cask.cdap.etl.common.PipelinePhase;
+import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.planner.ControlDag;
 import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.PipelinePlanner;
@@ -193,9 +195,10 @@ public class SmartWorkflow extends AbstractWorkflow {
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(context.getToken(), context.getRuntimeArguments(),
                                                               context.getLogicalStartTime(), context,
                                                               context.getNamespace());
+    PluginContext pluginContext = new PipelinePluginContext(context, workflowMetrics);
     for (ActionSpec actionSpec : batchPipelineSpec.getEndingActions()) {
-      postActions.put(actionSpec.getName(), (PostAction) context.newPluginInstance(actionSpec.getName(),
-                                                                                   macroEvaluator));
+      postActions.put(actionSpec.getName(), (PostAction) pluginContext.newPluginInstance(actionSpec.getName(),
+                                                                                         macroEvaluator));
     }
 
     WRAPPERLOGGER.info("Pipeline '{}' running", context.getApplicationSpecification().getName());

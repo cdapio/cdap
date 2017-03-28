@@ -19,6 +19,7 @@ package co.cask.cdap.etl.spark.streaming.function;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
@@ -26,6 +27,7 @@ import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.batch.SparkBatchSinkContext;
 import co.cask.cdap.etl.spark.batch.SparkBatchSinkFactory;
 import co.cask.cdap.etl.spark.function.CountingFunction;
+import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
@@ -60,10 +62,10 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
                                                          logicalStartTime,
                                                          sec.getSecureStore(),
                                                          sec.getNamespace());
+    PluginContext pluginContext = new SparkPipelinePluginContext(sec.getPluginContext(), sec.getMetrics());
     final SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
     final String stageName = stageInfo.getName();
-    final BatchSink<Object, Object, Object> batchSink =
-      sec.getPluginContext().newPluginInstance(stageName, evaluator);
+    final BatchSink<Object, Object, Object> batchSink = pluginContext.newPluginInstance(stageName, evaluator);
     boolean isPrepared = false;
     boolean isDone = false;
 

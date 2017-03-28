@@ -18,7 +18,8 @@ package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.StageMetrics;
-import co.cask.cdap.etl.log.LogContext;
+import co.cask.cdap.etl.common.plugin.Caller;
+import co.cask.cdap.etl.common.plugin.NoStageLoggingCaller;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -34,20 +35,22 @@ public class DefaultStageMetrics implements StageMetrics, Externalizable {
 
   private Metrics metrics;
   private String prefix;
+  private transient Caller caller;
 
   // Only used by Externalizable
   public DefaultStageMetrics() {
-    // no-op
+    this(null, "");
   }
 
   public DefaultStageMetrics(Metrics metrics, String stageName) {
     this.metrics = metrics;
     this.prefix = stageName + ".";
+    this.caller = NoStageLoggingCaller.wrap(Caller.DEFAULT);
   }
 
   @Override
   public void count(final String metricName, final int delta) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         metrics.count(prefix + metricName, delta);
@@ -58,7 +61,7 @@ public class DefaultStageMetrics implements StageMetrics, Externalizable {
 
   @Override
   public void gauge(final String metricName, final long value) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         metrics.gauge(prefix + metricName, value);
@@ -69,7 +72,7 @@ public class DefaultStageMetrics implements StageMetrics, Externalizable {
 
   @Override
   public void pipelineCount(final String metricName, final int delta) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         metrics.count(metricName, delta);
@@ -80,7 +83,7 @@ public class DefaultStageMetrics implements StageMetrics, Externalizable {
 
   @Override
   public void pipelineGauge(final String metricName, final long value) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         metrics.gauge(metricName, value);
