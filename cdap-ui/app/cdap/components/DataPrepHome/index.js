@@ -27,9 +27,9 @@ export default class DataPrepHome extends Component {
   constructor(props) {
     super(props);
 
-    window.onbeforeunload = function() {
-      return "Are you sure you want to leave this page?";
-    };
+    // window.onbeforeunload = function() {
+    //   return "Are you sure you want to leave this page?";
+    // };
   }
 
   componentWillUnmount() {
