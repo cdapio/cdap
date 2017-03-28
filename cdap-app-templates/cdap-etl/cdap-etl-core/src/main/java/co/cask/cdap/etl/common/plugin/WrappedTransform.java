@@ -14,49 +14,72 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package co.cask.cdap.etl.common.plugin;
 
 import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
-import co.cask.cdap.etl.log.LogContext;
 
 import java.util.concurrent.Callable;
 
 /**
- * Wrapper around a {@link Transform} that makes sure logging is set up correctly.
+ * Wrapper around a {@link Transform} that makes sure logging, classloading, and other pipeline capabilities
+ * are setup correctly.
  *
  * @param <IN> type of input
  * @param <OUT> type of output
  */
-public class LoggedTransform<IN, OUT> extends Transform<IN, OUT> {
+public class WrappedTransform<IN, OUT> extends Transform<IN, OUT> {
   private final Transform<IN, OUT> transform;
-  private final String name;
+  private final Caller caller;
 
-  public LoggedTransform(String name, Transform<IN, OUT> transform) {
+  public WrappedTransform(Transform<IN, OUT> transform, Caller caller) {
     this.transform = transform;
-    this.name = name;
+    this.caller = caller;
+  }
+
+  @Override
+  public void configurePipeline(final PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+    caller.callUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() {
+        transform.configurePipeline(pipelineConfigurer);
+        return null;
+      }
+    });
   }
 
   @Override
   public void initialize(final TransformContext context) throws Exception {
-    LogContext.run(new Callable<Void>() {
+    caller.call(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         transform.initialize(context);
         return null;
       }
-    }, name);
+    });
+  }
+
+  @Override
+  public void destroy() {
+    caller.callUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        transform.destroy();
+        return null;
+      }
+    });
   }
 
   @Override
   public void transform(final IN input, final Emitter<OUT> emitter) throws Exception {
-    LogContext.run(new Callable<Void>() {
+    caller.call(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         transform.transform(input, emitter);
         return null;
       }
-    }, name);
+    }, CallArgs.TRACK_TIME);
   }
 }

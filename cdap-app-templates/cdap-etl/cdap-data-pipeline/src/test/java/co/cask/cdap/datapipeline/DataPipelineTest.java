@@ -47,8 +47,8 @@ import co.cask.cdap.etl.mock.transform.DropNullTransform;
 import co.cask.cdap.etl.mock.transform.FilterErrorTransform;
 import co.cask.cdap.etl.mock.transform.FlattenErrorTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
+import co.cask.cdap.etl.mock.transform.SleepTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
-import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
@@ -478,7 +478,7 @@ public class DataPipelineTest extends HydratorTestBase {
   private void testSimpleMultiSource(Engine engine) throws Exception {
     /*
      * source1 --|
-     *           |--> sink
+     *           |--> sleep --> sink
      * source2 --|
      */
     String source1Name = String.format("simpleMSInput1-%s", engine);
@@ -487,9 +487,11 @@ public class DataPipelineTest extends HydratorTestBase {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .addStage(new ETLStage("source1", MockSource.getPlugin(source1Name)))
       .addStage(new ETLStage("source2", MockSource.getPlugin(source2Name)))
+      .addStage(new ETLStage("sleep", SleepTransform.getPlugin(2L)))
       .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
-      .addConnection("source1", "sink")
-      .addConnection("source2", "sink")
+      .addConnection("source1", "sleep")
+      .addConnection("source2", "sleep")
+      .addConnection("sleep", "sink")
       .setEngine(engine)
       .build();
 
@@ -506,10 +508,11 @@ public class DataPipelineTest extends HydratorTestBase {
     );
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+    StructuredRecord recordVincent = StructuredRecord.builder(schema).set("name", "vincent").build();
 
     // write one record to each source
     DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(source1Name));
-    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel));
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordVincent));
     inputManager = getDataset(NamespaceId.DEFAULT.dataset(source2Name));
     MockSource.writeInput(inputManager, ImmutableList.of(recordBob));
 
@@ -519,13 +522,16 @@ public class DataPipelineTest extends HydratorTestBase {
 
     // check sink
     DataSetManager<Table> sinkManager = getDataset(sinkName);
-    Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
+    Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob, recordVincent);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
 
-    validateMetric(1, appId, "source1.records.out");
+    validateMetric(2, appId, "source1.records.out");
     validateMetric(1, appId, "source2.records.out");
-    validateMetric(2, appId, "sink.records.in");
+    validateMetric(3, appId, "sleep.records.in");
+    validateMetric(3, appId, "sleep.records.out");
+    validateMetric(3, appId, "sink.records.in");
+    Assert.assertTrue(getMetric(appId, "sleep." + co.cask.cdap.etl.common.Constants.Metrics.TOTAL_TIME) > 0L);
   }
 
   @Test
@@ -1770,5 +1776,12 @@ public class DataPipelineTest extends HydratorTestBase {
     getMetricsManager().waitForTotalMetricCount(tags, "user." + metric, expected, 20, TimeUnit.SECONDS);
     // wait for won't throw an exception if the metric count is greater than expected
     Assert.assertEquals(expected, getMetricsManager().getTotalMetric(tags, "user." + metric));
+  }
+
+  private long getMetric(ApplicationId appId, String metric) {
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, appId.getNamespace(),
+                                               Constants.Metrics.Tag.APP, appId.getEntityName(),
+                                               Constants.Metrics.Tag.WORKFLOW, SmartWorkflow.NAME);
+    return getMetricsManager().getTotalMetric(tags, "user." + metric);
   }
 }

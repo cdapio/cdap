@@ -27,7 +27,9 @@ import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
-import co.cask.cdap.etl.log.LogContext;
+import co.cask.cdap.etl.common.plugin.Caller;
+import co.cask.cdap.etl.common.plugin.ClassLoaderCaller;
+import co.cask.cdap.etl.common.plugin.NoStageLoggingCaller;
 import co.cask.cdap.etl.planner.StageInfo;
 
 import java.util.Collections;
@@ -42,6 +44,7 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
   private final long logicalStartTime;
   private final Map<String, String> runtimeArgs;
   private final Admin admin;
+  private final Caller caller;
 
   protected AbstractBatchContext(PluginContext pluginContext,
                                  DatasetContext datasetContext,
@@ -56,6 +59,7 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
     this.logicalStartTime = logicalStartTime;
     this.runtimeArgs = runtimeArgs;
     this.admin = admin;
+    this.caller = ClassLoaderCaller.wrap(NoStageLoggingCaller.wrap(Caller.DEFAULT), getClass().getClassLoader());
   }
 
   protected <T extends PluginContext & DatasetContext> AbstractBatchContext(T context,
@@ -65,11 +69,7 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
                                                                             Map<String, String> runtimeArgs,
                                                                             Admin admin,
                                                                             StageInfo stageInfo) {
-    super(context, metrics, lookup, stageInfo);
-    this.datasetContext = context;
-    this.logicalStartTime = logicalStartTime;
-    this.runtimeArgs = runtimeArgs;
-    this.admin = admin;
+    this(context, context, metrics, lookup, logicalStartTime, runtimeArgs, admin, stageInfo);
   }
 
   public void createDataset(String datasetName, String typeName, DatasetProperties properties)
@@ -100,9 +100,9 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
 
   @Override
   public <T extends Dataset> T getDataset(final String name) throws DatasetInstantiationException {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+    return caller.callUnchecked(new Callable<T>() {
       @Override
-      public T call() throws Exception {
+      public T call() {
         return datasetContext.getDataset(name);
       }
     });
@@ -111,9 +111,9 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
   @Override
   public <T extends Dataset> T getDataset(final String namespace, final String name)
     throws DatasetInstantiationException {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+    return caller.callUnchecked(new Callable<T>() {
       @Override
-      public T call() throws Exception {
+      public T call() {
         return datasetContext.getDataset(namespace, name);
       }
     });
@@ -122,9 +122,9 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
   @Override
   public <T extends Dataset> T getDataset(final String name,
                                           final Map<String, String> arguments) throws DatasetInstantiationException {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+    return caller.callUnchecked(new Callable<T>() {
       @Override
-      public T call() throws Exception {
+      public T call() {
         return datasetContext.getDataset(name, arguments);
       }
     });
@@ -133,9 +133,9 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
   @Override
   public <T extends Dataset> T getDataset(final String namespace, final String name,
                                           final Map<String, String> arguments) throws DatasetInstantiationException {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+    return caller.callUnchecked(new Callable<T>() {
       @Override
-      public T call() throws Exception {
+      public T call() {
         return datasetContext.getDataset(namespace, name, arguments);
       }
     });
@@ -143,7 +143,7 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
 
   @Override
   public void releaseDataset(final Dataset dataset) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() {
         datasetContext.releaseDataset(dataset);
@@ -154,7 +154,7 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
 
   @Override
   public void discardDataset(final Dataset dataset) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() {
         datasetContext.discardDataset(dataset);
