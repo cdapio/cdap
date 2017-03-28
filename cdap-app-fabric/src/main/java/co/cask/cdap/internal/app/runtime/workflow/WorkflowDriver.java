@@ -53,6 +53,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -181,7 +183,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
-
   }
 
   @Override
@@ -505,31 +506,52 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private void createLocalDatasets() throws IOException, DatasetManagementException {
-    for (Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
-      String localInstanceName = entry.getValue();
-      DatasetId instanceId = new DatasetId(workflowRunId.getNamespace(), localInstanceName);
-      DatasetCreationSpec instanceSpec = workflowSpec.getLocalDatasetSpecs().get(entry.getKey());
+    for (final Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
+      final String localInstanceName = entry.getValue();
+      final DatasetId instanceId = new DatasetId(workflowRunId.getNamespace(), localInstanceName);
+      final DatasetCreationSpec instanceSpec = workflowSpec.getLocalDatasetSpecs().get(entry.getKey());
       LOG.debug("Adding Workflow local dataset instance: {}", localInstanceName);
-      datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId,
-                                   addLocalDatasetProperty(instanceSpec.getProperties()));
+
+      try {
+        Retries.callWithRetries(new Retries.Callable<Void, Exception>() {
+          @Override
+          public Void call() throws Exception {
+            datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId,
+                                         addLocalDatasetProperty(instanceSpec.getProperties()));
+            return null;
+          }
+        }, RetryStrategies.fixDelay(Constants.Retry.LOCAL_DATASET_OPERATION_RETRY_DELAY_SECONDS, TimeUnit.SECONDS));
+      } catch (IOException | DatasetManagementException e) {
+        throw e;
+      } catch (Exception e) {
+        // this should never happen
+        throw new IllegalStateException(e);
+      }
     }
   }
 
   private void deleteLocalDatasets() {
-    for (Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
-      Map<String, String> datasetArguments = RuntimeArguments.extractScope(Scope.DATASET, entry.getKey(),
+    for (final Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
+      final Map<String, String> datasetArguments = RuntimeArguments.extractScope(Scope.DATASET, entry.getKey(),
                                                                            basicWorkflowContext.getRuntimeArguments());
       if (Boolean.parseBoolean(datasetArguments.get("keep.local"))) {
         continue;
       }
 
-      String localInstanceName = entry.getValue();
-      DatasetId instanceId = new DatasetId(workflowRunId.getNamespace(), localInstanceName);
+      final String localInstanceName = entry.getValue();
+      final DatasetId instanceId = new DatasetId(workflowRunId.getNamespace(), localInstanceName);
       LOG.debug("Deleting Workflow local dataset instance: {}", localInstanceName);
+
       try {
-        datasetFramework.deleteInstance(instanceId);
-      } catch (Throwable t) {
-        LOG.warn("Failed to delete the Workflow local dataset instance {}", localInstanceName, t);
+        Retries.callWithRetries(new Retries.Callable<Void, Exception>() {
+          @Override
+          public Void call() throws Exception {
+            datasetFramework.deleteInstance(instanceId);
+            return null;
+          }
+        }, RetryStrategies.fixDelay(Constants.Retry.LOCAL_DATASET_OPERATION_RETRY_DELAY_SECONDS, TimeUnit.SECONDS));
+      } catch (Exception e) {
+        LOG.warn("Failed to delete the Workflow local dataset instance {}", localInstanceName, e);
       }
     }
   }
