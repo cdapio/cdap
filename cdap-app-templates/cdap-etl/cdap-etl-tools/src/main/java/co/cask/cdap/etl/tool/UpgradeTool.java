@@ -99,7 +99,8 @@ public class UpgradeTool {
     ApplicationDetail appDetail = appClient.get(appId);
 
     if (!upgrader.shouldUpgrade(appDetail.getArtifact())) {
-      LOG.debug("Skipping app {} since its not an upgradeable hydrator pipeline.", appId);
+      LOG.debug("Skipping app {} since it is not an upgradeable pipeline.", appId);
+      return false;
     }
 
     LOG.info("Upgrading pipeline: {}", appId);
@@ -165,8 +166,9 @@ public class UpgradeTool {
       HelpFormatter helpFormatter = new HelpFormatter();
       helpFormatter.printHelp(
         UpgradeTool.class.getName() + " upgrade",
-        "Upgrades Hydrator 3.2 - 3.6 pipelines into 4.0 pipelines. If the plugins used are not backwards compatible, " +
-          "a best effort will be made and output to and error directory for manual upgrade.", options, "");
+        "Upgrades old pipelines to the current version. If the plugins used are not backward-compatible, " +
+          "the attempted upgrade config will be written to the error directory for a manual upgrade.",
+        options, "");
       System.exit(0);
     }
 
