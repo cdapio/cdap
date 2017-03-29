@@ -315,7 +315,6 @@ public class DatasetBasedStreamSizeScheduleStore {
                                                       AbstractSchedulerService.scheduleIdFor(programId, programType,
                                                                                              scheduleName)));
           table.put(rowKey, columns, values);
-          LOG.debug("Updated schedule {} with columns {}, values {}", scheduleName, columns, values);
         }
       });
   }
