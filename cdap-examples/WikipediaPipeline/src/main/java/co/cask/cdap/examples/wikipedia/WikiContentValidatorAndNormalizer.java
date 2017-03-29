@@ -53,6 +53,8 @@ import javax.annotation.Nullable;
  */
 public class WikiContentValidatorAndNormalizer extends AbstractMapReduce {
 
+  private static final Logger LOG = LoggerFactory.getLogger(WikiContentValidatorAndNormalizer.class);
+
   public static final String NAME = WikiContentValidatorAndNormalizer.class.getSimpleName();
 
   @Override
@@ -64,6 +66,7 @@ public class WikiContentValidatorAndNormalizer extends AbstractMapReduce {
 
   @Override
   public void initialize() throws Exception {
+    LOG.info("USER");
     MapReduceContext context = getContext();
     Job job = context.getHadoopJob();
     job.setMapperClass(FilterNormalizerMapper.class);
@@ -74,6 +77,7 @@ public class WikiContentValidatorAndNormalizer extends AbstractMapReduce {
 
   @Override
   public void destroy() {
+    LOG.info("USER");
     WorkflowToken workflowToken = getContext().getWorkflowToken();
     if (workflowToken != null) {
       boolean isSuccessful = getContext().getState().getStatus() == ProgramStatus.COMPLETED;
@@ -93,6 +97,7 @@ public class WikiContentValidatorAndNormalizer extends AbstractMapReduce {
 
     @Override
     protected void map(byte[] key, byte[] value, Context context) throws IOException, InterruptedException {
+      LOG.info("USER MAP");
       if (key == null) {
         LOG.debug("Found null key. Skipping record.");
         return;

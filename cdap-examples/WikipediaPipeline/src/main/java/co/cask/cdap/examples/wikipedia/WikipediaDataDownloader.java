@@ -43,6 +43,8 @@ import java.net.URLEncoder;
  */
 public class WikipediaDataDownloader extends AbstractMapReduce {
 
+  private static final Logger LOG = LoggerFactory.getLogger(WikipediaDataDownloader.class);
+
   public static final String NAME = co.cask.cdap.examples.wikipedia.WikipediaDataDownloader.class.getSimpleName();
 
   @Override
@@ -54,6 +56,7 @@ public class WikipediaDataDownloader extends AbstractMapReduce {
 
   @Override
   public void initialize() throws Exception {
+    LOG.info("USER");
     MapReduceContext context = getContext();
     Job job = context.getHadoopJob();
     job.setMapperClass(WikipediaDataDownloaderMapper.class);
@@ -82,6 +85,7 @@ public class WikipediaDataDownloader extends AbstractMapReduce {
     @Override
     protected void map(byte[] key, byte[] value, Context context) throws IOException, InterruptedException {
       String rawWikiJson;
+      LOG.info("Mapping");
       try {
         rawWikiJson = downloadWikiData(Bytes.toString(value));
       } catch (IOException e) {

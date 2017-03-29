@@ -18,6 +18,7 @@ package co.cask.cdap.examples.wikipedia;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.spark.AbstractSpark;
+import org.apache.spark.SparkConf;
 
 /**
  * Spark program that executes in a workflow and analyzes wikipedia data
@@ -29,6 +30,20 @@ public class SparkWikipediaClustering extends AbstractSpark {
 
   public SparkWikipediaClustering(WikipediaPipelineApp.WikipediaAppConfig appConfig) {
     this.appConfig = appConfig;
+  }
+
+  @Override
+  protected void initialize() throws Exception {
+    SparkConf sparkConf = new SparkConf()
+      .set("spark.driver.extraJavaOptions",
+           "-verbose:gc -Xloggc:<LOG_DIR>/gc.log -XX:+PrintGCDetails -XX:+PrintGCTimeStamps " +
+             "-XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M " +
+             "-XX:MaxPermSize=128m")
+      .set("spark.executor.extraJavaOptions",
+           "-verbose:gc -Xloggc:<LOG_DIR>/gc.log -XX:+PrintGCDetails -XX:+PrintGCTimeStamps " +
+             "-XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M " +
+             "-XX:MaxPermSize=128m");
+    getContext().setSparkConf(sparkConf);
   }
 
   @Override

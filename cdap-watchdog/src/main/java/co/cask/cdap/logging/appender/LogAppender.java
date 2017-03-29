@@ -39,15 +39,14 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
       ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
       if (contextClassLoader != null) {
         ClassLoader classLoader = contextClassLoader.loadClass(className).getClassLoader();
-        if (classLoader != null
-          && ("co.cask.cdap.internal.app.runtime.plugin.ProgramClassLoader".equals(classLoader.getClass().getName())
-          || "co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader".equals(classLoader.getClass().getName()))) {
-          eventObject.getMDCPropertyMap().put(USER_LOG_TAG, USER_LOG_TRUE_VALUE);
-        }
+//          && ("co.cask.cdap.internal.app.runtime.plugin.ProgramClassLoader".equals(classLoader.getClass().getName())
+//          || "co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader".equals(classLoader.getClass().getName()))) {
+          eventObject.getMDCPropertyMap().put(USER_LOG_TAG, classLoader.getClass().getName());
       }
-    } catch (ClassNotFoundException e) {
+    } catch (Exception e) {
       // should not happen
-      LOG.error("Failed to mark user log for class {}", className, e);
+      System.out.println("Failed to mark user log for class " + className);
+      e.printStackTrace();
     }
   }
 

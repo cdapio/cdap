@@ -20,6 +20,7 @@ import co.cask.cdap.api.spark.{SparkExecutionContext, SparkMain}
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.clustering.KMeans
 import org.apache.spark.mllib.linalg.Vector
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConversions._
 
@@ -27,6 +28,8 @@ import scala.collection.JavaConversions._
  * Scala program to run K-Means algorithm on Wikipedia data.
  */
 class ScalaSparkKMeans extends SparkMain {
+
+  import ScalaSparkKMeans._
 
   override def run(implicit sec: SparkExecutionContext): Unit = {
     val sc = new SparkContext
@@ -45,6 +48,7 @@ class ScalaSparkKMeans extends SparkMain {
       case (id, vector) => vector
     }
 
+    LOG.info("USER")
     val kMeans = new KMeans()
     kMeans.setK(k)
     kMeans.setMaxIterations(maxIterations)
@@ -63,4 +67,8 @@ class ScalaSparkKMeans extends SparkMain {
 
     ClusteringUtils.storeResults(sc, sec, topTenTermsWithWeights, WikipediaPipelineApp.SPARK_CLUSTERING_OUTPUT_DATASET)
   }
+}
+
+object ScalaSparkKMeans {
+  private final val LOG: Logger = LoggerFactory.getLogger(classOf[ScalaSparkKMeans])
 }

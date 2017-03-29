@@ -23,6 +23,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.mllib.clustering.{LDA, LDAModel}
 import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.rdd.RDD
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConversions._
 
@@ -34,6 +35,8 @@ import scala.collection.JavaConversions._
  */
 class ScalaSparkLDA extends SparkMain {
 
+  import ScalaSparkLDA._
+
   override def run(implicit sec: SparkExecutionContext): Unit = {
     val sc = new SparkContext
 
@@ -43,6 +46,8 @@ class ScalaSparkLDA extends SparkMain {
     val (corpus, vocabArray, _) = ClusteringUtils.preProcess(
       sc.fromDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET), sec.getRuntimeArguments.toMap)
     corpus.cache()
+
+    LOG.info("USER")
 
     // Run LDA
     val ldaModel = runLDA(corpus, arguments)
@@ -70,4 +75,8 @@ class ScalaSparkLDA extends SparkMain {
       .setCheckpointInterval(10)
     lda.run(corpus)
   }
+}
+
+object ScalaSparkLDA {
+  private final val LOG: Logger = LoggerFactory.getLogger(classOf[ScalaSparkLDA])
 }
