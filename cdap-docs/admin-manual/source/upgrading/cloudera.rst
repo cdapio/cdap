@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 .. _admin-upgrading-cloudera:
 
@@ -13,8 +13,12 @@ Upgrading CDAP using Cloudera Manager
 
 Upgrading CDAP
 ==============
-When upgrading an existing CDAP installation from a previous version, you will need
-to make sure the CDAP table definitions in HBase are up-to-date.
+When upgrading an existing CDAP installation from a previous version, you will need run an
+upgrade tool to make sure the CDAP table definitions in HBase are up-to-date.
+
+To upgrade existing pipeline applications created using the |previous-short-version|\.x
+versions of system artifacts, there are :ref:`separate instructions on doing so
+<cdap-pipelines-operating-upgrading-pipeline>`. Run these after upgrading CDAP.
 
 **These steps will upgrade from CDAP** |bold-previous-short-version|\ **.x to**
 |bold-version|\ **.** If you are on an earlier version of CDAP, please follow the
@@ -66,7 +70,7 @@ CDAP:
    upgrade steps against the running services.  From the CDAP Service page, select "Run CDAP
    Post-Upgrade Tasks."
 
-#. To upgrade existing data pipeline applications created using the |previous-short-version|\.x versions of 
+#. To upgrade existing pipeline applications created using the |previous-short-version|\.x versions of 
    the system artifacts, there are :ref:`separate instructions <cdap-pipelines-operating-upgrading-pipeline>`.
 
 #. You must recompile and then redeploy your applications prior to using them.
