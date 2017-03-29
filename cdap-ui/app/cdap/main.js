@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ require('font-awesome-sass-loader!./styles/font-awesome.config.js');
 require('./styles/lib-styles.scss');
 require('./styles/common.scss');
 require('./styles/main.scss');
+require('./styles/svgxuse.js'); // to allow external SVG loading on IE 9+
 
 import Administration from 'components/Administration';
 import Dashboard from 'components/Dashboard';
