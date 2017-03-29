@@ -285,11 +285,15 @@
 {%- endif %}
   <tr>
     {%- if not hiderel %}
-    <th class="ftr-lft">
-    Previous Topic:
-    </th>    
+    <td class="ftr-lft">
+    {%- if prev and prev.title|striptags|e != '&lt;no title&gt;' %}
+    <a title="{{ prev.title|striptags|e }}" href="{{ prev.link|e }}" />Previous</a>
+    {%- else %}
+    &mdash;
     {%- endif %}
-    <th class="ftr-cntr" colspan="4">
+    </td>    
+    {%- endif %}
+    <td class="ftr-cntr" colspan="4">
     {%- if show_copyright %}
       {%- if hasdoc('copyright') %}
         {% trans path=pathto('copyright'), copyright=copyright|e %}<a href="{{ path }}">Copyright</a> &copy; {{ copyright }}{% endtrans %}
@@ -303,25 +307,11 @@
     {%- if show_sphinx %}
       {% trans sphinx_version=sphinx_version|e %}&bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
     {%- endif %}
-    </th>
+    </td>
     {%- if not hiderel %}
-    <th class="ftr-rght">
-    Next Topic:
-    </th>
-    {%- endif %}
-  </tr>
-  <tr>
-    {%- if not hiderel %}
-    <td class="ftr-lft" colspan="3">
-    {%- if prev and prev.title|striptags|e != '&lt;no title&gt;' %}
-    <a title="{{ prev.title|striptags|e }}" href="{{ prev.link|e }}" />{{ prev.title }}</a>
-    {%- else %}
-    &mdash;
-    {%- endif %}
-    </td>    
-    <td class="ftr-rght" colspan="3">
+    <td class="ftr-rght">
     {%- if next and next.title|striptags|e != '&lt;no title&gt;' %}
-    <a title="{{ next.title|striptags|e }}" href="{{ next.link|e }}" />{{ next.title }}</a>
+    <a title="{{ next.title|striptags|e }}" href="{{ next.link|e }}" />Next</a>
     {%- else %}
     &mdash;
     {%- endif %}
