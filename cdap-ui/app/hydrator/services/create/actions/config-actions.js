@@ -88,7 +88,7 @@ class HydratorPlusPlusConfigActions {
     let error = this.HydratorPlusPlusConfigStore.validateState(true);
 
     if (!error) { return; }
-    this.EventPipe.emit('showLoadingIcon', 'Publishing Pipeline to CDAP');
+    this.EventPipe.emit('showLoadingIcon', 'Deploying Pipeline...');
 
     let removeFromUserDrafts = (adapterName) => {
       let draftId = this.HydratorPlusPlusConfigStore.getState().__ui__.draftId;

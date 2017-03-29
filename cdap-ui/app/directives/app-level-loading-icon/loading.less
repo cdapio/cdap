@@ -18,11 +18,32 @@
 
 body.theme-cdap {
   .modal.custom-loading-modal {
-    top: 36%;
+    .modal-dialog {
+      margin-top: 0;
+      margin-bottom: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
     .modal-body {
       .icon-fist {
         font-size: 84px;
         color: @cdap-orange;
+      }
+
+      .icon-loading-bars {
+        background-color: rgba(255, 255, 255, 0.7);
+        color: #666666;
+        font-size: 84px;
+
+        > .loading-bar {
+          transform: translateY(-75%) scale(2);
+
+          rect {
+            fill: @cdap-orange;
+          }
+        }
       }
     }
   }

@@ -15,7 +15,9 @@
 -->
 <div class="input-schema">
   <div class="schema-inner" ng-if="::HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema">
-    <h4>Input Schema</h4>
+    <div class="field-header subtitle">
+      <h4>Input Schema</h4>
+    </div>
     <my-input-schema
         data-multiple-inputs="{{::(HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.inputs.multipleInputs === true)}}"
         input-schema="{{::HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema}}"></my-input-schema>
