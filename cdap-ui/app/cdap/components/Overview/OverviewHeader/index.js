@@ -15,6 +15,7 @@
  */
 
 import React, {PropTypes, Component} from 'react';
+import SVG from 'components/SVG';
 import classnames from 'classnames';
 import {Link} from 'react-router';
 require('./OverviewHeader.scss');
@@ -59,7 +60,7 @@ export default class OverviewHeader extends Component {
         {
           this.props.onClose ?
             <div className="header">
-              <i className={classnames("fa", this.props.icon)} />
+              <SVG icon={this.props.icon} />
               <h4>{this.props.title}</h4>
             </div>
           :
@@ -78,11 +79,11 @@ export default class OverviewHeader extends Component {
         }
         {
           this.props.onClose ?
-            <span
-              className="fa fa-times"
+            <SVG
+              icon="icon-close"
+              className="icon-close"
               onClick={this.props.onClose}
-            >
-            </span>
+            />
           :
             null
         }
