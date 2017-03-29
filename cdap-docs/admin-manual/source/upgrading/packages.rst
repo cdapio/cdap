@@ -15,8 +15,9 @@ Upgrading CDAP
 When upgrading an existing CDAP installation from a previous version, you will need run an
 upgrade tool to make sure the CDAP table definitions in HBase are up-to-date.
 
-If you have existing pipelines that need upgrading, there are :ref:`separate instructions
-<cdap-pipelines-operating-upgrading-pipeline>` for upgrading pipelines.
+To upgrade existing pipeline applications created using the |previous-short-version|\.x
+versions of system artifacts, there are :ref:`separate instructions on doing so
+<cdap-pipelines-operating-upgrading-pipeline>`. Run these after upgrading CDAP.
 
 **These steps will upgrade from CDAP** |bold-previous-short-version|\ **.x to**
 |bold-version|\ **.** If you are on an earlier version of CDAP, please follow the
