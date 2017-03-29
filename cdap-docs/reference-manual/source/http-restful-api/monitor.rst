@@ -43,7 +43,7 @@ The response body will contain a JSON-formatted list of the existing system serv
       ...
   ]
   
-See :ref:`downloading System Logs <http-restful-api-logging_downloading_system_logs>` for
+See :ref:`downloading System Logs <http-restful-api-logging-downloading-system-logs>` for
 information and an example of using these system services.
 
 .. rubric:: HTTP Responses
