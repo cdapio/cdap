@@ -302,7 +302,8 @@ gulp.task('watch:js:app', ['watch:js:app:hydrator', 'watch:js:app:tracker', 'wat
 gulp.task('polyfill', function () {
   return gulp.src([
     './app/polyfill.js',
-    './app/ui-utils/url-generator.js'
+    './app/ui-utils/url-generator.js',
+    './node_modules/svg4everybody/dist/svg4everybody.js'
   ])
     .pipe(plug.babel())
     .pipe(plug.concat('polyfill.js'))

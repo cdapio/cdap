@@ -22,7 +22,6 @@ require('font-awesome-sass-loader!./styles/font-awesome.config.js');
 require('./styles/lib-styles.scss');
 require('./styles/common.scss');
 require('./styles/main.scss');
-require('./styles/svgxuse.js'); // to allow external SVG loading on IE 9+
 
 import Administration from 'components/Administration';
 import Dashboard from 'components/Dashboard';
