@@ -479,7 +479,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getCause().getMessage());
       } else {
         Throwable rootCause = Throwables.getRootCause(e);
-        String message = "Error while invoking plugin method.";
+        String message = String.format("Error while invoking plugin method %s.", methodName);
         if (rootCause != null && rootCause.getMessage() != null) {
           message = String.format("%s %s", message, rootCause.getMessage());
         }
