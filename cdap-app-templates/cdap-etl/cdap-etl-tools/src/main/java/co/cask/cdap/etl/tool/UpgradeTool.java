@@ -99,7 +99,7 @@ public class UpgradeTool {
     ApplicationDetail appDetail = appClient.get(appId);
 
     if (!upgrader.shouldUpgrade(appDetail.getArtifact())) {
-      LOG.debug("Skipping app {} since it is not an upgradeable hydrator pipeline.", appId);
+      LOG.debug("Skipping app {} since it is not an upgradeable pipeline.", appId);
       return false;
     }
 
@@ -166,8 +166,8 @@ public class UpgradeTool {
       HelpFormatter helpFormatter = new HelpFormatter();
       helpFormatter.printHelp(
         UpgradeTool.class.getName() + " upgrade",
-        "Upgrades old pipelines to the current version. If the plugins used are not backwards compatible, " +
-          "the attempted upgrade config will be written to the error directory for manual upgrade.",
+        "Upgrades old pipelines to the current version. If the plugins used are not backward-compatible, " +
+          "the attempted upgrade config will be written to the error directory for a manual upgrade.",
         options, "");
       System.exit(0);
     }
