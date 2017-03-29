@@ -94,7 +94,7 @@ angular.module(PKG.name + '.commons')
 
         EventPipe.on('showLoadingIcon', function(message) {
           if(!modal && !isBackendDown) {
-            $scope.message = message || '';
+            $scope.message = message || 'Loading...';
             modal = $uibModal.open(modalObj);
           }
         }.bind($scope));
