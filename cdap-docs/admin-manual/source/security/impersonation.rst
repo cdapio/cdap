@@ -61,6 +61,10 @@ described in the installation section for each distribution (:ref:`Cloudera Mana
 <cloudera-hdfs-permissions>`, :ref:`Ambari <ambari-hdfs-permissions>`, 
 :ref:`MapR <mapr-hdfs-permissions>`, and :ref:`packages <packages-hdfs-permissions>`).
 
+Note that you can use the HDFS command ``hdfs groups [username ...]`` to confirm that the
+groups are set correctly, and that external security services such as LDAP are configured
+correctly.
+
 Application-level Impersonation
 -------------------------------
 To use application-level impersonation in CDAP |---| where applications, datasets, and streams have
