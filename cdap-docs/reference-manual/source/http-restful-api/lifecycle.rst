@@ -817,43 +817,87 @@ Update a Schedule
 -----------------
 To update a schedule, submit an HTTP POST request::
 
-  POST /v3/namespaces/<namespace-id>/apps/<app-id>/update
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/update
 
-To update a schedule to an application with a non-default version, submit an HTTP POST
+To update a schedule of an application with a non-default version, submit an HTTP POST
 request with the version specified::
 
-  POST /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/schedules/<schedule-id>
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/schedules/<schedule-id>/update
 
-The request body is a JSON object specifying the updated artifact version and the updated application
-config. For example, a request body of:
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
 
-.. container:: highlight
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``app-id``
+     - Name of the application
+   * - ``schedule-id``
+     - Name of the schedule; it is unique to the application and, if specified, the
+       application version 
+   * - ``version-id``
+     - Version of the application, typically following `semantic versioning
+       <http://semver.org>`__
 
-  .. parsed-literal::
-    |$| POST /v3/namespaces/default/apps/purchaseWordCount/update -d
-    {
-      "artifact": {
-        "name": "WordCount",
-        "version": "|release|",
-        "scope": "user"
-      },
-      "config": {
-        "stream": "logStream";
-      },
-      "principal":"user/example.net@examplekdc.net"
-    }
+The request body is a JSON object specifying the schedule to be updated, and follows the same form
+as documented in :ref:`http-restful-api-lifecycle-schedule-add`.
 
-will update the ``purchaseWordCount`` application to use version |release| of the ``WordCount`` artifact,
-and update the name of the stream to ``logStream``. If no artifact is given, the current artifact will be
-used. 
+Only changes to the schedule are supported; changes to the schedule name are not allowed.
+If a property is not given, the current property will be used. If the property is present,
+the current property will be overwritten by the property specified in the request. To
+remove the value of an existing property, use an empty value for the property.
 
-Only changes to artifact version are supported; changes to the artifact name are not allowed. If no
-``config`` is given, the current ``config`` will be used. If the ``config`` key is present, the current
-``config`` will be overwritten by the ``config`` specified in the request. As the principal of an
-application cannot be updated, during an update the principal should either be the same or absent.
+.. rubric:: HTTP Responses
 
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
 
+   * - Status Codes
+     - Description
+   * - ``400 Bad Request``
+     - If the new schedule type does not match the existing schedule type or there are
+       other client errors
 
+Delete a Schedule
+-----------------
+To delete a schedule, submit an HTTP DELETE::
+
+  DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>
+
+To delete a schedule of an application with a non-default version, submit an HTTP DELETE
+request with the version specified::
+
+  DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/schedules/<schedule-id>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``app-id``
+     - Name of the application to be deleted
+   * - ``schedule-id``
+     - Name of the schedule; it is unique to the application and, if specified, the
+       application version 
+   * - ``version-id``
+     - Version of the application to be deleted
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``404 Bad Request``
+     - If the schedule given by ``schedule-id`` was not found
 
 
 .. _http-restful-api-lifecycle-container-information:
