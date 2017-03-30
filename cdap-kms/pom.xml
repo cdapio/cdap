@@ -22,7 +22,7 @@
   <parent>
     <artifactId>cdap</artifactId>
     <groupId>co.cask.cdap</groupId>
-    <version>4.1.0</version>
+    <version>4.1.1-SNAPSHOT</version>
   </parent>
   <properties>
     <hadoop.common.version>2.6.0</hadoop.common.version>

@@ -38,7 +38,7 @@ const entity = {
   description: 'This is a test entity',
   org: 'Cask',
   created: Date.now(),
-  cdapVersion: '4.1.0'
+  cdapVersion: '4.1.1-SNAPSHOT'
 };
 const entityDetail = {
   "specVersion": "1.0",

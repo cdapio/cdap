@@ -21,10 +21,10 @@ describe('Footer Unit tests - ', () => {
     const footer = mount(
       <Footer
         copyrightYear="2016"
-        version="4.1.0"
+        version="4.1.1-SNAPSHOT"
       />
     );
-    expect(footer.instance().version).toBe('4.1.0');
+    expect(footer.instance().version).toBe('4.1.1-SNAPSHOT');
   });
   it('Should handle invalid cases with default values', () => {
     const footer = mount(
