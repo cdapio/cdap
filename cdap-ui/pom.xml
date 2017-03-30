@@ -167,6 +167,7 @@
                   <exclude>**/*.yaml</exclude>
                   <exclude>**/dll/**</exclude>
                   <exclude>**/LICENSE-node</exclude>
+                  <exclude>**/cdap-ui-upgrade/**</exclude>
                 </excludes>
               </configuration>
             </execution>
@@ -216,6 +217,22 @@
                   <goal>exec</goal>
                 </goals>
                 <configuration>
+                  <executable>${project.basedir}/node/node</executable>
+                  <arguments>
+                    <executable>${project.basedir}/node/npm/bin/npm-cli.js</executable>
+                    <argument>install</argument>
+                    <argument>-s --progress=false</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>npm-install-upgrade-ui</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <workingDirectory>${project.basedir}/cdap-ui-upgrade/</workingDirectory>
                   <executable>${project.basedir}/node/node</executable>
                   <arguments>
                     <executable>${project.basedir}/node/npm/bin/npm-cli.js</executable>
@@ -347,6 +364,7 @@
                     <copy todir = "${stage.opt.dir}/templates">
                       <fileset dir = "templates" />
                     </copy>
+
                     <copy todir = "${stage.opt.dir}">
                       <fileset dir = "./">
                         <include name="LICENSE-node" />
@@ -361,6 +379,9 @@
                       <fileset dir = "./">
                         <include name="server.js" />
                       </fileset>
+                    </copy>
+                    <copy todir = "${stage.opt.dir}/cdap-ui-upgrade">
+                      <fileset dir = "cdap-ui-upgrade" />
                     </copy>
                   </target>
                 </configuration>
