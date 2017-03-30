@@ -15,7 +15,7 @@ CDAP cluster (a *master*) is replicated to one or more additional CDAP *slave* c
 <installation-replication-disable-invalid-transaction-list-pruning>`, as this cannot be
 used with replication.
 
-**These steps should be reviewed (and the `Cluster Setup`_ completed) prior to starting CDAP.**
+**These steps should be reviewed (and the** `Cluster Setup`_ **completed) prior to starting CDAP.**
 
 .. _installation-replication-cluster-setup:
 
