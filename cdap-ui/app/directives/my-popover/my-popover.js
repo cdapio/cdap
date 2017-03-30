@@ -65,6 +65,7 @@ angular.module(PKG.name + '.commons')
           return delayCloseTimer;
         }
         function destroyPopover() {
+          scope.contentData.hovering = false;
           if (mypopover) {
             mypopover.destroy();
             mypopover = null;
@@ -90,7 +91,7 @@ angular.module(PKG.name + '.commons')
             mypopover.$scope.popoverContext = scope.popoverContext;
           }
           mypopover.$scope.delayClose = delayClose;
-          delayOpen(200);
+          delayOpen(100);
           return mypopover.$promise;
         }
         function initPopover() {
@@ -99,9 +100,9 @@ angular.module(PKG.name + '.commons')
               if (!mypopover) {
                 /*
                   We are not using the promise retuned by createpopover.
-                  TL;DR - Async delayed rendering(200ms) + executing stuff in promises' next tick = fucked up.
+                  TL;DR - Async delayed rendering(100ms) + executing stuff in promises' next tick = fucked up.
 
-                  Long version - We already open and close with a delay of 200ms and promise executes its then handler
+                  Long version - We already open and close with a delay of 100ms and promise executes its then handler
                   in the next tick. This adds one more delay in opening. By that time the user might have left the
                   target element. At that point opening the popover in the next tick makes it stay there forever as
                   we have already executed mouse leave at that point in time. that is the reason createPopover function
@@ -110,18 +111,19 @@ angular.module(PKG.name + '.commons')
 
                 createPopover();
               } else {
-                delayOpen(200);
+                delayOpen(100);
               }
             })
-            .on('mouseleave', delayClose.bind(null, 200))
+            .on('mouseleave', delayClose.bind(null, 100))
             .on('click', delayClose.bind(null));
         }
         function showPopover() {
           cancelTimers();
+          scope.contentData.hovering = true;
           mypopover.show();
           popoverElement = mypopover.$element;
           popoverElement.on('mouseenter', cancelTimers);
-          popoverElement.on('mouseleave', delayClose.bind(null, 200));
+          popoverElement.on('mouseleave', delayClose.bind(null, 100));
         }
         initPopover();
         scope.$on('$destroy', function () {
