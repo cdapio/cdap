@@ -46,7 +46,7 @@ class HydratorPlusPlusPluginConfigFactory {
             } else {
               throw 'NO_JSON_FOUND';
             }
-          } catch(e) {
+          } catch (e) {
             throw (e && e.name === 'SyntaxError')? 'CONFIG_SYNTAX_JSON_ERROR': e;
           }
         },
@@ -67,7 +67,7 @@ class HydratorPlusPlusPluginConfigFactory {
 
   generateNodeConfig(backendProperties, nodeConfig) {
     var specVersion = this.myHelpers.objectQuery(nodeConfig, 'metadata', 'spec-version') || '0.0';
-    switch(specVersion) {
+    switch (specVersion) {
       case '0.0':
         return this.generateConfigForOlderSpec(backendProperties, nodeConfig);
       case '1.0':
@@ -76,6 +76,7 @@ class HydratorPlusPlusPluginConfigFactory {
       case '1.2':
         return this.generateConfigFor12Spec(backendProperties, nodeConfig);
       case '1.3':
+      case '1.4':
         return this.generateConfigFor13Spec(backendProperties, nodeConfig);
       default: // No spec version which means
         throw 'NO_JSON_FOUND';

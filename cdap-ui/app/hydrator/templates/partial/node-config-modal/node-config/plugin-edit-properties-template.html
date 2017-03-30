@@ -26,11 +26,17 @@
            ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label">
   </div>
 
+  <div class="text-danger empty-hidden-properties-message" ng-if="HydratorPlusPlusNodeConfigCtrl.emptyHiddenFields.length">
+    Plugin contains hidden propertie(s) {{HydratorPlusPlusNodeConfigCtrl.emptyHiddenFields.join(', ')}} that do not have default values.
+    Please provide a default value in the 'widget-attributes' section of the widget JSON.
+  </div>
   <div ng-repeat="group in HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.groups">
     <div class="widget-group-container">
       <h4>{{::group.display}}</h4>
       <div ng-repeat="field in group.fields">
-        <div ng-if="field.name !== HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperty">
+        <div
+          ng-if="field.name !== HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperty && field['widget-type'] !== 'hidden'"
+        >
 
           <div class="form-group">
             <label class="control-label">
