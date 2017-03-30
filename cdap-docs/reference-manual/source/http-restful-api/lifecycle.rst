@@ -756,50 +756,101 @@ request with the version specified::
 
 The request body is a JSON object specifying the schedule to be created. Two different schedule
 types are currently supported: :ref:`time schedules <schedules-time>` and
-:ref:`stream-size schedules schedules-stream-size`.
+:ref:`stream-size schedules schedules-stream-size`:
 
-To specify a :ref:`time schedule <schedules-time>`, use ``"scheduleType": "TIME"``, as
-shown in this example for scheduling the *PurchaseHistoryWorkflow* of the :ref:`Purchase
-application <examples-purchase>`, to trigger daily::
+- To specify a :ref:`time schedule <schedules-time>`, use ``"scheduleType": "TIME"``, as
+  shown in this example for scheduling the *PurchaseHistoryWorkflow* of the :ref:`Purchase
+  application <examples-purchase>` to trigger daily::
     
-  {
-    "scheduleType": "TIME",
-    "schedule":{
-      "cronExpression":"0 4 * * *",
-      "description":"Daily schedule",
-      "runConstraints":{
-        "maxConcurrentRuns":1
-      }
-    },
-    "program":{
-      "programName": "PurchaseHistoryWorkflow",
-      "programType": "WORKFLOW"
-    },
-    "properties":{
-    }
-  }
-
-To specify a :ref:`stream-sized schedule <schedules-stream-size>`, use ``"scheduleType":
-"STREAM"``, as shown in this example for scheduling the *PurchaseHistoryWorkflow* of the
-:ref:`Purchase application <examples-purchase>`, to trigger after ingesting 1 MB of data or more::
-    
-  {
-    "scheduleType":"STREAM",
-    "schedule":{
-      "dataTriggerMB":1,
-      "description":"Schedule execution when 1 MB or more of data is ingested in the purchaseStream",
-      "runConstraints":{
-        "maxConcurrentRuns":1
+    {
+      "scheduleType": "TIME",
+      "schedule":{
+        "cronExpression":"0 4 * * *",
+        "description":"Daily schedule",
+        "runConstraints":{
+          "maxConcurrentRuns":1
+        }
       },
-      "streamName":"purchaseStream"
-    },
-    "program":{
-      "programName":"PurchaseHistoryWorkflow",
-      "programType":"WORKFLOW"
-    },
-    "properties":{
+      "program":{
+        "programName": "PurchaseHistoryWorkflow",
+        "programType": "WORKFLOW"
+      },
+      "properties":{
+      }
     }
-  }
+
+- To specify a :ref:`stream-sized schedule <schedules-stream-size>`, use ``"scheduleType":
+  "STREAM"``, as shown in this example for scheduling the *PurchaseHistoryWorkflow* of the
+  :ref:`Purchase application <examples-purchase>` to trigger after ingesting 1 MB of data or more::
+    
+    {
+      "scheduleType":"STREAM",
+      "schedule":{
+        "dataTriggerMB":1,
+        "description":"Schedule execution when 1 MB or more of data is ingested in the purchaseStream",
+        "runConstraints":{
+          "maxConcurrentRuns":1
+        },
+        "streamName":"purchaseStream"
+      },
+      "program":{
+        "programName":"PurchaseHistoryWorkflow",
+        "programType":"WORKFLOW"
+      },
+      "properties":{
+      }
+    }
+
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``409 Conflict``
+     - Schedule with the same name already exists
+
+Update a Schedule
+-----------------
+To update a schedule, submit an HTTP POST request::
+
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/update
+
+To update a schedule to an application with a non-default version, submit an HTTP POST
+request with the version specified::
+
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/schedules/<schedule-id>
+
+The request body is a JSON object specifying the updated artifact version and the updated application
+config. For example, a request body of:
+
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| POST /v3/namespaces/default/apps/purchaseWordCount/update -d
+    {
+      "artifact": {
+        "name": "WordCount",
+        "version": "|release|",
+        "scope": "user"
+      },
+      "config": {
+        "stream": "logStream";
+      },
+      "principal":"user/example.net@examplekdc.net"
+    }
+
+will update the ``purchaseWordCount`` application to use version |release| of the ``WordCount`` artifact,
+and update the name of the stream to ``logStream``. If no artifact is given, the current artifact will be
+used. 
+
+Only changes to artifact version are supported; changes to the artifact name are not allowed. If no
+``config`` is given, the current ``config`` will be used. If the ``config`` key is present, the current
+``config`` will be overwritten by the ``config`` specified in the request. As the principal of an
+application cannot be updated, during an update the principal should either be the same or absent.
 
 
 
