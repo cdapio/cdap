@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl {
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS ) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $window ) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -36,7 +36,9 @@ class HydratorPlusPlusTopPanelCtrl {
     this.dataSrc = new MyCDAPDataSource($scope);
     this.myAlertOnValium = myAlertOnValium;
     this.currentPreviewId = null;
+    this.$window = $window;
     this.showRunTimeArguments = false;
+    this.viewLogs = false;
     // This is for now run time arguments. It will be a map of macroMap
     // in the future once we get list of macros for a pipeline config.
     this.macrosMap = {};
@@ -44,9 +46,15 @@ class HydratorPlusPlusTopPanelCtrl {
     this.setState();
     this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
     this.focusTimeout = null;
+    this.timeoutInMinutes = 15;
 
     if ($stateParams.isClone) {
       this.openMetadata();
+    }
+
+    this.currentDraftId = this.HydratorPlusPlusConfigStore.getDraftId();
+    if (this.currentDraftId && this.currentDraftId === this.$window.localStorage.getItem('LastDraftId')) {
+      this.currentPreviewId = this.$window.localStorage.getItem('LastPreviewId');
     }
 
     this.isPreviewEnabled = angular.isObject(MY_CONFIG.hydrator) &&
@@ -72,10 +80,16 @@ class HydratorPlusPlusTopPanelCtrl {
       this.stopPreview();
       this.$interval.cancel(this.previewTimerInterval);
       this.$timeout.cancel(this.focusTimeout);
-
       this.previewStore.dispatch({ type: this.PREVIEWSTORE_ACTIONS.PREVIEW_RESET });
     });
+
+    // have to add this event handler because the $destroy event here
+    // is not triggered on page refresh
+    this.$window.onbeforeunload = function() {
+      $scope.$destroy();
+    };
   }
+
   setMetadata(metadata) {
     this.state.metadata = metadata;
   }
@@ -139,6 +153,8 @@ class HydratorPlusPlusTopPanelCtrl {
   onSaveDraft() {
     this.HydratorPlusPlusConfigActions.saveAsDraft();
     this.checkNameError();
+    this.$window.localStorage.setItem('LastDraftId', this.HydratorPlusPlusConfigStore.getDraftId());
+    this.$window.localStorage.setItem('LastPreviewId', this.currentPreviewId);
   }
   checkNameError() {
     let messages = this.consoleStore.getMessages() || [];
@@ -190,7 +206,7 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   toggleRuntimeArguments() {
-    if (!this.currentPreviewId) {
+    if (!this.previewRunning) {
       this.showRunTimeArguments = !this.showRunTimeArguments;
     } else {
       this.stopPreview();
@@ -198,6 +214,7 @@ class HydratorPlusPlusTopPanelCtrl {
   }
   runPreview() {
     this.previewLoading = true;
+    this.loadingLabel = 'Starting';
     this.showRunTimeArguments = false;
 
     this.displayDuration = {
@@ -234,7 +251,8 @@ class HydratorPlusPlusTopPanelCtrl {
       pipelineConfig.preview = Object.assign({}, previewConfig, {
         'realDatasets' :[],
         'programName' : 'DataStreamsSparkStreaming',
-        'programType': 'Spark'
+        'programType': 'Spark',
+        'timeout': this.timeoutInMinutes
       });
     }
     // Get start stages and end stages
@@ -271,10 +289,11 @@ class HydratorPlusPlusTopPanelCtrl {
           this.previewActions.setPreviewStartTime(startTime)
         );
         this.currentPreviewId = res.application;
+        this.$window.localStorage.setItem('LastDraftId', this.HydratorPlusPlusConfigStore.getDraftId());
+        this.$window.localStorage.setItem('LastPreviewId', this.currentPreviewId);
         this.startPollPreviewStatus(res.application);
       }, (err) => {
         this.previewLoading = false;
-        this.currentPreviewId = null;
         this.myAlertOnValium.show({
           type: 'danger',
           content: err.data
@@ -292,12 +311,12 @@ class HydratorPlusPlusTopPanelCtrl {
       previewId: this.currentPreviewId
     };
     this.previewLoading = true;
+    this.loadingLabel = 'Stopping';
     this.stopTimer();
     this.myPipelineApi
         .stopPreview(params, {})
         .$promise
         .then(() => {
-          this.currentPreviewId = null;
           this.previewLoading = false;
           this.previewRunning = false;
         });
@@ -314,7 +333,6 @@ class HydratorPlusPlusTopPanelCtrl {
         this.stopTimer();
         this.previewRunning = false;
         this.dataSrc.stopPoll(res.__pollId__);
-        this.currentPreviewId = null;
         if (res.status === 'COMPLETED') {
           this.myAlertOnValium.show({
             type: 'success',
@@ -322,17 +340,16 @@ class HydratorPlusPlusTopPanelCtrl {
           });
         } else {
           this.myAlertOnValium.show({
-            type: 'danger',
-            content: 'Pipeline preview stopped with status: ' + res.status
+            type: 'success',
+            content: 'Pipeline preview was stopped successfully.'
           });
         }
       }
     }, (err) => {
-      this.currentPreviewId = null;
       this.stopTimer();
         this.myAlertOnValium.show({
           type: 'danger',
-          content: err
+          content: 'Pipeline preview failed : ' + err
         });
       this.previewRunning = false;
       this.dataSrc.stopPoll(poll.__pollId__);
