@@ -17,6 +17,8 @@
 import React, { Component, PropTypes } from 'react';
 import classnames from 'classnames';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import DataPrepStore from 'components/DataPrep/store';
+import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 
 export default class FillNullOrEmptyDirective extends Component {
   constructor(props) {
@@ -66,8 +68,12 @@ export default class FillNullOrEmptyDirective extends Component {
         this.props.onComplete();
       }, (err) => {
         console.log('error', err);
-        this.setState({
-          error: err.message || err.response.message
+
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setError,
+          payload: {
+            message: err.message || err.response.message
+          }
         });
       });
   }

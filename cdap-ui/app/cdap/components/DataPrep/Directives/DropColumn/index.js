@@ -16,6 +16,8 @@
 
 import React, { Component, PropTypes } from 'react';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import DataPrepStore from 'components/DataPrep/store';
+import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 
 export default class DropColumnDirective extends Component {
   constructor(props) {
@@ -32,6 +34,13 @@ export default class DropColumnDirective extends Component {
         this.props.onComplete();
       }, (err) => {
         console.log('Error', err);
+
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setError,
+          payload: {
+            message: err.message || err.response.message
+          }
+        });
       });
   }
 
