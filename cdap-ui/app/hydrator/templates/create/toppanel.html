@@ -192,13 +192,19 @@
       data-config="HydratorPlusPlusTopPanelCtrl.runTimeWidgetConfig"
     ></key-value-widget>
   </div>
-  <div class="clearfix">
-    <div class="pull-right">
+  <div class="clearfix preview-start-section">
+    <span ng-if="HydratorPlusPlusTopPanelCtrl.state.artifact.name === HydratorPlusPlusTopPanelCtrl.GLOBALS.etlDataStreams">
+      <span class="fa fa-info-circle"></span>
+      <span>
+        For realtime pipelines, preview runs for 1 min
+      </span>
+    </span>
+    <span class="preview-start-button">
       <button class="btn btn-blue"
         ng-click="HydratorPlusPlusTopPanelCtrl.runPreview()">
         Start Now
       </button>
-    </div>
+    </span>
   </div>
 </div>
 <div class="pipeline-settings pipeline-logs-section" ng-if="HydratorPlusPlusTopPanelCtrl.viewLogs">

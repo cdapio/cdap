@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.preview;
 
 import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.preview.DataTracerFactory;
 import co.cask.cdap.app.preview.PreviewRequest;
 import co.cask.cdap.app.preview.PreviewRunner;
@@ -38,6 +38,7 @@ import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.gateway.handlers.store.ProgramStore;
+import co.cask.cdap.metrics.query.MetricsQueryHelper;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -57,7 +58,6 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -92,6 +92,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final DataTracerFactory dataTracerFactory;
   private final NamespaceAdmin namespaceAdmin;
   private final ProgramStore programStore;
+  private final MetricsCollectionService metricsCollectionService;
+  private final MetricsQueryHelper metricsQueryHelper;
 
   private volatile PreviewStatus status;
   private volatile boolean killedByTimer;
@@ -105,7 +107,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        SystemArtifactLoader systemArtifactLoader, ProgramRuntimeService programRuntimeService,
                        ProgramLifecycleService programLifecycleService,
                        PreviewStore previewStore, DataTracerFactory dataTracerFactory,
-                       NamespaceAdmin namespaceAdmin, ProgramStore programStore) {
+                       NamespaceAdmin namespaceAdmin, ProgramStore programStore,
+                       MetricsCollectionService metricsCollectionService, MetricsQueryHelper metricsQueryHelper) {
     this.datasetService = datasetService;
     this.logAppenderInitializer = logAppenderInitializer;
     this.applicationLifecycleService = applicationLifecycleService;
@@ -117,6 +120,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.dataTracerFactory = dataTracerFactory;
     this.namespaceAdmin = namespaceAdmin;
     this.programStore = programStore;
+    this.metricsCollectionService = metricsCollectionService;
+    this.metricsQueryHelper = metricsQueryHelper;
   }
 
   @Override
@@ -143,33 +148,32 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       throw e;
     }
 
-    PreviewConfig previewConfig = previewRequest.getAppRequest().getPreview();
+    final PreviewConfig previewConfig = previewRequest.getAppRequest().getPreview();
     ProgramController controller = programLifecycleService.start(
       programId, previewConfig == null ? Collections.<String, String>emptyMap() : previewConfig.getRuntimeArgs(),
       false);
-
-    // Only have timer if there is a timeout setting.
-    if (previewConfig.getTimeout() != null) {
-      timer = new Timer();
-      final int timeout =  previewConfig.getTimeout();
-      timer.schedule(new TimerTask() {
-        @Override
-        public void run() {
-          try {
-            LOG.info("Stopping the preview since it has reached running time: {} mins.", timeout);
-            stopPreview();
-            killedByTimer = true;
-          } catch (Exception e) {
-            LOG.debug("Error shutting down the preview run with id: {}", programId);
-          }
-        }
-      }, timeout * 60 * 1000);
-    }
 
     controller.addListener(new AbstractListener() {
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
         setStatus(new PreviewStatus(PreviewStatus.Status.RUNNING, null, System.currentTimeMillis(), null));
+        // Only have timer if there is a timeout setting.
+        if (previewConfig.getTimeout() != null) {
+          timer = new Timer();
+          final int timeOutMinutes =  previewConfig.getTimeout();
+          timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+              try {
+                LOG.info("Stopping the preview since it has reached running time: {} mins.", timeOutMinutes);
+                stopPreview();
+                killedByTimer = true;
+              } catch (Exception e) {
+                LOG.debug("Error shutting down the preview run with id: {}", programId);
+              }
+            }
+          }, timeOutMinutes * 60 * 1000);
+        }
       }
 
       @Override
@@ -226,11 +230,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   }
 
   @Override
-  public List<MetricTimeSeries> getMetrics() {
-    return new ArrayList<>();
-  }
-
-  @Override
   public ProgramRunId getProgramRunId() {
     return runId;
   }
@@ -238,6 +237,11 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   @Override
   public RunRecordMeta getRunRecord() {
     return programStore.getRun(programId, runId.getRun());
+  }
+
+  @Override
+  public MetricsQueryHelper getMetricsQueryHelper() {
+    return metricsQueryHelper;
   }
 
   @Override
@@ -255,7 +259,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       applicationLifecycleService.start(),
       systemArtifactLoader.start(),
       programRuntimeService.start(),
-      programLifecycleService.start()
+      programLifecycleService.start(),
+      metricsCollectionService.start()
     ).get();
   }
 
@@ -273,6 +278,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     applicationLifecycleService.stopAndWait();
     systemArtifactLoader.stopAndWait();
     logAppenderInitializer.close();
+    metricsCollectionService.stopAndWait();
     programLifecycleService.stopAndWait();
   }
 }
