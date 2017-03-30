@@ -62,8 +62,8 @@ described in the installation section for each distribution (:ref:`Cloudera Mana
 :ref:`MapR <mapr-hdfs-permissions>`, and :ref:`packages <packages-hdfs-permissions>`).
 
 Note that you can use the HDFS command ``hdfs groups [username ...]`` to confirm that the
-groups are set correctly, and that HBase permissions and external security services such
-as LDAP are configured correctly.
+groups are set correctly, and that external security services such as LDAP are configured
+correctly.
 
 Application-level Impersonation
 -------------------------------
