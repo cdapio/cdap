@@ -27,8 +27,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.utils.Networks;
@@ -67,11 +65,8 @@ import co.cask.cdap.gateway.handlers.preview.PreviewHttpHandler;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
-import co.cask.cdap.internal.app.namespace.DefaultNamespaceResourceDeleter;
 import co.cask.cdap.internal.app.namespace.DistributedStorageProviderNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
-import co.cask.cdap.internal.app.namespace.NamespaceResourceDeleter;
 import co.cask.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
@@ -117,7 +112,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Module;
-import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
@@ -151,8 +145,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getInMemoryModules() {
     return Modules.combine(new AppFabricServiceModule(
-                             StreamHandler.class, StreamFetchHandler.class,
-                             StreamViewHttpHandler.class),
+                               StreamHandler.class, StreamFetchHandler.class,
+                               StreamViewHttpHandler.class),
+                           new NamespaceAdminModule().getInMemoryModules(),
                            new ConfigStoreModule().getInMemoryModule(),
                            new EntityVerifierModule(),
                            new AuthenticationContextModules().getMasterModule(),
@@ -194,6 +189,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     return Modules.combine(new AppFabricServiceModule(
                              StreamHandler.class, StreamFetchHandler.class,
                              StreamViewHttpHandler.class, PreviewHttpHandler.class),
+                           new NamespaceAdminModule().getStandaloneModules(),
                            new ConfigStoreModule().getStandaloneModule(),
                            new EntityVerifierModule(),
                            new AuthenticationContextModules().getMasterModule(),
@@ -261,6 +257,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   public Module getDistributedModules() {
 
     return Modules.combine(new AppFabricServiceModule(ImpersonationHandler.class),
+                           new NamespaceAdminModule().getDistributedModules(),
                            new ConfigStoreModule().getDistributedModule(),
                            new EntityVerifierModule(),
                            new AuthenticationContextModules().getMasterModule(),
@@ -277,27 +274,27 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, MasterServiceManager.class);
                                mapBinder.addBinding(Constants.Service.LOGSAVER)
-                                        .to(LogSaverStatusServiceManager.class);
+                                 .to(LogSaverStatusServiceManager.class);
                                mapBinder.addBinding(Constants.Service.TRANSACTION)
-                                        .to(TransactionServiceManager.class);
+                                 .to(TransactionServiceManager.class);
                                mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR)
-                                        .to(MetricsProcessorStatusServiceManager.class);
+                                 .to(MetricsProcessorStatusServiceManager.class);
                                mapBinder.addBinding(Constants.Service.METRICS)
-                                        .to(MetricsServiceManager.class);
+                                 .to(MetricsServiceManager.class);
                                mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP)
-                                        .to(AppFabricServiceManager.class);
+                                 .to(AppFabricServiceManager.class);
                                mapBinder.addBinding(Constants.Service.STREAMS)
-                                        .to(StreamServiceManager.class);
+                                 .to(StreamServiceManager.class);
                                mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
-                                        .to(DatasetExecutorServiceManager.class);
+                                 .to(DatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.METADATA_SERVICE)
-                                        .to(MetadataServiceManager.class);
+                                 .to(MetadataServiceManager.class);
                                mapBinder.addBinding(Constants.Service.REMOTE_SYSTEM_OPERATION)
-                                        .to(RemoteSystemOperationServiceManager.class);
+                                 .to(RemoteSystemOperationServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
-                                        .to(ExploreServiceManager.class);
+                                 .to(ExploreServiceManager.class);
                                mapBinder.addBinding(Constants.Service.MESSAGING_SERVICE)
-                                        .to(MessagingServiceManager.class);
+                                 .to(MessagingServiceManager.class);
 
                                Multibinder<String> servicesNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
@@ -319,7 +316,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     private final List<Class<? extends HttpHandler>> handlerClasses;
 
-    @SafeVarargs
     private AppFabricServiceModule(Class<? extends HttpHandler>... handlerClasses) {
       this.handlerClasses = ImmutableList.copyOf(handlerClasses);
     }
@@ -344,19 +340,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-
-      install(new PrivateModule() {
-        @Override
-        protected void configure() {
-          bind(NamespaceResourceDeleter.class).to(DefaultNamespaceResourceDeleter.class).in(Scopes.SINGLETON);
-          bind(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
-          bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class);
-          bind(NamespaceQueryAdmin.class).to(DefaultNamespaceAdmin.class);
-
-          expose(NamespaceAdmin.class);
-          expose(NamespaceQueryAdmin.class);
-        }
-      });
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
