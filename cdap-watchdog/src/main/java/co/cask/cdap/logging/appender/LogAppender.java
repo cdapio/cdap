@@ -27,15 +27,20 @@ import org.slf4j.LoggerFactory;
  * CDAP log appender interface.
  */
 public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
-  private static final Logger LOG = LoggerFactory.getLogger(LogAppender.class);
   private static final String USER_LOG_TAG = ".userLog";
   private static final String USER_LOG_TRUE_VALUE = "true";
+
+  public LogAppender() {
+    System.out.println("Constructing LogAppender");
+  }
+
   /**
    * Check classLoader of the log to add userTag
    */
   private static void addUserLogTag(ILoggingEvent eventObject) {
-    String className = eventObject.getCallerData()[0].getClassName();
+    String className = null;
     try {
+      className = eventObject.getCallerData()[0].getClassName();
       ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
       if (contextClassLoader != null) {
         ClassLoader classLoader = contextClassLoader.loadClass(className).getClassLoader();
@@ -43,9 +48,13 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
 //          || "co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader".equals(classLoader.getClass().getName()))) {
           eventObject.getMDCPropertyMap().put(USER_LOG_TAG, classLoader.getClass().getName());
       }
-    } catch (Exception e) {
-      // should not happen
-      System.out.println("Failed to mark user log for class " + className);
+    } catch (Throwable e) {
+      if (className == null) {
+        System.out.println("Failed to get class name for eventObject");
+      } else {
+        // should not happen
+        System.out.println("Failed to mark user log for class " + className);
+      }
       e.printStackTrace();
     }
   }
