@@ -368,7 +368,7 @@ be similar to this (pretty-printed and portions deleted to fit)::
 Start a Program
 ---------------
 After an application is deployed, you can start its flows, MapReduce and Spark programs,
-custom services, workers, and workflows by submitting an HTTP POST request::
+custom services, workers, or workflows by submitting an HTTP POST request::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/start
 
@@ -377,10 +377,12 @@ POST request that includes the version::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/<program-type>/<program-id>/start
 
-Note: Concurrent runs of Flows and Workers across multiple versions of the same application is not allowed.
+Note: Concurrent runs of flows and workers across multiple versions of the same
+application are not allowed.
 
-When starting an program, you can optionally specify runtime arguments as a JSON map in the request body.
-CDAP will use these these runtime arguments only for this single invocation of the program.
+When starting an program, you can optionally specify runtime arguments as a JSON map in
+the request body. CDAP will use these runtime arguments only for this single invocation of
+the program.
 
 .. list-table::
    :widths: 20 80
@@ -457,7 +459,8 @@ Each JSON object will contain these parameters:
    * - ``"statusCode"``
      - The status code from starting an individual JSON object
    * - ``"error"``
-     - If an error, a description of why the program could not be started (for example, the specified program was not found)
+     - If an error, a description of why the program could not be started (for example,
+       the specified program was not found)
 
 For example::
 
@@ -551,7 +554,7 @@ For example::
 
   POST /v3/namespaces/default/apps/PurchaseHistory/mapreduce/PurchaseHistoryBuilder/runs/631bc459-a9dd-4218-9ea0-d46fb1991f82/stop
 
-will stop the specific run of the *PurchaseHistoryBuilder* mapreduce in the *PurchaseHistory* application.
+will stop a specific run of the *PurchaseHistoryBuilder* MapReduce program in the *PurchaseHistory* application.
 
 .. _http-restful-api-lifecycle-stop-multiple:
 
@@ -597,7 +600,8 @@ Each JSON object will contain these parameters:
    * - ``"statusCode"``
      - The status code from stopping an individual JSON object
    * - ``"error"``
-     - If an error, a description of why the program could not be stopped (for example, the specified program was not found)
+     - If an error, a description of why the program could not be stopped (for example,
+       the specified program was not found)
 
 For example::
 
@@ -679,7 +683,8 @@ with a JSON array in the request body consisting of multiple JSON objects with t
      - Name of the *flow*, *MapReduce*, *schedule*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
 
-The response will be the same JSON array as submitted with additional parameters for each of the underlying JSON objects:
+The response will be the same JSON array as submitted with additional parameters for each
+of the underlying JSON objects:
 
 .. list-table::
    :widths: 20 80
@@ -713,11 +718,97 @@ will retrieve the status of two programs. It will receive a response such as::
     { "appId":"MyApp2", "programType":"service", "programId":"MyService", "error":"Program not found", "statusCode":404 }
   ]
 
+
+.. _http-restful-api-lifecycle-schedule:
+
+Schedule Lifecycle
+==================
+
+.. _http-restful-api-lifecycle-schedule-add:
+
+Add a Schedule
+---------------------
+To add a schedule for a program to an application, submit an HTTP PUT request::
+
+  PUT /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>
+
+To add the schedule to an application with a non-default version, submit an HTTP PUT
+request with the version specified::
+
+  PUT /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/schedules/<schedule-id>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``app-id``
+     - Name of the application
+   * - ``schedule-id``
+     - Name of the schedule; it is unique to the application and, if specified, the
+       application version 
+   * - ``version-id``
+     - Version of the application, typically following `semantic versioning
+       <http://semver.org>`__
+
+The request body is a JSON object specifying the schedule to be created. Two different schedule
+types are currently supported: :ref:`time schedules <schedules-time>` and
+:ref:`stream-size schedules schedules-stream-size`.
+
+To specify a :ref:`time schedule <schedules-time>`, use ``"scheduleType": "TIME"``, as
+shown in this example for scheduling the *PurchaseHistoryWorkflow* of the :ref:`Purchase
+application <examples-purchase>`, to trigger daily::
+    
+  {
+    "scheduleType": "TIME",
+    "schedule":{
+      "cronExpression":"0 4 * * *",
+      "description":"Daily schedule",
+      "runConstraints":{
+        "maxConcurrentRuns":1
+      }
+    },
+    "program":{
+      "programName": "PurchaseHistoryWorkflow",
+      "programType": "WORKFLOW"
+    },
+    "properties":{
+    }
+  }
+
+To specify a :ref:`stream-sized schedule <schedules-stream-size>`, use ``"scheduleType":
+"STREAM"``, as shown in this example for scheduling the *PurchaseHistoryWorkflow* of the
+:ref:`Purchase application <examples-purchase>`, to trigger after ingesting 1 MB of data or more::
+    
+  {
+    "scheduleType":"STREAM",
+    "schedule":{
+      "dataTriggerMB":1,
+      "description":"Schedule execution when 1 MB or more of data is ingested in the purchaseStream",
+      "runConstraints":{
+        "maxConcurrentRuns":1
+      },
+      "streamName":"purchaseStream"
+    },
+    "program":{
+      "programName":"PurchaseHistoryWorkflow",
+      "programType":"WORKFLOW"
+    },
+    "properties":{
+    }
+  }
+
+
+
+
+
 .. _http-restful-api-lifecycle-container-information:
 
 Container Information
 =====================
-
 To find out the address of an program's container host and the container’s debug port, you can query
 CDAP for a flow or service’s live info via an HTTP GET method::
 
@@ -782,7 +873,8 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"runnableId"``
      - Name of the *flowlet*, only required if the program type is ``flow``
 
-The response will be the same JSON array as submitted with additional parameters for each of the underlying JSON objects:
+The response will be the same JSON array as submitted with additional parameters for each
+of the underlying JSON objects:
 
 .. list-table::
    :widths: 20 80
@@ -797,8 +889,8 @@ The response will be the same JSON array as submitted with additional parameters
    * - ``"statusCode"``
      - The status code from retrieving the instance count of an individual JSON object
    * - ``"error"``
-     - If an error, a description of why the status was not retrieved (for example, the specified program was not found, or
-       the requested JSON object was missing a parameter)
+     - If an error, a description of why the status was not retrieved (for example, the
+       specified program was not found, or the requested JSON object was missing a parameter)
 
 **Note:** The ``requested`` and ``provisioned`` fields are mutually exclusive of the ``error`` field.
 
@@ -1072,7 +1164,8 @@ To fetch the run record for a particular run of a program, use::
      :class: triple-table
 
      * - Description
-       - Retrieve the run record of the flow *WhoFlow* of the application *HelloWorld* for run *b78d0091-da42-11e4-878c-2217c18f435d*
+       - Retrieve the run record of the flow *WhoFlow* of the application *HelloWorld* for
+         run *b78d0091-da42-11e4-878c-2217c18f435d*
       
      * - HTTP Method
        - ``GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs/b78d0091-da42-11e4-878c-2217c18f435d``

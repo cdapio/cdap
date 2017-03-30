@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _schedules:
 
@@ -25,6 +25,8 @@ RESTful API <http-restful-api-lifecycle>`. The :ref:`status of a schedule
 
 When a schedule is initially deployed, it is in a *suspended* state; a *resume* command needs to be
 issued to change it to *scheduled* before it will begin.
+
+.. _schedules-time:
 
 Time Schedules
 ==============
@@ -56,6 +58,7 @@ Optionally, you can specify the properties for the schedule::
 Every time the ``FiveHourSchedule`` triggers, it passes the ``scheduleProperties`` as runtime arguments to the ``MyWorkflow``.
 
 
+.. _schedules-stream-size:
 .. _stream-size-schedules:
 
 Stream-size Schedules
