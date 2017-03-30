@@ -772,7 +772,10 @@ public class DataStreamsTest extends HydratorTestBase {
     Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, appId.getNamespace(),
                                                Constants.Metrics.Tag.APP, appId.getEntityName(),
                                                Constants.Metrics.Tag.SPARK, DataStreamsSparkLauncher.NAME);
-    metricsManager.waitForTotalMetricCount(tags, "user." + metric, expected, 10, TimeUnit.SECONDS);
-    metricsManager.waitForTotalMetricCount(tags, "user." + metric, expected, 10, TimeUnit.SECONDS);
+    String metricName = "user." + metric;
+    metricsManager.waitForTotalMetricCount(tags, metricName, expected, 10, TimeUnit.SECONDS);
+    metricsManager.waitForTotalMetricCount(tags, metricName, expected, 10, TimeUnit.SECONDS);
+    // wait for won't throw an exception if the metric count is greater than expected
+    Assert.assertEquals(expected, metricsManager.getTotalMetric(tags, metricName));
   }
 }
