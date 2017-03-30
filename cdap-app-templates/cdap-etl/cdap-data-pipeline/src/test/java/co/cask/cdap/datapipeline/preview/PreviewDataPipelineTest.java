@@ -19,7 +19,11 @@ package co.cask.cdap.datapipeline.preview;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.app.preview.PreviewRunner;
 import co.cask.cdap.app.preview.PreviewStatus;
@@ -38,10 +42,12 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.preview.PreviewConfig;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.TestConfiguration;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -51,11 +57,14 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Test for preview for data pipeline app
@@ -125,7 +134,8 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig, previewConfig);
 
     // Start the preview and get the corresponding PreviewRunner.
-    final PreviewRunner previewRunner = previewManager.getRunner(previewManager.start(NamespaceId.DEFAULT, appRequest));
+    ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
+    final PreviewRunner previewRunner = previewManager.getRunner(previewId);
 
     // Wait for the preview status go into COMPLETED.
     Tasks.waitFor(PreviewStatus.Status.COMPLETED, new Callable<PreviewStatus.Status>() {
@@ -145,6 +155,14 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     // Get the data for stage "sink" in the PreviewStore, should contain two records.
     checkPreviewStore(previewRunner, "sink", 2);
 
+    // Validate the metrics for preview
+    validateMetric(2, previewId, "source.records.in", previewRunner);
+    validateMetric(2, previewId, "source.records.out", previewRunner);
+    validateMetric(2, previewId, "transform.records.in", previewRunner);
+    validateMetric(2, previewId, "transform.records.out", previewRunner);
+    validateMetric(2, previewId, "sink.records.out", previewRunner);
+    validateMetric(2, previewId, "sink.records.in", previewRunner);
+
     // Check the sink table is not created in the real space.
     DataSetManager<Table> sinkManager = getDataset(sinkTableName);
     Assert.assertNull(sinkManager.get());
@@ -155,5 +173,38 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     Map<String, List<JsonElement>> result = previewRunner.getData(tracerName);
     Assert.assertTrue(!result.isEmpty());
     Assert.assertEquals(expectedNumber, result.get(DATA_TRACER_PROPERTY).size());
+  }
+
+  private void validateMetric(long expected, ApplicationId previewId,
+                              String metric, PreviewRunner runner) throws TimeoutException, InterruptedException {
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, previewId.getNamespace(),
+                                               Constants.Metrics.Tag.APP, previewId.getEntityName(),
+                                               Constants.Metrics.Tag.WORKFLOW, SmartWorkflow.NAME);
+    String metricName = "user." + metric;
+    long value = getTotalMetric(tags, metricName, runner);
+
+    // Min sleep time is 10ms, max sleep time is 1 seconds
+    long sleepMillis = TimeUnit.SECONDS.toMillis(1);
+    Stopwatch stopwatch = new Stopwatch().start();
+    while (value < expected && stopwatch.elapsedTime(TimeUnit.SECONDS) < 20) {
+      TimeUnit.MILLISECONDS.sleep(sleepMillis);
+      value = getTotalMetric(tags, metricName, runner);
+    }
+    // wait for won't throw an exception if the metric count is greater than expected
+    Assert.assertEquals(expected, value);
+  }
+
+  private long getTotalMetric(Map<String, String> tags, String metricName, PreviewRunner runner) {
+    MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
+                                                tags, new ArrayList<String>());
+    Collection<MetricTimeSeries> result = runner.getMetricsQueryHelper().getMetricStore().query(query);
+    if (result.isEmpty()) {
+      return 0;
+    }
+    List<TimeValue> timeValues = result.iterator().next().getTimeValues();
+    if (timeValues.isEmpty()) {
+      return 0;
+    }
+    return timeValues.get(0).getValue();
   }
 }
