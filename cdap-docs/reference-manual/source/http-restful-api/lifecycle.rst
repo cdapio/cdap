@@ -172,6 +172,7 @@ For example::
 
 will return all applications that use either the ``cdap-data-pipeline`` or ``cdap-etl-realtime`` artifacts.
 
+.. _http-restful-api-lifecycle-app-deployed-details:
 
 Details of a Deployed Application
 ---------------------------------
@@ -723,11 +724,13 @@ will retrieve the status of two programs. It will receive a response such as::
 
 Schedule Lifecycle
 ==================
+Currently (CDAP v\|release|), schedules can only be created for :ref:`workflows
+<workflows>`. Future releases of CDAP will expand this to encompass other program types.
 
 .. _http-restful-api-lifecycle-schedule-add:
 
 Add a Schedule
----------------------
+--------------
 To add a schedule for a program to an application, submit an HTTP PUT request::
 
   PUT /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>
@@ -755,8 +758,8 @@ request with the version specified::
        <http://semver.org>`__
 
 The request body is a JSON object specifying the schedule to be created. Two different schedule
-types are currently supported: :ref:`time schedules <schedules-time>` and
-:ref:`stream-size schedules schedules-stream-size`:
+types are currently supported for workflows: :ref:`time schedules <schedules-time>` and
+:ref:`stream-size schedules <schedules-stream-size>`:
 
 - To specify a :ref:`time schedule <schedules-time>`, use ``"scheduleType": "TIME"``, as
   shown in this example for scheduling the *PurchaseHistoryWorkflow* of the :ref:`Purchase
@@ -801,6 +804,7 @@ types are currently supported: :ref:`time schedules <schedules-time>` and
       }
     }
 
+*Note:* For any schedule, the program must be for a workflow and the ``programType`` must be set to ``WORKLFLOW``. 
 
 .. rubric:: HTTP Responses
 
@@ -812,6 +816,8 @@ types are currently supported: :ref:`time schedules <schedules-time>` and
      - Description
    * - ``409 Conflict``
      - Schedule with the same name already exists
+
+.. _http-restful-api-lifecycle-schedule-update:
 
 Update a Schedule
 -----------------
@@ -861,6 +867,89 @@ remove the value of an existing property, use an empty value for the property.
      - If the new schedule type does not match the existing schedule type or there are
        other client errors
 
+
+.. _http-restful-api-lifecycle-schedule-list:
+
+List Schedules
+--------------
+As schedules are created for a workflow, you need to know the workflows of an application
+in order to retrieve the application's schedules. You can use the
+:ref:`http-restful-api-lifecycle-app-deployed-details` to obtain the workflows of an
+application.
+
+To list all of the schedules of a workflow of an application, issue an HTTP GET request::
+
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/schedules
+
+To list the next time that the workflow is scheduled to run, use the parameter ``nextruntime``::
+
+    GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/nextruntime
+    
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``app-id``
+     - Name of the application
+   * - ``workflow-id``
+     - Name of the workflow
+
+
+.. container:: table-block-example
+
+  .. list-table::
+     :widths: 99 1
+     :stub-columns: 1
+
+     * - Example: Retrieving a Schedule
+       - 
+       
+  .. list-table::
+     :widths: 15 85
+     :class: triple-table
+
+     * - Description
+       - Retrieves the schedules of the workflow *PurchaseHistoryWorkflow* of the
+         application *PurchaseHistory*
+      
+     * - HTTP Method
+       - ``GET /v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/schedules``
+         
+     * - Returns
+       - | ``[{"schedule":{"name":"DailySchedule","description":"DailySchedule with crontab 0 4 * * *","cronEntry":"0 4 * * *"},``
+         | `` "program":{"programName":"PurchaseHistoryWorkflow","programType":"WORKFLOW"},"properties":{}}]``
+         
+
+.. container:: table-block-example
+
+  .. list-table::
+     :widths: 99 1
+     :stub-columns: 1
+
+     * - Example: Retrieving The Next Runtime
+       - 
+       
+  .. list-table::
+     :widths: 15 85
+     :class: triple-table
+
+     * - Description
+       - Retrieves the next runtime of the workflow *PurchaseHistoryWorkflow* of the
+         application *PurchaseHistory*
+      
+     * - HTTP Method
+       - ``GET /v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/nextruntime``
+         
+     * - Returns
+       - | ``[{"id":"DEFAULT.WORKFLOW:developer:PurchaseHistory:PurchaseHistoryWorkflow:0:DailySchedule","time":1415102400000}]``
+
+
+.. _http-restful-api-lifecycle-schedule-delete:
+
 Delete a Schedule
 -----------------
 To delete a schedule, submit an HTTP DELETE::
@@ -898,6 +987,61 @@ request with the version specified::
      - Description
    * - ``404 Bad Request``
      - If the schedule given by ``schedule-id`` was not found
+
+
+.. _http-restful-api-lifecycle-schedule-suspend-resume:
+
+Schedule: Suspend and Resume
+----------------------------
+For a schedule, you can suspend and resume it using the RESTful API.
+
+**Suspend:** To *suspend* a schedule means that the program associated with that schedule will not
+trigger again until the schedule is resumed.
+
+**Resume:** To *resume* a schedule means that the trigger is reset, and the program associated will
+run again at the next scheduled time.
+
+As a schedule is initially deployed in a *suspended* state, a call to this API is needed to *resume* it.
+
+To suspend or resume a schedule use::
+
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/suspend
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/resume
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``app-id``
+     - Name of the application
+   * - ``schedule-id``
+     - Name of the schedule
+
+.. container:: table-block-example
+
+  .. list-table::
+     :widths: 99 1
+     :stub-columns: 1
+
+     * - Example: Suspending a Schedule
+       - 
+       
+  .. list-table::
+     :widths: 15 85
+     :class: triple-table
+
+     * - Description
+       - Suspends the schedule *DailySchedule* of the application *PurchaseHistory*
+      
+     * - HTTP Method
+       - ``POST /v3/namespaces/default/apps/PurchaseHistory/schedules/DailySchedule/suspend``
+         
+     * - Returns
+       - | ``OK`` if successfully set as suspended
 
 
 .. _http-restful-api-lifecycle-container-information:
@@ -1147,8 +1291,8 @@ Retrieve the number of instances of the worker *DataWorker* in the application
 
 .. _rest-program-runs:
 
-Run Records and Schedules
-=========================
+Run Records
+===========
 
 To see all the runs of a selected program (flows, MapReduce programs, Spark programs,
 services, or workflows), issue an HTTP GET to the program’s URL with the ``runs``
@@ -1314,108 +1458,7 @@ For workflows, you can retrieve:
      * - Returns
        - | ``[{"runid":"cad83d45-ecfb-4bf8-8cdb-4928a5601b0e","start":1415051892,"end":1415057103,"status":"STOPPED"}]``
 
-
-.. container:: table-block-example
-
-  .. list-table::
-     :widths: 99 1
-     :stub-columns: 1
-
-     * - Example: Retrieving a Schedule
-       - 
        
-  .. list-table::
-     :widths: 15 85
-     :class: triple-table
-
-     * - Description
-       - Retrieves the schedules of the workflow *PurchaseHistoryWorkflow* of the application *PurchaseHistory*
-      
-     * - HTTP Method
-       - ``GET /v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/schedules``
-         
-     * - Returns
-       - | ``[{"schedule":{"name":"DailySchedule","description":"DailySchedule with crontab 0 4 * * *","cronEntry":"0 4 * * *"},``
-         | `` "program":{"programName":"PurchaseHistoryWorkflow","programType":"WORKFLOW"},"properties":{}}]``
-         
-
-.. container:: table-block-example
-
-  .. list-table::
-     :widths: 99 1
-     :stub-columns: 1
-
-     * - Example: Retrieving The Next Runtime
-       - 
-       
-  .. list-table::
-     :widths: 15 85
-     :class: triple-table
-
-     * - Description
-       - Retrieves the next runtime of the workflow *PurchaseHistoryWorkflow* of the application *PurchaseHistory*
-      
-     * - HTTP Method
-       - ``GET /v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/nextruntime``
-         
-     * - Returns
-       - | ``[{"id":"DEFAULT.WORKFLOW:developer:PurchaseHistory:PurchaseHistoryWorkflow:0:DailySchedule","time":1415102400000}]``
-       
-.. _http-restful-api-lifecycle-schedules-suspend-resume:
-
-Schedules: Suspend and Resume
------------------------------
-
-For schedules, you can suspend and resume them using the RESTful API.
-
-**Suspend:** To *suspend* a schedule means that the program associated with that schedule will not
-trigger again until the schedule is resumed.
-
-**Resume:** To *resume* a schedule means that the trigger is reset, and the program associated will
-run again at the next scheduled time.
-
-As a schedule is initially deployed in a *suspended* state, a call to this API is needed to *resume* it.
-
-To suspend or resume a schedule use::
-
-  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/suspend
-  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/resume
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``namespace-id``
-     - Namespace ID
-   * - ``app-id``
-     - Name of the application
-   * - ``schedule-id``
-     - Name of the schedule
-
-.. container:: table-block-example
-
-  .. list-table::
-     :widths: 99 1
-     :stub-columns: 1
-
-     * - Example: Suspending a Schedule
-       - 
-       
-  .. list-table::
-     :widths: 15 85
-     :class: triple-table
-
-     * - Description
-       - Suspends the schedule *DailySchedule* of the application *PurchaseHistory*
-      
-     * - HTTP Method
-       - ``POST /v3/namespaces/default/apps/PurchaseHistory/schedules/DailySchedule/suspend``
-         
-     * - Returns
-       - | ``OK`` if successfully set as suspended
-
 .. _http-restful-api-lifecycle-workflow-runs-suspend-resume:
 
 Workflow Runs: Suspend and Resume
