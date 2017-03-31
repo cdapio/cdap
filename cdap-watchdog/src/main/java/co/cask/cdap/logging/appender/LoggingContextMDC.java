@@ -49,6 +49,13 @@ class LoggingContextMDC extends AbstractMap<String, String> {
     }));
   }
 
+  /**
+   * Puts a new key value pair to the system tags.
+   */
+  void putSystemTag(String key, String value) {
+    systemTags.put(key, value);
+  }
+
   @Override
   public boolean containsKey(Object key) {
     return systemTags.containsKey(key) || eventMDC.containsKey(key);

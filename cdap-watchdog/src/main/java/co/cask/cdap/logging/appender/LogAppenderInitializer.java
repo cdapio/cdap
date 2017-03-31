@@ -59,6 +59,7 @@ public class LogAppenderInitializer implements Closeable {
         return;
       }
 
+      logAppender.setContext(loggerContext);
       LOG.info("Initializing log appender {}", logAppender.getName());
 
       // Display any errors during initialization of log appender to console
@@ -66,7 +67,6 @@ public class LogAppenderInitializer implements Closeable {
       OnConsoleStatusListener onConsoleListener = new OnConsoleStatusListener();
       statusManager.add(onConsoleListener);
 
-      logAppender.setContext(loggerContext);
       logAppender.start();
 
       logger.addAppender(logAppender);
