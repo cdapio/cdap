@@ -33,6 +33,7 @@ const MyDataPrepApi = {
   getUsage: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/usage`),
   getInfo: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/info`),
   getWorkspace: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}`),
+  getWorkspaceList: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/workspaces`),
 
   // WRANGLER SERVICE MANAGEMENT
   getApp: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}`),

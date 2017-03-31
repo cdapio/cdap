@@ -24,16 +24,14 @@ import CardActionFeedback from 'components/CardActionFeedback';
 import cookie from 'react-cookie';
 import isNil from 'lodash/isNil';
 import NamespaceStore from 'services/NamespaceStore';
-import {execute, setWorkspace} from 'components/DataPrep/store/DataPrepActionCreator';
+import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 
 export default class WorkspaceModal extends Component {
   constructor(props) {
     super(props);
 
-    let initialWorkspace = DataPrepStore.getState().dataprep.workspaceId;
-
     this.state = {
-      activeWorkspace: initialWorkspace,
+      activeWorkspace: DataPrepStore.getState().dataprep.workspaceId,
       workspaceId: null,
       file: null,
       message: null,
@@ -42,9 +40,7 @@ export default class WorkspaceModal extends Component {
     };
 
     this.handleWorkspaceInput = this.handleWorkspaceInput.bind(this);
-    this.setWorkspace = this.setWorkspace.bind(this);
     this.createWorkspace = this.createWorkspace.bind(this);
-    this.deleteWorkspace = this.deleteWorkspace.bind(this);
     this.fileChange = this.fileChange.bind(this);
     this.upload = this.upload.bind(this);
     this.attemptModalClose = this.attemptModalClose.bind(this);
@@ -67,22 +63,6 @@ export default class WorkspaceModal extends Component {
 
   handleWorkspaceInput(e) {
     this.setState({workspaceId: e.target.value});
-  }
-
-  setWorkspace() {
-    if (!this.state.workspaceId) { return; }
-    let workspaceId = this.state.workspaceId;
-
-    setWorkspace(workspaceId)
-      .subscribe(() => {
-        cookie.save('DATAPREP_WORKSPACE', workspaceId, { path: '/' });
-      }, (err) => {
-        console.log('err', err);
-        this.setState({
-          messageType: 'DANGER',
-          message: err.message || `${workspaceId} workspace does not exist`
-        });
-      });
   }
 
   createWorkspace() {
@@ -108,48 +88,14 @@ export default class WorkspaceModal extends Component {
         }
       });
 
+      this.props.onCreate();
+
     }, (err) => {
       this.setState({
         messageType: 'DANGER',
         message: err.message || err.data || err
       });
     });
-  }
-
-  deleteWorkspace() {
-    if (!this.state.workspaceId) { return; }
-    let workspaceId = this.state.workspaceId;
-    let namespace = NamespaceStore.getState().selectedNamespace;
-
-    MyDataPrepApi.delete({
-      namespace,
-      workspaceId
-    }).subscribe((res) => {
-      console.log(res);
-      this.setState({
-        messageType: 'SUCCESS',
-        message: res.message
-      });
-
-      if (this.state.workspaceId === this.state.activeWorkspace) {
-        DataPrepStore.dispatch({
-          type: DataPrepActions.setWorkspace,
-          payload: {
-            workspaceId: ''
-          }
-        });
-
-        cookie.remove('DATAPREP_WORKSPACE', { path: '/' });
-      }
-    }, (err) => {
-      console.log(err);
-
-      this.setState({
-        messageType: 'DANGER',
-        message: err.message
-      });
-    });
-
   }
 
   fileChange(e) {
@@ -190,10 +136,7 @@ export default class WorkspaceModal extends Component {
 
         execute([], true)
           .subscribe(() => {
-            this.setState({
-              messageType: 'SUCCESS',
-              message: `Success uploading file to workspace ${this.state.activeWorkspace}`
-            });
+            this.props.toggle();
           }, (err) => {
             console.log('err', err);
             this.setState({
@@ -220,7 +163,7 @@ export default class WorkspaceModal extends Component {
 
         <div>
           <h5>Upload Data</h5>
-          <h6>Select the file to be uploaded to active workspace</h6>
+          <h6>Select the file to be uploaded to the workspace</h6>
           <div className="file-input">
             <input
               type="file"
@@ -267,7 +210,7 @@ export default class WorkspaceModal extends Component {
   }
 
   attemptModalClose() {
-    if (!this.state.activeWorkspace) { return; }
+    if (!this.state.activeWorkspace || this.props.isEmpty) { return; }
 
     this.props.toggle();
   }
@@ -281,31 +224,23 @@ export default class WorkspaceModal extends Component {
       >
         <ModalHeader>
           <span>
-            Workspace
+            Create Workspace
           </span>
 
-          <div
-            className="close-section float-xs-right"
-            onClick={this.props.toggle}
-          >
-            <span className="fa fa-times" />
-          </div>
+          {
+            this.props.isEmpty ? null : (
+              <div
+                className="close-section float-xs-right"
+                onClick={this.attemptModalClose}
+              >
+                <span className="fa fa-times" />
+              </div>
+            )
+          }
         </ModalHeader>
         <ModalBody>
-          {
-            this.state.activeWorkspace ? (
-              <div>
-                <h5>
-                  Current Active Workspace: <em>{this.state.activeWorkspace}</em>
-                </h5>
-                <hr />
-              </div>
-            ) : null
-          }
-
           <div>
-            <h5>Set or Create New Workspace</h5>
-            <small>Create workspace before starting to wrangle</small>
+            <h5>Create New Workspace</h5>
             <input
               type="text"
               className="form-control"
@@ -316,23 +251,10 @@ export default class WorkspaceModal extends Component {
           </div>
           <div className="button-container">
             <button
-              className="btn btn-secondary"
-              onClick={this.setWorkspace}
-            >
-              Set
-            </button>
-            <button
               className="btn btn-primary"
               onClick={this.createWorkspace}
             >
               Create
-            </button>
-
-            <button
-              className="btn btn-danger float-xs-right"
-              onClick={this.deleteWorkspace}
-            >
-              Delete
             </button>
           </div>
 
@@ -347,5 +269,7 @@ export default class WorkspaceModal extends Component {
 }
 
 WorkspaceModal.propTypes = {
-  toggle: PropTypes.func.isRequired
+  toggle: PropTypes.func.isRequired,
+  onCreate: PropTypes.func,
+  isEmpty: PropTypes.bool
 };

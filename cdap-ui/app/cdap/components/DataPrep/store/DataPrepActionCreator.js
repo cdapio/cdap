@@ -94,12 +94,21 @@ export function setWorkspace(workspaceId) {
               }
             });
           }, (err) => {
-            console.log('err', err);
-            observer.onError(err);
+            // This flow is because of the workspace is empty
+
+            observer.onNext(err);
+            DataPrepStore.dispatch({
+              type: DataPrepActions.setWorkspace,
+              payload: {
+                data: [],
+                headers: [],
+                workspaceId
+              }
+            });
           });
 
       }, (err) => {
-        console.log('err', err);
+        console.log('get workspace err', err);
         observer.onError(err);
       });
   });

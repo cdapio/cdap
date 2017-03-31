@@ -15,12 +15,11 @@
  */
 
 import React, { Component } from 'react';
-import WorkspaceModal from 'components/DataPrep/TopPanel/WorkspaceModal';
 import DataPrepStore from 'components/DataPrep/store';
 import SchemaModal from 'components/DataPrep/TopPanel/SchemaModal';
 import AddToPipelineModal from 'components/DataPrep/TopPanel/AddToPipelineModal';
 import UpgradeModal from 'components/DataPrep/TopPanel/UpgradeModal';
-import ee from 'event-emitter';
+import WorkspaceTabs from 'components/DataPrep/TopPanel/WorkspaceTabs';
 
 require('./TopPanel.scss');
 
@@ -30,7 +29,6 @@ export default class DataPrepTopPanel extends Component {
 
     let initialState = DataPrepStore.getState().dataprep;
     this.state = {
-      workspaceId: initialState.workspaceId,
       workspaceModal: false,
       schemaModal: false,
       addToPipelineModal: false,
@@ -38,18 +36,13 @@ export default class DataPrepTopPanel extends Component {
       higherVersion: initialState.higherVersion
     };
 
-    this.toggleWorkspaceModal = this.toggleWorkspaceModal.bind(this);
     this.toggleSchemaModal = this.toggleSchemaModal.bind(this);
     this.toggleAddToPipelineModal = this.toggleAddToPipelineModal.bind(this);
     this.toggleUpgradeModal = this.toggleUpgradeModal.bind(this);
-    this.eventEmitter = ee(ee);
-
-    this.eventEmitter.on('DATAPREP_NO_WORKSPACE_ID', this.toggleWorkspaceModal);
 
     this.sub = DataPrepStore.subscribe(() => {
       let state = DataPrepStore.getState().dataprep;
       this.setState({
-        workspaceId: state.workspaceId,
         higherVersion: state.higherVersion
       });
     });
@@ -57,11 +50,6 @@ export default class DataPrepTopPanel extends Component {
 
   componentWillUnmount() {
     this.sub();
-    this.eventEmitter.off('DATAPREP_NO_WORKSPACE_ID', this.toggleWorkspaceModal);
-  }
-
-  toggleWorkspaceModal() {
-    this.setState({workspaceModal: !this.state.workspaceModal});
   }
 
   toggleSchemaModal() {
@@ -92,14 +80,6 @@ export default class DataPrepTopPanel extends Component {
     );
   }
 
-  renderWorkspaceModal() {
-    if (!this.state.workspaceModal) { return null; }
-
-    return (
-      <WorkspaceModal toggle={this.toggleWorkspaceModal} />
-    );
-  }
-
   renderUpgradeModal() {
     if (!this.state.upgradeModal) { return null; }
 
@@ -112,36 +92,29 @@ export default class DataPrepTopPanel extends Component {
     return (
       <div className="top-panel clearfix">
         <div className="left-title float-xs-left">
-          <div className="data-prep-name">
-            <strong>Data Preparation</strong>
-            <span className="tag tag-success">BETA</span>
+          <div className="upper-section">
+            <div className="data-prep-name">
+              <strong>Data Preparation</strong>
+              <span className="tag tag-success">BETA</span>
+            </div>
+
+            <div className="upgrade-button">
+              {
+                this.state.higherVersion ? (
+                  <button
+                    className="btn btn-info btn-sm"
+                    onClick={this.toggleUpgradeModal}
+                  >
+                    <span className="fa fa-wrench fa-fw" />
+                    Upgrade
+                  </button>
+                ) : null
+              }
+              {this.renderUpgradeModal()}
+            </div>
           </div>
 
-          <div
-            className="workspace-mgmt"
-            onClick={this.toggleWorkspaceModal}
-          >
-            <span>
-              {this.state.workspaceId}
-              {this.renderWorkspaceModal()}
-            </span>
-            <span className="fa fa-pencil" />
-          </div>
-        </div>
-
-        <div className="upgrade-button float-xs-left">
-          {
-            this.state.higherVersion ? (
-              <button
-                className="btn btn-info btn-sm"
-                onClick={this.toggleUpgradeModal}
-              >
-                <span className="fa fa-wrench fa-fw" />
-                Upgrade
-              </button>
-            ) : null
-          }
-          {this.renderUpgradeModal()}
+          <WorkspaceTabs />
         </div>
 
         <div className="action-buttons float-xs-right">

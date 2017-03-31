@@ -135,12 +135,10 @@ export default function enableDataPreparationService(shouldStopService) {
   function pingService(observer) {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
-
     function ping() {
       MyDataPrepApi.ping({ namespace })
         .subscribe(() => {
           observer.onCompleted();
-          window.onbeforeunload = null;
           window.location.reload();
         }, (err) => {
           if (err.statusCode === 503) {

@@ -20,9 +20,26 @@
     border-bottom: 1px solid #cccccc;
 
     .left-title {
+      width: calc(100% - 270px);
+
+      .data-prep-name,
+      .upgrade-button {
+        display: inline-block;
+      }
+
       .data-prep-name {
         font-size: 18px;
         padding: 0 10px;
+      }
+
+      .upgrade-button {
+        margin-top: 2px;
+        margin-left: 15px;
+        vertical-align: top;
+
+        .fa.fa-wrench {
+          margin-right: 3px;
+        }
       }
 
       .workspace-mgmt {
@@ -31,15 +48,6 @@
         font-size: 14px;
 
         .fa-pencil { margin-left: 10px; }
-      }
-    }
-
-    .upgrade-button {
-      margin-top: 3px;
-      margin-left: 15px;
-
-      .fa.fa-wrench {
-        margin-right: 3px;
       }
     }
 
