@@ -69,7 +69,7 @@ import javax.ws.rs.QueryParam;
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class PreviewHttpHandler extends AbstractLogHandler {
-  private static Logger LOG = LoggerFactory.getLogger(PreviewHttpHandler.class);
+  private static final Logger LOG = LoggerFactory.getLogger(PreviewHttpHandler.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
   private static final Type STRING_LIST_MAP_TYPE = new TypeToken<Map<String, List<String>>>() { }.getType();
