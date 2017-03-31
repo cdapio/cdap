@@ -23,6 +23,7 @@ import com.google.common.collect.Sets;
 
 import java.util.AbstractMap;
 import java.util.AbstractSet;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -33,9 +34,9 @@ import java.util.Set;
  */
 class LoggingContextMDC extends AbstractMap<String, String> {
 
-  private final Map<String, String> systemTags;
   private final Map<String, String> eventMDC;
   private final Iterable<Entry<String, String>> entryIterable;
+  private volatile Map<String, String> systemTags;
 
   LoggingContextMDC(LoggingContext loggingContext, Map<String, String> eventMDC) {
     this.systemTags = loggingContext.getSystemTagsAsString();
@@ -50,10 +51,21 @@ class LoggingContextMDC extends AbstractMap<String, String> {
   }
 
   /**
-   * Puts a new key value pair to the system tags.
+   * Puts a new key value pair to system tags.
    */
-  void putSystemTag(String key, String value) {
-    systemTags.put(key, value);
+  synchronized void putSystemTag(String key, String value) {
+    Map<String, String> newSystemTags = new HashMap<>(systemTags);
+    newSystemTags.put(key, value);
+    systemTags = newSystemTags;
+  }
+
+  /**
+   * Puts a set of new key value pairs to system tags.
+   */
+  synchronized void putSystemTags(Map<String, String> tags) {
+    Map<String, String> newSystemTags = new HashMap<>(systemTags);
+    newSystemTags.putAll(tags);
+    systemTags = newSystemTags;
   }
 
   @Override
