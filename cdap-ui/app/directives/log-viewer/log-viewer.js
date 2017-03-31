@@ -47,6 +47,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
         break;
       case 'STOPPED':
       case 'KILLED':
+      case 'KILLED_BY_TIMER':
       case 'FAILED':
       case 'SUSPENDED':
         vm.statusType = 1;

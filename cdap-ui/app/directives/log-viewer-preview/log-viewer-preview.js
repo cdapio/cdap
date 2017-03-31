@@ -46,6 +46,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
         break;
       case 'STOPPED':
       case 'KILLED':
+      case 'KILLED_BY_TIMER':
       case 'FAILED':
       case 'SUSPENDED':
         vm.statusType = 1;
@@ -132,9 +133,19 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
 
     vm.fullScreen = logViewerState.fullScreen;
 
-    if (vm.startedTimeRequest) {
+    if (vm.logStartTime === logViewerState.startTime){
       return;
     }
+
+    vm.logStartTime = logViewerState.startTime;
+
+    if (!vm.logStartTime || vm.startTimeMs === vm.logStartTime){
+      return;
+    }
+
+    vm.startTimeMs = (vm.logStartTime instanceof Date) ? vm.logStartTime.getTime() : vm.logStartTime;
+
+    vm.fromOffset = -10000 + '.' + vm.startTimeMs;
 
     vm.endRequest = false;
     startTimeRequest();
@@ -375,6 +386,8 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
           type: LOGVIEWERSTORE_ACTIONS.SET_STATUS,
           payload: {
             status: statusRes.status,
+            startTime: statusRes.startTime,
+            endTime: statusRes.endTime
           }
         });
         vm.setProgramMetadata(statusRes.status);
@@ -472,16 +485,16 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     // binds window element to check whether scrollbar has appeared on resize event
     angular.element($window).bind('resize', checkForScrollbar);
 
-    myPreviewLogsApi.nextLogsJson({
+    myPreviewLogsApi.nextLogsJsonOffset({
       namespace : vm.namespaceId,
       previewId : vm.previewId,
+      fromOffset: vm.fromOffset,
       filter: `loglevel=${vm.selectedLogLevel}`
     }).$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
         vm.loading = false;
         vm.data = res;
-        vm.startedTimeRequest = true;
 
         if(res.length === 0){
           //Update with start-time
@@ -588,7 +601,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     // Whenever we change the log level filter, the data needs
     // to start from scratch
     vm.data = [];
-    // vm.fromOffset = -10000 + '.' + vm.startTimeMs;
+    vm.fromOffset = -10000 + '.' + vm.startTimeMs;
 
     vm.selectedLogLevel = eventType;
     startTimeRequest();

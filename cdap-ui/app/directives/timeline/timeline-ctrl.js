@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers, moment, $timeout, caskWindowManager) {
+function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, myPreviewLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers, moment, $timeout, caskWindowManager) {
 
   var dataSrc = new MyCDAPDataSource($scope);
   this.pinScrollPosition = 0;
@@ -71,9 +71,15 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
 
   var pollPromise = null;
   var programType = ProgramsHelpers.getSingularName(this.programType);
+  var context = '';
+  if (this.runId) {
+    context = `namespace.${this.namespaceId}.app.${this.appId}.${programType}.${this.programId}.run.${this.runId}`;
+  } else if (this.previewId) {
+    context = `namespace.${this.namespaceId}.app.${this.previewId}`;
+  }
   var apiSettings = {
     metric : {
-      context: `namespace.${this.namespaceId}.app.${this.appId}.${programType}.${this.programId}.run.${this.runId}`,
+      context: context,
       names: ['system.app.log.error', 'system.app.log.warn', 'system.app.log.info', 'system.app.log.debug'],
       startTime : '',
       endTime : '',
@@ -87,24 +93,61 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     this.updateStartTimeInStore(apiSettings.metric.startTime);
   };
 
+  const getStatus = () => {
+    if (this.runId) {
+      myLogsApi.getLogsMetadata({
+        namespace : this.namespaceId,
+        appId : this.appId,
+        programType : this.programType,
+        programId : this.programId,
+        runId : this.runId
+      }).$promise.then(
+        (res) => {
+          if (pollPromise && res.status === 'KILLED' || res.status==='COMPLETED' || res.status === 'FAILED' || res.status === 'STOPPED' || res.status === 'KILLED_BY_TIMER') {
+            dataSrc.stopPoll(pollPromise.__pollId__);
+            pollPromise = null;
+          }
+        },
+        (err) => {
+          console.log('ERROR: ', err);
+        });
+    } else if (this.previewId) {
+      myPreviewLogsApi.getLogsStatus({
+        namespace : this.namespaceId,
+        previewId : this.previewId
+      }).$promise.then(
+        (res) => {
+          if (pollPromise && res.status === 'KILLED' || res.status==='COMPLETED' || res.status === 'FAILED' || res.status === 'STOPPED' || res.status === 'KILLED_BY_TIMER') {
+            dataSrc.stopPoll(pollPromise.__pollId__);
+            pollPromise = null;
+          }
+        },
+        (err) => {
+          console.log('ERROR: ', err);
+        });
+    }
+  };
+
   const pollForMetadata = () => {
-    pollPromise = dataSrc.poll({
-      _cdapPath: '/metrics/query',
-      method: 'POST',
-      body: MyMetricsQueryHelper.constructQuery(
+    var _cdapPath = '/metrics/query';
+    if (this.previewId) {
+      _cdapPath = `/namespaces/${this.namespaceId}/previews/${this.previewId}${_cdapPath}`;
+    }
+    let body = MyMetricsQueryHelper.constructQuery(
         'qid',
         MyMetricsQueryHelper.contextToTags(apiSettings.metric.context),
         apiSettings.metric
-      )
+      );
+    pollPromise = dataSrc.poll({
+      _cdapPath: _cdapPath,
+      method: 'POST',
+      body: body
     },
     (res) => {
       $scope.metadata = res;
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
-      if (res.status === 'KILLED' || res.status==='COMPLETED' || res.status === 'FAILED' || res.status === 'STOPPED') {
-        dataSrc.stopPoll(pollPromise.__pollId__);
-        pollPromise = null;
-      }
+      getStatus();
     }, (err) => {
       // FIXME: We need to fix this. Right now this fails and we need to handle this more gracefully.
       $scope.initialize();
@@ -138,32 +181,54 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
 
   screenSize = LogViewerStore.getState().fullScreen;
 
-  if (!this.namespaceId || !this.appId || !this.programType || !this.programId || !this.runId) {
+  if (!(this.namespaceId && this.previewId) && !(this.namespaceId && this.appId && this.programType && this.programId && this.runId)) {
     this.setDefaultTimeWindow();
     return;
   }
 
-  myLogsApi.getLogsMetadata({
-    namespace : this.namespaceId,
-    appId : this.appId,
-    programType : this.programType,
-    programId : this.programId,
-    runId : this.runId,
-  }).$promise.then(
-    (res) => {
-      $scope.metadata = res;
-      if(res.start === res.end){
-        res.end++;
-      }
-      apiSettings.metric.startTime = res.start;
-      apiSettings.metric.endTime = res.end;
-      $scope.renderSearchCircles([]);
-      pollForMetadata();
-    },
-    (err) => {
-      this.setDefaultTimeWindow();
-      console.log('ERROR: ', err);
-    });
+  if (this.runId) {
+    myLogsApi.getLogsMetadata({
+      namespace : this.namespaceId,
+      appId : this.appId,
+      programType : this.programType,
+      programId : this.programId,
+      runId : this.runId
+    }).$promise.then(
+      (res) => {
+        $scope.metadata = res;
+        if(res.start === res.end){
+          res.end++;
+        }
+        apiSettings.metric.startTime = res.start;
+        apiSettings.metric.endTime = res.end;
+        $scope.renderSearchCircles([]);
+        pollForMetadata();
+      },
+      (err) => {
+        this.setDefaultTimeWindow();
+        console.log('ERROR: ', err);
+      });
+  } else if (this.previewId) {
+    myPreviewLogsApi.getLogsStatus({
+      namespace : this.namespaceId,
+      previewId : this.previewId
+    }).$promise.then(
+      (res) => {
+        $scope.metadata = res;
+        if(res.start === res.end){
+          res.end++;
+        }
+        apiSettings.metric.startTime = res.startTime;
+        apiSettings.metric.endTime = res.endTime;
+        $scope.renderSearchCircles([]);
+        pollForMetadata();
+      },
+      (err) => {
+        this.setDefaultTimeWindow();
+        console.log('ERROR: ', err);
+      });
+  }
+
 }
 
 angular.module(PKG.name + '.commons')

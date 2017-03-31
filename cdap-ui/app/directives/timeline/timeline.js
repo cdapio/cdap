@@ -82,7 +82,7 @@ function link (scope, element) {
   /* ------------------- Plot Function ------------------- */
   scope.plot = function(){
 
-    if(typeof timelineData.qid === 'undefined'){
+    if(typeof timelineData.qid === 'undefined') {
       return;
     }
 
@@ -507,7 +507,8 @@ angular.module(PKG.name + '.commons')
       appId: '@',
       programType: '@',
       programId: '@',
-      runId: '@'
+      runId: '@',
+      previewId: '@'
     },
     link: link,
     bindToController: true,

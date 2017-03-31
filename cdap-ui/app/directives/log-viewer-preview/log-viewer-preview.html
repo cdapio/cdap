@@ -69,6 +69,12 @@
 
   <a class="sr-only" id="logs-export-link" href="{{LogViewerPreview.url}}" download="{{LogViewerPreview.exportFileName}}.log">Export</a>
 
+  <!-- LOGS TIMELINE -->
+  <my-timeline
+    namespace-id="{{LogViewerPreview.namespaceId}}"
+    preview-id="{{LogViewerPreview.previewId}}">
+  </my-timeline>
+
   <!-- LOGS TABLE -->
   <div class="logs-table">
     <table class="table table-bordered scroll scroll-table">
