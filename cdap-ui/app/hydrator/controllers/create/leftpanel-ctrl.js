@@ -104,8 +104,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         return;
       }
       this.pluginsMap = this.HydratorPlusPlusOrderingFactory.orderPluginTypes(this.pluginsMap);
-    });
-
+    });    
     var leftPanelStoreTimeout = $timeout(() => {
       this.leftpanelStore.dispatch({
         type: this.LEFTPANELSTORE_ACTIONS.PLUGIN_DEFAULT_VERSION_CHECK_AND_UPDATE

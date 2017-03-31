@@ -31,7 +31,7 @@
   }
 */
 
-let leftpanelactions, _DAGPlusPlusFactory, _GLOBALS, _myHelpers;
+let leftpanelactions, _DAGPlusPlusFactory, _GLOBALS, _myHelpers, _filter;
 let popoverTemplate = '/assets/features/hydrator/templates/create/popovers/leftpanel-plugin-popover.html';
 let getInitialState = () => {
   return {
@@ -73,6 +73,7 @@ const getPluginsWithAddedInfo = (plugins = [], pluginToArtifactArrayMap = {}, ex
     return Object.assign({}, {
       type: extension,
       icon: _DAGPlusPlusFactory.getIcon(plugin.name || plugin.pluginName),
+      label: _filter('myRemoveCamelcase')(plugin.name || plugin.pluginName),
       template: popoverTemplate
     });
   };
@@ -214,11 +215,12 @@ var extensions = (state = getInitialState().extensions, action = {}) => {
   }
 };
 
-var LeftPanelStore = (LEFTPANELSTORE_ACTIONS, Redux, ReduxThunk, GLOBALS, DAGPlusPlusFactory, myHelpers) => {
+var LeftPanelStore = (LEFTPANELSTORE_ACTIONS, Redux, ReduxThunk, GLOBALS, DAGPlusPlusFactory, myHelpers, $filter) => {
   leftpanelactions = LEFTPANELSTORE_ACTIONS;
   _GLOBALS = GLOBALS;
   _myHelpers = myHelpers;
   _DAGPlusPlusFactory = DAGPlusPlusFactory;
+  _filter = $filter;
   let {combineReducers, applyMiddleware} = Redux;
 
   let combineReducer = combineReducers({
@@ -235,7 +237,7 @@ var LeftPanelStore = (LEFTPANELSTORE_ACTIONS, Redux, ReduxThunk, GLOBALS, DAGPlu
     )
   );
 };
-LeftPanelStore.$inject = ['LEFTPANELSTORE_ACTIONS', 'Redux', 'ReduxThunk', 'GLOBALS', 'DAGPlusPlusFactory', 'myHelpers'];
+LeftPanelStore.$inject = ['LEFTPANELSTORE_ACTIONS', 'Redux', 'ReduxThunk', 'GLOBALS', 'DAGPlusPlusFactory', 'myHelpers', '$filter'];
 
 angular.module(`${PKG.name}.feature.hydrator`)
   .constant('LEFTPANELSTORE_ACTIONS', {
