@@ -93,6 +93,44 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     this.updateStartTimeInStore(apiSettings.metric.startTime);
   };
 
+  const getStatus = () => {
+    if (!pollPromise) {
+      return;
+    }
+    if (this.runId) {
+      myLogsApi.getLogsMetadata({
+        namespace : this.namespaceId,
+        appId : this.appId,
+        programType : this.programType,
+        programId : this.programId,
+        runId : this.runId
+      }).$promise.then(
+        (res) => {
+          if (pollPromise && res.status === 'KILLED' || res.status==='COMPLETED' || res.status === 'FAILED' || res.status === 'STOPPED' || res.status === 'KILLED_BY_TIMER') {
+            dataSrc.stopPoll(pollPromise.__pollId__);
+            pollPromise = null;
+          }
+        },
+        (err) => {
+          console.log('ERROR: ', err);
+        });
+    } else if (this.previewId) {
+      myPreviewLogsApi.getLogsStatus({
+        namespace : this.namespaceId,
+        previewId : this.previewId
+      }).$promise.then(
+        (res) => {
+          if (pollPromise && res.status === 'KILLED' || res.status==='COMPLETED' || res.status === 'FAILED' || res.status === 'STOPPED' || res.status === 'KILLED_BY_TIMER') {
+            dataSrc.stopPoll(pollPromise.__pollId__);
+            pollPromise = null;
+          }
+        },
+        (err) => {
+          console.log('ERROR: ', err);
+        });
+    }
+  };
+
   const pollForMetadata = () => {
     var _cdapPath = '/metrics/query';
     if (this.previewId) {
@@ -112,6 +150,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       $scope.metadata = res;
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
+      getStatus();
     }, (err) => {
       // FIXME: We need to fix this. Right now this fails and we need to handle this more gracefully.
       $scope.initialize();
@@ -179,11 +218,11 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     }).$promise.then(
       (res) => {
         $scope.metadata = res;
-        if(res.start === res.end){
-          res.end++;
+        if(res.startTime === res.endTime){
+          res.endTime++;
         }
-        apiSettings.metric.startTime = res.start;
-        apiSettings.metric.endTime = res.end;
+        apiSettings.metric.startTime = Math.floor(res.startTime/1000);
+        apiSettings.metric.endTime = Math.floor(res.endTime/1000);
         $scope.renderSearchCircles([]);
         pollForMetadata();
       },
