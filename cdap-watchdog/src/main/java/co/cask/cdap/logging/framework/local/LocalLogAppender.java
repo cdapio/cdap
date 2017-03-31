@@ -124,6 +124,9 @@ public class LocalLogAppender extends LogAppender {
 
   @Override
   protected void appendEvent(LogMessage logMessage) {
+    logMessage.prepareForDeferredProcessing();
+    logMessage.getCallerData();
+
     for (LocalLogProcessorPipeline pipeline : pipelines) {
       pipeline.append(logMessage);
     }

@@ -24,7 +24,6 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
 import co.cask.cdap.internal.dataset.DatasetRuntimeContext;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -104,7 +103,7 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
   /**
    * Helper method to execute a {@link Callable} with a {@link DatasetRuntimeContext}.
    * This method is mainly called from
-   * {@link LineageWriterDatasetFramework#getDataset(Id.DatasetInstance, Map, ClassLoader, DatasetClassLoaderProvider,
+   * {@link LineageWriterDatasetFramework#getDataset(DatasetId, Map, ClassLoader, DatasetClassLoaderProvider,
    * Iterable, AccessType)}.
    */
   public static <T> T execute(AuthorizationEnforcer enforcer,

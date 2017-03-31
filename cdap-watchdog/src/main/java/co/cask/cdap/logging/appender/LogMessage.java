@@ -38,7 +38,7 @@ public class LogMessage implements ILoggingEvent {
   public LogMessage(ILoggingEvent loggingEvent, LoggingContext loggingContext) {
     this.loggingEvent = loggingEvent;
     this.loggingContext = loggingContext;
-    this.mdc = new LoggingContextMDC(loggingContext, loggingEvent.getMDCPropertyMap());
+    this.mdc = new LoggingContextMDC(loggingContext.getSystemTagsAsString(), loggingEvent.getMDCPropertyMap());
   }
 
   public LoggingContext getLoggingContext() {
