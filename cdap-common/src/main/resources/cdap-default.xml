@@ -172,7 +172,7 @@
 
   <property>
     <name>twill.java.reserved.memory.mb</name>
-    <value>250</value>
+    <value>400</value>
     <description>
       Reserved non-heap memory in megabytes for Apache Twill container
     </description>
