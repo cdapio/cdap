@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
@@ -33,7 +32,6 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.security.impersonation.Impersonator;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,11 +40,10 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
- * Default implementation of {@link NamespaceResourceDeleter}.
+ * Abstract class for deleting namespace components
  */
-public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter {
-
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceResourceDeleter.class);
+public abstract class AbstractNamespaceResourceDeleter implements NamespaceResourceDeleter {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractNamespaceResourceDeleter.class);
 
   private final Impersonator impersonator;
   private final Store store;
@@ -54,7 +51,6 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
   private final DashboardStore dashboardStore;
   private final DatasetFramework dsFramework;
   private final QueueAdmin queueAdmin;
-  private final StreamAdmin streamAdmin;
   private final MetricStore metricStore;
   private final Scheduler scheduler;
   private final ApplicationLifecycleService applicationLifecycleService;
@@ -62,10 +58,11 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
   private final StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
   private final MessagingService messagingService;
 
-  @Inject
-  DefaultNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesStore preferencesStore,
+
+
+  AbstractNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesStore preferencesStore,
                                   DashboardStore dashboardStore, DatasetFramework dsFramework, QueueAdmin queueAdmin,
-                                  StreamAdmin streamAdmin, MetricStore metricStore, Scheduler scheduler,
+                                  MetricStore metricStore, Scheduler scheduler,
                                   ApplicationLifecycleService applicationLifecycleService,
                                   ArtifactRepository artifactRepository,
                                   StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
@@ -76,7 +73,6 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
     this.dashboardStore = dashboardStore;
     this.dsFramework = dsFramework;
     this.queueAdmin = queueAdmin;
-    this.streamAdmin = streamAdmin;
     this.metricStore = metricStore;
     this.scheduler = scheduler;
     this.applicationLifecycleService = applicationLifecycleService;
@@ -85,6 +81,7 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
     this.messagingService = messagingService;
   }
 
+  protected abstract void deleteStreams(NamespaceId namespaceId) throws Exception;
 
   @Override
   public void deleteResources(NamespaceMeta namespaceMeta) throws Exception {
@@ -103,7 +100,10 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
     dsFramework.deleteAllModules(namespaceId);
     // Delete queues and streams data
     queueAdmin.dropAllInNamespace(namespaceId);
-    streamAdmin.dropAllInNamespace(namespaceId);
+
+    // Delete all the streams in namespace
+    deleteStreams(namespaceId);
+
     // Delete all meta data
     store.removeAll(namespaceId);
 
