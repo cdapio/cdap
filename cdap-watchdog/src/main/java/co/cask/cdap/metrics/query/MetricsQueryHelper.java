@@ -220,7 +220,8 @@ public class MetricsQueryHelper {
     }
 
     MetricQueryRequest queryRequest = new MetricQueryRequest(queryRequestFormat.getTags(),
-                                                             queryRequestFormat.getMetrics(), queryRequestFormat.getGroupBy());
+                                                             queryRequestFormat.getMetrics(),
+                                                             queryRequestFormat.getGroupBy());
     setTimeRangeInQueryRequest(queryRequest, queryParams);
     return queryRequest;
   }

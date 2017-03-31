@@ -17,7 +17,6 @@
 package co.cask.cdap.gateway.handlers.preview;
 
 import co.cask.cdap.app.preview.PreviewManager;
-import co.cask.cdap.app.preview.PreviewRunner;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -35,6 +34,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -69,10 +69,12 @@ import javax.ws.rs.QueryParam;
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class PreviewHttpHandler extends AbstractLogHandler {
-  private static Logger LOG = LoggerFactory.getLogger(PreviewHttpHandler.class);
+  private static final Logger LOG = LoggerFactory.getLogger(PreviewHttpHandler.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
   private static final Type STRING_LIST_MAP_TYPE = new TypeToken<Map<String, List<String>>>() { }.getType();
+  private static final String NAMESPACE_STRING = "namespace";
+  private static final String APP_STRING = "app";
 
   private final PreviewManager previewManager;
 
@@ -234,6 +236,7 @@ public class PreviewHttpHandler extends AbstractLogHandler {
       return;
     }
     try {
+      tags = overrideTags(tags, namespaceId, previewId);
       switch (target) {
         case "tag":
           responder.sendJson(HttpResponseStatus.OK, helper.searchTags(tags));
@@ -269,11 +272,13 @@ public class PreviewHttpHandler extends AbstractLogHandler {
           Map<String, MetricsQueryHelper.QueryRequestFormat> queries =
             GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
                           new TypeToken<Map<String, MetricsQueryHelper.QueryRequestFormat>>() { }.getType());
+          overrideQueries(queries, namespaceId, previewId);
           responder.sendJson(HttpResponseStatus.OK, helper.executeBatchQueries(queries));
           return;
         }
         responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
       }
+      tags = overrideTags(tags, namespaceId, previewId);
       responder.sendJson(HttpResponseStatus.OK,
                          helper.executeTagQuery(tags, metrics, groupBy,
                                                 new QueryStringDecoder(request.getUri()).getParameters()));
@@ -296,5 +301,34 @@ public class PreviewHttpHandler extends AbstractLogHandler {
 
   private MetricsQueryHelper getMetricsQueryHelper(String namespaceId, String previewId) throws Exception {
     return previewManager.getRunner(new ApplicationId(namespaceId, previewId)).getMetricsQueryHelper();
+  }
+
+  private List<String> overrideTags(List<String> tags, String namespaceId, String previewId) {
+    List<String> newTags = Lists.newArrayList();
+    String namespaceTag = NAMESPACE_STRING + ":" + namespaceId;
+    String previewTag = APP_STRING + ":" + previewId;
+    for (String tag : tags) {
+      if (tag.startsWith(NAMESPACE_STRING)) {
+        newTags.add(namespaceTag);
+      } else if (tag.startsWith(APP_STRING)) {
+        newTags.add(previewTag);
+      } else {
+        newTags.add(tag);
+      }
+    }
+    return newTags;
+  }
+
+  private void overrideQueries(Map<String, MetricsQueryHelper.QueryRequestFormat> query, String namespaceId,
+                               String previewId) {
+    for (MetricsQueryHelper.QueryRequestFormat format : query.values()) {
+      Map<String, String> tags = format.getTags();
+      if (!tags.containsKey(NAMESPACE_STRING) || !tags.get(NAMESPACE_STRING).equals(namespaceId)) {
+        tags.put(NAMESPACE_STRING, namespaceId);
+      }
+      if (!tags.containsKey(APP_STRING) || !tags.get(APP_STRING).equals(previewId)) {
+        tags.put(APP_STRING, previewId);
+      }
+    }
   }
 }
