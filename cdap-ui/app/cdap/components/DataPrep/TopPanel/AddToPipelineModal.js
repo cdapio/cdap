@@ -25,6 +25,7 @@ import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
 import {objectQuery} from 'services/helpers';
 import T from 'i18n-react';
 import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers';
+import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 
 const mapErrorToMessage = (e) => {
   let message = e.message;
@@ -70,7 +71,7 @@ export default class AddToHydratorModal extends Component {
 
     MyDataPrepApi.getInfo({ namespace })
       .subscribe((res) => {
-        let pluginVersion = res.value[0]['plugin.version'];
+        let pluginVersion = res.values[0]['plugin.version'];
 
         this.constructProperties(pluginVersion);
       }, (err) => {
@@ -132,12 +133,11 @@ export default class AddToHydratorModal extends Component {
     };
 
     let directives = state.directives;
-    if (directives) {
-      requestObj.directive = directives;
-    }
+
+    let requestBody = directiveRequestBodyCreator(directives);
 
     MyArtifactApi.list({ namespace })
-      .combineLatest(MyDataPrepApi.getSchema(requestObj))
+      .combineLatest(MyDataPrepApi.getSchema(requestObj, requestBody))
       .subscribe((res) => {
         let batchArtifact = find(res[0], { 'name': 'cdap-data-pipeline' });
         let realtimeArtifact = find(res[0], { 'name': 'cdap-data-streams' });

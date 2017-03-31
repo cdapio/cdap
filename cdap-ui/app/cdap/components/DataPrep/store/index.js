@@ -60,7 +60,7 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
       stateCopy = Object.assign({}, state, {
         workspaceId: action.payload.workspaceId,
         headers: action.payload.headers || [],
-        directives: [],
+        directives: action.payload.directives || [],
         data: action.payload.data || [],
         initialized: true,
         loading: false

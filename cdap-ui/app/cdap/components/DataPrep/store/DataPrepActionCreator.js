@@ -19,10 +19,10 @@ import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
 import Rx from 'rx';
+import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
+import {objectQuery} from 'services/helpers';
 
-export function execute(addDirective) {
-  if (addDirective.length === 0) { return; }
-
+export function execute(addDirective, shouldReset) {
   DataPrepStore.dispatch({
     type: DataPrepActions.enableLoading
   });
@@ -30,25 +30,29 @@ export function execute(addDirective) {
   let store = DataPrepStore.getState().dataprep;
   let updatedDirectives = store.directives.concat(addDirective);
 
+  if (shouldReset) {
+    updatedDirectives = addDirective;
+  }
+
   let workspaceId = store.workspaceId;
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   let params = {
     namespace,
-    workspaceId,
-    limit: 100,
-    directive: updatedDirectives
+    workspaceId
   };
 
+  let requestBody = directiveRequestBodyCreator(updatedDirectives);
+
   return Rx.Observable.create((observer) => {
-    MyDataPrepApi.execute(params)
+    MyDataPrepApi.execute(params, requestBody)
       .subscribe((res) => {
         observer.onNext(res);
 
         DataPrepStore.dispatch({
           type: DataPrepActions.setDirectives,
           payload: {
-            data: res.value,
+            data: res.values,
             headers: res.header,
             directives: updatedDirectives
           }
@@ -58,6 +62,45 @@ export function execute(addDirective) {
         DataPrepStore.dispatch({
           type: DataPrepActions.disableLoading
         });
+      });
+  });
+}
+
+export function setWorkspace(workspaceId) {
+  let namespace = NamespaceStore.getState().selectedNamespace;
+
+  let params = {
+    namespace,
+    workspaceId
+  };
+
+  return Rx.Observable.create((observer) => {
+    MyDataPrepApi.getWorkspace(params)
+      .subscribe((res) => {
+        let directives = objectQuery(res, 'values', '0', 'recipe', 'directives') || [];
+        let requestBody = directiveRequestBodyCreator(directives);
+
+        MyDataPrepApi.execute(params, requestBody)
+          .subscribe((res) => {
+            observer.onNext(res);
+
+            DataPrepStore.dispatch({
+              type: DataPrepActions.setWorkspace,
+              payload: {
+                data: res.values,
+                headers: res.header,
+                directives,
+                workspaceId
+              }
+            });
+          }, (err) => {
+            console.log('err', err);
+            observer.onError(err);
+          });
+
+      }, (err) => {
+        console.log('err', err);
+        observer.onError(err);
       });
   });
 }

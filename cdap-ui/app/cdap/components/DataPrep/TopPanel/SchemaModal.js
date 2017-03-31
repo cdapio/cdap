@@ -25,6 +25,7 @@ import fileDownload from 'react-file-download';
 import NamespaceStore from 'services/NamespaceStore';
 import {objectQuery} from 'services/helpers';
 import T from 'i18n-react';
+import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 
 const mapErrorToMessage = (e) => {
   let message = e.message;
@@ -73,12 +74,9 @@ export default class SchemaModal extends Component {
     };
 
     let directives = state.directives;
+    let requestBody = directiveRequestBodyCreator(directives);
 
-    if (directives) {
-      requestObj.directive = directives;
-    }
-
-    MyDataPrepApi.getSchema(requestObj)
+    MyDataPrepApi.getSchema(requestObj, requestBody)
       .subscribe((res) => {
         let tempSchema = {
           name: 'avroSchema',
