@@ -252,7 +252,8 @@ gulp.task('js:aceworkers', function() {
   gulp.src([
     './bower_components/ace-builds/src-min-noconflict/ace.js',
     './bower_components/ace-builds/src-min-noconflict/mode-javascript.js',
-    './bower_components/ace-builds/src-min-noconflict/worker-javascript.js'
+    './bower_components/ace-builds/src-min-noconflict/worker-javascript.js',
+    './bower_components/ace-builds/src-min-noconflict/mode-python.js '
   ])
     .pipe(gulp.dest('./dist/assets/bundle/ace-editor-worker-scripts/'));
 });

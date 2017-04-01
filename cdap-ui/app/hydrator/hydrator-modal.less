@@ -323,7 +323,15 @@
               }
             }
           }
-          .control-label { font-weight: bold; }
+          .control-label {
+            font-weight: 500;
+            padding-right: 0;
+            .required:after {
+              color: @brand-danger;
+              content:"*";
+              font-size: 16px;
+            }
+          }
           table.table {
             .control-label { font-weight: bold; }
           }

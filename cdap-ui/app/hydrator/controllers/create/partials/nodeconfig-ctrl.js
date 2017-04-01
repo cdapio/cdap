@@ -217,6 +217,7 @@ class HydratorPlusPlusNodeConfigCtrl {
             }
             angular.forEach(this.state.groupsConfig.groups, (group) => {
               angular.forEach(group.fields, (field) => {
+                field.errorTooltip = '\'' + field.label + '\' is a required field';
                 if (field.defaultValue) {
                   this.state.node.plugin.properties[field.name] = this.state.node.plugin.properties[field.name] || field['widget-attributes'].default;
                 }
