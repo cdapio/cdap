@@ -123,6 +123,7 @@
       <div class="button-label">Preview</div>
     </div>
     <div class="btn"
+         ng-class="{'btn-select': HydratorPlusPlusTopPanelCtrl.showRunTimeArguments}"
          ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.toggleRuntimeArguments()"
          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading">
       <span class="fa fa-play text-success"
