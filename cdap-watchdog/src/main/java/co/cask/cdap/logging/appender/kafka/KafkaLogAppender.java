@@ -95,7 +95,7 @@ public final class KafkaLogAppender extends LogAppender {
     private final ContextAware contextAware;
     private final RetryStrategy retryStrategy;
     private SimpleKafkaProducer producer;
-    private Thread runThread;
+    private volatile Thread blockingThread;
 
     private KafkaLogPublisher(CConfiguration cConf, BlockingQueue<LogMessage> messageQueue, ContextAware contextAware) {
       this.cConf = cConf;
@@ -118,7 +118,6 @@ public final class KafkaLogAppender extends LogAppender {
 
     @Override
     protected void run() {
-      runThread = Thread.currentThread();
       List<KeyedMessage<String, byte[]>> buffer = new ArrayList<>(QUEUE_SIZE);
 
       int failures = 0;
@@ -146,35 +145,38 @@ public final class KafkaLogAppender extends LogAppender {
             // Log using the status manager
             contextAware.addError("Failed to publish log message to Kafka on topic " + topic, e);
           } else {
+            blockingThread = Thread.currentThread();
             try {
-              TimeUnit.MILLISECONDS.sleep(sleepMillis);
+              if (isRunning()) {
+                TimeUnit.MILLISECONDS.sleep(sleepMillis);
+              }
             } catch (InterruptedException ie) {
               break;
+            } finally {
+              blockingThread = null;
             }
           }
         }
       }
 
-      // Publish all pending messages. Make sure we can publish without interrupting
-      boolean interrupted = Thread.interrupted();
-      while (!messageQueue.isEmpty()) {
+      // Publish all remaining messages.
+      while (!messageQueue.isEmpty() || !buffer.isEmpty()) {
         try {
           publishMessages(buffer, false);
         } catch (Exception e) {
+          e.printStackTrace();
           contextAware.addError("Failed to publish log message to Kafka on topic " + topic, e);
         }
         // Ignore those that cannot be publish since we are already in shutdown sequence
         buffer.clear();
       }
-
-      if (interrupted) {
-        // Reset the interrupt flag
-        Thread.currentThread().interrupt();
-      }
     }
 
     @Override
     protected void triggerShutdown() {
+      // Interrupt the run thread first
+      // If the run loop is sleeping / blocking, it will wake and break the loop
+      Thread runThread = this.blockingThread;
       if (runThread != null) {
         runThread.interrupt();
       }
@@ -201,9 +203,20 @@ public final class KafkaLogAppender extends LogAppender {
     private void publishMessages(List<KeyedMessage<String, byte[]>> buffer,
                                  boolean blockForMessage) throws InterruptedException {
       int maxBufferSize = QUEUE_SIZE;
+
       if (blockForMessage) {
-        buffer.add(createKeyedMessage(messageQueue.take()));
-        maxBufferSize--;
+        blockingThread = Thread.currentThread();
+        try {
+          if (isRunning()) {
+            buffer.add(createKeyedMessage(messageQueue.take()));
+            maxBufferSize--;
+          }
+        } catch (InterruptedException e) {
+          // just ignore and keep going. This happen when this publisher is getting shutdown, but we still want
+          // to publish all pending messages.
+        } finally {
+          blockingThread = null;
+        }
       }
 
       while (buffer.size() < maxBufferSize) {
