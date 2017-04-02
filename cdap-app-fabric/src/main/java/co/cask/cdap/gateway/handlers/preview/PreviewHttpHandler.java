@@ -316,6 +316,12 @@ public class PreviewHttpHandler extends AbstractLogHandler {
         newTags.add(tag);
       }
     }
+    if (!newTags.contains(namespaceTag)) {
+      newTags.add(namespaceTag);
+    }
+    if (!newTags.contains(previewTag)) {
+      newTags.add(previewTag);
+    }
     return newTags;
   }
 
