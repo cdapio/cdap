@@ -14,9 +14,8 @@
  * the License.
  */
 
-package co.cask.cdap.data.tools.flow;
+package co.cask.cdap.data.tools;
 
-import co.cask.cdap.data.tools.HBaseQueueDebugger;
 import org.junit.Test;
 
 /**
