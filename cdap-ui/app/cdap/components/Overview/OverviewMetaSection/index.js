@@ -57,7 +57,7 @@ export default class OverviewMetaSection extends Component {
 
     const TWENTY_YEARS = 20 * 365 * 24 * 60 * 60;
 
-    let ttl = objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'ttl');
+    let ttl = objectQuery(this.props, 'entity', 'properties', 'ttl');
     ttl = parseInt(ttl, 10);
     ttl = ttl < TWENTY_YEARS ? moment.duration(ttl).humanize() : 'Forever';
 
@@ -74,7 +74,7 @@ export default class OverviewMetaSection extends Component {
   renderDatasetInfo() {
     if (this.props.entity.type !== 'datasetinstance') { return null; }
 
-    let type = objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'type');
+    let type = objectQuery(this.props, 'entity', 'properties', 'type');
     type = type.split('.');
     type = type[type.length - 1];
 
@@ -101,7 +101,7 @@ export default class OverviewMetaSection extends Component {
   }
 
   render() {
-    let creationTime = objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'creation-time');
+    let creationTime = objectQuery(this.props, 'entity', 'properties', 'creation-time');
     const renderCreationTime = (creationTime) => {
       return (
         this.props.showFullCreationTime ?
@@ -110,7 +110,7 @@ export default class OverviewMetaSection extends Component {
           <TimeAgo date={parseInt(creationTime, 10)} />
       );
     };
-    let description =  objectQuery(this.props, 'entity', 'metadata', 'metadata', 'SYSTEM', 'properties', 'description');
+    let description =  objectQuery(this.props, 'entity', 'properties', 'description');
     // have to generate new uniqueId here, because we don't want the fast actions here to
     // trigger the tooltips on the card view
     let entity = Object.assign({}, this.props.entity, {uniqueId: shortid.generate()});
@@ -123,7 +123,14 @@ export default class OverviewMetaSection extends Component {
           <div>
             {
               this.props.entity.type === 'application' ?
-                <span>{this.props.entity.version}</span>
+                <span>
+                  {
+                    this.props.entity.properties.version === '-SNAPSHOT' ?
+                      '1.0.0-SNAPSHOT'
+                    :
+                      this.props.entity.properties.version
+                  }
+                </span>
               :
                 null
             }

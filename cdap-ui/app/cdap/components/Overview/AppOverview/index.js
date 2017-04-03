@@ -22,12 +22,12 @@ import AppOverviewTab from 'components/Overview/AppOverview/AppOverviewTab';
 import {MyAppApi} from 'api/app';
 import NamespaceStore from 'services/NamespaceStore';
 import {objectQuery} from 'services/helpers';
+import {MyMetadataApi} from 'api/metadata';
 import shortid from 'shortid';
 import T from 'i18n-react';
 import FastActionToMessage from 'services/fast-action-message-helper';
 import {createRouterPath} from 'react-router/LocationUtils';
 import capitalize from 'lodash/capitalize';
-import {getType} from 'services/metadata-parser';
 
 export default class AppOverview extends Component {
   constructor(props) {
@@ -56,13 +56,26 @@ export default class AppOverview extends Component {
       loading: true
     });
     let namespace = NamespaceStore.getState().selectedNamespace;
+    const metadataParams = {
+      namespace,
+      entityType: 'apps',
+      entityId: this.props.entity.id,
+      scope: 'SYSTEM'
+    };
+
     if (objectQuery(this.props, 'entity', 'id')) {
-      MyAppApi
-        .get({
-          namespace,
-          appId: this.props.entity.id
-        })
-        .subscribe(entityDetail => {
+      MyMetadataApi
+        .getProperties(metadataParams)
+        .combineLatest(
+          MyAppApi.get({
+            namespace,
+            appId: this.props.entity.id
+          })
+        )
+        .subscribe(
+          res => {
+          let entityDetail = res[1];
+          let properties = res[0];
           let programs = entityDetail.programs.map(prog => {
             prog.uniqueId = shortid.generate();
             return prog;
@@ -90,7 +103,9 @@ export default class AppOverview extends Component {
           entityDetail.streams = streams;
           entityDetail.datasets = datasets;
           entityDetail.programs = programs;
-
+          entityDetail.properties = properties;
+          entityDetail.id = this.props.entity.id;
+          entityDetail.type = 'application';
           this.setState({
             entityDetail
           }, () => {
@@ -126,7 +141,14 @@ export default class AppOverview extends Component {
         <div className="fa fa-spinner fa-spin fa-3x"></div>
       );
     }
-    let entityType = getType(this.state.entity);
+    let artifactName = objectQuery(this.state, 'entityDetail', 'artifact', 'name');
+    let entityType = [
+      'cdap-data-pipeline',
+      'cdap-data-streams',
+      'cdap-batch',
+      'cdap-realtime'
+    ]
+      .indexOf(artifactName) !== -1 ? artifactName : 'application';
 
     let title = T.translate(`commons.entity.${entityType}.singular`);
 
@@ -149,7 +171,7 @@ export default class AppOverview extends Component {
           onClose={this.props.onClose}
         />
         <OverviewMetaSection
-          entity={this.state.entity}
+          entity={Object.assign({}, this.state.entityDetail, this.state.entity)}
           onFastActionSuccess={this.onFastActionSuccess.bind(this)}
           onFastActionUpdate={this.onFastActionUpdate.bind(this)}
           showSeparator={true}

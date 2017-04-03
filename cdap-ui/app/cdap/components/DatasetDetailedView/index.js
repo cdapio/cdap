@@ -22,13 +22,9 @@ import {objectQuery} from 'services/helpers';
 import NamespaceStore from 'services/NamespaceStore';
 import {MyDatasetApi} from 'api/dataset';
 import {MyMetadataApi} from 'api/metadata';
-import isNil from 'lodash/isNil';
-import isEmpty from 'lodash/isEmpty';
 import shortid from 'shortid';
 import T from 'i18n-react';
 import DatasetDetaildViewTab from 'components/DatasetDetailedView/Tabs';
-import {MySearchApi} from 'api/search';
-import {parseMetadata} from 'services/metadata-parser';
 import FastActionToMessage from 'services/fast-action-message-helper';
 import Redirect from 'react-router/Redirect';
 import capitalize from 'lodash/capitalize';
@@ -47,7 +43,6 @@ export default class DatasetDetailedView extends Component {
         programs: []
       },
       loading: true,
-      entityMetadata: objectQuery(this.props, 'location', 'state', 'entityMetadata') || {},
       isInvalid: false,
       routeToHome: false,
       successMessage: null,
@@ -72,13 +67,7 @@ export default class DatasetDetailedView extends Component {
     );
 
     this.fetchEntityDetails(namespace, datasetId);
-    this.fetchEntitiesMetadata(namespace);
-    if (
-      !isNil(this.state.entityMetadata) &&
-      !isEmpty(this.state.entityMetadata) &&
-      !isNil(this.state.entityDetail) &&
-      !isEmpty(this.state.entityDetail)
-    ) {
+    if (this.state.entityDetail.id) {
       this.setState({
         loading: false
       });
@@ -105,11 +94,9 @@ export default class DatasetDetailedView extends Component {
         schema: null,
         programs: []
       },
-      loading: true,
-      entityMetadata: {}
+      loading: true
     }, () => {
       this.fetchEntityDetails(namespace, datasetId);
-      this.fetchEntitiesMetadata(namespace, datasetId);
     });
   }
 
@@ -146,7 +133,8 @@ export default class DatasetDetailedView extends Component {
               name: appId, // FIXME: Finalize on entity detail for fast action
               app: appId,
               id: datasetId,
-              type: 'dataset'
+              type: 'datasetinstance',
+              properties: res[0]
             };
 
             this.setState({
@@ -171,38 +159,6 @@ export default class DatasetDetailedView extends Component {
     }
   }
 
-  fetchEntitiesMetadata(namespace) {
-    if (
-      isNil(this.state.entityMetadata) ||
-      isEmpty(this.state.entityMetadata)
-    ) {
-      // FIXME: This is NOT the right way. Need to figure out a way to be more efficient and correct.
-
-      MySearchApi
-        .search({
-          namespace,
-          query: this.props.params.datasetId
-        })
-        .map(res => res.results.map(parseMetadata))
-        .subscribe(entityMetadata => {
-          if (!entityMetadata.length) {
-            this.setState({
-              loading: false,
-              notFound: true
-            });
-          } else {
-            let metadata = entityMetadata
-              .filter(en => en.type === 'datasetinstance')
-              .find( en => en.id === this.props.params.datasetId);
-            this.setState({
-              entityMetadata: metadata,
-              loading: false
-            });
-          }
-        });
-    }
-  }
-
   goToHome(action) {
     if (action === 'delete') {
       let selectedNamespace = NamespaceStore.getState().selectedNamespace;
@@ -213,7 +169,7 @@ export default class DatasetDetailedView extends Component {
     }
     let successMessage;
     if (action === 'setPreferences') {
-      successMessage = FastActionToMessage(action, {entityType: capitalize(this.state.entityMetadata.type)});
+      successMessage = FastActionToMessage(action, {entityType: capitalize(this.state.entityDetail.type)});
     } else {
       successMessage = FastActionToMessage(action);
     }
@@ -261,7 +217,7 @@ export default class DatasetDetailedView extends Component {
           currentStateLabel={T.translate('commons.dataset')}
         />
         <OverviewMetaSection
-          entity={this.state.entityMetadata}
+          entity={this.state.entityDetail}
           onFastActionSuccess={this.goToHome.bind(this)}
           onFastActionUpdate={this.goToHome.bind(this)}
           fastActionToOpen={this.state.modalToOpen}

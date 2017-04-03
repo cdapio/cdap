@@ -92,7 +92,8 @@ export default class StreamOverview extends Component {
             name: appId, // FIXME: Finalize on entity detail for fast action
             app: appId,
             id: this.props.entity.id,
-            type: 'stream'
+            type: 'stream',
+            properties: res[0]
           };
 
           this.setState({
@@ -152,7 +153,7 @@ export default class StreamOverview extends Component {
           successMessage={this.state.successMessage}
         />
         <OverviewMetaSection
-          entity={this.state.entity}
+          entity={Object.assign({}, this.state.entityDetail, this.state.entity)}
           onFastActionSuccess={this.onFastActionSuccess.bind(this)}
           onFastActionUpdate={this.onFastActionUpdate.bind(this)}
           showSeparator={true}
