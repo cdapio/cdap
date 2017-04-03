@@ -1,0 +1,45 @@
+/*
+ * google-search.css_t
+ *
+ * :copyright: Copyright 2017 Cask Data, Inc.
+ * :license: Apache 2.0 License, see LICENSE for details.
+ *
+ */
+
+div.gcsc-branding,
+div.gsc-control-cse.gsc-control-cse-en,
+div.gsc-thumbnail-inside,
+div.gsc-url-top,
+table.gsc-table-result {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
+a.gsst_a {
+  padding-top: 7px;
+}
+
+td.gsib_a {
+  padding-left: 4px;
+}
+
+input#gsc-i-id1.gsc-input {
+  font-size: 13px;
+}
+
+div.gsc-result-info {
+  padding-left: 0px;
+}
+div.gsc-orderby {
+  text-align: right;
+}
+
+a.gs-title,
+div.gsc-cursor-page,
+table.gsc-table-result,
+div.gsc-result-info,
+div.gsc-orderby-label.gsc-inline-block,
+td.gcsc-branding-text,
+div.gcsc-branding-text {
+  font-family: 'Source Sans Pro', "Helvetica", "Arial", sans-serif;
+}

@@ -1,23 +1,20 @@
 {#
-    basic/search.html
-    ~~~~~~~~~~~~~~~~~
+    search.html
+    ~~~~~~~~~~~
 
     Template for the search page.
 
-    :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
-    :license: BSD, see LICENSE for details.
+    :copyright: Copyright 2017 Cask Data, Inc.
+    :license: Apache 2.0 License, see LICENSE for details.    
 #}
 {%- extends "layout.html" %}
 {% set title = _('Search') %}
-{% set script_files = script_files + ['_static/searchtools.js'] %}
 {% block extrahead %}
 {# Hide extra navigation on search result page #}
   <link rel="stylesheet" href="{{ pathto('_static/hide-nav.css', 1) }}" type="text/css" />
-  <script type="text/javascript">
-    jQuery(function() { Search.loadIndex("{{ pathto('searchindex.js', 1) }}"); });
-  </script>
-  {# this is used when loading the search index using $.ajax fails,
-     such as on Chrome for documents on localhost #}
+{# Google search result CSS #}
+  <link rel="stylesheet" href="{{ pathto('_static/google-search.css', 1) }}" type="text/css" />
+{# this is used when loading the search index using $.ajax fails, such as on Chrome for documents on localhost #}
   <script type="text/javascript" id="searchindexloader"></script>
   {{ super() }}
 {% endblock %}
@@ -31,24 +28,29 @@
   </p>
   </div>
   <p>
-  From here you can search the documentation. 
+  Enter your search term(s) to search the documentation:
   </p>
-  <p>
-  To perform a <strong>Quick Search</strong>, enter your search word(s) into the box below and
-  click <strong>"Search"</strong>: 
-  </p>
-  <form name="searchQ" action="" method="get">
-    <input maxlength="256" size="40" type="text" name="q" value="" />
-    <input type="submit" value="{{ _('search') }}" />
-    <span id="search-progress" style="padding-left: 10px"></span>
-  </form>
-  <p>
-  <i>Quick Search</i> is a local keyword search; not as comprehensive as an external
-  search engine, but fast and often sufficiently accurate. Note that the Search function
-  will automatically search for all of the words. Pages containing fewer words won't
-  appear in the result list. Don't use any special characters (such as hyphens or periods)
-  in your words, as the search will then not work.
-  </p>
-  <div id="search-results">
+  <div id="google-search-results">
+<script>
+  (function() {
+    var cx;
+    try {
+      cx = localStorage.gcseID;
+    } catch(e) {
+      console.log("Unable to set Google Custom Search Engine from local storage");
+      return;
+    }
+    if ( cx === "DEFAULT_GCSE_ID") {
+      cx = "002451258715120217843:nkzqh6x__gy";    
+    }    
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+  })();
+</script>
+<gcse:search></gcse:search>
   </div>
 {% endblock %}
