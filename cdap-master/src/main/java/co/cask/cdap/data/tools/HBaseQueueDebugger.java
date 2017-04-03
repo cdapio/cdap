@@ -80,11 +80,13 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
@@ -134,7 +136,6 @@ public class HBaseQueueDebugger extends AbstractIdleService {
   private final ZKClientService zkClientService;
   private final HBaseQueueClientFactory queueClientFactory;
   private final TransactionExecutorFactory txExecutorFactory;
-  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final Store store;
   private final Impersonator impersonator;
   private final AuthorizationEnforcementService authorizationEnforcementService;
@@ -144,7 +145,6 @@ public class HBaseQueueDebugger extends AbstractIdleService {
                             HBaseQueueClientFactory queueClientFactory,
                             ZKClientService zkClientService,
                             TransactionExecutorFactory txExecutorFactory,
-                            NamespaceQueryAdmin namespaceQueryAdmin,
                             Store store, Impersonator impersonator,
                             AuthorizationEnforcementService authorizationEnforcementService) {
     this.tableUtil = tableUtil;
@@ -152,7 +152,6 @@ public class HBaseQueueDebugger extends AbstractIdleService {
     this.queueClientFactory = queueClientFactory;
     this.zkClientService = zkClientService;
     this.txExecutorFactory = txExecutorFactory;
-    this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.store = store;
     this.impersonator = impersonator;
     this.authorizationEnforcementService = authorizationEnforcementService;
@@ -170,10 +169,9 @@ public class HBaseQueueDebugger extends AbstractIdleService {
     zkClientService.stopAndWait();
   }
 
-  public void scanAllQueues() throws Exception {
+  private void scanQueues(List<NamespaceMeta> namespaceMetas) throws Exception {
     final QueueStatistics totalStats = new QueueStatistics();
 
-    List<NamespaceMeta> namespaceMetas = namespaceQueryAdmin.list();
     for (final NamespaceMeta namespaceMeta : namespaceMetas) {
       final Collection<ApplicationSpecification> apps = store.getAllApplications(namespaceMeta.getNamespaceId());
       impersonator.doAs(namespaceMeta, new Callable<Void>() {
@@ -181,7 +179,6 @@ public class HBaseQueueDebugger extends AbstractIdleService {
         public Void call() throws Exception {
           for (ApplicationSpecification app : apps) {
             ApplicationId appId = new ApplicationId(namespaceMeta.getName(), app.getName(), app.getAppVersion());
-
             for (FlowSpecification flow : app.getFlows().values()) {
               ProgramId flowId = appId.program(ProgramType.FLOW, flow.getName());
 
@@ -479,16 +476,17 @@ public class HBaseQueueDebugger extends AbstractIdleService {
     }
   }
 
-  public static HBaseQueueDebugger createDebugger() throws Exception {
+  private static Injector createInjector(boolean disableAuthorization) throws Exception {
+
     CConfiguration cConf = CConfiguration.create();
-    if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
+    if (disableAuthorization && cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       System.out.println(String.format("Disabling authorization for %s.", HBaseQueueDebugger.class.getSimpleName()));
       cConf.setBoolean(Constants.Security.Authorization.ENABLED, false);
     }
     // Note: login has to happen before any objects that need Kerberos credentials are instantiated.
     SecurityUtil.loginForMasterService(cConf);
 
-    Injector injector = Guice.createInjector(
+    return Guice.createInjector(
       new ConfigModule(cConf, HBaseConfiguration.create()),
       new IOModule(),
       new ZKClientModule(),
@@ -529,8 +527,11 @@ public class HBaseQueueDebugger extends AbstractIdleService {
             .to(DatasetFramework.class).in(Singleton.class);
         }
       });
+  }
 
-    return injector.getInstance(HBaseQueueDebugger.class);
+  @VisibleForTesting
+  static HBaseQueueDebugger createDebugger() throws Exception {
+    return createInjector(false).getInstance(HBaseQueueDebugger.class);
   }
 
   public static void main(String[] args) throws Exception {
@@ -544,7 +545,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
       System.out.println("System properties:");
       System.out.println("-D" + PROP_SHOW_PROGRESS + "=true         Show progress while scanning the queue table");
       System.out.println("-D" + PROP_ROWS_CACHE + "=[num_of_rows]   " +
-                         "Number of rows to pass to HBase Scan.setCaching() method");
+                           "Number of rows to pass to HBase Scan.setCaching() method");
       System.exit(1);
     }
 
@@ -559,13 +560,65 @@ public class HBaseQueueDebugger extends AbstractIdleService {
       consumerGroupId = FlowUtils.generateConsumerGroupId(flowId, consumerFlowlet);
     }
 
-    HBaseQueueDebugger debugger = createDebugger();
+    final HBaseQueueDebugger debugger = createDebugger();
     debugger.startAndWait();
+
+    // CDAP-9005 We need to create the NamespaceQueryAdmin without authorization enabled, but create the
+    // HBaseQueueDebugger with authorization enabled.
+    Injector injector = createInjector(true);
+    NoAuthService noAuthService = injector.getInstance(NoAuthService.class);
+    noAuthService.startAndWait();
+    NamespaceQueryAdmin namespaceQueryAdmin = noAuthService.getNamespaceQueryAdmin();
+    Impersonator impersonator = noAuthService.getImpersonator();
+
     if (queueName != null) {
-      debugger.scanQueue(queueName, consumerGroupId);
+      final Long finalConsumerGroupId = consumerGroupId;
+      impersonator.doAs(new NamespaceId(queueName.getFirstComponent()), new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          debugger.scanQueue(queueName, finalConsumerGroupId);
+          return null;
+        }
+      });
     } else {
-      debugger.scanAllQueues();
+      debugger.scanQueues(namespaceQueryAdmin.list());
     }
+    noAuthService.stopAndWait();
     debugger.stopAndWait();
+  }
+
+  /**
+   * Helper class to start and stop zkClientService and provide access to objects (such as NamespaceQueryAdmin)
+   * without Authorization enabled.
+   */
+  private static final class NoAuthService extends AbstractIdleService {
+    private final ZKClientService zkClientService;
+    private final Impersonator impersonator;
+    private final NamespaceQueryAdmin namespaceQueryAdmin;
+
+    @Inject
+    NoAuthService(ZKClientService zkClientService, Impersonator impersonator, NamespaceQueryAdmin namespaceQueryAdmin) {
+      this.zkClientService = zkClientService;
+      this.impersonator = impersonator;
+      this.namespaceQueryAdmin = namespaceQueryAdmin;
+    }
+
+    @Override
+    protected void startUp() throws Exception {
+      zkClientService.startAndWait();
+    }
+
+    @Override
+    protected void shutDown() throws Exception {
+      zkClientService.stopAndWait();
+    }
+
+    Impersonator getImpersonator() {
+      return impersonator;
+    }
+
+    NamespaceQueryAdmin getNamespaceQueryAdmin() {
+      return namespaceQueryAdmin;
+    }
   }
 }
