@@ -936,7 +936,7 @@
     <name>kafka.seed.brokers</name>
     <value>127.0.0.1:9092</value>
     <description>
-      Comma-separated list of CDAP Kafka service brokers; for distributed
+      Comma-separated list of CDAP Kafka service brokers; for Distributed
       CDAP, replace with list of FQDN:port brokers
     </description>
   </property>
@@ -1044,7 +1044,8 @@
     <name>log.base.dir</name>
     <value>/logs/avro</value>
     <description>
-      Base log directory
+      In Distributed CDAP, the HDFS directory under which the system log pipeline saves
+      log files
     </description>
   </property>
 
@@ -1052,7 +1053,8 @@
     <name>log.collection.root</name>
     <value>${local.data.dir}/logs</value>
     <description>
-      Root location for collecting logs when in Standalone CDAP
+      In Standalone CDAP, the local directory under which the system log pipeline saves
+      log files
     </description>
   </property>
 
@@ -1068,7 +1070,7 @@
     <name>log.pipeline.cdap.dir.permissions</name>
     <value>700</value>
     <description>
-      Permissions to use for directories created by the system log appender
+      Permissions used by the system log pipeline when creating directories
     </description>
   </property>
 
@@ -1076,7 +1078,7 @@
     <name>log.pipeline.cdap.file.cleanup.interval.mins</name>
     <value>1440</value>
     <description>
-      Time in minutes for each interval of the log cleanup thread to run
+      Time in minutes between runs of the log cleanup thread
     </description>
   </property>
 
@@ -1084,8 +1086,8 @@
     <name>log.pipeline.cdap.file.cleanup.transaction.timeout</name>
     <value>60</value>
     <description>
-      Transaction timeout in seconds for running file cleanup tasks. This
-      should not be larger than ${data.tx.max.timeout}.
+      Transaction timeout in seconds used by the log cleanup thread. This
+      should not be greater than ${data.tx.max.timeout}.
     </description>
   </property>
 
@@ -1093,8 +1095,7 @@
     <name>log.pipeline.cdap.file.max.lifetime.ms</name>
     <value>21600000</value>
     <description>
-      Maximum time in milliseconds a file is kept open by the system log
-      appender
+      Maximum time span in milliseconds of a log file created by the system log pipeline
     </description>
   </property>
 
@@ -1102,7 +1103,7 @@
     <name>log.pipeline.cdap.file.max.size.bytes</name>
     <value>104857600</value>
     <description>
-      Maximum size in bytes of a file kept open by the system log appender
+      Maximum size in bytes of a log file created by the system log pipeline
     </description>
   </property>
 
@@ -1110,7 +1111,7 @@
     <name>log.pipeline.cdap.file.permissions</name>
     <value>600</value>
     <description>
-      Permissions to set for files created by the system log appender
+      Permissions used by the system log pipeline when creating files
     </description>
   </property>
 
@@ -1118,8 +1119,7 @@
     <name>log.pipeline.cdap.file.retention.duration.days</name>
     <value>7</value>
     <description>
-      Maximum time in days a file is kept before it can be deleted by log
-      cleanup
+      Time in days a log file is retained
     </description>
   </property>
 
@@ -1128,7 +1128,7 @@
     <value>10485760</value>
     <description>
       Number of bytes for the sync interval setting of the Avro file written
-      by the system log appender
+      by the system log pipeline
     </description>
   </property>
 
@@ -1138,7 +1138,7 @@
     <description>
       The ratio of total memory used for determining processing pipeline
       buffer size. This property is only used if
-      ${log.process.pipeline.buffer.size} is set to zero and the value
+      ${log.process.pipeline.buffer.size} is set to zero and this value
       should be greater than zero and less than one.
     </description>
   </property>
@@ -2780,7 +2780,7 @@
     <value>/${root.namespace}/security/auth</value>
     <description>
       Parent node in ZooKeeper used for secret key distribution in
-      distributed mode
+      Distributed CDAP
     </description>
   </property>
 
