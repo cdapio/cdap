@@ -264,62 +264,51 @@
 {%- block footer %}
 <footer class="sitefooter">
     <div class="footer" role="contentinfo">
-
-<style type="text/css">
-.tg {border-collapse:collapse;border-spacing:0;margin:0px auto;padding:0;table-layout:fixed;}
-.tg td{border-width:0;overflow:hidden;padding:0;word-break:normal;font-weight:normal;}
-.tg th{border-width:0;overflow:hidden;padding:0;word-break:normal;font-weight:normal;}
-.tg .ftr-lft{padding-left:20px;text-align:left;vertical-align:top;}
-.tg .ftr-cntr{text-align:center;}
-.tg .ftr-rght{padding-right:20px;text-align:right;vertical-align:top;}
-.tg a{font-weight:bold;}
-</style>
-<table class="tg" width="100%">
-{#  Code to check relations, controlled by setting in the field list at the top :hide-relations: true #}
-{%- set hiderel = '' %}
-{%- set hiderel_key = 'hide-relations' %}
-{%- if meta is defined %}
-    {%- if hiderel_key in meta %}
-        {%- set hiderel = meta[hiderel_key] %}
-    {%- endif %}
-{%- endif %}
-  <tr>
-    {%- if not hiderel %}
-    <td class="ftr-lft">
-    {%- if prev and prev.title|striptags|e != '&lt;no title&gt;' %}
-    <a title="{{ prev.title|striptags|e }}" href="{{ prev.link|e }}" />Previous</a>
-    {%- else %}
-    &mdash;
-    {%- endif %}
-    </td>    
-    {%- endif %}
-    <td class="ftr-cntr" colspan="4">
-    {%- if show_copyright %}
-      {%- if hasdoc('copyright') %}
-        {% trans path=pathto('copyright'), copyright=copyright|e %}<a href="{{ path }}">Copyright</a> &copy; {{ copyright }}{% endtrans %}
-      {%- else %}
-        {% trans copyright=copyright|e %}Copyright &copy; {{ copyright }}{% endtrans %}
+      <table class="tg" width="100%">
+      {#  Code to check relations, controlled by setting in the field list at the top :hide-relations: true #}
+      {%- set hiderel = '' %}
+      {%- set hiderel_key = 'hide-relations' %}
+      {%- if meta is defined %}
+          {%- if hiderel_key in meta %}
+              {%- set hiderel = meta[hiderel_key] %}
+          {%- endif %}
       {%- endif %}
-    {%- endif %}    
-    {%- if last_updated %}
-      {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
-    {%- endif %}
-    {%- if show_sphinx %}
-      {% trans sphinx_version=sphinx_version|e %}&bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
-    {%- endif %}
-    </td>
-    {%- if not hiderel %}
-    <td class="ftr-rght">
-    {%- if next and next.title|striptags|e != '&lt;no title&gt;' %}
-    <a title="{{ next.title|striptags|e }}" href="{{ next.link|e }}" />Next</a>
-    {%- else %}
-    &mdash;
-    {%- endif %}
-    </td>
-    {%- endif %}
-  </tr>
-</table>
-
+        <tr>
+          {%- if not hiderel %}
+          <td class="ftr-lft">
+          {%- if prev and prev.title|striptags|e != '&lt;no title&gt;' %}
+          <a title="{{ prev.title|striptags|e }}" href="{{ prev.link|e }}" />Previous</a>
+          {%- else %}
+          &mdash;
+          {%- endif %}
+          </td>    
+          {%- endif %}
+          <td class="ftr-cntr" colspan="4">
+          {%- if show_copyright %}
+            {%- if hasdoc('copyright') %}
+              {% trans path=pathto('copyright'), copyright=copyright|e %}<a href="{{ path }}">Copyright</a> &copy; {{ copyright }}{% endtrans %}
+            {%- else %}
+              {% trans copyright=copyright|e %}Copyright &copy; {{ copyright }}{% endtrans %}
+            {%- endif %}
+          {%- endif %}    
+          {%- if last_updated %}
+            {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
+          {%- endif %}
+          {%- if show_sphinx %}
+            {% trans sphinx_version=sphinx_version|e %}&bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
+          {%- endif %}
+          </td>
+          {%- if not hiderel %}
+          <td class="ftr-rght">
+          {%- if next and next.title|striptags|e != '&lt;no title&gt;' %}
+          <a title="{{ next.title|striptags|e }}" href="{{ next.link|e }}" />Next</a>
+          {%- else %}
+          &mdash;
+          {%- endif %}
+          </td>
+          {%- endif %}
+        </tr>
+      </table>
     </div>
     </footer>
 {%- endblock %}

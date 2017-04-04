@@ -58,7 +58,7 @@ div.section {
 }
 
 form.search {
-    margin-top: -1px;
+    margin-top: -2px;
 }
 
 hr {
@@ -135,6 +135,55 @@ div.footer a {
 
 div.footerclearer {
     height: 0;
+}
+
+table.tg {
+    border-top: 1px solid #888;
+}
+
+.tg {
+    border-collapse:collapse;
+    border-spacing:0;
+    margin:0px auto;
+    padding:0;
+    table-layout:fixed;
+}
+
+.tg td {
+    border-width:0;
+    overflow:hidden;
+    padding:0;
+    padding-top: 10px;
+    word-break:normal;
+    font-weight:normal;
+}
+
+.tg th {
+    border-width:0;
+    overflow:hidden;
+    padding:0;
+    word-break:normal;
+    font-weight:normal;
+}
+
+.tg .ftr-lft {
+    padding-left:20px;
+    text-align:left;
+    vertical-align:top;
+}
+
+.tg .ftr-cntr {
+    text-align:center;
+}
+
+.tg .ftr-rght {
+    padding-right:20px;
+    text-align:right;
+    vertical-align:top;
+}
+
+.tg a {
+    font-weight:bold;
 }
 
 /* -- Left Sidebar ----------------------------------------------------------- */
@@ -411,8 +460,8 @@ p.admonition-title:after {
 
 p.rubric {
     color: #111;
-    font-size: 110%; 
-    font-weight: normal;
+    font-size: 120%; 
+    font-weight: bold;
     margin: 30px 0 10px 0;
     padding: 5px 0  5px  15px;
     text-shadow: 0 1px 0 white;
@@ -421,7 +470,7 @@ p.rubric {
 pre {
     -moz-box-shadow: 1px 1px 1px #d8d8d8;
     -webkit-box-shadow: 1px 1px 1px #d8d8d8;
-    background-color: #FFF7EA;
+    background-color: #E9F5FC;
     border: 1px solid #C6C9CB;
     color: #222;
     font-size: 1.2em;
