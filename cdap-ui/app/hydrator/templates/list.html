@@ -29,20 +29,6 @@
       <span>Running</span>
     </li>
     <li>
-      <i class="fa fa-circle text-success"></i>
-      <span>
-        {{ ListController.statusCount.scheduled }}
-      </span>
-      <span>Scheduled</span>
-    </li>
-    <li>
-      <i class="fa fa-circle text-danger"></i>
-      <span>
-        {{ ListController.statusCount.suspended }}
-      </span>
-      <span>Suspended</span>
-    </li>
-    <li>
       <i class="fa fa-circle text-muted"></i>
       <span>
         {{ ListController.statusCount.draft }}
@@ -66,6 +52,7 @@
             <th data-predicate="_stats.lastStartTime"
                   data-predicate-default>Last Start Time</th>
             <th data-predicate="_latest.end">Last Finished Run</th>
+            <th data-predicate="_duration">Duration</th>
             <th skip-sort></th>
           </tr>
         </thead>
@@ -108,6 +95,11 @@
               <span ng-if="!pipeline._latest">
                 &mdash;
               </span>
+            </td>
+
+            <td>
+              <span ng-if="pipeline._stats.lastStartTime === 'N/A'"> &mdash; </span>
+              <span ng-if="pipeline._stats.lastStartTime !== 'N/A'">{{ pipeline._stats.lastStartTime * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A' }}</span>
             </td>
 
             <td>

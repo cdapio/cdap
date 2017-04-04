@@ -132,7 +132,9 @@ angular.module(PKG.name + '.feature.hydrator')
         .then(function (runs) {
           app._stats.numRuns = runs.length;
           app._stats.lastStartTime = runs.length > 0 ? runs[0].start : 'N/A';
-
+          var currentRun = runs[0];
+          // !TODO get duration working.
+          app._stats.duration = getDuration(app, currentRun);
           for (var i = 0; i < runs.length; i++) {
             var status = runs[i].status;
 
@@ -143,6 +145,32 @@ angular.module(PKG.name + '.feature.hydrator')
           }
 
         });
+    }
+
+    function getDuration(app, run) {
+      console.log('runs are ', run);
+      if (run.status === 'RUNNING') {
+
+        if (!app.pipelineDurationTimer) {
+          app.pipelineDurationTimer = vm.$interval(() => {
+
+            if (run.end) {
+              let endDuration = run.end - run.start;
+              app.duration = typeof run.end === 'number' ? vm.moment.utc(endDuration * 1000).format('HH:mm:ss') : 'N/A';
+            } else {
+              let runningDuration = new Date().getTime() - (run.start * 1000);
+              app.duration = vm.moment.utc(runningDuration).format('HH:mm:ss');
+            }
+          }, 1000);
+        }
+      }
+
+      let lastRunDuration = run.end - run.start;
+
+      let setInitialTimer = new Date().getTime() - (run.start * 1000);
+      app.duration = typeof run.end === 'number' ?
+                          vm.moment.utc(lastRunDuration * 1000).format('HH:mm:ss') :
+                          vm.moment.utc(setInitialTimer).format('HH:mm:ss');
     }
 
     function fetchStatus() {
