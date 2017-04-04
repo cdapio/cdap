@@ -86,6 +86,16 @@ This application demonstrates:
   and the other using K-Means. The application is packaged with the two possible application config JSON files at
   *resources/wikipedia-kmeans.json* and *resources/wikipedia-lda.json* in the application directory.
 
+- **Cross-namespace data access:** runtime arguments are used to pass in a namespace,
+  allowing each run to be customized as to the namespace used for data access. As all
+  programs of this example application can take a namespace as a runtime argument or
+  preference, programs can access datasets in a different namespace than the one where the
+  application was deployed.
+  
+  If your data is in a different namespace than your application, you can pass that
+  namespace as a runtime argument when you call programs in the application, as shown
+  below. The technique can be adapted to allow cross-namespace access for both reading,
+  writing, and application location.
 
 .. Building and Starting
 .. =====================
@@ -226,6 +236,15 @@ You can also do this from a terminal:
     $ curl -w"\n" -X POST -d '{"min.pages.threshold":"0", "mode":"online"}' \
     "http://localhost:11015/v3/namespaces/default/apps/|example|/workflows/|example-workflow|/start"
 
+If your data is in a different namespace than your application, you can pass that
+namespace as a runtime argument when you call programs in the application:
+
+  .. tabbed-parsed-literal::
+
+    $ cdap cli start workflow |example|.\ |example-workflow| "\"namespace=dataNamespace min.pages.threshold=0 mode=online\""
+    
+    Successfully started workflow '|example-workflow|' of application '|example|'
+    with provided runtime arguments 'namespace=dataNamespace min.pages.threshold=0 mode=online'
 
 Once the pipeline has run through to the end (below), you can start the service and query the results.
 
