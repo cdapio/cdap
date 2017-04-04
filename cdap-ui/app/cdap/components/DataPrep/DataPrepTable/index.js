@@ -32,11 +32,12 @@ export default class DataPrepTable extends Component {
       headers: storeState.headers,
       data: storeState.data,
       loading: !storeState.initialized,
-      directivesLength: storeState.directives.length
+      directivesLength: storeState.directives.length,
+      workspaceId: storeState.workspaceId
     };
 
     this.eventEmitter = ee(ee);
-    this.openWorkspace = this.openWorkspace.bind(this);
+    this.openUploadData = this.openUploadData.bind(this);
 
     this.sub = DataPrepStore.subscribe(() => {
       let state = DataPrepStore.getState().dataprep;
@@ -44,7 +45,8 @@ export default class DataPrepTable extends Component {
         data: state.data,
         headers: state.headers,
         loading: !state.initialized,
-        directivesLength: state.directives.length
+        directivesLength: state.directives.length,
+        workspaceId: state.workspaceId
       });
     });
   }
@@ -53,8 +55,8 @@ export default class DataPrepTable extends Component {
     this.sub();
   }
 
-  openWorkspace() {
-    this.eventEmitter.emit('DATAPREP_NO_WORKSPACE_ID');
+  openUploadData() {
+    this.eventEmitter.emit('DATAPREP_OPEN_UPLOAD');
   }
 
   render() {
@@ -78,13 +80,13 @@ export default class DataPrepTable extends Component {
           {
             this.state.directivesLength === 0 ? (
               <div>
-                <h5 className="text-xs-center">Please create workspace and upload data</h5>
+                <h5 className="text-xs-center">Please upload some data</h5>
                 <div className="button-container text-xs-center">
                   <button
                     className="btn btn-primary"
-                    onClick={this.openWorkspace}
+                    onClick={this.openUploadData}
                   >
-                    Create Workspace
+                    Upload Data
                   </button>
                 </div>
               </div>

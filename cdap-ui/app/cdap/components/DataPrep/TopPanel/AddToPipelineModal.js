@@ -57,13 +57,6 @@ export default class AddToHydratorModal extends Component {
 
   componentWillMount() {
     this.generateLinks();
-    window.onbeforeunload = null;
-  }
-
-  componentWillUnmount() {
-    window.onbeforeunload = function() {
-      return "Are you sure you want to leave this page?";
-    };
   }
 
   generateLinks() {
