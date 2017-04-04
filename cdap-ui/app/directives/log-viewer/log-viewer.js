@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $q, moment, myAlertOnValium) {
+function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $q, moment, myAlertOnValium) {
   'ngInject';
 
   /**
@@ -111,11 +111,16 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     'ERROR' : true,
     'WARN' : true,
     'INFO' : true,
-    'DEBUG' : true,
-    'TRACE' : true
+    'DEBUG' : false,
+    'TRACE' : false
   };
 
-  vm.selectedLogLevel = 'TRACE';
+  // dynamically sets the default log level filter
+  vm.logEvents.forEach(logLevel => {
+    if (vm.activeLogLevels[logLevel] === true) {
+      vm.selectedLogLevel = logLevel;
+    }
+  });
 
   vm.toggleExpandAll = false;
 
@@ -147,6 +152,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   let proximityVal = Number.MAX_VALUE;
   let newTime;
+  let timeout;
 
   vm.inViewScrollUpdate = (index, isInview, event) => {
 
@@ -487,7 +493,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }
 
     //Scroll table to the top
-    angular.element(document.getElementsByClassName('logs-table'))[0].scrollTop = 0;
+    angular.element(document.getElementsByClassName('logs-table-body'))[0].scrollTop = 0;
+    // binds window element to check whether scrollbar has appeared on resize event
+    angular.element($window).bind('resize', checkForScrollbar);
 
     myLogsApi.nextLogsJsonOffset({
       namespace : vm.namespaceId,
@@ -594,10 +602,14 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         vm.displayData[i].selected = vm.toggleExpandAll;
       }
     }
+    checkForScrollbar();
   };
 
-  vm.includeEvent = function(eventType){
-    if (eventType === vm.selectedLogLevel) { return; }
+  vm.includeEvent = function(event, eventType){
+    if (eventType === vm.selectedLogLevel) {
+      event.preventDefault();
+      return;
+    }
 
     vm.endRequest = false;
 
@@ -645,6 +657,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     */
     //Clean slate
     vm.displayData = vm.data;
+    checkForScrollbar();
   };
 
   vm.highlight = (text) => {
@@ -659,7 +672,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   function offsetScroll() {
-    let logsTableContainer = document.getElementsByClassName('logs-table');
+    let logsTableContainer = document.getElementsByClassName('logs-table-body');
 
     if (logsTableContainer && Array.isArray(logsTableContainer)) {
       // Offset the scroll by a tiny margin to stop the infinite scroll to
@@ -681,10 +694,47 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }
   };
 
+  function checkForScrollbar() {
+    // has to do timeout here for Firefox
+    timeout = $timeout(function(){
+      let tbodyEl = angular.element(document.querySelector('.logs-table-body'))[0];
+      if (tbodyEl && tbodyEl.clientHeight < tbodyEl.scrollHeight) {
+        let bodyRowEl = angular.element(document.querySelector('.logs-table-body tr'))[0];
+        vm.headerRowStyle = {
+          width: bodyRowEl.offsetWidth + 'px'
+        };
+      } else {
+        vm.headerRowStyle = {};
+      }
+    }, 100);
+  }
+
+  // This is only for users who have their scrollbar preferences set to always show.
+  // When the user resizes the browser, a scrollbar over the entire browser will appear
+  // for about a second after the user stops resizing, then disappear, which will cause
+  // the width of the inner elements to change. This $watch is to handle showing the
+  // correct header width when that happens.
+  $scope.$watch(function() {
+    return angular.element(document.querySelector('.logs-table-body tr'))[0].offsetWidth;
+  }, function(newValue, oldValue) {
+    // different browsers have different width for the scrollbar
+    if (newValue >= oldValue + 15 && newValue <= oldValue + 20) {
+      vm.headerRowStyle = {
+        width: newValue + 'px'
+      };
+    } else {
+      vm.headerRowStyle = {};
+    }
+  });
+
   $scope.$on('$destroy', function() {
     if (unsub) {
       unsub();
     }
+    if (timeout) {
+      $timeout.cancel(timeout);
+    }
+    angular.element($window).unbind('resize', checkForScrollbar);
     LogViewerStore.dispatch({
       type: 'RESET'
     });
@@ -696,7 +746,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 }
 
 const link = (scope) => {
-  scope.tableEl = document.getElementsByClassName('logs-table');
+  scope.tableEl = document.getElementsByClassName('logs-table-body');
 };
 
 angular.module(PKG.name + '.commons')

@@ -94,9 +94,9 @@ describe('LoadingIndicator Unit Tests', () => {
     expect(document.getElementsByClassName('loading-indicator').length).toBe(0);
   });
 
-  it('Should render default icon', () => {
+  it('Should not render default icon', () => {
     showLoadingIndicator();
-    expect(loadingIndicator.props().icon).toBe('icon-fist');
+    expect(loadingIndicator.props().icon).toBe('');
   });
 
   it('Should render icon passed as props', () => {

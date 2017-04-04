@@ -18,8 +18,8 @@ package co.cask.cdap.data2.transaction;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.common.utils.Tasks;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.tephra.InvalidTruncateTimeException;
 import org.apache.tephra.Transaction;
@@ -43,7 +43,7 @@ import java.util.concurrent.TimeoutException;
  * Everything else is just delegated to a TransactionSystemClient.
  */
 public class DistributedTransactionSystemClientService
-  extends UncaughtExceptionIdleService implements TransactionSystemClientService {
+  extends AbstractIdleService implements TransactionSystemClientService {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedTransactionSystemClientService.class);
   private final CConfiguration cConf;
@@ -162,10 +162,5 @@ public class DistributedTransactionSystemClientService
   @Override
   public int getInvalidSize() {
     return delegate.getInvalidSize();
-  }
-
-  @Override
-  protected Logger getUncaughtExceptionLogger() {
-    return LOG;
   }
 }

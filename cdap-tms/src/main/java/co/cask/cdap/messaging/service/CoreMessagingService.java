@@ -46,6 +46,7 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import org.apache.tephra.TxConstants;
 import org.apache.tephra.util.TxUtils;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -110,8 +111,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     //        messaging service ->
     //          "metrics collection"
     this.metricsCollectionService = metricsCollectionService;
-    this.txMaxLifeTimeInMillis = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tephra.CFG_TX_MAX_LIFETIME,
-                                                                         Constants.Tephra.DEFAULT_TX_MAX_LIFETIME));
+    this.txMaxLifeTimeInMillis = TimeUnit.SECONDS.toMillis(cConf.getLong(TxConstants.Manager.CFG_TX_MAX_LIFETIME,
+                                                                         TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME));
   }
 
   @Override

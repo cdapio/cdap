@@ -21,8 +21,10 @@ import isObject from 'lodash/isObject';
 import shortid from 'shortid';
 import 'whatwg-fetch';
 import {contructUrl, insertAt, removeAt, humanReadableDate} from 'services/helpers';
+import {UncontrolledTooltip} from 'components/UncontrolledComponents';
 require('./ExploreModal.scss');
 import NamespaceStore from 'services/NamespaceStore';
+import T from 'i18n-react';
 
 export default class ExploreModal extends Component {
   constructor(props) {
@@ -225,30 +227,88 @@ export default class ExploreModal extends Component {
       });
     }
   }
+  onModalToggle() {
+    let runningQueries = this.state.queries.filter(query => query.status === 'RUNNING');
+    this.props.onClose(runningQueries.length);
+  }
 
   render() {
     const renderQueryRow = (query) => {
+      let id = shortid.generate();
       return (
-        <tr key={shortid.generate()}>
+        <tr key={id}>
           <td> {humanReadableDate(query.timestamp, true)} </td>
-          <td> {query.status} </td>
           <td> {query.statement} </td>
           <td>
+            {
+              query.status === 'RUNNING' ?
+                <span>
+                  <span className="query-status-value">{query.status}</span>
+                  <i className="fa fa-spinner fa-spin"></i>
+                </span>
+              :
+                <span>{query.status}</span>
+            }
+          </td>
+          <td>
             <div className="btn-group">
-              <a
-                href={this.getDownloadUrl(query)}
-                onClick={this.updateQueryState.bind(this, query)}
-                className="btn btn-secondary"
-                disabled={!query.is_active || query.status !== 'FINISHED' ? 'disabled' : null}
-              >
-                <i className="fa fa-download"></i>
-              </a>
+              {
+                !query.is_active || query.status !== 'FINISHED' ?
+                  <button
+                    className="btn btn-secondary"
+                    disabled="disabled"
+                    >
+                    <i
+                      id={`${id}-download`}
+                      className="fa fa-download"
+                    ></i>
+                    {
+                      !query.is_active ?
+                        <UncontrolledTooltip
+                          target={`${id}-download`}
+                          placement="left"
+                          delay={300}
+                        >
+                          <div className="text-xs-left">
+                            {T.translate('features.FastAction.downloadDisabledMessage')}
+                          </div>
+                        </UncontrolledTooltip>
+                      :
+                        null
+                    }
+                  </button>
+                :
+                  <a
+                    href={this.getDownloadUrl(query)}
+                    onClick={this.updateQueryState.bind(this, query)}
+                    className="btn btn-secondary"
+                  >
+                    <i className="fa fa-download"></i>
+                  </a>
+              }
               <button
                 className="btn btn-secondary"
                 onClick={this.showPreview.bind(this, query)}
                 disabled={!query.is_active || query.status !== 'FINISHED' ? 'disabled' : null}
               >
-                <i className="fa fa-eye"></i>
+                <i
+                  className="fa fa-eye"
+                  id={`${id}-explore`}
+                  delay={300}
+                ></i>
+              {
+                !query.is_active?
+                  <UncontrolledTooltip
+                      target={`${id}-explore`}
+                      placement="top"
+                    >
+                      <div className="text-xs-left">
+                        {T.translate('features.FastAction.previewDisabledMessage')}
+                      </div>
+                    </UncontrolledTooltip>
+                  :
+                    null
+              }
               </button>
               <button className="btn btn-secondary" onClick={this.setQueryString.bind(this, query)}>
                 <i className="fa fa-clone"></i>
@@ -317,14 +377,14 @@ export default class ExploreModal extends Component {
     return (
       <Modal
         className="explore-modal confirmation-modal"
-        toggle={this.props.onClose}
+        toggle={this.onModalToggle.bind(this)}
         isOpen={this.props.isOpen}
         backdrop='static'
       >
         <ModalHeader>
           Explore Dataset
           <div
-           onClick={this.props.onClose}
+           onClick={this.onModalToggle.bind(this)}
            className="float-xs-right"
           >
             <span className="fa fa-times" />
@@ -365,8 +425,8 @@ export default class ExploreModal extends Component {
                 <thead>
                   <tr>
                     <th className="query-timestamp">Start time</th>
-                    <th className="query-status">Status</th>
                     <th>SQL Query</th>
+                    <th className="query-status">Status</th>
                     <th className="query-actions">Actions</th>
                   </tr>
                 </thead>

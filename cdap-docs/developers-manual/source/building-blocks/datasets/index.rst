@@ -26,3 +26,6 @@ forcing you to manipulate data with low-level APIs, datasets provide
 higher-level abstractions and generic, reusable implementations of
 common data patterns.
 
+.. include:: /security/index.rst
+    :start-after: .. impersonation-start
+    :end-before: .. impersonation-end

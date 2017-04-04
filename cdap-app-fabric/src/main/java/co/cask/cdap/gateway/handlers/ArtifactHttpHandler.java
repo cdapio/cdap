@@ -466,9 +466,11 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       Object response = pluginEndpoint.invoke(GSON.fromJson(requestBody, pluginEndpoint.getMethodParameterType()));
       responder.sendString(HttpResponseStatus.OK, GSON.toJson(response));
     } catch (JsonSyntaxException e) {
+      LOG.error("Exception while invoking plugin method.", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            "Unable to deserialize request body to method parameter type");
     } catch (InvocationTargetException e) {
+      LOG.error("Exception while invoking plugin method.", e);
       if (e.getCause() instanceof javax.ws.rs.NotFoundException) {
         throw new NotFoundException(e.getCause());
       } else if (e.getCause() instanceof javax.ws.rs.BadRequestException) {
@@ -476,7 +478,12 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       } else if (e.getCause() instanceof IllegalArgumentException && e.getCause() != null) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getCause().getMessage());
       } else {
-        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while invoking plugin method");
+        Throwable rootCause = Throwables.getRootCause(e);
+        String message = String.format("Error while invoking plugin method %s.", methodName);
+        if (rootCause != null && rootCause.getMessage() != null) {
+          message = String.format("%s %s", message, rootCause.getMessage());
+        }
+        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, message);
       }
     }
   }

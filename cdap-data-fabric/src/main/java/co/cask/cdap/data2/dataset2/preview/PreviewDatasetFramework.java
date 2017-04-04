@@ -47,7 +47,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
@@ -98,7 +97,6 @@ public class PreviewDatasetFramework implements DatasetFramework {
 
   private final DatasetFramework localDatasetFramework;
   private final DatasetFramework actualDatasetFramework;
-  private final Set<String> datasetNames;
   private final AuthenticationContext authenticationContext;
   private final AuthorizationEnforcer authorizationEnforcer;
 
@@ -107,14 +105,12 @@ public class PreviewDatasetFramework implements DatasetFramework {
    *
    * @param local the dataset framework instance in the preview space
    * @param actual the dataset framework instance in the real space
-   * @param datasetNames list of dataset names which need to be accessed for read only purpose from the real space
    */
-  public PreviewDatasetFramework(DatasetFramework local, DatasetFramework actual, Set<String> datasetNames,
+  public PreviewDatasetFramework(DatasetFramework local, DatasetFramework actual,
                                  AuthenticationContext authenticationContext,
                                  AuthorizationEnforcer authorizationEnforcer) {
     this.localDatasetFramework = local;
     this.actualDatasetFramework = actual;
-    this.datasetNames = datasetNames;
     this.authenticationContext = authenticationContext;
     this.authorizationEnforcer = authorizationEnforcer;
   }
@@ -178,16 +174,18 @@ public class PreviewDatasetFramework implements DatasetFramework {
   @Nullable
   @Override
   public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId) throws DatasetManagementException {
-    if (datasetNames.contains(datasetInstanceId.getDataset())) {
-      return actualDatasetFramework.getDatasetSpec(datasetInstanceId);
+    if (DatasetsUtil.isUserDataset(datasetInstanceId)) {
+      DatasetSpecification datasetSpec = actualDatasetFramework.getDatasetSpec(datasetInstanceId);
+      return datasetSpec != null ? datasetSpec : localDatasetFramework.getDatasetSpec(datasetInstanceId);
     }
     return localDatasetFramework.getDatasetSpec(datasetInstanceId);
   }
 
   @Override
   public boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
-    if (datasetNames.contains(datasetInstanceId.getDataset())) {
-      return actualDatasetFramework.hasInstance(datasetInstanceId);
+    if (DatasetsUtil.isUserDataset(datasetInstanceId)) {
+      return actualDatasetFramework.hasInstance(datasetInstanceId) ||
+        localDatasetFramework.hasInstance(datasetInstanceId);
     }
     return localDatasetFramework.hasInstance(datasetInstanceId);
   }
@@ -235,11 +233,10 @@ public class PreviewDatasetFramework implements DatasetFramework {
   public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException {
     // Return the no-op admin for the dataset from the real space
-    if (datasetNames.contains(datasetInstanceId.getDataset())
-      && actualDatasetFramework.hasInstance(datasetInstanceId)) {
+    if (actualDatasetFramework.hasInstance(datasetInstanceId)) {
       return (T) NOOP_DATASET_ADMIN;
     }
-    return actualDatasetFramework.getAdmin(datasetInstanceId, classLoader);
+    return localDatasetFramework.getAdmin(datasetInstanceId, classLoader);
   }
 
   @Nullable
@@ -249,11 +246,10 @@ public class PreviewDatasetFramework implements DatasetFramework {
                                              DatasetClassLoaderProvider classLoaderProvider)
     throws DatasetManagementException, IOException {
     // Return the no-op admin for the dataset from the real space
-    if (datasetNames.contains(datasetInstanceId.getDataset())
-      && actualDatasetFramework.hasInstance(datasetInstanceId)) {
+    if (actualDatasetFramework.hasInstance(datasetInstanceId)) {
       return (T) NOOP_DATASET_ADMIN;
     }
-    return actualDatasetFramework.getAdmin(datasetInstanceId, classLoader, classLoaderProvider);
+    return localDatasetFramework.getAdmin(datasetInstanceId, classLoader, classLoaderProvider);
   }
 
   @Nullable
@@ -279,8 +275,9 @@ public class PreviewDatasetFramework implements DatasetFramework {
     try {
       AuthorizationEnforcer enforcer;
 
+      final boolean isUserDataset = DatasetsUtil.isUserDataset(datasetInstanceId);
       // only for the datasets from the real space enforce the authorization.
-      if (DatasetsUtil.isUserDataset(datasetInstanceId) && datasetNames.contains(datasetInstanceId.getDataset())) {
+      if (isUserDataset && actualDatasetFramework.hasInstance(datasetInstanceId)) {
         enforcer = authorizationEnforcer;
       } else {
         enforcer = NOOP_ENFORCER;
@@ -290,7 +287,7 @@ public class PreviewDatasetFramework implements DatasetFramework {
                                                   null, new Callable<T>() {
           @Override
           public T call() throws Exception {
-            if (datasetNames.contains(datasetInstanceId.getDataset())) {
+            if (isUserDataset && actualDatasetFramework.hasInstance(datasetInstanceId)) {
               return actualDatasetFramework.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider,
                                                        owners, accessType);
             }

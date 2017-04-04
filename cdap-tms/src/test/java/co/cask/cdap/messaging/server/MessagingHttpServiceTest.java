@@ -42,6 +42,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.tephra.Transaction;
+import org.apache.tephra.TxConstants;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -75,7 +76,7 @@ public class MessagingHttpServiceTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setInt(Constants.MessagingSystem.HTTP_SERVER_CONSUME_CHUNK_SIZE, 128);
     // Set max life time to a high value so that dummy tx ids that we create in the tests still work
-    cConf.setLong(Constants.Tephra.CFG_TX_MAX_LIFETIME, 10000000000L);
+    cConf.setLong(TxConstants.Manager.CFG_TX_MAX_LIFETIME, 10000000000L);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),

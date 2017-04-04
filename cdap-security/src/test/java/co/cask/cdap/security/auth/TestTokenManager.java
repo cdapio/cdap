@@ -37,7 +37,7 @@ public abstract class TestTokenManager {
   protected static final Logger LOG = LoggerFactory.getLogger(TestTokenManager.class);
   protected static final long TOKEN_DURATION = 3600 * 1000;
 
-  protected abstract ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec();
+  protected abstract ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec() throws Exception;
 
   @Test
   public void testTokenValidation() throws Exception {

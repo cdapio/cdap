@@ -1,0 +1,229 @@
+{
+  "variables": {
+    "sdk_version": "DEFINE ME ON COMMAND LINE"
+  },
+  "builders": [
+    {
+      "type": "virtualbox-iso",
+      "guest_os_type": "Ubuntu_64",
+      "iso_url": "http://releases.ubuntu.com/16.04/ubuntu-16.04.2-server-amd64.iso",
+      "iso_checksum": "2bce60d18248df9980612619ff0b34e6",
+      "iso_checksum_type": "md5",
+      "ssh_username": "cdap",
+      "ssh_password": "cdap",
+      "ssh_wait_timeout": "30m",
+      "shutdown_command": "sudo shutdown -P now",
+      "format": "ova",
+      "headless": true,
+      "guest_additions_mode": "upload",
+      "http_directory": "files",
+      "boot_command": [
+        "<enter><wait><f6><esc><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "/install/vmlinuz<wait>",
+        " auto<wait>",
+        " console-setup/ask_detect=false<wait>",
+        " console-setup/layoutcode=us<wait>",
+        " console-setup/modelcode=pc105<wait>",
+        " debconf/frontend=noninteractive<wait>",
+        " debian-installer=en_US<wait>",
+        " fb=false<wait>",
+        " initrd=/install/initrd.gz<wait>",
+        " kbd-chooser/method=us<wait>",
+        " keyboard-configuration/layout=USA<wait>",
+        " keyboard-configuration/variant=USA<wait>",
+        " locale=en_US<wait>",
+        " netcfg/get_domain=cask.co<wait>",
+        " netcfg/get_hostname={{ .Name }}<wait>",
+        " grub-installer/bootdev=/dev/sda<wait>",
+        " noapic<wait>",
+        " preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg",
+        " -- <wait>",
+        "<enter><wait>"
+      ],
+      "vboxmanage": [
+        ["modifyvm", "{{ .Name }}", "--memory", "4096"],
+        ["modifyvm", "{{ .Name }}", "--nictype1", "virtio"]
+      ],
+      "vboxmanage_post": [
+        ["modifyvm", "{{ .Name }}", "--clipboard", "bidirectional"],
+        ["modifyvm", "{{ .Name }}", "--accelerate2dvideo", "on"],
+        ["modifyvm", "{{ .Name }}", "--accelerate3d", "on"],
+        ["modifyvm", "{{ .Name }}", "--natpf1", "guest_ssh,tcp,127.0.0.1,2222,,22" ]
+      ],
+      "vm_name": "cdap-standalone-vm-{{user `sdk_version`}}",
+      "name": "cdap-sdk-vm"
+    },
+    {
+      "type": "amazon-ebs",
+      "ami_name": "CDAP SDK {{user `sdk_version`}} ({{timestamp}})",
+      "instance_type": "m4.large",
+      "region": "us-east-1",
+      "source_ami": "ami-1ac0120c",
+      "ssh_username": "ubuntu",
+      "name": "cdap-sdk-ami"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
+      "scripts": [
+        "scripts/apt-setup.sh",
+        "scripts/cookbook-dir.sh"
+      ],
+      "pause_before": "10s"
+    },
+    {
+      "type": "chef-solo",
+      "install_command": "curl -L https://www.chef.io/chef/install.sh | {{if .Sudo}}sudo{{end}} bash -s -- -v 12.19.36",
+      "remote_cookbook_paths": "/var/chef/cookbooks"
+    },
+    {
+      "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
+      "scripts": "scripts/cookbook-setup.sh"
+    },
+    {
+      "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
+      "scripts": "scripts/eclipse-cookbook.sh",
+      "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "file",
+      "source": "files/eclipse.tar.gz",
+      "destination": "/tmp/eclipse.tar.gz",
+      "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "file",
+      "source": "files/idea.tar.gz",
+      "destination": "/tmp/idea.tar.gz",
+      "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "chef-solo",
+      "remote_cookbook_paths": "/var/chef/cookbooks",
+      "run_list": "recipe[maven],recipe[hadoop::flume_agent],recipe[idea],recipe[eclipse]",
+      "skip_install": true,
+      "json": {
+        "eclipse": {
+          "version": "Luna",
+          "release_code": "SR2",
+          "plugins": [
+            { "http://download.eclipse.org/releases/luna": "org.eclipse.egit.feature.group" },
+            { "http://download.eclipse.org/technology/m2e/releases": "org.eclipse.m2e.feature.feature.group" }
+          ],
+          "url": "file:///tmp/eclipse.tar.gz"
+        },
+        "idea": {
+          "setup_dir": "/opt",
+          "version": "2016.2.5",
+          "url": "file:///tmp/idea.tar.gz"
+        },
+        "hadoop": {
+          "distribution": "hdp",
+          "distribution_version": "2.1.7.0"
+        },
+        "java": {
+          "install_flavor": "openjdk",
+          "jdk_version": 7
+        }
+      },
+      "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "file",
+      "source": "files/cdap-sdk.zip",
+      "destination": "/tmp/cdap-sdk.zip"
+    },
+    {
+      "type": "file",
+      "source": "files/mavenrepo.tar.bz2",
+      "destination": "/tmp/mavenrepo.tar.bz2",
+      "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "chef-solo",
+      "remote_cookbook_paths": "/var/chef/cookbooks",
+      "run_list": "recipe[openssh],recipe[cdap::sdk]",
+      "skip_install": true,
+      "json": {
+        "cdap": {
+          "comment": "DO NOT PUT SNAPHOT IN THE VERSION BELOW, THIS CONTROLS CDAP COOKBOOK CODE",
+          "version": "4.2.0-1",
+          "sdk": {
+            "comment": "COPY SDK ZIP TO files/cdap-sdk.zip BEFORE RUNNING ME",
+            "url": "file:///tmp/cdap-sdk.zip"
+          }
+        },
+        "java": {
+          "install_flavor": "openjdk",
+          "jdk_version": 7
+        },
+        "nodejs": {
+          "install_method": "binary",
+          "version": "4.5.0",
+          "binary": {
+            "checksum": {
+              "linux_x64": "c6ee1f4303353e3605ff70de180431417eb594fe08daf612e692216236750c55"
+            }
+          }
+        },
+        "openssh": {
+          "server": {
+            "permit_root_login": "without-password",
+            "password_authentication": "no",
+            "use_dns": "no"
+          }
+        }
+      }
+    },
+    {
+      "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
+      "scripts": [
+        "scripts/motd.sh",
+        "scripts/xorg.sh",
+        "scripts/slim.sh",
+        "scripts/fill-maven-cache.sh",
+        "scripts/lxde.sh",
+        "scripts/vbox-guest-additions.sh"
+      ],
+      "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
+      "scripts": [
+        "scripts/remove-chef.sh",
+        "scripts/sdk-cleanup.sh",
+        "scripts/network-cleanup.sh",
+        "scripts/apt-cleanup.sh"
+      ]
+    },
+    {
+      "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
+      "scripts": "scripts/sdk-ami-security.sh",
+      "only": ["cdap-sdk-ami"]
+    },
+    {
+      "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
+      "scripts": [
+        "scripts/random-root-password.sh",
+        "scripts/zero-disk.sh"
+      ],
+      "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
+      "scripts": "scripts/ssh-cleanup.sh"
+    }
+  ]
+}

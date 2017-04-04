@@ -20,7 +20,7 @@ source ../vars
 source ../_common/common-build.sh
 
 DEFAULT_XML="../../cdap-common/src/main/resources/cdap-default.xml"
-DEFAULT_XML_MD5_HASH="97ddb1f9b71fa064d57b094d8b306865"
+DEFAULT_XML_MD5_HASH="c851bd08827a95976cdff733a8d05d0b"
 
 DEFAULT_TOOL="../tools/cdap-default/doc-cdap-default.py"
 DEFAULT_DEPRECATED_XML="../tools/cdap-default/cdap-default-deprecated.xml"
@@ -36,6 +36,16 @@ function rewrite_references_sed() {
   local target_pattern=${4}
   sed -e "s|${source_pattern}|${target_pattern}|g" ${source_rst} > ${target_rst}
   echo "Copied file ${source_rst} changing '${source_pattern}' to '${target_pattern}'"
+}
+
+function rewrite_references_in_place_sed() {
+  local source_rst=${1}
+  local source_pattern=${2}
+  local target_pattern=${3}
+  local target_pattern_escaped=$(printf '%s\n' "${target_pattern}" | sed 's,[\/&],\\&,g;s/$/\\/')
+  target_pattern_escaped=${target_pattern_escaped%?}
+  sed -e "s|${source_pattern}|${target_pattern_escaped}|g" -i_bu ${source_rst}
+  echo "Rewrote file ${source_rst} changing '${source_pattern}' to '${target_pattern}'"
 }
 
 function download_includes() {

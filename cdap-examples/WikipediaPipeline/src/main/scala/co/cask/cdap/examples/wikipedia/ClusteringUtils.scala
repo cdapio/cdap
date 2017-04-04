@@ -98,15 +98,14 @@ object ClusteringUtils {
    * Store the clustering results in the specified dataset and update accumulators and workflow token.
    */
   def storeResults(sc: SparkContext, sec: SparkExecutionContext,
-                   results: Array[Array[(String, Double)]], tableName: String) = {
+                   results: Array[Array[(String, Double)]], namespace: String, tableName: String) = {
     val numRecords: Accumulator[Int] = sc.accumulator(0, "num.records")
     val initial= new Term("", 0.0)
     val highestScore: Accumulator[Term] = sc.accumulator(initial, "highest.score")(HighestAccumulatorParam)
 
     sec.execute(new TxRunnable {
       override def run(context: DatasetContext) = {
-        val table: Table = context.getDataset(tableName)
-
+        val table: Table = context.getDataset(namespace, tableName)
         results.zipWithIndex.foreach { case (topic, i) =>
           val put: Put = new Put(Bytes.toBytes(i))
           topic.foreach { case (term, weight) =>

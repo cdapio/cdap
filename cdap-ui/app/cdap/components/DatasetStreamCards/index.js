@@ -20,6 +20,7 @@ import {parseMetadata} from 'services/metadata-parser';
 import {convertEntityTypeToApi} from 'services/entity-type-api-converter';
 import {Link} from 'react-router';
 import shortid from 'shortid';
+import {createRouterPath} from 'react-router/LocationUtils';
 require('./DataStreamCards.scss');
 
 export default function DatasetStreamCards({dataEntities}) {
@@ -39,7 +40,14 @@ export default function DatasetStreamCards({dataEntities}) {
     <div className="dataentity-cards">
       {
         data.map(dataEntity => (
-          <Link to={`/ns/${currentNamespace}/${convertEntityTypeToApi(dataEntity.type)}/${dataEntity.id}`}>
+          <Link
+            to={{
+              pathname: `/ns/${currentNamespace}/${convertEntityTypeToApi(dataEntity.type)}/${dataEntity.id}`,
+              state: {
+                previousPathname: createRouterPath(location).replace(/\/cdap\//g, '/')
+              }
+            }}
+          >
             <EntityCard
               className="entity-card-container"
               entity={dataEntity}

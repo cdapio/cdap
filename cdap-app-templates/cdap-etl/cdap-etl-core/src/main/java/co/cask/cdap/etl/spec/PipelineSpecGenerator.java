@@ -41,6 +41,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -279,7 +280,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
                         stage.getName()));
       }
       // if stage is Action stage, add it to the Action stage set
-      if (Action.PLUGIN_TYPE.equals(stage.getPlugin().getType())) {
+      if (isAction(stage.getPlugin().getType())) {
         actionStages.add(stage.getName());
       }
       stageTypes.put(stage.getName(), stage.getPlugin().getType());
@@ -294,6 +295,22 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       if (!stageNames.contains(connection.getTo())) {
         throw new IllegalArgumentException(
           String.format("Invalid connection %s. %s is not a stage.", connection, connection.getTo()));
+      }
+    }
+
+    List<StageConnections> traversalOrder = new ArrayList<>(stageNames.size());
+
+    // can only have empty connections if the pipeline consists of a single action.
+    if (config.getConnections().isEmpty()) {
+      if (actionStages.size() == 1 && stageNames.size() == 1) {
+        traversalOrder.add(new StageConnections(config.getStages().iterator().next(),
+                                                Collections.<String>emptyList(),
+                                                Collections.<String>emptyList()));
+        return traversalOrder;
+      } else {
+        throw new IllegalArgumentException(
+          "Invalid pipeline. There are no connections between stages. " +
+            "This is only allowed if the pipeline consists of a single action plugin.");
       }
     }
 
@@ -321,8 +338,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         }
       } else {
         // check that other non-action plugins are not sources or sinks in the dag
-        boolean isAction = Action.PLUGIN_TYPE.equals(stageType);
-        if (!isAction) {
+        if (!isAction(stageType)) {
           if (stageInputs.isEmpty()) {
             throw new IllegalArgumentException(
               String.format("Stage %s is unreachable, it has no incoming connections.", stageName));
@@ -350,12 +366,16 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       stages.put(stageName, new StageConnections(stage, stageInputs, stageOutputs));
     }
 
-    List<StageConnections> traversalOrder = new ArrayList<>(stages.size());
     for (String stageName : dag.getTopologicalOrder()) {
       traversalOrder.add(stages.get(stageName));
     }
 
     return traversalOrder;
+  }
+
+  // will soon have another action type
+  private boolean isAction(String pluginType) {
+    return Action.PLUGIN_TYPE.equals(pluginType);
   }
 
   private boolean isSource(String pluginType) {

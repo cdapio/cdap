@@ -514,7 +514,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     String tempLocationName = String.format("%s/%s.%s.%s.%s.%s", cConf.get(Constants.AppFabric.TEMP_DIR),
                                             programId.getType().name().toLowerCase(),
-                                            programId.getNamespaceId(), programId.getApplication(),
+                                            programId.getNamespace(), programId.getApplication(),
                                             programId.getProgram(), context.getRunId().getId());
     Location location = locationFactory.get(programId.getNamespaceId()).append(tempLocationName);
     location.mkdirs();

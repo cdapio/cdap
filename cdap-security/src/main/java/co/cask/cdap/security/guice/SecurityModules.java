@@ -22,7 +22,7 @@ import com.google.inject.Module;
 /**
  * Security guice modules
  */
-//TODO: we need to have seperate implementations for inMemoryModule and standaloneModule
+//TODO: we need to have separate implementations for inMemoryModule and standaloneModule
 public class SecurityModules extends RuntimeModule {
   @Override
   public Module getInMemoryModules() {

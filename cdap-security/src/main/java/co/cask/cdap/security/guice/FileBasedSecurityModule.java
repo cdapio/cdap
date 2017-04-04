@@ -51,6 +51,5 @@ public class FileBasedSecurityModule extends SecurityModule {
     public KeyManager get() {
       return new FileBasedKeyManager(cConf, keyIdentifierCodec);
     }
-  };
-
+  }
 }

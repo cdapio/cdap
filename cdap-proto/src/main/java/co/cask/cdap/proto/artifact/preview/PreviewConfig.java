@@ -20,7 +20,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -31,15 +30,15 @@ import javax.annotation.Nullable;
 public class PreviewConfig {
   private final String programName;
   private final ProgramType programType;
-  private final Set<String> realDatasets;
   private final Map<String, String> runtimeArgs;
+  private final Integer timeout;
 
-  public PreviewConfig(String programName, ProgramType programType, @Nullable Set<String> realDatasets,
-                       @Nullable Map<String, String> runtimeArgs) {
+  public PreviewConfig(String programName, ProgramType programType, @Nullable Map<String, String> runtimeArgs,
+                       @Nullable Integer timeout) {
     this.programName = programName;
     this.programType = programType;
-    this.realDatasets = realDatasets == null ? new HashSet<String>() : new HashSet<>(realDatasets);
     this.runtimeArgs = runtimeArgs == null ? new HashMap<String, String>() : new HashMap<>(runtimeArgs);
+    this.timeout = timeout;
   }
 
   public String getProgramName() {
@@ -50,11 +49,12 @@ public class PreviewConfig {
     return programType;
   }
 
-  public Set<String> getRealDatasets() {
-    return realDatasets;
-  }
-
   public Map<String, String> getRuntimeArgs() {
     return runtimeArgs;
+  }
+
+  @Nullable
+  public Integer getTimeout() {
+    return timeout;
   }
 }

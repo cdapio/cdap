@@ -21,7 +21,6 @@ import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/Artifact
 import { Col, Label, FormGroup, Form, Input } from 'reactstrap';
 import InputWithValidations from 'components/InputWithValidations';
 import SelectWithOptions from 'components/SelectWithOptions';
-import MultipleSelectWithOptions from 'components/MultipleSelectWithOptions';
 import T from 'i18n-react';
 
 
@@ -59,17 +58,6 @@ const mapStateToArtifactTypeInputProps = (state) => {
     placeholder: T.translate('features.Wizard.ArtifactUpload.Step2.typePlaceholder')
   };
 };
-const mapStateToArtifactParentProps = (state) => {
-  return {
-    options: [
-      {id: 'system:cdap-data-pipeline[3.0.0,10.0.0]', value: 'system:cdap-data-pipeline[3.0.0,10.0.0]'},
-      {id: 'system:cdap-data-streams[3.0.0,10.0.0]', value: 'system:cdap-data-streams[3.0.0,10.0.0]'}
-    ],
-    value: state.configure.parentArtifact,
-    multiple: true
-  };
-};
-
 
 const mapDispatchToArtifactNameProps = (dispatch) => {
   return {
@@ -110,25 +98,6 @@ const mapDispatchToArtifactTypeProps = (dispatch) => {
     }
   };
 };
-const mapDispatchToArtifactParentProps = (dispatch) => {
-  return {
-    onChange: (e) => {
-      const options = e.target.options;
-      let selected = [];
-      for (let i = 0; i < options.length; i++) {
-        if (options[i].selected) { selected.push(options[i].value); }
-      }
-
-      dispatch({
-        type: ArtifactUploadActions.setParentArtifact,
-        payload: {
-          parentArtifact: selected
-        }
-      });
-    }
-  };
-};
-
 
 const InputArtifactName = connect(
   mapStateToArtifactNameProps,
@@ -150,10 +119,6 @@ const TypeInput = connect(
   mapStateToArtifactTypeInputProps,
   mapDispatchToArtifactTypeProps
 )(Input);
-const ParentArtifactSelect = connect(
-  mapStateToArtifactParentProps,
-  mapDispatchToArtifactParentProps
-)(MultipleSelectWithOptions);
 
 
 export default function ConfigureStep({isMarket}) {
@@ -172,16 +137,6 @@ export default function ConfigureStep({isMarket}) {
           return false;
         }}
       >
-        <FormGroup row>
-          <Col xs="3">
-            <Label className="control-label">{T.translate('features.Wizard.ArtifactUpload.Step2.parentArtifactLabel')}</Label>
-          </Col>
-          <Col xs="7">
-            <ParentArtifactSelect />
-          </Col>
-          <i className="fa fa-asterisk text-danger float-xs-left"/>
-        </FormGroup>
-
         <FormGroup row>
           <Col xs="3">
             <Label className="control-label">{T.translate('features.Wizard.ArtifactUpload.Step2.nameLabel')}</Label>

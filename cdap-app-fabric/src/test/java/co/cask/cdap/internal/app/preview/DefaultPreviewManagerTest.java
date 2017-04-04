@@ -28,8 +28,6 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
-import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
-import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -51,6 +49,8 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
@@ -123,15 +123,14 @@ public class DefaultPreviewManagerTest {
     PreviewManager previewManager = getInjector().getInstance(PreviewManager.class);
     DefaultPreviewManager defaultPreviewManager = (DefaultPreviewManager) previewManager;
 
-    Injector previewInjector = defaultPreviewManager.createPreviewInjector(new ApplicationId("ns1", "app1"),
-                                                                           new HashSet<String>());
+    Injector previewInjector = defaultPreviewManager.createPreviewInjector(new ApplicationId("ns1", "app1"));
 
     // Make sure same PreviewManager instance is returned for a same preview
     Assert.assertEquals(previewInjector.getInstance(PreviewRunner.class),
                         previewInjector.getInstance(PreviewRunner.class));
 
     Injector anotherPreviewInjector
-      = defaultPreviewManager.createPreviewInjector(new ApplicationId("ns2", "app2"), new HashSet<String>());
+      = defaultPreviewManager.createPreviewInjector(new ApplicationId("ns2", "app2"));
 
     Assert.assertNotEquals(previewInjector.getInstance(PreviewRunner.class),
                            anotherPreviewInjector.getInstance(PreviewRunner.class));

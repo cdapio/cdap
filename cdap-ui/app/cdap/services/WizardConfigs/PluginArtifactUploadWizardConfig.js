@@ -39,7 +39,8 @@ let commonSteps = [
 ];
 
 const PluginArtifactUploadWizardConfig = {
-  steps: commonSteps
+  steps: commonSteps,
+  footertitle: T.translate('features.Wizard.PluginArtifact.footertitle')
 };
 
 

@@ -1,0 +1,170 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+.dataprep-container {
+  .top-panel {
+    height: 50px;
+    border-bottom: 1px solid #cccccc;
+
+    .left-title {
+      .data-prep-name {
+        font-size: 18px;
+        padding: 0 10px;
+      }
+
+      .workspace-mgmt {
+        padding-left: 11px;
+        cursor: pointer;
+        font-size: 14px;
+
+        .fa-pencil { margin-left: 10px; }
+      }
+    }
+
+    .upgrade-button {
+      margin-top: 3px;
+      margin-left: 15px;
+
+      .fa.fa-wrench {
+        margin-right: 3px;
+      }
+    }
+
+    .tag {
+      font-size: 10px;
+      vertical-align: top;
+      margin-left: 3px;
+      margin-top: 2px;
+      padding-bottom: 3px;
+    }
+
+    .action-buttons {
+      padding-right: 15px;
+      margin-top: 10px;
+
+      .btn { margin-left: 10px; }
+    }
+  }
+}
+
+.workspace-management-modal,
+.add-to-pipeline-dataprep-modal,
+.dataprep-upgrade-modal {
+  .close-section {
+    cursor: pointer;
+  }
+  .modal-body {
+    overflow-y: auto;
+  }
+}
+
+.workspace-management-modal.modal-dialog {
+  .modal-body {
+    .button-container {
+      margin-top: 10px;
+
+      .btn:not(:first-child) {
+        margin-left: 5px;
+      }
+    }
+
+    .record-delimiter {
+      margin-top: 10px;
+      .label-control { margin-right: 10px; }
+    }
+  }
+}
+
+.add-to-pipeline-dataprep-modal.modal-dialog,
+.dataprep-upgrade-modal.modal-dialog {
+  margin-top: 100px;
+
+  .modal-body {
+    padding: 0;
+
+    .message { padding: 15px; }
+
+    .loading-container {
+      padding: 25px;
+      &.error-message-container {
+        padding: 15px;
+        pre {
+          margin: 0;
+        }
+        .fa.fa-exclamation-triangle {
+          font-size: 15px;
+          margin-right: 5px;
+        }
+      }
+    }
+
+    .action-buttons {
+      margin-top: 10px;
+      width: 100%;
+      display: inline-flex;
+
+      .btn {
+        width: 50%;
+        border-radius: 0;
+        border: none;
+        border-top: 1px solid #cccccc;
+        padding: 10px 0;
+
+        &:first-child { border-right: 1px solid #cccccc; }
+        .fa { margin-right: 10px; }
+      }
+
+    }
+  }
+}
+
+.dataprep-schema-modal.modal-dialog {
+  margin-top: 100px;
+  .modal-header {
+    .fa {
+      cursor: pointer;
+    }
+
+    .btn.btn-link {
+      padding: 0;
+      margin-right: 50px;
+      color: inherit;
+      font-size: inherit;
+
+      &[disabled] {
+        .fa.fa-download {
+          cursor: inherit;
+        }
+      }
+
+      &:focus,
+      &:active {
+        outline: none;
+      }
+    }
+  }
+  .modal-body {
+    overflow-y: auto;
+    max-height: 75vh;
+    pre {
+      margin: 0;
+    }
+    .fa.fa-exclamation-triangle {
+      margin-right: 5px;
+      font-size: 15px;
+    }
+  }
+}

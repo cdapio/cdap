@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.common.runtime;
 
+import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ public abstract class DaemonMain {
    * as if the program is started by jsvc.
    */
   protected void doMain(final String[] args) throws Exception {
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     init(args);
 
     final CountDownLatch shutdownLatch = new CountDownLatch(1);

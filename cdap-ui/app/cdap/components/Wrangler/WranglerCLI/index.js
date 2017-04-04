@@ -19,6 +19,7 @@ import WranglerStore from 'components/Wrangler/store';
 import WranglerActions from 'components/Wrangler/store/WranglerActions';
 import MyWranglerApi from 'api/wrangler';
 import WranglerAutoComplete from 'components/Wrangler/AutoComplete';
+// import NamespaceStore from 'services/NamespaceStore';
 require('./WranglerCLI.scss');
 
 export default class WranglerCLI extends Component {
@@ -62,9 +63,10 @@ export default class WranglerCLI extends Component {
     let updatedDirectives = store.directives.concat(addDirective);
 
     let workspaceId = store.workspaceId;
+    let namespace = 'default';
 
     let params = {
-      namespace: 'default',
+      namespace,
       workspaceId: workspaceId,
       limit: 100,
       directive: updatedDirectives

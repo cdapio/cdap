@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,19 +45,29 @@ body.theme-cdap {
       }
 
       div.btn {
-        .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 5px 15px);
+        .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 3px 0);
         border-top: 1px solid transparent;
         border-right: 1px solid transparent;
         border-bottom: 1px solid transparent;
         border-left: 1px solid @table-border-color;
         transition: all 0.2s ease;
+        width: 55px;
+        > span:first-child {
+          line-height: 15px;
+        }
         span {
-          line-height: 31px;
-          &.icon-logview { font-size: 21px; }
-          &.icon-runtimestart,
-          &.icon-runtimestop { font-size: 24px; }
-          &.icon-runtimestarttime,
-          &.icon-runtimestoptime { font-size: 13px; }
+          &.fa-play,
+          &.fa-stop {
+            font-size: 18px;
+          }
+
+          &.fa-info-circle {
+            color: #666666;
+          }
+
+          &.fa-spinner {
+            line-height: 30px;
+          }
         }
         &:hover,
         &:focus,
@@ -89,9 +99,11 @@ body.theme-cdap {
 
         &.run-time {
           cursor: default;
-          color: @hydrator-blue;
-          font-size: 20px;
-          font-weight: 500;
+          > span {
+            font-size: 18px;
+            font-weight: 500;
+            color: @hydrator-blue;
+          }
           &:hover { background-color: white; }
           &:active,
           &:focus {
@@ -101,6 +113,10 @@ body.theme-cdap {
             border-right-color: transparent;
             background-color: white;
           }
+        }
+
+        div.button-label {
+          font-size: 11px;
         }
 
         @media (max-width: @screen-xs-max) {
@@ -246,66 +262,7 @@ body.theme-cdap {
       transition: all 0.2s ease;
       display: flex;
     }
-    .pipeline-settings-backdrop {
-      z-index: 998;
-    }
     .side-panel.top {
-      .pipeline-run-section {
-        position: absolute;
-        left: -609px;
-        top: 43px;
-        background: #ebebeb;
-        width: 700px;
-        z-index: 1000;
-        box-shadow: 0 7px 7px rgba(0,0,0,.1),0 19px 59px rgba(0,0,0,.2);
-        .macro-error-container { width: 70%; }
-
-        h5 {
-          margin: 10px 10px 0;
-        }
-        .arguments-container {
-          padding: 10px;
-          width: 100%;
-          // This is 100vh - (header (90px) + footer (43px) + Run time arguments title (36px) + Startnow/Schedule buttons (42px))
-          max-height: ~"calc(100vh - 216px)";
-          max-height: ~"-moz-calc(100vh - 216px)";
-          max-height: ~"-webkit-calc(100vh - 216px)";
-          overflow-y: auto;
-          overflow-x: hidden;
-          // FIXME: Everything below. What follows is a custom styling for hydrator
-          // key-value widget was specifically meant for hydrator plugin configuration
-          // Tweaking it for run configuration is messy. Either fix keyvalue to occupy
-          // max space available or build a new widget for hydrator run configuration.
-          key-value-widget {
-            .key-val-directive-container {
-              padding: 0;
-              border: 0;
-              .row {
-                margin: 5px 0;
-                input.form-control {
-                  height: 28px;
-                  padding-top: 5px;
-                  &:first-child { width: 30%; }
-                  &:nth-child(2) { width: 69%; }
-                }
-                .col-xs-10.col-lg-8 {
-                  padding: 0;
-                  width: ~"calc(100% - 60px)";
-                  width: ~"-webkit-calc(100% - 60px)";
-                  width: ~"-moz-calc(100% - 60px)";
-                }
-                .col-xs-2.col-lg-4 {
-                  padding: 0;
-                  width: 60px;
-                }
-              }
-              .btn.btn-danger,
-              .btn.btn-info { padding: 5px; }
-            }
-          }
-        }
-        .clearfix { padding: 10px; }
-      }
       div.hydrator-metadata {
         flex-wrap: wrap;
         display: flex;
@@ -443,13 +400,14 @@ body.theme-cdap {
           .fa-caret-down {
             position: absolute;
             top: 25px;
-            left: 18px;
+            left: 32px;
             line-height: 1;
           }
         }
       }
     }
     .action-buttons {
+      min-width: 400px;
       .btn {
         &.ng-animate.ng-leave {
           display: none;
@@ -464,9 +422,9 @@ body.theme-cdap {
       justify-content: space-between;
       .run-specific-section {
         display: flex;
-        width: ~"calc(100vw - 370px)";
-        width: ~"-moz-calc(100vw - 370px)";
-        width: ~"-webkit-calc(100vw - 370px)";
+        width: ~"calc(100vw - 428px)"; // 100vw - (pipeline-specifiction(370px) + resource center button (58px))
+        width: ~"-moz-calc(100vw - 428px)";
+        width: ~"-webkit-calc(100vw - 428px)";
         border-right: 0;
         .hydrator-detail-metadata {
           display: flex;
@@ -488,10 +446,6 @@ body.theme-cdap {
           max-width: ~"calc(100% - 412px)";
           max-width: ~"-moz-calc(100% - 412px)";
           max-width: ~"-webkit-calc(100% - 412px)";
-
-          @media (min-width: @screen-md-min) {
-            min-width: 200px;
-          }
 
           div.pipeline-type {
             line-height: 1;
@@ -568,38 +522,56 @@ body.theme-cdap {
         }
         .app-status-container {
           display: flex;
-          min-width: 400px;
+          min-width: 425px; // To accomadate the long datetime we show for pipeline run start time.
           position: relative;
           .btn.log-viewer,
-          .btn.scheduler { border-right: 1px solid #dddddd; }
+          .btn.scheduler {
+            border-right: 1px solid #dddddd;
+          }
+          .btn.scheduler {
+            width: 70px; // to accomadate Unscheduled. 0-0
+            padding-top: 0;
+          }
         }
         .last-run { margin: 3px 3px 3px 0; }
       }
       div.btn {
         align-items: center;
         height: 45px;
+        padding: 5px 0;
+
         .fa.fa-caret-down {
           position: absolute;
           top: 17px;
           left: 18px;
         }
-        .icon-double {
-          position: relative;
-          span {
-            &:last-child {
-              position: absolute;
-              top: -6px;
-            }
-            &.icon-runtimestarttime { left: 7px; }
-            &.icon-runtimestoptime { left: 13px; }
+
+        &.scheduler {
+
+          .icon-runtimestarttime {
+            // This is because the schedule icon is not filling up its content which leads to some empty space around the font.
+            // This will cause this icon alone to be rendered differently compared to the icons from font-awesome which occupies
+            // its full width. So to compensate that this hack.
+            font-size: 24px;
+            line-height: 29px;
+            padding-bottom: 5px;
+          }
+
+          .button-label {
+            line-height: 10px;
+            margin-top: -6px;
+          }
+
+          .fa-spinner {
+            line-height: 40px;
           }
         }
       }
       .pipeline-specific-section {
-        justify-content: flex-end;
         border-left: 0;
         display: flex;
-        width: 288px;
+        width: 370px;
+        justify-content: flex-end;
         span.metric-value {
           color: #636363;
           font-size: 13px;
@@ -627,15 +599,28 @@ body.theme-cdap {
           .macro-error-container { width: 70%; }
         }
         &.pipeline-logs-section {
-          height: ~"calc(100vh - 147px)";
-          height: ~"-moz-calc(100vh - 147px)";
-          height: ~"-webkit-calc(100vh - 147px)";
+          height: ~"calc(100vh - 146px)";
+          height: ~"-moz-calc(100vh - 146px)";
+          height: ~"-webkit-calc(100vh - 146px)";
           box-shadow: none;
 
           .logs-table {
             height: ~"calc(100vh - 263px)";
             height: ~"-moz-calc(100vh - 263px)";
             height: ~"-webkit-calc(100vh - 263px)";
+
+            /* 46px: header */
+            tbody {
+              height: ~"calc(100vh - 263px - 46px)";
+              height: ~"-moz-calc(100vh - 263px - 46px)";
+              height: ~"-webkit-calc(100vh - 263px - 46px)";
+
+              .message-holder {
+                td {
+                  border-bottom: 0;
+                }
+              }
+            }
           }
           .fa.fa-expand { display: none; }
         }
@@ -709,5 +694,61 @@ body.theme-cdap {
         }
       }
     }
+  }
+  .pipeline-run-section {
+    position: absolute;
+    right: 80px;
+    top: 94px;
+    background: #ebebeb;
+    width: 700px;
+    z-index: 1000;
+    box-shadow: 0 7px 7px rgba(0,0,0,.1),0 19px 59px rgba(0,0,0,.2);
+    .macro-error-container { width: 70%; }
+
+    h5 {
+      margin: 10px 10px 0;
+    }
+    .arguments-container {
+      padding: 10px;
+      width: 100%;
+      // This is 100vh - (header (90px) + footer (43px) + Run time arguments title (36px) + Startnow/Schedule buttons (42px))
+      max-height: ~"calc(100vh - 216px)";
+      max-height: ~"-moz-calc(100vh - 216px)";
+      max-height: ~"-webkit-calc(100vh - 216px)";
+      overflow-y: auto;
+      overflow-x: hidden;
+      // FIXME: Everything below. What follows is a custom styling for hydrator
+      // key-value widget was specifically meant for hydrator plugin configuration
+      // Tweaking it for run configuration is messy. Either fix keyvalue to occupy
+      // max space available or build a new widget for hydrator run configuration.
+      key-value-widget {
+        .key-val-directive-container {
+          padding: 0;
+          border: 0;
+          .row {
+            margin: 5px 0;
+            input.form-control {
+              height: 28px;
+              padding-top: 5px;
+              &:first-child { width: 30%; }
+              &:nth-child(2) { width: 69%; }
+            }
+            .col-xs-10.col-lg-8 {
+              padding: 0;
+              width: ~"calc(100% - 60px)";
+              width: ~"-webkit-calc(100% - 60px)";
+              width: ~"-moz-calc(100% - 60px)";
+            }
+            .col-xs-2.col-lg-4 {
+              padding: 0;
+              width: 60px;
+            }
+          }
+          .btn.btn-danger,
+          .btn.btn-info { padding: 5px; }
+        }
+      }
+    }
+    .clearfix { padding: 10px; }
   }
 }

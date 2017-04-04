@@ -65,6 +65,10 @@
     <artifactId>cdap-data-fabric</artifactId>
     <version>${project.version}</version>
   </dependency>
+    <dependency>
+      <groupId>org.apache.tephra</groupId>
+      <artifactId>tephra-hbase-compat-1.1</artifactId>
+    </dependency>
   <dependency>
     <groupId>org.apache.hadoop</groupId>
     <artifactId>hadoop-common</artifactId>
@@ -192,7 +196,7 @@
                 </goals>
                 <configuration>
                   <excludeArtifactIds>*</excludeArtifactIds>
-                  <includeArtifactIds>${project.artifactId}</includeArtifactIds>
+                  <includeArtifactIds>tephra-hbase-compat-1.1</includeArtifactIds>
                   <silent>true</silent>
                   <includeScope>compile</includeScope>
                 </configuration>

@@ -35,8 +35,7 @@ body.theme-cdap.state-hydrator-create {
 
       .left-panel {
         .left-top-section {
-          height: 80px;
-          padding: 5px 0;
+          padding: 6.5px 0;
           background: white;
           border-right: 1px solid #dddddd;
 
@@ -80,9 +79,9 @@ body.theme-cdap.state-hydrator-create {
           display: block;
           border-right: 1px solid #dddddd;
           border-top: 1px solid #dddddd;
-          height: ~"calc(100% - 79px)"; // 100% height of left panel - 80px of height from top section of left panel (filter, import, templates & + plugin)
-          height: ~"-moz-calc(100% - 79px)";
-          height: ~"-webkit-calc(100% - 79px)";
+          height: ~"calc(100% - 43px)"; // 100% height of left panel - 43px of height from top section of left panel (filter, import, templates & + plugin)
+          height: ~"-moz-calc(100% - 43px)";
+          height: ~"-webkit-calc(100% - 43px)";
 
           .hydrator-filter {
             min-height: 50px;
@@ -133,6 +132,11 @@ body.theme-cdap.state-hydrator-create {
                   text-overflow: ellipsis;
                   white-space: nowrap;
                   font-weight: 500;
+                  &.plugin-name {
+                    text-overflow: initial;
+                    white-space: normal;
+                    overflow-x: auto;
+                  }
                 }
               }
 
@@ -176,24 +180,27 @@ body.theme-cdap.state-hydrator-create {
                   flex-direction: row;
                   flex-wrap: wrap;
                   align-items: baseline;
-                  justify-content: space-between;
+
                   // Adjust max height to prevent side panel from becoming unusable below a certain browser height
                   @media (max-height: 550px) {
                     max-height: 20vh;
                   }
                   .plugin-item {
-                    text-align: left;
+                    text-align: center;
                     position: relative;
                     background-color: white;
                     color: #666666;
-                    line-height: 28px;
-                    margin-bottom: 4px;
+                    line-height: 32px;
+                    margin-bottom: 7px;
                     padding: 0 6px;
-                    height: 28px;
-                    width: 49%;
-                    border: 1px solid #dddddd;
-                    border-radius: 4px;
-                    box-shadow: 1px 4px 7px -5px rgba(0, 0, 0, 0.65);
+                    width: 33%;
+                    &.hovered {
+                      background-color: #ebebeb;
+                      border-top: 1px solid #ebebeb;
+                      border-right: 1px solid #ebebeb;
+                      border-left: 1px solid #dddddd;
+                      border-bottom: 1px solid #ebebeb;
+                    }
                     .name {
                       display: inline-block;
                       max-width: 90px;
@@ -217,13 +224,20 @@ body.theme-cdap.state-hydrator-create {
                     }
 
                     > .fa {
-                      font-size: 12px;
-                      width: 18px;
-                      line-height: 30px;
+                      font-size: 32px;
+                      width: 32px;
+                      line-height: 32px;
                       vertical-align: top;
+                      display: block;
+                      margin: 0px auto;
+                      padding-top: 8px;
                     }
                     .name {
                       font-size: 11px;
+                      &.plugin-name {
+                        line-height: 14px;
+                        padding-top: 8px;  
+                      }
                     }
                   }
                 }
@@ -275,7 +289,7 @@ body.theme-cdap.state-hydrator-create {
         .btn-left-panel-toggle {
           position: absolute;
           left: 260px;
-          top: 90px;
+          top: 53px;
           height: 32px;
           .btn.btn-default {
             line-height: 20px;
@@ -299,11 +313,11 @@ body.theme-cdap.state-hydrator-create {
         }
         div.side-panel.top {
           .hydrator-metadata {
-            width: ~"calc(100vw - 660px)"; // 370px for pipeline level buttons + 290 for left panel
-            width: ~"-moz-calc(100vw - 660px)";
-            width: ~"-webkit-calc(100vw - 660px)";
+            width: ~"calc(100vw - 755px)";
+            width: ~"-moz-calc(100vw - 755px)";
+            width: ~"-webkit-calc(100vw - 755px)";
             &.expanded {
-              width: ~"calc(100vw - 290px)"; // 370px for pipeline level buttons + 130 for sidepanel
+              width: ~"calc(100vw - 290px)";
               width: ~"-moz-calc(100vw - 290px)";
               width: ~"-webkit-calc(100vw - 290px)";
             }
@@ -319,9 +333,9 @@ body.theme-cdap.state-hydrator-create {
     ~.top-panel {
       div.side-panel.top {
         .hydrator-metadata {
-          width: ~"calc(100vw - 500px)"; // 370px for pipeline level buttons + 130 for sidepanel
-          width: ~"-moz-calc(100vw - 500px)";
-          width: ~"-webkit-calc(100vw - 500px)";
+          width: ~"calc(100vw - 600px)"; // 370px for pipeline level buttons + 130 for sidepanel
+          width: ~"-moz-calc(100vw - 600px)";
+          width: ~"-webkit-calc(100vw - 600px)";
 
           &.expanded {
             width: ~"calc(100vw - 130px)"; // 370px for pipeline level buttons + 130 for sidepanel
@@ -342,8 +356,9 @@ body.theme-cdap.state-hydrator-create {
 
     width: 130px;
     .left-top-section {
-      padding: 5px;
+      padding: 6.5px;
       background: white;
+      border-right: 1px solid #dddddd;
 
       select.form-control {
         width: 100%;
@@ -371,7 +386,7 @@ body.theme-cdap.state-hydrator-create {
         height: 100%;
       }
       .groups-container {
-        top: 152px;
+        top: 88px;
 
         .item {
           color: @cdap-lightgray;
@@ -387,6 +402,7 @@ body.theme-cdap.state-hydrator-create {
               height: -webkit-calc(~"100% - "@height-of-toppanel);
               height: calc(~"100% - "@height-of-toppanel);
               overflow-y: auto;
+              background-color: @cdap-white;
             }
           }
 
@@ -421,7 +437,7 @@ body.theme-cdap.state-hydrator-create {
               flex-direction: row;
               flex-wrap: wrap;
               align-items: baseline;
-              justify-content: space-between;
+
               // Adjust max height to prevent side panel from becoming unusable below a certain browser height
               @media (max-height: 550px) {
                 max-height: 20vh;
@@ -434,11 +450,15 @@ body.theme-cdap.state-hydrator-create {
                 border: 1px solid transparent;
                 color: #666666;
                 line-height: 30px;
-                margin-bottom: 6px;
-                padding: 0 8px;
-                height: 30px;
-                border: 1px solid #dddddd;
-                border-radius: 4px;
+                padding: 0;
+
+                &.hovered {
+                  background-color: #ebebeb;
+                  border-top: 1px solid #ebebeb;
+                  border-right: 1px solid #ebebeb;
+                  border-left: 1px solid #dddddd;
+                  border-bottom: 1px solid #ebebeb;
+                }
 
                 .name {
                   display: none;
@@ -462,10 +482,13 @@ body.theme-cdap.state-hydrator-create {
                 }
 
                 > .fa {
-                  font-size: 18px;
-                  width: 18px;
-                  line-height: 30px;
+                  font-size: 32px;
+                  width: 32px;
+                  line-height: 32px;
                   vertical-align: top;
+                  display: block;
+                  margin: 0px auto;
+                  padding: 7px 0;
                 }
                 .name {
                   font-size: 11px;
@@ -528,7 +551,7 @@ body.theme-cdap.state-hydrator-create {
       border-bottom-right-radius: 0;
       position: absolute;
       left: 102px;
-      top: 108px;
+      top: 49px;
     }
     .btn-left-panel-add-plugin {
       position: absolute;

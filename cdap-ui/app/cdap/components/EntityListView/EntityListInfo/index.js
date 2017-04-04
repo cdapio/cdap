@@ -17,6 +17,11 @@
 import React, {PropTypes, Component} from 'react';
 import T from 'i18n-react';
 import ReactPaginate from 'react-paginate';
+import NamespaceStore from 'services/NamespaceStore';
+import SearchStore from 'components/EntityListView/SearchStore';
+import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
+import {search, updateQueryString} from 'components/EntityListView/SearchStore/ActionCreator';
+import Mousetrap from 'mousetrap';
 
 require('./EntityListInfo.scss');
 
@@ -24,21 +29,78 @@ export default class EntityListInfo extends Component {
   constructor(props) {
     super(props);
   }
+  componentWillMount() {
+    Mousetrap.bind('right', this.goToNextPage.bind(this));
+    Mousetrap.bind('left', this.goToPreviousPage.bind(this));
+  }
+  componentWillUnmount() {
+    Mousetrap.unbind('left');
+    Mousetrap.unbind('right');
+  }
+  goToNextPage() {
+    let {currentPage, total, limit} = SearchStore.getState().search;
+    if (currentPage === Math.ceil(total / limit)) {
+      return;
+    }
+    SearchStore.dispatch({
+      type: SearchStoreActions.SETCURRENTPAGE,
+      payload: {
+        currentPage: currentPage + 1,
+        offset: (currentPage) * limit
+      }
+    });
+    search();
+    updateQueryString();
+  }
+  goToPreviousPage() {
+    let {currentPage, limit} = SearchStore.getState().search;
+    if (currentPage === 1) {
+      return;
+    }
+    SearchStore.dispatch({
+      type: SearchStoreActions.SETCURRENTPAGE,
+      payload: {
+        currentPage: currentPage - 1,
+        offset: (currentPage - 2) * limit
+      }
+    });
+    search();
+    updateQueryString();
+  }
   handlePageChange(data) {
-    let clickedIndex = data.selected+1;
-    this.props.onPageChange(clickedIndex);
+    let currentPage = data.selected + 1;
+    let pageSize = SearchStore.getState().search.limit;
+    let offset = data.selected * pageSize;
+    SearchStore.dispatch({
+      type: SearchStoreActions.SETCURRENTPAGE,
+      payload: {
+        currentPage,
+        offset
+      }
+    });
+    search();
+    updateQueryString();
   }
 
   showPagination() {
     let plus = this.props.allEntitiesFetched ? '' : '+';
+    let searchLoading = SearchStore.getState().search.loading;
     let entitiesLabel = T.translate('features.EntityListView.Info.entities');
     return (
       <span className="pagination">
-        <span className="total-entities">
-          {this.props.numberOfEntities} {plus} {entitiesLabel}
-        </span>
         {
-          this.props.numberOfPages > 1 ?
+          searchLoading ?
+            null
+          :
+            /* have to wrap this in an ul to be consistent with ReactPaginate html */
+            <ul className="total-entities">
+              <span>
+                {this.props.numberOfEntities} {plus} {entitiesLabel}
+              </span>
+            </ul>
+        }
+        {
+          !searchLoading && this.props.numberOfPages > 1 ?
             (
               <ReactPaginate
                 pageCount={this.props.numberOfPages}
@@ -63,12 +125,13 @@ export default class EntityListInfo extends Component {
     );
   }
   render() {
-    let title = T.translate('features.EntityListView.Info.title', {namespace: this.props.namespace});
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    let title = T.translate('features.EntityListView.Info.title', {namespace});
 
     return (
       <div className={this.props.className}>
         <span className="title">
-          <h3 title={this.props.namespace}>
+          <h3 title={namespace}>
             {title}
           </h3>
         </span>
@@ -85,20 +148,16 @@ export default class EntityListInfo extends Component {
 
 EntityListInfo.propTypes = {
   className: PropTypes.string,
-  namespace: PropTypes.string,
   numberOfPages: PropTypes.number,
   numberOfEntities: PropTypes.number,
   currentPage: PropTypes.number,
-  onPageChange: PropTypes.func,
   allEntitiesFetched: PropTypes.bool
 };
 
 EntityListInfo.defaultProps = {
   className: '',
-  namespace: '',
   numberOfPages: 1,
   numberOfEntities: 0,
   currentPage: 1,
-  onPageChange: () => {},
   allEntitiesFetched: false
 };

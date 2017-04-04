@@ -68,8 +68,11 @@ A stream can be created with an HTTP PUT method to the URL::
 - The ``new-stream-id`` should only contain ASCII letters, digits and hyphens.
 - If the stream already exists, no error is returned, and the existing stream remains in place.
 
-Optionally, properties for the stream can be set by providing them in the body of the request. These properties can
-be retrieved and modified afterwards using the ``/properties`` endpoint.
+Optionally, properties for the stream can be set by providing them in the body of the
+request. These properties can later be 
+:ref:`retrieved <http-restful-api-stream-getting-properties>` or 
+:ref:`modified <http-restful-api-stream-setting-properties>` (with the exception of the ``principal``)
+using :ref:`appropriate calls  <http-restful-api-stream-getting-setting-properties>`.
 
 .. list-table::
    :widths: 20 20 60
@@ -98,6 +101,7 @@ be retrieved and modified afterwards using the ``/properties`` endpoint.
      - Kerberos principal with which the stream should be created
 
 If a property is not given in the request body, the default value will be used instead.
+Once the stream has been created, the ``principal`` cannot be changed.
 
 Sending Events to a Stream
 ==========================
@@ -381,25 +385,29 @@ A stream can be deleted with an HTTP DELETE method to the URL::
      - Deletes the stream named *mystream* in the namespace *default* and all events in
        the stream
 
-.. _http-restful-api-stream-setting-properties:
+.. _http-restful-api-stream-getting-setting-properties:
 
 Getting and Setting Stream Properties
 =====================================
-There are a number of stream properties that can be retrieved and specified.
+There are a number of stream properties that can be retrieved and specified:
 
-The **Time-To-Live** (TTL, specified in seconds) property governs how long an event is valid for consumption since 
-it was written to the stream.
-The default TTL for all streams is infinite, meaning that events will never expire.
+- The **Time-To-Live** (TTL, specified in seconds) property governs how long an event is
+  valid for consumption since it was written to the stream. The default TTL for all streams
+  is infinite, meaning that events will never expire.
 
-The **format** property defines how stream event bodies should be read for data exploration.
-Different formats support different types of schemas. Schemas are used to determine
-the table schema used for running ad-hoc SQL-like queries on the stream.
-See :ref:`stream-exploration` for more information about formats and schemas.
+- The **format** property defines how stream event bodies should be read for data
+  exploration. Different formats support different types of schemas. Schemas are used to
+  determine the table schema used for running ad-hoc SQL-like queries on the stream. See
+  :ref:`stream-exploration` for more information about formats and schemas.
 
-The **notification threshold** defines the increment of data that a stream has to receive before
-publishing a notification.
+- The **notification threshold** defines the increment of data that a stream has to
+  receive before publishing a notification.
 
-The **description** of the stream.
+- The **description** of the stream.
+
+- The **principal** of the stream (which, if set, is unmodifiable).
+
+.. _http-restful-api-stream-getting-properties:
 
 .. rubric:: Getting Stream Properties
 
@@ -452,6 +460,8 @@ Stream properties can be retrieved with an HTTP PUT method to the URL::
      - Retrieves the properties of the ``who`` stream of the :ref:`HelloWorld example <examples-hello-world>`. 
 
 .. highlight:: console
+
+.. _http-restful-api-stream-setting-properties:
 
 .. rubric:: Setting Stream Properties
 

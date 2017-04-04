@@ -17,88 +17,60 @@
 import React, {PropTypes, Component} from 'react';
 import EntityCard from 'components/EntityCard';
 import classnames from 'classnames';
-import {objectQuery} from 'services/helpers';
-import T from 'i18n-react';
 import JustAddedSection from 'components/EntityListView/JustAddedSection';
+import NoEntitiesMessage from 'components/EntityListView/NoEntitiesMessage';
+import SearchStore from 'components/EntityListView/SearchStore';
+import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
+import ListViewHeader from 'components/EntityListView/ListViewHeader';
+import {search, updateQueryString} from 'components/EntityListView/SearchStore/ActionCreator';
+import {DEFAULT_SEARCH_SORT_OPTIONS, DEFAULT_SEARCH_QUERY, DEFAULT_SEARCH_FILTERS} from 'components/EntityListView/SearchStore/SearchConstants';
+import isNil from 'lodash/isNil';
 
 export default class HomeListView extends Component {
   constructor(props) {
     super(props);
     this.state = {
       loading: this.props.loading || false,
-      list: this.props.list || [],
-      selectedEntity: {}
+      list: this.props.list || []
     };
   }
+
   componentWillReceiveProps(nextProps) {
     this.setState({
       list: nextProps.list,
-      loading: nextProps.loading,
-      animationDirection: nextProps.animationDirection,
-      activeEntity: nextProps.activeEntity,
-      errorMessage: nextProps.errorMessage,
-      errorStatusCode: nextProps.errorStatusCode,
-      retryCounter: nextProps.retryCounter
+      loading: nextProps.loading
     });
   }
-
-  getActiveFilterStrings() {
-    return this.props.activeFilter.map(filter => {
-      if (filter === 'app') {
-        filter = 'application';
-      }
-      return T.translate(`commons.entity.${filter}.plural`);
-    });
-  }
-
-  getSubstitle() {
-    let text = {
-      search: T.translate('features.EntityListView.Info.subtitle.search'),
-      filteredBy: T.translate('features.EntityListView.Info.subtitle.filteredBy'),
-      sortedBy: T.translate('features.EntityListView.Info.subtitle.sortedBy'),
-      displayAll: T.translate('features.EntityListView.Info.subtitle.displayAll'),
-      displaySome: T.translate('features.EntityListView.Info.subtitle.displaySome'),
-    };
-
-    let activeFilters = this.getActiveFilterStrings();
-    let allFiltersSelected = (activeFilters.length === 0 || activeFilters.length === this.props.filterOptions.length);
-    let activeFilterString = activeFilters.join(', ');
-    let activeSort = this.props.activeSort;
-    let searchText = this.props.searchText;
-    let subtitle;
-
-    if (searchText) {
-      subtitle = `${text.search} "${searchText}"`;
-      if (!allFiltersSelected) {
-        subtitle += `, ${text.filteredBy} ${activeFilterString}`;
-      }
-    } else {
-      if (allFiltersSelected) {
-        subtitle = `${text.displayAll}`;
-      } else {
-        subtitle = `${text.displaySome} ${activeFilterString}`;
-      }
-      if (activeSort) {
-        subtitle += `, ${text.sortedBy} ${activeSort.displayName}`;
-      }
-    }
-
-    return subtitle;
-  }
-
   onClick(entity) {
-    let activeEntity = this.state.list.filter(e => e.id === entity.id);
-    if (activeEntity.length) {
-      this.setState({
-        activeEntity: activeEntity[0]
-      });
-    }
-    if (this.props.onEntityClick) {
-      this.props.onEntityClick(entity);
-    }
+    SearchStore.dispatch({
+      type: SearchStoreActions.SETOVERVIEWENTITY,
+      payload: {
+        overviewEntity: {
+          id: entity.id,
+          type: entity.type,
+          uniqueId: entity.uniqueId
+        }
+      }
+    });
+    updateQueryString();
   }
   render() {
     let content;
+    let searchState = SearchStore.getState().search;
+    let query = searchState.query;
+    let activeFilters = searchState.activeFilters;
+    let filterOptions = searchState.filters;
+    let overviewEntity = searchState.overviewEntity;
+    let isEntityActive = (entity) => {
+      if (isNil(overviewEntity)) {
+        return false;
+      }
+      return (
+        entity.id === overviewEntity.id &&
+        entity.type === overviewEntity.type &&
+        (overviewEntity.uniqueId === entity.uniqueId || isNil(overviewEntity.uniqueId)) // This will happen when the entity id and type comes from url and not through click
+      );
+    };
     if (this.state.loading) {
       content = (
         <h3 className="text-xs-center">
@@ -107,17 +79,28 @@ export default class HomeListView extends Component {
       );
     }
 
-    const empty = (
-      <h3 className="text-xs-center empty-message">
-        {T.translate('features.EntityListView.emptyMessage')}
-      </h3>
-    );
     if (!this.state.loading && !this.state.list.length) {
-      content = (
-        <div className="entities-container">
-          {empty}
-        </div>
-      );
+      content = <NoEntitiesMessage
+                  searchText={query}
+                  filtersAreApplied={() => activeFilters.length > 0 && activeFilters.length < filterOptions.length}
+                  clearSearchAndFilters={() => {
+                    let searchState = SearchStore.getState().search;
+                    SearchStore.dispatch({
+                      type: SearchStoreActions.SETSORTFILTERSEARCHCURRENTPAGE,
+                      payload: {
+                        query: DEFAULT_SEARCH_QUERY,
+                        activeSort: DEFAULT_SEARCH_SORT_OPTIONS[4],
+                        activeFilters: DEFAULT_SEARCH_FILTERS,
+                        currentPage: 1,
+                        offset: searchState.offset,
+                        overviewEntity: null
+                      }
+                    });
+                    search();
+                    updateQueryString();
+                  }}
+                />;
+
     }
     if (!this.state.loading && this.state.list.length) {
       content = this.state.list.map(entity => {
@@ -125,7 +108,7 @@ export default class HomeListView extends Component {
           <EntityCard
             className={
               classnames('entity-card-container',
-                { active: entity.uniqueId === objectQuery(this.state, 'activeEntity', 'uniqueId') }
+                { active: isEntityActive(entity)}
               )
             }
             id={entity.uniqueId}
@@ -133,34 +116,29 @@ export default class HomeListView extends Component {
             onClick={this.onClick.bind(this, entity)}
             entity={entity}
             onFastActionSuccess={this.props.onFastActionSuccess}
-            onUpdate={this.props.onUpdate}
           />
         );
       });
     }
 
+    let currentPage = SearchStore.getState().search.currentPage;
     return (
-      <div className={this.props.className}>
+      <div
+        id={this.props.id}
+        className={this.props.className}
+      >
         {
-          this.props.searchText || !this.props.numColumns ?
+          !this.props.showJustAddedSection ?
             null
           :
             (<JustAddedSection
               clickHandler={this.onClick.bind(this)}
               onFastActionSuccess={this.props.onFastActionSuccess}
-              onUpdate={this.props.onUpdate}
-              activeEntity={this.props.activeEntity}
-              currentPage={this.props.currentPage}
-              limit={this.props.numColumns}
+              currentPage={currentPage}
+              limit={this.props.pageSize}
             />)
         }
-
-        <div className="subtitle">
-          <span>
-            {this.getSubstitle()}
-          </span>
-        </div>
-
+        <ListViewHeader/>
         <div className="entities-all-list-container">
           {content}
         </div>
@@ -172,15 +150,9 @@ export default class HomeListView extends Component {
 HomeListView.propTypes = {
   list: PropTypes.array,
   loading: PropTypes.bool,
-  onEntityClick: PropTypes.func,
-  onUpdate: PropTypes.func,
-  onFastActionSuccess: PropTypes.func,
+  onFastActionSuccess: PropTypes.func, // FIXME: This is not right. I don't think onFastActionSuccess is being used correct here. Not able to reason.
   className: PropTypes.string,
-  activeEntity: PropTypes.object,
-  currentPage: PropTypes.number,
-  activeFilter: PropTypes.array,
-  filterOptions: PropTypes.array,
-  activeSort: PropTypes.obj,
-  searchText: PropTypes.string,
-  numColumns: PropTypes.number
+  pageSize: PropTypes.number,
+  showJustAddedSection: PropTypes.bool,
+  id: PropTypes.string
 };

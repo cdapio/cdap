@@ -217,7 +217,7 @@ public class MockLogReader implements LogReader {
             break;
           }
 
-          if (filter != Filter.EMPTY_FILTER && logLine.getOffset().getKafkaOffset() % 2 != 0) {
+          if (!filter.match(logLine.getLoggingEvent())) {
             continue;
           }
 

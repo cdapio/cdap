@@ -115,9 +115,9 @@ export default class ProgramTable extends Component {
                   }
                 </td>
                 <td>
-                  <div className="fast-actions-container">
+                  <div className="fast-actions-container text-xs-center">
                     <FastActions
-                      className="text-xs-left"
+                      className="text-xs-left btn-group"
                       entity={program}
                     />
                   </div>

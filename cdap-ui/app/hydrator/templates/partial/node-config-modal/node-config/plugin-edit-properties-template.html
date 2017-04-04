@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016 Cask Data, Inc.
+  Copyright © 2016-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -29,14 +29,6 @@
   <div ng-repeat="group in HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.groups">
     <div class="widget-group-container">
       <h4>{{::group.display}}</h4>
-      <div class="wrangler-button pull-right"
-        ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name === 'Wrangler' && !isDisabled">
-        <button class="btn btn-cdap"
-                ng-click="HydratorPlusPlusNodeConfigCtrl.openWranglerModal()">
-          <span class="fa icon-DataWrangler"></span>
-          <span>Wrangle</span>
-        </button>
-      </div>
       <div ng-repeat="field in group.fields">
         <div ng-if="field.name !== HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperty">
 
@@ -69,6 +61,7 @@
                      data-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
                      widget-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && HydratorPlusPlusNodeConfigCtrl.state.node.lock[field.name]"
                      input-schema="HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema"
+                     is-field-required="HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[field.name].required"
                      widget-container>
                 </div>
               </fieldset>

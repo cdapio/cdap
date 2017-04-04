@@ -22,6 +22,7 @@ import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
+import co.cask.cdap.proto.ScheduleType;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -35,31 +36,6 @@ import java.util.Map;
  *
  */
 public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<ScheduleSpecification> {
-
-  /**
-   * Schedule Type.
-   */
-  private enum ScheduleType {
-    /**
-     * Represents {@link TimeSchedule} objects.
-     */
-    TIME,
-
-    /**
-     * Represents {@link StreamSizeSchedule} objects.
-     */
-    STREAM;
-
-    private static ScheduleType fromSchedule(Schedule schedule) {
-      if (schedule instanceof StreamSizeSchedule) {
-        return STREAM;
-      } else if (schedule instanceof TimeSchedule) {
-        return TIME;
-      } else {
-        throw new IllegalArgumentException("Unhandled type of schedule: " + schedule.getClass());
-      }
-    }
-  }
 
   @SuppressWarnings("deprecation")
   @Override

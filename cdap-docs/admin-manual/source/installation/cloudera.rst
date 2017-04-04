@@ -235,6 +235,9 @@ available services which CM can install.
    using the instructions given for the case of installing software in the form of a parcel.
    In this case, you install the CSD first and then install the parcel second.
 
+#. The first time the CDAP CSD is installed, the Cloudera Management Service may prompt
+   to be restarted. This is necessary for the CDAP services to be properly monitored.
+
 .. _cloudera-installation-download-distribute-parcel:
 
 Downloading and Installing Parcels

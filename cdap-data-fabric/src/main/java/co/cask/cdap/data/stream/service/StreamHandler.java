@@ -26,7 +26,6 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
@@ -45,6 +44,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.impersonation.Impersonator;
+import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.http.AbstractHttpHandler;
@@ -306,13 +306,17 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void delete(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("stream") String stream) throws Exception {
+    deleteStream(namespaceId, stream);
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  public void deleteStream(String namespaceId, String stream) throws Exception {
     StreamId streamId = validateAndGetStreamId(namespaceId, stream);
     checkStreamExists(streamId);
     // On Windows, we can not move the file if it is open, and the stream writer may have an open file in this dir.
     // Since Windows is only supported in SDK/standalone, we don't need to worry about multiple stream writers here.
     streamWriter.close(streamId);
     streamAdmin.drop(streamId);
-    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @PUT

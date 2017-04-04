@@ -45,8 +45,16 @@ $border-color: #bbbbbb;
       td {
         line-height: 40px;
 
+        .fast-actions-container {
+          h4 {
+            > span {
+              border: 0;
+            }
+          }
+        }
         a.btn.btn-link {
           color: #4f5050;
+          padding: 0;
         }
       }
     }

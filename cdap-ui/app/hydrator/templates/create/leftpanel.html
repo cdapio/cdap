@@ -20,11 +20,6 @@
           ng-model="HydratorPlusPlusLeftPanelCtrl.selectedArtifact"
           ng-options="artifact as artifact.label for artifact in HydratorPlusPlusLeftPanelCtrl.artifacts">
   </select>
-
-  <div class="import-section">
-    <a class="btn btn-default" href="" ng-click="HydratorPlusPlusLeftPanelCtrl.openFileBrowser()">Import Pipeline</a>
-    <a class="btn btn-default" href="" ng-click="HydratorPlusPlusLeftPanelCtrl.loadArtifact();">Add Plugin</a>
-  </div>
 </div>
 <my-side-panel
   data-panel-groups="HydratorPlusPlusLeftPanelCtrl.pluginsMap"
@@ -45,10 +40,3 @@
     class="fa">
   </span>
 </div>
-
-<my-file-select class="sr-only"
-                id="pipeline-import-config-link"
-                data-button-icon="fa-upload"
-                on-file-select="HydratorPlusPlusLeftPanelCtrl.importFile($files)"
-                data-button-label="Import">
-</my-file-select>

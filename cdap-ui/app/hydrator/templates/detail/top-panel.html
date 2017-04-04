@@ -61,33 +61,27 @@
         <div ng-if="['STARTING', 'STOPPED', 'COMPLETED', 'FAILED', 'KILLED'].indexOf(TopPanelCtrl.appStatus) !== -1">
           <div ng-click="TopPanelCtrl.do('Start')"
                class="btn"
-               uib-tooltip="Run"
-               tooltip-placement="bottom"
-               tooltip-append-to-body="true"
-               tooltip-class="toppanel-tooltip"
                ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'STARTING'}"
                ng-disabled="TopPanelCtrl.appStatus === 'STARTING'">
             <span ng-if="TopPanelCtrl.appStatus !== 'STARTING'">
-              <span class="icon-runtimestart text-success"></span>
+              <span class="fa fa-play text-success"></span>
+              <div class="button-label">Start</div>
             </span>
             <span ng-if="TopPanelCtrl.appStatus === 'STARTING'">
-              <span class="fa fa-refresh fa-spin"></span>
+              <span class="fa fa-spinner fa-spin"></span>
             </span>
           </div>
         </div>
         <div ng-if="['STOPPING', 'RUNNING'].indexOf(TopPanelCtrl.appStatus) !== -1">
           <div ng-click="TopPanelCtrl.do('Stop')"
                class="btn"
-               uib-tooltip="Stop"
-               tooltip-placement="bottom"
-               tooltip-append-to-body="true"
-               tooltip-class="toppanel-tooltip"
                ng-disabled="TopPanelCtrl.appStatus === 'STOPPING'">
             <span ng-if="TopPanelCtrl.appStatus !== 'STOPPING'">
-            <span class="icon-runtimestop text-danger"></span>
+              <span class="fa fa-stop text-danger"></span>
+              <div class="button-label">Stop</div>
             </span>
             <span ng-if="TopPanelCtrl.appStatus === 'STOPPING'">
-              <span class="fa fa-refresh fa-spin"></span>
+              <span class="fa fa-spinner fa-spin"></span>
             </span>
           </div>
         </div>
@@ -97,72 +91,67 @@
 
           <div ng-click="TopPanelCtrl.do('Schedule')"
               class="btn scheduler"
-              uib-tooltip="Schedule"
-              tooltip-placement="bottom"
-              tooltip-append-to-body="true"
-              tooltip-class="toppanel-tooltip"
               ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'SCHEDULING'}"
             ng-disabled="TopPanelCtrl.scheduleStatus === 'SCHEDULING' || TopPanelCtrl.scheduleStatus.error">
-            <span class="icon-double" ng-if="(TopPanelCtrl.scheduleStatus === 'SUSPENDED' || TopPanelCtrl.scheduleStatus.error) && !TopPanelCtrl.scheduleLoading">
-              <span class="icon-runtimestart text-success"></span>
-              <span class="icon-runtimestarttime"></span>
+            <span class="double-line" ng-if="(TopPanelCtrl.scheduleStatus === 'SUSPENDED' || TopPanelCtrl.scheduleStatus.error) && !TopPanelCtrl.scheduleLoading">
+              <span class="fa icon-runtimestarttime"></span>
+              <div class="button-label">
+                <span>Schedule</span>
+              </div>
             </span>
             <span ng-if="TopPanelCtrl.scheduleLoading">
-              <span class="fa fa-refresh fa-spin"></span>
+              <span class="fa fa-spinner fa-spin"></span>
             </span>
           </div>
         </div>
         <div ng-if="['SCHEDULED', 'SUSPENDING'].indexOf(TopPanelCtrl.scheduleStatus) !== -1">
           <div ng-click="TopPanelCtrl.do('Suspend')"
                class="btn scheduler"
-               uib-tooltip="Suspend"
-               tooltip-placement="bottom"
-               tooltip-append-to-body="true"
-               tooltip-class="toppanel-tooltip"
-            ng-disabled="TopPanelCtrl.scheduleStatus === 'SUSPENDING'">
-            <span class="icon-double" ng-if="TopPanelCtrl.scheduleStatus ==='SCHEDULED' && !TopPanelCtrl.scheduleLoading">
-              <span class="icon-runtimestop text-danger"></span>
-              <span class="icon-runtimestoptime"></span>
+               ng-disabled="TopPanelCtrl.scheduleStatus === 'SUSPENDING'">
+            <span class="double-line" ng-if="TopPanelCtrl.scheduleStatus ==='SCHEDULED' && !TopPanelCtrl.scheduleLoading">
+              <span class="fa icon-runtimestarttime text-primary"></span>
+              <div class="button-label">
+                <span>Unschedule</span>
+              </div>
             </span>
             <span ng-if="TopPanelCtrl.scheduleLoading">
-              <span class="fa fa-refresh fa-spin"></span>
+              <span class="fa fa-spinner fa-spin"></span>
             </span>
           </div>
         </div>
       </div>
 
       <!-- Realtime or data Streams -->
-      <div ng-if="[TopPanelCtrl.GLOBALS.etlRealtime, TopPanelCtrl.GLOBALS.etlDataStreams].indexOf(TopPanelCtrl.app.type) !== -1 && (['KILLED', 'STOPPED', 'COMPLETED', 'FAILED', 'STARTING'].indexOf(TopPanelCtrl.appStatus) !== -1)"
-        class="btn"
-        ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'STARTING'}"
-        ng-click="TopPanelCtrl.do('Start')"
-        ng-disabled="TopPanelCtrl.appStatus === 'STARTING'">
-        <span ng-if="TopPanelCtrl.appStatus !=='STARTING'">
-        <span class="icon-runtimestart text-success"
-                uib-tooltip="Run"
-                tooltip-placement="bottom"
-                tooltip-append-to-body="true"
-                tooltip-class="toppanel-tooltip"></span>
-        </span>
-        <span ng-if="TopPanelCtrl.appStatus === 'STARTING'">
-          <span class="fa fa-refresh fa-spin"></span>
-        </span>
+      <div ng-if="[TopPanelCtrl.GLOBALS.etlRealtime, TopPanelCtrl.GLOBALS.etlDataStreams].indexOf(TopPanelCtrl.app.type) !== -1">
+        <div ng-if="['KILLED', 'STOPPED', 'COMPLETED', 'FAILED', 'STARTING'].indexOf(TopPanelCtrl.appStatus) !== -1">
+          <div class="btn"
+            ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'STARTING'}"
+            ng-click="TopPanelCtrl.do('Start')"
+            ng-disabled="TopPanelCtrl.appStatus === 'STARTING'">
+            <span ng-if="TopPanelCtrl.appStatus !== 'STARTING'">
+              <span class="fa fa-play text-success"></span>
+              <div class="button-label">Start</div>
+            </span>
+            <span ng-if="TopPanelCtrl.appStatus === 'STARTING'">
+              <span class="fa fa-spinner fa-spin"></span>
+            </span>
+          </div>
+        </div>
+        <div ng-if="['RUNNING', 'STOPPING'].indexOf(TopPanelCtrl.appStatus) !== -1">
+          <div class="btn"
+            ng-click="TopPanelCtrl.do('Stop')"
+            ng-disabled="TopPanelCtrl.appStatus === 'STOPPING'">
+            <span ng-if="TopPanelCtrl.appStatus !== 'STOPPING'">
+              <span class="fa fa-stop text-danger"></span>
+              <div class="button-label">Stop</div>
+            </span>
+            <span ng-if="TopPanelCtrl.appStatus === 'STOPPING'">
+              <span class="fa fa-spinner fa-spin"></span>
+            </span>
+          </div>
+        </div>
       </div>
-      <div ng-if="[TopPanelCtrl.GLOBALS.etlRealtime, TopPanelCtrl.GLOBALS.etlDataStreams].indexOf(TopPanelCtrl.app.type) !== -1 && ['RUNNING', 'STOPPING'].indexOf(TopPanelCtrl.appStatus) !== -1"
-        class="btn"
-        uib-tooltip="Stop"
-        tooltip-placement="bottom"
-        tooltip-append-to-body="true"
-        tooltip-class="toppanel-tooltip"
-        ng-click="TopPanelCtrl.do('Stop')"
-        ng-disabled="TopPanelCtrl.appStatus === 'STOPPING'">
-        <span ng-if="TopPanelCtrl.appStatus !=='STOPPING'">
-          <span class="icon-runtimestop text-danger"></span>
-        </span>
-        <span ng-if="TopPanelCtrl.appStatus === 'STOPPING'">
-          <span class="fa fa-refresh fa-spin"></span>
-        </span>
-      </div>
+
       <div class="app-status text-center" ng-class="{'status-green': TopPanelCtrl.isGreenStatus(), 'status-red': !TopPanelCtrl.isGreenStatus() }">
         <span class="fa fa-circle metric-value"></span>
         <span class="metric-label" ng-bind="TopPanelCtrl.appStatus"></span>
@@ -215,73 +204,50 @@
       </div>
       <div class="btn log-viewer"
            ng-class="{'btn-select': TopPanelCtrl.viewLogs}"
-           uib-tooltip="Logs"
-           tooltip-placement="bottom"
-           tooltip-append-to-body="true"
-           tooltip-class="toppanel-tooltip"
            ng-click="TopPanelCtrl.viewLogs = !TopPanelCtrl.viewLogs">
-        <span class="fa icon-logview"></span>
-        </span>
+        <span class="fa fa-file-text-o"></span>
+        <div class="button-label">Logs</div>
       </div>
     </div>
   </div>
 
   <div class="pipeline-specific-section">
     <div class="btn"
-         uib-tooltip="Summary"
-         tooltip-placement="bottom"
-         tooltip-append-to-body="true"
-         tooltip-class="toppanel-tooltip"
          ng-class="{'btn-select': TopPanelCtrl.viewSummary}"
          ng-click="TopPanelCtrl.viewSummary = !TopPanelCtrl.viewSummary">
       <span class="fa fa-line-chart"></span>
+      <div class="button-label">Summary</div>
     </div>
     <div class="btn"
-         uib-tooltip="Settings"
-         tooltip-placement="bottom"
-         tooltip-append-to-body="true"
-         tooltip-class="toppanel-tooltip"
          ng-class="{'btn-select': TopPanelCtrl.viewSettings}"
          ng-click="TopPanelCtrl.viewSettings = !TopPanelCtrl.viewSettings">
       <span class="fa fa-sliders"></span>
+      <div class="button-label">Settings</div>
     </div>
     <div class="btn"
-         ui-sref="hydrator.create({data: TopPanelCtrl.cloneConfig, type: TopPanelCtrl.app.type, isClone: true})"
-         uib-tooltip="Clone"
-         tooltip-placement="bottom"
-         tooltip-append-to-body="true"
-         tooltip-class="toppanel-tooltip">
-      <span class="icon-clone">
-      </span>
+         ui-sref="hydrator.create({data: TopPanelCtrl.cloneConfig, type: TopPanelCtrl.app.type, isClone: true})">
+      <span class="icon-clone"></span>
+      <div class="button-label">Clone</div>
     </div>
     <div class="btn"
-         uib-tooltip="Export"
-         tooltip-placement="bottom"
-         tooltip-append-to-body="true"
-         tooltip-class="toppanel-tooltip"
          ng-click="TopPanelCtrl.exportConfig()">
       <span class="fa icon-export"></span>
+      <div class="button-label">Export</div>
     </div>
     <!-- For styling consistency, wrapping the div on <a> -->
     <a href="{{TopPanelCtrl.viewInCdapLink}}">
-      <div class="btn"
-           uib-tooltip="View in CDAP"
-           tooltip-placement="bottom"
-           tooltip-append-to-body="true"
-           tooltip-class="toppanel-tooltip">
-           <span class="icon-fist"></span>
+      <div class="btn">
+        <span class="fa fa-info-circle"></span>
+        <div class="button-label">Details</div>
       </div>
     </a>
     <div class="btn"
-      uib-tooltip="Delete"
-      tooltip-placement="left"
-      tooltip-append-to-body="true"
-      tooltip-class="toppanel-tooltip"
       ng-click="caskConfirm()"
       confirmable-modal-class="hydrator-modal center"
       cask-confirmable="TopPanelCtrl.do('Delete')"
       data-confirmable-content="Are you sure you want to delete the pipeline <strong>'{{TopPanelCtrl.app.name}}'</strong>?">
       <span class="icon-delete"></span>
+      <div class="button-label">Delete</div>
     </div>
   </div>
   <cask-resource-center-button></cask-resource-center-button>

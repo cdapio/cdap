@@ -79,58 +79,61 @@
   </my-timeline>
 
   <!-- LOGS TABLE -->
-  <div class="logs-table"
-       in-view-container>
+  <div class="logs-table">
     <table class="table table-bordered scroll scroll-table">
       <thead>
-        <th class="time time-header log-header"
-            ng-if="LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
-          Time
-        </th>
+        <tr ng-style="LogViewer.headerRowStyle">
+          <th class="time time-header log-header"
+              ng-if="LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
+            Time
+          </th>
 
-        <th class='level level-header'
-            ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
-          <span uib-dropdown class="dropdown">
-            <span uib-dropdown-toggle>
-              Level <span class="fa fa-caret-down"></span>
+          <th class='level level-header'
+              ng-if="LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
+            <span uib-dropdown class="dropdown">
+              <span uib-dropdown-toggle>
+                Level <span class="fa fa-caret-down"></span>
+              </span>
+              <ul uib-dropdown-menu ng-click="$event.stopPropagation();">
+                <li ng-repeat="option in LogViewer.logEvents"
+                    ng-click="LogViewer.includeEvent($event, option)">
+                  <input
+                    type="checkbox"
+                    ng-model="LogViewer.activeLogLevels[option]"/>
+                    <span>{{option}}</span>
+                </li>
+              </ul>
             </span>
-            <ul uib-dropdown-menu ng-click="$event.stopPropagation();">
-              <li ng-repeat="option in LogViewer.logEvents"
-                  ng-click="LogViewer.includeEvent(option)">
-                <input
-                  type="checkbox"
-                  ng-model="LogViewer.activeLogLevels[option]"/>
-                  <span>{{option}}</span>
-              </li>
-            </ul>
-          </span>
-        </th>
+          </th>
 
-        <th class="source source-header log-header"
-            ng-if="LogViewer.configOptions.source && !LogViewer.hiddenColumns.source">
-          Source
-        </th>
+          <th class="source source-header log-header"
+              ng-if="LogViewer.configOptions.source && !LogViewer.hiddenColumns.source">
+            Source
+          </th>
 
-        <th class="message-header"
-            ng-if="LogViewer.configOptions.message && !LogViewer.hiddenColumns.message"
-            ng-class="{'expanded': LogViewer.isMessageExpanded }">
-          <span class="fa"
-                ng-class="{ 'fa-arrow-left': !LogViewer.isMessageExpanded,
-                  'fa-arrow-right': LogViewer.isMessageExpanded}"
-                ng-click="LogViewer.collapseColumns()"></span>
-          <span>Message</span>
-          <button class="btn btn-default pull-right"
-                  ng-click="LogViewer.toggleLogExpansion()"
-                  ng-disabled="LogViewer.displayData.length === 0">
-            <span ng-if="!LogViewer.toggleExpandAll">Expand All</span>
-            <span ng-if="LogViewer.toggleExpandAll">Collapse All</span>
-          </button>
-        </th>
+          <th class="message-header"
+              ng-if="LogViewer.configOptions.message && !LogViewer.hiddenColumns.message"
+              ng-class="{'expanded': LogViewer.isMessageExpanded }">
+            <span class="fa"
+                  ng-class="{ 'fa-arrow-left': !LogViewer.isMessageExpanded,
+                    'fa-arrow-right': LogViewer.isMessageExpanded}"
+                  ng-click="LogViewer.collapseColumns()"></span>
+            <span>Message</span>
+            <button class="btn btn-default pull-right"
+                    ng-click="LogViewer.toggleLogExpansion()"
+                    ng-disabled="LogViewer.displayData.length === 0">
+              <span ng-if="!LogViewer.toggleExpandAll">Expand All</span>
+              <span ng-if="LogViewer.toggleExpandAll">Collapse All</span>
+            </button>
+          </th>
+        </tr>
       </thead>
-      <tbody infinite-scroll="LogViewer.scrollFn()"
+      <tbody class="logs-table-body"
+             infinite-scroll="LogViewer.scrollFn()"
              infinite-scroll-immediate-check="false"
-             infinite-scroll-container="'.logs-table'"
+             infinite-scroll-container="'.logs-table-body'"
              infinite-scroll-disabled="(LogViewer.statusType === 0 || LogViewer.statusType === 1) && LogViewer.displayData.length === LogViewer.totalCount"
+             in-view-container
              >
 
         <tr ng-class="{'has-stack-trace' : entry.log.stackTrace.length > 0, 'row-selected' : $index+1  < LogViewer.displayData.length && LogViewer.displayData[$index + 1].stackTrace, 'row-expanded' : !entry.stackTrace && entry.selected }"
@@ -186,13 +189,13 @@
             <div class="well well-sm text-center"
                  ng-if="!LogViewer.errorRetrievingLogs && !LogViewer.loading && !LogViewer.displayData.length && LogViewer.statusType !== 0">
               <h4>
-                No logs to display.
+                There are no logs yet to display.
               </h4>
             </div>
             <div class="well well-sm text-center"
                  ng-if="LogViewer.errorRetrievingLogs && !LogViewer.loading">
               <h4>
-                Error Retrieving Logs.
+                Unable to retrieve logs.
               </h4>
             </div>
             <div class="well well-sm text-center"

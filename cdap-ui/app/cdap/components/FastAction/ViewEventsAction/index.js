@@ -56,7 +56,7 @@ export default class ViewEventsAccess extends Component {
     const tooltipId = `${this.props.entity.uniqueId}-viewevents`;
 
     return (
-      <span>
+      <span className="btn btn-secondary btn-sm">
         <FastActionButton
           icon="fa fa-filter"
           action={this.toggleModal}

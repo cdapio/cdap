@@ -29,12 +29,14 @@
   }
 
   .tag-input {
-    height: 21px;
+    height: 20px;
+    line-height: 20px;
     width: 120px;
     display: inline-block;
-    padding: 3px 5px;
-    transform: translateY(1px);
+    padding: 0 5px;
     margin-left: 5px;
     margin-right: 3px;
+    vertical-align: middle;
+    font-size: 12px;
   }
 }

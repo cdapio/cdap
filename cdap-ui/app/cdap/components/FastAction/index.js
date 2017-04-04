@@ -23,6 +23,7 @@ import SendEventAction from 'components/FastAction/SendEventAction';
 import SetPreferenceAction from 'components/FastAction/SetPreferenceAction';
 import LogAction from 'components/FastAction/LogAction';
 import ViewEventsAction from 'components/FastAction/ViewEventsAction';
+import {objectQuery} from 'services/helpers';
 
 export default class FastAction extends Component {
   constructor(props) {
@@ -39,6 +40,7 @@ export default class FastAction extends Component {
           <DeleteAction
             entity={this.props.entity}
             onSuccess={this.props.onSuccess}
+            argsToAction={objectQuery(this.props.argsToAction)}
           />
         );
       case 'truncate':
@@ -46,6 +48,7 @@ export default class FastAction extends Component {
           <TruncateAction
             entity={this.props.entity}
             onSuccess={this.props.onSuccess}
+            argsToAction={objectQuery(this.props.argsToAction)}
           />
         );
       case 'startStop':
@@ -53,6 +56,7 @@ export default class FastAction extends Component {
           <StartStopAction
             entity={this.props.entity}
             onSuccess={this.props.onSuccess}
+            argsToAction={objectQuery(this.props.argsToAction)}
           />
         );
       case 'explore':
@@ -60,6 +64,7 @@ export default class FastAction extends Component {
           <ExploreAction
             entity={this.props.entity}
             opened={this.props.opened}
+            argsToAction={objectQuery(this.props.argsToAction)}
           />
         );
       case 'sendEvents':
@@ -68,6 +73,7 @@ export default class FastAction extends Component {
             entity={this.props.entity}
             onSuccess={this.props.onSuccess}
             opened={this.props.opened}
+            argsToAction={objectQuery(this.props.argsToAction)}
           />
         );
       case 'setPreferences':
@@ -75,18 +81,21 @@ export default class FastAction extends Component {
           <SetPreferenceAction
             entity={this.props.entity}
             onSuccess={this.props.onSuccess}
+            argsToAction={objectQuery(this.props.argsToAction)}
           />
         );
       case 'log':
         return (
           <LogAction
             entity={this.props.entity}
+            argsToAction={objectQuery(this.props.argsToAction)}
           />
         );
       case 'viewEvents':
         return (
           <ViewEventsAction
             entity={this.props.entity}
+            argsToAction={objectQuery(this.props.argsToAction)}
           />
         );
     }
@@ -101,5 +110,6 @@ FastAction.propTypes = {
   type: PropTypes.oneOf(['delete', 'truncate', 'startStop', 'sendEvents', 'explore', 'setPreferences', 'log']),
   entity: PropTypes.object,
   onSuccess: PropTypes.func,
-  opened: PropTypes.bool
+  opened: PropTypes.bool,
+  argsToAction: PropTypes.object
 };
