@@ -200,6 +200,76 @@ features:
     JustAddedSection:
       subtitle: Just added
   DataPrep:
+    Directives:
+      apply: Apply
+      cancel: Cancel
+      Filter:
+        Conditions:
+          CUSTOMCONDITION: Custom condition
+          EMPTY: value is empty
+          TEXTCONTAINS: value contains
+          TEXTENDSWITH: value ends with
+          TEXTEXACTLY: value is
+          TEXTREGEX: value matches regex
+          TEXTSTARTSWITH: value starts with
+        if: If
+        KEEP: Keep rows
+        Placeholders:
+          CUSTOMCONDITION: "e.g. {columnName} < 30"
+          TEXTCONTAINS: Enter contained value
+          TEXTENDSWITH: Enter suffix
+          TEXTEXACTLY: Enter value
+          TEXTREGEX: Enter regex
+          TEXTSTARTSWITH: Enter prefix
+        REMOVE: Remove rows
+        title: Filter
+      Parse:
+        modalTitle: Parse as {parser}
+        Parsers:
+          CSV:
+            label: CSV
+            Options:
+              COMMA: Comma
+              PIPE: Pipe
+              TAB: Tab
+            shouldSkipLabel: Skip empty lines
+          FIXEDLENGTH:
+            fieldLabel: Column widths
+            label: Fixed Length
+            optionalFieldLabel: Padding
+            optionalPlaceholder: Optional padding parameter
+            placeholder: "e.g. 3, 5, 2, 5, 15"
+          HL7:
+            label: HL7
+          JSON:
+            fieldLabel: Depth
+            label: JSON
+            placeholder: Enter depth
+          LOG:
+            customPlaceholder: "e.g. %h %l %u %t \"%r\" %>s %b"
+            label: Log
+            Options:
+              COMMON: Common
+              COMBINED: Combined
+              COMBINEDIO: Combinedio
+              REFERER: Referer
+              AGENT: Agent
+              CUSTOM: Custom
+          NATURALDATE:
+            fieldLabel: Timezone
+            label: Natural Date
+            placeholder: "e.g. UTC"
+          SIMPLEDATE:
+            fieldLabel: Date format
+            label: Simple Date
+            placeholder: "e.g. yyyy.MM.dd G 'at' HH:mm:ss z"
+          XML:
+            label: XML
+          XMLTOJSON:
+            fieldLabel: Depth
+            label: XML to JSON
+            placeholder: Enter depth
+        title: Parse
     pageTitle: CDAP | Data Preparation
     TopPanel:
       invalidFieldNameMessage: Invalid field name "{fieldName}"
@@ -227,6 +297,7 @@ features:
     previewDisabledMessage: Results have already been downloaded once. Please run the query to preview them again.
     deleteFailed: Failed to delete {entityId}.
     logLabel: Logs
+    logNotAvailable: No logs available
     truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
     truncateLabel: Truncate
     truncateSuccess: Truncated Successfully

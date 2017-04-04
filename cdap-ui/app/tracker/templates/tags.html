@@ -44,7 +44,7 @@
         <tbody>
           <tr ng-repeat="tag in TagsController.tags.preferredTags | orderBy:sortable.predicate:sortable.reverse | myPaginate:TagsController.currentPreferredPage">
             <td>
-              <a class="tag preferred"
+              <a class="tag preferred user"
                 ui-sref="tracker.detail.result({searchQuery: tag.name})">{{ tag.name }}</a>
             </td>
             <td>

@@ -20,6 +20,7 @@ import DataPrepTable from 'components/DataPrep/DataPrepTable';
 import DataPrepSidePanel from 'components/DataPrep/DataPrepSidePanel';
 import DataPrepCLI from 'components/DataPrep/DataPrepCLI';
 import DataPrepLoading from 'components/DataPrep/DataPrepLoading';
+import DataPrepErrorAlert from 'components/DataPrep/DataPrepErrorAlert';
 import MyDataPrepApi from 'api/dataprep';
 import cookie from 'react-cookie';
 import DataPrepStore from 'components/DataPrep/store';
@@ -30,6 +31,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import {MyArtifactApi} from 'api/artifact';
 import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
 import Version from 'services/VersionRange/Version';
+import {setWorkspace} from 'components/DataPrep/store/DataPrepActionCreator';
 
 require('./DataPrep.scss');
 
@@ -50,18 +52,11 @@ export default class DataPrep extends Component {
     this.eventEmitter = ee(ee);
 
     this.eventEmitter.on('DATAPREP_BACKEND_DOWN', this.toggleBackendDown);
-
   }
 
   componentWillMount() {
     let workspaceId = cookie.load('DATAPREP_WORKSPACE');
     let namespace = NamespaceStore.getState().selectedNamespace;
-
-    let params = {
-      namespace,
-      workspaceId: workspaceId,
-      limit: 100
-    };
 
     MyArtifactApi.list({ namespace })
       .combineLatest(MyDataPrepApi.getApp({ namespace }))
@@ -85,17 +80,8 @@ export default class DataPrep extends Component {
         }
       });
 
-    MyDataPrepApi.execute(params)
-      .subscribe((res) => {
-        DataPrepStore.dispatch({
-          type: DataPrepActions.setWorkspace,
-          payload: {
-            data: res.value,
-            headers: res.header,
-            workspaceId
-          }
-        });
-
+    setWorkspace(workspaceId)
+      .subscribe(() => {
         this.setState({loading: false});
       }, (err) => {
         this.setState({loading: false});
@@ -112,7 +98,6 @@ export default class DataPrep extends Component {
         });
         this.eventEmitter.emit('DATAPREP_NO_WORKSPACE_ID');
       });
-
   }
 
   componentWillUnmount() {
@@ -147,6 +132,7 @@ export default class DataPrep extends Component {
 
     return (
       <div className="dataprep-container">
+        <DataPrepErrorAlert />
         <DataPrepTopPanel />
 
         <div className="row dataprep-body">

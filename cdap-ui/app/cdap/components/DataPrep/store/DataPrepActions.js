@@ -22,7 +22,9 @@ const DataPrepActions = {
   setHigherVersion: 'DATAPREP_SET_HIGHER_VERSION',
   enableLoading: 'DATAPREP_ENABLE_LOADING',
   disableLoading: 'DATAPREP_DISABLE_LOADING',
-  reset: 'DATAPREP_RESET'
+  reset: 'DATAPREP_RESET',
+  setError: 'DATAPREP_SET_ERROR',
+  dismissError: 'DATAPREP_DISMISS_ERROR'
 };
 
 export default DataPrepActions;

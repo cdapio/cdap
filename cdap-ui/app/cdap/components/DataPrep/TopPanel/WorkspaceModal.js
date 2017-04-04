@@ -24,6 +24,7 @@ import CardActionFeedback from 'components/CardActionFeedback';
 import cookie from 'react-cookie';
 import isNil from 'lodash/isNil';
 import NamespaceStore from 'services/NamespaceStore';
+import {execute, setWorkspace} from 'components/DataPrep/store/DataPrepActionCreator';
 
 export default class WorkspaceModal extends Component {
   constructor(props) {
@@ -71,26 +72,10 @@ export default class WorkspaceModal extends Component {
   setWorkspace() {
     if (!this.state.workspaceId) { return; }
     let workspaceId = this.state.workspaceId;
-    let namespace = NamespaceStore.getState().selectedNamespace;
 
-    let params = {
-      namespace,
-      workspaceId,
-      limit: 100
-    };
-
-    MyDataPrepApi.execute(params)
-      .subscribe((res) => {
+    setWorkspace(workspaceId)
+      .subscribe(() => {
         cookie.save('DATAPREP_WORKSPACE', workspaceId, { path: '/' });
-
-        DataPrepStore.dispatch({
-          type: DataPrepActions.setWorkspace,
-          payload: {
-            workspaceId,
-            data: res.value,
-            headers: res.header
-          }
-        });
       }, (err) => {
         console.log('err', err);
         this.setState({
@@ -181,7 +166,7 @@ export default class WorkspaceModal extends Component {
     let delimiter = this.state.recordDelimiter;
     let namespace = NamespaceStore.getState().selectedNamespace;
 
-    let url = `/namespaces/${namespace}/apps/wrangler/services/service/methods/workspaces/${this.state.activeWorkspace}/upload`;
+    let url = `/namespaces/${namespace}/apps/dataprep/services/service/methods/workspaces/${this.state.activeWorkspace}/upload`;
 
     let headers = {
       'Content-Type': 'application/octet-stream',
@@ -203,25 +188,8 @@ export default class WorkspaceModal extends Component {
       .subscribe((res) => {
         console.log(res);
 
-        let params = {
-          namespace,
-          workspaceId: this.state.activeWorkspace,
-          limit: 100
-        };
-
-        MyDataPrepApi.execute(params)
-          .subscribe((response) => {
-            console.log('res', response);
-
-            DataPrepStore.dispatch({
-              type: DataPrepActions.setWorkspace,
-              payload: {
-                workspaceId: this.state.activeWorkspace,
-                data: response.value,
-                headers: response.header
-              }
-            });
-
+        execute([], true)
+          .subscribe(() => {
             this.setState({
               messageType: 'SUCCESS',
               message: `Success uploading file to workspace ${this.state.activeWorkspace}`

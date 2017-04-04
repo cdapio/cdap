@@ -16,12 +16,10 @@
 
 import React, { Component } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
-import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import shortid from 'shortid';
-import MyDataPrepApi from 'api/dataprep';
 import DirectivesTabRow from 'components/DataPrep/DataPrepSidePanel/DirectivesTab/DirectivesTabRow';
 import fileDownload from 'react-file-download';
-import NamespaceStore from 'services/NamespaceStore';
+import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 
 export default class DirectivesTab extends Component {
   constructor(props) {
@@ -55,7 +53,6 @@ export default class DirectivesTab extends Component {
         })
       });
     });
-
   }
 
   componentWillUnmount() {
@@ -75,28 +72,10 @@ export default class DirectivesTab extends Component {
 
     let newDirectives = directives.slice(0, index);
 
-    let namespace = NamespaceStore.getState().selectedNamespace;
-
-    let params = {
-      namespace,
-      workspaceId: state.workspaceId,
-      limit: 100,
-      directive: newDirectives
-    };
-
-    MyDataPrepApi.execute(params)
-      .subscribe((res) => {
+    execute(newDirectives, true)
+      .subscribe(() => {
         this.setState({
           deleteHover: null
-        });
-
-        DataPrepStore.dispatch({
-          type: DataPrepActions.setDirectives,
-          payload: {
-            data: res.value,
-            headers: res.header,
-            directives: newDirectives
-          }
         });
       }, (err) => {
         // Should not ever come to this.. this is only if backend

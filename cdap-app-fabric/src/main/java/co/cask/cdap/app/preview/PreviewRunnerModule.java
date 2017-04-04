@@ -33,9 +33,9 @@ import co.cask.cdap.explore.client.MockExploreClient;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
-import co.cask.cdap.internal.app.namespace.DefaultNamespaceResourceDeleter;
 import co.cask.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.NamespaceResourceDeleter;
+import co.cask.cdap.internal.app.namespace.NoopNamespaceResourceDeleter;
 import co.cask.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import co.cask.cdap.internal.app.preview.DefaultDataTracerFactory;
 import co.cask.cdap.internal.app.preview.DefaultPreviewRunner;
@@ -133,7 +133,8 @@ public class PreviewRunnerModule extends PrivateModule {
     bind(RuntimeStore.class).to(DefaultStore.class);
     expose(RuntimeStore.class);
 
-    bind(NamespaceResourceDeleter.class).to(DefaultNamespaceResourceDeleter.class).in(Scopes.SINGLETON);
+    // we don't delete namespaces in preview as we just delete preview directory when its done
+    bind(NamespaceResourceDeleter.class).to(NoopNamespaceResourceDeleter.class).in(Scopes.SINGLETON);
     bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
     bind(NamespaceQueryAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
     expose(NamespaceAdmin.class);

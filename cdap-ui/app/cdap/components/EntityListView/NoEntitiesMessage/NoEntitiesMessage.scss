@@ -22,6 +22,8 @@
   margin-left: auto;
   margin-right: auto;
   margin-top: 25vh;
+  max-width: 50vw;
+  word-wrap: break-word;
 
   &.text-danger {
     .fa-exclamation-triangle {

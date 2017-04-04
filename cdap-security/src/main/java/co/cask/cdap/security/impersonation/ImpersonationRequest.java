@@ -18,6 +18,8 @@ package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.proto.id.NamespacedEntityId;
 
+import java.util.Objects;
+
 /**
  * A wrapper which wraps around the {@link co.cask.cdap.proto.id.NamespacedEntityId} on which impersonation needs to
  * be performed and the type of operation {@link ImpersonatedOpType} which will be performed.
@@ -45,5 +47,23 @@ public class ImpersonationRequest {
       "entityId=" + entityId +
       ", impersonatedOpType=" + impersonatedOpType +
       '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ImpersonationRequest that = (ImpersonationRequest) o;
+    return Objects.equals(entityId, that.entityId) &&
+      impersonatedOpType == that.impersonatedOpType;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(entityId, impersonatedOpType);
   }
 }

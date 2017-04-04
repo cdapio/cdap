@@ -306,13 +306,17 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void delete(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("stream") String stream) throws Exception {
+    deleteStream(namespaceId, stream);
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  public void deleteStream(String namespaceId, String stream) throws Exception {
     StreamId streamId = validateAndGetStreamId(namespaceId, stream);
     checkStreamExists(streamId);
     // On Windows, we can not move the file if it is open, and the stream writer may have an open file in this dir.
     // Since Windows is only supported in SDK/standalone, we don't need to worry about multiple stream writers here.
     streamWriter.close(streamId);
     streamAdmin.drop(streamId);
-    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @PUT

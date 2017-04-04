@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl {
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS ) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -36,7 +36,12 @@ class HydratorPlusPlusTopPanelCtrl {
     this.dataSrc = new MyCDAPDataSource($scope);
     this.myAlertOnValium = myAlertOnValium;
     this.currentPreviewId = null;
+    this.$window = $window;
     this.showRunTimeArguments = false;
+    this.viewLogs = false;
+    this.$q = $q;
+    this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
+    this.artifacts = rArtifacts;
     // This is for now run time arguments. It will be a map of macroMap
     // in the future once we get list of macros for a pipeline config.
     this.macrosMap = {};
@@ -44,9 +49,15 @@ class HydratorPlusPlusTopPanelCtrl {
     this.setState();
     this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
     this.focusTimeout = null;
+    this.timeoutInMinutes = 15;
 
     if ($stateParams.isClone) {
       this.openMetadata();
+    }
+
+    this.currentDraftId = this.HydratorPlusPlusConfigStore.getDraftId();
+    if (this.currentDraftId && this.currentDraftId === this.$window.localStorage.getItem('LastDraftId')) {
+      this.currentPreviewId = this.$window.localStorage.getItem('LastPreviewId');
     }
 
     this.isPreviewEnabled = angular.isObject(MY_CONFIG.hydrator) &&
@@ -72,10 +83,16 @@ class HydratorPlusPlusTopPanelCtrl {
       this.stopPreview();
       this.$interval.cancel(this.previewTimerInterval);
       this.$timeout.cancel(this.focusTimeout);
-
       this.previewStore.dispatch({ type: this.PREVIEWSTORE_ACTIONS.PREVIEW_RESET });
     });
+
+    // have to add this event handler because the $destroy event here
+    // is not triggered on page refresh
+    this.$window.onbeforeunload = function() {
+      $scope.$destroy();
+    };
   }
+
   setMetadata(metadata) {
     this.state.metadata = metadata;
   }
@@ -129,6 +146,17 @@ class HydratorPlusPlusTopPanelCtrl {
     }
   }
 
+  onImport() {
+    let fileBrowserClickCB = () => {
+      document.getElementById('pipeline-import-config-link').click();
+    };
+    // This is not using the promise pattern as browsers NEED to have the click on the call stack to generate the click on input[type=file] button programmatically in like line:115.
+    // When done in promise we go into the promise ticks and the then callback is called in the next tick which prevents the browser to open the file dialog
+    // as a file dialog is opened ONLY when manually clicked by the user OR transferring the click to another button in the same call stack
+    // TL;DR Can't open file dialog programmatically. If we need to, we need to transfer the click from a user on a button directly into the input file dialog button.
+    this._checkAndShowConfirmationModalOnDirtyState(fileBrowserClickCB);
+  }
+
   onExport() {
     this.DAGPlusPlusNodesActionsFactory.resetSelectedNode();
     let config = angular.copy(this.HydratorPlusPlusConfigStore.getDisplayConfig());
@@ -139,6 +167,8 @@ class HydratorPlusPlusTopPanelCtrl {
   onSaveDraft() {
     this.HydratorPlusPlusConfigActions.saveAsDraft();
     this.checkNameError();
+    this.$window.localStorage.setItem('LastDraftId', this.HydratorPlusPlusConfigStore.getDraftId());
+    this.$window.localStorage.setItem('LastPreviewId', this.currentPreviewId);
   }
   checkNameError() {
     let messages = this.consoleStore.getMessages() || [];
@@ -190,7 +220,7 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   toggleRuntimeArguments() {
-    if (!this.currentPreviewId) {
+    if (!this.previewRunning) {
       this.showRunTimeArguments = !this.showRunTimeArguments;
     } else {
       this.stopPreview();
@@ -198,6 +228,7 @@ class HydratorPlusPlusTopPanelCtrl {
   }
   runPreview() {
     this.previewLoading = true;
+    this.loadingLabel = 'Starting';
     this.showRunTimeArguments = false;
 
     this.displayDuration = {
@@ -234,7 +265,8 @@ class HydratorPlusPlusTopPanelCtrl {
       pipelineConfig.preview = Object.assign({}, previewConfig, {
         'realDatasets' :[],
         'programName' : 'DataStreamsSparkStreaming',
-        'programType': 'Spark'
+        'programType': 'Spark',
+        'timeout': this.timeoutInMinutes
       });
     }
     // Get start stages and end stages
@@ -271,10 +303,11 @@ class HydratorPlusPlusTopPanelCtrl {
           this.previewActions.setPreviewStartTime(startTime)
         );
         this.currentPreviewId = res.application;
+        this.$window.localStorage.setItem('LastDraftId', this.HydratorPlusPlusConfigStore.getDraftId());
+        this.$window.localStorage.setItem('LastPreviewId', this.currentPreviewId);
         this.startPollPreviewStatus(res.application);
       }, (err) => {
         this.previewLoading = false;
-        this.currentPreviewId = null;
         this.myAlertOnValium.show({
           type: 'danger',
           content: err.data
@@ -292,12 +325,12 @@ class HydratorPlusPlusTopPanelCtrl {
       previewId: this.currentPreviewId
     };
     this.previewLoading = true;
+    this.loadingLabel = 'Stopping';
     this.stopTimer();
     this.myPipelineApi
         .stopPreview(params, {})
         .$promise
         .then(() => {
-          this.currentPreviewId = null;
           this.previewLoading = false;
           this.previewRunning = false;
         });
@@ -314,7 +347,6 @@ class HydratorPlusPlusTopPanelCtrl {
         this.stopTimer();
         this.previewRunning = false;
         this.dataSrc.stopPoll(res.__pollId__);
-        this.currentPreviewId = null;
         if (res.status === 'COMPLETED') {
           this.myAlertOnValium.show({
             type: 'success',
@@ -322,17 +354,16 @@ class HydratorPlusPlusTopPanelCtrl {
           });
         } else {
           this.myAlertOnValium.show({
-            type: 'danger',
-            content: 'Pipeline preview stopped with status: ' + res.status
+            type: 'success',
+            content: 'Pipeline preview was stopped successfully.'
           });
         }
       }
     }, (err) => {
-      this.currentPreviewId = null;
       this.stopTimer();
         this.myAlertOnValium.show({
           type: 'danger',
-          content: err
+          content: 'Pipeline preview failed : ' + err
         });
       this.previewRunning = false;
       this.dataSrc.stopPoll(poll.__pollId__);
@@ -344,7 +375,155 @@ class HydratorPlusPlusTopPanelCtrl {
       this.previewActions.togglePreviewMode(!this.previewMode)
     );
   }
+
+  importFile(files) {
+    if (files[0].name.indexOf('.json') === -1) {
+      this.myAlertOnValium.show({
+        type: 'danger',
+        content: 'Pipeline configuration should be JSON.'
+      });
+      return;
+    }
+    let generateLinearConnections = (config) => {
+      let nodes = config.stages;
+      let connections = [];
+      let i;
+
+      for (i=0; i<nodes.length - 1 ; i++) {
+        connections.push({ from: nodes[i].name, to: nodes[i+1].name });
+      }
+      return connections;
+    };
+
+    let isValidArtifact = (importArtifact) => {
+      let isVersionExists = [];
+      let isScopeExists = [];
+      let isNameExists = this.artifacts.filter( artifact => artifact.name === importArtifact.name );
+      isVersionExists = isNameExists.filter( artifact => artifact.version === importArtifact.version );
+      isScopeExists = isNameExists.filter( artifact => artifact.scope.toUpperCase() === importArtifact.scope.toUpperCase() );
+      return {
+        name: isNameExists.length > 0,
+        version: isVersionExists.length > 0,
+        scope: isScopeExists.length > 0
+      };
+    };
+
+    var reader = new FileReader();
+    reader.readAsText(files[0], 'UTF-8');
+
+    reader.onload =  (evt) => {
+      var data = evt.target.result;
+      var jsonData;
+      try {
+        jsonData = JSON.parse(data);
+      } catch(e) {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: 'Syntax Error. Ill-formed pipeline configuration.'
+        });
+        return;
+      }
+
+      let isNotValid = this.NonStorePipelineErrorFactory.validateImportJSON(jsonData);
+
+      if (isNotValid) {
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: isNotValid
+        });
+        return;
+      }
+
+      if (!jsonData.config.connections) {
+        jsonData.config.connections = generateLinearConnections(jsonData.config);
+      }
+
+      let validArtifact = isValidArtifact(jsonData.artifact);
+      if (!validArtifact.name || !validArtifact.version || !validArtifact.scope) {
+        let invalidFields = [];
+        if (!validArtifact.name) {
+          invalidFields.push('Artifact name');
+        } else {
+          if (!validArtifact.version) {
+            invalidFields.push('Artifact version');
+          }
+          if (!validArtifact.scope) {
+            invalidFields.push('Artifact scope');
+          }
+        }
+        invalidFields = invalidFields.length === 1 ? invalidFields[0] : invalidFields.join(', ');
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: `Imported pipeline has invalid artifact information: ${invalidFields}.`
+        });
+      } else {
+        if (!jsonData.config.connections) {
+          jsonData.config.connections = generateLinearConnections(jsonData.config);
+        }
+        this.HydratorPlusPlusConfigStore.setState(this.HydratorPlusPlusConfigStore.getDefaults());
+        this.$state.go('hydrator.create', { data: jsonData });
+      }
+    };
+  }
+
+  _checkAndShowConfirmationModalOnDirtyState(proceedCb) {
+    let goTonextStep = true;
+    let isStoreDirty = this.HydratorPlusPlusConfigStore.getIsStateDirty();
+    if (isStoreDirty) {
+      return this.$uibModal.open({
+          templateUrl: '/assets/features/hydrator/templates/create/popovers/canvas-overwrite-confirmation.html',
+          size: 'lg',
+          backdrop: 'static',
+          keyboard: false,
+          windowTopClass: 'confirm-modal hydrator-modal center',
+          controller: ['$scope', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', function($scope, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions) {
+            $scope.isSaving = false;
+            $scope.discard = () => {
+              goTonextStep = true;
+              if (proceedCb) {
+                proceedCb();
+              }
+              $scope.$close();
+            };
+            $scope.save = () => {
+              let pipelineName = HydratorPlusPlusConfigStore.getName();
+              if (!pipelineName.length) {
+                HydratorPlusPlusConfigActions.saveAsDraft();
+                goTonextStep = false;
+                $scope.$close();
+                return;
+              }
+              var unsub = HydratorPlusPlusConfigStore.registerOnChangeListener( () => {
+                let isStateDirty = HydratorPlusPlusConfigStore.getIsStateDirty();
+                // This is solely used for showing the spinner icon until the modal is closed.
+                if(!isStateDirty) {
+                  unsub();
+                  goTonextStep = true;
+                  $scope.$close();
+                }
+              });
+              HydratorPlusPlusConfigActions.saveAsDraft();
+              $scope.isSaving = true;
+            };
+            $scope.cancel = () => {
+              $scope.$close();
+              goTonextStep = false;
+            };
+          }]
+        })
+        .closed
+        .then(() => {
+          return goTonextStep;
+        });
+    } else {
+      if (proceedCb) {
+        proceedCb();
+      }
+      return this.$q.when(goTonextStep);
+    }
+  }
 }
 
+HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', '$interval', 'myPipelineApi', '$state', 'MyCDAPDataSource', 'myAlertOnValium', 'MY_CONFIG', 'PREVIEWSTORE_ACTIONS', '$q', 'NonStorePipelineErrorFactory', 'rArtifacts', '$window'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);
