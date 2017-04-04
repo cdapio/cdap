@@ -15,9 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorPlusPlusListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium, myLoadingService, mySparkApi) {
+  .controller('HydratorPlusPlusListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium, myLoadingService, mySparkApi, $interval, moment, MyPipelineStatusMapper) {
     var dataSrc = new MyCDAPDataSource($scope);
     var vm = this;
+    vm.$interval = $interval;
+    vm.moment = moment;
+    vm.allPollId = null;
+    vm.currentPollId = null;
     const checkForValidPage = (pageNumber) => {
       return (
         !Number.isNaN(pageNumber) &&
@@ -52,6 +56,8 @@ angular.module(PKG.name + '.feature.hydrator')
 
     $scope.$on('$destroy', function() {
       eventEmitter.off(window.CaskCommon.globalEvents.PUBLISHPIPELINE, vm.reloadState);
+      destroyAllTimers();
+      stopPollingAll();
     });
 
     vm.statusCount = {
@@ -79,13 +85,67 @@ angular.module(PKG.name + '.feature.hydrator')
           .then(setCurrentPage);
 
         angular.forEach(vm.pipelineList, function (app) {
+          console.log('app is ', app);
           app._stats = {};
 
           fetchRunsInfo(app);
         });
 
         fetchStatus();
+        pollPipelineStatuses();
       });
+
+    function pollPipelineStatuses() {
+      var postData = getAllPipelinePostData();
+      console.log(postData);
+      dataSrc.poll({
+        _cdapNsPath: '/status',
+        interval: 2000,
+        method: 'POST',
+        json: postData
+      }, (res) => {
+        console.log(res);
+        vm.allPollId = res.__pollId__;
+        // if (res.status === 'FINISHED') {
+        //   dataSrc.stopPoll(res.__pollId__);
+        //   this.fetchQueryResults(handle);
+        // }
+      });
+    }
+
+    function stopPollingAll() {
+      if (vm.allPollId) {
+        dataSrc.stopPoll(vm.allPollId);  
+      }
+    }
+
+    function getAllPipelinePostData() {
+      var postData = [];
+      vm.pipelineList.forEach(function (app) {
+        var appVars = {
+          'appId': app.id  
+        };
+        if (app.artifact.name === GLOBALS.etlBatch || app.artifact.name === GLOBALS.etlDataPipeline) {
+        
+          var workflowId = app.artifact.name === GLOBALS.etlDataPipeline ? 'DataPipelineWorkflow' : 'ETLWorkflow';
+          appVars.programType = 'Workflow';
+          appVars.programId = workflowId;
+        
+        } else if (app.artifact.name === GLOBALS.etlDataStreams) {
+
+          appVars.programType = 'Spark';
+          appVars.programId = 'DataStreamsSparkStreaming';
+        
+        } else {
+
+          appVars.programType = 'Worker';
+          appVars.programId = 'Worker';
+
+        }
+        postData.push(appVars);
+      });
+      return postData;
+    }
 
     function fetchRunsInfo(app) {
       var params = {
@@ -133,8 +193,7 @@ angular.module(PKG.name + '.feature.hydrator')
           app._stats.numRuns = runs.length;
           app._stats.lastStartTime = runs.length > 0 ? runs[0].start : 'N/A';
           var currentRun = runs[0];
-          // !TODO get duration working.
-          app._stats.duration = getDuration(app, currentRun);
+          setDurationTimers(app, currentRun);
           for (var i = 0; i < runs.length; i++) {
             var status = runs[i].status;
 
@@ -143,17 +202,19 @@ angular.module(PKG.name + '.feature.hydrator')
               break;
             }
           }
+          if (app._latest) {
+            app._latest.status = MyPipelineStatusMapper.lookupDisplayStatus(app._latest.status);
+          }
 
         });
     }
 
-    function getDuration(app, run) {
+    function setDurationTimers(app, run) {
       console.log('runs are ', run);
       if (run.status === 'RUNNING') {
 
         if (!app.pipelineDurationTimer) {
           app.pipelineDurationTimer = vm.$interval(() => {
-
             if (run.end) {
               let endDuration = run.end - run.start;
               app.duration = typeof run.end === 'number' ? vm.moment.utc(endDuration * 1000).format('HH:mm:ss') : 'N/A';
@@ -163,14 +224,14 @@ angular.module(PKG.name + '.feature.hydrator')
             }
           }, 1000);
         }
+      } else {
+        let lastRunDuration = run.end - run.start;
+
+        let setInitialTimer = new Date().getTime() - (run.start * 1000);
+        app.duration = typeof run.end === 'number' ?
+                            vm.moment.utc(lastRunDuration * 1000).format('HH:mm:ss') :
+                            vm.moment.utc(setInitialTimer).format('HH:mm:ss');
       }
-
-      let lastRunDuration = run.end - run.start;
-
-      let setInitialTimer = new Date().getTime() - (run.start * 1000);
-      app.duration = typeof run.end === 'number' ?
-                          vm.moment.utc(lastRunDuration * 1000).format('HH:mm:ss') :
-                          vm.moment.utc(setInitialTimer).format('HH:mm:ss');
     }
 
     function fetchStatus() {
@@ -181,9 +242,10 @@ angular.module(PKG.name + '.feature.hydrator')
         body: batch
       })
       .then(function (res) {
+        console.log('res here is ', res);
         angular.forEach(res, function (app) {
           if (app.status === 'RUNNING') {
-            statusMap[app.appId] = 'Running';
+            statusMap[app.appId] = MyPipelineStatusMapper.lookupDisplayStatus('RUNNING');
             vm.statusCount.running++;
           } else {
             /**
@@ -199,10 +261,10 @@ angular.module(PKG.name + '.feature.hydrator')
               .$promise
               .then(function (schedule) {
                 if (schedule.status === 'SCHEDULED') {
-                  statusMap[app.appId] = 'Scheduled';
+                  statusMap[app.appId] = MyPipelineStatusMapper.lookupDisplayStatus('SCHEDULED');
                   vm.statusCount.scheduled++;
                 } else {
-                  statusMap[app.appId] = 'Suspended';
+                  statusMap[app.appId] = MyPipelineStatusMapper.lookupDisplayStatus('SUSPENDED');
                   vm.statusCount.suspended++;
                 }
                 updateStatusAppObject();
@@ -223,10 +285,10 @@ angular.module(PKG.name + '.feature.hydrator')
       .then(function (res) {
         angular.forEach(res, function (app) {
           if (app.status === 'RUNNING') {
-            statusMap[app.appId] = 'Running';
+            statusMap[app.appId] = MyPipelineStatusMapper.lookupDisplayStatus('RUNNING');
             vm.statusCount.running++;
           } else {
-            statusMap[app.appId] = 'Suspended';
+            statusMap[app.appId] = MyPipelineStatusMapper.lookupDisplayStatus('SUSPENDED');
             vm.statusCount.suspended++;
           }
         });
@@ -239,6 +301,9 @@ angular.module(PKG.name + '.feature.hydrator')
     function updateStatusAppObject() {
       angular.forEach(vm.pipelineList, function (app) {
         app._status = app._status || statusMap[app.id];
+        if (app._status === 'COMPLETED' || app._status === 'KILLED') {
+          destroyTimerForApp(app);
+        }
       });
     }
 
@@ -268,6 +333,51 @@ angular.module(PKG.name + '.feature.hydrator')
           }
         });
     }
+
+    function destroyTimerForApp(app) {
+      console.log('destroy called');
+      if (app.pipelineDurationTimer) {
+        vm.$interval.cancel(app.pipelineDurationTimer);
+        app.pipelineDurationTimer = null;
+      }
+    }
+
+    function destroyAllTimers() {
+      angular.forEach(vm.pipelineList, function (app) {
+        destroyTimerForApp(app);
+      });
+    }
+
+    vm.getDisplayPipelineStatus = function (pipeline) {
+
+      // If running, return running.
+      if (pipeline._status === MyPipelineStatusMapper.lookupDisplayStatus('RUNNING')) {
+        return pipeline._status;
+      }
+
+      // Else return the status of the latest run if there is one.
+      if (pipeline._latest) {
+        return pipeline._latest.status;
+      } else {
+        // Return default status.
+        return pipeline._status;
+      }
+    };
+
+    vm.getStatusIndicatorClass = function (pipeline) {
+      var displayStatus = vm.getDisplayPipelineStatus(pipeline);
+      if (displayStatus === 'Running') {
+        return 'status-blue';
+      } else if (displayStatus === 'Succeeded') {
+        return 'status-light-green';
+      } else if (displayStatus === 'Failed') {
+        return 'status-light-red';
+      } else if (displayStatus === 'Draft') {
+        return 'status-outline-grey';
+      } else {
+        return 'status-light-grey';
+      }
+    };
 
     vm.deleteDraft = function(draftId) {
       myLoadingService.showLoadingIcon()

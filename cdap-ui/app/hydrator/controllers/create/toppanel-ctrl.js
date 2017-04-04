@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl {
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window, MyPipelineStatusMapper) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -28,6 +28,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.myHelpers = myHelpers;
     this.$timeout = $timeout;
     this.PREVIEWSTORE_ACTIONS = PREVIEWSTORE_ACTIONS;
+    this.MyPipelineStatusMapper = MyPipelineStatusMapper;
     this.previewStore = HydratorPlusPlusPreviewStore;
     this.previewActions = HydratorPlusPlusPreviewActions;
     this.$interval = $interval;
@@ -343,7 +344,8 @@ class HydratorPlusPlusTopPanelCtrl {
       _cdapNsPath: '/previews/' + previewId + '/status',
       interval: 5000
     }, (res) => {
-      if (res.status !== 'RUNNING' && res.status !== 'STARTED') {
+      let status = this.MyPipelineStatusMapper.lookupDisplayStatus(res.status);
+      if (status !== 'Running') {
         this.stopTimer();
         this.previewRunning = false;
         this.dataSrc.stopPoll(res.__pollId__);
@@ -352,17 +354,17 @@ class HydratorPlusPlusTopPanelCtrl {
         if (pipelineName.length > 0) {
           pipelinePreviewPlaceholder += ` "${pipelineName}"`;
         }
-        if (res.status === 'COMPLETED') {
+        if (status === 'Succeeded') {
           this.myAlertOnValium.show({
             type: 'success',
             content: `${pipelinePreviewPlaceholder} has completed successfully.`
           });
-        } else if (res.status === 'STOPPED' || res.status === 'KILLED') {
+        } else if (status === 'Stopped') {
           this.myAlertOnValium.show({
             type: 'success',
             content: `${pipelinePreviewPlaceholder} was stopped.`
           });
-        } else if (res.status === 'FAILED' || res.status === 'RUN_FAILED') {
+        } else if (status === 'Failed') {
           this.myAlertOnValium.show({
             type: 'danger',
             content: `${pipelinePreviewPlaceholder} has failed. Please check the logs for more information.`
