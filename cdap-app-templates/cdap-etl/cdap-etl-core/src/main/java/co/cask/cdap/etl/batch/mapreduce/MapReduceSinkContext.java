@@ -22,6 +22,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.batch.preview.NullOutputFormatProvider;
 import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.log.LogContext;
 import co.cask.cdap.etl.planner.StageInfo;
@@ -39,11 +40,13 @@ import java.util.concurrent.Callable;
  */
 public class MapReduceSinkContext extends MapReduceBatchContext implements BatchSinkContext {
   private final Set<String> outputNames;
+  private final boolean isPreviewEnabled;
 
   public MapReduceSinkContext(MapReduceContext context, Metrics metrics, LookupProvider lookup,
-                              Map<String, String> runtimeArgs, StageInfo stageInfo) {
+                              Map<String, String> runtimeArgs, StageInfo stageInfo, boolean isPreviewEnabled) {
     super(context, metrics, lookup, runtimeArgs, stageInfo);
     this.outputNames = new HashSet<>();
+    this.isPreviewEnabled = isPreviewEnabled;
   }
 
   @Override
@@ -56,7 +59,7 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
     String alias = LogContext.runWithoutLoggingUnchecked(new Callable<String>() {
       @Override
       public String call() throws Exception {
-        Output output = suffixOutput(Output.ofDataset(datasetName, arguments));
+        Output output = suffixOutput(getOutput(Output.ofDataset(datasetName, arguments)));
         mrContext.addOutput(output);
         return output.getAlias();
       }
@@ -69,7 +72,7 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
     String alias = LogContext.runWithoutLoggingUnchecked(new Callable<String>() {
       @Override
       public String call() throws Exception {
-        Output output = suffixOutput(Output.of(outputName, outputFormatProvider));
+        Output output = suffixOutput(getOutput(Output.of(outputName, outputFormatProvider)));
         mrContext.addOutput(output);
         return output.getAlias();
       }
@@ -79,15 +82,22 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
 
   @Override
   public void addOutput(final Output output) {
+    final Output actualOutput = suffixOutput(getOutput(output));
     Output trackableOutput = LogContext.runWithoutLoggingUnchecked(new Callable<Output>() {
       @Override
       public Output call() throws Exception {
-        Output trackableOutput = ExternalDatasets.makeTrackable(mrContext.getAdmin(), suffixOutput(output));
+        Output trackableOutput = isPreviewEnabled ? actualOutput : ExternalDatasets.makeTrackable(mrContext.getAdmin(),
+                                                                                                  actualOutput);
         mrContext.addOutput(trackableOutput);
         return trackableOutput;
       }
     });
     outputNames.add(trackableOutput.getAlias());
+  }
+
+  @Override
+  public boolean isPreviewEnabled() {
+    return isPreviewEnabled;
   }
 
   /**
@@ -103,5 +113,15 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
   private Output suffixOutput(Output output) {
     String suffixedAlias = String.format("%s-%s", output.getAlias(), UUID.randomUUID());
     return output.alias(suffixedAlias);
+  }
+
+  /**
+   * Get the output, if preview is enabled, return the output with a {@link NullOutputFormatProvider}.
+   */
+  private Output getOutput(Output output) {
+    if (isPreviewEnabled) {
+      return Output.of(output.getName(), new NullOutputFormatProvider());
+    }
+    return output;
   }
 }

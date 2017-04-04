@@ -72,7 +72,8 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
         @Override
         public void run(DatasetContext datasetContext) throws Exception {
           SparkBatchSinkContext sinkContext =
-            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo);
+            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo,
+                                      sec.getDataTracer(stageName).isEnabled());
           batchSink.prepareRun(sinkContext);
         }
       });
@@ -84,7 +85,8 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
         @Override
         public void run(DatasetContext datasetContext) throws Exception {
           SparkBatchSinkContext sinkContext =
-            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo);
+            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo,
+                                      sec.getDataTracer(stageName).isEnabled());
           batchSink.onRunFinish(true, sinkContext);
         }
       });
@@ -96,7 +98,8 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
           @Override
           public void run(DatasetContext datasetContext) throws Exception {
             SparkBatchSinkContext sinkContext =
-              new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo);
+              new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo,
+                                        sec.getDataTracer(stageName).isEnabled());
             batchSink.onRunFinish(false, sinkContext);
           }
         });
