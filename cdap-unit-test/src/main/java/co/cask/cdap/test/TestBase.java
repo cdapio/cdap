@@ -397,6 +397,7 @@ public class TestBase {
     // Setup defaults that can be overridden by user
     cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
     cConf.setBoolean(Constants.Explore.START_ON_DEMAND, false);
+    cConf.setBoolean(Constants.Preview.ENABLED, true);
 
     // Setup test case specific configurations.
     // The system properties are usually setup by TestConfiguration class using @ClassRule
