@@ -223,6 +223,13 @@ features:
           TEXTSTARTSWITH: Enter prefix
         REMOVE: Remove rows
         title: Filter
+      FindAndReplace:
+        buttonLabel: Replace All
+        find: Find
+        findPlaceholder: Old value
+        replacePlaceholder: New value
+        replaceWith: Replace with
+        title: Find and Replace
       Parse:
         modalTitle: Parse as {parser}
         Parsers:
