@@ -17,6 +17,8 @@
 import React, { Component } from 'react';
 import DataPrepAutoComplete from 'components/DataPrep/AutoComplete';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import DataPrepStore from 'components/DataPrep/store';
+import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 require('./DataPrepCLI.scss');
 
 export default class DataPrepCLI extends Component {
@@ -34,11 +36,25 @@ export default class DataPrepCLI extends Component {
     this.dismissError = this.dismissError.bind(this);
     this.handlePaste = this.handlePaste.bind(this);
     this.execute = this.execute.bind(this);
+
+    this.sub = DataPrepStore.subscribe(() => {
+      let storeState = DataPrepStore.getState().error;
+
+      this.setState({
+        error: storeState.cliError
+      });
+    });
   }
 
   componentDidMount() {
     if (this.directiveRef) {
       this.directiveRef.focus();
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.sub) {
+      this.sub();
     }
   }
 
@@ -57,18 +73,26 @@ export default class DataPrepCLI extends Component {
     execute(addDirective)
       .subscribe(() => {
         this.setState({
-          error: null,
           directiveInput: ''
         });
       }, (err) => {
-        this.setState({
-          error: err.message || err.response.message
+
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setCLIError,
+          payload: {
+            message: err.message || err.response.message
+          }
         });
       });
   }
 
   dismissError() {
-    this.setState({error: null});
+    DataPrepStore.dispatch({
+      type: DataPrepActions.setCLIError,
+      payload: {
+        message: null
+      }
+    });
   }
 
   renderError() {

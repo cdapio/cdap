@@ -27,8 +27,7 @@ export default class DataPrepErrorAlert extends Component {
     let state = DataPrepStore.getState().error;
 
     this.state = {
-      showError: state.showError,
-      message: state.message
+      showError: state.showError
     };
 
     this.dismissError = this.dismissError.bind(this);
@@ -39,8 +38,7 @@ export default class DataPrepErrorAlert extends Component {
       let state = DataPrepStore.getState().error;
 
       this.setState({
-        showError: state.showError,
-        message: state.message
+        showError: state.showError
       });
     });
   }
@@ -63,7 +61,7 @@ export default class DataPrepErrorAlert extends Component {
     return (
       <div className="dataprep-error-alert-container">
         <div className="error-content">
-          {this.state.message}
+          {this.state.showError}
         </div>
         <div className="close-icon">
           <span

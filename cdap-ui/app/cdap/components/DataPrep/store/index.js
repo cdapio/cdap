@@ -33,8 +33,8 @@ const defaultInitialState = {
 };
 
 const errorInitialState = {
-  showError: false,
-  message: ''
+  showError: null,
+  cliError: null
 };
 
 const dataprep = (state = defaultInitialState, action = defaultAction) => {
@@ -99,14 +99,26 @@ const error = (state = errorInitialState, action = defaultAction) => {
   switch (action.type) {
     case DataPrepActions.setError:
       stateCopy = Object.assign({}, state, {
-        showError: true,
-        message: action.payload.message
+        showError: action.payload.message,
+        cliError: null
+      });
+      break;
+    case DataPrepActions.setCLIError:
+      stateCopy = Object.assign({}, state, {
+        showError: null,
+        cliError: action.payload.message
+      });
+      break;
+    case DataPrepActions.setWorkspace:
+    case DataPrepActions.setDirectives:
+      stateCopy = Object.assign({}, state, {
+        showError: null,
+        cliError: null
       });
       break;
     case DataPrepActions.dismissError:
       stateCopy = Object.assign({}, state, {
-        showError: false,
-        message: ''
+        showError: null
       });
       break;
     case DataPrepActions.reset:
