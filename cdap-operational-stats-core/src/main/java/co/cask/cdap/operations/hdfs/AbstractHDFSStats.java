@@ -16,6 +16,8 @@
 
 package co.cask.cdap.operations.hdfs;
 
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.operations.AbstractOperationalStats;
 import co.cask.cdap.operations.OperationalStats;
 import com.google.common.annotations.VisibleForTesting;
@@ -48,11 +50,11 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractHDFSStats extends AbstractOperationalStats {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractHDFSStats.class);
+  private static final Logger READ_FAILURE_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(60000));
   @VisibleForTesting
   static final String SERVICE_NAME = "HDFS";
 
   protected final Configuration conf;
-  private boolean lastCollectFailed = false;
 
   @VisibleForTesting
   AbstractHDFSStats(Configuration conf) {
@@ -64,6 +66,10 @@ public abstract class AbstractHDFSStats extends AbstractOperationalStats {
     return SERVICE_NAME;
   }
 
+  /**
+   * @return the web URL of the HDFS Namenode, or {@code null} if the web URL cannot be determined.
+   */
+  @Nullable
   public String getWebURL() {
     try {
       if (HAUtil.isHAEnabled(conf, getNameService())) {
@@ -79,13 +85,10 @@ public abstract class AbstractHDFSStats extends AbstractOperationalStats {
           }
         }
       }
-      lastCollectFailed = false;
     } catch (Exception e) {
       // TODO: remove once CDAP-7887 is fixed
-      if (!lastCollectFailed) {
-        LOG.warn("Error in determining HDFS URL. Web URL of HDFS will not be available in HDFS operational stats.", e);
-      }
-      lastCollectFailed = true;
+      READ_FAILURE_LOG.warn("Error in determining HDFS URL. Web URL of HDFS will not be available in HDFS " +
+                              "operational stats.", e);
     }
     return null;
   }
@@ -101,8 +104,8 @@ public abstract class AbstractHDFSStats extends AbstractOperationalStats {
     if (1 == nameservices.size()) {
       return Iterables.getOnlyElement(nameservices);
     }
-    throw new IllegalStateException("Found multiple nameservices configured in HDFS. CDAP currently does not support " +
-                                      "HDFS Federation.");
+    throw new IllegalStateException("Found multiple nameservices configured in HDFS. Operational stats currently does" +
+                                      " not support HDFS Federation.");
   }
 
   @Nullable
