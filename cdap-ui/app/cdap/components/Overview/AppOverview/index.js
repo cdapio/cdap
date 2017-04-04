@@ -25,7 +25,6 @@ import {objectQuery} from 'services/helpers';
 import shortid from 'shortid';
 import T from 'i18n-react';
 import FastActionToMessage from 'services/fast-action-message-helper';
-import {createRouterPath} from 'react-router/LocationUtils';
 import capitalize from 'lodash/capitalize';
 import {getType} from 'services/metadata-parser';
 
@@ -141,7 +140,7 @@ export default class AppOverview extends Component {
             state: {
               entityDetail: this.state.entityDetail,
               entityMetadata: this.props.entity,
-              previousPathname: createRouterPath(location).replace(/\/cdap\//g, '/')
+              previousPathname: (location.pathname + location.search).replace(/\/cdap\//g, '/')
             }
           }}
           entityType={entityType}
@@ -165,4 +164,13 @@ AppOverview.propTypes = {
   entity: PropTypes.object,
   onClose: PropTypes.func,
   onCloseAndRefresh: PropTypes.func
+};
+
+
+AppOverview.contextTypes = {
+  router: PropTypes.shape({
+     history: PropTypes.object.isRequired,
+     route: PropTypes.object.isRequired,
+     staticContext: PropTypes.object
+   })
 };

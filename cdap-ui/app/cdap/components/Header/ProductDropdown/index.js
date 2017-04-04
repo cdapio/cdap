@@ -18,7 +18,7 @@ import React, {PropTypes, Component} from 'react';
 import NamespaceStore from 'services/NamespaceStore';
 import {Dropdown, DropdownToggle, DropdownItem} from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
-import {Link} from 'react-router';
+import {Link} from 'react-router-dom';
 import RedirectToLogin from 'services/redirect-to-login';
 import cookie from 'react-cookie';
 import VersionStore from 'services/VersionStore';

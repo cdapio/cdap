@@ -16,9 +16,9 @@
 
 import React, { Component } from 'react';
 import DataPrep from 'components/DataPrep';
-import NavigationPrompt from 'react-router/NavigationPrompt';
 import Helmet from 'react-helmet';
 import T from 'i18n-react';
+import {Prompt} from 'react-router-dom';
 
 /**
  *  Routing container for DataPrep for React
@@ -44,7 +44,7 @@ export default class DataPrepHome extends Component {
         />
         <DataPrep />
 
-        <NavigationPrompt
+        <Prompt
           when={true}
           message="Are you sure you want to leave this page?"
         />

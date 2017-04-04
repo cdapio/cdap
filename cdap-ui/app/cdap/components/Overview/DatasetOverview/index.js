@@ -26,7 +26,6 @@ import {MyMetadataApi} from 'api/metadata';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';
 import FastActionToMessage from 'services/fast-action-message-helper';
-import {createRouterPath} from 'react-router/LocationUtils';
 import capitalize from 'lodash/capitalize';
 
 export default class DatasetOverview extends Component {
@@ -141,7 +140,7 @@ export default class DatasetOverview extends Component {
             state: {
               entityDetail: this.state.entityDetail,
               entityMetadata: this.props.entity,
-              previousPathname: createRouterPath(location).replace(/\/cdap\//g, '/')
+              previousPathname: (location.pathname + location.search).replace(/\/cdap\//g, '/')
             }
           }}
           onClose={this.props.onClose}
@@ -165,4 +164,12 @@ DatasetOverview.propTypes = {
   entity: PropTypes.object,
   onClose: PropTypes.func,
   onCloseAndRefresh: PropTypes.func
+};
+
+DatasetOverview.contextTypes = {
+  router: PropTypes.shape({
+     history: PropTypes.object.isRequired,
+     route: PropTypes.object.isRequired,
+     staticContext: PropTypes.object
+   })
 };

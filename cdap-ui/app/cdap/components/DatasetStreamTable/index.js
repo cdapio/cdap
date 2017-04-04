@@ -16,7 +16,7 @@
 import React, {Component, PropTypes} from 'react';
 import NamespaceStore from 'services/NamespaceStore';
 import SortableTable from 'components/SortableTable';
-import {Link} from 'react-router';
+import {Link} from 'react-router-dom';
 import {convertEntityTypeToApi} from 'services/entity-type-api-converter';
 import classnames from 'classnames';
 import isNil from 'lodash/isNil';

@@ -29,7 +29,7 @@ import BreadCrumb from 'components/BreadCrumb';
 import {parseMetadata} from 'services/metadata-parser';
 import AppDetailedViewTab from 'components/AppDetailedView/Tabs';
 import shortid from 'shortid';
-import Redirect from 'react-router/Redirect';
+import {Redirect} from 'react-router-dom';
 import FastActionToMessage from 'services/fast-action-message-helper';
 import capitalize from 'lodash/capitalize';
 import Page404 from 'components/404';
@@ -42,7 +42,7 @@ export default class AppDetailedView extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      entityDetail: objectQuery(this.props, 'location', 'state', 'entityDetail') || {
+      entityDetail: objectQuery(this.props.location, 'state', 'entityDetail') || {
         programs: [],
         datasets: [],
         streams: [],
@@ -52,15 +52,15 @@ export default class AppDetailedView extends Component {
         notFound: false
       },
       loading: true,
-      entityMetadata: objectQuery(this.props, 'location', 'state', 'entityMetadata') || {},
+      entityMetadata: objectQuery(this.props.location, 'state', 'entityMetadata') || {},
       isInvalid: false,
       previousPathName: null
     };
   }
   componentWillMount() {
     let selectedNamespace = NamespaceStore.getState().selectedNamespace;
-    let {namespace, appId} = this.props.params;
-    let previousPathName = objectQuery(this.props, 'location', 'state', 'previousPathname') ||
+    let {namespace, appId} = this.props.match.params;
+    let previousPathName = objectQuery(this.props.location, 'state', 'previousPathname') ||
       `/ns/${selectedNamespace}?overviewid=${appId}&overviewtype=application`;
     if (!namespace) {
       namespace = NamespaceStore.getState().selectedNamespace;
@@ -133,7 +133,7 @@ export default class AppDetailedView extends Component {
       MySearchApi
         .search({
           namespace,
-          query: this.props.params.appId
+          query: this.props.match.params.appId
         })
         .map(res => res.results.map(parseMetadata))
         .subscribe(entityMetadata => {
@@ -145,7 +145,7 @@ export default class AppDetailedView extends Component {
           }
           let metadata = entityMetadata
             .filter(en => en.type === 'application')
-            .find( en => en.id === this.props.params.appId);
+            .find( en => en.id === this.props.match.params.appId);
           this.setState({
             entityMetadata: metadata,
             loading: false
@@ -193,7 +193,7 @@ export default class AppDetailedView extends Component {
       return (
         <Page404
           entityType="application"
-          entityName={this.props.params.appId}
+          entityName={this.props.match.params.appId}
         />
       );
     }
@@ -211,7 +211,7 @@ export default class AppDetailedView extends Component {
     return (
       <div className="app-detailed-view">
         <Helmet
-          title={T.translate('features.AppDetailedView.Title', {appId: this.props.params.appId})}
+          title={T.translate('features.AppDetailedView.Title', {appId: this.props.match.params.appId})}
         />
         <ResourceCenterButton />
         <BreadCrumb
@@ -227,7 +227,7 @@ export default class AppDetailedView extends Component {
           showFullCreationTime={true}
         />
         <AppDetailedViewTab
-          params={this.props.params}
+          params={this.props.match.params}
           pathname={this.props.location.pathname}
           entity={this.state.entityDetail}/
         >
@@ -243,21 +243,6 @@ export default class AppDetailedView extends Component {
 
 }
 
-const entityDetailType = PropTypes.shape({
-  artifact: PropTypes.shape({
-    name: PropTypes.string,
-    scope: PropTypes.string,
-    version: PropTypes.string
-  }),
-  artifactVersion: PropTypes.string,
-  configuration: PropTypes.string,
-  // Need to expand on these
-  datasets: PropTypes.arrayOf(PropTypes.object),
-  streams: PropTypes.arrayOf(PropTypes.object),
-  plugins: PropTypes.arrayOf(PropTypes.object),
-  programs: PropTypes.arrayOf(PropTypes.object),
-});
-
 
 AppDetailedView.propTypes = {
   entity: PropTypes.object,
@@ -265,15 +250,8 @@ AppDetailedView.propTypes = {
     appId: PropTypes.string,
     namespace: PropTypes.string
   }),
-  location: PropTypes.shape({
-    hash: PropTypes.string,
-    pathname: PropTypes.string,
-    query: PropTypes.any,
-    search: PropTypes.string,
-    state: PropTypes.shape({
-      entityDetail: entityDetailType,
-      entityMetadata: PropTypes.object,
-      previousPathname: PropTypes.string
-    })
-  })
+  pathname: PropTypes.string,
+  location: PropTypes.object,
+  match: PropTypes.object,
+  history: PropTypes.object
 };
