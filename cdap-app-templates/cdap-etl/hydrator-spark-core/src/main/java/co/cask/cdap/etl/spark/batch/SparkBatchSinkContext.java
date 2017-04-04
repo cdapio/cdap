@@ -23,6 +23,7 @@ import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.batch.preview.NullOutputFormatProvider;
 import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.planner.StageInfo;
 
@@ -35,17 +36,21 @@ import java.util.UUID;
  */
 public class SparkBatchSinkContext extends AbstractSparkBatchContext implements BatchSinkContext {
   private final SparkBatchSinkFactory sinkFactory;
+  private final boolean isPreviewEnabled;
 
   public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, SparkClientContext sparkContext,
-                               LookupProvider lookupProvider, StageInfo stageInfo) {
+                               LookupProvider lookupProvider, StageInfo stageInfo, boolean isPreviewEnabled) {
     super(sparkContext, lookupProvider, stageInfo);
     this.sinkFactory = sinkFactory;
+    this.isPreviewEnabled = isPreviewEnabled;
   }
 
   public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, JavaSparkExecutionContext sec,
-                               DatasetContext datasetContext, long logicalStartTime, StageInfo stageInfo) {
+                               DatasetContext datasetContext, long logicalStartTime, StageInfo stageInfo,
+                               boolean isPreviewEnabled) {
     super(sec, datasetContext, logicalStartTime, stageInfo);
     this.sinkFactory = sinkFactory;
+    this.isPreviewEnabled = isPreviewEnabled;
   }
 
   @Override
@@ -55,18 +60,24 @@ public class SparkBatchSinkContext extends AbstractSparkBatchContext implements 
 
   @Override
   public void addOutput(String datasetName, Map<String, String> arguments) {
-    sinkFactory.addOutput(getStageName(), suffixOutput(Output.ofDataset(datasetName, arguments)));
+    sinkFactory.addOutput(getStageName(), suffixOutput(getOutput(Output.ofDataset(datasetName, arguments))));
   }
 
   @Override
   public void addOutput(String outputName, OutputFormatProvider outputFormatProvider) {
-    sinkFactory.addOutput(getStageName(), suffixOutput(Output.of(outputName, outputFormatProvider)));
+    sinkFactory.addOutput(getStageName(), suffixOutput(getOutput(Output.of(outputName, outputFormatProvider))));
   }
 
   @Override
   public void addOutput(Output output) {
-    Output trackableOutput = ExternalDatasets.makeTrackable(admin, suffixOutput(output));
+    Output actualOutput = suffixOutput(getOutput(output));
+    Output trackableOutput = isPreviewEnabled ? actualOutput : ExternalDatasets.makeTrackable(admin, actualOutput);
     sinkFactory.addOutput(getStageName(), trackableOutput);
+  }
+
+  @Override
+  public boolean isPreviewEnabled() {
+    return isPreviewEnabled;
   }
 
   /**
@@ -75,5 +86,16 @@ public class SparkBatchSinkContext extends AbstractSparkBatchContext implements 
   private Output suffixOutput(Output output) {
     String suffixedAlias = String.format("%s-%s", output.getAlias(), UUID.randomUUID());
     return output.alias(suffixedAlias);
+  }
+
+
+  /**
+   * Get the output, if preview is enabled, return the output with a {@link NullOutputFormatProvider}.
+   */
+  private Output getOutput(Output output) {
+    if (isPreviewEnabled) {
+      return Output.of(output.getName(), new NullOutputFormatProvider());
+    }
+    return output;
   }
 }
