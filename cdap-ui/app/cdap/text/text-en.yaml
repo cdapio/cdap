@@ -215,7 +215,7 @@ features:
         if: If
         KEEP: Keep rows
         Placeholders:
-          CUSTOMCONDITION: "e.g. {columnName} < 30"
+          CUSTOMCONDITION: e.g. < 30
           TEXTCONTAINS: Enter contained value
           TEXTENDSWITH: Enter suffix
           TEXTEXACTLY: Enter value
@@ -277,6 +277,14 @@ features:
             label: XML to JSON
             placeholder: Enter depth
         title: Parse
+      Copy:
+        copySuffix: _copy
+        duplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
+        inputLabel: Name New Column
+        placeholder: Destination Column
+        title: Copy Column
+      Keep:
+       title: Delete Other Columns
     pageTitle: CDAP | Data Preparation
     TopPanel:
       invalidFieldNameMessage: Invalid field name "{fieldName}"
@@ -988,4 +996,6 @@ features:
     overviewLabel: Overview
     manageLabel: Manage
     pipelinesMessage: Pipelines
+  WarningContainer:
+    title: Warning
 ...

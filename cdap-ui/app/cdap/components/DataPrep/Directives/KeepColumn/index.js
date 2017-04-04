@@ -15,11 +15,12 @@
  */
 
 import React, { Component, PropTypes } from 'react';
+import T from 'i18n-react';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 
-export default class DropColumnDirective extends Component {
+export default class KeepColumnDirective extends Component {
   constructor(props) {
     super(props);
     this.applyDirective = this.applyDirective.bind(this);
@@ -27,7 +28,7 @@ export default class DropColumnDirective extends Component {
 
   applyDirective() {
     let column = this.props.column;
-    let directive = `drop ${column}`;
+    let directive = `keep ${column}`;
 
     execute([directive])
       .subscribe(() => {
@@ -47,16 +48,18 @@ export default class DropColumnDirective extends Component {
   render() {
     return (
       <div
-        className="drop-column-directive clearfix action-item"
+        className="keep-column-directive clearfix action-item"
         onClick={this.applyDirective}
       >
-        <span>Delete This Column</span>
+        <span>
+          {T.translate('features.DataPrep.Directives.Keep.title')}
+        </span>
       </div>
     );
   }
 }
 
-DropColumnDirective.propTypes = {
+KeepColumnDirective.propTypes = {
   column: PropTypes.string,
   onComplete: PropTypes.func
 };
