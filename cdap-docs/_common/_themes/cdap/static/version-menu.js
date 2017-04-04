@@ -4,7 +4,7 @@
  *
  * JavaScript for generating 
  *
- * :copyright: © Copyright 2015-2016 Cask Data, Inc.
+ * :copyright: © Copyright 2015-2017 Cask Data, Inc.
  * :license: Apache License, Version 2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -21,11 +21,26 @@
  * 
  * Requires a JSONP file at http://docs.cask.co/cdap/json-versions.js in the format:
  * 
- * versionscallback({'development': [['3.5.0-SNAPSHOT', '3.5.0']], 'current': ['3.4.1', '3.4.1', '2016-05-12'], 'timeline': [['0', '3.4.0', '2016-04-29', ' (100 days)'], ['1', '3.4.1', '2016-05-12', ' (13 days)'], ['0', '3.3.0', '2016-01-20', ' (119 days)'], ['1', '3.3.1', '2016-02-19', ' (30 days)'], ['1', '3.3.2', '2016-03-07', ' (17 days)'], ['1', '3.3.3', '2016-04-15', ' (39 days)'], ['1', '3.3.4', '2016-05-19', ' (34 days)'], ['0', '3.2.0', '2015-09-23', ' (51 days)'], ['1', '3.2.1', '2015-10-21', ' (28 days)'], ... ['2.6.0', '2.6.0', '2015-01-10', '']]});
+ * versionscallback({
+ *  'development': [['3.5.0-SNAPSHOT', '3.5.0', '', '1']], 
+ *  'current': ['3.4.1', '3.4.1', '2016-05-12'], 
+ *  'timeline': [['0', '3.4.0', '2016-04-29', ' (100 days)'], 
+ *    ['1', '3.4.1', '2016-05-12', ' (13 days)'], 
+ *    ['0', '3.3.0', '2016-01-20', ' (119 days)'], 
+ *    ['1', '3.3.1', '2016-02-19', ' (30 days)'], 
+ *    ['1', '3.3.2', '2016-03-07', ' (17 days)'], 
+ *    ['1', '3.3.3', '2016-04-15', ' (39 days)'], 
+ *    ['1', '3.3.4', '2016-05-19', ' (34 days)'], 
+ *    ['0', '3.2.0', '2015-09-23', ' (51 days)'], 
+ *    ['1', '3.2.1', '2015-10-21', ' (28 days)'], ... ['2.6.0', '2.6.0', '2015-01-10', '']],
+ * 'gcse': {'4.0.1': '002451258715120217843:nkzqh6x__gy', 
+ *          '4.0.0': '002451258715120217843:nkzqh6x__gy', 
+ *          '4.1.0': '002451258715120217843:v_9tcw7mwb0'}
+ * });
  * 
- * list of development versions; one current version; list of additional versions
+ * list of development versions; one current version; list of additional versions; dict of Google Custom Search Engines (gcse)
  *
- * version 0.3
+ * version 0.5
  * 
  */
 
@@ -33,7 +48,12 @@
   var versionsURL = 'http://docs.cask.co/cdap/';
   var versionID = 'select-version';
   var buildURL = (function(dir){
-    return versionsURL + dir + '/en/';
+    var en = location.pathname.indexOf('/en/');
+    if (en != -1) {
+      return versionsURL + dir + location.pathname.substr(en);
+    } else {
+      return versionsURL + dir + '/en/';
+    }    
   });
   var writeLink = (function(dir, label){
     document.write('<option value="' + buildURL(dir) + '">' + label + '</option>');
@@ -52,8 +72,12 @@
       ess = (data.development.length == 1) ? "" : "s" ;
       document.write('<optgroup label="Development Release' + ess +'">');          
       var i;
+      var d;
       for (i in data.development) {
-        writeVersionLink(data.development[i][0], data.development[i][1]);
+        d = data.development[i];
+        if (d.length === 2 || (d.length > 2 && parseInt(d[3]) === 1)) {
+          writeVersionLink(d[0], d[1]);
+        } 
       }
       document.write('</optgroup>');
     } else {
@@ -88,6 +112,18 @@
     if (data) {
       document.write('</select>');
     }
+
+    var gcseID = 'DEFAULT_GCSE_ID';
+    if (data && data.gcse) {
+      var v = window.DOCUMENTATION_OPTIONS.VERSION;
+      if (!(data.gcse[v]) && v.endsWith('-SNAPSHOT')) {
+          v = v.replace('-SNAPSHOT', '');
+      }
+      if (data.gcse[v]) {
+        gcseID = data.gcse[v];
+      }
+    }
+    localStorage.setItem("gcseID", gcseID);
   });
   window.gotoVersion = (function(id) {
     var node = document.getElementById( id );
