@@ -174,12 +174,20 @@ the URL::
 .. highlight:: json-ellipsis
 
 The response body will contain a JSON-formatted list of CDAP Master services, with the
-first container listed being the CDAP Master::
+first container listed being the active CDAP Master in an HA deployment::
 
   {
       "containers":[
-                    {"type":"system_service","name":"appfabric","host":"host1.example.com"},
-                    {"type":"system_service","name":"appfabric","host":"host2.example.com"}
+                      {
+                          "host":"host1.example.com",
+                          "name":"appfabric",
+                          "type":"system_service"
+                      },
+                      {
+                          "host":"host2.example.com",
+                          "name":"appfabric",
+                          "type":"system_service"
+                      }
                    ]
   }    
 
