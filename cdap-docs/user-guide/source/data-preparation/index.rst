@@ -3,6 +3,8 @@
     :copyright: Copyright © 2017 Cask Data, Inc.
     :description: The CDAP User Guide: Data Preparation
 
+:hide-toc: true
+
 .. _user-guide-data-preparation:
 
 ================
@@ -13,15 +15,15 @@ Data Preparation
 
     Concepts <concepts>
     Notations <notations>
-    Parsers <parsers/index>
-    Output Formatters <output-formatters/index>
-    Encoders and Decoders <encoders-decoders/index>
-    Date Transformations <date-transformations/index>
-    Unique ID <unique-id/index>
     Hashing and Masking <hashing-masking>
-    Directives <directives/index>
-    Service <service/index>
     Transform <transform>
+    Parsers <parsers/index>
+    Output Formatters <output-formatters>
+    Encoders and Decoders <encoders-decoders>
+    Date Transformations <date-transformations>
+    Unique ID <unique-id>
+    Directives <directives/index>
+    Services <services>
 
 
 Data Preparation (also known as "Data Prep") allows you to parse, transform, cleanse,

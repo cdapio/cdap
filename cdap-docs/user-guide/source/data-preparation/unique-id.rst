@@ -3,9 +3,12 @@
     :copyright: Copyright © 2017 Cask Data, Inc.
     :description: The CDAP User Guide
 
-.. _user-guide-data-preparation-generate-uuid:
+.. _user-guide-data-preparation-unique-id:
 
-=============
+=========
+Unique ID
+=========
+
 Generate UUID
 =============
 
