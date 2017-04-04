@@ -14,6 +14,27 @@ Guides
 
 .. default-role:: link-black
 
+.. |user-guide| replace:: **User Guide**
+.. _user-guide: user-guide/index.html
+
+.. |user-guide-t-black| replace:: `Tutorials:`
+.. _user-guide-t-black: user-guide/tutorials/index.html
+
+.. |user-guide-prep-black| replace:: `Data Preparation:`
+.. _user-guide-prep-black: user-guide/data-preparation/index.html
+
+.. |user-guide-pipe-black| replace:: `Data Pipelines:`
+.. _user-guide-pipe-black: user-guide/pipelines/index.html
+
+- |user-guide|_
+
+  - |user-guide-t-black|_ Tutorials on how to use Data Preparation and Data Pipelines for common data science use cases
+
+  - |user-guide-prep-black|_ Documentation on usage of Data Preparation and Data Preparation transforms
+
+  - |user-guide-pipe-black|_ Documentation on usage of Data Pipelines UI
+
+
 .. |developer-manual| replace:: **Developer Manual**
 .. _developer-manual: developer-manual/index.html
 

@@ -154,12 +154,13 @@ _intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
 
 # Mapping keys must be alpha-numeric only
 intersphinx_mapping_cdap_manuals = {
-  'developer':    ('../../developer-manual/', os.path.abspath(_intersphinx_mapping % 'developer-manual')),
-  'admin':        ('../../admin-manual/',     os.path.abspath(_intersphinx_mapping % 'admin-manual')),
-  'integrations': ('../../integrations/',     os.path.abspath(_intersphinx_mapping % 'integrations')),
-  'examples':     ('../../examples-manual',   os.path.abspath(_intersphinx_mapping % 'examples-manual')),
-  'reference':    ('../../reference-manual',  os.path.abspath(_intersphinx_mapping % 'reference-manual')),
-  'faqs':         ('../../faqs',              os.path.abspath(_intersphinx_mapping % 'faqs')),
+  'user':         ('../../user-guide/',          os.path.abspath(_intersphinx_mapping % 'user-guide')),
+  'developers':   ('../../developers-manual/',   os.path.abspath(_intersphinx_mapping % 'developers-manual')),
+  'admin':        ('../../admin-manual/',        os.path.abspath(_intersphinx_mapping % 'admin-manual')),
+  'integrations': ('../../integrations/',        os.path.abspath(_intersphinx_mapping % 'integrations')),
+  'examples':     ('../../examples-manual',      os.path.abspath(_intersphinx_mapping % 'examples-manual')),
+  'reference':    ('../../reference-manual',     os.path.abspath(_intersphinx_mapping % 'reference-manual')),
+  'faqs':         ('../../faqs',                 os.path.abspath(_intersphinx_mapping % 'faqs')),
 }
 
 intersphinx_mapping_cdap_extensions = {
@@ -282,6 +283,10 @@ rst_epilog = """
 
 .. role:: gp
 .. |cdap >| replace:: :gp:`cdap >`
+
+.. |br| raw:: html
+
+   <br />
 
 .. |http:| replace:: http:
 .. |https:| replace:: https:
@@ -516,7 +521,8 @@ navbar_list = [
 # Fields:
 #     directory,    intersphinx_mapping    href,         title,                             set,       expansion
 manuals_complete_list = [
-    ['developer-manual', 'developer',     'index.html', 'Developer Manual',                'guides',       -1],
+    ['user-guide',        'user',         'index.html', 'User Guide',                      'guides',       -1],
+    ['developer-manual',  'developer',    'index.html', 'Developer Manual',                'guides',       -1],
     ['admin-manual',      'admin',        'index.html', 'Administration Manual',           'guides',       -1],
     ['integrations',      'integrations', 'index.html', 'Integrations',                    'guides',       -1],
     ['examples-manual',   'examples',     'index.html', 'Examples, Guides, and Tutorials', 'guides',       -1],
