@@ -334,7 +334,7 @@ attrib +h %~dsp0MyProg.pid >NUL
 <nul (SET /p _tmp=.)
 REM Sleep for 1 seconds to prevent spinning on fast machines
 PING 127.0.0.1 -n 2 > NUL 2>&1
-findstr /R /C:".*Failed to start server.*" "%CDAP_HOME%\logs\cdap-process.log" >NUL 2>&1
+findstr /R /C:".*Failed to start.*" "%CDAP_HOME%\logs\cdap-process.log" >NUL 2>&1
 if %errorlevel% == 0 GOTO ServerError
 
 findstr /R /C:"..* started successfully.*" "%CDAP_HOME%\logs\cdap-process.log" >NUL 2>&1
