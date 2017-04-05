@@ -47,6 +47,12 @@ final class ImpersonatedTwillPreparer implements TwillPreparer {
   }
 
   @Override
+  public TwillPreparer withConfiguration(Map<String, String> config) {
+    delegate.withConfiguration(config);
+    return this;
+  }
+
+  @Override
   public TwillPreparer addLogHandler(LogHandler handler) {
     delegate.addLogHandler(handler);
     return this;
@@ -206,6 +212,12 @@ final class ImpersonatedTwillPreparer implements TwillPreparer {
   @Override
   public TwillPreparer setLogLevels(String runnableName, Map<String, LogEntry.Level> logLevelsForRunnable) {
     delegate.setLogLevels(runnableName, logLevelsForRunnable);
+    return this;
+  }
+
+  @Override
+  public TwillPreparer setClassLoader(String classLoaderClassName) {
+    delegate.setClassLoader(classLoaderClassName);
     return this;
   }
 

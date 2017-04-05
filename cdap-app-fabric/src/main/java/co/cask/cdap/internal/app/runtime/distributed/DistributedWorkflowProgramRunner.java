@@ -41,7 +41,7 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHel
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.security.TokenSecureStoreUpdater;
+import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.base.Preconditions;
@@ -73,10 +73,10 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
   @Inject
   DistributedWorkflowProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
-                                   TokenSecureStoreUpdater tokenSecureStoreUpdater,
+                                   TokenSecureStoreRenewer tokenSecureStoreRenewer,
                                    ProgramRuntimeProviderLoader runtimeProviderLoader,
                                    Impersonator impersonator) {
-    super(twillRunner, createConfiguration(hConf), cConf, tokenSecureStoreUpdater, impersonator);
+    super(twillRunner, createConfiguration(hConf), cConf, tokenSecureStoreRenewer, impersonator);
     this.runtimeProviderLoader = runtimeProviderLoader;
   }
 

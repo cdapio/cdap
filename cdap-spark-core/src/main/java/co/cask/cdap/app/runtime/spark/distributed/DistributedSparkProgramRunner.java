@@ -36,7 +36,7 @@ import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.security.TokenSecureStoreUpdater;
+import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -65,10 +65,10 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
   @Inject
   @VisibleForTesting
   public DistributedSparkProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
-                                       TokenSecureStoreUpdater tokenSecureStoreUpdater,
+                                       TokenSecureStoreRenewer tokenSecureStoreRenewer,
                                        Impersonator impersonator) {
-    super(twillRunner, createConfiguration(hConf, cConf, tokenSecureStoreUpdater),
-          cConf, tokenSecureStoreUpdater, impersonator);
+    super(twillRunner, createConfiguration(hConf, cConf, tokenSecureStoreRenewer),
+          cConf, tokenSecureStoreRenewer, impersonator);
   }
 
   @Override
@@ -112,7 +112,7 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
   }
 
   private static YarnConfiguration createConfiguration(YarnConfiguration hConf, CConfiguration cConf,
-                                                       TokenSecureStoreUpdater secureStoreUpdater) {
+                                                       TokenSecureStoreRenewer secureStoreRenewer) {
     YarnConfiguration configuration = new YarnConfiguration(hConf);
     configuration.setBoolean(SparkRuntimeContextConfig.HCONF_ATTR_CLUSTER_MODE, true);
 
@@ -121,7 +121,7 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
       // If we don't offset it, it will look for the new credentials too soon
       // Also add 5 seconds to the interval to give master time to push the changes to the Spark client container
       configuration.setLong(SparkRuntimeContextConfig.HCONF_ATTR_CREDENTIALS_UPDATE_INTERVAL_MS,
-                            (long) ((secureStoreUpdater.getUpdateInterval() + 5000) / 0.8));
+                            (long) ((secureStoreRenewer.getUpdateInterval() + 5000) / 0.8));
     }
     return configuration;
   }

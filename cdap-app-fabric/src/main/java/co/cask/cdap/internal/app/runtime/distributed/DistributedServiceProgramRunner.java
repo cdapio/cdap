@@ -28,7 +28,7 @@ import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.security.TokenSecureStoreUpdater;
+import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -52,9 +52,9 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
 
   @Inject
   DistributedServiceProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
-                                  TokenSecureStoreUpdater tokenSecureStoreUpdater,
+                                  TokenSecureStoreRenewer tokenSecureStoreRenewer,
                                   Impersonator impersonator) {
-    super(twillRunner, hConf, cConf, tokenSecureStoreUpdater, impersonator);
+    super(twillRunner, hConf, cConf, tokenSecureStoreRenewer, impersonator);
   }
 
   @Override
