@@ -24,7 +24,6 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.logging.LoggingUtil;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
@@ -237,8 +236,6 @@ public final class KafkaLogAppender extends LogAppender {
      * Creates a {@link KeyedMessage} for the given {@link LogMessage}.
      */
     private KeyedMessage<String, byte[]> createKeyedMessage(LogMessage logMessage) {
-      LoggingUtil.addOriginTag(logMessage);
-
       String partitionKey = getPartitionKey(logMessage.getLoggingContext());
       return new KeyedMessage<>(topic, partitionKey, loggingEventSerializer.toBytes(logMessage));
     }

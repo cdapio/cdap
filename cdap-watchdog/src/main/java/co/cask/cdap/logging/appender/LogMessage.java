@@ -25,7 +25,6 @@ import com.google.common.base.Objects;
 import org.slf4j.Marker;
 
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Represents an event to be logged along with the context.
@@ -34,31 +33,16 @@ public class LogMessage implements ILoggingEvent {
 
   private final ILoggingEvent loggingEvent;
   private final LoggingContext loggingContext;
-  private final LoggingContextMDC mdc;
-  private final ClassLoader contextClassLoader;
+  private final Map<String, String> mdc;
 
   public LogMessage(ILoggingEvent loggingEvent, LoggingContext loggingContext) {
     this.loggingEvent = loggingEvent;
     this.loggingContext = loggingContext;
-    this.mdc = new LoggingContextMDC(loggingContext, loggingEvent.getMDCPropertyMap());
-    this.contextClassLoader = Thread.currentThread().getContextClassLoader();
+    this.mdc = new LoggingContextMDC(loggingContext.getSystemTagsAsString(), loggingEvent.getMDCPropertyMap());
   }
 
   public LoggingContext getLoggingContext() {
     return loggingContext;
-  }
-
-  /**
-   * @return the context {@link ClassLoader} when this log message was created or returning {@code null} if there
-   *         was no context classloader.
-   */
-  @Nullable
-  public ClassLoader getContextClassLoader() {
-    return contextClassLoader;
-  }
-
-  public void putSystemTag(String key, String value) {
-    mdc.putSystemTag(key, value);
   }
 
   @Override

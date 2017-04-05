@@ -16,14 +16,12 @@
 
 package co.cask.cdap.logging.appender;
 
-import co.cask.cdap.common.logging.LoggingContext;
 import com.google.common.base.Predicate;
-import com.google.common.collect.Iterators;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 import java.util.AbstractMap;
 import java.util.AbstractSet;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -34,30 +32,20 @@ import java.util.Set;
  */
 class LoggingContextMDC extends AbstractMap<String, String> {
 
+  private final Map<String, String> systemTags;
   private final Map<String, String> eventMDC;
-  private volatile Map<String, String> systemTags;
+  private final Iterable<Entry<String, String>> entryIterable;
 
-  LoggingContextMDC(LoggingContext loggingContext, Map<String, String> eventMDC) {
-    this.systemTags = loggingContext.getSystemTagsAsString();
+  LoggingContextMDC(Map<String, String> systemTags, Map<String, String> eventMDC) {
+    this.systemTags = systemTags;
     this.eventMDC = eventMDC;
-  }
-
-  /**
-   * Puts a new key value pair to system tags.
-   */
-  synchronized void putSystemTag(String key, String value) {
-    Map<String, String> newSystemTags = new HashMap<>(systemTags);
-    newSystemTags.put(key, value);
-    systemTags = newSystemTags;
-  }
-
-  /**
-   * Puts a set of new key value pairs to system tags.
-   */
-  synchronized void putSystemTags(Map<String, String> tags) {
-    Map<String, String> newSystemTags = new HashMap<>(systemTags);
-    newSystemTags.putAll(tags);
-    systemTags = newSystemTags;
+    this.entryIterable = Iterables.concat(systemTags.entrySet(),
+                                          Iterables.filter(eventMDC.entrySet(), new Predicate<Entry<String, String>>() {
+      @Override
+      public boolean apply(Entry<String, String> entry) {
+        return !LoggingContextMDC.this.systemTags.containsKey(entry.getKey());
+      }
+    }));
   }
 
   @Override
@@ -67,7 +55,6 @@ class LoggingContextMDC extends AbstractMap<String, String> {
 
   @Override
   public String get(Object key) {
-    Map<String, String> systemTags = this.systemTags;
     if (systemTags.containsKey(key)) {
       return systemTags.get(key);
     }
@@ -87,16 +74,7 @@ class LoggingContextMDC extends AbstractMap<String, String> {
     return new AbstractSet<Entry<String, String>>() {
       @Override
       public Iterator<Entry<String, String>> iterator() {
-        // Take a snapshot of the systemTags before iterator to provide a consistent view
-        final Map<String, String> systemTags = LoggingContextMDC.this.systemTags;
-        return Iterators.concat(
-          systemTags.entrySet().iterator(),
-          Iterators.filter(eventMDC.entrySet().iterator(), new Predicate<Entry<String, String>>() {
-            @Override
-            public boolean apply(Entry<String, String> entry) {
-              return !systemTags.containsKey(entry.getKey());
-            }
-          }));
+        return entryIterable.iterator();
       }
 
       @Override
