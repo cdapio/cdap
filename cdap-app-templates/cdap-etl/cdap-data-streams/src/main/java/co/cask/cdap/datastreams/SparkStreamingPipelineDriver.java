@@ -43,6 +43,9 @@ import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.streaming.api.java.JavaStreamingContextFactory;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -53,6 +56,7 @@ import javax.annotation.Nullable;
  * Driver for running pipelines using Spark Streaming.
  */
 public class SparkStreamingPipelineDriver implements JavaSparkMain {
+  private static final Logger LOG = LoggerFactory.getLogger(SparkStreamingPipelineDriver.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
@@ -62,6 +66,9 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
 
   @Override
   public void run(final JavaSparkExecutionContext sec) throws Exception {
+    MDC.put(Constants.PIPELINE_LIFECYCLE_TAG, Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
+    LOG.info("Pipeline '{}' is started.", sec.getApplicationSpecification().getName());
+    MDC.remove(Constants.PIPELINE_LIFECYCLE_TAG);
     final DataStreamsPipelineSpec pipelineSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
                                                                DataStreamsPipelineSpec.class);
 
@@ -113,6 +120,9 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
         jssc.stop(true, pipelineSpec.isStopGracefully());
       }
     }
+    MDC.put(Constants.PIPELINE_LIFECYCLE_TAG, Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
+    LOG.info("Pipeline '{}' is completed.", sec.getApplicationSpecification().getName());
+    MDC.remove(Constants.PIPELINE_LIFECYCLE_TAG);
   }
 
   private JavaStreamingContext run(final DataStreamsPipelineSpec pipelineSpec,
