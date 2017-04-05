@@ -106,8 +106,7 @@ public class MetadataStoreDataset extends AbstractDataset {
   @Nullable
   public <T> T getFirst(MDSKey id, Type typeOfT) {
     try {
-      Scanner scan = table.scan(id.getKey(), Bytes.stopKeyForPrefix(id.getKey()));
-      try {
+      try (Scanner scan = table.scan(id.getKey(), Bytes.stopKeyForPrefix(id.getKey()))) {
         Row row = scan.next();
         if (row == null || row.isEmpty()) {
           return null;
@@ -119,8 +118,6 @@ public class MetadataStoreDataset extends AbstractDataset {
         }
 
         return deserialize(value, typeOfT);
-      } finally {
-        scan.close();
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -331,11 +328,6 @@ public class MetadataStoreDataset extends AbstractDataset {
     }
   }
 
-  public void delete(MDSKey id) {
-    byte[] key = id.getKey();
-    table.delete(key);
-  }
-
   public void deleteAll(MDSKey id) {
     deleteAll(id, Predicates.<MDSKey>alwaysTrue());
   }
@@ -360,6 +352,14 @@ public class MetadataStoreDataset extends AbstractDataset {
           table.delete(new Delete(next.getRow()).add(COLUMN));
         }
       }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public void delete(MDSKey id) {
+    try {
+      table.delete(id.getKey(), COLUMN);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

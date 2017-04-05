@@ -222,6 +222,9 @@ public class StreamSizeScheduler implements Scheduler {
     if (taskExecutorService != null) {
       taskExecutorService.shutdownNow();
     }
+    if (scheduleStore != null) {
+      scheduleStore.shutdown();
+    }
   }
 
   @Override

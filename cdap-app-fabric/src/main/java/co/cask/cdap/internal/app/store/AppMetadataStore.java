@@ -24,6 +24,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -49,7 +50,6 @@ import com.google.common.base.Stopwatch;
 import com.google.common.base.Ticker;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -69,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Predicates.and;
@@ -90,6 +91,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_NAMESPACE = "namespace";
 
   private final CConfiguration cConf;
+  private final AtomicBoolean upgradeComplete;
 
   private static final Function<RunRecordMeta, RunId> RUN_RECORD_META_TO_RUN_ID_FUNCTION =
     new Function<RunRecordMeta, RunId>() {
@@ -99,9 +101,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
       }
     };
 
-  public AppMetadataStore(Table table, CConfiguration cConf) {
+  public AppMetadataStore(Table table, CConfiguration cConf, AtomicBoolean upgradeComplete) {
     super(table);
     this.cConf = cConf;
+    this.upgradeComplete = upgradeComplete;
   }
 
   @Override
@@ -807,6 +810,24 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return runIds;
   }
 
+  /**
+   * @return true if the row key is present in the table
+   */
+  public boolean isUpgradeComplete(byte[] key) {
+    MDSKey.Builder keyBuilder = new MDSKey.Builder();
+    keyBuilder.add(key);
+    return exists(keyBuilder.build());
+  }
+
+  /**
+   * Mark the table that the upgrade is complete.
+   */
+  public void setUpgradeComplete(byte[] key) {
+    MDSKey.Builder keyBuilder = new MDSKey.Builder();
+    keyBuilder.add(key);
+    write(keyBuilder.build(), ProjectInfo.getVersion().toString());
+  }
+
   private Iterable<RunId> getRunningInRangeForStatus(String statusKey, final long startTimeInSecs,
                                                      final long endTimeInSecs, long maxScanTimeMillis) {
     List<Iterable<RunId>> batches = getRunningInRangeForStatus(statusKey, startTimeInSecs, endTimeInSecs,
@@ -850,11 +871,12 @@ public class AppMetadataStore extends MetadataStoreDataset {
   /**
    * Upgrades the keys in table to include version if it is not already present.
    */
-  void upgradeVersionKeys() {
-    upgradeVersionKeys(TYPE_APP_META, ApplicationMeta.class);
-    upgradeVersionKeys(TYPE_RUN_RECORD_COMPLETED, RunRecordMeta.class);
-    upgradeVersionKeys(TYPE_WORKFLOW_NODE_STATE, WorkflowNodeStateDetail.class);
-    upgradeVersionKeys(TYPE_WORKFLOW_TOKEN, BasicWorkflowToken.class);
+  boolean upgradeVersionKeys(int maxRows) {
+    boolean upgradeDone = upgradeVersionKeys(TYPE_APP_META, ApplicationMeta.class, maxRows);
+    upgradeDone &= upgradeVersionKeys(TYPE_RUN_RECORD_COMPLETED, RunRecordMeta.class, maxRows);
+    upgradeDone &= upgradeVersionKeys(TYPE_WORKFLOW_NODE_STATE, WorkflowNodeStateDetail.class, maxRows);
+    upgradeDone &= upgradeVersionKeys(TYPE_WORKFLOW_TOKEN, BasicWorkflowToken.class, maxRows);
+    return upgradeDone;
   }
 
   /**
@@ -863,24 +885,51 @@ public class AppMetadataStore extends MetadataStoreDataset {
    * @param recordType type of the record
    * @param typeOfT    content type of the record
    * @param <T>        type param
+   * @param maxRows    maximum number of rows to be upgraded in this call.
+   * @return true if no rows required an upgrade
    */
-  private <T> void upgradeVersionKeys(String recordType, Type typeOfT) {
+  private <T> boolean upgradeVersionKeys(String recordType, Type typeOfT, int maxRows) {
     LOG.info("Upgrading {}", recordType);
     MDSKey startKey = new MDSKey.Builder().add(recordType).build();
     Map<MDSKey, T> oldMap = listKV(startKey, typeOfT);
     Map<MDSKey, T> newMap = new HashMap<>();
+    Set<MDSKey> deleteKeys = new HashSet<>();
+
     for (Map.Entry<MDSKey, T> oldEntry : oldMap.entrySet()) {
-      MDSKey newKey = appendDefaultVersion(recordType, typeOfT, oldEntry.getKey());
-      newMap.put(newKey, oldEntry.getValue());
+      MDSKey oldKey = oldEntry.getKey();
+      MDSKey newKey = appendDefaultVersion(recordType, typeOfT, oldKey);
+      // If the key has been modified, only then add it to the map.
+      if (!newKey.equals(oldKey)) {
+        deleteKeys.add(oldKey);
+
+        // If a row with the new key doesn't exists, only then upgrade the old key otherwise just delete the old key.
+        Object valueOfNewKey = get(newKey, typeOfT);
+        if (valueOfNewKey == null) {
+          newMap.put(newKey, oldEntry.getValue());
+        }
+
+        // We want to modify only certain number of rows
+        if (deleteKeys.size() >= maxRows) {
+          break;
+        }
+      }
     }
 
-    //Delete old rows
-    deleteAll(startKey);
+    // No rows needs to be modified
+    if (deleteKeys.size() == 0) {
+      return true;
+    }
+
+    // Delete old keys
+    for (MDSKey oldKey : deleteKeys) {
+      delete(oldKey);
+    }
 
     // Write new rows
     for (Map.Entry<MDSKey, T> newEntry : newMap.entrySet()) {
       write(newEntry.getKey(), newEntry.getValue());
     }
+    return false;
   }
 
   private static MDSKey getUpgradedAppMetaKey(MDSKey originalKey) {

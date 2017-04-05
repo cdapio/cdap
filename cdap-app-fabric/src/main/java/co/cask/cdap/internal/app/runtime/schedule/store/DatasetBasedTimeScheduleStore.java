@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.internal.app.runtime.schedule.DefaultSchedulerService;
 import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.annotations.VisibleForTesting;
@@ -33,8 +34,12 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionConflictException;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionExecutorFactory;
+import org.apache.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionNotInProgressException;
+import org.apache.twill.common.Threads;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
@@ -58,19 +63,30 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * ScheduleStore extends from RAMJobStore and persists the trigger and schedule information into datasets.
  */
 public class DatasetBasedTimeScheduleStore extends RAMJobStore {
 
+  private static final byte[] APP_VERSION_UPGRADE_KEY = Bytes.toBytes("upgrade.timeschedule.appversion.complete");
   private static final Logger LOG = LoggerFactory.getLogger(DatasetBasedTimeScheduleStore.class);
   private static final byte[] JOB_KEY = Bytes.toBytes("jobs");
   private static final byte[] TRIGGER_KEY = Bytes.toBytes("trigger");
+  private static volatile boolean storeInitialized = false;
 
   private final TransactionExecutorFactory factory;
   private final ScheduleStoreTableUtil tableUtil;
+  private final AtomicBoolean appVerUpgrade;
+
   private final CConfiguration cConf;
+
+  private ExecutorService executorService;
   private Table table;
 
   @Inject
@@ -78,6 +94,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
                                 CConfiguration cConf) {
     this.tableUtil = tableUtil;
     this.factory = factory;
+    this.appVerUpgrade = new AtomicBoolean(false);
     this.cConf = cConf;
   }
 
@@ -89,8 +106,20 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
       setMisfireThreshold(cConf.getLong(Constants.Scheduler.CFG_SCHEDULER_MISFIRE_THRESHOLD_MS));
       initializeScheduleTable();
       readSchedulesFromPersistentStore();
+      executorService = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory(
+        "time-schedulestore-appver-upgrade-checker"));
+      executorService.submit(new UpgradeCompleteCheck(APP_VERSION_UPGRADE_KEY, factory, table, appVerUpgrade));
+      storeInitialized = true;
     } catch (Throwable th) {
       throw Throwables.propagate(th);
+    }
+  }
+
+  @Override
+  public void shutdown() {
+    super.shutdown();
+    if (executorService != null) {
+      executorService.shutdown();
     }
   }
 
@@ -167,14 +196,16 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   }
 
   private void executeDelete(final TriggerKey triggerKey) {
-    final TriggerKey versionLessTriggerKey = removeAppVersion(triggerKey);
     try {
       factory.createExecutor(ImmutableList.of((TransactionAware) table))
         .execute(new TransactionExecutor.Subroutine() {
           @Override
           public void apply() throws Exception {
-            if (versionLessTriggerKey != null) {
-              removeTrigger(table, versionLessTriggerKey);
+            if (!isUpgradeComplete()) {
+              TriggerKey versionLessTriggerKey = removeAppVersion(triggerKey);
+              if (versionLessTriggerKey != null) {
+                removeTrigger(table, versionLessTriggerKey);
+              }
             }
             removeTrigger(table, triggerKey);
           }
@@ -185,14 +216,16 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   }
 
   private void executeDelete(final JobKey jobKey) {
-    final JobKey versionLessJobKey = removeAppVersion(jobKey);
     try {
       factory.createExecutor(ImmutableList.of((TransactionAware) table))
         .execute(new TransactionExecutor.Subroutine() {
           @Override
           public void apply() throws Exception {
-            if (versionLessJobKey != null) {
-              removeJob(table, versionLessJobKey);
+            if (!isUpgradeComplete()) {
+              JobKey versionLessJobKey = removeAppVersion(jobKey);
+              if (versionLessJobKey != null) {
+                removeJob(table, versionLessJobKey);
+              }
             }
             removeJob(table, jobKey);
           }
@@ -360,22 +393,83 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     }
   }
 
+  // Returns true if the upgrade flag is set. Upgrade could have completed earlier than this since this flag is
+  // updated asynchronously.
+  public boolean isUpgradeComplete() {
+    return appVerUpgrade.get();
+  }
+
   /**
-   * Method to add version in JobKey and VersionKey in SchedulerStore.
+   * Method to add version to row key in SchedulerStore.
    *
-   * @throws Exception
+   * @throws InterruptedException
+   * @throws IOException
+   * @throws DatasetManagementException
    */
-  public void upgrade() throws Exception {
-    // Create table instance.
+  public void upgrade() throws InterruptedException, IOException, DatasetManagementException {
+    // Wait until the store is initialized
+    while (!storeInitialized) {
+      TimeUnit.SECONDS.sleep(10);
+    }
+
+    final AtomicBoolean upgradeComplete = new AtomicBoolean(false);
     initializeScheduleTable();
-    factory.createExecutor(ImmutableList.of((TransactionAware) table))
-      .execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          upgradeJobs();
-          upgradeTriggers();
+    try {
+      factory.createExecutor(ImmutableList.of((TransactionAware) table))
+        .execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            byte[] result = table.get(APP_VERSION_UPGRADE_KEY, Bytes.toBytes('c'));
+            if (result != null) {
+              upgradeComplete.set(true);
+            }
+          }
+        });
+    } catch (TransactionFailureException e) {
+      // It is ok to ignore this error since this is an optimization check.
+      String errorMessage = "Initial check to see whether upgrade of TimeScheduleStore is " +
+        "complete or not, has failed. Proceeding with upgrade.";
+      if (e instanceof TransactionConflictException | e instanceof TransactionNotInProgressException) {
+        LOG.trace(errorMessage, e);
+      } else {
+        LOG.error(errorMessage, e);
+      }
+    }
+
+    // If upgrade is already complete, then simply return.
+    if (upgradeComplete.get()) {
+      LOG.info("TimeScheduleStore is already upgraded.");
+      return;
+    }
+
+    final AtomicInteger sleepTimeInMins = new AtomicInteger(1);
+    LOG.info("Starting upgrade of TimeScheduleStore.");
+    while (!isUpgradeComplete()) {
+      sleepTimeInMins.set(1);
+      try {
+        factory.createExecutor(ImmutableList.of((TransactionAware) table))
+          .execute(new TransactionExecutor.Subroutine() {
+            @Override
+            public void apply() {
+              upgradeJobs(table);
+              upgradeTriggers(table);
+              // Upgrade is complete. Mark that app version upgrade is complete in the table.
+              table.put(APP_VERSION_UPGRADE_KEY, Bytes.toBytes('c'),
+                        Bytes.toBytes(ProjectInfo.getVersion().toString()));
+            }
+          });
+      } catch (TransactionFailureException e) {
+        if (e instanceof TransactionConflictException) {
+          LOG.debug("Upgrade step faced Transaction Conflict exception. Retrying operation now.", e);
+          sleepTimeInMins.set(0);
+        } else {
+          LOG.error("Upgrade step faced exception. Will retry operation after some delay.", e);
+          sleepTimeInMins.set(1);
         }
-      });
+      }
+      TimeUnit.MINUTES.sleep(sleepTimeInMins.get());
+    }
+    LOG.info("Upgrade of TimeSizeScheduleStore is complete.");
   }
 
   @VisibleForTesting
@@ -449,7 +543,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     return true;
   }
 
-  private void upgradeJobs() throws Exception {
+  private void upgradeJobs(Table table) {
     Row result = table.get(JOB_KEY);
     if (result.isEmpty()) {
       return;
@@ -466,7 +560,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     }
   }
 
-  private void upgradeTriggers() throws Exception {
+  private void upgradeTriggers(Table table) {
     Row result = table.get(TRIGGER_KEY);
     if (result.isEmpty()) {
       return;

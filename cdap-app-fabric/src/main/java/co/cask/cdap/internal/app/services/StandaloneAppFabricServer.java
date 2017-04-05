@@ -70,11 +70,12 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    SystemArtifactLoader systemArtifactLoader,
                                    PluginService pluginService,
                                    PrivilegesFetcherProxyService privilegesFetcherProxyService,
+                                   AppVersionUpgradeService appVersionUpgradeService,
                                    RouteStore routeStore) {
     super(cConf, sConf, discoveryService, schedulerService, notificationService, hostname, handlers,
           metricsCollectionService, programRuntimeService, applicationLifecycleService,
           programLifecycleService, streamCoordinatorClient, servicesNames, handlerHookNames, namespaceAdmin,
-          systemArtifactLoader, pluginService, privilegesFetcherProxyService, routeStore);
+          systemArtifactLoader, pluginService, privilegesFetcherProxyService, appVersionUpgradeService, routeStore);
     this.metricStore = metricStore;
   }
 

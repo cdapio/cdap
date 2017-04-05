@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;
@@ -75,8 +76,12 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
+import org.apache.tephra.TransactionConflictException;
+import org.apache.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionNotInProgressException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,16 +93,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
 /**
  * Implementation of the Store that ultimately places data into MetaDataTable.
  */
 public class DefaultStore implements Store {
-
   private static final Logger LOG = LoggerFactory.getLogger(DefaultStore.class);
   private static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
+  private static final byte[] APP_VERSION_UPGRADE_KEY = Bytes.toBytes("upgrade.appmeta.appversion.complete");
+
   // mds is specific for metadata, we do not want to add workflow stats related information to the mds,
   // as it is not specifically metadata
   private static final DatasetId WORKFLOW_STATS_INSTANCE_ID = NamespaceId.SYSTEM.dataset("workflow.stats");
@@ -108,6 +118,8 @@ public class DefaultStore implements Store {
   private final CConfiguration configuration;
   private final DatasetFramework dsFramework;
   private final Transactional transactional;
+  private final AtomicBoolean appVerUpgrade;
+  private ExecutorService executorService;
 
   @Inject
   public DefaultStore(CConfiguration conf, DatasetFramework framework, TransactionSystemClient txClient) {
@@ -119,6 +131,16 @@ public class DefaultStore implements Store {
         NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
+    this.appVerUpgrade = new AtomicBoolean(false);
+    this.executorService = Executors.newSingleThreadExecutor(
+      Threads.createDaemonThreadFactory("appmeta-appver-upgrade-checker"));
+    this.executorService.submit(new UpgradeChecker(transactional, framework, conf, appVerUpgrade));
+  }
+
+  // Returns true if the upgrade flag is set. Upgrade could have completed earlier than this since this flag is
+  // updated asynchronously.
+  public boolean isUpgradeComplete() {
+    return appVerUpgrade.get();
   }
 
   /**
@@ -135,7 +157,7 @@ public class DefaultStore implements Store {
                                                                                      DatasetManagementException {
     Table table = DatasetsUtil.getOrCreateDataset(datasetContext, dsFramework, APP_META_INSTANCE_ID,
                                                   Table.class.getName(), DatasetProperties.EMPTY);
-    return new AppMetadataStore(table, configuration);
+    return new AppMetadataStore(table, configuration, appVerUpgrade);
   }
 
   private WorkflowDataset getWorkflowDataset(DatasetContext datasetContext) throws IOException,
@@ -881,14 +903,81 @@ public class DefaultStore implements Store {
     truncate(dsFramework.getAdmin(WORKFLOW_STATS_INSTANCE_ID, null));
   }
 
-  public void upgradeAppVersion() throws Exception {
-    Transactions.executeUnchecked(transactional, configuration.getInt(Constants.APP_META_UPGRADE_TIMEOUT_SECS),
-                                  new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        getAppMetadataStore(context).upgradeVersionKeys();
+  /**
+   * Method to add version in DefaultStore.
+   *
+   * @throws InterruptedException
+   * @throws IOException
+   * @throws DatasetManagementException
+   */
+  public void upgrade() throws InterruptedException, IOException, DatasetManagementException {
+    final AtomicBoolean upgradeComplete = new AtomicBoolean(false);
+    try {
+      Transactions.execute(transactional, new TxCallable<Void>() {
+        @Override
+        public Void call(DatasetContext context) throws Exception {
+          boolean complete = getAppMetadataStore(context).isUpgradeComplete(APP_VERSION_UPGRADE_KEY);
+          if (complete) {
+            upgradeComplete.set(true);
+          }
+          return null;
+        }
+      });
+    } catch (TransactionFailureException e) {
+      // It is ok to ignore this error since this is an optimization check.
+      String errorMessage = "Initial check to see whether upgrade of DefaultStore is " +
+        "complete or not, has failed. Proceeding with upgrade.";
+      if (e instanceof TransactionConflictException | e instanceof TransactionNotInProgressException) {
+        LOG.trace(errorMessage, e);
+      } else {
+        LOG.error(errorMessage, e);
       }
-    });
+    }
+
+    // If upgrade is already complete, then simply return.
+    if (upgradeComplete.get()) {
+      LOG.info("DefaultStore is already upgraded.");
+      return;
+    }
+
+    final AtomicInteger maxRows = new AtomicInteger(5);
+    final AtomicInteger sleepTimeInMins = new AtomicInteger(1);
+
+    LOG.info("Starting upgrade of DefaultStore.");
+    while (!isUpgradeComplete()) {
+      sleepTimeInMins.set(1);
+      try {
+        Transactions.execute(transactional, new TxCallable<Void>() {
+          @Override
+          public Void call(DatasetContext context) throws Exception {
+            AppMetadataStore store = getAppMetadataStore(context);
+            boolean upgradeComplete = store.upgradeVersionKeys(maxRows.get());
+            if (upgradeComplete) {
+              store.setUpgradeComplete(APP_VERSION_UPGRADE_KEY);
+            }
+            return null;
+          }
+        });
+      } catch (TransactionFailureException e) {
+        if (e instanceof TransactionConflictException) {
+          LOG.debug("Upgrade step faced Transaction Conflict exception. Retrying operation now.", e);
+          sleepTimeInMins.set(0);
+        } else if (e instanceof TransactionNotInProgressException) {
+          int currMaxRows = maxRows.get();
+          if (currMaxRows > 1) {
+            maxRows.decrementAndGet();
+          }
+          sleepTimeInMins.set(0);
+          LOG.debug("Upgrade step faced a Transaction Timeout exception. " +
+                      "Reducing the number of max rows to : {} and retrying the operation now.", maxRows.get(), e);
+        } else {
+          LOG.error("Upgrade step faced exception. Will retry operation after some delay.", e);
+          sleepTimeInMins.set(1);
+        }
+      }
+      TimeUnit.MINUTES.sleep(sleepTimeInMins.get());
+    }
+    LOG.info("Upgrade of DefaultStore is complete.");
   }
 
   private void truncate(DatasetAdmin admin) throws Exception {
@@ -1071,5 +1160,52 @@ public class DefaultStore implements Store {
         return getAppMetadataStore(context).getRunningInRange(startTimeInSecs, endTimeInSecs);
       }
     });
+  }
+
+  private static final class UpgradeChecker implements Runnable {
+    private static final Logger LOG = LoggerFactory.getLogger(UpgradeChecker.class);
+
+    private final Transactional transactional;
+    private final DatasetFramework dsFramework;
+    private final CConfiguration cConf;
+    private final AtomicBoolean flag;
+
+    UpgradeChecker(Transactional transactional, DatasetFramework dsFramework, CConfiguration cConf,
+                   AtomicBoolean flag) {
+      this.transactional = transactional;
+      this.dsFramework = dsFramework;
+      this.cConf = cConf;
+      this.flag = flag;
+    }
+
+    @Override
+    public void run() {
+      while (!flag.get()) {
+        try {
+          TimeUnit.MINUTES.sleep(5);
+        } catch (InterruptedException e) {
+          LOG.debug("Received an interrupt.", e);
+          Thread.currentThread().interrupt();
+        }
+
+        try {
+          Transactions.execute(transactional, new TxCallable<Void>() {
+            @Override
+            public Void call(DatasetContext context) throws Exception {
+              Table table = DatasetsUtil.getOrCreateDataset(context, dsFramework, APP_META_INSTANCE_ID,
+                                                            Table.class.getName(), DatasetProperties.EMPTY);
+              AppMetadataStore appMetadataStore = new AppMetadataStore(table, cConf, flag);
+              boolean upgradeComplete = appMetadataStore.isUpgradeComplete(APP_VERSION_UPGRADE_KEY);
+              if (upgradeComplete) {
+                flag.set(true);
+              }
+              return null;
+            }
+          });
+        } catch (TransactionFailureException ex) {
+          LOG.debug("Received an exception while trying to read the upgrade flag entry. Will retry in sometime.", ex);
+        }
+      }
+    }
   }
 }
