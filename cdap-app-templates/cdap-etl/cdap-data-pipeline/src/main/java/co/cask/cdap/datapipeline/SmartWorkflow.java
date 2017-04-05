@@ -55,6 +55,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -165,6 +166,9 @@ public class SmartWorkflow extends AbstractWorkflow {
 
   @Override
   public void initialize(WorkflowContext context) throws Exception {
+    MDC.put(Constants.PIPELINE_LIFECYCLE_TAG, Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
+    LOG.info("Pipeline is started {}", context.getApplicationSpecification().getName());
+    MDC.remove(Constants.PIPELINE_LIFECYCLE_TAG);
     super.initialize(context);
     postActions = new LinkedHashMap<>();
     BatchPipelineSpec batchPipelineSpec =
@@ -200,6 +204,9 @@ public class SmartWorkflow extends AbstractWorkflow {
         LOG.error("Error while running ending action {}.", name, t);
       }
     }
+    MDC.put(Constants.PIPELINE_LIFECYCLE_TAG, Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
+    LOG.info("Pipeline run is complete. {}", getContext().getApplicationSpecification().getName());
+    MDC.remove(Constants.PIPELINE_LIFECYCLE_TAG);
   }
 
   private void addPrograms(String node, WorkflowConfigurer configurer) {
