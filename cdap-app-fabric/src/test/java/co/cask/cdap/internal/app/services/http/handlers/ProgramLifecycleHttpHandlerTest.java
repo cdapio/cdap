@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.AppWithMultipleScheduledWorkflows;
+import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.AppWithWorker;
 import co.cask.cdap.AppWithWorkflow;
@@ -24,10 +25,14 @@ import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.Config;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
@@ -42,6 +47,7 @@ import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.ServiceSpecificationCodec;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
@@ -64,6 +70,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -1066,6 +1073,188 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // verify queue is gone
     Assert.assertFalse(dequeueOne(queueName));
+  }
+
+  @Test
+  public void testSchedules() throws Exception {
+    // deploy an app with schedule
+    Id.Artifact artifactId = Id.Artifact.from(TEST_NAMESPACE_META1.getNamespaceId().toId(),
+                                              AppWithSchedule.NAME, VERSION1);
+    addAppArtifact(artifactId, AppWithSchedule.class);
+    AppRequest<? extends Config> request = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
+    ApplicationId defaultAppId = TEST_NAMESPACE_META1.getNamespaceId().app(AppWithSchedule.NAME);
+    Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
+
+    // deploy another version of the app
+    ApplicationId appV2Id = TEST_NAMESPACE_META1.getNamespaceId().app(AppWithSchedule.NAME, VERSION2);
+    Assert.assertEquals(200, deploy(appV2Id, request).getStatusLine().getStatusCode());
+
+    String newSchedule = "newTimeSchedule";
+    testAddSchedule(appV2Id, newSchedule);
+    testDeleteSchedule(appV2Id, newSchedule);
+    testUpdateSchedule(appV2Id);
+  }
+
+  private void testAddSchedule(ApplicationId appV2Id, String scheduleName) throws Exception {
+    TimeSchedule timeSchedule = (TimeSchedule) Schedules.builder(scheduleName)
+      .setDescription("Something")
+      .createTimeSchedule("0 * * * ?");
+    ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW,
+                                                              AppWithSchedule.WORKFLOW_NAME);
+    ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
+    ScheduleSpecification specification = new ScheduleSpecification(timeSchedule, programInfo, properties);
+
+    // trying to add the schedule with different name in path param than schedule spec should fail
+    HttpResponse response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, "differentName",
+                                        specification);
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
+
+    // adding a schedule to a non-existing app should fail
+    response = addSchedule(TEST_NAMESPACE1, "nonExisitngApp", null, scheduleName,
+                           specification);
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+
+    // adding a schedule to invalid type of program type should fail
+    ScheduleProgramInfo invalidScheduleProgramInfo = new ScheduleProgramInfo(SchedulableProgramType.SPARK,
+                                                                             "someRandomName");
+    ScheduleSpecification invalidSpecification = new ScheduleSpecification(timeSchedule, invalidScheduleProgramInfo,
+                                                                           properties);
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName,
+                                        invalidSpecification);
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
+
+    // adding a schedule with invalid schedule details should fail
+    TimeSchedule invalidTimeSchedule = (TimeSchedule) Schedules.builder("invalidTimeSchedule")
+      .setDescription("Something")
+      .createTimeSchedule("0 * *"); // invalid cron expression
+    invalidSpecification = new ScheduleSpecification(invalidTimeSchedule, programInfo, properties);
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, "invalidTimeSchedule",
+                           invalidSpecification);
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
+
+    // test adding a schedule
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName,
+                                            specification);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME,
+                                                         AppWithSchedule.WORKFLOW_NAME);
+    Assert.assertEquals(2, schedules.size());
+
+    // trying to add the same schedule again should fail with AlreadyExistsException
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName,
+                           specification);
+    Assert.assertEquals(HttpResponseStatus.CONFLICT.getCode(), response.getStatusLine().getStatusCode());
+
+
+    // although we should be able to add schedule to a different version of the app
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, appV2Id.getVersion(), scheduleName,
+                           specification);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    // there should be two schedules now
+    List<ScheduleSpecification> actualSchSpecs = listSchedules(TEST_NAMESPACE1, appV2Id.getApplication(),
+                                                               appV2Id.getVersion());
+    Assert.assertEquals(2, actualSchSpecs.size());
+    Assert.assertTrue(actualSchSpecs.contains(specification));
+  }
+
+  private void testDeleteSchedule(ApplicationId appV2Id, String scheduleName) throws Exception {
+    // trying to delete a schedule from a non-existing app should fail
+    HttpResponse response = deleteSchedule(TEST_NAMESPACE1, "nonExistingApp", null, scheduleName);
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+
+    // trying to delete a non-existing schedule should fail
+    response = deleteSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, "nonExistingSchedule");
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+
+    // trying to delete a valid existing schedule should pass
+    response = deleteSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME,
+                                                         AppWithSchedule.WORKFLOW_NAME);
+    Assert.assertEquals(1, schedules.size());
+
+    // the above schedule delete should not have affected the schedule with same name in another version of the app
+    schedules = getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, appV2Id.getVersion(),
+                             AppWithSchedule.WORKFLOW_NAME);
+    Assert.assertEquals(2, schedules.size());
+
+    // should have a schedule with the given name
+    boolean foundSchedule = false;
+    for (ScheduleSpecification schedule : schedules) {
+      if (schedule.getSchedule().getName().equals(scheduleName)) {
+        foundSchedule = true;
+      }
+    }
+    Assert.assertTrue(String.format("Expected to find a schedule named %s but didn't", scheduleName), foundSchedule);
+
+    // delete the schedule from the other version of the app too as a cleanup
+    response = deleteSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, appV2Id.getVersion(), scheduleName);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    schedules = getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, appV2Id.getVersion(),
+                             AppWithSchedule.WORKFLOW_NAME);
+    Assert.assertEquals(1, schedules.size());
+  }
+
+  private void testUpdateSchedule(ApplicationId appV2Id) throws Exception {
+    Schedule nonExistingSchedule = Schedules.builder("NonExistingSchedule")
+      .setDescription("Every minute")
+      .createTimeSchedule("0 4 * * *");
+
+    Schedule updatedSchedule = Schedules.builder(AppWithSchedule.SCHEDULE)
+      .setDescription("Every minute")
+      .createTimeSchedule("0 4 * * *");
+    Map<String, String> properties = ImmutableMap.of();
+    ScheduleSpecification nonExistingScheduleSpec =
+      new ScheduleSpecification(nonExistingSchedule,
+                                new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, AppWithSchedule.WORKFLOW_NAME),
+                                properties);
+    ScheduleSpecification invalidProgramTypeScheduleSpec =
+      new ScheduleSpecification(nonExistingSchedule,
+                                new ScheduleProgramInfo(SchedulableProgramType.SPARK, AppWithSchedule.WORKFLOW_NAME),
+                                properties);
+
+    ScheduleSpecification updatedScheduleSpec =
+      new ScheduleSpecification(updatedSchedule,
+                                new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, AppWithSchedule.WORKFLOW_NAME),
+                                properties);
+
+    // trying to update with a different name than in schedule should fail
+    HttpResponse response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null,
+                                           "differentNameHere", updatedScheduleSpec);
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
+
+    // trying to update schedule for a non-existing app should fail
+    response = updateSchedule(TEST_NAMESPACE1, "nonExistingApp", null, AppWithSchedule.SCHEDULE,
+                              updatedScheduleSpec);
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+
+    // trying to update a non-existing schedule should fail
+    response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null,
+                              "NonExistingSchedule", nonExistingScheduleSpec);
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+
+    // trying to update a schedule for invalid program type should fail
+    response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, AppWithSchedule.SCHEDULE,
+                              invalidProgramTypeScheduleSpec);
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
+
+    // should be able to update an existing schedule with a valid new schedule
+    response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, AppWithSchedule.SCHEDULE,
+                              updatedScheduleSpec);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    // verify that the schedule information for updated
+    ScheduleSpecification schedule = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, AppWithSchedule.SCHEDULE);
+    TimeSchedule actualSchedule = (TimeSchedule) schedule.getSchedule();
+    Assert.assertEquals(updatedSchedule, actualSchedule);
+
+    // the above update should not have affected the schedule for the other version of the app
+    schedule = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, appV2Id.getVersion(), AppWithSchedule.SCHEDULE);
+    actualSchedule = (TimeSchedule) schedule.getSchedule();
+    Assert.assertNotEquals(updatedSchedule, actualSchedule);
   }
 
   @After

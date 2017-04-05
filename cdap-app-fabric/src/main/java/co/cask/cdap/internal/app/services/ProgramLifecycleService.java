@@ -76,6 +76,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -828,7 +829,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
         new ScheduleId(applicationId.getNamespace(), applicationId.getApplication(), scheduleName));
     }
 
-    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+    ProgramType programType = getSchedulableProgramType(scheduleSpec);
     String programName = scheduleSpec.getProgram().getProgramName();
     ProgramId programId = applicationId.program(programType, programName);
 
@@ -838,8 +839,12 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
     // TODO: CDAP-8907 Make the scheduler update and store update transactional
     // TODO: CDAP-8908 reduce redundant parameters in the scheduler call
-    scheduler.schedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
-                       scheduleSpec.getProperties());
+    try {
+      scheduler.schedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
+                         scheduleSpec.getProperties());
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e);
+    }
     store.addSchedule(programId, scheduleSpec, false);
   }
 
@@ -876,8 +881,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
     ProgramType existingProgramType =
       ProgramType.valueOfSchedulableType(existingScheduleSpec.getProgram().getProgramType());
-
-    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpecUpdate.getProgram().getProgramType());
+    ProgramType programType = getSchedulableProgramType(scheduleSpecUpdate);
     String programName = scheduleSpecUpdate.getProgram().getProgramName();
     ProgramId programId = applicationId.program(programType, programName);
 
@@ -890,8 +894,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
     // TODO: CDAP-8907 Make the scheduler update and store update transactional
     // TODO: CDAP-8908 reduce redundant parameters in the scheduler call
-    scheduler.updateSchedule(programId, scheduleSpecUpdate.getProgram().getProgramType(),
-                             scheduleSpecUpdate.getSchedule(), scheduleSpecUpdate.getProperties());
+    try {
+      scheduler.updateSchedule(programId, scheduleSpecUpdate.getProgram().getProgramType(),
+                               scheduleSpecUpdate.getSchedule(), scheduleSpecUpdate.getProperties());
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e);
+    }
+
     store.addSchedule(programId, scheduleSpecUpdate, true);
   }
 
@@ -924,6 +933,45 @@ public class ProgramLifecycleService extends AbstractIdleService {
     // TODO: CDAP-8908 reduce redundant parameters in the scheduler call
     scheduler.deleteSchedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleName);
     store.deleteSchedule(programId, scheduleName);
+  }
+
+  /**
+   * Gets a given schedule in an application.
+   *
+   * @param applicationId the application containing the schedule
+   * @param scheduleName the name of the schedule
+   * @return {@link ScheduleSpecification} of the given schedule
+   * @throws NotFoundException when application is not found, or when the schedule is not found
+   */
+  public ScheduleSpecification getSchedule(ApplicationId applicationId, String scheduleName)
+    throws NotFoundException {
+    ApplicationSpecification appSpec = store.getApplication(applicationId);
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(applicationId);
+    }
+
+    ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
+    if (scheduleSpec == null) {
+      throw new NotFoundException(new ScheduleId(applicationId.getNamespace(), applicationId.getApplication(),
+                                                 scheduleName));
+    }
+    return scheduleSpec;
+  }
+
+  /**
+   * Gets all of the schedules in a application.
+   *
+   * @param applicationId the application id
+   * @return list of {@link ScheduleSpecification} of all the schedules in the application
+   * @throws NotFoundException when application if is not found
+   */
+  public List<ScheduleSpecification> getAllSchedules(ApplicationId applicationId)
+    throws NotFoundException {
+    ApplicationSpecification appSpec = store.getApplication(applicationId);
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(applicationId);
+    }
+    return ImmutableList.copyOf(appSpec.getSchedules().values());
   }
 
   /**
@@ -961,6 +1009,17 @@ public class ProgramLifecycleService extends AbstractIdleService {
       }
     }
     return programRecords;
+  }
+
+  private ProgramType getSchedulableProgramType(ScheduleSpecification scheduleSpec) throws BadRequestException {
+    try {
+      return ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+    } catch (IllegalArgumentException e) {
+      // the ProgramType.valueOfSchedulableType throws IllegalArgumentException if the given program type is not in
+      // SchedulableProgramType just wrap it in BadRequest to send proper error code to user if this call is made from
+      // user request
+      throw new BadRequestException(e);
+    }
   }
 
   private void createProgramRecords(NamespaceId namespaceId, String appId, ProgramType type,
