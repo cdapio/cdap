@@ -19,6 +19,7 @@ package co.cask.cdap.logging;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.logging.appender.LogMessage;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -115,5 +116,37 @@ public final class LoggingUtil {
                     value == null ? null : value.toString());
     }
     return stringMap;
+  }
+
+  /**
+   * Adds extra system tags to the given {@link LogMessage} to record the origin of the log message
+   */
+  public static void addOriginTag(LogMessage logMessage) {
+    StackTraceElement[] callerData = logMessage.getCallerData();
+    if (callerData == null || callerData.length == 0 || callerData[0].isNativeMethod()) {
+      return;
+    }
+
+    ClassLoader classLoader = logMessage.getContextClassLoader();
+    if (classLoader == null) {
+      return;
+    }
+
+    try {
+      String classLoaderName = classLoader.loadClass(callerData[0].getClassName())
+        .getClassLoader().getClass().getName();
+      switch (classLoaderName) {
+        case "co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader":
+          logMessage.putSystemTag(".origin", "plugin");
+          break;
+        case "co.cask.cdap.internal.app.runtime.ProgramClassLoader":
+          logMessage.putSystemTag(".origin", "program");
+          break;
+        default:
+          logMessage.putSystemTag(".origin", "system");
+      }
+    } catch (Throwable t) {
+      // If not able to load the caller class, just don't add any tag
+    }
   }
 }

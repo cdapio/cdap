@@ -94,10 +94,7 @@ public final class FilterParser {
     } else if (key.equals("loglevel")) {
       // Log level
       return new LogLevelExpression(value);
-    } else if (key.equals("condensed")) {
-      return new CondensedExpression(key, value);
-    }
-    else {
+    } else {
       throw new IllegalArgumentException(String.format("Unknown expression of type %s", key));
     }
   }

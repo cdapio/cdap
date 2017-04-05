@@ -24,6 +24,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
+import co.cask.cdap.logging.LoggingUtil;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
@@ -236,7 +237,7 @@ public final class KafkaLogAppender extends LogAppender {
      * Creates a {@link KeyedMessage} for the given {@link LogMessage}.
      */
     private KeyedMessage<String, byte[]> createKeyedMessage(LogMessage logMessage) {
-      addOriginTag(logMessage);
+      LoggingUtil.addOriginTag(logMessage);
 
       String partitionKey = getPartitionKey(logMessage.getLoggingContext());
       return new KeyedMessage<>(topic, partitionKey, loggingEventSerializer.toBytes(logMessage));
@@ -263,29 +264,6 @@ public final class KafkaLogAppender extends LogAppender {
           throw new IllegalArgumentException(
             String.format("Invalid log partition type %s. Allowed partition types are program/application",
                           cConf.get(Constants.Logging.LOG_PUBLISH_PARTITION_KEY)));
-      }
-    }
-
-    /**
-     * Adds extra system tags to the given {@link LogMessage} to record the origin of the log message
-     */
-    private void addOriginTag(LogMessage logMessage) {
-      StackTraceElement[] callerData = logMessage.getCallerData();
-      if (callerData == null || callerData.length == 0 || callerData[0].isNativeMethod()) {
-        return;
-      }
-
-      ClassLoader classLoader = logMessage.getContextClassLoader();
-      if (classLoader == null) {
-        return;
-      }
-
-      try {
-        String classLoaderName = classLoader.loadClass(callerData[0].getClassName())
-          .getClassLoader().getClass().getName();
-        logMessage.putSystemTag(".origin", classLoaderName);
-      } catch (Throwable t) {
-        // If not able to load the caller class, just don't add any tag
       }
     }
   }

@@ -24,6 +24,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.logging.LoggingUtil;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.framework.LocalAppenderContext;
@@ -222,7 +223,7 @@ public class LocalLogAppender extends LogAppender {
         return;
       }
 
-      addOriginTag(event);
+      LoggingUtil.addOriginTag(event);
 
       Logger logger = context.getEffectiveLogger(event.getLoggerName());
       if (event.getLevel().isGreaterOrEqual(logger.getEffectiveLevel())) {
@@ -233,29 +234,6 @@ public class LocalLogAppender extends LogAppender {
           // Should never happen. Just ignore the exception and reset the flag
           Thread.currentThread().interrupt();
         }
-      }
-    }
-
-    /**
-     * Adds extra system tags to the given {@link LogMessage} to record the origin of the log message
-     */
-    private void addOriginTag(LogMessage logMessage) {
-      StackTraceElement[] callerData = logMessage.getCallerData();
-      if (callerData == null || callerData.length == 0 || callerData[0].isNativeMethod()) {
-        return;
-      }
-
-      ClassLoader classLoader = logMessage.getContextClassLoader();
-      if (classLoader == null) {
-        return;
-      }
-
-      try {
-        String classLoaderName = classLoader.loadClass(callerData[0].getClassName())
-          .getClassLoader().getClass().getName();
-        logMessage.putSystemTag(".origin", classLoaderName);
-      } catch (Throwable t) {
-        // If not able to load the caller class, just don't add any tag
       }
     }
 
