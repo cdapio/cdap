@@ -416,36 +416,33 @@ public class DefaultMetadataStore implements MetadataStore {
       throw new IllegalArgumentException("limit must not be negative");
     }
 
-    List<MetadataEntry> resultsFromOffset = new LinkedList<>();
+    List<MetadataEntry> results = new LinkedList<>();
     List<String> cursors = new LinkedList<>();
-    List<MetadataEntry> resultsFromBeginning = new LinkedList<>();
     for (MetadataScope scope : scopes) {
       SearchResults searchResults =
         getSearchResults(scope, namespaceId, searchQuery, types, sortInfo, offset, limit, numCursors, cursor,
                          showHidden, entityScope);
-      resultsFromOffset.addAll(searchResults.getResultsFromOffset());
+      results.addAll(searchResults.getResults());
       cursors.addAll(searchResults.getCursors());
-      resultsFromBeginning.addAll(searchResults.getResultsFromBeginning());
     }
 
     // sort if required
-    Set<NamespacedEntityId> sortedEntities = getSortedEntities(resultsFromOffset, sortInfo);
-    int total = getSortedEntities(resultsFromBeginning, sortInfo).size();
+    Set<NamespacedEntityId> sortedEntities = getSortedEntities(results, sortInfo);
+    int total = sortedEntities.size();
 
     // pagination is not performed at the dataset level, because:
     // 1. scoring is needed for DEFAULT sort info. So perform it here for now.
-    // 2. Even when using custom sorting, we still fetch extra results if numCursors > 1
+    // 2. Even when using custom sorting, we need to remove elements from the beginning to the offset and the cursors
+    //    at the end
     // TODO: Figure out how all of this can be done server (HBase) side
-    if (SortInfo.DEFAULT.equals(sortInfo)) {
-      int startIndex = Math.min(offset, sortedEntities.size());
-      int endIndex = (int) Math.min(Integer.MAX_VALUE, (long) offset + limit); // Account for overflow
-      endIndex = Math.min(endIndex, sortedEntities.size());
+    int startIndex = Math.min(offset, sortedEntities.size());
+    int endIndex = (int) Math.min(Integer.MAX_VALUE, (long) offset + limit); // Account for overflow
+    endIndex = Math.min(endIndex, sortedEntities.size());
 
-      // add 1 to maxIndex because end index is exclusive
-      sortedEntities = new LinkedHashSet<>(
-        ImmutableList.copyOf(sortedEntities).subList(startIndex, endIndex)
-      );
-    }
+    // add 1 to maxIndex because end index is exclusive
+    sortedEntities = new LinkedHashSet<>(
+      ImmutableList.copyOf(sortedEntities).subList(startIndex, endIndex)
+    );
 
     // Fetch metadata for entities in the result list
     // Note: since the fetch is happening in a different transaction, the metadata for entities may have been
