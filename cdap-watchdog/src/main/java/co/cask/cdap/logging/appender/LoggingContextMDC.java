@@ -67,6 +67,7 @@ class LoggingContextMDC extends AbstractMap<String, String> {
 
   @Override
   public String get(Object key) {
+    Map<String, String> systemTags = this.systemTags;
     if (systemTags.containsKey(key)) {
       return systemTags.get(key);
     }
@@ -86,14 +87,16 @@ class LoggingContextMDC extends AbstractMap<String, String> {
     return new AbstractSet<Entry<String, String>>() {
       @Override
       public Iterator<Entry<String, String>> iterator() {
-        return Iterators.concat(systemTags.entrySet().iterator(),
-                                Iterators.filter(eventMDC.entrySet().iterator(),
-                                                 new Predicate<Entry<String, String>>() {
-                                                   @Override
-                                                   public boolean apply(Entry<String, String> entry) {
-                                                     return !systemTags.containsKey(entry.getKey());
-                                                   }
-                                                 }));
+        // Take a snapshot of the systemTags before iterator to provide a consistent view
+        final Map<String, String> systemTags = LoggingContextMDC.this.systemTags;
+        return Iterators.concat(
+          systemTags.entrySet().iterator(),
+          Iterators.filter(eventMDC.entrySet().iterator(), new Predicate<Entry<String, String>>() {
+            @Override
+            public boolean apply(Entry<String, String> entry) {
+              return !systemTags.containsKey(entry.getKey());
+            }
+          }));
       }
 
       @Override

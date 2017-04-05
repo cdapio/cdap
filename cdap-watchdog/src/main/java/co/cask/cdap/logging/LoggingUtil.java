@@ -38,6 +38,7 @@ import javax.annotation.Nullable;
 public final class LoggingUtil {
 
   private static final String MDC_NULL_KEY = ".null";
+  private static final String ORIGIN_KEY = ".origin";
   private static final Comparator<File> FILE_NAME_COMPARATOR = new Comparator<File>() {
     @Override
     public int compare(File o1, File o2) {
@@ -137,13 +138,13 @@ public final class LoggingUtil {
         .getClassLoader().getClass().getName();
       switch (classLoaderName) {
         case "co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader":
-          logMessage.putSystemTag(".origin", "plugin");
+          logMessage.putSystemTag(ORIGIN_KEY, "plugin");
           break;
         case "co.cask.cdap.internal.app.runtime.ProgramClassLoader":
-          logMessage.putSystemTag(".origin", "program");
+          logMessage.putSystemTag(ORIGIN_KEY, "program");
           break;
         default:
-          logMessage.putSystemTag(".origin", "system");
+          logMessage.putSystemTag(ORIGIN_KEY, "system");
       }
     } catch (Throwable t) {
       // If not able to load the caller class, just don't add any tag
