@@ -16,6 +16,7 @@
 
 package co.cask.cdap.datapipeline;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
@@ -41,6 +42,7 @@ import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.planner.ControlDag;
 import co.cask.cdap.etl.planner.PipelinePlan;
@@ -50,9 +52,11 @@ import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.spark.batch.ETLSpark;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +72,8 @@ public class SmartWorkflow extends AbstractWorkflow {
   public static final String NAME = "DataPipelineWorkflow";
   public static final String DESCRIPTION = "Data Pipeline Workflow";
   private static final Logger LOG = LoggerFactory.getLogger(SmartWorkflow.class);
+  private static final Logger WRAPPERLOGGER = new LocationAwareMDCWrapperLogger(LOG, Constants.EVENT_TYPE_TAG,
+                                                                                Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
 
@@ -166,6 +172,13 @@ public class SmartWorkflow extends AbstractWorkflow {
   @Override
   public void initialize(WorkflowContext context) throws Exception {
     super.initialize(context);
+
+    String arguments = Joiner.on(", ").withKeyValueSeparator("=").join(context.getRuntimeArguments());
+    WRAPPERLOGGER.info("Pipeline '{}' is started by user '{}' with arguments {}",
+                       context.getApplicationSpecification().getName(),
+                       UserGroupInformation.getCurrentUser().getShortUserName(),
+                       arguments);
+
     postActions = new LinkedHashMap<>();
     BatchPipelineSpec batchPipelineSpec =
       GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
@@ -177,6 +190,8 @@ public class SmartWorkflow extends AbstractWorkflow {
       postActions.put(actionSpec.getName(), (PostAction) context.newPluginInstance(actionSpec.getName(),
                                                                                    macroEvaluator));
     }
+
+    WRAPPERLOGGER.info("Pipeline '{}' running", context.getApplicationSpecification().getName());
   }
 
   @Override
@@ -200,6 +215,10 @@ public class SmartWorkflow extends AbstractWorkflow {
         LOG.error("Error while running ending action {}.", name, t);
       }
     }
+
+    ProgramStatus status = getContext().getState().getStatus();
+    WRAPPERLOGGER.info("Pipeline '{}' {}", getContext().getApplicationSpecification().getName(),
+                       status == ProgramStatus.COMPLETED ? "succeeded" : status.name().toLowerCase());
   }
 
   private void addPrograms(String node, WorkflowConfigurer configurer) {

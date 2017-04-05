@@ -353,6 +353,7 @@ public class MockLogReader implements LogReader {
    * Last 20 events are not tagged with {@code ApplicationLoggingContext#TAG_RUN_ID}.
    * All events are alternately marked as {@link Level#ERROR} and {@link Level#WARN}.
    * All events are alternately tagged with "plugin", "program" and "system" as value of MDC property ".origin"
+   * All events are alternately tagged with "lifecycle" as value of MDC property "MDC:eventType
    */
   private void generateLogs(LoggingContext loggingContext, ProgramId programId, ProgramRunStatus runStatus)
     throws InterruptedException {
@@ -385,6 +386,9 @@ public class MockLogReader implements LogReader {
       // Determine the value of ".origin" property by (i % 3)
       tagMap.put(".origin", origins[i % 3]);
 
+      if (i % 2 == 0) {
+        tagMap.put("MDC:eventType", "lifecycle");
+      }
       event.setMDCPropertyMap(tagMap);
       logEvents.add(new LogEvent(event, new LogOffset(i, i)));
     }
