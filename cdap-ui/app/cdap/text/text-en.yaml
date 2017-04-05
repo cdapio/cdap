@@ -451,6 +451,7 @@ features:
         Masters: Masters
         MissingBlocks: Missing Blocks
         Namenodes: Namenodes
+        Datanodes: Datanodes
         Namespaces: Namespaces
         NumCommittingChangeSets: Committing Changes
         NumCommittedChangeSets: Committed Changes
