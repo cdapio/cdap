@@ -14,7 +14,7 @@
  * the License.
  */
 
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import enableDataPreparationService from 'components/DataPrep/DataPrepServiceControl/ServiceEnablerUtilities';
 
 export default class DataPrepServiceControl extends Component {
@@ -41,7 +41,7 @@ export default class DataPrepServiceControl extends Component {
 
     enableDataPreparationService(false)
       .subscribe(() => {
-        console.log('success');
+        this.props.onServiceStart();
       }, (err) => {
         this.setState({
           error: err.error,
@@ -96,3 +96,6 @@ export default class DataPrepServiceControl extends Component {
     );
   }
 }
+DataPrepServiceControl.propTypes = {
+  onServiceStart: PropTypes.func
+};

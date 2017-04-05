@@ -14,12 +14,18 @@
  * the License.
  */
 
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
 import SchemaModal from 'components/DataPrep/TopPanel/SchemaModal';
 import AddToPipelineModal from 'components/DataPrep/TopPanel/AddToPipelineModal';
 import UpgradeModal from 'components/DataPrep/TopPanel/UpgradeModal';
 import WorkspaceTabs from 'components/DataPrep/TopPanel/WorkspaceTabs';
+import {objectQuery} from 'services/helpers';
+import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers';
+import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
+import NamespaceStore from 'services/NamespaceStore';
+import MyDataPrepApi from 'api/dataprep';
+import T from 'i18n-react';
 
 require('./TopPanel.scss');
 
@@ -33,7 +39,9 @@ export default class DataPrepTopPanel extends Component {
       schemaModal: false,
       addToPipelineModal: false,
       upgradeModal: false,
-      higherVersion: initialState.higherVersion
+      higherVersion: initialState.higherVersion,
+      onSubmitError: null,
+      onSubmitLoading: false
     };
 
     this.toggleSchemaModal = this.toggleSchemaModal.bind(this);
@@ -88,6 +96,56 @@ export default class DataPrepTopPanel extends Component {
     );
   }
 
+  onSubmit() {
+    if (this.props.onSubmit) {
+      let directives = DataPrepStore.getState().dataprep.directives;
+      let workspaceId = DataPrepStore.getState().dataprep.workspaceId;
+      let namespace = NamespaceStore.getState().selectedNamespace;
+      let requestObj = {
+        namespace,
+        workspaceId
+      };
+      let requestBody = directiveRequestBodyCreator(directives);
+      this.setState({
+        onSubmitLoading: true,
+        onSubmitError: null
+      });
+      MyDataPrepApi
+        .getSchema(requestObj, requestBody)
+        .subscribe(
+          res => {
+            let schema = {
+              name: 'avroSchema',
+              type: 'record',
+              fields: res
+            };
+            try {
+              getParsedSchemaForDataPrep(schema);
+            } catch (e) {
+              this.setState({
+                onSubmitError: e.message,
+                onSubmitLoading: false
+              });
+              return;
+            }
+            if (this.props.onSubmit) {
+              this.props.onSubmit({
+                workspaceId,
+                directives,
+                schema: JSON.stringify(schema)
+              });
+            }
+          },
+          (err) => {
+            this.setState({
+              onSubmitError: objectQuery(err, 'response', 'message') || JSON.stringify(err),
+              onSubmitLoading: false
+            });
+          }
+        );
+    }
+  }
+
   render() {
     return (
       <div className="top-panel clearfix">
@@ -106,7 +164,7 @@ export default class DataPrepTopPanel extends Component {
                     onClick={this.toggleUpgradeModal}
                   >
                     <span className="fa fa-wrench fa-fw" />
-                    Upgrade
+                    {T.translate('features.DataPrep.TopPanel.upgradeBtnLabel')}
                   </button>
                 ) : null
               }
@@ -114,23 +172,49 @@ export default class DataPrepTopPanel extends Component {
             </div>
           </div>
 
-          <WorkspaceTabs />
+          <WorkspaceTabs
+            singleWorkspaceMode={this.props.singleWorkspaceMode}
+            workspaceId={this.props.workspaceId}
+          />
         </div>
 
         <div className="action-buttons float-xs-right">
-          <button
-            className="btn btn-primary"
-            onClick={this.toggleAddToPipelineModal}
-          >
-            Add to Pipeline
-          </button>
+          {
+            this.state.onSubmitError ?
+              <span className="text-danger">{this.state.onSubmitError}</span>
+            :
+              null
+          }
+          {
+            !this.props.singleWorkspaceMode ?
+              <button
+                className="btn btn-primary"
+                onClick={this.toggleAddToPipelineModal}
+              >
+                {T.translate('features.DataPrep.TopPanel.addToPipelineBtnLabel')}
+              </button>
+            :
+            <button
+              className="btn btn-primary"
+              onClick={this.onSubmit.bind(this)}
+              disabled={this.state.onSubmitLoading ? 'disabled' : null}
+            >
+              {
+                this.state.onSubmitLoading ?
+                  <span className="fa fa-spinner fa-spin"></span>
+                :
+                  null
+              }
+              <span>{T.translate('features.DataPrep.TopPanel.applyBtnLabel')}</span>
+            </button>
+          }
           {this.renderAddToPipelineModal()}
 
           <button
             className="btn btn-secondary"
             onClick={this.toggleSchemaModal}
           >
-            View Schema
+            {T.translate('features.DataPrep.TopPanel.viewSchemaBtnLabel')}
           </button>
           {this.renderSchemaModal()}
         </div>
@@ -138,3 +222,9 @@ export default class DataPrepTopPanel extends Component {
     );
   }
 }
+
+DataPrepTopPanel.propTypes = {
+  singleWorkspaceMode: PropTypes.bool,
+  workspaceId: PropTypes.string,
+  onSubmit: PropTypes.func
+};

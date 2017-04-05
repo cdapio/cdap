@@ -160,6 +160,7 @@ export default class SchemaModal extends Component {
         isOpen={true}
         toggle={this.props.toggle}
         size="lg"
+        zIndex="1061"
         className="dataprep-schema-modal"
       >
         <ModalHeader>
