@@ -275,7 +275,6 @@ public final class KafkaLogAppender extends LogAppender {
         return;
       }
 
-      // TODO: Optimize with a size limited cache to avoid searching classloader
       ClassLoader classLoader = logMessage.getContextClassLoader();
       if (classLoader == null) {
         return;
@@ -283,14 +282,8 @@ public final class KafkaLogAppender extends LogAppender {
 
       try {
         String classLoaderName = classLoader.loadClass(callerData[0].getClassName())
-                                            .getClassLoader().getClass().getName();
-        switch (classLoaderName) {
-          case "co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader":
-            logMessage.putSystemTag(".origin", "plugin");
-            break;
-          case "co.cask.cdap.internal.app.runtime.ProgramClassLoader":
-            logMessage.putSystemTag(".origin", "program");
-        }
+          .getClassLoader().getClass().getName();
+        logMessage.putSystemTag(".origin", classLoaderName);
       } catch (Throwable t) {
         // If not able to load the caller class, just don't add any tag
       }

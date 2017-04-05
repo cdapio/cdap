@@ -211,9 +211,9 @@ public class LocalLogAppender extends LogAppender {
     }
 
     /**
-     * Appends the given {@link ILoggingEvent} to the pipeline.
+     * Appends the given {@link LogMessage} to the pipeline.
      */
-    void append(ILoggingEvent event) {
+    void append(LogMessage event) {
       // Don't append if the pipeline is already stopped or the log is coming from the same thread that do the actual
       // call to appenders. This won't guard against the case that an appender starts a new thread and emit log per
       // event (something like what this class does). If that's the case, the appender itself need to guard against
@@ -221,6 +221,8 @@ public class LocalLogAppender extends LogAppender {
       if (!isRunning() || Thread.currentThread() == appenderThread) {
         return;
       }
+
+      addOriginTag(event);
 
       Logger logger = context.getEffectiveLogger(event.getLoggerName());
       if (event.getLevel().isGreaterOrEqual(logger.getEffectiveLevel())) {
@@ -231,6 +233,29 @@ public class LocalLogAppender extends LogAppender {
           // Should never happen. Just ignore the exception and reset the flag
           Thread.currentThread().interrupt();
         }
+      }
+    }
+
+    /**
+     * Adds extra system tags to the given {@link LogMessage} to record the origin of the log message
+     */
+    private void addOriginTag(LogMessage logMessage) {
+      StackTraceElement[] callerData = logMessage.getCallerData();
+      if (callerData == null || callerData.length == 0 || callerData[0].isNativeMethod()) {
+        return;
+      }
+
+      ClassLoader classLoader = logMessage.getContextClassLoader();
+      if (classLoader == null) {
+        return;
+      }
+
+      try {
+        String classLoaderName = classLoader.loadClass(callerData[0].getClassName())
+          .getClassLoader().getClass().getName();
+        logMessage.putSystemTag(".origin", classLoaderName);
+      } catch (Throwable t) {
+        // If not able to load the caller class, just don't add any tag
       }
     }
 

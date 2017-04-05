@@ -18,7 +18,7 @@ package co.cask.cdap.logging.appender;
 
 import co.cask.cdap.common.logging.LoggingContext;
 import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
 
 import java.util.AbstractMap;
@@ -35,19 +35,11 @@ import java.util.Set;
 class LoggingContextMDC extends AbstractMap<String, String> {
 
   private final Map<String, String> eventMDC;
-  private final Iterable<Entry<String, String>> entryIterable;
   private volatile Map<String, String> systemTags;
 
   LoggingContextMDC(LoggingContext loggingContext, Map<String, String> eventMDC) {
     this.systemTags = loggingContext.getSystemTagsAsString();
     this.eventMDC = eventMDC;
-    this.entryIterable = Iterables.concat(systemTags.entrySet(),
-                                          Iterables.filter(eventMDC.entrySet(), new Predicate<Entry<String, String>>() {
-      @Override
-      public boolean apply(Entry<String, String> entry) {
-        return !systemTags.containsKey(entry.getKey());
-      }
-    }));
   }
 
   /**
@@ -94,7 +86,14 @@ class LoggingContextMDC extends AbstractMap<String, String> {
     return new AbstractSet<Entry<String, String>>() {
       @Override
       public Iterator<Entry<String, String>> iterator() {
-        return entryIterable.iterator();
+        return Iterators.concat(systemTags.entrySet().iterator(),
+                                Iterators.filter(eventMDC.entrySet().iterator(),
+                                                 new Predicate<Entry<String, String>>() {
+                                                   @Override
+                                                   public boolean apply(Entry<String, String> entry) {
+                                                     return !systemTags.containsKey(entry.getKey());
+                                                   }
+                                                 }));
       }
 
       @Override
