@@ -48,13 +48,45 @@
       display: flex;
       align-items: center;
       justify-content: center;
-
-      > div:not(.fa) {
+      > div {
         height: 100%;
         width: 100%;
       }
+
+      > div.overview-error-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 50vw;
+        width: auto;
+        padding: 0 20px;
+        .btn-link {
+          color: $cdap-orange;
+          cursor: pointer;
+        }
+        hr {
+          width: 100%;
+          color: #999999;
+          background-color: #999999;
+        }
+        .message-container {
+          font-weight: 500;
+          ul,
+          li {
+            list-style: none;
+            padding: 0;
+          }
+          .btn-link {
+            color: $cdap-orange;
+          }
+        }
+      }
       > .fa.fa-spinner.fa-spin {
         color: gray;
+        height: auto;
+        width: auto;
       }
     }
   }
