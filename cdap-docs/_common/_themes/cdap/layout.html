@@ -29,6 +29,7 @@
 {%- macro relbar() %}
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>{{ _('Navigation') }}</h3>
+
       <ul>
         <li class="headerlogo"><a href="http://docs.cask.co/cdap"><img class="headerlogo" src="{{ pathto('_static/doc_logo.png', 1) }}" alt="Logo"/></a></li>
 
@@ -38,22 +39,22 @@
         <script>window.setVersion('{{ release }}');</script>
         <li><a href="{{ pathto(master_doc) }}">{{ shorttitle|e }}</a>{{ reldelim1 }}</li>
         {%- endblock %}
-        {%- for parent in parents %}
-          <li><a href="{{ parent.link|e }}" {% if loop.last %}{{ accesskey("U") }}{% endif %}>{{ parent.title }}</a>{{ reldelim1 }}</li>
-        {%- endfor %}
-
+        {%- if parents|count > 0 %}
+          <li>&hellip;{{ reldelim1 }}</li>
+        {%- endif %}
+          <li><a href="{{ self.link|e }}">{{ title }}</a></li>
         {%- if pagename != "search" and builder != "singlehtml" %}
           {# Force all pages to use top-level search index #}
           {%- if html_short_title_toc != 'CDAP Documentation' %}
           {%- set search_root = '../' %}
-        {%- endif %}       
+          {%- endif %}       
         <li class="right"><form class="search" action="{{ search_root }}{{ pathto('search') }}" method="get">
         <input type="text" name="q" />
         <input type="submit" value="{{ _('Search') }}" />
         </form>
         </li>
         <script type="text/javascript">$('#searchbox').show(0);</script>
-    {%- endif %}
+        {%- endif %}
       </ul>
     </div>
 {%- endmacro %}

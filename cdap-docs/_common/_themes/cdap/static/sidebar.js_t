@@ -69,7 +69,7 @@ $(function() {
   // colors used by the current theme
   //   var dark_color = $('.related').css('background-color');
   //   var light_color = $('.document').css('background-color');
-  var dark_color = '#CCCCCC';
+  var dark_color = '#EEEEEE'; // used for showing sidebar button when on-mouse-over
   var light_color = '#FFFFFF';
   var type_color = '#444444';
   
@@ -155,8 +155,10 @@ $(function() {
 	  viewport_height = $(window).height();
     sidebarbutton.find('span').css({
         'display': 'block',
+        'position': 'fixed',
 //         'margin-top': (viewport_height - sidebar.position().top - 20) / 2,
-        'margin-top': 20,
+        'margin-top': '20px',
+        'margin-left': '10px',
         'text-align': 'center'
     });
 
