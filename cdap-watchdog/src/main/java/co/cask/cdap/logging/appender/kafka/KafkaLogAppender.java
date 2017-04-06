@@ -164,7 +164,6 @@ public final class KafkaLogAppender extends LogAppender {
         try {
           publishMessages(buffer, false);
         } catch (Exception e) {
-          e.printStackTrace();
           contextAware.addError("Failed to publish log message to Kafka on topic " + topic, e);
         }
         // Ignore those that cannot be publish since we are already in shutdown sequence
