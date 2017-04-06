@@ -60,7 +60,8 @@ public class RouterAuditLookUpTest {
                   new AuditLogContent(HttpMethod.POST, false, true,
                                       ImmutableList.of(AbstractAppFabricHttpHandler.ARCHIVE_NAME_HEADER,
                                                        AbstractAppFabricHttpHandler.APP_CONFIG_HEADER,
-                                                       AbstractAppFabricHttpHandler.PRINCIPAL_HEADER)));
+                                                       AbstractAppFabricHttpHandler.PRINCIPAL_HEADER,
+                                                       AbstractAppFabricHttpHandler.SCHEDULES_HEADER)));
     // endpoints from ArtifactHttpHandler
     assertContent("/v3/namespaces/default/artifacts/myArtifact/versions/1.0/properties", DEFAULT_AUDIT);
     assertContent("/v3/namespaces/default/artifacts/myArtifact",
