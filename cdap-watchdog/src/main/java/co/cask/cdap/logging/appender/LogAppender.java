@@ -20,11 +20,37 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * CDAP log appender interface.
  */
 public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
+  private static final Logger LOG = LoggerFactory.getLogger(LogAppender.class);
+  private static final String USER_LOG_TAG = ".userLog";
+  private static final String USER_LOG_TRUE_VALUE = "true";
+  /**
+   * Check classLoader of the log to add userTag
+   */
+  private static void addUserLogTag(ILoggingEvent eventObject) {
+    String className = eventObject.getCallerData()[0].getClassName();
+    try {
+      ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+      if (contextClassLoader != null) {
+        ClassLoader classLoader = contextClassLoader.loadClass(className).getClassLoader();
+        if (classLoader != null
+          && ("co.cask.cdap.internal.app.runtime.plugin.ProgramClassLoader".equals(classLoader.getClass().getName())
+          || "co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader".equals(classLoader.getClass().getName()))) {
+          eventObject.getMDCPropertyMap().put(USER_LOG_TAG, USER_LOG_TRUE_VALUE);
+        }
+      }
+    } catch (ClassNotFoundException e) {
+      // should not happen
+      LOG.error("Failed to mark user log for class {}", className, e);
+    }
+  }
+
   public final void append(ILoggingEvent eventObject) {
     LoggingContext loggingContext;
     // If the context is not setup, pickup the context from thread-local.
@@ -37,6 +63,8 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
         return;
       }
     }
+    // Check if this is a User Log and add appropriate tag
+    addUserLogTag(eventObject);
 
     appendEvent(new LogMessage(eventObject, loggingContext));
   }
