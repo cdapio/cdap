@@ -101,10 +101,7 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
     }
 
     // Add the extra tag to the log event
-    Map<String, String> mdc = event.getMDCPropertyMap();
-    for (Map.Entry<String, String> entry : tags.entrySet()) {
-      mdc.put(entry.getKey(), entry.getValue());
-    }
+    event.getMDCPropertyMap().putAll(tags);
   }
 
   protected abstract void appendEvent(LogMessage logMessage);

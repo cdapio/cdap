@@ -165,7 +165,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testFlowLogs() throws Exception {
-//    testLogs("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
+    testLogs("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
     testLogsFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
     testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "text",
                   ImmutableList.<String>of());

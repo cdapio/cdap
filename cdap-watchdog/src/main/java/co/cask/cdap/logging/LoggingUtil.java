@@ -37,7 +37,6 @@ import javax.annotation.Nullable;
 public final class LoggingUtil {
 
   private static final String MDC_NULL_KEY = ".null";
-  private static final String ORIGIN_KEY = ".origin";
   private static final Comparator<File> FILE_NAME_COMPARATOR = new Comparator<File>() {
     @Override
     public int compare(File o1, File o2) {
