@@ -116,16 +116,16 @@ public class CLIMainTest extends CLITestBase {
   private static final String V1 = "1.0";
   private static final String V1_SNAPSHOT = "v1.0.0-SNAPSHOT";
 
-  private static final ArtifactId fakeArtifactId = NamespaceId.DEFAULT.artifact(FakeApp.NAME, V1);
-  private static final ApplicationId fakeAppId = NamespaceId.DEFAULT.app(FakeApp.NAME);
-  private static final ApplicationId fakeAppIdV1 = NamespaceId.DEFAULT.app(FakeApp.NAME, V1_SNAPSHOT);
-  private final ProgramId fakeWorkflowId = fakeAppId.workflow(FakeWorkflow.NAME);
-  private final ProgramId fakeFlowId = fakeAppId.flow(FakeFlow.NAME);
-  private final ProgramId fakeSparkId = fakeAppId.spark(FakeSpark.NAME);
-  private final ServiceId pingServiceId = fakeAppId.service(PingService.NAME);
-  private final ServiceId prefixedEchoHandlerId = fakeAppId.service(PrefixedEchoHandler.NAME);
-  private final DatasetId fakeDsId = NamespaceId.DEFAULT.dataset(FakeApp.DS_NAME);
-  private final StreamId fakeStreamId = NamespaceId.DEFAULT.stream(FakeApp.STREAM_NAME);
+  private static final ArtifactId FAKE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact(FakeApp.NAME, V1);
+  private static final ApplicationId FAKE_APP_ID = NamespaceId.DEFAULT.app(FakeApp.NAME);
+  private static final ApplicationId FAKE_APP_ID_V_1 = NamespaceId.DEFAULT.app(FakeApp.NAME, V1_SNAPSHOT);
+  private static final ProgramId FAKE_WORKFLOW_ID = FAKE_APP_ID.workflow(FakeWorkflow.NAME);
+  private static final ProgramId FAKE_FLOW_ID = FAKE_APP_ID.flow(FakeFlow.NAME);
+  private static final ProgramId FAKE_SPARK_ID = FAKE_APP_ID.spark(FakeSpark.NAME);
+  private static final ServiceId PING_SERVICE_ID = FAKE_APP_ID.service(PingService.NAME);
+  private static final ServiceId PREFIXED_ECHO_HANDLER_ID = FAKE_APP_ID.service(PrefixedEchoHandler.NAME);
+  private static final DatasetId FAKE_DS_ID = NamespaceId.DEFAULT.dataset(FakeApp.DS_NAME);
+  private static final StreamId FAKE_STREAM_ID = NamespaceId.DEFAULT.stream(FakeApp.STREAM_NAME);
 
   private static ProgramClient programClient;
   private static QueryClient queryClient;
@@ -203,7 +203,7 @@ public class CLIMainTest extends CLITestBase {
   @Test
   public void testProgram() throws Exception {
     String flowId = FakeApp.FLOWS.get(0);
-    final ProgramId flow = fakeAppId.flow(flowId);
+    final ProgramId flow = FAKE_APP_ID.flow(flowId);
 
     String qualifiedFlowId = FakeApp.NAME + "." + flowId;
     testCommandOutputContains(cli, "start flow " + qualifiedFlowId, "Successfully started flow");
@@ -373,14 +373,14 @@ public class CLIMainTest extends CLITestBase {
 
   @Test
   public void testSchedule() throws Exception {
-    String scheduleId = FakeApp.NAME + "." + FakeApp.SCHEDULE_NAME;
+    String scheduleId = FakeApp.NAME + "." + FakeApp.TIME_SCHEDULE_NAME;
     String workflowId = FakeApp.NAME + "." + FakeWorkflow.NAME;
     testCommandOutputContains(cli, "get schedule status " + scheduleId, "SUSPENDED");
     testCommandOutputContains(cli, "resume schedule " + scheduleId, "Successfully resumed");
     testCommandOutputContains(cli, "get schedule status " + scheduleId, "SCHEDULED");
     testCommandOutputContains(cli, "suspend schedule " + scheduleId, "Successfully suspended");
     testCommandOutputContains(cli, "get schedule status " + scheduleId, "SUSPENDED");
-    testCommandOutputContains(cli, "get workflow schedules " + workflowId, FakeApp.SCHEDULE_NAME);
+    testCommandOutputContains(cli, "get workflow schedules " + workflowId, FakeApp.TIME_SCHEDULE_NAME);
   }
 
   @Test
@@ -436,8 +436,8 @@ public class CLIMainTest extends CLITestBase {
 
   @Test
   public void testService() throws Exception {
-    ServiceId service = fakeAppId.service(PrefixedEchoHandler.NAME);
-    ServiceId serviceV1 = fakeAppIdV1.service(PrefixedEchoHandler.NAME);
+    ServiceId service = FAKE_APP_ID.service(PrefixedEchoHandler.NAME);
+    ServiceId serviceV1 = FAKE_APP_ID_V_1.service(PrefixedEchoHandler.NAME);
     String serviceName = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
     String serviceArgument = String.format("%s version %s", serviceName, ApplicationId.DEFAULT_VERSION);
     String serviceV1Argument = String.format("%s version %s", serviceName, V1_SNAPSHOT);
@@ -505,8 +505,8 @@ public class CLIMainTest extends CLITestBase {
 
   @Test
   public void testRouteConfig() throws Exception {
-    ServiceId service = fakeAppId.service(PrefixedEchoHandler.NAME);
-    ServiceId serviceV1 = fakeAppIdV1.service(PrefixedEchoHandler.NAME);
+    ServiceId service = FAKE_APP_ID.service(PrefixedEchoHandler.NAME);
+    ServiceId serviceV1 = FAKE_APP_ID_V_1.service(PrefixedEchoHandler.NAME);
     String serviceName = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
     String serviceArgument = String.format("%s version %s", serviceName, ApplicationId.DEFAULT_VERSION);
     String serviceV1Argument = String.format("%s version %s", serviceName, V1_SNAPSHOT);
@@ -793,7 +793,7 @@ public class CLIMainTest extends CLITestBase {
     Tasks.waitFor(1, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return programClient.getProgramRuns(fakeWorkflowId, ProgramRunStatus.COMPLETED.name(), 0, Long.MAX_VALUE,
+        return programClient.getProgramRuns(FAKE_WORKFLOW_ID, ProgramRunStatus.COMPLETED.name(), 0, Long.MAX_VALUE,
                                             Integer.MAX_VALUE).size();
       }
     }, 180, TimeUnit.SECONDS);
@@ -835,80 +835,81 @@ public class CLIMainTest extends CLITestBase {
 
     // stop workflow
     testCommandOutputContains(cli, "stop workflow " + workflow,
-                              String.format("400: Program '%s' is not running", fakeWorkflowId));
+                              String.format("400: Program '%s' is not running", FAKE_WORKFLOW_ID));
   }
 
   @Test
   public void testMetadata() throws Exception {
     testCommandOutputContains(cli, "cli render as csv", "Now rendering as CSV");
     // verify system metadata
-    testCommandOutputContains(cli, String.format("get metadata %s scope system", fakeAppId),
+    testCommandOutputContains(cli, String.format("get metadata %s scope system", FAKE_APP_ID),
                               FakeApp.class.getSimpleName());
-    testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", fakeWorkflowId),
+    testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", FAKE_WORKFLOW_ID),
                               FakeWorkflow.FakeAction.class.getSimpleName());
-    testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", fakeWorkflowId),
+    testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", FAKE_WORKFLOW_ID),
                               FakeWorkflow.FakeAction.ANOTHER_FAKE_NAME);
-    testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", fakeDsId),
+    testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", FAKE_DS_ID),
                               "batch");
-    testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", fakeDsId),
+    testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", FAKE_DS_ID),
                               "explore");
-    testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", fakeStreamId),
+    testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", FAKE_STREAM_ID),
                               AbstractSystemMetadataWriter.EXPLORE_TAG);
-    testCommandOutputContains(cli, String.format("add metadata-properties %s appKey=appValue", fakeAppId),
+    testCommandOutputContains(cli, String.format("add metadata-properties %s appKey=appValue", FAKE_APP_ID),
                               "Successfully added metadata properties");
-    testCommandOutputContains(cli, String.format("get metadata-properties %s", fakeAppId), "appKey,appValue");
-    testCommandOutputContains(cli, String.format("add metadata-tags %s 'wfTag1 wfTag2'", fakeWorkflowId),
+    testCommandOutputContains(cli, String.format("get metadata-properties %s", FAKE_APP_ID), "appKey,appValue");
+    testCommandOutputContains(cli, String.format("add metadata-tags %s 'wfTag1 wfTag2'", FAKE_WORKFLOW_ID),
                               "Successfully added metadata tags");
-    String output = getCommandOutput(cli, String.format("get metadata-tags %s", fakeWorkflowId));
+    String output = getCommandOutput(cli, String.format("get metadata-tags %s", FAKE_WORKFLOW_ID));
     List<String> lines = Arrays.asList(output.split("\\r?\\n"));
     Assert.assertTrue(lines.contains("wfTag1") && lines.contains("wfTag2"));
-    testCommandOutputContains(cli, String.format("add metadata-properties %s dsKey=dsValue", fakeDsId),
+    testCommandOutputContains(cli, String.format("add metadata-properties %s dsKey=dsValue", FAKE_DS_ID),
                               "Successfully added metadata properties");
-    testCommandOutputContains(cli, String.format("get metadata-properties %s", fakeDsId), "dsKey,dsValue");
-    testCommandOutputContains(cli, String.format("add metadata-tags %s 'streamTag1 streamTag2'", fakeStreamId),
+    testCommandOutputContains(cli, String.format("get metadata-properties %s", FAKE_DS_ID), "dsKey,dsValue");
+    testCommandOutputContains(cli, String.format("add metadata-tags %s 'streamTag1 streamTag2'", FAKE_STREAM_ID),
                               "Successfully added metadata tags");
-    output = getCommandOutput(cli, String.format("get metadata-tags %s", fakeStreamId));
+    output = getCommandOutput(cli, String.format("get metadata-tags %s", FAKE_STREAM_ID));
     lines = Arrays.asList(output.split("\\r?\\n"));
     Assert.assertTrue(lines.contains("streamTag1") && lines.contains("streamTag2"));
     // test search
     testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type artifact",
-                                                 FakeApp.class.getSimpleName()), fakeArtifactId.toString());
-    testCommandOutputContains(cli, "search metadata appKey:appValue", fakeAppId.toString());
-    testCommandOutputContains(cli, "search metadata fake* filtered by target-type app", fakeAppId.toString());
+                                                 FakeApp.class.getSimpleName()), FAKE_ARTIFACT_ID.toString());
+    testCommandOutputContains(cli, "search metadata appKey:appValue", FAKE_APP_ID.toString());
+    testCommandOutputContains(cli, "search metadata fake* filtered by target-type app", FAKE_APP_ID.toString());
     output = getCommandOutput(cli, "search metadata fake* filtered by target-type program");
     lines = Arrays.asList(output.split("\\r?\\n"));
-    List<String> expected = ImmutableList.of("Entity", fakeWorkflowId.toString(), fakeSparkId.toString(),
-                                             fakeFlowId.toString());
+    List<String> expected = ImmutableList.of("Entity", FAKE_WORKFLOW_ID.toString(), FAKE_SPARK_ID.toString(),
+                                             FAKE_FLOW_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
-    testCommandOutputContains(cli, "search metadata fake* filtered by target-type dataset", fakeDsId.toString());
-    testCommandOutputContains(cli, "search metadata fake* filtered by target-type stream", fakeStreamId.toString());
-    testCommandOutputContains(cli, String.format("search metadata %s", FakeApp.SCHEDULE_NAME), fakeAppId.toString());
+    testCommandOutputContains(cli, "search metadata fake* filtered by target-type dataset", FAKE_DS_ID.toString());
+    testCommandOutputContains(cli, "search metadata fake* filtered by target-type stream", FAKE_STREAM_ID.toString());
+    testCommandOutputContains(cli, String.format("search metadata %s", FakeApp.TIME_SCHEDULE_NAME),
+                              FAKE_APP_ID.toString());
     testCommandOutputContains(cli, String.format("search metadata %s", FakeApp.STREAM_SCHEDULE_NAME),
-                              fakeAppId.toString());
+                              FAKE_APP_ID.toString());
     testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type app", PingService.NAME),
-                              fakeAppId.toString());
+                              FAKE_APP_ID.toString());
     testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type program",
-                                                 PrefixedEchoHandler.NAME), prefixedEchoHandlerId.toString());
-    testCommandOutputContains(cli, "search metadata batch* filtered by target-type dataset", fakeDsId.toString());
+                                                 PrefixedEchoHandler.NAME), PREFIXED_ECHO_HANDLER_ID.toString());
+    testCommandOutputContains(cli, "search metadata batch* filtered by target-type dataset", FAKE_DS_ID.toString());
     testCommandOutputNotContains(cli, "search metadata batchwritable filtered by target-type dataset",
-                                 fakeDsId.toString());
-    testCommandOutputContains(cli, "search metadata bat* filtered by target-type dataset", fakeDsId.toString());
+                                 FAKE_DS_ID.toString());
+    testCommandOutputContains(cli, "search metadata bat* filtered by target-type dataset", FAKE_DS_ID.toString());
     output = getCommandOutput(cli, "search metadata batch filtered by target-type program");
     lines = Arrays.asList(output.split("\\r?\\n"));
-    expected = ImmutableList.of("Entity", fakeSparkId.toString(), fakeWorkflowId.toString());
+    expected = ImmutableList.of("Entity", FAKE_SPARK_ID.toString(), FAKE_WORKFLOW_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
     output = getCommandOutput(cli, "search metadata realtime filtered by target-type program");
     lines = Arrays.asList(output.split("\\r?\\n"));
-    expected = ImmutableList.of("Entity", fakeFlowId.toString(), pingServiceId.toString(),
-                                prefixedEchoHandlerId.toString());
+    expected = ImmutableList.of("Entity", FAKE_FLOW_ID.toString(), PING_SERVICE_ID.toString(),
+                                PREFIXED_ECHO_HANDLER_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
     output = getCommandOutput(cli, "search metadata fake* filtered by target-type dataset,stream");
     lines = Arrays.asList(output.split("\\r?\\n"));
-    expected = ImmutableList.of("Entity", fakeDsId.toString(), fakeStreamId.toString());
+    expected = ImmutableList.of("Entity", FAKE_DS_ID.toString(), FAKE_STREAM_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
     output = getCommandOutput(cli, "search metadata fake* filtered by target-type dataset,stream,app");
     lines = Arrays.asList(output.split("\\r?\\n"));
-    expected = ImmutableList.of("Entity", fakeDsId.toString(), fakeStreamId.toString(), fakeAppId.toString());
+    expected = ImmutableList.of("Entity", FAKE_DS_ID.toString(), FAKE_STREAM_ID.toString(), FAKE_APP_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
   }
 
