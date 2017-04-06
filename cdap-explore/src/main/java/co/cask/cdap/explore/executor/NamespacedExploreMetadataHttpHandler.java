@@ -82,10 +82,10 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
 
   @GET
   @Path("tables/{table}/info")
-  public void getTableSchema(HttpRequest request, final HttpResponder responder,
-                             @PathParam("namespace-id") final String namespaceId,
-                             @PathParam("table") final String table,
-                             @QueryParam("database") final String database) {
+  public void getTableInfo(HttpRequest request, final HttpResponder responder,
+                           @PathParam("namespace-id") final String namespaceId,
+                           @PathParam("table") final String table,
+                           @QueryParam("database") final String database) {
     LOG.trace("Received get table info for table {}", table);
     try {
       impersonator.doAs(new NamespaceId(namespaceId), new Callable<Void>() {
@@ -96,7 +96,7 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
         }
       });
     } catch (TableNotFoundException e) {
-      LOG.error("Could not find table {}", table, e);
+      LOG.trace("Could not find table {}", table, e);
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable t) {
       LOG.error("Got exception:", t);
