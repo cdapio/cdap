@@ -5,7 +5,7 @@
     Master layout template for Sphinx themes.
     Modified by Cask Data, Inc.
     Portions Copyright © 2014-2017 Cask Data, Inc.
-    
+
     :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 #}
@@ -29,25 +29,25 @@
 {%- macro relbar() %}
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>{{ _('Navigation') }}</h3>
-
       <ul>
         <li class="headerlogo"><a href="http://docs.cask.co/cdap"><img class="headerlogo" src="{{ pathto('_static/doc_logo.png', 1) }}" alt="Logo"/></a></li>
-
         {%- block rootrellink %}
         <script type="text/javascript" src="{{ pathto('_static/version-menu.js', 1) }}"></script>
         <script src="{{ theme_json_versions_js }}"/></script>
         <script>window.setVersion('{{ release }}');</script>
-        <li><a href="{{ pathto(master_doc) }}">{{ shorttitle|e }}</a>{{ reldelim1 }}</li>
+        {%- set index_path = url_root + "index.html" %}
+        <li><a href="{{ index_path }}">{{ shorttitle|e }}</a>{{ reldelim1 }}</li>
         {%- endblock %}
-        {%- if parents|count > 0 %}
-          <li>&hellip;{{ reldelim1 }}</li>
+        {%- if pagename != "index" or parents|count > 0 %}
+          {%- for item in toctree(titles_only=true)|walktoc %}
+          <li>{{ item|e }}{{ reldelim1 }}</li>
+          {%- endfor %}
         {%- endif %}
-          <li><a href="{{ self.link|e }}">{{ title }}</a></li>
         {%- if pagename != "search" and builder != "singlehtml" %}
           {# Force all pages to use top-level search index #}
           {%- if html_short_title_toc != 'CDAP Documentation' %}
           {%- set search_root = '../' %}
-          {%- endif %}       
+          {%- endif %}
         <li class="right"><form class="search" action="{{ search_root }}{{ pathto('search') }}" method="get">
         <input type="text" name="q" />
         <input type="submit" value="{{ _('Search') }}" />
@@ -105,7 +105,7 @@
     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
     })(window,document,'script','dataLayer','{{ html_google_tag_manager_code }}');</script>
     <!-- End Google Tag Manager -->
-    
+
     {%- endif %}
 {%- endmacro %}
 {%- macro googletagmanagerbody() %}{%- if html_google_tag_manager_code is defined %}
@@ -113,7 +113,7 @@
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ html_google_tag_manager_code }}"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
-    
+
     {%- endif %}
 {%- endmacro %}
 {%- macro script() %}
@@ -282,7 +282,7 @@
           {%- else %}
           &mdash;
           {%- endif %}
-          </td>    
+          </td>
           {%- endif %}
           <td class="ftr-cntr" colspan="4">
           {%- if show_copyright %}
@@ -291,7 +291,7 @@
             {%- else %}
               {% trans copyright=copyright|e %}Copyright &copy; {{ copyright }}{% endtrans %}
             {%- endif %}
-          {%- endif %}    
+          {%- endif %}
           {%- if last_updated %}
             {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
           {%- endif %}

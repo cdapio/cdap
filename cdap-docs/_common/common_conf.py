@@ -649,6 +649,8 @@ html_context = {'html_short_title_toc': html_short_title_toc}
 # Custom CustomHTMLTranslator to customize formatting of titles
 html_translator_class = 'customHTML.CustomHTMLTranslator'
 
+template_bridge = 'customHTML.CustomTemplateBridge'
+
 html_add_permalinks = u'\U0001F517' # HTML '&#128279;' # Link symbol: see http://www.fileformat.info/info/unicode/char/1f517/index.htm
 
 # -- Options for LaTeX output ---------------------------------------------

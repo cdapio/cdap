@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright © 2016 Cask Data, Inc.
+# Copyright © 2016-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -15,15 +15,15 @@
 # the License.
 
 """
-    customHTML
-    ~~~~~~~~~~
+    CustomHTMLTranslator
+    ~~~~~~~~~~~~~~~~~~~~
 
     Docutils writer that revises the handling of title nodes.
     It reverses the structure so that the permalink precedes the headline text.
 
-    :copyright: Copyright 2016 by Cask Data, Inc.
+    :copyright: Copyright 2016-2017 by Cask Data, Inc.
     :license: Apache License, Version 2.0, see http://www.apache.org/licenses/LICENSE-2.0
-    :version: 0.2
+    :version: 0.3
 
 """
 
@@ -36,7 +36,7 @@ class CustomHTMLTranslator(HTMLTranslator):
     """
     Our custom, custom HTML translator.
     """
-        
+
     def depart_title(self, node):
         h_level = 0
         close_tag = self.context[-1]
@@ -55,19 +55,86 @@ class CustomHTMLTranslator(HTMLTranslator):
                     self.body.append(tags.pop())
                     tags.reverse()
                     break
-            
+
             # <h1>Manual Installation using Packages<a class="headerlink" href="#manual-installation-using-packages"
             # title="Permalink to this headline">¶</a></h1>
             # becomes
             # <h1><a class="headerlink" href="#manual-installation-using-packages"
             # title="Permalink to this headline">¶</a>Manual Installation using Packages</h1>
-            
+
             if close_tag.startswith('</h'):
                 self.body.append(u'<a class="headerlink" href="#%s" ' % aname +
                                  u'title="%s">%s</a>' % (_('Perma-link to this heading'), self.permalink_text))
             elif close_tag.startswith('</a></h'):
                 self.body.append(u'</a><a class="headerlink" href="#%s" ' % aname +
                                  u'title="%s">%s' % (_('Perma-link to this heading'), self.permalink_text))
-            self.body = self.body + tags            
+            self.body = self.body + tags
 
         BaseTranslator.depart_title(self, node)
+
+
+"""
+    CustomTemplateBridge
+    ~~~~~~~~~~~~~~~~~~~~
+
+    Adds a custom template bridge class so that custom methods can be added to the Jinja Template environment.
+
+    :copyright: Copyright 2017 by Cask Data, Inc.
+    :license: Apache License, Version 2.0, see http://www.apache.org/licenses/LICENSE-2.0
+    :version: 0.1
+
+"""
+from sphinx.jinja2glue import BuiltinTemplateLoader
+import xml.etree.ElementTree as ET
+
+def _getcurrentchildren(root):
+    """
+    For a given root, finds the first child with a class attribute with "current",
+    and for that child, returns the text of its first 'a' child node and first 'ul' child node.
+    """
+    current = None
+    current_text = None
+    current_ul = None
+    for child in root.getchildren():
+        if 'current' in child.attrib['class'].split():
+            current = child
+            current_children = child.getchildren()
+            break
+    if current and current_children:
+        for child in current_children:
+            if not current_text and child.tag == 'a':
+                current_text = child.text
+            if not current_ul and child.tag == 'ul':
+                current_ul = child
+    return (current_text, current_ul)
+
+def _walktoc(html):
+    """
+    Walks down given HTML, and finds all the "current" class items.
+    """
+    breadcrumbs = list()
+    current = None
+    if isinstance(html, basestring):
+        root = ET.fromstring(html)
+        while root:
+            current_text, root = _getcurrentchildren(root)
+            if current_text or root:
+                breadcrumbs.append(current_text)
+    return breadcrumbs
+
+
+class CustomTemplateBridge(BuiltinTemplateLoader):
+    """
+    Our custom template bridge.
+
+    Interfaces the rendering environment of jinja2 for use in Sphinx.
+    """
+
+    # TemplateBridge interface
+
+    def init(self, builder, theme=None, dirs=None):
+        # Note that the init method is not an __init__ constructor method.
+        BuiltinTemplateLoader.init(self, builder, theme, dirs)
+        # Add our own filters to the Jinja environment
+        self.environment.filters['walktoc'] = _walktoc
+
