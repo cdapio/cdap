@@ -206,23 +206,14 @@ public final class KafkaLogAppender extends LogAppender {
 
       if (blockForMessage) {
         blockingThread = Thread.currentThread();
-        LogMessage message = null;
         try {
           if (isRunning()) {
-            message = messageQueue.take();
-            buffer.add(createKeyedMessage(message));
+            buffer.add(createKeyedMessage(messageQueue.take()));
             maxBufferSize--;
           }
         } catch (InterruptedException e) {
           // just ignore and keep going. This happen when this publisher is getting shutdown, but we still want
           // to publish all pending messages.
-        } catch (Throwable t) {
-          if (message == null) {
-            contextAware.addError("Got exception while taking message from queue", t);
-          } else {
-            contextAware.addError("Got exception while adding log message to queue: "
-                                    + message.getFormattedMessage(), t);
-          }
         } finally {
           blockingThread = null;
         }
@@ -234,11 +225,7 @@ public final class KafkaLogAppender extends LogAppender {
         if (message == null) {
           break;
         }
-        try {
-          buffer.add(createKeyedMessage(message));
-        } catch (Throwable t) {
-          contextAware.addError("Got exception while adding log message to queue: " + message.getFormattedMessage(), t);
-        }
+        buffer.add(createKeyedMessage(message));
       }
 
       // Publish all messages
