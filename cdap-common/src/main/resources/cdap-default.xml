@@ -3057,4 +3057,15 @@
     </description>
   </property>
 
+
+  <!-- Upgrade configuration -->
+
+  <property>
+    <name>upgrade.thread.pool.size</name>
+    <value>10</value>
+    <description>
+      Number of threads used to run operations concurrently during an upgrade
+    </description>
+  </property>
+
 </configuration>
