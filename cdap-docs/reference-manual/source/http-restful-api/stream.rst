@@ -155,11 +155,11 @@ asynchronously to a stream with higher throughput by sending an HTTP POST method
 
 You can pass headers for the event as HTTP headers by prefixing them with the *stream-id*::
 
-  <stream-id>.<property>:<string value>
+  <stream-id>.<property>:<string-value>
 
 After receiving the request, the HTTP handler transforms it into a stream event:
 
-- The body of the event is an identical copy of the bytes found in the body of the HTTP post request.
+- The body of the event is an identical copy of the bytes found in the body of the HTTP POST request.
 - If the request contains any headers prefixed with the *stream-id*,
   the *stream-id* prefix is stripped from the header name and
   the header is added to the event.
@@ -170,6 +170,17 @@ Multiple events can be sent to a stream in batch by sending an HTTP POST method 
 
   POST /v3/namespaces/<namespace-id>/streams/<stream-id>/batch
 
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``stream-id``
+     - Name of an existing stream
+
 The ``Content-Type`` header must be specified to describe the data type in the POST body. Currently, these
 types are supported:
 
@@ -179,10 +190,8 @@ types are supported:
 
    * - Content-Type
      - Description
-   * - ``namespace-id``
-     - Namespace ID
-   * - ``text/{sub-type}``
-     - Text content with one line per event; the ``sub-type`` can be anything
+   * - ``text/<sub-type>``
+     - Text content with one line per event; the ``<sub-type>`` can be anything
    * - ``avro/binary``
      - Avro Object Container File format; each Avro record in the file becomes a single event in the stream
 
@@ -205,9 +214,9 @@ types are supported:
 
    * - HTTP Method
      - ``POST /v3/namespaces/default/streams/mystream/batch``
-   * - Content type header
+   * - Content-Type Header
      - ``Content-type: text/csv``
-   * - POST body
+   * - POST Body
      - A comma-separated record per line::
      
         1,Sam,Smith,18
@@ -219,13 +228,18 @@ types are supported:
 
 .. rubric:: Comments
 
-You can pass headers that apply to all events as HTTP headers by prefixing them with the *stream-id*::
+- If using commands such as ``curl``, the body must be passed with the option
+  ``--data-binary`` in order for the lines to be correctly resolved into separate records.
 
-  <stream-id>.<property>:<string-value>
+- You can pass headers that apply to all events as HTTP headers by prefixing them with the
+  *stream-id*::
 
-After receiving the request, if the request contains any headers prefixed with the *stream-id*,
-the *stream-id* prefix is stripped from the header name and the header is added to each event sent
-in the request body.
+    <stream-id>.<property>:<string-value>
+
+  After receiving the request, if the request contains any headers prefixed with the
+  *stream-id*, the *stream-id* prefix is stripped from the header name and the header is
+  added to each event sent in the request body.
+
 
 Reading Events from a Stream
 ============================
