@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security.authorization;
 
+import co.cask.cdap.common.PrivilegeFetchException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.EntityId;
@@ -27,6 +28,7 @@ import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -36,10 +38,12 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -178,7 +182,12 @@ public class AbstractAuthorizationService extends AbstractScheduledService {
   }
 
   protected Map<EntityId, Set<Action>> getPrivileges(Principal principal) throws Exception {
-    return cacheEnabled ? authPolicyCache.get(principal) : fetchPrivileges(principal);
+    try {
+      return cacheEnabled ? authPolicyCache.get(principal) : fetchPrivileges(principal);
+    } catch (ExecutionException e) {
+      Throwables.propagateIfPossible(e.getCause(), IOException.class, PrivilegeFetchException.class);
+      throw new IllegalStateException(e);
+    }
   }
 
   protected void doInvalidate(final Predicate<Principal> predicate) {
