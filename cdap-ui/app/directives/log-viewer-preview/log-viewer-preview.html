@@ -43,6 +43,17 @@
     </div>
     <div class="log-actions">
       <div class="log-action-container">
+        <span class="include-system">
+          <i class="fa fa-square"
+            ng-if="!LogViewerPreview.includeSystemLogs"
+            ng-click="LogViewerPreview.toggleSystemLogs()">
+          </i>
+          <i class="fa fa-check-square"
+            ng-if="LogViewerPreview.includeSystemLogs"
+            ng-click="LogViewerPreview.toggleSystemLogs()">
+          </i>
+          <span>Include System Logs</span>
+        </span>
         <a href="{{LogViewerPreview.getDownloadUrl('raw')}}"
           target="_blank"
           class="log-action-btn view-raw btn btn-default"

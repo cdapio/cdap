@@ -29,6 +29,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   var collapseCount = 0;
   var vm = this;
 
+  const showCondensedLogsQuery = ' AND .origin=program OR .origin=program OR .lifecycle=pipeline';
 
   vm.viewLimit = 100;
   vm.errorRetrievingLogs = false;
@@ -68,6 +69,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     vm.data = [];
     vm.loading = false;
     vm.fullScreen = false;
+    vm.includeSystemLogs = false;
     vm.programStatus = 'Not Started';
     vm.configOptions = {
       time: true,
@@ -317,6 +319,14 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     });
   };
 
+  vm.toggleSystemLogs = () => {
+    vm.includeSystemLogs = !vm.includeSystemLogs;
+
+    // data needs to start from scratch
+    vm.fromOffset = -10000 + '.' + vm.startTimeMs;
+    startTimeRequest();
+  };
+
   function validUrl() {
     return vm.namespaceId && vm.appId && vm.programType && vm.runId && vm.fromOffset;
   }
@@ -336,6 +346,11 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
       pollPromise = null;
     }
 
+    let filter = `loglevel=${vm.selectedLogLevel}`;
+    if (!vm.includeSystemLogs) {
+      filter += showCondensedLogsQuery;
+    }
+
     myLogsApi.nextLogsJsonOffset({
       'namespace' : vm.namespaceId,
       'appId' : vm.appId,
@@ -343,7 +358,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
       'programId' : vm.programId,
       'runId' : vm.runId,
       'fromOffset' : vm.fromOffset,
-      filter: `loglevel=${vm.selectedLogLevel}`
+      filter
     }).$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
@@ -418,8 +433,14 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   }
 
   function pollForNewLogs () {
+    let filter = `loglevel=${vm.selectedLogLevel}`;
+    if (!vm.includeSystemLogs) {
+      filter += showCondensedLogsQuery;
+    }
+    let _cdapPath = `/namespaces/${vm.namespaceId}/apps/${vm.appId}/${vm.programType}/${vm.programId}/runs/${vm.runId}/logs/next?format=json&max=100&fromOffset=${vm.fromOffset}&filter=${filter}`;
+
     pollPromise = dataSrc.poll({
-      _cdapPath: '/namespaces/' + vm.namespaceId + '/apps/' + vm.appId + '/' + vm.programType + '/' + vm.programId + '/runs/' + vm.runId + '/logs/next?format=json&max=100&fromOffset=' + vm.fromOffset + '&filter=loglevel=' + vm.selectedLogLevel,
+      _cdapPath,
       method: 'GET'
     },
     (res) => {
@@ -497,6 +518,11 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     // binds window element to check whether scrollbar has appeared on resize event
     angular.element($window).bind('resize', checkForScrollbar);
 
+    let filter = `loglevel=${vm.selectedLogLevel}`;
+    if (!vm.includeSystemLogs) {
+      filter += showCondensedLogsQuery;
+    }
+
     myLogsApi.nextLogsJsonOffset({
       namespace : vm.namespaceId,
       appId : vm.appId,
@@ -504,7 +530,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
       programId : vm.programId,
       runId : vm.runId,
       fromOffset: vm.fromOffset,
-      filter: `loglevel=${vm.selectedLogLevel}`
+      filter
     }).$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
