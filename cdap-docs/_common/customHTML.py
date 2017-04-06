@@ -93,6 +93,7 @@ def _getcurrentchildren(root):
     and for that child, returns the text of its first 'a' child node and first 'ul' child node.
     """
     current = None
+    current_link = None
     current_text = None
     current_ul = None
     for child in root.getchildren():
@@ -102,11 +103,14 @@ def _getcurrentchildren(root):
             break
     if current and current_children:
         for child in current_children:
-            if not current_text and child.tag == 'a':
-                current_text = child.text
+            if child.tag == 'a':
+                if not current_link and 'href' in child.keys():
+                    current_link = child.attrib['href']
+                if not current_text:
+                    current_text = child.text
             if not current_ul and child.tag == 'ul':
                 current_ul = child
-    return (current_text, current_ul)
+    return (current_text, current_link, current_ul)
 
 def _walktoc(html):
     """
@@ -117,9 +121,9 @@ def _walktoc(html):
     if isinstance(html, basestring):
         root = ET.fromstring(html)
         while root:
-            current_text, root = _getcurrentchildren(root)
+            current_text, current_link, root = _getcurrentchildren(root)
             if current_text or root:
-                breadcrumbs.append(current_text)
+                breadcrumbs.append((current_text, current_link))
     return breadcrumbs
 
 

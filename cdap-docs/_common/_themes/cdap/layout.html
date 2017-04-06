@@ -39,8 +39,8 @@
         <li><a href="{{ index_path }}">{{ shorttitle|e }}</a>{{ reldelim1 }}</li>
         {%- endblock %}
         {%- if pagename != "index" or parents|count > 0 %}
-          {%- for item in toctree(titles_only=true)|walktoc %}
-          <li>{{ item|e }}{{ reldelim1 }}</li>
+          {%- for link_text, link in toctree(titles_only=true)|walktoc %}
+            <li><a href="{{ link|e }}">{{ link_text|e }}</a>{{ reldelim1 }}</li>
           {%- endfor %}
         {%- endif %}
         {%- if pagename != "search" and builder != "singlehtml" %}
