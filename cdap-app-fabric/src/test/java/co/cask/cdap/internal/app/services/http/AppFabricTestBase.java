@@ -33,6 +33,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.test.AppJarHelper;
@@ -54,6 +55,7 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -70,6 +72,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.AbstractModule;
@@ -99,6 +102,7 @@ import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -125,7 +129,10 @@ import javax.ws.rs.core.MediaType;
  * running the handler tests, this also gives the ability to run individual test cases.
  */
 public abstract class AppFabricTestBase {
-  protected static final Gson GSON = new Gson();
+  protected static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
+    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .create();
   private static final String API_KEY = "SampleTestApiKey";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
 
@@ -861,6 +868,46 @@ public abstract class AppFabricTestBase {
     HttpResponse response = doGet(versionedUrl);
     String json = EntityUtils.toString(response.getEntity());
     return GSON.fromJson(json, new TypeToken<List<ScheduleSpecification>>() { }.getType());
+  }
+
+  protected HttpResponse addSchedule(String namespace, String appName, @Nullable String appVersion, String scheduleName,
+                             ScheduleSpecification scheduleSpec) throws Exception {
+    appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
+    String path = String.format("apps/%s/versions/%s/schedules/%s", appName, appVersion, scheduleName);
+    return doPut(getVersionedAPIPath(path, namespace), GSON.toJson(scheduleSpec));
+  }
+
+  protected HttpResponse deleteSchedule(String namespace, String appName, @Nullable String appVersion,
+                                        String scheduleName) throws Exception {
+    appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
+    String path = String.format("apps/%s/versions/%s/schedules/%s", appName, appVersion, scheduleName);
+    return doDelete(getVersionedAPIPath(path, namespace));
+  }
+
+  protected HttpResponse updateSchedule(String namespace, String appName, @Nullable String appVersion,
+                                        String scheduleName, ScheduleSpecification scheduleSpec) throws Exception {
+    appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
+    String path = String.format("apps/%s/versions/%s/schedules/%s/update", appName, appVersion, scheduleName);
+    return doPost(getVersionedAPIPath(path, namespace), GSON.toJson(scheduleSpec));
+  }
+
+  protected ScheduleSpecification getSchedule(String namespace, String appName, @Nullable String appVersion,
+                                              String scheduleName) throws Exception {
+    appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
+    String path = String.format("apps/%s/versions/%s/schedules/%s", appName, appVersion, scheduleName);
+    HttpResponse response = doGet(getVersionedAPIPath(path, namespace));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    return readResponse(response, ScheduleSpecification.class);
+  }
+
+  protected List<ScheduleSpecification> listSchedules(String namespace, String appName,
+                                                      @Nullable String appVersion) throws Exception {
+    appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
+    String path = String.format("apps/%s/versions/%s/schedules", appName, appVersion);
+    HttpResponse response = doGet(getVersionedAPIPath(path, namespace));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Type scheduleSpecsType = new TypeToken<List<ScheduleSpecification>>() { }.getType();
+    return readResponse(response, scheduleSpecsType);
   }
 
   protected void verifyNoRunWithStatus(final Id.Program program, final String status) throws Exception {
