@@ -38,7 +38,7 @@ public class RunConstraints {
    * @param maxConcurrentRuns the maximum number of concurrent active runs for a schedule.
    *                          If null, no limit is enforced.
    */
-  RunConstraints(@Nullable Integer maxConcurrentRuns) {
+  public RunConstraints(@Nullable Integer maxConcurrentRuns) {
     this.maxConcurrentRuns = maxConcurrentRuns;
   }
 
