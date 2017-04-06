@@ -85,6 +85,7 @@ export default class SingleFieldModal extends Component {
         toggle={this.props.toggle}
         size="md"
         backdrop="static"
+        zIndex="1061"
         className="dataprep-parse-modal"
       >
         <ModalHeader>

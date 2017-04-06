@@ -213,6 +213,7 @@ features:
           TEXTREGEX: value matches regex
           TEXTSTARTSWITH: value starts with
         if: If
+        ignoreCase: Ignore Case
         KEEP: Keep rows
         Placeholders:
           CUSTOMCONDITION: e.g. < 30
@@ -234,12 +235,17 @@ features:
         modalTitle: Parse as {parser}
         Parsers:
           CSV:
+            customPlaceholder: "Delimiter (e.g ;, #, %, ^)"
+            firstRowHeader: Set first row as header
             label: CSV
+            modalTitle: Please select the delimiter
             Options:
               COMMA: Comma
+              CUSTOM: Custom Delimiter
               PIPE: Pipe
               TAB: Tab
-            shouldSkipLabel: Skip empty lines
+              CONTROL_A: ^A
+              CONTROL_D: ^D
           FIXEDLENGTH:
             fieldLabel: Column widths
             label: Fixed Length
@@ -255,6 +261,7 @@ features:
           LOG:
             customPlaceholder: "e.g. %h %l %u %t \"%r\" %>s %b"
             label: Log
+            modalTitle: Please select the logs format
             Options:
               COMMON: Common
               COMBINED: Combined
@@ -267,9 +274,22 @@ features:
             label: Natural Date
             placeholder: "e.g. UTC"
           SIMPLEDATE:
-            fieldLabel: Date format
+            customPlaceholder: "e.g. yyyy.MM.dd G 'at' HH:mm:ss z"
             label: Simple Date
-            placeholder: "e.g. yyyy.MM.dd G 'at' HH:mm:ss z"
+            modalTitle: Please select the date format
+            Options:
+              CUSTOM: Custom Format
+              OPTION1: "MM/dd/yyyy"
+              OPTION2: "dd/MM/yyyy"
+              OPTION3: "MM-dd-yyyy"
+              OPTION4: "MM-dd-yy"
+              OPTION5: "MM-dd-yyyy 'at' HH:mm:ss"
+              OPTION6: "dd/MM/yy HH:mm:ss"
+              OPTION7: "MM.dd.yyyy HH:mm:ss.SSS"
+              OPTION8: "EEE, d MMM yyyy HH:mm:ss"
+              OPTION9: "EEE, MMM d, 'yy"
+              OPTION10: "h:mm AM/PM"
+              OPTION11: "H:mm with timezone"
           XML:
             label: XML
           XMLTOJSON:
@@ -294,6 +314,8 @@ features:
         defaultErrorMessage: Error generating schema.
       PipelineModal:
         defaultErrorMessage: Error adding to pipeline
+    Upgrade:
+      minimumVersionError: "Data Preparation requires wrangler-service artifact version 1.3.0 or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
   Dashboard:
     Title: Dashboard
 

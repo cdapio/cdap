@@ -22,65 +22,63 @@ import T from 'i18n-react';
 const PREFIX = 'features.DataPrep.Directives.Parse';
 
 const OPTIONS_MAP = {
-  'COMMA': ',',
-  'TAB': '\\t',
-  'PIPE': '\\|',
-  'CONTROL_A': '\\u0001',
-  'CONTROL_D': '\\u0004',
+  'OPTION1': 'MM/dd/yyyy',
+  'OPTION2': 'dd/MM/yyyy',
+  'OPTION3': 'MM-dd-yyyy',
+  'OPTION4': 'MM-dd-yy',
+  'OPTION5': 'MM-dd-yyyy G \'at\' HH:mm:ss z',
+  'OPTION6': 'dd/MM/yy HH:mm:ss',
+  'OPTION7': 'yyyy,MM.dd\'T\'HH:mm:ss.SSSZ',
+  'OPTION8': 'EEE, d MMM yyyy HH:mm:ss Z',
+  'OPTION9': 'EEE, MMM d, \'\'yy',
+  'OPTION10': 'h:mm a',
+  'OPTION11': 'H:mm a, z',
   'CUSTOM': 'CUSTOM'
 };
 
-export default class CSVModal extends Component {
+export default class SimpleDateModal extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      delimiter: 'COMMA',
-      firstRowHeader: false,
-      customDelimiter: ''
+      format: 'OPTION1',
+      customFormat: ''
     };
 
     this.apply = this.apply.bind(this);
-    this.toggleSetFirstRow = this.toggleSetFirstRow.bind(this);
-    this.handleCustomDelimiterChange = this.handleCustomDelimiterChange.bind(this);
+    this.handleCustomFormatChange = this.handleCustomFormatChange.bind(this);
   }
 
   apply() {
-    let delimiter = OPTIONS_MAP[this.state.delimiter];
+    let format = OPTIONS_MAP[this.state.format];
 
-    if (this.state.delimiter === 'CUSTOM') {
-      delimiter = this.state.customDelimiter;
+    if (this.state.format === 'CUSTOM') {
+      format = this.state.customFormat;
     }
 
-    let configuration = `${delimiter} ${this.state.firstRowHeader}`;
-
-    this.props.onApply('CSV', configuration);
+    this.props.onApply('SIMPLEDATE', format);
     this.props.toggle();
   }
 
-  selectDelimiter(option) {
-    this.setState({delimiter: option});
+  selectFormat(option) {
+    this.setState({format: option});
   }
 
-  toggleSetFirstRow() {
-    this.setState({firstRowHeader: !this.state.firstRowHeader});
-  }
-
-  handleCustomDelimiterChange(e) {
-    this.setState({customDelimiter: e.target.value});
+  handleCustomFormatChange(e) {
+    this.setState({customFormat: e.target.value});
   }
 
   renderCustomText() {
-    if (this.state.delimiter !== 'CUSTOM') { return null; }
+    if (this.state.format !== 'CUSTOM') { return null; }
 
     return (
       <div className="custom-format">
         <input
           type="text"
           className="form-control"
-          value={this.state.customDelimiter}
-          onChange={this.handleCustomDelimiterChange}
-          placeholder={T.translate(`${PREFIX}.Parsers.CSV.customPlaceholder`)}
+          value={this.state.customFormat}
+          onChange={this.handleCustomFormatChange}
+          placeholder={T.translate(`${PREFIX}.Parsers.SIMPLEDATE.customPlaceholder`)}
         />
       </div>
     );
@@ -89,7 +87,7 @@ export default class CSVModal extends Component {
   render() {
     let options = Object.keys(OPTIONS_MAP);
 
-    let disabled = this.state.delimiter === 'CUSTOM' && this.state.customDelimiter.length === 0;
+    let disabled = this.state.format === 'CUSTOM' && this.state.customFormat.length === 0;
 
     return (
       <Modal
@@ -102,7 +100,7 @@ export default class CSVModal extends Component {
       >
         <ModalHeader>
           <span>
-            {T.translate(`${PREFIX}.modalTitle`, {parser: 'CSV'})}
+            {T.translate(`${PREFIX}.modalTitle`, {parser: 'Simple Date'})}
           </span>
 
           <div
@@ -114,7 +112,7 @@ export default class CSVModal extends Component {
         </ModalHeader>
         <ModalBody>
           <h5>
-            {T.translate(`${PREFIX}.Parsers.CSV.modalTitle`)}
+            {T.translate(`${PREFIX}.Parsers.SIMPLEDATE.modalTitle`)}
           </h5>
 
           <br />
@@ -125,39 +123,25 @@ export default class CSVModal extends Component {
                 return (
                   <div
                     key={option}
-                    onClick={this.selectDelimiter.bind(this, option)}
+                    onClick={this.selectFormat.bind(this, option)}
                   >
                     <span
                       className={classnames('fa', {
-                        'fa-circle-o': option !== this.state.delimiter,
-                        'fa-circle': option === this.state.delimiter
+                        'fa-circle-o': option !== this.state.format,
+                        'fa-circle': option === this.state.format
                       })}
                     />
                     <span>
-                      {T.translate(`${PREFIX}.Parsers.CSV.Options.${option}`)}
+                      {T.translate(`${PREFIX}.Parsers.SIMPLEDATE.Options.${option}`)}
                     </span>
                   </div>
                 );
               })
             }
+          </div>
 
-            {this.renderCustomText()}
-          </div>
-          <div className="optional-config">
-            <span
-              onClick={this.toggleSetFirstRow}
-            >
-              <span
-                className={classnames('fa', {
-                  'fa-square-o': !this.state.firstRowHeader,
-                  'fa-check-square': this.state.firstRowHeader
-                })}
-              />
-              <span>
-                {T.translate(`${PREFIX}.Parsers.CSV.firstRowHeader`)}
-              </span>
-            </span>
-          </div>
+          {this.renderCustomText()}
+
         </ModalBody>
 
         <ModalFooter>
@@ -181,7 +165,7 @@ export default class CSVModal extends Component {
 }
 
 
-CSVModal.propTypes = {
+SimpleDateModal.propTypes = {
   toggle: PropTypes.func,
   onApply: PropTypes.func,
 };

@@ -19,7 +19,7 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import classnames from 'classnames';
 import T from 'i18n-react';
 
-const SUFFIX = 'features.DataPrep.Directives.Parse';
+const PREFIX = 'features.DataPrep.Directives.Parse';
 
 const OPTIONS_MAP = {
   'COMMON': 'common',
@@ -72,7 +72,7 @@ export default class LogModal extends Component {
           className="form-control"
           value={this.state.customFormat}
           onChange={this.handleCustomFormatChange}
-          placeholder={T.translate(`${SUFFIX}.Parsers.LOG.customPlaceholder`)}
+          placeholder={T.translate(`${PREFIX}.Parsers.LOG.customPlaceholder`)}
         />
       </div>
     );
@@ -89,11 +89,12 @@ export default class LogModal extends Component {
         toggle={this.props.toggle}
         size="md"
         backdrop="static"
+        zIndex="1061"
         className="dataprep-parse-modal"
       >
         <ModalHeader>
           <span>
-            {T.translate(`${SUFFIX}.modalTitle`, {parser: 'Log'})}
+            {T.translate(`${PREFIX}.modalTitle`, {parser: 'Log'})}
           </span>
 
           <div
@@ -104,6 +105,12 @@ export default class LogModal extends Component {
           </div>
         </ModalHeader>
         <ModalBody>
+          <h5>
+            {T.translate(`${PREFIX}.Parsers.LOG.modalTitle`)}
+          </h5>
+
+          <br />
+
           <div className="list-options">
             {
               options.map((option) => {
@@ -119,7 +126,7 @@ export default class LogModal extends Component {
                       })}
                     />
                     <span>
-                      {T.translate(`${SUFFIX}.Parsers.LOG.Options.${option}`)}
+                      {T.translate(`${PREFIX}.Parsers.LOG.Options.${option}`)}
                     </span>
                   </div>
                 );
