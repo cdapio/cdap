@@ -88,6 +88,7 @@ angular.module(PKG.name + '.commons')
         element: '<my-json-textbox></my-json-textbox>',
         attributes: {
           'ng-model': 'model',
+          'disabled': 'disabled',
           placeholder: 'myconfig.properties.default || myconfig["widget-attributes"].default'
         }
       },
