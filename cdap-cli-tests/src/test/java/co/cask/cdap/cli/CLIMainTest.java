@@ -266,7 +266,7 @@ public class CLIMainTest extends CLITestBase {
 
   @Test
   public void testGetParentArtifact() throws Exception {
-    testCommandOutputContains(cli, String.format("get artifact parents %s %s", fakePluginId.getArtifact(),
+    testCommandOutputContains(cli, String.format("describe artifact %s %s", fakePluginId.getArtifact(),
                                                  fakePluginId.getVersion()), FakeApp.NAME);
   }
 
