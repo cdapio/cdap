@@ -14,27 +14,30 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+from docutils.writers.html4css1 import HTMLTranslator as BaseTranslator
+from sphinx.jinja2glue import BuiltinTemplateLoader
+from sphinx.locale import _
+from sphinx.writers.html import HTMLTranslator
+
+import xml.etree.ElementTree as ET
+import sys
+
 """
     CustomHTMLTranslator
     ~~~~~~~~~~~~~~~~~~~~
+"""
 
-    Docutils writer that revises the handling of title nodes.
+class CustomHTMLTranslator(HTMLTranslator):
+    """
+    A custom HTML translator.
+
+    A Docutils translator that revises the handling of title nodes.
     It reverses the structure so that the permalink precedes the headline text.
 
     :copyright: Copyright 2016-2017 by Cask Data, Inc.
     :license: Apache License, Version 2.0, see http://www.apache.org/licenses/LICENSE-2.0
     :version: 0.3
 
-"""
-
-from docutils.writers.html4css1 import HTMLTranslator as BaseTranslator
-
-from sphinx.locale import _
-from sphinx.writers.html import HTMLTranslator
-
-class CustomHTMLTranslator(HTMLTranslator):
-    """
-    Our custom, custom HTML translator.
     """
 
     def depart_title(self, node):
@@ -76,16 +79,7 @@ class CustomHTMLTranslator(HTMLTranslator):
 """
     CustomTemplateBridge
     ~~~~~~~~~~~~~~~~~~~~
-
-    Adds a custom template bridge class so that custom methods can be added to the Jinja Template environment.
-
-    :copyright: Copyright 2017 by Cask Data, Inc.
-    :license: Apache License, Version 2.0, see http://www.apache.org/licenses/LICENSE-2.0
-    :version: 0.1
-
 """
-from sphinx.jinja2glue import BuiltinTemplateLoader
-import xml.etree.ElementTree as ET
 
 def _getcurrentchildren(root):
     """
@@ -117,28 +111,38 @@ def _walktoc(html):
     Walks down given HTML, and finds all the "current" class items.
     """
     breadcrumbs = list()
-    current = None
-    if isinstance(html, basestring):
-        root = ET.fromstring(html)
+    current_text = None
+    current_link = None
+    try:
+        html_encoded = html.encode('utf-8', 'replace')
+        root = ET.fromstring(html_encoded)
         while root:
             current_text, current_link, root = _getcurrentchildren(root)
             if current_text or root:
                 breadcrumbs.append((current_text, current_link))
+        del root
+    except Exception, e:
+        sys.stderr.write("Error in _walktoc (current_text: %s current_link: %s): %s\n%s\n" %
+            (current_text, current_link, e, html_encoded))
     return breadcrumbs
 
 
 class CustomTemplateBridge(BuiltinTemplateLoader):
     """
-    Our custom template bridge.
+    CustomTemplateBridge
+    ~~~~~~~~~~~~~~~~~~~~
 
     Interfaces the rendering environment of jinja2 for use in Sphinx.
-    """
+    Adds a custom template bridge class so that custom methods can be added to the Jinja Template environment.
 
-    # TemplateBridge interface
+    :copyright: Copyright 2017 by Cask Data, Inc.
+    :license: Apache License, Version 2.0, see http://www.apache.org/licenses/LICENSE-2.0
+    :version: 0.1
+
+    """
 
     def init(self, builder, theme=None, dirs=None):
         # Note that the init method is not an __init__ constructor method.
         BuiltinTemplateLoader.init(self, builder, theme, dirs)
-        # Add our own filters to the Jinja environment
+        # Add filters to the Jinja environment
         self.environment.filters['walktoc'] = _walktoc
-
