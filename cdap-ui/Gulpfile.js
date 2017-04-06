@@ -272,11 +272,11 @@ gulp.task('watch:js:app:hydrator', function() {
 });
 gulp.task('watch:js:app:tracker', function() {
   return getExtensionBuildPipeline('tracker')
-    .pipe(plug.livereload({ port: 35728 }));
+    // .pipe(plug.livereload({ port: 35728 }));
 });
 gulp.task('watch:js:app:logviewer', function() {
   return getExtensionBuildPipeline('logviewer')
-    .pipe(plug.livereload({ port: 35728 }));
+    // .pipe(plug.livereload({ port: 35728 }));
 });
 gulp.task('watch:js:app:babel', function() {
   return getBabelBuildPipeline()
@@ -298,7 +298,9 @@ gulp.task('js:app:babel', function() {
 });
 
 gulp.task('js:app', ['js:app:babel', 'js:app:hydrator', 'js:app:tracker', 'js:app:logviewer']);
-gulp.task('watch:js:app', ['watch:js:app:hydrator', 'watch:js:app:tracker', 'watch:js:app:logviewer']);
+gulp.task('watch:js:app', ['watch:js:app:hydrator',
+  // 'watch:js:app:tracker', 'watch:js:app:logviewer'
+  ]);
 gulp.task('polyfill', function () {
   return gulp.src([
     './app/polyfill.js',
