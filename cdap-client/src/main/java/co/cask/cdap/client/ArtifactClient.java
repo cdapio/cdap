@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
-import co.cask.cdap.proto.artifact.ArtifactParentWrapper;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.PluginInfo;
@@ -313,31 +312,6 @@ public class ArtifactClient {
       throw new ArtifactNotFoundException(artifactId);
     }
     return ObjectResponse.fromJsonBody(response, ArtifactInfo.class, GSON).getResponseObject();
-  }
-
-  public ArtifactParentWrapper getArtifactParents(ArtifactId artifactId)
-    throws IOException, ArtifactNotFoundException, UnauthenticatedException, UnauthorizedException {
-    ArtifactParentWrapper wrapper;
-    try {
-      wrapper = getArtifactParents(artifactId, ArtifactScope.SYSTEM);
-    } catch (ArtifactNotFoundException e) {
-      wrapper = getArtifactParents(artifactId, ArtifactScope.USER);
-    }
-    return wrapper;
-  }
-
-  public ArtifactParentWrapper getArtifactParents(ArtifactId artifactId, ArtifactScope scope)
-    throws IOException, ArtifactNotFoundException, UnauthenticatedException, UnauthorizedException {
-    String path = String.format("artifacts/%s/versions/%s/parents?scope=%s", artifactId.getArtifact(),
-                                artifactId.getVersion(), scope.name());
-
-    URL url = config.resolveNamespacedURLV3(artifactId.getParent(), path);
-    HttpResponse response =
-      restClient.execute(HttpMethod.GET, url, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(artifactId);
-    }
-    return ObjectResponse.fromJsonBody(response, ArtifactParentWrapper.class).getResponseObject();
   }
 
   /**

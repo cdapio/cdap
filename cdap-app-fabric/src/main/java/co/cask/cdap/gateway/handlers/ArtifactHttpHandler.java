@@ -46,7 +46,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
-import co.cask.cdap.proto.artifact.ArtifactParentWrapper;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
@@ -209,35 +208,13 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       ArtifactDescriptor descriptor = detail.getDescriptor();
       // info hides some fields that are available in detail, such as the location of the artifact
       ArtifactInfo info = new ArtifactInfo(descriptor.getArtifactId(),
-                                           detail.getMeta().getClasses(), detail.getMeta().getProperties());
+                                           detail.getMeta().getClasses(), detail.getMeta().getProperties(),
+                                           detail.getMeta().getUsableBy());
       responder.sendJson(HttpResponseStatus.OK, info, ArtifactInfo.class, GSON);
     } catch (IOException e) {
       LOG.error("Exception reading artifacts named {} for namespace {} from the store.", artifactName, namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading artifact metadata from the store.");
     }
-  }
-
-  @GET
-  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/parents")
-  public void getArtifactParents(HttpRequest request, HttpResponder responder,
-                                 @PathParam("namespace-id") String namespaceId,
-                                 @PathParam("artifact-name") String artifactName,
-                                 @PathParam("artifact-version") String artifactVersion,
-                                 @QueryParam("scope") @DefaultValue("user") String scope)
-    throws Exception {
-
-    NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
-    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
-
-    try {
-      ArtifactDetail detail = artifactRepository.getArtifact(artifactId);
-      ArtifactParentWrapper wrapper = new ArtifactParentWrapper(detail.getMeta().getUsableBy());
-      responder.sendJson(HttpResponseStatus.OK, wrapper, ArtifactParentWrapper.class, GSON);
-    } catch (IOException e) {
-      LOG.error("Exception reading artifacts named {} for namespace {} from the store.", artifactName, namespaceId, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading artifact metadata from the store.");
-    }
-
   }
 
   @GET
