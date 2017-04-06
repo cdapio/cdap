@@ -435,7 +435,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   function pollForNewLogs () {
     let filter = `loglevel=${vm.selectedLogLevel}`;
     if (!vm.includeSystemLogs) {
-      filter += showCondensedLogsQuery;
+      filter += encodeURIComponent(showCondensedLogsQuery);
     }
     let _cdapPath = `/namespaces/${vm.namespaceId}/apps/${vm.appId}/${vm.programType}/${vm.programId}/runs/${vm.runId}/logs/next?format=json&max=100&fromOffset=${vm.fromOffset}&filter=${filter}`;
 
