@@ -766,7 +766,6 @@ const link = (scope) => {
 };
 
 angular.module(PKG.name + '.commons')
-  .value('THROTTLE_MILLISECONDS', 250) // throttle infinite scroll
   .directive('myLogViewer', function () {
     return {
       templateUrl: 'log-viewer/log-viewer.html',
