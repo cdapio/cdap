@@ -15,58 +15,52 @@ Date Transformations
 
 
 Diff Date
-================
+=========
+The DIFF-DATE directive calculates the difference between two dates.
 
-#
+Syntax
+------
+::
 
+  diff-date <column> <column> <destination>
 
-DIFF-DATE is a directive for taking the difference in two dates.
+Usage Notes
+-----------
+The DIFF-DATE directive will take the difference between two Date objects, and put that
+difference (in milliseconds) into the ``destination`` column.
 
-## Syntax
+This directive can only be used on two columns whose date strings have already
+been parsed, either by using the :ref:`PARSE-AS-DATE` or the :ref:`PARSE-AS-SIMPLE-DATE`
+directives.
 
-```
-diff-date <column> <column> <destination>
-```
+Note that ``date-diff`` can return a negative difference when the first column is an
+earlier date than the second column.
 
-## Usage Notes
+If one of the dates in the column is ``null``, then the resulting ``destination`` column
+will be null.  If any of the columns contains ``now``, then the column with an actual date is
+subtracted from the current time. The ``now`` applies the same date across all the rows.
 
-The DIFF-DATE directive will take the difference between two Date objects, and put difference (in milliseconds)
-into the destination column.
+Examples
+--------
+Consider this example::
 
-Note that this directive can only apply on two columns whose date strings have already been parsed, either using the
-[PARSE-AS-DATE](docs/directives/parse-as-date.md) directive or the [PARSE-AS-SIMPLE-DATE](docs/directives/parse-as-simple-date.md).
+  {
+    "create_date" : "02/12/2017",
+    "update_date" : "02/14/2017"
+  }
 
-```date-diff``` can return negative difference when first column is an earlier than the second column.
+Applying this directive::
 
-If one of the dates in the column is 'null', then resulting column will be null and if any of the columns
-contains "now", then the column with actual date is subtracted from the current time. "now" applies the same
-date across all the rows.
+  diff-date update_date create_date diff_date
 
-## Examples
+will result in this record::
 
-Let's consider an example
-```
-{
-"create_date" : "02/12/2017",
-"update_date" : "02/14/2017"
-}
-```
+  {
+    "create_date" : "02/12/2017",
+    "update_date" : "02/14/2017",
+    "diff_date" : 17280000
+  }
 
-Now, applying the following directive
-
-```
-diff-date update_date create_date diff_date
-```
-
-will result in the record below.
-
-```
-{
-"create_date" : "02/12/2017",
-"update_date" : "02/14/2017",
-"diff_date" : 17280000
-}
-```
 
 Format Date
 ================
@@ -84,11 +78,15 @@ format-date <column> <format>
 
 ## Usage Notes
 
-Date and time formats are specified by date and time pattern strings. Within date and time pattern strings,
-unquoted letters from 'A' to 'Z' and from 'a' to 'z' are interpreted as pattern letters representing the components
-of a date or time string. Text can be quoted using single quotes \('\) to avoid interpretation. "''" represents a single quote. All other characters are not interpreted; they're simply copied into the output string during formatting or matched against the input string during parsing.
+Date and time formats are specified by date and time pattern strings. Within date and time
+pattern strings, unquoted letters from 'A' to 'Z' and from 'a' to 'z' are interpreted as
+pattern letters representing the components of a date or time string. Text can be quoted
+using single quotes \('\) to avoid interpretation. "''" represents a single quote. All
+other characters are not interpreted; they're simply copied into the output string during
+formatting or matched against the input string during parsing.
 
-The following pattern letters are defined \(all other characters from 'A' to 'Z' and from 'a' to 'z' are reserved\):
+The following pattern letters are defined \(all other characters from 'A' to 'Z' and from
+'a' to 'z' are reserved\):
 
 | Letter | Date or Time Component | Presentation | Examples |
 | --- | --- | --- | --- |
