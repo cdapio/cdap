@@ -38,7 +38,7 @@ public class LoggingContextMDCTest {
     Map<String, String> userMDC = new HashMap<>();
     userMDC.put(Constants.Logging.TAG_APPLICATION_ID, "userApp");
 
-    Map<String, String> mdc = new LoggingContextMDC(context, userMDC);
+    Map<String, String> mdc = new LoggingContextMDC(context.getSystemTagsAsString(), userMDC);
 
     Assert.assertEquals(4, mdc.size());
 
