@@ -27,8 +27,8 @@ public final class Constants {
   public static final String PIPELINE_SPEC_KEY = "pipeline.spec";
   public static final String STAGE_LOGGING_ENABLED = "stage.logging.enabled";
   public static final String CONNECTOR_TYPE = "connector";
-  public static final String PIPELINE_LIFECYCLE_TAG = ".lifecycle";
-  public static final String PIPELINE_LIFECYCLE_TAG_VALUE = "pipeline";
+  public static final String EVENT_TYPE_TAG = "eventType";
+  public static final String PIPELINE_LIFECYCLE_TAG_VALUE = "lifecycle";
   public static final Schema ERROR_SCHEMA = Schema.recordOf(
     "error",
     Schema.Field.of(ErrorDataset.ERRCODE, Schema.of(Schema.Type.INT)),
