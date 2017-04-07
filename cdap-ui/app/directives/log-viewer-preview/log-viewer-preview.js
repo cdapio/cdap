@@ -32,7 +32,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
   vm.viewLimit = 100;
   vm.errorRetrievingLogs = false;
 
-  const showCondensedLogsQuery = ' AND .origin=program OR .origin=program OR .lifecycle=pipeline';
+  const showCondensedLogsQuery = ' AND .origin=plugin OR .origin=program AND .lifecycle=pipeline';
 
   vm.setProgramMetadata = (status) => {
     vm.programStatus = status;
@@ -639,6 +639,17 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
       text.replace(new RegExp(vm.searchText, 'gi'),
       '<span class="highlighted-text">$&</span>'
     ));
+  };
+
+  vm.getEntrySource = (entry) => {
+    let log = entry.log;
+    let mdc = log.mdc;
+    let source = `${log.className}#${log.lineNumber}`;
+    // system log
+    if (!(mdc['.origin'] === 'plugin' || mdc['.origin'] === 'program' && mdc['.lifecycle'] === 'pipeline')) {
+      source += `-${log.threadName}`;
+    }
+    return source;
   };
 
   function offsetScroll() {
