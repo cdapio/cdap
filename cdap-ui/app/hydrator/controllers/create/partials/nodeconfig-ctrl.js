@@ -127,7 +127,7 @@ class HydratorPlusPlusNodeConfigCtrl {
       schemaAdvance: false
     };
 
-    if (this.state.isSink && this.state.node.outputSchema && this.state.node.outputSchema.length > 0) {
+    if (this.state.node.outputSchema && this.state.node.outputSchema.length > 0) {
       try {
         this.avsc.parse(this.state.node.outputSchema);
       } catch (e) {
