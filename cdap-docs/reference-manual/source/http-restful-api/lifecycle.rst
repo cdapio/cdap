@@ -847,19 +847,21 @@ request with the version specified::
      - Version of the application, typically following `semantic versioning
        <http://semver.org>`__
 
-The request body is a JSON object specifying the schedule configurations to be updated, and follows the same form
-as documented in :ref:`http-restful-api-lifecycle-schedule-add`.
+The request body is a JSON object specifying the schedule configurations to be updated, and follows
+the same form as documented in :ref:`http-restful-api-lifecycle-schedule-add`.
 
-- For example to update a :ref:`time schedule <schedules-time>`, use::
+- To update a :ref:`time schedule <schedules-time>`, use::
 
     {
       "scheduleDescription": "updatedDescription",
       "maxConcurrentRuns": 1,
-      "properties": {},
+      "properties": {
+         "key": "value"
+      },
       "cronExpression": "0 4 * * *"
     }
 
-- For :ref:`stream-sized schedule <schedules-stream-size>`, use::
+- For a :ref:`stream-sized schedule <schedules-stream-size>`, use::
 
     {
       "scheduleDescription": "updatedDescription",
@@ -871,10 +873,11 @@ as documented in :ref:`http-restful-api-lifecycle-schedule-add`.
       "dataTriggerMB": 50
     }
 
-Only changes to the schedule configurations are supported; changes to the schedule name, its type or the program
-associated with it are not allowed. If a property is not given, the current property will be used.
-If the property is present, the current property will be overwritten by the property specified in the request. To
-remove the value of an existing property, use an empty value for the property.
+Only changes to the schedule configurations are supported; changes to the schedule name,
+its type, or the program associated with it are not allowed. If a property is not given,
+the current property will be used. If the property is present, the current property will
+be overwritten by the property specified in the request. To remove the value of an
+existing property, use an empty value for the property.
 
 .. rubric:: HTTP Responses
 
@@ -893,10 +896,9 @@ remove the value of an existing property, use an empty value for the property.
 
 Retrieving a Schedule
 ---------------------
-To get a schedule in an application, submit an HTTP GET request::
+To retrieve a schedule in an application, submit an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-name>
-
 
 .. list-table::
 :widths: 20 80
@@ -911,49 +913,47 @@ To get a schedule in an application, submit an HTTP GET request::
    * - ``schedule-name``
      - Name of the schedule
 
-
 .. container:: table-block-example
 
    .. list-table::
       :widths: 99 1
       :stub-columns: 1
 
-         * - Example: Retrieving a Schedule
-           -
+      * - Example: Retrieving a Schedule
+        -
 
    .. list-table::
       :widths: 15 85
       :class: triple-table
 
       * - Description
-         - Retrieves the schedule *DailySchedule* of the application *PurchaseHistory*
+        - Retrieves the schedule *DailySchedule* of the application *PurchaseHistory*
 
       * - HTTP Method
-         - ``GET /v3/namespaces/default/apps/PurchaseHistory/schedules/DailySchedule``
+        - ``GET /v3/namespaces/default/apps/PurchaseHistory/schedules/DailySchedule``
 
       * - Returns
-         - | ``[{"schedule":{"name":"DailySchedule","description":"DailySchedule with crontab 0 4 * * *","cronEntry":"0 4 * * *"},``
-           | `` "program":{"programName":"PurchaseHistoryWorkflow","programType":"WORKFLOW"},"properties":{}}]``
+        - | ``[{"schedule":{"name":"DailySchedule","description":"DailySchedule with crontab 0 4 * * *","cronEntry":"0 4 * * *"},``
+          | `` "program":{"programName":"PurchaseHistoryWorkflow","programType":"WORKFLOW"},"properties":{}}]``
 
 
 List Schedules
 --------------
-To list all the schedules for an application, submit an HTTP GET request::
+To list all of the schedules for an application, use an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/schedules
 
-
-As schedules are created for a workflow, you can also list schedules for a workflow of an application. You can use the
-:ref:`http-restful-api-lifecycle-app-deployed-details` to obtain the workflows of an
+As schedules are created for a workflow, you can also list schedules for a workflow of an application.
+You can use the :ref:`http-restful-api-lifecycle-app-deployed-details` to obtain the workflows of an
 application.
 
-To list all of the schedules of a workflow of an application, issue an HTTP GET request::
+To list all of the schedules of a workflow of an application, use an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/schedules
 
 To list the next time that the workflow is scheduled to run, use the parameter ``nextruntime``::
 
-    GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/nextruntime
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/nextruntime
     
 .. list-table::
    :widths: 20 80
