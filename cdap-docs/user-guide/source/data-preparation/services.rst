@@ -298,6 +298,7 @@ Executing Directives
 This HTTP RESTful API applies directives on the data stored in a workspace.
 
 .. highlight:: console
+
 .. list-table::
    :widths: 20 80
 

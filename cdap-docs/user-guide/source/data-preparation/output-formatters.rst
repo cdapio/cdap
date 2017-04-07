@@ -16,98 +16,90 @@ Output Formatters
 .. _user-guide-data-preparation-write-as-csv:
 
 Write as CSV
-================
+============
 
-#
-Write as CSV
+The WRITE-AS-CSV directive converts a record into CSV format.
 
-WRITE-AS-CSV directive converts the record into CSV.
+Syntax
+------
+::
 
-## Syntax
-```
-write-as-csv <column>
-```
+  write-as-csv <column>
 
-```column``` will contain the CSV representation of the record.
+``column`` will contain the CSV representation of the record.
 
-## Usage Notes
+Usage Notes
+-----------
+- The WRITE-AS-CSV directive converts a record into CSV format.
 
-The WRITE-AS-CSV directive provides an easy way to convert the record
-into a CSV. If the ```column``` already exists, it will overwrite it.
+- If the ``column`` already exists, the directive will overwrite it.
 
+Example
+-------
+Consider the simple record::
 
-## Example
+  {
+    "int": 1,
+    "string": "This, is a string."
+  }
 
-Let's consider a very simple record
-```
-{
-"int" : 1,
-"string" : "this is string",
-}
-```
+Running the directive::
 
-running the directive
-```
-write-as-csv body
-```
+  write-as-csv body
 
-would generate the following record
+will generate this record::
 
-```
-{
-"body" : "1,\"this is, string\",
-"int" : 1,
-"string" : "this is, string",
-}
-```
+  {
+    "body": "1,\"This, is a string.\"",
+    "int": 1,
+    "string": "This, is a string."
+  }
 
 
-.. _user-guide-data-preparation-write-as-a-json-map:
+.. _user-guide-data-preparation-write-as-json-map:
 
-Write as a JSON Map
-===================
-
-#
 Write as JSON Map
+=================
 
-WRITE-AS-JSON-MAP directive converts the record into JSON Map.
+The WRITE-AS-JSON-MAP directive converts the record into a JSON Map.
 
-## Syntax
-```
-write-as-json <column>
-```
+Syntax
+------
+::
 
-```column``` will contain the JSON of the fields in the record.
+  write-as-json <column>
 
-## Usage Notes
 
-The WRITE-AS-JSON-MAP directive provides an easy way to convert the record
-into a JSON. If the ```column``` already exists, it will overwrite it.
+``column`` will contain the JSON of the fields of the record.
 
-Depending on the type of the object the field is holding it will be transformed
-appropriately.
+Usage Notes
+-----------
 
-## Example
+- The WRITE-AS-JSON-MAP directive converts a record into a JSON map.
 
-Let's consider a very simple record
-```
-{
-"int" : 1,
-"string" : "this is string",
-}
-```
+- If the ``column`` already exists, the directive will overwrite it.
 
-running the directive
-```
-write-as-json-map body
-```
+- Depending on the type of object a field is holding, it will be transformed
+  appropriately.
 
-would generate the following record
+Example
+-------
+Consider the simple record::
 
-```
-{
-"body" : "[{"key": "int", "value" : "1"}, {"key" : "string", "value" : "this is string"} ]"
-"int" : 1,
-"string" : "this is string",
-}
-```
+  {
+    "int": 1,
+    "string": "this is a string"
+  }
+
+Running the directive::
+
+  write-as-json-map body
+
+
+will generate this record::
+
+  {
+    "body": "[{\"key\": \"int\", \"value\" : \"1\"}, {\"key\" : \"string\", \"value\" : \"this is a string\"}]",
+    "int": 1,
+    "string": "this is a string"
+  }

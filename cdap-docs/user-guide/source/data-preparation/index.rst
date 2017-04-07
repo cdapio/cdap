@@ -28,14 +28,13 @@ Data Preparation
 
 Data Preparation (also known as "Data Prep") allows you to parse, transform, cleanse,
 blend, and consolidate data for analysis. A combination of a CDAP service and transform,
-it allows you to ensure that data is consistent and high-quality by allowing you to
-perform data transformations with visual feedback. You can immediately run the resulting
-transformations at big data scale in minutes.
+it let you ensure that data is consistent and high-quality by enabling you to perform data
+transformations with immediate visual feedback. You can then run the resulting
+transformations at big data scale within minutes.
 
-Data Prep performs data cleansing, transformation, and filtering using a set of
-instructions called "directives". Directives to manipulate the data are generated either
-using an interactive visual tool or are manually entered.
+Data Prep performs the data cleansing, transformation, and filtering using a set of
+instructions called *directives*. Directives to manipulate the data are generated either
+by using an interactive visual tool or by being entered manually.
 
 .. image:: /_images/data-preparation/data-preparation.png
-   :width: 5in
-   :align: center
+   :width: 8in
