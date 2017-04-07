@@ -22,9 +22,8 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchJoinerContext;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.planner.StageInfo;
-
-import java.util.Map;
 
 /**
  * Batch Joiner context
@@ -34,15 +33,14 @@ public abstract class AbstractJoinerContext extends AbstractBatchContext impleme
   private Class<?> joinKeyClass;
   private Class<?> joinInputRecordClass;
 
-  protected AbstractJoinerContext(PluginContext pluginContext,
-                                  DatasetContext datasetContext,
-                                  Metrics metrics,
-                                  LookupProvider lookup,
-                                  long logicalStartTime,
-                                  Map<String, String> runtimeArgs,
-                                  Admin admin,
-                                  StageInfo stageInfo) {
-    super(pluginContext, datasetContext, metrics, lookup, logicalStartTime, runtimeArgs, admin, stageInfo);
+  protected <T extends PluginContext & DatasetContext> AbstractJoinerContext(T context,
+                                                                             Metrics metrics,
+                                                                             LookupProvider lookup,
+                                                                             long logicalStartTime,
+                                                                             Admin admin,
+                                                                             StageInfo stageInfo,
+                                                                             BasicArguments arguments) {
+    super(context, metrics, lookup, logicalStartTime, admin, stageInfo, arguments);
   }
 
   @Override

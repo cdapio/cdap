@@ -21,11 +21,10 @@ import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.WorkflowContext;
-import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
 import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
-import co.cask.cdap.etl.common.DatasetContextLookupProvider;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.proto.Engine;
@@ -102,15 +101,13 @@ public class ETLWorkflow extends AbstractWorkflow {
     if (workflowContext.getDataTracer(PostAction.PLUGIN_TYPE).isEnabled()) {
       return;
     }
-    LookupProvider lookupProvider = new DatasetContextLookupProvider(workflowContext);
-    Map<String, String> runtimeArgs = workflowContext.getRuntimeArguments();
-    long logicalStartTime = workflowContext.getLogicalStartTime();
+    BasicArguments arguments = new BasicArguments(workflowContext.getToken(), workflowContext.getRuntimeArguments());
     for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
       String name = endingActionEntry.getKey();
       PostAction action = endingActionEntry.getValue();
       StageInfo stageInfo = StageInfo.builder(name, PostAction.PLUGIN_TYPE).build();
-      BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics, lookupProvider,
-                                                                   logicalStartTime, runtimeArgs, stageInfo);
+      BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics,
+                                                                   stageInfo, arguments);
       try {
         action.run(context);
       } catch (Throwable t) {

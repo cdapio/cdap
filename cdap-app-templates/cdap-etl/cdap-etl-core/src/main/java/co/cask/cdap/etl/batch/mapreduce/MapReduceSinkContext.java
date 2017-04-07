@@ -20,9 +20,9 @@ import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.batch.preview.NullOutputFormatProvider;
+import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.log.LogContext;
 import co.cask.cdap.etl.planner.StageInfo;
@@ -42,11 +42,10 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
   private final Set<String> outputNames;
   private final boolean isPreviewEnabled;
 
-  public MapReduceSinkContext(MapReduceContext context, Metrics metrics, LookupProvider lookup,
-                              Map<String, String> runtimeArgs, StageInfo stageInfo, boolean isPreviewEnabled) {
-    super(context, metrics, lookup, runtimeArgs, stageInfo);
+  public MapReduceSinkContext(MapReduceContext context, Metrics metrics, StageInfo stageInfo) {
+    super(context, metrics, new DatasetContextLookupProvider(context), stageInfo);
     this.outputNames = new HashSet<>();
-    this.isPreviewEnabled = isPreviewEnabled;
+    this.isPreviewEnabled = context.getDataTracer(stageInfo.getName()).isEnabled();
   }
 
   @Override

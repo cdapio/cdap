@@ -25,6 +25,7 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.StageMetrics;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.planner.StageInfo;
@@ -87,7 +88,8 @@ public class PluginFunctionContext implements Serializable {
   }
 
   public SparkBatchRuntimeContext createBatchRuntimeContext() {
-    return new SparkBatchRuntimeContext(pluginContext, metrics, logicalStartTime, arguments, stageInfo);
+    return new SparkBatchRuntimeContext(pluginContext, metrics, logicalStartTime, stageInfo,
+                                        new BasicArguments(arguments));
   }
 
   public DataTracer getDataTracer() {

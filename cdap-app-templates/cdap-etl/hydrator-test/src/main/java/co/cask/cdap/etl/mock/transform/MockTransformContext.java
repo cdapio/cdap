@@ -18,10 +18,12 @@ package co.cask.cdap.etl.mock.transform;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.etl.api.Arguments;
 import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.TransformContext;
+import co.cask.cdap.etl.mock.common.MockArguments;
 import co.cask.cdap.etl.mock.common.MockLookupProvider;
 import co.cask.cdap.etl.mock.common.MockStageMetrics;
 
@@ -38,6 +40,7 @@ public class MockTransformContext implements TransformContext {
   private final MockStageMetrics metrics;
   private final LookupProvider lookup;
   private final String stageName;
+  private final Arguments arguments;
 
   public MockTransformContext() {
     this("someStage");
@@ -56,6 +59,7 @@ public class MockTransformContext implements TransformContext {
     this.lookup = lookup;
     this.metrics = new MockStageMetrics(stageName);
     this.stageName = stageName;
+    this.arguments = new MockArguments(args);
   }
 
   @Override
@@ -102,6 +106,11 @@ public class MockTransformContext implements TransformContext {
   @Override
   public Schema getOutputSchema() {
     return null;
+  }
+
+  @Override
+  public Arguments getArguments() {
+    return arguments;
   }
 
   @Override

@@ -18,6 +18,7 @@ package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.batch.AbstractJoinerContext;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.planner.StageInfo;
 
@@ -27,8 +28,8 @@ import co.cask.cdap.etl.planner.StageInfo;
 public class SparkJoinerContext extends AbstractJoinerContext {
 
   protected SparkJoinerContext(StageInfo stageInfo, SparkClientContext scc) {
-    super(scc, scc, scc.getMetrics(), new DatasetContextLookupProvider(scc),
-          scc.getLogicalStartTime(), scc.getRuntimeArguments(), scc.getAdmin(), stageInfo);
+    super(scc, scc.getMetrics(), new DatasetContextLookupProvider(scc),
+          scc.getLogicalStartTime(), scc.getAdmin(), stageInfo, new BasicArguments(scc));
   }
 
   @Override

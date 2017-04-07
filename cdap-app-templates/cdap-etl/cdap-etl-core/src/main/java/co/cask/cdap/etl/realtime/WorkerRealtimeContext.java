@@ -22,6 +22,7 @@ import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.planner.StageInfo;
 
 /**
@@ -31,7 +32,7 @@ public class WorkerRealtimeContext extends AbstractTransformContext implements R
   private final WorkerContext context;
 
   public WorkerRealtimeContext(WorkerContext context, Metrics metrics, LookupProvider lookup, StageInfo stageInfo) {
-    super(context, metrics, lookup, stageInfo);
+    super(context, metrics, lookup, stageInfo, new BasicArguments(context.getRuntimeArguments()));
     this.context = context;
   }
 
