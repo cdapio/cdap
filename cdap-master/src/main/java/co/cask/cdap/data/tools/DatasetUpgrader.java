@@ -30,9 +30,11 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -42,7 +44,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
 /**
@@ -84,48 +92,110 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
   @Override
   public void upgrade() throws Exception {
-    // Upgrade system dataset
-    upgradeSystemDatasets();
+    int numThreads = cConf.getInt(Constants.Upgrade.UPGRADE_THREAD_POOL_SIZE);
+    ExecutorService executor =
+      Executors.newFixedThreadPool(numThreads,
+                                   new ThreadFactoryBuilder()
+                                     .setNameFormat("hbase-cmd-executor-%d")
+                                     .setDaemon(true)
+                                     .build());
+    try {
+      // Upgrade system dataset
+      upgradeSystemDatasets(executor);
 
-    // Upgrade all user hbase tables
-    upgradeUserTables();
-  }
-
-  private void upgradeSystemDatasets() throws Exception {
-    for (DatasetSpecificationSummary spec : dsFramework.getInstances(NamespaceId.SYSTEM)) {
-      LOG.info("Upgrading dataset in system namespace: {}, spec: {}", spec.getName(), spec.toString());
-      DatasetAdmin admin = dsFramework.getAdmin(NamespaceId.SYSTEM.dataset(spec.getName()), null);
-      // we know admin is not null, since we are looping over existing datasets
-      //noinspection ConstantConditions
-      admin.upgrade();
-      LOG.info("Upgraded dataset: {}", spec.getName());
+      // Upgrade all user hbase tables
+      upgradeUserTables(executor);
+    } finally {
+      // We'll have tasks pending in the executor only on an interrupt, when user wants to abort the upgrade.
+      // Use shutdownNow() to interrupt the tasks and abort.
+      executor.shutdownNow();
     }
   }
 
-  private void upgradeUserTables() throws Exception {
+  private void upgradeSystemDatasets(ExecutorService executor) throws Exception {
+    Map<String, Future<?>> futures = new HashMap<>();
+    for (final DatasetSpecificationSummary spec : dsFramework.getInstances(NamespaceId.SYSTEM)) {
+      final DatasetId datasetId = NamespaceId.SYSTEM.dataset(spec.getName());
+      Runnable runnable = new Runnable() {
+        public void run() {
+          try {
+            LOG.info("Upgrading dataset in system namespace: {}, spec: {}", spec.getName(), spec.toString());
+            DatasetAdmin admin = dsFramework.getAdmin(datasetId, null);
+            // we know admin is not null, since we are looping over existing datasets
+            //noinspection ConstantConditions
+            admin.upgrade();
+            LOG.info("Upgraded dataset: {}", spec.getName());
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+      };
+
+      Future<?> future = executor.submit(runnable);
+      futures.put(datasetId.toString(), future);
+    }
+
+    // Wait for the system dataset upgrades to complete
+    Map<String, Throwable> failed = waitForUpgrade(futures);
+    if (!failed.isEmpty()) {
+      for (Map.Entry<String, Throwable> entry : failed.entrySet()) {
+        LOG.error("Failed to upgrade system dataset {}", entry.getKey(), entry.getValue());
+      }
+      throw new Exception(String.format("Error upgrading system datasets. %s of %s failed",
+                                        failed.size(), futures.size()));
+    }
+  }
+
+  private void upgradeUserTables(final ExecutorService executor) throws Exception {
+    final Map<String, Future<?>> allFutures = new HashMap<>();
     for (final NamespaceMeta namespaceMeta : namespaceQueryAdmin.list()) {
       impersonator.doAs(namespaceMeta.getNamespaceId(), new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          upgradeUserTables(namespaceMeta);
+          Map<String, Future<?>> futures = upgradeUserTables(namespaceMeta, executor);
+          allFutures.putAll(futures);
           return null;
         }
       });
     }
+
+    // Wait for the user dataset upgrades to complete
+    Map<String, Throwable> failed = waitForUpgrade(allFutures);
+    if (!failed.isEmpty()) {
+      for (Map.Entry<String, Throwable> entry : failed.entrySet()) {
+        LOG.error("Failed to upgrade user table {}", entry.getKey(), entry.getValue());
+      }
+      throw new Exception(String.format("Error upgrading user tables. %s of %s failed",
+                                        failed.size(), allFutures.size()));
+    }
   }
 
-  private void upgradeUserTables(NamespaceMeta namespaceMeta) throws Exception {
+  private Map<String, Future<?>> upgradeUserTables(NamespaceMeta namespaceMeta, ExecutorService executor)
+    throws Exception {
+    Map<String, Future<?>> futures = new HashMap<>();
     String hBaseNamespace = hBaseTableUtil.getHBaseNamespace(namespaceMeta);
     try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get(); HBaseAdmin hAdmin = new HBaseAdmin(hConf)) {
-      for (HTableDescriptor desc :
+      for (final HTableDescriptor desc :
         hAdmin.listTableDescriptorsByNamespace(HTableNameConverter.encodeHBaseEntity(hBaseNamespace))) {
-        if (isCDAPUserTable(desc)) {
-          upgradeUserTable(desc);
-        } else if (isStreamOrQueueTable(desc.getNameAsString())) {
-          updateTableDesc(desc, ddlExecutor);
-        }
+        Runnable runnable = new Runnable() {
+          public void run() {
+            try {
+              if (isCDAPUserTable(desc)) {
+                upgradeUserTable(desc);
+              } else if (isStreamOrQueueTable(desc.getNameAsString())) {
+                updateTableDesc(desc, ddlExecutor);
+              }
+            } catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+          }
+        };
+
+        Future<?> future = executor.submit(runnable);
+        futures.put(desc.getNameAsString(), future);
       }
     }
+    return futures;
   }
 
   private void upgradeUserTable(HTableDescriptor desc) throws IOException {
@@ -193,5 +263,22 @@ public class DatasetUpgrader extends AbstractUpgrader {
   // CDAP-2963 should be fixed so that we can make use of this check generically for all cdap tables
   private boolean isTableCreatedByCDAP(HTableDescriptor desc) {
     return (desc.getValue(HBaseTableUtil.CDAP_VERSION) != null);
+  }
+
+  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+  private Map<String, Throwable> waitForUpgrade(Map<String, Future<?>> upgradeFutures) throws InterruptedException {
+    Map<String, Throwable> failed = new HashMap<>();
+    for (Map.Entry<String, Future<?>> entry : upgradeFutures.entrySet()) {
+      try {
+        entry.getValue().get();
+      } catch (ExecutionException e) {
+        if (e.getCause() instanceof RuntimeException && e.getCause().getCause() != null) {
+          failed.put(entry.getKey(), e.getCause().getCause());
+        } else {
+          failed.put(entry.getKey(), e.getCause());
+        }
+      }
+    }
+    return failed;
   }
 }

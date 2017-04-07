@@ -1260,4 +1260,11 @@ public final class Constants {
   public static final class HBaseDDLExecutor {
     public static final String EXTENSIONS_DIR = "hbase.ddlexecutor.extension.dir";
   }
+
+  /**
+   * Constants for upgrade tool.
+   */
+  public static final class Upgrade {
+    public static final String UPGRADE_THREAD_POOL_SIZE = "upgrade.thread.pool.size";
+  }
 }
