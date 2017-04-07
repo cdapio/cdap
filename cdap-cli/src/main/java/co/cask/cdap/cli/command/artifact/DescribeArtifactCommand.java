@@ -28,6 +28,7 @@ import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.common.cli.Arguments;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -66,14 +67,15 @@ public class DescribeArtifactCommand extends AbstractAuthCommand {
     }
 
     Table table = Table.builder()
-      .setHeader("name", "version", "scope", "app classes", "plugin classes", "properties")
+      .setHeader("name", "version", "scope", "app classes", "plugin classes", "properties", "parents")
       .setRows(ImmutableList.of((List<String>) ImmutableList.of(
         info.getName(),
         info.getVersion(),
         info.getScope().name(),
         GSON.toJson(info.getClasses().getApps()),
         GSON.toJson(info.getClasses().getPlugins()),
-        GSON.toJson(info.getProperties())))
+        GSON.toJson(info.getProperties()),
+        Joiner.on('/').join(info.getParents())))
       )
       .build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
