@@ -16,7 +16,6 @@
 
 package co.cask.cdap.security.authorization;
 
-import co.cask.cdap.common.PrivilegeFetchException;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
@@ -164,13 +163,7 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
 
     @Override
     public Set<Privilege> listPrivileges(Principal principal) throws Exception {
-      try {
-        return authorizerInstantiator.get().listPrivileges(principal);
-      } catch (Exception e) {
-        // if we failed to fetch privileges from the authorization extension for any
-        // reason catch it and rethrow it as PrivilegeFetchException
-        throw new PrivilegeFetchException(e);
-      }
+      return authorizerInstantiator.get().listPrivileges(principal);
     }
   }
 }
