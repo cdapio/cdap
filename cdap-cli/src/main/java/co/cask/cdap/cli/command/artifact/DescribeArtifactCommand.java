@@ -67,7 +67,7 @@ public class DescribeArtifactCommand extends AbstractAuthCommand {
     }
 
     Table table = Table.builder()
-      .setHeader("name", "version", "scope", "app classes", "plugin classes", "properties", "used by")
+      .setHeader("name", "version", "scope", "app classes", "plugin classes", "properties", "parents")
       .setRows(ImmutableList.of((List<String>) ImmutableList.of(
         info.getName(),
         info.getVersion(),
@@ -75,7 +75,7 @@ public class DescribeArtifactCommand extends AbstractAuthCommand {
         GSON.toJson(info.getClasses().getApps()),
         GSON.toJson(info.getClasses().getPlugins()),
         GSON.toJson(info.getProperties()),
-        Joiner.on('/').join(info.getUsedBy())))
+        Joiner.on('/').join(info.getParents())))
       )
       .build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);

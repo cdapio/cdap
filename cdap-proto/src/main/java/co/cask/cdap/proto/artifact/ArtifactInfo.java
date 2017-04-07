@@ -31,15 +31,15 @@ import java.util.Set;
 public class ArtifactInfo extends ArtifactSummary {
   private final ArtifactClasses classes;
   private final Map<String, String> properties;
-  private final Set<ArtifactRange> usedBy;
+  private final Set<ArtifactRange> parents;
 
   public ArtifactInfo(ArtifactId id, ArtifactClasses classes, Map<String, String> properties) {
     this(id.getName(), id.getVersion().getVersion(), id.getScope(), classes, properties);
   }
 
   public ArtifactInfo(ArtifactId id, ArtifactClasses classes, Map<String, String> properties,
-                      Set<ArtifactRange> usedBy) {
-    this(id.getName(), id.getVersion().getVersion(), id.getScope(), classes, properties, usedBy);
+                      Set<ArtifactRange> parents) {
+    this(id.getName(), id.getVersion().getVersion(), id.getScope(), classes, properties, parents);
   }
 
   public ArtifactInfo(String name, String version, ArtifactScope scope,
@@ -47,15 +47,15 @@ public class ArtifactInfo extends ArtifactSummary {
     super(name, version, scope);
     this.classes = classes;
     this.properties = properties;
-    this.usedBy = null;
+    this.parents = null;
   }
 
   public ArtifactInfo(String name, String version, ArtifactScope scope, ArtifactClasses classes,
-                      Map<String, String> properties, Set<ArtifactRange> usedBy) {
+                      Map<String, String> properties, Set<ArtifactRange> parents) {
     super(name, version, scope);
     this.classes = classes;
     this.properties = properties;
-    this.usedBy = usedBy;
+    this.parents = parents;
   }
 
   public ArtifactClasses getClasses() {
@@ -66,8 +66,8 @@ public class ArtifactInfo extends ArtifactSummary {
     return properties;
   }
 
-  public Set<ArtifactRange> getUsedBy() {
-    return usedBy;
+  public Set<ArtifactRange> getParents() {
+    return parents;
   }
 
   @Override
