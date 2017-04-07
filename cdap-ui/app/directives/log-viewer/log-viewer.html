@@ -173,13 +173,12 @@
 
           <td class="source"
               ng-if="!entry.stackTrace && LogViewer.configOptions.source && !LogViewer.hiddenColumns.source"
-              uib-tooltip="{{entry.log.threadName}}:{{entry.log.className}}#{{entry.log.lineNumber}}"
+              uib-tooltip="{{LogViewer.getEntrySource(entry)}}"
               tooltip-append-to-body="true"
               tooltip-placement="top"
               tooltip-popup-delay="500"
               tooltip-class="source-tooltip">
-              <span
-                ng-bind="(entry.log.threadName)+':'+(entry.log.className)+'#'+(entry.log.lineNumber)"></span>
+              <span ng-bind="LogViewer.getEntrySource(entry)"></span>
           </td>
           <td class="log-message"
               ng-if="!entry.stackTrace && LogViewer.configOptions.message && !LogViewer.hiddenColumns.message"
