@@ -26,7 +26,6 @@ import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.batch.SparkBatchSinkContext;
 import co.cask.cdap.etl.spark.batch.SparkBatchSinkFactory;
-import co.cask.cdap.etl.spark.function.CountingFunction;
 import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
@@ -76,8 +75,7 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
         @Override
         public void run(DatasetContext datasetContext) throws Exception {
           SparkBatchSinkContext sinkContext =
-            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo,
-                                      sec.getDataTracer(stageName).isEnabled());
+            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo);
           batchSink.prepareRun(sinkContext);
         }
       });
@@ -89,8 +87,7 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
         @Override
         public void run(DatasetContext datasetContext) throws Exception {
           SparkBatchSinkContext sinkContext =
-            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo,
-                                      sec.getDataTracer(stageName).isEnabled());
+            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo);
           batchSink.onRunFinish(true, sinkContext);
         }
       });
@@ -102,8 +99,7 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
           @Override
           public void run(DatasetContext datasetContext) throws Exception {
             SparkBatchSinkContext sinkContext =
-              new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo,
-                                        sec.getDataTracer(stageName).isEnabled());
+              new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo);
             batchSink.onRunFinish(false, sinkContext);
           }
         });

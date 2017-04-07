@@ -26,6 +26,7 @@ import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.planner.StageInfo;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -45,7 +46,8 @@ public class SparkStreamingExecutionContext extends AbstractTransformContext imp
 
   public SparkStreamingExecutionContext(JavaSparkExecutionContext sec, JavaSparkContext jsc,
                                         long batchTime, StageInfo stageInfo) {
-    super(sec.getPluginContext(), sec.getServiceDiscoverer(), sec.getMetrics(), null, stageInfo);
+    super(sec.getPluginContext(), sec.getServiceDiscoverer(), sec.getMetrics(), null,
+          stageInfo, new BasicArguments(sec));
     this.sec = sec;
     this.jsc = jsc;
     this.batchTime = batchTime;

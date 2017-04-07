@@ -16,35 +16,34 @@
 
 package co.cask.cdap.etl.batch;
 
-import co.cask.cdap.api.Admin;
-import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.plugin.PluginContext;
-import co.cask.cdap.etl.api.LookupProvider;
+import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.batch.BatchAggregatorContext;
+import co.cask.cdap.etl.common.BasicArguments;
+import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.planner.StageInfo;
-
-import java.util.Map;
+import org.apache.hadoop.mapreduce.Job;
 
 /**
- * Base Aggregator Context.
+ * Batch Aggregator Context.
  */
-public abstract class AbstractAggregatorContext extends AbstractBatchContext implements BatchAggregatorContext {
+public class DefaultAggregatorContext extends AbstractBatchContext implements BatchAggregatorContext {
+  private final Job job;
   private Integer numPartitions;
   private Class<?> groupKeyClass;
   private Class<?> groupValueClass;
 
-  protected AbstractAggregatorContext(PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer,
-                                      DatasetContext datasetContext,
-                                      Metrics metrics,
-                                      LookupProvider lookup,
-                                      long logicalStartTime,
-                                      Map<String, String> runtimeArgs,
-                                      Admin admin,
-                                      StageInfo stageInfo) {
-    super(pluginContext, serviceDiscoverer, datasetContext, metrics, lookup, logicalStartTime, runtimeArgs,
-          admin, stageInfo);
+  public DefaultAggregatorContext(MapReduceContext context, Metrics metrics, StageInfo stageInfo) {
+    super(context, metrics, new DatasetContextLookupProvider(context), context.getLogicalStartTime(),
+          context.getAdmin(), stageInfo, new BasicArguments(context));
+    this.job = context.getHadoopJob();
+  }
+
+  public DefaultAggregatorContext(SparkClientContext context, StageInfo stageInfo) {
+    super(context, context.getMetrics(), new DatasetContextLookupProvider(context), context.getLogicalStartTime(),
+          context.getAdmin(), stageInfo, new BasicArguments(context));
+    this.job = null;
   }
 
   @Override
@@ -78,4 +77,11 @@ public abstract class AbstractAggregatorContext extends AbstractBatchContext imp
     return groupValueClass;
   }
 
+  @Override
+  public <T> T getHadoopJob() {
+    if (job == null) {
+      throw new UnsupportedOperationException("Hadoop Job is not available in Spark");
+    }
+    return (T) job;
+  }
 }

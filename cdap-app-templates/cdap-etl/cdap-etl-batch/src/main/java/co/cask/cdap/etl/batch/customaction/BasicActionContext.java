@@ -23,6 +23,7 @@ import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.api.action.SettableArguments;
 import co.cask.cdap.etl.common.AbstractStageContext;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.planner.StageInfo;
 import org.apache.tephra.TransactionFailureException;
 
@@ -34,12 +35,11 @@ import java.util.Map;
 public class BasicActionContext extends AbstractStageContext implements ActionContext  {
 
   private final CustomActionContext context;
-  private final BasicSettableArguments arguments;
 
-  public BasicActionContext(CustomActionContext context, Metrics metrics, String stageName) {
-    super(context, context, metrics, StageInfo.builder(stageName, Action.PLUGIN_TYPE).build());
+  public BasicActionContext(CustomActionContext context, Metrics metrics, String stageName,
+                            BasicArguments arguments) {
+    super(context, context, metrics, StageInfo.builder(stageName, Action.PLUGIN_TYPE).build(), arguments);
     this.context = context;
-    this.arguments = new BasicSettableArguments(context.getRuntimeArguments());
   }
 
   @Override

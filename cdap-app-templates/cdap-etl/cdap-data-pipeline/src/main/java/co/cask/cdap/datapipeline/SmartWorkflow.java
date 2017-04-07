@@ -27,7 +27,6 @@ import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.etl.api.Engine;
-import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
@@ -42,8 +41,8 @@ import co.cask.cdap.etl.batch.WorkflowBackedActionContext;
 import co.cask.cdap.etl.batch.connector.ConnectorSource;
 import co.cask.cdap.etl.batch.customaction.PipelineAction;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
 import co.cask.cdap.etl.common.PipelinePhase;
@@ -209,11 +208,9 @@ public class SmartWorkflow extends AbstractWorkflow {
   public void destroy() {
     WorkflowContext workflowContext = getContext();
 
+    // Execute the post actions only if pipeline is not running in preview mode.
     if (!workflowContext.getDataTracer(PostAction.PLUGIN_TYPE).isEnabled()) {
-      // Execute the post actions only if pipeline is not running in preview mode.
-      LookupProvider lookupProvider = new DatasetContextLookupProvider(workflowContext);
-      Map<String, String> runtimeArgs = workflowContext.getRuntimeArguments();
-      long logicalStartTime = workflowContext.getLogicalStartTime();
+      BasicArguments arguments = new BasicArguments(workflowContext.getToken(), workflowContext.getRuntimeArguments());
       for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
         String name = endingActionEntry.getKey();
         PostAction action = endingActionEntry.getValue();
@@ -221,8 +218,8 @@ public class SmartWorkflow extends AbstractWorkflow {
           .setStageLoggingEnabled(spec.isStageLoggingEnabled())
           .setProcessTimingEnabled(spec.isProcessTimingEnabled())
           .build();
-        BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics, lookupProvider,
-                                                                     logicalStartTime, runtimeArgs, stageInfo);
+        BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics,
+                                                                     stageInfo, arguments);
         try {
           action.run(context);
         } catch (Throwable t) {
