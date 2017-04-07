@@ -27,10 +27,10 @@ import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.log.LogContext;
 import co.cask.cdap.etl.planner.StageInfo;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -40,7 +40,6 @@ import java.util.concurrent.Callable;
 public abstract class AbstractBatchContext extends AbstractTransformContext implements BatchContext {
   private final DatasetContext datasetContext;
   private final long logicalStartTime;
-  private final Map<String, String> runtimeArgs;
   private final Admin admin;
 
   protected AbstractBatchContext(PluginContext pluginContext,
@@ -48,13 +47,12 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
                                  Metrics metrics,
                                  LookupProvider lookup,
                                  long logicalStartTime,
-                                 Map<String, String> runtimeArgs,
                                  Admin admin,
-                                 StageInfo stageInfo) {
-    super(pluginContext, metrics, lookup, stageInfo);
+                                 StageInfo stageInfo,
+                                 BasicArguments arguments) {
+    super(pluginContext, metrics, lookup, stageInfo, arguments);
     this.datasetContext = datasetContext;
     this.logicalStartTime = logicalStartTime;
-    this.runtimeArgs = runtimeArgs;
     this.admin = admin;
   }
 
@@ -62,14 +60,10 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
                                                                             Metrics metrics,
                                                                             LookupProvider lookup,
                                                                             long logicalStartTime,
-                                                                            Map<String, String> runtimeArgs,
                                                                             Admin admin,
-                                                                            StageInfo stageInfo) {
-    super(context, metrics, lookup, stageInfo);
-    this.datasetContext = context;
-    this.logicalStartTime = logicalStartTime;
-    this.runtimeArgs = runtimeArgs;
-    this.admin = admin;
+                                                                            StageInfo stageInfo,
+                                                                            BasicArguments arguments) {
+    this(context, context, metrics, lookup, logicalStartTime, admin, stageInfo, arguments);
   }
 
   public void createDataset(String datasetName, String typeName, DatasetProperties properties)
@@ -88,13 +82,13 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
 
   @Override
   public Map<String, String> getRuntimeArguments() {
-    return Collections.unmodifiableMap(runtimeArgs);
+    return arguments.asMap();
   }
 
   @Override
   public void setRuntimeArgument(String key, String value, boolean overwrite) {
-    if (overwrite || !runtimeArgs.containsKey(key)) {
-      runtimeArgs.put(key, value);
+    if (overwrite || !arguments.has(key)) {
+      arguments.set(key, value);
     }
   }
 

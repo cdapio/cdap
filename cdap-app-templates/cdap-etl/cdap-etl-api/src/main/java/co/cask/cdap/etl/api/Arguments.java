@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,37 +13,32 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.etl.api.action;
 
-import co.cask.cdap.etl.api.Arguments;
+package co.cask.cdap.etl.api;
 
 import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Provides access to the pipeline arguments which can be updated.
+ * Provides access to the pipeline arguments at runtime.
  */
-public interface SettableArguments extends Arguments {
+public interface Arguments extends Iterable<Map.Entry<String, String>> {
 
   /**
-   * Returns true if specified argument is provided, otherwise false is returned.
+   * Returns true if the specified argument exists and false if not.
+   *
+   * @param name the name of the argument
+   * @return true if the specified argument exists and false if not
    */
   boolean has(String name);
 
   /**
-   * Returns the value for the given argument name if it exist, otherwise {@code null} is returned.
+   * Returns the value for the specified argument or {@code null} if none exists.
+   *
+   * @param name the name of the argument
+   * @return the value for the specified argument or {@code null} if none exists
    */
   @Nullable
   String get(String name);
-
-  /**
-   * Sets the name and value as specified by the input parameters.
-   */
-  void set(String name, String value);
-
-  /**
-   * Returns an unmodifiable map that represents all arguments.
-   */
-  Map<String, String> asMap();
 
 }

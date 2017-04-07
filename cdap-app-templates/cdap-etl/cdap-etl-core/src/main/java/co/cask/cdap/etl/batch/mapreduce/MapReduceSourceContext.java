@@ -19,14 +19,13 @@ package co.cask.cdap.etl.batch.mapreduce;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.log.LogContext;
 import co.cask.cdap.etl.planner.StageInfo;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -38,11 +37,10 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
   private final Set<String> inputNames;
   private final boolean isPreviewEnabled;
 
-  public MapReduceSourceContext(MapReduceContext context, Metrics metrics, LookupProvider lookup,
-                                Map<String, String> runtimeArgs, StageInfo stageInfo, boolean isPreviewEnabled) {
-    super(context, metrics, lookup, runtimeArgs, stageInfo);
+  public MapReduceSourceContext(MapReduceContext context, Metrics metrics, StageInfo stageInfo) {
+    super(context, metrics, new DatasetContextLookupProvider(context), stageInfo);
     this.inputNames = new HashSet<>();
-    this.isPreviewEnabled = isPreviewEnabled;
+    this.isPreviewEnabled = context.getDataTracer(stageInfo.getName()).isEnabled();
   }
 
   @Override

@@ -21,6 +21,7 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.batch.AbstractBatchContext;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.log.LogContext;
 import co.cask.cdap.etl.planner.StageInfo;
 
@@ -34,9 +35,10 @@ public class MapReduceBatchContext extends AbstractBatchContext {
   protected final MapReduceContext mrContext;
 
   public MapReduceBatchContext(MapReduceContext context, Metrics metrics,
-                               LookupProvider lookup, Map<String, String> runtimeArguments,
+                               LookupProvider lookup,
                                StageInfo stageInfo) {
-    super(context, metrics, lookup, context.getLogicalStartTime(), runtimeArguments, context.getAdmin(), stageInfo);
+    super(context, metrics, lookup, context.getLogicalStartTime(), context.getAdmin(), stageInfo,
+          new BasicArguments(context));
     this.mrContext = context;
   }
 

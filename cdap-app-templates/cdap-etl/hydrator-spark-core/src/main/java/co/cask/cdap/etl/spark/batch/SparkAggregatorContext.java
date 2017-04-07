@@ -19,6 +19,7 @@ package co.cask.cdap.etl.spark.batch;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.batch.AbstractAggregatorContext;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.planner.StageInfo;
 
 /**
@@ -27,8 +28,8 @@ import co.cask.cdap.etl.planner.StageInfo;
 public class SparkAggregatorContext extends AbstractAggregatorContext {
 
   public SparkAggregatorContext(SparkClientContext context, LookupProvider lookup, StageInfo stageInfo) {
-    super(context, context, context.getMetrics(),
-          lookup, context.getLogicalStartTime(), context.getRuntimeArguments(), context.getAdmin(), stageInfo);
+    super(context, context.getMetrics(), lookup, context.getLogicalStartTime(), context.getAdmin(), stageInfo,
+          new BasicArguments(context));
   }
 
   @Override

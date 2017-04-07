@@ -24,6 +24,7 @@ import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.log.LogContext;
 import co.cask.cdap.etl.planner.StageInfo;
 import com.google.common.collect.ImmutableMap;
@@ -44,7 +45,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
 
   public MapReduceRuntimeContext(MapReduceTaskContext context, Metrics metrics,
                                  LookupProvider lookup, Map<String, String> runtimeArgs, StageInfo stageInfo) {
-    super(context, metrics, lookup, stageInfo);
+    super(context, metrics, lookup, stageInfo, new BasicArguments(context.getWorkflowToken(), runtimeArgs));
     this.context = context;
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
   }

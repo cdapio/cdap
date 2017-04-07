@@ -20,9 +20,8 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.batch.AbstractJoinerContext;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.planner.StageInfo;
-
-import java.util.Map;
 
 /**
  * Map reduce context of joiner
@@ -31,8 +30,9 @@ public class MapReduceJoinerContext extends AbstractJoinerContext {
   private final MapReduceContext mrContext;
 
   public MapReduceJoinerContext(MapReduceContext context, Metrics metrics, LookupProvider lookup,
-                                Map<String, String> runtimeArgs, StageInfo stageInfo) {
-    super(context, context, metrics, lookup, context.getLogicalStartTime(), runtimeArgs, context.getAdmin(), stageInfo);
+                                StageInfo stageInfo) {
+    super(context, metrics, lookup, context.getLogicalStartTime(), context.getAdmin(), stageInfo,
+          new BasicArguments(context));
     this.mrContext = context;
   }
 

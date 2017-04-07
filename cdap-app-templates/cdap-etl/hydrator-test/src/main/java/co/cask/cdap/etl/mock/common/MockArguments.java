@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,7 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.etl.batch.customaction;
+
+package co.cask.cdap.etl.mock.common;
 
 import co.cask.cdap.etl.api.action.SettableArguments;
 
@@ -22,13 +23,16 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Default implementation of {@link SettableArguments}.
+ * Mock version of {@link SettableArguments}.
  */
-public class BasicSettableArguments implements SettableArguments {
-
+public class MockArguments implements SettableArguments {
   private final Map<String, String> options;
 
-  public BasicSettableArguments(Map<String, String> arguments) {
+  public MockArguments() {
+    this(new HashMap<String, String>());
+  }
+
+  public MockArguments(Map<String, String> arguments) {
     options = new HashMap<>();
     for (Map.Entry<String, String> argument : arguments.entrySet()) {
       options.put(argument.getKey(), argument.getValue());

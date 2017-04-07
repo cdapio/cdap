@@ -180,10 +180,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName, evaluator);
       batchSource = new LoggedBatchConfigurable<>(sourceName, batchSource);
       StageInfo stageInfo = phaseSpec.getPhase().getStage(sourceName);
-      MapReduceSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics,
-                                                                        new DatasetContextLookupProvider(context),
-                                                                        context.getRuntimeArguments(), stageInfo,
-                                                                        context.getDataTracer(sourceName).isEnabled());
+      MapReduceSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics, stageInfo);
       batchSource.prepareRun(sourceContext);
       runtimeArgs.put(sourceName, sourceContext.getRuntimeArguments());
       for (String inputAlias : sourceContext.getInputNames()) {
@@ -204,10 +201,7 @@ public class ETLMapReduce extends AbstractMapReduce {
 
       BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(sinkName, evaluator);
       batchSink = new LoggedBatchConfigurable<>(sinkName, batchSink);
-      MapReduceSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics,
-                                                                  new DatasetContextLookupProvider(context),
-                                                                  context.getRuntimeArguments(), stageInfo,
-                                                                  context.getDataTracer(sinkName).isEnabled());
+      MapReduceSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics, stageInfo);
       batchSink.prepareRun(sinkContext);
       runtimeArgs.put(sinkName, sinkContext.getRuntimeArguments());
       finishers.add(batchSink, sinkContext);
@@ -241,8 +235,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       if (!phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE).isEmpty()) {
         BatchAggregator aggregator = pluginInstantiator.newPluginInstance(reducerName, evaluator);
         MapReduceAggregatorContext aggregatorContext =
-          new MapReduceAggregatorContext(context, mrMetrics, new DatasetContextLookupProvider(context),
-                                         context.getRuntimeArguments(), stageInfo);
+          new MapReduceAggregatorContext(context, mrMetrics, new DatasetContextLookupProvider(context), stageInfo);
         aggregator.prepareRun(aggregatorContext);
         finishers.add(aggregator, aggregatorContext);
 
@@ -265,8 +258,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       } else { // reducer type is joiner
         BatchJoiner batchJoiner = pluginInstantiator.newPluginInstance(reducerName, evaluator);
         MapReduceJoinerContext joinerContext =
-          new MapReduceJoinerContext(context, mrMetrics, new DatasetContextLookupProvider(context),
-                                     context.getRuntimeArguments(), stageInfo);
+          new MapReduceJoinerContext(context, mrMetrics, new DatasetContextLookupProvider(context), stageInfo);
         batchJoiner.prepareRun(joinerContext);
         finishers.add(batchJoiner, joinerContext);
 

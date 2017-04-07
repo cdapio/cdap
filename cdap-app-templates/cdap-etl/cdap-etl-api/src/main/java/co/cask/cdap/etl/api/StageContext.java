@@ -118,4 +118,11 @@ public interface StageContext {
    */
   @Nullable
   Schema getOutputSchema();
+
+  /**
+   * Return the pipeline arguments for this run.
+   *
+   * @return the pipeline arguments for this run
+   */
+  Arguments getArguments();
 }

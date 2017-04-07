@@ -35,8 +35,8 @@ public abstract class AbstractTransformContext extends AbstractStageContext impl
   private final LookupProvider lookup;
 
   public AbstractTransformContext(PluginContext pluginContext, Metrics metrics,
-                                  LookupProvider lookup, StageInfo stageInfo) {
-    super(pluginContext, metrics, stageInfo);
+                                  LookupProvider lookup, StageInfo stageInfo, BasicArguments arguments) {
+    super(pluginContext, metrics, stageInfo, arguments);
     this.lookup = lookup;
   }
 

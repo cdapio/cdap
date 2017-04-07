@@ -28,6 +28,7 @@ import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
@@ -42,6 +43,8 @@ import java.util.Map;
 public class StringValueFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
+  private String filterField;
+  private String filterValue;
 
   public StringValueFilterTransform(Config config) {
     this.config = config;
@@ -54,9 +57,23 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
   }
 
   @Override
+  public void initialize(TransformContext context) throws Exception {
+    // override whatever is in the conf if they are specified in the pipeline arguments.
+    super.initialize(context);
+    filterField = context.getArguments().get("field");
+    if (filterField == null)  {
+      filterField = config.field;
+    }
+    filterValue = context.getArguments().get("value");
+    if (filterValue == null) {
+      filterValue = config.value;
+    }
+  }
+
+  @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
-    String value = input.get(config.field);
-    if (!config.value.equals(value)) {
+    String value = input.get(filterField);
+    if (!filterValue.equals(value)) {
       emitter.emit(input);
     } else {
       emitter.emitError(new InvalidEntry<>(1, "bad string value", input));
