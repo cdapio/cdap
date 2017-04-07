@@ -42,7 +42,6 @@ import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.Destroyables;
-import co.cask.cdap.etl.common.LoggedTransform;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TrackedEmitter;
@@ -51,6 +50,8 @@ import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.common.TxLookupProvider;
+import co.cask.cdap.etl.common.plugin.Caller;
+import co.cask.cdap.etl.common.plugin.WrappedTransform;
 import co.cask.cdap.etl.log.LogStageInjector;
 import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.PipelinePlanner;
@@ -277,8 +278,8 @@ public class ETLWorker extends AbstractWorker {
     for (StageInfo transformInfo : transformInfos) {
       String transformName = transformInfo.getName();
       try {
-        Transform<?, ?> transform = context.newPluginInstance(transformName);
-        transform = new LoggedTransform<>(transformName, transform);
+        Transform<?, ?> transform = context.newPluginInstance(transformName);;
+        transform = new WrappedTransform<>(transform, Caller.DEFAULT);
         WorkerRealtimeContext transformContext = new WorkerRealtimeContext(
           context, metrics, new TxLookupProvider(context), transformInfo);
         LOG.debug("Transform Class : {}", transform.getClass().getName());

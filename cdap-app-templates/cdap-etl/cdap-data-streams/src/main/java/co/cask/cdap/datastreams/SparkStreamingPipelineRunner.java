@@ -17,6 +17,7 @@
 package co.cask.cdap.datastreams;
 
 import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.JoinElement;
@@ -27,6 +28,7 @@ import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
 import co.cask.cdap.etl.spark.SparkPipelineRunner;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
+import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import co.cask.cdap.etl.spark.streaming.DStreamCollection;
 import co.cask.cdap.etl.spark.streaming.DefaultStreamingContext;
 import co.cask.cdap.etl.spark.streaming.DynamicDriverContext;
@@ -79,7 +81,8 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
       MacroEvaluator macroEvaluator = new ErrorMacroEvaluator(
         "Due to spark limitations, macro evaluation is not allowed in streaming sources when checkpointing " +
           "is enabled.");
-      source = sec.getPluginContext().newPluginInstance(stageInfo.getName(), macroEvaluator);
+      PluginContext pluginContext = new SparkPipelinePluginContext(sec.getPluginContext(), sec.getMetrics());
+      source = pluginContext.newPluginInstance(stageInfo.getName(), macroEvaluator);
     }
 
     DataTracer dataTracer = sec.getDataTracer(stageInfo.getName());

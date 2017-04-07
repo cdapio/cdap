@@ -23,7 +23,9 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.etl.api.realtime.DataWriter;
-import co.cask.cdap.etl.log.LogContext;
+import co.cask.cdap.etl.common.plugin.Caller;
+import co.cask.cdap.etl.common.plugin.ClassLoaderCaller;
+import co.cask.cdap.etl.common.plugin.NoStageLoggingCaller;
 import com.google.common.base.Throwables;
 
 import java.io.File;
@@ -38,15 +40,17 @@ import java.util.concurrent.Callable;
 public class DefaultDataWriter implements DataWriter {
   private final WorkerContext context;
   private final DatasetContext dsContext;
+  private final Caller caller;
 
   public DefaultDataWriter(WorkerContext context, DatasetContext dsContext) {
     this.context = context;
     this.dsContext = dsContext;
+    this.caller = ClassLoaderCaller.wrap(NoStageLoggingCaller.wrap(Caller.DEFAULT), getClass().getClassLoader());
   }
 
   @Override
   public <T extends Dataset> T getDataset(final String name) throws DatasetInstantiationException {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+    return caller.callUnchecked(new Callable<T>() {
       @Override
       public T call() throws Exception {
         return dsContext.getDataset(name);
@@ -57,7 +61,7 @@ public class DefaultDataWriter implements DataWriter {
   @Override
   public <T extends Dataset> T getDataset(final String namespace, final String name)
     throws DatasetInstantiationException {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+    return caller.callUnchecked(new Callable<T>() {
       @Override
       public T call() throws Exception {
         return dsContext.getDataset(namespace, name);
@@ -68,7 +72,7 @@ public class DefaultDataWriter implements DataWriter {
   @Override
   public <T extends Dataset> T getDataset(final String name, final Map<String, String> arguments)
     throws DatasetInstantiationException {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+    return caller.callUnchecked(new Callable<T>() {
       @Override
       public T call() throws Exception {
         return dsContext.getDataset(name, arguments);
@@ -79,7 +83,7 @@ public class DefaultDataWriter implements DataWriter {
   @Override
   public <T extends Dataset> T getDataset(final String namespace, final String name,
                                           final Map<String, String> arguments) throws DatasetInstantiationException {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+    return caller.callUnchecked(new Callable<T>() {
       @Override
       public T call() throws Exception {
         return dsContext.getDataset(namespace, name, arguments);
@@ -89,7 +93,7 @@ public class DefaultDataWriter implements DataWriter {
 
   @Override
   public void releaseDataset(final Dataset dataset) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() {
         dsContext.releaseDataset(dataset);
@@ -100,7 +104,7 @@ public class DefaultDataWriter implements DataWriter {
 
   @Override
   public void discardDataset(final Dataset dataset) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() {
         dsContext.discardDataset(dataset);
@@ -112,11 +116,11 @@ public class DefaultDataWriter implements DataWriter {
   @Override
   public void write(final String stream, final String data) throws IOException {
     try {
-      LogContext.runWithoutLogging(new Callable<Void>() {
+      caller.call(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           context.write(stream, data);
-          return  null;
+          return null;
         }
       });
     } catch (Exception e) {
@@ -128,11 +132,11 @@ public class DefaultDataWriter implements DataWriter {
   @Override
   public void write(final String stream, final String data, final Map<String, String> headers) throws IOException {
     try {
-      LogContext.runWithoutLogging(new Callable<Void>() {
+      caller.call(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           context.write(stream, data, headers);
-          return  null;
+          return null;
         }
       });
     } catch (Exception e) {
@@ -144,11 +148,11 @@ public class DefaultDataWriter implements DataWriter {
   @Override
   public void write(final String stream, final ByteBuffer data) throws IOException {
     try {
-      LogContext.runWithoutLogging(new Callable<Void>() {
+      caller.call(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           context.write(stream, data);
-          return  null;
+          return null;
         }
       });
     } catch (Exception e) {
@@ -160,11 +164,11 @@ public class DefaultDataWriter implements DataWriter {
   @Override
   public void write(final String stream, final StreamEventData data) throws IOException {
     try {
-      LogContext.runWithoutLogging(new Callable<Void>() {
+      caller.call(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           context.write(stream, data);
-          return  null;
+          return null;
         }
       });
     } catch (Exception e) {
@@ -176,11 +180,11 @@ public class DefaultDataWriter implements DataWriter {
   @Override
   public void writeFile(final String stream, final File file, final String contentType) throws IOException {
     try {
-      LogContext.runWithoutLogging(new Callable<Void>() {
+      caller.call(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           context.writeFile(stream, file, contentType);
-          return  null;
+          return null;
         }
       });
     } catch (Exception e) {
@@ -192,7 +196,7 @@ public class DefaultDataWriter implements DataWriter {
   @Override
   public StreamBatchWriter createBatchWriter(final String stream, final String contentType) throws IOException {
     try {
-      return LogContext.runWithoutLogging(new Callable<StreamBatchWriter>() {
+      return caller.call(new Callable<StreamBatchWriter>() {
         @Override
         public StreamBatchWriter call() throws Exception {
           return context.createBatchWriter(stream, contentType);

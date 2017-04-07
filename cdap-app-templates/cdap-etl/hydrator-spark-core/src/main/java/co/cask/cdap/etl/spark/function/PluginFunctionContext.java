@@ -16,7 +16,6 @@
 
 package co.cask.cdap.etl.spark.function;
 
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
@@ -28,8 +27,10 @@ import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
+import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.batch.SparkBatchRuntimeContext;
+import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -50,6 +51,7 @@ public class PluginFunctionContext implements Serializable {
   private final SecureStore secureStore;
   private final DataTracer dataTracer;
   private final StageInfo stageInfo;
+  private transient PipelinePluginContext pipelinePluginContext;
 
   public PluginFunctionContext(StageInfo stageInfo, JavaSparkExecutionContext sec) {
     this.namespace = sec.getNamespace();
@@ -68,11 +70,12 @@ public class PluginFunctionContext implements Serializable {
     this.metrics = sec.getMetrics();
     this.secureStore = sec.getSecureStore();
     this.dataTracer = sec.getDataTracer(stageInfo.getName());
+    this.pipelinePluginContext = getPluginContext();
   }
 
   public <T> T createPlugin() throws Exception {
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(arguments, logicalStartTime, secureStore, namespace);
-    return pluginContext.newPluginInstance(stageInfo.getName(), macroEvaluator);
+    return getPluginContext().newPluginInstance(stageInfo.getName(), macroEvaluator);
   }
 
   public String getStageName() {
@@ -88,11 +91,18 @@ public class PluginFunctionContext implements Serializable {
   }
 
   public SparkBatchRuntimeContext createBatchRuntimeContext() {
-    return new SparkBatchRuntimeContext(pluginContext, metrics, logicalStartTime, stageInfo,
+    return new SparkBatchRuntimeContext(getPluginContext(), metrics, logicalStartTime, stageInfo,
                                         new BasicArguments(arguments));
   }
 
   public DataTracer getDataTracer() {
     return dataTracer;
+  }
+
+  private PipelinePluginContext getPluginContext() {
+    if (pipelinePluginContext == null) {
+      pipelinePluginContext = new SparkPipelinePluginContext(pluginContext, metrics);
+    }
+    return pipelinePluginContext;
   }
 }

@@ -34,6 +34,7 @@ public final class Constants {
                                                                   Schema.of(Schema.Type.NULL))),
     Schema.Field.of(ErrorDataset.INVALIDENTRY, Schema.of(Schema.Type.STRING))
   );
+  public static final String MDC_STAGE_KEY = "pipeline.stage";
 
   private Constants() {
     throw new AssertionError("Suppress default constructor for noninstantiability");
@@ -47,5 +48,16 @@ public final class Constants {
     public static final String ERRMSG = "errMsg";
     public static final String TIMESTAMP = "errTimestamp";
     public static final String INVALIDENTRY = "invalidRecord";
+  }
+
+  /**
+   * Various metric constants.
+   */
+  public static final class Metrics {
+    public static final String TOTAL_TIME = "process.time.total";
+    public static final String MIN_TIME = "process.time.min";
+    public static final String MAX_TIME = "process.time.max";
+    public static final String STD_DEV_TIME = "process.time.stddev";
+    public static final String AVG_TIME = "process.time.avg";
   }
 }

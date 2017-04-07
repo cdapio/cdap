@@ -20,6 +20,7 @@ import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.customaction.CustomActionContext;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.action.ActionContext;
@@ -29,6 +30,7 @@ import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.SetMultimapCodec;
+import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.SetMultimap;
@@ -74,13 +76,14 @@ public class PipelineAction extends AbstractCustomAction {
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
     PipelinePhase phase = phaseSpec.getPhase();
     StageInfo stageInfo = phase.iterator().next();
+    PluginContext pluginContext = new PipelinePluginContext(context, metrics);
     Action action =
-      context.newPluginInstance(stageInfo.getName(),
-                                new DefaultMacroEvaluator(context.getWorkflowToken(),
-                                                          context.getRuntimeArguments(),
-                                                          context.getLogicalStartTime(),
-                                                          context,
-                                                          context.getNamespace()));
+      pluginContext.newPluginInstance(stageInfo.getName(),
+                                      new DefaultMacroEvaluator(context.getWorkflowToken(),
+                                                                context.getRuntimeArguments(),
+                                                                context.getLogicalStartTime(),
+                                                                context,
+                                                                context.getNamespace()));
     BasicArguments arguments = new BasicArguments(context);
     ActionContext actionContext = new BasicActionContext(context, metrics, stageInfo.getName(), arguments);
     if (!context.getDataTracer(stageInfo.getName()).isEnabled()) {

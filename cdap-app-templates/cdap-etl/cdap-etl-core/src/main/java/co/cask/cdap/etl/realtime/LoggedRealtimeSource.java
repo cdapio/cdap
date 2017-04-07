@@ -21,7 +21,8 @@ import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.api.realtime.SourceState;
-import co.cask.cdap.etl.log.LogContext;
+import co.cask.cdap.etl.common.plugin.Caller;
+import co.cask.cdap.etl.common.plugin.StageLoggingCaller;
 
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
@@ -32,55 +33,55 @@ import javax.annotation.Nullable;
  * @param <T> type of output
  */
 public class LoggedRealtimeSource<T> extends RealtimeSource<T> {
-  private final String name;
   private final RealtimeSource<T> realtimeSource;
+  private final Caller caller;
 
   public LoggedRealtimeSource(String name, RealtimeSource<T> realtimeSource) {
-    this.name = name;
     this.realtimeSource = realtimeSource;
+    this.caller = StageLoggingCaller.wrap(Caller.DEFAULT, name);
   }
 
   @Nullable
   @Override
   public SourceState poll(final Emitter<T> writer, final SourceState currentState) throws Exception {
-    return LogContext.run(new Callable<SourceState>() {
+    return caller.call(new Callable<SourceState>() {
       @Override
       public SourceState call() throws Exception {
         return realtimeSource.poll(writer, currentState);
       }
-    }, name);
+    });
   }
 
   @Override
   public void configurePipeline(final PipelineConfigurer pipelineConfigurer) {
-    LogContext.runUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         realtimeSource.configurePipeline(pipelineConfigurer);
         return null;
       }
-    }, name);
+    });
   }
 
   @Override
   public void initialize(final RealtimeContext context) throws Exception {
-    LogContext.run(new Callable<Void>() {
+    caller.call(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         realtimeSource.initialize(context);
         return null;
       }
-    }, name);
+    });
   }
 
   @Override
   public void destroy() {
-    LogContext.runUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         realtimeSource.destroy();
         return null;
       }
-    }, name);
+    });
   }
 }

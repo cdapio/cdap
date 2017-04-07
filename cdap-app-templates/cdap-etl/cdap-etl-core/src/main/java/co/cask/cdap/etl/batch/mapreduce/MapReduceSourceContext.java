@@ -22,7 +22,9 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.ExternalDatasets;
-import co.cask.cdap.etl.log.LogContext;
+import co.cask.cdap.etl.common.plugin.Caller;
+import co.cask.cdap.etl.common.plugin.ClassLoaderCaller;
+import co.cask.cdap.etl.common.plugin.NoStageLoggingCaller;
 import co.cask.cdap.etl.planner.StageInfo;
 
 import java.util.HashSet;
@@ -36,19 +38,21 @@ import java.util.concurrent.Callable;
 public class MapReduceSourceContext extends MapReduceBatchContext implements BatchSourceContext {
   private final Set<String> inputNames;
   private final boolean isPreviewEnabled;
+  private final Caller caller;
 
   public MapReduceSourceContext(MapReduceContext context, Metrics metrics, StageInfo stageInfo) {
     super(context, metrics, new DatasetContextLookupProvider(context), stageInfo);
     this.inputNames = new HashSet<>();
     this.isPreviewEnabled = context.getDataTracer(stageInfo.getName()).isEnabled();
+    this.caller = ClassLoaderCaller.wrap(NoStageLoggingCaller.wrap(Caller.DEFAULT), getClass().getClassLoader());
   }
 
   @Override
   public void setInput(final Input input) {
-    Input trackableInput = LogContext.runWithoutLoggingUnchecked(new Callable<Input>() {
+    Input trackableInput = caller.callUnchecked(new Callable<Input>() {
       @Override
       public Input call() throws Exception {
-        Input trackableInput =  ExternalDatasets.makeTrackable(mrContext.getAdmin(), suffixInput(input));
+        Input trackableInput = ExternalDatasets.makeTrackable(mrContext.getAdmin(), suffixInput(input));
         mrContext.addInput(trackableInput);
         return trackableInput;
       }

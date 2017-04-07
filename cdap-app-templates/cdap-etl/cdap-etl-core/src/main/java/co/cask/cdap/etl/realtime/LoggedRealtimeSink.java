@@ -20,7 +20,8 @@ import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.realtime.DataWriter;
 import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.etl.api.realtime.RealtimeSink;
-import co.cask.cdap.etl.log.LogContext;
+import co.cask.cdap.etl.common.plugin.Caller;
+import co.cask.cdap.etl.common.plugin.StageLoggingCaller;
 
 import java.util.concurrent.Callable;
 
@@ -30,54 +31,54 @@ import java.util.concurrent.Callable;
  * @param <I> the input type
  */
 public class LoggedRealtimeSink<I> extends RealtimeSink<I> {
-  private final String name;
   private final RealtimeSink<I> realtimeSink;
+  private final Caller caller;
 
   public LoggedRealtimeSink(String name, RealtimeSink<I> realtimeSink) {
-    this.name = name;
     this.realtimeSink = realtimeSink;
+    this.caller = StageLoggingCaller.wrap(Caller.DEFAULT, name);
   }
 
   @Override
   public int write(final Iterable<I> objects, final DataWriter dataWriter) throws Exception {
-    return LogContext.run(new Callable<Integer>() {
+    return caller.call(new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
         return realtimeSink.write(objects, dataWriter);
       }
-    }, name);
+    });
   }
 
   @Override
   public void configurePipeline(final PipelineConfigurer pipelineConfigurer) {
-    LogContext.runUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() {
         realtimeSink.configurePipeline(pipelineConfigurer);
         return null;
       }
-    }, name);
+    });
   }
 
   @Override
   public void initialize(final RealtimeContext context) throws Exception {
-    LogContext.run(new Callable<Void>() {
+    caller.call(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         realtimeSink.initialize(context);
         return null;
       }
-    }, name);
+    });
   }
 
   @Override
   public void destroy() {
-    LogContext.runUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         realtimeSink.destroy();
         return null;
       }
-    }, name);
+    });
   }
 }

@@ -25,7 +25,9 @@ import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 import co.cask.cdap.etl.common.BasicArguments;
-import co.cask.cdap.etl.log.LogContext;
+import co.cask.cdap.etl.common.plugin.Caller;
+import co.cask.cdap.etl.common.plugin.ClassLoaderCaller;
+import co.cask.cdap.etl.common.plugin.NoStageLoggingCaller;
 import co.cask.cdap.etl.planner.StageInfo;
 import com.google.common.collect.ImmutableMap;
 
@@ -42,19 +44,21 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
   implements BatchRuntimeContext, BatchJoinerRuntimeContext {
   private final MapReduceTaskContext context;
   private final Map<String, String> runtimeArgs;
+  private final Caller caller;
 
   public MapReduceRuntimeContext(MapReduceTaskContext context, Metrics metrics,
                                  LookupProvider lookup, Map<String, String> runtimeArgs, StageInfo stageInfo) {
     super(context, metrics, lookup, stageInfo, new BasicArguments(context.getWorkflowToken(), runtimeArgs));
     this.context = context;
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
+    this.caller = ClassLoaderCaller.wrap(NoStageLoggingCaller.wrap(Caller.DEFAULT), getClass().getClassLoader());
   }
 
   @Override
   public long getLogicalStartTime() {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<Long>() {
+    return caller.callUnchecked(new Callable<Long>() {
       @Override
-      public Long call() throws Exception {
+      public Long call() {
         return context.getLogicalStartTime();
       }
     });
@@ -72,7 +76,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
 
   @Override
   public <T extends Dataset> T getDataset(final String name) throws DatasetInstantiationException {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+    return caller.callUnchecked(new Callable<T>() {
       @Override
       public T call() throws DatasetInstantiationException {
         return context.getDataset(name);
@@ -83,7 +87,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
   @Override
   public <T extends Dataset> T getDataset(final String namespace, final String name)
     throws DatasetInstantiationException {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+    return caller.callUnchecked(new Callable<T>() {
       @Override
       public T call() throws DatasetInstantiationException {
         return context.getDataset(namespace, name);
@@ -94,7 +98,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
   @Override
   public <T extends Dataset> T getDataset(final String name,
                                           final Map<String, String> arguments) throws DatasetInstantiationException {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+    return caller.callUnchecked(new Callable<T>() {
       @Override
       public T call() throws DatasetInstantiationException {
         return context.getDataset(name, arguments);
@@ -105,7 +109,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
   @Override
   public <T extends Dataset> T getDataset(final String namespace, final String name,
                                           final Map<String, String> arguments) throws DatasetInstantiationException {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+    return caller.callUnchecked(new Callable<T>() {
       @Override
       public T call() throws DatasetInstantiationException {
         return context.getDataset(namespace, name, arguments);
@@ -115,7 +119,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
 
   @Override
   public void releaseDataset(final Dataset dataset) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() {
         context.releaseDataset(dataset);
@@ -126,7 +130,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
 
   @Override
   public void discardDataset(final Dataset dataset) {
-    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() {
         context.discardDataset(dataset);

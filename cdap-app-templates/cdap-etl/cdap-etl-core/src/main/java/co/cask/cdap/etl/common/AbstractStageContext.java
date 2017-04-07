@@ -23,7 +23,9 @@ import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.etl.api.Arguments;
 import co.cask.cdap.etl.api.StageContext;
 import co.cask.cdap.etl.api.StageMetrics;
-import co.cask.cdap.etl.log.LogContext;
+import co.cask.cdap.etl.common.plugin.Caller;
+import co.cask.cdap.etl.common.plugin.ClassLoaderCaller;
+import co.cask.cdap.etl.common.plugin.NoStageLoggingCaller;
 import co.cask.cdap.etl.planner.StageInfo;
 import com.google.common.base.Throwables;
 
@@ -45,6 +47,7 @@ public abstract class AbstractStageContext implements StageContext {
   private final Map<String, Schema> inputSchemas;
   private final Schema inputSchema;
   private final Schema outputSchema;
+  private final Caller caller;
   protected final BasicArguments arguments;
 
   protected AbstractStageContext(PluginContext pluginContext, Metrics metrics,
@@ -57,11 +60,12 @@ public abstract class AbstractStageContext implements StageContext {
     // all plugins except joiners have just a single input schema
     this.inputSchema = inputSchemas.isEmpty() ? null : inputSchemas.values().iterator().next();
     this.arguments = arguments;
+    this.caller = ClassLoaderCaller.wrap(NoStageLoggingCaller.wrap(Caller.DEFAULT), getClass().getClassLoader());
   }
 
   @Override
   public final PluginProperties getPluginProperties(final String pluginId) {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<PluginProperties>() {
+    return caller.callUnchecked(new Callable<PluginProperties>() {
       @Override
       public PluginProperties call() throws Exception {
         return pluginContext.getPluginProperties(scopePluginId(pluginId));
@@ -72,7 +76,7 @@ public abstract class AbstractStageContext implements StageContext {
   @Override
   public final <T> T newPluginInstance(final String pluginId) throws InstantiationException {
     try {
-      return LogContext.runWithoutLogging(new Callable<T>() {
+      return caller.call(new Callable<T>() {
         @Override
         public T call() throws Exception {
           return pluginContext.newPluginInstance(scopePluginId(pluginId));
@@ -86,7 +90,7 @@ public abstract class AbstractStageContext implements StageContext {
 
   @Override
   public final <T> Class<T> loadPluginClass(final String pluginId) {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<Class<T>>() {
+    return caller.callUnchecked(new Callable<Class<T>>() {
       @Override
       public Class<T> call() throws Exception {
         return pluginContext.loadPluginClass(scopePluginId(pluginId));
@@ -96,7 +100,7 @@ public abstract class AbstractStageContext implements StageContext {
 
   @Override
   public final PluginProperties getPluginProperties() {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<PluginProperties>() {
+    return caller.callUnchecked(new Callable<PluginProperties>() {
       @Override
       public PluginProperties call() throws Exception {
         return pluginContext.getPluginProperties(stageName);

@@ -35,7 +35,6 @@ import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
-import co.cask.cdap.etl.batch.LoggedBatchConfigurable;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
@@ -156,7 +155,8 @@ public class ETLMapReduce extends AbstractMapReduce {
   @Override
   public void initialize() throws Exception {
     MapReduceContext context = getContext();
-    if (Boolean.valueOf(context.getSpecification().getProperty(Constants.STAGE_LOGGING_ENABLED))) {
+    Map<String, String> properties = context.getSpecification().getProperties();
+    if (Boolean.valueOf(properties.get(Constants.STAGE_LOGGING_ENABLED))) {
       LogStageInjector.start();
     }
     CompositeFinisher.Builder finishers = CompositeFinisher.builder();
@@ -170,15 +170,13 @@ public class ETLMapReduce extends AbstractMapReduce {
                                                          context.getLogicalStartTime(),
                                                          context, context.getNamespace());
 
-    Map<String, String> properties = context.getSpecification().getProperties();
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
     PipelinePhase phase = phaseSpec.getPhase();
-    PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(context, phaseSpec);
+    PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(context, mrMetrics, phaseSpec);
 
     Map<String, String> inputAliasToStage = new HashMap<>();
     for (String sourceName : phaseSpec.getPhase().getSources()) {
       BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName, evaluator);
-      batchSource = new LoggedBatchConfigurable<>(sourceName, batchSource);
       StageInfo stageInfo = phaseSpec.getPhase().getStage(sourceName);
       MapReduceSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics, stageInfo);
       batchSource.prepareRun(sourceContext);
@@ -200,7 +198,6 @@ public class ETLMapReduce extends AbstractMapReduce {
       }
 
       BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(sinkName, evaluator);
-      batchSink = new LoggedBatchConfigurable<>(sinkName, batchSink);
       MapReduceSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics, stageInfo);
       batchSink.prepareRun(sinkContext);
       runtimeArgs.put(sinkName, sinkContext.getRuntimeArguments());

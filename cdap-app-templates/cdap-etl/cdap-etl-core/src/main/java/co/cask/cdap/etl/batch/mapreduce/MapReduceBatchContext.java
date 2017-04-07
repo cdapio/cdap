@@ -22,10 +22,11 @@ import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.batch.AbstractBatchContext;
 import co.cask.cdap.etl.common.BasicArguments;
-import co.cask.cdap.etl.log.LogContext;
+import co.cask.cdap.etl.common.plugin.Caller;
+import co.cask.cdap.etl.common.plugin.ClassLoaderCaller;
+import co.cask.cdap.etl.common.plugin.NoStageLoggingCaller;
 import co.cask.cdap.etl.planner.StageInfo;
 
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -33,6 +34,7 @@ import java.util.concurrent.Callable;
  */
 public class MapReduceBatchContext extends AbstractBatchContext {
   protected final MapReduceContext mrContext;
+  private final Caller caller;
 
   public MapReduceBatchContext(MapReduceContext context, Metrics metrics,
                                LookupProvider lookup,
@@ -40,13 +42,14 @@ public class MapReduceBatchContext extends AbstractBatchContext {
     super(context, metrics, lookup, context.getLogicalStartTime(), context.getAdmin(), stageInfo,
           new BasicArguments(context));
     this.mrContext = context;
+    this.caller = ClassLoaderCaller.wrap(NoStageLoggingCaller.wrap(Caller.DEFAULT), getClass().getClassLoader());
   }
 
   @Override
   public <T> T getHadoopJob() {
-    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+    return caller.callUnchecked(new Callable<T>() {
       @Override
-      public T call() throws Exception {
+      public T call() {
         return mrContext.getHadoopJob();
       }
     });
