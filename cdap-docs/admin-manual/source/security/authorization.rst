@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 .. _admin-authorization:
 
@@ -27,7 +27,7 @@ properties to :ref:`cdap-site.xml <appendix-cdap-default-security>`:
      - Value
    * - ``security.authorization.enabled``
      -  true
-   * - ``security.authorization.extension.extension.jar.path``
+   * - ``security.authorization.extension.jar.path``
      - Absolute path of the JAR file to be used as the authorization extension. This file
        must be present on the local file system of the CDAP Master. In an HA environment, it
        should be present on the local file system of all CDAP Master hosts.
@@ -370,7 +370,7 @@ This limitation has a larger implication when :ref:`Cross-namespace Dataset Acce
 <cross-namespace-dataset-access>` is used. When accessing a dataset from a different
 namespace, CDAP currently presumes that the user accessing the dataset has been granted
 permissions on the dataset in the storage provider prior to accessing the dataset from
-CDAP. 
+CDAP.
 
 For example, if a program in the namespace *ns1* tries to access a :term:`fileset` in the
 namespace *ns2*, the user running the program should be granted the appropriate (*READ*,
