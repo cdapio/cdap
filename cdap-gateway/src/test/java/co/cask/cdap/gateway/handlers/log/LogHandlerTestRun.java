@@ -499,6 +499,12 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     response = doGet(getVersionedAPIPath(originFilterUrl + "%20AND%20loglevel=ERROR", namespace));
     verifyLogs(response, entityId, "text", 6, true, true, 2, 24, ImmutableList.<String>of());
 
+    // There are 3 logs with .origin=program and MDC:eventType=lifeCycle starting from 22
+    originFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&filter=.origin=program", appId,
+                                    entityType, entityId, startTime, stopTime);
+    response = doGet(getVersionedAPIPath(originFilterUrl + "%20AND%20MDC:eventType=lifecycle", namespace));
+    verifyLogs(response, entityId, "text", 6, true, true, 3, 22, ImmutableList.<String>of());
+
     originFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&filter=loglevel=ERROR", appId,
                                     entityType, entityId, startTime, stopTime);
     // Test complex filters with combining AndFilter and OrFilter. Filters are combined from right to left.
