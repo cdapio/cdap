@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -498,20 +498,17 @@ function link (scope, element) {
 }
 
 angular.module(PKG.name + '.commons')
-.directive('myTimeline', function() {
+.directive('myTimelinePreview', function() {
   return {
     templateUrl: 'timeline/timeline.html',
     scope: {
       timelineData: '=?',
       namespaceId: '@',
-      appId: '@',
-      programType: '@',
-      programId: '@',
-      runId: '@'
+      previewId: '@'
     },
     link: link,
     bindToController: true,
-    controller: 'TimelineController',
+    controller: 'TimelinePreviewController',
     controllerAs: 'Timeline'
   };
 });

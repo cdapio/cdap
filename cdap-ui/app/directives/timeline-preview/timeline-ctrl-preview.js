@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,16 @@
  * the License.
  */
 
-function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers, moment, $timeout, caskWindowManager) {
+function TimelinePreviewController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myPreviewLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers, moment, $timeout, caskWindowManager) {
 
   this.dataSrc = new MyCDAPDataSource($scope);
   this.pinScrollPosition = 0;
   this.screenSize = LogViewerStore.getState().fullScreen;
   this.pollPromise = null;
 
-  let programTypeSingular = ProgramsHelpers.getSingularName(this.programType);
   this.apiSettings = {
     metric : {
-      context: `namespace.${this.namespaceId}.app.${this.appId}.${programTypeSingular}.${this.programId}.run.${this.runId}`,
+      context: `namespace.${this.namespaceId}.app.${this.previewId}`,
       names: ['system.app.log.error', 'system.app.log.warn', 'system.app.log.info', 'system.app.log.debug', 'system.app.log.trace'],
       startTime : '',
       endTime : '',
@@ -93,16 +92,13 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     if (!this.pollPromise) {
       return;
     }
-    myLogsApi.getLogsMetadata({
+    myPreviewLogsApi.getLogsStatus({
       namespace : this.namespaceId,
-      appId : this.appId,
-      programType : this.programType,
-      programId : this.programId,
-      runId : this.runId
+      previewId : this.previewId
     }).$promise.then(
       (res) => {
-        let runStatuses =  ['KILLED', 'COMPLETED', 'FAILED', 'STOPPED', 'KILLED_BY_TIMER'];
-        if (this.pollPromise && runStatuses.indexOf(res.status) !== -1) {
+        let previewStatuses =  ['KILLED', 'COMPLETED', 'FAILED', 'STOPPED', 'KILLED_BY_TIMER'];
+        if (this.pollPromise && previewStatuses.indexOf(res.status) !== -1) {
           this.dataSrc.stopPoll(this.pollPromise.__pollId__);
           this.pollPromise = null;
         }
@@ -118,7 +114,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
 
   this.pollForMetadata = () => {
     this.pollPromise = this.dataSrc.poll({
-      _cdapPath: '/metrics/query',
+      _cdapPath: `/namespaces/${this.namespaceId}/previews/${this.previewId}/metrics/query`,
       method: 'POST',
       body: MyMetricsQueryHelper.constructQuery(
         'qid',
@@ -163,25 +159,22 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     }
   });
 
-  if (!this.namespaceId || !this.appId || !this.programType || !this.programId || !this.runId) {
+  if (!this.namespaceId || !this.previewId) {
     this.setDefaultTimeWindow();
     return;
   }
 
-  myLogsApi.getLogsMetadata({
+  myPreviewLogsApi.getLogsStatus({
     namespace : this.namespaceId,
-    appId : this.appId,
-    programType : this.programType,
-    programId : this.programId,
-    runId : this.runId
+    previewId : this.previewId
   }).$promise.then(
     (res) => {
       $scope.metadata = res;
-      if(res.start === res.end){
-        res.end++;
+      if(res.startTime === res.endTime){
+        res.endTime++;
       }
-      this.apiSettings.metric.startTime = res.start;
-      this.apiSettings.metric.endTime = res.end;
+      this.apiSettings.metric.startTime = Math.floor(res.startTime/1000);
+      this.apiSettings.metric.endTime = Math.floor(res.endTime/1000);
       $scope.renderSearchCircles([]);
       this.pollForMetadata();
     },
@@ -192,4 +185,4 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
 }
 
 angular.module(PKG.name + '.commons')
-.controller('TimelineController', TimelineController);
+.controller('TimelinePreviewController', TimelinePreviewController);
