@@ -20,6 +20,7 @@ import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.logging.context.LoggingContextHelper;
@@ -71,7 +72,8 @@ import javax.ws.rs.QueryParam;
 public class PreviewHttpHandler extends AbstractLogHandler {
   private static final Logger LOG = LoggerFactory.getLogger(PreviewHttpHandler.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
+    .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
+    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory(true)).create();
   private static final Type STRING_LIST_MAP_TYPE = new TypeToken<Map<String, List<String>>>() { }.getType();
 
   private final PreviewManager previewManager;
