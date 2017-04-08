@@ -22,12 +22,13 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
    *  The entry point for this log is startTimeRequest()
    **/
 
-  var dataSrc = new MyCDAPDataSource($scope);
-  var pollPromise;
-  //Collapsing LogViewer Table Columns
+  // Collapsing LogViewer Table Columns
   var columnsList = [];
   var collapseCount = 0;
   var vm = this;
+
+  var pollTimeout;
+  var pollStarted = false;
 
   vm.viewLimit = 100;
   vm.errorRetrievingLogs = false;
@@ -139,9 +140,8 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     if (logViewerState.statusInfo && logViewerState.statusInfo.status) {
       vm.setProgramMetadata(logViewerState.statusInfo.status);
       if (vm.statusType !== 0){
-        if (pollPromise) {
-          dataSrc.stopPoll(pollPromise.__pollId__);
-          pollPromise = null;
+        if (pollStarted) {
+          stopPoll();
           vm.loading = false;
         }
       }
@@ -352,9 +352,8 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
 
     vm.loading = true;
 
-    if (pollPromise){
-      dataSrc.stopPoll(pollPromise.__pollId__);
-      pollPromise = null;
+    if (pollStarted){
+      stopPoll();
     }
 
     let filter = `loglevel=${vm.selectedLogLevel}`;
@@ -421,14 +420,10 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
           }
         });
         vm.setProgramMetadata(statusRes.status);
-        if(vm.statusType === 0){
-          if (!pollPromise) {
-            pollForNewLogs();
-          }
-        } else {
-          if (pollPromise) {
-            dataSrc.stopPoll(pollPromise.__pollId__);
-            pollPromise = null;
+
+        if (vm.statusType !== 0){
+          if (pollStarted) {
+            stopPoll();
           }
         }
       },
@@ -438,47 +433,66 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     );
   }
 
-  function pollForNewLogs () {
+  function pollForNewLogs() {
+    pollStarted = true;
+
     let filter = `loglevel=${vm.selectedLogLevel}`;
     if (!vm.includeSystemLogs) {
-      filter += encodeURIComponent(showCondensedLogsQuery);
+      filter += showCondensedLogsQuery;
     }
-    let _cdapPath = `/namespaces/${vm.namespaceId}/previews/${vm.previewId}/logs/next?format=json&max=100&fromOffset=${vm.fromOffset}&filter=${filter}`;
 
-    pollPromise = dataSrc.poll({
-      _cdapPath,
-      method: 'GET'
-    },
-    (res) => {
-      //We have recieved more logs, append to current dataset
-      vm.errorRetrievingLogs = false;
+    myPreviewLogsApi.nextLogsJsonOffset({
+      'namespace' : vm.namespaceId,
+      'previewId' : vm.previewId,
+      'fromOffset' : vm.fromOffset,
+      filter
+    }).$promise.then(
+      (res) => {
+        vm.errorRetrievingLogs = false;
+        vm.loading = false;
 
-      if(res.length > 0){
-        vm.fromOffset = res[res.length-1].offset;
+        if (!pollStarted) {
+          // This path can happen if th next request come in while the poll
+          // is in the middle of fetching response.
+          $timeout.cancel(pollTimeout);
+          return;
+        }
 
-        angular.forEach(res, (element, index) => {
-          //Format dates properly for rendering and computing
-          let formattedDate = new Date(res[index].log.timestamp);
-          res[index].log.timestamp = formattedDate;
-          res[index].log.displayTime = moment(formattedDate).format('L H:mm:ss');
-          res[index].log.stackTrace = res[index].log.stackTrace.trim();
-        });
+        if (res.length > 0){
+          vm.fromOffset = res[res.length-1].offset;
+          angular.forEach(res, (element, index) => {
+            //Format dates properly for rendering and computing
+            let formattedDate = new Date(res[index].log.timestamp);
+            res[index].log.timestamp = formattedDate;
+            res[index].log.displayTime = moment(formattedDate).format('L H:mm:ss');
+            res[index].log.stackTrace = res[index].log.stackTrace.trim();
+          });
 
-        vm.data = vm.data.concat(res);
-        vm.renderData();
+          vm.data = vm.data.concat(res);
+          vm.renderData();
+        }
+
+        if (vm.displayData.length >= vm.viewLimit){
+          stopPoll();
+        } else {
+          getStatus();
+
+          pollTimeout = $timeout(pollForNewLogs, 5000);
+        }
+      },
+      (err) => {
+        console.log('ERROR: ', err);
+        vm.errorRetrievingLogs = true;
+
+        pollTimeout = $timeout(pollForNewLogs, 5000);
       }
+    );
+  }
 
-      if(vm.displayData.length >= vm.viewLimit){
-        dataSrc.stopPoll(pollPromise.__pollId__);
-        pollPromise = null;
-      } else {
-        getStatus();
-      }
-
-    }, (err) => {
-      console.log('ERROR: ', err);
-      vm.errorRetrievingLogs = true;
-    });
+  function stopPoll() {
+    $timeout.cancel(pollTimeout);
+    pollTimeout = null;
+    pollStarted = false;
   }
 
   vm.getDownloadUrl = (type = 'download') => {
@@ -512,9 +526,8 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     vm.loading = true;
     vm.data = [];
     vm.renderData();
-    if(pollPromise){
-      dataSrc.stopPoll(pollPromise.__pollId__);
-      pollPromise = null;
+    if (pollStarted){
+      stopPoll();
     }
 
     //Scroll table to the top
@@ -531,7 +544,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
       namespace : vm.namespaceId,
       previewId : vm.previewId,
       fromOffset: vm.fromOffset,
-      filter,
+      filter
     }).$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
@@ -541,10 +554,14 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
         if(res.length === 0){
           //Update with start-time
           getStatus();
-          if(vm.statusType !== 0){
+          if (vm.statusType !== 0){
+            vm.loading = false;
             vm.displayData = [];
+            vm.renderData();
+            return;
           }
           vm.renderData();
+          pollForNewLogs();
           return;
         }
 
@@ -564,8 +581,8 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
           vm.updateScrollPositionInStore(vm.displayData[0].log.timestamp);
         }
 
-        if(res.length < vm.viewLimit){
-          getStatus();
+        if (res.length < vm.viewLimit){
+          pollForNewLogs();
         }
       },
       (err) => {
@@ -697,7 +714,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     if (vm.loading || vm.endRequest) { return; }
     offsetScroll();
     requestWithOffset();
-  }, 500);
+  }, 1000);
 
   vm.preventClick = function (event) {
     // disabled is not a valid attribute for <a>
@@ -750,9 +767,8 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     LogViewerStore.dispatch({
       type: 'RESET'
     });
-    if(pollPromise){
-      dataSrc.stopPoll(pollPromise.__pollId__);
-      pollPromise = null;
+    if (pollStarted){
+      stopPoll();
     }
   });
 }
@@ -762,7 +778,6 @@ const link = (scope) => {
 };
 
 angular.module(PKG.name + '.commons')
-  .value('THROTTLE_MILLISECONDS', 250) // throttle infinite scroll
   .directive('myLogViewerPreview', function () {
     return {
       templateUrl: 'log-viewer-preview/log-viewer-preview.html',
