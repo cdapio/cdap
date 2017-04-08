@@ -32,6 +32,8 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
   vm.viewLimit = 100;
   vm.errorRetrievingLogs = false;
 
+  const showCondensedLogsQuery = ' AND .origin=plugin OR .origin=program AND MDC:eventType=lifecycle';
+
   vm.setProgramMetadata = (status) => {
     vm.programStatus = status;
 
@@ -67,6 +69,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     vm.data = [];
     vm.loading = false;
     vm.fullScreen = false;
+    vm.includeSystemLogs = false;
     vm.programStatus = 'Not Started';
     vm.configOptions = {
       time: true,
@@ -302,6 +305,11 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     });
   };
 
+  vm.toggleSystemLogs = () => {
+    vm.includeSystemLogs = !vm.includeSystemLogs;
+    startTimeRequest();
+  };
+
   function validUrl() {
     return vm.namespaceId && vm.previewId;
   }
@@ -321,11 +329,16 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
       pollPromise = null;
     }
 
+    let filter = `loglevel=${vm.selectedLogLevel}`;
+    if (!vm.includeSystemLogs) {
+      filter += showCondensedLogsQuery;
+    }
+
     myPreviewLogsApi.nextLogsJsonOffset({
       'namespace' : vm.namespaceId,
       'previewId' : vm.previewId,
       'fromOffset' : vm.fromOffset,
-      filter: `loglevel=${vm.selectedLogLevel}`
+      filter
     }).$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
@@ -395,8 +408,14 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
   }
 
   function pollForNewLogs () {
+    let filter = `loglevel=${vm.selectedLogLevel}`;
+    if (!vm.includeSystemLogs) {
+      filter += encodeURIComponent(showCondensedLogsQuery);
+    }
+    let _cdapPath = `/namespaces/${vm.namespaceId}/previews/${vm.previewId}/logs/next?format=json&max=100&fromOffset=${vm.fromOffset}&filter=${filter}`;
+
     pollPromise = dataSrc.poll({
-      _cdapPath: '/namespaces/' + vm.namespaceId + '/previews/' + vm.previewId + '/logs/next?format=json&max=100&fromOffset=' + vm.fromOffset + '&filter=loglevel=' + vm.selectedLogLevel,
+      _cdapPath,
       method: 'GET'
     },
     (res) => {
@@ -472,10 +491,15 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     // binds window element to check whether scrollbar has appeared on resize event
     angular.element($window).bind('resize', checkForScrollbar);
 
+    let filter = `loglevel=${vm.selectedLogLevel}`;
+    if (!vm.includeSystemLogs) {
+      filter += showCondensedLogsQuery;
+    }
+
     myPreviewLogsApi.nextLogsJson({
       namespace : vm.namespaceId,
       previewId : vm.previewId,
-      filter: `loglevel=${vm.selectedLogLevel}`
+      filter,
     }).$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
@@ -615,6 +639,17 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
       text.replace(new RegExp(vm.searchText, 'gi'),
       '<span class="highlighted-text">$&</span>'
     ));
+  };
+
+  vm.getEntrySource = (entry) => {
+    let log = entry.log;
+    let mdc = log.mdc;
+    let source = `${log.className}#${log.lineNumber}`;
+    // system log
+    if (!(mdc['.origin'] === 'plugin' || mdc['.origin'] === 'program' && mdc['MDC:eventType'] === 'lifecycle')) {
+      source += `-${log.threadName}`;
+    }
+    return source;
   };
 
   function offsetScroll() {
