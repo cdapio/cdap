@@ -26,7 +26,7 @@ for cb in cdap hadoop idea maven nodejs openssh; do
 done
 
 # need nodejs < 3.0.0 until CDAP UI nodeVersion is a version they provide *.xz downloads for
-knife cookbook site install nodejs 2.4.4 || die "Cannot fetch ark cookbook 2.1.0"
+knife cookbook site install nodejs 2.4.4 || die "Cannot fetch nodejs cookbook 2.4.4"
 
 # Do not change HOME for cdap user
 sed -i '/ home /d' /var/chef/cookbooks/cdap/recipes/sdk.rb
