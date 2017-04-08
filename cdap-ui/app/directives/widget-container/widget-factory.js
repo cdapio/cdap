@@ -210,6 +210,14 @@ angular.module(PKG.name + '.commons')
           'input-schema': 'inputSchema',
           'config': 'myconfig'
         }
+      },
+      'wrangler-directives': {
+        element: '<my-wrangler-directives></my-wrangler-directives>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig',
+          'properties': 'properties'
+        }
       }
     };
     this.registry['__default__'] = this.registry['textbox'];

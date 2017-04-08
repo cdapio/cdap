@@ -177,6 +177,7 @@ export default class WorkspacePropertiesModal extends Component {
         isOpen={true}
         toggle={this.attemptModalClose}
         className="workspace-management-modal"
+        zIndex="1061"
       >
         <ModalHeader>
           <span>
@@ -206,14 +207,19 @@ export default class WorkspacePropertiesModal extends Component {
               </button>
             </div>
 
-            <div className="button-container float-xs-right">
-              <button
-                className="btn btn-danger"
-                onClick={this.deleteWorkspace}
-              >
-                Delete this workspace
-              </button>
-            </div>
+            {
+              this.props.singleWorkspaceMode ?
+                null
+              :
+                <div className="button-container float-xs-right">
+                  <button
+                    className="btn btn-danger"
+                    onClick={this.deleteWorkspace}
+                  >
+                    Delete this workspace
+                  </button>
+                </div>
+            }
           </div>
         </ModalBody>
 
@@ -226,5 +232,6 @@ export default class WorkspacePropertiesModal extends Component {
 WorkspacePropertiesModal.propTypes = {
   toggle: PropTypes.func.isRequired,
   workspace: PropTypes.string.isRequired,
-  onDelete: PropTypes.func
+  onDelete: PropTypes.func,
+  singleWorkspaceMode: PropTypes.bool
 };

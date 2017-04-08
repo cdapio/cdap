@@ -25,6 +25,7 @@ import cookie from 'react-cookie';
 import isNil from 'lodash/isNil';
 import NamespaceStore from 'services/NamespaceStore';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import T from 'i18n-react';
 
 export default class WorkspaceModal extends Component {
   constructor(props) {
@@ -36,7 +37,8 @@ export default class WorkspaceModal extends Component {
       file: null,
       message: null,
       messageType: null,
-      recordDelimiter: '\\n'
+      recordDelimiter: '\\n',
+      workspaceCreated: false
     };
 
     this.handleWorkspaceInput = this.handleWorkspaceInput.bind(this);
@@ -45,7 +47,7 @@ export default class WorkspaceModal extends Component {
     this.upload = this.upload.bind(this);
     this.attemptModalClose = this.attemptModalClose.bind(this);
     this.handleRecordDelimiterChange = this.handleRecordDelimiterChange.bind(this);
-
+    this.createAndUpload = this.createAndUpload.bind(this);
     this.sub = DataPrepStore.subscribe(() => {
       this.setState({
         activeWorkspace: DataPrepStore.getState().dataprep.workspaceId
@@ -70,13 +72,15 @@ export default class WorkspaceModal extends Component {
     let workspaceId = this.state.workspaceId;
     let namespace = NamespaceStore.getState().selectedNamespace;
 
-    MyDataPrepApi.create({
+    let createObservable = MyDataPrepApi.create({
       namespace,
       workspaceId
-    }).subscribe((res) => {
+    });
+    createObservable.subscribe((res) => {
       this.setState({
         messageType: 'SUCCESS',
-        message: res.message
+        message: res.message,
+        workspaceCreated: true
       });
 
       cookie.save('DATAPREP_WORKSPACE', workspaceId, { path: '/' });
@@ -96,6 +100,7 @@ export default class WorkspaceModal extends Component {
         message: err.message || err.data || err
       });
     });
+    return createObservable;
   }
 
   fileChange(e) {
@@ -154,6 +159,12 @@ export default class WorkspaceModal extends Component {
       });
   }
 
+  createAndUpload() {
+    this.createWorkspace()
+        .subscribe(() => {
+          this.upload();
+        });
+  }
   renderUploadSection() {
     if (!this.state.activeWorkspace) { return null; }
 
@@ -162,8 +173,8 @@ export default class WorkspaceModal extends Component {
         <hr />
 
         <div>
-          <h5>Upload Data</h5>
-          <h6>Select the file to be uploaded to the workspace</h6>
+          <h5>{T.translate('features.DataPrep.TopPanel.WorkspaceModal.uploadTitle')}</h5>
+          <h6>{T.translate('features.DataPrep.TopPanel.WorkspaceModal.uploadSubTitle')}</h6>
           <div className="file-input">
             <input
               type="file"
@@ -175,11 +186,15 @@ export default class WorkspaceModal extends Component {
           <div className="clearfix">
             <div className="button-container float-xs-left">
               <button
-                className="btn btn-secondary"
-                onClick={this.upload}
+                className="btn btn-primary"
+                onClick={this.createAndUpload}
                 disabled={!this.state.file}
               >
-                Upload
+                {
+                  this.state.workspaceCreated ?
+                    T.translate('features.DataPrep.TopPanel.WorkspaceModal.uploadBtnLabel')
+                  :
+                    T.translate('features.DataPrep.TopPanel.WorkspaceModal.createAndUploadBtnLabel')}
               </button>
             </div>
 
@@ -221,10 +236,11 @@ export default class WorkspaceModal extends Component {
         isOpen={true}
         toggle={this.attemptModalClose}
         className="workspace-management-modal"
+        zIndex="1061"
       >
         <ModalHeader>
           <span>
-            Create Workspace
+            {T.translate('features.DataPrep.TopPanel.WorkspaceModal.createModalTitle')}
           </span>
 
           {
@@ -240,7 +256,7 @@ export default class WorkspaceModal extends Component {
         </ModalHeader>
         <ModalBody>
           <div>
-            <h5>Create New Workspace</h5>
+            <h5>{T.translate('features.DataPrep.TopPanel.WorkspaceModal.createTitle')}</h5>
             <input
               type="text"
               className="form-control"
@@ -254,7 +270,7 @@ export default class WorkspaceModal extends Component {
               className="btn btn-primary"
               onClick={this.createWorkspace}
             >
-              Create
+              {T.translate('features.DataPrep.TopPanel.WorkspaceModal.create')}
             </button>
           </div>
 

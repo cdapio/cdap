@@ -114,7 +114,8 @@
             var isKeyFormatSetting = key === 'format.setting.pattern';
             var isPropertyEmptyOrNull = properties[key] === '' || properties[key] === null;
             var isErrorDatasetName = !backendProperties[key] && key !== 'errorDatasetName';
-            if (isKeyFormatSetting && !isPropertyEmptyOrNull) {
+            var isWorkspaceID = !backendProperties[key] && key === 'workspaceId';
+            if ((isKeyFormatSetting && !isPropertyEmptyOrNull) || isWorkspaceID) {
               return;
             }
             if (isErrorDatasetName || (!isRequiredField && isPropertyEmptyOrNull)) {
@@ -153,7 +154,7 @@
 
       pruneNonBackEndProperties(config);
 
-      if(angular.isArray(config.stages)) {
+      if (angular.isArray(config.stages)) {
         config.stages.forEach( node => {
           delete node.plugin._backendProperties;
         });

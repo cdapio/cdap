@@ -18,6 +18,7 @@ import React, { Component, PropTypes } from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import enableDataPreparationService from 'components/DataPrep/DataPrepServiceControl/ServiceEnablerUtilities';
 import CardActionFeedback from 'components/CardActionFeedback';
+import ee from 'event-emitter';
 
 export default class UpgradeModal extends Component {
   constructor(props) {
@@ -29,6 +30,7 @@ export default class UpgradeModal extends Component {
       extendedMessage: null
     };
 
+    this.eventEmitter = ee(ee);
     this.attemptClose = this.attemptClose.bind(this);
     this.upgradeClick = this.upgradeClick.bind(this);
   }
@@ -44,6 +46,7 @@ export default class UpgradeModal extends Component {
 
     enableDataPreparationService(true)
       .subscribe(() => {
+        this.eventEmitter.emit('REFRESH_DATAPREP');
       }, (err) => {
         this.setState({
           loading: false,
@@ -108,6 +111,7 @@ export default class UpgradeModal extends Component {
         isOpen={true}
         toggle={this.attemptClose}
         className="dataprep-upgrade-modal"
+        zIndex="1061"
       >
         <ModalHeader>
           <span>

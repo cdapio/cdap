@@ -12,25 +12,11 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
-import DataPrepStore from 'components/DataPrep/store';
-
-export function directiveRequestBodyCreator(directivesArray, wsId) {
-  let workspaceId = wsId || DataPrepStore.getState().dataprep.workspaceId;
-
-  return {
-    version: 1.0,
-    workspace: {
-      name: workspaceId,
-      results: 100
-    },
-    recipe: {
-      directives: directivesArray
-    },
-    sampling: {
-      method: "FIRST",
-      limit: 1000
-    }
-  };
+my-wrangler-directives {
+  .wrangler-button {
+    margin-bottom: -20px;
+    margin-top: 5px;
+  }
 }
