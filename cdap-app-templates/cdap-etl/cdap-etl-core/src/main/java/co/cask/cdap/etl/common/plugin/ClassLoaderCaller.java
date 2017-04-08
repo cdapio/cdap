@@ -42,6 +42,7 @@ public class ClassLoaderCaller extends Caller {
   }
 
   public static Caller wrap(Caller delegate, ClassLoader classLoader) {
-    return new ClassLoaderCaller(delegate, classLoader);
+    return delegate;
+    //return new ClassLoaderCaller(delegate, classLoader);
   }
 }

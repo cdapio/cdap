@@ -104,7 +104,7 @@ public class PipelinePluginContext implements PluginContext {
       caller = StageLoggingCaller.wrap(caller, pluginId);
     }
 
-    return ClassLoaderCaller.wrap(caller, plugin.getClass().getClassLoader());
+    return caller;
   }
 
   protected Object wrapUnknownPlugin(String pluginId, Object plugin, Caller caller) {

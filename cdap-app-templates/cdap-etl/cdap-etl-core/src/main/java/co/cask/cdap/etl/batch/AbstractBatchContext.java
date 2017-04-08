@@ -57,7 +57,7 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
     this.datasetContext = datasetContext;
     this.logicalStartTime = logicalStartTime;
     this.admin = admin;
-    this.caller = ClassLoaderCaller.wrap(NoStageLoggingCaller.wrap(Caller.DEFAULT), getClass().getClassLoader());
+    this.caller = NoStageLoggingCaller.wrap(Caller.DEFAULT);
   }
 
   protected <T extends PluginContext & DatasetContext> AbstractBatchContext(T context,
