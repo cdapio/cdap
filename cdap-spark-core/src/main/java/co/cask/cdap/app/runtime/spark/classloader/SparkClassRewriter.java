@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.runtime.spark.classloader;
 
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
 import co.cask.cdap.common.lang.ClassRewriter;
@@ -70,6 +71,8 @@ public class SparkClassRewriter implements ClassRewriter {
   private static final Type KRYO_TYPE = Type.getObjectType("com/esotericsoftware/kryo/Kryo");
   private static final Type SCHEMA_SERIALIZER_TYPE =
     Type.getObjectType("co/cask/cdap/app/runtime/spark/serializer/SchemaSerializer");
+  private static final Type STRUCTURED_RECORD_SERIALIZER_TYPE =
+    Type.getObjectType("co/cask/cdap/app/runtime/spark/serializer/StructuredRecordSerializer");
 
   // Don't refer akka Remoting with the ".class" because in future Spark version, akka dependency is removed and
   // we don't want to force a dependency on akka.
@@ -215,6 +218,15 @@ public class SparkClassRewriter implements ClassRewriter {
         generatorAdapter.loadThis();
         generatorAdapter.push(Type.getType(Schema.class));
         generatorAdapter.push(SCHEMA_SERIALIZER_TYPE);
+        generatorAdapter.invokeVirtual(KRYO_TYPE,
+                                       new Method("addDefaultSerializer", Type.VOID_TYPE,
+                                                  new Type[] { Type.getType(Class.class), Type.getType(Class.class)}));
+
+        // Register serializer for StructuredRecord
+        // addDefaultSerializer(StructuredRecord.class, StructuredRecordSerializer.class);
+        generatorAdapter.loadThis();
+        generatorAdapter.push(Type.getType(StructuredRecord.class));
+        generatorAdapter.push(STRUCTURED_RECORD_SERIALIZER_TYPE);
         generatorAdapter.invokeVirtual(KRYO_TYPE,
                                        new Method("addDefaultSerializer", Type.VOID_TYPE,
                                                   new Type[] { Type.getType(Class.class), Type.getType(Class.class)}));
