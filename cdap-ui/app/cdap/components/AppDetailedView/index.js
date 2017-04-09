@@ -21,12 +21,9 @@ import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import {fetchTables} from 'services/ExploreTables/ActionCreator';
 import OverviewMetaSection from 'components/Overview/OverviewMetaSection';
 import T from 'i18n-react';
-import {MySearchApi} from 'api/search';
-import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
 import NamespaceStore from 'services/NamespaceStore';
 import BreadCrumb from 'components/BreadCrumb';
-import {parseMetadata} from 'services/metadata-parser';
 import AppDetailedViewTab from 'components/AppDetailedView/Tabs';
 import shortid from 'shortid';
 import Redirect from 'react-router/Redirect';
@@ -36,6 +33,7 @@ import Page404 from 'components/404';
 import ResourceCenterButton from 'components/ResourceCenterButton';
 import Helmet from 'react-helmet';
 import OverviewHeader from 'components/Overview/OverviewHeader';
+import {MyMetadataApi} from 'api/metadata';
 require('./AppDetailedView.scss');
 
 export default class AppDetailedView extends Component {
@@ -52,7 +50,6 @@ export default class AppDetailedView extends Component {
         notFound: false
       },
       loading: true,
-      entityMetadata: objectQuery(this.props, 'location', 'state', 'entityMetadata') || {},
       isInvalid: false,
       previousPathName: null
     };
@@ -72,13 +69,24 @@ export default class AppDetailedView extends Component {
       previousPathName
     });
     if (this.state.entityDetail.programs.length === 0) {
-      MyAppApi
-        .get({
-          namespace,
-          appId
-        })
+      const metadataParams = {
+        namespace,
+        entityType: 'apps',
+        entityId: appId,
+        scope: 'SYSTEM'
+      };
+      MyMetadataApi
+        .getProperties(metadataParams)
+        .combineLatest(
+          MyAppApi.get({
+            namespace,
+            appId
+          })
+        )
         .subscribe(
-          entityDetail => {
+          res => {
+            let entityDetail = res[1];
+            let properties = res[0];
             if (isEmpty(entityDetail)) {
               this.setState({
                 notFound: true,
@@ -112,53 +120,25 @@ export default class AppDetailedView extends Component {
             entityDetail.streams = streams;
             entityDetail.datasets = datasets;
             entityDetail.programs = programs;
+            entityDetail.properties = properties;
+            entityDetail.id = appId;
+            entityDetail.type = 'application';
             this.setState({
-              entityDetail
+              entityDetail,
+              loading: false
             });
           },
           err => {
             if (err.statusCode === 404) {
               this.setState({
-                notFound: true
+                notFound: true,
+                loading: false
               });
             }
           }
       );
     }
-    if (
-      isNil(this.state.entityMetadata) ||
-      isEmpty(this.state.entityMetadata)
-    ) {
-      // FIXME: This is NOT the right way. Need to figure out a way to be more efficient and correct.
-      MySearchApi
-        .search({
-          namespace,
-          query: this.props.params.appId
-        })
-        .map(res => res.results.map(parseMetadata))
-        .subscribe(entityMetadata => {
-          if (!entityMetadata.length) {
-            this.setState({
-              notFound: true,
-              loading: false
-            });
-          }
-          let metadata = entityMetadata
-            .filter(en => en.type === 'application')
-            .find( en => en.id === this.props.params.appId);
-          this.setState({
-            entityMetadata: metadata,
-            loading: false
-          });
-        });
-    }
-
-    if (
-      !isNil(this.state.entityMetadata) &&
-      !isEmpty(this.state.entityMetadata) &&
-      !isNil(this.state.entityDetail) &&
-      !isEmpty(this.state.entityDetail)
-    ) {
+    if (this.state.entityDetail.name) {
       this.setState({
         loading: false
       });
@@ -174,7 +154,7 @@ export default class AppDetailedView extends Component {
     }
     let successMessage;
     if (action === 'setPreferences') {
-      successMessage = FastActionToMessage(action, {entityType: capitalize(this.state.entityMetadata.type)});
+      successMessage = FastActionToMessage(action, {entityType: capitalize(this.state.entityDetail.type)});
     } else {
       successMessage = FastActionToMessage(action);
     }
@@ -221,7 +201,7 @@ export default class AppDetailedView extends Component {
         />
         <OverviewHeader successMessage={this.state.successMessage} />
         <OverviewMetaSection
-          entity={this.state.entityMetadata}
+          entity={this.state.entityDetail}
           onFastActionSuccess={this.goToHome.bind(this)}
           onFastActionUpdate={this.goToHome.bind(this)}
           showFullCreationTime={true}
@@ -229,8 +209,8 @@ export default class AppDetailedView extends Component {
         <AppDetailedViewTab
           params={this.props.params}
           pathname={this.props.location.pathname}
-          entity={this.state.entityDetail}/
-        >
+          entity={this.state.entityDetail}
+        />
         {
           this.state.routeToHome ?
             <Redirect to={`/ns/${this.state.selectedNamespace}`} />
@@ -256,6 +236,7 @@ const entityDetailType = PropTypes.shape({
   streams: PropTypes.arrayOf(PropTypes.object),
   plugins: PropTypes.arrayOf(PropTypes.object),
   programs: PropTypes.arrayOf(PropTypes.object),
+  name: PropTypes.string
 });
 
 
@@ -272,7 +253,6 @@ AppDetailedView.propTypes = {
     search: PropTypes.string,
     state: PropTypes.shape({
       entityDetail: entityDetailType,
-      entityMetadata: PropTypes.object,
       previousPathname: PropTypes.string
     })
   })

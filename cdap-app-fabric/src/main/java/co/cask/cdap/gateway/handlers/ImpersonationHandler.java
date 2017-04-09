@@ -19,7 +19,7 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.security.TokenSecureStoreUpdater;
+import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.ImpersonationRequest;
 import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import co.cask.cdap.security.impersonation.PrincipalCredentials;
@@ -32,7 +32,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.Credentials;
-import org.apache.twill.api.SecureStore;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -47,8 +46,8 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
 /**
- * Resolves the UGI for a given namespace, acquires the delegation tokens for that UGI,
- * using {@link TokenSecureStoreUpdater}, and serializes these Credentials to a location.
+ * Provides REST endpoint to resolve UGI for a given entity and acquires the delegation tokens for that UGI,
+ * using {@link TokenSecureStoreRenewer}, and serializes these Credentials to a location.
  *
  * Response with the location to which the credentials were serialized to, as well as the UGI's short username
  */
@@ -62,14 +61,14 @@ public class ImpersonationHandler extends AbstractHttpHandler {
     .create();
 
   private final UGIProvider ugiProvider;
-  private final TokenSecureStoreUpdater tokenSecureStoreUpdater;
+  private final TokenSecureStoreRenewer tokenSecureStoreRenewer;
   private final LocationFactory locationFactory;
 
   @Inject
-  ImpersonationHandler(UGIProvider ugiProvider, TokenSecureStoreUpdater tokenSecureStoreUpdater,
+  ImpersonationHandler(UGIProvider ugiProvider, TokenSecureStoreRenewer tokenSecureStoreRenewer,
                        LocationFactory locationFactory) {
     this.ugiProvider = ugiProvider;
-    this.tokenSecureStoreUpdater = tokenSecureStoreUpdater;
+    this.tokenSecureStoreRenewer = tokenSecureStoreRenewer;
     this.locationFactory = locationFactory;
   }
 
@@ -86,8 +85,7 @@ public class ImpersonationHandler extends AbstractHttpHandler {
     Credentials credentials = ImpersonationUtils.doAs(ugiWithPrincipal.getUGI(), new Callable<Credentials>() {
       @Override
       public Credentials call() throws Exception {
-        SecureStore update = tokenSecureStoreUpdater.update();
-        return update.getStore();
+        return tokenSecureStoreRenewer.createCredentials();
       }
     });
 

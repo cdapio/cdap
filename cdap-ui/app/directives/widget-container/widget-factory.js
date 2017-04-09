@@ -88,6 +88,7 @@ angular.module(PKG.name + '.commons')
         element: '<my-json-textbox></my-json-textbox>',
         attributes: {
           'ng-model': 'model',
+          'disabled': 'disabled',
           placeholder: 'myconfig.properties.default || myconfig["widget-attributes"].default'
         }
       },
@@ -208,6 +209,14 @@ angular.module(PKG.name + '.commons')
           'disabled': 'disabled',
           'input-schema': 'inputSchema',
           'config': 'myconfig'
+        }
+      },
+      'wrangler-directives': {
+        element: '<my-wrangler-directives></my-wrangler-directives>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig',
+          'properties': 'properties'
         }
       }
     };

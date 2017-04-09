@@ -59,6 +59,15 @@
       line-height: 2;
       cursor: initial;
 
+      .warning-container {
+        margin-bottom: -5px;
+
+        .warning-title-container {
+          margin-left: -10px;
+          margin-right: -10px;
+        }
+      }
+
       .cursor-pointer { cursor: pointer; }
 
       h5 {

@@ -71,7 +71,7 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.operations.OperationalStatsService;
 import co.cask.cdap.operations.guice.OperationalStatsModule;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.TokenSecureStoreUpdater;
+import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
@@ -107,6 +107,7 @@ import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.twill.api.Configs;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
@@ -121,6 +122,7 @@ import org.apache.twill.internal.ServiceListenerAdapter;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.internal.zookeeper.ReentrantDistributedLock;
 import org.apache.twill.kafka.client.KafkaClientService;
+import org.apache.twill.yarn.YarnSecureStore;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.twill.zookeeper.ZKOperations;
@@ -641,13 +643,14 @@ public class MasterServiceMain extends DaemonMain {
       twillRunner = injector.getInstance(TwillRunnerService.class);
       twillRunner.start();
 
-      TokenSecureStoreUpdater secureStoreUpdater = injector.getInstance(TokenSecureStoreUpdater.class);
+      TokenSecureStoreRenewer secureStoreRenewer = injector.getInstance(TokenSecureStoreRenewer.class);
 
       // Schedule secure store update.
       if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
-        secureStoreUpdateCancellable = twillRunner.scheduleSecureStoreUpdate(secureStoreUpdater, 30000L,
-                                                                             secureStoreUpdater.getUpdateInterval(),
-                                                                             TimeUnit.MILLISECONDS);
+        secureStoreUpdateCancellable = twillRunner.setSecureStoreRenewer(secureStoreRenewer, 30000L,
+                                                                         secureStoreRenewer.getUpdateInterval(),
+                                                                         30000L,
+                                                                         TimeUnit.MILLISECONDS);
       }
 
       // Create app-fabric and dataset services
@@ -662,7 +665,7 @@ public class MasterServiceMain extends DaemonMain {
       executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("master-runner"));
 
       // Start monitoring twill application
-      monitorTwillApplication(executor, 0, controller, twillRunner, serviceStore, secureStoreUpdater);
+      monitorTwillApplication(executor, 0, controller, twillRunner, serviceStore, secureStoreRenewer);
 
       // Starts all services.
       for (Service service : services) {
@@ -773,7 +776,7 @@ public class MasterServiceMain extends DaemonMain {
     private void monitorTwillApplication(final ScheduledExecutorService executor, final int failures,
                                          final AtomicReference<TwillController> serviceController,
                                          final TwillRunnerService twillRunner, final ServiceStore serviceStore,
-                                         final TokenSecureStoreUpdater secureStoreUpdater) {
+                                         final TokenSecureStoreRenewer secureStoreRenewer) {
       if (executor.isShutdown()) {
         return;
       }
@@ -785,7 +788,7 @@ public class MasterServiceMain extends DaemonMain {
         startTime = 0L;
       } else {
         try {
-          controller = startTwillApplication(twillRunner, serviceStore, secureStoreUpdater);
+          controller = startTwillApplication(twillRunner, serviceStore, secureStoreRenewer);
         } catch (Exception e) {
           LOG.error("Failed to start master twill application", e);
           throw e;
@@ -828,7 +831,7 @@ public class MasterServiceMain extends DaemonMain {
             executor.execute(new Runnable() {
               @Override
               public void run() {
-                monitorTwillApplication(executor, 0, serviceController, twillRunner, serviceStore, secureStoreUpdater);
+                monitorTwillApplication(executor, 0, serviceController, twillRunner, serviceStore, secureStoreRenewer);
               }
             });
             return;
@@ -839,7 +842,7 @@ public class MasterServiceMain extends DaemonMain {
             @Override
             public void run() {
               monitorTwillApplication(executor, failures + 1, serviceController,
-                                      twillRunner, serviceStore, secureStoreUpdater);
+                                      twillRunner, serviceStore, secureStoreRenewer);
             }
           }, nextRunTime, TimeUnit.MILLISECONDS);
         }
@@ -889,7 +892,7 @@ public class MasterServiceMain extends DaemonMain {
      */
     private TwillController startTwillApplication(TwillRunnerService twillRunner,
                                                   ServiceStore serviceStore,
-                                                  TokenSecureStoreUpdater secureStoreUpdater) {
+                                                  TokenSecureStoreRenewer secureStoreRenewer) {
       try {
         // Create a temp dir for the run to hold temporary files created to run the application
         Path tempPath = Files.createDirectories(Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
@@ -903,7 +906,7 @@ public class MasterServiceMain extends DaemonMain {
           TwillPreparer preparer = twillRunner.prepare(masterTwillApp);
 
           if (!cConf.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
-            preparer.addJVMOptions("-Dtwill.disable.kafka=true");
+            preparer.withConfiguration(Collections.singletonMap(Configs.Keys.LOG_COLLECTION_ENABLED, "false"));
           }
 
           // Add logback xml
@@ -930,7 +933,7 @@ public class MasterServiceMain extends DaemonMain {
 
           // Add secure tokens
           if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
-            preparer.addSecureStore(secureStoreUpdater.update());
+            preparer.addSecureStore(YarnSecureStore.create(secureStoreRenewer.createCredentials()));
           }
 
           // add hadoop classpath to application classpath and exclude hadoop classes from bundle jar.
@@ -956,6 +959,9 @@ public class MasterServiceMain extends DaemonMain {
           if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
             prepareExploreContainer(preparer);
           }
+
+          // Set the container to use MainClassLoader for class rewriting
+          preparer.setClassLoader(MainClassLoader.class.getName());
 
           // We need to ship the extension jar to the system service containers. In order to do this we add it
           // in the classpath by creating CombineClassLoader.

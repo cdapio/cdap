@@ -16,8 +16,8 @@
 
 import DataPrepStore from 'components/DataPrep/store';
 
-export function directiveRequestBodyCreator(directivesArray) {
-  let workspaceId = DataPrepStore.getState().dataprep.workspaceId;
+export function directiveRequestBodyCreator(directivesArray, wsId) {
+  let workspaceId = wsId || DataPrepStore.getState().dataprep.workspaceId;
 
   return {
     version: 1.0,

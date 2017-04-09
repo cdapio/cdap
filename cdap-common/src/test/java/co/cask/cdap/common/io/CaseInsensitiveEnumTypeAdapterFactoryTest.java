@@ -24,20 +24,28 @@ import org.junit.Test;
 /**
  */
 public class CaseInsensitiveEnumTypeAdapterFactoryTest {
-  private static final Gson GSON = new GsonBuilder()
+  private static final Gson GSON_LOWER_CASE = new GsonBuilder()
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .create();
+  private static final Gson GSON_UPPER_CASE = new GsonBuilder()
+    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory(true))
+    .create();
+
 
   @Test
   public void testDeserialization() {
-    Assert.assertEquals(Suit.CLUB, GSON.fromJson("club", Suit.class));
-    Assert.assertEquals(Suit.CLUB, GSON.fromJson("CLUB", Suit.class));
-    Assert.assertEquals(Suit.CLUB, GSON.fromJson("cLub", Suit.class));
+    Assert.assertEquals(Suit.CLUB, GSON_LOWER_CASE.fromJson("club", Suit.class));
+    Assert.assertEquals(Suit.CLUB, GSON_LOWER_CASE.fromJson("CLUB", Suit.class));
+    Assert.assertEquals(Suit.CLUB, GSON_LOWER_CASE.fromJson("cLub", Suit.class));
+    Assert.assertEquals(Suit.CLUB, GSON_UPPER_CASE.fromJson("club", Suit.class));
+    Assert.assertEquals(Suit.CLUB, GSON_UPPER_CASE.fromJson("CLUB", Suit.class));
+    Assert.assertEquals(Suit.CLUB, GSON_UPPER_CASE.fromJson("cLub", Suit.class));
   }
 
   @Test
   public void testSerialization() {
-    Assert.assertEquals("\"club\"", GSON.toJson(Suit.CLUB));
+    Assert.assertEquals("\"club\"", GSON_LOWER_CASE.toJson(Suit.CLUB));
+    Assert.assertEquals("\"CLUB\"", GSON_UPPER_CASE.toJson(Suit.CLUB));
   }
 
   private enum Suit {

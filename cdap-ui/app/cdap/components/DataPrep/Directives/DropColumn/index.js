@@ -47,7 +47,7 @@ export default class DropColumnDirective extends Component {
   render() {
     return (
       <div
-        className="drop-column clearfix action-item"
+        className="drop-column-directive clearfix action-item"
         onClick={this.applyDirective}
       >
         <span>Delete This Column</span>

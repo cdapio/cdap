@@ -21,6 +21,12 @@ include use of additional widgets that are not listed here. We recommend only us
 list of plugins shown here, as these other widgets are internal to CDAP and may not be
 supported in a future release.
 
+This document describes version |plugins-spec-version| of the plugin specification.
+Changes to the specification are described in the  
+:ref:`plugins-presentation-specification-changes` and should be checked if you are using a 
+version of the specification earlier than the current.
+
+
 .. _plugins-presentation-widget-json:
 
 Plugin Widget JSON
@@ -33,7 +39,9 @@ The widget JSON is composed of:
 
 - a map of :ref:`metadata <plugins-presentation-metadata>`
 - a list of property :ref:`configuration groups <plugins-presentation-configuration-groups>`
-- a list of :ref:`outputs (output properties) <plugins-presentation-outputs>`
+- a map of :ref:`inputs <plugins-presentation-inputs>`
+- a list of :ref:`outputs <plugins-presentation-outputs>`
+- a map of :ref:`stream or dataset jumps <plugins-presentation-jumps>`
 
 .. highlight:: json-ellipsis
 
@@ -58,11 +66,17 @@ Each configuration group consists of a list of the :ref:`individual properties
       },
       ...
     ],
+    "inputs": {
+      ...
+    },
     "outputs": [
       {"output-property-1"},
       {"output-property-2"},
       ...
-    ]
+    ],
+    "jump-config": {
+      ...
+    }
   }
 
 .. _plugins-presentation-metadata:
@@ -82,7 +96,7 @@ Current version: |plugins-spec-version|. For example:
     },
     ...
   }
- 
+
 .. _plugins-presentation-configuration-groups:
 
 Configuration Groups
@@ -135,11 +149,12 @@ Property Configuration
 Each individual property of the plugin is represented by a configuration, composed of:
 
 - **name:** Name of the field (as supplied by the CDAP server for the artifact).
+- **label:** Text string displayed in the CDAP UI beside the widget.
 - :ref:`widget-type: <plugins-presentation-widgets>` The type of
   widget to be used to represent this property.
-- **widget-attributes:** A map of attributes that the widget type requires to be defined in
-  order to render the property in the CDAP UI. The attributes required depend on the
-  widget type used.
+- :ref:`widget-attributes: <plugins-presentation-widgets>` A map of attributes that the
+  widget type requires to be defined in order to render the property in the CDAP UI. The
+  attributes required depend on the widget type used.
 - :ref:`plugin-function: <plugins-presentation-plugin-function>`
   An optional map of plugin method and its widget attributes that can be applied to a
   particular plugin property.
@@ -164,14 +179,17 @@ different properties are defined; three use a *textbox* widget, while one uses a
         "properties": [
           {
             "name": "name",
+            "label": "Dataset",
             "widget-type": "dataset-selector"
           },
           {
             "name": "basePath",
+            "label": "Base Path",
             "widget-type": "textbox"
           },
           {
             "name": "groupByFields",
+            "label": "Group By Fields",
             "widget-type": "textbox",
             "plugin-function": {
               "method": "POST",
@@ -193,7 +211,6 @@ different properties are defined; three use a *textbox* widget, while one uses a
     ]
   }
 
-
 .. _plugins-presentation-widgets:
 
 Plugin Widgets
@@ -201,7 +218,7 @@ Plugin Widgets
 A widget in the CDAP UI represents a component that will be rendered and used to set the
 value of a property of a plugin. These are the different widgets |---| their type, their
 attributes (if any), their output data type, a description, sample JSON |---| that we support in
-CDAP pipelines as of version |version|:
+CDAP pipelines as of version |version|.
 
 .. highlight:: json-ellipsis
 
@@ -286,6 +303,23 @@ CDAP pipelines as of version |version|:
             }
           }
      
+   * - ``hidden``
+     - ``default``: default ``string`` value for the widget
+     - ``string``
+     - This "hidden" widget allows values to be set for a property but hidden from users.
+       A default can be supplied that will be used as the value for the property.
+     - .. container:: copyable copyable-text
+
+         ::
+
+          {
+            "name": "property-hidden",
+            "widget-type": "hidden",
+            "widget-attributes": {
+              "default": "defaultValue"
+            }
+          }
+
    * - ``input-field-selector``
      - No attributes
      - ``string``
@@ -531,7 +565,7 @@ CDAP pipelines as of version |version|:
               "default": "Default text."
             }
           }
-     
+
 
 .. _plugins-presentation-plugin-function:
 
@@ -553,10 +587,10 @@ These fields need to be configured to use the plugin functions in the CDAP UI:
   disabled in the CDAP UI, displayed when required fields are missing values
 
 The last two properties (*required-fields* and *missing-required-fields-message*) are
-solely for the the CDAP UI and are not required for all widgets. However, the first four
+solely for use by the CDAP UI and are not required for all widgets. However, the first four
 fields are required fields to use a plugin method of the plugin in the CDAP UI. 
 
-In the case of a plugin function, if the widget is not supported in the CDAP UI or the
+With plugin functions, if the widget is not supported in the CDAP UI or the
 plugin function map is not supplied, the user will not see the widget in the CDAP UI.
 
 Example Plugin
@@ -609,6 +643,38 @@ plugin-function, could be represented by::
     ]
   }
 
+
+.. _plugins-presentation-inputs:
+
+Inputs
+------
+Beginning with version 1.2 of the specification, a plugin can accept multiple input
+schemas and from them generate a single output schema. Using the field ``multipleInputs``
+and setting it to true tells the CDAP UI to show the multiple input schemas coming into a
+specific plugin, instead of assuming that all of the schemas coming in from different
+plugins are identical. 
+
+This is an optional object, and if it is not present, it is assumed that all of the
+schemas coming in from any connected plugins are identical. Currently, only one value
+(``multipleInputs``) is accepted.
+
+For example::
+
+  {
+    "metadata": {
+      ...
+    },
+    "configuration-groups": [
+      ...
+    ],
+    "inputs": {
+      "multipleInputs": true
+    },
+    "outputs": [
+      ...
+    ]
+  }
+
 .. _plugins-presentation-outputs:
 
 Outputs
@@ -634,7 +700,7 @@ be editable through the CDAP UI.
 
 For example, a "Batch Source" plugin could have a configurable output schema named
 ``data-format``, displayed for editing with the ``schema`` widget-type, with a default
-type of ``string``, and a list of types that are available::
+type of ``string``, and a list of the types that are available::
 
   {
     "outputs": [
@@ -689,6 +755,64 @@ An example of this is from the :github-hydrator-plugins:`KeyValueTable Batch Sou
 
 Widget types for output properties are limited to ensure that the schema that is
 propagated across different plugins in the CDAP UI is consistent.
+
+.. _plugins-presentation-jumps:
+
+Stream and Dataset Jumps
+------------------------
+Beginning with version 1.3 of the specification, a plugin can be specified (using
+``jump-config``) with a map of stream and dataset "jumps". They specify which plugin
+property names are either a stream or dataset that can be used, in the CDAP UI, to
+directly jump to a detailed view of the stream or dataset.
+
+This is an optional object, and if it is not present, no jump links will be created in the
+CDAP UI. Jump links are not active in the CDAP Studio.
+
+For example::
+
+  {
+    "metadata": {
+      ...
+    },
+    "configuration-groups": [
+      {
+        "label": "KV Table Properties",
+        "properties": [
+          {
+            "widget-type": "dataset-selector",
+            "label": "Dataset Name",
+            "name": "datasetName"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "widget-type": "non-editable-schema-editor",
+        "schema": {
+          "name": "etlSchemaBody",
+          "type": "record",
+          "fields": [
+            {
+              "name": "key",
+              "type": "bytes"
+            },
+            {
+              "name": "value",
+              "type": "bytes"
+            }
+          ]
+        }
+      }
+    ],
+    "jump-config": {
+      "datasets": [{
+        "ref-property-name": "datasetName"
+      }]
+    }
+  }  
+
+In this example, the ``datasetName`` field of the ``dataset-selector`` will have a "jump" link added in the CDAP UI.
 
 Example Widget JSON
 ===================
@@ -775,4 +899,19 @@ Based on the above specification, we can write a widget JSON for a *Batch Source
       }
     ]
   }
-  
+
+
+.. _plugins-presentation-specification-changes:
+
+Specification Changes
+=====================
+These changes describe changes added with each version of the specification.
+
+- **1.1:** Initial version of the specification.
+
+- **1.2:** Added :ref:`multiple inputs <plugins-presentation-inputs>` for a plugin.
+
+- **1.3:** Added :ref:`jump-config <plugins-presentation-jumps>` to specify which property
+  names are to be connected in the CDAP UI to a detailed view of a stream or dataset.
+
+- **1.4:** Added ``widget-type: hidden``.

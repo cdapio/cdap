@@ -35,10 +35,14 @@ import java.util.Map;
  */
 public class AppWithSchedule extends AbstractApplication {
 
+  public static final String NAME = "AppWithSchedule";
+  public static final String WORKFLOW_NAME = "SampleWorkflow";
+  public static final String SCHEDULE = "SampleSchedule";
+
   @Override
   public void configure() {
     try {
-      setName("AppWithSchedule");
+      setName(NAME);
       setDescription("Sample application");
       ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
@@ -49,10 +53,10 @@ public class AppWithSchedule extends AbstractApplication {
       scheduleProperties.put("anotherKey", "anotherValue");
       scheduleProperties.put("someKey", "someValue");
 
-      scheduleWorkflow(Schedules.builder("SampleSchedule")
+      scheduleWorkflow(Schedules.builder(SCHEDULE)
                          .setDescription("Sample schedule")
                          .createTimeSchedule("0/15 * * * * ?"),
-                       "SampleWorkflow",
+                       WORKFLOW_NAME,
                        scheduleProperties);
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);

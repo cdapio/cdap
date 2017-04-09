@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client.app;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.schedule.Schedules;
@@ -23,17 +24,18 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  *
  */
-public class FakeApp extends AbstractApplication {
+public class FakeApp extends AbstractApplication<FakeApp.AppConfig> {
 
   public static final String NAME = "FakeApp";
   public static final String STREAM_NAME = "fakeStream";
   public static final String DS_NAME = "fakeds";
 
-  public static final String SCHEDULE_NAME = "someSchedule";
+  public static final String TIME_SCHEDULE_NAME = "someSchedule";
   public static final String SCHEDULE_CRON = "0 0 1 1 *";
   public static final String STREAM_SCHEDULE_NAME = "streamSchedule";
   public static final int STREAM_TRIGGER_MB = 10000;
@@ -51,6 +53,34 @@ public class FakeApp extends AbstractApplication {
     .addAll(SERVICES)
     .build();
 
+  /**
+   * Application Config Class to control schedule creation
+   */
+  public static class AppConfig extends Config {
+    private final boolean addTimeSchedule;
+    private final boolean addSizeSchedule;
+    private final String timeScheduleName;
+    private final String sizeScheduleName;
+    private final String timeScheduleCron;
+
+
+    public AppConfig() {
+      this.addTimeSchedule = true;
+      this.addSizeSchedule = true;
+      this.timeScheduleName = TIME_SCHEDULE_NAME;
+      this.sizeScheduleName = STREAM_SCHEDULE_NAME;
+      this.timeScheduleCron = SCHEDULE_CRON;
+    }
+
+    public AppConfig(boolean addTimeSchedule, boolean addSizeSchedule, @Nullable String timeScheduleName,
+                     @Nullable String sizeScheduleName, String timeScheduleCron) {
+      this.addTimeSchedule = addTimeSchedule;
+      this.addSizeSchedule = addSizeSchedule;
+      this.timeScheduleName = timeScheduleName == null ? TIME_SCHEDULE_NAME : timeScheduleName;
+      this.sizeScheduleName = sizeScheduleName == null ? STREAM_SCHEDULE_NAME : sizeScheduleName;
+      this.timeScheduleCron = timeScheduleCron == null ? SCHEDULE_CRON : timeScheduleCron;
+    }
+  }
   @Override
   public void configure() {
     setName(NAME);
@@ -60,10 +90,16 @@ public class FakeApp extends AbstractApplication {
     addFlow(new FakeFlow());
     addSpark(new FakeSpark());
     addWorkflow(new FakeWorkflow());
-    scheduleWorkflow(Schedules.builder(SCHEDULE_NAME).createTimeSchedule(SCHEDULE_CRON), FakeWorkflow.NAME);
-    scheduleWorkflow(Schedules.builder(STREAM_SCHEDULE_NAME)
-                       .createDataSchedule(Schedules.Source.STREAM, STREAM_NAME, STREAM_TRIGGER_MB),
-                     FakeWorkflow.NAME);
+    AppConfig config = getConfig();
+    if (config.addTimeSchedule) {
+      scheduleWorkflow(Schedules.builder(config.timeScheduleName).createTimeSchedule(config.timeScheduleCron),
+                       FakeWorkflow.NAME);
+    }
+    if (config.addSizeSchedule) {
+      scheduleWorkflow(Schedules.builder(config.sizeScheduleName)
+                         .createDataSchedule(Schedules.Source.STREAM, STREAM_NAME, STREAM_TRIGGER_MB),
+                       FakeWorkflow.NAME);
+    }
     addService(PingService.NAME, new PingService());
     addService(PrefixedEchoHandler.NAME, new PrefixedEchoHandler());
   }

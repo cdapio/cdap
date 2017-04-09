@@ -23,7 +23,7 @@ import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 
 require('./FilterDirective.scss');
 
-const SUFFIX = 'features.DataPrep.Directives.Filter';
+const PREFIX = 'features.DataPrep.Directives.Filter';
 
 const DIRECTIVES_MAP = {
   'KEEP': {
@@ -54,7 +54,8 @@ export default class FilterDirective extends Component {
       selectedCondition: 'EMPTY',
       textFilter: '',
       rowFilter: 'KEEP',
-      customFilter: ''
+      customFilter: '',
+      ignoreCase: false
     };
 
     this.handleConditionSelect = this.handleConditionSelect.bind(this);
@@ -63,6 +64,7 @@ export default class FilterDirective extends Component {
     this.preventPropagation = this.preventPropagation.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
     this.handleCustomFilterChange = this.handleCustomFilterChange.bind(this);
+    this.toggleIgnoreCase = this.toggleIgnoreCase.bind(this);
 
     this.conditionsOptions = [
       'EMPTY',
@@ -77,7 +79,7 @@ export default class FilterDirective extends Component {
   componentDidUpdate() {
     if (this.state.selectedCondition.substr(0, 4) === 'TEXT' && this.state.textFilter.length === 0 && this.textFilterRef) {
       this.textFilterRef.focus();
-    } else if (this.state.selectedCondition.substr(0, 6) === 'CUSTOM' && this.state.customFilter.length === 0) {
+    } else if (this.state.selectedCondition.substr(0, 6) === 'CUSTOM' && this.state.customFilter.length === 0 && this.customFilterRef) {
       this.customFilterRef.focus();
     }
   }
@@ -100,6 +102,10 @@ export default class FilterDirective extends Component {
     this.setState({customFilter: e.target.value});
   }
 
+  toggleIgnoreCase() {
+    this.setState({ignoreCase: !this.state.ignoreCase});
+  }
+
   handleKeyPress(e) {
     if (e.nativeEvent.keyCode !== 13 || this.state.textFilter.length === 0) { return; }
 
@@ -117,27 +123,45 @@ export default class FilterDirective extends Component {
 
     let condition = DIRECTIVES_MAP[this.state.rowFilter][this.state.selectedCondition];
 
+    let configuration;
+
     switch (this.state.selectedCondition) {
       case 'EMPTY':
         directive = `${condition} ${column} ^\\s*$`;
         break;
       case 'TEXTCONTAINS':
+        if (this.state.ignoreCase) {
+          textValue = `(?i)${textValue}`;
+        }
         directive = `${condition} ${column} .*${textValue}.*`;
         break;
       case 'TEXTSTARTSWITH':
-        directive = `${condition} ${column} =^ "${textValue}"`;
+        configuration = `"${textValue}"`;
+        if (this.state.ignoreCase) {
+          column = `${column}.toLowerCase()`;
+          configuration = `"${textValue}".toLowerCase()`;
+        }
+        directive = `${condition} ${column} =^ ${configuration}`;
         break;
       case 'TEXTENDSWITH':
-        directive = `${condition} ${column} =$ "${textValue}"`;
+        configuration = `"${textValue}"`;
+        if (this.state.ignoreCase) {
+          column = `${column}.toLowerCase()`;
+          configuration = `"${textValue}".toLowerCase()`;
+        }
+        directive = `${condition} ${column} =$ ${configuration}`;
         break;
       case 'TEXTEXACTLY':
+        if (this.state.ignoreCase) {
+          textValue = `(?i)${textValue}`;
+        }
         directive = `${condition} ${column} ${textValue}`;
         break;
       case 'TEXTREGEX':
         directive = `${condition} ${column} ${textValue}`;
         break;
       case 'CUSTOMCONDITION':
-        directive = `${condition} ${this.state.customFilter}`;
+        directive = `${condition} ${column} ${this.state.customFilter}`;
         break;
     }
 
@@ -172,7 +196,7 @@ export default class FilterDirective extends Component {
           value={this.state.customFilter}
           onChange={this.handleCustomFilterChange}
           ref={ref => this.customFilterRef = ref}
-          placeholder={T.translate(`${SUFFIX}.Placeholders.CUSTOMCONDITION`, {columnName: this.props.column})}
+          placeholder={T.translate(`${PREFIX}.Placeholders.CUSTOMCONDITION`)}
         />
       </div>
     );
@@ -181,18 +205,43 @@ export default class FilterDirective extends Component {
   renderTextFilter() {
     if (this.state.selectedCondition.substr(0, 4) !== 'TEXT') { return null; }
 
+    let ignoreCase;
+    if (this.state.selectedCondition !== 'TEXTREGEX') {
+      ignoreCase = (
+        <div>
+          <span
+            className="cursor-pointer"
+            onClick={this.toggleIgnoreCase}
+          >
+            <span
+              className={classnames('fa', {
+                'fa-square-o': !this.state.ignoreCase,
+                'fa-check-square': this.state.ignoreCase
+              })}
+            />
+            <span>
+              {T.translate(`${PREFIX}.ignoreCase`)}
+            </span>
+          </span>
+        </div>
+      );
+    }
+
     return (
       <div>
         <br />
-        <input
-          type="text"
-          className="form-control"
-          value={this.state.textFilter}
-          onChange={this.handleTextFilterChange}
-          placeholder={T.translate(`${SUFFIX}.Placeholders.${this.state.selectedCondition}`)}
-          ref={ref => this.textFilterRef = ref}
-          onKeyPress={this.handleKeyPress}
-        />
+        <div>
+          <input
+            type="text"
+            className="form-control"
+            value={this.state.textFilter}
+            onChange={this.handleTextFilterChange}
+            placeholder={T.translate(`${PREFIX}.Placeholders.${this.state.selectedCondition}`)}
+            ref={ref => this.textFilterRef = ref}
+            onKeyPress={this.handleKeyPress}
+          />
+        </div>
+        {ignoreCase}
       </div>
     );
   }
@@ -201,7 +250,7 @@ export default class FilterDirective extends Component {
     let filterConditions = this.conditionsOptions.map((filter) => {
       return {
         filter: filter,
-        displayText: T.translate(`${SUFFIX}.Conditions.${filter}`)
+        displayText: T.translate(`${PREFIX}.Conditions.${filter}`)
       };
     });
 
@@ -214,7 +263,7 @@ export default class FilterDirective extends Component {
             })}
             onClick={this.handleRowFilter.bind(this, 'KEEP')}
           >
-            {T.translate(`${SUFFIX}.KEEP`)}
+            {T.translate(`${PREFIX}.KEEP`)}
           </span>
           <span> | </span>
           <span
@@ -223,13 +272,13 @@ export default class FilterDirective extends Component {
             })}
             onClick={this.handleRowFilter.bind(this, 'REMOVE')}
           >
-            {T.translate(`${SUFFIX}.REMOVE`)}
+            {T.translate(`${PREFIX}.REMOVE`)}
           </span>
         </div>
 
         <div className="filter-condition">
           <div className="condition-select">
-            <span>{T.translate(`${SUFFIX}.if`)}</span>
+            <span>{T.translate(`${PREFIX}.if`)}</span>
             <div>
               <select
                 className="form-control"
@@ -255,7 +304,7 @@ export default class FilterDirective extends Component {
                   &#x2500;&#x2500;&#x2500;&#x2500;
                 </option>
                 <option value="CUSTOMCONDITION">
-                  {T.translate(`${SUFFIX}.Conditions.CUSTOMCONDITION`)}
+                  {T.translate(`${PREFIX}.Conditions.CUSTOMCONDITION`)}
                 </option>
               </select>
             </div>
@@ -310,7 +359,7 @@ export default class FilterDirective extends Component {
           'active': this.props.isOpen
         })}
       >
-        <span>{T.translate(`${SUFFIX}.title`)}</span>
+        <span>{T.translate(`${PREFIX}.title`)}</span>
 
         <span className="float-xs-right">
           <span className="fa fa-caret-right" />

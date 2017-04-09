@@ -21,6 +21,8 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.schedule.RunConstraints;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.LogLevelUpdater;
@@ -50,6 +52,8 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
+import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -59,6 +63,7 @@ import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleType;
+import co.cask.cdap.proto.ScheduleUpdateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
@@ -76,6 +81,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -828,7 +834,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
         new ScheduleId(applicationId.getNamespace(), applicationId.getApplication(), scheduleName));
     }
 
-    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+    ProgramType programType = getSchedulableProgramType(scheduleSpec);
     String programName = scheduleSpec.getProgram().getProgramName();
     ProgramId programId = applicationId.program(programType, programName);
 
@@ -838,8 +844,12 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
     // TODO: CDAP-8907 Make the scheduler update and store update transactional
     // TODO: CDAP-8908 reduce redundant parameters in the scheduler call
-    scheduler.schedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
-                       scheduleSpec.getProperties());
+    try {
+      scheduler.schedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
+                         scheduleSpec.getProperties());
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e);
+    }
     store.addSchedule(programId, scheduleSpec, false);
   }
 
@@ -847,52 +857,104 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * Update the schedule in an application.
    *
    * @param applicationId the application containing the schedule
-   * @param scheduleSpecUpdate updated schedule specification
+   * @param scheduleName the name of the schedule which needs to updated
+   * @param scheduleUpdateDetail updated schedule details
    * @throws NotFoundException when application is not found
    * @throws SchedulerException on an exception when updating the schedule
    * @throws BadRequestException when existing schedule type does not match the updated schedule type
    */
-  public void updateSchedule(ApplicationId applicationId, ScheduleSpecification scheduleSpecUpdate)
+  public void updateSchedule(ApplicationId applicationId, String scheduleName,
+                             ScheduleUpdateDetail scheduleUpdateDetail)
     throws NotFoundException, SchedulerException, AlreadyExistsException, BadRequestException {
     ApplicationSpecification appSpec = store.getApplication(applicationId);
     if (appSpec == null) {
       throw new ApplicationNotFoundException(applicationId);
     }
 
-    String scheduleName = scheduleSpecUpdate.getSchedule().getName();
     ScheduleSpecification existingScheduleSpec = appSpec.getSchedules().get(scheduleName);
     if (existingScheduleSpec == null) {
       throw new NotFoundException(new ScheduleId(applicationId.getNamespace(), applicationId.getApplication(),
                                                  scheduleName));
     }
 
-    ScheduleType existingType = ScheduleType.fromSchedule(existingScheduleSpec.getSchedule());
-    ScheduleType newType = ScheduleType.fromSchedule(scheduleSpecUpdate.getSchedule());
-    if (!existingType.equals(newType)) {
-      throw new BadRequestException(
-        String.format("The updated schedule has different type (%s) then the existing schedule type (%s)",
-                      newType, existingType));
-    }
-
-    ProgramType existingProgramType =
-      ProgramType.valueOfSchedulableType(existingScheduleSpec.getProgram().getProgramType());
-
-    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpecUpdate.getProgram().getProgramType());
-    String programName = scheduleSpecUpdate.getProgram().getProgramName();
+    ProgramType programType = ProgramType.valueOfSchedulableType(existingScheduleSpec.getProgram().getProgramType());
+    String programName = existingScheduleSpec.getProgram().getProgramName();
     ProgramId programId = applicationId.program(programType, programName);
 
-    // The below check also makes sure that only workflows can be scheduled
-    if (!existingProgramType.equals(programType)) {
-      throw new BadRequestException(
-        String.format("The updated schedule has a different program type (%s) than the existing program type (%s)",
-                      programType, existingProgramType));
-    }
+    ScheduleSpecification updatedScheduleSpec = getUpdatedScheduleSpecification(existingScheduleSpec,
+                                                                                scheduleUpdateDetail);
 
     // TODO: CDAP-8907 Make the scheduler update and store update transactional
     // TODO: CDAP-8908 reduce redundant parameters in the scheduler call
-    scheduler.updateSchedule(programId, scheduleSpecUpdate.getProgram().getProgramType(),
-                             scheduleSpecUpdate.getSchedule(), scheduleSpecUpdate.getProperties());
-    store.addSchedule(programId, scheduleSpecUpdate, true);
+    try {
+      scheduler.updateSchedule(programId, existingScheduleSpec.getProgram().getProgramType(),
+                               updatedScheduleSpec.getSchedule(), updatedScheduleSpec.getProperties());
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e);
+    }
+
+    store.addSchedule(programId, updatedScheduleSpec, true);
+  }
+
+  /**
+   * Returns a new {@link ScheduleSpecification} which has been updated with the configurations
+   * present in {@link ScheduleUpdateDetail}
+   */
+  private ScheduleSpecification getUpdatedScheduleSpecification(ScheduleSpecification existingScheduleSpec,
+                                                                ScheduleUpdateDetail scheduleUpdateDetail)
+    throws BadRequestException {
+    Schedule schedule = existingScheduleSpec.getSchedule();
+    // if the user specified some update configuration for schedule we need to update the schedule details in
+    // ScheduleSpecification
+    if (scheduleUpdateDetail.getSchedule() != null) {
+      // schedule description is common in time and stream so get it here
+      String desc = scheduleUpdateDetail.getSchedule().getDescription() == null ?
+        existingScheduleSpec.getSchedule().getDescription() :
+        scheduleUpdateDetail.getSchedule().getDescription();
+      RunConstraints runConstraints = scheduleUpdateDetail.getSchedule().getRunConstraints() == null ?
+        existingScheduleSpec.getSchedule().getRunConstraints() :
+        scheduleUpdateDetail.getSchedule().getRunConstraints();
+
+      if (ScheduleType.fromSchedule(existingScheduleSpec.getSchedule()) == ScheduleType.TIME) {
+        if (scheduleUpdateDetail.getSchedule().getDataTriggerMB() != null ||
+          scheduleUpdateDetail.getSchedule().getStreamName() != null) {
+          throw new BadRequestException(String.format("Schedule %s being updated is of type %s and found either " +
+                                                        "stream name or data trigger configuration in schedule " +
+                                                        "update details %s.",
+                                                      existingScheduleSpec.getSchedule().getName(), ScheduleType.TIME,
+                                                      scheduleUpdateDetail));
+        }
+        TimeSchedule oldTimeSchedule = (TimeSchedule) existingScheduleSpec.getSchedule();
+        String cron = scheduleUpdateDetail.getSchedule().getCronExpression() == null ? oldTimeSchedule.getCronEntry() :
+          scheduleUpdateDetail.getSchedule().getCronExpression();
+        schedule = new TimeSchedule(existingScheduleSpec.getSchedule().getName(), desc, cron, runConstraints);
+      } else if (ScheduleType.fromSchedule(existingScheduleSpec.getSchedule()) == ScheduleType.STREAM) {
+        if (scheduleUpdateDetail.getSchedule().getCronExpression() != null) {
+          throw new BadRequestException(String.format("Schedule %s being updated is of type %s and found cron " +
+                                                        "expression configuration in schedule update details %s. " +
+                                                        "This configuration will be ignored due to type mismatch.",
+                                                      existingScheduleSpec.getSchedule().getName(), ScheduleType.STREAM,
+                                                      scheduleUpdateDetail));
+        }
+        StreamSizeSchedule oldTimeSchedule = (StreamSizeSchedule) existingScheduleSpec.getSchedule();
+        String sName = scheduleUpdateDetail.getSchedule().getStreamName() == null ? oldTimeSchedule.getStreamName() :
+          scheduleUpdateDetail.getSchedule().getStreamName();
+        int dTrigger = scheduleUpdateDetail.getSchedule().getDataTriggerMB() == null ?
+          oldTimeSchedule.getDataTriggerMB() : scheduleUpdateDetail.getSchedule().getDataTriggerMB();
+        schedule = new StreamSizeSchedule(existingScheduleSpec.getSchedule().getName(), desc, sName, dTrigger,
+                                          runConstraints);
+      } else {
+        throw new BadRequestException(String.format("Invalid schedule type %s",
+                                                    ScheduleType.fromSchedule(existingScheduleSpec.getSchedule())));
+      }
+    }
+
+    // If a user provided properties in ScheduleUpdateDetails replace the existing schedule properties with the new one.
+    // We do replace rather than merging the old and new to support the case where an user want to delete all the
+    // properties.
+    Map<String, String> prop = scheduleUpdateDetail.getProperties() == null ? existingScheduleSpec.getProperties() :
+      scheduleUpdateDetail.getProperties();
+    return new ScheduleSpecification(schedule, existingScheduleSpec.getProgram(), prop);
   }
 
   /**
@@ -924,6 +986,45 @@ public class ProgramLifecycleService extends AbstractIdleService {
     // TODO: CDAP-8908 reduce redundant parameters in the scheduler call
     scheduler.deleteSchedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleName);
     store.deleteSchedule(programId, scheduleName);
+  }
+
+  /**
+   * Gets a given schedule in an application.
+   *
+   * @param applicationId the application containing the schedule
+   * @param scheduleName the name of the schedule
+   * @return {@link ScheduleSpecification} of the given schedule
+   * @throws NotFoundException when application is not found, or when the schedule is not found
+   */
+  public ScheduleSpecification getSchedule(ApplicationId applicationId, String scheduleName)
+    throws NotFoundException {
+    ApplicationSpecification appSpec = store.getApplication(applicationId);
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(applicationId);
+    }
+
+    ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
+    if (scheduleSpec == null) {
+      throw new NotFoundException(new ScheduleId(applicationId.getNamespace(), applicationId.getApplication(),
+                                                 scheduleName));
+    }
+    return scheduleSpec;
+  }
+
+  /**
+   * Gets all of the schedules in a application.
+   *
+   * @param applicationId the application id
+   * @return list of {@link ScheduleSpecification} of all the schedules in the application
+   * @throws NotFoundException when application if is not found
+   */
+  public List<ScheduleSpecification> getAllSchedules(ApplicationId applicationId)
+    throws NotFoundException {
+    ApplicationSpecification appSpec = store.getApplication(applicationId);
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(applicationId);
+    }
+    return ImmutableList.copyOf(appSpec.getSchedules().values());
   }
 
   /**
@@ -961,6 +1062,17 @@ public class ProgramLifecycleService extends AbstractIdleService {
       }
     }
     return programRecords;
+  }
+
+  private ProgramType getSchedulableProgramType(ScheduleSpecification scheduleSpec) throws BadRequestException {
+    try {
+      return ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+    } catch (IllegalArgumentException e) {
+      // the ProgramType.valueOfSchedulableType throws IllegalArgumentException if the given program type is not in
+      // SchedulableProgramType just wrap it in BadRequest to send proper error code to user if this call is made from
+      // user request
+      throw new BadRequestException(e);
+    }
   }
 
   private void createProgramRecords(NamespaceId namespaceId, String appId, ProgramType type,

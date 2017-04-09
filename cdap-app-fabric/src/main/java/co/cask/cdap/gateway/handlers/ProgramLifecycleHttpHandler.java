@@ -67,8 +67,8 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ScheduleUpdateDetail;
 import co.cask.cdap.proto.ServiceInstances;
-import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -141,7 +141,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Gson GSON = ApplicationSpecificationAdapter
     .addTypeAdapters(new GsonBuilder())
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
-    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .create();
 
   private static final Function<RunRecordMeta, RunRecord> CONVERT_TO_RUN_RECORD =
@@ -546,6 +545,61 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, specification);
   }
 
+  @GET
+  @Path("apps/{app-name}/schedules/{schedule-name}")
+  public void getSchedule(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId,
+                          @PathParam("app-name") String appName,
+                          @PathParam("schedule-name") String scheduleName)
+    throws NotFoundException, SchedulerException {
+    doGetSchedule(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+  }
+
+  @GET
+  @Path("apps/{app-name}/versions/{app-version}/schedules/{schedule-name}")
+  public void getSchedule(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId,
+                          @PathParam("app-name") String appName,
+                          @PathParam("app-version") String appVersion,
+                          @PathParam("schedule-name") String scheduleName)
+    throws NotFoundException, SchedulerException {
+    doGetSchedule(responder, namespaceId, appName, appVersion, scheduleName);
+  }
+
+  private void doGetSchedule(HttpResponder responder, String namespaceId, String appName,
+                             String appVersion, String scheduleName) throws NotFoundException {
+    ApplicationId applicationId = new ApplicationId(namespaceId, appName, appVersion);
+    ScheduleSpecification specification = lifecycleService.getSchedule(applicationId, scheduleName);
+    responder.sendJson(HttpResponseStatus.OK, specification, ScheduleSpecification.class, GSON);
+  }
+
+  @GET
+  @Path("apps/{app-name}/schedules")
+  public void getAllSchedules(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace-id") String namespaceId,
+                              @PathParam("app-name") String appName)
+    throws NotFoundException, SchedulerException {
+    doGetAllSchedules(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION);
+  }
+
+  @GET
+  @Path("apps/{app-name}/versions/{app-version}/schedules")
+  public void getAllSchedules(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace-id") String namespaceId,
+                              @PathParam("app-name") String appName,
+                              @PathParam("app-version") String appVersion)
+    throws NotFoundException, SchedulerException {
+    doGetAllSchedules(responder, namespaceId, appName, appVersion);
+  }
+
+  private void doGetAllSchedules(HttpResponder responder, String namespaceId, String appName,
+                                 String appVersion) throws NotFoundException {
+    ApplicationId applicationId = new ApplicationId(namespaceId, appName, appVersion);
+    List<ScheduleSpecification> specification = lifecycleService.getAllSchedules(applicationId);
+    Type scheduleSpecsType = new TypeToken<List<ScheduleSpecification>>() { }.getType();
+    responder.sendJson(HttpResponseStatus.OK, specification, scheduleSpecsType, GSON);
+  }
+
   @PUT
   @Path("apps/{app-name}/schedules/{schedule-name}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
@@ -625,27 +679,17 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                 String appVersion, String scheduleName)
     throws IOException, BadRequestException, NotFoundException, SchedulerException, AlreadyExistsException {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, appVersion);
-    ScheduleSpecification scheduleSpecFromRequest;
+    ScheduleUpdateDetail scheduleUpdateDetail;
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
-      // The schedule spec in the request body can contain only the changed information or more, but should always
-      // contain the schedule type for deserialization
-      scheduleSpecFromRequest = GSON.fromJson(reader, ScheduleSpecification.class);
+      scheduleUpdateDetail = GSON.fromJson(reader, ScheduleUpdateDetail.class);
     } catch (IOException e) {
-      LOG.debug("Error reading schedule specification from request body", e);
+      LOG.debug("Error reading schedule update details from request body", e);
       throw new IOException("Error reading request body");
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());
     }
 
-    // If the schedule name is present in the request body, it should match the name in path params
-    if (!scheduleName.equals(scheduleSpecFromRequest.getSchedule().getName())) {
-      throw new BadRequestException(
-        String.format(
-          "schedule name in the body of the request (%s) does not match the schedule name in the path parameter (%s)",
-          scheduleSpecFromRequest.getSchedule().getName(), scheduleName));
-    }
-
-    lifecycleService.updateSchedule(applicationId, scheduleSpecFromRequest);
+    lifecycleService.updateSchedule(applicationId, scheduleName, scheduleUpdateDetail);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

@@ -22,7 +22,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.logging.KafkaTestBase;
-import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.LoggingTester;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
@@ -62,26 +61,25 @@ public class TestKafkaLogging extends KafkaTestBase {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static TransactionManager txManager;
-  private static LogAppender appender;
 
   @BeforeClass
   public static void init() throws Exception {
     txManager = KAFKA_TESTER.getInjector().getInstance(TransactionManager.class);
     txManager.startAndWait();
 
-    appender = KAFKA_TESTER.getInjector().getInstance(KafkaLogAppender.class);
+    KafkaLogAppender appender = KAFKA_TESTER.getInjector().getInstance(KafkaLogAppender.class);
     new LogAppenderInitializer(appender).initialize("TestKafkaLogging");
 
     Logger logger = LoggerFactory.getLogger("TestKafkaLogging");
     LoggingTester loggingTester = new LoggingTester();
     loggingTester.generateLogs(logger, new FlowletLoggingContext("TKL_NS_1", "APP_1", "FLOW_1", "FLOWLET_1",
                                                                  "RUN1", "INSTANCE1"));
+    appender.stop();
   }
 
   @AfterClass
   public static void finish() {
     txManager.stopAndWait();
-    appender.stop();
   }
 
   @Test

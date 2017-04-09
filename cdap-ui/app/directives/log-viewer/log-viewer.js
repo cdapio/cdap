@@ -47,6 +47,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
         break;
       case 'STOPPED':
       case 'KILLED':
+      case 'KILLED_BY_TIMER':
       case 'FAILED':
       case 'SUSPENDED':
         vm.statusType = 1;
@@ -66,7 +67,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     vm.statusType = 3;
     vm.displayData = [];
     vm.data = [];
-    vm.loading = false;
+    vm.loading = true;
     vm.fullScreen = false;
     vm.programStatus = 'Not Started';
     vm.configOptions = {
@@ -219,6 +220,8 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
           });
         }
       });
+  } else {
+    vm.loading = false;
   }
 
   vm.filterSearch = () => {
@@ -268,6 +271,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
       //otherwise, it does not have stack trace but has been selected
       vm.displayData[index].selected = !vm.displayData[index].selected;
     }
+    checkForScrollbar();
   };
 
   vm.collapseColumns = () => {

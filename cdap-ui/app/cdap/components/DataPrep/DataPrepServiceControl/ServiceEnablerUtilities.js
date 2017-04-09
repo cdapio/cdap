@@ -18,8 +18,11 @@ import NamespaceStore from 'services/NamespaceStore';
 import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
 import {MyArtifactApi} from 'api/artifact';
 import MyDataPrepApi from 'api/dataprep';
-
+import Version from 'services/VersionRange/Version';
+import T from 'i18n-react';
 import Rx from 'rx';
+
+const PREFIX = 'features.DataPrep.Upgrade';
 
 export default function enableDataPreparationService(shouldStopService) {
   function enableService(observer) {
@@ -51,6 +54,16 @@ export default function enableDataPreparationService(shouldStopService) {
         });
 
         let highestVersion = findHighestVersion(versionsArray, true);
+
+        let minimumVersion = new Version('1.3.0-SNAPSHOT');
+
+        if (minimumVersion.compareTo(new Version(highestVersion)) > 0) {
+          observer.onError({
+            error: T.translate(`${PREFIX}.minimumVersionError`, { highestVersion })
+          });
+          return;
+        }
+
 
         let highestVersionArtifact = wranglerArtifacts.filter((artifact) => {
           return artifact.version === highestVersion;
@@ -135,13 +148,10 @@ export default function enableDataPreparationService(shouldStopService) {
   function pingService(observer) {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
-
     function ping() {
       MyDataPrepApi.ping({ namespace })
         .subscribe(() => {
-          observer.onCompleted();
-          window.onbeforeunload = null;
-          window.location.reload();
+          observer.onNext();
         }, (err) => {
           if (err.statusCode === 503) {
             setTimeout(() => {

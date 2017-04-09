@@ -980,10 +980,14 @@ public class DefaultStore implements Store {
   }
 
   private ApplicationSpecification getAppSpecOrFail(AppMetadataStore mds, ProgramId id) {
-    ApplicationSpecification appSpec = getApplicationSpec(mds, id.getParent());
+    return getAppSpecOrFail(mds, id.getParent());
+  }
+
+  private ApplicationSpecification getAppSpecOrFail(AppMetadataStore mds, ApplicationId id) {
+    ApplicationSpecification appSpec = getApplicationSpec(mds, id);
     if (appSpec == null) {
       throw new NoSuchElementException("no such application @ namespace id: " + id.getNamespaceId() +
-                                           ", app id: " + id.getApplication());
+                                         ", app id: " + id.getApplication());
     }
     return appSpec;
   }

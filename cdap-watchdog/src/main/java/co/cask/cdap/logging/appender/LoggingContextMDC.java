@@ -16,7 +16,6 @@
 
 package co.cask.cdap.logging.appender;
 
-import co.cask.cdap.common.logging.LoggingContext;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
@@ -37,14 +36,14 @@ class LoggingContextMDC extends AbstractMap<String, String> {
   private final Map<String, String> eventMDC;
   private final Iterable<Entry<String, String>> entryIterable;
 
-  LoggingContextMDC(LoggingContext loggingContext, Map<String, String> eventMDC) {
-    this.systemTags = loggingContext.getSystemTagsAsString();
+  LoggingContextMDC(Map<String, String> systemTags, Map<String, String> eventMDC) {
+    this.systemTags = systemTags;
     this.eventMDC = eventMDC;
     this.entryIterable = Iterables.concat(systemTags.entrySet(),
                                           Iterables.filter(eventMDC.entrySet(), new Predicate<Entry<String, String>>() {
       @Override
       public boolean apply(Entry<String, String> entry) {
-        return !systemTags.containsKey(entry.getKey());
+        return !LoggingContextMDC.this.systemTags.containsKey(entry.getKey());
       }
     }));
   }

@@ -22,6 +22,7 @@ var fs = require('fs');
 var archiver = require('archiver');
 var minimist = require('minimist');
 var Listr = require('listr');
+const chalk = require('chalk');
 
 var runtimearguments = minimist(process.argv.slice(2));
 var newuizippath = runtimearguments['new-ui-zip-path'];
@@ -116,7 +117,9 @@ function zipExistingUI() {
     try {
       var olduizip = fs.createWriteStream(cdaphome + '/ui_backup'+ Date.now() + '.zip');
       var archive = archiver('zip', { store: true });
+      process.chdir(cdaphome);
       olduizip.on('close', function() {
+        process.chdir(__dirname);
       });
 
       archive.on('error', function(err) {
@@ -125,18 +128,18 @@ function zipExistingUI() {
 
       folderstozip
         .filter(function(folder) {
-          return fs.existsSync(cdaphome + '/ui/' + folder);
+          return fs.existsSync('ui' + folder);
         })
         .forEach(function(folder) {
-          archive.directory(cdaphome + '/ui/' + folder);
+          archive.directory('ui' + folder);
         });
 
       filestozip
         .filter(function(file) {
-          return fs.existsSync(cdaphome + '/ui/' + file);
+          return fs.existsSync('ui' + file);
         })
         .forEach(function(file) {
-          archive.file(cdaphome + '/ui/' + file);
+          archive.file('ui' + file);
         });
       archive.pipe(olduizip);
       archive.finalize();
@@ -182,7 +185,10 @@ var tasks = new Listr([
 tasks
   .run()
   .catch(function(err) {
-    console.error('\n \x1b[31m Failed to upgrade.\n \t', err.message);
-    console.log('\n \x1b[33m Usage:');
-    console.log('\tnpm run upgrade --new-ui-zip-path=<path-to-zip-file>');
+    const error = chalk.red;
+    const warn = chalk.yellow;
+    console.error('\n ' +  error('Failed to upgrade') + '\n \t', error(err.message));
+    console.log('\n ' + warn('Usage:'));
+    console.log('\t' + warn('npm run upgrade -- --new-ui-zip-path=<path-to-zip-file>'));
+    process.exit(1);
   });

@@ -20,9 +20,11 @@ import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import SingleFieldModal from 'components/DataPrep/Directives/Parse/Modals/SingleFieldModal';
 import CSVModal from 'components/DataPrep/Directives/Parse/Modals/CSVModal';
 import LogModal from 'components/DataPrep/Directives/Parse/Modals/LogModal';
+import SimpleDateModal from 'components/DataPrep/Directives/Parse/Modals/SimpleDateModal';
 import T from 'i18n-react';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+import debounce from 'lodash/debounce';
 
 const SUFFIX = 'features.DataPrep.Directives.Parse';
 
@@ -61,6 +63,37 @@ export default class ParseDirective extends Component {
       'FIXEDLENGTH',
       'HL7'
     ];
+
+    this.calculateOffset = this.calculateOffset.bind(this);
+
+    this.offsetCalcDebounce = debounce(this.calculateOffset, 1000);
+
+    window.addEventListener('resize', this.offsetCalcDebounce);
+  }
+
+  componentDidUpdate() {
+    if (this.props.isOpen) {
+      this.calculateOffset();
+    }
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.offsetCalcDebounce);
+  }
+
+  calculateOffset() {
+    let elem = document.getElementsByClassName('second-level-popover');
+    let elemBounding = elem[0].getBoundingClientRect();
+    let bodySize = elem[0].ownerDocument.body.getBoundingClientRect();
+
+    // out of bound check
+    let diff = bodySize.height - elemBounding.bottom;
+
+    if (diff < 0) {
+      elem[0].style.top = `${diff}px`;
+    } else {
+      elem[0].style.top = 0;
+    }
   }
 
   preventPropagation(e) {
@@ -109,7 +142,7 @@ export default class ParseDirective extends Component {
   }
 
   renderSingleFieldModal() {
-    let isRequired = ['SIMPLEDATE', 'FIXEDLENGTH'].indexOf(this.state.selectedParse) !== -1;
+    let isRequired = this.state.selectedParse === 'FIXEDLENGTH';
 
     let defaultValue;
     if (['JSON', 'XMLTOJSON'].indexOf(this.state.selectedParse) !== -1) {
@@ -148,6 +181,15 @@ export default class ParseDirective extends Component {
     );
   }
 
+  renderSimpleDateModal() {
+    return (
+      <SimpleDateModal
+        toggle={this.selectParse.bind(this, null)}
+        onApply={this.applyDirective.bind(this)}
+      />
+    );
+  }
+
   renderModal() {
     if (!this.state.selectedParse) { return null; }
 
@@ -155,6 +197,8 @@ export default class ParseDirective extends Component {
       return this.renderCSVModal();
     } else if (this.state.selectedParse === 'LOG') {
       return this.renderLogModal();
+    } else if (this.state.selectedParse === 'SIMPLEDATE') {
+      return this.renderSimpleDateModal();
     } else {
       return this.renderSingleFieldModal();
     }

@@ -213,9 +213,10 @@ features:
           TEXTREGEX: value matches regex
           TEXTSTARTSWITH: value starts with
         if: If
+        ignoreCase: Ignore Case
         KEEP: Keep rows
         Placeholders:
-          CUSTOMCONDITION: "e.g. {columnName} < 30"
+          CUSTOMCONDITION: e.g. < 30
           TEXTCONTAINS: Enter contained value
           TEXTENDSWITH: Enter suffix
           TEXTEXACTLY: Enter value
@@ -223,16 +224,28 @@ features:
           TEXTSTARTSWITH: Enter prefix
         REMOVE: Remove rows
         title: Filter
+      FindAndReplace:
+        buttonLabel: Replace All
+        find: Find
+        findPlaceholder: Old value
+        replacePlaceholder: New value
+        replaceWith: Replace with
+        title: Find and Replace
       Parse:
         modalTitle: Parse as {parser}
         Parsers:
           CSV:
+            customPlaceholder: "Delimiter (e.g ;, #, %, ^)"
+            firstRowHeader: Set first row as header
             label: CSV
+            modalTitle: Please select the delimiter
             Options:
               COMMA: Comma
+              CUSTOM: Custom Delimiter
               PIPE: Pipe
               TAB: Tab
-            shouldSkipLabel: Skip empty lines
+              CONTROL_A: ^A
+              CONTROL_D: ^D
           FIXEDLENGTH:
             fieldLabel: Column widths
             label: Fixed Length
@@ -248,6 +261,7 @@ features:
           LOG:
             customPlaceholder: "e.g. %h %l %u %t \"%r\" %>s %b"
             label: Log
+            modalTitle: Please select the logs format
             Options:
               COMMON: Common
               COMBINED: Combined
@@ -260,9 +274,22 @@ features:
             label: Natural Date
             placeholder: "e.g. UTC"
           SIMPLEDATE:
-            fieldLabel: Date format
+            customPlaceholder: "e.g. yyyy.MM.dd G 'at' HH:mm:ss z"
             label: Simple Date
-            placeholder: "e.g. yyyy.MM.dd G 'at' HH:mm:ss z"
+            modalTitle: Please select the date format
+            Options:
+              CUSTOM: Custom Format
+              OPTION1: "MM/dd/yyyy"
+              OPTION2: "dd/MM/yyyy"
+              OPTION3: "MM-dd-yyyy"
+              OPTION4: "MM-dd-yy"
+              OPTION5: "MM-dd-yyyy 'at' HH:mm:ss"
+              OPTION6: "dd/MM/yy HH:mm:ss"
+              OPTION7: "MM.dd.yyyy HH:mm:ss.SSS"
+              OPTION8: "EEE, d MMM yyyy HH:mm:ss"
+              OPTION9: "EEE, MMM d, 'yy"
+              OPTION10: "h:mm AM/PM"
+              OPTION11: "H:mm with timezone"
           XML:
             label: XML
           XMLTOJSON:
@@ -270,8 +297,20 @@ features:
             label: XML to JSON
             placeholder: Enter depth
         title: Parse
+      Copy:
+        copySuffix: _copy
+        duplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
+        inputLabel: Name New Column
+        placeholder: Destination Column
+        title: Copy Column
+      Keep:
+       title: Delete Other Columns
     pageTitle: CDAP | Data Preparation
     TopPanel:
+      applyBtnLabel: Apply
+      addToPipelineBtnLabel: Add to Pipeline
+      upgradeBtnLabel: Upgrade
+      viewSchemaBtnLabel: View Schema
       invalidFieldNameMessage: Invalid field name "{fieldName}"
       invalidFieldNameRemedies1: "Your field name contains an invalid character: no space or special character other than - or _ are allowed"
       invalidFieldNameRemedies2: Try to apply directive “cleanse-column-names”
@@ -279,6 +318,16 @@ features:
         defaultErrorMessage: Error generating schema.
       PipelineModal:
         defaultErrorMessage: Error adding to pipeline
+      WorkspaceModal:
+        create: Create
+        createModalTitle: Create Workspace
+        createTitle: Create New Workspace
+        uploadTitle: Upload Data
+        uploadSubTitle: Select the file to be uploaded to the workspace
+        createAndUploadBtnLabel: Create & Upload
+        uploadBtnLabel: Upload
+    Upgrade:
+      minimumVersionError: "Data Preparation requires wrangler-service artifact version 1.3.0 or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
   Dashboard:
     Title: Dashboard
 
@@ -436,6 +485,7 @@ features:
         Masters: Masters
         MissingBlocks: Missing Blocks
         Namenodes: Namenodes
+        Datanodes: Datanodes
         Namespaces: Namespaces
         NumCommittingChangeSets: Committing Changes
         NumCommittedChangeSets: Committed Changes
@@ -579,6 +629,11 @@ features:
     deployedLabel:
       data: Created
       app: Deployed
+    errorMessage404: Sorry, we are not able to find {entityType} "{entityId}"
+    errorMessageAuthorization: You are not authorized to view {entityType} "{entityId}"
+    errorMessageSubtitle: Please select another entity
+    overviewCloseLabel: Close
+    overviewCloseLabel1: this panel
   Pagination:
     dropdown-label: Page
   PropertiesEditor:
@@ -981,4 +1036,6 @@ features:
     overviewLabel: Overview
     manageLabel: Manage
     pipelinesMessage: Pipelines
+  WarningContainer:
+    title: Warning
 ...

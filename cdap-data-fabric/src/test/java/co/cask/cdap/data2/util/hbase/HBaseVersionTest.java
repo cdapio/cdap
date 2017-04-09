@@ -78,6 +78,7 @@ public class HBaseVersionTest {
     assertCompatModuleMapping(HBaseVersion.Version.HBASE_12_CDH57, "1.2.0-cdh5.8.2");
     assertCompatModuleMapping(HBaseVersion.Version.HBASE_12_CDH57, "1.2.0-cdh5.9.0");
     assertCompatModuleMapping(HBaseVersion.Version.HBASE_12_CDH57, "1.2.0-cdh5.10.0");
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_12_CDH57, "1.2.0-cdh5.11.0");
   }
 
   private void assertCompatModuleMapping(HBaseVersion.Version expectedCompatModule,

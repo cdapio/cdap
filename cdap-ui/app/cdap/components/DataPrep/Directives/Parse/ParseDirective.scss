@@ -36,6 +36,11 @@
   .close-section { cursor: pointer; }
 
   .modal-body {
+    h5 {
+      font-weight: 500;
+      font-size: 15px;
+    }
+
     .list-options,
     .optional-config {
       span:first-child {

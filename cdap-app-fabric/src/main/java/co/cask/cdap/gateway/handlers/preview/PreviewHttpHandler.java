@@ -20,11 +20,13 @@ import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.gateway.handlers.AbstractLogHandler;
 import co.cask.cdap.logging.read.LogReader;
+import co.cask.cdap.metrics.query.MetricsQueryHelper;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.codec.BasicThrowableCodec;
@@ -33,6 +35,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -41,8 +44,12 @@ import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -63,8 +70,10 @@ import javax.ws.rs.QueryParam;
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class PreviewHttpHandler extends AbstractLogHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(PreviewHttpHandler.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
+    .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
+    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory(true)).create();
   private static final Type STRING_LIST_MAP_TYPE = new TypeToken<Map<String, List<String>>>() { }.getType();
 
   private final PreviewManager previewManager;
@@ -214,6 +223,73 @@ public class PreviewHttpHandler extends AbstractLogHandler {
     doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord, format, suppress);
   }
 
+  @POST
+  @Path("previews/{preview-id}/metrics/search")
+  public void search(HttpRequest request, HttpResponder responder,
+                     @PathParam("namespace-id") String namespaceId,
+                     @PathParam("preview-id") String previewId,
+                     @QueryParam("target") String target,
+                     @QueryParam("tag") List<String> tags) throws Exception {
+    MetricsQueryHelper helper = getMetricsQueryHelper(namespaceId, previewId);
+    if (target == null) {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Required target param is missing");
+      return;
+    }
+    try {
+      tags = overrideTags(tags, namespaceId, previewId);
+      switch (target) {
+        case "tag":
+          responder.sendJson(HttpResponseStatus.OK, helper.searchTags(tags));
+          break;
+        case "metric":
+          responder.sendJson(HttpResponseStatus.OK, helper.searchMetric(tags));
+          break;
+        default:
+          responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Unknown target param value: " + target);
+          break;
+      }
+    } catch (IllegalArgumentException e) {
+      LOG.warn("Invalid request", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (Exception e) {
+      LOG.error("Exception querying metrics ", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
+    }
+  }
+
+  @POST
+  @Path("previews/{preview-id}/metrics/query")
+  public void query(HttpRequest request, HttpResponder responder,
+                    @PathParam("namespace-id") String namespaceId,
+                    @PathParam("preview-id") String previewId,
+                    @QueryParam("metric") List<String> metrics,
+                    @QueryParam("groupBy") List<String> groupBy,
+                    @QueryParam("tag") List<String> tags) throws Exception {
+    MetricsQueryHelper helper = getMetricsQueryHelper(namespaceId, previewId);
+    try {
+      if (new QueryStringDecoder(request.getUri()).getParameters().isEmpty()) {
+        if (HttpHeaders.getContentLength(request) > 0) {
+          Map<String, MetricsQueryHelper.QueryRequestFormat> queries =
+            GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
+                          new TypeToken<Map<String, MetricsQueryHelper.QueryRequestFormat>>() { }.getType());
+          overrideQueries(queries, namespaceId, previewId);
+          responder.sendJson(HttpResponseStatus.OK, helper.executeBatchQueries(queries));
+          return;
+        }
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
+      }
+      tags = overrideTags(tags, namespaceId, previewId);
+      responder.sendJson(HttpResponseStatus.OK,
+                         helper.executeTagQuery(tags, metrics, groupBy,
+                                                new QueryStringDecoder(request.getUri()).getParameters()));
+    } catch (IllegalArgumentException e) {
+      LOG.warn("Invalid request", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (Exception e) {
+      LOG.error("Exception querying metrics ", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
+    }
+  }
 
   private ProgramRunId getProgramRunId(String namespaceId, String previewId) throws Exception {
      return previewManager.getRunner(new ApplicationId(namespaceId, previewId)).getProgramRunId();
@@ -221,5 +297,46 @@ public class PreviewHttpHandler extends AbstractLogHandler {
 
   private RunRecordMeta getRunRecord(String namespaceId, String previewId) throws Exception {
     return previewManager.getRunner(new ApplicationId(namespaceId, previewId)).getRunRecord();
+  }
+
+  private MetricsQueryHelper getMetricsQueryHelper(String namespaceId, String previewId) throws Exception {
+    return previewManager.getRunner(new ApplicationId(namespaceId, previewId)).getMetricsQueryHelper();
+  }
+
+  private List<String> overrideTags(List<String> tags, String namespaceId, String previewId) {
+    List<String> newTags = Lists.newArrayList();
+    String namespaceTag = MetricsQueryHelper.NAMESPACE_STRING + ":" + namespaceId;
+    String previewTag = MetricsQueryHelper.APP_STRING + ":" + previewId;
+    for (String tag : tags) {
+      if (tag.startsWith(MetricsQueryHelper.NAMESPACE_STRING)) {
+        newTags.add(namespaceTag);
+      } else if (tag.startsWith(MetricsQueryHelper.APP_STRING)) {
+        newTags.add(previewTag);
+      } else {
+        newTags.add(tag);
+      }
+    }
+    if (!newTags.contains(namespaceTag)) {
+      newTags.add(namespaceTag);
+    }
+    if (!newTags.contains(previewTag)) {
+      newTags.add(previewTag);
+    }
+    return newTags;
+  }
+
+  private void overrideQueries(Map<String, MetricsQueryHelper.QueryRequestFormat> query, String namespaceId,
+                               String previewId) {
+    for (MetricsQueryHelper.QueryRequestFormat format : query.values()) {
+      Map<String, String> tags = format.getTags();
+      if (!tags.containsKey(MetricsQueryHelper.NAMESPACE_STRING) ||
+        !tags.get(MetricsQueryHelper.NAMESPACE_STRING).equals(namespaceId)) {
+        tags.put(MetricsQueryHelper.NAMESPACE_STRING, namespaceId);
+      }
+      if (!tags.containsKey(MetricsQueryHelper.APP_STRING) ||
+        !tags.get(MetricsQueryHelper.APP_STRING).equals(previewId)) {
+        tags.put(MetricsQueryHelper.APP_STRING, previewId);
+      }
+    }
   }
 }

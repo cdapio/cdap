@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.gateway.handlers;
 
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -25,7 +26,7 @@ import co.cask.cdap.logging.gateway.handlers.store.ProgramStore;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableList;
@@ -81,9 +82,9 @@ public class LogHandler extends AbstractLogHandler {
                            @QueryParam("escape") @DefaultValue("true") boolean escape,
                            @QueryParam("filter") @DefaultValue("") String filterStr,
                            @QueryParam("format") @DefaultValue("text") String format,
-                           @QueryParam("suppress") List<String> suppress) {
+                           @QueryParam("suppress") List<String> suppress) throws NotFoundException {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
-    RunRecordMeta runRecord = programStore.getRun(new ProgramId(namespaceId, appId, type, programId), runId);
+    RunRecordMeta runRecord = getRunRecordMeta(namespaceId, appId, type, programId, runId);
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId, type,
                                                                                     runId, runRecord.getSystemArgs());
 
@@ -116,9 +117,9 @@ public class LogHandler extends AbstractLogHandler {
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
                         @QueryParam("filter") @DefaultValue("") String filterStr,
                         @QueryParam("format") @DefaultValue("text") String format,
-                        @QueryParam("suppress") List<String> suppress) {
+                        @QueryParam("suppress") List<String> suppress) throws NotFoundException {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
-    RunRecordMeta runRecord = programStore.getRun(new ProgramId(namespaceId, appId, type, programId), runId);
+    RunRecordMeta runRecord = getRunRecordMeta(namespaceId, appId, type, programId, runId);
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId, type,
                                                                                     runId, runRecord.getSystemArgs());
 
@@ -150,9 +151,9 @@ public class LogHandler extends AbstractLogHandler {
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
                         @QueryParam("filter") @DefaultValue("") String filterStr,
                         @QueryParam("format") @DefaultValue("text") String format,
-                        @QueryParam("suppress") List<String> suppress) {
+                        @QueryParam("suppress") List<String> suppress) throws NotFoundException {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
-    RunRecordMeta runRecord = programStore.getRun(new ProgramId(namespaceId, appId, type, programId), runId);
+    RunRecordMeta runRecord = getRunRecordMeta(namespaceId, appId, type, programId, runId);
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId, type,
                                                                                     runId, runRecord.getSystemArgs());
 
@@ -200,5 +201,15 @@ public class LogHandler extends AbstractLogHandler {
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
                                                                            serviceId);
     doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
+  }
+
+  private RunRecordMeta getRunRecordMeta(String namespace, String app, ProgramType programType,
+                                         String programName, String run) throws NotFoundException {
+    ProgramRunId programRunId = new ProgramRunId(namespace, app, programType, programName, run);
+    RunRecordMeta runRecord = programStore.getRun(programRunId.getParent(), programRunId.getRun());
+    if (runRecord == null) {
+      throw new NotFoundException(programRunId);
+    }
+    return runRecord;
   }
 }

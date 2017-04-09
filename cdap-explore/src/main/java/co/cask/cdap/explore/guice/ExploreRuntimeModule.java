@@ -186,13 +186,15 @@ public class ExploreRuntimeModule extends RuntimeModule {
       @Override
       public ExploreService get() {
         File hiveDataDir = new File(cConf.get(Constants.Explore.LOCAL_DATA_DIR));
+        File defaultScratchDir = new File(hiveDataDir, cConf.get(Constants.AppFabric.TEMP_DIR));
 
         // The properties set using setProperty will be included to any new HiveConf object created,
         // at the condition that the configuration is known by Hive, and so is one of the HiveConf.ConfVars
         // variables.
 
-        System.setProperty(HiveConf.ConfVars.SCRATCHDIR.toString(),
-                           new File(hiveDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
+        if (System.getProperty(HiveConf.ConfVars.SCRATCHDIR.toString()) == null) {
+          System.setProperty(HiveConf.ConfVars.SCRATCHDIR.toString(), defaultScratchDir.getAbsolutePath());
+        }
 
         // Reset hadoop tmp dir because Hive does not pick it up from hConf
         System.setProperty("hadoop.tmp.dir", hConf.get("hadoop.tmp.dir"));

@@ -274,6 +274,14 @@ export default class EntityListView extends Component {
     this.retryCounter += 1;
     search();
   }
+  onFastActionSuccess(action) {
+    if (action === 'delete') {
+      this.onOverviewCloseAndRefresh();
+      updateQueryString();
+      return;
+    }
+    search();
+  }
   onOverviewCloseAndRefresh() {
     this.setState({
       overview: false
@@ -386,7 +394,7 @@ export default class EntityListView extends Component {
                   list={this.state.entities}
                   pageSize={this.state.limit}
                   showJustAddedSection={searchText === DEFAULT_SEARCH_QUERY}
-                  onFastActionSuccess={search}
+                  onFastActionSuccess={this.onFastActionSuccess.bind(this)}
                 />
             }
             <Overview

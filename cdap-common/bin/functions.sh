@@ -636,6 +636,20 @@ cdap_start_bin() {
 }
 
 #
+# cdap_run_bin [args]
+# Runs a non-Java application with arguments in the foreground
+#
+cdap_run_bin() {
+  local readonly __bin=${1}
+  shift
+  local readonly __args=${@}
+  local readonly __ret
+  ${__bin} ${__args}
+  __ret=${?}
+  return ${__ret}
+}
+
+#
 # cdap_start_java [args]
 # Start a Java application from class name with arguments in the background
 #
@@ -1102,6 +1116,25 @@ cdap_upgrade_tool() {
   cdap_run_class ${__class} ${@}
   __ret=${?}
   return ${__ret}
+}
+
+#
+# cdap_apply_pack [arguments]
+#
+cdap_apply_pack() {
+  local __ui_pack=${1}
+  local __ext=${__ui_pack##*.}
+
+  if [[ -f ${__ui_pack} ]] && [[ -r ${__ui_pack} ]] && [[ ${__ext} == zip ]]; then
+    # ui upgrade script must be run from subdirectory
+    cd ${CDAP_HOME}/ui/cdap-ui-upgrade
+
+    cdap_run_bin "npm" "run" "upgrade" "--" "--new-ui-zip-path=${__ui_pack}"
+    __ret=${?}
+    return ${__ret}
+  else
+    die "UI pack must be an absolute path to a zip file"
+  fi
 }
 
 #

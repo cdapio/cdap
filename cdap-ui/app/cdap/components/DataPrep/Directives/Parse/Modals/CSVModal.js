@@ -19,12 +19,15 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import classnames from 'classnames';
 import T from 'i18n-react';
 
-const SUFFIX = 'features.DataPrep.Directives.Parse';
+const PREFIX = 'features.DataPrep.Directives.Parse';
 
 const OPTIONS_MAP = {
   'COMMA': ',',
   'TAB': '\\t',
-  'PIPE': '\\|'
+  'PIPE': '\\|',
+  'CONTROL_A': '\\u0001',
+  'CONTROL_D': '\\u0004',
+  'CUSTOM': 'CUSTOM'
 };
 
 export default class CSVModal extends Component {
@@ -33,17 +36,23 @@ export default class CSVModal extends Component {
 
     this.state = {
       delimiter: 'COMMA',
-      shouldSkip: false
+      firstRowHeader: false,
+      customDelimiter: ''
     };
 
     this.apply = this.apply.bind(this);
-    this.toggleShouldSkip = this.toggleShouldSkip.bind(this);
+    this.toggleSetFirstRow = this.toggleSetFirstRow.bind(this);
+    this.handleCustomDelimiterChange = this.handleCustomDelimiterChange.bind(this);
   }
-
 
   apply() {
     let delimiter = OPTIONS_MAP[this.state.delimiter];
-    let configuration = `${delimiter} ${this.state.shouldSkip}`;
+
+    if (this.state.delimiter === 'CUSTOM') {
+      delimiter = this.state.customDelimiter;
+    }
+
+    let configuration = `${delimiter} ${this.state.firstRowHeader}`;
 
     this.props.onApply('CSV', configuration);
     this.props.toggle();
@@ -53,12 +62,34 @@ export default class CSVModal extends Component {
     this.setState({delimiter: option});
   }
 
-  toggleShouldSkip() {
-    this.setState({shouldSkip: !this.state.shouldSkip});
+  toggleSetFirstRow() {
+    this.setState({firstRowHeader: !this.state.firstRowHeader});
+  }
+
+  handleCustomDelimiterChange(e) {
+    this.setState({customDelimiter: e.target.value});
+  }
+
+  renderCustomText() {
+    if (this.state.delimiter !== 'CUSTOM') { return null; }
+
+    return (
+      <div className="custom-format">
+        <input
+          type="text"
+          className="form-control"
+          value={this.state.customDelimiter}
+          onChange={this.handleCustomDelimiterChange}
+          placeholder={T.translate(`${PREFIX}.Parsers.CSV.customPlaceholder`)}
+        />
+      </div>
+    );
   }
 
   render() {
     let options = Object.keys(OPTIONS_MAP);
+
+    let disabled = this.state.delimiter === 'CUSTOM' && this.state.customDelimiter.length === 0;
 
     return (
       <Modal
@@ -66,11 +97,12 @@ export default class CSVModal extends Component {
         toggle={this.props.toggle}
         size="md"
         backdrop="static"
+        zIndex="1061"
         className="dataprep-parse-modal"
       >
         <ModalHeader>
           <span>
-            {T.translate(`${SUFFIX}.modalTitle`, {parser: 'CSV'})}
+            {T.translate(`${PREFIX}.modalTitle`, {parser: 'CSV'})}
           </span>
 
           <div
@@ -81,6 +113,12 @@ export default class CSVModal extends Component {
           </div>
         </ModalHeader>
         <ModalBody>
+          <h5>
+            {T.translate(`${PREFIX}.Parsers.CSV.modalTitle`)}
+          </h5>
+
+          <br />
+
           <div className="list-options">
             {
               options.map((option) => {
@@ -96,25 +134,27 @@ export default class CSVModal extends Component {
                       })}
                     />
                     <span>
-                      {T.translate(`${SUFFIX}.Parsers.CSV.Options.${option}`)}
+                      {T.translate(`${PREFIX}.Parsers.CSV.Options.${option}`)}
                     </span>
                   </div>
                 );
               })
             }
+
+            {this.renderCustomText()}
           </div>
           <div className="optional-config">
             <span
-              onClick={this.toggleShouldSkip}
+              onClick={this.toggleSetFirstRow}
             >
               <span
                 className={classnames('fa', {
-                  'fa-square-o': !this.state.shouldSkip,
-                  'fa-check-square': this.state.shouldSkip
+                  'fa-square-o': !this.state.firstRowHeader,
+                  'fa-check-square': this.state.firstRowHeader
                 })}
               />
               <span>
-                {T.translate(`${SUFFIX}.Parsers.CSV.shouldSkipLabel`)}
+                {T.translate(`${PREFIX}.Parsers.CSV.firstRowHeader`)}
               </span>
             </span>
           </div>
@@ -124,6 +164,7 @@ export default class CSVModal extends Component {
           <button
             className="btn btn-primary"
             onClick={this.apply}
+            disabled={disabled}
           >
             {T.translate('features.DataPrep.Directives.apply')}
           </button>

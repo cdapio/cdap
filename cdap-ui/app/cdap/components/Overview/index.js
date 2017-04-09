@@ -24,7 +24,12 @@ import classnames from 'classnames';
 import SearchStore from 'components/EntityListView/SearchStore';
 import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
 import {updateQueryString} from 'components/EntityListView/SearchStore/ActionCreator';
+import {MyMetadataApi} from 'api/metadata';
+import NamespaceStore from 'services/NamespaceStore';
+import {convertEntityTypeToApi} from 'services/entity-type-api-converter';
+import Mousetrap from 'mousetrap';
 require('./Overview.scss');
+import T from 'i18n-react';
 
 export default class Overview extends Component {
   constructor(props) {
@@ -32,40 +37,83 @@ export default class Overview extends Component {
     this.state = {
       tag: null,
       entity: null,
-      showOverview: false
+      showOverview: false,
+      loading: false
     };
     this.typeToComponentMap = {
       'application': AppOverview,
       'datasetinstance': DatasetOverview,
+      'dataset': DatasetOverview,
       'stream': StreamOverview
     };
   }
   componentWillMount() {
     this.searchStoreSubscription = SearchStore.subscribe(() => {
       let searchState = SearchStore.getState().search;
-      let overviewEntity = searchState.overviewEntity;
-      if (isNil(overviewEntity)) {
+      if (isNil(searchState.overviewEntity)) {
         this.setState({
           entity: null,
           showOverview: false,
-          tag: null
+          tag: null,
+          loading: false,
+          errorContent: null
         });
         return;
       }
-      if (overviewEntity.id !== objectQuery(this.state, 'entity', 'id')) {
-        let entity = searchState.results.find(searchEntitiy => searchEntitiy.id === overviewEntity.id && searchEntitiy.type === overviewEntity.type);
-        if (!isNil(entity)) {
-          if (overviewEntity.uniqueId) {
-            entity = Object.assign({}, entity, {uniqueId: overviewEntity.uniqueId});
+      this.setState({
+        showOverview: true,
+        loading: true
+      });
+      let {id: entityId, type: entityType} = searchState.overviewEntity;
+      let entityTypeLabel = entityType === 'datasetinstance' ? 'dataset' : entityType;
+      entityType = convertEntityTypeToApi(entityType);
+      let namespace = NamespaceStore.getState().selectedNamespace;
+
+      MyMetadataApi
+        .getMetadata({
+          namespace,
+          entityId,
+          entityType
+        })
+        .subscribe(
+          () => {
+            this.setState({
+              entity: searchState.overviewEntity,
+              errorContent: null,
+              showOverview: true,
+              loading: false,
+              tag: this.typeToComponentMap[objectQuery(searchState.overviewEntity, 'type')]
+            }, this.scrollEntityToView.bind(this));
+          },
+          (err) => {
+            let errorContent;
+            if (err.statusCode === 404) {
+              errorContent = this.get404ErrorMessage(entityId, entityTypeLabel);
+            } else if (err.statusCode === 403) {
+              errorContent = this.getAuthorizationMessage(entityId, entityTypeLabel);
+            }
+            this.setState({
+              errorContent,
+              loading: false,
+              showOverview: true
+            });
           }
-          this.setState({
-            entity,
-            showOverview: true,
-            tag: this.typeToComponentMap[objectQuery(overviewEntity, 'type')]
-          }, this.scrollEntityToView.bind(this));
-        }
-      }
+        );
     });
+  }
+  componentDidMount() {
+    this.bindKeyboardShortcuts();
+    this.scrollEntityToView();
+  }
+  componentDidUpdate() {
+    this.scrollEntityToView();
+  }
+  componentWillUnmount() {
+    if (this.searchStoreSubscription) {
+      this.searchStoreSubscription();
+    }
+    this.mousetrap.unbind('esc');
+    this.mousetrap.reset();
   }
   scrollEntityToView() {
     if (isNil(this.state.entity) || !objectQuery(this.state, 'entity', 'uniqueId')) {
@@ -81,16 +129,79 @@ export default class Overview extends Component {
       paginationContainer.scrollTop -= 120;
     }
   }
-  componentDidMount() {
-    this.scrollEntityToView();
-  }
-  componentDidUpdate() {
-    this.scrollEntityToView();
-  }
-  componentWillUnmount() {
-    if (this.searchStoreSubscription) {
-      this.searchStoreSubscription();
+  bindKeyboardShortcuts() {
+    if (this.mousetrap) {
+      this.mousetrap.reset();
+      delete this.mousetrap;
     }
+    this.mousetrap = new Mousetrap(document);
+    this.mousetrap.bind('escape', (e) => {
+      if (e.target.nodeName === 'BODY' && !document.querySelector('.modal')) {
+        this.hideOverview();
+      }
+    });
+  }
+  get404ErrorMessage(entityId, entityTypeLabel) {
+    return (
+      <div className="overview-error-container">
+        <h4>
+          <strong>
+            {T.translate('features.Overview.errorMessage404', {entityId, entityType: entityTypeLabel})}
+          </strong>
+        </h4>
+        <hr />
+        <div className="message-container">
+          <span>{T.translate('features.EntityListView.emptyMessage.suggestion')}</span>
+          <ul>
+            <li>
+              <span>
+                {T.translate('features.Overview.errorMessageSubtitle')}
+              </span>
+            </li>
+            <li>
+              <span
+                className="btn-link"
+                onClick={this.hideOverview.bind(this)}
+              >
+                {T.translate('features.Overview.overviewCloseLabel')}
+              </span>
+              <span> {T.translate('features.Overview.overviewCloseLabel1')}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+  getAuthorizationMessage(entityId, entityTypeLabel) {
+    return (
+      <div className="overview-error-container">
+        <h4>
+          <strong>
+            {T.translate('features.Overview.errorMessageAuthorization', {entityId, entityType: entityTypeLabel})}
+          </strong>
+        </h4>
+        <hr />
+        <div className="message-container">
+          <span>{T.translate('features.EntityListView.emptyMessage.suggestion')}</span>
+          <ul>
+            <li>
+              <span>
+                {T.translate('features.Overview.errorMessageSubtitle')}
+              </span>
+            </li>
+            <li>
+              <span
+                className="btn-link"
+                onClick={this.hideOverview.bind(this)}
+              >
+                {T.translate('features.Overview.overviewCloseLabel')}
+              </span>
+              <span> {T.translate('features.Overview.overviewCloseLabel1')}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    );
   }
   hideOverview() {
     this.setState({
@@ -100,6 +211,7 @@ export default class Overview extends Component {
       type: SearchStoreActions.RESETOVERVIEWENTITY
     });
     updateQueryString();
+    this.mousetrap.unbind('esc');
   }
   closeAndRefresh(action) {
     this.hideOverview();
@@ -111,18 +223,33 @@ export default class Overview extends Component {
   }
   render() {
     let Tag = this.state.tag || 'div';
+    const renderContent = () => {
+      if (this.state.errorContent) {
+        return this.state.errorContent;
+      }
+      if (this.state.loading) {
+        return (
+          <div className="fa fa-spinner fa-spin fa-3x"></div>
+        );
+      }
+
+      return React.createElement(
+        Tag,
+        {
+          entity: this.state.entity,
+          onClose: this.hideOverview.bind(this),
+          onCloseAndRefresh: this.closeAndRefresh.bind(this)
+        }
+      );
+    };
     return (
       <div className={classnames("overview-container", {"show-overview": this.state.showOverview })}>
-        <div className="overview-wrapper" >
+        <div
+          id="overview-wrapper"
+          className="overview-wrapper"
+        >
           {
-            React.createElement(
-              Tag,
-              {
-                entity: this.state.entity,
-                onClose: this.hideOverview.bind(this),
-                onCloseAndRefresh: this.closeAndRefresh.bind(this)
-              }
-            )
+            renderContent()
           }
         </div>
       </div>

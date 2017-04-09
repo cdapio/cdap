@@ -19,7 +19,6 @@ import co.cask.cdap.common.lang.FunctionWithException;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Iterators;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
@@ -32,7 +31,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.twill.filesystem.FileContextLocationFactory;
-import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -50,6 +48,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.PrivilegedExceptionAction;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -129,26 +128,24 @@ public final class Locations {
             return new FileSeekableInputStream((FileInputStream) input);
           }
           if (input instanceof FSDataInputStream) {
-            FSDataInputStream dataInput = (FSDataInputStream) input;
+            final FSDataInputStream dataInput = (FSDataInputStream) input;
             LocationFactory locationFactory = location.getLocationFactory();
 
-            // Get the FileSystem so that we can determine if the file is currently opened or not
-            Configuration hConf = null;
-            if (locationFactory instanceof HDFSLocationFactory) {
-              hConf = ((HDFSLocationFactory) locationFactory).getFileSystem().getConf();
-            } else if (locationFactory instanceof FileContextLocationFactory) {
-              hConf = ((FileContextLocationFactory) locationFactory).getConfiguration();
-            }
-
-            if (hConf != null) {
-              // Disable the FileSystem cache. The FileSystem will be closed when the InputStream is closed
-              String scheme = locationFactory.getHomeLocation().toURI().getScheme();
-              hConf = new Configuration(hConf);
-              hConf.set(String.format("fs.%s.impl.disable.cache", scheme), "true");
-              FileSystem fs = FileSystem.get(hConf);
-              return new DFSSeekableInputStream(dataInput, createDFSStreamSizeProvider(fs, true,
-                                                                                       new Path(location.toURI()),
-                                                                                       dataInput));
+            if (locationFactory instanceof FileContextLocationFactory) {
+              final FileContextLocationFactory lf = (FileContextLocationFactory) locationFactory;
+              return lf.getFileContext().getUgi().doAs(new PrivilegedExceptionAction<SeekableInputStream>() {
+                @Override
+                public SeekableInputStream run() throws IOException {
+                  // Disable the FileSystem cache. The FileSystem will be closed when the InputStream is closed
+                  String scheme = lf.getHomeLocation().toURI().getScheme();
+                  Configuration hConf = new Configuration(lf.getConfiguration());
+                  hConf.set(String.format("fs.%s.impl.disable.cache", scheme), "true");
+                  FileSystem fs = FileSystem.get(hConf);
+                  return new DFSSeekableInputStream(dataInput,
+                                                    createDFSStreamSizeProvider(fs, true,
+                                                                                new Path(location.toURI()), dataInput));
+                }
+              });
             }
 
             // This shouldn't happen
@@ -240,10 +237,6 @@ public final class Locations {
    */
   private static LocationStatus getLocationStatus(Location location) throws IOException {
     LocationFactory lf = location.getLocationFactory();
-    if (lf instanceof HDFSLocationFactory) {
-      return FILE_STATUS_TO_LOCATION_STATUS.apply(
-        ((HDFSLocationFactory) lf).getFileSystem().getFileLinkStatus(new Path(location.toURI())));
-    }
     if (lf instanceof FileContextLocationFactory) {
       return FILE_STATUS_TO_LOCATION_STATUS.apply(
         ((FileContextLocationFactory) lf).getFileContext().getFileLinkStatus(new Path(location.toURI())));
@@ -257,11 +250,6 @@ public final class Locations {
    */
   private static RemoteIterator<LocationStatus> listLocationStatus(Location location) throws IOException {
     LocationFactory lf = location.getLocationFactory();
-    if (lf instanceof HDFSLocationFactory) {
-      FileStatus[] fileStatuses = ((HDFSLocationFactory) lf).getFileSystem()
-        .listStatus(new Path(location.toURI()));
-      return transform(asRemoteIterator(Iterators.forArray(fileStatuses)), FILE_STATUS_TO_LOCATION_STATUS);
-    }
     if (lf instanceof FileContextLocationFactory) {
       FileContext fc = ((FileContextLocationFactory) lf).getFileContext();
       return transform(fc.listStatus(new Path(location.toURI())), FILE_STATUS_TO_LOCATION_STATUS);

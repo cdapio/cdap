@@ -199,4 +199,10 @@ final class ImpersonatedTwillController implements TwillController {
   public void awaitTerminated(long timeout, TimeUnit timeoutUnit) throws TimeoutException, ExecutionException {
     delegate.awaitTerminated(timeout, timeoutUnit);
   }
+
+  @Nullable
+  @Override
+  public TerminationStatus getTerminationStatus() {
+    return delegate.getTerminationStatus();
+  }
 }
