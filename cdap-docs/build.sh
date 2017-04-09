@@ -69,8 +69,8 @@ function run_command() {
     docs-package )      build_docs_package;;
     docs-set )          build_docs_set; warnings=$?;;
     docs-web-only )     build_docs_web_only; warnings=$?;;
-    javadocs )          build_javadocs docs;;
-    javadocs-all )      build_javadocs all;;
+    javadocs )          build_javadocs docs; warnings=$?;;
+    javadocs-all )      build_javadocs all; warnings=$?;;
     licenses )          build_license_dependency_pdfs;;
     version )           print_version;;
     * )                 usage ${1}; warnings=$?;;
@@ -115,7 +115,7 @@ function build_docs_web_only() {
 }
 
 function _build_docs() {
-  local warnings
+  local errors
   local type=${1}
   local title=${2}
   display_start_title "${title}"
@@ -129,6 +129,11 @@ function _build_docs() {
     clear_messages_file
     if [[ ${type} == "docs_set" ]]; then
       build_javadocs docs
+      errors=$?
+      if [[ ${errors} -ne 0 ]]; then
+          echo "Could not build javadocs"
+          return ${errors}   
+      fi
     fi
     build_docs_cli
   fi
@@ -140,10 +145,10 @@ function _build_docs() {
   
   set_and_display_version
   display_messages
-  warnings=$?
+  errors=$?
   cleanup_messages_file
   display_end_title_bell "${title}"
-  return ${warnings}
+  return ${errors}
 }
 
 function build_docs_first_pass() {
@@ -170,10 +175,11 @@ function build_javadocs() {
   # Used by reference manual to know to copy the javadocs
   USING_JAVADOCS="true"
   export USING_JAVADOCS
+  local warnings
   local javadoc_type=${1}
   local title="Building Javadocs: '${javadoc_type}'"
   display_start_title "${title}"
-  local warnings
+  set_version
   check_build_rst
   set_environment    
   if [[ ${DEBUG} == ${TRUE} ]]; then
@@ -182,24 +188,43 @@ function build_javadocs() {
     local debug_flag=''
   fi
   if [[ ${javadoc_type} == ${ALL} ]]; then
-    javadoc_run="javadoc:aggregate"
+    javadoc_run="javadoc:aggregate -P release"
   else
-    javadoc_run="site"
+    javadoc_run="site -P templates"
   fi
   local start=`date`
   cd ${PROJECT_PATH}
   MAVEN_OPTS="-Xmx4g -XX:MaxPermSize=256m" # match other CDAP builds
-  mvn clean package ${javadoc_run} -P examples,templates,release -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
-  warnings=$?
-  if [[ ${warnings} -eq 0 ]]; then
-    echo
-    echo "Javadocs Build Start: ${start}"
-    echo "                 End: `date`"
+  local temp_repo="-Dmaven.repo.local=/tmp/repo-cdap-docs/${GIT_BRANCH}"
+  echo "Using temp_repo '${temp_repo}'"
+  if [[ -d ${temp_repo} ]]; then
+    rm -rf ${temp_repo}
+  fi 
+  echo "========================================================"
+  echo "Building and installing CDAP to ${temp_repo}"
+  echo "command:"
+  echo "mvn clean install ${temp_repo} -P examples,templates,release -DskipTests -Dgpg.skip=true"
+  mvn clean install ${temp_repo} -P examples,templates,release -DskipTests -Dgpg.skip=true
+  errors=$?
+  if [[ ${errors} -eq 0 ]]; then
+    echo "========================================================"
+    echo "Building and installing CDAP finished; running Javadocs"
+    echo "command:"
+    echo "mvn ${javadoc_run} ${temp_repo} -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}"
+    mvn ${javadoc_run} ${temp_repo} -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
+    errors=$?
+    if [[ ${errors} -eq 0 ]]; then
+      echo
+      echo "Javadocs Build Start: ${start}"
+      echo "                 End: `date`"
+    else
+      echo "Error building Javadocs: ${errors}"
+    fi
   else
-    echo "Error building Javadocs: ${warnings}"
+    echo "Error installing CDAP: ${errors}"
   fi
   display_end_title ${title}
-  return ${warnings}
+  return ${errors}
 }
 
 function build_docs_cli() {
