@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.runtime.spark.classloader;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
 import co.cask.cdap.common.lang.ClassRewriter;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
@@ -66,6 +67,9 @@ public class SparkClassRewriter implements ClassRewriter {
   private static final Type SPARK_DSTREAM_GRAPH_TYPE = Type.getObjectType("org/apache/spark/streaming/DStreamGraph");
   private static final Type YARN_SPARK_HADOOP_UTIL_TYPE =
     Type.getObjectType("org/apache/spark/deploy/yarn/YarnSparkHadoopUtil");
+  private static final Type KRYO_TYPE = Type.getObjectType("com/esotericsoftware/kryo/Kryo");
+  private static final Type SCHEMA_SERIALIZER_TYPE =
+    Type.getObjectType("co/cask/cdap/app/runtime/spark/serializer/SchemaSerializer");
 
   // Don't refer akka Remoting with the ".class" because in future Spark version, akka dependency is removed and
   // we don't want to force a dependency on akka.
@@ -125,6 +129,10 @@ public class SparkClassRewriter implements ClassRewriter {
       // CDAP-8636 Rewrite methods of YarnSparkHadoopUtil to avoid acquiring delegation token, because when we execute
       // spark submit, we don't have keytab login
       return rewriteSparkHadoopUtil(className, input);
+    }
+    if (className.equals(KRYO_TYPE.getClassName())) {
+      // CDAP-9314 Rewrite the Kryo constructor to register serializer for CDAP classes
+      return rewriteKryo(input);
     }
 
     return null;
@@ -193,13 +201,34 @@ public class SparkClassRewriter implements ClassRewriter {
   }
 
   /**
-   * Rewrites the constructors who don't delegate to other constructor with the given {@link ConstructorRewriter}
-   * and define the class.
+   * Rewrites the constructor of the Kryo class to add serializer for CDAP classes.
+   *
+   * @param byteCodeStream {@link InputStream} for reading the original bytecode of the class
+   * @return the rewritten bytecode
+   */
+  private byte[] rewriteKryo(InputStream byteCodeStream) throws IOException {
+    return rewriteConstructor(KRYO_TYPE, byteCodeStream, new ConstructorRewriter() {
+      @Override
+      public void onMethodExit(GeneratorAdapter generatorAdapter) {
+        // Register serializer for Schema
+        // addDefaultSerializer(Schema.class, SchemaSerializer.class);
+        generatorAdapter.loadThis();
+        generatorAdapter.push(Type.getType(Schema.class));
+        generatorAdapter.push(SCHEMA_SERIALIZER_TYPE);
+        generatorAdapter.invokeVirtual(KRYO_TYPE,
+                                       new Method("addDefaultSerializer", Type.VOID_TYPE,
+                                                  new Type[] { Type.getType(Class.class), Type.getType(Class.class)}));
+      }
+    });
+  }
+
+  /**
+   * Rewrites the constructors who don't delegate to other constructor with the given {@link ConstructorRewriter}.
    *
    * @param classType type of the class to be defined
    * @param byteCodeStream {@link InputStream} for reading the original bytecode of the class
    * @param rewriter a {@link ConstructorRewriter} for rewriting the constructor
-   * @return a defined Class
+   * @return the rewritten bytecode
    */
   private byte[] rewriteConstructor(final Type classType, InputStream byteCodeStream,
                                     final ConstructorRewriter rewriter) throws IOException {
@@ -257,7 +286,7 @@ public class SparkClassRewriter implements ClassRewriter {
    * {@link SparkRuntimeEnv#setProperty(String, String)}.
    *
    * @param byteCodeStream {@link InputStream} for reading in the original bytecode.
-   * @return a defined class
+   * @return the rewritten bytecode
    */
   private byte[] rewriteSetProperties(InputStream byteCodeStream) throws IOException {
     final Type systemType = Type.getType(System.class);

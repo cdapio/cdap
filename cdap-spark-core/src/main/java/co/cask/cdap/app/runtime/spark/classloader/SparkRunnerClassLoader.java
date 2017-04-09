@@ -88,11 +88,13 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
     // Any class that is not from Spark
     // We also need to define the org.spark-project., fastxml and akka classes in this ClassLoader
     // to avoid reference/thread leakage due to Spark assumption on process terminating after execution
+    // Also need to define Kryo class as it is for rewriting the Kryo class to add extra default serializers
     if (API_CLASSES.contains(name) || (!name.startsWith("co.cask.cdap.api.spark.")
         && !name.startsWith("co.cask.cdap.app.runtime.spark.")
         && !name.startsWith("org.apache.spark.") && !name.startsWith("org.spark-project.")
         && !name.startsWith("com.fasterxml.jackson.module.scala.")
-        && !name.startsWith("akka.") && !name.startsWith("com.typesafe."))) {
+        && !name.startsWith("akka.") && !name.startsWith("com.typesafe.")
+        && !name.startsWith("com.esotericsoftware.kryo.") && !name.startsWith("com.twitter.chill."))) {
       return super.loadClass(name, resolve);
     }
 
