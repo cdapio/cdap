@@ -1046,9 +1046,9 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>com.mchange</groupId>
+        <groupId>c3p0</groupId>
         <artifactId>c3p0</artifactId>
-        <version>0.9.2.1</version>
+        <version>0.9.2</version>
       </dependency>
       <dependency>
         <groupId>com.ning</groupId>
