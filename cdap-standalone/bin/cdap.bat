@@ -27,11 +27,11 @@ SET "CDAP_HOME=%CDAP_HOME:~0,-5%"
 IF /i NOT "%CDAP_HOME: =%"=="%CDAP_HOME%" (
   echo CDAP_HOME "%CDAP_HOME%"
   echo Contains one or more space characters, will not work correctly, and is not supported.
-  echo Exiting. 
+  echo Exiting.
   GOTO :FINALLY
 )
 
-SET CDAP_VERSION=4.1.1-SNAPSHOT
+SET CDAP_VERSION=@@project.version@@
 
 REM Double-quotes surround string to include a space character but are not included in string
 REM As JAVACMD can include a space, any use of it needs to be surrounded in double-quotes
@@ -149,7 +149,7 @@ for /F "delims=.,v tokens=1,2,3" %%a in ('echo %line%') do (
     echo Node.js v%line% is not supported. The minimum version supported is %nodejs_minimum%.
     GOTO FINALLY
   ) else (
-    echo Node.js version: v%line% 
+    echo Node.js version: v%line%
   )
 )
 endlocal
@@ -407,7 +407,7 @@ attrib -h %~dsp0MyProg.pid >NUL
 IF exist %~dsp0MyProg.pid (
   for /F %%i in (%~dsp0MyProg.pid) do (
     IF "%%i" == "No" (
-      IF %show_error_messages% EQU 1 echo No valid PID in PID file.    
+      IF %show_error_messages% EQU 1 echo No valid PID in PID file.
     ) else (
       taskkill /F /PID %%i >NUL 2>&1
       del %~dsp0MyProg.pid 1>NUL 2>&1
