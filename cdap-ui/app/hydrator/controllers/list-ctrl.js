@@ -247,7 +247,6 @@ angular.module(PKG.name + '.feature.hydrator')
           fetchDrafts().then(setCurrentPage);
 
           angular.forEach(vm.pipelineList, function (app) {
-            console.log('app is ', app);
             app._stats = {};
 
             fetchRunsInfo(app);
@@ -311,7 +310,6 @@ angular.module(PKG.name + '.feature.hydrator')
         body: batch
       })
       .then(function (res) {
-        console.log('res here is ', res);
         vm.runningPolls.push(res.__pollId__);
         angular.forEach(res, function (app) {
           if (app.status === 'RUNNING') {
@@ -405,7 +403,6 @@ angular.module(PKG.name + '.feature.hydrator')
     }
 
     function destroyTimerForApp(app) {
-      console.log('pipline duration destroy called for', app);
       if (app.pipelineDurationTimer) {
         vm.$interval.cancel(app.pipelineDurationTimer);
         app.pipelineDurationTimer = null;
@@ -419,7 +416,6 @@ angular.module(PKG.name + '.feature.hydrator')
     }
 
     function stopPollingAll() {
-      console.log('pipline duration destroy called for', vm.runningPolls);
       vm.runningPolls.forEach(function (pollId) {
         dataSrc.stopPoll(pollId);
       });
