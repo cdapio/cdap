@@ -37,8 +37,8 @@ SOURCE_PATH = os.path.dirname(os.path.abspath(__file__))
 def parse_options():
     """ Parses args options.
     """
-    
-    description = """Reads an input release notes XML file, converts it to an RST format, and 
+
+    description = """Reads an input release notes XML file, converts it to an RST format, and
 outputs it to the default RST file '%(default_release_notes_file)s' unless otherwise specified.
 """ % {'default_release_notes_file': DEFAULT_OUTPUT_RST_FILE}
 
@@ -55,15 +55,15 @@ outputs it to the default RST file '%(default_release_notes_file)s' unless other
     parser.add_option(
         '-o', '--output',
         dest='output',
-        help="The release notes RST file to be written to, if not the default '%s'" % DEFAULT_OUTPUT_RST_FILE,
+        help="The release notes RST file to be written to, if not the default of the input file with '.rst'",
         metavar='FILE',
-        default=DEFAULT_OUTPUT_RST_FILE)
+        default=None)
 
     (options, args) = parser.parse_args()
-    
+
     if not options.input:
         parser.print_help()
-    
+
     return options, args
 
 ##
@@ -98,29 +98,29 @@ def unlink(text):
     A_HREF = '<a href="'
     A_HREF_CLOSE = '">'
     A_HREF_TAG_CLOSE = '</a>'
-    
+
     find_a_href = text.find(A_HREF)
     if find_a_href == -1:
         return text
-        
+
     find_a_href_close = text.find(A_HREF_CLOSE)
     if find_a_href_close == -1:
         raise Exception('unlink', "'%s' is missing a '%s'" % (text, A_HREF_CLOSE))
     find_a_href_close_end = find_a_href_close + len(A_HREF_CLOSE)
-    
+
     find_a_href_tag_close = text.find(A_HREF_TAG_CLOSE)
     if find_a_href_tag_close == -1:
         raise Exception('unlink', "'%s' is missing a '%s'" % (text, A_HREF_TAG_CLOSE))
     find_a_href_tag_close_end = find_a_href_tag_close + len(A_HREF_TAG_CLOSE)
-    
+
     open = text[0:find_a_href]
     link = text[find_a_href_close_end:find_a_href_tag_close]
     close = text[find_a_href_tag_close_end:]
-    
+
     new_text = "%s`%s`__%s" % (open, link, close)
     # Recursive in case there are more
     return  unlink(new_text)
-    
+
 def read_lines(input, output):
     func = 'read_lines'
     KEY_ID = '                        <key id='
@@ -153,20 +153,28 @@ def read_lines(input, output):
                 new_line = "- :cask-issue:`%s` - %s" % (issue, new_note)
                 print new_line
                 new_lines.append(new_line)
-                issue = None         
+                issue = None
             else:
-                print "Error in custom_field line: %s" % line    
-    
+                print "Error in custom_field line: %s" % line
+
     f = open(output, 'w')
     print "Writing to output file: %s" % output
     if new_lines:
         for line in new_lines:
             f.write("%s\n\n" % line)
-    f.close()    
+    f.close()
 
     print "Key Count:   %d" % key_count
     print "Lines Count: %d" % len(new_lines)
-                
+
+def make_output_path(input):
+    # Input is probably of the form SearchRequest-xxxxx.xml
+    output = DEFAULT_OUTPUT_RST_FILE
+    if input and input.endswith('.xml'):
+        output = input[:-len('.xml')] + '.rst'
+    print "Using output file %s" % output
+    return output
+
 #
 # Main function
 #
@@ -177,13 +185,16 @@ def main():
     return_code = 0
     try:
         if options.input:
-            return_code = read_lines(input=options.input, output=options.output)
+            output = options.output
+            if not output:
+                output = make_output_path(options.input)
+            return_code = read_lines(input=options.input, output=output)
     except Exception, e:
         sys.stderr.write("Error: %s\n" % e)
         sys.exit(1)
-    
-    return return_code    
-    
+
+    return return_code
+
 if __name__ == '__main__':
     exit_code = main()
     sys.exit(exit_code)
