@@ -28,7 +28,7 @@ IF /i NOT "%CDAP_HOME: =%"=="%CDAP_HOME%" (
   echo CDAP_HOME "%CDAP_HOME%"
   echo Contains one or more space characters, will not work correctly, and is not supported.
   echo Exiting.
-  GOTO :FINALLY
+  GOTO FINALLY
 )
 
 SET CDAP_VERSION=@@project.version@@
@@ -286,7 +286,7 @@ CALL :CHECK_PID
 IF %ERRORLEVEL% == 0 (
   REM Ask for confirmation from user
   CHOICE /C yn /N /M "This deletes all apps, data, and logs. Are you certain you want to proceed? (y/n) "
-  IF ERRORLEVEL 2 GOTO :FINALLY
+  IF ERRORLEVEL 2 GOTO FINALLY
   REM Delete logs and data directories
   echo Resetting Standalone CDAP...
   rmdir /S /Q "%CDAP_HOME%\logs" "%CDAP_HOME%\data" > NUL 2>&1
