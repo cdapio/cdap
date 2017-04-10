@@ -757,12 +757,15 @@ features:
     Done: Done
     GoToHomePage: Go to Home Page
     Informational:
-      termsandconditions: Terms and Conditions
       Step1:
         description: Please follow the steps specified below to download and configure
         shorttitle: Download Information
         title: Information
       headerlabel: Download Information
+    licenseStep:
+      termsandconditions: Terms and Conditions
+      agreeAndActionBtnLabel: Agree
+      backToCaskBtnLabel: Back to Cask Market
     MarketHydratorPluginUpload:
       headerlabel: Add Hydrator Plugin
     OneStepDeploy:
