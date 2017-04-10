@@ -235,7 +235,7 @@ for /f "usebackq tokens=1*" %%i in (`echo %*`) DO @ set params=%%j
 
 REM UI Upgrade script must be run from cdap-ui-upgrade subdirectory
 cd "%CDAP_HOME%\ui\cdap-ui-upgrade"
-npm run upgrade -- --new-ui-zip-path=%params%
+call npm run upgrade -- --new-ui-zip-path=%params%
 
 GOTO FINALLY
 
