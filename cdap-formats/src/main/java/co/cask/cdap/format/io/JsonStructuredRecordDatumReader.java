@@ -83,7 +83,7 @@ public class JsonStructuredRecordDatumReader extends StructuredRecordDatumReader
   @Override
   protected Map<?, ?> decodeMap(Decoder decoder, Schema keySchema, Schema valueSchema) throws IOException {
     if (!keySchema.isCompatible(Schema.of(Schema.Type.STRING))) {
-      throw new IOException("Complex key type not supported: " + keySchema);
+      throw new IOException("Complex key type in maps are not supported: " + keySchema);
     }
 
     Map<Object, Object> result = new HashMap<>();
@@ -133,7 +133,8 @@ public class JsonStructuredRecordDatumReader extends StructuredRecordDatumReader
       }
     }
 
-    throw new IOException("No matching schema found for union type: " + unionSchema);
+    throw new IOException(String.format("No matching schema found for union type: %s for token: %s", unionSchema,
+                                        token));
   }
 
   private JsonReader getJsonReader(Decoder decoder) {
