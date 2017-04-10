@@ -31,7 +31,7 @@ IF /i NOT "%CDAP_HOME: =%"=="%CDAP_HOME%" (
   GOTO :FINALLY
 )
 
-SET CDAP_VERSION=@@project.version@@
+SET CDAP_VERSION=4.1.1-SNAPSHOT
 
 REM Double-quotes surround string to include a space character but are not included in string
 REM As JAVACMD can include a space, any use of it needs to be surrounded in double-quotes
@@ -56,6 +56,7 @@ REM Process command line
 IF "%1" == "cli" GOTO CLI
 IF "%1" == "sdk" GOTO SDK
 IF "%1" == "tx-debugger" GOTO TX_DEBUGGER
+IF "%1" == "apply-pack" GOTO APPLY_PACK
 REM Process deprecated SDK arguments
 IF "%1" == "start" GOTO SDK_DEPRECATED
 IF "%1" == "stop" GOTO SDK_DEPRECATED
@@ -224,6 +225,20 @@ for /f "usebackq tokens=1*" %%i in (`echo %*`) DO @ set params=%%j
 "%JAVACMD%" %DEFAULT_JVM_OPTS% %HADOOP_HOME_OPTS% %TOKEN_FILE_OPTS% -classpath "%CLASSPATH%" %class% %params%
 GOTO FINALLY
 
+:APPLY_PACK
+REM Installs a CDAP Pack specified as an argument
+CALL :CHECK_WINDOWS
+CALL :CHECK_NODE
+
+REM Skip first parameter
+for /f "usebackq tokens=1*" %%i in (`echo %*`) DO @ set params=%%j
+
+REM UI Upgrade script must be run from cdap-ui-upgrade subdirectory
+cd "%CDAP_HOME%\ui\cdap-ui-upgrade"
+npm run upgrade -- --new-ui-zip-path=%params%
+
+GOTO FINALLY
+
 :CLI
 REM See TX_DEBUGGER for notes on setting CLASSPATH
 SET "CLASSPATH=%CDAP_HOME%\libexec\co.cask.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\lib\co.cask.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\conf\;"
@@ -248,6 +263,7 @@ echo:
 echo     cli         - Starts a CDAP CLI session
 echo     sdk         - Sends the arguments to the SDK service
 echo     tx-debugger - Sends the arguments to the CDAP transaction debugger
+echo     apply-pack  - Installs a CDAP Pack specified as an argument
 echo:
 echo   Get help for a command by executing:
 echo:
