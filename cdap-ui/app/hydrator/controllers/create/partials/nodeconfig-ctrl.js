@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc) {
+  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, LogViewerStore) {
     'ngInject';
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -36,6 +36,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.previewStore = HydratorPlusPlusPreviewStore;
     this.HydratorPlusPlusOrderingFactory = HydratorPlusPlusOrderingFactory;
     this.avsc = avsc;
+    this.LogViewerStore = LogViewerStore;
     this.setDefaults(rPlugin);
     this.tabs = [
       {
@@ -60,6 +61,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     if (rIsStudioMode && this.isPreviewMode) {
       this.previewLoading = false;
       this.previewData = null;
+      this.previewStatus = null;
       this.fetchPreview();
     }
 
@@ -399,6 +401,11 @@ class HydratorPlusPlusNodeConfigCtrl {
             }
           }
         });
+        let logViewerState = this.LogViewerStore.getState();
+        if (logViewerState.statusInfo) {
+          // TODO: Move preview status state info HydratorPlusPlusPreviewStore, then get from there
+          this.previewStatus = logViewerState.statusInfo.status;
+        }
         this.previewLoading = false;
       }, () => {
         this.previewLoading = false;

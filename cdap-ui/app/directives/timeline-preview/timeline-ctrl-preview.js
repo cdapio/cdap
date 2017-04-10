@@ -14,12 +14,14 @@
  * the License.
  */
 
-function TimelinePreviewController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myPreviewLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers, moment, $timeout, caskWindowManager) {
+function TimelinePreviewController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myPreviewLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers, moment, $timeout, caskWindowManager, HydratorPlusPlusPreviewStore) {
 
-  this.dataSrc = new MyCDAPDataSource($scope);
+  let dataSrc = new MyCDAPDataSource($scope);
   this.pinScrollPosition = 0;
   this.screenSize = LogViewerStore.getState().fullScreen;
-  this.pollPromise = null;
+  this.previewStatus = LogViewerStore.getState().statusInfo.status;
+  let queryPoll = null;
+  const previewEndedStatuses = ['KILLED', 'COMPLETED', 'FAILED', 'RUN_FAILED', 'STOPPED', 'KILLED_BY_TIMER'];
 
   this.apiSettings = {
     metric : {
@@ -82,38 +84,37 @@ function TimelinePreviewController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIO
     });
   };
 
+  this.updateStatusInStore = function(val) {
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.SET_STATUS,
+      payload: {
+        status: val
+      }
+    });
+  };
+
   this.setDefaultTimeWindow = () => {
     this.apiSettings.metric.startTime = '';
     this.apiSettings.metric.endTime = '';
     this.updateStartTimeInStore(this.apiSettings.metric.startTime);
   };
 
-  this.getStatus = () => {
-    if (!this.pollPromise) {
+  this.stopPollIfPreviewEnded = () => {
+    if (!queryPoll) {
       return;
     }
-    myPreviewLogsApi.getLogsStatus({
-      namespace : this.namespaceId,
-      previewId : this.previewId
-    }).$promise.then(
-      (res) => {
-        let previewStatuses =  ['KILLED', 'COMPLETED', 'FAILED', 'RUN_FAILED', 'STOPPED', 'KILLED_BY_TIMER'];
-        if (this.pollPromise && previewStatuses.indexOf(res.status) !== -1) {
-          this.dataSrc.stopPoll(this.pollPromise.__pollId__);
-          this.pollPromise = null;
-        }
-      },
-      (err) => {
-        if (this.pollPromise) {
-          this.dataSrc.stopPoll(this.pollPromise.__pollId__);
-          this.pollPromise = null;
-        }
-        console.log('ERROR: ', err);
-      });
+    if (this.previewStatus && previewEndedStatuses.indexOf(this.previewStatus) !== -1) {
+      dataSrc.stopPoll(queryPoll.__pollId__);
+      queryPoll = null;
+    }
   };
 
   this.pollForMetadata = () => {
-    this.pollPromise = this.dataSrc.poll({
+    if (queryPoll) {
+      return;
+    }
+
+    queryPoll = dataSrc.poll({
       _cdapPath: `/namespaces/${this.namespaceId}/previews/${this.previewId}/metrics/query`,
       method: 'POST',
       body: MyMetricsQueryHelper.constructQuery(
@@ -126,7 +127,7 @@ function TimelinePreviewController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIO
       $scope.metadata = res;
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
-      this.getStatus();
+      this.stopPollIfPreviewEnded();
     }, (err) => {
       // FIXME: We need to fix this. Right now this fails and we need to handle this more gracefully.
       $scope.initialize();
@@ -134,7 +135,7 @@ function TimelinePreviewController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIO
     });
   };
 
-  LogViewerStore.subscribe(() => {
+  let logViewerStorePoll = LogViewerStore.subscribe(() => {
     let state = LogViewerStore.getState();
     if(this.screenSize !== state.fullScreen){
       this.screenSize = state.fullScreen;
@@ -157,31 +158,61 @@ function TimelinePreviewController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIO
         $scope.renderSearchCircles($scope.searchResultTimes);
       }
     }
+
+    if (state.statusInfo.status && this.previewStatus !== state.statusInfo.status) {
+      this.previewStatus = state.statusInfo.status;
+      this.stopPollIfPreviewEnded();
+    }
   });
 
-  if (!this.namespaceId || !this.previewId) {
-    this.setDefaultTimeWindow();
-    return;
-  }
+  let previewStorePoll = HydratorPlusPlusPreviewStore.subscribe(() => {
+    let state = HydratorPlusPlusPreviewStore.getState().preview;
+    if (this.previewId !== state.previewId) {
+      this.previewId = state.previewId;
+      this.initializeTimeline();
+    }
+  });
 
-  myPreviewLogsApi.getLogsStatus({
-    namespace : this.namespaceId,
-    previewId : this.previewId
-  }).$promise.then(
-    (res) => {
-      $scope.metadata = res;
-      if(res.startTime === res.endTime){
-        res.endTime++;
-      }
-      this.apiSettings.metric.startTime = Math.floor(res.startTime/1000);
-      this.apiSettings.metric.endTime = Math.floor(res.endTime/1000);
-      $scope.renderSearchCircles([]);
-      this.pollForMetadata();
-    },
-    (err) => {
+  this.initializeTimeline = () => {
+    if (!this.namespaceId || !this.previewId) {
       this.setDefaultTimeWindow();
-      console.log('ERROR: ', err);
-    });
+      return;
+    }
+
+    myPreviewLogsApi.getLogsStatus({
+      namespace : this.namespaceId,
+      previewId : this.previewId
+    }).$promise.then(
+      (res) => {
+        $scope.metadata = res;
+        if(res.startTime === res.endTime){
+          res.endTime++;
+        }
+        this.apiSettings.metric.startTime = Math.floor(res.startTime/1000);
+        this.apiSettings.metric.endTime = Math.floor(res.endTime/1000);
+        $scope.renderSearchCircles([]);
+        this.pollForMetadata();
+      },
+      (err) => {
+        this.setDefaultTimeWindow();
+        console.log('ERROR: ', err);
+      });
+  };
+
+  this.initializeTimeline();
+
+  $scope.$on('$destroy', function() {
+    if (logViewerStorePoll) {
+      logViewerStorePoll();
+    }
+    if (previewStorePoll) {
+      previewStorePoll();
+    }
+    if (queryPoll) {
+      dataSrc.stopPoll(queryPoll.__pollId__);
+      queryPoll = null;
+    }
+  });
 }
 
 angular.module(PKG.name + '.commons')

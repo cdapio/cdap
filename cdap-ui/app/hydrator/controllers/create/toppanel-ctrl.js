@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl {
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window, LogViewerStore, LOGVIEWERSTORE_ACTIONS) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myPreviewLogsApi) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -34,6 +34,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.LogViewerStore = LogViewerStore;
     this.$interval = $interval;
     this.myPipelineApi = myPipelineApi;
+    this.myPreviewLogsApi = myPreviewLogsApi;
     this.$state = $state;
     this.dataSrc = new MyCDAPDataSource($scope);
     this.myAlertOnValium = myAlertOnValium;
@@ -60,20 +61,53 @@ class HydratorPlusPlusTopPanelCtrl {
     this.currentDraftId = this.HydratorPlusPlusConfigStore.getDraftId();
     if (this.currentDraftId && this.currentDraftId === this.$window.localStorage.getItem('LastDraftId')) {
       this.currentPreviewId = this.$window.localStorage.getItem('LastPreviewId');
+      this.previewStore.dispatch(
+        this.previewActions.setPreviewId(this.currentPreviewId)
+      );
     }
 
     this.isPreviewEnabled = angular.isObject(MY_CONFIG.hydrator) &&
                             MY_CONFIG.hydrator.previewEnabled === true;
 
     this.previewMode = false;
-    this.previewStartTime = null;
-    this.displayDuration = {
-      minutes: '--',
-      seconds: '--'
-    };
-    this.previewTimerInterval = null;
-    this.previewLoading = false;
-    this.previewRunning = false;
+    this.previewLoading = true;
+
+    if (this.currentPreviewId) {
+      this.myPreviewLogsApi.getLogsStatus({
+        namespace : this.$state.params.namespace,
+        previewId : this.currentPreviewId
+      }).$promise.then(
+        (statusRes) => {
+          this.previewStartTime = statusRes.startTime;
+          this.previewLoading = false;
+
+          // TODO: Just realized it makes more sense to have preview status be in previewStore (HydratorPlusPlusPreviewStore),
+          // instead of LogViewerStore. Will migrate later, as I don't want to introduce breaking changes right now.
+          this.LogViewerStore.dispatch({
+            type: this.LOGVIEWERSTORE_ACTIONS.SET_STATUS,
+            payload: {
+              status: statusRes.status,
+              startTime: statusRes.startTime,
+              endTime: statusRes.endTime
+            }
+          });
+
+          if (statusRes.status === 'RUNNING') {
+            this.previewRunning = true;
+            this.startTimer();
+            this.startPollPreviewStatus(this.currentPreviewId);
+          } else {
+            this.calculateDuration(statusRes.endTime);
+          }
+        },
+        (statusErr) => {
+          console.log('ERROR: ', statusErr);
+          this.setDefault();
+        }
+      );
+    } else {
+      this.setDefault();
+    }
 
     let unsub = this.previewStore.subscribe(() => {
       let state = this.previewStore.getState().preview;
@@ -87,12 +121,17 @@ class HydratorPlusPlusTopPanelCtrl {
       this.$timeout.cancel(this.focusTimeout);
       this.previewStore.dispatch({ type: this.PREVIEWSTORE_ACTIONS.PREVIEW_RESET });
     });
+  }
 
-    // have to add this event handler because the $destroy event here
-    // is not triggered on page refresh
-    this.$window.onbeforeunload = function() {
-      $scope.$destroy();
+  setDefault() {
+    this.previewStartTime = null;
+    this.displayDuration = {
+      minutes: '--',
+      seconds: '--'
     };
+    this.previewTimerInterval = null;
+    this.previewLoading = false;
+    this.previewRunning = false;
   }
 
   setMetadata(metadata) {
@@ -203,22 +242,28 @@ class HydratorPlusPlusTopPanelCtrl {
   // PREVIEW
   startTimer() {
     this.previewTimerInterval = this.$interval(() => {
-      let duration = (new Date() - this.previewStartTime) / 1000;
-      duration = duration >= 0 ? duration : 0;
-
-      let minutes = Math.floor(duration / 60);
-      let seconds = Math.floor(duration % 60);
-      seconds = seconds < 10 ? '0' + seconds : seconds;
-      minutes = minutes < 10 ? '0' + minutes : minutes;
-
-      this.displayDuration = {
-        minutes: minutes,
-        seconds: seconds
-      };
+      this.calculateDuration();
     }, 500);
   }
   stopTimer() {
     this.$interval.cancel(this.previewTimerInterval);
+  }
+  calculateDuration(endTime) {
+    if (!endTime) {
+      endTime = new Date();
+    }
+    let duration = (endTime - this.previewStartTime) / 1000;
+    duration = duration >= 0 ? duration : 0;
+
+    let minutes = Math.floor(duration / 60);
+    let seconds = Math.floor(duration % 60);
+    seconds = seconds < 10 ? '0' + seconds : seconds;
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+
+    this.displayDuration = {
+      minutes: minutes,
+      seconds: seconds
+    };
   }
 
   toggleRuntimeArguments() {
@@ -242,6 +287,12 @@ class HydratorPlusPlusTopPanelCtrl {
       minutes: '--',
       seconds: '--'
     };
+
+    this.currentPreviewId = null;
+    this.previewStore.dispatch(
+      this.previewActions.setPreviewId(this.currentPreviewId)
+    );
+    this.$window.localStorage.removeItem('LastPreviewId', this.currentPreviewId);
 
     let params = {
       namespace: this.$state.params.namespace,
@@ -348,7 +399,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.previewRunning = true;
     let poll = this.dataSrc.poll({
       _cdapNsPath: '/previews/' + previewId + '/status',
-      interval: 5000
+      interval: 1000
     }, (res) => {
       if (this.LogViewerStore) {
         this.LogViewerStore.dispatch({
@@ -590,6 +641,6 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 }
 
-HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', '$interval', 'myPipelineApi', '$state', 'MyCDAPDataSource', 'myAlertOnValium', 'MY_CONFIG', 'PREVIEWSTORE_ACTIONS', '$q', 'NonStorePipelineErrorFactory', 'rArtifacts', '$window', 'LogViewerStore', 'LOGVIEWERSTORE_ACTIONS'];
+HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', '$interval', 'myPipelineApi', '$state', 'MyCDAPDataSource', 'myAlertOnValium', 'MY_CONFIG', 'PREVIEWSTORE_ACTIONS', '$q', 'NonStorePipelineErrorFactory', 'rArtifacts', '$window', 'LogViewerStore', 'LOGVIEWERSTORE_ACTIONS', 'myPreviewLogsApi'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);
