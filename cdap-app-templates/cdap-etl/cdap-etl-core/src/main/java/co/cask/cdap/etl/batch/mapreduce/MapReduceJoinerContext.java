@@ -32,7 +32,8 @@ public class MapReduceJoinerContext extends AbstractJoinerContext {
 
   public MapReduceJoinerContext(MapReduceContext context, Metrics metrics, LookupProvider lookup,
                                 Map<String, String> runtimeArgs, StageInfo stageInfo) {
-    super(context, context, metrics, lookup, context.getLogicalStartTime(), runtimeArgs, context.getAdmin(), stageInfo);
+    super(context, context, context, metrics, lookup, context.getLogicalStartTime(), runtimeArgs,
+          context.getAdmin(), stageInfo);
     this.mrContext = context;
   }
 

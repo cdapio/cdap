@@ -16,7 +16,7 @@
 
 package co.cask.cdap.etl.spark.function;
 
-import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
@@ -45,6 +45,7 @@ public class PluginFunctionContext implements Serializable {
   private final long logicalStartTime;
   private final Map<String, String> arguments;
   private final PluginContext pluginContext;
+  private final ServiceDiscoverer serviceDiscoverer;
   private final Metrics metrics;
   private final SecureStore secureStore;
   private final DataTracer dataTracer;
@@ -64,6 +65,7 @@ public class PluginFunctionContext implements Serializable {
     }
     this.arguments = arguments;
     this.pluginContext = sec.getPluginContext();
+    this.serviceDiscoverer = sec.getServiceDiscoverer();
     this.metrics = sec.getMetrics();
     this.secureStore = sec.getSecureStore();
     this.dataTracer = sec.getDataTracer(stageInfo.getName());
@@ -87,7 +89,8 @@ public class PluginFunctionContext implements Serializable {
   }
 
   public SparkBatchRuntimeContext createBatchRuntimeContext() {
-    return new SparkBatchRuntimeContext(pluginContext, metrics, logicalStartTime, arguments, stageInfo);
+    return new SparkBatchRuntimeContext(pluginContext, serviceDiscoverer, metrics, logicalStartTime, arguments,
+                                        stageInfo);
   }
 
   public DataTracer getDataTracer() {

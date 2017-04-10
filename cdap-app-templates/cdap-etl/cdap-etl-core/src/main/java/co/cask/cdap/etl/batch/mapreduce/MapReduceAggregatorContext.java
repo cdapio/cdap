@@ -32,7 +32,7 @@ public class MapReduceAggregatorContext extends AbstractAggregatorContext {
 
   public MapReduceAggregatorContext(MapReduceContext context, Metrics metrics, LookupProvider lookup,
                                     Map<String, String> runtimeArgs, StageInfo stageInfo) {
-    super(context, context, metrics, lookup, context.getLogicalStartTime(),
+    super(context, context, context, metrics, lookup, context.getLogicalStartTime(),
           runtimeArgs, context.getAdmin(), stageInfo);
     this.mrContext = context;
   }

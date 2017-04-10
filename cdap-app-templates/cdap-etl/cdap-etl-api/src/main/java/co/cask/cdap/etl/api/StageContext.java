@@ -22,6 +22,7 @@ import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
 
+import java.net.URL;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -118,4 +119,23 @@ public interface StageContext {
    */
   @Nullable
   Schema getOutputSchema();
+
+  /**
+   * Discover the base URL for a Service, relative to which Service endpoints can be accessed
+   *
+   * @param applicationId Application name
+   * @param serviceId     Service name
+   * @return URL for the discovered service or null if the service is not found
+   */
+  @Nullable
+  URL getServiceURL(String applicationId, String serviceId);
+
+  /**
+   * Discover the base URL for a Service in the same application, relative to which Service endpoints can be accessed
+   *
+   * @param serviceId Service Name
+   * @return URL for the discovered service or null if the service is not found
+   */
+  @Nullable
+  URL getServiceURL(String serviceId);
 }
