@@ -197,22 +197,23 @@ public class SmartWorkflow extends AbstractWorkflow {
   @Override
   public void destroy() {
     WorkflowContext workflowContext = getContext();
-    if (workflowContext.getDataTracer(PostAction.PLUGIN_TYPE).isEnabled()) {
-      return;
-    }
-    LookupProvider lookupProvider = new DatasetContextLookupProvider(workflowContext);
-    Map<String, String> runtimeArgs = workflowContext.getRuntimeArguments();
-    long logicalStartTime = workflowContext.getLogicalStartTime();
-    for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
-      String name = endingActionEntry.getKey();
-      PostAction action = endingActionEntry.getValue();
-      StageInfo stageInfo = StageInfo.builder(name, PostAction.PLUGIN_TYPE).build();
-      BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics, lookupProvider,
-                                                                   logicalStartTime, runtimeArgs, stageInfo);
-      try {
-        action.run(context);
-      } catch (Throwable t) {
-        LOG.error("Error while running ending action {}.", name, t);
+
+    if (!workflowContext.getDataTracer(PostAction.PLUGIN_TYPE).isEnabled()) {
+      // Execute the post actions only if pipeline is not running in preview mode.
+      LookupProvider lookupProvider = new DatasetContextLookupProvider(workflowContext);
+      Map<String, String> runtimeArgs = workflowContext.getRuntimeArguments();
+      long logicalStartTime = workflowContext.getLogicalStartTime();
+      for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
+        String name = endingActionEntry.getKey();
+        PostAction action = endingActionEntry.getValue();
+        StageInfo stageInfo = StageInfo.builder(name, PostAction.PLUGIN_TYPE).build();
+        BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics, lookupProvider,
+                                                                     logicalStartTime, runtimeArgs, stageInfo);
+        try {
+          action.run(context);
+        } catch (Throwable t) {
+          LOG.error("Error while running post action {}.", name, t);
+        }
       }
     }
 
