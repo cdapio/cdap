@@ -853,31 +853,39 @@ the same form as documented in :ref:`http-restful-api-lifecycle-schedule-add`.
 - To update a :ref:`time schedule <schedules-time>`, use::
 
     {
-      "scheduleDescription": "updatedDescription",
-      "maxConcurrentRuns": 1,
-      "properties": {
-         "key": "value"
+      "schedule": {
+        "description": "updatedDescription",
+        "runConstraints": {
+          "maxConcurrentRuns": 5
+        },
+        "cronExpression": "0 4 * * *"
       },
-      "cronExpression": "0 4 * * *"
+      "properties": {
+        "twoKey": "twoValue",
+        "someKey": "newValue"
+      }
     }
 
 - For a :ref:`stream-sized schedule <schedules-stream-size>`, use::
 
     {
-      "scheduleDescription": "updatedDescription",
-      "maxConcurrentRuns": 2,
-      "properties": {
-         "key": "value"
+      "schedule": {
+        "description": "updatedDescription",
+        "runConstraints": {
+          "maxConcurrentRuns": 5
+        },
+        "streamName": "myStream",
+        "dataTriggerMB": 256
       },
-      "streamName": "myStream",
-      "dataTriggerMB": 50
+      "properties": {
+        "twoKey": "twoValue",
+        "someKey": "newValue"
+      }
     }
 
 Only changes to the schedule configurations are supported; changes to the schedule name,
-its type, or the program associated with it are not allowed. If a property is not given,
-the current property will be used. If the property is present, the current property will
-be overwritten by the property specified in the request. To remove the value of an
-existing property, use an empty value for the property.
+type, or the program associated with it are not allowed. If properties are provided then it will overwrite all existing
+properties.
 
 .. rubric:: HTTP Responses
 
