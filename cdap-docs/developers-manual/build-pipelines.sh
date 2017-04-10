@@ -295,7 +295,6 @@ function pipelines_download_includes() {
   download_md_file mongodb-plugins MongoDB-realtimesink.md
   download_md_file solrsearch-plugins SolrSearch-batchsink.md
   download_md_file solrsearch-plugins SolrSearch-realtimesink.md
-  download_md_file spark-plugins Kafka-streamingsource.md
   download_md_file spark-plugins Twitter-streamingsource.md
   download_md_file transform-plugins CloneRecord-transform.md
   download_md_file transform-plugins Compressor-transform.md
