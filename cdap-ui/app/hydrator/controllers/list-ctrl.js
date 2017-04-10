@@ -20,8 +20,7 @@ angular.module(PKG.name + '.feature.hydrator')
     var vm = this;
     vm.$interval = $interval;
     vm.moment = moment;
-    vm.allPollId = null;
-    vm.currentPollId = null;
+    vm.runningPolls = [];
     const checkForValidPage = (pageNumber) => {
       return (
         !Number.isNaN(pageNumber) &&
@@ -80,9 +79,8 @@ angular.module(PKG.name + '.feature.hydrator')
       .$promise
       .then(function success(res) {
         vm.pipelineList = res;
-
-        fetchDrafts()
-          .then(setCurrentPage);
+        
+        fetchDrafts().then(setCurrentPage);
 
         angular.forEach(vm.pipelineList, function (app) {
           console.log('app is ', app);
@@ -92,60 +90,43 @@ angular.module(PKG.name + '.feature.hydrator')
         });
 
         fetchStatus();
-        pollPipelineStatuses();
+        fetchWorkflowNextRunTimes();
       });
-
-    function pollPipelineStatuses() {
-      var postData = getAllPipelinePostData();
-      console.log(postData);
-      dataSrc.poll({
-        _cdapNsPath: '/status',
-        interval: 2000,
-        method: 'POST',
-        json: postData
-      }, (res) => {
-        console.log(res);
-        vm.allPollId = res.__pollId__;
-        // if (res.status === 'FINISHED') {
-        //   dataSrc.stopPoll(res.__pollId__);
-        //   this.fetchQueryResults(handle);
-        // }
-      });
-    }
 
     function stopPollingAll() {
-      if (vm.allPollId) {
-        dataSrc.stopPoll(vm.allPollId);  
-      }
-    }
-
-    function getAllPipelinePostData() {
-      var postData = [];
-      vm.pipelineList.forEach(function (app) {
-        var appVars = {
-          'appId': app.id  
-        };
-        if (app.artifact.name === GLOBALS.etlBatch || app.artifact.name === GLOBALS.etlDataPipeline) {
-        
-          var workflowId = app.artifact.name === GLOBALS.etlDataPipeline ? 'DataPipelineWorkflow' : 'ETLWorkflow';
-          appVars.programType = 'Workflow';
-          appVars.programId = workflowId;
-        
-        } else if (app.artifact.name === GLOBALS.etlDataStreams) {
-
-          appVars.programType = 'Spark';
-          appVars.programId = 'DataStreamsSparkStreaming';
-        
-        } else {
-
-          appVars.programType = 'Worker';
-          appVars.programId = 'Worker';
-
-        }
-        postData.push(appVars);
+      console.log('pipline duration destroy called for', vm.runningPolls);
+      vm.runningPolls.forEach(function (pollId) {
+        dataSrc.stopPoll(pollId);
       });
-      return postData;
     }
+
+    // function prepareAppData() {
+    //   vm.pipelineList.forEach(function (app) {
+    //     var appVars = {
+    //       'appId': app.id  
+    //     };
+    //     if (app.artifact.name === GLOBALS.etlBatch || app.artifact.name === GLOBALS.etlDataPipeline) {
+        
+    //       var workflowId = app.artifact.name === GLOBALS.etlDataPipeline ? 'DataPipelineWorkflow' : 'ETLWorkflow';
+    //       appVars.programType = 'Workflow';
+    //       appVars.programId = workflowId;
+    //       appVars.workflowId = workflowId;
+    //       batch.push(appVars);
+        
+    //     } else if (app.artifact.name === GLOBALS.etlDataStreams) {
+
+    //       appVars.programType = 'Spark';
+    //       appVars.programId = 'DataStreamsSparkStreaming';
+    //       realtime.push(appVars);
+    //     } else {
+
+    //       appVars.programType = 'Worker';
+    //       appVars.programId = 'Worker';
+    //       appVars.workerId = 'ETLWorker';
+    //       realtime.push(appVars);
+    //     }
+    //   });
+    // }
 
     function fetchRunsInfo(app) {
       var params = {
@@ -209,8 +190,27 @@ angular.module(PKG.name + '.feature.hydrator')
         });
     }
 
+    /**
+     * Gets the next workflow run times. This must be called after batch objects have been created.
+     */
+    function fetchWorkflowNextRunTimes() {
+      batch.forEach(function (batchParams) {
+        dataSrc.request({
+          _cdapNsPath: '/apps/' + batchParams.appId +'/workflows/' + batchParams.programId +'/nextruntime',
+        })
+        .then(function (res) {
+          if (res && res.length) {
+            vm.pipelineList.forEach(function (app) {
+              if (app.id === batchParams.appId) {
+                app._stats.nextRun = res[0].time;    
+              }
+            });
+          }
+        });
+      });
+    }
+
     function setDurationTimers(app, run) {
-      console.log('runs are ', run);
       if (run.status === 'RUNNING') {
 
         if (!app.pipelineDurationTimer) {
@@ -236,13 +236,15 @@ angular.module(PKG.name + '.feature.hydrator')
 
     function fetchStatus() {
       // fetching ETL Batch statuses
-      dataSrc.request({
+      dataSrc.poll({
         _cdapNsPath: '/status',
         method: 'POST',
+        interval: 2000,
         body: batch
       })
       .then(function (res) {
         console.log('res here is ', res);
+        vm.runningPolls.push(res.__pollId__);
         angular.forEach(res, function (app) {
           if (app.status === 'RUNNING') {
             statusMap[app.appId] = MyPipelineStatusMapper.lookupDisplayStatus('RUNNING');
@@ -277,12 +279,14 @@ angular.module(PKG.name + '.feature.hydrator')
 
 
       //fetching ETL Realtime statuses
-      dataSrc.request({
+      dataSrc.poll({
         _cdapNsPath: '/status',
         method: 'POST',
+        interval: 2000,
         body: realtime
       })
       .then(function (res) {
+        vm.runningPolls.push(res.__pollId__);
         angular.forEach(res, function (app) {
           if (app.status === 'RUNNING') {
             statusMap[app.appId] = MyPipelineStatusMapper.lookupDisplayStatus('RUNNING');
@@ -335,7 +339,7 @@ angular.module(PKG.name + '.feature.hydrator')
     }
 
     function destroyTimerForApp(app) {
-      console.log('destroy called');
+      console.log('pipline duration destroy called for', app);
       if (app.pipelineDurationTimer) {
         vm.$interval.cancel(app.pipelineDurationTimer);
         app.pipelineDurationTimer = null;

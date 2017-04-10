@@ -52,7 +52,7 @@
             <th data-predicate="_stats.lastStartTime"
                   data-predicate-default>Last Start Time</th>
             <th data-predicate="duration">Duration</th>
-            <th data-predicate="_stats._nextRun">Next Run</th>
+            <th data-predicate="_stats.nextRun">Next Run</th>
             <th skip-sort></th>
           </tr>
         </thead>
@@ -90,7 +90,8 @@
             </td>
 
             <td>
-              <span ng-if="!pipeline._stats._nextRun"> &mdash; </span>
+              <span ng-if="!pipeline._stats.nextRun"> &mdash; </span>
+              <span ng-if="pipeline._stats.nextRun !== 'N/A'">{{ pipeline._stats.nextRun * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A' }}</span>
             </td>
 
             <td>

@@ -344,6 +344,7 @@ class HydratorPlusPlusTopPanelCtrl {
       _cdapNsPath: '/previews/' + previewId + '/status',
       interval: 5000
     }, (res) => {
+      console.log('res called', res);
       let status = this.MyPipelineStatusMapper.lookupDisplayStatus(res.status);
       if (status !== 'Running') {
         this.stopTimer();
