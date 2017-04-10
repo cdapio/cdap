@@ -76,6 +76,7 @@ export default class FilterDirective extends Component {
     ];
   }
 
+
   componentDidUpdate() {
     if (this.state.selectedCondition.substr(0, 4) === 'TEXT' && this.state.textFilter.length === 0 && this.textFilterRef) {
       this.textFilterRef.focus();
@@ -117,6 +118,9 @@ export default class FilterDirective extends Component {
   }
 
   applyDirective() {
+    if (this.state.selectedCondition.substr(0, 4) === 'TEXT' && this.state.textFilter.length === 0) {
+      return;
+    }
     let directive;
     let column = this.props.column;
     let textValue = this.state.textFilter;
@@ -233,7 +237,7 @@ export default class FilterDirective extends Component {
         <div>
           <input
             type="text"
-            className="form-control"
+            className="form-control mousetrap"
             value={this.state.textFilter}
             onChange={this.handleTextFilterChange}
             placeholder={T.translate(`${PREFIX}.Placeholders.${this.state.selectedCondition}`)}
@@ -281,7 +285,7 @@ export default class FilterDirective extends Component {
             <span>{T.translate(`${PREFIX}.if`)}</span>
             <div>
               <select
-                className="form-control"
+                className="form-control mousetrap"
                 value={this.state.selectedCondition}
                 onChange={this.handleConditionSelect}
               >

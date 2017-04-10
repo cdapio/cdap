@@ -17,7 +17,7 @@
 import React, { Component, PropTypes } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import T from 'i18n-react';
-
+import MouseTrap from 'mousetrap';
 const SUFFIX = 'features.DataPrep.Directives.Parse';
 
 export default class SingleFieldModal extends Component {
@@ -30,7 +30,17 @@ export default class SingleFieldModal extends Component {
     };
 
     this.onTextChange = this.onTextChange.bind(this);
+    this.onOptionalTextChange = this.onOptionalTextChange.bind(this);
     this.apply = this.apply.bind(this);
+  }
+
+  componentDidMount() {
+    MouseTrap.bind('enter', this.apply);
+    this.inputRef.focus();
+  }
+
+  componentWillUnmount() {
+    MouseTrap.reset();
   }
 
   onTextChange(e) {
@@ -42,6 +52,9 @@ export default class SingleFieldModal extends Component {
   }
 
   apply() {
+    if (!this.state.text) {
+      return false;
+    }
     let configuration = this.state.text;
 
     if (this.props.hasOptionalField && this.state.optionalText.length > 0) {
@@ -64,7 +77,7 @@ export default class SingleFieldModal extends Component {
         </label>
         <input
           type="text"
-          className="form-control"
+          className="form-control mousetrap"
           placeholder={T.translate(`${SUFFIX}.Parsers.${parser}.optionalPlaceholder`)}
           value={this.state.optionalText}
           onChange={this.onOptionalTextChange}
@@ -107,9 +120,10 @@ export default class SingleFieldModal extends Component {
             </label>
             <input
               type="text"
-              className="form-control"
+              className="form-control mousetrap"
               placeholder={T.translate(`${SUFFIX}.Parsers.${parser}.placeholder`)}
               value={this.state.text}
+              ref={(ref) => this.inputRef = ref}
               onChange={this.onTextChange}
             />
           </div>
