@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileContext;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.FileContextLocationFactory;
 
 /**
@@ -41,6 +42,12 @@ public final class RootLocationFactoryProvider implements Provider<RootLocationF
 
   @Override
   public RootLocationFactory get() {
-    return new RootLocationFactory(new FileContextLocationFactory(hConf, fc, "/"));
+    FileContextLocationFactory delegate;
+    if (UserGroupInformation.isSecurityEnabled()) {
+      delegate = new FileContextLocationFactory(hConf, "/");
+    } else {
+      delegate = new InsecureFileContextLocationFactory(hConf, "/", fc);
+    }
+    return new RootLocationFactory(delegate);
   }
 }
