@@ -38,8 +38,7 @@ import java.util.Map;
  * Serializable collection of objects that can be used in Spark closures to instantiate plugins.
  */
 public class PluginFunctionContext implements Serializable {
-
-  private static final long serialVersionUID = -8131461628444037900L;
+  private static final long serialVersionUID = 7591792350198264606L;
 
   private final String namespace;
   private final long logicalStartTime;
