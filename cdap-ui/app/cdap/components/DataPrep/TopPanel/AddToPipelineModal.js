@@ -143,9 +143,7 @@ export default class AddToHydratorModal extends Component {
         };
 
         let properties = {
-          field: '*',
-          directives: directives.join('\n'),
-          schema: JSON.stringify(tempSchema)
+          workspaceId
         };
 
         try {

@@ -76,17 +76,16 @@ export default class DataPrepTable extends Component {
     if (data.length === 0 || headers.length === 0) {
       return (
         <div className="dataprep-table empty">
-          <h4 className="text-xs-center">No Data</h4>
           {
             this.state.directivesLength === 0 ? (
               <div>
-                <h5 className="text-xs-center">Please upload some data</h5>
+                <h5 className="text-xs-center">Start by uploading data to this workspace</h5>
                 <div className="button-container text-xs-center">
                   <button
                     className="btn btn-primary"
                     onClick={this.openUploadData}
                   >
-                    Upload Data
+                    Upload
                   </button>
                 </div>
               </div>

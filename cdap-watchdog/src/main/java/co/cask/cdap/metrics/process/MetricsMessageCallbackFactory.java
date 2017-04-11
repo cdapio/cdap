@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.io.DatumReader;
+import co.cask.cdap.common.io.DatumReader;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import com.google.common.base.Throwables;

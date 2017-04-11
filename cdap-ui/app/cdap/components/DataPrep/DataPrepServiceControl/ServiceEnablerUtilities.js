@@ -151,8 +151,7 @@ export default function enableDataPreparationService(shouldStopService) {
     function ping() {
       MyDataPrepApi.ping({ namespace })
         .subscribe(() => {
-          observer.onCompleted();
-          window.location.reload();
+          observer.onNext();
         }, (err) => {
           if (err.statusCode === 503) {
             setTimeout(() => {

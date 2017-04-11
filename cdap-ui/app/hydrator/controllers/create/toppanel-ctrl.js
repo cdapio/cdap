@@ -50,7 +50,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.setState();
     this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
     this.focusTimeout = null;
-    this.timeoutInMinutes = 15;
+    this.timeoutInMinutes = 1;
 
     if ($stateParams.isClone) {
       this.openMetadata();
@@ -361,6 +361,14 @@ class HydratorPlusPlusTopPanelCtrl {
             content: `${pipelinePreviewPlaceholder} has completed successfully.`
           });
         } else if (status === 'Stopped') {
+        } else if (res.status === 'KILLED_BY_TIMER') {
+          // TODO: Remove this when we allow users to specify the timeout
+          let minute = this.timeoutInMinutes <= 1 ? 'minute' : 'minutes';
+          this.myAlertOnValium.show({
+            type: 'success',
+            content: `${pipelinePreviewPlaceholder} has completed successfully after ${this.timeoutInMinutes} ${minute}.`
+          });
+        } else if (res.status === 'STOPPED' || res.status === 'KILLED') {
           this.myAlertOnValium.show({
             type: 'success',
             content: `${pipelinePreviewPlaceholder} was stopped.`

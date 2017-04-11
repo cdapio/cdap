@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -56,6 +57,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.hadoop.conf.Configuration;
@@ -75,11 +77,16 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * admin for queues in hbase.
@@ -234,54 +241,103 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
 
   @Override
   public void upgrade() throws Exception {
-    // For each queue config table and queue data table in each namespace, perform an upgrade
-    for (final NamespaceMeta namespaceMeta : namespaceQueryAdmin.list()) {
-      impersonator.doAs(namespaceMeta.getNamespaceId(), new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          upgradeQueues(namespaceMeta);
-          return null;
+    int numThreads = cConf.getInt(Constants.Upgrade.UPGRADE_THREAD_POOL_SIZE);
+    final ExecutorService executor =
+      Executors.newFixedThreadPool(numThreads,
+                                   new ThreadFactoryBuilder()
+                                     .setNameFormat("hbase-cmd-executor-%d")
+                                     .setDaemon(true)
+                                     .build());
+    try {
+      final Map<TableId, Future<?>> allFutures = new HashMap<>();
+      // For each queue config table and queue data table in each namespace, perform an upgrade
+      for (final NamespaceMeta namespaceMeta : namespaceQueryAdmin.list()) {
+        impersonator.doAs(namespaceMeta.getNamespaceId(), new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            Map<TableId, Future<?>> futures = upgradeQueues(namespaceMeta, executor);
+            allFutures.putAll(futures);
+            return null;
+          }
+        });
+      }
+
+      // Wait for the queue upgrades to complete
+      Map<TableId, Throwable> failed = waitForUpgrade(allFutures);
+      if (!failed.isEmpty()) {
+        for (Map.Entry<TableId, Throwable> entry : failed.entrySet()) {
+          LOG.error("Failed to upgrade queue table {}", entry.getKey(), entry.getValue());
         }
-      });
+        throw new Exception(String.format("Error upgrading queue tables. %s of %s failed",
+                                          failed.size(), allFutures.size()));
+      }
+    } finally {
+      // We'll have tasks pending in the executor only on an interrupt, when user wants to abort the upgrade.
+      // Use shutdownNow() to interrupt the tasks and abort.
+      executor.shutdownNow();
     }
   }
 
-  private void upgradeQueues(NamespaceMeta namespaceMeta) throws Exception {
+  private Map<TableId, Future<?>> upgradeQueues(final NamespaceMeta namespaceMeta, ExecutorService executor)
+    throws Exception {
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       String hbaseNamespace = tableUtil.getHBaseNamespace(namespaceMeta);
       List<TableId> tableIds = tableUtil.listTablesInNamespace(admin, hbaseNamespace);
       List<TableId> stateStoreTableIds = Lists.newArrayList();
+      Map<TableId, Future<?>> futures = new HashMap<>();
 
-      for (TableId tableId : tableIds) {
+      for (final TableId tableId : tableIds) {
         // It's important to skip config table enabled.
         if (isDataTable(tableId)) {
-          LOG.info("Upgrading queue table: {}", tableId);
-          Properties properties = new Properties();
-          HTableDescriptor desc = tableUtil.getHTableDescriptor(admin, tableId);
-          if (desc.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES) == null) {
-            // It's the old queue table. Set the property prefix bytes to SALT_BYTES
-            properties.setProperty(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES,
-                                   Integer.toString(SaltedHBaseQueueStrategy.SALT_BYTES));
-          }
-          upgrade(tableId, properties);
-          LOG.info("Upgraded queue table: {}", tableId);
+          Runnable runnable = new Runnable() {
+            public void run() {
+              try {
+                LOG.info("Upgrading queue table: {}", tableId);
+                Properties properties = new Properties();
+                HTableDescriptor desc = tableUtil.getHTableDescriptor(admin, tableId);
+                if (desc.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES) == null) {
+                  // It's the old queue table. Set the property prefix bytes to SALT_BYTES
+                  properties.setProperty(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES,
+                                         Integer.toString(SaltedHBaseQueueStrategy.SALT_BYTES));
+                }
+                upgrade(tableId, properties);
+                LOG.info("Upgraded queue table: {}", tableId);
+              } catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+            }
+          };
+          Future<?> future = executor.submit(runnable);
+          futures.put(tableId, future);
         } else if (isStateStoreTable(tableId)) {
           stateStoreTableIds.add(tableId);
         }
       }
 
       // Upgrade of state store table
-      for (TableId tableId : stateStoreTableIds) {
-        LOG.info("Upgrading queue state store: {}", tableId);
-        DatasetId stateStoreId = createStateStoreDataset(namespaceMeta.getName());
-        DatasetAdmin datasetAdmin = datasetFramework.getAdmin(stateStoreId, null);
-        if (datasetAdmin == null) {
-          LOG.error("No dataset admin available for {}", stateStoreId);
-          continue;
-        }
-        datasetAdmin.upgrade();
-        LOG.info("Upgraded queue state store: {}", tableId);
+      for (final TableId tableId : stateStoreTableIds) {
+        Runnable runnable = new Runnable() {
+          public void run() {
+            try {
+              LOG.info("Upgrading queue state store: {}", tableId);
+              DatasetId stateStoreId = createStateStoreDataset(namespaceMeta.getName());
+              DatasetAdmin datasetAdmin = datasetFramework.getAdmin(stateStoreId, null);
+              if (datasetAdmin == null) {
+                LOG.error("No dataset admin available for {}", stateStoreId);
+                return;
+              }
+              datasetAdmin.upgrade();
+              LOG.info("Upgraded queue state store: {}", tableId);
+            } catch (Exception e) {
+              new RuntimeException(e);
+            }
+          }
+        };
+        Future<?> future = executor.submit(runnable);
+        futures.put(tableId, future);
       }
+
+      return futures;
     }
   }
 
@@ -566,5 +622,22 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
         ddlExecutor.createTableIfNotExists(tdBuilder.build(), splitKeys);
       }
     }
+  }
+
+  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+  private Map<TableId, Throwable> waitForUpgrade(Map<TableId, Future<?>> upgradeFutures) throws InterruptedException {
+    Map<TableId, Throwable> failed = new HashMap<>();
+    for (Map.Entry<TableId, Future<?>> entry : upgradeFutures.entrySet()) {
+      try {
+        entry.getValue().get();
+      } catch (ExecutionException e) {
+        if (e.getCause() instanceof RuntimeException && e.getCause().getCause() != null) {
+          failed.put(entry.getKey(), e.getCause().getCause());
+        } else {
+          failed.put(entry.getKey(), e.getCause());
+        }
+      }
+    }
+    return failed;
   }
 }

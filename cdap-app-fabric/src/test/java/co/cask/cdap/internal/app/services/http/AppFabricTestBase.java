@@ -52,6 +52,7 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ScheduleUpdateDetail;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
@@ -885,10 +886,11 @@ public abstract class AppFabricTestBase {
   }
 
   protected HttpResponse updateSchedule(String namespace, String appName, @Nullable String appVersion,
-                                        String scheduleName, ScheduleSpecification scheduleSpec) throws Exception {
+                                        String scheduleName,
+                                        ScheduleUpdateDetail scheduleUpdateDetail) throws Exception {
     appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
     String path = String.format("apps/%s/versions/%s/schedules/%s/update", appName, appVersion, scheduleName);
-    return doPost(getVersionedAPIPath(path, namespace), GSON.toJson(scheduleSpec));
+    return doPost(getVersionedAPIPath(path, namespace), GSON.toJson(scheduleUpdateDetail));
   }
 
   protected ScheduleSpecification getSchedule(String namespace, String appName, @Nullable String appVersion,

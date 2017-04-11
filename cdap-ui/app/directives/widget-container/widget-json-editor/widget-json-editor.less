@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,18 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.internal.io;
+my-json-textbox {
+  .widget-json-editor {
+    .textarea-container {
+      position: relative;
 
-import co.cask.cdap.common.io.Encoder;
+      textarea {
+        padding-right: 55px;
+        font-family: monospace;
+      }
 
-import java.io.IOException;
-
-/**
- * Represents writer for encoding object.
- *
- * @param <T> type T to serialized.
- */
-public interface DatumWriter<T> {
-
-  void encode(T data, Encoder encoder) throws IOException;
+      .tidy-button {
+        position: absolute;
+        top: 0;
+        right: 0;
+      }
+    }
+  }
 }

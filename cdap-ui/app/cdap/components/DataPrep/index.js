@@ -14,7 +14,7 @@
  * the License.
  */
 
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import DataPrepTopPanel from 'components/DataPrep/TopPanel';
 import DataPrepTable from 'components/DataPrep/DataPrepTable';
 import DataPrepSidePanel from 'components/DataPrep/DataPrepSidePanel';
@@ -32,7 +32,6 @@ import {MyArtifactApi} from 'api/artifact';
 import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
 import Version from 'services/VersionRange/Version';
 import {setWorkspace} from 'components/DataPrep/store/DataPrepActionCreator';
-
 require('./DataPrep.scss');
 
 /**
@@ -45,17 +44,38 @@ export default class DataPrep extends Component {
 
     this.state = {
       backendDown: false,
-      loading: true
+      loading: true,
+      onSubmitError: null
     };
 
     this.toggleBackendDown = this.toggleBackendDown.bind(this);
     this.eventEmitter = ee(ee);
 
     this.eventEmitter.on('DATAPREP_BACKEND_DOWN', this.toggleBackendDown);
+    this.eventEmitter.on('REFRESH_DATAPREP', () => {
+      this.setState({
+        loading: true
+      });
+      /*
+        Not sure if this is necessary but added it is safer when doing an upgrade.
+        - Modified directives?
+        - Modified API calls that are not compatible with earlier version?
+      */
+      DataPrepStore.dispatch({
+        type: DataPrepActions.reset
+      });
+      let workspaceId = this.props.singleWorkspaceMode ? this.props.workspaceId : cookie.load('DATAPREP_WORKSPACE');
+      this.setCurrentWorkspace(workspaceId);
+      setTimeout(() => {
+        this.setState({
+          loading: false
+        });
+      });
+    });
   }
 
   componentWillMount() {
-    let workspaceId = cookie.load('DATAPREP_WORKSPACE');
+    let workspaceId = this.props.singleWorkspaceMode ? this.props.workspaceId : cookie.load('DATAPREP_WORKSPACE');
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     MyArtifactApi.list({ namespace })
@@ -79,7 +99,21 @@ export default class DataPrep extends Component {
           });
         }
       });
+      this.setCurrentWorkspace(workspaceId);
+  }
 
+  componentWillUnmount() {
+    if (this.props.onSubmit) {
+      let workspaceId = DataPrepStore.getState().dataprep.workspaceId;
+      this.props.onSubmit({workspaceId});
+    }
+    DataPrepStore.dispatch({
+      type: DataPrepActions.reset
+    });
+    this.eventEmitter.off('DATAPREP_BACKEND_DOWN', this.toggleBackendDown);
+  }
+
+  setCurrentWorkspace(workspaceId) {
     setWorkspace(workspaceId)
       .subscribe(() => {
         this.setState({loading: false});
@@ -100,21 +134,33 @@ export default class DataPrep extends Component {
       });
   }
 
-  componentWillUnmount() {
-    DataPrepStore.dispatch({
-      type: DataPrepActions.reset
-    });
-    this.eventEmitter.off('DATAPREP_BACKEND_DOWN', this.toggleBackendDown);
-  }
-
   toggleBackendDown() {
     this.setState({backendDown: true});
   }
 
+  onServiceStart() {
+    this.setState({backendDown: false});
+    let workspaceId = this.props.singleWorkspaceMode ? this.props.workspaceId : cookie.load('DATAPREP_WORKSPACE');
+    this.setCurrentWorkspace(workspaceId);
+  }
+
   renderBackendDown() {
     return (
-      <DataPrepServiceControl />
+      <DataPrepServiceControl
+        onServiceStart={this.onServiceStart.bind(this)}
+      />
     );
+  }
+
+  onSubmitToListener({workspaceId, directives, schema}) {
+    if (!this.props.onSubmit) {
+      return;
+    }
+    this.props.onSubmit({
+      workspaceId,
+      directives,
+      schema: schema
+    });
   }
 
   render() {
@@ -133,7 +179,11 @@ export default class DataPrep extends Component {
     return (
       <div className="dataprep-container">
         <DataPrepErrorAlert />
-        <DataPrepTopPanel />
+        <DataPrepTopPanel
+          singleWorkspaceMode={this.props.singleWorkspaceMode}
+          workspaceId={this.props.workspaceId}
+          onSubmit={this.onSubmitToListener.bind(this)}
+        />
 
         <div className="row dataprep-body">
           <div className="dataprep-main col-xs-9">
@@ -149,3 +199,8 @@ export default class DataPrep extends Component {
     );
   }
 }
+DataPrep.propTypes = {
+  singleWorkspaceMode: PropTypes.bool,
+  workspaceId: PropTypes.string,
+  onSubmit: PropTypes.func
+};

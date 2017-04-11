@@ -38,7 +38,7 @@ public abstract class AbstractLoggingContext implements LoggingContext {
   };
 
   // Map looks not efficient here, it might be better to use set
-  private Map<String, SystemTag> systemTags = Maps.newHashMap();
+  private final Map<String, SystemTag> systemTags = Maps.newHashMap();
 
   /**
    * Returns the base dir for logs under the namespace directory

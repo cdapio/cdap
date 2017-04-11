@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,19 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.io;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.common.io.Decoder;
+package co.cask.cdap.common.io;
 
 import java.io.IOException;
 
 /**
- * Represents reader for decoding object.
+ * Represents writer for encoding object.
  *
- * @param <T> type T to be deserialized.
+ * @param <T> type T to serialized.
  */
-public interface DatumReader<T> {
+public interface DatumWriter<T> {
 
-  T read(Decoder decoder, Schema sourceSchema) throws IOException;
+  void encode(T data, Encoder encoder) throws IOException;
 }

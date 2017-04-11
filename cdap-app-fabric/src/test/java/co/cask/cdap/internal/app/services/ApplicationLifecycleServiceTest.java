@@ -92,7 +92,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
           public void stop(ProgramId programId) throws Exception {
             // no-op
           }
-        });
+        }, true);
       Assert.fail("expected application deployment to fail.");
     } catch (Exception e) {
       // expected
@@ -225,7 +225,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
       public void stop(ProgramId programId) throws Exception {
         // no-op
       }
-    });
+    }, true);
 
     ApplicationId appId = NamespaceId.DEFAULT.app("appName");
 

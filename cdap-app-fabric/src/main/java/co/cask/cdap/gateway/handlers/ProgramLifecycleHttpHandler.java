@@ -65,6 +65,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ScheduleUpdateDetail;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowId;
@@ -672,27 +673,17 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                 String appVersion, String scheduleName)
     throws IOException, BadRequestException, NotFoundException, SchedulerException, AlreadyExistsException {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, appVersion);
-    ScheduleSpecification scheduleSpecFromRequest;
+    ScheduleUpdateDetail scheduleUpdateDetail;
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
-      // The schedule spec in the request body can contain only the changed information or more, but should always
-      // contain the schedule type for deserialization
-      scheduleSpecFromRequest = GSON.fromJson(reader, ScheduleSpecification.class);
+      scheduleUpdateDetail = GSON.fromJson(reader, ScheduleUpdateDetail.class);
     } catch (IOException e) {
-      LOG.debug("Error reading schedule specification from request body", e);
+      LOG.debug("Error reading schedule update details from request body", e);
       throw new IOException("Error reading request body");
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());
     }
 
-    // If the schedule name is present in the request body, it should match the name in path params
-    if (!scheduleName.equals(scheduleSpecFromRequest.getSchedule().getName())) {
-      throw new BadRequestException(
-        String.format(
-          "schedule name in the body of the request (%s) does not match the schedule name in the path parameter (%s)",
-          scheduleSpecFromRequest.getSchedule().getName(), scheduleName));
-    }
-
-    lifecycleService.updateSchedule(applicationId, scheduleSpecFromRequest);
+    lifecycleService.updateSchedule(applicationId, scheduleName, scheduleUpdateDetail);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

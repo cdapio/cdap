@@ -35,8 +35,8 @@
 
       <ul class="output-schema-actions" uib-dropdown-menu>
         <!-- If node is a sink and it's macro enabled -->
-        <li ng-if="!isDisabled && HydratorPlusPlusNodeConfigCtrl.state.isSink && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties['schema'] && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties['schema'].macroSupported">
-          <a href="" ng-click="HydratorPlusPlusNodeConfigCtrl.toggleAdvance()">Advance</a>
+        <li ng-if="!isDisabled && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties['schema'] && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties['schema'].macroSupported">
+          <a href="" ng-click="HydratorPlusPlusNodeConfigCtrl.toggleAdvance()">Advanced</a>
         </li>
 
         <li ng-if="(!HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema && !isDisabled)">

@@ -16,8 +16,8 @@
 
 package co.cask.cdap.app.preview;
 
-import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.metrics.query.MetricsQueryHelper;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.gson.JsonElement;
 
@@ -64,12 +64,6 @@ public interface PreviewRunner {
   Map<String, List<JsonElement>> getData(String tracerName);
 
   /**
-   * Get metric associated with the preview run represented by this {@link PreviewRunner}.
-   * @return the {@link List} of metrics emitted during the preview run
-   */
-  List<MetricTimeSeries> getMetrics();
-
-  /**
    * Get the run id of the program executed as a part of preview.
    * @return the {@link ProgramRunId} associated with the preview
    */
@@ -80,4 +74,10 @@ public interface PreviewRunner {
    * @return the {@link RunRecordMeta} associated with the preview
    */
   RunRecordMeta getRunRecord();
+
+  /**
+   * Get the helper object to query for metrics for the preview run.
+   * @return the {@link MetricsQueryHelper} associated with the preview
+   */
+  MetricsQueryHelper getMetricsQueryHelper();
 }

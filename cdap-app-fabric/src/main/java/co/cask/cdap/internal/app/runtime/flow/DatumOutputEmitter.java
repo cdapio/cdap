@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,9 +19,9 @@ package co.cask.cdap.internal.app.runtime.flow;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.common.io.BinaryEncoder;
+import co.cask.cdap.common.io.DatumWriter;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
-import co.cask.cdap.internal.io.DatumWriter;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;

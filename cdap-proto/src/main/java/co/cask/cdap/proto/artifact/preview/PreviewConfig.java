@@ -21,7 +21,6 @@ import co.cask.cdap.proto.artifact.AppRequest;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -31,6 +30,7 @@ public class PreviewConfig {
   private final String programName;
   private final ProgramType programType;
   private final Map<String, String> runtimeArgs;
+  // The timeout unit is minutes.
   private final Integer timeout;
 
   public PreviewConfig(String programName, ProgramType programType, @Nullable Map<String, String> runtimeArgs,
@@ -41,18 +41,32 @@ public class PreviewConfig {
     this.timeout = timeout;
   }
 
+  /**
+   * @return the program name.
+   */
   public String getProgramName() {
     return programName;
   }
 
+  /**
+   * @return the {@link ProgramType} of the preview.
+   */
   public ProgramType getProgramType() {
     return programType;
   }
 
+  /**
+   * @return the {@link Map} of runtime arguments of the preview.
+   */
   public Map<String, String> getRuntimeArgs() {
     return runtimeArgs;
   }
 
+  /**
+   * Get the timeout for the preview run, the time unit is minutes, null if not provided.
+   *
+   * @return the timeout for the preview.
+   */
   @Nullable
   public Integer getTimeout() {
     return timeout;

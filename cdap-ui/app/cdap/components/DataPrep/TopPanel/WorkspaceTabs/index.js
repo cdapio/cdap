@@ -14,7 +14,7 @@
  * the License.
  */
 
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import MyDataPrepApi from 'api/dataprep';
@@ -76,7 +76,7 @@ export default class WorkspaceTabs extends Component {
 
     MyDataPrepApi.getWorkspaceList({ namespace })
       .subscribe((res) => {
-        if (!this.state.activeWorkspace && res.values.length > 0) {
+        if (!this.state.activeWorkspace && res.values.length > 0 && !this.props.singleWorkspaceMode) {
           this.setActiveWorkspace(res.values[0]);
         }
 
@@ -96,7 +96,7 @@ export default class WorkspaceTabs extends Component {
           beginIndex
         });
 
-        if (res.values.length === 0) {
+        if (res.values.length === 0 || this.props.singleWorkspaceMode && !(this.props.workspaceId || this.state.activeWorkspace)) {
           this.toggleCreateWorkspace();
         }
       }, (err) => {
@@ -155,6 +155,7 @@ export default class WorkspaceTabs extends Component {
         toggle={this.toggleWorkspacePropertiesModal}
         workspace={this.state.activeWorkspace}
         onDelete={this.getWorkspaceList}
+        singleWorkspaceMode={this.props.singleWorkspaceMode}
       />
     );
   }
@@ -182,7 +183,7 @@ export default class WorkspaceTabs extends Component {
         className="workspace-tab active"
         onClick={this.toggleWorkspacePropertiesModal}
       >
-        <span>
+        <span title={workspace}>
           {workspace}
         </span>
         <span className="fa fa-pencil" />
@@ -253,6 +254,15 @@ export default class WorkspaceTabs extends Component {
   }
 
   render() {
+    if (this.props.singleWorkspaceMode) {
+      return (
+        <div>
+          {this.renderWorkspacePropertiesModal()}
+          {this.renderCreateWorkspaceModal()}
+          {this.renderActiveWorkspace(this.state.activeWorkspace)}
+        </div>
+      );
+    }
     return (
       <div className="workspace-tabs">
         {this.renderWorkspaceTabs()}
@@ -269,3 +279,8 @@ export default class WorkspaceTabs extends Component {
     );
   }
 }
+
+WorkspaceTabs.propTypes = {
+  singleWorkspaceMode: PropTypes.bool,
+  workspaceId: PropTypes.string
+};

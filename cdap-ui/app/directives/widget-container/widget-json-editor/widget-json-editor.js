@@ -20,25 +20,47 @@ angular.module(PKG.name + '.commons')
       restrict: 'EA',
       scope: {
         model: '=ngModel',
-        placeholder: '='
+        placeholder: '=',
+        disabled: '='
       },
-      template: '<textarea class="form-control" data-ng-trim="false" cask-json-edit="internalModel" placeholder="placeholder"></textarea>',
+      controllerAs: 'JsonEditor',
+      bindToController: true,
+      templateUrl: 'widget-container/widget-json-editor/widget-json-editor.html',
       controller: function($scope) {
-        function initialize () {
+        var vm = this;
+        vm.warning = null;
+
+        function attemptParse(input) {
           try {
-            $scope.internalModel = JSON.parse($scope.model);
-          } catch(e) {
-            $scope.internalModel = '';
+            let parsedModel = angular.fromJson(input);
+
+            vm.internalModel = angular.toJson(parsedModel, true);
+            vm.warning = null;
+          } catch (e) {
+            vm.internalModel = input;
+            vm.warning = 'Value is not a JSON';
           }
+        }
+
+        function initialize () {
+          attemptParse(vm.model);
         }
 
         initialize();
 
-        $scope.$watch('model', initialize);
+        vm.tidy = function() {
+          attemptParse(vm.internalModel);
+        };
 
-        $scope.$watch('internalModel', function(newVal, oldVal) {
-          if (newVal !== oldVal) {
-            $scope.model = angular.toJson($scope.internalModel);
+        $scope.$watch('JsonEditor.internalModel', function(oldVal, newVal) {
+          if (oldVal !== newVal) {
+            // removing newlines
+            try {
+              let parsed = angular.fromJson(vm.internalModel);
+              vm.model = angular.toJson(parsed);
+            } catch (e) {
+              vm.model = vm.internalModel;
+            }
           }
         });
       }

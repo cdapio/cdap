@@ -307,6 +307,10 @@ features:
        title: Delete Other Columns
     pageTitle: CDAP | Data Preparation
     TopPanel:
+      applyBtnLabel: Apply
+      addToPipelineBtnLabel: Add to Pipeline
+      upgradeBtnLabel: Upgrade
+      viewSchemaBtnLabel: View Schema
       invalidFieldNameMessage: Invalid field name "{fieldName}"
       invalidFieldNameRemedies1: "Your field name contains an invalid character: no space or special character other than - or _ are allowed"
       invalidFieldNameRemedies2: Try to apply directive “cleanse-column-names”
@@ -314,6 +318,14 @@ features:
         defaultErrorMessage: Error generating schema.
       PipelineModal:
         defaultErrorMessage: Error adding to pipeline
+      WorkspaceModal:
+        create: Create
+        createModalTitle: Create Workspace
+        createTitle: Create New Workspace
+        uploadTitle: Upload Data
+        uploadSubTitle: Select the file to be uploaded to the workspace
+        createAndUploadBtnLabel: Create & Upload
+        uploadBtnLabel: Upload
     Upgrade:
       minimumVersionError: "Data Preparation requires wrangler-service artifact version 1.3.0 or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
   Dashboard:
