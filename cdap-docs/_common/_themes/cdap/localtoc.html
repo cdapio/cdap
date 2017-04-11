@@ -1,11 +1,11 @@
-{#
+  {#
     cdap/localtoc.html
     ~~~~~~~~~~~~~~~~~~~
 
     Sphinx sidebar template: local table of contents.
 
     :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
-    :copyright: Copyright 2014-2016 Cask Data, Inc.
+    :copyright: Copyright 2014-2017 Cask Data, Inc.
     :license: Apache License, Version 2.0
 
     Code to hide table-of-contents on pages, by setting in the field list at the top
@@ -23,6 +23,6 @@
 {%- endif %}
 
 {%- if display_toc and not hide_local_toc %}
-  <h3 class="localtoc"><a href="{{ pathto(master_doc) }}">{{ html_short_title_toc }} {{ _('Table of Contents') }}</a></h3>
+  <h3 class="localtoc"><a href="{{ pathto(master_doc) }}{{ _('/../index.html') }}">{{ html_short_title_toc }}</a></h3>
   {{ toc }}
 {%- endif %}

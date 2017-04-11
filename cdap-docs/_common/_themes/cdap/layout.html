@@ -4,8 +4,8 @@
 
     Master layout template for Sphinx themes.
     Modified by Cask Data, Inc.
-    Portions Copyright © 2014-2016 Cask Data, Inc.
-    
+    Portions Copyright © 2014-2017 Cask Data, Inc.
+
     :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 #}
@@ -30,24 +30,31 @@
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>{{ _('Navigation') }}</h3>
       <ul>
-        {%- for rellink in rellinks %}
-        <li class="right" {% if loop.first %}style="margin-right: 10px"{% endif %}>
-          <a href="{{ pathto(rellink[0]) }}" title="{{ rellink[1]|striptags|e }}"
-             {{ accesskey(rellink[2]) }}>{{ rellink[3] }}</a>
-          {%- if not loop.first %}{{ reldelim2 }}{% endif %}</li>
-        {%- endfor %}
+        <li class="headerlogo"><a href="http://docs.cask.co/cdap"><img class="headerlogo" src="{{ pathto('_static/doc_logo.png', 1) }}" alt="Logo"/></a></li>
         {%- block rootrellink %}
-        
         <script type="text/javascript" src="{{ pathto('_static/version-menu.js', 1) }}"></script>
         <script src="{{ theme_json_versions_js }}"/></script>
         <script>window.setVersion('{{ release }}');</script>
-       
-        <li><a href="{{ pathto(master_doc) }}">{{ shorttitle|e }}</a>{{ reldelim1 }}</li>
+        {%- set index_path = url_root + "index.html" %}
+        <li><a href="{{ index_path }}">{{ shorttitle|e }}</a>{{ reldelim1 }}</li>
         {%- endblock %}
-        {%- for parent in parents %}
-          <li><a href="{{ parent.link|e }}" {% if loop.last %}{{ accesskey("U") }}{% endif %}>{{ parent.title }}</a>{{ reldelim1 }}</li>
-        {%- endfor %}
-        {%- block relbaritems %} {% endblock %}
+        {%- if pagename != "index" or parents|count > 0 %}
+          {%- for link_text, link in toctree(titles_only=true)|walktoc %}
+            <li><a href="{{ link|e }}">{{ link_text|e }}</a>{{ reldelim1 }}</li>
+          {%- endfor %}
+        {%- endif %}
+        {%- if pagename != "search" and builder != "singlehtml" %}
+          {# Force all pages to use top-level search index #}
+          {%- if html_short_title_toc != 'CDAP Documentation' %}
+          {%- set search_root = '../' %}
+          {%- endif %}
+        <li class="right"><form class="search" action="{{ search_root }}{{ pathto('search') }}" method="get">
+        <input type="text" name="q" />
+        <input type="submit" value="{{ _('Search') }}" />
+        </form>
+        </li>
+        <script type="text/javascript">$('#searchbox').show(0);</script>
+        {%- endif %}
       </ul>
     </div>
 {%- endmacro %}
@@ -98,7 +105,7 @@
     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
     })(window,document,'script','dataLayer','{{ html_google_tag_manager_code }}');</script>
     <!-- End Google Tag Manager -->
-    
+
     {%- endif %}
 {%- endmacro %}
 {%- macro googletagmanagerbody() %}{%- if html_google_tag_manager_code is defined %}
@@ -106,7 +113,7 @@
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ html_google_tag_manager_code }}"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
-    
+
     {%- endif %}
 {%- endmacro %}
 {%- macro script() %}
@@ -119,17 +126,17 @@
         HAS_SOURCE:  {{ has_source|lower }}
       };
     </script>
+    {% set script_files = script_files + ['_static/copy-to-clipboard.js'] %}
+    {% set script_files = script_files + ['_static/sidebar.js'] %}
+    {% set script_files = script_files + ['_static/tabbed-parsed-literal.js'] %}
     {%- for scriptfile in script_files %}
     <script type="text/javascript" src="{{ pathto(scriptfile, 1) }}"></script>
     {%- endfor %}
-    <script type="text/javascript" src="{{ pathto('_static/copy-to-clipboard.js', 1) }}"></script>
-    <script type="text/javascript" src="{{ pathto('_static/tabbed-parsed-literal.js', 1) }}"></script>
 {%- endmacro %}
 
 {%- macro css() %}
-    <link rel="stylesheet" href="{{ pathto('_static/' + style, 1) }}" type="text/css" />
-    <link rel="stylesheet" href="{{ pathto('_static/pygments.css', 1) }}" type="text/css" />
-    <link rel="stylesheet" href="{{ pathto('_static/annotator.min.css', 1) }}" type="text/css" />
+    {% set css_files = css_files + ['_static/' + style] %}
+    {% set css_files = css_files + ['_static/pygments.css'] %}
     {%- for cssfile in css_files %}
     <link rel="stylesheet" href="{{ pathto(cssfile, 1) }}" type="text/css" />
     {%- endfor %}
@@ -145,7 +152,7 @@
         {%- endif %}
     {%- endif %}
     {%- if section_numbering %}
-        <link rel="stylesheet" href="{{ pathto('_static/section-numbering.css', 1) }}" type="text/css" />
+    <link rel="stylesheet" href="{{ pathto('_static/section-numbering.css', 1) }}" type="text/css" />
     {%- endif %}
 {#
     Code to hide table-of-contents on pages, by setting in the field list at the top
@@ -181,8 +188,7 @@
     {{ googletagmanager() }}
     <meta http-equiv="Content-Type" content="text/html; charset={{ encoding }}" />
     {{ metatags }}
-    {# Code to add custom theme values as meta_tags #}
-    {# Used to add the Git release, hash, timestamp values #}
+    {# Code to add custom theme values as meta_tags; used to add the Git release, hash, timestamp values #}
     {%- for tag, tag_value in theme_meta_git.iteritems() %}
     <meta name="{{ tag }}" content="{{ tag_value }}">
     {%- endfor %}
@@ -255,68 +261,57 @@
       <div class="clearer"></div>
     </div>
 {%- endblock %}
-
+<div class="footerclearer"></div>
 {%- block footer %}
+<footer class="sitefooter">
     <div class="footer" role="contentinfo">
-
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
-.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
-.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
-.tg .tg-s6z2{text-align:center;}
-.tg .tg-0ord{text-align:right;}
-.tg a{font-weight:bold;}
-</style>
-<table class="tg" width= 100%>
-{#  Code to check relations, controlled by setting in the field list at the top :hide-relations: true #}
-{%- set hiderel = '' %}
-{%- set hiderel_key = 'hide-relations' %}
-{%- if meta is defined %}
-    {%- if hiderel_key in meta %}
-        {%- set hiderel = meta[hiderel_key] %}
-    {%- endif %}
-{%- endif %}
-  <tr>
-    {%- if not hiderel %}
-    <th class="tg-031e">
-    {%- if prev %}Previous Topic: 
-    <a title="{{ prev.title|striptags|e }}" href="{{ prev.link|e }}" />{{ prev.title }}</a>&nbsp;&nbsp;
-    {%- else %}
-    &nbsp;&nbsp;
-    {%- endif %}
-    </th>
-    {%- endif %}
-    
-    <th class="tg-s6z2">
-    {%- if show_copyright %}
-      {%- if hasdoc('copyright') %}
-        {% trans path=pathto('copyright'), copyright=copyright|e %}<a href="{{ path }}">Copyright</a> &copy; {{ copyright }}{% endtrans %}
-      {%- else %}
-        {% trans copyright=copyright|e %}Copyright &copy; {{ copyright }}{% endtrans %}
+      <table class="tg" width="100%">
+      {#  Code to check relations, controlled by setting in the field list at the top :hide-relations: true #}
+      {%- set hiderel = '' %}
+      {%- set hiderel_key = 'hide-relations' %}
+      {%- if meta is defined %}
+          {%- if hiderel_key in meta %}
+              {%- set hiderel = meta[hiderel_key] %}
+          {%- endif %}
       {%- endif %}
-    {%- endif %}    
-    {%- if last_updated %}
-      {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
-    {%- endif %}
-    {%- if show_sphinx %}
-      {% trans sphinx_version=sphinx_version|e %}&bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
-    {%- endif %}
-    </th>
-    
-    {%- if not hiderel %}
-    <th class="tg-0ord">
-    {%- if next %}&nbsp;&nbsp;Next Topic:
-    <a title="{{ next.title|striptags|e }}" href="{{ next.link|e }}" />{{ next.title }}</a>
-    {%- else %}
-    &nbsp;&nbsp;
-    {%- endif %}
-    </th>
-    {%- endif %}
-
-  </tr>
-</table>
-
+        <tr>
+          {%- if not hiderel %}
+          <td class="ftr-lft">
+          {%- if prev and prev.title|striptags|e != '&lt;no title&gt;' %}
+          <a title="{{ prev.title|striptags|e }}" href="{{ prev.link|e }}" />Previous</a>
+          {%- else %}
+          &mdash;
+          {%- endif %}
+          </td>
+          {%- endif %}
+          <td class="ftr-cntr" colspan="4">
+          {%- if show_copyright %}
+            {%- if hasdoc('copyright') %}
+              {% trans path=pathto('copyright'), copyright=copyright|e %}<a href="{{ path }}">Copyright</a> &copy; {{ copyright }}{% endtrans %}
+            {%- else %}
+              {% trans copyright=copyright|e %}Copyright &copy; {{ copyright }}{% endtrans %}
+            {%- endif %}
+          {%- endif %}
+          {%- if last_updated %}
+            {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
+          {%- endif %}
+          {%- if show_sphinx %}
+            {% trans sphinx_version=sphinx_version|e %}&bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
+          {%- endif %}
+          </td>
+          {%- if not hiderel %}
+          <td class="ftr-rght">
+          {%- if next and next.title|striptags|e != '&lt;no title&gt;' %}
+          <a title="{{ next.title|striptags|e }}" href="{{ next.link|e }}" />Next</a>
+          {%- else %}
+          &mdash;
+          {%- endif %}
+          </td>
+          {%- endif %}
+        </tr>
+      </table>
     </div>
+    </footer>
 {%- endblock %}
   </body>
 </html>

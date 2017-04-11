@@ -52,6 +52,10 @@ function usage() {
   echo 
   echo "    clean             Clean up any previous build's target directories"
   echo "    docs-cli          Build CLI input file for documentation"
+  echo
+  echo "    docs-2-pass       Builds the second pass of the docs and the outer docs"
+  echo "    docs-2-pass-local Builds the second pass of the docs and the outer docs, but using local copies"
+  echo "    docs-outer        Builds the outer docs and copies the inner docs"
   echo "    docs-package      Package (zip up) docs"
   echo "    javadocs          Build Javadocs for documentation"
   echo "    javadocs-all      Build Javadocs for all modules"
@@ -72,7 +76,9 @@ function run_command() {
     docs-all )          build_docs_set; warnings=$?;;
     docs-cli )          build_docs_cli;;
     docs-first-pass )   build_docs_first_pass;;
-    docs-second-pass )  build_docs_second_pass;;
+    docs-2-pass )       build_docs_second_pass;;
+    docs-2-pass-local ) build_docs_second_pass_local;;
+    docs-outer )        build_docs_outer;;
     docs-package )      build_docs_package;;
     docs-set )          build_docs_set; warnings=$?;;
     docs-set-local )    build_docs_set_local; warnings=$?;;
@@ -188,6 +194,24 @@ function build_docs_second_pass() {
   display_start_title "${title}"
 
   build_docs_inner_level build-web
+  build_docs_outer_level ${GOOGLE_TAG_MANAGER_CODE}
+  copy_docs_inner_level
+
+  display_end_title ${title}
+}
+
+function build_docs_second_pass_local() {
+  LOCAL_INCLUDES="${TRUE}"
+  export LOCAL_INCLUDES
+  local title="Building Docs Only, 2nd Pass w/local files"
+  display_start_title "${title}"
+  build_docs_second_pass
+}
+
+function build_docs_outer() {
+  local title="Building Docs Outer"
+  display_start_title "${title}"
+
   build_docs_outer_level ${GOOGLE_TAG_MANAGER_CODE}
   copy_docs_inner_level
 
