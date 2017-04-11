@@ -391,7 +391,7 @@ PING 127.0.0.1 -n 6 > NUL 2>&1
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq node.exe"') DO SET MyNodePID=%%b
 echo %MyNodePID% > %~dsp0MyProgNode.pid
 attrib +h %~dsp0MyProgNode.pid >NUL
-echo Standalone CDAP started succesfully.
+echo Standalone CDAP started successfully.
 GOTO FINALLY
 
 :SDK_STOP
