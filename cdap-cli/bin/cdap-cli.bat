@@ -23,8 +23,8 @@ SET "CDAP_HOME=%CDAP_HOME:~0,-5%"
 IF /i NOT "%CDAP_HOME: =%"=="%CDAP_HOME%" (
   echo CDAP_HOME "%CDAP_HOME%"
   echo Contains one or more space characters, will not work correctly, and is not supported.
-  echo Exiting. 
-  GOTO :FINALLY
+  echo Exiting.
+  GOTO :EOF
 )
 
 SET "JAVACMD=%JAVA_HOME%\bin\java.exe"

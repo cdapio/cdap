@@ -1,7 +1,7 @@
 @echo OFF
 
 REM #################################################################################
-REM ## Copyright (C) 2016 Cask Data, Inc.
+REM ## Copyright (C) 2016-2017 Cask Data, Inc.
 REM ##
 REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
 REM ## use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,8 @@ REM Set the base directory
 for %%i in ("%~dp0..\") do (SET $APP_HOME=%%~dpi)
 
 REM Set path for curl.exe
-set $PATH=%PATH%;%APP_HOME%\..\..\libexec\bin
+SET "ORIG_PATH=%PATH%"
+SET "PATH=%PATH%;%PATH%;%APP_HOME%\..\..\libexec\bin"
 
 REM Process access token
 set $ACCESS_TOKEN=
@@ -45,10 +46,10 @@ if DEFINED $ERROR goto :USAGE
 if not DEFINED $DELAY set $ERROR=Delay must be set
 if DEFINED $ERROR goto :USAGE
 
-goto :PROGRAM
+GOTO PROGRAM
 
 :USAGE
-SET $PROGRAM_NAME=%0 
+SET $PROGRAM_NAME=%0
 echo Tool for sending events to the '%$STREAM%' stream
 echo Usage: %$PROGRAM_NAME% events delay [host]
 echo:
@@ -59,7 +60,7 @@ echo     host      Specifies the host that CDAP is running on (default: localhos
 echo:
 if DEFINED $ERROR echo Error: !$ERROR!
 set $ERROR=
-goto :FINALLY
+GOTO FINALLY
 
 :PROGRAM
 if DEFINED $HOST set $GATEWAY=!$HOST!
@@ -77,6 +78,7 @@ for /L %%G IN (1 1 !$EVENTS!) DO (
     set /a $PING_DELAY=!$DELAY!+1
     ping -n !$PING_DELAY! localhost >nul
 )
-goto :FINALLY
+GOTO FINALLY
 
 :FINALLY
+SET "PATH=%ORIG_PATH%"
