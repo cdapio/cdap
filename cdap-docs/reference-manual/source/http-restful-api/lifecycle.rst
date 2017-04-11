@@ -883,7 +883,7 @@ the same form as documented in :ref:`http-restful-api-lifecycle-schedule-add`.
 
 Only changes to the schedule configurations are supported; changes to the schedule name,
 type, or the program associated with it are not allowed. If *any* properties are provided,
-it will overwrite all existing properties with what is provided. You must return all
+it will overwrite all existing properties with what is provided. You must include all
 properties, even ones you are are not altering.
 
 .. rubric:: HTTP Responses
