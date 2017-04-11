@@ -16,16 +16,12 @@
 
 package co.cask.cdap.datapipeline.service;
 
-import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.AbstractFlow;
-import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
@@ -33,6 +29,7 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
@@ -47,39 +44,7 @@ public class ServiceApp extends AbstractApplication {
     setDescription("A program which exposes a simple service");
     addStream(new Stream("who"));
     createDataset("whom", KeyValueTable.class, DatasetProperties.builder().setDescription("Store names").build());
-    addFlow(new WhoFlow());
     addService(new Name());
-  }
-
-  /**
-   * Sample Flow.
-   */
-  public static final class WhoFlow extends AbstractFlow {
-
-    @Override
-    protected void configure() {
-      setName("WhoFlow");
-      setDescription("A flow that collects names");
-      addFlowlet("saver", new NameSaver());
-      connectStream("who", "saver");
-    }
-  }
-
-  /**
-   * Sample Flowlet.
-   */
-  public static final class NameSaver extends AbstractFlowlet {
-
-    @UseDataSet("whom")
-    private KeyValueTable whom;
-
-    @ProcessInput
-    public void process(StreamEvent event) {
-      byte[] name = Bytes.toBytes(event.getBody());
-      if (name.length > 0) {
-        whom.write(Bytes.toBytes(event.getBody()), name);
-      }
-    }
   }
 
   /**
@@ -95,6 +60,24 @@ public class ServiceApp extends AbstractApplication {
       setName(SERVICE_NAME);
       setDescription("Service that checks if the name is stored in the kv dataset or not");
       addHandler(new NameHandler());
+      addHandler(new NameSaveHandler());
+    }
+  }
+
+  /**
+   * Greeting Service handler.
+   */
+  public static final class NameSaveHandler extends AbstractHttpServiceHandler {
+
+    @UseDataSet("whom")
+    private KeyValueTable whom;
+
+    @Path("name")
+    @POST
+    public void saveName(HttpServiceRequest request, HttpServiceResponder responder) {
+      String body = Bytes.toString(request.getContent());
+      whom.write(Bytes.toBytes(body), Bytes.toBytes(body));
+      responder.sendStatus(200);
     }
   }
 
@@ -108,8 +91,8 @@ public class ServiceApp extends AbstractApplication {
 
     @Path("name/{user}")
     @GET
-    public void greet(HttpServiceRequest request, HttpServiceResponder responder,
-                      @PathParam("user") String user) {
+    public void getName(HttpServiceRequest request, HttpServiceResponder responder,
+                        @PathParam("user") String user) {
       byte[] name = whom.read(Bytes.toBytes(user));
       String toSend = name != null ? new String(name, Charsets.UTF_8) : "null";
       responder.sendString(String.format("%s", toSend));

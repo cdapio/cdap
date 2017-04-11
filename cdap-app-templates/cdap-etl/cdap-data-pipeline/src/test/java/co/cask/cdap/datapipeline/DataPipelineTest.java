@@ -69,11 +69,13 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkflowManager;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -1891,34 +1893,18 @@ public class DataPipelineTest extends HydratorTestBase {
     // Deploy the ServiceApp application
     ApplicationManager appManager = deployApplication(ServiceApp.class);
 
-    // Start WhoFlow
-    FlowManager flowManager = appManager.getFlowManager("WhoFlow").start();
-    Assert.assertTrue(flowManager.isRunning());
-
-    // Send stream events to the "who" Stream
-    StreamManager streamManager = getStreamManager("who");
-    streamManager.send("alice");
-    streamManager.send("bob");
-    streamManager.send("cathie");
-    streamManager.send("drake");
-    streamManager.send("ellie");
-
-    try {
-      // Wait for the last Flowlet processing 5 events, or at most 5 seconds
-      RuntimeMetrics metrics = flowManager.getFlowletMetrics("saver");
-      metrics.waitForProcessed(5, 5, TimeUnit.SECONDS);
-    } finally {
-      flowManager.stop();
-      Assert.assertFalse(flowManager.isRunning());
-    }
-
     // Start Greeting service and use it
     ServiceManager serviceManager = appManager.getServiceManager(ServiceApp.Name.SERVICE_NAME).start();
 
     // Wait service startup
     serviceManager.waitForStatus(true);
 
-    URL url = new URL(serviceManager.getServiceURL(), "name/alice");
+    URL url = new URL(serviceManager.getServiceURL(), "name");
+    HttpRequest httpRequest = HttpRequest.post(url).withBody("bob").build();
+    HttpResponse httpResponse = HttpRequests.execute(httpRequest);
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, httpResponse.getResponseCode());
+
+    url = new URL(serviceManager.getServiceURL(), "name/bob");
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     Assert.assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
     String response;
@@ -1927,7 +1913,7 @@ public class DataPipelineTest extends HydratorTestBase {
     } finally {
       connection.disconnect();
     }
-    Assert.assertEquals("alice", response);
+    Assert.assertEquals("bob", response);
 
     String sourceName = "ServiceUrlInput-" + engine.name();
     String sinkName = "ServiceUrlOutput-" + engine.name();
