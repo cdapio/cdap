@@ -21,16 +21,26 @@ import OneStepDeployStore from 'services/WizardStores/OneStepDeploy/OneStepDeplo
 import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
 import T from 'i18n-react';
+import LicenseStep from 'components/CaskWizards/LicenseStep';
 
 export default class OneStepDeployWizard extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      showWizard: this.props.isOpen
+      showWizard: this.props.isOpen,
+      license: this.props.input.package.license ? true : false
     };
 
     this.publishApp = this.publishApp.bind(this);
+    this.showWizardContents = this.showWizardContents.bind(this);
+    this.toggleWizard = this.toggleWizard.bind(this);
+  }
+
+  showWizardContents() {
+    this.setState({
+      license: false
+    });
   }
 
   toggleWizard(returnResult) {
@@ -76,7 +86,18 @@ export default class OneStepDeployWizard extends Component {
         toggle={this.toggleWizard.bind(this, false)}
         className="one-step-deploy-wizard"
       >
-        {getWizardContent()}
+        {
+          this.state.license ?
+            <LicenseStep
+              entityName={this.props.input.package.name}
+              entityVersion={this.props.input.package.version}
+              licenseFileName={this.props.input.package.license}
+              onAgree={this.showWizardContents}
+              onReject={this.toggleWizard.bind(this, false)}
+            />
+          :
+            getWizardContent()
+        }
       </WizardModal>
     );
   }
