@@ -68,24 +68,7 @@ angular.module(PKG.name + '.feature.hydrator')
       $state.go('hydrator.list', $stateParams, {notify: false});
     };
 
-    vm.getDisplayPipelineStatus = function (pipeline) {
-
-      // If running, return running.
-      if (pipeline._status === MyPipelineStatusMapper.lookupDisplayStatus('RUNNING')) {
-        return pipeline._status;
-      }
-
-      // Else return the status of the latest run if there is one.
-      if (pipeline._latest) {
-        return pipeline._latest.status;
-      } else {
-        // Return default status.
-        return pipeline._status;
-      }
-    };
-
-    vm.getStatusIndicatorClass = function (pipeline) {
-      var displayStatus = vm.getDisplayPipelineStatus(pipeline);
+    vm.getStatusIndicatorClass = function (displayStatus) {
       if (displayStatus === 'Running') {
         return 'status-blue';
       } else if (displayStatus === 'Succeeded') {
@@ -372,8 +355,25 @@ angular.module(PKG.name + '.feature.hydrator')
         if (app._status === 'COMPLETED' || app._status === 'KILLED') {
           destroyTimerForApp(app);
         }
+        app.displayStatus = getPipelineDisplayStatus(app);
       });
     }
+
+    function getPipelineDisplayStatus(pipeline) {
+
+      // If running, return running.
+      if (pipeline._status === MyPipelineStatusMapper.lookupDisplayStatus('RUNNING')) {
+        return pipeline._status;
+      }
+
+      // Else return the status of the latest run if there is one.
+      if (pipeline._latest) {
+        return pipeline._latest.status;
+      } else {
+        // Return default status.
+        return pipeline._status;
+      }
+    };
 
     function fetchDrafts() {
       return mySettings.get('hydratorDrafts', true)
