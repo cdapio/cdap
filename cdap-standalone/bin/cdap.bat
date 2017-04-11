@@ -28,7 +28,7 @@ IF /i NOT "%CDAP_HOME: =%"=="%CDAP_HOME%" (
   echo CDAP_HOME "%CDAP_HOME%"
   echo Contains one or more space characters, will not work correctly, and is not supported.
   echo Exiting.
-  GOTO FINALLY
+  GOTO :EOF
 )
 
 SET CDAP_VERSION=@@project.version@@
