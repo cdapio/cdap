@@ -77,31 +77,45 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
     String callerClass = callerData[0].getClassName();
 
     Map<String, String> tags = loggerExtraTags.getIfPresent(callerClass);
+    Class[] callerClasses = CallerClassSecurityManager.getCallerClasses();
     if (tags == null) {
-      tags = Collections.emptyMap();
-
-      for (Class<?> cls : CallerClassSecurityManager.getCallerClasses()) {
-        if (cls.getName().equals(callerClass)) {
-          String classLoaderName = cls.getClassLoader().getClass().getName();
-          switch (classLoaderName) {
-            case "co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader":
-              tags = Collections.singletonMap(ORIGIN_KEY, "plugin");
-              break;
-            case "co.cask.cdap.internal.app.runtime.ProgramClassLoader":
-              tags = Collections.singletonMap(ORIGIN_KEY, "program");
-              break;
-            default:
-              tags = Collections.singletonMap(ORIGIN_KEY, "system");
-          }
-          break;
-        }
-      }
+      tags = addTagsForClass(callerClass, callerClasses);
 
       loggerExtraTags.put(callerClass, tags);
     }
 
+    // If no tags were added using callerData, try using LoggerName
+    if (tags.isEmpty()) {
+      tags = loggerExtraTags.getIfPresent(event.getLoggerName());
+      if (tags == null) {
+        tags = addTagsForClass(event.getLoggerName(), callerClasses);
+        loggerExtraTags.put(event.getLoggerName(), tags);
+      }
+    }
+
     // Add the extra tag to the log event
     event.getMDCPropertyMap().putAll(tags);
+  }
+
+  private Map<String, String> addTagsForClass(String className, Class[] callerClasses) {
+    Map<String, String> tags = Collections.emptyMap();
+    for (Class<?> cls : callerClasses) {
+      if (cls.getName().equals(className)) {
+        String classLoaderName = cls.getClassLoader().getClass().getName();
+        switch (classLoaderName) {
+          case "co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader":
+            tags = Collections.singletonMap(ORIGIN_KEY, "plugin");
+            break;
+          case "co.cask.cdap.internal.app.runtime.ProgramClassLoader":
+            tags = Collections.singletonMap(ORIGIN_KEY, "program");
+            break;
+          default:
+            tags = Collections.singletonMap(ORIGIN_KEY, "system");
+        }
+        break;
+      }
+    }
+    return tags;
   }
 
   protected abstract void appendEvent(LogMessage logMessage);
