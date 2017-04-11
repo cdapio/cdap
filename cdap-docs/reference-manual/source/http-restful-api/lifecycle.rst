@@ -861,8 +861,7 @@ the same form as documented in :ref:`http-restful-api-lifecycle-schedule-add`.
         "cronExpression": "0 4 * * *"
       },
       "properties": {
-        "twoKey": "twoValue",
-        "someKey": "newValue"
+        "aKey": "aValue"
       }
     }
 
@@ -878,14 +877,14 @@ the same form as documented in :ref:`http-restful-api-lifecycle-schedule-add`.
         "dataTriggerMB": 256
       },
       "properties": {
-        "twoKey": "twoValue",
-        "someKey": "newValue"
+        "aKey": "aValue"
       }
     }
 
 Only changes to the schedule configurations are supported; changes to the schedule name,
-type, or the program associated with it are not allowed. If properties are provided then it will overwrite all existing
-properties.
+type, or the program associated with it are not allowed. If *any* properties are provided,
+it will overwrite all existing properties with what is provided. You must return all
+properties, even ones you are are not altering.
 
 .. rubric:: HTTP Responses
 
