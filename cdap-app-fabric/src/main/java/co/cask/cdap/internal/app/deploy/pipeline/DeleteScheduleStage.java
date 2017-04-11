@@ -47,6 +47,13 @@ public class DeleteScheduleStage extends AbstractStage<ApplicationWithPrograms> 
 
   @Override
   public void process(ApplicationWithPrograms input) throws Exception {
+    // do not have to delete any schedule here if update schedule is set to false.
+    // deleting of schedules of deleted workflow is handled in DeletedProgramHandlerStage.
+    if (!input.canUpdateSchedules()) {
+      emit(input);
+      return;
+    }
+
     // drop deleted schedules
     Map<String, ScheduleSpecification> existingSchedulesMap = input.getExistingAppSpec() != null ?
       input.getExistingAppSpec().getSchedules() : ImmutableMap.<String, ScheduleSpecification>of();
@@ -56,10 +63,10 @@ public class DeleteScheduleStage extends AbstractStage<ApplicationWithPrograms> 
       // delete schedules that existed in the old app spec, but don't anymore
       ScheduleSpecification scheduleSpec = entry.getValue();
       ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-      LOG.debug("Deleting schedule {} with specification {}", entry.getKey(), scheduleSpec);
-      scheduler.deleteSchedule(input.getApplicationId().program(programType,
-                                                                scheduleSpec.getProgram().getProgramName()),
-                               scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule().getName());
+        LOG.debug("Deleting schedule {} with specification {}", entry.getKey(), scheduleSpec);
+        scheduler.deleteSchedule(input.getApplicationId().program(programType,
+                                                                  scheduleSpec.getProgram().getProgramName()),
+                                 scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule().getName());
     }
 
     // for the entries which differ schedule type delete them here so that we can re-create them again in
@@ -74,11 +81,11 @@ public class DeleteScheduleStage extends AbstractStage<ApplicationWithPrograms> 
         LOG.debug("Deleting existing schedule {} with specification {}. It will be created with specification {} " +
                     "as they differ in schedule type.", entry.getKey(), oldScheduleSpec, newScheduleSpec);
         ProgramType programType = ProgramType.valueOfSchedulableType(newScheduleSpec.getProgram().getProgramType());
-        scheduler.deleteSchedule(input.getApplicationId().program(programType,
-                                                                  oldScheduleSpec.getProgram().getProgramName()),
-                                 oldScheduleSpec.getProgram().getProgramType(),
-                                 oldScheduleSpec.getSchedule().getName());
-      }
+          scheduler.deleteSchedule(input.getApplicationId().program(programType,
+                                                                    oldScheduleSpec.getProgram().getProgramName()),
+                                   oldScheduleSpec.getProgram().getProgramType(),
+                                   oldScheduleSpec.getSchedule().getName());
+        }
     }
     // Emit the input to next stage.
     emit(input);

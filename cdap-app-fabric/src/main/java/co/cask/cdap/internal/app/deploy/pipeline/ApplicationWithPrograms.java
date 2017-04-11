@@ -33,7 +33,7 @@ public class ApplicationWithPrograms extends ApplicationDeployable {
     super(applicationDeployable.getArtifactId(), applicationDeployable.getArtifactLocation(),
           applicationDeployable.getApplicationId(), applicationDeployable.getSpecification(),
           applicationDeployable.getExistingAppSpec(), applicationDeployable.getApplicationDeployScope(),
-          applicationDeployable.getOwnerPrincipal());
+          applicationDeployable.getOwnerPrincipal(), applicationDeployable.canUpdateSchedules());
     this.programDescriptors = ImmutableList.copyOf(programDescriptors);
   }
 

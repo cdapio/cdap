@@ -132,7 +132,7 @@ public class ScheduleClientTestRun extends ClientTestBase {
 
   @Test
   public void testScheduleChanges() throws Exception {
-    // deploy the app without time and stream size schedule
+    // deploy the app with time and stream size schedule
     FakeApp.AppConfig config = new FakeApp.AppConfig(true, true, null, null, null);
     appClient.deploy(namespace, createAppJarFile(FakeApp.class), config);
     // now there should be two schedule

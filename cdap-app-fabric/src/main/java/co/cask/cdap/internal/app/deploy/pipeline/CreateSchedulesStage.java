@@ -52,6 +52,13 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
 
   @Override
   public void process(ApplicationWithPrograms input) throws Exception {
+
+    if (!input.canUpdateSchedules()) {
+      // if we cant update schedules, emit and return
+      emit(input);
+      return;
+    }
+
     ApplicationId appId = input.getApplicationId();
     Map<String, ScheduleSpecification> existingSchedulesMap = input.getExistingAppSpec() != null ?
       input.getExistingAppSpec().getSchedules() : ImmutableMap.<String, ScheduleSpecification>of();
