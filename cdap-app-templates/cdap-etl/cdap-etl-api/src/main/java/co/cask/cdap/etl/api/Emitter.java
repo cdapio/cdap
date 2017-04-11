@@ -27,7 +27,7 @@ import co.cask.cdap.api.annotation.Beta;
 public interface Emitter<T> {
 
   /**
-   * Emit an object.
+   * Emit an object. Note that if any further stages has an exception thrown, it will be propagated to this stage.
    * @param value the object to emit
    */
   void emit(T value);
