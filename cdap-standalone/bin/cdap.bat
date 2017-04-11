@@ -28,7 +28,7 @@ IF /i NOT "%CDAP_HOME: =%"=="%CDAP_HOME%" (
   echo CDAP_HOME "%CDAP_HOME%"
   echo Contains one or more space characters, will not work correctly, and is not supported.
   echo Exiting.
-  GOTO FINALLY
+  GOTO :EOF
 )
 
 SET CDAP_VERSION=@@project.version@@
@@ -69,7 +69,7 @@ GOTO USAGE
 :SDK_DEPRECATED
 REM Process deprecated SDK arguments
 ECHO:
-ECHO [WARN] %0 is deprecated and will be removed in CDAP 5.0. Please use 'cdap cli' for the CDAP command line.
+ECHO [WARN] %0 is deprecated and will be removed in CDAP 5.0. Please use 'cdap sdk' for the CDAP command line.
 ECHO:
 ECHO   cdap sdk %*
 ECHO:
