@@ -360,7 +360,6 @@ class HydratorPlusPlusTopPanelCtrl {
             type: 'success',
             content: `${pipelinePreviewPlaceholder} has completed successfully.`
           });
-        } else if (status === 'Stopped') {
         } else if (res.status === 'KILLED_BY_TIMER') {
           // TODO: Remove this when we allow users to specify the timeout
           let minute = this.timeoutInMinutes <= 1 ? 'minute' : 'minutes';
