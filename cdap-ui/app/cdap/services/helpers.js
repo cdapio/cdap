@@ -17,6 +17,8 @@
 import isObject from 'lodash/isObject';
 import numeral from 'numeral';
 import moment from 'moment';
+import isNil from 'lodash/isNil';
+import isEmpty from 'lodash/isEmpty';
 
 /*
   Purpose: Query a json object or an array of json objects
@@ -126,8 +128,16 @@ function isDescendant(parent, child) {
 function getArtifactNameAndVersion (nameWithVersion) {
   // core-plugins-3.4.0-SNAPSHOT.jar
   // extracts version from the jar file name. We then get the name of the artifact (that is from the beginning up to version beginning)
-  let regExpRule = new RegExp('(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:[.\\-](.*))?$');
-  let version = regExpRule.exec(nameWithVersion)[0];
+  // Fixed it to use a suffix pattern. Added `\\-` to detect versions from names such as `redshifttos3-action-plugin-1.0.0.json`
+  if (isNil(nameWithVersion) || isEmpty(nameWithVersion)) {
+    return {name: nameWithVersion, version: undefined};
+  }
+  let regExpRule = new RegExp('\\-(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:[.\\-](.*))?$');
+  let version = regExpRule.exec(nameWithVersion);
+  if (!version) {
+    return {name: nameWithVersion, version: undefined};
+  }
+  version = version[0].slice(1);
   let name = nameWithVersion.substr(0, nameWithVersion.indexOf(version) -1);
   return { version, name };
 }
