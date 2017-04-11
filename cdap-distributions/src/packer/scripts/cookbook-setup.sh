@@ -20,6 +20,8 @@
 
 die() { echo $*; exit 1; }
 
+export GIT_MERGE_AUTOEDIT=no
+
 # Grab cookbooks using knife
 for cb in cdap idea maven openssh; do
   knife cookbook site install $cb || die "Cannot fetch cookbook $cb"
