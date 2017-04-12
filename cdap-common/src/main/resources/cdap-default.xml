@@ -422,6 +422,18 @@
   </property>
 
   <property>
+    <name>app.deploy.update.schedules</name>
+    <value>true</value>
+    <description>
+      If true, redeploying an application will modify any schedules that currently exist
+      for the application; if false, redeploying an application does not create any new
+      schedules and existing schedules are neither deleted nor updated. This property only
+      affects the redeployment of an application; all related actions or endpoints are
+      unaffected.
+    </description>
+  </property>
+
+  <property>
     <name>master.services.bind.address</name>
     <value>0.0.0.0</value>
     <description>
