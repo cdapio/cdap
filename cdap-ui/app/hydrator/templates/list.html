@@ -91,7 +91,7 @@
 
             <td>
               <span ng-if="!pipeline._stats.nextRun"> &mdash; </span>
-              <span ng-if="pipeline._stats.nextRun !== 'N/A'">{{ pipeline._stats.nextRun * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A' }}</span>
+              <span ng-if="pipeline._stats.nextRun !== 'N/A'">{{ pipeline._stats.nextRun | amDateFormat: 'MM/DD/YY h:mm:ss A' }}</span>
             </td>
 
             <td>
