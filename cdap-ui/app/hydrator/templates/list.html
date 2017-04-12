@@ -72,8 +72,8 @@
             </td>
             <td>
               <span class="status-bubble"
-                ng-class="ListController.getStatusIndicatorClass(pipeline.displayStatus)""></span>
-              <span>{{ pipeline.displayStatus }} </span>
+                ng-class="ListController.MyPipelineStatusMapper.getStatusIndicatorClass(pipeline.displayStatus)"></span>
+              <span>{{ pipeline.displayStatus }}</span>
             </td>
             <td>
               <span ng-if="pipeline._stats.numRuns !== 'N/A'">{{ pipeline._stats.numRuns }}</span>

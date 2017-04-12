@@ -33,7 +33,11 @@ angular.module(PKG.name + '.feature.hydrator')
       'DEPLOY_FAILED': 'Failed',
       'RUN_FAILED': 'Failed',
       'SUSPENDED': 'Deployed',
-      'SCHEDULED': 'Scheduled'
+      'SCHEDULED': 'Scheduled',
+      'STARTING': 'Starting',
+      'SCHEDULING': 'Scheduling',
+      'STOPPING': 'Stopping',
+      'SUSPENDING': 'Suspending',
     };
 
     function lookupDisplayStatus (systemStatus) {
@@ -44,7 +48,41 @@ angular.module(PKG.name + '.feature.hydrator')
       }
     }
 
+    function getStatusIndicatorClass (displayStatus) {
+      if (displayStatus === 'Running') {
+        return 'status-blue';
+      } else if (displayStatus === 'Succeeded' || displayStatus === 'Starting' || displayStatus === 'Scheduling' || displayStatus === 'Stopping') {
+        return 'status-light-green';
+      } else if (displayStatus === 'Failed') {
+        return 'status-light-red';
+      } else if (displayStatus === 'Draft') {
+        return 'status-outline-grey';
+      } else {
+        return 'status-light-grey';
+      }
+    }
+
+
+    function getPipelineDisplayStatus(pipeline) {
+
+      // If running, return running.
+      if (pipeline._status === lookupDisplayStatus('RUNNING')) {
+        return pipeline._status;
+      }
+
+      // Else return the status of the latest run if there is one.
+      if (pipeline._latest) {
+        return pipeline._latest.status;
+      } else {
+        // Return default status.
+        return pipeline._status;
+      }
+    }
+
+
     return {
-      lookupDisplayStatus: lookupDisplayStatus
+      lookupDisplayStatus: lookupDisplayStatus,
+      getStatusIndicatorClass: getStatusIndicatorClass,
+      getPipelineDisplayStatus: getPipelineDisplayStatus
     };
   });
