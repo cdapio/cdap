@@ -92,6 +92,9 @@ public class FilterTransform extends Transform<StructuredRecord, StructuredRecor
     return outputBuilder;
   }
 
+  /**
+   * Config for FilterTransform
+   */
   public static class Config extends PluginConfig {
     private String name;
   }
