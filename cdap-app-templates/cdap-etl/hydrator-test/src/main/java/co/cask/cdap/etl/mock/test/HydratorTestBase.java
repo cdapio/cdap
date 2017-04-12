@@ -25,6 +25,7 @@ import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.mock.action.MockAction;
+import co.cask.cdap.etl.mock.batch.FilterTransform;
 import co.cask.cdap.etl.mock.batch.LookupTransform;
 import co.cask.cdap.etl.mock.batch.MockExternalSink;
 import co.cask.cdap.etl.mock.batch.MockExternalSource;
@@ -89,8 +90,9 @@ public class HydratorTestBase extends TestBase {
     co.cask.cdap.etl.mock.batch.MockSink.PLUGIN_CLASS,
     DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
     IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS, DropNullTransform.PLUGIN_CLASS,
-    FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS, GroupFilterAggregator.PLUGIN_CLASS,
-    MockJoiner.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
+    FilterTransform.PLUGIN_CLASS,
+    FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS,
+    GroupFilterAggregator.PLUGIN_CLASS, MockJoiner.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
     StringValueFilterCompute.PLUGIN_CLASS, Window.PLUGIN_CLASS,
     FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS
   );

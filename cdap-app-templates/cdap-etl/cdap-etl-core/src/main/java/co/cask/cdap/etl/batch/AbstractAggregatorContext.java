@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
@@ -34,7 +35,7 @@ public abstract class AbstractAggregatorContext extends AbstractBatchContext imp
   private Class<?> groupKeyClass;
   private Class<?> groupValueClass;
 
-  protected AbstractAggregatorContext(PluginContext pluginContext,
+  protected AbstractAggregatorContext(PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer,
                                       DatasetContext datasetContext,
                                       Metrics metrics,
                                       LookupProvider lookup,
@@ -42,7 +43,8 @@ public abstract class AbstractAggregatorContext extends AbstractBatchContext imp
                                       Map<String, String> runtimeArgs,
                                       Admin admin,
                                       StageInfo stageInfo) {
-    super(pluginContext, datasetContext, metrics, lookup, logicalStartTime, runtimeArgs, admin, stageInfo);
+    super(pluginContext, serviceDiscoverer, datasetContext, metrics, lookup, logicalStartTime, runtimeArgs,
+          admin, stageInfo);
   }
 
   @Override

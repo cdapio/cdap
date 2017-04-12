@@ -25,6 +25,7 @@ import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.api.action.SettableArguments;
 import co.cask.cdap.proto.id.NamespaceId;
 
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -96,6 +97,20 @@ public class MockActionContext implements ActionContext {
   @Nullable
   @Override
   public Schema getOutputSchema() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public URL getServiceURL(String applicationId, String serviceId) {
+    // no-op
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public URL getServiceURL(String serviceId) {
+    //no-op
     return null;
   }
 

@@ -41,8 +41,8 @@ public abstract class AbstractSparkBatchContext extends AbstractBatchContext imp
 
   protected AbstractSparkBatchContext(JavaSparkExecutionContext sec, DatasetContext datasetContext,
                                       long logicalStartTime, StageInfo stageInfo) {
-    super(sec.getPluginContext(), datasetContext, sec.getMetrics(), NoLookupProvider.INSTANCE,
-          logicalStartTime, sec.getRuntimeArguments(), sec.getAdmin(), stageInfo);
+    super(sec.getPluginContext(), sec.getServiceDiscoverer(), datasetContext, sec.getMetrics(),
+          NoLookupProvider.INSTANCE, logicalStartTime, sec.getRuntimeArguments(), sec.getAdmin(), stageInfo);
     admin = sec.getAdmin();
   }
 

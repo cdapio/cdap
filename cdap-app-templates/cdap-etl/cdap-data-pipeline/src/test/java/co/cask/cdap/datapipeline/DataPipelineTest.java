@@ -29,11 +29,13 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
 import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.datapipeline.mock.SpamMessage;
+import co.cask.cdap.datapipeline.service.ServiceApp;
 import co.cask.cdap.datapipeline.spark.LineFilterProgram;
 import co.cask.cdap.datapipeline.spark.WordCount;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.mock.action.MockAction;
+import co.cask.cdap.etl.mock.batch.FilterTransform;
 import co.cask.cdap.etl.mock.batch.LookupTransform;
 import co.cask.cdap.etl.mock.batch.MockExternalSink;
 import co.cask.cdap.etl.mock.batch.MockExternalSource;
@@ -66,14 +68,19 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
+import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkflowManager;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.google.common.io.ByteStreams;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -84,6 +91,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1866,5 +1875,87 @@ public class DataPipelineTest extends HydratorTestBase {
     getMetricsManager().waitForTotalMetricCount(tags, "user." + metric, expected, 20, TimeUnit.SECONDS);
     // wait for won't throw an exception if the metric count is greater than expected
     Assert.assertEquals(expected, getMetricsManager().getTotalMetric(tags, "user." + metric));
+  }
+
+  @Test
+  public void testServiceUrlMR() throws Exception {
+    testServiceUrl(Engine.MAPREDUCE);
+  }
+
+  @Test
+  public void testServiceUrlSpark() throws Exception {
+    testServiceUrl(Engine.SPARK);
+  }
+
+  public void testServiceUrl(Engine engine) throws Exception {
+
+    // Deploy the ServiceApp application
+    ApplicationManager appManager = deployApplication(ServiceApp.class);
+
+    // Start Greeting service and use it
+    ServiceManager serviceManager = appManager.getServiceManager(ServiceApp.Name.SERVICE_NAME).start();
+
+    // Wait service startup
+    serviceManager.waitForStatus(true);
+
+    URL url = new URL(serviceManager.getServiceURL(), "name");
+    HttpRequest httpRequest = HttpRequest.post(url).withBody("bob").build();
+    HttpResponse httpResponse = HttpRequests.execute(httpRequest);
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, httpResponse.getResponseCode());
+
+    url = new URL(serviceManager.getServiceURL(), "name/bob");
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
+    String response;
+    try {
+      response = new String(ByteStreams.toByteArray(connection.getInputStream()), Charsets.UTF_8);
+    } finally {
+      connection.disconnect();
+    }
+    Assert.assertEquals("bob", response);
+
+    String sourceName = "ServiceUrlInput-" + engine.name();
+    String sinkName = "ServiceUrlOutput-" + engine.name();
+    /*
+     * source --> filter --> sink
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .setEngine(engine)
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("filter", FilterTransform.getPlugin("name")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
+      .addConnection("source", "filter")
+      .addConnection("filter", "sink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("ServiceUrl-" + engine);
+    appManager = deployApplication(appId.toId(), appRequest);
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
+
+    // write one record to each source
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(sourceName));
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    // check output
+    DataSetManager<Table> sinkManager = getDataset(sinkName);
+    Set<StructuredRecord> expected = ImmutableSet.of(recordBob);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+
+    serviceManager.stop();
+    serviceManager.waitForRun(ProgramRunStatus.KILLED, 180, TimeUnit.SECONDS);
   }
 }

@@ -27,7 +27,7 @@ import co.cask.cdap.etl.planner.StageInfo;
 public class SparkJoinerContext extends AbstractJoinerContext {
 
   protected SparkJoinerContext(StageInfo stageInfo, SparkClientContext scc) {
-    super(scc, scc, scc.getMetrics(), new DatasetContextLookupProvider(scc),
+    super(scc, scc, scc, scc.getMetrics(), new DatasetContextLookupProvider(scc),
           scc.getLogicalStartTime(), scc.getRuntimeArguments(), scc.getAdmin(), stageInfo);
   }
 

@@ -37,7 +37,7 @@ public class BasicActionContext extends AbstractStageContext implements ActionCo
   private final BasicSettableArguments arguments;
 
   public BasicActionContext(CustomActionContext context, Metrics metrics, String stageName) {
-    super(context, metrics, StageInfo.builder(stageName, Action.PLUGIN_TYPE).build());
+    super(context, context, metrics, StageInfo.builder(stageName, Action.PLUGIN_TYPE).build());
     this.context = context;
     this.arguments = new BasicSettableArguments(context.getRuntimeArguments());
   }
