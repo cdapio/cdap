@@ -29,17 +29,25 @@ export default class FindAndReplaceDirective extends Component {
 
     this.state = {
       findInput: '',
-      replaceInput: ''
+      replaceInput: '',
+      isOpen: this.props.isOpen
     };
 
     this.handleFindInputChange = this.handleFindInputChange.bind(this);
     this.handleReplaceInputChange = this.handleReplaceInputChange.bind(this);
+    this.handleKeyPress = this.handleKeyPress.bind(this);
     this.applyDirective = this.applyDirective.bind(this);
   }
 
-  componentDidUpdate() {
-    if (this.props.isOpen && this.state.findInput.length === 0 && this.findInputBox) {
-      this.findInputBox.focus();
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.isOpen !== this.state.isOpen) {
+      this.setState({
+        isOpen: nextProps.isOpen
+      }, () => {
+        if (this.findInputBox) {
+          this.findInputBox.focus();
+        }
+      });
     }
   }
 
@@ -55,6 +63,13 @@ export default class FindAndReplaceDirective extends Component {
 
   handleReplaceInputChange(e) {
     this.setState({replaceInput: e.target.value});
+  }
+
+  handleKeyPress(e) {
+    if (e.nativeEvent.keyCode === 13) {
+      this.applyDirective();
+      this.preventPropagation(e);
+    }
   }
 
   applyDirective() {
@@ -82,7 +97,7 @@ export default class FindAndReplaceDirective extends Component {
   }
 
   renderDetail() {
-    if (!this.props.isOpen) { return null; }
+    if (!this.state.isOpen) { return null; }
 
     return (
       <div
@@ -94,8 +109,9 @@ export default class FindAndReplaceDirective extends Component {
         <div className="input">
           <input
             type="text"
-            className="form-control"
+            className="form-control mousetrap"
             value={this.state.findInput}
+            onKeyPress={this.handleKeyPress}
             onChange={this.handleFindInputChange}
             placeholder={T.translate(`${PREFIX}.findPlaceholder`)}
             ref={ref => this.findInputBox = ref}
@@ -109,8 +125,9 @@ export default class FindAndReplaceDirective extends Component {
         <div className="input">
           <input
             type="text"
-            className="form-control"
+            className="form-control mousetrap"
             value={this.state.replaceInput}
+            onKeyPress={this.handleKeyPress}
             onChange={this.handleReplaceInputChange}
             placeholder={T.translate(`${PREFIX}.replacePlaceholder`)}
           />
@@ -143,7 +160,7 @@ export default class FindAndReplaceDirective extends Component {
     return (
       <div
         className={classnames('fill-null-or-empty-directive clearfix action-item', {
-          'active': this.props.isOpen
+          'active': this.state.isOpen
         })}
       >
         <span>{T.translate(`${PREFIX}.title`)}</span>

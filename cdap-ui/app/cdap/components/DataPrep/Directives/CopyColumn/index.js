@@ -21,7 +21,6 @@ import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import WarningContainer from 'components/WarningContainer';
-
 const PREFIX = 'features.DataPrep.Directives.Copy';
 
 export default class CopyColumnDirective extends Component {
@@ -100,7 +99,7 @@ export default class CopyColumnDirective extends Component {
         <div className="input">
           <input
             type="text"
-            className="form-control"
+            className="form-control mousetrap"
             value={this.state.input}
             onChange={this.handleInputChange}
             onKeyPress={this.handleKeyPress}
