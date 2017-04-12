@@ -58,7 +58,7 @@
     <div class="app-status-container">
       <!-- IF ETL BATCH -->
       <div ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1">
-        <div ng-if="['Starting', 'Succeeded', 'Failed', 'Stopped'].indexOf(TopPanelCtrl.appStatus) !== -1">
+        <div ng-if="['Starting', 'Succeeded', 'Failed', 'Stopped', 'Deployed'].indexOf(TopPanelCtrl.appStatus) !== -1">
           <div ng-click="TopPanelCtrl.do('Start')"
                class="btn"
                ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'Starting'}"
