@@ -27,8 +27,6 @@ angular.module(PKG.name + '.feature.hydrator')
     var eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
     vm.statusCount = {
       running: 0,
-      scheduled: 0,
-      suspended: 0,
       draft: 0
     };
     vm.GLOBALS = GLOBALS;
@@ -187,22 +185,27 @@ angular.module(PKG.name + '.feature.hydrator')
       api.runs(params)
         .$promise
         .then(function (runs) {
-          app._stats.numRuns = runs.length;
-          app._stats.lastStartTime = runs.length > 0 ? runs[0].start : 'N/A';
-          var currentRun = runs[0];
-          setDurationTimers(app, currentRun);
-          for (var i = 0; i < runs.length; i++) {
-            var status = runs[i].status;
+          if (runs.length) {
+            app._stats.numRuns = runs.length;
+            app._stats.lastStartTime = runs.length > 0 ? runs[0].start : 'N/A';
+            var currentRun = runs[0];
+            setDurationTimers(app, currentRun);
+            for (var i = 0; i < runs.length; i++) {
+              var status = runs[i].status;
 
-            if (['RUNNING', 'STARTING', 'STOPPING'].indexOf(status) === -1) {
-              app._latest = runs[i];
-              break;
+              if (['RUNNING', 'STARTING', 'STOPPING'].indexOf(status) === -1) {
+                app._latest = runs[i];
+                break;
+              }
             }
+            if (app._latest) {
+              app._latest.status = vm.MyPipelineStatusMapper.lookupDisplayStatus(app._latest.status);
+            }  
+          } else {
+            statusMap[app.id] = vm.MyPipelineStatusMapper.lookupDisplayStatus('SUSPENDED');
+            updateStatusAppObject();
           }
-          if (app._latest) {
-            app._latest.status = vm.MyPipelineStatusMapper.lookupDisplayStatus(app._latest.status);
-          }
-
+          
         });
     }
 
@@ -285,28 +288,6 @@ angular.module(PKG.name + '.feature.hydrator')
           if (app.status === 'RUNNING') {
             statusMap[app.appId] = vm.MyPipelineStatusMapper.lookupDisplayStatus('RUNNING');
             vm.statusCount.running++;
-          } else {
-            /**
-             * FIXME: https://github.com/caskdata/cdap/pull/5426
-             * The check for app.programId is because we don't have the artifact name here
-             **/
-            myWorkFlowApi.getScheduleStatus({
-              namespace: $state.params.namespace,
-              appId: app.appId,
-              scheduleId: app.programId === 'ETLWorkflow' ? 'etlWorkflow' : 'dataPipelineSchedule',
-              scope: $scope
-            })
-              .$promise
-              .then(function (schedule) {
-                if (schedule.status === 'SCHEDULED') {
-                  statusMap[app.appId] = vm.MyPipelineStatusMapper.lookupDisplayStatus(schedule.status);
-                  vm.statusCount.scheduled++;
-                } else {
-                  statusMap[app.appId] = vm.MyPipelineStatusMapper.lookupDisplayStatus('SUSPENDED');
-                  vm.statusCount.suspended++;
-                }
-                updateStatusAppObject();
-              });
           }
         });
 
@@ -326,9 +307,6 @@ angular.module(PKG.name + '.feature.hydrator')
           if (app.status === 'RUNNING') {
             statusMap[app.appId] = vm.MyPipelineStatusMapper.lookupDisplayStatus(app.status);
             vm.statusCount.running++;
-          } else {
-            statusMap[app.appId] = vm.MyPipelineStatusMapper.lookupDisplayStatus('SUSPENDED');
-            vm.statusCount.suspended++;
           }
         });
 

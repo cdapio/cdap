@@ -65,6 +65,11 @@ angular.module(PKG.name + '.feature.hydrator')
 
     function getPipelineDisplayStatus(pipeline) {
 
+      // If running, return running.
+      if (pipeline._status === lookupDisplayStatus('RUNNING')) {
+        return pipeline._status;
+      }
+
       // Else return the status of the latest run if there is one.
       if (pipeline._latest) {
         return pipeline._latest.status;
@@ -74,21 +79,9 @@ angular.module(PKG.name + '.feature.hydrator')
       }
     }
 
-    function getDisplayStatusForDetail(status, lastFinished) {
-
-      // Else return the status of the latest run if there is one.
-      if (lastFinished) {
-        return lookupDisplayStatus(lastFinished.status);
-      } else {
-        // Return default status.
-        return lookupDisplayStatus(status);
-      }
-    }
-
     return {
       lookupDisplayStatus: lookupDisplayStatus,
       getStatusIndicatorClass: getStatusIndicatorClass,
-      getPipelineDisplayStatus: getPipelineDisplayStatus,
-      getDisplayStatusForDetail: getDisplayStatusForDetail
+      getPipelineDisplayStatus: getPipelineDisplayStatus
     };
   });
