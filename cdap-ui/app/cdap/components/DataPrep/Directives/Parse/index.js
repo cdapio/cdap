@@ -82,17 +82,25 @@ export default class ParseDirective extends Component {
   }
 
   calculateOffset() {
-    let elem = document.getElementsByClassName('second-level-popover');
-    let elemBounding = elem[0].getBoundingClientRect();
-    let bodySize = elem[0].ownerDocument.body.getBoundingClientRect();
+    let elem = document.getElementById('parse-directive');
+    let elemBounding = elem.getBoundingClientRect();
+
+    const HEADER_HEIGHT = 50;
+    const FOOTER_HEIGHT = 54;
+    let bodyHeight = document.documentElement.clientHeight - HEADER_HEIGHT - FOOTER_HEIGHT;
+
+    let popover = document.getElementsByClassName('second-level-popover');
+    let popoverHeight = popover[0].getBoundingClientRect().height;
+
+    let tableContainerScroll = document.getElementById('dataprep-table-id').scrollTop;
 
     // out of bound check
-    let diff = bodySize.height - elemBounding.bottom;
+    let diff = bodyHeight - (elemBounding.top + popoverHeight) - tableContainerScroll;
 
     if (diff < 0) {
-      elem[0].style.top = `${diff}px`;
+      popover[0].style.top = `${diff}px`;
     } else {
-      elem[0].style.top = 0;
+      popover[0].style.top = 0;
     }
   }
 
@@ -236,6 +244,7 @@ export default class ParseDirective extends Component {
   render() {
     return (
       <div
+        id="parse-directive"
         className={classnames('parse-directive clearfix action-item', {
           'active': this.props.isOpen
         })}
