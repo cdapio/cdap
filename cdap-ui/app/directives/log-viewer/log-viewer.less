@@ -360,6 +360,7 @@ my-log-viewer-preview {
         .include-system {
           color: white;
           margin-right: 15px;
+          cursor: pointer;
         }
         .view-raw {
           max-width: 110px;
@@ -430,27 +431,22 @@ my-log-viewer-preview {
       border-bottom: none;
     }
 
-    table.scroll thead {
-      border-bottom: 1px solid #cccccc;
-      display: block;
-    }
+    table.scroll thead { border-bottom: 1px solid #cccccc; }
 
     .logs-table {
       height: ~"-moz-calc(100vh - 356px)";
       height: ~"-webkit-calc(100vh - 356px)";
       height: ~"calc(100vh - 356px)";
+      font-weight: 300;
 
-      tbody {
-        height: ~"-moz-calc(100vh - 356px - 46px)";
-        height: ~"-webkit-calc(100vh - 356px - 46px)";
-        height: ~"calc(100vh - 356px - 46px)";
+      .logs-table-body {
+        overflow-y: auto;
+        overflow-x: hidden;
+        height: ~"-moz-calc(100% - 47px)";
+        height: ~"-webkit-calc(100% - 47px)";
+        height: ~"calc(100% - 47px)";
 
-        td {
-          color: #666666;
-          font-size: 11px;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
+        .table { border-top: 0; }
       }
 
       .has-stack-trace {
@@ -466,7 +462,6 @@ my-log-viewer-preview {
 
       tr {
         width: 100%;
-        display: table;
         background-color: @table-background-color;
 
         &.display-time {
@@ -506,6 +501,10 @@ my-log-viewer-preview {
         td {
           line-height: 18px;
           border-top: 0;
+          color: #666666;
+          font-size: 11px;
+          text-overflow: ellipsis;
+          white-space: nowrap;
 
           .fa-chevron-right {
             color: #393939;
@@ -525,6 +524,7 @@ my-log-viewer-preview {
         }
 
         .log-message {
+          width: 100%;
           padding-right: 5px;
         }
       }
@@ -562,8 +562,6 @@ my-log-viewer-preview {
         border-color: @border-color;
         color: #333333;
       }
-
-      font-weight: 300;
 
       tbody tr:hover {
         background-color: @selected-row-color;
@@ -605,7 +603,6 @@ my-log-viewer-preview {
         &.table-bordered {
           border-color: @border-color;
           margin-bottom: 0;
-          height: 100%;
           table-layout: fixed;
         }
         margin-top: 0;
@@ -645,8 +642,6 @@ my-log-viewer-preview {
       }
 
       tbody {
-        overflow: auto;
-        display: block;
         background-color: @selected-row-color;
         .message {
           padding-left: 10px;
@@ -696,7 +691,7 @@ my-log-viewer-preview {
 
       .source,
       .source-header {
-        width: 18%;
+        width: 160px;
       }
 
       .source {
@@ -707,6 +702,8 @@ my-log-viewer-preview {
       }
 
       .message-header {
+        width: 100%;
+
         .fa {
           position: relative;
           bottom: 1px;
