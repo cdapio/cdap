@@ -11,7 +11,7 @@ Lifecycle HTTP RESTful API
 
 .. highlight:: console
 
-Use the CDAP Lifecycle HTTP RESTful API to deploy or delete applications and manage the lifecycle of 
+Use the CDAP Lifecycle HTTP RESTful API to deploy or delete applications and manage the lifecycle of
 flows, MapReduce and Spark programs, custom services, workers, and workflows.
 
 Details of these CDAP components can be found in the :ref:`Developers' Manual: Building Blocks <building-blocks>`.
@@ -35,7 +35,7 @@ To create an application, submit an HTTP PUT request::
 To create an application with a non-default version, submit an HTTP POST request with the version specified::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/create
-  
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -52,7 +52,7 @@ To create an application with a non-default version, submit an HTTP POST request
 
 The request body is a JSON object specifying the artifact to use to create the application,
 and an optional application configuration. For example:
- 
+
 .. container:: highlight
 
   .. parsed-literal::
@@ -67,11 +67,11 @@ and an optional application configuration. For example:
         "stream": "purchaseStream"
       },
       "principal":"user/example.net@examplekdc.net"
-    } 
+    }
 
 will create an application named ``purchaseWordCount`` from the example ``WordCount`` artifact.
 The application will receive the specified ``config``, which will configure the application
-to create a stream named ``purchaseStream`` instead of using the default stream name. 
+to create a stream named ``purchaseStream`` instead of using the default stream name.
 
 Optionally, you can specify a Kerberos principal with which the application should be deployed.
 If a Kerberos principal is specified, then all the streams and datasets created by the
@@ -104,7 +104,7 @@ config. For example, a request body of:
 
 will update the ``purchaseWordCount`` application to use version |release| of the ``WordCount`` artifact,
 and update the name of the stream to ``logStream``. If no artifact is given, the current artifact will be
-used. 
+used.
 
 Only changes to artifact version are supported; changes to the artifact name are not allowed. If no
 ``config`` is given, the current ``config`` will be used. If the ``config`` key is present, the current
@@ -286,7 +286,7 @@ custom services, schedules, workers, and workflows by submitting an HTTP GET req
 To retrieve information about the schedules of the program's workflows, use::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/schedules
-  
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -304,7 +304,7 @@ To retrieve information about the schedules of the program's workflows, use::
        being called
    * - ``workflow-id``
      - Name of the *workflow* being called, when retrieving schedules
-  
+
 The response will be a JSON array containing details about the program. The details returned depend on the
 program type.
 
@@ -347,9 +347,9 @@ be similar to this (pretty-printed and portions deleted to fit)::
                   "whom"
               ],
               "inputs": {
-            
+
                 . . .
-              
+
               },
               "outputs": {
               }
@@ -481,7 +481,7 @@ will attempt to start the three programs listed in the request body. It will rec
   ]
 
 In this particular example, the service and mapreduce programs in the *App1* application were successfully
-started, and there was an error starting the last program because the *App2* application does not exist. 
+started, and there was an error starting the last program because the *App2* application does not exist.
 
 .. _http-restful-api-lifecycle-stop:
 
@@ -516,7 +516,7 @@ request that includes the version::
        being stopped
 
 A program that is in the STOPPED state cannot be stopped. If there are multiple runs of the program
-in the RUNNING state, this call will stop one of the runs, but not all of the runs. 
+in the RUNNING state, this call will stop one of the runs, but not all of the runs.
 
 For example::
 
@@ -622,7 +622,7 @@ will attempt to stop the three programs listed in the request body. It will rece
   ]
 
 In this particular example, the service and mapreduce programs in the *App1* application were successfully
-stopped, and there was an error starting the last program because the *App2* application does not exist. 
+stopped, and there was an error starting the last program because the *App2* application does not exist.
 
 .. _http-restful-api-lifecycle-status:
 
@@ -752,7 +752,7 @@ request with the version specified::
      - Name of the application
    * - ``schedule-id``
      - Name of the schedule; it is unique to the application and, if specified, the
-       application version 
+       application version
    * - ``version-id``
      - Version of the application, typically following `semantic versioning
        <http://semver.org>`__
@@ -764,7 +764,7 @@ types are currently supported for workflows: :ref:`time schedules <schedules-tim
 - To specify a :ref:`time schedule <schedules-time>`, use ``"scheduleType": "TIME"``, as
   shown in this example for scheduling the *PurchaseHistoryWorkflow* of the :ref:`Purchase
   application <examples-purchase>` to trigger daily::
-    
+
     {
       "scheduleType": "TIME",
       "schedule":{
@@ -785,7 +785,7 @@ types are currently supported for workflows: :ref:`time schedules <schedules-tim
 - To specify a :ref:`stream-sized schedule <schedules-stream-size>`, use ``"scheduleType":
   "STREAM"``, as shown in this example for scheduling the *PurchaseHistoryWorkflow* of the
   :ref:`Purchase application <examples-purchase>` to trigger after ingesting 1 MB of data or more::
-    
+
     {
       "scheduleType":"STREAM",
       "schedule":{
@@ -804,7 +804,7 @@ types are currently supported for workflows: :ref:`time schedules <schedules-tim
       }
     }
 
-*Note:* For any schedule, the program must be for a workflow and the ``programType`` must be set to ``WORKLFLOW``. 
+*Note:* For any schedule, the program must be for a workflow and the ``programType`` must be set to ``WORKLFLOW``.
 
 .. rubric:: HTTP Responses
 
@@ -842,7 +842,7 @@ request with the version specified::
      - Name of the application
    * - ``schedule-id``
      - Name of the schedule; it is unique to the application and, if specified, the
-       application version 
+       application version
    * - ``version-id``
      - Version of the application, typically following `semantic versioning
        <http://semver.org>`__
@@ -908,8 +908,8 @@ To retrieve a schedule in an application, submit an HTTP GET request::
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-name>
 
 .. list-table::
-:widths: 20 80
-:header-rows: 1
+   :widths: 20 80
+   :header-rows: 1
 
    * - Parameter
      - Description
@@ -961,7 +961,7 @@ To list all of the schedules of a workflow of an application, use an HTTP GET re
 To list the next time that the workflow is scheduled to run, use the parameter ``nextruntime``::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/nextruntime
-    
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -983,8 +983,8 @@ To list the next time that the workflow is scheduled to run, use the parameter `
      :stub-columns: 1
 
      * - Example: Retrieving a Schedule
-       - 
-       
+       -
+
   .. list-table::
      :widths: 15 85
      :class: triple-table
@@ -992,14 +992,14 @@ To list the next time that the workflow is scheduled to run, use the parameter `
      * - Description
        - Retrieves the schedules of the workflow *PurchaseHistoryWorkflow* of the
          application *PurchaseHistory*
-      
+
      * - HTTP Method
        - ``GET /v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/schedules``
-         
+
      * - Returns
        - | ``[{"schedule":{"name":"DailySchedule","description":"DailySchedule with crontab 0 4 * * *","cronEntry":"0 4 * * *"},``
          | `` "program":{"programName":"PurchaseHistoryWorkflow","programType":"WORKFLOW"},"properties":{}}]``
-         
+
 
 .. container:: table-block-example
 
@@ -1008,8 +1008,8 @@ To list the next time that the workflow is scheduled to run, use the parameter `
      :stub-columns: 1
 
      * - Example: Retrieving The Next Runtime
-       - 
-       
+       -
+
   .. list-table::
      :widths: 15 85
      :class: triple-table
@@ -1017,10 +1017,10 @@ To list the next time that the workflow is scheduled to run, use the parameter `
      * - Description
        - Retrieves the next runtime of the workflow *PurchaseHistoryWorkflow* of the
          application *PurchaseHistory*
-      
+
      * - HTTP Method
        - ``GET /v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/nextruntime``
-         
+
      * - Returns
        - | ``[{"id":"DEFAULT.WORKFLOW:developer:PurchaseHistory:PurchaseHistoryWorkflow:0:DailySchedule","time":1415102400000}]``
 
@@ -1050,7 +1050,7 @@ request with the version specified::
      - Name of the application to be deleted
    * - ``schedule-id``
      - Name of the schedule; it is unique to the application and, if specified, the
-       application version 
+       application version
    * - ``version-id``
      - Version of the application to be deleted
 
@@ -1105,18 +1105,18 @@ To suspend or resume a schedule use::
      :stub-columns: 1
 
      * - Example: Suspending a Schedule
-       - 
-       
+       -
+
   .. list-table::
      :widths: 15 85
      :class: triple-table
 
      * - Description
        - Suspends the schedule *DailySchedule* of the application *PurchaseHistory*
-      
+
      * - HTTP Method
        - ``POST /v3/namespaces/default/apps/PurchaseHistory/schedules/DailySchedule/suspend``
-         
+
      * - Returns
        - | ``OK`` if successfully set as suspended
 
@@ -1149,7 +1149,7 @@ Example::
 
   GET /v3/namespaces/default/apps/WordCount/flows/WordCounter/live-info
 
-The response is formatted in JSON; an example of this is shown in 
+The response is formatted in JSON; an example of this is shown in
 :ref:`CDAP Testing and Debugging. <developers:debugging-distributed>`
 
 
@@ -1306,7 +1306,7 @@ with the arguments as a JSON string in the body::
    * - ``quantity``
      - Number of instances to be used
 
-**Note:** You can scale system services using the Monitor HTTP RESTful API 
+**Note:** You can scale system services using the Monitor HTTP RESTful API
 :ref:`Scaling System Services <http-restful-api-monitor-scaling-system-services>`.
 
 .. rubric:: Examples
@@ -1324,7 +1324,7 @@ with the arguments as a JSON string in the body::
   with the arguments as a JSON string in the body::
 
     { "instances" : 2 }
-  
+
 - Using ``curl`` and the :ref:`Standalone CDAP <standalone-index>`:
 
   .. tabbed-parsed-literal::
@@ -1393,7 +1393,7 @@ time, end time, and program status::
    * - ``program-id``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, or *workflow* being called
 
-You can filter the runs by the status of a program, the start and end times, 
+You can filter the runs by the status of a program, the start and end times,
 and can limit the number of returned records:
 
 .. list-table::
@@ -1422,18 +1422,18 @@ Use that runid in subsequent calls to obtain additional information.
      :stub-columns: 1
 
      * - Example: Retrieving Run Records
-       - 
-       
+       -
+
   .. list-table::
      :widths: 15 85
      :class: triple-table
 
      * - Description
        - Retrieve the run records of the flow *WhoFlow* of the application *HelloWorld*
-      
+
      * - HTTP Method
        - ``GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs``
-         
+
      * - Returns
        - | ``{"runid":"...","start":1382567598,"status":"RUNNING"},``
          | ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
@@ -1473,8 +1473,8 @@ To fetch the run record for a particular run of a program, use::
      :stub-columns: 1
 
      * - Example: Retrieving A Particular Run Record
-       - 
-       
+       -
+
   .. list-table::
      :widths: 15 85
      :class: triple-table
@@ -1482,10 +1482,10 @@ To fetch the run record for a particular run of a program, use::
      * - Description
        - Retrieve the run record of the flow *WhoFlow* of the application *HelloWorld* for
          run *b78d0091-da42-11e4-878c-2217c18f435d*
-      
+
      * - HTTP Method
        - ``GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs/b78d0091-da42-11e4-878c-2217c18f435d``
-         
+
      * - Returns
        - | ``{"runid":"...","start":1382567598,"status":"RUNNING"}``
 
@@ -1520,22 +1520,22 @@ For workflows, you can retrieve:
      :stub-columns: 1
 
      * - Example: Retrieving The Most Recent Run
-       - 
-       
+       -
+
   .. list-table::
      :widths: 15 85
      :class: triple-table
 
      * - Description
        - Retrieve the most recent successful completed run of the service *CatalogLookup* of the application *PurchaseHistory*
-      
+
      * - HTTP Method
        - ``GET /v3/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/runs?status=completed&limit=1``
-         
+
      * - Returns
        - | ``[{"runid":"cad83d45-ecfb-4bf8-8cdb-4928a5601b0e","start":1415051892,"end":1415057103,"status":"STOPPED"}]``
 
-       
+
 .. _http-restful-api-lifecycle-workflow-runs-suspend-resume:
 
 Workflow Runs: Suspend and Resume
@@ -1545,7 +1545,7 @@ For workflows, in addition to :ref:`starting <http-restful-api-lifecycle-start>`
 :ref:`stopping <http-restful-api-lifecycle-stop>`, you can suspend and resume individual
 runs of a workflow using the RESTful API.
 
-**Suspend:** To *suspend* means that the current activity will be taken to completion, but no further 
+**Suspend:** To *suspend* means that the current activity will be taken to completion, but no further
 programs will be initiated. Programs will not be left partially uncompleted, barring any errors.
 
 In the case of a workflow with multiple MapReduce programs, if one of them is running (first of
@@ -1562,7 +1562,7 @@ With workflows, *suspend* and *resume* require a *run-id* as the action takes pl
 either a currently running or suspended workflow.
 
 To suspend or resume a workflow, use::
-  
+
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/suspend
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/resume
 
@@ -1588,8 +1588,8 @@ To suspend or resume a workflow, use::
      :stub-columns: 1
 
      * - Example: Suspending a Workflow
-       - 
-       
+       -
+
   .. list-table::
      :widths: 15 85
      :class: triple-table
@@ -1597,9 +1597,9 @@ To suspend or resume a workflow, use::
      * - Description
        - Suspends the run ``0ce13912-e980-11e4-a7d7-8cae4cfd0e64`` of the workflow
          *PurchaseHistoryWorkflow* of the application *PurchaseHistory*
-      
+
      * - HTTP Method
        - ``POST /v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/runs/0ce13912-e980-11e4-a7d7-8cae4cfd0e64/suspend``
-         
+
      * - Returns
        - | ``Program run suspended.`` if successfully set as suspended
