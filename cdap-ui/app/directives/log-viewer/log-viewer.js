@@ -478,7 +478,23 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
           res[index].log.stackTrace = res[index].log.stackTrace.trim();
         });
 
-        vm.data = vm.data.concat(res);
+        // xor vm.data with res, add the xor value to vm.data
+        // Calculating xor is not very optimal, however since the
+        // limit would be iterating through 100 items, we should be fine
+        // Uniqueness is identied by the offset
+        let xor = {};
+        let xorData = [];
+        angular.forEach(vm.data, (logItem) => {
+          xor[logItem.offset] = true;
+        });
+
+        angular.forEach(res, (logItem) => {
+          if (!xor[logItem.offset]) {
+            xorData.push(logItem);
+          }
+        });
+
+        vm.data = vm.data.concat(xorData);
         vm.renderData();
       }
 
@@ -807,7 +823,6 @@ const link = (scope) => {
 };
 
 angular.module(PKG.name + '.commons')
-  .value('THROTTLE_MILLISECONDS', 250) // throttle infinite scroll
   .directive('myLogViewer', function () {
     return {
       templateUrl: 'log-viewer/log-viewer.html',
