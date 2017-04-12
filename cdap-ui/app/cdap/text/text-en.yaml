@@ -826,7 +826,7 @@ features:
         title: Configure a Pipeline
         description: Specify the name of the pipeline.
       pipelinenameplaceholder: Pipeline Name
-      headerlabel: Publish Pipeline
+      headerlabel: Deploy Pipeline
       success: You have successfully created the pipeline "{pipelineName}".
       callToAction:
         customize: Customize Pipeline
