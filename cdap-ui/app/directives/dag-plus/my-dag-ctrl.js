@@ -398,8 +398,14 @@ angular.module(PKG.name + '.commons')
             vm.instance.addEndpoint(node.name, sinkTarget, {uuid: 'Target' + node.name});
             break;
           case 'action':
-            vm.instance.addEndpoint(node.name, actionOrigin, {uuid: 'Origin' + node.name});
-            vm.instance.addEndpoint(node.name, actionTarget, {uuid: 'Target' + node.name});
+            vm.instance.addEndpoint(node.name, actionOrigin, {
+              uuid: 'Origin' + node.name,
+              cssClass: node.type + '-anchor'
+            });
+            vm.instance.addEndpoint(node.name, actionTarget, {
+              uuid: 'Target' + node.name,
+              cssClass: node.type + '-anchor'
+            });
             break;
           default:
             // Need to id each end point so that it can be used later to make connections.

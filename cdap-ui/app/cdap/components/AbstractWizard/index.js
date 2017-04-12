@@ -24,6 +24,7 @@ import InformationalWizard from 'components/CaskWizards/Informational';
 import ArtifactUploadWizard from 'components/CaskWizards/ArtifactUpload';
 import PluginArtifactUploadWizard from 'components/CaskWizards/PluginArtifactUpload';
 import ApplicationUploadWizard from 'components/CaskWizards/ApplicationUpload';
+import LibraryUploadWizard from 'components/CaskWizards/LibraryUpload';
 
 import MarketArtifactUploadWizard from 'components/CaskWizards/MarketArtifactUpload';
 import MarketHydratorPluginUpload from 'components/CaskWizards/MarketHydratorPluginUpload';
@@ -57,6 +58,10 @@ const WizardTypesMap = {
   },
   'create_artifact_rc': {
     tag: ArtifactUploadWizard,
+    store: ArtifactUploadStore
+  },
+  'create_library_rc': {
+    tag: LibraryUploadWizard,
     store: ArtifactUploadStore
   },
   'create_plugin_artifact': {
