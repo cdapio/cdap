@@ -299,7 +299,7 @@ angular.module(PKG.name + '.feature.hydrator')
               .$promise
               .then(function (schedule) {
                 if (schedule.status === 'SCHEDULED') {
-                  statusMap[app.appId] = vm.MyPipelineStatusMapper.lookupDisplayStatus('SCHEDULED');
+                  statusMap[app.appId] = vm.MyPipelineStatusMapper.lookupDisplayStatus(schedule.status);
                   vm.statusCount.scheduled++;
                 } else {
                   statusMap[app.appId] = vm.MyPipelineStatusMapper.lookupDisplayStatus('SUSPENDED');
@@ -324,7 +324,7 @@ angular.module(PKG.name + '.feature.hydrator')
         vm.runningPolls.push(res.__pollId__);
         angular.forEach(res, function (app) {
           if (app.status === 'RUNNING') {
-            statusMap[app.appId] = vm.MyPipelineStatusMapper.lookupDisplayStatus('RUNNING');
+            statusMap[app.appId] = vm.MyPipelineStatusMapper.lookupDisplayStatus(app.status);
             vm.statusCount.running++;
           } else {
             statusMap[app.appId] = vm.MyPipelineStatusMapper.lookupDisplayStatus('SUSPENDED');

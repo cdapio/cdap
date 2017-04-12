@@ -229,7 +229,8 @@ class HydratorDetailTopPanelController {
   }
 
   setAppStatus() {
-    this.appStatus = this.MyPipelineStatusMapper.lookupDisplayStatus(this.HydratorPlusPlusDetailRunsStore.getStatus());
+    this.appStatus = this.MyPipelineStatusMapper.getDisplayStatusForDetail(
+      this.HydratorPlusPlusDetailRunsStore.getStatus(), this.HydratorPlusPlusDetailRunsStore.getLatestRun());
 
     if (this.appStatus === 'Succeeded' || this.appStatus === 'Stopped') {
       this.$interval.cancel(this.pipelineDurationTimer);
@@ -239,7 +240,7 @@ class HydratorDetailTopPanelController {
     this.config = this.HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
   }
   setScheduleStatus() {
-    this.scheduleStatus = this.HydratorPlusPlusDetailNonRunsStore.getScheduleStatus();
+    this.scheduleStatus = this.MyPipelineStatusMapper.getDisplayStatusForDetail(this.HydratorPlusPlusDetailNonRunsStore.getScheduleStatus(), this.HydratorPlusPlusDetailRunsStore.getLatestRun());
   }
   isGreenStatus() {
     var greenStatus = ['Succeeded', 'Starting', 'Scheduling', 'Stopping'];
