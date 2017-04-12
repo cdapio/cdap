@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl {
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window, MyPipelineStatusMapper) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window, LogViewerStore, LOGVIEWERSTORE_ACTIONS) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -28,9 +28,10 @@ class HydratorPlusPlusTopPanelCtrl {
     this.myHelpers = myHelpers;
     this.$timeout = $timeout;
     this.PREVIEWSTORE_ACTIONS = PREVIEWSTORE_ACTIONS;
-    this.MyPipelineStatusMapper = MyPipelineStatusMapper;
     this.previewStore = HydratorPlusPlusPreviewStore;
     this.previewActions = HydratorPlusPlusPreviewActions;
+    this.LOGVIEWERSTORE_ACTIONS = LOGVIEWERSTORE_ACTIONS;
+    this.LogViewerStore = LogViewerStore;
     this.$interval = $interval;
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
@@ -344,9 +345,17 @@ class HydratorPlusPlusTopPanelCtrl {
       _cdapNsPath: '/previews/' + previewId + '/status',
       interval: 5000
     }, (res) => {
-      console.log('res called', res);
-      let status = this.MyPipelineStatusMapper.lookupDisplayStatus(res.status);
-      if (status !== 'Running') {
+      if (this.LogViewerStore) {
+        this.LogViewerStore.dispatch({
+          type: this.LOGVIEWERSTORE_ACTIONS.SET_STATUS,
+          payload: {
+            status: res.status,
+            startTime: res.startTime,
+            endTime: res.endTime
+          }
+        });
+      }
+      if (res.status !== 'RUNNING' && res.status !== 'STARTED') {
         this.stopTimer();
         this.previewRunning = false;
         this.dataSrc.stopPoll(res.__pollId__);
@@ -355,7 +364,7 @@ class HydratorPlusPlusTopPanelCtrl {
         if (pipelineName.length > 0) {
           pipelinePreviewPlaceholder += ` "${pipelineName}"`;
         }
-        if (status === 'Succeeded') {
+        if (res.status === 'COMPLETED') {
           this.myAlertOnValium.show({
             type: 'success',
             content: `${pipelinePreviewPlaceholder} has completed successfully.`
@@ -372,7 +381,7 @@ class HydratorPlusPlusTopPanelCtrl {
             type: 'success',
             content: `${pipelinePreviewPlaceholder} was stopped.`
           });
-        } else if (status === 'Failed') {
+        } else if (res.status === 'FAILED' || res.status === 'RUN_FAILED') {
           this.myAlertOnValium.show({
             type: 'danger',
             content: `${pipelinePreviewPlaceholder} has failed. Please check the logs for more information.`
@@ -544,6 +553,6 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 }
 
-HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', '$interval', 'myPipelineApi', '$state', 'MyCDAPDataSource', 'myAlertOnValium', 'MY_CONFIG', 'PREVIEWSTORE_ACTIONS', '$q', 'NonStorePipelineErrorFactory', 'rArtifacts', '$window'];
+HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', '$interval', 'myPipelineApi', '$state', 'MyCDAPDataSource', 'myAlertOnValium', 'MY_CONFIG', 'PREVIEWSTORE_ACTIONS', '$q', 'NonStorePipelineErrorFactory', 'rArtifacts', '$window', 'LogViewerStore', 'LOGVIEWERSTORE_ACTIONS'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);

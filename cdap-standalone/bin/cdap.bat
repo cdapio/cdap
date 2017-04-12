@@ -27,8 +27,8 @@ SET "CDAP_HOME=%CDAP_HOME:~0,-5%"
 IF /i NOT "%CDAP_HOME: =%"=="%CDAP_HOME%" (
   echo CDAP_HOME "%CDAP_HOME%"
   echo Contains one or more space characters, will not work correctly, and is not supported.
-  echo Exiting. 
-  GOTO :FINALLY
+  echo Exiting.
+  GOTO :EOF
 )
 
 SET CDAP_VERSION=@@project.version@@
@@ -56,6 +56,7 @@ REM Process command line
 IF "%1" == "cli" GOTO CLI
 IF "%1" == "sdk" GOTO SDK
 IF "%1" == "tx-debugger" GOTO TX_DEBUGGER
+IF "%1" == "apply-pack" GOTO APPLY_PACK
 REM Process deprecated SDK arguments
 IF "%1" == "start" GOTO SDK_DEPRECATED
 IF "%1" == "stop" GOTO SDK_DEPRECATED
@@ -68,7 +69,7 @@ GOTO USAGE
 :SDK_DEPRECATED
 REM Process deprecated SDK arguments
 ECHO:
-ECHO [WARN] %0 is deprecated and will be removed in CDAP 5.0. Please use 'cdap cli' for the CDAP command line.
+ECHO [WARN] %0 is deprecated and will be removed in CDAP 5.0. Please use 'cdap sdk' for the CDAP command line.
 ECHO:
 ECHO   cdap sdk %*
 ECHO:
@@ -148,7 +149,7 @@ for /F "delims=.,v tokens=1,2,3" %%a in ('echo %line%') do (
     echo Node.js v%line% is not supported. The minimum version supported is %nodejs_minimum%.
     GOTO FINALLY
   ) else (
-    echo Node.js version: v%line% 
+    echo Node.js version: v%line%
   )
 )
 endlocal
@@ -224,6 +225,20 @@ for /f "usebackq tokens=1*" %%i in (`echo %*`) DO @ set params=%%j
 "%JAVACMD%" %DEFAULT_JVM_OPTS% %HADOOP_HOME_OPTS% %TOKEN_FILE_OPTS% -classpath "%CLASSPATH%" %class% %params%
 GOTO FINALLY
 
+:APPLY_PACK
+REM Installs a CDAP Pack specified as an argument
+CALL :CHECK_WINDOWS
+CALL :CHECK_NODE
+
+REM Skip first parameter
+for /f "usebackq tokens=1*" %%i in (`echo %*`) DO @ set params=%%j
+
+REM UI Upgrade script must be run from cdap-ui-upgrade subdirectory
+cd "%CDAP_HOME%\ui\cdap-ui-upgrade"
+call npm run upgrade -- --new-ui-zip-path=%params%
+
+GOTO FINALLY
+
 :CLI
 REM See TX_DEBUGGER for notes on setting CLASSPATH
 SET "CLASSPATH=%CDAP_HOME%\libexec\co.cask.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\lib\co.cask.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\conf\;"
@@ -248,6 +263,7 @@ echo:
 echo     cli         - Starts a CDAP CLI session
 echo     sdk         - Sends the arguments to the SDK service
 echo     tx-debugger - Sends the arguments to the CDAP transaction debugger
+echo     apply-pack  - Installs a CDAP Pack specified as an argument
 echo:
 echo   Get help for a command by executing:
 echo:
@@ -270,7 +286,7 @@ CALL :CHECK_PID
 IF %ERRORLEVEL% == 0 (
   REM Ask for confirmation from user
   CHOICE /C yn /N /M "This deletes all apps, data, and logs. Are you certain you want to proceed? (y/n) "
-  IF ERRORLEVEL 2 GOTO :FINALLY
+  IF ERRORLEVEL 2 GOTO FINALLY
   REM Delete logs and data directories
   echo Resetting Standalone CDAP...
   rmdir /S /Q "%CDAP_HOME%\logs" "%CDAP_HOME%\data" > NUL 2>&1
@@ -375,7 +391,7 @@ PING 127.0.0.1 -n 6 > NUL 2>&1
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq node.exe"') DO SET MyNodePID=%%b
 echo %MyNodePID% > %~dsp0MyProgNode.pid
 attrib +h %~dsp0MyProgNode.pid >NUL
-echo Standalone CDAP started succesfully.
+echo Standalone CDAP started successfully.
 GOTO FINALLY
 
 :SDK_STOP
@@ -391,7 +407,7 @@ attrib -h %~dsp0MyProg.pid >NUL
 IF exist %~dsp0MyProg.pid (
   for /F %%i in (%~dsp0MyProg.pid) do (
     IF "%%i" == "No" (
-      IF %show_error_messages% EQU 1 echo No valid PID in PID file.    
+      IF %show_error_messages% EQU 1 echo No valid PID in PID file.
     ) else (
       taskkill /F /PID %%i >NUL 2>&1
       del %~dsp0MyProg.pid 1>NUL 2>&1

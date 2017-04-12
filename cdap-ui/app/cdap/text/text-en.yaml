@@ -757,12 +757,15 @@ features:
     Done: Done
     GoToHomePage: Go to Home Page
     Informational:
-      termsandconditions: Terms and Conditions
       Step1:
         description: Please follow the steps specified below to download and configure
         shorttitle: Download Information
         title: Information
       headerlabel: Download Information
+    licenseStep:
+      termsandconditions: Terms and Conditions
+      agreeAndActionBtnLabel: Agree
+      backToCaskBtnLabel: Back to Cask Market
     MarketHydratorPluginUpload:
       headerlabel: Add Hydrator Plugin
     OneStepDeploy:
@@ -823,7 +826,7 @@ features:
         title: Configure a Pipeline
         description: Specify the name of the pipeline.
       pipelinenameplaceholder: Pipeline Name
-      headerlabel: Publish Pipeline
+      headerlabel: Deploy Pipeline
       success: You have successfully created the pipeline "{pipelineName}".
       callToAction:
         customize: Customize Pipeline

@@ -97,7 +97,7 @@ function TimelinePreviewController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIO
       previewId : this.previewId
     }).$promise.then(
       (res) => {
-        let previewStatuses =  ['KILLED', 'COMPLETED', 'FAILED', 'STOPPED', 'KILLED_BY_TIMER'];
+        let previewStatuses =  ['KILLED', 'COMPLETED', 'FAILED', 'RUN_FAILED', 'STOPPED', 'KILLED_BY_TIMER'];
         if (this.pollPromise && previewStatuses.indexOf(res.status) !== -1) {
           this.dataSrc.stopPoll(this.pollPromise.__pollId__);
           this.pollPromise = null;

@@ -42,19 +42,19 @@ public class TrackedEmitter<T> implements Emitter<T> {
 
   @Override
   public void emit(T value) {
-    delegate.emit(value);
     stageMetrics.count(emitMetricName, 1);
     if (dataTracer.isEnabled()) {
       dataTracer.info(emitMetricName, value);
     }
+    delegate.emit(value);
   }
 
   @Override
   public void emitError(InvalidEntry<T> value) {
-    delegate.emitError(value);
     stageMetrics.count(RECORDS_ERROR, 1);
     if (dataTracer.isEnabled()) {
       dataTracer.info(RECORDS_ERROR, value);
     }
+    delegate.emitError(value);
   }
 }

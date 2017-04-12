@@ -19,7 +19,7 @@ import Wizard from 'components/Wizard';
 import InformationalWizardConfig from 'services/WizardConfigs/InformationalWizardConfig';
 import InformationalWizardStore from 'services/WizardStores/Informational/InformationalStore';
 import InformationalActions from 'services/WizardStores/Informational/InformationalActions';
-import {MyMarketApi} from 'api/market';
+import LicenseStep from 'components/CaskWizards/LicenseStep';
 require('./Informational.scss');
 
 import T from 'i18n-react';
@@ -29,27 +29,13 @@ export default class InformationalWizard extends Component {
     super(props);
     this.state = {
       showWizard: this.props.isOpen,
-      license: this.props.input.package.license ? true : false,
-      licenseAgreement: false
+      license: this.props.input.package.license ? true : false
     };
+    this.showWizardContents = this.showWizardContents.bind(this);
+    this.toggleWizard = this.toggleWizard.bind(this);
     this.prepareInputForSteps();
   }
-  componentDidMount() {
-    if (this.props.input.package.license) {
-      let params = {
-        entityName: this.props.input.package.name,
-        entityVersion: this.props.input.package.version,
-        filename: this.props.input.package.license
-      };
-      MyMarketApi
-        .getSampleData(params)
-        .subscribe(license => {
-          this.setState({
-            license
-          });
-        });
-    }
-  }
+
   prepareInputForSteps() {
     let actionSteps = this.props.input.action.arguments[0].value;
 
@@ -73,10 +59,9 @@ export default class InformationalWizard extends Component {
     });
   }
 
-
-  showWizard() {
+  showWizardContents() {
     this.setState({
-      licenseAgreement: true
+      license: false
     });
   }
   render() {
@@ -94,37 +79,6 @@ export default class InformationalWizard extends Component {
       );
     };
 
-    const getLicenseTemplate = () => {
-      if (typeof this.state.license === 'boolean') {
-        return (
-          <div className="fa fa-spin fa-spinner"></div>
-        );
-      }
-      if (this.state.licenseAgreement) {
-        return getWizardContent();
-      } else {
-        return (
-          <div className="license-container">
-            <h2>{T.translate('features.Wizard.Informational.termsandconditions')}</h2>
-            <div className="license-text">{this.state.license}</div>
-            <div>
-              <div
-                className="btn btn-primary agree-btn"
-                onClick={this.showWizard.bind(this)}
-              >
-                Agree and Download
-              </div>
-              <div
-                className="back-to-cdap-link"
-                onClick={this.toggleWizard.bind(this, false)}
-              >
-                Back to Cask Market
-              </div>
-            </div>
-          </div>
-        );
-      }
-    };
 
     let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.Informational.headerlabel');
     return (
@@ -136,7 +90,13 @@ export default class InformationalWizard extends Component {
       >
         {
           this.state.license ?
-            getLicenseTemplate()
+            <LicenseStep
+              entityName={this.props.input.package.name}
+              entityVersion={this.props.input.package.version}
+              licenseFileName={this.props.input.package.license}
+              onAgree={this.showWizardContents}
+              onReject={this.toggleWizard.bind(this, false)}
+            />
           :
             getWizardContent()
         }

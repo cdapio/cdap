@@ -22,15 +22,18 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
    *  The entry point for this log is startTimeRequest()
    **/
 
-  var dataSrc = new MyCDAPDataSource($scope);
-  var pollPromise;
-  //Collapsing LogViewer Table Columns
+  // Collapsing LogViewer Table Columns
   var columnsList = [];
   var collapseCount = 0;
   var vm = this;
 
+  var pollTimeout;
+  var pollStarted = false;
+
   vm.viewLimit = 100;
   vm.errorRetrievingLogs = false;
+
+  const showCondensedLogsQuery = ' AND .origin=plugin OR MDC:eventType=lifecycle';
 
   vm.setProgramMetadata = (status) => {
     vm.programStatus = status;
@@ -64,10 +67,11 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
   vm.setDefault = () => {
     vm.textFile = null;
     vm.statusType = 3;
+    vm.loading = true;
     vm.displayData = [];
     vm.data = [];
-    vm.loading = true;
     vm.fullScreen = false;
+    vm.includeSystemLogs = false;
     vm.programStatus = 'Not Started';
     vm.configOptions = {
       time: true,
@@ -132,6 +136,16 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     vm.errorCount = logViewerState.totalErrors;
 
     vm.fullScreen = logViewerState.fullScreen;
+
+    if (logViewerState.statusInfo && logViewerState.statusInfo.status) {
+      vm.setProgramMetadata(logViewerState.statusInfo.status);
+      if (vm.statusType !== 0){
+        if (pollStarted) {
+          stopPoll();
+          vm.loading = false;
+        }
+      }
+    }
 
     if (vm.logStartTime === logViewerState.startTime){
       return;
@@ -316,8 +330,16 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     });
   };
 
+  vm.toggleSystemLogs = () => {
+    vm.includeSystemLogs = !vm.includeSystemLogs;
+
+    // data needs to start from scratch
+    vm.fromOffset = -10000 + '.' + vm.startTimeMs;
+    startTimeRequest();
+  };
+
   function validUrl() {
-    return vm.namespaceId && vm.previewId;
+    return vm.namespaceId && vm.previewId && vm.fromOffset;
   }
 
   function requestWithOffset() {
@@ -330,16 +352,20 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
 
     vm.loading = true;
 
-    if (pollPromise){
-      dataSrc.stopPoll(pollPromise.__pollId__);
-      pollPromise = null;
+    if (pollStarted){
+      stopPoll();
+    }
+
+    let filter = `loglevel=${vm.selectedLogLevel}`;
+    if (!vm.includeSystemLogs) {
+      filter += showCondensedLogsQuery;
     }
 
     myPreviewLogsApi.nextLogsJsonOffset({
       'namespace' : vm.namespaceId,
       'previewId' : vm.previewId,
       'fromOffset' : vm.fromOffset,
-      filter: `loglevel=${vm.selectedLogLevel}`
+      filter
     }).$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
@@ -394,13 +420,10 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
           }
         });
         vm.setProgramMetadata(statusRes.status);
-        if(vm.statusType === 0){
-          if (!pollPromise) {
-            pollForNewLogs();
-          }
-        } else {
-          if (pollPromise) {
-            dataSrc.stopPoll(pollPromise.__pollId__);
+
+        if (vm.statusType !== 0){
+          if (pollStarted) {
+            stopPoll();
           }
         }
       },
@@ -410,41 +433,66 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     );
   }
 
-  function pollForNewLogs () {
-    pollPromise = dataSrc.poll({
-      _cdapPath: '/namespaces/' + vm.namespaceId + '/previews/' + vm.previewId + '/logs/next?format=json&max=100&fromOffset=' + vm.fromOffset + '&filter=loglevel=' + vm.selectedLogLevel,
-      method: 'GET'
-    },
-    (res) => {
-      //We have recieved more logs, append to current dataset
-      vm.errorRetrievingLogs = false;
+  function pollForNewLogs() {
+    pollStarted = true;
 
-      if(res.length > 0){
-        vm.fromOffset = res[res.length-1].offset;
+    let filter = `loglevel=${vm.selectedLogLevel}`;
+    if (!vm.includeSystemLogs) {
+      filter += showCondensedLogsQuery;
+    }
 
-        angular.forEach(res, (element, index) => {
-          //Format dates properly for rendering and computing
-          let formattedDate = new Date(res[index].log.timestamp);
-          res[index].log.timestamp = formattedDate;
-          res[index].log.displayTime = moment(formattedDate).format('L H:mm:ss');
-          res[index].log.stackTrace = res[index].log.stackTrace.trim();
-        });
+    myPreviewLogsApi.nextLogsJsonOffset({
+      'namespace' : vm.namespaceId,
+      'previewId' : vm.previewId,
+      'fromOffset' : vm.fromOffset,
+      filter
+    }).$promise.then(
+      (res) => {
+        vm.errorRetrievingLogs = false;
+        vm.loading = false;
 
-        vm.data = vm.data.concat(res);
-        vm.renderData();
+        if (!pollStarted) {
+          // This path can happen if th next request come in while the poll
+          // is in the middle of fetching response.
+          $timeout.cancel(pollTimeout);
+          return;
+        }
+
+        if (res.length > 0){
+          vm.fromOffset = res[res.length-1].offset;
+          angular.forEach(res, (element, index) => {
+            //Format dates properly for rendering and computing
+            let formattedDate = new Date(res[index].log.timestamp);
+            res[index].log.timestamp = formattedDate;
+            res[index].log.displayTime = moment(formattedDate).format('L H:mm:ss');
+            res[index].log.stackTrace = res[index].log.stackTrace.trim();
+          });
+
+          vm.data = vm.data.concat(res);
+          vm.renderData();
+        }
+
+        if (vm.displayData.length >= vm.viewLimit){
+          stopPoll();
+        } else {
+          getStatus();
+
+          pollTimeout = $timeout(pollForNewLogs, 5000);
+        }
+      },
+      (err) => {
+        console.log('ERROR: ', err);
+        vm.errorRetrievingLogs = true;
+
+        pollTimeout = $timeout(pollForNewLogs, 5000);
       }
+    );
+  }
 
-      if(vm.displayData.length >= vm.viewLimit){
-        dataSrc.stopPoll(pollPromise.__pollId__);
-        pollPromise = null;
-      } else {
-        getStatus();
-      }
-
-    }, (err) => {
-      console.log('ERROR: ', err);
-      vm.errorRetrievingLogs = true;
-    });
+  function stopPoll() {
+    $timeout.cancel(pollTimeout);
+    pollTimeout = null;
+    pollStarted = false;
   }
 
   vm.getDownloadUrl = (type = 'download') => {
@@ -478,9 +526,8 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     vm.loading = true;
     vm.data = [];
     vm.renderData();
-    if(pollPromise){
-      dataSrc.stopPoll(pollPromise.__pollId__);
-      pollPromise = null;
+    if (pollStarted){
+      stopPoll();
     }
 
     //Scroll table to the top
@@ -488,11 +535,16 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     // binds window element to check whether scrollbar has appeared on resize event
     angular.element($window).bind('resize', checkForScrollbar);
 
+    let filter = `loglevel=${vm.selectedLogLevel}`;
+    if (!vm.includeSystemLogs) {
+      filter += showCondensedLogsQuery;
+    }
+
     myPreviewLogsApi.nextLogsJsonOffset({
       namespace : vm.namespaceId,
       previewId : vm.previewId,
       fromOffset: vm.fromOffset,
-      filter: `loglevel=${vm.selectedLogLevel}`
+      filter
     }).$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
@@ -502,10 +554,14 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
         if(res.length === 0){
           //Update with start-time
           getStatus();
-          if(vm.statusType !== 0){
+          if (vm.statusType !== 0){
+            vm.loading = false;
             vm.displayData = [];
+            vm.renderData();
+            return;
           }
           vm.renderData();
+          pollForNewLogs();
           return;
         }
 
@@ -525,8 +581,8 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
           vm.updateScrollPositionInStore(vm.displayData[0].log.timestamp);
         }
 
-        if(res.length < vm.viewLimit){
-          getStatus();
+        if (res.length < vm.viewLimit){
+          pollForNewLogs();
         }
       },
       (err) => {
@@ -633,6 +689,17 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     ));
   };
 
+  vm.getEntrySource = (entry) => {
+    let log = entry.log;
+    let mdc = log.mdc;
+    let source = `${log.loggerName}#${log.lineNumber}`;
+    // system log
+    if (!(mdc['.origin'] === 'plugin' || mdc['.origin'] === 'program' && mdc['MDC:eventType'] === 'lifecycle')) {
+      source += `-${log.threadName}`;
+    }
+    return source;
+  };
+
   function offsetScroll() {
     let logsTableContainer = document.getElementsByClassName('logs-table-body');
 
@@ -647,7 +714,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     if (vm.loading || vm.endRequest) { return; }
     offsetScroll();
     requestWithOffset();
-  }, 500);
+  }, 1000);
 
   vm.preventClick = function (event) {
     // disabled is not a valid attribute for <a>
@@ -700,9 +767,8 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     LogViewerStore.dispatch({
       type: 'RESET'
     });
-    if(pollPromise){
-      dataSrc.stopPoll(pollPromise.__pollId__);
-      pollPromise = null;
+    if (pollStarted){
+      stopPoll();
     }
   });
 }
@@ -712,7 +778,6 @@ const link = (scope) => {
 };
 
 angular.module(PKG.name + '.commons')
-  .value('THROTTLE_MILLISECONDS', 250) // throttle infinite scroll
   .directive('myLogViewerPreview', function () {
     return {
       templateUrl: 'log-viewer-preview/log-viewer-preview.html',

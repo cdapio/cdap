@@ -11,7 +11,7 @@ Lifecycle HTTP RESTful API
 
 .. highlight:: console
 
-Use the CDAP Lifecycle HTTP RESTful API to deploy or delete applications and manage the lifecycle of 
+Use the CDAP Lifecycle HTTP RESTful API to deploy or delete applications and manage the lifecycle of
 flows, MapReduce and Spark programs, custom services, workers, and workflows.
 
 Details of these CDAP components can be found in the :ref:`Developers' Manual: Building Blocks <building-blocks>`.
@@ -35,7 +35,7 @@ To create an application, submit an HTTP PUT request::
 To create an application with a non-default version, submit an HTTP POST request with the version specified::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/create
-  
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -52,7 +52,7 @@ To create an application with a non-default version, submit an HTTP POST request
 
 The request body is a JSON object specifying the artifact to use to create the application,
 and an optional application configuration. For example:
- 
+
 .. container:: highlight
 
   .. parsed-literal::
@@ -67,11 +67,11 @@ and an optional application configuration. For example:
         "stream": "purchaseStream"
       },
       "principal":"user/example.net@examplekdc.net"
-    } 
+    }
 
 will create an application named ``purchaseWordCount`` from the example ``WordCount`` artifact.
 The application will receive the specified ``config``, which will configure the application
-to create a stream named ``purchaseStream`` instead of using the default stream name. 
+to create a stream named ``purchaseStream`` instead of using the default stream name.
 
 Optionally, you can specify a Kerberos principal with which the application should be deployed.
 If a Kerberos principal is specified, then all the streams and datasets created by the
@@ -104,7 +104,7 @@ config. For example, a request body of:
 
 will update the ``purchaseWordCount`` application to use version |release| of the ``WordCount`` artifact,
 and update the name of the stream to ``logStream``. If no artifact is given, the current artifact will be
-used. 
+used.
 
 Only changes to artifact version are supported; changes to the artifact name are not allowed. If no
 ``config`` is given, the current ``config`` will be used. If the ``config`` key is present, the current
@@ -172,6 +172,7 @@ For example::
 
 will return all applications that use either the ``cdap-data-pipeline`` or ``cdap-etl-realtime`` artifacts.
 
+.. _http-restful-api-lifecycle-app-deployed-details:
 
 Details of a Deployed Application
 ---------------------------------
@@ -285,7 +286,7 @@ custom services, schedules, workers, and workflows by submitting an HTTP GET req
 To retrieve information about the schedules of the program's workflows, use::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/schedules
-  
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -303,7 +304,7 @@ To retrieve information about the schedules of the program's workflows, use::
        being called
    * - ``workflow-id``
      - Name of the *workflow* being called, when retrieving schedules
-  
+
 The response will be a JSON array containing details about the program. The details returned depend on the
 program type.
 
@@ -346,9 +347,9 @@ be similar to this (pretty-printed and portions deleted to fit)::
                   "whom"
               ],
               "inputs": {
-            
+
                 . . .
-              
+
               },
               "outputs": {
               }
@@ -368,7 +369,7 @@ be similar to this (pretty-printed and portions deleted to fit)::
 Start a Program
 ---------------
 After an application is deployed, you can start its flows, MapReduce and Spark programs,
-custom services, workers, and workflows by submitting an HTTP POST request::
+custom services, workers, or workflows by submitting an HTTP POST request::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/start
 
@@ -377,10 +378,12 @@ POST request that includes the version::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/<program-type>/<program-id>/start
 
-Note: Concurrent runs of Flows and Workers across multiple versions of the same application is not allowed.
+Note: Concurrent runs of flows and workers across multiple versions of the same
+application are not allowed.
 
-When starting an program, you can optionally specify runtime arguments as a JSON map in the request body.
-CDAP will use these these runtime arguments only for this single invocation of the program.
+When starting an program, you can optionally specify runtime arguments as a JSON map in
+the request body. CDAP will use these runtime arguments only for this single invocation of
+the program.
 
 .. list-table::
    :widths: 20 80
@@ -457,7 +460,8 @@ Each JSON object will contain these parameters:
    * - ``"statusCode"``
      - The status code from starting an individual JSON object
    * - ``"error"``
-     - If an error, a description of why the program could not be started (for example, the specified program was not found)
+     - If an error, a description of why the program could not be started (for example,
+       the specified program was not found)
 
 For example::
 
@@ -477,7 +481,7 @@ will attempt to start the three programs listed in the request body. It will rec
   ]
 
 In this particular example, the service and mapreduce programs in the *App1* application were successfully
-started, and there was an error starting the last program because the *App2* application does not exist. 
+started, and there was an error starting the last program because the *App2* application does not exist.
 
 .. _http-restful-api-lifecycle-stop:
 
@@ -512,7 +516,7 @@ request that includes the version::
        being stopped
 
 A program that is in the STOPPED state cannot be stopped. If there are multiple runs of the program
-in the RUNNING state, this call will stop one of the runs, but not all of the runs. 
+in the RUNNING state, this call will stop one of the runs, but not all of the runs.
 
 For example::
 
@@ -551,7 +555,7 @@ For example::
 
   POST /v3/namespaces/default/apps/PurchaseHistory/mapreduce/PurchaseHistoryBuilder/runs/631bc459-a9dd-4218-9ea0-d46fb1991f82/stop
 
-will stop the specific run of the *PurchaseHistoryBuilder* mapreduce in the *PurchaseHistory* application.
+will stop a specific run of the *PurchaseHistoryBuilder* MapReduce program in the *PurchaseHistory* application.
 
 .. _http-restful-api-lifecycle-stop-multiple:
 
@@ -597,7 +601,8 @@ Each JSON object will contain these parameters:
    * - ``"statusCode"``
      - The status code from stopping an individual JSON object
    * - ``"error"``
-     - If an error, a description of why the program could not be stopped (for example, the specified program was not found)
+     - If an error, a description of why the program could not be stopped (for example,
+       the specified program was not found)
 
 For example::
 
@@ -617,7 +622,7 @@ will attempt to stop the three programs listed in the request body. It will rece
   ]
 
 In this particular example, the service and mapreduce programs in the *App1* application were successfully
-stopped, and there was an error starting the last program because the *App2* application does not exist. 
+stopped, and there was an error starting the last program because the *App2* application does not exist.
 
 .. _http-restful-api-lifecycle-status:
 
@@ -679,7 +684,8 @@ with a JSON array in the request body consisting of multiple JSON objects with t
      - Name of the *flow*, *MapReduce*, *schedule*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
 
-The response will be the same JSON array as submitted with additional parameters for each of the underlying JSON objects:
+The response will be the same JSON array as submitted with additional parameters for each
+of the underlying JSON objects:
 
 .. list-table::
    :widths: 20 80
@@ -713,11 +719,412 @@ will retrieve the status of two programs. It will receive a response such as::
     { "appId":"MyApp2", "programType":"service", "programId":"MyService", "error":"Program not found", "statusCode":404 }
   ]
 
+
+.. _http-restful-api-lifecycle-schedule:
+
+Schedule Lifecycle
+==================
+Currently (CDAP v\|release|), schedules can only be created for :ref:`workflows
+<workflows>`. Future releases of CDAP will expand this to encompass other program types.
+
+.. _http-restful-api-lifecycle-schedule-add:
+
+Add a Schedule
+--------------
+To add a schedule for a program to an application, submit an HTTP PUT request::
+
+  PUT /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>
+
+To add the schedule to an application with a non-default version, submit an HTTP PUT
+request with the version specified::
+
+  PUT /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/schedules/<schedule-id>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``app-id``
+     - Name of the application
+   * - ``schedule-id``
+     - Name of the schedule; it is unique to the application and, if specified, the
+       application version
+   * - ``version-id``
+     - Version of the application, typically following `semantic versioning
+       <http://semver.org>`__
+
+The request body is a JSON object specifying the schedule to be created. Two different schedule
+types are currently supported for workflows: :ref:`time schedules <schedules-time>` and
+:ref:`stream-size schedules <schedules-stream-size>`:
+
+- To specify a :ref:`time schedule <schedules-time>`, use ``"scheduleType": "TIME"``, as
+  shown in this example for scheduling the *PurchaseHistoryWorkflow* of the :ref:`Purchase
+  application <examples-purchase>` to trigger daily::
+
+    {
+      "scheduleType": "TIME",
+      "schedule":{
+        "cronExpression":"0 4 * * *",
+        "description":"Daily schedule",
+        "runConstraints":{
+          "maxConcurrentRuns":1
+        }
+      },
+      "program":{
+        "programName": "PurchaseHistoryWorkflow",
+        "programType": "WORKFLOW"
+      },
+      "properties":{
+      }
+    }
+
+- To specify a :ref:`stream-sized schedule <schedules-stream-size>`, use ``"scheduleType":
+  "STREAM"``, as shown in this example for scheduling the *PurchaseHistoryWorkflow* of the
+  :ref:`Purchase application <examples-purchase>` to trigger after ingesting 1 MB of data or more::
+
+    {
+      "scheduleType":"STREAM",
+      "schedule":{
+        "dataTriggerMB":1,
+        "description":"Schedule execution when 1 MB or more of data is ingested in the purchaseStream",
+        "runConstraints":{
+          "maxConcurrentRuns":1
+        },
+        "streamName":"purchaseStream"
+      },
+      "program":{
+        "programName":"PurchaseHistoryWorkflow",
+        "programType":"WORKFLOW"
+      },
+      "properties":{
+      }
+    }
+
+*Note:* For any schedule, the program must be for a workflow and the ``programType`` must be set to ``WORKLFLOW``.
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``409 Conflict``
+     - Schedule with the same name already exists
+
+.. _http-restful-api-lifecycle-schedule-update:
+
+Update a Schedule
+-----------------
+To update a schedule, submit an HTTP POST request::
+
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/update
+
+To update a schedule of an application with a non-default version, submit an HTTP POST
+request with the version specified::
+
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/schedules/<schedule-id>/update
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``app-id``
+     - Name of the application
+   * - ``schedule-id``
+     - Name of the schedule; it is unique to the application and, if specified, the
+       application version
+   * - ``version-id``
+     - Version of the application, typically following `semantic versioning
+       <http://semver.org>`__
+
+The request body is a JSON object specifying the schedule configurations to be updated, and follows
+the same form as documented in :ref:`http-restful-api-lifecycle-schedule-add`.
+
+- To update a :ref:`time schedule <schedules-time>`, use::
+
+    {
+      "schedule": {
+        "description": "updatedDescription",
+        "runConstraints": {
+          "maxConcurrentRuns": 5
+        },
+        "cronExpression": "0 4 * * *"
+      },
+      "properties": {
+        "aKey": "aValue"
+      }
+    }
+
+- For a :ref:`stream-sized schedule <schedules-stream-size>`, use::
+
+    {
+      "schedule": {
+        "description": "updatedDescription",
+        "runConstraints": {
+          "maxConcurrentRuns": 5
+        },
+        "streamName": "myStream",
+        "dataTriggerMB": 256
+      },
+      "properties": {
+        "aKey": "aValue"
+      }
+    }
+
+Only changes to the schedule configurations are supported; changes to the schedule name,
+type, or the program associated with it are not allowed. If *any* properties are provided,
+it will overwrite all existing properties with what is provided. You must include all
+properties, even ones you are are not altering.
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``400 Bad Request``
+     - If the new schedule type does not match the existing schedule type or there are
+       other client errors
+
+
+.. _http-restful-api-lifecycle-schedule-list:
+
+Retrieving a Schedule
+---------------------
+To retrieve a schedule in an application, submit an HTTP GET request::
+
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-name>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``app-id``
+     - Name of the application
+   * - ``schedule-name``
+     - Name of the schedule
+
+.. container:: table-block-example
+
+   .. list-table::
+      :widths: 99 1
+      :stub-columns: 1
+
+      * - Example: Retrieving a Schedule
+        -
+
+   .. list-table::
+      :widths: 15 85
+      :class: triple-table
+
+      * - Description
+        - Retrieves the schedule *DailySchedule* of the application *PurchaseHistory*
+
+      * - HTTP Method
+        - ``GET /v3/namespaces/default/apps/PurchaseHistory/schedules/DailySchedule``
+
+      * - Returns
+        - | ``[{"schedule":{"name":"DailySchedule","description":"DailySchedule with crontab 0 4 * * *","cronEntry":"0 4 * * *"},``
+          | `` "program":{"programName":"PurchaseHistoryWorkflow","programType":"WORKFLOW"},"properties":{}}]``
+
+
+List Schedules
+--------------
+To list all of the schedules for an application, use an HTTP GET request::
+
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/schedules
+
+As schedules are created for a workflow, you can also list schedules for a workflow of an application.
+You can use the :ref:`http-restful-api-lifecycle-app-deployed-details` to obtain the workflows of an
+application.
+
+To list all of the schedules of a workflow of an application, use an HTTP GET request::
+
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/schedules
+
+To list the next time that the workflow is scheduled to run, use the parameter ``nextruntime``::
+
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/nextruntime
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``app-id``
+     - Name of the application
+   * - ``workflow-id``
+     - Name of the workflow
+
+
+.. container:: table-block-example
+
+  .. list-table::
+     :widths: 99 1
+     :stub-columns: 1
+
+     * - Example: Retrieving a Schedule
+       -
+
+  .. list-table::
+     :widths: 15 85
+     :class: triple-table
+
+     * - Description
+       - Retrieves the schedules of the workflow *PurchaseHistoryWorkflow* of the
+         application *PurchaseHistory*
+
+     * - HTTP Method
+       - ``GET /v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/schedules``
+
+     * - Returns
+       - | ``[{"schedule":{"name":"DailySchedule","description":"DailySchedule with crontab 0 4 * * *","cronEntry":"0 4 * * *"},``
+         | `` "program":{"programName":"PurchaseHistoryWorkflow","programType":"WORKFLOW"},"properties":{}}]``
+
+
+.. container:: table-block-example
+
+  .. list-table::
+     :widths: 99 1
+     :stub-columns: 1
+
+     * - Example: Retrieving The Next Runtime
+       -
+
+  .. list-table::
+     :widths: 15 85
+     :class: triple-table
+
+     * - Description
+       - Retrieves the next runtime of the workflow *PurchaseHistoryWorkflow* of the
+         application *PurchaseHistory*
+
+     * - HTTP Method
+       - ``GET /v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/nextruntime``
+
+     * - Returns
+       - | ``[{"id":"DEFAULT.WORKFLOW:developer:PurchaseHistory:PurchaseHistoryWorkflow:0:DailySchedule","time":1415102400000}]``
+
+
+.. _http-restful-api-lifecycle-schedule-delete:
+
+Delete a Schedule
+-----------------
+To delete a schedule, submit an HTTP DELETE::
+
+  DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>
+
+To delete a schedule of an application with a non-default version, submit an HTTP DELETE
+request with the version specified::
+
+  DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/schedules/<schedule-id>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``app-id``
+     - Name of the application to be deleted
+   * - ``schedule-id``
+     - Name of the schedule; it is unique to the application and, if specified, the
+       application version
+   * - ``version-id``
+     - Version of the application to be deleted
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``404 Bad Request``
+     - If the schedule given by ``schedule-id`` was not found
+
+
+.. _http-restful-api-lifecycle-schedule-suspend-resume:
+
+Schedule: Suspend and Resume
+----------------------------
+For a schedule, you can suspend and resume it using the RESTful API.
+
+**Suspend:** To *suspend* a schedule means that the program associated with that schedule will not
+trigger again until the schedule is resumed.
+
+**Resume:** To *resume* a schedule means that the trigger is reset, and the program associated will
+run again at the next scheduled time.
+
+As a schedule is initially deployed in a *suspended* state, a call to this API is needed to *resume* it.
+
+To suspend or resume a schedule use::
+
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/suspend
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/resume
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``app-id``
+     - Name of the application
+   * - ``schedule-id``
+     - Name of the schedule
+
+.. container:: table-block-example
+
+  .. list-table::
+     :widths: 99 1
+     :stub-columns: 1
+
+     * - Example: Suspending a Schedule
+       -
+
+  .. list-table::
+     :widths: 15 85
+     :class: triple-table
+
+     * - Description
+       - Suspends the schedule *DailySchedule* of the application *PurchaseHistory*
+
+     * - HTTP Method
+       - ``POST /v3/namespaces/default/apps/PurchaseHistory/schedules/DailySchedule/suspend``
+
+     * - Returns
+       - | ``OK`` if successfully set as suspended
+
+
 .. _http-restful-api-lifecycle-container-information:
 
 Container Information
 =====================
-
 To find out the address of an program's container host and the container’s debug port, you can query
 CDAP for a flow or service’s live info via an HTTP GET method::
 
@@ -742,7 +1149,7 @@ Example::
 
   GET /v3/namespaces/default/apps/WordCount/flows/WordCounter/live-info
 
-The response is formatted in JSON; an example of this is shown in 
+The response is formatted in JSON; an example of this is shown in
 :ref:`CDAP Testing and Debugging. <developers:debugging-distributed>`
 
 
@@ -782,7 +1189,8 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"runnableId"``
      - Name of the *flowlet*, only required if the program type is ``flow``
 
-The response will be the same JSON array as submitted with additional parameters for each of the underlying JSON objects:
+The response will be the same JSON array as submitted with additional parameters for each
+of the underlying JSON objects:
 
 .. list-table::
    :widths: 20 80
@@ -797,8 +1205,8 @@ The response will be the same JSON array as submitted with additional parameters
    * - ``"statusCode"``
      - The status code from retrieving the instance count of an individual JSON object
    * - ``"error"``
-     - If an error, a description of why the status was not retrieved (for example, the specified program was not found, or
-       the requested JSON object was missing a parameter)
+     - If an error, a description of why the status was not retrieved (for example, the
+       specified program was not found, or the requested JSON object was missing a parameter)
 
 **Note:** The ``requested`` and ``provisioned`` fields are mutually exclusive of the ``error`` field.
 
@@ -898,7 +1306,7 @@ with the arguments as a JSON string in the body::
    * - ``quantity``
      - Number of instances to be used
 
-**Note:** You can scale system services using the Monitor HTTP RESTful API 
+**Note:** You can scale system services using the Monitor HTTP RESTful API
 :ref:`Scaling System Services <http-restful-api-monitor-scaling-system-services>`.
 
 .. rubric:: Examples
@@ -916,7 +1324,7 @@ with the arguments as a JSON string in the body::
   with the arguments as a JSON string in the body::
 
     { "instances" : 2 }
-  
+
 - Using ``curl`` and the :ref:`Standalone CDAP <standalone-index>`:
 
   .. tabbed-parsed-literal::
@@ -960,8 +1368,8 @@ Retrieve the number of instances of the worker *DataWorker* in the application
 
 .. _rest-program-runs:
 
-Run Records and Schedules
-=========================
+Run Records
+===========
 
 To see all the runs of a selected program (flows, MapReduce programs, Spark programs,
 services, or workflows), issue an HTTP GET to the program’s URL with the ``runs``
@@ -985,7 +1393,7 @@ time, end time, and program status::
    * - ``program-id``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, or *workflow* being called
 
-You can filter the runs by the status of a program, the start and end times, 
+You can filter the runs by the status of a program, the start and end times,
 and can limit the number of returned records:
 
 .. list-table::
@@ -1014,18 +1422,18 @@ Use that runid in subsequent calls to obtain additional information.
      :stub-columns: 1
 
      * - Example: Retrieving Run Records
-       - 
-       
+       -
+
   .. list-table::
      :widths: 15 85
      :class: triple-table
 
      * - Description
        - Retrieve the run records of the flow *WhoFlow* of the application *HelloWorld*
-      
+
      * - HTTP Method
        - ``GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs``
-         
+
      * - Returns
        - | ``{"runid":"...","start":1382567598,"status":"RUNNING"},``
          | ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
@@ -1065,18 +1473,19 @@ To fetch the run record for a particular run of a program, use::
      :stub-columns: 1
 
      * - Example: Retrieving A Particular Run Record
-       - 
-       
+       -
+
   .. list-table::
      :widths: 15 85
      :class: triple-table
 
      * - Description
-       - Retrieve the run record of the flow *WhoFlow* of the application *HelloWorld* for run *b78d0091-da42-11e4-878c-2217c18f435d*
-      
+       - Retrieve the run record of the flow *WhoFlow* of the application *HelloWorld* for
+         run *b78d0091-da42-11e4-878c-2217c18f435d*
+
      * - HTTP Method
        - ``GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs/b78d0091-da42-11e4-878c-2217c18f435d``
-         
+
      * - Returns
        - | ``{"runid":"...","start":1382567598,"status":"RUNNING"}``
 
@@ -1111,122 +1520,21 @@ For workflows, you can retrieve:
      :stub-columns: 1
 
      * - Example: Retrieving The Most Recent Run
-       - 
-       
+       -
+
   .. list-table::
      :widths: 15 85
      :class: triple-table
 
      * - Description
        - Retrieve the most recent successful completed run of the service *CatalogLookup* of the application *PurchaseHistory*
-      
+
      * - HTTP Method
        - ``GET /v3/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/runs?status=completed&limit=1``
-         
+
      * - Returns
        - | ``[{"runid":"cad83d45-ecfb-4bf8-8cdb-4928a5601b0e","start":1415051892,"end":1415057103,"status":"STOPPED"}]``
 
-
-.. container:: table-block-example
-
-  .. list-table::
-     :widths: 99 1
-     :stub-columns: 1
-
-     * - Example: Retrieving a Schedule
-       - 
-       
-  .. list-table::
-     :widths: 15 85
-     :class: triple-table
-
-     * - Description
-       - Retrieves the schedules of the workflow *PurchaseHistoryWorkflow* of the application *PurchaseHistory*
-      
-     * - HTTP Method
-       - ``GET /v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/schedules``
-         
-     * - Returns
-       - | ``[{"schedule":{"name":"DailySchedule","description":"DailySchedule with crontab 0 4 * * *","cronEntry":"0 4 * * *"},``
-         | `` "program":{"programName":"PurchaseHistoryWorkflow","programType":"WORKFLOW"},"properties":{}}]``
-         
-
-.. container:: table-block-example
-
-  .. list-table::
-     :widths: 99 1
-     :stub-columns: 1
-
-     * - Example: Retrieving The Next Runtime
-       - 
-       
-  .. list-table::
-     :widths: 15 85
-     :class: triple-table
-
-     * - Description
-       - Retrieves the next runtime of the workflow *PurchaseHistoryWorkflow* of the application *PurchaseHistory*
-      
-     * - HTTP Method
-       - ``GET /v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/nextruntime``
-         
-     * - Returns
-       - | ``[{"id":"DEFAULT.WORKFLOW:developer:PurchaseHistory:PurchaseHistoryWorkflow:0:DailySchedule","time":1415102400000}]``
-       
-.. _http-restful-api-lifecycle-schedules-suspend-resume:
-
-Schedules: Suspend and Resume
------------------------------
-
-For schedules, you can suspend and resume them using the RESTful API.
-
-**Suspend:** To *suspend* a schedule means that the program associated with that schedule will not
-trigger again until the schedule is resumed.
-
-**Resume:** To *resume* a schedule means that the trigger is reset, and the program associated will
-run again at the next scheduled time.
-
-As a schedule is initially deployed in a *suspended* state, a call to this API is needed to *resume* it.
-
-To suspend or resume a schedule use::
-
-  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/suspend
-  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/resume
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``namespace-id``
-     - Namespace ID
-   * - ``app-id``
-     - Name of the application
-   * - ``schedule-id``
-     - Name of the schedule
-
-.. container:: table-block-example
-
-  .. list-table::
-     :widths: 99 1
-     :stub-columns: 1
-
-     * - Example: Suspending a Schedule
-       - 
-       
-  .. list-table::
-     :widths: 15 85
-     :class: triple-table
-
-     * - Description
-       - Suspends the schedule *DailySchedule* of the application *PurchaseHistory*
-      
-     * - HTTP Method
-       - ``POST /v3/namespaces/default/apps/PurchaseHistory/schedules/DailySchedule/suspend``
-         
-     * - Returns
-       - | ``OK`` if successfully set as suspended
 
 .. _http-restful-api-lifecycle-workflow-runs-suspend-resume:
 
@@ -1237,7 +1545,7 @@ For workflows, in addition to :ref:`starting <http-restful-api-lifecycle-start>`
 :ref:`stopping <http-restful-api-lifecycle-stop>`, you can suspend and resume individual
 runs of a workflow using the RESTful API.
 
-**Suspend:** To *suspend* means that the current activity will be taken to completion, but no further 
+**Suspend:** To *suspend* means that the current activity will be taken to completion, but no further
 programs will be initiated. Programs will not be left partially uncompleted, barring any errors.
 
 In the case of a workflow with multiple MapReduce programs, if one of them is running (first of
@@ -1254,7 +1562,7 @@ With workflows, *suspend* and *resume* require a *run-id* as the action takes pl
 either a currently running or suspended workflow.
 
 To suspend or resume a workflow, use::
-  
+
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/suspend
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/resume
 
@@ -1280,8 +1588,8 @@ To suspend or resume a workflow, use::
      :stub-columns: 1
 
      * - Example: Suspending a Workflow
-       - 
-       
+       -
+
   .. list-table::
      :widths: 15 85
      :class: triple-table
@@ -1289,9 +1597,9 @@ To suspend or resume a workflow, use::
      * - Description
        - Suspends the run ``0ce13912-e980-11e4-a7d7-8cae4cfd0e64`` of the workflow
          *PurchaseHistoryWorkflow* of the application *PurchaseHistory*
-      
+
      * - HTTP Method
        - ``POST /v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/runs/0ce13912-e980-11e4-a7d7-8cae4cfd0e64/suspend``
-         
+
      * - Returns
        - | ``Program run suspended.`` if successfully set as suspended

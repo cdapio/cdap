@@ -81,7 +81,7 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
       throw new IllegalArgumentException("Invalid pipeline. There must only be one source.");
     }
 
-    PipelinePlanner planner = new PipelinePlanner(SUPPORTED_PLUGIN_TYPES,
+    PipelinePlanner planner = new PipelinePlanner(SUPPORTED_PLUGIN_TYPES, ImmutableSet.<String>of(),
                                                   ImmutableSet.<String>of(), ImmutableSet.<String>of());
     PipelinePlan plan = planner.plan(spec);
 
