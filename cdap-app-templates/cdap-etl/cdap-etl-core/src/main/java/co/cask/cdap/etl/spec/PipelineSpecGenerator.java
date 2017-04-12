@@ -29,6 +29,7 @@ import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.etl.planner.Dag;
@@ -230,7 +231,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       if (type.equals(BatchJoiner.PLUGIN_TYPE)) {
         MultiInputPipelineConfigurable multiPlugin = (MultiInputPipelineConfigurable) plugin;
         multiPlugin.configurePipeline(pipelineConfigurer);
-      } else {
+      } else if (!type.equals(Constants.SPARK_PROGRAM_PLUGIN_TYPE)) {
         PipelineConfigurable singlePlugin = (PipelineConfigurable) plugin;
         singlePlugin.configurePipeline(pipelineConfigurer);
       }
@@ -375,7 +376,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
   // will soon have another action type
   private boolean isAction(String pluginType) {
-    return Action.PLUGIN_TYPE.equals(pluginType);
+    return Action.PLUGIN_TYPE.equals(pluginType) || Constants.SPARK_PROGRAM_PLUGIN_TYPE.equals(pluginType);
   }
 
   private boolean isSource(String pluginType) {

@@ -26,6 +26,7 @@ import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.etl.api.LookupProvider;
+import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
@@ -88,6 +89,7 @@ public class SmartWorkflow extends AbstractWorkflow {
   private ControlDag dag;
   private int phaseNum;
   private Map<String, PostAction> postActions;
+  private Map<String, StageSpec> stageSpecs;
 
   // injected by cdap
   @SuppressWarnings("unused")
@@ -117,9 +119,11 @@ public class SmartWorkflow extends AbstractWorkflow {
     properties.put(Constants.PIPELINE_SPEC_KEY, GSON.toJson(spec));
     setProperties(properties);
 
+    stageSpecs = new HashMap<>();
     useSpark = engine == Engine.SPARK;
     if (!useSpark) {
       for (StageSpec stageSpec : spec.getStages()) {
+        stageSpecs.put(stageSpec.getName(), stageSpec);
         String pluginType = stageSpec.getPlugin().getType();
         if (SparkCompute.PLUGIN_TYPE.equals(pluginType) || SparkSink.PLUGIN_TYPE.equals(pluginType)) {
           useSpark = true;
@@ -129,14 +133,17 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
 
     PipelinePlanner planner;
+    Set<String> actionTypes = ImmutableSet.of(Action.PLUGIN_TYPE, Constants.SPARK_PROGRAM_PLUGIN_TYPE);
     if (useSpark) {
       // if the pipeline uses spark, we don't need to break the pipeline up into phases, we can just have
       // a single phase.
-      planner = new PipelinePlanner(supportedPluginTypes, ImmutableSet.<String>of(), ImmutableSet.<String>of());
+      planner = new PipelinePlanner(supportedPluginTypes, ImmutableSet.<String>of(), ImmutableSet.<String>of(),
+                                    actionTypes);
     } else {
       planner = new PipelinePlanner(supportedPluginTypes,
                                     ImmutableSet.of(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE),
-                                    ImmutableSet.of(SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE));
+                                    ImmutableSet.of(SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE),
+                                    actionTypes);
     }
     plan = planner.plan(spec);
 
@@ -299,16 +306,17 @@ public class SmartWorkflow extends AbstractWorkflow {
                                                        spec.isStageLoggingEnabled(), phaseConnectorDatasets,
                                                        spec.getNumOfRecordsPreview());
 
-    // Custom action is the only phase in the pipeline which has no associated dag
-    boolean hasCustomAction = batchPhaseSpec.getPhase().getSources().isEmpty()
-      && batchPhaseSpec.getPhase().getSinks().isEmpty();
-    if (hasCustomAction) {
-      // Add custom action to the Workflow
+    Set<String> pluginTypes = batchPhaseSpec.getPhase().getPluginTypes();
+    if (pluginTypes.contains(Action.PLUGIN_TYPE)) {
+      // actions will be all by themselves in a phase
       programAdder.addAction(new PipelineAction(batchPhaseSpec));
-      return;
-    }
-
-    if (useSpark) {
+    } else if (pluginTypes.contains(Constants.SPARK_PROGRAM_PLUGIN_TYPE)) {
+      // spark programs will be all by themselves in a phase
+      String stageName = phase.getStagesOfType(Constants.SPARK_PROGRAM_PLUGIN_TYPE).iterator().next().getName();
+      StageSpec stageSpec = stageSpecs.get(stageName);
+      applicationConfigurer.addSpark(new ExternalSparkProgram(programName, stageSpec));
+      programAdder.addSpark(programName);
+    } else if (useSpark) {
       applicationConfigurer.addSpark(new ETLSpark(batchPhaseSpec));
       programAdder.addSpark(programName);
     } else {
