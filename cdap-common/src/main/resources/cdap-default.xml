@@ -242,6 +242,14 @@
   </property>
 
   <property>
+    <name>upgrade.thread.pool.size</name>
+    <value>10</value>
+    <description>
+      Number of threads to be used running operations concurrently during a CDAP upgrade
+    </description>
+  </property>
+
+  <property>
     <name>zookeeper.client.startup.timeout.millis</name>
     <value>60000</value>
     <description>
@@ -3054,17 +3062,6 @@
     <value>60000</value>
     <description>
       Read timeout in milliseconds for internal HTTP requests
-    </description>
-  </property>
-
-
-  <!-- Upgrade configuration -->
-
-  <property>
-    <name>upgrade.thread.pool.size</name>
-    <value>10</value>
-    <description>
-      Number of threads used to run operations concurrently during an upgrade
     </description>
   </property>
 
