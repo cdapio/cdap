@@ -164,6 +164,15 @@
           "install_flavor": "openjdk",
           "jdk_version": 7
         },
+        "nodejs": {
+          "install_method": "binary",
+          "version": "0.12.0",
+          "binary": {
+            "checksum": {
+              "linux_x64": "3bdb7267ca7ee24ac59c54ae146741f70a6ae3a8a8afd42d06204647fe9d4206"
+            }
+          }
+        },
         "openssh": {
           "server": {
             "permit_root_login": "without-password",
