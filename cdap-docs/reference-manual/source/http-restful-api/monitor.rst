@@ -44,10 +44,10 @@ The response body will contain a JSON-formatted list of the existing system serv
       }
       ...
   ]
-  
+
 .. highlight:: console
 
-See :ref:`downloading System Logs <http-restful-api-logging_downloading_system_logs>` for
+See :ref:`downloading System Logs <http-restful-api-logging-downloading-system-logs>` for
 information and an example of using these system services.
 
 .. rubric:: HTTP Responses
@@ -89,7 +89,7 @@ The status of these CDAP system services can be checked:
 .. list-table::
    :header-rows: 1
    :widths: 25 25 50
-   
+
    * - Service
      - Service ID
      - Description of the service
@@ -110,10 +110,10 @@ The status of these CDAP system services can be checked:
      - Service that aggregates all system and application logs
    * - ``Metrics Processor``
      - ``metrics.processor``
-     - Service that aggregates all system and application metrics 
+     - Service that aggregates all system and application metrics
    * - ``Dataset Executor``
      - ``dataset.executor``
-     - Service that handles all data-related HTTP requests 
+     - Service that handles all data-related HTTP requests
    * - ``Explore Service``
      - ``explore.service``
      - Service that handles all HTTP requests for ad-hoc data exploration
@@ -136,7 +136,7 @@ The status of these CDAP system services can be checked:
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
-   
+
    * - HTTP Method
      - ``GET /v3/system/services/metrics/status``
    * - Description
@@ -149,7 +149,7 @@ If you are trying to debug a CDAP system service, you can retrieve container inf
 system service with::
 
   GET /v3/system/services/<service-id>/live-info
-  
+
 where
 
 .. list-table::
@@ -160,12 +160,12 @@ where
      - Description
    * - ``service-id``
      - Name (ID) of the system service
-     
+
 **Note:** This returns useful information only for Distributed CDAP installations.
 
 
 .. rubric:: Example
-     
+
 For example, to retrieve the list of CDAP Master services, issue an HTTP GET request to
 the URL::
 
@@ -189,7 +189,7 @@ first container listed being the active CDAP Master in an HA deployment::
                           "type":"system_service"
                       }
                    ]
-  }    
+  }
 
 
 .. highlight:: console
@@ -276,7 +276,7 @@ The response body will contain a JSON-formatted status of the last restart attem
 
 Scaling System Services
 =======================
-In Distributed CDAP installations, the number of instances for CDAP system services 
+In Distributed CDAP installations, the number of instances for CDAP system services
 can be queried and changed by using these commands::
 
   GET /v3/system/services/<service-id>/instances
@@ -297,10 +297,10 @@ with the arguments as a JSON string in the body::
    * - Parameter
      - Description
    * - ``service-id``
-     - Name (ID) of the system service 
+     - Name (ID) of the system service
    * - ``quantity``
      - Number of instances to be used
-     
+
 **Note:** In Standalone CDAP, trying to set the instances of system services will return a Status Code ``400 Bad Request``.
 
 .. rubric:: Examples
@@ -311,9 +311,9 @@ with the arguments as a JSON string in the body::
    * - HTTP Method
      - ``GET /v3/system/services/metrics/instances``
    * - Description
-     - Determine the number of instances being used for the metrics HTTP service 
-   * - 
-     - 
+     - Determine the number of instances being used for the metrics HTTP service
+   * -
+     -
    * - HTTP Method
      - ``PUT /v3/system/services/metrics/instances``
        ``instances``
