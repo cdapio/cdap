@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorPlusPlusListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium, myLoadingService, mySparkApi, $interval, moment, MyPipelineStatusMapper) {
+  .controller('HydratorPlusPlusListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium, myLoadingService, mySparkApi, $interval, moment, MyPipelineStatusMapper, myPipelineCommonApi) {
     var dataSrc = new MyCDAPDataSource($scope);
     var vm = this;
     vm.$interval = $interval;
@@ -72,12 +72,12 @@ angular.module(PKG.name + '.feature.hydrator')
 
     vm.deleteDraft = function(draftId) {
       myLoadingService.showLoadingIcon()
-      .then(function(){
+      .then(function() {
         let draftName;
         mySettings.get('hydratorDrafts')
-          .then(function(res){
+          .then(function(res) {
             let draft = myHelpers.objectQuery(res, $stateParams.namespace, draftId);
-            if(draft){
+            if (draft) {
               draftName = draft.name;
               delete res[$stateParams.namespace][draftId];
             }
@@ -109,7 +109,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     vm.deleteApp = function (appId) {
       myLoadingService.showLoadingIcon()
-      .then(function(){
+      .then(function() {
         var deleteParams = {
           namespace: $state.params.namespace,
           appId: appId,
@@ -228,10 +228,15 @@ angular.module(PKG.name + '.feature.hydrator')
      */
     function fetchWorkflowNextRunTimes() {
       batch.forEach(function (batchParams) {
-        dataSrc.request({
-          _cdapNsPath: '/apps/' + batchParams.appId +'/workflows/' + batchParams.programId +'/nextruntime',
+        myPipelineCommonApi.nextRunTime({
+          namespace: $stateParams.namespace,
+          app: batchParams.appId,
+          programType: 'workflows',
+          programName: batchParams.programId,
+          scope: $scope
         })
-        .then(function (res) {
+          .$promise
+          .then(function (res) {
           if (res && res.length) {
             vm.pipelineList.forEach(function (app) {
               if (app.id === batchParams.appId) {
@@ -287,7 +292,7 @@ angular.module(PKG.name + '.feature.hydrator')
         updateStatusAppObject();
       }); // end of ETL Batch
 
-      //fetching ETL Realtime statuses
+      // fetching ETL Realtime statuses
       dataSrc.poll({
         _cdapNsPath: '/status',
         method: 'POST',
