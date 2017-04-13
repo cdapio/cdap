@@ -58,42 +58,42 @@
     <div class="app-status-container">
       <!-- IF ETL BATCH -->
       <div ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1">
-        <div ng-if="['STARTING', 'STOPPED', 'COMPLETED', 'FAILED', 'KILLED'].indexOf(TopPanelCtrl.appStatus) !== -1">
+        <div ng-if="['Starting', 'Succeeded', 'Failed', 'Stopped', 'Deployed'].indexOf(TopPanelCtrl.appStatus) !== -1">
           <div ng-click="TopPanelCtrl.do('Start')"
                class="btn"
-               ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'STARTING'}"
-               ng-disabled="TopPanelCtrl.appStatus === 'STARTING'">
-            <span ng-if="TopPanelCtrl.appStatus !== 'STARTING'">
+               ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'Starting'}"
+               ng-disabled="TopPanelCtrl.appStatus === 'Starting'">
+            <span ng-if="TopPanelCtrl.appStatus !== 'Starting'">
               <span class="fa fa-play text-success"></span>
               <div class="button-label">Start</div>
             </span>
-            <span ng-if="TopPanelCtrl.appStatus === 'STARTING'">
+            <span ng-if="TopPanelCtrl.appStatus === 'Starting'">
               <span class="fa fa-spinner fa-spin"></span>
             </span>
           </div>
         </div>
-        <div ng-if="['STOPPING', 'RUNNING'].indexOf(TopPanelCtrl.appStatus) !== -1">
+        <div ng-if="['Stopping', 'Running'].indexOf(TopPanelCtrl.appStatus) !== -1">
           <div ng-click="TopPanelCtrl.do('Stop')"
                class="btn"
-               ng-disabled="TopPanelCtrl.appStatus === 'STOPPING'">
-            <span ng-if="TopPanelCtrl.appStatus !== 'STOPPING'">
+               ng-disabled="TopPanelCtrl.appStatus === 'Stopping'">
+            <span ng-if="TopPanelCtrl.appStatus !== 'Stopping'">
               <span class="fa fa-stop text-danger"></span>
               <div class="button-label">Stop</div>
             </span>
-            <span ng-if="TopPanelCtrl.appStatus === 'STOPPING'">
+            <span ng-if="TopPanelCtrl.appStatus === 'Stopping'">
               <span class="fa fa-spinner fa-spin"></span>
             </span>
           </div>
         </div>
       </div>
       <div ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1">
-        <div ng-if="['SUSPENDED', 'SCHEDULING'].indexOf(TopPanelCtrl.scheduleStatus) !== -1 || TopPanelCtrl.scheduleStatus.error">
+        <div ng-if="['Deployed', 'Scheduling'].indexOf(TopPanelCtrl.scheduleStatus) !== -1 || TopPanelCtrl.scheduleStatus.error">
 
           <div ng-click="TopPanelCtrl.do('Schedule')"
               class="btn scheduler"
-              ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'SCHEDULING'}"
-            ng-disabled="TopPanelCtrl.scheduleStatus === 'SCHEDULING' || TopPanelCtrl.scheduleStatus.error">
-            <span class="double-line" ng-if="(TopPanelCtrl.scheduleStatus === 'SUSPENDED' || TopPanelCtrl.scheduleStatus.error) && !TopPanelCtrl.scheduleLoading">
+              ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'Scheduling'}"
+            ng-disabled="TopPanelCtrl.scheduleStatus === 'Scheduling' || TopPanelCtrl.scheduleStatus.error">
+            <span class="double-line" ng-if="(TopPanelCtrl.scheduleStatus === 'Deployed' || TopPanelCtrl.scheduleStatus.error) && !TopPanelCtrl.scheduleLoading">
               <span class="fa icon-runtimestarttime"></span>
               <div class="button-label">
                 <span>Schedule</span>
@@ -104,11 +104,11 @@
             </span>
           </div>
         </div>
-        <div ng-if="['SCHEDULED', 'SUSPENDING'].indexOf(TopPanelCtrl.scheduleStatus) !== -1">
+        <div ng-if="['Scheduled', 'Suspending'].indexOf(TopPanelCtrl.scheduleStatus) !== -1">
           <div ng-click="TopPanelCtrl.do('Suspend')"
                class="btn scheduler"
-               ng-disabled="TopPanelCtrl.scheduleStatus === 'SUSPENDING'">
-            <span class="double-line" ng-if="TopPanelCtrl.scheduleStatus ==='SCHEDULED' && !TopPanelCtrl.scheduleLoading">
+               ng-disabled="TopPanelCtrl.scheduleStatus === 'Suspending'">
+            <span class="double-line" ng-if="TopPanelCtrl.scheduleStatus ==='Scheduled' && !TopPanelCtrl.scheduleLoading">
               <span class="fa icon-runtimestarttime text-primary"></span>
               <div class="button-label">
                 <span>Unschedule</span>
@@ -123,37 +123,38 @@
 
       <!-- Realtime or data Streams -->
       <div ng-if="[TopPanelCtrl.GLOBALS.etlRealtime, TopPanelCtrl.GLOBALS.etlDataStreams].indexOf(TopPanelCtrl.app.type) !== -1">
-        <div ng-if="['KILLED', 'STOPPED', 'COMPLETED', 'FAILED', 'STARTING'].indexOf(TopPanelCtrl.appStatus) !== -1">
+        <div ng-if="['Stopped', 'Succeeded', 'Failed', 'Starting', 'Deployed'].indexOf(TopPanelCtrl.appStatus) !== -1">
           <div class="btn"
-            ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'STARTING'}"
+            ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'Starting'}"
             ng-click="TopPanelCtrl.do('Start')"
-            ng-disabled="TopPanelCtrl.appStatus === 'STARTING'">
-            <span ng-if="TopPanelCtrl.appStatus !== 'STARTING'">
+            ng-disabled="TopPanelCtrl.appStatus === 'Starting'">
+            <span ng-if="TopPanelCtrl.appStatus !== 'Starting'">
               <span class="fa fa-play text-success"></span>
               <div class="button-label">Start</div>
             </span>
-            <span ng-if="TopPanelCtrl.appStatus === 'STARTING'">
+            <span ng-if="TopPanelCtrl.appStatus === 'Starting'">
               <span class="fa fa-spinner fa-spin"></span>
             </span>
           </div>
         </div>
-        <div ng-if="['RUNNING', 'STOPPING'].indexOf(TopPanelCtrl.appStatus) !== -1">
+        <div ng-if="['Running', 'Stopping'].indexOf(TopPanelCtrl.appStatus) !== -1">
           <div class="btn"
             ng-click="TopPanelCtrl.do('Stop')"
-            ng-disabled="TopPanelCtrl.appStatus === 'STOPPING'">
-            <span ng-if="TopPanelCtrl.appStatus !== 'STOPPING'">
+            ng-disabled="TopPanelCtrl.appStatus === 'Stopping'">
+            <span ng-if="TopPanelCtrl.appStatus !== 'Stopping'">
               <span class="fa fa-stop text-danger"></span>
               <div class="button-label">Stop</div>
             </span>
-            <span ng-if="TopPanelCtrl.appStatus === 'STOPPING'">
+            <span ng-if="TopPanelCtrl.appStatus === 'Stopping'">
               <span class="fa fa-spinner fa-spin"></span>
             </span>
           </div>
         </div>
       </div>
 
-      <div class="app-status text-center" ng-class="{'status-green': TopPanelCtrl.isGreenStatus(), 'status-red': !TopPanelCtrl.isGreenStatus() }">
-        <span class="fa fa-circle metric-value"></span>
+      <div class="app-status text-center">
+        <span class="status-bubble"
+                ng-class="TopPanelCtrl.MyPipelineStatusMapper.getStatusIndicatorClass(TopPanelCtrl.appStatus)"></span>
         <span class="metric-label" ng-bind="TopPanelCtrl.appStatus"></span>
       </div>
       <div class="last-run text-left">
@@ -188,13 +189,13 @@
           </span>
           <div class="pull-right">
             <button class="btn btn-blue"
-                 ng-if="TopPanelCtrl.runPlayer.action === 'STARTING'"
+                 ng-if="TopPanelCtrl.runPlayer.action === 'Starting'"
                  ng-disabled="!TopPanelCtrl.isValidToStartOrSchedule()"
                  ng-click="TopPanelCtrl.startPipeline()">
               Start Now
             </button>
             <button class="btn btn-blue"
-                 ng-if="TopPanelCtrl.runPlayer.action === 'SCHEDULING'"
+                 ng-if="TopPanelCtrl.runPlayer.action === 'Scheduling'"
                  ng-disabled="!TopPanelCtrl.isValidToStartOrSchedule()"
                  ng-click="TopPanelCtrl.schedulePipeline()">
               Schedule

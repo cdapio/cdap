@@ -42,7 +42,7 @@ const getClonePipelineName = (name) => {
 };
 
 class HydratorDetailTopPanelController {
-  constructor(HydratorPlusPlusDetailRunsStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailActions, GLOBALS, $state, myLoadingService, $timeout, $scope, moment, myAlertOnValium, myPipelineExportModalService, myPipelineApi, myHelpers, myPreferenceApi, $q, $interval) {
+  constructor(HydratorPlusPlusDetailRunsStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailActions, GLOBALS, $state, myLoadingService, $timeout, $scope, moment, myAlertOnValium, myPipelineExportModalService, myPipelineApi, myHelpers, myPreferenceApi, $q, $interval, MyPipelineStatusMapper) {
     this.GLOBALS = GLOBALS;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.myAlertOnValium = myAlertOnValium;
@@ -63,6 +63,7 @@ class HydratorDetailTopPanelController {
     this.myPreferenceApi = myPreferenceApi;
     this.$q = $q;
     this.$interval = $interval;
+    this.MyPipelineStatusMapper = MyPipelineStatusMapper;
     this.app = {
       name: HydratorPlusPlusDetailNonRunsStore.getPipelineName(),
       description: this.config.description,
@@ -228,9 +229,10 @@ class HydratorDetailTopPanelController {
   }
 
   setAppStatus() {
-    this.appStatus = this.HydratorPlusPlusDetailRunsStore.getStatus();
+    this.appStatus = this.MyPipelineStatusMapper.lookupDisplayStatus(
+      this.HydratorPlusPlusDetailRunsStore.getStatus());
 
-    if (this.appStatus === 'COMPLETED' || this.appStatus === 'KILLED') {
+    if (this.appStatus === 'Succeeded' || this.appStatus === 'Stopped') {
       this.$interval.cancel(this.pipelineDurationTimer);
       this.pipelineDurationTimer = null;
     }
@@ -238,10 +240,10 @@ class HydratorDetailTopPanelController {
     this.config = this.HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
   }
   setScheduleStatus() {
-    this.scheduleStatus = this.HydratorPlusPlusDetailNonRunsStore.getScheduleStatus();
+    this.scheduleStatus = this.MyPipelineStatusMapper.lookupDisplayStatus(this.HydratorPlusPlusDetailNonRunsStore.getScheduleStatus());
   }
   isGreenStatus() {
-    var greenStatus = ['COMPLETED', 'RUNNING', 'SCHEDULED', 'STARTING'];
+    var greenStatus = ['Succeeded', 'Starting', 'Scheduling', 'Stopping'];
     if (greenStatus.indexOf(this.appStatus) > -1) {
       return true;
     } else {
@@ -264,21 +266,21 @@ class HydratorDetailTopPanelController {
         this.fetchMacros()
           .then(() => {
             this.runPlayer.view = true;
-            this.runPlayer.action = 'STARTING';
+            this.runPlayer.action = this.MyPipelineStatusMapper.lookupDisplayStatus('STARTING');
           }, (err) => {console.log('Error: ', err); });
         break;
       case 'Schedule':
         this.fetchMacros()
           .then(() => {
             this.runPlayer.view = true;
-            this.runPlayer.action = 'SCHEDULING';
+            this.runPlayer.action = this.MyPipelineStatusMapper.lookupDisplayStatus('SCHEDULING');
           });
         break;
       case 'Suspend':
         this.suspendPipeline();
         break;
       case 'Stop':
-        this.appStatus = 'STOPPING';
+        this.appStatus = this.MyPipelineStatusMapper.lookupDisplayStatus('STOPPING');
         this.stopPipeline();
         break;
       case 'Delete':
@@ -311,7 +313,7 @@ class HydratorDetailTopPanelController {
   startPipeline() {
     this.lastRunTime = 'N/A';
     this.lastFinished = null;
-    this.appStatus = 'STARTING';
+    this.appStatus = this.MyPipelineStatusMapper.lookupDisplayStatus('STARTING');
     this.runPlayer.view = false;
     this.runPlayer.action = null;
     this.HydratorPlusPlusDetailActions.startPipeline(
@@ -350,7 +352,7 @@ class HydratorDetailTopPanelController {
   }
 
   schedulePipeline() {
-    this.scheduleStatus = 'SCHEDULING';
+    this.scheduleStatus = this.MyPipelineStatusMapper.lookupDisplayStatus('SCHEDULING');
     this.scheduleLoading = true;
     let preferenceParams = {
       namespace: this.$state.params.namespace,
@@ -442,6 +444,6 @@ class HydratorDetailTopPanelController {
   }
 }
 
-HydratorDetailTopPanelController.$inject = ['HydratorPlusPlusDetailRunsStore', 'HydratorPlusPlusDetailNonRunsStore', 'HydratorPlusPlusDetailActions', 'GLOBALS', '$state', 'myLoadingService', '$timeout', '$scope', 'moment', 'myAlertOnValium', 'myPipelineExportModalService', 'myPipelineApi', 'myHelpers', 'myPreferenceApi', '$q', '$interval'];
+HydratorDetailTopPanelController.$inject = ['HydratorPlusPlusDetailRunsStore', 'HydratorPlusPlusDetailNonRunsStore', 'HydratorPlusPlusDetailActions', 'GLOBALS', '$state', 'myLoadingService', '$timeout', '$scope', 'moment', 'myAlertOnValium', 'myPipelineExportModalService', 'myPipelineApi', 'myHelpers', 'myPreferenceApi', '$q', '$interval', 'MyPipelineStatusMapper'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorDetailTopPanelController', HydratorDetailTopPanelController);
