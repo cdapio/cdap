@@ -313,6 +313,25 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testNextSystemLogs(Constants.Service.MASTER_SERVICES);
   }
 
+  // Verify the Json returned for logs has isNativeMethod set correctly
+  @Test
+  public void testNativeMethodField() throws Exception {
+    ProgramId programId =
+      new NamespaceId(MockLogReader.TEST_NAMESPACE).app("testTemplate1").program(ProgramType.
+        valueOfCategoryName("workflows"), "testWorkflow1");
+    RunRecord runRecord = mockLogReader.getRunRecord(programId);
+    String logsUrl = String.format("apps/%s/%s/%s/runs/%s/logs/next?format=json",
+                            "testTemplate1", "workflows", "testWorkflow1", runRecord.getPid());
+    HttpResponse response = doGet(getVersionedAPIPath(logsUrl, MockLogReader.TEST_NAMESPACE));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    String out = EntityUtils.toString(response.getEntity());
+    List<LogDataOffset> logDataOffsetList = GSON.fromJson(out, LIST_LOGDATA_OFFSET_TYPE);
+    Assert.assertEquals(logDataOffsetList.size(), 15);
+    Assert.assertEquals(logDataOffsetList.get(0).getLog().getNativeMethod(), true);
+    Assert.assertEquals(logDataOffsetList.get(1).getLog().getNativeMethod(), false);
+    Assert.assertEquals(logDataOffsetList.get(2).getLog().getNativeMethod(), false);
+  }
+
 
   private List<LogLine> getLogs(String namespaceId, String appId, String programType, String programName, String runId,
                                                                    String endPoint) throws Exception {
