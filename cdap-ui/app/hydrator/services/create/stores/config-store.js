@@ -216,6 +216,15 @@ class HydratorPlusPlusConfigStore {
     });
     config.connections = connections;
 
+
+    // Adding leftover nodes
+    if (Object.keys(nodesMap).length !== 0) {
+      angular.forEach(nodesMap, (node, id) => {
+        addPluginToConfig(node, id);
+      });
+    }
+
+
     let appType = this.getAppType();
     if ( this.GLOBALS.etlBatchPipelines.indexOf(appType) !== -1) {
       config.schedule = this.getSchedule();

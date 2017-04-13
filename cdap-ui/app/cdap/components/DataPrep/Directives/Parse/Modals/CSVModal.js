@@ -18,6 +18,7 @@ import React, { Component, PropTypes } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import classnames from 'classnames';
 import T from 'i18n-react';
+import MouseTrap from 'mousetrap';
 
 const PREFIX = 'features.DataPrep.Directives.Parse';
 
@@ -43,6 +44,14 @@ export default class CSVModal extends Component {
     this.apply = this.apply.bind(this);
     this.toggleSetFirstRow = this.toggleSetFirstRow.bind(this);
     this.handleCustomDelimiterChange = this.handleCustomDelimiterChange.bind(this);
+  }
+
+  componentDidMount() {
+    MouseTrap.bind('enter', this.apply);
+  }
+
+  componentWillUnmount() {
+    MouseTrap.unbind('enter');
   }
 
   apply() {
@@ -77,7 +86,7 @@ export default class CSVModal extends Component {
       <div className="custom-format">
         <input
           type="text"
-          className="form-control"
+          className="form-control mousetrap"
           value={this.state.customDelimiter}
           onChange={this.handleCustomDelimiterChange}
           placeholder={T.translate(`${PREFIX}.Parsers.CSV.customPlaceholder`)}

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.spark.batch;
 
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
@@ -37,10 +38,10 @@ public class SparkBatchRuntimeContext extends AbstractTransformContext
   private final long logicalStartTime;
   private final Map<String, String> runtimeArguments;
 
-  public SparkBatchRuntimeContext(PluginContext pluginContext, Metrics metrics,
+  public SparkBatchRuntimeContext(PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer, Metrics metrics,
                                   long logicalStartTime, Map<String, String> runtimeArguments,
                                   StageInfo stageInfo) {
-    super(pluginContext, metrics, NoLookupProvider.INSTANCE, stageInfo);
+    super(pluginContext, serviceDiscoverer, metrics, NoLookupProvider.INSTANCE, stageInfo);
     this.logicalStartTime = logicalStartTime;
     this.runtimeArguments = runtimeArguments;
   }

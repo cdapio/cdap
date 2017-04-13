@@ -27,7 +27,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import {MyPipelineApi} from 'api/pipeline';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
-
+import LicenseStep from 'components/CaskWizards/LicenseStep';
 import T from 'i18n-react';
 
 export default class PublishPipelineWizard extends Component {
@@ -35,11 +35,12 @@ export default class PublishPipelineWizard extends Component {
     super(props);
     this.state = {
       showWizard: this.props.isOpen,
-      successInfo: {}
+      successInfo: {},
+      license: this.props.input.package.license ? true : false
     };
 
     this.setDefaultConfig();
-
+    this.showWizardContents = this.showWizardContents.bind(this);
     this.eventEmitter = ee(ee);
   }
   componentWillMount() {
@@ -59,6 +60,11 @@ export default class PublishPipelineWizard extends Component {
   componentWillUnmount() {
     PublishPipelineWizardStore.dispatch({
       type: PublishPipelineAction.onReset
+    });
+  }
+  showWizardContents() {
+    this.setState({
+      license: false
     });
   }
   setDefaultConfig() {
@@ -173,14 +179,26 @@ export default class PublishPipelineWizard extends Component {
               toggle={this.toggleWizard.bind(this, false)}
               className="create-stream-wizard"
             >
-              <Wizard
-                wizardConfig={PublishPipelineWizardConfig}
-                wizardType="PublishPipeline"
-                onSubmit={this.publishPipeline.bind(this)}
-                successInfo={this.state.successInfo}
-                onClose={this.toggleWizard.bind(this)}
-                store={PublishPipelineWizardStore}
-              />
+
+              {
+                this.state.license ?
+                  <LicenseStep
+                    entityName={this.props.input.package.name}
+                    entityVersion={this.props.input.package.version}
+                    licenseFileName={this.props.input.package.license}
+                    onAgree={this.showWizardContents}
+                    onReject={this.toggleWizard.bind(this, false)}
+                  />
+                :
+                  <Wizard
+                    wizardConfig={PublishPipelineWizardConfig}
+                    wizardType="PublishPipeline"
+                    onSubmit={this.publishPipeline.bind(this)}
+                    successInfo={this.state.successInfo}
+                    onClose={this.toggleWizard.bind(this)}
+                    store={PublishPipelineWizardStore}
+                  />
+              }
             </WizardModal>
           :
             null

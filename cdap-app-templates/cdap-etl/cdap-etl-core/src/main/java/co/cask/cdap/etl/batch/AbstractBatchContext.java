@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
@@ -44,6 +45,7 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
   private final Admin admin;
 
   protected AbstractBatchContext(PluginContext pluginContext,
+                                 ServiceDiscoverer serviceDiscoverer,
                                  DatasetContext datasetContext,
                                  Metrics metrics,
                                  LookupProvider lookup,
@@ -51,7 +53,7 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
                                  Map<String, String> runtimeArgs,
                                  Admin admin,
                                  StageInfo stageInfo) {
-    super(pluginContext, metrics, lookup, stageInfo);
+    super(pluginContext, serviceDiscoverer, metrics, lookup, stageInfo);
     this.datasetContext = datasetContext;
     this.logicalStartTime = logicalStartTime;
     this.runtimeArgs = runtimeArgs;
@@ -59,13 +61,14 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
   }
 
   protected <T extends PluginContext & DatasetContext> AbstractBatchContext(T context,
+                                                                            ServiceDiscoverer serviceDiscoverer,
                                                                             Metrics metrics,
                                                                             LookupProvider lookup,
                                                                             long logicalStartTime,
                                                                             Map<String, String> runtimeArgs,
                                                                             Admin admin,
                                                                             StageInfo stageInfo) {
-    super(context, metrics, lookup, stageInfo);
+    super(context, serviceDiscoverer, metrics, lookup, stageInfo);
     this.datasetContext = context;
     this.logicalStartTime = logicalStartTime;
     this.runtimeArgs = runtimeArgs;

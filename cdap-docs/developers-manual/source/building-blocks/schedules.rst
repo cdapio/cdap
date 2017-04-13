@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _schedules:
 
@@ -18,13 +18,16 @@ class contains a builder to create schedules based on time, or schedules based o
 The name of a schedule must be unique in the application that it is in; the same name can
 be used in different applications.
 
-Schedules can be controlled by the :ref:`CDAP CLI <cli>` and the :ref:`Lifecycle HTTP
+Schedules can be added and controlled by the :ref:`CDAP CLI <cli>` and the :ref:`Lifecycle HTTP
 RESTful API <http-restful-api-lifecycle>`. The :ref:`status of a schedule
-<http-restful-api-lifecycle-status>` can be retrieved, and individual schedules
-:ref:`resumed or suspended <http-restful-api-lifecycle-schedules-suspend-resume>`. 
+<http-restful-api-lifecycle-status>` can be retrieved, and individual schedules can be 
+:ref:`added <http-restful-api-lifecycle-schedule-add>`, 
+:ref:`resumed, or suspended <http-restful-api-lifecycle-schedule-suspend-resume>`. 
 
 When a schedule is initially deployed, it is in a *suspended* state; a *resume* command needs to be
 issued to change it to *scheduled* before it will begin.
+
+.. _schedules-time:
 
 Time Schedules
 ==============
@@ -56,6 +59,7 @@ Optionally, you can specify the properties for the schedule::
 Every time the ``FiveHourSchedule`` triggers, it passes the ``scheduleProperties`` as runtime arguments to the ``MyWorkflow``.
 
 
+.. _schedules-stream-size:
 .. _stream-size-schedules:
 
 Stream-size Schedules
@@ -118,11 +122,11 @@ These actions can be performed on a schedule:
   already-active schedule has no effect. If |---| while the schedule was suspended, and since the last time the
   schedule was triggered |---| the Stream has ingested more than the increment of data defined by the schedule,
   the workflow will be immediately executed upon resume.
-- *Update*: this action is triggered when an application which contains a stream-size schedule is redeployed in CDAP.
+- *Update*: this action is triggered when an application which contains a schedule is redeployed in CDAP.
   If the schedule name has not been modified and one of its parameters has changed |---| such as the `dataTrigger` |---| the
   *update* action will be called. If the `dataTrigger` is updated, and the Stream has ingested more data than defined
   by the `dataTrigger` since the last time the schedule was triggered, then the workflow will be executed upon
-  update.
+  update. A similar behaviour triggers a time schedule, if the time has passed for when it should have been executed.
 
 .. rubric:: Special Runtime Arguments
 

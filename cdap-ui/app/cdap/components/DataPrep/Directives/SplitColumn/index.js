@@ -110,7 +110,7 @@ export default class SplitColumnDirective extends Component {
       <div className="custom-delimiter-input">
         <input
           type="text"
-          className="form-control"
+          className="form-control mousetrap"
           onChange={this.handleDelimiterInput}
           onKeyPress={this.handleKeyPress}
           value={this.state.customDelimiter}
@@ -209,4 +209,3 @@ SplitColumnDirective.propTypes = {
   isOpen: PropTypes.bool,
   close: PropTypes.func
 };
-

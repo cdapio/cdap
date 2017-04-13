@@ -360,6 +360,7 @@ public class MockLogReader implements LogReader {
     // All possible values of " MDC property ".origin
     String[] origins = {"plugin", "program", "system"};
     String entityId = LoggingContextHelper.getEntityId(loggingContext).getValue();
+    StackTraceElement stackTraceElementNative = new StackTraceElement("co.cask.Test", "testMethod", null, -2);
     RunId runId = null;
     Long stopTs = null;
     for (int i = 0; i < MAX; ++i) {
@@ -388,6 +389,9 @@ public class MockLogReader implements LogReader {
 
       if (i % 2 == 0) {
         tagMap.put("MDC:eventType", "lifecycle");
+      }
+      if (i == 30) {
+        event.setCallerData(new StackTraceElement[]{stackTraceElementNative});
       }
       event.setMDCPropertyMap(tagMap);
       logEvents.add(new LogEvent(event, new LogOffset(i, i)));

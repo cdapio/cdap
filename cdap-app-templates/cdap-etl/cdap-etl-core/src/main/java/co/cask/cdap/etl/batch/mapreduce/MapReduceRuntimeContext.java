@@ -44,7 +44,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
 
   public MapReduceRuntimeContext(MapReduceTaskContext context, Metrics metrics,
                                  LookupProvider lookup, Map<String, String> runtimeArgs, StageInfo stageInfo) {
-    super(context, metrics, lookup, stageInfo);
+    super(context, context, metrics, lookup, stageInfo);
     this.context = context;
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
   }

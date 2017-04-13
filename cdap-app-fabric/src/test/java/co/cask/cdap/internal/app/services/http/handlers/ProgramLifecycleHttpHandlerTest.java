@@ -1111,6 +1111,95 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     testUpdateSchedule(appV2Id);
   }
 
+  @Test
+  public void testUpdateSchedulesFlag() throws Exception {
+    // deploy an app with schedule
+    AppWithSchedule.AppConfig config = new AppWithSchedule.AppConfig(true, true, true);
+
+    Id.Artifact artifactId = Id.Artifact.from(TEST_NAMESPACE_META2.getNamespaceId().toId(),
+                                              AppWithSchedule.NAME, VERSION1);
+    addAppArtifact(artifactId, AppWithSchedule.class);
+    AppRequest<? extends Config> request = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, false);
+
+    ApplicationId defaultAppId = TEST_NAMESPACE_META2.getNamespaceId().app(AppWithSchedule.NAME);
+    Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
+
+    List<ScheduleSpecification> actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
+                                                               defaultAppId.getApplication(),
+                                                               defaultAppId.getVersion());
+
+    // none of the schedules will be added as we have set update schedules to be false
+    Assert.assertEquals(0, actualSchSpecs.size());
+
+    request = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, true);
+
+    Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
+
+    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
+                                                               defaultAppId.getApplication(),
+                                                               defaultAppId.getVersion());
+    Assert.assertEquals(2, actualSchSpecs.size());
+
+    // with workflow, without schedule
+    config = new AppWithSchedule.AppConfig(true, false, false);
+    request = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, false);
+    Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
+
+    // schedule should not be updated
+    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
+                                   defaultAppId.getApplication(),
+                                   defaultAppId.getVersion());
+    Assert.assertEquals(2, actualSchSpecs.size());
+
+    // without workflow and schedule, schedule should be deleted
+    config = new AppWithSchedule.AppConfig(false, false, false);
+    request = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, false);
+    Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
+
+    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
+                                   defaultAppId.getApplication(),
+                                   defaultAppId.getVersion());
+    Assert.assertEquals(0, actualSchSpecs.size());
+
+    // with workflow and  one schedule, schedule should be added
+    config = new AppWithSchedule.AppConfig(true, true, false);
+    request = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, true);
+    Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
+
+    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
+                                   defaultAppId.getApplication(),
+                                   defaultAppId.getVersion());
+    Assert.assertEquals(1, actualSchSpecs.size());
+    Assert.assertEquals("SampleSchedule", actualSchSpecs.get(0).getSchedule().getName());
+
+    // with workflow and two schedules, but update-schedules is false, so 2nd schedule should not get added
+    config = new AppWithSchedule.AppConfig(true, true, true);
+    request = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, false);
+    Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
+
+    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
+                                   defaultAppId.getApplication(),
+                                   defaultAppId.getVersion());
+    Assert.assertEquals(1, actualSchSpecs.size());
+    Assert.assertEquals("SampleSchedule", actualSchSpecs.get(0).getSchedule().getName());
+
+    // same config, but update-schedule flag is true now, so 2 schedules should be available now
+    request = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, true);
+    Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
+
+    actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
+                                   defaultAppId.getApplication(),
+                                   defaultAppId.getVersion());
+    Assert.assertEquals(2, actualSchSpecs.size());
+  }
+
   private void testAddSchedule(ApplicationId appV2Id, String scheduleName) throws Exception {
     TimeSchedule timeSchedule = (TimeSchedule) Schedules.builder(scheduleName)
       .setDescription("Something")

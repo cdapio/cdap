@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.etl.api.Lookup;
@@ -34,9 +35,9 @@ public abstract class AbstractTransformContext extends AbstractStageContext impl
 
   private final LookupProvider lookup;
 
-  public AbstractTransformContext(PluginContext pluginContext, Metrics metrics,
-                                  LookupProvider lookup, StageInfo stageInfo) {
-    super(pluginContext, metrics, stageInfo);
+  public AbstractTransformContext(PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer,
+                                  Metrics metrics, LookupProvider lookup, StageInfo stageInfo) {
+    super(pluginContext, serviceDiscoverer, metrics, stageInfo);
     this.lookup = lookup;
   }
 

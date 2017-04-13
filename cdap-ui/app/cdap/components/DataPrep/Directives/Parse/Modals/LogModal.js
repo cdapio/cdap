@@ -18,6 +18,7 @@ import React, { Component, PropTypes } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import classnames from 'classnames';
 import T from 'i18n-react';
+import MouseTrap from 'mousetrap';
 
 const PREFIX = 'features.DataPrep.Directives.Parse';
 
@@ -41,6 +42,14 @@ export default class LogModal extends Component {
 
     this.apply = this.apply.bind(this);
     this.handleCustomFormatChange = this.handleCustomFormatChange.bind(this);
+  }
+
+  componentDidMount() {
+    MouseTrap.bind('enter', this.apply);
+  }
+
+  componentWillUnmount() {
+    MouseTrap.unbind('enter');
   }
 
   apply() {
@@ -69,7 +78,7 @@ export default class LogModal extends Component {
       <div className="custom-format">
         <input
           type="text"
-          className="form-control"
+          className="form-control mousetrap"
           value={this.state.customFormat}
           onChange={this.handleCustomFormatChange}
           placeholder={T.translate(`${PREFIX}.Parsers.LOG.customPlaceholder`)}

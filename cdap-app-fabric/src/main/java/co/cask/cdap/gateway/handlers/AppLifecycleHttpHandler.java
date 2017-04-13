@@ -83,6 +83,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -161,14 +162,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") final String namespaceId,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName,
                              @HeaderParam(APP_CONFIG_HEADER) String configString,
-                             @HeaderParam(PRINCIPAL_HEADER) String ownerPrincipal)
+                             @HeaderParam(PRINCIPAL_HEADER) String ownerPrincipal,
+                             @DefaultValue("true") @HeaderParam(SCHEDULES_HEADER) boolean  updateSchedules)
     throws BadRequestException, NamespaceNotFoundException {
 
     NamespaceId namespace = validateNamespace(namespaceId);
 
     // null means use name provided by app spec
     try {
-      return deployApplication(responder, namespace, null, archiveName, configString, ownerPrincipal);
+      return deployApplication(responder, namespace, null, archiveName, configString, ownerPrincipal, updateSchedules);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
@@ -386,7 +388,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           // if we don't null check, it gets serialized to "null"
           String configString = appRequest.getConfig() == null ? null : GSON.toJson(appRequest.getConfig());
           applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
-                                                artifactId, configString, createProgramTerminator(), ownerPrincipalId);
+                                                artifactId, configString, createProgramTerminator(), ownerPrincipalId,
+                                                appRequest.canUpdateSchedules());
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (ArtifactNotFoundException e) {
           responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
@@ -413,7 +416,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                          final String appId,
                                          final String archiveName,
                                          final String configString,
-                                         @Nullable final String ownerPrincipal) throws IOException {
+                                         @Nullable final String ownerPrincipal,
+                                         final boolean updateSchedules) throws IOException {
 
     Id.Namespace idNamespace = namespace.toId();
     Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
@@ -465,7 +469,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           // deploy app
           ApplicationWithPrograms app =
             applicationLifecycleService.deployAppAndArtifact(namespace, appId, artifactId, uploadedFile, configString,
-                                                             finalOwnerPrincipalId, createProgramTerminator());
+                                                             finalOwnerPrincipalId, createProgramTerminator(),
+                                                             updateSchedules);
           LOG.info("Successfully deployed app {} in namespace {} from artifact {} with configuration {} and " +
                      "principal {}", app.getApplicationId().getApplication(), namespace.getNamespace(), artifactId,
                    configString, finalOwnerPrincipalId);

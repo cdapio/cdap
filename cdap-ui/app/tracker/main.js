@@ -86,6 +86,8 @@ angular
     'angular-loading-bar'
   ])
 
+  .value('THROTTLE_MILLISECONDS', 1000) // throttle infinite scroll
+
   .run(function ($rootScope, $state, $stateParams) {
     // It's very handy to add references to $state and $stateParams to the $rootScope
     // so that you can access them from any scope within your applications.For example,

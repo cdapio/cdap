@@ -51,13 +51,7 @@ public class SparkContainerClassLoader extends MainClassLoader {
 
   @Override
   protected boolean needIntercept(String className) {
-    if (super.needIntercept(className)) {
-      return true;
-    }
-    // There are certain Spark classes that need to be rewritten in distributed mode.
-    // Just intercept all Spark classes and determine what actually needs to be rewritten
-    // in the rewrite method.
-    return className.startsWith("org.apache.spark.");
+    return super.needIntercept(className) || needRewrite(className);
   }
 
   @Nullable
@@ -65,13 +59,22 @@ public class SparkContainerClassLoader extends MainClassLoader {
   public byte[] rewriteClass(String className, InputStream input) throws IOException {
     byte[] rewrittenCode = super.rewriteClass(className, input);
 
-    // If it is not a Spark class, just return
-    if (!className.startsWith("org.apache.spark.")) {
+    if (!needRewrite(className)) {
       return rewrittenCode;
     }
 
     // Otherwise rewrite it using the SparkClassRewriter
     return sparkClassRewriter.rewriteClass(className,
                                            rewrittenCode == null ? input : new ByteArrayInputStream(rewrittenCode));
+  }
+
+  /**
+   * Returns whether the given class needs to be rewritten via this classloader.
+   */
+  private boolean needRewrite(String className) {
+    // There are certain Spark classes that need to be rewritten in distributed mode.
+    // Just intercept all Spark classes and determine what actually needs to be rewritten
+    // in the rewrite method.
+    return className.startsWith("org.apache.spark.") || className.equals("com.esotericsoftware.kryo.Kryo");
   }
 }

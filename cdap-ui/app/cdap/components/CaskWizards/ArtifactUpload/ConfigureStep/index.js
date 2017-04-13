@@ -14,15 +14,13 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import React from 'react';
 import { connect, Provider } from 'react-redux';
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
-import { Col, Label, FormGroup, Form, Input } from 'reactstrap';
+import { Col, Label, FormGroup, Form } from 'reactstrap';
 import InputWithValidations from 'components/InputWithValidations';
-import SelectWithOptions from 'components/SelectWithOptions';
 import T from 'i18n-react';
-
 
 const mapStateToArtifactNameProps = (state) => {
   return {
@@ -46,19 +44,6 @@ const mapStateToArtifactClassnameProps = (state) => {
     placeholder: T.translate('features.Wizard.ArtifactUpload.Step2.classnamePlaceholder')
   };
 };
-const mapStateToArtifactTypeSelectProps = (state) => {
-  return {
-    options: [{id: 'jdbc', value: 'jdbc'}],
-    value: state.configure.type
-  };
-};
-const mapStateToArtifactTypeInputProps = (state) => {
-  return {
-    value: state.configure.type,
-    placeholder: T.translate('features.Wizard.ArtifactUpload.Step2.typePlaceholder')
-  };
-};
-
 const mapDispatchToArtifactNameProps = (dispatch) => {
   return {
     onChange: (e) => {
@@ -86,19 +71,6 @@ const mapDispatchToArtifactClassnameProps = (dispatch) => {
   };
 };
 
-const mapDispatchToArtifactTypeProps = (dispatch) => {
-  return {
-    onChange: (e) => {
-      dispatch({
-        type: ArtifactUploadActions.setType,
-        payload: {
-          type: e.target.value
-        }
-      });
-    }
-  };
-};
-
 const InputArtifactName = connect(
   mapStateToArtifactNameProps,
   mapDispatchToArtifactNameProps
@@ -111,23 +83,8 @@ const InputArtifactClassname = connect(
   mapStateToArtifactClassnameProps,
   mapDispatchToArtifactClassnameProps
 )(InputWithValidations);
-const TypeSelect = connect(
-  mapStateToArtifactTypeSelectProps,
-  mapDispatchToArtifactTypeProps
-)(SelectWithOptions);
-const TypeInput = connect(
-  mapStateToArtifactTypeInputProps,
-  mapDispatchToArtifactTypeProps
-)(Input);
 
-
-export default function ConfigureStep({isMarket}) {
-  let getTypeComponent = () => {
-    if (isMarket) {
-      return (<TypeSelect />);
-    }
-    return (<TypeInput />);
-  };
+export default function ConfigureStep() {
   return (
     <Provider store={ArtifactUploadStore}>
       <Form
@@ -143,16 +100,6 @@ export default function ConfigureStep({isMarket}) {
           </Col>
           <Col xs="7">
             <InputArtifactName />
-          </Col>
-          <i className="fa fa-asterisk text-danger float-xs-left"/>
-        </FormGroup>
-
-        <FormGroup row>
-          <Col xs="3">
-            <Label className="control-label">{T.translate('features.Wizard.ArtifactUpload.Step2.typeLabel')}</Label>
-          </Col>
-          <Col xs="7">
-            {getTypeComponent()}
           </Col>
           <i className="fa fa-asterisk text-danger float-xs-left"/>
         </FormGroup>
@@ -180,7 +127,3 @@ export default function ConfigureStep({isMarket}) {
     </Provider>
   );
 }
-
-ConfigureStep.propTypes = {
-  isMarket: PropTypes.bool
-};

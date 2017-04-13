@@ -44,16 +44,18 @@ public class LogDataOffsetProducer extends AbstractJSONLogProducer {
     String className = "";
     String simpleClassName = "";
     int lineNumber = 0;
+    boolean isNativeMethod = false;
     if (stackTraceElements != null && stackTraceElements.length > 0) {
       StackTraceElement first = stackTraceElements[0];
       className = first.getClassName();
       simpleClassName = (className.indexOf('.') >= 0) ? className.substring(className.lastIndexOf('.') + 1) : className;
       lineNumber = first.getLineNumber();
+      isNativeMethod = first.isNativeMethod();
     }
     LogData logData = new LogData(event.getTimeStamp(), event.getLevel().toString(), event.getThreadName(),
                                   className, simpleClassName, lineNumber, event.getFormattedMessage(),
                                   ThrowableProxyUtil.asString(event.getThrowableProxy()), event.getLoggerName(),
-                                  event.getMDCPropertyMap());
+                                  event.getMDCPropertyMap(), isNativeMethod);
     return modifyLogJsonElememnt(GSON.toJsonTree(new FormattedLogDataEvent(logData, logEvent.getOffset())));
   }
 

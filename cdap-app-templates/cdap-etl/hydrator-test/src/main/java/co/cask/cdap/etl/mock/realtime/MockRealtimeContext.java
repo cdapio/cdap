@@ -24,6 +24,7 @@ import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.etl.mock.common.NoopMetrics;
 import com.google.common.collect.Maps;
 
+import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -101,6 +102,20 @@ public class MockRealtimeContext implements RealtimeContext {
 
   @Override
   public <T> Lookup<T> provide(String table, Map<String, String> arguments) {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public URL getServiceURL(String applicationId, String serviceId) {
+    //no-op
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public URL getServiceURL(String serviceId) {
+    //no-op
     return null;
   }
 }

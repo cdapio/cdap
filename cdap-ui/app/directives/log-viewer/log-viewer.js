@@ -22,13 +22,18 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
    *  The entry point for this log is startTimeRequest()
    **/
 
-  var dataSrc = new MyCDAPDataSource($scope);
-  var pollPromise;
-  //Collapsing LogViewer Table Columns
+  // Collapsing LogViewer Table Columns
   var columnsList = [];
   var collapseCount = 0;
   var vm = this;
 
+  let showCondensedLogsQuery = ' AND .origin=plugin OR .origin=program';
+  if (vm.isPipeline) {
+    showCondensedLogsQuery = ' AND .origin=plugin OR MDC:eventType=lifecycle';
+  }
+
+  var pollTimeout;
+  var pollStarted = false;
 
   vm.viewLimit = 100;
   vm.errorRetrievingLogs = false;
@@ -65,10 +70,11 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   vm.setDefault = () => {
     vm.textFile = null;
     vm.statusType = 3;
+    vm.loading = true;
     vm.displayData = [];
     vm.data = [];
-    vm.loading = true;
     vm.fullScreen = false;
+    vm.includeSystemLogs = false;
     vm.programStatus = 'Not Started';
     vm.configOptions = {
       time: true,
@@ -133,6 +139,17 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     vm.errorCount = logViewerState.totalErrors;
 
     vm.fullScreen = logViewerState.fullScreen;
+
+    if (logViewerState.status) {
+      vm.setProgramMetadata(logViewerState.status);
+      if (vm.statusType !== 0){
+        if (pollStarted) {
+          stopPoll();
+          vm.loading = false;
+        }
+      }
+    }
+
     if (vm.logStartTime === logViewerState.startTime){
       return;
     }
@@ -321,6 +338,14 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     });
   };
 
+  vm.toggleSystemLogs = () => {
+    vm.includeSystemLogs = !vm.includeSystemLogs;
+
+    // data needs to start from scratch
+    vm.fromOffset = -10000 + '.' + vm.startTimeMs;
+    startTimeRequest();
+  };
+
   function validUrl() {
     return vm.namespaceId && vm.appId && vm.programType && vm.runId && vm.fromOffset;
   }
@@ -335,9 +360,13 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
 
     vm.loading = true;
 
-    if (pollPromise){
-      dataSrc.stopPoll(pollPromise.__pollId__);
-      pollPromise = null;
+    if (pollStarted){
+      stopPoll();
+    }
+
+    let filter = `loglevel=${vm.selectedLogLevel}`;
+    if (!vm.includeSystemLogs) {
+      filter += showCondensedLogsQuery;
     }
 
     myLogsApi.nextLogsJsonOffset({
@@ -347,7 +376,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
       'programId' : vm.programId,
       'runId' : vm.runId,
       'fromOffset' : vm.fromOffset,
-      filter: `loglevel=${vm.selectedLogLevel}`
+      filter
     }).$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
@@ -405,13 +434,10 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
           }
         });
         vm.setProgramMetadata(statusRes.status);
-        if(vm.statusType === 0){
-          if (!pollPromise) {
-            pollForNewLogs();
-          }
-        } else {
-          if (pollPromise) {
-            dataSrc.stopPoll(pollPromise.__pollId__);
+
+        if (vm.statusType !== 0){
+          if (pollStarted) {
+            stopPoll();
           }
         }
       },
@@ -421,42 +447,72 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     );
   }
 
-  function pollForNewLogs () {
-    pollPromise = dataSrc.poll({
-      _cdapPath: '/namespaces/' + vm.namespaceId + '/apps/' + vm.appId + '/' + vm.programType + '/' + vm.programId + '/runs/' + vm.runId + '/logs/next?format=json&max=100&fromOffset=' + vm.fromOffset + '&filter=loglevel=' + vm.selectedLogLevel,
-      method: 'GET'
-    },
-    (res) => {
-      //We have recieved more logs, append to current dataset
-      vm.errorRetrievingLogs = false;
+  // NEW IMPLEMENTATION
+  function pollForNewLogs() {
+    pollStarted = true;
 
-      if(res.length > 0){
-        vm.fromOffset = res[res.length-1].offset;
+    let filter = `loglevel=${vm.selectedLogLevel}`;
+    if (!vm.includeSystemLogs) {
+      filter += showCondensedLogsQuery;
+    }
 
-        angular.forEach(res, (element, index) => {
-          //Format dates properly for rendering and computing
-          let formattedDate = new Date(res[index].log.timestamp);
-          res[index].log.timestamp = formattedDate;
-          res[index].log.displayTime = moment(formattedDate).format('L H:mm:ss');
-          res[index].log.stackTrace = res[index].log.stackTrace.trim();
-        });
+    myLogsApi.nextLogsJsonOffset({
+      'namespace' : vm.namespaceId,
+      'appId' : vm.appId,
+      'programType' : vm.programType,
+      'programId' : vm.programId,
+      'runId' : vm.runId,
+      'fromOffset' : vm.fromOffset,
+      filter
+    }).$promise.then(
+      (res) => {
+        vm.errorRetrievingLogs = false;
+        vm.loading = false;
 
-        vm.data = vm.data.concat(res);
-        vm.renderData();
-      }
+        if (!pollStarted) {
+          // This path can happen if th next request come in while the poll
+          // is in the middle of fetching response.
+          $timeout.cancel(pollTimeout);
+          return;
+        }
 
-      if(vm.displayData.length >= vm.viewLimit){
-        dataSrc.stopPoll(pollPromise.__pollId__);
-        pollPromise = null;
-      } else {
-        getStatus();
-      }
+        if (res.length > 0) {
+          vm.fromOffset = res[res.length-1].offset;
+          angular.forEach(res, (element, index) => {
+            //Format dates properly for rendering and computing
+            let formattedDate = new Date(res[index].log.timestamp);
+            res[index].log.timestamp = formattedDate;
+            res[index].log.displayTime = moment(formattedDate).format('L H:mm:ss');
+            res[index].log.stackTrace = res[index].log.stackTrace.trim();
+          });
 
-    }, (err) => {
-      console.log('ERROR: ', err);
-      vm.errorRetrievingLogs = true;
-    });
+          vm.data = vm.data.concat(res);
+          vm.renderData();
+        }
+
+
+        if (vm.displayData.length >= vm.viewLimit){
+          stopPoll();
+        } else {
+          getStatus();
+
+          pollTimeout = $timeout(pollForNewLogs, 5000);
+        }
+      },
+      (err) => {
+        console.log('ERROR: ', err);
+        vm.errorRetrievingLogs = true;
+
+        pollTimeout = $timeout(pollForNewLogs, 5000);
+      });
   }
+
+  function stopPoll() {
+    $timeout.cancel(pollTimeout);
+    pollTimeout = null;
+    pollStarted = false;
+  }
+
 
   vm.getDownloadUrl = (type = 'download') => {
 
@@ -491,15 +547,19 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     vm.loading = true;
     vm.data = [];
     vm.renderData();
-    if(pollPromise){
-      dataSrc.stopPoll(pollPromise.__pollId__);
-      pollPromise = null;
+    if (pollStarted){
+      stopPoll();
     }
 
     //Scroll table to the top
     angular.element(document.getElementsByClassName('logs-table-body'))[0].scrollTop = 0;
     // binds window element to check whether scrollbar has appeared on resize event
     angular.element($window).bind('resize', checkForScrollbar);
+
+    let filter = `loglevel=${vm.selectedLogLevel}`;
+    if (!vm.includeSystemLogs) {
+      filter += showCondensedLogsQuery;
+    }
 
     myLogsApi.nextLogsJsonOffset({
       namespace : vm.namespaceId,
@@ -508,21 +568,24 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
       programId : vm.programId,
       runId : vm.runId,
       fromOffset: vm.fromOffset,
-      filter: `loglevel=${vm.selectedLogLevel}`
+      filter
     }).$promise.then(
       (res) => {
         vm.errorRetrievingLogs = false;
         vm.loading = false;
         vm.data = res;
 
-        if(res.length === 0){
+        if (res.length === 0){
           //Update with start-time
           getStatus();
-          if(vm.statusType !== 0){
-            // vm.loading = false;
+          if (vm.statusType !== 0){
+            vm.loading = false;
             vm.displayData = [];
+            vm.renderData();
+            return;
           }
           vm.renderData();
+          pollForNewLogs();
           return;
         }
 
@@ -543,7 +606,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
         }
 
         if(res.length < vm.viewLimit){
-          getStatus();
+          pollForNewLogs();
         }
       },
       (err) => {
@@ -675,6 +738,17 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     ));
   };
 
+  vm.getEntrySource = (entry) => {
+    let log = entry.log;
+    let mdc = log.mdc;
+    let source = `${log.loggerName}#${log.lineNumber}`;
+    // system log
+    if (!(mdc['.origin'] === 'plugin' || mdc['.origin'] === 'program' && mdc['MDC:eventType'] === 'lifecycle')) {
+      source += `-${log.threadName}`;
+    }
+    return source;
+  };
+
   function offsetScroll() {
     let logsTableContainer = document.getElementsByClassName('logs-table-body');
 
@@ -689,7 +763,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     if (vm.loading || vm.endRequest) { return; }
     offsetScroll();
     requestWithOffset();
-  }, 500);
+  }, 1000);
 
   vm.preventClick = function (event) {
     // disabled is not a valid attribute for <a>
@@ -742,9 +816,8 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     LogViewerStore.dispatch({
       type: 'RESET'
     });
-    if(pollPromise){
-      dataSrc.stopPoll(pollPromise.__pollId__);
-      pollPromise = null;
+    if (pollStarted){
+      stopPoll();
     }
   });
 }
@@ -754,7 +827,6 @@ const link = (scope) => {
 };
 
 angular.module(PKG.name + '.commons')
-  .value('THROTTLE_MILLISECONDS', 250) // throttle infinite scroll
   .directive('myLogViewer', function () {
     return {
       templateUrl: 'log-viewer/log-viewer.html',
@@ -768,7 +840,8 @@ angular.module(PKG.name + '.commons')
         programId: '@',
         runId: '@',
         getDownloadFilename: '&',
-        entityName: '@'
+        entityName: '@',
+        isPipeline: '@'
       },
       link: link,
       bindToController: true

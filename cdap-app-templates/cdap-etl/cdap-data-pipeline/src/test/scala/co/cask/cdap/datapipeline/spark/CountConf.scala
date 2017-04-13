@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,19 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.io;
 
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.common.io.Decoder;
+package co.cask.cdap.datapipeline.spark
 
-import java.io.IOException;
+import co.cask.cdap.api.plugin.PluginConfig
 
 /**
- * Represents reader for decoding object.
- *
- * @param <T> type T to be deserialized.
+ * Conf for CaskCountProgram.
  */
-public interface DatumReader<T> {
+class CountConf(inputPath: String, outputPath: String, filterStr: String) extends PluginConfig with Serializable {
 
-  T read(Decoder decoder, Schema sourceSchema) throws IOException;
+  def getInputPath = inputPath
+
+  def getOutputPath = outputPath
+
+  def getFilterStr = filterStr
 }

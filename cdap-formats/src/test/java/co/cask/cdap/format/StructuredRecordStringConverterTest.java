@@ -16,6 +16,7 @@
 
 package co.cask.cdap.format;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import com.google.common.base.Charsets;
@@ -24,7 +25,10 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Test for {@link StructuredRecordStringConverter} class from {@link StructuredRecord} to json string
@@ -68,13 +72,15 @@ public class StructuredRecordStringConverterTest {
 
   @Test
   public void checkConversion() throws Exception {
-    StructuredRecord initial = getStructuredRecord();
-    String jsonOfRecord = StructuredRecordStringConverter.toJsonString(initial);
-    StructuredRecord recordOfJson = StructuredRecordStringConverter.fromJsonString(jsonOfRecord, schema);
-    assertRecordsEqual(initial, recordOfJson);
+    for (boolean nullable : Arrays.asList(true, false)) {
+      StructuredRecord initial = getStructuredRecord(nullable);
+      String jsonOfRecord = StructuredRecordStringConverter.toJsonString(initial);
+      StructuredRecord recordOfJson = StructuredRecordStringConverter.fromJsonString(jsonOfRecord, schema);
+      assertRecordsEqual(initial, recordOfJson);
+    }
   }
 
-  private StructuredRecord getStructuredRecord() {
+  private StructuredRecord getStructuredRecord(boolean withNullValue) {
     Schema.Field mapField = Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING),
                                                                     Schema.of(Schema.Type.STRING)));
     Schema.Field idField = Schema.Field.of("id", Schema.of(Schema.Type.INT));
@@ -83,6 +89,7 @@ public class StructuredRecordStringConverterTest {
     Schema.Field graduatedField = Schema.Field.of("graduated", Schema.of(Schema.Type.BOOLEAN));
     Schema.Field binaryNameField = Schema.Field.of("binary", Schema.of(Schema.Type.BYTES));
     Schema.Field timeField = Schema.Field.of("time", Schema.of(Schema.Type.LONG));
+    Schema.Field nullableField = Schema.Field.of("nullableField", Schema.nullableOf(Schema.of(Schema.Type.LONG)));
     Schema.Field recordField = Schema.Field.of("innerRecord", Schema.recordOf("innerSchema", mapField, idField));
     StructuredRecord.Builder innerRecordBuilder = StructuredRecord.builder(Schema.recordOf("innerSchema",
                                                                                            mapField, idField));
@@ -91,18 +98,22 @@ public class StructuredRecordStringConverterTest {
       .set("id", 3);
 
     schema = Schema.recordOf("complexRecord", mapField, idField, nameField, scoreField,
-                             graduatedField, binaryNameField, timeField, recordField);
+                             graduatedField, binaryNameField, timeField, nullableField, recordField);
 
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(schema);
     recordBuilder
       .set("headers", ImmutableMap.of("h1", "v1"))
       .set("id", 1)
-      .set("name", "Bob").
-      set("score", 3.4)
+      .set("name", "Bob")
+      .set("score", 3.4)
       .set("graduated", false)
       .set("time", System.currentTimeMillis())
       .set("binary", "Bob".getBytes(Charsets.UTF_8))
       .set("innerRecord", innerRecordBuilder.build());
+
+    if (!withNullValue) {
+      recordBuilder.set("nullableField", 123L);
+    }
 
     return recordBuilder.build();
   }
@@ -111,13 +122,31 @@ public class StructuredRecordStringConverterTest {
     Assert.assertTrue(one.getSchema().getRecordName().equals(two.getSchema().getRecordName()));
     Assert.assertTrue(one.getSchema().getFields().size() == two.getSchema().getFields().size());
     for (Schema.Field field : one.getSchema().getFields()) {
-      if (one.get(field.getName()).getClass().equals(StructuredRecord.class)) {
-        assertRecordsEqual((StructuredRecord) one.get(field.getName()), (StructuredRecord) two.get(field.getName()));
+      Object oneFieldValue = one.get(field.getName());
+      Object twoFieldValue = two.get(field.getName());
+
+      if (oneFieldValue == null) {
+        Assert.assertNull(twoFieldValue);
+      } else if (oneFieldValue.getClass().equals(StructuredRecord.class)) {
+        assertRecordsEqual((StructuredRecord) oneFieldValue, (StructuredRecord) twoFieldValue);
       } else if (field.getName().equals("binary")) {
-        Assert.assertArrayEquals((byte[]) two.get(field.getName()), (byte[]) one.get(field.getName()));
+        Assert.assertArrayEquals(asBytes(oneFieldValue), asBytes(twoFieldValue));
       } else {
-        Assert.assertTrue(one.get(field.getName()).toString().equals(two.get(field.getName()).toString()));
+        Assert.assertTrue(oneFieldValue.toString().equals(twoFieldValue.toString()));
       }
     }
+  }
+
+  /**
+   * Returns a byte[] representing of the given obj. The object must either be a byte[] or {@link ByteBuffer}.
+   */
+  private byte[] asBytes(Object obj) {
+    if (obj.getClass() == byte[].class) {
+      return (byte[]) obj;
+    }
+    if (obj instanceof ByteBuffer) {
+      return Bytes.getBytes((ByteBuffer) obj);
+    }
+    throw new IllegalArgumentException("Expected type to be byte[] or ByteBuffer. Got " + obj.getClass());
   }
 }

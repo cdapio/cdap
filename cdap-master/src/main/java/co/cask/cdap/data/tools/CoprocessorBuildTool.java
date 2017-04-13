@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.FileContextProvider;
+import co.cask.cdap.common.guice.InsecureFileContextLocationFactory;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -40,6 +41,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -94,7 +96,10 @@ public class CoprocessorBuildTool {
         @Singleton
         private LocationFactory providesLocationFactory(Configuration hConf, CConfiguration cConf, FileContext fc) {
           final String namespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
-          return new FileContextLocationFactory(hConf, fc, namespace);
+          if (UserGroupInformation.isSecurityEnabled()) {
+            return new FileContextLocationFactory(hConf, namespace);
+          }
+          return new InsecureFileContextLocationFactory(hConf, namespace, fc);
         }
       }
     );

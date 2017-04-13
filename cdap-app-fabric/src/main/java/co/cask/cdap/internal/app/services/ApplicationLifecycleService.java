@@ -348,7 +348,7 @@ ApplicationLifecycleService extends AbstractIdleService {
 
     Id.Artifact artifactId = Artifacts.toArtifactId(appId.getParent(), newArtifactId).toId();
     return deployApp(appId.getParent(), appId.getApplication(), null, artifactId, requestedConfigStr,
-                     programTerminator);
+                     programTerminator, ownerAdmin.getOwner(appId), appRequest.canUpdateSchedules());
   }
 
   /**
@@ -371,11 +371,13 @@ ApplicationLifecycleService extends AbstractIdleService {
                                                       Id.Artifact artifactId, File jarFile,
                                                       @Nullable String configStr,
                                                       @Nullable KerberosPrincipalId ownerPrincipal,
-                                                      ProgramTerminator programTerminator) throws Exception {
+                                                      ProgramTerminator programTerminator,
+                                                      boolean updateSchedules) throws Exception {
 
     ArtifactDetail artifactDetail = artifactRepository.addArtifact(artifactId, jarFile);
     try {
-      return deployApp(namespace, appName, null, configStr, programTerminator, artifactDetail, ownerPrincipal);
+      return deployApp(namespace, appName, null, configStr, programTerminator, artifactDetail, ownerPrincipal,
+                       updateSchedules);
     } catch (Exception e) {
       // if we added the artifact, but failed to deploy the application, delete the artifact to bring us back
       // to the state we were in before this call.
@@ -413,16 +415,18 @@ ApplicationLifecycleService extends AbstractIdleService {
                                            Id.Artifact artifactId,
                                            @Nullable String configStr,
                                            ProgramTerminator programTerminator) throws Exception {
-    return deployApp(namespace, appName, appVersion, artifactId, configStr, programTerminator, null);
+    return deployApp(namespace, appName, appVersion, artifactId, configStr, programTerminator, null, true);
   }
 
   public ApplicationWithPrograms deployApp(NamespaceId namespace, @Nullable String appName, @Nullable String appVersion,
                                            Id.Artifact artifactId,
                                            @Nullable String configStr,
                                            ProgramTerminator programTerminator,
-                                           @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
+                                           @Nullable KerberosPrincipalId ownerPrincipal,
+                                           boolean updateSchedules) throws Exception {
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
-    return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetail, ownerPrincipal);
+    return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetail, ownerPrincipal,
+                     updateSchedules);
   }
 
   /**
@@ -586,7 +590,8 @@ ApplicationLifecycleService extends AbstractIdleService {
                                             @Nullable String configStr,
                                             ProgramTerminator programTerminator,
                                             ArtifactDetail artifactDetail,
-                                            @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
+                                            @Nullable KerberosPrincipalId ownerPrincipal,
+                                            boolean updateSchedules) throws Exception {
     // Enforce that the current principal has write access to the namespace the app is being deployed to
     authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.WRITE);
 
@@ -599,7 +604,7 @@ ApplicationLifecycleService extends AbstractIdleService {
     // deploy application with newly added artifact
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), namespaceId,
                                                              appClass.getClassName(), appName, appVersion, configStr,
-                                                             ownerPrincipal);
+                                                             ownerPrincipal, updateSchedules);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.

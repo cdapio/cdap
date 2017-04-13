@@ -431,7 +431,7 @@ public class AppFabricClient {
     }
     MockResponder mockResponder = new MockResponder();
     BodyConsumer bodyConsumer = appLifecycleHttpHandler.deploy(request, mockResponder, namespace.getId(), archiveName,
-                                                               config, owner);
+                                                               config, owner, true);
     Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from deploy call should not be null");
 
     try (BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024)) {

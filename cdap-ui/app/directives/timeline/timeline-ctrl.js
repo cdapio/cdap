@@ -101,7 +101,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       runId : this.runId
     }).$promise.then(
       (res) => {
-        let runStatuses =  ['KILLED', 'COMPLETED', 'FAILED', 'STOPPED', 'KILLED_BY_TIMER'];
+        let runStatuses =  ['KILLED', 'COMPLETED', 'FAILED', 'RUN_FAILED', 'STOPPED', 'KILLED_BY_TIMER'];
         if (this.pollPromise && runStatuses.indexOf(res.status) !== -1) {
           this.dataSrc.stopPoll(this.pollPromise.__pollId__);
           this.pollPromise = null;

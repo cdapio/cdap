@@ -27,7 +27,7 @@ import co.cask.cdap.etl.planner.StageInfo;
 public class SparkAggregatorContext extends AbstractAggregatorContext {
 
   public SparkAggregatorContext(SparkClientContext context, LookupProvider lookup, StageInfo stageInfo) {
-    super(context, context, context.getMetrics(),
+    super(context, context, context, context.getMetrics(),
           lookup, context.getLogicalStartTime(), context.getRuntimeArguments(), context.getAdmin(), stageInfo);
   }
 
