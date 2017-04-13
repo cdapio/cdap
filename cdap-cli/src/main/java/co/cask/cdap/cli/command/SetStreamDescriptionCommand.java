@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,6 +58,6 @@ public class SetStreamDescriptionCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Sets the description of %s.", Fragment.of(Article.A, ElementType.STREAM.getName()));
+    return String.format("Sets the description of %s", Fragment.of(Article.A, ElementType.STREAM.getName()));
   }
 }

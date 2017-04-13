@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -89,7 +89,7 @@ public class LoadPreferencesDeprecatedCommand extends AbstractSetPreferencesComm
 
   @Override
   public String getDescription() {
-    return String.format("Sets the preferences of %s from a local JSON config file (Deprecated as of CDAP 4.1.0. " +
-                           "Use %s instead)", Fragment.of(Article.A, type.getName()), determinePattern("load"));
+    return String.format("Sets the preferences of %s from a local JSON config file. (Deprecated as of CDAP 4.1.0. " +
+                           "Use %s instead.)", Fragment.of(Article.A, type.getName()), determinePattern("load"));
   }
 }

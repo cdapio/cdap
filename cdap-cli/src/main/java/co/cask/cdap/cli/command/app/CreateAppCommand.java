@@ -96,7 +96,7 @@ public class CreateAppCommand extends AbstractAuthCommand {
                            "containing the application config. For example, the file contents could contain: " +
                            "'{ \"config\": { \"stream\": \"purchases\" } }'. In this case, the application would " +
                            "receive '{ \"stream\": \"purchases\" }' as its config object. Finally, an optional " +
-                           "principal may be given",
+                           "principal may be given.",
       Fragment.of(Article.A, ElementType.APP.getName()), ApplicationId.DEFAULT_VERSION);
   }
 }
