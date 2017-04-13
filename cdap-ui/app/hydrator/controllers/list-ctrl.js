@@ -16,11 +16,9 @@
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorPlusPlusListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium, myLoadingService, mySparkApi, $interval, moment, MyPipelineStatusMapper, myPipelineCommonApi) {
-    var dataSrc = new MyCDAPDataSource($scope);
     var vm = this;
     vm.$interval = $interval;
     vm.moment = moment;
-    vm.runningPolls = [];
     vm.pipelineList = [];
     vm.pipelineListLoaded = false;
     vm.MyPipelineStatusMapper = MyPipelineStatusMapper;
@@ -138,7 +136,6 @@ angular.module(PKG.name + '.feature.hydrator')
 
     $scope.$on('$destroy', function() {
       eventEmitter.off(window.CaskCommon.globalEvents.PUBLISHPIPELINE, vm.reloadState);
-      stopPollingAll();
     });
 
     function fetchRunsInfo(app) {
@@ -288,11 +285,5 @@ angular.module(PKG.name + '.feature.hydrator')
             });
           }
         });
-    }
-
-    function stopPollingAll() {
-      vm.runningPolls.forEach(function (pollId) {
-        dataSrc.stopPoll(pollId);
-      });
     }
   });
