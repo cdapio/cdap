@@ -26,7 +26,10 @@ angular.module(PKG.name + '.feature.hydrator')
     vm.MyPipelineStatusMapper = MyPipelineStatusMapper;
     var eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
     vm.statusCount = {
-      running: 0,
+      running: {
+        batch: 0,
+        realtime: 0
+      },
       draft: 0
     };
     vm.GLOBALS = GLOBALS;
@@ -42,7 +45,7 @@ angular.module(PKG.name + '.feature.hydrator')
         Math.floor(vm.pipelineList.length) >= pageNumber
       );
     };
-    
+
     const setCurrentPage = () => {
       let pageNumber = parseInt($stateParams.page, 10);
       if (pageNumber&& checkForValidPage(pageNumber)) {
@@ -51,8 +54,8 @@ angular.module(PKG.name + '.feature.hydrator')
         vm.currentPage = 1;
       }
       vm.goToPage();
-    };    
-    
+    };
+
     vm.reloadState = function() {
       $state.reload();
     };
@@ -190,22 +193,12 @@ angular.module(PKG.name + '.feature.hydrator')
             app._stats.lastStartTime = runs.length > 0 ? runs[0].start : 'N/A';
             var currentRun = runs[0];
             setDurationTimers(app, currentRun);
-            for (var i = 0; i < runs.length; i++) {
-              var status = runs[i].status;
-
-              if (['RUNNING', 'STARTING', 'STOPPING'].indexOf(status) === -1) {
-                app._latest = runs[i];
-                break;
-              }
-            }
-            if (app._latest) {
-              app._latest.status = vm.MyPipelineStatusMapper.lookupDisplayStatus(app._latest.status);
-            }  
+            app._latest = currentRun;
+            statusMap[app.id] = vm.MyPipelineStatusMapper.lookupDisplayStatus(app._latest.status);
           } else {
             statusMap[app.id] = vm.MyPipelineStatusMapper.lookupDisplayStatus('SUSPENDED');
-            updateStatusAppObject();
           }
-          
+          updateStatusAppObject();
         });
     }
 
@@ -216,7 +209,7 @@ angular.module(PKG.name + '.feature.hydrator')
         .$promise
         .then(function success(res) {
           vm.pipelineList = res;
-          
+
           fetchDrafts().then(setCurrentPage);
 
           angular.forEach(vm.pipelineList, function (app) {
@@ -242,7 +235,7 @@ angular.module(PKG.name + '.feature.hydrator')
           if (res && res.length) {
             vm.pipelineList.forEach(function (app) {
               if (app.id === batchParams.appId) {
-                app._stats.nextRun = res[0].time;    
+                app._stats.nextRun = res[0].time;
               }
             });
           }
@@ -284,10 +277,10 @@ angular.module(PKG.name + '.feature.hydrator')
       })
       .then(function (res) {
         vm.runningPolls.push(res.__pollId__);
+        vm.statusCount.running.batch = 0;
         angular.forEach(res, function (app) {
           if (app.status === 'RUNNING') {
-            statusMap[app.appId] = vm.MyPipelineStatusMapper.lookupDisplayStatus('RUNNING');
-            vm.statusCount.running++;
+            vm.statusCount.running.batch++;
           }
         });
 
@@ -303,10 +296,11 @@ angular.module(PKG.name + '.feature.hydrator')
       })
       .then(function (res) {
         vm.runningPolls.push(res.__pollId__);
+        vm.statusCount.running.realtime = 0;
         angular.forEach(res, function (app) {
           if (app.status === 'RUNNING') {
             statusMap[app.appId] = vm.MyPipelineStatusMapper.lookupDisplayStatus(app.status);
-            vm.statusCount.running++;
+            vm.statusCount.running.realtime++;
           }
         });
 
@@ -320,7 +314,7 @@ angular.module(PKG.name + '.feature.hydrator')
         if (app._status === 'COMPLETED' || app._status === 'KILLED') {
           destroyTimerForApp(app);
         }
-        app.displayStatus = vm.MyPipelineStatusMapper.getPipelineDisplayStatus(app);
+        app.displayStatus = app._status;
       });
     }
 
