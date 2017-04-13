@@ -9,7 +9,7 @@
 Transactional Messaging System
 ==============================
 
-.. topic::  **Note:** 
+.. topic::  **Note:**
 
     TMS is currently a **beta** feature of CDAP |release|, and is subject to change without notice.
 
@@ -44,8 +44,11 @@ A valid topic name can only contain characters from the
 
 Messages
 ========
-Messages in TMS are published as either `non-transactional <Non-transactional Messages>`__
-or `transactional <Transactional Messages>`__ messages.
+Messages in TMS are published as either :ref:`non-transactional
+<transactional-messaging-system-non-trans>` or :ref:`transactional
+<transactional-messaging-system-trans>` messages.
+
+.. _transactional-messaging-system-non-trans:
 
 Non-transactional Messaging
 ---------------------------
@@ -73,6 +76,8 @@ available for consumption (fetching) as soon as the method call that publishes t
 
 Note that non-transactional consumers see *all* messages of a topic, including messages that
 are currently in a transaction.
+
+.. _transactional-messaging-system-trans:
 
 Transactional Messaging
 -----------------------
@@ -104,7 +109,7 @@ Consider a workflow that modifies a dataset, and at the same time publishes a no
 a topic.
 
 If it were to **publish to a topic non-transactionally,** a problem can arise as there is
-no guarantee that the notification will be published only after the dataset commit. 
+no guarantee that the notification will be published only after the dataset commit.
 If it were to **publish transactionally to a TMS topic,** there is the guarantee that
 transaction consumers will only see the notification if the write to the dataset is
 successfully committed:
@@ -125,7 +130,7 @@ Currently, TMS:
 
 Java API
 ========
-Javadocs describing the TMS Java API are available in the 
+Javadocs describing the TMS Java API are available in the
 :javadoc:`package co.cask.cdap.api.messaging <co/cask/cdap/api/messaging/package-summary>`:
 
 - :javadoc:`MessagingAdmin <co/cask/cdap/api/messaging/MessagingAdmin>`: Provides topic administration functions
