@@ -17,6 +17,8 @@
 @import "../../../styles/variables.less";
 
 my-function-dropdown-with-alias {
+  padding: 5px;
+  display: block;
   .row {
     margin-bottom: 5px;
     > div {
@@ -40,6 +42,7 @@ my-function-dropdown-with-alias {
     }
     [class*="col-xs-"] {
       padding-left: 0;
+      padding-right: 5px;
 
       &:first-child {
         padding-right: 0;
@@ -50,6 +53,11 @@ my-function-dropdown-with-alias {
       @media (max-width: 801px), (min-width: @screen-lg-min) and (max-width: 1542px) {
         margin-top: 5px;
       }
+    }
+    .btn.btn-danger,
+    .btn.btn-info {
+      padding: 6px;
+      display: inline-block;
     }
   }
 }
