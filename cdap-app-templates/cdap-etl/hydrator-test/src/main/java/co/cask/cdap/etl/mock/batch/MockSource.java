@@ -36,6 +36,7 @@ import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import co.cask.cdap.test.DataSetManager;
+import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -140,12 +141,30 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
    */
   public static void writeInput(DataSetManager<Table> tableManager,
                                 Iterable<StructuredRecord> records) throws Exception {
+    writeInput(tableManager, null, records);
+  }
+
+  /**
+   * Used to write the input record with specified row key for the pipeline run.
+   * Should be called after the pipeline has been created.
+   *
+   * @param tableManager dataset manager used to write to the source dataset
+   * @param rowKey the row key of the table
+   * @param record record that should be the input for the pipeline
+   */
+  public static void writeInput(DataSetManager<Table> tableManager, String rowKey,
+                                StructuredRecord record) throws Exception {
+    writeInput(tableManager, rowKey, ImmutableList.of(record));
+  }
+
+  private static void writeInput(DataSetManager<Table> tableManager, @Nullable String rowKey,
+                                 Iterable<StructuredRecord> records) throws Exception {
     tableManager.flush();
     Table table = tableManager.get();
     // write each record as a separate row, with the serialized record as one column and schema as another
     // each rowkey will be a UUID.
     for (StructuredRecord record : records) {
-      byte[] row = Bytes.toBytes(UUID.randomUUID());
+      byte[] row = rowKey == null ? Bytes.toBytes(UUID.randomUUID()) : Bytes.toBytes(rowKey);
       table.put(row, SCHEMA_COL, Bytes.toBytes(record.getSchema().toString()));
       table.put(row, RECORD_COL, Bytes.toBytes(StructuredRecordStringConverter.toJsonString(record)));
     }
