@@ -491,7 +491,17 @@ public class CLIMainTest extends CLITestBase {
   public void testRuntimeArgs() throws Exception {
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
     ServiceId service = NamespaceId.DEFAULT.app(FakeApp.NAME).service(PrefixedEchoHandler.NAME);
+    testServiceRuntimeArgs(qualifiedServiceId, service);
+  }
 
+  @Test
+  public void testVersionedRuntimeArgs() throws Exception {
+    String versionedServiceId = String.format("%s.%s version %s", FakeApp.NAME, PrefixedEchoHandler.NAME, V1_SNAPSHOT);
+    ServiceId service = FAKE_APP_ID_V_1.service(PrefixedEchoHandler.NAME);
+    testServiceRuntimeArgs(versionedServiceId, service);
+  }
+
+  public void testServiceRuntimeArgs(String qualifiedServiceId, ServiceId service) throws Exception {
     Map<String, String> runtimeArgs = ImmutableMap.of("sdf", "bacon");
     String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId + " '" + runtimeArgsKV + "'",
