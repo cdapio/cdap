@@ -279,6 +279,7 @@ angular.module(PKG.name + '.feature.hydrator')
                 artifact: value.artifact,
                 description: myHelpers.objectQuery(value, 'description'),
                 _status: 'Draft',
+                displayStatus: vm.MyPipelineStatusMapper.lookupDisplayStatus('DRAFT'),
                 _stats: {
                   numRuns: 'N/A',
                   lastStartTime: 'N/A'
