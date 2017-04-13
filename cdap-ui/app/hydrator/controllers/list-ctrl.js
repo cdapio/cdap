@@ -26,10 +26,7 @@ angular.module(PKG.name + '.feature.hydrator')
     vm.MyPipelineStatusMapper = MyPipelineStatusMapper;
     var eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
     vm.statusCount = {
-      running: {
-        batch: 0,
-        realtime: 0
-      },
+      running: 0,
       draft: 0
     };
     vm.GLOBALS = GLOBALS;
@@ -141,7 +138,6 @@ angular.module(PKG.name + '.feature.hydrator')
 
     $scope.$on('$destroy', function() {
       eventEmitter.off(window.CaskCommon.globalEvents.PUBLISHPIPELINE, vm.reloadState);
-      destroyAllTimers();
       stopPollingAll();
     });
 
@@ -192,9 +188,12 @@ angular.module(PKG.name + '.feature.hydrator')
             app._stats.numRuns = runs.length;
             app._stats.lastStartTime = runs.length > 0 ? runs[0].start : 'N/A';
             var currentRun = runs[0];
-            setDurationTimers(app, currentRun);
+            setDuration(app, currentRun);
             app._latest = currentRun;
             statusMap[app.id] = vm.MyPipelineStatusMapper.lookupDisplayStatus(app._latest.status);
+            if (currentRun.status === 'RUNNING') {
+              vm.statusCount.running += 1;
+            }
           } else {
             statusMap[app.id] = vm.MyPipelineStatusMapper.lookupDisplayStatus('SUSPENDED');
           }
@@ -214,11 +213,8 @@ angular.module(PKG.name + '.feature.hydrator')
 
           angular.forEach(vm.pipelineList, function (app) {
             app._stats = {};
-
             fetchRunsInfo(app);
           });
-
-          fetchStatus();
           fetchWorkflowNextRunTimes();
         });
     }
@@ -248,21 +244,8 @@ angular.module(PKG.name + '.feature.hydrator')
       });
     }
 
-    function setDurationTimers(app, run) {
-      if (run.status === 'RUNNING') {
-
-        if (!app.pipelineDurationTimer) {
-          app.pipelineDurationTimer = vm.$interval(() => {
-            if (run.end) {
-              let endDuration = run.end - run.start;
-              app.duration = typeof run.end === 'number' ? vm.moment.utc(endDuration * 1000).format('HH:mm:ss') : 'N/A';
-            } else {
-              let runningDuration = new Date().getTime() - (run.start * 1000);
-              app.duration = vm.moment.utc(runningDuration).format('HH:mm:ss');
-            }
-          }, 1000);
-        }
-      } else {
+    function setDuration(app, run) {
+      if (run.status !== 'RUNNING') {
         let lastRunDuration = run.end - run.start;
 
         let setInitialTimer = new Date().getTime() - (run.start * 1000);
@@ -272,53 +255,9 @@ angular.module(PKG.name + '.feature.hydrator')
       }
     }
 
-    function fetchStatus() {
-      // fetching ETL Batch statuses
-      dataSrc.poll({
-        _cdapNsPath: '/status',
-        method: 'POST',
-        interval: 2000,
-        body: batch
-      })
-      .then(function (res) {
-        vm.runningPolls.push(res.__pollId__);
-        vm.statusCount.running.batch = 0;
-        angular.forEach(res, function (app) {
-          if (app.status === 'RUNNING') {
-            vm.statusCount.running.batch++;
-          }
-        });
-
-        updateStatusAppObject();
-      }); // end of ETL Batch
-
-      // fetching ETL Realtime statuses
-      dataSrc.poll({
-        _cdapNsPath: '/status',
-        method: 'POST',
-        interval: 2000,
-        body: realtime
-      })
-      .then(function (res) {
-        vm.runningPolls.push(res.__pollId__);
-        vm.statusCount.running.realtime = 0;
-        angular.forEach(res, function (app) {
-          if (app.status === 'RUNNING') {
-            statusMap[app.appId] = vm.MyPipelineStatusMapper.lookupDisplayStatus(app.status);
-            vm.statusCount.running.realtime++;
-          }
-        });
-
-        updateStatusAppObject();
-      });
-    }
-
     function updateStatusAppObject() {
       angular.forEach(vm.pipelineList, function (app) {
         app._status = app._status || statusMap[app.id];
-        if (app._status === 'COMPLETED' || app._status === 'KILLED') {
-          destroyTimerForApp(app);
-        }
         app.displayStatus = app._status;
       });
     }
@@ -348,19 +287,6 @@ angular.module(PKG.name + '.feature.hydrator')
             });
           }
         });
-    }
-
-    function destroyTimerForApp(app) {
-      if (app.pipelineDurationTimer) {
-        vm.$interval.cancel(app.pipelineDurationTimer);
-        app.pipelineDurationTimer = null;
-      }
-    }
-
-    function destroyAllTimers() {
-      angular.forEach(vm.pipelineList, function (app) {
-        destroyTimerForApp(app);
-      });
     }
 
     function stopPollingAll() {
