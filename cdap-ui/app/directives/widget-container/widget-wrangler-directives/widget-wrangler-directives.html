@@ -13,7 +13,16 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<div>
+<div class="clearfix">
+  <div class="wrangler-button pull-right">
+    <button
+      class="btn btn-primary"
+      ng-click="openWranglerModal()"
+    >
+      <span class="fa icon-DataPreparation"></span>
+      <span>Wrangle</span>
+    </button>
+  </div>
   <textarea
     class="form-control"
     ng-trim="false"
@@ -22,13 +31,4 @@
     placeholder="{{placeholder}}"
   >
   </textarea>
-  <div class="wrangler-button pull-right">
-    <button
-      class="btn btn-primary"
-      ng-click="openWranglerModal()"
-    >
-      <span class="fa icon-DataWrangler"></span>
-      <span>Wrangle</span>
-    </button>
-  </div>
 </div>

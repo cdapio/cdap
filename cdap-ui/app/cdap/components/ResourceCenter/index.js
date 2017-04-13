@@ -83,7 +83,7 @@ export default class ResourceCenter extends Component {
           title: T.translate('features.Resource-Center.Library.label'),
           description: T.translate('features.Resource-Center.Library.description'),
           actionLabel: T.translate('features.Resource-Center.Library.actionbtn0'),
-          iconClassName: 'fa fa-book',
+          iconClassName: 'fa icon-library',
           wizardId: 'createLibraryWizard'
         },
         {
