@@ -228,6 +228,11 @@ class HydratorPlusPlusTopPanelCtrl {
       this.stopPreview();
     }
   }
+
+  onPreviewStart() {
+    this._checkAndShowConfirmationModalOnActionPlugin(this.runPreview.bind(this));
+  }
+
   runPreview() {
     this.previewLoading = true;
     this.loadingLabel = 'Starting';
@@ -549,6 +554,38 @@ class HydratorPlusPlusTopPanelCtrl {
         proceedCb();
       }
       return this.$q.when(goTonextStep);
+    }
+  }
+
+  _checkAndShowConfirmationModalOnActionPlugin(proceedCb) {
+    let config = this.HydratorPlusPlusConfigStore.getConfigForExport().config;
+
+    let actions = config.stages.filter((stage) => {
+      return stage.plugin.type === 'action';
+    });
+
+    let postActions = config.postActions;
+
+    if (actions.length > 0 || postActions.length > 0) {
+      this.showRunTimeArguments = false;
+      let confirmModal = this.$uibModal.open({
+          templateUrl: '/assets/features/hydrator/templates/create/popovers/run-preview-action-confirmation-modal.html',
+          size: 'lg',
+          backdrop: 'static',
+          keyboard: false,
+          windowTopClass: 'confirm-modal hydrator-modal center'
+        });
+
+      confirmModal.result.then((confirm) => {
+        if (confirm && proceedCb) {
+          proceedCb();
+        }
+      });
+
+    } else {
+      if (proceedCb) {
+        proceedCb();
+      }
     }
   }
 }

@@ -63,8 +63,7 @@ class HydratorPlusPlusNodeConfigCtrl {
       this.fetchPreview();
     }
 
-    this.activeTab = this.isPreviewMode ? 2 : 1;
-
+    this.activeTab = this.isPreviewMode && !rPlugin.isAction ? 2 : 1;
 
     // Timeouts
     this.setStateTimeout = null;
