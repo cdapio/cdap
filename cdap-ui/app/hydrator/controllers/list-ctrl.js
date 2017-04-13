@@ -160,7 +160,7 @@ angular.module(PKG.name + '.feature.hydrator')
         });
       } else if (app.artifact.name === GLOBALS.etlDataStreams) {
         api = mySparkApi;
-
+        params.sparkId = 'DataStreamsSparkStreaming';
         realtime.push({
           appId: app.id,
           programType: 'Spark',
@@ -192,6 +192,7 @@ angular.module(PKG.name + '.feature.hydrator')
               vm.statusCount.running += 1;
             }
           } else {
+            app._stats.numRuns = 0;
             statusMap[app.id] = vm.MyPipelineStatusMapper.lookupDisplayStatus('SUSPENDED');
           }
           updateStatusAppObject();
