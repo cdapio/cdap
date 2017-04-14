@@ -31,23 +31,18 @@ import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.api.streaming.Windower;
 import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.streaming.api.java.JavaStreamingContextFactory;
 import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -58,9 +53,6 @@ import javax.annotation.Nullable;
  * Driver for running pipelines using Spark Streaming.
  */
 public class SparkStreamingPipelineDriver implements JavaSparkMain {
-  private static final Logger LOG = LoggerFactory.getLogger(SparkStreamingPipelineDriver.class);
-  private static final Logger WRAPPERLOGGER = new LocationAwareMDCWrapperLogger(LOG, Constants.EVENT_TYPE_TAG,
-                                                                                Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
@@ -70,11 +62,6 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
 
   @Override
   public void run(final JavaSparkExecutionContext sec) throws Exception {
-    String arguments = Joiner.on(", ").withKeyValueSeparator("=").join(sec.getRuntimeArguments());
-    WRAPPERLOGGER.info("Pipeline '{}' is started by user '{}' with arguments {}",
-                       sec.getApplicationSpecification().getName(),
-                       UserGroupInformation.getCurrentUser().getShortUserName(),
-                       arguments);
 
     final DataStreamsPipelineSpec pipelineSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
                                                                DataStreamsPipelineSpec.class);
@@ -117,8 +104,6 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
     JavaStreamingContext jssc = run(pipelineSpec, pipelinePhase, sec, checkpointDir);
     jssc.start();
 
-    WRAPPERLOGGER.info("Pipeline '{}' running", sec.getApplicationSpecification().getName());
-
     boolean stopped = false;
     try {
       // most programs will just keep running forever.
@@ -131,7 +116,6 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
       }
     }
 
-    WRAPPERLOGGER.info("Pipeline '{}' killed", sec.getApplicationSpecification().getName());
   }
 
   private JavaStreamingContext run(final DataStreamsPipelineSpec pipelineSpec,

@@ -16,17 +16,21 @@
 
 package co.cask.cdap.datastreams;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
 import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.spark.SparkConf;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -42,6 +46,9 @@ import java.util.UUID;
  */
 public class DataStreamsSparkLauncher extends AbstractSpark {
   private static final Logger LOG = LoggerFactory.getLogger(DataStreamsSparkLauncher.class);
+  private static final Logger WRAPPERLOGGER = new LocationAwareMDCWrapperLogger(LOG, Constants.EVENT_TYPE_TAG,
+                                                                                Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
+
   static final String IS_UNIT_TEST = "hydrator.is.unit.test";
   static final String NUM_SOURCES = "hydrator.num.sources";
   static final String EXTRA_OPTS = "hydrator.extra.opts";
@@ -91,6 +98,12 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
   @Override
   public void initialize() throws Exception {
     SparkClientContext context = getContext();
+    String arguments = Joiner.on(", ").withKeyValueSeparator("=").join(context.getRuntimeArguments());
+    WRAPPERLOGGER.info("Pipeline '{}' is started by user '{}' with arguments {}",
+                       context.getApplicationSpecification().getName(),
+                       UserGroupInformation.getCurrentUser().getShortUserName(),
+                       arguments);
+
     SparkConf sparkConf = new SparkConf();
     // spark... makes you set this to at least the number of receivers (streaming sources)
     // because it holds one thread per receiver, or one core in distributed mode.
@@ -144,6 +157,16 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
           String.format("Unable to create checkpoint directory '%s' for the pipeline.", pipelineCheckpointDir));
       }
     }
+    WRAPPERLOGGER.info("Pipeline '{}' running", context.getApplicationSpecification().getName());
+  }
+
+  @Override
+  public void destroy() {
+    super.destroy();
+    ProgramStatus status = getContext().getState().getStatus();
+    WRAPPERLOGGER.info("Pipeline '{}' {}", getContext().getApplicationSpecification().getName(),
+                       status == ProgramStatus.COMPLETED ? "succeeded" : status.name().toLowerCase());
+
   }
 
   private boolean ensureDirExists(Location location) throws IOException {
