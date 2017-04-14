@@ -225,6 +225,10 @@ export default class WorkspaceModal extends Component {
   }
 
   attemptModalClose() {
+    if (this.props.singleWorkspaceMode) {
+      this.props.toggle();
+      return;
+    }
     if (!this.state.activeWorkspace || this.props.isEmpty) { return; }
 
     this.props.toggle();
@@ -287,5 +291,6 @@ export default class WorkspaceModal extends Component {
 WorkspaceModal.propTypes = {
   toggle: PropTypes.func.isRequired,
   onCreate: PropTypes.func,
-  isEmpty: PropTypes.bool
+  isEmpty: PropTypes.bool,
+  singleWorkspaceMode: PropTypes.bool
 };
