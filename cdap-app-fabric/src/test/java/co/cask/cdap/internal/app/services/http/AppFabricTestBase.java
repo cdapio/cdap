@@ -249,6 +249,10 @@ public abstract class AppFabricTestBase {
     cConf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     cConf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+    String updateSchedules = System.getProperty(Constants.AppFabric.APP_UPDATE_SCHEDULES);
+    if (updateSchedules != null) {
+      cConf.set(Constants.AppFabric.APP_UPDATE_SCHEDULES, updateSchedules);
+    }
     return cConf;
   }
 

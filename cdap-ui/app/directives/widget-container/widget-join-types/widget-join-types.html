@@ -14,7 +14,8 @@
   the License.
 -->
 
-<div class="multi-checkboxes-container">
+<div class="multi-checkboxes-container"
+     ng-class="{empty: JoinTypes.inputs.length === 0}">
   <div ng-if="JoinTypes.inputs.length > 0">
     <select class="form-control"
             ng-model="JoinTypes.joinType"
@@ -36,10 +37,8 @@
           <div class="checkbox">
             <label>
               <input type="checkbox"
-                     class="checkbox"
                      ng-model="input.selected"
                      ng-change="JoinTypes.formatOutput()">
-
               {{ input.name }}
             </label>
           </div>

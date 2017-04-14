@@ -30,7 +30,7 @@ import DropColumn from 'components/DataPrep/Directives/DropColumn';
 import FilterDirective from 'components/DataPrep/Directives/Filter';
 import FindAndReplaceDirective from 'components/DataPrep/Directives/FindAndReplace';
 import CopyColumnDirective from 'components/DataPrep/Directives/CopyColumn';
-
+import ee from 'event-emitter';
 require('./ColumnActionsDropdown.scss');
 
 export default class ColumnActionsDropdown extends Component {
@@ -74,10 +74,13 @@ export default class ColumnActionsDropdown extends Component {
         tag: ParseDirective
       }
     ];
+    this.eventEmitter = ee(ee);
+    this.eventEmitter.on('CLOSE_POPOVER', this.toggleDropdown.bind(this, false));
   }
 
   componentWillMount() {
     this.dropdownId = shortid.generate();
+    this.eventEmitter.off('CLOSE_POPOVER', this.toggleDropdown.bind(this, false));
   }
 
   componentWillUnmount() {
@@ -87,8 +90,8 @@ export default class ColumnActionsDropdown extends Component {
     Mousetrap.unbind('esc');
   }
 
-  toggleDropdown() {
-    let newState = !this.state.dropdownOpen;
+  toggleDropdown(toggleState) {
+    let newState = typeof toggleState === 'boolean' ? toggleState : !this.state.dropdownOpen;
 
     this.setState({
       dropdownOpen: newState,
@@ -109,7 +112,9 @@ export default class ColumnActionsDropdown extends Component {
 
       Mousetrap.bind('esc', this.toggleDropdown);
     } else {
-      this.documentClick$.dispose();
+      if (this.documentClick$) {
+        this.documentClick$.dispose();
+      }
       Mousetrap.unbind('esc');
     }
   }
@@ -155,7 +160,7 @@ export default class ColumnActionsDropdown extends Component {
                   >
                     <Tag
                       column={this.props.column}
-                      onComplete={this.toggleDropdown}
+                      onComplete={this.toggleDropdown.bind(this, false)}
                       isOpen={this.state.open === directive.id}
                       close={this.directiveClick.bind(this, null)}
                     />

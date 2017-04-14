@@ -32,7 +32,7 @@ public class AppRequest<T> {
   private final PreviewConfig preview;
   @SerializedName("principal")
   private final String ownerPrincipal;
-  @SerializedName("update-schedules")
+  @SerializedName("app.deploy.update.schedules")
   private final Boolean updateSchedules;
 
 
@@ -41,19 +41,19 @@ public class AppRequest<T> {
   }
 
   public AppRequest(ArtifactSummary artifact, @Nullable T config) {
-    this(artifact, config, null, null, true);
+    this(artifact, config, null, null, null);
   }
 
   public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview) {
-    this(artifact, config, preview, null, true);
+    this(artifact, config, preview, null, null);
   }
 
   public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable String ownerPrincipal) {
-    this(artifact, config, null, ownerPrincipal, true);
+    this(artifact, config, null, ownerPrincipal, null);
   }
 
   public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview,
-                    @Nullable String ownerPrincipal, boolean updateSchedules) {
+                    @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules) {
     this.artifact = artifact;
     this.config = config;
     this.preview = preview;
@@ -80,7 +80,8 @@ public class AppRequest<T> {
     return ownerPrincipal;
   }
 
+  @Nullable
   public Boolean canUpdateSchedules() {
-    return updateSchedules == null || updateSchedules;
+    return updateSchedules;
   }
 }

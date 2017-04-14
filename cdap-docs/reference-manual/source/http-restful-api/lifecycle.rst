@@ -66,7 +66,8 @@ and an optional application configuration. For example:
       "config": {
         "stream": "purchaseStream"
       },
-      "principal":"user/example.net@EXAMPLEKDC.NET"
+      "principal":"user/example.net@EXAMPLEKDC.NET",
+      "app.deploy.update.schedules":"true"
     }
 
 will create an application named ``purchaseWordCount`` from the example ``WordCount`` artifact.
@@ -76,6 +77,11 @@ to create a stream named ``purchaseStream`` instead of using the default stream 
 Optionally, you can specify a Kerberos principal with which the application should be deployed.
 If a Kerberos principal is specified, then all the streams and datasets created by the
 application will be created with the application's Kerberos principal.
+
+Optionally, you can set or reset the flag ``app.deploy.update.schedules``. If true,
+redeploying an application will modify any schedules that currently exist for the application;
+if false, redeploying an application does not create any new schedules and existing schedules
+are neither deleted nor updated.
 
 Update an Application
 ---------------------
@@ -126,6 +132,10 @@ and Kerberos principal with which the application is to be deployed (if required
 
   X-Principal: <Kerberos Principal>
 
+and enable or disable updating schedules of the existing workflows using the header::
+
+  X-App-Deploy-Update-Schedules: <Update Schedules>
+
 This will add the JAR file as an artifact and then create an application from that artifact.
 The archive name must be in the form ``<artifact-name>-<artifact-version>.jar``.
 An optional header can supply a configuration object as a serialized JSON string::
@@ -155,6 +165,7 @@ We can deploy it with this RESTful call::
   POST /v3/namespaces/<namespace-id>/apps
   -H "X-Archive-Name: <jar-name>" \
   -H "X-Principal: <kerberos-principal>" \
+  -H "X-App-Deploy-Update-Schedules: true" \
   -H 'X-App-Config: "{\"streamName\" : \"newStream\", \"datasetName\" : \"newDataset\" }" ' \
   --data-binary "@<jar-location>"
 

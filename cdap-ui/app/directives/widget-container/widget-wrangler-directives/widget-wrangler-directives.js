@@ -23,39 +23,9 @@
         properties: '='
       },
       templateUrl: 'widget-container/widget-wrangler-directives/widget-wrangler-directives.html',
-      controller: function($scope, myHelpers, $stateParams, myDataprepApi, EventPipe, $uibModal) {
+      controller: function($scope, myHelpers, $uibModal) {
         $scope.rows = myHelpers.objectQuery($scope, 'config', 'widget-attributes', 'rows');
         $scope.placeholder = myHelpers.objectQuery($scope, 'config', 'widget-attributes', 'rows') || '';
-        $scope.fetchWorkspaceDetails = function() {
-          if ($scope.properties.workspaceId) {
-            let workspaceId =  $scope.properties.workspaceId;
-            let requestObj = {
-              namespace: $stateParams.namespace,
-              workspaceId: $scope.properties.workspaceId
-            };
-            myDataprepApi.getWorkspace(requestObj)
-              .$promise
-              .then(res => {
-                let directives = myHelpers.objectQuery(res, 'values', 0, 'recipe', 'directives');
-                $scope.model = directives.join('\n');
-                let requestBody = window.CaskCommon.DataPrepHelper.directiveRequestBodyCreator(directives, workspaceId);
-
-                myDataprepApi
-                  .getSchema(requestObj, requestBody)
-                  .$promise
-                  .then(fields => {
-                    let schemaValue = {
-                      name: 'avroSchema',
-                      type: 'record',
-                      fields
-                    };
-                    EventPipe.emit('schema.import', JSON.stringify(schemaValue));
-                  });
-              });
-          }
-        };
-        EventPipe.on('wrangler.updateworkspace', $scope.fetchWorkspaceDetails);
-        $scope.fetchWorkspaceDetails();
 
         $scope.openWranglerModal = function() {
           $uibModal.open({
