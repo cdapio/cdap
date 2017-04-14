@@ -31,8 +31,8 @@ source _common/common-build.sh
 
 function usage() {
   local warnings
-  if [[ -n $1 ]]; then
-    echo_red_bold "Unknown action: " $1
+  if [[ -n ${1} ]]; then
+    echo_red_bold "Unknown action: " ${1}
     warnings=1
     echo
   fi
@@ -61,19 +61,19 @@ function usage() {
 function run_command() {
   case ${1} in
     clean )             clean_targets;;
-    docs )              build_docs_only; warnings=$?;;
-    docs-all )          build_docs_set; warnings=$?;;
+    docs )              build_docs_only; warnings=${?};;
+    docs-all )          build_docs_set; warnings=${?};;
     docs-cli )          build_docs_cli;;
     docs-first-pass )   build_docs_first_pass;;
     docs-second-pass )  build_docs_second_pass;;
     docs-package )      build_docs_package;;
-    docs-set )          build_docs_set; warnings=$?;;
-    docs-web-only )     build_docs_web_only; warnings=$?;;
-    javadocs )          build_javadocs docs; warnings=$?;;
-    javadocs-all )      build_javadocs all; warnings=$?;;
+    docs-set )          build_docs_set; warnings=${?};;
+    docs-web-only )     build_docs_web_only; warnings=${?};;
+    javadocs )          build_javadocs docs; warnings=${?};;
+    javadocs-all )      build_javadocs all; warnings=${?};;
     licenses )          build_license_dependency_pdfs;;
     version )           print_version;;
-    * )                 usage ${1}; warnings=$?;;
+    * )                 usage ${1}; warnings=${?};;
   esac
   return ${warnings}
 }
@@ -127,7 +127,7 @@ function _build_docs() {
     clear_messages_file
     if [[ ${type} == "docs_set" ]]; then
       build_javadocs docs
-      errors=$?
+      errors=${?}
       if [[ ${errors} -ne 0 ]]; then
         echo "Could not build javadocs"
         return ${errors}
@@ -143,7 +143,7 @@ function _build_docs() {
 
   set_and_display_version
   display_messages
-  errors=$?
+  errors=${?}
   cleanup_messages_file
   display_end_title_bell "${title}"
   return ${errors}
@@ -174,6 +174,7 @@ function build_javadocs() {
   USING_JAVADOCS="true"
   export USING_JAVADOCS
   local errors
+  local errors_javadocs
   local javadoc_type=${1}
   local title="Building Javadocs: '${javadoc_type}'"
   display_start_title "${title}"
@@ -201,21 +202,23 @@ function build_javadocs() {
   echo "========================================================"
   echo "Building and installing CDAP to ${temp_repo}"
   mvn clean install ${temp_repo} -P examples,templates,release -DskipTests -Dgpg.skip=true
-  errors=$?
+  errors=${?}
   if [[ ${errors} -eq 0 ]]; then
     echo "========================================================"
     echo "Building and installing CDAP finished; running Javadocs"
     mvn ${javadoc_run} ${temp_repo} -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
-    errors=$?
-    if [[ ${errors} -eq 0 ]]; then
+    errors_javadocs=${?}
+    if [[ ${errors_javadocs} -eq 0 ]]; then
       echo
       echo "Javadocs Build Start: ${start}"
       echo "                 End: `date`"
     else
-      echo "Error building Javadocs: ${errors}"
+      echo "Error building Javadocs"
+      display_end_title ${title}
+      return ${errors_javadocs}
     fi
   else
-    echo "Error installing CDAP: ${errors}"
+    echo "Error installing CDAP"
   fi
   display_end_title ${title}
   return ${errors}
@@ -234,10 +237,10 @@ function build_docs_cli() {
     set_environment
     cd ${PROJECT_PATH}
     mvn package -pl cdap-docs-gen -am -DskipTests
-    warnings=$?
+    warnings=${?}
     if [[ ${warnings} -eq 0 ]]; then
       ${JAVA} -cp cdap-docs-gen/target/cdap-docs-gen-${PROJECT_VERSION}.jar:cdap-cli/target/cdap-cli-${PROJECT_VERSION}.jar co.cask.cdap.docgen.cli.GenerateCLIDocsTable > ${target_txt}
-      warnings=$?
+      warnings=${?}
       echo
       echo "Completed building of CLI"
       if [[ ${warnings} -eq 0 ]]; then
@@ -334,42 +337,42 @@ function build_docs_package() {
   rm -rf ${PROJECT_VERSION} *.zip
   echo "Creating ${PROJECT_VERSION}"
   mkdir ${PROJECT_VERSION} && cp -r html ${PROJECT_VERSION}/en
-  errors=$?
+  errors=${?}
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not create ${PROJECT_VERSION}"
       return ${errors}
   fi
   echo "Adding a redirect index.html file"
   cp ${SCRIPT_PATH}/${COMMON_SOURCE}/redirect.html ${PROJECT_VERSION}/index.html
-  errors=$?
+  errors=${?}
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not add redirect file"
       return ${errors}
   fi
   echo "Adding .htaccess file (404 file)"
   rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/htaccess ${TARGET_PATH}/${PROJECT_VERSION}/.htaccess "<version>" "${PROJECT_VERSION}"
-  errors=$?
+  errors=${?}
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not create a .htaccess file"
       return ${errors}
   fi
   echo "Canonical numbered version ${zip_dir_name}"
   python ${docs_change_py} ${TARGET_PATH}/${PROJECT_VERSION}
-  errors=$?
+  errors=${?}
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not change doc set ${TARGET_PATH}/${PROJECT_VERSION}"
       return ${errors}
   fi
   echo "Creating zip ${zip_dir_name}"
   zip -qr ${zip_dir_name}.zip ${PROJECT_VERSION}/* ${PROJECT_VERSION}/.htaccess --exclude *.DS_Store* *.buildinfo*
-  errors=$?
+  errors=${?}
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not create zipped doc set ${TARGET_PATH}/${PROJECT_VERSION}"
       return ${errors}
   fi
   echo "Copying zip ${zip_dir_name}"
   cp ${zip_dir_name}.zip ${TARGET_PATH}/${PROJECT_VERSION}
-  errors=$?
+  errors=${?}
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not copy zipped doc set into ${TARGET_PATH}/${PROJECT_VERSION}"
       return ${errors}
@@ -424,7 +427,7 @@ function set_project_path() {
 
 function setup() {
   # Check that we're starting in the correct directory
-  local quiet={$1}
+  local quiet=${1}
   E_WRONG_DIRECTORY=85
   if [[ -z ${MANUAL} ]] || [[ -z ${CDAP_DOCS} ]]; then
     echo "Manual or CDAP_DOCS set incorrectly: are you in the correct directory?"
@@ -447,7 +450,7 @@ function setup() {
 }
 
 setup quiet
-if [[ $? -ne 0 ]]; then
-    exit $?
+if [[ ${?} -ne 0 ]]; then
+    exit ${?}
 fi
 run_command ${1}
