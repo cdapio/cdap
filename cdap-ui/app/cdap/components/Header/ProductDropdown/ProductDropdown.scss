@@ -14,6 +14,8 @@
  * the License.
  */
 @import '../../../styles/variables.scss';
+$cap-red: #d12e32;
+$cap-blue: #004977;
 
 .product-dropdown {
   display: inline-block;
@@ -39,7 +41,7 @@
     background: transparent;
     border: 0;
     &:focus {
-      color: $cdap-light-orange;
+      color: $cap-red;
     }
   }
   &.dropdown,
@@ -85,14 +87,14 @@
     }
     .dropdown-menu {
       border-radius: 0;
-      background: #333333;
+      background: white;
       color: white;
       min-width: 160px;
       max-width: 210px;
 
       .dropdown-item,
       .dropdown-header {
-        color: inherit;
+        color: $cap-blue;
         line-height: 1;
         min-width: inherit;
         max-width: inherit;
@@ -110,7 +112,7 @@
           background: transparent;
 
           &:hover {
-            color: $cdap-light-orange;
+            color: $cap-red;
           }
         }
       }

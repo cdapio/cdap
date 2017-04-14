@@ -15,10 +15,12 @@
  */
 
 @import '../../styles/variables.scss';
+$cap-blue: #004977;
+$cap-red: #d12e32;
 
 .global-navbar {
   height: 50px;
-  background: $navbar-bg;
+  background: white;
   position: fixed;
   width: 100%;
   top: 0;
@@ -32,17 +34,17 @@
   li a,
   .with-shadow,
   .dropdown-item {
-    color: white;
+    color: $cap-blue;
     &:hover,
     &:active {
-      color: $cdap-light-orange;
+      color: lighten($cap-red, 10%);
     }
     .active {
-      color: $cdap-orange;
+      color: $cap-red;
       &:focus,
       &:hover {
         outline: none;
-        color: $cdap-orange;
+        color: $cap-red;
       }
     }
   }
@@ -70,6 +72,7 @@
   .brand-section {
     display: inline-block;
     vertical-align: top;
+    background-color: white;
     img {
       height: 50px;
     }
@@ -174,7 +177,7 @@
         color: inherit;
         &.active {
           &:hover {
-            color: $cdap-light-orange;
+            color: lighten($cap-red, 10%);
           }
         }
       }

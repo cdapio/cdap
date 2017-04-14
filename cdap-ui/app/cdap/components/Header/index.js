@@ -116,11 +116,11 @@ export default class Header extends Component {
               <Link
                 to={`/ns/${this.state.currentNamespace}`}
               >
-                <img src="/cdap_assets/img/company_logo.png" />
+                <img src="/cdap_assets/img/caplogo.png" />
               </Link>
             :
               <a href={window.getAbsUIUrl({namespaceId: this.state.currentNamespace})}>
-                <img src="/cdap_assets/img/company_logo.png" />
+                <img src="/cdap_assets/img/caplogo.png" />
               </a>
           }
         </div>
