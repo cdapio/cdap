@@ -102,7 +102,7 @@ export default class ColumnActionsDropdown extends Component {
 
       this.documentClick$ = Rx.Observable.fromEvent(document.body, 'click')
         .subscribe((e) => {
-          if (isDescendant(this.popover, e.target) || !this.state.dropdownOpen) {
+          if (isDescendant(this.popover, e.target) || this.menuCaretSpanRef === e.target) {
             return;
           }
 
@@ -145,6 +145,10 @@ export default class ColumnActionsDropdown extends Component {
         target={`dataprep-action-${this.dropdownId}`}
         className="dataprep-columns-action-dropdown"
         tether={tetherOption}
+        tetherRef={(ref) => {
+          if (!ref) {return;}
+          this.popover = ref.element;
+        }}
       >
         <PopoverContent>
           <div>
@@ -177,12 +181,12 @@ export default class ColumnActionsDropdown extends Component {
     return (
       <span
         className="column-actions-dropdown-container"
-        ref={(ref) => this.popover = ref}
       >
         <span
           className={classnames('fa fa-caret-down', {
             'expanded': this.state.dropdownOpen
           })}
+          ref={(ref) => this.menuCaretSpanRef = ref}
           onClick={this.toggleDropdown}
           id={`dataprep-action-${this.dropdownId}`}
         />
