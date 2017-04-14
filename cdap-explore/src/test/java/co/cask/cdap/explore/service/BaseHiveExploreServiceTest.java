@@ -24,8 +24,6 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.NamespaceClientUnitTestModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
-import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
-import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
@@ -75,6 +73,8 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
+import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
 import co.cask.http.HttpHandler;
@@ -268,7 +268,7 @@ public class BaseHiveExploreServiceTest {
    * Create a namespace because app fabric is not started in explore tests.
    */
   protected static void createNamespace(NamespaceId namespaceId) throws Exception {
-    namespacedLocationFactory.get(namespaceId.toId()).mkdirs();
+    namespacedLocationFactory.get(namespaceId).mkdirs();
     NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(namespaceId.toId()).build();
     namespaceAdmin.create(namespaceMeta);
     if (!NamespaceId.DEFAULT.equals(namespaceId)) {
@@ -280,7 +280,7 @@ public class BaseHiveExploreServiceTest {
    * Delete a namespace because app fabric is not started in explore tests.
    */
   protected static void deleteNamespace(NamespaceId namespaceId) throws Exception {
-    namespacedLocationFactory.get(namespaceId.toId()).delete(true);
+    namespacedLocationFactory.get(namespaceId).delete(true);
     if (!NamespaceId.DEFAULT.equals(namespaceId)) {
       exploreService.deleteNamespace(namespaceId);
     }

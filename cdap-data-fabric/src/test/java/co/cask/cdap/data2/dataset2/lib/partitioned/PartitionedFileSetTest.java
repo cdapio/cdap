@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -119,7 +119,7 @@ public class PartitionedFileSetTest {
     tablePermissions = ImmutableMap.of("@" + group, "RWX");
     // determine the default permissions of created directories (we want to test with different perms)
     Location loc = dsFrameworkUtil.getInjector().getInstance(NamespacedLocationFactory.class)
-      .get(DatasetFrameworkTestUtil.NAMESPACE2_ID.toId());
+      .get(DatasetFrameworkTestUtil.NAMESPACE2_ID);
     loc.mkdirs();
     loc = loc.append("permcheckfile");
     loc.createNew();

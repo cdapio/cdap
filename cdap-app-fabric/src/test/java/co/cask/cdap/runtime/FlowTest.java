@@ -128,12 +128,13 @@ public class FlowTest {
       );
     }
 
-    TimeUnit.SECONDS.sleep(1);
     DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
                                                     getInstance(DiscoveryServiceClient.class);
-    Discoverable discoverable = discoveryServiceClient.discover(
-      String.format("service.%s.%s.%s",
-                    DefaultId.NAMESPACE.getNamespace(), "ArgumentCheckApp", "SimpleService")).iterator().next();
+    String discoverableName = String.format("service.%s.%s.%s",
+                                            DefaultId.NAMESPACE.getNamespace(), "ArgumentCheckApp", "SimpleService");
+    Discoverable discoverable = new RandomEndpointStrategy(discoveryServiceClient.discover(discoverableName))
+      .pick(5, TimeUnit.SECONDS);
+    Assert.assertNotNull(discoverable);
 
     URL url = new URL(String.format("http://%s:%d/v3/namespaces/default/apps/%s/services/%s/methods/%s",
                                     discoverable.getSocketAddress().getHostName(),

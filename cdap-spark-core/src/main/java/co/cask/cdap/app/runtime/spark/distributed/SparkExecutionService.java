@@ -85,7 +85,7 @@ public final class SparkExecutionService extends AbstractIdleService {
   public SparkExecutionService(LocationFactory locationFactory, String host,
                                ProgramRunId programRunId, @Nullable WorkflowToken workflowToken) {
     this.locationFactory = locationFactory;
-    this.httpServer = NettyHttpService.builder()
+    this.httpServer = NettyHttpService.builder(SparkExecutionService.class.getName())
       .addHttpHandlers(Collections.singletonList(new SparkControllerHandler()))
       .setHost(host)
       .setExceptionHandler(new HttpExceptionHandler())

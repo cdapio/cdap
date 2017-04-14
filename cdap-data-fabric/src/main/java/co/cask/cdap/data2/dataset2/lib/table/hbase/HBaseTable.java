@@ -107,7 +107,7 @@ public class HBaseTable extends BufferingTable {
     HTable hTable = tableUtil.createHTable(hConf, hBaseTableId);
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
-    hTable.setAutoFlush(false);
+    hTable.setAutoFlushTo(false);
     this.tableUtil = tableUtil;
     this.hTable = hTable;
     this.hTableName = Bytes.toStringBinary(hTable.getTableName());

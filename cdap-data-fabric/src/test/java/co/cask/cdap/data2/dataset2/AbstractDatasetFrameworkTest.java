@@ -35,9 +35,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
-import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
-import co.cask.cdap.common.kerberos.OwnerAdmin;
-import co.cask.cdap.common.kerberos.OwnerStore;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -67,8 +64,11 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.auth.context.AuthenticationTestContext;
+import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
+import co.cask.cdap.security.impersonation.InMemoryOwnerStore;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
+import co.cask.cdap.security.impersonation.OwnerStore;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
-import co.cask.cdap.store.InMemoryOwnerStore;
 import com.google.common.collect.Maps;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -455,8 +455,8 @@ public abstract class AbstractDatasetFrameworkTest {
     NamespaceId namespace2 = new NamespaceId("ns2");
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace1).build());
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace2).build());
-    namespacedLocationFactory.get(namespace1.toId()).mkdirs();
-    namespacedLocationFactory.get(namespace2.toId()).mkdirs();
+    namespacedLocationFactory.get(namespace1).mkdirs();
+    namespacedLocationFactory.get(namespace2).mkdirs();
 
     // create 2 tables, one in each namespace. both tables have the same name.
     DatasetId table1ID = namespace1.dataset("table");
@@ -506,7 +506,7 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertTrue(framework.hasInstance(table2ID));
 
     // delete one namespace and make sure the other still exists
-    namespacedLocationFactory.get(namespace1.toId()).delete(true);
+    namespacedLocationFactory.get(namespace1).delete(true);
     Assert.assertTrue(framework.hasInstance(table2ID));
   }
 
@@ -519,8 +519,8 @@ public abstract class AbstractDatasetFrameworkTest {
     NamespaceId namespace2 = new NamespaceId("ns2");
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace1).build());
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace2).build());
-    namespacedLocationFactory.get(namespace1.toId()).mkdirs();
-    namespacedLocationFactory.get(namespace2.toId()).mkdirs();
+    namespacedLocationFactory.get(namespace1).mkdirs();
+    namespacedLocationFactory.get(namespace2).mkdirs();
 
     // add modules in each namespace, with one module that shares the same name
     DatasetModuleId simpleModuleNs1 = namespace1.datasetModule(SimpleKVTable.class.getName());

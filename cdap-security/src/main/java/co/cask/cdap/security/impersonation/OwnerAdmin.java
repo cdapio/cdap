@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.kerberos;
+package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.proto.id.EntityId;

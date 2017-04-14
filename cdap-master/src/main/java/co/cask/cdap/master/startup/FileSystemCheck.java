@@ -18,6 +18,7 @@ package co.cask.cdap.master.startup;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
@@ -46,12 +47,12 @@ public class FileSystemCheck extends AbstractMasterCheck {
   }
 
   @Override
-  public void run() {
+  public void run() throws IOException {
     String user = cConf.get(Constants.CFG_HDFS_USER);
     String rootPath = cConf.get(Constants.CFG_HDFS_NAMESPACE);
 
     LOG.info("Checking FileSystem availability.");
-    Location rootLocation = locationFactory.create(rootPath);
+    Location rootLocation = Locations.getLocationFromAbsolutePath(locationFactory, rootPath);
     boolean rootExists;
     try {
       rootExists = rootLocation.exists();

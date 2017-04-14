@@ -145,7 +145,8 @@ The status of these CDAP system services can be checked:
 
 Container Information of a System Service
 =========================================
-If you are trying to debug a CDAP system service, you can retrieve container info for a system service with::
+If you are trying to debug a CDAP system service, you can retrieve container info for a
+system service with::
 
   GET /v3/system/services/<service-id>/live-info
 
@@ -162,6 +163,36 @@ where
 
 **Note:** This returns useful information only for Distributed CDAP installations.
 
+
+.. rubric:: Example
+
+For example, to retrieve the list of CDAP Master services, issue an HTTP GET request to
+the URL::
+
+  GET /v3/system/services/appfabric/live-info
+
+.. highlight:: json-ellipsis
+
+The response body will contain a JSON-formatted list of CDAP Master services, with the
+first container listed being the active CDAP Master in an HA deployment::
+
+  {
+      "containers":[
+                      {
+                          "host":"host1.example.com",
+                          "name":"appfabric",
+                          "type":"system_service"
+                      },
+                      {
+                          "host":"host2.example.com",
+                          "name":"appfabric",
+                          "type":"system_service"
+                      }
+                   ]
+  }
+
+
+.. highlight:: console
 
 Restarting System Service Instances
 ===================================
@@ -251,9 +282,13 @@ can be queried and changed by using these commands::
   GET /v3/system/services/<service-id>/instances
   PUT /v3/system/services/<service-id>/instances
 
+.. highlight:: json
+
 with the arguments as a JSON string in the body::
 
         { "instances" : <quantity> }
+
+.. highlight:: console
 
 .. list-table::
    :widths: 20 80

@@ -80,7 +80,7 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
 
     HTable hTable = tableUtil.createHTable(hConf, hbaseTableId);
     hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
-    hTable.setAutoFlush(false);
+    hTable.setAutoFlushTo(false);
     return new HBaseStreamConsumerStateStore(streamConfig, hTable);
   }
 

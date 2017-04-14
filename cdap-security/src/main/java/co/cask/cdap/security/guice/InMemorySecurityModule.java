@@ -28,7 +28,7 @@ import com.google.inject.Scopes;
  * Guice bindings for InMemoryKeyManagers. This extends {@code SecurityModule} to provide
  * an instance of {@code InMemoryKeyManager}.
  */
-public class InMemorySecurityModule extends SecurityModule {
+final class InMemorySecurityModule extends SecurityModule {
 
   @Override
   protected void bindKeyManager(Binder binder) {
@@ -47,5 +47,5 @@ public class InMemorySecurityModule extends SecurityModule {
     public KeyManager get() {
       return new InMemoryKeyManager(cConf);
     }
-  };
+  }
 }

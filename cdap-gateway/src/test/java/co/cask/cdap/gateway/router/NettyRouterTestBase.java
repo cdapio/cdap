@@ -508,7 +508,7 @@ public abstract class NettyRouterTestBase {
 
     @Override
     protected void startUp() {
-      NettyHttpService.Builder builder = NettyHttpService.builder();
+      NettyHttpService.Builder builder = NettyHttpService.builder(ServerService.class.getName());
       builder.addHttpHandlers(ImmutableSet.of(new ServerHandler()));
       builder.setHost(hostname);
       builder.setPort(0);

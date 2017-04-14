@@ -31,7 +31,7 @@ import org.apache.twill.zookeeper.ZKClientService;
  * Configures dependency injection with all security class implementations required to run in a distributed
  * environment.
  */
-public class DistributedSecurityModule extends SecurityModule {
+final class DistributedSecurityModule extends SecurityModule {
   @Override
   protected void bindKeyManager(Binder binder) {
     binder.bind(KeyManager.class).toProvider(DistributedKeyManagerProvider.class).in(Scopes.SINGLETON);

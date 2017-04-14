@@ -916,17 +916,17 @@ Transforming Your Data
                    }
                  }
                ],
-              "connections": [
-                {
-                  "from": "Stream",
-                  "to": "Projection"
-                },
-                {
-                  "from": "Projection",
-                  "to": "TPFSAvro"
-                }
-              ]
-            }
+               "connections": [
+                 {
+                   "from": "Stream",
+                   "to": "Projection"
+                 },
+                 {
+                   "from": "Projection",
+                   "to": "TPFSAvro"
+                 }
+               ]
+             }
            }
 
             

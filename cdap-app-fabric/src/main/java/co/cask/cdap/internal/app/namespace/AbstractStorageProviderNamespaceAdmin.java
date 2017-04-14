@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.namespace;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.stream.StreamUtils;
@@ -27,6 +26,7 @@ import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.impersonation.SecurityUtil;
 import com.google.common.base.Strings;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
@@ -107,7 +107,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
 
   private void deleteLocation(NamespaceId namespaceId) throws IOException {
     // TODO: CDAP-1581: Implement soft delete
-    Location namespaceHome = namespacedLocationFactory.get(namespaceId.toId());
+    Location namespaceHome = namespacedLocationFactory.get(namespaceId);
     try {
       if (hasCustomLocation(namespaceQueryAdmin.get(namespaceId))) {
         LOG.debug("Custom location mapping {} was found while deleting namespace {}. Deleting all data inside it but" +

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.framework.distributed;
+package co.cask.cdap.common.test;
 
 import co.cask.cdap.common.app.RunIds;
 import com.google.common.base.Throwables;
@@ -32,7 +32,7 @@ import java.util.concurrent.locks.Lock;
 /**
  * A mock {@link TwillContext} for unit-test.
  */
-final class MockTwillContext implements TwillContext {
+public final class MockTwillContext implements TwillContext {
 
   private final RunId runId = RunIds.generate();
   private final RunId appRunId = RunIds.generate();

@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.security.server.LDAPLoginModule;
 import com.google.common.base.Supplier;
@@ -37,6 +38,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLSocket;
 
@@ -52,16 +54,20 @@ public class AppFabricServerTest {
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     Service.State state = server.startAndWait();
     Assert.assertTrue(state == Service.State.RUNNING);
-    // Sleep shortly for the discovery
-    TimeUnit.SECONDS.sleep(1);
-    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP);
-    Assert.assertFalse(Iterables.isEmpty(discovered));
+
+    final EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
+      discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP));
+    Assert.assertNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS));
 
     state = server.stopAndWait();
     Assert.assertTrue(state == Service.State.TERMINATED);
 
-    TimeUnit.SECONDS.sleep(1);
-    Assert.assertTrue(Iterables.isEmpty(discovered));
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return endpointStrategy.pick() == null;
+      }
+    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   @Test

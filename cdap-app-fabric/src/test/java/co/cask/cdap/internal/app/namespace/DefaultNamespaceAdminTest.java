@@ -333,7 +333,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     // create a namespace with default settings, validate that data dir exists and has
     namespaceAdmin.create(new NamespaceMeta.Builder().setName("dd1").build());
 
-    Location homeDir = namespacedLocationFactory.get(new NamespaceId("dd1").toId());
+    Location homeDir = namespacedLocationFactory.get(new NamespaceId("dd1"));
     Location dataDir = homeDir.append(Constants.Dataset.DEFAULT_DATA_DIR);
     Location tempDir = homeDir.append(cConf.get(Constants.AppFabric.TEMP_DIR));
     Location streamsDir = homeDir.append(cConf.get(Constants.Stream.BASE_DIR));
@@ -353,7 +353,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     // create and validate a namespace with a default settings except that a group is configured
     namespaceAdmin.create(new NamespaceMeta.Builder().setName("dd2").setGroupName(nsGroup).build());
 
-    homeDir = namespacedLocationFactory.get(new NamespaceId("dd2").toId());
+    homeDir = namespacedLocationFactory.get(new NamespaceId("dd2"));
     dataDir = homeDir.append(Constants.Dataset.DEFAULT_DATA_DIR);
     tempDir = homeDir.append(cConf.get(Constants.AppFabric.TEMP_DIR));
     streamsDir = homeDir.append(cConf.get(Constants.Stream.BASE_DIR));

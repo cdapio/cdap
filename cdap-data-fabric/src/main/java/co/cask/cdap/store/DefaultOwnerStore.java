@@ -38,6 +38,7 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.security.impersonation.OwnerStore;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionFailureException;
@@ -66,7 +67,7 @@ import javax.annotation.Nullable;
  * creation time else the owner information is non-existent which signifies that the entity own is default CDAP owner.
  * </p>
  */
-public class DefaultOwnerStore extends AbstractOwnerStore {
+public class DefaultOwnerStore extends OwnerStore {
   private static final String OWNER_PREFIX = "o";
   // currently, we only leverage one column of the table. However, not using KeyValueTable, so that being able to use
   // additional columns in the future is simple. In future, we will like to support storing keytab file location
@@ -101,8 +102,8 @@ public class DefaultOwnerStore extends AbstractOwnerStore {
   }
 
   @Override
-  public void add(final NamespacedEntityId entityId, final KerberosPrincipalId kerberosPrincipalId)
-    throws IOException, AlreadyExistsException {
+  public void add(final NamespacedEntityId entityId,
+                  final KerberosPrincipalId kerberosPrincipalId) throws IOException, AlreadyExistsException {
     validate(entityId, kerberosPrincipalId);
     try {
       transactional.execute(new TxRunnable() {

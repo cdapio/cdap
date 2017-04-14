@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 import java.security.PrivilegedAction;
 
 /**
- * Guice module for {@link FileContext} created created with {@link UserGroupInformation} of
+ * Guice {@link Provider} for {@link FileContext} created created with {@link UserGroupInformation} of
  * {@link Constants#CFG_HDFS_USER}
  */
 public class FileContextProvider implements Provider<FileContext> {

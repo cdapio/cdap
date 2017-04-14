@@ -420,7 +420,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                          final boolean updateSchedules) throws IOException {
 
     Id.Namespace idNamespace = namespace.toId();
-    Location namespaceHomeLocation = namespacedLocationFactory.get(idNamespace);
+    Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
     if (!namespaceHomeLocation.exists()) {
       String msg = String.format("Home directory %s for namespace %s not found",
                                  namespaceHomeLocation, namespace.getNamespace());

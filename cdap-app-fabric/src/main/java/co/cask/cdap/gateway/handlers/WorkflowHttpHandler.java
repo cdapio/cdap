@@ -37,6 +37,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -114,10 +115,10 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   WorkflowHttpHandler(Store store, WorkflowClient workflowClient, ProgramRuntimeService runtimeService,
                       QueueAdmin queueAdmin, Scheduler scheduler, PreferencesStore preferencesStore,
                       MRJobInfoFetcher mrJobInfoFetcher, ProgramLifecycleService lifecycleService,
-                      MetricStore metricStore, DatasetFramework datasetFramework,
-                      DiscoveryServiceClient discoveryServiceClient) {
+                      MetricStore metricStore, NamespaceQueryAdmin namespaceQueryAdmin,
+                      DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient) {
     super(store, runtimeService, discoveryServiceClient, lifecycleService, queueAdmin, preferencesStore,
-          mrJobInfoFetcher, metricStore);
+          mrJobInfoFetcher, metricStore, namespaceQueryAdmin);
     this.workflowClient = workflowClient;
     this.datasetFramework = datasetFramework;
     this.scheduler = scheduler;

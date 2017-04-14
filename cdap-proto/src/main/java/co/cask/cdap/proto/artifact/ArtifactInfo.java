@@ -22,6 +22,7 @@ import co.cask.cdap.api.artifact.ArtifactScope;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Represents an artifact returned by /artifacts/{artifact-name}/versions/{artifact-version}.
@@ -30,9 +31,15 @@ import java.util.Objects;
 public class ArtifactInfo extends ArtifactSummary {
   private final ArtifactClasses classes;
   private final Map<String, String> properties;
+  private final Set<ArtifactRange> parents;
 
   public ArtifactInfo(ArtifactId id, ArtifactClasses classes, Map<String, String> properties) {
     this(id.getName(), id.getVersion().getVersion(), id.getScope(), classes, properties);
+  }
+
+  public ArtifactInfo(ArtifactId id, ArtifactClasses classes, Map<String, String> properties,
+                      Set<ArtifactRange> parents) {
+    this(id.getName(), id.getVersion().getVersion(), id.getScope(), classes, properties, parents);
   }
 
   public ArtifactInfo(String name, String version, ArtifactScope scope,
@@ -40,6 +47,15 @@ public class ArtifactInfo extends ArtifactSummary {
     super(name, version, scope);
     this.classes = classes;
     this.properties = properties;
+    this.parents = null;
+  }
+
+  public ArtifactInfo(String name, String version, ArtifactScope scope, ArtifactClasses classes,
+                      Map<String, String> properties, Set<ArtifactRange> parents) {
+    super(name, version, scope);
+    this.classes = classes;
+    this.properties = properties;
+    this.parents = parents;
   }
 
   public ArtifactClasses getClasses() {
@@ -48,6 +64,10 @@ public class ArtifactInfo extends ArtifactSummary {
 
   public Map<String, String> getProperties() {
     return properties;
+  }
+
+  public Set<ArtifactRange> getParents() {
+    return parents;
   }
 
   @Override

@@ -279,7 +279,7 @@ function anchor_scroll(hash){
 }
 
 jQuery(function() {
-  // Catch all clicks on a tags
+  // Catch all clicks on "a" tags
   jQuery("a").click(function(){
     // Check if it has a hash (i.e. if it's an anchor link)
     if(this.hash){
@@ -290,7 +290,7 @@ jQuery(function() {
   });
   // Do the same with urls with hash (so on page load it will slide nicely)
   if(location.hash){
-      window.scroll(0,0);
+    window.scroll(0,0);
     var hash = location.hash.substr(1);
     anchor_scroll(hash);
     return false;
