@@ -177,6 +177,7 @@ public final class Constants {
     public static final int DEFAULT_EXEC_THREADS = 20;
     public static final int DEFAULT_BOSS_THREADS = 1;
     public static final int DEFAULT_WORKER_THREADS = 10;
+    public static final boolean DEFAULT_APP_UPDATE_SCHEDULES = true;
 
     /**
      * Query parameter to indicate start time.
@@ -215,6 +216,8 @@ public final class Constants {
      * added to classpaths of CDAP programs.
      */
     public static final String PROGRAM_CONTAINER_DIST_JARS = "program.container.dist.jars";
+
+    public static final String APP_UPDATE_SCHEDULES = "app.deploy.update.schedules";
   }
 
   /**
