@@ -99,9 +99,8 @@ export default class ColumnActionsDropdown extends Component {
     });
 
     if (newState) {
-      let element = document.getElementById('app-container');
 
-      this.documentClick$ = Rx.Observable.fromEvent(element, 'click')
+      this.documentClick$ = Rx.Observable.fromEvent(document.body, 'click')
         .subscribe((e) => {
           if (isDescendant(this.popover, e.target) || !this.state.dropdownOpen) {
             return;
