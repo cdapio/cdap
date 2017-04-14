@@ -21,16 +21,17 @@
 my-sql-conditions {
   .sql-conditions-container {
     .rule { margin-bottom: 10px; }
+    .empty-message { margin-bottom: 0; }
 
     .select-fields-group {
       position: relative;
       left: 0;
       background-color: #eeeeee;
-      padding: 0 15px 5px;
+      padding: 0 10px 5px;
       display: inline-block;
-      width: ~"-moz-calc(100% - 75px)";
-      width: ~"-webkit-calc(100% - 75px)";
-      width: ~"calc(100% - 75px)";
+      width: ~"-moz-calc(100% - 50px)";
+      width: ~"-webkit-calc(100% - 50px)";
+      width: ~"calc(100% - 50px)";
 
       .delete-field-button {
         color: white;
@@ -41,10 +42,12 @@ my-sql-conditions {
         right: -5px;
         top: -5px;
         cursor: pointer;
+
+        &:hover { text-decoration: none; }
       }
 
       .select-field {
-        width: 45%;
+        width: 43%;
         display: inline-block;
         margin-top: 5px;
       }
@@ -59,7 +62,7 @@ my-sql-conditions {
 
     }
 
-    .action-buttons {
+    .rule-action-buttons {
       padding-left: 5px;
       display: inline-block;
       vertical-align: bottom;
@@ -69,6 +72,9 @@ my-sql-conditions {
         border-radius: 0;
         color: white;
         background-color: @button-color;
+        padding: 5px;
+
+        &.plus { padding: 5px 10px; }
       }
     }
   }
