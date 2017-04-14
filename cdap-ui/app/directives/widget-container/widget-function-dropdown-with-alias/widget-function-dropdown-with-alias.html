@@ -27,12 +27,13 @@
       <input class="form-control" type="text" ng-model="fnalias.alias"  placeholder="{{placeholders.alias}}"/>
     </div>
   </div>
-  <div class="col-xs-2">
-    <a class="btn btn-danger">
-      <span class="fa fa-fw fa-trash" ng-click="removeFunctionAlias($index)"></span>
-    </a>
-    <a class="btn btn-info btn-transparent" ng-click="addFunctionAlias()" ng-if="$last">
+  <div class="col-xs-2 field-actions">
+    <span class="text-danger" ng-click="removeFunctionAlias($index)">
+      <span class="fa fa-fw fa-trash"></span>
+    </span>
+
+    <span class="text-info" ng-click="addFunctionAlias()" ng-if="$last">
       <span class="fa fa-fw fa-plus"></span>
-    </a>
+    </span>
   </div>
 </div>
