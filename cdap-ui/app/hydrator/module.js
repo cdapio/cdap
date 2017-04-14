@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.hydrator', [
   })
   .constant('HYDRATOR_DEFAULT_VALUES', {
     instance: 1,
-    batchInterval: '1s',
+    batchInterval: '10s',
     schedule: '0 * * * *',
     resources: {
       virtualCores: 1,
