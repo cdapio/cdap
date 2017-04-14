@@ -25,6 +25,7 @@ import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.guice.TwillModule;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -69,6 +70,10 @@ import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
@@ -89,12 +94,14 @@ import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.distributed.TransactionService;
+import org.apache.twill.api.RunId;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Command line tool for the Upgrade tool
@@ -116,6 +123,7 @@ public class UpgradeTool {
   private final UpgradeDatasetServiceManager upgradeDatasetServiceManager;
   private final NamespaceStore nsStore;
   private final AuthorizationEnforcementService authorizationService;
+  private final DefaultStore defaultStore;
 
   /**
    * Set of Action available in this tool.
@@ -132,7 +140,8 @@ public class UpgradeTool {
     UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n" +
                     "system HBase tables to a version that is compatible with the new HBase \n" +
                     "version. All tables must be disabled prior to this step."),
-    HELP("Show this help.");
+    HELP("Show this help."),
+    GEN_DATA("Generate data");
 
     private final String description;
 
@@ -178,6 +187,7 @@ public class UpgradeTool {
     });
     this.existingEntitySystemMetadataWriter = injector.getInstance(ExistingEntitySystemMetadataWriter.class);
     this.upgradeDatasetServiceManager = injector.getInstance(UpgradeDatasetServiceManager.class);
+    this.defaultStore = injector.getInstance(DefaultStore.class);
   }
 
   @VisibleForTesting
@@ -344,11 +354,33 @@ public class UpgradeTool {
         case HELP:
           printHelp();
           break;
+        case GEN_DATA:
+          try {
+            startUp();
+            genData();
+          } finally {
+            stop();
+          }
+          break;
       }
     } catch (Exception e) {
       System.out.println(String.format("Failed to perform action '%s'. Reason: '%s'.", action, e.getMessage()));
       throw e;
     }
+  }
+
+  private void genData() throws Exception {
+    int count = 100;
+    LOG.info("Generating {} run records", count);
+    for (int i = 0; i < count; ++i) {
+      ApplicationId applicationId = new ApplicationId("poorna", "PurchaseHistory");
+      ProgramId program = applicationId.program(ProgramType.SERVICE, "PurchaseHistoryService");
+      RunId runId = RunIds.generate();
+      defaultStore.setStart(program.toId(), runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS));
+      defaultStore.setStop(program.toId(), runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS) + 100,
+                           ProgramRunStatus.COMPLETED);
+    }
+    LOG.info("Added {} run records", count);
   }
 
   private String getResponse(boolean interactive) {
