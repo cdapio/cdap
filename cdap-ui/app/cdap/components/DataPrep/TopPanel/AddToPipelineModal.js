@@ -51,7 +51,10 @@ export default class AddToHydratorModal extends Component {
       loading: true,
       batchUrl: null,
       realtimeUrl: null,
-      error: null
+      error: null,
+      workspaceId: null,
+      realtimeConfig: null,
+      batchConfig: null
     };
   }
 
@@ -143,7 +146,10 @@ export default class AddToHydratorModal extends Component {
         };
 
         let properties = {
-          workspaceId
+          workspaceId,
+          directives: directives.join('\n'),
+          schema: JSON.stringify(tempSchema),
+          field: '*'
         };
 
         try {
@@ -182,7 +188,8 @@ export default class AddToHydratorModal extends Component {
           stateName: 'hydrator.create',
           stateParams: {
             namespace,
-            configParams: realtimeConfig
+            workspaceId,
+            artifactType: realtimeArtifact.name
           }
         });
 
@@ -190,14 +197,18 @@ export default class AddToHydratorModal extends Component {
           stateName: 'hydrator.create',
           stateParams: {
             namespace,
-            configParams: batchConfig
+            workspaceId,
+            artifactType: batchArtifact.name
           }
         });
 
         this.setState({
           loading: false,
           realtimeUrl,
-          batchUrl
+          batchUrl,
+          workspaceId,
+          realtimeConfig,
+          batchConfig
         });
 
       }, (err) => {
@@ -245,6 +256,9 @@ export default class AddToHydratorModal extends Component {
             <a
               href={this.state.batchUrl}
               className="btn btn-secondary"
+              onClick={(() => {
+                window.localStorage.setItem(this.state.workspaceId, JSON.stringify(this.state.batchConfig));
+              }).bind(this)}
             >
               <i className="fa icon-ETLBatch"/>
               <span>Batch Pipeline</span>
@@ -252,6 +266,9 @@ export default class AddToHydratorModal extends Component {
             <a
               href={this.state.realtimeUrl}
               className="btn btn-secondary"
+              onClick={(() => {
+                window.localStorage.setItem(this.state.workspaceId, JSON.stringify(this.state.realtimeConfig));
+              }).bind(this)}
             >
               <i className="fa icon-sparkstreaming"/>
               <span>Realtime Pipeline</span>

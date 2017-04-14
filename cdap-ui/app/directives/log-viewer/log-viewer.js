@@ -144,8 +144,10 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
       vm.setProgramMetadata(logViewerState.status);
       if (vm.statusType !== 0){
         if (pollStarted) {
-          stopPoll();
-          vm.loading = false;
+          // Manually request for logs one final time after the preview has stopped,
+          // since we might not have reached the polling interval before we stop
+          // the poll.
+          requestWithOffset();
         }
       }
     }

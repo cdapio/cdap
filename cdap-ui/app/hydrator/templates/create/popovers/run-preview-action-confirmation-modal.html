@@ -13,22 +13,15 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<div class="clearfix">
-  <div class="wrangler-button pull-right">
-    <button
-      class="btn btn-primary"
-      ng-click="openWranglerModal()"
-    >
-      <span class="fa icon-DataPreparation"></span>
-      <span>Wrangle</span>
-    </button>
+
+<div class="modal-body">
+  <div>
+    <span>Actions and Post-run actions are ignored when running preview of a pipeline. Do you wish to continue anyway?</span>
   </div>
-  <textarea
-    class="form-control"
-    ng-trim="false"
-    ng-model="model"
-    rows="{{rows}}"
-    placeholder="{{placeholder}}"
-  >
-  </textarea>
+</div>
+<div class="modal-footer">
+  <div class="pull-right">
+    <button class="btn btn-grey-cancel" ng-click="$close(false)">No</button>
+    <button class="btn btn-blue" ng-click="$close(true)">Yes</button>
+  </div>
 </div>

@@ -115,6 +115,7 @@ body {
       border-radius: 3px;
       font-size: 11px;
       max-width: 600px;
+      white-space: pre-wrap;
       &.top {
         margin-top: -2px;
         .tooltip-arrow {
@@ -131,6 +132,8 @@ body {
 
 my-log-viewer,
 my-log-viewer-preview {
+  font-family: Helvetica, Arial, sans-serif;
+
   .empty-buffer {
     display: none;
   }
@@ -138,7 +141,7 @@ my-log-viewer-preview {
   .row-expanded {
     td,
     span {
-      white-space: normal;
+      white-space: pre-wrap;
     }
 
     td.source {
@@ -445,8 +448,16 @@ my-log-viewer-preview {
         height: ~"-moz-calc(100% - 47px)";
         height: ~"-webkit-calc(100% - 47px)";
         height: ~"calc(100% - 47px)";
+        background-color: @selected-row-color;
 
         .table { border-top: 0; }
+
+        td {
+          color: #333333;
+          font-size: 14px;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
       }
 
       .has-stack-trace {
@@ -499,12 +510,14 @@ my-log-viewer-preview {
         }
 
         td {
-          line-height: 18px;
+          line-height: 30px;
           border-top: 0;
           color: #666666;
           font-size: 11px;
           text-overflow: ellipsis;
           white-space: nowrap;
+          border-left: 0;
+          border-right: 0;
 
           .fa-chevron-right {
             color: #393939;
@@ -549,7 +562,7 @@ my-log-viewer-preview {
           padding-left: 5px;
           padding-right: 0;
           padding-top: 10px;
-          font-size: 12px;
+          font-size: 14px;
           font-family: inherit;
           background-color: @stack-trace-background-color;
           color: @stack-trace-font-color;
@@ -588,12 +601,11 @@ my-log-viewer-preview {
       td {
         padding: 0;
         padding-left: 10px;
-        max-width: 0;
         vertical-align: middle;
         line-height: 12px;
         height: 10px;
         overflow: hidden;
-        font-size: 12px;
+        font-size: 14px;
         border-color: @border-color;
       }
       td.time-stack-trace {
@@ -614,6 +626,10 @@ my-log-viewer-preview {
         th:hover,
         th:focus {
           cursor: default;
+          font-size: 14px;
+          border-left: 0;
+          border-right: 0;
+
           ul.dropdown-menu { width: 30px; }
 
           li {
@@ -621,7 +637,7 @@ my-log-viewer-preview {
           }
         }
         td {
-          line-height: 18px;
+          line-height: 30px;
         }
         .table-text-content {
           display: inline-block;
@@ -657,7 +673,7 @@ my-log-viewer-preview {
       }
 
       .time {
-        width: 130px;
+        width: 150px;
         max-width: initial;
         padding-left: 15px;
       }
@@ -691,7 +707,7 @@ my-log-viewer-preview {
 
       .source,
       .source-header {
-        width: 160px;
+        width: 320px;
       }
 
       .source {

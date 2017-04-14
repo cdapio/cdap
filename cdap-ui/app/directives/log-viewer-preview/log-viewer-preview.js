@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $q, moment, myAlertOnValium) {
+function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $q, moment, myAlertOnValium, HydratorPlusPlusPreviewStore) {
   'ngInject';
 
   /**
@@ -128,6 +128,14 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
 
   vm.toggleExpandAll = false;
 
+  let previewPoll = HydratorPlusPlusPreviewStore.subscribe(() => {
+    let state = HydratorPlusPlusPreviewStore.getState().preview;
+    if (vm.previewId !== state.previewId) {
+      vm.previewId = state.previewId;
+      vm.getInitalPreviewStatus();
+    }
+  });
+
   let unsub = LogViewerStore.subscribe(() => {
     let logViewerState = LogViewerStore.getState();
 
@@ -141,8 +149,10 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
       vm.setProgramMetadata(logViewerState.statusInfo.status);
       if (vm.statusType !== 0){
         if (pollStarted) {
-          stopPoll();
-          vm.loading = false;
+          // Manually request for logs one final time after the preview has stopped,
+          // since we might not have reached the polling interval before we stop
+          // the poll.
+          requestWithOffset();
         }
       }
     }
@@ -204,34 +214,38 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     }
   };
 
-  if (vm.previewId) {
-    // Get Initial Status
-    myPreviewLogsApi.getLogsStatus({
-      namespace : vm.namespaceId,
-      previewId : vm.previewId
-    }).$promise.then(
-      (statusRes) => {
-        LogViewerStore.dispatch({
-          type: LOGVIEWERSTORE_ACTIONS.SET_STATUS,
-          payload: {
-            status: statusRes.status,
+  vm.getInitalPreviewStatus = () => {
+    if (vm.previewId) {
+      // Get Initial Status
+      myPreviewLogsApi.getLogsStatus({
+        namespace : vm.namespaceId,
+        previewId : vm.previewId
+      }).$promise.then(
+        (statusRes) => {
+          LogViewerStore.dispatch({
+            type: LOGVIEWERSTORE_ACTIONS.SET_STATUS,
+            payload: {
+              status: statusRes.status,
+            }
+          });
+          vm.setProgramMetadata(statusRes.status);
+        },
+        (statusErr) => {
+          console.log('ERROR: ', statusErr);
+
+          if (statusErr.statusCode === 404) {
+            myAlertOnValium.show({
+              type: 'danger',
+              content: statusErr.data
+            });
           }
         });
-        vm.setProgramMetadata(statusRes.status);
-      },
-      (statusErr) => {
-        console.log('ERROR: ', statusErr);
+    } else {
+      vm.loading = false;
+    }
+  };
 
-        if (statusErr.statusCode === 404) {
-          myAlertOnValium.show({
-            type: 'danger',
-            content: statusErr.data
-          });
-        }
-      });
-  } else {
-    vm.loading = false;
-  }
+  vm.getInitalPreviewStatus();
 
   vm.filterSearch = () => {
     // Rerender data
@@ -759,6 +773,9 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
   $scope.$on('$destroy', function() {
     if (unsub) {
       unsub();
+    }
+    if (previewPoll) {
+      previewPoll();
     }
     if (timeout) {
       $timeout.cancel(timeout);

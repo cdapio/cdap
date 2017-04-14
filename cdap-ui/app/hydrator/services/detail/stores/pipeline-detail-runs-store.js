@@ -58,7 +58,7 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getStatus = function() {
       var status;
       if (this.state.runs.list.length === 0) {
-        status = 'STOPPED';
+        status = 'DEPLOYED';
       } else {
         status = myHelpers.objectQuery(this.state, 'runs', 'latest', 'status') || '';
       }

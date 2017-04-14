@@ -16,6 +16,16 @@
 
 my-join-types {
   .multi-checkboxes-container {
+    background-color: #efefef;
+    padding: 15px 10px;
+
+    &.empty {
+      background-color: initial;
+      padding: initial;
+    }
+
+    h4 { margin-bottom: 0; }
+
     .checkboxes-group {
       .subtitle {
         color: #3c4355;
@@ -35,7 +45,7 @@ my-join-types {
           padding-right: 75px;
         }
 
-        input.checkbox {
+        input[type="checkbox"] {
           margin-top: 3px;
         }
       }

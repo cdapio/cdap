@@ -206,7 +206,8 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(sourceTableName));
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
-    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
+    MockSource.writeInput(inputManager, "1", recordSamuel);
+    MockSource.writeInput(inputManager, "2", recordBob);
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig, previewConfig);
 
@@ -223,13 +224,13 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
       }
     }, 5, TimeUnit.MINUTES);
 
-    // Get the data for stage "source" in the PreviewStore, should contain one record.
+    // Get the data for stage "source" in the PreviewStore.
     checkPreviewStore(previewRunner, "source", 2);
 
-    // Get the data for stage "transform" in the PreviewStore, should contain no records.
+    // Get the data for stage "transform" in the PreviewStore, should contain one less record than source.
     checkPreviewStore(previewRunner, "transform", 1);
 
-    // Get the data for stage "sink" in the PreviewStore, should contain no records.
+    // Get the data for stage "sink" in the PreviewStore, should contain one less record than source.
     checkPreviewStore(previewRunner, "sink", 1);
 
     // Validate the metrics for preview

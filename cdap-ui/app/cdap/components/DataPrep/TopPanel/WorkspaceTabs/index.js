@@ -51,7 +51,7 @@ export default class WorkspaceTabs extends Component {
     this.eventEmitter = ee(ee);
 
     this.eventEmitter.on('DATAPREP_OPEN_UPLOAD', this.toggleWorkspacePropertiesModal);
-
+    this.eventEmitter.on('DATAPREP_CREATE_WORKSPACE', this.toggleCreateWorkspace);
     this.sub = DataPrepStore.subscribe(() => {
       this.setState({
         activeWorkspace: DataPrepStore.getState().dataprep.workspaceId
@@ -69,6 +69,7 @@ export default class WorkspaceTabs extends Component {
     }
 
     this.eventEmitter.off('DATAPREP_OPEN_UPLOAD', this.toggleWorkspacePropertiesModal);
+    this.eventEmitter.off('DATAPREP_CREATE_WORKSPACE', this.toggleCreateWorkspace);
   }
 
   getWorkspaceList() {
@@ -142,6 +143,7 @@ export default class WorkspaceTabs extends Component {
       <WorkspaceModal
         toggle={this.toggleCreateWorkspace}
         onCreate={this.getWorkspaceList}
+        singleWorkspaceMode={this.props.singleWorkspaceMode}
         isEmpty={this.state.workspaceList.length === 0}
       />
     );

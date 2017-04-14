@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc) {
+  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, LogViewerStore) {
     'ngInject';
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -36,6 +36,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.previewStore = HydratorPlusPlusPreviewStore;
     this.HydratorPlusPlusOrderingFactory = HydratorPlusPlusOrderingFactory;
     this.avsc = avsc;
+    this.LogViewerStore = LogViewerStore;
     this.setDefaults(rPlugin);
     this.tabs = [
       {
@@ -60,11 +61,11 @@ class HydratorPlusPlusNodeConfigCtrl {
     if (rIsStudioMode && this.isPreviewMode) {
       this.previewLoading = false;
       this.previewData = null;
+      this.previewStatus = null;
       this.fetchPreview();
     }
 
-    this.activeTab = this.isPreviewMode ? 2 : 1;
-
+    this.activeTab = this.isPreviewMode && !rPlugin.isAction ? 2 : 1;
 
     // Timeouts
     this.setStateTimeout = null;
@@ -217,6 +218,7 @@ class HydratorPlusPlusNodeConfigCtrl {
             }
             angular.forEach(this.state.groupsConfig.groups, (group) => {
               angular.forEach(group.fields, (field) => {
+                field.errorTooltip = '\'' + field.label + '\' is a required field';
                 if (field.defaultValue) {
                   this.state.node.plugin.properties[field.name] = this.state.node.plugin.properties[field.name] || field['widget-attributes'].default;
                 }
@@ -399,6 +401,11 @@ class HydratorPlusPlusNodeConfigCtrl {
             }
           }
         });
+        let logViewerState = this.LogViewerStore.getState();
+        if (logViewerState.statusInfo) {
+          // TODO: Move preview status state info HydratorPlusPlusPreviewStore, then get from there
+          this.previewStatus = logViewerState.statusInfo.status;
+        }
         this.previewLoading = false;
       }, () => {
         this.previewLoading = false;

@@ -196,6 +196,10 @@
                   cursor: pointer;
 
                   &.active { border-bottom: 2px solid @hydrator-blue; }
+                  &.disabled {
+                    cursor: not-allowed;
+                    color: #cccccc;
+                  }
                 }
               }
               .bottompanel-body {
@@ -261,6 +265,12 @@
                 }
               }
 
+              .row.preview-no-data {
+                h3 {
+                  font-size: 16px;
+                }
+              }
+
               .row.preview-tab {
                 margin-left: 0;
                 margin-right: 0;
@@ -280,6 +290,11 @@
                   padding-left: 5px;
                   margin-top: 20px;
                   font-size: 18px;
+
+                  &.message {
+                    font-size: 16px;
+                    font-weight: 300;
+                  }
                 }
                 .schema-toggle {
                   padding-left: 15px;
@@ -323,7 +338,15 @@
               }
             }
           }
-          .control-label { font-weight: bold; }
+          .control-label {
+            font-weight: 500;
+            padding-right: 0;
+            .required:after {
+              color: @brand-danger;
+              content:"*";
+              font-size: 16px;
+            }
+          }
           table.table {
             .control-label { font-weight: bold; }
           }

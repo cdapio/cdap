@@ -76,21 +76,16 @@ body.state-hydrator-create.state-hydrator {
     }
   }
   dataprep .dataprep-container {
+    .dataprep-loading {
+      z-index: 1063;
+    }
     .top-panel {
       .left-title {
-        width: ~"calc(100% - 210px)";
+        width: auto;
         margin-top: 5px;
         .workspace-tab {
           padding: 0 10px;
           cursor: pointer;
-
-          span:not(.fa) {
-            max-width: ~"calc(100% - 20px)";
-            display: inline-block;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            vertical-align: top;
-          }
           .fa.fa-pencil {
             margin-left: 5px;
           }
