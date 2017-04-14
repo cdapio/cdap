@@ -48,7 +48,7 @@ To retrieve all the configurations used by CDAP, issue an HTTP GET request::
    * - Parameter
      - Description
    * - ``type``
-     - Format for returned type, either ``json`` (default) or ``xml`` (optional)
+     - Optional format for returned type, either ``json`` (default) or ``xml``
 
 .. highlight:: json-ellipsis
 
@@ -98,7 +98,7 @@ To retrieve all the configurations used by HBase, issue an HTTP GET request::
    * - Parameter
      - Description
    * - ``type``
-     - Format for returned type, either ``json`` (default) or ``xml`` (optional)
+     - Optional format for returned type, either ``json`` (default) or ``xml``
 
 .. highlight:: xml
 
