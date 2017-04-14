@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2017 Cask Data, Inc.
 
 .. _http-restful-api-security:
 
@@ -33,6 +33,8 @@ Use the CDAP Authorization HTTP RESTful API to grant, revoke, and list privilege
 entities. Details about authorization in CDAP can be found at :ref:`Admin' Manual:
 Authorization <admin-authorization>`.
 
+.. highlight:: json
+
 In this API, a JSON-formatted body is used that contains the principal, the CDAP entity, and the privileges to
 be granted::
 
@@ -49,6 +51,8 @@ be granted::
     "actions": ["READ", "WRITE", "ADMIN"]
   }
 
+.. highlight:: console
+
 In the above JSON body, the ``entity`` object is the JSON-serialized form of the CDAP
 entity classes |---| for example, for datasets, it is the JSON representation of the
 :cdap-java-source-github:`DatasetId <cdap-proto/src/main/java/co/cask/cdap/proto/id/DatasetId.java>`
@@ -58,7 +62,7 @@ class.
 
 The ``principal`` object refers to the principal that you want to grant the privileges to.
 Principals have a ``name`` and a ``type``. The supported types are ``USER``, ``GROUP``, and
-``ROLE``. 
+``ROLE``.
 
 **Please note that** ``ROLE`` **is experimental and has only been created for
 supporting integration with** :ref:`Apache Sentry <integrations:apache-sentry>`.
@@ -76,6 +80,8 @@ the URL::
 
   POST /v3/security/authorization/privileges/grant
 
+.. highlight:: json
+
 with JSON-formatted body that contains the principal, the CDAP entity, and the actions to
 be granted, such as::
 
@@ -91,6 +97,8 @@ be granted, such as::
     },
     "actions": ["READ", "WRITE", "ADMIN"]
   }
+
+.. highlight:: console
 
 .. rubric:: HTTP Responses
 
@@ -112,6 +120,8 @@ You can revoke privileges for a principal on a CDAP Entity by making an HTTP POS
 
   POST /v3/security/authorization/privileges/revoke
 
+.. highlight:: json
+
 with JSON-formatted body that contains the principal, the CDAP entity and the actions to be revoked::
 
   {
@@ -127,10 +137,12 @@ with JSON-formatted body that contains the principal, the CDAP entity and the ac
     "actions": ["READ", "WRITE", "ADMIN"]
   }
 
+.. highlight:: console
+
 The ``entity`` object is mandatory in a revoke request.
 
 - If both ``principal`` and ``actions`` are not provided, then the API revokes all
-  privileges on the specified entity for all principals. 
+  privileges on the specified entity for all principals.
 - If ``entity`` and ``principal`` are provided, but ``actions`` is not, the API revokes
   all actions (``READ``, ``WRITE``, ``ADMIN``, and ``EXECUTE``) on the specified entity for
   the specified principal.
@@ -179,6 +191,8 @@ You can list all privileges for a principal on all CDAP entities by making an HT
    * - ``200 OK``
      - Privileges were successfully listed for the specified principal
 
+.. highlight:: json
+
 This will return a JSON array that lists each privilege for the principal with its ``entity`` and ``action``.
 Example output (pretty-printed)::
 
@@ -210,6 +224,7 @@ Example output (pretty-printed)::
     }
   ]
 
+.. highlight:: console
 
 
 .. _http-restful-api-secure-storage:
@@ -232,17 +247,20 @@ You can add a secure key to secure storage by making an HTTP PUT request to the 
 
   PUT /v3/namespaces/<namespace-id>/securekeys/<secure-key-id>
 
+.. highlight:: json
+
 with a JSON-formatted body that contains the description of the key, the data to be stored
 under the key, and a map of properties associated with the key::
 
   {
     "description": "Example Secure Key",
-    "data": <secure-contents>,
+    "data": "<secure-contents>",
     "properties": {
       "<property-key>": "<property-value>"
     }
   }
 
+.. highlight:: console
 
 .. list-table::
    :widths: 20 80
@@ -260,7 +278,7 @@ under the key, and a map of properties associated with the key::
      - Name of a property key to associate with the secure key
    * - ``property-value``
      - Value associated with the property key
-     
+
 
 .. rubric:: HTTP Responses
 
@@ -323,6 +341,8 @@ You can retrieve just the metadata for a secure key from secure storage by makin
 
   GET /v3/namespaces/<namespace-id>/securekeys/<secure-key-id>/metadata
 
+.. highlight:: json
+
 with the metadata of the secure key returned as a JSON object |---| name (the
 ``secure-key-id``), description, created timestamp, and the map of properties
 |---| passed in the response body, shown here pretty-printed::
@@ -336,6 +356,7 @@ with the metadata of the secure key returned as a JSON object |---| name (the
     }
   }
 
+.. highlight:: console
 
 .. list-table::
    :widths: 20 80
@@ -380,6 +401,8 @@ in the response body (shown here pretty-printed)::
     ...
   }
 
+.. highlight:: json-ellipsis
+
 such as (depending on what was stored)::
 
   {
@@ -388,6 +411,7 @@ such as (depending on what was stored)::
     ...
   }
 
+.. highlight:: console
 
 .. list-table::
    :widths: 20 80
@@ -419,7 +443,6 @@ Remove a Secure Key
 You can remove a secure key from secure storage by making an HTTP DELETE request to the URL::
 
   DELETE /v3/namespaces/<namespace-id>/securekeys/<secure-key-id>
-
 
 .. list-table::
    :widths: 20 80

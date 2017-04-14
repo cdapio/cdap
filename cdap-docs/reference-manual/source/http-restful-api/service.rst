@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _http-restful-api-service:
 
@@ -44,7 +44,9 @@ You can list all services in a namespace in CDAP by issuing an HTTP GET request 
      - Description
    * - ``namespace-id``
      - Namespace ID
-     
+
+.. highlight:: json-ellipsis
+
 The response body will contain a JSON-formatted list of the existing services::
 
   [
@@ -57,6 +59,8 @@ The response body will contain a JSON-formatted list of the existing services::
       }
       ...
   ]
+
+.. highlight:: console
 
 Checking Service Availability
 =============================
@@ -104,8 +108,8 @@ as part of the request URL along with any additional headers, body, and query pa
 The request type is defined by the service's method::
 
   <request-type> /v3/namespaces/<namespace-id>/apps/<app-id>/services/<service-id>/methods/<endpoint-path>
-  
-**Note:** Any reserved or unsafe characters in the path parameters should be encoded using 
+
+**Note:** Any reserved or unsafe characters in the path parameters should be encoded using
 :ref:`percent-encoding <http-restful-api-conventions-reserved-unsafe-characters>`. See the
 section on :ref:`Path Parameters<services-path-parameters>` for suggested approaches to
 encoding parameters.

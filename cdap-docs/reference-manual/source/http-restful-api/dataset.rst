@@ -41,14 +41,14 @@ You can list all datasets in CDAP by issuing an HTTP GET request to the URL::
 The response body will contain a JSON-formatted list of the existing datasets::
 
   {
-     "name":"cdap.user.purchases",
-     "type":"co.cask.cdap.api.dataset.lib.ObjectStore",
-     "description" : "Purchases Dataset",
-     "properties":{
+     "name": "cdap.user.purchases",
+     "type": "co.cask.cdap.api.dataset.lib.ObjectStore",
+     "description": "Purchases Dataset",
+     "properties": {
         "schema":"...",
         "type":"..."
      },
-     "datasetSpecs":{
+     "datasetSpecs": {
         ...
      }
    }
@@ -69,12 +69,12 @@ You can create a dataset by issuing an HTTP PUT request to the URL::
 with JSON-formatted name of the dataset type, properties, and description in a body::
 
   {
-     "typeName":"<type-name>",
+     "typeName": "<type-name>",
      "properties":{
         "<properties>"
       },
-     "description":"Dataset Description",
-     "principal":"user/example.net@EXAMPLEKDC.NET"
+     "description": "Dataset Description",
+     "principal": "user/example.net@EXAMPLEKDC.NET"
   }
 
 .. highlight:: console
@@ -265,7 +265,7 @@ with JSON-formatted properties in the body::
 
 .. highlight:: console
 
-**Notes:** 
+**Notes:**
 
 - The dataset must already exist.
 - The properties given in this request replace all existing properties; that is, if you
@@ -357,7 +357,7 @@ You can delete a dataset by issuing an HTTP DELETE request to the URL::
 Deleting all Datasets
 =====================
 
-If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is set to ``true``, 
+If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is set to ``true``,
 you can delete all Datasets (in a namespace) by issuing an HTTP DELETE request to the URL::
 
   DELETE /v3/unrecoverable/namespaces/<namespace-id>/datasets

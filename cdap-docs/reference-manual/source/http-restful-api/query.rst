@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _http-restful-api-query:
 
@@ -44,21 +44,30 @@ To submit a SQL query, post the query string to the ``queries`` URL::
    * - ``namespace-id``
      - Namespace ID
 
+.. highlight:: json
+
 The body of the request must contain a JSON string of the form::
 
   {
-    "query":"<SQL-query-string>"
+    "query": "<SQL-query-string>"
   }
+
+.. highlight:: console
 
 where ``SQL-query-string`` is the actual SQL query.
 If you are running a version of Hive that uses reserved keywords, and a column in your query is a `Hive reserved keyword
 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL#LanguageManualDDL-Keywords,
 Non-reservedKeywordsandReservedKeywords>`__, you must enclose the column name in backticks.
+
+.. highlight:: json
+
 For example::
 
   {
-    "query":"select `date` from stream_events"
+    "query": "select `date` from stream_events"
   }
+
+.. highlight:: console
 
 .. rubric:: HTTP Responses
 .. list-table::
@@ -75,11 +84,15 @@ For example::
 
 .. rubric:: Comments
 
+.. highlight:: json
+
 If the query execution was successfully initiated, the body of the
 response will contain a handle that can be used to identify the query in
 subsequent requests::
 
-  { "handle":"<query-handle>" }
+  { "handle": "<query-handle>" }
+
+.. highlight:: console
 
 .. rubric:: Example
 .. list-table::
@@ -104,7 +117,7 @@ Status of a Query
 The status of a query is obtained using a HTTP GET request to the query's URL::
 
   GET /v3/data/explore/queries/<query-handle>/status
-  
+
 **Note:** this endpoint is *not* namespaced, as all query-handles are globally unique.
 
 .. list-table::
@@ -134,8 +147,8 @@ If the query exists, the body will contain the status of its execution
 and whether the query has a results set::
 
   {
-    "status":"<status-code>",
-    "hasResults":<boolean>
+    "status": "<status-code>",
+    "hasResults": <boolean>
    }
 
 Status can be one of the following: ``INITIALIZED``, ``RUNNING``, ``FINISHED``, ``CANCELED``, ``CLOSED``,
@@ -194,7 +207,7 @@ The query's result schema is returned in a JSON body as a list of columns,
 each given by its name, type and position; if the query has no result set, this list is empty::
 
   [
-    {"name":"<name>", "type":"<type>", "position":<int>},
+    {"name": "<name>", "type": "<type>", "position": <int>},
     ...
   ]
 
@@ -230,7 +243,7 @@ size in the body of the request::
 The body of the request can contain a JSON string specifying the batch size::
 
   {
-    "size":<int>
+    "size": <int>
   }
 
 If the batch size is not specified, the default is 20.
@@ -270,8 +283,8 @@ The value at each position has the type that was returned in the result schema f
 For example, if the returned type was ``INT``, then the value will be an integer literal,
 whereas for ``STRING`` or ``VARCHAR`` the value will be a string literal.
 
-Repeat the query to retrieve subsequent results. If all results of the query have already 
-been retrieved, then the returned list is empty. 
+Repeat the query to retrieve subsequent results. If all results of the query have already
+been retrieved, then the returned list is empty.
 
 .. rubric:: Example
 .. list-table::
@@ -281,11 +294,13 @@ been retrieved, then the returned list is empty.
    * - HTTP Request
      - ``POST /v3/namespaces/default/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/next``
    * - HTTP Response
-     - | ``[{"columns": [ 10, 5]},``
-       | `` {"columns": [ 20, 27]},``
-       | `` {"columns": [ 50, 6]},``
-       | `` {"columns": [ 90, 30]},``
-       | `` {"columns": [ 95, 91]}]``
+     - | :literal:`[`
+       | :literal:`\   {"columns": [10, 5]},`
+       | :literal:`\   {"columns": [ 20, 27]},`
+       | :literal:`\   {"columns": [ 50, 6]},`
+       | :literal:`\   {"columns": [ 90, 30]},`
+       | :literal:`\   {"columns": [ 95, 91]}`
+       | :literal:`]`
    * - Description
      - Retrieve the results of the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
 
@@ -363,19 +378,23 @@ To return a list of queries, use::
 
 .. rubric:: Comments
 
+.. highlight:: json-ellipsis
+
 The results are returned as a JSON array, with each element containing information about a query::
 
   [
     {
-        "timestamp":1407192465183,
-        "statement":"SHOW TABLES",
-        "status":"FINISHED",
-        "query_handle":"319d9438-903f-49b8-9fff-ac71cf5d173d",
-        "has_results":true,
-        "is_active":false
+        "timestamp": 1407192465183,
+        "statement": "SHOW TABLES",
+        "status": "FINISHED",
+        "query_handle": "319d9438-903f-49b8-9fff-ac71cf5d173d",
+        "has_results": true,
+        "is_active": false
     },
     ...
   ]
+
+.. highlight:: console
 
 .. rubric:: Example
 .. list-table::
@@ -414,10 +433,13 @@ To return the count of **active** queries, use::
    * - ``namespace-id``
      - Namespace ID
 
+.. highlight:: json
+
 The results are returned in the body as a JSON string::
 
   { "count":6 }
 
+.. highlight:: console
 
 .. _http-restful-api-query-downloading:
 
@@ -442,7 +464,7 @@ The results of the query are returned in CSV format.
 
 .. rubric:: Comments
 
-The query results can be downloaded only once. The RESTful API will return a Status Code ``409 Conflict`` 
+The query results can be downloaded only once. The RESTful API will return a Status Code ``409 Conflict``
 if results for the ``query-handle`` are attempted to be downloaded again.
 
 .. rubric:: HTTP Responses
@@ -506,7 +528,7 @@ tracking the :ref:`status of the query <http-restful-api-query-status>`.
      - Name of the stream
    * - ``table-name``
      - Name of the table
-     
+
 .. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
@@ -522,11 +544,15 @@ tracking the :ref:`status of the query <http-restful-api-query-status>`.
 
 .. rubric:: Comments
 
+.. highlight:: json
+
 If the request was successful, the body will contain a query handle that can be used to
 identify the query in subsequent requests, such as a :ref:`status request
 <http-restful-api-query-status>`::
 
-  { "handle":"<query-handle>" }
+  { "handle": "<query-handle>" }
+
+.. highlight:: console
 
 .. rubric:: Example
 .. list-table::
