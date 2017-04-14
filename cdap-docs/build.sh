@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 
 # Copyright © 2016-2017 Cask Data, Inc.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
 # the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
-  
+
 # Build script for docs
 #
 # Builds all manuals
@@ -31,14 +31,14 @@ source _common/common-build.sh
 
 function usage() {
   local warnings
-  if [[ -n $1 ]]; then
-    echo_red_bold "Unknown action: " $1
+  if [[ -n ${1} ]]; then
+    echo_red_bold "Unknown action: " ${1}
     warnings=1
     echo
   fi
   echo "Build script for 'cdap' docs"
   echo "Usage: ${SCRIPT} <action>"
-  echo 
+  echo
   echo "  Action (select one)"
   echo
   echo "    docs-all          alias to \"docs-set\""
@@ -46,10 +46,10 @@ function usage() {
   echo "    docs-set          Clean build of HTML, CLI, including Javadocs, zipped"
   echo "    docs-set-local    Clean build of HTML, CLI, including Javadocs, zipped, but using local copies"
   echo "    docs-web-only     Clean build of HTML, CLI, zipped, skipping Javadocs"
-  echo 
+  echo
   echo "    docs              Dirty build of HTML, skipping CLI, Javadocs, or zipping"
   echo "    docs-local        Dirty build of HTML, skipping CLI, Javadocs, or zipping, but using local copies"
-  echo 
+  echo
   echo "    clean             Clean up any previous build's target directories"
   echo "    docs-cli          Build CLI input file for documentation"
   echo "    docs-package      Package (zip up) docs"
@@ -59,29 +59,29 @@ function usage() {
   echo "    version           Print the version information"
   echo
   echo "    check             Runs build without running Sphinx, to check all downloads and includes"
-  echo 
+  echo
   return ${warnings}
 }
 
 function run_command() {
   case ${1} in
-    check )             build_docs_check; warnings=$?;;
+    check )             build_docs_check; warnings=${?};;
     clean )             clean_targets;;
-    docs )              build_docs_only; warnings=$?;;
-    docs-local )        build_docs_only_local; warnings=$?;;
-    docs-all )          build_docs_set; warnings=$?;;
+    docs )              build_docs_only; warnings=${?};;
+    docs-local )        build_docs_only_local; warnings=${?};;
+    docs-all )          build_docs_set; warnings=${?};;
     docs-cli )          build_docs_cli;;
     docs-first-pass )   build_docs_first_pass;;
     docs-second-pass )  build_docs_second_pass;;
     docs-package )      build_docs_package;;
-    docs-set )          build_docs_set; warnings=$?;;
-    docs-set-local )    build_docs_set_local; warnings=$?;;
-    docs-web-only )     build_docs_web_only; warnings=$?;;
-    javadocs )          build_javadocs docs;;
-    javadocs-all )      build_javadocs all;;
+    docs-set )          build_docs_set; warnings=${?};;
+    docs-set-local )    build_docs_set_local; warnings=${?};;
+    docs-web-only )     build_docs_web_only; warnings=${?};;
+    javadocs )          build_javadocs docs; warnings=${?};;
+    javadocs-all )      build_javadocs all; warnings=${?};;
     licenses )          build_license_dependency_pdfs;;
     version )           print_version;;
-    * )                 usage ${1}; warnings=$?;;
+    * )                 usage ${1}; warnings=${?};;
   esac
   return ${warnings}
 }
@@ -93,7 +93,7 @@ function display_start_title() {
   echo "--------------------------------------------------------"
   echo
 }
-  
+
 function display_end_title() {
   echo "--------------------------------------------------------"
   echo "Completed \"${1}\""
@@ -141,7 +141,7 @@ function build_docs_web_only() {
 }
 
 function _build_docs() {
-  local warnings
+  local errors
   local type=${1}
   local title=${2}
   display_start_title "${title}"
@@ -156,22 +156,27 @@ function _build_docs() {
     if [[ ${type} == "docs_set" ]]; then
       cache_docs_cli
       build_javadocs docs
+      errors=${?}
+      if [[ ${errors} -ne 0 ]]; then
+        echo "Could not build javadocs"
+        return ${errors}
+      fi
       # As build_javadocs wipes out the results of the build_docs_cli
       restore_cached_docs_cli
     fi
   fi
   build_docs_second_pass
-  
+
   if [[ ${type} == "docs_set" ]] || [[ ${type} == "docs_web_only" ]]; then
     build_docs_package
   fi
-  
+
   set_and_display_version
   display_messages
-  warnings=$?
+  errors=${?}
   cleanup_messages_file
   display_end_title_bell "${title}"
-  return ${warnings}
+  return ${errors}
 }
 
 function build_docs_first_pass() {
@@ -179,7 +184,7 @@ function build_docs_first_pass() {
   display_start_title "${title}"
 
   build_docs_inner_level build-docs
-  
+
   display_end_title ${title}
 }
 
@@ -198,36 +203,55 @@ function build_javadocs() {
   # Used by reference manual to know to copy the javadocs
   USING_JAVADOCS="true"
   export USING_JAVADOCS
+  local errors
+  local errors_javadocs
   local javadoc_type=${1}
   local title="Building Javadocs: '${javadoc_type}'"
   display_start_title "${title}"
-  local warnings
+  set_version
   check_build_rst
-  set_environment    
+  set_environment
   if [[ ${DEBUG} == ${TRUE} ]]; then
     local debug_flag="-X"
   else
     local debug_flag=''
   fi
   if [[ ${javadoc_type} == ${ALL} ]]; then
-    javadoc_run="javadoc:aggregate"
+    javadoc_run="javadoc:aggregate -P release"
   else
-    javadoc_run="site"
+    javadoc_run="site -P templates"
   fi
   local start=`date`
   cd ${PROJECT_PATH}
   MAVEN_OPTS="-Xmx4g -XX:MaxPermSize=256m" # match other CDAP builds
-  mvn clean package ${javadoc_run} -P examples,templates,release -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
-  warnings=$?
-  if [[ ${warnings} -eq 0 ]]; then
-    echo
-    echo "Javadocs Build Start: ${start}"
-    echo "                 End: `date`"
+  local temp_repo="-Dmaven.repo.local=/tmp/repo-cdap-docs/${GIT_BRANCH}"
+  echo "Using temp_repo '${temp_repo}'"
+  if [[ -d ${temp_repo} ]]; then
+    rm -rf ${temp_repo}
+  fi
+  echo "========================================================"
+  echo "Building and installing CDAP to ${temp_repo}"
+  mvn clean install ${temp_repo} -P examples,templates,release -DskipTests -Dgpg.skip=true
+  errors=${?}
+  if [[ ${errors} -eq 0 ]]; then
+    echo "========================================================"
+    echo "Building and installing CDAP finished; running Javadocs"
+    mvn ${javadoc_run} ${temp_repo} -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
+    errors_javadocs=${?}
+    if [[ ${errors_javadocs} -eq 0 ]]; then
+      echo
+      echo "Javadocs Build Start: ${start}"
+      echo "                 End: `date`"
+    else
+      echo "Error building Javadocs"
+      display_end_title ${title}
+      return ${errors_javadocs}
+    fi
   else
-    echo "Error building Javadocs: ${warnings}"
+    echo "Error installing CDAP"
   fi
   display_end_title ${title}
-  return ${warnings}
+  return ${errors}
 }
 
 function build_docs_cli() {
@@ -243,10 +267,10 @@ function build_docs_cli() {
     set_environment
     cd ${PROJECT_PATH}
     mvn package -pl cdap-docs-gen -am -DskipTests
-    warnings=$?
+    warnings=${?}
     if [[ ${warnings} -eq 0 ]]; then
       ${JAVA} -cp cdap-docs-gen/target/cdap-docs-gen-${PROJECT_VERSION}.jar:cdap-cli/target/cdap-cli-${PROJECT_VERSION}.jar co.cask.cdap.docgen.cli.GenerateCLIDocsTable > ${target_txt}
-      warnings=$?
+      warnings=${?}
       echo
       echo "Completed building of CLI"
       if [[ ${warnings} -eq 0 ]]; then
@@ -268,7 +292,7 @@ function cache_docs_cli() {
   local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/target/cdap-docs-cli.txt
   local cache=${SCRIPT_PATH}/target
   cp ${target_txt} ${cache}
-  warnings=$?
+  warnings=${?}
   if [[ ${warnings} -eq 0 ]]; then
     echo "Caching CLI output file from '${target_txt}'"
   else
@@ -283,7 +307,7 @@ function restore_cached_docs_cli() {
   local target=${SCRIPT_PATH}/../cdap-docs-gen/target
   local cache_txt=${SCRIPT_PATH}/target/cdap-docs-cli.txt
   cp ${cache_txt} ${target}
-  warnings=$?
+  warnings=${?}
   if [[ ${warnings} -eq 0 ]]; then
     echo "Restored CLI output file from '${cache_txt}'"
   else
@@ -331,7 +355,7 @@ function build_docs_outer_level() {
     mkdir -p ${TARGET_PATH}/${SOURCE}/${i}
     rewrite ${SCRIPT_PATH}/${COMMON_PLACEHOLDER} ${TARGET_PATH}/${SOURCE}/${i}/index.rst "<placeholder-title>" ${i}
     echo
-  done  
+  done
 
   # Build outer-level docs
   cp ${SCRIPT_PATH}/${COMMON_HIGHLEVEL_PY}  ${TARGET_PATH}/${SOURCE}/conf.py
@@ -348,7 +372,7 @@ function build_docs_outer_level() {
   add_html_redirect
   echo
 }
- 
+
 function copy_docs_inner_level() {
   local title="Copying lower-level documentation"
   display_start_title "${title}"
@@ -393,52 +417,52 @@ function build_docs_package() {
   rm -rf ${PROJECT_VERSION} *.zip
   echo "Creating ${PROJECT_VERSION}"
   mkdir ${PROJECT_VERSION} && cp -r html ${PROJECT_VERSION}/en
-  errors=$?
+  errors=${?}
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not create ${PROJECT_VERSION}"
-      return ${errors}   
+      return ${errors}
   fi
   echo "Adding a redirect index.html file"
   cp ${SCRIPT_PATH}/${COMMON_SOURCE}/redirect.html ${PROJECT_VERSION}/index.html
-  errors=$?
+  errors=${?}
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not add redirect file"
-      return ${errors}   
+      return ${errors}
   fi
   echo "Adding .htaccess file (404 file)"
   rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/htaccess ${TARGET_PATH}/${PROJECT_VERSION}/.htaccess "<version>" "${PROJECT_VERSION}"
-  errors=$?
+  errors=${?}
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not create a .htaccess file"
-      return ${errors}   
+      return ${errors}
   fi
   echo "Canonical numbered version ${zip_dir_name}"
   python ${docs_change_py} ${TARGET_PATH}/${PROJECT_VERSION}
-  errors=$?
+  errors=${?}
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not change doc set ${TARGET_PATH}/${PROJECT_VERSION}"
-      return ${errors}   
+      return ${errors}
   fi
   echo "Creating zip ${zip_dir_name}"
   zip -qr ${zip_dir_name}.zip ${PROJECT_VERSION}/* ${PROJECT_VERSION}/.htaccess --exclude *.DS_Store* *.buildinfo*
-  errors=$?
+  errors=${?}
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not create zipped doc set ${TARGET_PATH}/${PROJECT_VERSION}"
-      return ${errors}   
+      return ${errors}
   fi
   echo "Copying zip ${zip_dir_name}"
   cp ${zip_dir_name}.zip ${TARGET_PATH}/${PROJECT_VERSION}
-  errors=$?
+  errors=${?}
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not copy zipped doc set into ${TARGET_PATH}/${PROJECT_VERSION}"
-      return ${errors}   
+      return ${errors}
   fi
   echo "Building sitemap.xml"
   python ${sitemap_xml_py} -i ${TARGET_PATH}/${PROJECT_VERSION} -o ${TARGET_PATH}/${PROJECT_VERSION}/sitemap.xml -v ${PROJECT_VERSION}
-  errors=$?
+  errors=${?}
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not build sitemap for ${TARGET_PATH}/${PROJECT_VERSION}"
-      return ${errors}   
+      return ${errors}
   fi
   display_end_title ${title}
 }
@@ -495,7 +519,7 @@ function setup() {
       DEBUG="${FALSE}"
     fi
     return 0
-  else  
+  else
     echo "Did not find MANUAL \"${MANUAL}\": are you in the correct directory?"
     exit ${E_WRONG_DIRECTORY}
   fi
@@ -503,7 +527,7 @@ function setup() {
 }
 
 setup quiet
-if [[ $? -ne 0 ]]; then
-    exit $?   
+if [[ ${?} -ne 0 ]]; then
+    exit ${?}
 fi
 run_command ${1}
