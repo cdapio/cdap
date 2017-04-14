@@ -504,7 +504,7 @@ function set_project_path() {
 
 function setup() {
   # Check that we're starting in the correct directory
-  local quiet={$1}
+  local quiet=${1}
   E_WRONG_DIRECTORY=85
   if [[ -z ${MANUAL} ]] || [[ -z ${CDAP_DOCS} ]]; then
     echo "Manual or CDAP_DOCS set incorrectly: are you in the correct directory?"
