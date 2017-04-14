@@ -38,6 +38,7 @@ export default class DataPrepTable extends Component {
 
     this.eventEmitter = ee(ee);
     this.openUploadData = this.openUploadData.bind(this);
+    this.openCreateWorkspaceModal = this.openCreateWorkspaceModal.bind(this);
 
     this.sub = DataPrepStore.subscribe(() => {
       let state = DataPrepStore.getState().dataprep;
@@ -53,6 +54,10 @@ export default class DataPrepTable extends Component {
 
   componentWillUnmount() {
     this.sub();
+  }
+
+  openCreateWorkspaceModal() {
+    this.eventEmitter.emit('DATAPREP_CREATE_WORKSPACE');
   }
 
   openUploadData() {
@@ -72,6 +77,24 @@ export default class DataPrepTable extends Component {
 
     let headers = this.state.headers;
     let data = this.state.data;
+
+    if (!this.state.workspaceId) {
+      return (
+        <div className="dataprep-table empty">
+          <div>
+            <h5 className="text-xs-center">Please create a workspace to wrangle data</h5>
+            <div className="button-container text-xs-center">
+              <button
+                className="btn btn-primary"
+                onClick={this.openCreateWorkspaceModal}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     if (data.length === 0 || headers.length === 0) {
       return (

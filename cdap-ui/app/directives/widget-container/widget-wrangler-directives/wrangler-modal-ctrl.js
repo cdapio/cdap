@@ -22,6 +22,12 @@ class WranglerModalController {
     this.EventPipe = EventPipe;
     this.onSubmit = this.onSubmit.bind(this);
     this.modalClosed = false;
+    $scope.$on('modal.closing', (e, reason) => {
+      if (reason === 'ADD_TO_PIPELINE') { return; }
+
+      let shouldClose = confirm('Are you sure you want to exit Wrangler?');
+      if (!shouldClose) { e.preventDefault(); }
+    });
   }
 
   onSubmit ({workspaceId, directives, schema}) {
@@ -30,7 +36,6 @@ class WranglerModalController {
     }
     if (!directives || !schema) {
       this.node.properties.workspaceId = workspaceId;
-      this.EventPipe.emit('wrangler.updateworkspace');
       this.$uibModalInstance.close('ADD_TO_PIPELINE');
       this.modalClosed = true;
       return;
