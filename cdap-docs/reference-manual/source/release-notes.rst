@@ -235,6 +235,10 @@ Known Issues
   working correctly. Use the previous commands (marked as deprecated), such as ``set
   preferences app <runtime-args> <app-id>``, as a workaround.
 
+- :cask-issue:`CDAP-9388` - When creating a stream and uploading data from the wizard in
+  the CDAP resource center, the metrics on the cards in the overview do not show appropriate
+  numbers. It will just show zero for the number of events and the bytes.
+
 .. API Changes
 .. Deprecated and Removed Features
 
