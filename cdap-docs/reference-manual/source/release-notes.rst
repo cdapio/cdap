@@ -96,7 +96,8 @@ Other New Features
 
 - :cask-issue:`CDAP-9281` - Added support for CDH 5.11.0.
 
-- :cask-issue:`CDAP-9311` - Adding support for service discovery in plugins.
+- :cask-issue:`CDAP-9311` - Added support that allows plugin developers to integrate with
+  CDAP services by exposing CDAP service discovery capabilities in the plugin context.
 
 Improvements
 ------------
@@ -229,8 +230,8 @@ Other Bug Fixes
 - :cask-issue:`CDAP-9142` - Fixed an issue with the binary format in the Kafka streaming
   source that prevented pipeline deployment.
 
-- :cask-issue:`CDAP-9160` - Fixed an issue when a user was using impersonation where YARN
-  would kill a container due to excessive memory usage.
+- :cask-issue:`CDAP-9160` - Fixed an issue that caused YARN containers to be killed due to
+  excessive memory usage when impersonation is enabled.
 
 - :cask-issue:`CDAP-9216` - Fixed bug where navigation links were referencing default
   namespace instead of the current namespace.
