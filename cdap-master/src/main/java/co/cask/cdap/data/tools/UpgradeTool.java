@@ -65,12 +65,10 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.schedule.AbstractSchedulerService;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedStreamSizeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
-import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
@@ -131,7 +129,6 @@ import java.util.concurrent.TimeUnit;
 public class UpgradeTool {
 
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeTool.class);
-  private static final String NAMESPACE_NAME = "upgradeTest";
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -385,7 +382,8 @@ public class UpgradeTool {
         case GEN_DATA:
           try {
             startUp();
-            genData();
+            genData("default");
+            genData("upgrade");
           } finally {
             stop();
           }
@@ -414,12 +412,12 @@ public class UpgradeTool {
     LOG.info("Run records generation done {}, {}", programId, status);
   }
 
-  private void genTimeSchedules() throws Exception {
+  private void genTimeSchedules(String namespace) throws Exception {
     LOG.info("Generating time schedules");
     int count = 1000;
     timeScheduleStore.initialize(null, null);
     for (int i = 0; i < count; i++) {
-      Id.Program program = Id.Program.from(NAMESPACE_NAME, "PurchaseHistory", ProgramType.WORKFLOW,
+      Id.Program program = Id.Program.from(namespace, "PurchaseHistory", ProgramType.WORKFLOW,
                                            "PurchaseHistoryWorkflow" + String.valueOf(i));
 
       // Generate JobKey based on the program
@@ -441,12 +439,12 @@ public class UpgradeTool {
     LOG.info("Time schedule generation done");
   }
 
-  private void genDataSchedules() throws Exception {
+  private void genDataSchedules(String namespace) throws Exception {
     LOG.info("Generating data schedules.");
     int count = 100;
     streamScheduleStore.initialize();
     for (int i = 0; i < count; i++) {
-      Id.Program program = Id.Program.from(NAMESPACE_NAME, "PurchaseHistory", ProgramType.WORKFLOW,
+      Id.Program program = Id.Program.from(namespace, "PurchaseHistory", ProgramType.WORKFLOW,
                                            "PurchaseHistoryWorkflow" + String.valueOf(i));
       streamScheduleStore.persist(program, SchedulableProgramType.WORKFLOW,
                                   new StreamSizeSchedule("StreamSchedule" + String.valueOf(i), "description",
@@ -456,11 +454,11 @@ public class UpgradeTool {
     LOG.info("Data schedule generation done.");
   }
 
-  private void generateWorkflowToken() {
+  private void generateWorkflowToken(String namespace) {
     LOG.info("Generating workflow token.");
     int count = 100;
     for (int i = 0; i < count; i++) {
-      Id.Program program = Id.Program.from(NAMESPACE_NAME, "PurchaseHistory", ProgramType.WORKFLOW,
+      Id.Program program = Id.Program.from(namespace, "PurchaseHistory", ProgramType.WORKFLOW,
                                            "PurchaseHistoryWorkflow" + String.valueOf(i));
       RunId runId = RunIds.generate();
       ProgramRunId workflowRunId = program.toEntityId().run(runId);
@@ -472,11 +470,11 @@ public class UpgradeTool {
     LOG.info("WorkflowToken generation done.");
   }
 
-  private void generateNodeState() {
+  private void generateNodeState(String namespace) {
     LOG.info("Generating node states.");
     int count = 100;
     for (int i = 0; i < count; i++) {
-      Id.Program program = Id.Program.from(NAMESPACE_NAME, "PurchaseHistory", ProgramType.WORKFLOW,
+      Id.Program program = Id.Program.from(namespace, "PurchaseHistory", ProgramType.WORKFLOW,
                                            "PurchaseHistoryWorkflow" + String.valueOf(i));
       RunId runId = RunIds.generate();
       ProgramRunId workflowRunId = program.toEntityId().run(runId);
@@ -487,7 +485,7 @@ public class UpgradeTool {
 
     BasicThrowable t = new BasicThrowable(new RuntimeException("Test throwable"));
     for (int i = 0; i < count; i++) {
-      Id.Program program = Id.Program.from(NAMESPACE_NAME, "PurchaseHistory", ProgramType.WORKFLOW,
+      Id.Program program = Id.Program.from(namespace, "PurchaseHistory", ProgramType.WORKFLOW,
                                            "PurchaseHistoryWorkflow" + String.valueOf(i));
       RunId runId = RunIds.generate();
       ProgramRunId workflowRunId = program.toEntityId().run(runId);
@@ -498,8 +496,9 @@ public class UpgradeTool {
     LOG.info("Node states generation done.");
   }
 
-  private void genData() throws Exception {
-    ApplicationId applicationId = new ApplicationId(NAMESPACE_NAME, "PurchaseHistory");
+  private void genData(String namespace) throws Exception {
+    LOG.info("Generating data for the namespace {}", namespace);
+    ApplicationId applicationId = new ApplicationId(namespace, "PurchaseHistory");
 
     // Generate RunRecords for the program
     ProgramId purchaseHistoryService = applicationId.program(ProgramType.SERVICE, "PurchaseHistoryService");
@@ -508,16 +507,17 @@ public class UpgradeTool {
 
 
     // Generate TimeSchedules
-    genTimeSchedules();
+    genTimeSchedules(namespace);
 
     // Generate Data schedules
-    genDataSchedules();
+    genDataSchedules(namespace);
 
     // Generate WorkflowToken
-    generateWorkflowToken();
+    generateWorkflowToken(namespace);
 
     // Generate node states
-    generateNodeState();
+    generateNodeState(namespace);
+    LOG.info("Generated data for the namespace {}", namespace);
   }
 
   private JobDetail getJobDetail(String jobKey) {
