@@ -130,6 +130,13 @@ public final class MDSKey implements Comparable<MDSKey> {
       skipBytes();
     }
 
+    /**
+     * @return true if there are any bytes remaining to be read
+     */
+    public boolean hasRemaining() {
+      return byteBuffer.hasRemaining();
+    }
+
     private void forward(int count) {
       int position = byteBuffer.position();
       byteBuffer.position(position + count);

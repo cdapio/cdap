@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,12 +23,15 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.internal.app.runtime.schedule.AbstractSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.StreamSizeScheduleState;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -58,10 +61,15 @@ import javax.annotation.Nullable;
  */
 @Singleton
 public class DatasetBasedStreamSizeScheduleStore {
+  public static final String KEY_PREFIX = "streamSizeSchedule";
+
   private static final Logger LOG = LoggerFactory.getLogger(DatasetBasedStreamSizeScheduleStore.class);
+  // Limit the number of logs when the rows have invalid columns. This will be called only during the startup when the
+  // scheduler is initialized from the store entries and since we don't expect to have many data sized schedules,
+  // we can log once every N log calls
+  private static final Logger LIMITED_LOG = Loggers.sampling(LOG, LogSamplers.onceEvery(100));
 
   private static final Gson GSON = new Gson();
-  private static final String KEY_PREFIX = "streamSizeSchedule";
   private static final byte[] SCHEDULE_COL = Bytes.toBytes("schedule");
   private static final byte[] BASE_SIZE_COL = Bytes.toBytes("baseSize");
   private static final byte[] BASE_TS_COL = Bytes.toBytes("baseTs");
@@ -144,8 +152,8 @@ public class DatasetBasedStreamSizeScheduleStore {
   public void resume(ProgramId programId, SchedulableProgramType programType, String scheduleName)
     throws TransactionFailureException, InterruptedException {
     updateTable(programId, programType, scheduleName,
-                new byte[][]{ ACTIVE_COL },
-                new byte[][]{ Bytes.toBytes(true) },
+                new byte[][]{ACTIVE_COL},
+                new byte[][]{Bytes.toBytes(true)},
                 null);
   }
 
@@ -162,9 +170,9 @@ public class DatasetBasedStreamSizeScheduleStore {
                             long newBaseRunSize, long newBaseRunTs)
     throws TransactionFailureException, InterruptedException {
       updateTable(programId, programType, scheduleName,
-                new byte[][]{ BASE_SIZE_COL, BASE_TS_COL },
-                new byte[][]{ Bytes.toBytes(newBaseRunSize), Bytes.toBytes(newBaseRunTs) },
-                null);
+                  new byte[][]{BASE_SIZE_COL, BASE_TS_COL},
+                  new byte[][]{Bytes.toBytes(newBaseRunSize), Bytes.toBytes(newBaseRunTs)},
+                  null);
   }
 
   /**
@@ -183,8 +191,8 @@ public class DatasetBasedStreamSizeScheduleStore {
                             TransactionMethod txMethod)
     throws TransactionFailureException, InterruptedException {
     updateTable(programId, programType, scheduleName,
-                new byte[][]{ LAST_RUN_SIZE_COL, LAST_RUN_TS_COL },
-                new byte[][]{ Bytes.toBytes(newLastRunSize), Bytes.toBytes(newLastRunTs) },
+                new byte[][]{LAST_RUN_SIZE_COL, LAST_RUN_TS_COL},
+                new byte[][]{Bytes.toBytes(newLastRunSize), Bytes.toBytes(newLastRunTs)},
                 txMethod);
   }
 
@@ -218,12 +226,21 @@ public class DatasetBasedStreamSizeScheduleStore {
       .execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
-          byte[] rowKey = Bytes.toBytes(String.format("%s:%s", KEY_PREFIX,
-                                                      AbstractSchedulerService.scheduleIdFor(programId, programType,
-                                                                                             scheduleName)));
-          table.delete(rowKey);
+          String rowKey = getRowKey(programId, programType, scheduleName);
+
+          String versionLessRowKey = removeAppVersion(rowKey);
+          if (versionLessRowKey != null) {
+            table.delete(Bytes.toBytes(versionLessRowKey));
+          }
+          table.delete(Bytes.toBytes(rowKey));
         }
       });
+  }
+
+  @VisibleForTesting
+  String getRowKey(ProgramId programId, SchedulableProgramType programType, String scheduleName) {
+    return String.format("%s:%s", KEY_PREFIX, AbstractSchedulerService.scheduleIdFor(
+      programId, programType, scheduleName));
   }
 
   /**
@@ -245,22 +262,28 @@ public class DatasetBasedStreamSizeScheduleStore {
               byte[] lastRunTsBytes = row.get(LAST_RUN_TS_COL);
               byte[] activeBytes = row.get(ACTIVE_COL);
               byte[] propertyBytes = row.get(PROPERTIES_COL);
-              if (scheduleBytes == null || baseSizeBytes == null || baseTsBytes == null || lastRunSizeBytes == null ||
-                lastRunTsBytes == null || activeBytes == null) {
+              if (isInvalidRow(row)) {
+                LIMITED_LOG.debug("Stream Sized Schedule entry with Row key {} does not have all columns.",
+                                  Bytes.toString(row.getRow()));
                 continue;
               }
 
               String rowKey = Bytes.toString(row.getRow());
               String[] splits = rowKey.split(":");
-              // Row key for the trigger should be of the form -
-              // streamSizeSchedule:namespace:application:version:type:program:schedule
-              if (splits.length != 7) {
+              ProgramId program;
+
+              if (splits.length == 7) {
+                // New Row key for the trigger should be of the form -
+                // streamSizeSchedule:namespace:application:version:type:program:schedule
+                program = new ApplicationId(splits[1], splits[2], splits[3])
+                  .program(ProgramType.valueOf(splits[4]), splits[5]);
+              } else if (splits.length == 6) {
+                program = new ApplicationId(splits[1], splits[2]).program(ProgramType.valueOf(splits[3]), splits[4]);
+              } else {
                 continue;
               }
-              ProgramId program = new ApplicationId(splits[1], splits[2], splits[3])
-                .program(ProgramType.valueOf(splits[4]), splits[5]);
-              SchedulableProgramType programType = SchedulableProgramType.valueOf(splits[4]);
 
+              SchedulableProgramType programType = program.getType().getSchedulableType();
               StreamSizeSchedule schedule = GSON.fromJson(Bytes.toString(scheduleBytes), StreamSizeSchedule.class);
               long baseSize = Bytes.toLong(baseSizeBytes);
               long baseTs = Bytes.toLong(baseTsBytes);
@@ -311,12 +334,17 @@ public class DatasetBasedStreamSizeScheduleStore {
           if (txMethod != null) {
             txMethod.execute();
           }
-          byte[] rowKey = Bytes.toBytes(String.format("%s:%s", KEY_PREFIX,
-                                                      AbstractSchedulerService.scheduleIdFor(programId, programType,
-                                                                                             scheduleName)));
+          byte[] rowKey = Bytes.toBytes(getRowKey(programId, programType, scheduleName));
           table.put(rowKey, columns, values);
         }
       });
+  }
+
+  @Nullable
+  String removeAppVersion(String scheduleId) {
+    // New Row key for the trigger should be of the form -
+    // streamSizeSchedule:namespace:application:version:type:program:schedule
+    return ScheduleUpgradeUtil.splitAndRemoveDefaultVersion(scheduleId, 7, 3);
   }
 
   /**
@@ -355,6 +383,8 @@ public class DatasetBasedStreamSizeScheduleStore {
       Row next;
       while ((next = scan.next()) != null) {
         if (isInvalidRow(next)) {
+          LIMITED_LOG.debug("Stream Sized Schedule entry with Row key {} does not have all columns.",
+                            Bytes.toString(next.getRow()));
           continue;
         }
         byte[] oldRowKey = next.getRow();

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 
 package co.cask.cdap.internal.app.store;
 
@@ -67,6 +66,56 @@ public class AppMetadataStoreTest {
     datasetFramework = injector.getInstance(DatasetFramework.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     cConf = injector.getInstance(CConfiguration.class);
+  }
+
+  @Test
+  public void testOldRunRecordFormat() throws Exception {
+    DatasetId storeTable = NamespaceId.DEFAULT.dataset("testOldRunRecordFormat");
+    datasetFramework.addInstance(Table.class.getName(), storeTable, DatasetProperties.EMPTY);
+
+    Table table = datasetFramework.getDataset(storeTable, ImmutableMap.<String, String>of(), null);
+    Assert.assertNotNull(table);
+    final AppMetadataStore metadataStoreDataset = new AppMetadataStore(table, cConf);
+    TransactionExecutor txnl = txExecutorFactory.createExecutor(
+      Collections.singleton((TransactionAware) metadataStoreDataset));
+
+    ApplicationId application = NamespaceId.DEFAULT.app("app");
+    final ProgramId program = application.program(ProgramType.values()[ProgramType.values().length - 1],
+                                                  "program");
+    final RunId runId = RunIds.generate();
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        metadataStoreDataset.recordProgramStartOldFormat(program, runId.getId(),
+                                                         RunIds.getTime(runId, TimeUnit.SECONDS), null, null, null);
+      }
+    });
+
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Set<RunId> runIds = metadataStoreDataset.getRunningInRange(0, Long.MAX_VALUE);
+        Assert.assertEquals(1, runIds.size());
+        RunRecordMeta meta = metadataStoreDataset.getRun(program, runIds.iterator().next().getId());
+        Assert.assertNotNull(meta);
+        Assert.assertEquals(runId.getId(), meta.getPid());
+      }
+    });
+
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        metadataStoreDataset.recordProgramStopOldFormat(program, runId.getId(),
+                                                        TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                                        ProgramRunStatus.COMPLETED, null);
+        Map<ProgramRunId, RunRecordMeta> runRecordMap = metadataStoreDataset.getRuns(
+          program, ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE, Integer.MAX_VALUE, null);
+        Assert.assertEquals(1, runRecordMap.size());
+        ProgramRunId programRunId = runRecordMap.keySet().iterator().next();
+        Assert.assertEquals(program, programRunId.getParent());
+        Assert.assertEquals(runId.getId(), programRunId.getRun());
+      }
+    });
   }
 
   @Test
@@ -181,9 +230,8 @@ public class AppMetadataStoreTest {
     final Set<ProgramRunId> programRunIdSet = new HashSet<>();
     final Set<ProgramRunId> programRunIdSetHalf = new HashSet<>();
     for (int i = 0; i < 100; ++i) {
-      ApplicationId application = NamespaceId.DEFAULT.app("app" + i);
-      final ProgramId program = application.program(ProgramType.values()[i % ProgramType.values().length],
-                                                    "program" + i);
+      ApplicationId application = NamespaceId.DEFAULT.app("app");
+      final ProgramId program = application.program(ProgramType.FLOW, "program");
       final RunId runId = RunIds.generate((i + 1) * 10000);
       expected.add(runId.toString());
       final int index = i;
