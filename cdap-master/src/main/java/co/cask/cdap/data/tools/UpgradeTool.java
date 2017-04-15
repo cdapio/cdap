@@ -20,6 +20,9 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -62,14 +65,18 @@ import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
+import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -81,6 +88,8 @@ import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -124,6 +133,8 @@ public class UpgradeTool {
   private final NamespaceStore nsStore;
   private final AuthorizationEnforcementService authorizationService;
   private final DefaultStore defaultStore;
+  private final Scheduler scheduler;
+  private final AppFabricServer appFabricServer;
 
   /**
    * Set of Action available in this tool.
@@ -174,6 +185,8 @@ public class UpgradeTool {
     this.queueAdmin = injector.getInstance(QueueAdmin.class);
     this.nsStore = injector.getInstance(NamespaceStore.class);
     this.authorizationService = injector.getInstance(AuthorizationEnforcementService.class);
+    this.scheduler = injector.getInstance(Scheduler.class);
+    this.appFabricServer = injector.getInstance(AppFabricServer.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -272,9 +285,13 @@ public class UpgradeTool {
    */
   private void startUp() throws Exception {
     // Start all the services.
+    appFabricServer.startAndWait();
     zkClientService.startAndWait();
     txService.startAndWait();
     authorizationService.startAndWait();
+    if (scheduler instanceof Service) {
+      ((Service) scheduler).startAndWait();
+    }
     initializeDSFramework(cConf, dsFramework);
   }
 
@@ -286,6 +303,10 @@ public class UpgradeTool {
       txService.stopAndWait();
       zkClientService.stopAndWait();
       authorizationService.stopAndWait();
+      if (scheduler instanceof Service) {
+        ((Service) scheduler).stopAndWait();
+      }
+      appFabricServer.stopAndWait();
     } catch (Throwable e) {
       LOG.error("Exception while trying to stop upgrade process", e);
       Runtime.getRuntime().halt(1);
@@ -370,10 +391,10 @@ public class UpgradeTool {
   }
 
   private void genData() throws Exception {
-    int count = 100;
+    int count = 1000;
     LOG.info("Generating {} run records", count);
     for (int i = 0; i < count; ++i) {
-      ApplicationId applicationId = new ApplicationId("poorna", "PurchaseHistory");
+      ApplicationId applicationId = new ApplicationId("upgradeTest", "PurchaseHistory");
       ProgramId program = applicationId.program(ProgramType.SERVICE, "PurchaseHistoryService");
       RunId runId = RunIds.generate();
       defaultStore.setStart(program.toId(), runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS));
@@ -381,6 +402,21 @@ public class UpgradeTool {
                            ProgramRunStatus.COMPLETED);
     }
     LOG.info("Added {} run records", count);
+
+    count = 1;
+    LOG.info("Generating {} schedules", count);
+    for (int i = 0; i < count; i++) {
+//      ScheduleSpecification spec = new ScheduleSpecification(new TimeSchedule("schedule1", "test", "*/1 * * * *"),
+//                                                             new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW,
+//                                                                                     "PurchaseHistoryWorkflow"),
+//                                                             ImmutableMap.<String, String>of());
+//      defaultStore.addSchedule(Id.Program.from("upgradeTest", "PurchaseHistory", ProgramType.WORKFLOW,
+//                                               "PurchaseHistoryWorkflow"), spec);
+      scheduler.schedule(Id.Program.from("upgradeTest", "PurchaseHistory", ProgramType.WORKFLOW,
+                                         "PurchaseHistoryWorkflow"), SchedulableProgramType.WORKFLOW,
+                         new TimeSchedule("schedule1", "test", "*/1 * * * *"));
+    }
+    LOG.info("Added {} schedules", count);
   }
 
   private String getResponse(boolean interactive) {
