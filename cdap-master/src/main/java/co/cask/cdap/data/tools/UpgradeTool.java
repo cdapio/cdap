@@ -22,7 +22,9 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -67,8 +69,10 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
@@ -76,11 +80,14 @@ import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
@@ -167,6 +174,7 @@ public class UpgradeTool {
 
   public UpgradeTool() throws Exception {
     this.cConf = CConfiguration.create();
+    cConf.set(Constants.Explore.EXPLORE_ENABLED, "false");
     if (this.cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       LOG.info("Disabling authorization for {}.", getClass().getSimpleName());
       this.cConf.setBoolean(Constants.Security.Authorization.ENABLED, false);
@@ -285,14 +293,14 @@ public class UpgradeTool {
    */
   private void startUp() throws Exception {
     // Start all the services.
-    appFabricServer.startAndWait();
     zkClientService.startAndWait();
     txService.startAndWait();
     authorizationService.startAndWait();
+    initializeDSFramework(cConf, dsFramework);
+    appFabricServer.startAndWait();
     if (scheduler instanceof Service) {
       ((Service) scheduler).startAndWait();
     }
-    initializeDSFramework(cConf, dsFramework);
   }
 
   /**
@@ -300,13 +308,13 @@ public class UpgradeTool {
    */
   private void stop() {
     try {
-      txService.stopAndWait();
-      zkClientService.stopAndWait();
-      authorizationService.stopAndWait();
       if (scheduler instanceof Service) {
         ((Service) scheduler).stopAndWait();
       }
       appFabricServer.stopAndWait();
+      authorizationService.stopAndWait();
+      txService.stopAndWait();
+      zkClientService.stopAndWait();
     } catch (Throwable e) {
       LOG.error("Exception while trying to stop upgrade process", e);
       Runtime.getRuntime().halt(1);
@@ -403,20 +411,45 @@ public class UpgradeTool {
     }
     LOG.info("Added {} run records", count);
 
-    count = 1;
-    LOG.info("Generating {} schedules", count);
+    LOG.info("Generating {} time schedules", count);
     for (int i = 0; i < count; i++) {
-//      ScheduleSpecification spec = new ScheduleSpecification(new TimeSchedule("schedule1", "test", "*/1 * * * *"),
-//                                                             new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW,
-//                                                                                     "PurchaseHistoryWorkflow"),
-//                                                             ImmutableMap.<String, String>of());
-//      defaultStore.addSchedule(Id.Program.from("upgradeTest", "PurchaseHistory", ProgramType.WORKFLOW,
-//                                               "PurchaseHistoryWorkflow"), spec);
       scheduler.schedule(Id.Program.from("upgradeTest", "PurchaseHistory", ProgramType.WORKFLOW,
                                          "PurchaseHistoryWorkflow"), SchedulableProgramType.WORKFLOW,
-                         new TimeSchedule("schedule1", "test", "*/1 * * * *"));
+                         new TimeSchedule("TimeSchedule" + String.valueOf(i), "test", "*/1 * * * *"));
     }
-    LOG.info("Added {} schedules", count);
+    LOG.info("Added {} time schedules", count);
+
+    LOG.info("Generating {} data schedules", count);
+    for (int i = 0; i < count; i++) {
+      scheduler.schedule(Id.Program.from("upgradeTest", "PurchaseHistory", ProgramType.WORKFLOW,
+                                         "PurchaseHistoryWorkflow"), SchedulableProgramType.WORKFLOW,
+                         new StreamSizeSchedule("StreamSchedule" + String.valueOf(i), "test", "purchaseStream", 100));
+    }
+    LOG.info("Added {} Stream schedules", count);
+
+    LOG.info("Generating {} workflow tokens", count);
+    ProgramId workflow = new ProgramId("upgradeTest", "PurchaseHistory", ProgramType.WORKFLOW,
+                                       "PurchaseHistoryWorkflow");
+    for (int i = 0; i < count; i++) {
+      RunId runId = RunIds.generate();
+      ProgramRunId workflowRunId = workflow.run(runId);
+      BasicWorkflowToken token = new BasicWorkflowToken(100);
+      token.put("testkey", "testvalue");
+      defaultStore.updateWorkflowToken(workflowRunId, token);
+    }
+
+    LOG.info("Generated {} workflow tokens", count);
+
+    LOG.info("Generating {} workflow node state", count);
+    for (int i = 0; i < count; i++) {
+      RunId runId = RunIds.generate();
+      ProgramRunId workflowRunId = workflow.run(runId);
+      WorkflowNodeStateDetail detail = new WorkflowNodeStateDetail("PurchaseHistoryBuilder", NodeStatus.COMPLETED,
+                                                                   RunIds.generate().getId(), null);
+      defaultStore.addWorkflowNodeState(workflowRunId, detail);
+    }
+
+    LOG.info("Generated {} workflow tokens", count);
   }
 
   private String getResponse(boolean interactive) {
