@@ -17,6 +17,7 @@
 Cask Data Application Platform Release Notes
 ============================================
 
+.. Summary
 .. New Features
 .. Improvements
 .. Bug Fixes
@@ -33,125 +34,159 @@ Cask Data Application Platform Release Notes
 `Release 4.1.1 <http://docs.cask.co/cdap/4.1.1/index.html>`__
 =============================================================
 
+Summary
+-------
+
+1. **Data Preparation:** Point-and-click interactions and integration with the rest of CDAP
+   including |---| but not limited to |---| namespaces, security, and pipelines.
+
+2. **Upgrade:** Significant reduction in downtime during CDAP upgrades, by removing some data
+   migration and doing required migration in the background after CDAP starts up.
+
+3. **Pipeline Previews**: Added logs, better error messaging, ability to read from existing
+   datasets, and a better stop experience.
+
+4. **Logs**: Added a condensed view of logs for CDAP pipelines and programs that does not
+   include logs emitted by the CDAP platform and libraries. The condensed view only
+   contains lifecycle logs, logs emitted by the program or pipeline, and errors.
+
+5. **Schedules:** Added the ability to update schedules without redeploying the application.
+
 New Features
 ------------
 
-- :cask-issue:`CDAP-8872` - Changed the Apache Tephra dependency to the 0.11.0-incubating
-  version.
+Data Preparation
+................
+- :cask-issue:`CDAP-9235` - Users can now interact with and manage multiple workspaces in
+  Data Preparation.
 
-- :cask-issue:`CDAP-9250` - Added support for the Hive version shipped with HDP 2.6.
+- :cask-issue:`WRANGLER-77` - Added point-and-click interactions for applying directives
+  such as parsing, splitting, find and replace, filling null or empty rows, copying and
+  deleting columns in Data Preparation. They can be invoked by using the dropdown menu for
+  each column.
 
-- :cask-issue:`CDAP-7731` - Added fetch size and transaction flush interval configurations
-  to the Kafka Consumer Flowlet.
-
-- :cask-issue:`CDAP-8902` - Added support for adding, deleting, updating, and retrieving
-  workflow schedules in the CDAP CLI.
-
+Logs
+....
 - :cask-issue:`CDAP-9117` - Changed the log viewer to only show "user" condensed logs by
   default. There is an option to "Include System Logs" to show all logs as previously.
 
-- :cask-issue:`CDAP-9141` - Added a 'sparkprogram' plugin type that can be used to run
-  arbitrary Spark code at the beginning or end of a pipeline.
+- :cask-issue:`HYDRATOR-1316` - Logs for previews of CDAP pipelines are now available in
+  the CDAP UI via the *Logs* button in Preview mode.
 
-- :cask-issue:`CDAP-9147` - Added pipeline start and finish logs in the condensed view.
+Schedules
+.........
+- :cask-issue:`CDAP-8902` - Added support for adding, deleting, updating, and retrieving
+  workflow schedules.
 
-- :cask-issue:`CDAP-9235` - Added workspace tabs to the top panel of the Data Preparation (Wrangler) plugin.
+Other New Features
+..................
+- :cask-issue:`CDAP-8872` - Upgraded Apache Tephra dependency to the 0.11.0-incubating
+  version.
+
+- :cask-issue:`CDAP-9141`, :cask-issue:`HYDRATOR-1453` - Users can now deploy CDAP
+  pipelines with a single action plugin. This feature can be used to run external Apache
+  Spark programs as CDAP pipelines.
+
+  Added a *sparkprogram* plugin type that can be used to run arbitrary Spark code at the
+  beginning or end of a pipeline. An external Spark program can be added by clicking the
+  "plus" ("+") button in the CDAP UI, choosing *Library*, and specifying *sparkprogram* as
+  the type. It is then available as an Action plugin in the CDAP Studio.
+
+- :cask-issue:`CDAP-9250` - Added support for HDP 2.6.
 
 - :cask-issue:`CDAP-9281` - Added support for CDH 5.11.0.
 
-- :cask-issue:`CDAP-9327` - Added support in the CDAP UI for the Spark program pipeline
-  plugin.
-
-- :cask-issue:`HYDRATOR-1316` - Added the ability to see logs in preview.
-
-- :cask-issue:`WRANGLER-51` - Added Copy Column to the list of column dropdown directives
-  in the Data Preparation (Wrangler) plugin.
-
-- :cask-issue:`WRANGLER-77` - Added a column-action dropdown menu for Data Preparation
-  directives.
+- :cask-issue:`CDAP-9311` - Adding support for service discovery in plugins.
 
 Improvements
 ------------
 
-- :cask-issue:`CDAP-7352` - Improved log viewer to always show headers at the top of the
-  screen, even when the user scrolls down.
+Upgrade
+.......
+- :cask-issue:`CDAP-9278` - Added the running of HBase coprocessor upgrades concurrently
+  on CDAP Datasets.
 
-- :cask-issue:`CDAP-8430` - Modified the Entity list page to show appropriate message when
-  no entity is shown on the page, appropriate to how the user got to that state.
+- :cask-issue:`CDAP-9282`, :cask-issue:`CDAP-9283` - Improved the CDAP upgrade process to
+  minimize the downtime needed to upgrade, by performing data migration in the background.
 
-- :cask-issue:`CDAP-8942` - Allow administrators to enable or disable updating schedules
-  using the property "app.deploy.update.schedules" in cdap-site.xml. Users can override this
-  to enable or disable updating schedules during deployment of an application using the same
-  property specified in the configuration of application.
-
-- :cask-issue:`CDAP-8982` - Updated SDK images (Amazon AMI, Docker image, Virtual Machine
-  image) to use Ubuntu 16.04 LTS release.
-
-- :cask-issue:`CDAP-8990` - New configurations have been added to control the YARN
-  application master container memory size, maximum heap memory size, and maximum non-heap
-  memory size: twill.java.heap.memory.ratio, twill.yarn.am.memory.mb, and
-  twill.yarn.am.reserved.memory.mb.
-
-- :cask-issue:`CDAP-9003` - Increased the memory allocation for the CDAP Explore service
-  container to 2048MB.
-
+Pipeline Previews
+.................
 - :cask-issue:`CDAP-9017` - Simplified the status, next runtime of pipelines, total number
   of running pipelines, and drafts in the pipeline list view UI.
 
-- :cask-issue:`CDAP-9070` - Added the ability to work with Data Preparation from within
-  the CDAP Studio UI. Users can now open a Wrangler transform, wrangle the data, and save it
-  back to the CDAP Studio.
+Schedules
+.........
+- :cask-issue:`CDAP-8942` - Allow administrators to enable or disable updating schedules
+  using the property "app.deploy.update.schedules" in cdap-site.xml. Users can override this
+  to enable or disable updating schedules during deployment of an application using the same
+  property specified in the configuration of the application.
+
+Other Improvements
+..................
+- :cask-issue:`CDAP-7731` - Added fetch size and transaction flush interval configurations
+  to the Kafka Consumer Flowlet.
+
+- :cask-issue:`CDAP-8430` - Users can now see a contextual message with appropriate
+  call(s) to action when no entities are found on the Overview page.
+
+- :cask-issue:`CDAP-8990` - Added new configurations to control the YARN application
+  master container memory size, maximum heap memory size, and maximum non-heap memory size:
+  ``twill.java.heap.memory.ratio``, ``twill.yarn.am.memory.mb``, and
+  ``twill.yarn.am.reserved.memory.mb``.
+
+- :cask-issue:`CDAP-9003` - Increased the default memory allocation for the CDAP Explore service
+  container to 2048MB.
+
+- :cask-issue:`CDAP-9027` - Users can now grant and revoke privileges for UNIX groups and
+  users when using Apache Sentry as the authorization extension for CDAP.
 
 - :cask-issue:`CDAP-9077` - Added a "cdap apply-pack [pack]" command to the "cdap" script
   that allows for upgrading of individual CDAP components.
 
-- :cask-issue:`CDAP-9242` - Improved the documentation of PartitionedFileSet properties.
-
-- :cask-issue:`CDAP-9278` - Added the running of HBase coprocessor upgrades concurrently
-  on CDAP Datasets.
-
-- :cask-issue:`CDAP-9282` - Made the AppMetadataStore and ScheduleStore compatible with an
-  older data format where the app version was not present, so that it is no longer necessary
-  to update these records to the new format in the Upgrade Tool.
-
-- :cask-issue:`CDAP-9283` - The migration of ScheduleStore and AppMetadataStore from the
-  app version-less format to the new format with a version will be performed by background
-  threads running in the CDAP Master process.
-
-- :cask-issue:`CDAP-9311` - Adding support for service discovery in plugins.
-
-- :cask-issue:`CDAP-9371` - Added convenience functions to set a Date in a
-  StructuredRecord as a long or a string.
-
-- :cask-issue:`HYDRATOR-1432` - Added a timer for realtime preview to stop a run
-  automatically. By default, it is one minute.
-
 Bug Fixes
 ---------
 
-- :cask-issue:`CDAP-4213` - Fixed an issue in the CDAP startup script for Windows,
-  removing the requirement of being an admin to run the CDAP process.
+Upgrade
+.......
+- :cask-issue:`CDAP-9185` - Fixed an issue with the pipeline upgrade tool that caused it
+  to skip CDAP 4.0.x pipelines.
+
+Pipeline Previews
+.................
+- :cask-issue:`CDAP-7884` - Fixed a bug that preview cannot read from datasets in real
+  space.
+
+- :cask-issue:`CDAP-8013` - When previewing a pipeline in the CDAP Studio, disabled all
+  writes to sinks. Incoming data to sinks can be viewed in the preview tab of the sink, but
+  is not written to the sink.
+
+- :cask-issue:`CDAP-9333` - Fixed an issue where preview of CDAP pipelines did not show
+  data for successful stages if a particular stage failed.
+
+Logs
+....
+- :cask-issue:`CDAP-7138` - Fixed a problem that caused duplicate logs to show up for a
+  running pipeline.
+
+- :cask-issue:`CDAP-9248` - Fixed bug where the "Total Messages/Errors/Warnings" at the
+  top of logviewer was showing incorrect values.
+
+Schedules
+.........
+- :cask-issue:`CDAP-8918` - Fixed an issue where redeployment of an application with a
+  deleted schedule would fail.
+
+Other Bug Fixes
+...............
+- :cask-issue:`CDAP-4213` - Removed the requirement of being an admin to run the CDAP
+  startup script for Windows.
 
 - :cask-issue:`CDAP-5715` - Made Plugin Endpoint invocation more robust. If a plugin's
   parent can't instantiate the plugin necessary for invoking, CDAP will attempt with other
   parents of the plugin and try to instantiate using them before retuning error.
 
-- :cask-issue:`CDAP-6348` - Fixed a Issue in Namespace delete which caused CDAP
-  Application's test cases to fail earlier in a Windows environment.
-
-- :cask-issue:`CDAP-7138` - Fixed a problem with duplicate log lines showing for a running
-  program.
-
-- :cask-issue:`CDAP-7884` - Fixed a bug that preview cannot read from datasets in real
-  space.
-
-- :cask-issue:`CDAP-8013` - Disabled the write-to-any-dataset for sinks when in preview.
-
-- :cask-issue:`CDAP-8396` - Added a "call-to-action" when the user had successfully
-  created a new namespace.
-
-- :cask-issue:`CDAP-8668` - Modified the log viewer to only show ERROR, WARN, and INFO
-  levels of logs by default, instead of all logs as previously.
+- :cask-issue:`CDAP-6348` - Fixed an issue with namespace deletion which caused CDAP
+  Application test cases to fail in a Windows environment.
 
 - :cask-issue:`CDAP-8862` - Fix an issue with losing a few metrics when a container is
   shutdown.
@@ -162,9 +197,6 @@ Bug Fixes
 - :cask-issue:`CDAP-8913` - Improved the serializability of Tables and IndexedTables when
   used in Spark programs.
 
-- :cask-issue:`CDAP-8918` - Fixed an issue where redeployment of an application with a
-  deleted schedule would fail.
-
 - :cask-issue:`CDAP-8945` - Moved the "add plugin" behavior from a plugin's left panel to
   an "Add Entity" button in the CDAP Studio UI.
 
@@ -172,26 +204,18 @@ Bug Fixes
   card to an overview and then to a detail page made the detail page show a spinner icon
   indefinitely.
 
-- :cask-issue:`CDAP-8980` - Fixed an issue with the Spark program runtime so that the Kryo
-  serializer can be used.
+- :cask-issue:`CDAP-8980`, :cask-issue:`CDAP-9314` - Fixed an issue with the Spark program
+  runtime so that the Kryo serializer can be used.
 
-- :cask-issue:`CDAP-9005` - Fixed an issue where the HBaseQueueDebugger failed when
-  authorization was enabled.
+- :cask-issue:`CDAP-9005` - Fixed an issue where the HBase Queue Debugging Tool failed
+  when authorization was enabled.
 
-- :cask-issue:`CDAP-9027` - Added support for grant/revoke on groups, and revoke on users,
-  in the CDAP Sentry Extension.
-
-- :cask-issue:`CDAP-9029` - Fixed an issue where the CDAP Sentry Extension failed to grant
-  privileges to a role.
-
-- :cask-issue:`CDAP-9035` - Fixed an issue where the CDAP Sentry Extension was not able to
-  fetch privileges associated with a user's group.
+- :cask-issue:`CDAP-9029`, :cask-issue:`CDAP-9035` - Fixed an issue where users could not
+  grant and revoke privileges for UNIX groups and users when using Apache Sentry as the
+  authorization extension for CDAP.
 
 - :cask-issue:`CDAP-9046` - Fixed an issue where revoking privileges from a role caused
   the privilege to be revoked from all roles.
-
-- :cask-issue:`CDAP-9084` - LogHandler endpoints now return a 404 status code if the
-  entity (the run id) for which logs are requested does not exist.
 
 - :cask-issue:`CDAP-9086` - Fixed an issue with the Window plugin so that it propagates
   schema properly.
@@ -199,42 +223,20 @@ Bug Fixes
 - :cask-issue:`CDAP-9087` - Fixed the Overview panel in home page of the CDAP UI to handle
   unknown entities appropriately.
 
-- :cask-issue:`CDAP-9114` - Fixed an issue with the retrying of local dataset operations
-  when a failure happens.
+- :cask-issue:`CDAP-9114` - Added the retrying of local dataset operations when a failure
+  happens.
 
 - :cask-issue:`CDAP-9142` - Fixed an issue with the binary format in the Kafka streaming
   source that prevented pipeline deployment.
 
-- :cask-issue:`CDAP-9160` - Fixed a memory leak issue with the Hadoop FileSystem object.
-
-- :cask-issue:`CDAP-9185` - Fixed an issue with the pipeline upgrade tool that caused it
-  to skip CDAP 4.0.x pipelines.
+- :cask-issue:`CDAP-9160` - Fixed an issue when a user was using impersonation where YARN
+  would kill a container due to excessive memory usage.
 
 - :cask-issue:`CDAP-9216` - Fixed bug where navigation links were referencing default
   namespace instead of the current namespace.
 
-- :cask-issue:`CDAP-9247` - Removed a misleading error log message in the CDAP Explore
-  service.
-
-- :cask-issue:`CDAP-9248` - Fixed bug where the "Total Messages/Errors/Warnings" at the
-  top of logviewer was showing incorrect values.
-
-- :cask-issue:`CDAP-9314` - Made a StructuredRecord serializable by Kryo in a Spark
-  program when the Kryo Serializer is used.
-
-- :cask-issue:`CDAP-9333` - Fixed an issue where preview did not show data for successful
-  stages if a particular stage failed.
-
-- :cask-issue:`HYDRATOR-703` - Improved DB Plugin Get Schema error messaging.
-
-- :cask-issue:`HYDRATOR-1364` - Removed the ``__ui__`` property which was being used only by
-  CDAP UI while exporting a pipeline configuration.
-
-- :cask-issue:`HYDRATOR-1453` - Fixed an issue that prevented batch pipelines with a
-  single action from being deployed.
-
-- :cask-issue:`HYDRATOR-1468` - Fixed an issue where the CDAP UI shows a success message
-  even when a preview run has failed.
+- :cask-issue:`HYDRATOR-703` - Improved error messages for the 'Get Schema' functionality
+  of Database plugins in CDAP Pipelines.
 
 Known Issues
 ------------
@@ -247,10 +249,15 @@ Known Issues
   the CDAP resource center, the metrics on the cards in the overview do not show appropriate
   numbers. It will just show zero for the number of events and the bytes.
 
-.. API Changes
+API Changes
+-----------
+
+Logs
+....
+- :cask-issue:`CDAP-9084` - The CDAP Logging APIs now return a 404 status code if the
+  entity (the run id) for which logs are requested does not exist.
+
 .. Deprecated and Removed Features
-
-
 
 
 `Release 4.1.0 <http://docs.cask.co/cdap/4.1.0/index.html>`__
