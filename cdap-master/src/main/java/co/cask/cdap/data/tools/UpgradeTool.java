@@ -107,14 +107,12 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.distributed.TransactionService;
 import org.apache.twill.api.RunId;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.quartz.Job;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
 import org.quartz.JobKey;
 import org.quartz.TriggerKey;
 import org.quartz.impl.triggers.CronTriggerImpl;
+import org.quartz.jobs.NoOpJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -634,16 +632,5 @@ public class UpgradeTool {
 
     // Usage registry
     DefaultUsageRegistry.setupDatasets(datasetFramework);
-  }
-
-  /**
-   *
-   */
-  public static class NoOpJob implements Job {
-
-    @Override
-    public void execute(JobExecutionContext context) throws JobExecutionException {
-      // no-op
-    }
   }
 }
