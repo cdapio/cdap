@@ -21,10 +21,7 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.NodeStatus;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -67,20 +64,22 @@ import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
+import co.cask.cdap.internal.app.runtime.schedule.AbstractSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedStreamSizeScheduleStore;
+import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
-import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.notifications.service.NotificationService;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -95,8 +94,6 @@ import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -112,10 +109,19 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.distributed.TransactionService;
 import org.apache.twill.api.RunId;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.quartz.Job;
+import org.quartz.JobBuilder;
+import org.quartz.JobDetail;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+import org.quartz.JobKey;
+import org.quartz.TriggerKey;
+import org.quartz.impl.triggers.CronTriggerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
@@ -125,6 +131,7 @@ import java.util.concurrent.TimeUnit;
 public class UpgradeTool {
 
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeTool.class);
+  private static final String NAMESPACE_NAME = "upgradeTest";
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -140,8 +147,8 @@ public class UpgradeTool {
   private final NamespaceStore nsStore;
   private final AuthorizationEnforcementService authorizationService;
   private final DefaultStore defaultStore;
-  private final Scheduler scheduler;
-  private final AppFabricServer appFabricServer;
+  private final DatasetBasedStreamSizeScheduleStore streamScheduleStore;
+  private final DatasetBasedTimeScheduleStore timeScheduleStore;
 
   /**
    * Set of Action available in this tool.
@@ -193,8 +200,8 @@ public class UpgradeTool {
     this.queueAdmin = injector.getInstance(QueueAdmin.class);
     this.nsStore = injector.getInstance(NamespaceStore.class);
     this.authorizationService = injector.getInstance(AuthorizationEnforcementService.class);
-    this.scheduler = injector.getInstance(Scheduler.class);
-    this.appFabricServer = injector.getInstance(AppFabricServer.class);
+    this.streamScheduleStore = injector.getInstance(DatasetBasedStreamSizeScheduleStore.class);
+    this.timeScheduleStore = injector.getInstance(DatasetBasedTimeScheduleStore.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -297,10 +304,6 @@ public class UpgradeTool {
     txService.startAndWait();
     authorizationService.startAndWait();
     initializeDSFramework(cConf, dsFramework);
-    appFabricServer.startAndWait();
-    if (scheduler instanceof Service) {
-      ((Service) scheduler).startAndWait();
-    }
   }
 
   /**
@@ -308,10 +311,6 @@ public class UpgradeTool {
    */
   private void stop() {
     try {
-      if (scheduler instanceof Service) {
-        ((Service) scheduler).stopAndWait();
-      }
-      appFabricServer.stopAndWait();
       authorizationService.stopAndWait();
       txService.stopAndWait();
       zkClientService.stopAndWait();
@@ -398,59 +397,136 @@ public class UpgradeTool {
     }
   }
 
-  private void genData() throws Exception {
+  private void genRunRecords(ProgramId programId, ProgramRunStatus status) {
     int count = 1000;
-    LOG.info("Generating {} run records", count);
+    LOG.info("Generating run records {}, {}", programId, status);
+    BasicThrowable basicThrowable = null;
+    if (status == ProgramRunStatus.FAILED) {
+      basicThrowable = new BasicThrowable(new RuntimeException("Test Exception"));
+    }
+
     for (int i = 0; i < count; ++i) {
-      ApplicationId applicationId = new ApplicationId("upgradeTest", "PurchaseHistory");
-      ProgramId program = applicationId.program(ProgramType.SERVICE, "PurchaseHistoryService");
       RunId runId = RunIds.generate();
-      defaultStore.setStart(program.toId(), runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS));
-      defaultStore.setStop(program.toId(), runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS) + 100,
-                           ProgramRunStatus.COMPLETED);
+      defaultStore.setStart(programId.toId(), runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS));
+      defaultStore.setStop(programId.toId(), runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS) + 100, status,
+                           basicThrowable);
     }
-    LOG.info("Added {} run records", count);
+    LOG.info("Run records generation done {}, {}", programId, status);
+  }
 
-    LOG.info("Generating {} time schedules", count);
+  private void genTimeSchedules() throws Exception {
+    LOG.info("Generating time schedules");
+    int count = 1000;
+    timeScheduleStore.initialize(null, null);
     for (int i = 0; i < count; i++) {
-      scheduler.schedule(Id.Program.from("upgradeTest", "PurchaseHistory", ProgramType.WORKFLOW,
-                                         "PurchaseHistoryWorkflow"), SchedulableProgramType.WORKFLOW,
-                         new TimeSchedule("TimeSchedule" + String.valueOf(i), "test", "*/1 * * * *"));
+      Id.Program program = Id.Program.from(NAMESPACE_NAME, "PurchaseHistory", ProgramType.WORKFLOW,
+                                           "PurchaseHistoryWorkflow" + String.valueOf(i));
+
+      // Generate JobKey based on the program
+      String jobKey = new JobKey(AbstractSchedulerService.programIdFor(program, SchedulableProgramType.WORKFLOW))
+        .getName();
+
+      JobDetail jobDetail = getJobDetail(jobKey);
+
+      // Generate TriggerKey based on the program
+      String scheduleName = "schedule" + String.valueOf(i);
+      String triggerKey = new TriggerKey(AbstractSchedulerService.scheduleIdFor(program,
+                                                                                SchedulableProgramType.WORKFLOW,
+                                                                                scheduleName), "NewPausedTrigger")
+        .getName();
+
+      timeScheduleStore.storeJobAndTrigger(jobDetail, new CronTriggerImpl(triggerKey, "NewPausedTriggers", jobKey,
+                                                                          null, "* * * * * ?"));
     }
-    LOG.info("Added {} time schedules", count);
+    LOG.info("Time schedule generation done");
+  }
 
-    LOG.info("Generating {} data schedules", count);
+  private void genDataSchedules() throws Exception {
+    LOG.info("Generating data schedules.");
+    int count = 100;
+    streamScheduleStore.initialize();
     for (int i = 0; i < count; i++) {
-      scheduler.schedule(Id.Program.from("upgradeTest", "PurchaseHistory", ProgramType.WORKFLOW,
-                                         "PurchaseHistoryWorkflow"), SchedulableProgramType.WORKFLOW,
-                         new StreamSizeSchedule("StreamSchedule" + String.valueOf(i), "test", "purchaseStream", 100));
+      Id.Program program = Id.Program.from(NAMESPACE_NAME, "PurchaseHistory", ProgramType.WORKFLOW,
+                                           "PurchaseHistoryWorkflow" + String.valueOf(i));
+      streamScheduleStore.persist(program, SchedulableProgramType.WORKFLOW,
+                                  new StreamSizeSchedule("StreamSchedule" + String.valueOf(i), "description",
+                                                         "purchaseStream", 100), new HashMap<String, String>(),
+                                  0L, 0L, 0L, 0L, false);
     }
-    LOG.info("Added {} Stream schedules", count);
+    LOG.info("Data schedule generation done.");
+  }
 
-    LOG.info("Generating {} workflow tokens", count);
-    ProgramId workflow = new ProgramId("upgradeTest", "PurchaseHistory", ProgramType.WORKFLOW,
-                                       "PurchaseHistoryWorkflow");
+  private void generateWorkflowToken() {
+    LOG.info("Generating workflow token.");
+    int count = 100;
     for (int i = 0; i < count; i++) {
+      Id.Program program = Id.Program.from(NAMESPACE_NAME, "PurchaseHistory", ProgramType.WORKFLOW,
+                                           "PurchaseHistoryWorkflow" + String.valueOf(i));
       RunId runId = RunIds.generate();
-      ProgramRunId workflowRunId = workflow.run(runId);
+      ProgramRunId workflowRunId = program.toEntityId().run(runId);
       BasicWorkflowToken token = new BasicWorkflowToken(100);
+      token.setCurrentNode("PurchaseHistoryBuilder");
       token.put("testkey", "testvalue");
       defaultStore.updateWorkflowToken(workflowRunId, token);
     }
+    LOG.info("WorkflowToken generation done.");
+  }
 
-    LOG.info("Generated {} workflow tokens", count);
-
-    LOG.info("Generating {} workflow node state", count);
+  private void generateNodeState() {
+    LOG.info("Generating node states.");
+    int count = 100;
     for (int i = 0; i < count; i++) {
+      Id.Program program = Id.Program.from(NAMESPACE_NAME, "PurchaseHistory", ProgramType.WORKFLOW,
+                                           "PurchaseHistoryWorkflow" + String.valueOf(i));
       RunId runId = RunIds.generate();
-      ProgramRunId workflowRunId = workflow.run(runId);
+      ProgramRunId workflowRunId = program.toEntityId().run(runId);
       WorkflowNodeStateDetail detail = new WorkflowNodeStateDetail("PurchaseHistoryBuilder", NodeStatus.COMPLETED,
                                                                    RunIds.generate().getId(), null);
       defaultStore.addWorkflowNodeState(workflowRunId, detail);
     }
 
-    LOG.info("Generated {} workflow tokens", count);
+    BasicThrowable t = new BasicThrowable(new RuntimeException("Test throwable"));
+    for (int i = 0; i < count; i++) {
+      Id.Program program = Id.Program.from(NAMESPACE_NAME, "PurchaseHistory", ProgramType.WORKFLOW,
+                                           "PurchaseHistoryWorkflow" + String.valueOf(i));
+      RunId runId = RunIds.generate();
+      ProgramRunId workflowRunId = program.toEntityId().run(runId);
+      WorkflowNodeStateDetail detail = new WorkflowNodeStateDetail("PurchaseHistoryBuilder", NodeStatus.FAILED,
+                                                                   RunIds.generate().getId(), t);
+      defaultStore.addWorkflowNodeState(workflowRunId, detail);
+    }
+    LOG.info("Node states generation done.");
   }
+
+  private void genData() throws Exception {
+    ApplicationId applicationId = new ApplicationId(NAMESPACE_NAME, "PurchaseHistory");
+
+    // Generate RunRecords for the program
+    ProgramId purchaseHistoryService = applicationId.program(ProgramType.SERVICE, "PurchaseHistoryService");
+    genRunRecords(purchaseHistoryService, ProgramRunStatus.COMPLETED);
+    genRunRecords(purchaseHistoryService, ProgramRunStatus.FAILED);
+
+
+    // Generate TimeSchedules
+    genTimeSchedules();
+
+    // Generate Data schedules
+    genDataSchedules();
+
+    // Generate WorkflowToken
+    generateWorkflowToken();
+
+    // Generate node states
+    generateNodeState();
+  }
+
+  private JobDetail getJobDetail(String jobKey) {
+    return JobBuilder.newJob(NoOpJob.class)
+      .withIdentity(jobKey)
+      .storeDurably(true)
+      .build();
+  }
+
 
   private String getResponse(boolean interactive) {
     if (interactive) {
@@ -558,5 +634,16 @@ public class UpgradeTool {
 
     // Usage registry
     DefaultUsageRegistry.setupDatasets(datasetFramework);
+  }
+
+  /**
+   *
+   */
+  public static class NoOpJob implements Job {
+
+    @Override
+    public void execute(JobExecutionContext context) throws JobExecutionException {
+      // no-op
+    }
   }
 }
