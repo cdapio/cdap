@@ -51,11 +51,11 @@ New Features
   default. There is an option to "Include System Logs" to show all logs as previously.
 
 - :cask-issue:`CDAP-9141` - Added a 'sparkprogram' plugin type that can be used to run
-  arbitrary Spark code at the start or end of a pipeline.
+  arbitrary Spark code at the beginning or end of a pipeline.
 
 - :cask-issue:`CDAP-9147` - Added pipeline start and finish logs in the condensed view.
 
-- :cask-issue:`CDAP-9235` - Added workspace tabs to the top panel of the Data Prep plugin.
+- :cask-issue:`CDAP-9235` - Added workspace tabs to the top panel of the Data Preparation (Wrangler) plugin.
 
 - :cask-issue:`CDAP-9281` - Added support for CDH 5.11.0.
 
@@ -65,7 +65,7 @@ New Features
 - :cask-issue:`HYDRATOR-1316` - Added the ability to see logs in preview.
 
 - :cask-issue:`WRANGLER-51` - Added Copy Column to the list of column dropdown directives
-  in the Data Prep plugin.
+  in the Data Preparation (Wrangler) plugin.
 
 - :cask-issue:`WRANGLER-77` - Added a column-action dropdown menu for Data Preparation
   directives.
@@ -99,13 +99,13 @@ Improvements
   of running pipelines, and drafts in the pipeline list view UI.
 
 - :cask-issue:`CDAP-9070` - Added the ability to work with Data Preparation from within
-  the CDAP Studio UI. Users can now open a wrangler transform, wrangle the data, and save it
+  the CDAP Studio UI. Users can now open a Wrangler transform, wrangle the data, and save it
   back to the CDAP Studio.
 
 - :cask-issue:`CDAP-9077` - Added a "cdap apply-pack [pack]" command to the "cdap" script
   that allows for upgrading of individual CDAP components.
 
-- :cask-issue:`CDAP-9242` - Improved the documentation for PartitionedFileSet properties.
+- :cask-issue:`CDAP-9242` - Improved the documentation of PartitionedFileSet properties.
 
 - :cask-issue:`CDAP-9278` - Added the running of HBase coprocessor upgrades concurrently
   on CDAP Datasets.
@@ -219,7 +219,7 @@ Bug Fixes
 
 - :cask-issue:`HYDRATOR-703` - Improved DB Plugin Get Schema error messaging.
 
-- :cask-issue:`HYDRATOR-1364` - Removed the "__ui__" property which was being used only by
+- :cask-issue:`HYDRATOR-1364` - Removed the ``__ui__`` property which was being used only by
   CDAP UI while exporting a pipeline configuration.
 
 - :cask-issue:`HYDRATOR-1453` - Fixed an issue that prevented batch pipelines with a
