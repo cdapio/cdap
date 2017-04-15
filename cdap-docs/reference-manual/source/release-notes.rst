@@ -110,6 +110,14 @@ Improvements
 - :cask-issue:`CDAP-9278` - Added the running of HBase coprocessor upgrades concurrently
   on CDAP Datasets.
 
+- :cask-issue:`CDAP-9282` - Made the AppMetadataStore and ScheduleStore compatible with an
+  older data format where the app version was not present, so that it is no longer necessary
+  to update these records to the new format in the Upgrade Tool.
+
+- :cask-issue:`CDAP-9283` - The migration of ScheduleStore and AppMetadataStore from the
+  app version-less format to the new format with a version will be performed by background
+  threads running in the CDAP Master process.
+
 - :cask-issue:`CDAP-9311` - Adding support for service discovery in plugins.
 
 - :cask-issue:`CDAP-9371` - Added convenience functions to set a Date in a
