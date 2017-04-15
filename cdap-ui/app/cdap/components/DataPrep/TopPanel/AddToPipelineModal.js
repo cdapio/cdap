@@ -182,6 +182,7 @@ export default class AddToHydratorModal extends Component {
         };
 
         let realtimeConfig = Object.assign({}, config, {artifact: realtimeArtifact});
+        realtimeConfig.config.batchInterval = '10s';
         let batchConfig = Object.assign({}, config, {artifact: batchArtifact});
 
         let realtimeUrl = window.getHydratorUrl({
