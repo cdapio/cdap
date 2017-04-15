@@ -395,7 +395,7 @@ public class UpgradeTool {
 
   private void genRunRecords(ProgramId programId, ProgramRunStatus status) {
     int count = 10000;
-    LOG.info("Generating run records {}, {}", programId, status);
+    LOG.info("Generating {} run records {}, {}", count, programId, status);
     BasicThrowable basicThrowable = null;
     if (status == ProgramRunStatus.FAILED) {
       basicThrowable = new BasicThrowable(new RuntimeException("Test Exception"));
@@ -407,12 +407,12 @@ public class UpgradeTool {
       defaultStore.setStop(programId.toId(), runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS) + 100, status,
                            basicThrowable);
     }
-    LOG.info("Run records generation done {}, {}", programId, status);
+    LOG.info("{} Run records generation done {}, {}", count, programId, status);
   }
 
   private void genTimeSchedules(String namespace) throws Exception {
-    LOG.info("Generating time schedules");
-    int count = 1000;
+    int count = 100;
+    LOG.info("Generating {} time schedules", count);
     timeScheduleStore.initialize(null, null);
     for (int i = 0; i < count; i++) {
       Id.Program program = Id.Program.from(namespace, "PurchaseHistory", ProgramType.WORKFLOW,
@@ -434,12 +434,12 @@ public class UpgradeTool {
       timeScheduleStore.storeJobAndTrigger(jobDetail, new CronTriggerImpl(triggerKey, "NewPausedTriggers", jobKey,
                                                                           null, "* * * * * ?"));
     }
-    LOG.info("Time schedule generation done");
+    LOG.info("{} Time schedule generation done", count);
   }
 
   private void genDataSchedules(String namespace) throws Exception {
-    LOG.info("Generating data schedules.");
-    int count = 1000;
+    int count = 100;
+    LOG.info("Generating {} data schedules.", count);
     streamScheduleStore.initialize();
     for (int i = 0; i < count; i++) {
       Id.Program program = Id.Program.from(namespace, "PurchaseHistory", ProgramType.WORKFLOW,
@@ -453,8 +453,8 @@ public class UpgradeTool {
   }
 
   private void generateWorkflowToken(String namespace) {
-    LOG.info("Generating workflow token.");
     int count = 10000;
+    LOG.info("Generating {} workflow tokens.", count);
     for (int i = 0; i < count; i++) {
       Id.Program program = Id.Program.from(namespace, "PurchaseHistory", ProgramType.WORKFLOW,
                                            "PurchaseHistoryWorkflow" + String.valueOf(i));
@@ -465,12 +465,12 @@ public class UpgradeTool {
       token.put("testkey", "testvalue");
       defaultStore.updateWorkflowToken(workflowRunId, token);
     }
-    LOG.info("WorkflowToken generation done.");
+    LOG.info("{} WorkflowToken generation done.", count);
   }
 
   private void generateNodeState(String namespace) {
-    LOG.info("Generating node states.");
     int count = 10000;
+    LOG.info("Generating {} node states.", count);
     for (int i = 0; i < count; i++) {
       Id.Program program = Id.Program.from(namespace, "PurchaseHistory", ProgramType.WORKFLOW,
                                            "PurchaseHistoryWorkflow" + String.valueOf(i));
@@ -491,7 +491,7 @@ public class UpgradeTool {
                                                                    RunIds.generate().getId(), t);
       defaultStore.addWorkflowNodeState(workflowRunId, detail);
     }
-    LOG.info("Node states generation done.");
+    LOG.info(" {} Node states generation done.", count);
   }
 
   private void genData(String namespace) throws Exception {
