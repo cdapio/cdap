@@ -396,7 +396,7 @@ public class UpgradeTool {
   }
 
   private void genRunRecords(ProgramId programId, ProgramRunStatus status) {
-    int count = 50000;
+    int count = 10000;
     LOG.info("Generating run records {}, {}", programId, status);
     BasicThrowable basicThrowable = null;
     if (status == ProgramRunStatus.FAILED) {
@@ -456,7 +456,7 @@ public class UpgradeTool {
 
   private void generateWorkflowToken(String namespace) {
     LOG.info("Generating workflow token.");
-    int count = 50000;
+    int count = 10000;
     for (int i = 0; i < count; i++) {
       Id.Program program = Id.Program.from(namespace, "PurchaseHistory", ProgramType.WORKFLOW,
                                            "PurchaseHistoryWorkflow" + String.valueOf(i));
@@ -472,7 +472,7 @@ public class UpgradeTool {
 
   private void generateNodeState(String namespace) {
     LOG.info("Generating node states.");
-    int count = 50000;
+    int count = 10000;
     for (int i = 0; i < count; i++) {
       Id.Program program = Id.Program.from(namespace, "PurchaseHistory", ProgramType.WORKFLOW,
                                            "PurchaseHistoryWorkflow" + String.valueOf(i));
