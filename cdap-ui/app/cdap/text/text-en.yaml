@@ -830,7 +830,7 @@ features:
         typeLabel: Type
         typePlaceholder: Library Type. E.g. sparkprogram
         classnameLabel: Class Name
-        classnamePlaceholder: Library Class Name. E.g. com.example.MyClass
+        classnamePlaceholder: com.example.MyClass
       success: You have successfully uploaded the library "{artifactName}".
       subtitle: You can now create a pipeline using the library.
       callToAction: Create a Pipeline

@@ -47,6 +47,7 @@ const mapStateToArtifactClassnameProps = (state) => {
 const mapStateToArtifactTypeInputProps = (state) => {
   return {
     value: state.configure.type,
+    disabled: 'disabled',
     placeholder: T.translate('features.Wizard.LibraryUpload.Step2.typePlaceholder')
   };
 };
