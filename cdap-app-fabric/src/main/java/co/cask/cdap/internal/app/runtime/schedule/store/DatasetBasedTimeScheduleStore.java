@@ -111,7 +111,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     if (cacheLoaderInitialized.compareAndSet(false, true)) {
       upgradeCacheLoader = CacheBuilder.newBuilder()
         .expireAfterWrite(1, TimeUnit.MINUTES)
-        .build(new UpgradeValueLoader(NAME, factory, table));
+        // Use a new instance of table since Table is not thread safe
+        .build(new UpgradeValueLoader(NAME, factory, tableUtil.getMetaTable()));
     }
   }
 

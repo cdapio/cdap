@@ -110,7 +110,8 @@ public class DatasetBasedStreamSizeScheduleStore {
                                ScheduleStoreTableUtil.SCHEDULE_STORE_DATASET_NAME);
     upgradeCacheLoader = CacheBuilder.newBuilder()
       .expireAfterWrite(1, TimeUnit.MINUTES)
-      .build(new UpgradeValueLoader(NAME, factory, table, storeInitialized));
+      // Use a new instance of table since Table is not thread safe
+      .build(new UpgradeValueLoader(NAME, factory, tableUtil.getMetaTable(), storeInitialized));
     storeInitialized.set(true);
   }
 
@@ -270,7 +271,7 @@ public class DatasetBasedStreamSizeScheduleStore {
       .execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
-          try (Scanner scan = getScannerWithPrefix(KEY_PREFIX)) {
+          try (Scanner scan = getScannerWithPrefix(table, KEY_PREFIX)) {
             Row row;
             while ((row = scan.next()) != null) {
               byte[] scheduleBytes = row.get(SCHEDULE_COL);
@@ -324,7 +325,7 @@ public class DatasetBasedStreamSizeScheduleStore {
     return scheduleStates;
   }
 
-  private Scanner getScannerWithPrefix(String keyPrefix) {
+  private Scanner getScannerWithPrefix(Table table, String keyPrefix) {
     byte[] startKey = Bytes.toBytes(keyPrefix);
     byte[] endKey = Bytes.stopKeyForPrefix(startKey);
     return table.scan(startKey, endKey);
@@ -387,7 +388,14 @@ public class DatasetBasedStreamSizeScheduleStore {
    */
   public void upgrade() throws InterruptedException, IOException, DatasetManagementException {
     // Wait until the store is initialized
-    while (!storeInitialized.get()) {
+    // Use a new instance of table since Table is not thread safe
+    Table metaTable = null;
+    while (metaTable == null) {
+      try {
+        metaTable = tableUtil.getMetaTable();
+      } catch (Exception e) {
+        // ignore exception
+      }
       TimeUnit.SECONDS.sleep(10);
     }
 
@@ -402,13 +410,14 @@ public class DatasetBasedStreamSizeScheduleStore {
     while (!isUpgradeComplete()) {
       sleepTimeInSecs.set(60);
       try {
-        factory.createExecutor(ImmutableList.of((TransactionAware) table))
+        final Table finalMetaTable = metaTable;
+        factory.createExecutor(ImmutableList.of((TransactionAware) finalMetaTable))
           .execute(new TransactionExecutor.Subroutine() {
             @Override
-            public void apply() {
-              if (upgradeVersionKeys(table, maxNumberUpdateRows.get())) {
+            public void apply() throws Exception {
+              if (upgradeVersionKeys(finalMetaTable, maxNumberUpdateRows.get())) {
                 // Upgrade is complete. Mark that app version upgrade is complete in the table.
-                table.put(APP_VERSION_UPGRADE_KEY, COLUMN, Bytes.toBytes(ProjectInfo.getVersion().toString()));
+                finalMetaTable.put(APP_VERSION_UPGRADE_KEY, COLUMN, Bytes.toBytes(ProjectInfo.getVersion().toString()));
               }
             }
           });
@@ -451,7 +460,7 @@ public class DatasetBasedStreamSizeScheduleStore {
   // upgraded after the invocation of this method.
   private boolean upgradeVersionKeys(Table table, int maxNumberUpdateRows) {
     int numRowsUpgraded = 0;
-    try (Scanner scan = getScannerWithPrefix(KEY_PREFIX)) {
+    try (Scanner scan = getScannerWithPrefix(table, KEY_PREFIX)) {
       Row next;
       // Upgrade only N rows in one transaction to reduce the probability of conflicts with regular Store operations.
       while (((next = scan.next()) != null) && (numRowsUpgraded < maxNumberUpdateRows)) {
