@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2015-2016 Cask Data, Inc.
+# Copyright © 2015-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@
 
 # Install xorg
 apt-get install -y --no-install-recommends xorg
+apt-get install -y --no-install-recommends linux-source xscreensaver xserver-xorg-video-vesa virtualbox-guest-dkms
 
 # Remove X11 video drivers
 for i in ati cirrus fbdev intel mach64 mga neomagic nouveau openchrome qxl r128 radeon s3 savage siliconmotion sis sisusb tdfx trident ; do 
@@ -30,5 +31,8 @@ done
 for i in mouse synaptics wacom ; do
   apt-get purge -y xserver-xorg-input-$i
 done
+
+# Remove linux-source
+apt-get purge -y linux-source
 
 exit 0
