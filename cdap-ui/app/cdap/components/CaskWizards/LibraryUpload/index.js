@@ -36,6 +36,14 @@ export default class LibraryUploadWizard extends Component {
     };
     this.eventEmitter = ee(ee);
   }
+  componentDidMount() {
+    ArtifactUploadStore.dispatch({
+      type: ArtifactUploadActions.setType,
+      payload: {
+        type: 'sparkprogram'
+      }
+    });
+  }
   componentWillUnmount() {
     ArtifactUploadStore.dispatch({
       type: ArtifactUploadActions.onReset
