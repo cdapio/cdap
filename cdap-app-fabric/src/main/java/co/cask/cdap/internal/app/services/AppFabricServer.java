@@ -88,6 +88,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final SystemArtifactLoader systemArtifactLoader;
   private final PluginService pluginService;
   private final PrivilegesFetcherProxyService privilegesFetcherProxyService;
+  private final AppVersionUpgradeService appVersionUpgradeService;
   private final RouteStore routeStore;
   private final CConfiguration cConf;
   private final SConfiguration sConf;
@@ -119,6 +120,7 @@ public class AppFabricServer extends AbstractIdleService {
                          SystemArtifactLoader systemArtifactLoader,
                          PluginService pluginService,
                          PrivilegesFetcherProxyService privilegesFetcherProxyService,
+                         @Nullable AppVersionUpgradeService appVersionUpgradeService,
                          RouteStore routeStore) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
@@ -137,6 +139,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.systemArtifactLoader = systemArtifactLoader;
     this.pluginService = pluginService;
     this.privilegesFetcherProxyService = privilegesFetcherProxyService;
+    this.appVersionUpgradeService = appVersionUpgradeService;
     this.routeStore = routeStore;
     this.defaultNamespaceEnsurer = new DefaultNamespaceEnsurer(namespaceAdmin);
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
@@ -261,6 +264,9 @@ public class AppFabricServer extends AbstractIdleService {
 
     httpService.startAndWait();
     defaultNamespaceEnsurer.startAndWait();
+    if (appVersionUpgradeService != null) {
+      appVersionUpgradeService.startAndWait();
+    }
   }
 
   @Override
@@ -276,6 +282,9 @@ public class AppFabricServer extends AbstractIdleService {
     programLifecycleService.stopAndWait();
     pluginService.stopAndWait();
     privilegesFetcherProxyService.stopAndWait();
+    if (appVersionUpgradeService != null) {
+      appVersionUpgradeService.stopAndWait();
+    }
   }
 
   private static String generateRandomPassword() {

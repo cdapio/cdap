@@ -110,9 +110,7 @@ import javax.annotation.Nullable;
 /**
  * Service that manage lifecycle of Applications.
  */
-public class
-
-ApplicationLifecycleService extends AbstractIdleService {
+public class ApplicationLifecycleService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationLifecycleService.class);
 
   /**

@@ -45,4 +45,10 @@ public final class ScheduleUpgradeUtil {
     splitArray.remove(versionIdx);
     return Joiner.on(":").join(splitArray);
   }
+
+  public static String getNameWithDefaultVersion(String[] splits, int index) {
+    List<String> splitsList = new ArrayList<>(Arrays.asList(splits));
+    splitsList.add(index, ApplicationId.DEFAULT_VERSION);
+    return Joiner.on(":").join(splitsList);
+  }
 }
