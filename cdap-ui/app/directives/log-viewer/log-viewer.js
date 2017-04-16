@@ -74,7 +74,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     vm.displayData = [];
     vm.data = [];
     vm.fullScreen = false;
-    vm.includeSystemLogs = false;
+    vm.includeSystemLogs = true;
     vm.programStatus = 'Not Started';
     vm.configOptions = {
       time: true,
