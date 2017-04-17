@@ -269,13 +269,13 @@ public class LineageTest extends MetadataTestBase {
             new Relation(stream, mapreduce, AccessType.READ, workflowMrRunId),
             new Relation(stream, worker, AccessType.WRITE, workerRunId)
           )));
-      Assert.assertEquals(expected, lineage);
+      Assert.assertEquals("Expected: " + expected + " but got " + lineage, expected, lineage);
 
       // Fetch stream lineage
       lineage = fetchLineage(stream, now - oneHour, now + oneHour, 10);
 
       // stream too is accessed by all programs
-      Assert.assertEquals(expected, lineage);
+      Assert.assertEquals("Expected: " + expected + " but got " + lineage, expected, lineage);
 
       // Assert metadata
       // Id.Flow needs conversion to Id.Program JIRA - CDAP-3658
