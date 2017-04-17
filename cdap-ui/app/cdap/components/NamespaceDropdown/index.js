@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import AbstractWizard from 'components/AbstractWizard';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import SetPreferenceAction from 'components/FastAction/SetPreferenceAction';
+import IconSVG from 'components/IconSVG';
 import {MySearchApi} from 'api/search';
 import isObject from 'lodash/isObject';
 import sortBy from 'lodash/sortBy';
@@ -197,8 +198,8 @@ export default class NamespaceDropdown extends Component {
               (
                 <span>
                   <span className="default-status">(Default)</span>
-                  <i
-                    className="fa fa-star"
+                  <IconSVG
+                    name="icon-star"
                     onClick={this.setDefault.bind(this, currentNamespace)}
                   />
                 </span>
@@ -207,8 +208,8 @@ export default class NamespaceDropdown extends Component {
               (
                 <span>
                   <span className="default-status">(Set Default)</span>
-                  <i
-                    className="fa fa-star-o"
+                  <IconSVG
+                    name="icon-star-o"
                     onClick={this.setDefault.bind(this, currentNamespace)}
                   />
                 </span>
@@ -220,8 +221,8 @@ export default class NamespaceDropdown extends Component {
     let preferenceSpecificCardHeader = (
       <div className="preferences-saved-message text-white">
         <span>{T.translate('features.FastAction.setPreferencesSuccess.default', {entityType: 'Namespace'})}</span>
-        <span
-          className='fa fa-times'
+        <IconSVG
+          name='icon-close'
           onClick={() => this.setState({preferencesSavedMessage: false})}
         />
       </div>
@@ -240,7 +241,9 @@ export default class NamespaceDropdown extends Component {
               <small>{T.translate('features.Navbar.NamespaceDropdown.namespaceLabel')}</small>
               <span>{currentNamespace}</span>
             </div>
-            <span className="fa fa-caret-down float-xs-right" />
+            <span className="float-xs-right">
+              <IconSVG name="icon-caret-down" />
+            </span>
           </div>
           <DropdownMenu>
             {
@@ -269,7 +272,10 @@ export default class NamespaceDropdown extends Component {
                               <td>
                                 {
                                   this.state.numMetricsLoading ?
-                                    <span className = "fa fa-spinner fa-spin" />
+                                    <IconSVG
+                                      name="icon-spinner"
+                                      className="fa-spin"
+                                    />
                                   :
                                     this.state.numApplications
                                 }
@@ -277,7 +283,10 @@ export default class NamespaceDropdown extends Component {
                               <td>
                                 {
                                   this.state.numMetricsLoading ?
-                                    <span className = "fa fa-spinner fa-spin" />
+                                    <IconSVG
+                                      name="icon-spinner"
+                                      className="fa-spin"
+                                    />
                                   :
                                     this.state.numDatasets
                                 }
@@ -285,7 +294,10 @@ export default class NamespaceDropdown extends Component {
                               <td>
                                 {
                                   this.state.numMetricsLoading ?
-                                    <span className = "fa fa-spinner fa-spin" />
+                                    <IconSVG
+                                      name="icon-spinner"
+                                      className="fa-spin"
+                                    />
                                   :
                                     this.state.numStreams
                                 }
@@ -315,7 +327,7 @@ export default class NamespaceDropdown extends Component {
                 this.state.namespaceList
                   .filter(item => item.name !== currentNamespace)
                   .map( (item) => {
-                    let starClass = defaultNamespace === item.name ? "fa fa-star": "fa fa-star-o";
+                    let starIcon = defaultNamespace === item.name ? "icon-star": "icon-star-o";
                     return (
                       <div
                         className="clearfix namespace-container"
@@ -337,7 +349,7 @@ export default class NamespaceDropdown extends Component {
                           className="default-ns-section float-xs-right"
                           onClick={this.setDefault.bind(this, item.name)}
                         >
-                          <span className={starClass} />
+                          <IconSVG name={starIcon} />
                         </span>
                       </div>
                     );

@@ -15,8 +15,8 @@
  */
 
 import React, {PropTypes} from 'react';
+import IconSVG from 'components/IconSVG';
 import Link from 'react-router/Link';
-import classnames from 'classnames';
 require('./BreadCrumb.scss');
 
 export default function BreadCrumb({previousPaths, currentStateIcon, currentStateLabel}) {
@@ -25,7 +25,7 @@ export default function BreadCrumb({previousPaths, currentStateIcon, currentStat
       {
         previousPaths.map(previousPath => <Link to={previousPath.pathname}>{previousPath.label}</Link>)
       }
-      <span className={classnames("fa", currentStateIcon)}></span>
+      <IconSVG name={currentStateIcon} />
       <span>{currentStateLabel}</span>
     </div>
   );

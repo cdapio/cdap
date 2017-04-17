@@ -17,6 +17,7 @@
 import React, {Component, PropTypes} from 'react';
 import { Nav, NavItem, NavLink, TabContent, TabPane} from 'reactstrap';
 import classnames from 'classnames';
+import IconSVG from 'components/IconSVG';
 require('./ViewSwitch.scss');
 import cookie from 'react-cookie';
 
@@ -49,14 +50,14 @@ export default class ViewSwitch extends Component {
               <NavLink
                 className={classnames({ active: this.state.activeTab === 'card' })}
                 onClick={() => {this.toggleView('card');}}>
-                <span className="fa fa-th-large"></span>
+                <IconSVG name="icon-th-large" />
               </NavLink>
             </NavItem>
             <NavItem>
               <NavLink
                 className={classnames({ active: this.state.activeTab === 'list' })}
                 onClick={() => {this.toggleView('list');}}>
-                <span className="fa fa-list"></span>
+                <IconSVG name="icon-list" />
               </NavLink>
             </NavItem>
           </Nav>

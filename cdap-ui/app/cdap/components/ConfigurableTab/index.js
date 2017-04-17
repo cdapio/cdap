@@ -18,6 +18,7 @@ import React, {PropTypes, Component} from 'react';
 import Tabs from '../Tabs';
 import TabHeaders from '../TabHeaders';
 import {TabContent, TabPane} from 'reactstrap';
+import IconSVG from 'components/IconSVG';
 
 import TabHead from '../TabHead';
 require('./ConfigurableTab.scss');
@@ -66,7 +67,9 @@ export default class ConfigurableTab extends Component {
                   onClick={() => this.setTab(tab.id)}
                   activeTab={this.isActiveTab(tab.id)}
                 >
-                  <span className={`${tab.icon} tab-header-icon`}></span>
+                  <span className="fa-fw tab-header-icon">
+                    <IconSVG name={tab.icon} />
+                  </span>
                   <span title={tab.name}>{tab.name}</span>
                 </TabHead>
               );

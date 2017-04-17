@@ -19,6 +19,7 @@ import getIcon from 'services/market-action-icon-map';
 import shortid from 'shortid';
 import classnames from 'classnames';
 import AbstractWizard from 'components/AbstractWizard';
+import IconSVG from 'components/IconSVG';
 
 require('./MarketActionsContainer.scss');
 
@@ -111,7 +112,9 @@ export default class MarketActionsContainer extends Component {
                       <span className={classnames("tag tag-pill", {'completed' : isCompletedAction})}>{index + 1}</span>
                     </div>
                     <div className="action-icon">
-                      <div className={classnames("fa", actionIcon)}></div>
+                      <div>
+                        <IconSVG name={actionIcon} />
+                      </div>
                     </div>
                     <div
                       className="action-description"

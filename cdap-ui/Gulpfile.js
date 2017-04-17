@@ -303,7 +303,8 @@ gulp.task('watch:js:app', ['watch:js:app:hydrator', 'watch:js:app:tracker', 'wat
 gulp.task('polyfill', function () {
   return gulp.src([
     './app/polyfill.js',
-    './app/ui-utils/url-generator.js'
+    './app/ui-utils/url-generator.js',
+    './node_modules/svg4everybody/dist/svg4everybody.js'
   ])
     .pipe(plug.babel())
     .pipe(plug.concat('polyfill.js'))
@@ -393,7 +394,29 @@ gulp.task('css:minify', ['css'], function() {
     .pipe(plug.cssnano({ safe: true }))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
-gulp.task('minify', ['js:minify', 'css:minify']);
+gulp.task('fonts:minify', ['fonts'], function() {
+  return gulp.src('./dist/assets/fonts/*.svg')
+    .pipe(plug.svgmin({
+      plugins: [{
+        removeUselessDefs: false
+      }, {
+        cleanupIDs: false
+      }]
+    }))
+    .pipe(gulp.dest('./dist/assets/fonts'));
+});
+gulp.task('img:minify', ['img'], function() {
+  return gulp.src('./dist/assets/img/*.svg')
+    .pipe(plug.svgmin({
+      plugins: [{
+        removeUselessDefs: false
+      }, {
+        cleanupIDs: false
+      }]
+    }))
+    .pipe(gulp.dest('./dist/assets/img'));
+});
+gulp.task('minify', ['js:minify', 'css:minify', 'fonts:minify', 'img:minify']);
 
 /*
   rev'd assets

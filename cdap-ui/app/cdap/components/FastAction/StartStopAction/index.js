@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import {MyProgramApi} from 'api/program';
 import FastActionButton from '../FastActionButton';
 import {convertProgramToApi} from 'services/program-api-converter';
 import ConfirmationModal from 'components/ConfirmationModal';
+import IconSVG from 'components/IconSVG';
 import {Tooltip} from 'reactstrap';
 import T from 'i18n-react';
 
@@ -124,6 +125,7 @@ export default class StartStopAction extends Component {
     let headerText;
     let confirmationText;
     let icon;
+    let iconClass;
 
     if (this.startStop === 'start') {
       confirmBtnText = 'startConfirmLabel';
@@ -136,9 +138,16 @@ export default class StartStopAction extends Component {
     }
     // icon can change in the background, so using state instead of this.startStop
     if (this.state.programStatus === '') {
-      icon = 'fa fa-spinner fa-spin';
+      icon = 'icon-spinner';
+      iconClass = 'fa-spin';
     } else {
-      icon = this.state.programStatus === 'STOPPED' ? 'fa fa-play text-success' : 'fa fa-stop text-danger';
+      if (this.state.programStatus === 'STOPPED') {
+        icon = 'icon-play';
+        iconClass = 'text-success';
+      } else {
+        icon = 'icon-stop';
+        iconClass = 'text-danger';
+      }
     }
     let tooltipID = `${this.props.entity.uniqueId}-${this.startStop}`;
 
@@ -164,13 +173,17 @@ export default class StartStopAction extends Component {
         {
           this.state.actionStatus === 'loading' ? (
             <button className="btn btn-link" disabled>
-              <span className="fa fa-spin fa-spinner"></span>
+              <IconSVG
+                name="icon-spinner"
+                className="fa-spin"
+              />
             </button>
           ) :
           (
             <span>
               <FastActionButton
                 icon={icon}
+                iconClasses={iconClass}
                 action={this.toggleModal}
                 id={tooltipID}
               />
