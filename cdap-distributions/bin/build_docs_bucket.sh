@@ -86,7 +86,7 @@ function get_repo_version() {
 }
 
 function sync_from_s3() {
-  s3cmd sync s3://${S3_BUCKET}/${S3_REPO_PATH}/${__repo_version}/ ${TARGET_DIR}
+  s3cmd sync --no-preserve s3://${S3_BUCKET}/${S3_REPO_PATH}/${__repo_version}/ ${TARGET_DIR}/${__repo_version}/
 }
 
 function robots_tags() {

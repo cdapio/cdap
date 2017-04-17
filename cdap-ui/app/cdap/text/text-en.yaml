@@ -615,7 +615,7 @@ features:
     ProgramTab:
       emptyMessage: No Programs found.
       title: "Programs in application \"{appId}\""
-      runningProgramLabel: "Number of programs running: {programCount}"
+      runningProgramLabel: "Number of running programs: {programCount}"
       altTitle: "Programs using {entityType} \"{entityId}\""
     DatasetTab:
       title: "Datasets and Streams used by \"{appId}\""
@@ -629,7 +629,7 @@ features:
     deployedLabel:
       data: Created
       app: Deployed
-    errorMessage404: Sorry, we are not able to find {entityType} "{entityId}"
+    errorMessage404: Sorry, we could not find {entityType} "{entityId}"
     errorMessageAuthorization: You are not authorized to view {entityType} "{entityId}"
     errorMessageSubtitle: Please select another entity
     overviewCloseLabel: Close
@@ -663,7 +663,7 @@ features:
   Resource-Center:
     Application:
       label: Application
-      description: Upload a custom application artifact or create an instance of an application from an existing artifact.
+      description: An Application is a collection of datasets and programs that read and write data to datasets.
       actionbtn0: Upload
       actionbtn-1: Create
       modalheadertitle: Upload Application
@@ -737,24 +737,24 @@ features:
         name-label: "Name"
         name-placeholder: "Namespace name"
         scheduler-queue-label: "Scheduler Queue"
-        scheduler-queue-placeholder: "Specify the YARN queue name to be associated with this namespace"
+        scheduler-queue-placeholder: "Specify the YARN queue name to be used for programs in this namespace"
         sld-desc:  "Specify the name and the description of the namespace."
         ssd-label: "General Information"
       Step2:
         hbase-nm-name-label: "HBase Namespace Name"
-        hbase-nm-name-placeholder: "Existing namespace in HBase for new namespace"
+        hbase-nm-name-placeholder: "Namespace in HBase for datasets in this namespace"
         hdfs-root-directory-label: "HDFS Root Directory"
-        hdfs-root-directory-placeholder: "Root directory of HDFS for new namespace root"
+        hdfs-root-directory-placeholder: "Base directory on HDFS for this namespace"
         hive-db-name-label: "Hive Database Name"
-        hive-db-name-placeholder: "Hive db name for the new namespace."
-        sld-label: "Specify mapping of namespace resources to the underlying existing storage resources."
+        hive-db-name-placeholder: "Hive database for this namespace"
+        sld-label: "Specify mapping of namespace resources to the existing underlying storage resources."
         ssd-label: "Namespace Mapping"
       Step3:
         keytab-uri-label: "Keytab URI"
         keytab-uri-placeholder: "Location of keytab file associated with the principal"
         principal-label: "Principal"
-        principal-placeholder: "User to be impersonated-as for jobs in the new namespace"
-        sld-label: "Specify credentials for securely impersonating programs running as a specified user."
+        principal-placeholder: "Kerberos principal of the user to run CDAP programs as"
+        sld-label: "Specify credentials for securely impersonating CDAP programs in this namespace."
         ssd-label: "Security"
       Step4:
         name-label: "Name"
@@ -771,7 +771,7 @@ features:
         filePathLabel: Choose file
         shorttitle: Upload Application
         title: Upload JAR
-        uploadHelperText: Upload the JAR for your application that you wish to deploy
+        uploadHelperText: Upload the JAR for the application that you wish to deploy
       success: You have successfully deployed the application "{appName}".
     ArtifactUpload:
       headerlabel: Add Third Party Driver
@@ -830,7 +830,7 @@ features:
         typeLabel: Type
         typePlaceholder: Library Type. E.g. sparkprogram
         classnameLabel: Class Name
-        classnamePlaceholder: Library Class Name. E.g. com.example.MyClass
+        classnamePlaceholder: com.example.MyClass
       success: You have successfully uploaded the library "{artifactName}".
       subtitle: You can now create a pipeline using the library.
       callToAction: Create a Pipeline
@@ -906,7 +906,7 @@ features:
       callToAction: View Stream Details
       headerlabel: Upload Data
       Step1:
-        description: Shows the data for your reference that would be uploaded to a destination.
+        description: Shows the data that would be uploaded to a destination for your reference.
         shorttitle: View Data
         title: View Data
       Step2:

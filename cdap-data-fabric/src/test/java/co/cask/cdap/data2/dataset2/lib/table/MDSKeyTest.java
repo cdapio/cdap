@@ -86,7 +86,9 @@ public class MDSKeyTest {
     Assert.assertEquals("part3", splitter.getString());
 
     splitter.skipBytes();
+    Assert.assertTrue(splitter.hasRemaining());
     Assert.assertTrue(Bytes.equals(bytesToCheck, splitter.getBytes()));
+    Assert.assertFalse(splitter.hasRemaining());
   }
 
   @Test
@@ -151,6 +153,7 @@ public class MDSKeyTest {
       splitter.getInt();
       Assert.fail();
     } catch (BufferUnderflowException expected) {
+      Assert.assertFalse(splitter.hasRemaining());
     }
   }
 

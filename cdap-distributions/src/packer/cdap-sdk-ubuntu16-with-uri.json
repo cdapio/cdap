@@ -15,7 +15,7 @@
       "shutdown_command": "sudo shutdown -P now",
       "format": "ova",
       "headless": true,
-      "guest_additions_mode": "upload",
+      "guest_additions_mode": "disable",
       "http_directory": "files",
       "boot_command": [
         "<enter><wait><f6><esc><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
@@ -48,6 +48,7 @@
         ["modifyvm", "{{ .Name }}", "--nictype1", "virtio"]
       ],
       "vboxmanage_post": [
+        ["modifyhd", "output-cdap-sdk-vm/{{ .Name }}.vdi", "--compact"],
         ["modifyvm", "{{ .Name }}", "--clipboard", "bidirectional"],
         ["modifyvm", "{{ .Name }}", "--accelerate2dvideo", "on"],
         ["modifyvm", "{{ .Name }}", "--accelerate3d", "on"],
@@ -190,8 +191,7 @@
         "scripts/xorg.sh",
         "scripts/slim.sh",
         "scripts/fill-maven-cache.sh",
-        "scripts/lxde.sh",
-        "scripts/vbox-guest-additions.sh"
+        "scripts/lxde.sh"
       ],
       "only": ["cdap-sdk-vm"]
     },

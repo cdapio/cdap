@@ -52,7 +52,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.setState();
     this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
     this.focusTimeout = null;
-    this.timeoutInMinutes = 1;
+    this.timeoutInMinutes = 2;
 
     if ($stateParams.isClone) {
       this.openMetadata();

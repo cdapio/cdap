@@ -32,6 +32,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.scheduler.LogPrintingJob;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -40,6 +41,7 @@ import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
 import co.cask.cdap.test.SlowTests;
+import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -62,6 +64,7 @@ import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.impl.DirectSchedulerFactory;
+import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.simpl.RAMJobStore;
 import org.quartz.simpl.SimpleThreadPool;
 import org.quartz.spi.JobStore;
@@ -71,6 +74,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Tests {@link DatasetBasedTimeScheduleStore} across scheduler restarts to verify we retain scheduler information
@@ -151,6 +155,66 @@ public class DatasetBasedTimeScheduleStoreTest {
 
   public static void schedulerTearDown() throws SchedulerException {
     scheduler.shutdown();
+  }
+
+  @Test
+  public void testOldJobKeyFormatCompatibility() throws Exception {
+    testJobKeyDeletion("v1");
+    testJobKeyDeletion(ApplicationId.DEFAULT_VERSION);
+  }
+
+  private void testJobKeyDeletion(String version) throws Exception {
+    schedulerSetup(true);
+    String jobGroup = "jg";
+    JobDetail jobDetail = getJobDetail(jobGroup, "job1", version);
+    JobDetail versionLessJobDetail = getJobDetail(jobGroup, "job1", null);
+
+    scheduler.addJob(versionLessJobDetail, true);
+    scheduler.addJob(jobDetail, true);
+    schedulerTearDown();
+
+    schedulerSetup(true);
+    Set<JobKey> keys = scheduler.getJobKeys(GroupMatcher.jobGroupEquals(jobGroup));
+    if (version.equals(ApplicationId.DEFAULT_VERSION)) {
+      Assert.assertEquals(1, keys.size());
+      Assert.assertTrue(scheduler.deleteJob(jobDetail.getKey()));
+    } else {
+      Assert.assertEquals(2, keys.size());
+      Assert.assertTrue(scheduler.deleteJob(jobDetail.getKey()));
+      Assert.assertTrue(scheduler.deleteJob(versionLessJobDetail.getKey()));
+    }
+    schedulerTearDown();
+    schedulerSetup(true);
+    Set<JobKey> jobKeys = scheduler.getJobKeys(GroupMatcher.jobGroupEquals(jobGroup));
+    Assert.assertEquals(0, jobKeys.size());
+    schedulerTearDown();
+  }
+
+  @Test
+  public void testSimpleJobDeletion() throws Exception {
+    schedulerSetup(true);
+    Trigger trigger = TriggerBuilder.newTrigger()
+      .withIdentity("g2")
+      .usingJobData(LogPrintingJob.KEY, LogPrintingJob.VALUE)
+      .startNow()
+      .withSchedule(CronScheduleBuilder.cronSchedule("0/1 * * * * ?"))
+      .build();
+
+    int oldCount = scheduler.getJobKeys(GroupMatcher.anyJobGroup()).size();
+
+    JobDetail jobDetail = getJobDetail("mr1");
+    scheduler.scheduleJob(jobDetail, trigger);
+    Assert.assertTrue(scheduler.unscheduleJob(trigger.getKey()));
+    Assert.assertTrue(scheduler.deleteJob(jobDetail.getKey()));
+
+    int newCount = scheduler.getJobKeys(GroupMatcher.anyJobGroup()).size();
+    Assert.assertEquals(oldCount, newCount);
+    schedulerTearDown();
+    schedulerSetup(true);
+
+    newCount = scheduler.getJobKeys(GroupMatcher.anyJobGroup()).size();
+    Assert.assertEquals(oldCount, newCount);
+    schedulerTearDown();
   }
 
   @Test
@@ -303,6 +367,17 @@ public class DatasetBasedTimeScheduleStoreTest {
   private JobDetail getJobDetail(String jobName) {
     return JobBuilder.newJob(LogPrintingJob.class)
       .withIdentity(String.format("developer:application1:%s", jobName))
+      .build();
+  }
+
+  private JobDetail getJobDetail(String jobGroup, String jobName, @Nullable String appVersion) {
+    String identity = Strings.isNullOrEmpty(appVersion) ?
+      String.format("developer:application1:flow:%s", jobName) :
+      String.format("developer:application1:%s:flow:%s", appVersion, jobName);
+
+    return JobBuilder.newJob(LogPrintingJob.class)
+      .withIdentity(identity, jobGroup)
+      .storeDurably()
       .build();
   }
 

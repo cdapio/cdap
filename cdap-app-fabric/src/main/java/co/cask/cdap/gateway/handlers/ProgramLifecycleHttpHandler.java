@@ -50,6 +50,8 @@ import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
+import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.BatchProgramResult;
 import co.cask.cdap.proto.BatchProgramStart;
@@ -647,8 +649,31 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           scheduleSpecFromRequest.getSchedule().getName(), scheduleName));
     }
 
+    if (scheduleSpecFromRequest.getSchedule().getName() == null) {
+      scheduleSpecFromRequest = addNameToSpec(scheduleSpecFromRequest, scheduleName);
+    }
+
     lifecycleService.addSchedule(applicationId, scheduleSpecFromRequest);
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private ScheduleSpecification addNameToSpec(ScheduleSpecification scheduleSpecification, String name)
+    throws BadRequestException {
+    if (scheduleSpecification.getSchedule() instanceof TimeSchedule) {
+      TimeSchedule ts = (TimeSchedule) scheduleSpecification.getSchedule();
+      return new ScheduleSpecification(
+        new TimeSchedule(name, ts.getDescription(), ts.getCronEntry(), ts.getRunConstraints()),
+        scheduleSpecification.getProgram(), scheduleSpecification.getProperties());
+    } else if (scheduleSpecification.getSchedule() instanceof StreamSizeSchedule) {
+      StreamSizeSchedule s = (StreamSizeSchedule) scheduleSpecification.getSchedule();
+      return new ScheduleSpecification(
+        new StreamSizeSchedule(name, s.getDescription(), s.getStreamName(), s.getDataTriggerMB(),
+                               s.getRunConstraints()),
+        scheduleSpecification.getProgram(), scheduleSpecification.getProperties()
+      );
+    } else {
+      throw new BadRequestException("Unknown schedule type given");
+    }
   }
 
   @POST

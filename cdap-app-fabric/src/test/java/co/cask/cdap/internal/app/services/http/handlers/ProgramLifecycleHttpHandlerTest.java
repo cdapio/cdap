@@ -1260,6 +1260,19 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                                appV2Id.getVersion());
     Assert.assertEquals(2, actualSchSpecs.size());
     Assert.assertTrue(actualSchSpecs.contains(specification));
+
+    // Add a schedule with no schedule name in spec
+    TimeSchedule timeSchedule2 = (TimeSchedule) Schedules.builder(null)
+      .setDescription("Something 2")
+      .createTimeSchedule("0 * * * ?");
+    ScheduleSpecification specification2 = new ScheduleSpecification(timeSchedule2, programInfo, properties);
+
+    response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, appV2Id.getVersion(), "schedule-100",
+                           specification2);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    ScheduleSpecification schedule2 =
+      getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, appV2Id.getVersion(), "schedule-100");
+    Assert.assertNotNull(schedule2);
   }
 
   private void testDeleteSchedule(ApplicationId appV2Id, String scheduleName) throws Exception {
@@ -1281,7 +1294,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // the above schedule delete should not have affected the schedule with same name in another version of the app
     schedules = getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, appV2Id.getVersion(),
                              AppWithSchedule.WORKFLOW_NAME);
-    Assert.assertEquals(2, schedules.size());
+    Assert.assertEquals(3, schedules.size());
 
     // should have a schedule with the given name
     boolean foundSchedule = false;
@@ -1297,7 +1310,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     schedules = getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, appV2Id.getVersion(),
                              AppWithSchedule.WORKFLOW_NAME);
-    Assert.assertEquals(1, schedules.size());
+    Assert.assertEquals(2, schedules.size());
   }
 
   private void testUpdateSchedule(ApplicationId appV2Id) throws Exception {

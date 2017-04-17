@@ -1,5 +1,4 @@
 /*
-/*
  * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -61,8 +60,6 @@ import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
-import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedStreamSizeScheduleStore;
-import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.meta.LoggingStoreTableUtil;
@@ -115,13 +112,9 @@ public class UpgradeTool {
   private final TransactionService txService;
   private final ZKClientService zkClientService;
   private final DatasetFramework dsFramework;
-  private final StreamStateStoreUpgrader streamStateStoreUpgrader;
   private final DatasetUpgrader dsUpgrade;
   private final QueueAdmin queueAdmin;
   private final AuthorizationEnforcementService authorizationService;
-  private final DatasetBasedStreamSizeScheduleStore datasetBasedStreamSizeScheduleStore;
-  private final DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore;
-  private final DefaultStore store;
   private final HBaseTableFactory tmsTableFactory;
   private final CoprocessorManager coprocessorManager;
 
@@ -164,13 +157,9 @@ public class UpgradeTool {
     this.txService = injector.getInstance(TransactionService.class);
     this.zkClientService = injector.getInstance(ZKClientService.class);
     this.dsFramework = injector.getInstance(DatasetFramework.class);
-    this.streamStateStoreUpgrader = injector.getInstance(StreamStateStoreUpgrader.class);
     this.dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     this.queueAdmin = injector.getInstance(QueueAdmin.class);
     this.authorizationService = injector.getInstance(AuthorizationEnforcementService.class);
-    this.datasetBasedStreamSizeScheduleStore = injector.getInstance(DatasetBasedStreamSizeScheduleStore.class);
-    this.datasetBasedTimeScheduleStore = injector.getInstance(DatasetBasedTimeScheduleStore.class);
-    this.store = injector.getInstance(DefaultStore.class);
     this.tmsTableFactory = injector.getInstance(HBaseTableFactory.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     HBaseTableUtil tableUtil = injector.getInstance(HBaseTableUtil.class);
@@ -412,18 +401,6 @@ public class UpgradeTool {
 
   private void performUpgrade() throws Exception {
     performCoprocessorUpgrade();
-
-    LOG.info("Upgrading AppMetadatastore...");
-    store.upgradeAppVersion();
-
-    LOG.info("Upgrading stream state store table...");
-    streamStateStoreUpgrader.upgrade();
-
-    LOG.info("Upgrading stream size schedule store...");
-    datasetBasedStreamSizeScheduleStore.upgrade();
-
-    LOG.info("Upgrading time schedule store...");
-    datasetBasedTimeScheduleStore.upgrade();
   }
 
   private void performHBaseUpgrade() throws Exception {

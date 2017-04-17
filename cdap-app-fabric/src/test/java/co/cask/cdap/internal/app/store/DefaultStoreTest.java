@@ -260,7 +260,7 @@ public class DefaultStoreTest {
     store.setStop(programId, run2.getId(), nowSecs, ProgramController.State.COMPLETED.getRunStatus());
 
     Map<ProgramRunId, RunRecordMeta> historymap = store.getRuns(programId, ProgramRunStatus.ALL,
-                                                            0, Long.MAX_VALUE, Integer.MAX_VALUE);
+                                                                0, Long.MAX_VALUE, Integer.MAX_VALUE);
 
     Assert.assertEquals(2, historymap.size());
   }

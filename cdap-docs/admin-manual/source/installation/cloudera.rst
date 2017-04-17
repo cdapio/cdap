@@ -37,7 +37,7 @@ Preparing the Cluster
 
 Roles and Dependencies
 ----------------------
-The CDAP CSD (`Custom Service Descriptor 
+The CDAP CSD (`Custom Service Descriptor
 <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_addon_services.html#concept_qbv_3jk_bn_unique_1>`__)
 consists of four mandatory roles and two optional roles:
 
@@ -55,32 +55,32 @@ consists of four mandatory roles and two optional roles:
      - Metrics and logging transport service, using an embedded version of *Kafka*
    * - CDAP UI Service
      - User interface for managing CDAP applications
-   * - 
-     - 
+   * -
+     -
    * - CDAP Security Auth Service
      - Performs client authentication for CDAP when security is enabled (*optional*)
    * - Gateway
-     - `Cloudera Manager Gateway Role 
+     - `Cloudera Manager Gateway Role
        <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_managing_roles.html>`__
        that installs the CDAP client tools (such as the *CDAP CLI*) and configuration (*optional*)
 
 These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of the same name.
 
 - As CDAP depends on HDFS, YARN, HBase, ZooKeeper, and (optionally) Hive and Spark, it must be installed
-  on cluster host(s) with full client configurations for these dependent services. 
+  on cluster host(s) with full client configurations for these dependent services.
 
 - The CDAP Master Service role (or *CDAP Master*) must be co-located on a cluster host with an HDFS Gateway, a YARN
   Gateway, an HBase Gateway, and |---| optionally |---| Hive or Spark Gateways.
 
-- Note that these Gateways are redundant if you are co-locating the CDAP Master role 
+- Note that these Gateways are redundant if you are co-locating the CDAP Master role
   on a cluster host (or hosts, in the case of a deployment with high availability) with
   actual services, such as the HDFS Namenode, the YARN resource manager, or the HBase
   Master.
 
-- Note that the CDAP Gateway/Router Service is not a `Cloudera Manager Gateway Role 
+- Note that the CDAP Gateway/Router Service is not a `Cloudera Manager Gateway Role
   <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_managing_roles.html>`__
   but is instead another name for the CDAP Router Service.
-  
+
 - CDAP also provides its own Gateway role that can be used to install CDAP client
   configurations on other hosts of the cluster.
 
@@ -106,7 +106,7 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
 
      $MR2_CLASSPATH
 
-   Copy all the entries to the ``yarn.application.classpath`` configuration for YARN on your Cluster. 
+   Copy all the entries to the ``yarn.application.classpath`` configuration for YARN on your Cluster.
    The ``yarn.application.classpath`` setting can be found by searching as mentioned above.
 
    Add the entries required by scrolling to the last entry in the classpath form,
@@ -137,7 +137,7 @@ Downloading and Installing CSD
 ------------------------------
 To install CDAP on a cluster managed by Cloudera, we have available a Custom Service
 Descriptor (CSD) which you can install onto your CM server. This adds CDAP to the list of
-available services which CM can install. 
+available services which CM can install.
 
 .. _cloudera-compatibility-matrix:
 
@@ -146,6 +146,20 @@ available services which CM can install.
 +------------+-----------------------+-----------------------------------------------------------+
 | CM Version | CDH Version           | CDAP Parcel / CSD Version                                 |
 +============+=======================+===========================================================+
+| 5.10       | 5.9.x through 5.10.x  | |short-version-x|                                         |
++------------+-----------------------+-----------------------------------------------------------+
+| 5.10       | 5.8.x                 | 3.5.x through |short-version-x|                           |
++------------+-----------------------+-----------------------------------------------------------+
+| 5.10       | 5.7.x                 | 3.4.x through |short-version-x|                           |
++------------+-----------------------+-----------------------------------------------------------+
+| 5.10       | 5.5.x through 5.6.x   | 3.3.x through |short-version-x|                           |
++------------+-----------------------+-----------------------------------------------------------+
+| 5.10       | 5.4.x                 | 3.1.x through |short-version-x|                           |
++------------+-----------------------+-----------------------------------------------------------+
+| 5.10       | no greater than 5.3.x | 3.0.x through |short-version-x|                           |
++------------+-----------------------+-----------------------------------------------------------+
+|                                                                                                |
++------------+-----------------------+-----------------------------------------------------------+
 | 5.9        | 5.9.x                 | |short-version-x|                                         |
 +------------+-----------------------+-----------------------------------------------------------+
 | 5.9        | 5.8.x                 | 3.5.x through |short-version-x|                           |
@@ -215,23 +229,23 @@ available services which CM can install.
 
 **Notes:**
 
-- Cloudera Manager supports `a version of CDH no greater than its own 
+- Cloudera Manager supports `a version of CDH no greater than its own
   <http://www.cloudera.com/documentation/enterprise/latest/topics/pcm_cdh_cm.html>`__
   (for example, CM version 5.1 supports CDH versions less than or equal to 5.1).
-  
+
 - The version of the CDAP Parcel that is used should match the CSD major.minor version.
 
 **Steps:**
 
-#. Download the CDAP CSD by `downloading the JAR file 
+#. Download the CDAP CSD by `downloading the JAR file
    <http://cask.co/downloads/#cloudera>`__.
-   Details on CSDs and Cloudera Manager Extensions are `available online 
+   Details on CSDs and Cloudera Manager Extensions are `available online
    <https://github.com/cloudera/cm_ext/wiki>`__.
 
    .. _cloudera-installation-csd:
 
 #. Install the CSD following the instructions at Cloudera's website on `Add-on Services
-   <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_mc_addon_services.html>`__, 
+   <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_mc_addon_services.html>`__,
    using the instructions given for the case of installing software in the form of a parcel.
    In this case, you install the CSD first and then install the parcel second.
 
@@ -246,18 +260,18 @@ Download and distribute the CDAP-|version| parcel. Complete instructions on parc
 available at `Cloudera's website
 <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/
 cm_ig_parcels.html>`__, but in summary these are the steps:
-   
-1. Installing the CSD adds the corresponding Cask parcel repository for you; however, you can 
-   `customize the list of repositories 
+
+1. Installing the CSD adds the corresponding Cask parcel repository for you; however, you can
+   `customize the list of repositories
    <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#cmug_topic_7_11_5_unique_1>`__
    searched by Cloudera Manager if you need to;
-#. `Download 
+#. `Download
    <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#concept_vwq_421_yk_unique_1__section_cnx_b3y_bm_unique_1>`__
    the parcel to your Cloudera Manager server;
-#. `Distribute 
+#. `Distribute
    <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#concept_vwq_421_yk_unique_1__section_sty_b3y_bm_unique_1>`__
    the parcel to all the servers in your cluster; and
-#. `Activate 
+#. `Activate
    <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#concept_vwq_421_yk_unique_1__section_ug1_c3y_bm_unique_1>`__
    the parcel.
 
@@ -268,17 +282,17 @@ cm_ig_parcels.html>`__, but in summary these are the steps:
    :class: bordered-image
 
    **Cloudera Manager:** CDAP Parcels *Distributed, Activated* on a cluster.
-   
+
 **Notes:**
 
 - If the Cask parcel repository is inaccessible to your cluster, please see :ref:`these
   suggestions <faqs-cloudera-direct-parcel-access>`.
 - The CDAP parcels are hosted at a repository determined by the CDAP version.
-  For instance, the CDAP |short-version| parcel metadata is accessed by Cloudera Manager at 
+  For instance, the CDAP |short-version| parcel metadata is accessed by Cloudera Manager at
   :cask-repository-parcels-cdap:`this URL: <manifest.json>`
-  
+
   .. parsed-literal::
-  
+
     \http://repository.cask.co/parcels/cdap/|short-version|\ /manifest.json
 
 
@@ -333,7 +347,7 @@ when you review these changes.
    :class: bordered-image
 
    **Add Service Wizard, Page 1:** Setting the dependencies (in this case, including Hive).
-   
+
 
 Add Service Wizard: Customize Role Assignments
 ----------------------------------------------
@@ -349,7 +363,7 @@ with service *or* gateway roles for HBase, HDFS, YARN, and (optionally) Hive and
 
    **Add Service Wizard, Page 2:** When customizing Role Assignments, the *CDAP Security
    Auth Service* can be added later, if required.
-   
+
 
 Add Service Wizard: Customize Role Assignments
 ----------------------------------------------
@@ -376,7 +390,7 @@ Add Service Wizard: Customize Role Assignments
 
    **Add Service Wizard, Page 2 (dialog):** Completing assignments with the CDAP Gateway client
    added to other nodes of the cluster; it can be added to nodes with CDAP roles.
-   
+
 
 Add Service Wizard: Customize Role Assignments
 ----------------------------------------------
@@ -388,7 +402,7 @@ Add Service Wizard: Customize Role Assignments
    :class: bordered-image
 
    **Add Service Wizard, Page 2:** Completed role assignments.
-   
+
 .. _cloudera-installation-add-service-wizard-configuration:
 
 Add Service Wizard: Reviewing Configuration
@@ -452,7 +466,7 @@ Executing commands to install and automatically start CDAP services.
    :class: bordered-image
 
    **Add Service Wizard, Page 5:** Finishing first run of commands to install and start CDAP.
-   
+
 
 Add Service Wizard: Completion Page
 -----------------------------------
@@ -559,7 +573,7 @@ Verification
 Service Checks in Cloudera Manager
 ----------------------------------
 After the Cloudera Manager Admin Console's *Add Service* Wizard completes, *CDAP* will
-show in your cluster's list of services. 
+show in your cluster's list of services.
 
 .. figure:: ../_images/cloudera/cloudera-csd-09b.png
    :figwidth: 100%
@@ -583,7 +597,7 @@ port ``11011`` of the host where the UI role instance is running.
    :class: bordered-image
 
    **Cloudera Manager:** CDAP page showing available services and their status.
-   
+
 .. _cloudera-cdap-ui:
 
 .. include:: /_includes/installation/smoke-test-cdap.txt
@@ -613,28 +627,28 @@ For Kerberos-enabled Hadoop clusters:
 
 - The ``cdap`` user needs to be granted HBase permissions to create tables.
   As the ``hbase`` user, issue the command::
- 
+
     $ echo "grant 'cdap', 'RWCA'" | hbase shell
 
 - The ``cdap`` user must be able to launch YARN containers, either by adding it to the YARN
   ``allowed.system.users`` or by adjusting the YARN ``min.user.id`` to include the ``cdap`` user.
   (Search for the YARN configuration ``allowed.system.users`` in Cloudera Manager, and then add
   the ``cdap`` user to the whitelist.)
-  
+
 - If you are converting an existing CDAP cluster to being Kerberos-enabled, then you may
   run into YARN usercache directory permission problems. A non-Kerberos cluster with
   default settings will run CDAP containers as the user ``yarn``. A Kerberos cluster will
   run them as the user ``cdap``. When converting, the usercache directory that YARN
   creates will already exist and be owned by a different user. On all datanodes, run this
   command, substituting in the correct value of the YARN parameter ``yarn.nodemanager.local-dirs``::
-    
+
     $ rm -rf <YARN.NODEMANAGER.LOCAL-DIRS>/usercache/cdap
-  
+
   (As ``yarn.nodemanager.local-dirs`` can be a comma-separated list of directories, you may
   need to run this command multiple times, once for each entry.)
-  
+
   If, for example, the setting for ``yarn.nodemanager.local-dirs`` is ``/yarn/nm``, you would use::
-  
+
     $ rm -rf /yarn/nm/usercache/cdap
 
   Restart CDAP after removing the usercache(s).
@@ -663,7 +677,7 @@ CDAP Components
 For each of the CDAP components listed below (Master, Router, Kafka, UI, Authentication Server), these
 comments apply:
 
-- Sync the configuration files (such as ``cdap-site.xml`` and ``cdap-security.xml``) on all the nodes. 
+- Sync the configuration files (such as ``cdap-site.xml`` and ``cdap-security.xml``) on all the nodes.
 - While the default *bind.address* settings (``0.0.0.0``, used for ``app.bind.address``,
   ``data.tx.bind.address``, ``router.bind.address``, and so on) can be synced across hosts,
   if you customize them to a particular IP address, they will |---| as a result |---| be
@@ -716,13 +730,13 @@ CDAP UI
   to additional machines.
 - For Cloudera Manager, the CDAP UI and the CDAP Router currently need to be colocated on
   the same node.
-- Start each ``CDAP UI Service`` role. 
+- Start each ``CDAP UI Service`` role.
 
 CDAP Authentication Server
 ..........................
 - Using the Cloudera Manager UI, add *Role Instances* of the role type ``CDAP Security Auth
   Service`` (the CDAP Authentication Server) to additional machines.
-- Start each ``CDAP Security Auth Service`` role.  
+- Start each ``CDAP Security Auth Service`` role.
 - Note that when an unauthenticated request is made in a secure HA setup, a list of all
   running authentication endpoints will be returned in the body of the request.
 
