@@ -67,8 +67,7 @@ Data Preparation
 
 Logs
 ....
-- :cask-issue:`CDAP-9117` - Changed the log viewer to only show "user" condensed logs by
-  default. There is an option to "Include System Logs" to show all logs as previously.
+- :cask-issue:`CDAP-9117` - Added option to the log viewer to only show "user" condensed logs.
 
 - :cask-issue:`HYDRATOR-1316` - Logs for previews of CDAP pipelines are now available in
   the CDAP UI via the *Logs* button in Preview mode.
