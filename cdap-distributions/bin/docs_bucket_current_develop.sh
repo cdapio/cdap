@@ -19,7 +19,7 @@ S3_BUCKET=${S3_BUCKET:-docs.cask.co}
 
 # Get Docs versions
 echo "Getting Docs version from local directory: ${LOCAL_DIR}"
-__local=${VERSION:-$(ls -1F ${LOCAL_DIR}/ | grep '/$' | head -n 1 | sed -e 's:/$::')}
+__local=${VERSION:-$(ls -1F ${LOCAL_DIR}/ | sort -rn | grep '/$' | tail -n 1 | sed -e 's:/$::')}
 echo "Getting Docs versions from remote: ${S3_BUCKET}/${LOCAL_DIR}"
 __current=$(curl -sL http://s3.amazonaws.com/${S3_BUCKET}/${LOCAL_DIR}/version)
 __develop=$(curl -sL http://s3.amazonaws.com/${S3_BUCKET}/${LOCAL_DIR}/development)
