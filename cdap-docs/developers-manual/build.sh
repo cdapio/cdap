@@ -23,10 +23,9 @@
 # Targets for both a limited and complete set of javadocs
 # Targets not included in usage are intended for internal usage by script
 
+source ../vars
 source ../_common/common-build.sh
 
-CDAP_CLIENTS_RELEASE_VERSION="1.2.0"
-CDAP_INGEST_RELEASE_VERSION="1.3.0"
 CHECK_INCLUDES=${TRUE}
 
 function download_readme_file_and_test() {

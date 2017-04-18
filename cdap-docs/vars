@@ -25,3 +25,7 @@ GIT_BRANCH_PARENT="release/3.3"
 
 # Used by cdap-apps for Hydrator documentation
 GIT_BRANCH_CDAP_HYDRATOR="release/1.2"
+
+# Used by developers-manual
+CDAP_CLIENTS_RELEASE_VERSION="1.2.0"
+CDAP_INGEST_RELEASE_VERSION="1.3.0"
