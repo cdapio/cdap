@@ -21,6 +21,7 @@ import Rx from 'rx';
 import shortid from 'shortid';
 import classnames from 'classnames';
 import Mousetrap from 'mousetrap';
+import DataPrepStore from 'components/DataPrep/store';
 
 // Directives List
 import SplitColumn from 'components/DataPrep/Directives/SplitColumn';
@@ -81,6 +82,7 @@ export default class ColumnActionsDropdown extends Component {
   componentWillMount() {
     this.dropdownId = shortid.generate();
     this.eventEmitter.off('CLOSE_POPOVER', this.toggleDropdown.bind(this, false));
+    this.singleWorkspaceMode = DataPrepStore.getState().dataprep.singleWorkspaceMode;
   }
 
   componentWillUnmount() {
@@ -100,6 +102,9 @@ export default class ColumnActionsDropdown extends Component {
 
     if (newState) {
       let element = document.getElementById('app-container');
+      if (this.singleWorkspaceMode) {
+        element = document.getElementsByClassName('wrangler-modal')[0];
+      }
       this.documentClick$ = Rx.Observable.fromEvent(element, 'click')
         .subscribe((e) => {
           if (isDescendant(this.popover, e.target) || !this.state.dropdownOpen) {
