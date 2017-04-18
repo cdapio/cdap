@@ -74,8 +74,7 @@
                       class="form-control col-xs-4"
                       ng-disabled="property.readonly"
                       ng-options="option as option for option in options"
-                      ng-focus="activeCell = true"
-                      ng-blur="activeCell = false"></select>
+                      ></select>
                 </div>
               </td>
               <td class="text-center nullable" ng-if="!property.empty" ng-class="{'active-cell': activeCell === true}">
