@@ -22,6 +22,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.FileContextProvider;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.guice.InsecureFileContextLocationFactory;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.startup.CheckRunner;
@@ -43,6 +44,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -170,8 +172,11 @@ public class MasterStartupTool {
         @Provides
         @Singleton
         private LocationFactory providesLocationFactory(Configuration hConf, CConfiguration cConf, FileContext fc) {
-          String namespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
-          return new FileContextLocationFactory(hConf, fc, namespace);
+          final String namespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
+          if (UserGroupInformation.isSecurityEnabled()) {
+            return new FileContextLocationFactory(hConf, namespace);
+          }
+          return new InsecureFileContextLocationFactory(hConf, namespace, fc);
         }
       }
     );
