@@ -106,9 +106,11 @@ public class DatasetSpecificationUpgrader {
                 }
                 String specEntry = Bytes.toString(colVal);
                 DatasetSpecification specification = GSON.fromJson(specEntry, DatasetSpecification.class);
-                DatasetSpecification updatedSpec = updateTTLInSpecification(specification, null);
-                colVal = Bytes.toBytes(GSON.toJson(updatedSpec));
-                put.add(familyMap.getKey(), columnMap.getKey(), timeStamp, colVal);
+                if (specification != null) {
+                  DatasetSpecification updatedSpec = updateTTLInSpecification(specification, null);
+                  colVal = Bytes.toBytes(GSON.toJson(updatedSpec));
+                  put.add(familyMap.getKey(), columnMap.getKey(), timeStamp, colVal);
+                }
               }
             }
           }
