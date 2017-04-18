@@ -212,16 +212,11 @@ div.body h5 { background-color: #F2F2F2; margin: 30px 0px 10px 0px; }
 div.body h6 { background-color: #F2F2F2; }
 
 a.headerlink {
-    color: #c60f0f;
+    color: #ff6600 !important;
     font-size: 0.8em;
     padding: 0 4px 0 4px;
-    text-decoration: none;
-    display: none;
-}
-
-a.headerlink:hover {
-    background-color: #c60f0f;
-    color: white;
+    margin-left: 6px;
+    text-decoration: none !important;
 }
 
 a.toc-backref {
