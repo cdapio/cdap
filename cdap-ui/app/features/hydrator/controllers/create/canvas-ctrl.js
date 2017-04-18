@@ -15,12 +15,14 @@
  */
 
 class HydratorCreateCanvasController {
-  constructor(BottomPanelStore, NodesStore, NodesActionsFactory, ConfigStore, PipelineNodeConfigActionFactory, HydratorService) {
+  constructor(BottomPanelStore, NodesStore, NodesActionsFactory, ConfigStore, PipelineNodeConfigActionFactory, HydratorService, $scope, $window) {
     this.NodesStore = NodesStore;
     this.ConfigStore = ConfigStore;
     this.PipelineNodeConfigActionFactory = PipelineNodeConfigActionFactory;
     this.NodesActionsFactory = NodesActionsFactory;
     this.HydratorService = HydratorService;
+    this.$scope = $scope;
+    this.$window = $window;
 
     this.setState = () => {
       this.state = {
@@ -35,6 +37,41 @@ class HydratorCreateCanvasController {
 
     this.updateNodesAndConnections();
     NodesStore.registerOnChangeListener(this.updateNodesAndConnections.bind(this));
+
+
+    this.$scope.$on('$stateChangeStart', (event) => {
+      let currentConfig = this.ConfigStore.getState();
+      let draft = this.ConfigStore.getDraftState();
+
+      if (!angular.equals(currentConfig, draft)) {
+        var response = confirm('You have unsaved changes.\n\nTo stay on the page and save changes, click \“OK.\” To leave, click \“Cancel.\"');
+        if (response) {
+          event.preventDefault();
+        }
+      }
+    });
+
+    this.$window.onbeforeunload = (event) => {
+      event = event || $window.event;
+
+      let currentConfig = this.ConfigStore.getState();
+      let draft = this.ConfigStore.getDraftState();
+
+      if (!angular.equals(currentConfig, draft)) {
+        let message = 'You have unsaved changes.';
+
+        if (event) {
+          event.returnValue = message;
+        }
+        return message;
+      } else {
+        return;
+      }
+    };
+
+    this.$scope.$on('$destroy', () => {
+      this.$window.onbeforeunload = null;
+    });
   }
 
   setStateAndUpdateConfigStore() {
@@ -83,6 +120,6 @@ class HydratorCreateCanvasController {
 }
 
 
-HydratorCreateCanvasController.$inject = ['BottomPanelStore', 'NodesStore', 'NodesActionsFactory', 'ConfigStore', 'PipelineNodeConfigActionFactory', 'HydratorService'];
+HydratorCreateCanvasController.$inject = ['BottomPanelStore', 'NodesStore', 'NodesActionsFactory', 'ConfigStore', 'PipelineNodeConfigActionFactory', 'HydratorService', '$scope', '$window'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorCreateCanvasController', HydratorCreateCanvasController);

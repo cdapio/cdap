@@ -50,6 +50,7 @@ class ConfigStore {
     this.changeListeners.forEach( callback => callback() );
   }
   setDefaults(config) {
+    this.draft = null;
     this.state = {
       artifact: {
         name: '',
@@ -73,6 +74,7 @@ class ConfigStore {
     }
   }
   init(config) {
+    this.draft = config;
     this.setDefaults(config);
   }
   getDefaultConfig() {
@@ -100,6 +102,10 @@ class ConfigStore {
   setDraftId(draftId) {
     this.state.__ui__.draftId = draftId;
   }
+  getDraftState() {
+    return angular.copy(this.draft);
+  }
+
   getArtifact() {
     return this.getState().artifact;
   }
@@ -686,6 +692,8 @@ class ConfigStore {
       })
       .then(
         () => {
+          this.draft = config;
+
           this.ConsoleActionsFactory.addMessage({
             type: 'success',
             content: `Draft ${config.name} saved successfully.`
