@@ -45,9 +45,18 @@ angular.module(PKG.name + '.feature.admin')
 
     };
 
+    /**
+     *  On namespace delete, we have to clean up the User Store as well.
+     *    1. Plugin Templates
+     *    2. Hydrator Drafts
+     *    3. Operation Dashboard
+     **/
     $scope.deleteNamespace = function() {
       $scope.loading = true;
       EventPipe.emit('showLoadingIcon');
+
+      var nsName = $state.params.nsadmin;
+      var path = '/configuration/user';
 
       dataSrc.request({
         _cdapPath: '/unrecoverable/namespaces/' + $state.params.nsadmin,
@@ -58,15 +67,45 @@ angular.module(PKG.name + '.feature.admin')
           EventPipe.emit('namespace.update');
         });
 
-        $timeout(function() {
-          EventPipe.emit('hideLoadingIcon.immediate');
+        dataSrc.request({
+          _cdapPath: path
+        }).then(function (res) {
+          if (res.property) {
+            // Delete Plugin Templates
+            if (res.property.pluginTemplates) {
+              delete res.property.pluginTemplates[nsName];
+            }
+            // Delete Hydrator Drafts
+            if (res.property.adapterDrafts) {
+              delete res.property.adapterDrafts[nsName];
+            }
+            // Delete Operation Dashboard
+            if (res.property.dashsbyns) {
+              delete res.property.dashsbyns[nsName];
+            }
+          }
 
-          $state.go('admin.overview', {}, {reload: true});
-          myAlertOnValium.show({
-            type: 'success',
-            content: 'You have successfully deleted a namespace'
+          dataSrc.request({
+            _cdapPath: path,
+            method: 'PUT',
+            body: res.property
+          }).then(function () {
+            // Success
+            EventPipe.emit('hideLoadingIcon.immediate');
+
+            $state.go('admin.overview', {}, {reload: true})
+              .then(function () {
+                myAlertOnValium.show({
+                  type: 'success',
+                  content: 'You have successfully deleted a namespace'
+                });
+              });
+
+
           });
-        }, 500);
+
+        });
+
       }, function error() {
         EventPipe.emit('hideLoadingIcon.immediate');
       });

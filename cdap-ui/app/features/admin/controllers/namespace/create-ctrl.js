@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceCreateController', function ($scope, myAlert, $modalInstance, MyCDAPDataSource, myNamespace, EventPipe, myAlertOnValium, $state, $timeout) {
+  .controller('NamespaceCreateController', function ($scope, myAlert, $modalInstance, MyCDAPDataSource, myNamespace, EventPipe, myAlertOnValium, $state) {
     $scope.model = {
       name: '',
       description: ''
@@ -43,16 +43,16 @@ angular.module(PKG.name + '.feature.admin')
             $scope.isSaving = false;
             myNamespace.getList(true).then(function() {
               EventPipe.emit('namespace.update');
-              $modalInstance.close();
-            });
-            $state.go('admin.overview', {}, { reload: true })
-              .then(
-                function() {
-                  $timeout(myAlertOnValium.show({
+
+              $state.go('admin.overview', {}, { reload: true })
+                .then(function () {
+                  $modalInstance.close();
+                  myAlertOnValium.show({
                     type: 'success',
                     content: res
-                  }), 100);
+                  });
                 });
+            });
           },
           function error(err) {
             $scope.isSaving = false;
