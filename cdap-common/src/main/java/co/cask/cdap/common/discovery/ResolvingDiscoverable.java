@@ -53,4 +53,9 @@ public class ResolvingDiscoverable extends Discoverable {
     }
     return bindAddress;
   }
+  
+  @Override
+  public String toString() {
+    return getName();
+  }
 }
