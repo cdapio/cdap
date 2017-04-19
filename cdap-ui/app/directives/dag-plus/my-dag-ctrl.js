@@ -603,8 +603,7 @@ angular.module(PKG.name + '.commons')
       }
     };
 
-    vm.onNodeDelete = function (event, node) {
-      event.stopPropagation();
+    vm.onNodeDelete = function (node) {
       DAGPlusPlusNodesActionsFactory.removeNode(node.name);
       vm.instance.remove(node.name);
     };

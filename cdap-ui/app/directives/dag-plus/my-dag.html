@@ -109,9 +109,13 @@
                 </span>
               </div>
             </div>
+
             <div class="fa fa-close"
                  ng-if="!DAGPlusPlusCtrl.isDisabled"
-                 ng-click="DAGPlusPlusCtrl.onNodeDelete($event, node)"></div>
+                 ng-click="caskConfirm()"
+                cask-confirmable="DAGPlusPlusCtrl.onNodeDelete(node)"
+                confirmable-modal-class="hydrator-modal center"
+                data-confirmable-content="Are you sure you want to delete the node?"></div>
             <div class="icon fa {{node.icon}}"></div>
           </div>
           <div class="plugin-name" ng-bind="node.plugin.label || node.name | myEllipsis: 25"></div>
