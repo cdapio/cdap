@@ -26,6 +26,7 @@ import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
+import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
@@ -51,7 +52,6 @@ import co.cask.cdap.etl.planner.ControlDag;
 import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.PipelinePlanner;
 import co.cask.cdap.etl.planner.StageInfo;
-import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.spark.batch.ETLSpark;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -313,7 +313,8 @@ public class SmartWorkflow extends AbstractWorkflow {
                                                        spec.isStageLoggingEnabled(),
                                                        spec.isProcessTimingEnabled(),
                                                        phaseConnectorDatasets,
-                                                       spec.getNumOfRecordsPreview());
+                                                       spec.getNumOfRecordsPreview(),
+                                                       spec.getProperties());
 
     Set<String> pluginTypes = batchPhaseSpec.getPhase().getPluginTypes();
     if (pluginTypes.contains(Action.PLUGIN_TYPE)) {

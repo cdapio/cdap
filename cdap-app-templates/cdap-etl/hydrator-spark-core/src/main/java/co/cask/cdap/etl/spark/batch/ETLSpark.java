@@ -111,6 +111,11 @@ public class ETLSpark extends AbstractSpark {
 
     Map<String, String> properties = context.getSpecification().getProperties();
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
+
+    for (Map.Entry<String, String> pipelineProperty : phaseSpec.getPipelineProperties().entrySet()) {
+      sparkConf.set(pipelineProperty.getKey(), pipelineProperty.getValue());
+    }
+
     DatasetContextLookupProvider lookProvider = new DatasetContextLookupProvider(context);
     MacroEvaluator evaluator = new DefaultMacroEvaluator(context.getWorkflowToken(), context.getRuntimeArguments(),
                                                          context.getLogicalStartTime(), context,

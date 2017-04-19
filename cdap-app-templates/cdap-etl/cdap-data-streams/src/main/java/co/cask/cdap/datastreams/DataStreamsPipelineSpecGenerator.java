@@ -17,6 +17,7 @@
 package co.cask.cdap.datastreams;
 
 import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.common.macro.TimeParser;
 import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
 import co.cask.cdap.etl.spec.PipelineSpecGenerator;
@@ -31,7 +32,7 @@ public class DataStreamsPipelineSpecGenerator
 
   public DataStreamsPipelineSpecGenerator(PluginConfigurer configurer, Set<String> sourcePluginTypes,
                                           Set<String> sinkPluginTypes) {
-    super(configurer, sourcePluginTypes, sinkPluginTypes, null, null);
+    super(configurer, sourcePluginTypes, sinkPluginTypes, null, null, Engine.SPARK);
   }
 
   @Override
@@ -45,7 +46,12 @@ public class DataStreamsPipelineSpecGenerator
     }
     DataStreamsPipelineSpec.Builder specBuilder = DataStreamsPipelineSpec.builder(batchIntervalMillis)
       .setExtraJavaOpts(config.getExtraJavaOpts())
-      .setStopGracefully(config.getStopGracefully());
+      .setStopGracefully(config.getStopGracefully())
+      .setIsUnitTest(config.isUnitTest())
+      .setCheckpointsDisabled(config.checkpointsDisabled());
+    if (config.getCheckpointDir() != null) {
+      specBuilder.setCheckpointDirectory(config.getCheckpointDir());
+    }
     configureStages(config, specBuilder);
     return specBuilder.build();
   }

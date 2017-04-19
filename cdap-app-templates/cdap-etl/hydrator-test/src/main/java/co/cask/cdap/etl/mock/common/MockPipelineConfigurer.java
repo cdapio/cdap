@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
+import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
 
@@ -76,6 +77,16 @@ public class MockPipelineConfigurer implements PipelineConfigurer {
 
       }
     };
+  }
+
+  @Override
+  public Engine getEngine() {
+    return Engine.SPARK;
+  }
+
+  @Override
+  public void setPipelineProperties(Map<String, String> properties) {
+    // no-op
   }
 
   @Nullable

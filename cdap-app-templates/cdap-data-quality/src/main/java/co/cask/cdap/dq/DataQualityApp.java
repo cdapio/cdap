@@ -36,10 +36,13 @@ import co.cask.cdap.dq.functions.BasicAggregationFunction;
 import co.cask.cdap.dq.functions.CombinableAggregationFunction;
 import co.cask.cdap.dq.rowkey.AggregationsRowKey;
 import co.cask.cdap.dq.rowkey.ValuesRowKey;
+import co.cask.cdap.etl.api.Engine;
+import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.mapreduce.MapReduceSourceContext;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
+import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.etl.planner.StageInfo;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -166,7 +169,8 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
                                           PluginProperties.builder().addAll(source.getProperties()).build());
       Preconditions.checkNotNull(batchSource, "Could not find plugin %s of type 'source'", source.getName());
       // We use pluginId as the prefixId
-      batchSource.configurePipeline(new MapReducePipelineConfigurer(mrConfigurer, PLUGIN_ID));
+      PipelineConfigurer configurer = new DefaultPipelineConfigurer(mrConfigurer, PLUGIN_ID, Engine.MAPREDUCE);
+      batchSource.configurePipeline(configurer);
       setName("FieldAggregator");
       setProperties(ImmutableMap.<String, String>builder()
                       .put("fieldAggregations", GSON.toJson(fieldAggregations))
