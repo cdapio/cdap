@@ -19,7 +19,7 @@
 #
 
 # Remove old kernels/headers
-apt-get remove --purge -y $(dpkg -l 'linux-image-*' | sed '/^ii/!d;s/^[^ ]* [^ ]* \([^ ]*\).*/\1/;/[0-9]/!d' | sort | tail -n +2)
+apt-get remove --purge -y $(dpkg -l 'linux-image-*' | grep -v linux-image-extra | grep -v linux-image-generic | sed '/^ii/!d;s/^[^ ]* [^ ]* \([^ ]*\).*/\1/;/[0-9]/!d' | sort | tail -n +2)
 apt-get remove --purge -y $(dpkg -l 'linux-headers-*' | sed '/^ii/!d;s/^[^ ]* [^ ]* \([^ ]*\).*/\1/;/[0-9]/!d' | sort | tail -n +2)
 
 # Remove build packages
