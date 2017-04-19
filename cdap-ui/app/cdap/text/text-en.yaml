@@ -335,11 +335,27 @@ features:
     PropertiesTab:
       title: Properties for {entityType} "{entityId}"
 
+  FileBrowser:
+    directory: Directory
+    Table:
+      group: Group
+      lastModified: Last Modified
+      name: Name
+      owner: Owner
+      permission: Permission
+      size: Size
+      type: Type
+    TopPanel:
+      directoryMetrics: "{count} Files and Folders"
+      searchPlaceholder: Search this directory
+      selectData: "Select HDFS File/Directory to Preview"
+
   FileDataUpload:
     click: "Click "
     or: or
     paste: Click anywhere else to paste data
     upload: " to upload a file"
+
   FileDnD:
     uploadLabel: Drag-and-drop the file to be uploaded
     clickLabel: Click to select file from your computer

@@ -41,7 +41,10 @@ const MyDataPrepApi = {
   stopService: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/stop`),
   pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${baseServicePath}/status`),
   createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${appPath}`),
-  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/usage`, { interval: 2000 })
+  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/usage`, { interval: 2000 }),
+
+  // File System Browser
+  explorer: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/explorer`)
 };
 
 export default MyDataPrepApi;
