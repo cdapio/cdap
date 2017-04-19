@@ -89,7 +89,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_WORKFLOW_NODE_STATE = "wns";
   private static final String TYPE_WORKFLOW_TOKEN = "wft";
   private static final String TYPE_NAMESPACE = "namespace";
-  private static final ProjectInfo.Version EXPECTED_VERSION = new ProjectInfo.Version("4.1.1");
 
   private final CConfiguration cConf;
   private final AtomicBoolean upgradeComplete;
@@ -826,7 +825,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       return false;
     }
     ProjectInfo.Version actual = new ProjectInfo.Version(version);
-    return actual.compareTo(EXPECTED_VERSION) >= 0;
+    return actual.compareTo(ProjectInfo.getVersion()) >= 0;
   }
 
   /**
