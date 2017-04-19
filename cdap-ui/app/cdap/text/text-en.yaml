@@ -335,6 +335,11 @@ features:
     PropertiesTab:
       title: Properties for {entityType} "{entityId}"
 
+  FileDataUpload:
+    click: "Click "
+    or: or
+    paste: Click anywhere else to paste data
+    upload: " to upload a file"
   FileDnD:
     uploadLabel: Drag-and-drop the file to be uploaded
     clickLabel: Click to select file from your computer
@@ -919,118 +924,7 @@ features:
         tooltiptext: The stream will be created if it does not exist
       subtitle: to the stream "{streamId}".
       success: You have successfully uploaded the datapack "{datapackName}"
-  Wrangler:
-    Actions:
-      WRANGLER_DROP_COLUMN: drop
-      WRANGLER_SPLIT_COLUMN: split
-      WRANGLER_MERGE_COLUMN: merge
-      WRANGLER_RENAME_COLUMN: rename
-      WRANGLER_UPPER_CASE_COLUMN: uppercase
-      WRANGLER_LOWER_CASE_COLUMN: lowercase
-      WRANGLER_TITLE_CASE_COLUMN: titlecase
-      WRANGLER_SUBSTRING_COLUMN: substring
-    ColumnActions:
-      Drop:
-        label: Drop
-      LowerCase:
-        label: Lowercase
-      Merge:
-        header: "Merge Column: {columnName}"
-        joinBy: Join By
-        label: Merge
-        mergedColumn: Merged Column Name
-        mergeWith: Merge With
-      Rename:
-        header: "Rename Column: {columnName}"
-        label: Rename
-        newName: "New Column Name"
-      Split:
-        firstColumn: First Split Column Name
-        header: "Split Column: {columnName}"
-        label: Split
-        secondColumn: Second Split Column Name
-        splitBy: Split by first occurence of
-      Substring:
-        beginIndex: Begin Index
-        endIndex: End Index
-        header: "Substring Column: {columnName}"
-        label: Substring
-        substringColumn: Substring Column Name
-      TitleCase:
-        label: Titlecase
-      UpperCase:
-        label: Uppercase
 
-    Errors:
-      MISSING_REQUIRED_FIELDS: Please fill out all required fields
-      INVALID_NAME: "Invalid column name. Column name can only be alphanumeric, '_', or '-'"
-      DUPLICATE_NAME: "Column name already exist. Please choose a different name"
-      INVALID_COLUMNS: "Column names can contain only A-Z, a-z, 0-9 and underscores. Invalid columns: {columns} "
-      DUPLICATE_COLUMNS: "Duplicates: {columns}"
-      NO_DATA: Please upload a file, enter data to process or choose data from existing datasets
-    ErrorsShortDescription:
-      INVALID_COLUMNS: Invalid column name.
-      DUPLICATE_COLUMNS: Duplicate column name.
-      NO_DATA: No data to process.
-    Explore:
-      browse: "Browse Dataset ({count})"
-      noData: No data
-      chooseField: "Choose one field to wrangle:"
-    Filter:
-      apply: Apply
-      filter: Filter
-      ignoreCase: Ignore Case
-      Options:
-        equal: Equal
-        doesNotEqual: Does not equal
-        lessThan: Less than
-        greaterThan: Greater than
-        lessEqual: Less or equal to
-        greaterEqual: Greater or equal to
-        startsWith: Starts with
-        endsWith: Ends with
-        contains: Contains
-    Header:
-      importData: Import Data
-    history: History
-    InputScreen:
-      ErrorTable:
-        error: Error
-        row: Row
-      HelperText:
-        click: "Click "
-        upload: " to upload a file"
-        or: or
-        paste: Click anywhere else to paste data
-      Options:
-        delimiter: Set delimiter
-        firstLineAsColumns: First line as column name
-        skipEmptyLines: Skip empty lines
-        convertToSchema: Make column names schema compatible
-    LeftPanel:
-      sort: Sort
-      selectColumn: Select a column to enable {type}
-    MetricsBar:
-      rows: Rows
-      columns: Columns
-      nulls: Nulls
-
-    Visualization:
-      line: Line
-      area: Area
-      bar: Bar
-      scatter: Scatter
-    wrangleButton: Wrangle
-    WrangleData:
-      applyToPipeline: Apply to Pipeline
-      addToPipeline: Add to Pipeline
-      wrangling: "Wrangling..."
-    Tooltips:
-      actions: Actions
-      redo: Redo
-      undo: Undo
-
-    parsing: "Parsing..."
   LoadingIndicator:
     defaultMessage: 'Loading...'
     # backendDown: 'CDAP Services are not available',
