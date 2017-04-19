@@ -217,38 +217,30 @@ function build_javadocs() {
     local debug_flag=''
   fi
   if [[ ${javadoc_type} == ${ALL} ]]; then
-    javadoc_run="javadoc:aggregate -P release"
+    javadoc_run="javadoc:aggregate"
   else
-    javadoc_run="site -P templates"
+    javadoc_run="site"
   fi
   local start=`date`
   cd ${PROJECT_PATH}
   MAVEN_OPTS="-Xmx4g -XX:MaxPermSize=256m" # match other CDAP builds
-  local temp_repo="-Dmaven.repo.local=/tmp/repo-cdap-docs/${GIT_BRANCH}"
-  echo "Using temp_repo '${temp_repo}'"
-  if [[ -d ${temp_repo} ]]; then
-    rm -rf ${temp_repo}
+  local temp_repo="${TARGET_PATH}/temp-repo"
+  echo "Building temp_repo ${temp_repo}"
+  mkdir -p ${temp_repo}
+  if [[ -d ${HOME}/.m2/repository ]]; then
+    cp -a ${HOME}/.m2/repository/* ${temp_repo}
+    # Cleanup any CDAP JARs, so we use our own
+    rm -rf ${temp_repo}/co/cask/cdap
   fi
-  echo "========================================================"
-  echo "Building and installing CDAP to ${temp_repo}"
-  mvn clean install ${temp_repo} -P examples,templates,release -DskipTests -Dgpg.skip=true
+  display_start_title "Building and installing CDAP to ${temp_repo}"
+  mvn clean package ${javadoc_run} -P examples,templates,release -Dmaven.repo.local=${temp_repo} -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
   errors=${?}
   if [[ ${errors} -eq 0 ]]; then
-    echo "========================================================"
-    echo "Building and installing CDAP finished; running Javadocs"
-    mvn ${javadoc_run} ${temp_repo} -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
-    errors_javadocs=${?}
-    if [[ ${errors_javadocs} -eq 0 ]]; then
-      echo
-      echo "Javadocs Build Start: ${start}"
-      echo "                 End: `date`"
-    else
-      echo "Error building Javadocs"
-      display_end_title ${title}
-      return ${errors_javadocs}
-    fi
+    echo
+    echo "Javadocs Build Start: ${start}"
+    echo "                 End: `date`"
   else
-    echo "Error installing CDAP"
+    echo "Error building Javadocs"
   fi
   display_end_title ${title}
   return ${errors}
