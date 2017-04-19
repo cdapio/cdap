@@ -19,8 +19,10 @@ import DataPrepStore from 'components/DataPrep/store';
 import shortid from 'shortid';
 import ee from 'event-emitter';
 import ColumnActionsDropdown from 'components/DataPrep/ColumnActionsDropdown';
-
 require('./DataPrepTable.scss');
+import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+import TextboxOnValium from 'components/TextboxOnValium';
 
 export default class DataPrepTable extends Component {
   constructor(props) {
@@ -29,7 +31,7 @@ export default class DataPrepTable extends Component {
     let storeState = DataPrepStore.getState().dataprep;
 
     this.state = {
-      headers: storeState.headers,
+      headers: storeState.headers.map(header => ({name: header, edit: false})),
       data: storeState.data,
       loading: !storeState.initialized,
       directivesLength: storeState.directives.length,
@@ -39,12 +41,12 @@ export default class DataPrepTable extends Component {
     this.eventEmitter = ee(ee);
     this.openUploadData = this.openUploadData.bind(this);
     this.openCreateWorkspaceModal = this.openCreateWorkspaceModal.bind(this);
-
+    this.switchToEditColumnName = this.switchToEditColumnName.bind(this);
     this.sub = DataPrepStore.subscribe(() => {
       let state = DataPrepStore.getState().dataprep;
       this.setState({
         data: state.data,
-        headers: state.headers,
+        headers: state.headers.map(header => ({name: header, edit: false})),
         loading: !state.initialized,
         directivesLength: state.directives.length,
         workspaceId: state.workspaceId
@@ -64,6 +66,50 @@ export default class DataPrepTable extends Component {
     this.eventEmitter.emit('DATAPREP_OPEN_UPLOAD');
   }
 
+  switchToEditColumnName(head) {
+    let newHeaders = this.state.headers.map(header => {
+      if (header.name === head.name) {
+        return Object.assign({}, header, {
+          edit: !header.edit
+        });
+      }
+      return header;
+    });
+    this.setState({
+      headers: newHeaders
+    });
+  }
+
+  handleSaveEditedColumnName(index, changedValue, noChange) {
+    let headers = this.state.headers;
+    let matchedHeader = headers[index];
+    if (!noChange) {
+      this.applyDirective(`rename ${matchedHeader.name} ${changedValue}`);
+      matchedHeader.name = changedValue;
+    }
+    matchedHeader.edit = false;
+    this.setState({
+      headers: [
+        ...headers.slice(0, index),
+        matchedHeader,
+        ...headers.slice(index + 1)
+      ]
+    });
+  }
+  applyDirective(directive) {
+    execute([directive])
+      .subscribe(
+        () => {},
+        (err) => {
+          DataPrepStore.dispatch({
+            type: DataPrepActions.setError,
+            payload: {
+              message: err.message || err.response.message
+            }
+          });
+        }
+      );
+  }
   render() {
     if (this.state.loading) {
       return (
@@ -123,21 +169,35 @@ export default class DataPrepTable extends Component {
         <table className="table table-bordered table-striped">
           <thead className="thead-inverse">
             {
-              headers.map((head) => {
+              headers.map((head, index) => {
                 return (
                   <th
-                    id={`column-${head}`}
-                    key={head}
+                    id={`column-${head.name}`}
+                    key={head.name}
                   >
-                    <span className="header-text">
-                      {head}
-                    </span>
-
-                    <span className="float-xs-right directives-dropdown-button">
-                      <ColumnActionsDropdown
-                        column={head}
-                      />
-                    </span>
+                    <div
+                      className="clearfix column-wrapper"
+                    >
+                      {
+                        !head.edit ?
+                          <span
+                            className="header-text float-xs-left"
+                            onClick={this.switchToEditColumnName.bind(this, head)}
+                          >
+                            {head.name}
+                          </span>
+                        :
+                          <TextboxOnValium
+                            onChange={this.handleSaveEditedColumnName.bind(this, index)}
+                            value={head.name}
+                          />
+                      }
+                      <span className="float-xs-right directives-dropdown-button">
+                        <ColumnActionsDropdown
+                          column={head.name}
+                        />
+                      </span>
+                    </div>
                   </th>
                 );
               })
@@ -149,7 +209,7 @@ export default class DataPrepTable extends Component {
                 return (
                   <tr key={shortid.generate()}>
                     {headers.map((head) => {
-                      return <td key={shortid.generate()}><div>{row[head]}</div></td>;
+                      return <td key={shortid.generate()}><div>{row[head.name]}</div></td>;
                     })}
                   </tr>
                 );
