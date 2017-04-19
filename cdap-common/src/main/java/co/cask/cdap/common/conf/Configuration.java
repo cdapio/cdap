@@ -1814,7 +1814,9 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
           if (deprecatedKeyMap.containsKey(attr)) {
             DeprecatedKeyInfo keyInfo = deprecatedKeyMap.get(attr);
             keyInfo.accessed = false;
-            warnOnceIfDeprecated(attr);
+            if (!quiet) {
+              warnOnceIfDeprecated(attr);
+            }
             for (String key : keyInfo.newKeys) {
               // update new keys with deprecated key's value
               loadProperty(properties, name, key, value, finalParameter);
