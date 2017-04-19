@@ -80,7 +80,6 @@ public class SmartWorkflow extends AbstractWorkflow {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
 
-  private final BatchPipelineSpec spec;
   private final ApplicationConfigurer applicationConfigurer;
   private final Set<String> supportedPluginTypes;
   // connector stage -> local dataset name
@@ -97,6 +96,7 @@ public class SmartWorkflow extends AbstractWorkflow {
   @SuppressWarnings("unused")
   private Metrics workflowMetrics;
 
+  private BatchPipelineSpec spec;
   private int connectorNum = 0;
 
   public SmartWorkflow(BatchPipelineSpec spec,
@@ -189,14 +189,15 @@ public class SmartWorkflow extends AbstractWorkflow {
                        arguments);
 
     postActions = new LinkedHashMap<>();
-    BatchPipelineSpec batchPipelineSpec =
-      GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
-                    BatchPipelineSpec.class);
+    spec = GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
+                         BatchPipelineSpec.class);
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(context.getToken(), context.getRuntimeArguments(),
                                                               context.getLogicalStartTime(), context,
                                                               context.getNamespace());
-    PluginContext pluginContext = new PipelinePluginContext(context, workflowMetrics);
-    for (ActionSpec actionSpec : batchPipelineSpec.getEndingActions()) {
+    PluginContext pluginContext = new PipelinePluginContext(context, workflowMetrics,
+                                                            spec.isStageLoggingEnabled(),
+                                                            spec.isProcessTimingEnabled());
+    for (ActionSpec actionSpec : spec.getEndingActions()) {
       postActions.put(actionSpec.getName(), (PostAction) pluginContext.newPluginInstance(actionSpec.getName(),
                                                                                          macroEvaluator));
     }
@@ -216,7 +217,10 @@ public class SmartWorkflow extends AbstractWorkflow {
       for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
         String name = endingActionEntry.getKey();
         PostAction action = endingActionEntry.getValue();
-        StageInfo stageInfo = StageInfo.builder(name, PostAction.PLUGIN_TYPE).build();
+        StageInfo stageInfo = StageInfo.builder(name, PostAction.PLUGIN_TYPE)
+          .setStageLoggingEnabled(spec.isStageLoggingEnabled())
+          .setProcessTimingEnabled(spec.isProcessTimingEnabled())
+          .build();
         BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics, lookupProvider,
                                                                      logicalStartTime, runtimeArgs, stageInfo);
         try {
@@ -306,7 +310,9 @@ public class SmartWorkflow extends AbstractWorkflow {
     BatchPhaseSpec batchPhaseSpec = new BatchPhaseSpec(programName, phase, spec.getResources(),
                                                        spec.getDriverResources(),
                                                        spec.getClientResources(),
-                                                       spec.isStageLoggingEnabled(), phaseConnectorDatasets,
+                                                       spec.isStageLoggingEnabled(),
+                                                       spec.isProcessTimingEnabled(),
+                                                       phaseConnectorDatasets,
                                                        spec.getNumOfRecordsPreview());
 
     Set<String> pluginTypes = batchPhaseSpec.getPhase().getPluginTypes();

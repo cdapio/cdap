@@ -34,10 +34,11 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
 
   private DataStreamsPipelineSpec(Set<StageSpec> stages, Set<Connection> connections,
                                   Resources resources, Resources driverResources, Resources clientResources,
-                                  boolean stageLoggingEnabled, long batchIntervalMillis,
+                                  boolean stageLoggingEnabled, boolean processTimingEnabled, long batchIntervalMillis,
                                   String extraJavaOpts, int numOfRecordsPreview,
                                   boolean stopGracefully) {
-      super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, numOfRecordsPreview);
+      super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled,
+            processTimingEnabled, numOfRecordsPreview);
     this.batchIntervalMillis = batchIntervalMillis;
     this.extraJavaOpts = extraJavaOpts;
     this.stopGracefully = stopGracefully;
@@ -117,7 +118,7 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
 
     public DataStreamsPipelineSpec build() {
       return new DataStreamsPipelineSpec(stages, connections, resources, driverResources, clientResources,
-                                         stageLoggingEnabled, batchIntervalMillis, extraJavaOpts,
+                                         stageLoggingEnabled, processTimingEnabled, batchIntervalMillis, extraJavaOpts,
                                          numOfRecordsPreview, stopGracefully);
     }
   }

@@ -45,6 +45,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   private final Resources driverResources;
   private final Resources clientResources;
   private final Boolean stageLoggingEnabled;
+  private final Boolean processTimingEnabled;
   // v1 fields to support backwards compatibility
   private final co.cask.cdap.etl.proto.v1.ETLStage source;
   private final List<co.cask.cdap.etl.proto.v1.ETLStage> sinks;
@@ -53,13 +54,14 @@ public class ETLConfig extends Config implements UpgradeableConfig {
 
   protected ETLConfig(Set<ETLStage> stages, Set<Connection> connections,
                       Resources resources, Resources driverResources, Resources clientResources,
-                      boolean stageLoggingEnabled, int numOfRecordsPreview) {
+                      boolean stageLoggingEnabled, boolean processTimingEnabled, int numOfRecordsPreview) {
     this.stages = Collections.unmodifiableSet(stages);
     this.connections = Collections.unmodifiableSet(connections);
     this.resources = resources;
     this.driverResources = driverResources;
     this.clientResources = clientResources;
     this.stageLoggingEnabled = stageLoggingEnabled;
+    this.processTimingEnabled = processTimingEnabled;
     // these fields are only here for backwards compatibility
     this.source = null;
     this.sinks = new ArrayList<>();
@@ -93,6 +95,10 @@ public class ETLConfig extends Config implements UpgradeableConfig {
 
   public boolean isStageLoggingEnabled() {
     return stageLoggingEnabled == null ? true : stageLoggingEnabled;
+  }
+
+  public boolean isProcessTimingEnabled() {
+    return processTimingEnabled == null ? true : processTimingEnabled;
   }
 
   /**
@@ -153,6 +159,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
       ", driverResources=" + driverResources +
       ", clientResources=" + clientResources +
       ", stageLoggingEnabled=" + stageLoggingEnabled +
+      ", processTimingEnabled=" + processTimingEnabled +
       ", source=" + source +
       ", sinks=" + sinks +
       ", transforms=" + transforms +
@@ -173,15 +180,18 @@ public class ETLConfig extends Config implements UpgradeableConfig {
 
     return Objects.equals(stages, that.stages) &&
       Objects.equals(connections, that.connections) &&
-      Objects.equals(resources, that.resources) &&
-      Objects.equals(driverResources, that.driverResources) &&
-      Objects.equals(clientResources, that.clientResources) &&
-      isStageLoggingEnabled() == that.isStageLoggingEnabled();
+      Objects.equals(getResources(), that.getResources()) &&
+      Objects.equals(getDriverResources(), that.getDriverResources()) &&
+      Objects.equals(getClientResources(), that.getClientResources()) &&
+      isStageLoggingEnabled() == that.isStageLoggingEnabled() &&
+      isProcessTimingEnabled() == that.isProcessTimingEnabled() &&
+      getNumOfRecordsPreview() == that.getNumOfRecordsPreview();
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(stages, resources, isStageLoggingEnabled());
+    return Objects.hash(stages, connections, getResources(), getDriverResources(), getClientResources(),
+                        isStageLoggingEnabled(), isProcessTimingEnabled(), getNumOfRecordsPreview());
   }
 
   @Override
@@ -206,7 +216,8 @@ public class ETLConfig extends Config implements UpgradeableConfig {
     protected Resources resources;
     protected Resources driverResources;
     protected Resources clientResources;
-    protected Boolean stageLoggingEnabled;
+    protected boolean stageLoggingEnabled;
+    protected boolean processTimingEnabled;
     protected int numOfRecordsPreview;
 
     protected Builder() {
@@ -216,6 +227,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
       this.driverResources = new Resources(1024, 1);
       this.clientResources = new Resources(1024, 1);
       this.stageLoggingEnabled = true;
+      this.processTimingEnabled = true;
     }
 
     public T addStage(ETLStage stage) {
@@ -260,6 +272,11 @@ public class ETLConfig extends Config implements UpgradeableConfig {
 
     public T disableStageLogging() {
       this.stageLoggingEnabled = false;
+      return (T) this;
+    }
+
+    public T disableProcessTiming() {
+      this.processTimingEnabled = false;
       return (T) this;
     }
   }

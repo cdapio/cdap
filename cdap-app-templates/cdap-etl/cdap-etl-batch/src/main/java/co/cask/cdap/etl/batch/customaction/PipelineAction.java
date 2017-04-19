@@ -75,7 +75,9 @@ public class PipelineAction extends AbstractCustomAction {
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
     PipelinePhase phase = phaseSpec.getPhase();
     StageInfo stageInfo = phase.iterator().next();
-    PluginContext pluginContext = new PipelinePluginContext(context, metrics);
+    PluginContext pluginContext = new PipelinePluginContext(context, metrics,
+                                                            phaseSpec.isStageLoggingEnabled(),
+                                                            phaseSpec.isProcessTimingEnabled());
     Action action =
       pluginContext.newPluginInstance(stageInfo.getName(),
                                       new DefaultMacroEvaluator(context.getWorkflowToken(),

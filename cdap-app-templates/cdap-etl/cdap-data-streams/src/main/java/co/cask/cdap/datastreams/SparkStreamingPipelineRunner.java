@@ -52,15 +52,15 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
 
   private final JavaSparkExecutionContext sec;
   private final JavaStreamingContext streamingContext;
+  private final DataStreamsPipelineSpec spec;
   private final boolean checkpointsDisabled;
-  private final int numOfRecordsPreview;
 
   public SparkStreamingPipelineRunner(JavaSparkExecutionContext sec, JavaStreamingContext streamingContext,
-                                      boolean checkpointsDisabled, int numOfRecordsPreview) {
+                                      DataStreamsPipelineSpec spec, boolean checkpointsDisabled) {
     this.sec = sec;
     this.streamingContext = streamingContext;
     this.checkpointsDisabled = checkpointsDisabled;
-    this.numOfRecordsPreview = numOfRecordsPreview;
+    this.spec = spec;
   }
 
   @Override
@@ -81,7 +81,9 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
       MacroEvaluator macroEvaluator = new ErrorMacroEvaluator(
         "Due to spark limitations, macro evaluation is not allowed in streaming sources when checkpointing " +
           "is enabled.");
-      PluginContext pluginContext = new SparkPipelinePluginContext(sec.getPluginContext(), sec.getMetrics());
+      PluginContext pluginContext = new SparkPipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
+                                                                   spec.isStageLoggingEnabled(),
+                                                                   spec.isProcessTimingEnabled());
       source = pluginContext.newPluginInstance(stageInfo.getName(), macroEvaluator);
     }
 
@@ -90,7 +92,7 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
     JavaDStream<Object> javaDStream = source.getStream(sourceContext);
     if (dataTracer.isEnabled()) {
       // it will create a new function for each RDD, which would limit each RDD but not the entire DStream.
-      javaDStream = javaDStream.transform(new LimitingFunction<>(numOfRecordsPreview));
+      javaDStream = javaDStream.transform(new LimitingFunction<>(spec.getNumOfRecordsPreview()));
     }
     JavaDStream<Tuple2<Boolean, Object>> outputDStream = javaDStream
       .transform(new CountingTransformFunction<>(stageInfo.getName(), sec.getMetrics(), "records.out", dataTracer))

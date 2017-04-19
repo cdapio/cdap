@@ -40,6 +40,7 @@ public class PipelineSpec {
   private final Resources driverResources;
   private final Resources clientResources;
   private final boolean stageLoggingEnabled;
+  private final boolean processTimingEnabled;
   private final int numOfRecordsPreview;
 
   protected PipelineSpec(Set<StageSpec> stages,
@@ -48,6 +49,7 @@ public class PipelineSpec {
                          Resources driverResources,
                          Resources clientResources,
                          boolean stageLoggingEnabled,
+                         boolean processTimingEnabled,
                          int numOfRecordsPreview) {
     this.stages = ImmutableSet.copyOf(stages);
     this.connections = ImmutableSet.copyOf(connections);
@@ -55,6 +57,7 @@ public class PipelineSpec {
     this.driverResources = driverResources;
     this.clientResources = clientResources;
     this.stageLoggingEnabled = stageLoggingEnabled;
+    this.processTimingEnabled = processTimingEnabled;
     this.numOfRecordsPreview = numOfRecordsPreview;
   }
 
@@ -82,6 +85,10 @@ public class PipelineSpec {
     return stageLoggingEnabled;
   }
 
+  public boolean isProcessTimingEnabled() {
+    return processTimingEnabled;
+  }
+
   public int getNumOfRecordsPreview() {
     return numOfRecordsPreview;
   }
@@ -102,12 +109,15 @@ public class PipelineSpec {
       Objects.equals(resources, that.resources) &&
       Objects.equals(driverResources, that.driverResources) &&
       Objects.equals(clientResources, that.clientResources) &&
-      Objects.equals(stageLoggingEnabled, that.stageLoggingEnabled);
+      stageLoggingEnabled == that.stageLoggingEnabled &&
+      processTimingEnabled == that.processTimingEnabled &&
+      numOfRecordsPreview == that.numOfRecordsPreview;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled);
+    return Objects.hash(stages, connections, resources, driverResources, clientResources,
+                        stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview);
   }
 
   @Override
@@ -119,6 +129,7 @@ public class PipelineSpec {
       ", driverResources=" + driverResources +
       ", clientResources=" + clientResources +
       ", stageLoggingEnabled=" + stageLoggingEnabled +
+      ", processTimingEnabled=" + processTimingEnabled +
       ", numOfRecordsPreview=" + numOfRecordsPreview +
       '}';
   }
@@ -143,6 +154,7 @@ public class PipelineSpec {
     protected Resources driverResources;
     protected Resources clientResources;
     protected boolean stageLoggingEnabled;
+    protected boolean processTimingEnabled;
     protected int numOfRecordsPreview;
 
     protected Builder() {
@@ -150,6 +162,7 @@ public class PipelineSpec {
       this.connections = new HashSet<>();
       this.resources = new Resources();
       this.stageLoggingEnabled = true;
+      this.processTimingEnabled = true;
     }
 
     public T addStage(StageSpec stage) {
@@ -192,6 +205,11 @@ public class PipelineSpec {
       return (T) this;
     }
 
+    public T setProcessTimingEnabled(boolean processTimingEnabled) {
+      this.processTimingEnabled = processTimingEnabled;
+      return (T) this;
+    }
+
     public T setNumOfRecordsPreview(int numOfRecordsPreview) {
       this.numOfRecordsPreview = numOfRecordsPreview;
       return (T) this;
@@ -199,7 +217,7 @@ public class PipelineSpec {
 
     public PipelineSpec build() {
       return new PipelineSpec(stages, connections, resources, driverResources, clientResources,
-                              stageLoggingEnabled, numOfRecordsPreview);
+                              stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview);
     }
   }
 }

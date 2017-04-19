@@ -40,7 +40,9 @@ public class PipelinePluginInstantiator {
   private final Set<String> connectorSinks;
 
   public PipelinePluginInstantiator(PluginContext pluginContext, Metrics metrics, BatchPhaseSpec phaseSpec) {
-    this.pluginContext = new PipelinePluginContext(pluginContext, metrics);
+    this.pluginContext = new PipelinePluginContext(pluginContext, metrics,
+                                                   phaseSpec.isStageLoggingEnabled(),
+                                                   phaseSpec.isProcessTimingEnabled());
     this.phaseSpec = phaseSpec;
     this.connectorSources = new HashSet<>();
     this.connectorSinks = new HashSet<>();

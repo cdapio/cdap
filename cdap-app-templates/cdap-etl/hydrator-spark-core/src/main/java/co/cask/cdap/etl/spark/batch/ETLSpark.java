@@ -118,7 +118,9 @@ public class ETLSpark extends AbstractSpark {
     SparkBatchSourceFactory sourceFactory = new SparkBatchSourceFactory();
     SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
     Map<String, Integer> stagePartitions = new HashMap<>();
-    PluginContext pluginContext = new SparkPipelinePluginContext(context, context.getMetrics());
+    PluginContext pluginContext = new SparkPipelinePluginContext(context, context.getMetrics(),
+                                                                 phaseSpec.isStageLoggingEnabled(),
+                                                                 phaseSpec.isProcessTimingEnabled());
 
     for (StageInfo stageInfo : phaseSpec.getPhase()) {
       String stageName = stageInfo.getName();

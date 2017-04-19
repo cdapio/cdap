@@ -39,9 +39,11 @@ public class BatchPipelineSpec extends PipelineSpec {
                             Resources driverResources,
                             Resources clientResources,
                             boolean stageLoggingEnabled,
+                            boolean processTimingEnabled,
                             List<ActionSpec> endingActions,
                             int numOfRecordsPreview) {
-    super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, numOfRecordsPreview);
+    super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
+          numOfRecordsPreview);
     this.endingActions = ImmutableList.copyOf(endingActions);
   }
 
@@ -92,7 +94,7 @@ public class BatchPipelineSpec extends PipelineSpec {
 
     public BatchPipelineSpec build() {
       return new BatchPipelineSpec(stages, connections, resources, driverResources, clientResources,
-                                   stageLoggingEnabled, endingActions, numOfRecordsPreview);
+                                   stageLoggingEnabled, processTimingEnabled, endingActions, numOfRecordsPreview);
     }
   }
 }

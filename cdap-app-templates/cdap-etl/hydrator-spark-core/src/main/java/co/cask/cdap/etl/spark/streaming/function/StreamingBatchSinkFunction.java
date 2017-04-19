@@ -62,7 +62,9 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
                                                          logicalStartTime,
                                                          sec.getSecureStore(),
                                                          sec.getNamespace());
-    PluginContext pluginContext = new SparkPipelinePluginContext(sec.getPluginContext(), sec.getMetrics());
+    PluginContext pluginContext = new SparkPipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
+                                                                 stageInfo.isStageLoggingEnabled(),
+                                                                 stageInfo.isProcessTimingEnabled());
     final SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
     final String stageName = stageInfo.getName();
     final BatchSink<Object, Object, Object> batchSink = pluginContext.newPluginInstance(stageName, evaluator);

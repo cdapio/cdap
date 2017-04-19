@@ -43,6 +43,7 @@ import co.cask.cdap.etl.spark.function.LeftJoinFlattenFunction;
 import co.cask.cdap.etl.spark.function.OuterJoinFlattenFunction;
 import co.cask.cdap.etl.spark.function.OutputFilter;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
+import co.cask.cdap.etl.spec.PipelineSpec;
 import scala.Tuple2;
 
 import java.util.HashMap;
@@ -70,14 +71,14 @@ public abstract class SparkPipelineRunner {
 
   public void runPipeline(PipelinePhase pipelinePhase, String sourcePluginType,
                           JavaSparkExecutionContext sec,
-                          Map<String, Integer> stagePartitions) throws Exception {
+                          Map<String, Integer> stagePartitions,
+                          PipelinePluginContext pluginContext) throws Exception {
 
     MacroEvaluator macroEvaluator =
       new DefaultMacroEvaluator(sec.getWorkflowToken(), sec.getRuntimeArguments(), sec.getLogicalStartTime(), sec,
                                 sec.getNamespace());
     Map<String, SparkCollection<Object>> stageDataCollections = new HashMap<>();
     Map<String, SparkCollection<ErrorRecord<Object>>> stageErrorCollections = new HashMap<>();
-    PluginContext pluginContext = new PipelinePluginContext(sec.getPluginContext(), sec.getMetrics());
 
     // should never happen, but removes warning
     if (pipelinePhase.getDag() == null) {

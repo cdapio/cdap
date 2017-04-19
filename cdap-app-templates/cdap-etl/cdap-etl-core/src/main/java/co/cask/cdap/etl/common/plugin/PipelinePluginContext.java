@@ -43,12 +43,12 @@ public class PipelinePluginContext implements PluginContext {
   private final boolean stageLoggingEnabled;
   private final boolean processTimingEnabled;
 
-  public PipelinePluginContext(PluginContext delegate, Metrics metrics) {
+  public PipelinePluginContext(PluginContext delegate, Metrics metrics,
+                               boolean stageLoggingEnabled, boolean processTimingEnabled) {
     this.delegate = delegate;
     this.metrics = metrics;
-    // todo: allow disabling these through the application config
-    this.stageLoggingEnabled = true;
-    this.processTimingEnabled = true;
+    this.stageLoggingEnabled = stageLoggingEnabled;
+    this.processTimingEnabled = processTimingEnabled;
   }
 
   @Override

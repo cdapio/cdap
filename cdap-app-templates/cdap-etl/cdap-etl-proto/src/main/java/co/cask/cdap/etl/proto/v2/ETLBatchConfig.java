@@ -46,12 +46,14 @@ public final class ETLBatchConfig extends ETLConfig {
                          List<ETLStage> postActions,
                          Resources resources,
                          boolean stageLoggingEnabled,
+                         boolean processTimingEnabled,
                          Engine engine,
                          String schedule,
                          Resources driverResources,
                          Resources clientResources,
                          int numOfRecordsPreview) {
-    super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, numOfRecordsPreview);
+    super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
+          numOfRecordsPreview);
     this.postActions = ImmutableList.copyOf(postActions);
     this.engine = engine;
     this.schedule = schedule;
@@ -166,7 +168,8 @@ public final class ETLBatchConfig extends ETLConfig {
 
     public ETLBatchConfig build() {
       return new ETLBatchConfig(stages, connections, endingActions, resources, stageLoggingEnabled,
-                                engine, schedule, driverResources, clientResources, numOfRecordsPreview);
+                                processTimingEnabled, engine, schedule, driverResources, clientResources,
+                                numOfRecordsPreview);
     }
   }
 }

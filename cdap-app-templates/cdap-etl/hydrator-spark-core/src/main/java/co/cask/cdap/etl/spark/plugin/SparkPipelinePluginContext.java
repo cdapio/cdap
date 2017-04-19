@@ -30,8 +30,9 @@ import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
  */
 public class SparkPipelinePluginContext extends PipelinePluginContext {
 
-  public SparkPipelinePluginContext(PluginContext delegate, Metrics metrics) {
-    super(delegate, metrics);
+  public SparkPipelinePluginContext(PluginContext delegate, Metrics metrics,
+                                    boolean stageLoggingEnabled, boolean processTimingEnabled) {
+    super(delegate, metrics, stageLoggingEnabled, processTimingEnabled);
   }
 
   @SuppressWarnings("unchecked")

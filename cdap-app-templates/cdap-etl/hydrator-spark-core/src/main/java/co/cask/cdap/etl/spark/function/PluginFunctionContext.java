@@ -103,7 +103,9 @@ public class PluginFunctionContext implements Serializable {
 
   private PipelinePluginContext getPluginContext() {
     if (pipelinePluginContext == null) {
-      pipelinePluginContext = new SparkPipelinePluginContext(pluginContext, metrics);
+      pipelinePluginContext = new SparkPipelinePluginContext(pluginContext, metrics,
+                                                             stageInfo.isStageLoggingEnabled(),
+                                                             stageInfo.isProcessTimingEnabled());
     }
     return pipelinePluginContext;
   }

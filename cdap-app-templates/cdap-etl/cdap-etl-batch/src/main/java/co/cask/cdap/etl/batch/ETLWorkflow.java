@@ -108,7 +108,10 @@ public class ETLWorkflow extends AbstractWorkflow {
     for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
       String name = endingActionEntry.getKey();
       PostAction action = endingActionEntry.getValue();
-      StageInfo stageInfo = StageInfo.builder(name, PostAction.PLUGIN_TYPE).build();
+      StageInfo stageInfo = StageInfo.builder(name, PostAction.PLUGIN_TYPE)
+        .setStageLoggingEnabled(spec.isStageLoggingEnabled())
+        .setProcessTimingEnabled(spec.isProcessTimingEnabled())
+        .build();
       BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics, lookupProvider,
                                                                    logicalStartTime, runtimeArgs, stageInfo);
       try {
