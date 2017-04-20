@@ -253,7 +253,7 @@ public class HBaseQueueClientFactory implements QueueClientFactory, ProgramConte
     HTable consumerTable = hBaseTableUtil.createHTable(hConf, hTableId);
     // TODO: make configurable
     consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
-    consumerTable.setAutoFlush(false);
+    consumerTable.setAutoFlushTo(false);
     return consumerTable;
   }
 

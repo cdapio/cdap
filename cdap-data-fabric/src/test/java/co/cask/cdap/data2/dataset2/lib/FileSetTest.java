@@ -127,7 +127,7 @@ public class FileSetTest {
 
     // determine the default permissions of created directories (we want to test with different perms)
     String defaultPermissions = dsFrameworkUtil.getInjector().getInstance(NamespacedLocationFactory.class)
-      .get(OTHER_NAMESPACE.toId()).getPermissions();
+      .get(OTHER_NAMESPACE).getPermissions();
     if (fsPermissions.equals(defaultPermissions)) {
       // swap the permissions so we can test with different file set permissions than the default
       customPermissions = "rwxrwx--x";

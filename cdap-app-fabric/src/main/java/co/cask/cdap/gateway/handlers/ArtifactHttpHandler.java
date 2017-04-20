@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -208,7 +208,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       ArtifactDescriptor descriptor = detail.getDescriptor();
       // info hides some fields that are available in detail, such as the location of the artifact
       ArtifactInfo info = new ArtifactInfo(descriptor.getArtifactId(),
-                                           detail.getMeta().getClasses(), detail.getMeta().getProperties());
+                                           detail.getMeta().getClasses(), detail.getMeta().getProperties(),
+                                           detail.getMeta().getUsableBy());
       responder.sendJson(HttpResponseStatus.OK, info, ArtifactInfo.class, GSON);
     } catch (IOException e) {
       LOG.error("Exception reading artifacts named {} for namespace {} from the store.", artifactName, namespaceId, e);

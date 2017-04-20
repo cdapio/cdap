@@ -24,8 +24,6 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
-import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
@@ -56,6 +54,8 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -184,12 +184,12 @@ public class DFSStreamHeartbeatsTest {
     hostname = streamHttpService.getBindAddress().getHostName();
     port = streamHttpService.getBindAddress().getPort();
 
-    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(NamespaceId.DEFAULT.toId()));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(NamespaceId.DEFAULT));
   }
 
   @AfterClass
   public static void afterClass() throws IOException {
-    Locations.deleteQuietly(namespacedLocationFactory.get(NamespaceId.DEFAULT.toId()), true);
+    Locations.deleteQuietly(namespacedLocationFactory.get(NamespaceId.DEFAULT), true);
 
     notificationService.startAndWait();
     datasetService.startAndWait();

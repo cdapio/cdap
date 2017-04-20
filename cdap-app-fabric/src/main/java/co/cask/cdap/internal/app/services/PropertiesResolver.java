@@ -19,12 +19,12 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.kerberos.ImpersonationInfo;
-import co.cask.cdap.common.kerberos.OwnerAdmin;
-import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.impersonation.ImpersonationInfo;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
+import co.cask.cdap.security.impersonation.SecurityUtil;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 

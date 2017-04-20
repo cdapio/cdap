@@ -24,8 +24,6 @@ import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.kerberos.OwnerAdmin;
-import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.stream.CoordinatorStreamProperties;
@@ -62,6 +60,8 @@ import co.cask.cdap.proto.notification.NotificationFeedInfo;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.impersonation.Impersonator;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
+import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
@@ -660,7 +660,7 @@ public class FileStreamAdmin implements StreamAdmin {
    * Returns the location for the given namespace that contains all streams belong to that namespace.
    */
   private Location getStreamBaseLocation(NamespaceId namespace) throws IOException {
-    return namespacedLocationFactory.get(namespace.toId()).append(streamBaseDirPath);
+    return namespacedLocationFactory.get(namespace).append(streamBaseDirPath);
   }
 
   private void doTruncate(final StreamId streamId, final Location streamLocation) throws Exception {

@@ -29,9 +29,11 @@ import co.cask.cdap.client.app.ConfigTestApp;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeDataset;
 import co.cask.cdap.client.app.FakeFlow;
+import co.cask.cdap.client.app.FakePlugin;
 import co.cask.cdap.client.app.FakeSpark;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PingService;
+import co.cask.cdap.client.app.PluginConfig;
 import co.cask.cdap.client.app.PrefixedEchoHandler;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.conf.Constants;
@@ -86,8 +88,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -119,6 +123,7 @@ public class CLIMainTest extends CLITestBase {
   private static final ArtifactId FAKE_ARTIFACT_ID = NamespaceId.DEFAULT.artifact(FakeApp.NAME, V1);
   private static final ApplicationId FAKE_APP_ID = NamespaceId.DEFAULT.app(FakeApp.NAME);
   private static final ApplicationId FAKE_APP_ID_V_1 = NamespaceId.DEFAULT.app(FakeApp.NAME, V1_SNAPSHOT);
+  private static final ArtifactId FAKE_PLUGIN_ID = NamespaceId.DEFAULT.artifact(FakePlugin.NAME, V1);
   private static final ProgramId FAKE_WORKFLOW_ID = FAKE_APP_ID.workflow(FakeWorkflow.NAME);
   private static final ProgramId FAKE_FLOW_ID = FAKE_APP_ID.flow(FakeFlow.NAME);
   private static final ProgramId FAKE_SPARK_ID = FAKE_APP_ID.spark(FakeSpark.NAME);
@@ -155,6 +160,10 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, String.format("create app %s version %s %s %s %s",
                                                  FakeApp.NAME, V1_SNAPSHOT, FakeApp.NAME, V1, ArtifactScope.USER),
                               "Successfully created application");
+
+    File pluginJarFile = createPluginJarFile(FakePlugin.class);
+    testCommandOutputContains(cli, String.format("load artifact %s config-file %s", pluginJarFile.getAbsolutePath(),
+                                                 createPluginConfig().getAbsolutePath()), "Successfully");
     if (!appJarFile.delete()) {
       LOG.warn("Failed to delete temporary app jar file: {}", appJarFile.getAbsolutePath());
     }
@@ -253,6 +262,12 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, "delete app " + ConfigTestApp.NAME, "Successfully");
     testCommandOutputContains(cli, "delete dataset instance " + datasetId, "Successfully deleted");
     testCommandOutputContains(cli, "delete stream " + streamId, "Successfully deleted stream");
+  }
+
+  @Test
+  public void testGetParentArtifact() throws Exception {
+    testCommandOutputContains(cli, String.format("describe artifact %s %s", FAKE_PLUGIN_ID.getArtifact(),
+                                                 FAKE_PLUGIN_ID.getVersion()), FakeApp.NAME);
   }
 
   @Test
@@ -1012,5 +1027,35 @@ public class CLIMainTest extends CLITestBase {
     ExploreExecutionResult exploreExecutionResult = dbCreationFuture.get(10, TimeUnit.SECONDS);
     QueryStatus status = exploreExecutionResult.getStatus();
     Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
+  }
+
+  private static File createPluginConfig() throws IOException {
+    File tmpFolder = TMP_FOLDER.newFolder();
+    File pluginConfig = new File(tmpFolder, "pluginConfig.txt");
+
+    List<String> parents = new ArrayList<>();
+    parents.add(String.format("%s[0.0.0,9.9.9]", FakeApp.NAME));
+
+    List<Map<String, String>> plugins = new ArrayList<>();
+    Map<String, String> plugin = new HashMap<>();
+    plugin.put("name", "FakePlugin");
+    plugin.put("type", "runnable");
+    plugin.put("className", "co.cask.cdap.client.app.FakePlugin");
+
+    PrintWriter writer = new PrintWriter(pluginConfig);
+    writer.print(GSON.toJson(new PluginConfig(parents, plugins)));
+    writer.close();
+
+    return pluginConfig;
+  }
+
+  private static File createPluginJarFile(Class<?> cls) throws IOException {
+    File tmpFolder = TMP_FOLDER.newFolder();
+    LocationFactory locationFactory = new LocalLocationFactory(tmpFolder);
+    Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
+    File appJarFile =
+      new File(tmpFolder, String.format("%s-1.0.jar", cls.getSimpleName()));
+    Files.copy(Locations.newInputSupplier(deploymentJar), appJarFile);
+    return appJarFile;
   }
 }

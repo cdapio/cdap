@@ -324,11 +324,6 @@ In addition, you may configure these optional properties in ``cdap-site.xml``:
 ========================================================== =========================== ======================================
 Property                                                   Value                       Description
 ========================================================== =========================== ======================================
-``security.authentication.handler.bindDn``                 ``<bindDn>``                The Distinguished Name used to bind to
-                                                                                       the LDAP server and search the
-                                                                                       directory
-``security.authentication.handler.bindPassword``           ``<bindPassword>``          The password used to bind to the LDAP
-                                                                                       server
 ``security.authentication.handler.userIdAttribute``        ``<userIdAttribute>``       LDAP Object attribute containing the 
                                                                                        username
 ``security.authentication.handler.userPasswordAttribute``  ``<userPasswordAttribute>`` LDAP Object attribute containing the 
@@ -342,6 +337,19 @@ Property                                                   Value                
                                                                                        group members
 ``security.authentication.handler.roleObjectClass``        ``<roleObjectClass>``       LDAP Object class used to store group  
                                                                                        entries
+========================================================== =========================== ======================================
+
+If the LDAP instance requires binding as a specific user, you may configure
+these optional properties in ``cdap-security.xml``:
+
+========================================================== =========================== ======================================
+Property                                                   Value                       Description
+========================================================== =========================== ======================================
+``security.authentication.handler.bindDn``                 ``<bindDn>``                The Distinguished Name used to bind to
+                                                                                       the LDAP server and search the
+                                                                                       directory
+``security.authentication.handler.bindPassword``           ``<bindPassword>``          The password used to bind to the LDAP
+                                                                                       server
 ========================================================== =========================== ======================================
 
 To enable SSL between the authentication server and the LDAP instance, configure

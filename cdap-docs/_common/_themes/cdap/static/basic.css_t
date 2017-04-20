@@ -49,7 +49,7 @@ div.sphinxsidebarwrapper {
 
 div.sphinxsidebar {
     float: left;
-    width: 230px;
+    width: {{ theme_sidebarwidth|toint }}px;
     margin-left: -100%;
     font-size: 90%;
 }
@@ -100,15 +100,14 @@ ul.search {
 }
 
 ul.search li {
-    padding: 5px 0 5px 0px;
+    padding: 5px 0 5px 20px;
+    background-image: url(file.png);
+    background-repeat: no-repeat;
+    background-position: 0 7px;
 }
 
 ul.search li a {
     font-weight: bold;
-    padding: 5px 2px 5px 20px;
-    background-image: url(file.png);
-    background-repeat: no-repeat;
-    background-position: 0 7px;
 }
 
 ul.search li div.context {
@@ -313,14 +312,10 @@ div.body p.centered {
 table.docutils {
     border: 0;
     border-collapse: collapse;
-    width: 100%;
-    margin-left: 0%;
-    margin-right: 0%;
-    background-color: white;
 }
 
 table.docutils td, table.docutils th {
-    padding: 1px 8px 1px 15px;
+    padding: 1px 8px 1px 5px;
     border-top: 0;
     border-left: 0;
     border-right: 0;

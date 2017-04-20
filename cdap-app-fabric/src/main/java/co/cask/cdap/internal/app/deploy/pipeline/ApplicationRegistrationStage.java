@@ -25,28 +25,24 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  *

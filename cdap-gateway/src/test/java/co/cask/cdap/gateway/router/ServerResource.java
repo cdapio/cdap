@@ -71,7 +71,7 @@ public class ServerResource extends ExternalResource {
   protected void before() throws Throwable {
     NettyRouterPipelineTest.GATEWAY_SERVER.clearNumRequests();
 
-    NettyHttpService.Builder builder = NettyHttpService.builder();
+    NettyHttpService.Builder builder = NettyHttpService.builder(ServerResource.class.getName());
     builder.addHttpHandlers(ImmutableSet.of(new ServerHandler()));
     builder.setHost(hostname);
     builder.setPort(0);

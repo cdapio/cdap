@@ -49,11 +49,19 @@
   {%- else %}
     {% set title_br = ':' %}
   {%- endif %}
-  <h3 class="pagenavtitle"><a href="{{ pathto(master_doc) }}">{{ html_short_title_toc }}{{ title_br }} Table&nbsp;of&nbsp;Contents</a></h3>
+  {%- if pathto(master_doc) == '#' %}
+    {% set master_url_root = '' %}{% set doc = '<b>' %}{% set docb = '</b>' %}
+  {%- else %}
+    {% set master_url_root = master_doc %}{%- set doc = '' %}{% set docb = '' %}
+  {% endif %}
+  <h3 class="pagenavtitle"><a href="{{ pathto(master_url_root) }}{{ _('/../index.html') }}">{{ html_short_title_toc }}</a></h3>
   {%- if link_only_global_toc %}
     <br>    
   {%- else %}
     <nav class="pagenav">
+<!-- 
+    <p class="pagenav-toc"><a href="{{ pathto(master_doc) }}">{{ doc }}Table of Contents{{ docb }}</a></p>
+ -->
     {{ toctree(titles_only=titles_only_global_toc) }} 
     </nav>
   {%- endif %}
