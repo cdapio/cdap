@@ -145,8 +145,8 @@ Verification
 
 #. Navigate to the Administration page from CDAP pulldown menu in the upper-right. (You
    can also directly enter the URL for the page,
-   ``https://<cdap-host>/cdap/administration``, substituting for ``<cdap-host>`` the host
-   name of the CDAP server):
+   ``https://<cdap-host>:443/cdap/administration``, substituting for ``<cdap-host>`` the host
+   name of the CDAP server, as shown above in step 1 of *Verification*):
 
    .. figure:: ../_images/azure-hdinsight/azure-hdinsight-12.png
       :figwidth: 100%
