@@ -24,6 +24,7 @@ import StreamDetailedView from 'components/StreamDetailedView';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import DataPrepHome from 'components/DataPrepHome';
+import FileBrowser from 'components/FileBrowser';
 
 export default class Home extends Component {
   componentWillMount() {
@@ -42,6 +43,7 @@ export default class Home extends Component {
         <Match pattern="/ns/:namespace/datasets/:datasetId" component={DatasetDetailedView} />
         <Match pattern="/ns/:namespace/streams/:streamId" component={StreamDetailedView} />
         <Match pattern="/ns/:namespace/dataprep" component={DataPrepHome} />
+        <Match pattern="/ns/:namespace/file" component={FileBrowser} />
         <Miss component={Page404} />
       </div>
     );

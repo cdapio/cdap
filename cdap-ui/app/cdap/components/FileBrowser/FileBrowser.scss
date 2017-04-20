@@ -1,0 +1,104 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+$top-panel-bg-color: #efefef;
+$border-color: #cccccc;
+$table-header-color: #eeeeee;
+$table-row-hover-color: #eeeeee;
+$folder-icon-color: #2980b9;
+$file-icon-color: #f39c12;
+$table-font-color: #333333;
+$info-font-color: #999999;
+$top-panel-height: 56px;
+$subpanel-height: 46px;
+$gutter-width: 15px;
+
+.file-browser-container {
+  .top-panel {
+    height: $top-panel-height;
+    background-color: $top-panel-bg-color;
+    border-bottom: 1px solid $border-color;
+
+    .title > h5 {
+      padding-left: $gutter-width;
+      margin-bottom: 0;
+      line-height: $top-panel-height;
+      font-weight: 500;
+    }
+  }
+
+  .sub-panel {
+    padding: 0 $gutter-width;
+    height: $subpanel-height;
+
+    .path-container {
+      line-height: $subpanel-height;
+    }
+
+    .search-container,
+    .info {
+      display: inline-block;
+      float: left;
+      width: 200px;
+      padding-left: $gutter-width;
+    }
+
+    .info {
+      line-height: $subpanel-height;
+      font-size: 12px;
+      color: $info-font-color;
+    }
+
+    .search-container .form-control {
+      margin-top: ($subpanel-height - 32px) / 2;
+    }
+  }
+
+  .directory-content-table {
+    padding: 0 $gutter-width;
+
+    .row { margin: 0; }
+
+    .content-header {
+      border-bottom: 1px solid $border-color;
+      border-top: 1px solid $border-color;
+      background-color: $table-header-color;
+      line-height: 36px;
+      font-weight: 600;
+    }
+
+    .content-body {
+      .row-container { cursor: pointer; }
+      .content-row {
+        border-bottom: 1px solid $border-color;
+        line-height: 36px;
+        color: $table-font-color;
+
+        &:hover { background-color: $table-row-hover-color; }
+
+        .type-icon { margin-right: 5px; }
+        .folder-icon { color: $folder-icon-color; }
+        .file-icon { color: $file-icon-color; }
+
+        > div {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+  }
+}
