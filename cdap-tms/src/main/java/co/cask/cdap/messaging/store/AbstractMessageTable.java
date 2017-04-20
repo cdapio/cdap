@@ -27,7 +27,6 @@ import co.cask.cdap.proto.id.TopicId;
 import org.apache.tephra.Transaction;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
@@ -38,12 +37,6 @@ import javax.annotation.Nullable;
 public abstract class AbstractMessageTable implements MessageTable {
 
   private final StoreIterator storeIterator = new StoreIterator();
-
-  private enum Result {
-    ACCEPT,
-    SKIP,
-    HOLD
-  }
 
   /**
    * Store the {@link RawMessageTableEntry}s persistently.
@@ -122,38 +115,12 @@ public abstract class AbstractMessageTable implements MessageTable {
              Bytes.toBytes(-1 * rollbackDetail.getTransactionWritePointer()));
   }
 
-  private static Result isVisible(@Nullable byte[] txPtr, @Nullable Transaction transaction) {
-    // No transaction info available, so accept this message (it must have been published non-transactionally)
-    if (transaction == null || txPtr == null) {
-      return Result.ACCEPT;
-    }
-
-    long txWritePtr = Bytes.toLong(txPtr);
-    // This transaction has been rolled back and thus skip the entry
-    if (txWritePtr < 0) {
-      return Result.SKIP;
-    }
-
-    // This transaction is visible, hence accept the message
-    if (transaction.isVisible(txWritePtr)) {
-      return Result.ACCEPT;
-    }
-
-    // This transaction is an invalid transaction, so skip the entry and proceed to the next
-    if (Arrays.binarySearch(transaction.getInvalids(), txWritePtr) >= 0) {
-      return Result.SKIP;
-    }
-
-    // This transaction has not yet been committed, hence hold to ensure ordering
-    return Result.HOLD;
-  }
-
   /**
    * An {@link Iterator} for fetching {@link Entry} from the the message table.
    */
   private static class FetchIterator extends AbstractCloseableIterator<Entry> {
     private final CloseableIterator<RawMessageTableEntry> scanner;
-    private final Transaction transaction;
+    private final TransactionMessageFilter filter;
     private byte[] skipStartRow;
     private boolean closed = false;
     private int maxLimit;
@@ -161,7 +128,7 @@ public abstract class AbstractMessageTable implements MessageTable {
     FetchIterator(CloseableIterator<RawMessageTableEntry> scanner, int limit, @Nullable byte[] skipStartRow,
                   @Nullable Transaction transaction) {
       this.scanner = scanner;
-      this.transaction = transaction;
+      this.filter =  transaction == null ? null : new TransactionMessageFilter(transaction);
       this.skipStartRow = skipStartRow;
       this.maxLimit = limit;
     }
@@ -184,13 +151,13 @@ public abstract class AbstractMessageTable implements MessageTable {
              continue;
            }
         }
-        Result status = isVisible(tableEntry.getTxPtr(), transaction);
-        if (status == Result.ACCEPT) {
+        MessageFilter.Result status = accept(tableEntry.getTxPtr());
+        if (status == MessageFilter.Result.ACCEPT) {
           maxLimit--;
           return new ImmutableMessageTableEntry(tableEntry.getKey(), tableEntry.getPayload(), tableEntry.getTxPtr());
         }
 
-        if (status == Result.HOLD) {
+        if (status == MessageFilter.Result.HOLD) {
           break;
         }
       }
@@ -205,6 +172,15 @@ public abstract class AbstractMessageTable implements MessageTable {
         endOfData();
         closed = true;
       }
+    }
+
+    private MessageFilter.Result accept(@Nullable byte[] txPtr) {
+      // No transaction info available, so accept this message (it must have been published non-transactionally)
+      if (filter == null || txPtr == null) {
+        return MessageFilter.Result.ACCEPT;
+      }
+
+      return filter.filter(Bytes.toLong(txPtr));
     }
   }
 

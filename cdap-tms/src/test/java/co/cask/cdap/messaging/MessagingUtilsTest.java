@@ -16,12 +16,18 @@
 
 package co.cask.cdap.messaging;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 /**
- * Tests for {@link MessagingUtils}.
+ * Tests for {@link MessagingUtils} and {@link MessagingServiceUtils}.
  */
 public class MessagingUtilsTest {
 
@@ -40,5 +46,21 @@ public class MessagingUtilsTest {
     Assert.assertFalse(MessagingUtils.isOlderGeneration(6, 5));
     Assert.assertFalse(MessagingUtils.isOlderGeneration(6, 6));
     Assert.assertFalse(MessagingUtils.isOlderGeneration(6, -5));
+  }
+
+  @Test
+  public void testSystemTopics() {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.MessagingSystem.SYSTEM_TOPICS, "  topic-1, topic_2 ,prefix:10,invalid.name");
+
+    Set<TopicId> topics = MessagingServiceUtils.getSystemTopics(cConf, true);
+    Set<TopicId> expected = new LinkedHashSet<>();
+    expected.add(NamespaceId.SYSTEM.topic("topic-1"));
+    expected.add(NamespaceId.SYSTEM.topic("topic_2"));
+    for (int i = 0; i < 10; i++) {
+      expected.add(NamespaceId.SYSTEM.topic("prefix" + i));
+    }
+
+    Assert.assertEquals(expected, topics);
   }
 }

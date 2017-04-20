@@ -36,11 +36,12 @@ public class LevelDBMessageTableTest extends MessageTableTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
+  protected static CConfiguration cConf;
   private static TableFactory tableFactory;
 
   @BeforeClass
   public static void init() throws IOException {
-    CConfiguration cConf = CConfiguration.create();
+    cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     tableFactory = new LevelDBTableFactory(cConf);
   }

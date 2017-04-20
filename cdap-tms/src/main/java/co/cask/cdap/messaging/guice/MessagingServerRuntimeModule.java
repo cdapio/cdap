@@ -23,14 +23,20 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.cache.MessageCache;
 import co.cask.cdap.messaging.server.FetchHandler;
 import co.cask.cdap.messaging.server.MessagingHttpService;
 import co.cask.cdap.messaging.server.MetadataHandler;
 import co.cask.cdap.messaging.server.StoreHandler;
 import co.cask.cdap.messaging.service.CoreMessagingService;
+import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.messaging.store.TableFactory;
+import co.cask.cdap.messaging.store.cache.CachingTableFactory;
+import co.cask.cdap.messaging.store.cache.DefaultMessageTableCacheProvider;
+import co.cask.cdap.messaging.store.cache.MessageTableCacheProvider;
 import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
 import co.cask.cdap.messaging.store.leveldb.LevelDBTableFactory;
+import co.cask.cdap.proto.id.TopicId;
 import co.cask.http.HttpHandler;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
@@ -40,6 +46,8 @@ import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+
+import javax.annotation.Nullable;
 
 /**
  * Provides Guice modules for the messaging server.
@@ -62,7 +70,13 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(HBaseTableUtil.class).toProvider(HBaseTableUtilProvider.class);
-        bind(TableFactory.class).to(HBaseTableFactory.class);
+        bind(TableFactory.class)
+          .annotatedWith(Names.named(CachingTableFactory.DELEGATE_TABLE_FACTORY))
+          .to(HBaseTableFactory.class);
+
+        // The cache must be in singleton scope
+        bind(MessageTableCacheProvider.class).to(DefaultMessageTableCacheProvider.class).in(Scopes.SINGLETON);
+        bind(TableFactory.class).to(CachingTableFactory.class).in(Scopes.SINGLETON);
         expose(TableFactory.class);
 
         bind(MessagingService.class).to(CoreMessagingService.class).in(Scopes.SINGLETON);
@@ -92,6 +106,15 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
 
     @Override
     protected void configure() {
+      // No caching in local mode
+      bind(MessageTableCacheProvider.class).toInstance(new MessageTableCacheProvider() {
+        @Nullable
+        @Override
+        public MessageCache<MessageTable.Entry> getMessageCache(TopicId topicId) {
+          return null;
+        }
+      });
+
       bind(TableFactory.class).to(LevelDBTableFactory.class).in(Scopes.SINGLETON);
       bind(MessagingService.class).to(CoreMessagingService.class).in(Scopes.SINGLETON);
       expose(MessagingService.class);

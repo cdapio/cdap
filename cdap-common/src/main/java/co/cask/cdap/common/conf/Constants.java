@@ -607,7 +607,9 @@ public final class Constants {
       public static final String PRODUCER = "pr";
       public static final String CONSUMER = "co";
 
+      // For TMS
       public static final String TABLE = "tbl";
+      public static final String TOPIC = "tpc";
     }
 
     /**
@@ -1172,6 +1174,8 @@ public final class Constants {
   public static final class MessagingSystem {
     public static final String LOCAL_DATA_DIR = "messaging.local.data.dir";
     public static final String LOCAL_DATA_CLEANUP_FREQUENCY = "messaging.local.data.cleanup.frequency.secs";
+
+    public static final String CACHE_SIZE_MB = "messaging.cache.size.mb";
 
     public static final String HBASE_MAX_SCAN_THREADS = "messaging.hbase.max.scan.threads";
     public static final String HBASE_SCAN_CACHE_ROWS = "messaging.hbase.scan.cache.rows";

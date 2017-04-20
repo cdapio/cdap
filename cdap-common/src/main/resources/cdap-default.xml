@@ -660,6 +660,15 @@
   </property>
 
   <property>
+    <name>data.tx.grace.period</name>
+    <value>86400</value>
+    <description>
+      The time in seconds used to pad transaction max lifetime while pruning.
+    </description>
+    <final>true</final>
+  </property>
+
+  <property>
     <name>data.tx.pruning.plugin.class</name>
     <value>co.cask.data2.txprune.DefaultHBaseTransactionPruningPlugin</value>
     <description>
@@ -1458,6 +1467,17 @@
 
 
   <!-- Messaging System Configuration -->
+
+  <property>
+    <name>messaging.cache.size.mb</name>
+    <value>30</value>
+    <description>
+      Memory in megabytes for the cache size used by the messaging service
+      for caching recently published messages. Currently, only topics listed
+      in the ${messaging.system.topics} configuration have caching enabled.
+      Set it to 0 to disable caching.
+    </description>
+  </property>
 
   <property>
     <name>messaging.container.instances</name>
