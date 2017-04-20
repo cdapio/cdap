@@ -85,10 +85,10 @@ The ``manifest.json`` can always be referred to for the list of latest available
 Previously released parcels can also be accessed from their version-specific URLs.  For example:
 
 .. parsed-literal::
-  |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-el6.parcel
-  |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-precise.parcel
-  |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-trusty.parcel
-  |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-wheezy.parcel
+  |http:|//repository.cask.co/parcels/cdap/|previous-short-version|/CDAP-|previous-version|-1-el6.parcel
+  |http:|//repository.cask.co/parcels/cdap/|previous-short-version|/CDAP-|previous-version|-1-precise.parcel
+  |http:|//repository.cask.co/parcels/cdap/|previous-short-version|/CDAP-|previous-version|-1-trusty.parcel
+  |http:|//repository.cask.co/parcels/cdap/|previous-short-version|/CDAP-|previous-version|-1-wheezy.parcel
   
 To host your own parcel repository, you will need to download all the parcels,
 generate a ``manifest.json``, and serve it with the parcels from a webserver. For
