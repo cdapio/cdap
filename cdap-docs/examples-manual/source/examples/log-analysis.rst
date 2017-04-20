@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform SparkPageRank Application
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _examples-log-analysis:
 
@@ -56,7 +56,7 @@ of the application are tied together by the class ``LogAnalysisApp``:
 
 .. literalinclude:: /../../../cdap-examples/LogAnalysis/src/main/java/co/cask/cdap/examples/loganalysis/LogAnalysisApp.java
    :language: java
-   :lines: 61-98
+   :lines: 62-99
    :append: . . .
 
 The *hitCount* and *responseCount* KeyValueTables and *reqCount* TimePartitionedFileSet

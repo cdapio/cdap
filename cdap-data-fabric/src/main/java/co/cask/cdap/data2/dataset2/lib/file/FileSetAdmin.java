@@ -46,11 +46,11 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
   private final Location baseLocation;
   private final CConfiguration cConf;
   private final DatasetContext datasetContext;
-  private final LocationFactory absoluteLocationFactory;
+  private final LocationFactory locationFactory;
   private final NamespacedLocationFactory namespacedLocationFactory;
 
   FileSetAdmin(DatasetContext datasetContext, CConfiguration cConf,
-               LocationFactory absoluteLocationFactory,
+               LocationFactory locationFactory,
                NamespacedLocationFactory namespacedLocationFactory,
                DatasetSpecification spec) throws IOException {
 
@@ -59,10 +59,10 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
     this.useExisting = FileSetProperties.isUseExisting(spec.getProperties());
     this.possessExisting = FileSetProperties.isPossessExisting(spec.getProperties());
     this.baseLocation = FileSetDataset.determineBaseLocation(datasetContext, cConf, spec,
-                                                             absoluteLocationFactory, namespacedLocationFactory);
+                                                             locationFactory, namespacedLocationFactory);
     this.datasetContext = datasetContext;
     this.cConf = cConf;
-    this.absoluteLocationFactory = absoluteLocationFactory;
+    this.locationFactory = locationFactory;
     this.namespacedLocationFactory = namespacedLocationFactory;
   }
 
@@ -174,7 +174,7 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
     // all we need to do is therefore to move it to the new base location if that location has changed
     if (isExternal && !FileSetProperties.isDataExternal(oldSpec.getProperties())) {
       Location oldBaseLocation = FileSetDataset.determineBaseLocation(
-        datasetContext, cConf, oldSpec, absoluteLocationFactory, namespacedLocationFactory);
+        datasetContext, cConf, oldSpec, locationFactory, namespacedLocationFactory);
       if (!baseLocation.equals(oldBaseLocation)) {
         oldBaseLocation.renameTo(baseLocation);
       }

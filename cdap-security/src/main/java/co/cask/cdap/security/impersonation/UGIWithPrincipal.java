@@ -14,34 +14,36 @@
  * the License.
  */
 
-package co.cask.cdap.common.kerberos;
+package co.cask.cdap.security.impersonation;
+
+import org.apache.hadoop.security.UserGroupInformation;
 
 /**
- * A wrapper around kerberos principal and credentials file path of a user to allow creating UGI remotely.
+ * A wrapper around kerberos principal of the user and the ugi. This is needed because when remote ugi provider needs
+ * the ugi information (the credentials file location) and also the principal to be able construct the UGI remotely.
  */
-public class PrincipalCredentials {
+public class UGIWithPrincipal {
   private final String principal;
-  private final String credentialsPath;
+  private final UserGroupInformation ugi;
 
-
-  public PrincipalCredentials(String principal, String credentialsPath) {
+  public UGIWithPrincipal(String principal, UserGroupInformation ugi) {
     this.principal = principal;
-    this.credentialsPath = credentialsPath;
+    this.ugi = ugi;
   }
 
   public String getPrincipal() {
     return principal;
   }
 
-  public String getCredentialsPath() {
-    return credentialsPath;
+  public UserGroupInformation getUGI() {
+    return ugi;
   }
 
   @Override
   public String toString() {
-    return "PrincipalCredentials{" +
+    return "UGIWithPrincipal{" +
       "principal='" + principal + '\'' +
-      ", credentialsPath=" + credentialsPath +
+      ", ugi=" + ugi +
       '}';
   }
 }

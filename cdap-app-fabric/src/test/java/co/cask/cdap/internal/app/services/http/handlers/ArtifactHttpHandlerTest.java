@@ -608,6 +608,29 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
                                           validPluginParents).getStatusLine().getStatusCode());
   }
 
+  @Test
+  public void invalidInputsToPluginEndpoint() throws Exception {
+    // add an app for plugins to extend
+    Id.Artifact wordCount1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                        addAppArtifact(wordCount1Id, WordCountApp.class).getStatusLine().getStatusCode());
+
+    // test plugin with endpoint that throws IllegalArgumentException
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, PluginWithPojo.class.getPackage().getName());
+    Id.Artifact pluginsId = Id.Artifact.from(Id.Namespace.DEFAULT, "aggregator", "1.0.0");
+
+    Set<ArtifactRange> plugins5Parents = Sets.newHashSet(new ArtifactRange(
+      NamespaceId.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                        addPluginArtifact(pluginsId, PluginWithPojo.class, manifest,
+                                          plugins5Parents).getStatusLine().getStatusCode());
+
+    // this call should throw IllegalArgumentException
+    String response = callPluginMethod(pluginsId, "interactive", "aggregator", "throwException", "testString",
+                                       ArtifactScope.USER, 400).getResponseBodyAsString();
+    Assert.assertEquals("Invalid user inputs: testString", response);
+  }
 
   @Test
   public void testGetPlugins() throws Exception {

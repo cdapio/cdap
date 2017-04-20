@@ -66,7 +66,7 @@ public class HBaseMetricsTable implements MetricsTable {
     HTable hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable
     hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
-    hTable.setAutoFlush(false);
+    hTable.setAutoFlushTo(false);
     this.hTable = hTable;
     this.columnFamily = TableProperties.getColumnFamilyBytes(spec.getProperties());
   }

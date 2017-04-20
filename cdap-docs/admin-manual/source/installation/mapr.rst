@@ -197,7 +197,7 @@ YARN Application Classpath
 --------------------------
 CDAP requires that an additional entry |---| ``/opt/mapr/lib/*`` |---| be appended to the
 ``yarn.application.classpath`` setting of ``yarn-site.xml``. (This file is usually in 
-``/data/mapr/hadoop/hadoop-<hadoop-version>/etc/hadoop/yarn-site.xml``.) The default
+``/opt/mapr/hadoop/hadoop-<hadoop-version>/etc/hadoop/yarn-site.xml``.) The default
 ``yarn.application.classpath`` for Linux with this additional entry appended is
 (reformatted to fit)::
 

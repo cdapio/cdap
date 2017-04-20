@@ -50,7 +50,7 @@ public class LogSaverStatusService extends AbstractIdleService {
                                @Named(Constants.LogSaver.LOG_SAVER_STATUS_HANDLER) Set<HttpHandler> handlers,
                                MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
-    this.httpService = NettyHttpService.builder()
+    this.httpService = NettyHttpService.builder(LogSaverStatusService.class.getName())
       .addHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.LogSaver.LOG_SAVER_STATUS_HANDLER)))

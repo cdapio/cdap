@@ -22,14 +22,14 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.FileContextProvider;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.guice.InsecureFileContextLocationFactory;
 import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.RootLocationFactoryProvider;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.startup.CheckRunner;
 import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.data.runtime.main.ClientVersions;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
+import co.cask.cdap.security.impersonation.SecurityUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -37,11 +37,15 @@ import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -163,7 +167,16 @@ public class MasterStartupTool {
         @Override
         protected void configure() {
           bind(FileContext.class).toProvider(FileContextProvider.class).in(Scopes.SINGLETON);
-          bind(LocationFactory.class).toProvider(RootLocationFactoryProvider.class).in(Scopes.SINGLETON);
+        }
+
+        @Provides
+        @Singleton
+        private LocationFactory providesLocationFactory(Configuration hConf, CConfiguration cConf, FileContext fc) {
+          final String namespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
+          if (UserGroupInformation.isSecurityEnabled()) {
+            return new FileContextLocationFactory(hConf, namespace);
+          }
+          return new InsecureFileContextLocationFactory(hConf, namespace, fc);
         }
       }
     );

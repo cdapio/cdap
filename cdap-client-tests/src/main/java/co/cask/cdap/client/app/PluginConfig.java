@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,21 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.data.tools;
+package co.cask.cdap.client.app;
 
-import com.google.inject.Injector;
-import org.junit.Test;
+import java.util.List;
+import java.util.Map;
 
 /**
- *
+ * Configurations for setting up a plugin
  */
-public class UpgradeToolTest {
-  @Test
-  public void testInjector() throws Exception {
-    Injector upgradeToolInjector = new UpgradeTool().createInjector();
-    // should not throw exception
-    // Test the UpgradeDatasetServiceManager injector creation
-    upgradeToolInjector.getInstance(UpgradeDatasetServiceManager.class);
-    // should not throw exception
+public class PluginConfig {
+  private List<String> parents;
+  private List<Map<String, String>> plugins;
+
+  public PluginConfig(List<String> parents, List<Map<String, String>> plugins) {
+    this.parents = parents;
+    this.plugins = plugins;
+  }
+
+  public List<String> getParents() {
+    return parents;
+  }
+
+  public List<Map<String, String>> getPlugins() {
+    return plugins;
   }
 }

@@ -14,17 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.common.kerberos;
+package co.cask.cdap.client.app;
 
-import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
 
 /**
- * A Enum which can represent categorizes different types of operations which are performed with impersonation.
- * Currently, explore queries running inside a namespace is categorized as {@link #EXPLORE} and all other operations
- * as {@link #OTHER}.
+ * No-op plugin, for CLI testing
  */
-@Beta
-public enum ImpersonatedOpType {
-  EXPLORE,
-  OTHER
+@Plugin(type = "runnable")
+@Name("FakePlugin")
+public class FakePlugin implements Runnable {
+  public static final String NAME = "FakePlugin";
+
+  public void run() {
+    // do nothing
+  }
 }

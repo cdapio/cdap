@@ -77,33 +77,33 @@ public class CLIMain {
   private static final String TOOL_NAME = "cli";
 
   @VisibleForTesting
-  public static final Option HELP_OPTION = new Option(
+  static final Option HELP_OPTION = new Option(
     "h", "help", false, "Print the usage message.");
 
-  @VisibleForTesting
-  public static final Option URI_OPTION = new Option(
+  private static final Option URI_OPTION = new Option(
     "u", "uri", true, "CDAP instance URI to interact with in" +
     " the format \"[http[s]://]<hostname>[:<port>[/<namespace>]]\"." +
     " Defaults to \"" + getDefaultURI().toString() + "\".");
 
-  @VisibleForTesting
-  public static final Option VERIFY_SSL_OPTION = new Option(
+  private static final Option VERIFY_SSL_OPTION = new Option(
     "v", "verify-ssl", true, "If \"true\", verify SSL certificate when making requests." +
     " Defaults to \"" + DEFAULT_VERIFY_SSL + "\".");
 
   @VisibleForTesting
-  public static final Option AUTOCONNECT_OPTION = new Option(
+  static final Option AUTOCONNECT_OPTION = new Option(
     "a", "autoconnect", true, "If \"true\", try provided connection" +
     " (from " + URI_OPTION.getLongOpt() + ")" +
     " upon launch or try default connection if none provided." +
     " Defaults to \"" + DEFAULT_AUTOCONNECT + "\".");
 
-  @VisibleForTesting
-  public static final Option DEBUG_OPTION = new Option(
+  private static final Option DEBUG_OPTION = new Option(
     "d", "debug", false, "Print exception stack traces.");
 
   private static final Option SCRIPT_OPTION = new Option(
     "s", "script", true, "Execute a file containing a series of CLI commands, line-by-line.");
+
+  private static final Option TIMEOUT_OPTION = new Option(
+    "t", "timeout", true, "Set HTTP read timeout of the CLI in seconds.");
 
   private final CLI cli;
   private final Iterable<CommandSet<Command>> commands;
@@ -268,7 +268,7 @@ public class CLIMain {
       try {
         ClientConfig clientConfig = ClientConfig.builder()
           .setConnectionConfig(null)
-          .setDefaultReadTimeout(60 * 1000)
+          .setDefaultReadTimeout(parseIntegerOption(command, TIMEOUT_OPTION, 60) * 1000)
           .build();
         final CLIConfig cliConfig = new CLIConfig(clientConfig, output, new AltStyleTableRenderer());
         CLIMain cliMain = new CLIMain(launchOptions, cliConfig);
@@ -313,8 +313,15 @@ public class CLIMain {
   }
 
   private static boolean parseBooleanOption(CommandLine command, Option option, boolean defaultValue) {
-    String value = command.getOptionValue(option.getOpt(), Boolean.toString(defaultValue));
-    return "true".equals(value);
+    return command.hasOption(option.getOpt())
+      ? Boolean.parseBoolean(command.getOptionValue(option.getOpt()))
+      : defaultValue;
+  }
+
+  private static int parseIntegerOption(CommandLine command, Option option, int defaultValue) {
+    return command.hasOption(option.getOpt())
+      ? Integer.parseInt(command.getOptionValue(option.getOpt()))
+      : defaultValue;
   }
 
   @VisibleForTesting
@@ -326,6 +333,7 @@ public class CLIMain {
     addOptionalOption(options, AUTOCONNECT_OPTION);
     addOptionalOption(options, DEBUG_OPTION);
     addOptionalOption(options, SCRIPT_OPTION);
+    addOptionalOption(options, TIMEOUT_OPTION);
     return options;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,7 +36,7 @@ public class StreamFileTestUtils {
 
   public static Location getStreamBaseLocation(NamespacedLocationFactory namespacedLocationFactory,
                                                StreamId streamId) throws IOException {
-    return namespacedLocationFactory.get(streamId.getParent().toId()).append(streamId.getEntityName());
+    return namespacedLocationFactory.get(streamId.getParent()).append(streamId.getEntityName());
   }
 
   public static StreamEvent createEvent(long timestamp, String body) {

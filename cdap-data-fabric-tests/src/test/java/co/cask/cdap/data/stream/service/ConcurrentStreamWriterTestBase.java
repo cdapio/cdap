@@ -34,7 +34,6 @@ import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.TimestampCloseable;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.impersonation.DefaultImpersonator;
@@ -289,7 +288,7 @@ public abstract class ConcurrentStreamWriterTestBase {
   }
 
   private FileInfo generateFile(NamespacedLocationFactory locationFactory, int id, int events) throws IOException {
-    Id.Namespace dummyNs = Id.Namespace.from("dummy");
+    NamespaceId dummyNs = new NamespaceId("dummy");
     Location eventLocation = locationFactory.get(dummyNs).append(UUID.randomUUID().toString());
     Location indexLocation = locationFactory.get(dummyNs).append(UUID.randomUUID().toString());
 

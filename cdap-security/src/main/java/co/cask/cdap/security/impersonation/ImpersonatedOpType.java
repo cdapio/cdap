@@ -14,19 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.logging.framework.distributed;
+package co.cask.cdap.security.impersonation;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import org.apache.hadoop.conf.Configuration;
-import org.junit.Test;
+import co.cask.cdap.api.annotation.Beta;
 
 /**
- * Tests for {@link LogSaverTwillRunnable}.
+ * A Enum which can represent categorizes different types of operations which are performed with impersonation.
+ * Currently, explore queries running inside a namespace is categorized as {@link #EXPLORE} and all other operations
+ * as {@link #OTHER}.
  */
-public class LogSaverTwillRunnableTest {
-
-  @Test
-  public void testLogSaverInjector() {
-    LogSaverTwillRunnable.createGuiceInjector(CConfiguration.create(), new Configuration(), new MockTwillContext());
-  }
+@Beta
+public enum ImpersonatedOpType {
+  EXPLORE,
+  OTHER
 }

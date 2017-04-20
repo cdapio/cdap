@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.FileUtils;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -88,7 +89,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
   @SuppressWarnings("WeakerAccess")
   public FileSetDataset(DatasetContext datasetContext, CConfiguration cConf,
                         DatasetSpecification spec,
-                        LocationFactory absoluteLocationFactory,
+                        LocationFactory locationFactory,
                         NamespacedLocationFactory namespacedLocationFactory,
                         @Nonnull Map<String, String> runtimeArguments) throws IOException {
 
@@ -100,7 +101,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
 
     Location baseLocation = determineBaseLocation(datasetContext, cConf, spec,
-                                                  absoluteLocationFactory, namespacedLocationFactory);
+                                                  locationFactory, namespacedLocationFactory);
     this.baseLocation = new FileSetLocation(baseLocation,
                                             new FileSetLocationFactory(baseLocation.getLocationFactory()));
     this.outputLocation = determineOutputLocation();
@@ -125,7 +126,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
    * TODO: Ideally, this should be done in configure(), but currently it cannot because of CDAP-1721
    */
   static Location determineBaseLocation(DatasetContext datasetContext, CConfiguration cConf,
-                                        DatasetSpecification spec, LocationFactory rootLocationFactory,
+                                        DatasetSpecification spec, LocationFactory locationFactory,
                                         NamespacedLocationFactory namespacedLocationFactory) throws IOException {
 
     // older versions of file set incorrectly interpret absolute paths as relative to the namespace's
@@ -144,9 +145,9 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
                    "To disable this message, upgrade the dataset properties with a relative path. ",
                  spec.getName(), basePath);
       } else {
-        String topLevelPath = namespacedLocationFactory.getBaseLocation().toURI().getPath();
+        String topLevelPath = locationFactory.create("/").toURI().getPath();
         topLevelPath = topLevelPath.endsWith("/") ? topLevelPath : topLevelPath + "/";
-        Location baseLocation = rootLocationFactory.create(basePath);
+        Location baseLocation = Locations.getLocationFromAbsolutePath(locationFactory, basePath);
         if (baseLocation.toURI().getPath().startsWith(topLevelPath)) {
           throw new DataSetException("Invalid base path '" + basePath + "' for dataset '" + spec.getName() + "'. " +
                                        "It must not be inside the CDAP base path '" + topLevelPath + "'.");
@@ -156,7 +157,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     }
     NamespaceId namespaceId = new NamespaceId(datasetContext.getNamespaceId());
     String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
-    return namespacedLocationFactory.get(namespaceId.toId()).append(dataDir).append(basePath);
+    return namespacedLocationFactory.get(namespaceId).append(dataDir).append(basePath);
   }
 
   private Location determineOutputLocation() {
