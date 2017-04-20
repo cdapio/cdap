@@ -1093,8 +1093,8 @@ cdap_config_tool() {
   if [[ ${__has_arg} -eq 0 ]] && [[ -f ${__auth_file} ]]; then
     set -- ${@} "--token-file" "${__auth_file}"
   fi
-
-  "${JAVA}" -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@}
+  # TODO: remove redirect when CDAP-7468 is resolved properly
+  "${JAVA}" -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@} 2>/dev/null
   __ret=${?}
   return ${__ret}
 }
