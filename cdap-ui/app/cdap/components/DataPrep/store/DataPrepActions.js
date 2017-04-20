@@ -20,6 +20,7 @@ const DataPrepActions = {
   setWorkspace: 'DATAPREP_SET_WORKSPACE',
   setInitialized: 'DATAPREP_SET_INITIALIZED',
   setHigherVersion: 'DATAPREP_SET_HIGHER_VERSION',
+  setWorkspaceMode: 'DATAPREP_SET_WORKSPACE_MODE',
   enableLoading: 'DATAPREP_ENABLE_LOADING',
   disableLoading: 'DATAPREP_DISABLE_LOADING',
   reset: 'DATAPREP_RESET',

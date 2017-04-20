@@ -98,6 +98,15 @@ export default class DataPrep extends Component {
             }
           });
         }
+
+        if (this.props.singleWorkspaceMode) {
+          DataPrepStore.dispatch({
+            type: DataPrepActions.setWorkspaceMode,
+            payload: {
+              singleWorkspaceMode: true
+            }
+          });
+        }
       });
       this.setCurrentWorkspace(workspaceId);
   }
