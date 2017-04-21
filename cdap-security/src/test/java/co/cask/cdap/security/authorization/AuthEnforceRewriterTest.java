@@ -23,6 +23,7 @@ import co.cask.cdap.internal.asm.ClassDefinition;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.auth.context.AuthenticationTestContext;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -69,19 +70,25 @@ public class AuthEnforceRewriterTest {
     testRewrite(getMethod(cls, "testMethodWithoutException", NamespaceId.class), rewrittenObject,
                 ExceptionAuthorizationEnforcer.ExpectedException.class, NamespaceId.DEFAULT);
 
-    // tests that class rewriting does not happen if an interface has a method with AuthEnforce
-    cls = classLoader.loadClass(DummyAuthEnforce.ClassImplementingInterfaceWithAuthAnnotation.class.getName());
-    rewrittenObject = loadRewritten(classLoader, DummyAuthEnforce.class.getName(), cls.getName());
-    invokeSetters(cls, rewrittenObject);
-    testRewrite(getMethod(cls, "interfaceMethodWithAuthEnforce", NamespaceId.class), rewrittenObject,
-                DummyAuthEnforce.EnforceNotCalledException.class, NamespaceId.DEFAULT);
+    testRewrite(getMethod(cls, "testNameAnnotationPref", NamespaceId.class, String.class), rewrittenObject,
+                NamespaceId.DEFAULT, ExceptionAuthorizationEnforcer.ExpectedException.class,
+                NamespaceId.DEFAULT, "stream");
+
+    testRewrite(getMethod(cls, "testMultipleParts", String.class, String.class), rewrittenObject,
+                new StreamId("ns", "stream"), ExceptionAuthorizationEnforcer.ExpectedException.class, "ns", "stream");
+
+    testRewrite(getMethod(cls, "testQueryPathParamAnnotations", String.class, String.class), rewrittenObject,
+                new StreamId("ns", "stream"), ExceptionAuthorizationEnforcer.ExpectedException.class, "ns", "stream");
+
+    testRewrite(getMethod(cls, "testMultipleAnnotationsPref", NamespaceId.class), rewrittenObject,
+                ExceptionAuthorizationEnforcer.ExpectedException.class, NamespaceId.DEFAULT);
 
     // test that class rewriting does not happen for classes which does not have AuthEnforce annotation on its method
     cls = classLoader.loadClass(DummyAuthEnforce.ClassWithoutAuthEnforce.class.getName());
     rewrittenObject = loadRewritten(classLoader, DummyAuthEnforce.class.getName(), cls.getName());
     invokeSetters(cls, rewrittenObject);
-    testRewrite(getMethod(cls, "methodWithoutAuthEnforce", NamespaceId.class), rewrittenObject, DummyAuthEnforce
-      .EnforceNotCalledException.class, NamespaceId.DEFAULT);
+    testRewrite(getMethod(cls, "methodWithoutAuthEnforce", NamespaceId.class), rewrittenObject,
+                DummyAuthEnforce.EnforceNotCalledException.class, NamespaceId.DEFAULT);
 
     // test that class rewriting works for a valid annotated method in another inner class and needs the
     // invokeSetters to called independently for this
@@ -114,6 +121,24 @@ public class AuthEnforceRewriterTest {
     testInvalidEntityHelper(DummyAuthEnforce.InvalidEntityName.class);
     // test that the class rewrite fails if two parameters are found with the same Name annotation
     testInvalidEntityHelper(DummyAuthEnforce.DuplicateEntityName.class);
+    // test that the class rewrite fails if less entity parts are provided than needed by enforceOn
+    testInvalidEntityHelper(DummyAuthEnforce.LessMultipleParts.class);
+    // test that the class rewrite fails if more entity parts are provided than needed by enforceOn
+    testInvalidEntityHelper(DummyAuthEnforce.MoreMultipleParts.class);
+    // test that the class rewrite fails if multiple entityId are provided and not strings
+    testInvalidEntityHelper(DummyAuthEnforce.MultipleEntityIds.class);
+    // test that the class rewrite fails if invalid enforceOn entity type is provided
+    testInvalidEntityHelper(DummyAuthEnforce.InvalidAuthEnforceEntityType.class);
+    // test that the class rewrite fails if invalid Annotation is used to annotate a parameter
+    testInvalidEntityHelper(DummyAuthEnforce.InvalidParameterAnnotationType.class);
+    // test that class rewrite fails if two parameter have same annotated name
+    testInvalidEntityHelper(DummyAuthEnforce.DuplicateAnnotationName.class);
+    // test that class rewrite fails if parameter have QueryParam and PathParam with same name
+    testInvalidEntityHelper(DummyAuthEnforce.SameQueryAndPathParam.class);
+    // test that class rewrite fails if multiple part is specified of some other type than String
+    testInvalidEntityHelper(DummyAuthEnforce.EntityWithString.class);
+    // test that class rewrite fails if a blank string is provided in entity parts
+    testInvalidEntityHelper(DummyAuthEnforce.BlankEntityName.class);
   }
 
   private void testInvalidEntityHelper(Class cls) throws Exception {
@@ -150,10 +175,11 @@ public class AuthEnforceRewriterTest {
 
         }
         ExceptionAuthorizationEnforcer.ExpectedException exception =
-          (ExceptionAuthorizationEnforcer.ExpectedException) e.getCause();
+                (ExceptionAuthorizationEnforcer.ExpectedException) e.getCause();
         if (!exception.getEntityId().equals(entityId)) {
-          Assert.fail(String.format("Expected %s with entity %s but found %s", ExceptionAuthorizationEnforcer
-            .ExpectedException.class.getSimpleName(), entityId, exception.getEntityId()));
+          Assert.fail(String.format("Expected %s with entity %s but found %s",
+                                    ExceptionAuthorizationEnforcer.ExpectedException.class.getSimpleName(),
+                                    entityId, exception.getEntityId()));
         }
       }
     }
@@ -165,12 +191,12 @@ public class AuthEnforceRewriterTest {
   }
 
   private void invokeSetters(Class<?> cls, Object rewrittenObject)
-    throws InvocationTargetException, IllegalAccessException {
+          throws InvocationTargetException, IllegalAccessException {
     Method[] declaredMethods = cls.getDeclaredMethods();
     for (Method declaredMethod : declaredMethods) {
       // if the method name starts with set_ then we know its an generated setter
       if (declaredMethod.getName().startsWith(AuthEnforceRewriter.GENERATED_SETTER_METHOD_PREFIX +
-                                                AuthEnforceRewriter.GENERATED_FIELD_PREFIX)) {
+                                                      AuthEnforceRewriter.GENERATED_FIELD_PREFIX)) {
         declaredMethod.setAccessible(true); // since its setter it might be private
         if (declaredMethod.getName().contains(AuthEnforceRewriter.AUTHENTICATION_CONTEXT_FIELD_NAME)) {
           declaredMethod.invoke(rewrittenObject, new AuthenticationTestContext());
@@ -178,7 +204,7 @@ public class AuthEnforceRewriterTest {
           declaredMethod.invoke(rewrittenObject, new ExceptionAuthorizationEnforcer());
         } else {
           throw new IllegalStateException(String.format("Found an expected setter method with name %s. While trying " +
-                                                          "invoke setter for %s and %s",
+                                                                "invoke setter for %s and %s",
                                                         declaredMethod.getName(),
                                                         AuthenticationContext.class.getSimpleName(),
                                                         AuthorizationEnforcer.class.getSimpleName()));
@@ -197,8 +223,8 @@ public class AuthEnforceRewriterTest {
   }
 
   private Object loadRewritten(ClassLoader classLoader, String outerClassName, String innerClassName)
-    throws ClassNotFoundException,
-    IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+          throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchMethodException,
+          InvocationTargetException {
     // the classes which we are loading from DummyAuthEnforce are inner classes so we need to instantiate the outer
     // class to load them.
     Class<?> outerClass = classLoader.loadClass(outerClassName);
