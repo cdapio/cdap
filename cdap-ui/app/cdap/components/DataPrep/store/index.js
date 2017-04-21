@@ -29,7 +29,8 @@ const defaultInitialState = {
   headers: [],
   directives: [],
   higherVersion: null,
-  loading: false
+  loading: false,
+  singleWorkspaceMode: false
 };
 
 const errorInitialState = {
@@ -72,6 +73,11 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
     case DataPrepActions.setHigherVersion:
       stateCopy = Object.assign({}, state, {
         higherVersion: action.payload.higherVersion
+      });
+      break;
+    case DataPrepActions.setWorkspaceMode:
+      stateCopy = Object.assign({}, state, {
+        singleWorkspaceMode: action.payload.singleWorkspaceMode
       });
       break;
     case DataPrepActions.enableLoading:
