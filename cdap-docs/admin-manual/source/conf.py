@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 
+import json
 import os
 import sys
 
 # Import the common config file
-# Note that paths in the common config are interpreted as if they were 
+# Note that paths in the common config are interpreted as if they were
 # in the location of this file
 
 # Setup the config
 sys.path.insert(0, os.path.abspath('../../_common'))
-from common_conf import * 
+from common_conf import *
 
 html_short_title_toc, html_short_title, html_context = set_conf_for_manual()
 
@@ -83,3 +84,30 @@ logging_pipeline_configuration_2 = [
     "log.process.pipeline.lib.dir",
     ]
 build_property_tables(defaults_dict, exclusions, dcd.RST_TABLE_HEADER, "logging-pipeline-configuration-2.rst", logging_pipeline_configuration_2)
+
+# Add Microsoft Azure HDInsight versions for this branch
+hdinsight_versions = ''
+hdinsight_path = os.path.join(os.getcwd(), '../../..', 'cdap-distributions/src/hdinsight/pkg/createUiDefinition.json')
+try:
+    with open(hdinsight_path) as json_data:
+        d = json.load(json_data)
+        v_list = d['clusterFilters']['versions']
+        if not v_list:
+            raise
+        if len(v_list) == 1:
+            hdinsight_versions = v_list[0]
+        elif len(v_list) == 2:
+            hdinsight_versions = "%s and %s" % (v_list[0], v_list[1])
+        else:
+            for v in v_list[:-1]:
+                hdinsight_versions += "%s, " % v
+            hdinsight_versions += "and %s" % v_list[-1]
+except:
+    raise Exception(html_short_title_toc, "hdinsight_versions can't be found at %s" % hdinsight_path)
+
+if hdinsight_versions:
+    rst_epilog += """
+.. |hdinsight-versions| replace:: %s
+
+""" % hdinsight_versions
+

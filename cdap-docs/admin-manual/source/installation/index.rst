@@ -11,11 +11,12 @@ Installation
 ============
 
 .. toctree::
-   
+
     Cloudera Manager <cloudera>
     Amazon EMR <emr>
     Apache Ambari <ambari>
     MapR <mapr>
+    Microsoft Azure HDInsight <azure-hdinsight>
     Packages <packages>
     Replication <replication>
 
@@ -28,11 +29,11 @@ Installation
    installation
    security
 
-    
+
 Installation and configuration instructions for either **specific distributions** or
 **generic Apache Hadoop** clusters using RPM or Debian Package Managers.
 
-**Note:** For setting up CDAP Replication (a cluster that is replicated to other clusters), 
+**Note:** For setting up CDAP Replication (a cluster that is replicated to other clusters),
 see the :ref:`CDAP Replication instructions <installation-replication>` *before installing CDAP*.
 
 - :ref:`Installation using Cloudera Manager <admin-installation-cloudera>`
@@ -60,6 +61,13 @@ see the :ref:`CDAP Replication instructions <installation-replication>` *before 
 
   - :ref:`Advanced Topics: <mapr-installation-advanced-topics>`
     enabling perimeter security, Kerberos, CDAP high availability, and CDAP Explore engines
+
+..
+
+- :ref:`Installation for Microsoft Azure HDInsight <admin-installation-azure-hdinsight>`
+
+  - **Advanced Topics** (enabling perimeter security, CDAP high availability, CDAP Explore
+    engines, and enabling Kerberos) are currently not available for Microsoft Azure HDInsight
 
 ..
 
