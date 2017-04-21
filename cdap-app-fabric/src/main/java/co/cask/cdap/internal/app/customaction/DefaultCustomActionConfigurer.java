@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.customaction;
 import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.customaction.CustomActionConfigurer;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
+import co.cask.cdap.api.retry.RetryPolicy;
 import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -44,6 +45,7 @@ public final class DefaultCustomActionConfigurer extends DefaultPluginConfigurer
   private String name;
   private String description;
   private Map<String, String> properties;
+  private RetryPolicy remoteRetryPolicy;
 
   private DefaultCustomActionConfigurer(CustomAction customAction, Id.Namespace deployNamespace, Id.Artifact artifactId,
                                        ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
@@ -72,12 +74,17 @@ public final class DefaultCustomActionConfigurer extends DefaultPluginConfigurer
     this.properties = new HashMap<>(properties);
   }
 
+  @Override
+  public void setRemoteRetryPolicy(RetryPolicy retryPolicy) {
+    remoteRetryPolicy = retryPolicy;
+  }
+
   private DefaultCustomActionSpecification createSpecification() {
     Set<String> datasets = new HashSet<>();
     Reflections.visit(customAction, customAction.getClass(), new PropertyFieldExtractor(properties),
                       new DataSetFieldExtractor(datasets));
     return new DefaultCustomActionSpecification(customAction.getClass().getName(), name,
-                                                description, properties, datasets);
+                                                description, properties, datasets, remoteRetryPolicy);
   }
 
   public static CustomActionSpecification configureAction(CustomAction action, Id.Namespace deployNamespace,

@@ -19,6 +19,7 @@ package co.cask.cdap.api.service.http;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.retry.RetryPolicy;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Specification for a {@link HttpServiceHandler}.
@@ -39,19 +41,22 @@ public final class HttpServiceHandlerSpecification implements PropertyProvider, 
   private final Map<String, String> properties;
   private final Set<String> datasets;
   private final List<ServiceHttpEndpoint> endpoints;
+  private final RetryPolicy remoteRetryPolicy;
 
   /**
    * Create an instance of {@link HttpServiceHandlerSpecification}.
    */
   public HttpServiceHandlerSpecification(String className, String name,
                                          String description, Map<String, String> properties,
-                                         Set<String> datasets, List<ServiceHttpEndpoint> endpoints) {
+                                         Set<String> datasets, List<ServiceHttpEndpoint> endpoints,
+                                         RetryPolicy remoteRetryPolicy) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
     this.endpoints = Collections.unmodifiableList(new ArrayList<>(endpoints));
+    this.remoteRetryPolicy = remoteRetryPolicy;
   }
 
   /**
@@ -107,5 +112,13 @@ public final class HttpServiceHandlerSpecification implements PropertyProvider, 
    */
   public List<ServiceHttpEndpoint> getEndpoints() {
     return endpoints;
+  }
+
+  /**
+   * @return RetryPolicy for remote calls or {@code null} if the CDAP default should be used.
+   */
+  @Nullable
+  public RetryPolicy getRemoteRetryPolicy() {
+    return remoteRetryPolicy;
   }
 }

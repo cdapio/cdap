@@ -20,6 +20,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.retry.RetryPolicy;
 import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -47,6 +48,7 @@ public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer im
   private Resources driverResources;
   private Resources mapperResources;
   private Resources reducerResources;
+  private RetryPolicy remoteRetryPolicy;
 
   public DefaultMapReduceConfigurer(MapReduce mapReduce, Id.Namespace deployNamespace, Id.Artifact artifactId,
                                     ArtifactRepository artifactRepository,
@@ -74,6 +76,11 @@ public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer im
   }
 
   @Override
+  public void setRemoteRetryPolicy(RetryPolicy retryPolicy) {
+    remoteRetryPolicy = retryPolicy;
+  }
+
+  @Override
   public void setDriverResources(Resources resources) {
     this.driverResources = resources;
   }
@@ -94,6 +101,7 @@ public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer im
                       new DataSetFieldExtractor(datasets));
     return new MapReduceSpecification(mapReduce.getClass().getName(), name, description,
                                       inputDataset, outputDataset, datasets,
-                                      properties, driverResources, mapperResources, reducerResources);
+                                      properties, driverResources, mapperResources, reducerResources,
+                                      remoteRetryPolicy);
   }
 }

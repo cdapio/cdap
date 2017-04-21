@@ -17,9 +17,11 @@ package co.cask.cdap.api.customaction;
 
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.retry.RetryPolicy;
 import co.cask.cdap.api.workflow.Workflow;
 
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Specification for the custom java code that will be executed as a part of {@link Workflow}.
@@ -44,4 +46,10 @@ public interface CustomActionSpecification extends PropertyProvider {
    * @return an immutable set of {@link Dataset} name that are used by the {@link CustomAction}
    */
   Set<String> getDatasets();
+
+  /**
+   * @return RetryPolicy for remote calls or {@code null} if the CDAP default should be used.
+   */
+  @Nullable
+  RetryPolicy getRemoteRetryPolicy();
 }

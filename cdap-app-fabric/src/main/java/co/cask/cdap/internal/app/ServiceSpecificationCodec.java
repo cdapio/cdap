@@ -120,7 +120,8 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
                                                        spec.get("name").getAsString(),
                                                        spec.get("description").getAsString(),
                                                        properties, ImmutableSet.<String>of(),
-                                                       ImmutableList.<ServiceHttpEndpoint>of()));
+                                                       ImmutableList.<ServiceHttpEndpoint>of(),
+                                                       null));
     }
 
     ResourceSpecification resourceSpec = handlerSpec.getResourceSpecification();

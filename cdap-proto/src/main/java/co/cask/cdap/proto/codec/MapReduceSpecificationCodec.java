@@ -18,6 +18,7 @@ package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.retry.RetryPolicy;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -58,6 +59,7 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
     }
     jsonObj.add("datasets", serializeSet(src.getDataSets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
+    jsonObj.add("remoteRetryPolicy", context.serialize(src.getRemoteRetryPolicy()));
 
     return jsonObj;
   }
@@ -80,8 +82,10 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
 
     Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
+    RetryPolicy remoteRetryPolicy = context.deserialize(jsonObj.get("remoteRetryPolicy"), RetryPolicy.class);
     return new MapReduceSpecification(className, name, description, inputDataSet, outputDataSet,
-                                      dataSets, properties, driverResources, mapperResources, reducerResources);
+                                      dataSets, properties, driverResources, mapperResources, reducerResources,
+                                      remoteRetryPolicy);
   }
 
   /**

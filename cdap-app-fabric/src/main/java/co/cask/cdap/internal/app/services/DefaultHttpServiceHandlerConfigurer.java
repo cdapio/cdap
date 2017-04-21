@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.retry.RetryPolicy;
 import co.cask.cdap.api.service.http.HttpServiceConfigurer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -44,6 +45,7 @@ public class DefaultHttpServiceHandlerConfigurer extends DefaultPluginConfigurer
   private final String name;
   private Map<String, String> properties;
   private Set<String> datasets;
+  private RetryPolicy remoteRetryPolicy;
 
   /**
    * Instantiates the class with the given {@link HttpServiceHandler}.
@@ -73,6 +75,11 @@ public class DefaultHttpServiceHandlerConfigurer extends DefaultPluginConfigurer
     this.properties = new HashMap<>(properties);
   }
 
+  @Override
+  public void setRemoteRetryPolicy(RetryPolicy retryPolicy) {
+    remoteRetryPolicy = retryPolicy;
+  }
+
   /**
    * Creates a {@link HttpServiceHandlerSpecification} from the parameters stored in this class.
    *
@@ -86,6 +93,7 @@ public class DefaultHttpServiceHandlerConfigurer extends DefaultPluginConfigurer
                       new PropertyFieldExtractor(properties),
                       new ServiceEndpointExtractor(endpoints));
 
-    return new HttpServiceHandlerSpecification(handler.getClass().getName(), name, "", properties, datasets, endpoints);
+    return new HttpServiceHandlerSpecification(handler.getClass().getName(), name, "", properties, datasets, endpoints,
+                                               remoteRetryPolicy);
   }
 }

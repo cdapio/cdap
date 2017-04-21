@@ -21,6 +21,7 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.retry.RetryPolicy;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowAction;
@@ -63,6 +64,7 @@ public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
   private String name;
   private String description;
   private Map<String, String> properties;
+  private RetryPolicy remoteRetryPolicy;
 
   public DefaultWorkflowConfigurer(Workflow workflow, DatasetConfigurer datasetConfigurer,
                                    Id.Namespace deployNamespace, Id.Artifact artifactId,
@@ -91,6 +93,11 @@ public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
   @Override
   public void setProperties(Map<String, String> properties) {
     this.properties = ImmutableMap.copyOf(properties);
+  }
+
+  @Override
+  public void setRemoteRetryPolicy(RetryPolicy retryPolicy) {
+    remoteRetryPolicy = retryPolicy;
   }
 
   @Override
@@ -158,7 +165,7 @@ public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
 
   public WorkflowSpecification createSpecification() {
     return new WorkflowSpecification(className, name, description, properties, createNodesWithId(nodes),
-                                     localDatasetSpecs);
+                                     localDatasetSpecs, remoteRetryPolicy);
   }
 
   private List<WorkflowNode> createNodesWithId(List<WorkflowNode> nodes) {

@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.PropertyProvider;
+import co.cask.cdap.api.retry.RetryPolicy;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,12 +44,14 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
   private final Resources clientResources;
   private final Resources driverResources;
   private final Resources executorResources;
+  private final RetryPolicy remoteRetryPolicy;
 
   public SparkSpecification(String className, String name, String description,
                             String mainClassName, Set<String> datasets, Map<String, String> properties,
                             @Nullable Resources clientResources,
                             @Nullable Resources driverResources,
-                            @Nullable Resources executorResources) {
+                            @Nullable Resources executorResources,
+                            @Nullable RetryPolicy remoteRetryPolicy) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -58,6 +61,7 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
     this.clientResources = clientResources;
     this.driverResources = driverResources;
     this.executorResources = executorResources;
+    this.remoteRetryPolicy = remoteRetryPolicy;
   }
 
   @Override
@@ -121,5 +125,13 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
   @Nullable
   public Resources getExecutorResources() {
     return executorResources;
+  }
+
+  /**
+   * @return RetryPolicy for remote calls or {@code null} if the CDAP default should be used.
+   */
+  @Nullable
+  public RetryPolicy getRemoteRetryPolicy() {
+    return remoteRetryPolicy;
   }
 }

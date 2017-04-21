@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.spark;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.retry.RetryPolicy;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkConfigurer;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -47,6 +48,7 @@ public final class DefaultSparkConfigurer extends DefaultPluginConfigurer implem
   private Resources clientResources;
   private Resources driverResources;
   private Resources executorResources;
+  private RetryPolicy remoteRetryPolicy;
 
   public DefaultSparkConfigurer(Spark spark, Id.Namespace deployNamespace, Id.Artifact artifactId,
                                 ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
@@ -79,6 +81,11 @@ public final class DefaultSparkConfigurer extends DefaultPluginConfigurer implem
   }
 
   @Override
+  public void setRemoteRetryPolicy(RetryPolicy retryPolicy) {
+    remoteRetryPolicy = retryPolicy;
+  }
+
+  @Override
   public void setClientResources(Resources resources) {
     this.clientResources = resources;
   }
@@ -103,6 +110,6 @@ public final class DefaultSparkConfigurer extends DefaultPluginConfigurer implem
                       new DataSetFieldExtractor(datasets));
     return new SparkSpecification(spark.getClass().getName(), name, description,
                                   mainClassName, datasets, properties,
-                                  clientResources, driverResources, executorResources);
+                                  clientResources, driverResources, executorResources, remoteRetryPolicy);
   }
 }

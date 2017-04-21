@@ -17,6 +17,7 @@ package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
+import co.cask.cdap.api.retry.RetryPolicy;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import javax.annotation.Nullable;
 
 /**
  * Specification for a {@link Workflow}
@@ -38,10 +40,12 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
   private final List<WorkflowNode> nodes;
   private final Map<String, WorkflowNode> nodeIdMap;
   private final Map<String, DatasetCreationSpec> localDatasetSpecs;
+  private final RetryPolicy remoteRetryPolicy;
 
   public WorkflowSpecification(String className, String name, String description,
                                Map<String, String> properties, List<WorkflowNode> nodes,
-                               Map<String, DatasetCreationSpec> localDatasetSpecs) {
+                               Map<String, DatasetCreationSpec> localDatasetSpecs,
+                               @Nullable RetryPolicy remoteRetryPolicy) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -50,6 +54,7 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     this.nodes = Collections.unmodifiableList(new ArrayList<>(nodes));
     this.nodeIdMap = Collections.unmodifiableMap(generateNodeIdMap(nodes));
     this.localDatasetSpecs = Collections.unmodifiableMap(new HashMap<>(localDatasetSpecs));
+    this.remoteRetryPolicy = remoteRetryPolicy;
   }
 
   /**
@@ -128,6 +133,14 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
    */
   public Map<String, DatasetCreationSpec> getLocalDatasetSpecs() {
     return localDatasetSpecs;
+  }
+
+  /**
+   * @return RetryPolicy for remote calls or {@code null} if the CDAP default should be used.
+   */
+  @Nullable
+  public RetryPolicy getRemoteRetryPolicy() {
+    return remoteRetryPolicy;
   }
 
   @Override
