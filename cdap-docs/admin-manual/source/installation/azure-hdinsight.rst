@@ -17,9 +17,9 @@ This section describes installing CDAP on `Microsoft Azure HDInsight
 <https://azure.microsoft.com/en-us/services/hdinsight/>`__ using
 Microsoft's website to:
 
-- Create an HDInsight HBase cluster;
-- Install CDAP as an application on the cluster; and then
-- Verify that CDAP is installed and running by using the CDAP UI.
+- :ref:`Create an HDInsight HBase cluster <admin-installation-azure-hdinsight-creating-cluster>` with CDAP installed as an application
+- Install CDAP as an application :ref:`on an existing HDInsight HBase cluster <admin-installation-azure-hdinsight-installing-on-existing>`
+- :ref:`Verify that CDAP is installed and running <admin-installation-azure-hdinsight-verification>` by using the CDAP UI
 
 Information on Microsoft Azure HDInsight is `available online
 <https://docs.microsoft.com/en-us/azure/hdinsight/>`__.
@@ -27,8 +27,10 @@ Information on Microsoft Azure HDInsight is `available online
 CDAP |short-version| is compatible with Microsoft Azure HDInsight |hdinsight-versions|.
 
 
-Creating the Cluster
-====================
+.. _admin-installation-azure-hdinsight-creating-cluster:
+
+Creating a Cluster with CDAP Installed
+======================================
 
 1. Log onto Microsoft Azure and navigate to *HDInsight clusters* (either through the *New*
    menu and under *Intelligence + analytics*, or directly through the *HDInsight clusters*
@@ -144,15 +146,17 @@ Creating the Cluster
 
       **Microsoft Azure HDInsight:** The cluster dashboard, *Applications* button circled
 
-#. CDAP should show as installed successfully:
+#. CDAP should show as installed successfully, with a *Portal* link to access it:
 
    .. figure:: ../_images/azure-hdinsight/azure-hdinsight-5.2.png
       :figwidth: 100%
       :width: 800px
       :class: bordered-image
 
-      **Microsoft Azure HDInsight:** Installed applications, showing CDAP and its *Portal* button
+      **Microsoft Azure HDInsight:** Installed applications, showing CDAP and its *Portal* link
 
+
+.. _admin-installation-azure-hdinsight-installing-on-existing:
 
 Install CDAP as an Application on an Existing Cluster
 =====================================================
@@ -189,21 +193,22 @@ creating a cluster, you can jump to :ref:`verification
 
       **Microsoft Azure HDInsight:** CDAP accepted as an application
 
-#. Once CDAP is installed successfully, its status shows as *Installed*:
+#. Once CDAP is installed successfully, its status shows as *Installed*, with a *Portal*
+   link to access it:
 
    .. figure:: ../_images/azure-hdinsight/azure-hdinsight-9.png
       :figwidth: 100%
       :width: 631px
       :class: bordered-image
 
-      **Microsoft Azure HDInsight:** CDAP installed as an application
+      **Microsoft Azure HDInsight:** CDAP installed as an application and its *Portal* link
 
 
 .. _admin-installation-azure-hdinsight-verification:
 
 Verification
 ============
-#. Click the *Portal* button to launch the login window. Login by entering the cluster
+#. Click the *Portal* link to launch the login window. Login by entering the cluster
    login name (default *admin*) and password which are entered when you created the
    cluster:
 
