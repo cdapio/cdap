@@ -51,7 +51,7 @@ def get_sdk_version():
         full_version = full_version_temp.strip().replace('<version>', '').replace('</version>', '')
         version = full_version.replace('-SNAPSHOT', '')
         short_version = "%s.%s" % tuple(version.split('.')[0:2])
-       
+
         v = full_version.replace('-', '.').split('.')
         if len(v) > 3:
             s = "%s-" % v[3]
@@ -61,7 +61,7 @@ def get_sdk_version():
         else:
             v.append('')
             v.append('')
-        version_tuple = tuple(v)      
+        version_tuple = tuple(v)
     except:
         print "Unexpected error: %s" % sys.exc_info()[0]
         pass
@@ -223,7 +223,7 @@ if git_build_vars.has_key(GIT_BRANCH_PARENT):
     cdap_java_source_github_pattern = "https://github.com/caskdata/cdap/blob/%s/%%s" % git_build_vars[GIT_BRANCH_PARENT]
 else:
     cdap_java_source_github_pattern = ''
-    
+
 GIT_BRANCH_CDAP_SECURITY_EXTN = 'GIT_BRANCH_CDAP_SECURITY_EXTN'
 if git_build_vars.has_key(GIT_BRANCH_CDAP_SECURITY_EXTN):
     cdap_security_extn_github_pattern = "https://github.com/caskdata/cdap-security-extn/blob/%s/%%s" % \
@@ -295,7 +295,7 @@ rst_epilog = """
 .. |--| unicode:: U+2013   .. en dash
 .. |---| unicode:: U+2014  .. em dash, trimming surrounding whitespace
    :trim:
-  
+
 .. |non-breaking-space| unicode:: U+00A0 .. non-breaking space
 """
 
@@ -333,6 +333,11 @@ if short_version:
         previous_short_version = git_build_vars['GIT_PREVIOUS_SHORT_VERSION']
     else:
         previous_short_version = float(short_version) -0.1
+    if git_build_vars.has_key('GIT_PREVIOUS_VERSION'):
+        previous_version = git_build_vars['GIT_PREVIOUS_VERSION']
+    else:
+        previous_version = "%s.%s" % (previous_short_version, '0')
+
     rst_epilog += """
 .. |short-version| replace:: %(short_version)s
 .. |short-version-x| replace:: %(short_version)s.x
@@ -342,8 +347,11 @@ if short_version:
 .. |previous-short-version| replace:: %(previous_short_version)s
 .. |bold-previous-short-version| replace:: **%(previous_short_version)s**
 .. |literal-previous-short-version| replace:: ``%(previous_short_version)s``
-
-""" % {'short_version': short_version, 'previous_short_version': previous_short_version}
+.. |previous-version| replace:: %(previous_version)s
+""" % {'short_version': short_version,
+       'previous_short_version': previous_short_version,
+       'previous_version': previous_version,
+      }
 
 if version_tuple:
     rst_epilog += """
@@ -367,7 +375,7 @@ if release and version:
     version_list = version.split('.')
     version_list[1] = str(int(version_list[1])+1)
     release_range = "[%s,%s)" % (release, '.'.join(version_list))
-    
+
     rst_epilog += """
 .. |literal-release| replace:: ``%(release)s``
 """ % {'release': release}
@@ -405,7 +413,7 @@ if cdap_apps_version and cdap_apps_compatibile_version:
 
 """ % {'cdap-apps-version': cdap_apps_version, 'cdap-apps-compatibile-version': cdap_apps_compatibile_version}
 else:
-    print 'Unable to find cdap_apps_version and cdap_apps_compatibile_version'    
+    print 'Unable to find cdap_apps_version and cdap_apps_compatibile_version'
 
 cdap_metadata_management_version = os.environ.get('CDAP_METADATA_MANAGEMENT_VERSION')
 if cdap_metadata_management_version:
@@ -417,7 +425,7 @@ if cdap_metadata_management_version:
 
 """ % {'cdap-metadata-management-version': cdap_metadata_management_version}
 else:
-    print 'Unable to find CDAP_METADATA_MANAGEMENT_VERSION'    
+    print 'Unable to find CDAP_METADATA_MANAGEMENT_VERSION'
 
 cdap_pipelines_version = os.environ.get('CDAP_PIPELINES_VERSION')
 if cdap_pipelines_version:
@@ -868,20 +876,20 @@ def source_read_handler(app, docname, source):
             app.env.config.highlight_language_cache = app.env.config.highlight_language
             app.env.config.highlight_language = 'none'
     else:
-        if (not app.env.config.rst_epilog and hasattr(app.env.config, 'rst_epilog_cache') and 
+        if (not app.env.config.rst_epilog and hasattr(app.env.config, 'rst_epilog_cache') and
                 app.env.config.rst_epilog_cache):
             app.env.config.rst_epilog = app.env.config.rst_epilog_cache
-        if (not app.env.config.rst_prolog and hasattr(app.env.config, 'rst_prolog_cache') and 
+        if (not app.env.config.rst_prolog and hasattr(app.env.config, 'rst_prolog_cache') and
                 app.env.config.rst_prolog_cache):
             app.env.config.rst_prolog = app.env.config.rst_prolog_cache
         if (not app.env.config.highlight_language or app.env.config.highlight_language == 'none'):
-            if (hasattr(app.env.config, 'highlight_language_cache') and 
-                app.env.config.highlight_language_cache and 
+            if (hasattr(app.env.config, 'highlight_language_cache') and
+                app.env.config.highlight_language_cache and
                 app.env.config.highlight_language_cache != 'none'):
                 app.env.config.highlight_language = app.env.config.highlight_language_cache
             else:
                 app.env.config.highlight_language = 'java'
-            
+
 
 # -- Configure Application --------------------------------------------------
 
