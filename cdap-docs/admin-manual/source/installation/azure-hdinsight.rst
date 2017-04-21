@@ -66,10 +66,7 @@ Creating a Cluster with CDAP Installed
 
       **Microsoft Azure HDInsight:** Creating a cluster using *Custom (size, settings, apps)* settings
 
-#. Enter the required basic settings: *Cluster login password*, *Resource group*, and *Location*.
-   As a minimum, a cluster requires 4 D3 v2 region nodes. This is enough YARN capacity to
-   run only simple examples. For any serious work, you will need a cluster with larger
-   nodes:
+#. Enter the required basic settings: *Cluster login password*, *Resource group*, and *Location*:
 
    .. figure:: ../_images/azure-hdinsight/azure-hdinsight-3.0.png
       :figwidth: 100%
@@ -98,9 +95,10 @@ Creating a Cluster with CDAP Installed
 
       **Microsoft Azure HDInsight:** Setting CDAP as an application on the cluster
 
-#. Under *Cluster size*, at a minimum, a cluster requires four *D3 v2* region nodes. This is
+#. Under *Cluster size*, at a minimum, a CDAP cluster requires four *D3 v2* region nodes. This is
    enough YARN capacity to run only simple examples. For any serious work, you will need a
-   cluster with larger nodes:
+   cluster with additional nodes (Microsoft recommends additional smaller nodes versus
+   fewer larger nodes due to the nature of blob storage):
 
    .. figure:: ../_images/azure-hdinsight/azure-hdinsight-3.3.png
       :figwidth: 100%
@@ -109,14 +107,14 @@ Creating a Cluster with CDAP Installed
 
       **Microsoft Azure HDInsight:** Setting cluster size
 
-#. Under *Advanced settings*, there are currently no settings to be made:
+#. Under *Advanced settings*, there are currently no settings required:
 
    .. figure:: ../_images/azure-hdinsight/azure-hdinsight-3.4.png
       :figwidth: 100%
       :width: 710px
       :class: bordered-image
 
-      **Microsoft Azure HDInsight:** *Advanced settings* are currently not used
+      **Microsoft Azure HDInsight:** *Advanced settings* are currently not required
 
 #. Click *Next* to review the summary. Then click *Create* to start cluster initialization:
 
