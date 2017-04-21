@@ -19,6 +19,7 @@ package co.cask.cdap.internal.dataset;
 import co.cask.cdap.api.annotation.ReadOnly;
 import co.cask.cdap.api.annotation.ReadWrite;
 import co.cask.cdap.api.annotation.WriteOnly;
+import co.cask.cdap.internal.lang.CallerClassSecurityManager;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,16 +107,4 @@ public abstract class DatasetRuntimeContext {
    */
   @SuppressWarnings("unused")
   public abstract void onMethodExit();
-
-  /**
-   * A {@link SecurityManager} to help get access to classes in the call stack.
-   */
-  private static final class CallerClassSecurityManager extends SecurityManager {
-
-    private static final CallerClassSecurityManager INSTANCE = new CallerClassSecurityManager();
-
-    static Class[] getCallerClasses() {
-      return INSTANCE.getClassContext();
-    }
-  }
 }

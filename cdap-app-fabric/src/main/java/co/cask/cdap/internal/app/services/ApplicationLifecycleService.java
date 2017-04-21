@@ -39,9 +39,8 @@ import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.CannotBeDeletedException;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.kerberos.OwnerAdmin;
-import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -74,6 +73,8 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.security.impersonation.Impersonator;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
+import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
@@ -109,9 +110,7 @@ import javax.annotation.Nullable;
 /**
  * Service that manage lifecycle of Applications.
  */
-public class
-
-ApplicationLifecycleService extends AbstractIdleService {
+public class ApplicationLifecycleService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationLifecycleService.class);
 
   /**
@@ -138,9 +137,11 @@ ApplicationLifecycleService extends AbstractIdleService {
   private final AuthenticationContext authenticationContext;
   private final Impersonator impersonator;
   private final RouteStore routeStore;
+  private final boolean appUpdateSchedules;
 
   @Inject
-  ApplicationLifecycleService(ProgramRuntimeService runtimeService, Store store,
+  ApplicationLifecycleService(CConfiguration cConfiguration,
+                              ProgramRuntimeService runtimeService, Store store,
                               Scheduler scheduler, QueueAdmin queueAdmin,
                               StreamConsumerFactory streamConsumerFactory, UsageRegistry usageRegistry,
                               PreferencesStore preferencesStore, MetricStore metricStore, OwnerAdmin ownerAdmin,
@@ -149,6 +150,8 @@ ApplicationLifecycleService extends AbstractIdleService {
                               MetadataStore metadataStore, PrivilegesManager privilegesManager,
                               AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
                               Impersonator impersonator, RouteStore routeStore) {
+    this.appUpdateSchedules = cConfiguration.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
+                                                        Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
     this.runtimeService = runtimeService;
     this.store = store;
     this.scheduler = scheduler;
@@ -348,7 +351,7 @@ ApplicationLifecycleService extends AbstractIdleService {
 
     Id.Artifact artifactId = Artifacts.toArtifactId(appId.getParent(), newArtifactId).toId();
     return deployApp(appId.getParent(), appId.getApplication(), null, artifactId, requestedConfigStr,
-                     programTerminator);
+                     programTerminator, ownerAdmin.getOwner(appId), appRequest.canUpdateSchedules());
   }
 
   /**
@@ -371,11 +374,13 @@ ApplicationLifecycleService extends AbstractIdleService {
                                                       Id.Artifact artifactId, File jarFile,
                                                       @Nullable String configStr,
                                                       @Nullable KerberosPrincipalId ownerPrincipal,
-                                                      ProgramTerminator programTerminator) throws Exception {
+                                                      ProgramTerminator programTerminator,
+                                                      boolean updateSchedules) throws Exception {
 
     ArtifactDetail artifactDetail = artifactRepository.addArtifact(artifactId, jarFile);
     try {
-      return deployApp(namespace, appName, null, configStr, programTerminator, artifactDetail, ownerPrincipal);
+      return deployApp(namespace, appName, null, configStr, programTerminator, artifactDetail, ownerPrincipal,
+                       updateSchedules);
     } catch (Exception e) {
       // if we added the artifact, but failed to deploy the application, delete the artifact to bring us back
       // to the state we were in before this call.
@@ -413,16 +418,40 @@ ApplicationLifecycleService extends AbstractIdleService {
                                            Id.Artifact artifactId,
                                            @Nullable String configStr,
                                            ProgramTerminator programTerminator) throws Exception {
-    return deployApp(namespace, appName, appVersion, artifactId, configStr, programTerminator, null);
+    return deployApp(namespace, appName, appVersion, artifactId, configStr, programTerminator, null, true);
   }
 
+  /**
+   * Deploy an application using the specified artifact and configuration. When an app is deployed, the Application
+   * class is instantiated and configure() is called in order to generate an {@link ApplicationSpecification}.
+   * Programs, datasets, and streams are created based on the specification before the spec is persisted in the
+   * {@link Store}. This method can create a new application as well as update an existing one.
+   *
+   * @param namespace the namespace to deploy the app to
+   * @param appName the name of the app. If null, the name will be set based on the application spec
+   * @param artifactId the id of the artifact to create the application from
+   * @param configStr the configuration to send to the application when generating the application specification
+   * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
+   *                          For example, if an update removes a flow, the terminator defines how to stop that flow.
+   * @param ownerPrincipal the kerberos principal of the application owner
+   * @param updateSchedules specifies if schedules of the workflow have to be updated,
+   *                        if null value specified by the property "app.deploy.update.schedules" will be used.
+   * @return information about the deployed application
+   * @throws InvalidArtifactException if the artifact does not contain any application classes
+   * @throws ArtifactNotFoundException if the specified artifact does not exist
+   * @throws IOException if there was an IO error reading artifact detail from the meta store
+   * @throws Exception if there was an exception during the deployment pipeline. This exception will often wrap
+   *                   the actual exception
+   */
   public ApplicationWithPrograms deployApp(NamespaceId namespace, @Nullable String appName, @Nullable String appVersion,
                                            Id.Artifact artifactId,
                                            @Nullable String configStr,
                                            ProgramTerminator programTerminator,
-                                           @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
+                                           @Nullable KerberosPrincipalId ownerPrincipal,
+                                           @Nullable Boolean updateSchedules) throws Exception {
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
-    return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetail, ownerPrincipal);
+    return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetail, ownerPrincipal,
+                     updateSchedules == null ? appUpdateSchedules : updateSchedules);
   }
 
   /**
@@ -586,7 +615,8 @@ ApplicationLifecycleService extends AbstractIdleService {
                                             @Nullable String configStr,
                                             ProgramTerminator programTerminator,
                                             ArtifactDetail artifactDetail,
-                                            @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
+                                            @Nullable KerberosPrincipalId ownerPrincipal,
+                                            boolean updateSchedules) throws Exception {
     // Enforce that the current principal has write access to the namespace the app is being deployed to
     authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.WRITE);
 
@@ -599,7 +629,7 @@ ApplicationLifecycleService extends AbstractIdleService {
     // deploy application with newly added artifact
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), namespaceId,
                                                              appClass.getClassName(), appName, appVersion, configStr,
-                                                             ownerPrincipal);
+                                                             ownerPrincipal, updateSchedules);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.

@@ -15,13 +15,10 @@
  */
 
 import React, { Component, PropTypes } from 'react';
-import {objectQuery} from 'services/helpers';
 import SchemaStore from 'components/SchemaEditor/SchemaStore';
 import SchemaEditor from 'components/SchemaEditor';
-import {getParsedSchema} from 'components/SchemaEditor/SchemaHelpers';
 import {Tooltip} from 'reactstrap';
 import T from 'i18n-react';
-
 require('./SchemaTab.scss');
 
 export default class SchemaTab extends Component {
@@ -37,21 +34,14 @@ export default class SchemaTab extends Component {
 
   componentWillMount() {
     if (!this.props.entity.schema) { return; }
-
-    let fields = getParsedSchema(this.props.entity.schema);
-    this.setSchema({fields});
-  }
-
-  componentWillReceiveProps(nextProps) {
-    let entitiesMatch = objectQuery(nextProps, 'entity', 'name') === objectQuery(this.props, 'entity', 'name');
-    if (!entitiesMatch) {
-      this.setState({
-        entity: nextProps.entity
-      });
-
-      let fields = getParsedSchema(nextProps.entity.schema);
-      this.setSchema({fields});
+    let schema;
+    try {
+      schema = JSON.parse(this.props.entity.schema);
+    } catch (e) {
+      console.error('Error parsing schema: ', e);
+      schema = { fields: []};
     }
+    this.setSchema({fields: schema.fields});
   }
 
   componentWillUnmount() {

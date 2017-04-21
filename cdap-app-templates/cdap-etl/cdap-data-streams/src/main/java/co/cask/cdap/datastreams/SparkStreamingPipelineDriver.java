@@ -62,6 +62,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
 
   @Override
   public void run(final JavaSparkExecutionContext sec) throws Exception {
+
     final DataStreamsPipelineSpec pipelineSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
                                                                DataStreamsPipelineSpec.class);
 
@@ -102,6 +103,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
 
     JavaStreamingContext jssc = run(pipelineSpec, pipelinePhase, sec, checkpointDir);
     jssc.start();
+
     boolean stopped = false;
     try {
       // most programs will just keep running forever.
@@ -113,6 +115,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
         jssc.stop(true, pipelineSpec.isStopGracefully());
       }
     }
+
   }
 
   private JavaStreamingContext run(final DataStreamsPipelineSpec pipelineSpec,
@@ -143,6 +146,4 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
 
     return JavaStreamingContext.getOrCreate(checkpointDir, contextFactory);
   }
-
-
 }

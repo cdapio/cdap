@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.preview;
 
 import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.preview.DataTracerFactory;
 import co.cask.cdap.app.preview.PreviewRequest;
 import co.cask.cdap.app.preview.PreviewRunner;
@@ -35,7 +35,10 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
+import co.cask.cdap.logging.gateway.handlers.store.ProgramStore;
+import co.cask.cdap.metrics.query.MetricsQueryHelper;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -45,27 +48,33 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.inject.Inject;
-import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.common.Threads;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.annotation.Nullable;
 
 /**
  * Default implementation of the {@link PreviewRunner}.
  */
 public class DefaultPreviewRunner extends AbstractIdleService implements PreviewRunner {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewRunner.class);
   private static final Gson GSON = new Gson();
+
   private static final ProgramTerminator NOOP_PROGRAM_TERMINATOR = new ProgramTerminator() {
     @Override
     public void stop(ProgramId programId) throws Exception {
@@ -82,9 +91,15 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final PreviewStore previewStore;
   private final DataTracerFactory dataTracerFactory;
   private final NamespaceAdmin namespaceAdmin;
+  private final ProgramStore programStore;
+  private final MetricsCollectionService metricsCollectionService;
+  private final MetricsQueryHelper metricsQueryHelper;
 
   private volatile PreviewStatus status;
+  private volatile boolean killedByTimer;
   private ProgramId programId;
+  private ProgramRunId runId;
+  private Timer timer;
 
   @Inject
   DefaultPreviewRunner(DatasetService datasetService, LogAppenderInitializer logAppenderInitializer,
@@ -92,7 +107,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        SystemArtifactLoader systemArtifactLoader, ProgramRuntimeService programRuntimeService,
                        ProgramLifecycleService programLifecycleService,
                        PreviewStore previewStore, DataTracerFactory dataTracerFactory,
-                       NamespaceAdmin namespaceAdmin) {
+                       NamespaceAdmin namespaceAdmin, ProgramStore programStore,
+                       MetricsCollectionService metricsCollectionService, MetricsQueryHelper metricsQueryHelper) {
     this.datasetService = datasetService;
     this.logAppenderInitializer = logAppenderInitializer;
     this.applicationLifecycleService = applicationLifecycleService;
@@ -103,6 +119,9 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.status = null;
     this.dataTracerFactory = dataTracerFactory;
     this.namespaceAdmin = namespaceAdmin;
+    this.programStore = programStore;
+    this.metricsCollectionService = metricsCollectionService;
+    this.metricsQueryHelper = metricsQueryHelper;
   }
 
   @Override
@@ -125,11 +144,11 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       applicationLifecycleService.deployApp(preview.getParent(), preview.getApplication(), preview.getVersion(),
                                             artifactId.toId(), config, NOOP_PROGRAM_TERMINATOR);
     } catch (Exception e) {
-      this.status = new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED, new BasicThrowable(e));
+      this.status = new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED, new BasicThrowable(e), null, null);
       throw e;
     }
 
-    PreviewConfig previewConfig = previewRequest.getAppRequest().getPreview();
+    final PreviewConfig previewConfig = previewRequest.getAppRequest().getPreview();
     ProgramController controller = programLifecycleService.start(
       programId, previewConfig == null ? Collections.<String, String>emptyMap() : previewConfig.getRuntimeArgs(),
       false);
@@ -137,24 +156,53 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     controller.addListener(new AbstractListener() {
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
-        setStatus(new PreviewStatus(PreviewStatus.Status.RUNNING, null));
+        setStatus(new PreviewStatus(PreviewStatus.Status.RUNNING, null, System.currentTimeMillis(), null));
+        // Only have timer if there is a timeout setting.
+        if (previewConfig.getTimeout() != null) {
+          timer = new Timer();
+          final int timeOutMinutes =  previewConfig.getTimeout();
+          timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+              try {
+                LOG.info("Stopping the preview since it has reached running time: {} mins.", timeOutMinutes);
+                stopPreview();
+                killedByTimer = true;
+              } catch (Exception e) {
+                LOG.debug("Error shutting down the preview run with id: {}", programId);
+              }
+            }
+          }, timeOutMinutes * 60 * 1000);
+        }
       }
 
       @Override
       public void completed() {
-        setStatus(new PreviewStatus(PreviewStatus.Status.COMPLETED, null));
+        setStatus(new PreviewStatus(PreviewStatus.Status.COMPLETED, null, status.getStartTime(),
+                                    System.currentTimeMillis()));
+        shutDownUnrequiredServices();
       }
 
       @Override
       public void killed() {
-        setStatus(new PreviewStatus(PreviewStatus.Status.KILLED, null));
+        if (!killedByTimer) {
+          setStatus(new PreviewStatus(PreviewStatus.Status.KILLED, null, status.getStartTime(),
+                                      System.currentTimeMillis()));
+        } else {
+          setStatus(new PreviewStatus(PreviewStatus.Status.KILLED_BY_TIMER, null, status.getStartTime(),
+                                      System.currentTimeMillis()));
+        }
+        shutDownUnrequiredServices();
       }
 
       @Override
       public void error(Throwable cause) {
-        setStatus(new PreviewStatus(PreviewStatus.Status.RUN_FAILED, new BasicThrowable(cause)));
+        setStatus(new PreviewStatus(PreviewStatus.Status.RUN_FAILED, new BasicThrowable(cause), status.getStartTime(),
+                                    System.currentTimeMillis()));
+        shutDownUnrequiredServices();
       }
     }, Threads.SAME_THREAD_EXECUTOR);
+    runId = controller.getProgramRunId();
   }
 
   private void setStatus(PreviewStatus status) {
@@ -182,13 +230,18 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   }
 
   @Override
-  public List<MetricTimeSeries> getMetrics() {
-    return new ArrayList<>();
+  public ProgramRunId getProgramRunId() {
+    return runId;
   }
 
   @Override
-  public List<LogEntry> getLogs() {
-    return new ArrayList<>();
+  public RunRecordMeta getRunRecord() {
+    return programStore.getRun(programId, runId.getRun());
+  }
+
+  @Override
+  public MetricsQueryHelper getMetricsQueryHelper() {
+    return metricsQueryHelper;
   }
 
   @Override
@@ -206,17 +259,26 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       applicationLifecycleService.start(),
       systemArtifactLoader.start(),
       programRuntimeService.start(),
-      programLifecycleService.start()
+      programLifecycleService.start(),
+      metricsCollectionService.start()
     ).get();
   }
 
   @Override
   protected void shutDown() throws Exception {
+    shutDownUnrequiredServices();
+    datasetService.stopAndWait();
+  }
+
+  private void shutDownUnrequiredServices() {
+    if (timer != null) {
+      timer.cancel();
+    }
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
     systemArtifactLoader.stopAndWait();
-    programLifecycleService.stopAndWait();
     logAppenderInitializer.close();
-    datasetService.stopAndWait();
+    metricsCollectionService.stopAndWait();
+    programLifecycleService.stopAndWait();
   }
 }

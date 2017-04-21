@@ -144,7 +144,19 @@ features:
         sortedBy: sorted by
         displayAll: Displaying All Entities
         displaySome: Displaying
-    emptyMessage: No entities found in the system.
+    emptyMessage:
+      default: No entities found in namespace "{namespace}"
+      search: No results found for "{searchText}"
+      filter: No entities found for your selection
+      suggestion: "You can try to:"
+      clearText:
+        clear: Clear
+        search: " your search; or"
+        filter: " your filters; or"
+        add: Add
+        entities: " new entities; or"
+        browse: Browse
+        Market: " Cask Market"
     Cards:
       type: "Type: "
     Errors:
@@ -181,11 +193,141 @@ features:
       suggestionMessage1: "Go back to:"
       suggestionMessage2: Page 1
     NamespaceNotFound:
-      createMessage: Would like to
-      createLinkLabel: create a new one?
-      switchMessage: Or select a different namespace from the namespace dropdown.
+      optionsSubtitle: Here are some options on what to do next
+      createMessage: Create a
+      createLinkLabel: new namespace
+      switchMessage: Select a different namespace from the namespace dropdown
     JustAddedSection:
       subtitle: Just added
+  DataPrep:
+    Directives:
+      apply: Apply
+      cancel: Cancel
+      Filter:
+        Conditions:
+          CUSTOMCONDITION: Custom condition
+          EMPTY: value is empty
+          TEXTCONTAINS: value contains
+          TEXTENDSWITH: value ends with
+          TEXTEXACTLY: value is
+          TEXTREGEX: value matches regex
+          TEXTSTARTSWITH: value starts with
+        if: If
+        ignoreCase: Ignore Case
+        KEEP: Keep rows
+        Placeholders:
+          CUSTOMCONDITION: e.g. < 30
+          TEXTCONTAINS: Enter contained value
+          TEXTENDSWITH: Enter suffix
+          TEXTEXACTLY: Enter value
+          TEXTREGEX: Enter regex
+          TEXTSTARTSWITH: Enter prefix
+        REMOVE: Remove rows
+        title: Filter
+      FindAndReplace:
+        buttonLabel: Replace All
+        find: Find
+        findPlaceholder: Old value
+        replacePlaceholder: New value
+        replaceWith: Replace with
+        title: Find and Replace
+      Parse:
+        modalTitle: Parse as {parser}
+        Parsers:
+          CSV:
+            customPlaceholder: "Delimiter (e.g ;, #, %, ^)"
+            firstRowHeader: Set first row as header
+            label: CSV
+            modalTitle: Please select the delimiter
+            Options:
+              COMMA: Comma
+              CUSTOM: Custom Delimiter
+              PIPE: Pipe
+              TAB: Tab
+              CONTROL_A: ^A
+              CONTROL_D: ^D
+          FIXEDLENGTH:
+            fieldLabel: Column widths
+            label: Fixed Length
+            optionalFieldLabel: Padding
+            optionalPlaceholder: Optional padding parameter
+            placeholder: "e.g. 3, 5, 2, 5, 15"
+          HL7:
+            label: HL7
+          JSON:
+            fieldLabel: Depth
+            label: JSON
+            placeholder: Enter depth
+          LOG:
+            customPlaceholder: "e.g. %h %l %u %t \"%r\" %>s %b"
+            label: Log
+            modalTitle: Please select the logs format
+            Options:
+              COMMON: Common
+              COMBINED: Combined
+              COMBINEDIO: Combinedio
+              REFERER: Referer
+              AGENT: Agent
+              CUSTOM: Custom
+          NATURALDATE:
+            fieldLabel: Timezone
+            label: Natural Date
+            placeholder: "e.g. UTC"
+          SIMPLEDATE:
+            customPlaceholder: "e.g. yyyy.MM.dd G 'at' HH:mm:ss z"
+            label: Simple Date
+            modalTitle: Please select the date format
+            Options:
+              CUSTOM: Custom Format
+              OPTION1: "MM/dd/yyyy"
+              OPTION2: "dd/MM/yyyy"
+              OPTION3: "MM-dd-yyyy"
+              OPTION4: "MM-dd-yy"
+              OPTION5: "MM-dd-yyyy 'at' HH:mm:ss"
+              OPTION6: "dd/MM/yy HH:mm:ss"
+              OPTION7: "MM.dd.yyyy HH:mm:ss.SSS"
+              OPTION8: "EEE, d MMM yyyy HH:mm:ss"
+              OPTION9: "EEE, MMM d, 'yy"
+              OPTION10: "h:mm AM/PM"
+              OPTION11: "H:mm with timezone"
+          XML:
+            label: XML
+          XMLTOJSON:
+            fieldLabel: Depth
+            label: XML to JSON
+            placeholder: Enter depth
+        title: Parse
+      Copy:
+        copySuffix: _copy
+        duplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
+        inputLabel: Name New Column
+        placeholder: Destination Column
+        title: Copy Column
+      Keep:
+       title: Delete Other Columns
+    pageTitle: CDAP | Data Preparation
+    TopPanel:
+      applyBtnLabel: Apply
+      addToPipelineBtnLabel: Add to Pipeline
+      upgradeBtnLabel: Upgrade
+      viewSchemaBtnLabel: View Schema
+      invalidFieldNameMessage: Invalid field name "{fieldName}"
+      invalidFieldNameRemedies1: "Your field name contains an invalid character: no space or special character other than - or _ are allowed"
+      invalidFieldNameRemedies2: Try to apply directive “cleanse-column-names”
+      SchemaModal:
+        defaultErrorMessage: Error generating schema.
+      PipelineModal:
+        defaultErrorMessage: Error adding to pipeline
+      WorkspaceModal:
+        create: Create
+        createModalTitle: Create Workspace
+        createTitle: Create New Workspace
+        uploadTitle: Upload Data
+        uploadSubTitle: Select the file to be uploaded to the workspace
+        createAndUploadBtnLabel: Create & Upload
+        uploadBtnLabel: Upload
+    Upgrade:
+      minimumVersionError: "Data Preparation requires wrangler-service artifact version 1.3.0 or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
   Dashboard:
     Title: Dashboard
 
@@ -200,8 +342,11 @@ features:
     deleteConfirmation: Are you sure you want to delete *_{entityId}_*?
     exploreLabel: Explore
     deleteLabel: Delete
+    downloadDisabledMessage: Results have already been downloaded once. Please run the query to download them again.
+    previewDisabledMessage: Results have already been downloaded once. Please run the query to preview them again.
     deleteFailed: Failed to delete {entityId}.
     logLabel: Logs
+    logNotAvailable: No logs available
     truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
     truncateLabel: Truncate
     truncateSuccess: Truncated Successfully
@@ -249,6 +394,7 @@ features:
       numEventsTitle: Set Number of Events
       timeRangeTitle: Select Time Range
       to: To
+    doneLabel: Done
 
   JumpButton:
     buttonLabel: Jump
@@ -339,6 +485,7 @@ features:
         Masters: Masters
         MissingBlocks: Missing Blocks
         Namenodes: Namenodes
+        Datanodes: Datanodes
         Namespaces: Namespaces
         NumCommittingChangeSets: Committing Changes
         NumCommittedChangeSets: Committed Changes
@@ -402,7 +549,7 @@ features:
       examples: Applications
       pipelines: Pipelines
       plugins: Plugins
-      useCases: Use Cases
+      useCases: Solutions
       edwOffload: EDW Offload
       emptyTab: No Entities found
     action-types:
@@ -436,7 +583,6 @@ features:
       author: Author
       company: Company
       created: Created
-      cdapversion: CDAP Version
     doneLabel: Done
     closeLabel: Close
   MarketEntityModal:
@@ -469,7 +615,7 @@ features:
     ProgramTab:
       emptyMessage: No Programs found.
       title: "Programs in application \"{appId}\""
-      runningProgramLabel: "Number of programs running: {programCount}"
+      runningProgramLabel: "Number of running programs: {programCount}"
       altTitle: "Programs using {entityType} \"{entityId}\""
     DatasetTab:
       title: "Datasets and Streams used by \"{appId}\""
@@ -483,6 +629,11 @@ features:
     deployedLabel:
       data: Created
       app: Deployed
+    errorMessage404: Sorry, we could not find {entityType} "{entityId}"
+    errorMessageAuthorization: You are not authorized to view {entityType} "{entityId}"
+    errorMessageSubtitle: Please select another entity
+    overviewCloseLabel: Close
+    overviewCloseLabel1: this panel
   Pagination:
     dropdown-label: Page
   PropertiesEditor:
@@ -510,34 +661,39 @@ features:
     scope: Scope
 
   Resource-Center:
-    Stream:
-      label: Stream
-      description: A stream is used to ingest data into HDFS in real-time or batch.
-      actionbtn0: Create
     Application:
       label: Application
-      description: Upload a custom application artifact or create an instance of an application from an existing artifact.
+      description: An Application is a collection of datasets and programs that read and write data to datasets.
       actionbtn0: Upload
       actionbtn-1: Create
       modalheadertitle: Upload Application
-    Stream-View:
-      label: Stream View
-      description: A stream view is non-materialized view over a stream with schema-on-read capability. Creates a view over an existing stream.
-      actionbtn0: Create
+    Artifact:
+      label: Driver
+      description: A driver is a JAR file that contains third-party code to communicate with systems such as MySQL, Oracle, and PostgreSQL using JDBC.
+      actionbtn0: Upload
+      modalheadertitle: Add Driver
     HydratorPipeline:
       label: Pipeline
       description: A pipeline allows you to ingest, egress, and process data either to, from, or within Hadoop.
       actionbtn0: Create
-    Artifact:
-      label: Driver
-      description: A driver is a JAR file that contains third-party code to talk to external systems, such as MySQL, Oracle, and PostgreSQL.
+    Library:
+      label: Library
+      description: A library is a JAR file that can contains reusable third-party code (e.g. External Spark Programs).
       actionbtn0: Upload
-      modalheadertitle: Add Driver
+      modalheadertitle: Add Library
     Plugins:
       label: Plugin
       description: A plugin is an easy way to extend the functionality of an application.
       actionbtn0: Upload
       modalheadertitle: Upload Plugin Artifact
+    Stream:
+      label: Stream
+      description: A stream is used to ingest data into HDFS in real-time or batch.
+      actionbtn0: Create
+    Stream-View:
+      label: Stream View
+      description: A stream view is non-materialized view over a stream with schema-on-read capability. Creates a view over an existing stream.
+      actionbtn0: Create
 
   SplashScreen:
     dontShow: Don't show this again
@@ -568,18 +724,58 @@ features:
   DatasetDetailedView:
     Title: CDAP | Dataset | {datasetId}
   Wizard:
+    Add-Namespace:
+      callToAction:
+        primary: Switch to '{namespaceId}'
+      headerlabel: Add Namespace
+      Status:
+        creation-error-desc: "Failed to create namespace '%s'."
+        creation-success-desc: Successfully created namespace '{namespaceId}'.
+      Step1:
+        description-label: "Description"
+        description-placeholder: "Namespace description"
+        name-label: "Name"
+        name-placeholder: "Namespace name"
+        scheduler-queue-label: "Scheduler Queue"
+        scheduler-queue-placeholder: "Specify the YARN queue name to be used for programs in this namespace"
+        sld-desc:  "Specify the name and the description of the namespace."
+        ssd-label: "General Information"
+      Step2:
+        hbase-nm-name-label: "HBase Namespace Name"
+        hbase-nm-name-placeholder: "Namespace in HBase for datasets in this namespace"
+        hdfs-root-directory-label: "HDFS Root Directory"
+        hdfs-root-directory-placeholder: "Base directory on HDFS for this namespace"
+        hive-db-name-label: "Hive Database Name"
+        hive-db-name-placeholder: "Hive database for this namespace"
+        sld-label: "Specify mapping of namespace resources to the existing underlying storage resources."
+        ssd-label: "Namespace Mapping"
+      Step3:
+        keytab-uri-label: "Keytab URI"
+        keytab-uri-placeholder: "Location of keytab file associated with the principal"
+        principal-label: "Principal"
+        principal-placeholder: "Kerberos principal of the user to run CDAP programs as"
+        sld-label: "Specify credentials for securely impersonating CDAP programs in this namespace."
+        ssd-label: "Security"
+      Step4:
+        name-label: "Name"
+        name-placeholder: "Preference name"
+        sld-label: "Specify preferences to be applied at the namespace level."
+        ssd-label: "Preferences"
+        value-label: "Value"
+        value-placeholder: "Preference value"
     ApplicationUpload:
+      callToAction: View Application Details
       headerlabel: Upload Application
       Step1:
         description: Upload your application JAR
+        filePathLabel: Choose file
         shorttitle: Upload Application
         title: Upload JAR
-        uploadHelperText: Upload the JAR for your application that you wish to deploy
-        filePathLabel: Choose file
+        uploadHelperText: Upload the JAR for the application that you wish to deploy
       success: You have successfully deployed the application "{appName}".
-      callToAction: View Application Details
     ArtifactUpload:
-      headerlabel: Add Third party Driver
+      headerlabel: Add Third Party Driver
+      footertitle: Add Driver
       Step1:
         description: Upload your Driver
         shorttitle: Upload Driver
@@ -595,22 +791,53 @@ features:
         namePlaceholder: Driver Name
         descriptionLabel: Description
         decriptionPlaceholder: Driver Description
-        typeLabel: Type
-        typePlaceholder: Driver Type
         classnameLabel: Class Name
-        classnamePlaceholder: Driver Class Name
+        classnamePlaceholder: Driver Class Name. E.g. com.example.MyClass
       success: You have successfully uploaded the driver "{artifactName}".
       subtitle: You can now create a pipeline to extract data from Database using the driver.
       callToAction: Create a Pipeline
     Done: Done
+    FailedMessage: Failed to {step}
     GoToHomePage: Go to Home Page
+    HydratorPipeline:
+      batchLinkLabel: Batch Pipeline
+      message: Choose the pipeline type you would like to create.
+      realtimeLinkLabel: Realtime Pipeline
+      title: Create a Data Pipeline
     Informational:
-      termsandconditions: Terms and Conditions
+      headerlabel: Download Information
       Step1:
         description: Please follow the steps specified below to download and configure
         shorttitle: Download Information
         title: Information
-      headerlabel: Download Information
+    LibraryUpload:
+      headerlabel: Add Library
+      footertitle: Add Library
+      Step1:
+        description: Upload your Library
+        shorttitle: Upload Library
+        title: Upload JAR
+        filePathLabel: Choose file
+      Step2:
+        description: Configure the settings for your library
+        shorttitle: Library Configuration
+        title: Configure Library
+        parentArtifactLabel: Parent Artifact
+        nameLabel: Name
+        namePlaceholder: Library Name
+        descriptionLabel: Description
+        decriptionPlaceholder: Library Description
+        typeLabel: Type
+        typePlaceholder: Library Type. E.g. sparkprogram
+        classnameLabel: Class Name
+        classnamePlaceholder: com.example.MyClass
+      success: You have successfully uploaded the library "{artifactName}".
+      subtitle: You can now create a pipeline using the library.
+      callToAction: Create a Pipeline
+    licenseStep:
+      agreeAndActionBtnLabel: Agree
+      backToCaskBtnLabel: Back to Cask Market
+      termsandconditions: Terms and Conditions
     MarketHydratorPluginUpload:
       headerlabel: Add Hydrator Plugin
     OneStepDeploy:
@@ -619,122 +846,79 @@ features:
         description: Deploy {entityType} using JAR file
         shorttitle: Deploy {entityType}
         title: Deploy JAR
-    Skip: Skipped
-    FailedMessage: Failed to {step}
-    StreamCreate:
-      Step1:
-        shorttitle: General Information
-        title: General
-        description: Provide information about the stream you want to create.
-        ttllabel: TTL
-        ttl-placeholder: Specify the time-to-live for events in seconds
-      Step2:
-        shorttitle: Setup Format and Schema
-        title: Set Format and Schema
-        description: Setting format and schema allows you to perform schema-on-read.
-      Step3:
-        shorttitle: Trigger Setup
-        title: Setup a Trigger
-        description: Setting up a trigger configures CDAP to notify systems observing to start processing.
-        thresholdlabel: The stream will notify any observers upon reaching this threshold to start processing the data in this stream.
-        mblabel: Megabytes (MB)
-      Step4:
-        shorttitle: Upload Data
-        title: Upload Data
-        description: Upload data to the stream you created.
-      headerlabel: Create Stream
-      success: You have successfully created the stream "{streamName}".
-      callToAction: View Stream Details
-      secondaryCallToAction:
-        uploadData: Upload Data to Stream
-        queryStream: Query Stream
-    UploadData:
-      Step1:
-        shorttitle: View Data
-        title: View Data
-        description: Shows the data for your reference that would be uploaded to a destination.
-      Step2:
-        shorttitle: Select Destination
-        title: Select a Destination
-        tooltiptext: The stream will be created if it does not exist
-        description: Select the destination where the data needs to be uploaded.
-        dataentitynameplaceholder: Dataset/Stream Name
-        destinationtype: Destination Type
-        destinationname: Destination Name
-      headerlabel: Upload Data
-      success: You have successfully uploaded the datapack "{datapackName}"
-      subtitle: to the stream "{streamId}".
-      callToAction: View Stream Details
-    PublishPipeline:
-      Step1:
-        shorttitle: Configure Pipeline
-        title: Configure a Pipeline
-        description: Specify the name of the pipeline.
-      pipelinenameplaceholder: Pipeline Name
-      headerlabel: Publish Pipeline
-      success: You have successfully created the pipeline "{pipelineName}".
-      callToAction:
-        customize: Customize Pipeline
-        view: View Pipeline
-    HydratorPipeline:
-      title: Create a Data Pipeline
-      message: Choose the pipeline type you would like to create.
-      batchLinkLabel: Batch Pipeline
-      realtimeLinkLabel: Realtime Pipeline
     PluginArtifact:
+      callToAction: Create a Pipeline
+      footertitle: Upload Plugin Artifact
       Step1:
+        description: Upload your plugin JAR.
+        errorMessage: Invalid plugin. Plugin must be a JAR file.
+        filePathLabel: Choose File
         shorttitle: Upload Plugin JAR
         title: Upload Plugin JAR
-        description: Upload your plugin JAR.
-        filePathLabel: Choose File
-        errorMessage: Invalid plugin. Plugin must be a JAR file.
       Step2:
-        shorttitle: Upload Plugin Configuration JSON
-        title: Upload Plugin Configuration JSON
         description: Upload the plugin configuration JSON.
         errorMessage: Invalid plugin JSON. Plugin configuration should be in JSON format.
         errorMessageParentArtifacts: Invalid plugin JSON. Please specify parent artifacts.
-      success: You have successfully uploaded the plugin "{pluginName}".
+        shorttitle: Upload Plugin Configuration JSON
+        title: Upload Plugin Configuration JSON
       subtitle: Start creating a pipeline with the plugin.
-      callToAction: Create a Pipeline
-    Add-Namespace:
-       Step1:
-         ssd-label: "General Information"
-         sld-desc:  "Specify the name and the description of the namespace."
-         name-label: "Name"
-         name-placeholder: "Namespace name"
-         description-label: "Description"
-         description-placeholder: "Namespace description"
-         scheduler-queue-label: "Scheduler Queue"
-         scheduler-queue-placeholder: "Specify the YARN queue name to be associated with this namespace"
-       Step2:
-         ssd-label: "Namespace Mapping"
-         sld-label: "Specify mapping of namespace resources to the underlying existing storage resources."
-         hdfs-root-directory-label: "HDFS Root Directory"
-         hdfs-root-directory-placeholder: "Root directory of HDFS for new namespace root"
-         hive-db-name-label: "Hive Database Name"
-         hive-db-name-placeholder: "Hive db name for the new namespace."
-         hbase-nm-name-label: "HBase Namespace Name"
-         hbase-nm-name-placeholder: "Existing namespace in HBase for new namespace"
-       Step3:
-         ssd-label: "Security"
-         sld-label: "Specify credentials for securely impersonating programs running as a specified user."
-         principal-label: "Principal"
-         principal-placeholder: "User to be impersonated-as for jobs in the new namespace"
-         keytab-uri-label: "Keytab URI"
-         keytab-uri-placeholder: "Location of keytab file associated with the principal"
-       Step4:
-         ssd-label: "Preferences"
-         sld-label: "Specify preferences to be applied at the namespace level."
-         name-label: "Name"
-         name-placeholder: "Preference name"
-         value-label: "Value"
-         value-placeholder: "Preference value"
-       headerlabel: Add Namespace
-       Status:
-         creation-error-desc: "Failed to create namespace '%s'."
-         creation-success-desc: "Successfully created namespace '%s'."
-
+      success: You have successfully uploaded the plugin "{pluginName}".
+    PublishPipeline:
+      callToAction:
+        customize: Customize Pipeline
+        view: View Pipeline
+      headerlabel: Deploy Pipeline
+      pipelinenameplaceholder: Pipeline Name
+      Step1:
+        description: Specify the name of the pipeline.
+        shorttitle: Configure Pipeline
+        title: Configure a Pipeline
+      success: You have successfully created the pipeline "{pipelineName}".
+    Skip: Skipped
+    StreamCreate:
+      callToAction: View Stream Details
+      headerlabel: Create Stream
+      secondaryCallToAction:
+        uploadData: Upload Data to Stream
+        queryStream: Query Stream
+      Step1:
+        description: Provide information about the stream you want to create.
+        shorttitle: General Information
+        title: General
+        ttl-placeholder: Specify the time-to-live for events in seconds
+        ttllabel: TTL
+      Step2:
+        description: Setting format and schema allows you to perform schema-on-read.
+        shorttitle: Setup Format and Schema
+        title: Set Format and Schema
+      Step3:
+        description: Setting up a trigger configures CDAP to notify systems observing to start processing.
+        mblabel: Megabytes (MB)
+        shorttitle: Trigger Setup
+        thresholdlabel: The stream will notify any observers upon reaching this threshold to start processing the data in this stream.
+        title: Setup a Trigger
+      Step4:
+        description: Upload data to the stream you created.
+        shorttitle: Upload Data
+        title: Upload Data
+      success: You have successfully created the stream "{streamName}".
+    UploadData:
+      callToAction: View Stream Details
+      headerlabel: Upload Data
+      Step1:
+        description: Shows the data that would be uploaded to a destination for your reference.
+        shorttitle: View Data
+        title: View Data
+      Step2:
+        dataentitynameplaceholder: Dataset/Stream Name
+        description: Select the destination where the data needs to be uploaded.
+        destinationname: Destination Name
+        destinationtype: Destination Type
+        shorttitle: Select Destination
+        title: Select a Destination
+        tooltiptext: The stream will be created if it does not exist
+      subtitle: to the stream "{streamId}".
+      success: You have successfully uploaded the datapack "{datapackName}"
   Wrangler:
     Actions:
       WRANGLER_DROP_COLUMN: drop
@@ -875,10 +1059,12 @@ features:
       statusLabel: Status
   Page404:
     genericMessage: Sorry, we are not able to find the page you are looking for.
-    entityMessage: Sorry, we are not able to find {entityType}
+    entityMessage: Sorry, we are not able to find {entityType} "{entityName}"
     subtitleMessage1: Here are some options on where to go next
     subtitleMessage2: View all your entities in the
     overviewLabel: Overview
     manageLabel: Manage
     pipelinesMessage: Pipelines
+  WarningContainer:
+    title: Warning
 ...

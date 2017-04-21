@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,28 @@
 
 function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers, moment, $timeout, caskWindowManager) {
 
-  var dataSrc = new MyCDAPDataSource($scope);
+  this.dataSrc = new MyCDAPDataSource($scope);
   this.pinScrollPosition = 0;
+  this.screenSize = LogViewerStore.getState().fullScreen;
+  this.pollPromise = null;
+
+  let programTypeSingular = ProgramsHelpers.getSingularName(this.programType);
+  this.apiSettings = {
+    metric : {
+      context: `namespace.${this.namespaceId}.app.${this.appId}.${programTypeSingular}.${this.programId}.run.${this.runId}`,
+      names: ['system.app.log.error', 'system.app.log.warn', 'system.app.log.info', 'system.app.log.debug', 'system.app.log.trace'],
+      startTime : '',
+      endTime : '',
+      resolution: 'auto'
+    }
+  };
+
   $scope.moment = moment;
-  let screenSize;
   $scope.pinScrollingPosition = 0;
+
+  $scope.$on(caskWindowManager.event.resize, () => {
+    $timeout($scope.initialize);
+  });
 
   this.updateStartTimeInStore = function(val) {
     LogViewerStore.dispatch({
@@ -31,9 +48,6 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     });
   };
 
-  $scope.$on(caskWindowManager.event.resize, () => {
-    $timeout($scope.initialize);
-  });
   this.updateTotalLogsInStore = function(val) {
     LogViewerStore.dispatch({
       type: LOGVIEWERSTORE_ACTIONS.TOTAL_LOGS,
@@ -69,42 +83,54 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     });
   };
 
-  var pollPromise = null;
-  var programType = ProgramsHelpers.getSingularName(this.programType);
-  var apiSettings = {
-    metric : {
-      context: `namespace.${this.namespaceId}.app.${this.appId}.${programType}.${this.programId}.run.${this.runId}`,
-      names: ['system.app.log.error', 'system.app.log.warn', 'system.app.log.info', 'system.app.log.debug'],
-      startTime : '',
-      endTime : '',
-      resolution: '1m'
-    }
-  };
-
   this.setDefaultTimeWindow = () => {
-    apiSettings.metric.startTime = '';
-    apiSettings.metric.endTime = '';
-    this.updateStartTimeInStore(apiSettings.metric.startTime);
+    this.apiSettings.metric.startTime = '';
+    this.apiSettings.metric.endTime = '';
+    this.updateStartTimeInStore(this.apiSettings.metric.startTime);
   };
 
-  const pollForMetadata = () => {
-    pollPromise = dataSrc.poll({
+  this.getStatus = () => {
+    if (!this.pollPromise) {
+      return;
+    }
+    myLogsApi.getLogsMetadata({
+      namespace : this.namespaceId,
+      appId : this.appId,
+      programType : this.programType,
+      programId : this.programId,
+      runId : this.runId
+    }).$promise.then(
+      (res) => {
+        let runStatuses =  ['KILLED', 'COMPLETED', 'FAILED', 'RUN_FAILED', 'STOPPED', 'KILLED_BY_TIMER'];
+        if (this.pollPromise && runStatuses.indexOf(res.status) !== -1) {
+          this.dataSrc.stopPoll(this.pollPromise.__pollId__);
+          this.pollPromise = null;
+        }
+      },
+      (err) => {
+        if (this.pollPromise) {
+          this.dataSrc.stopPoll(this.pollPromise.__pollId__);
+          this.pollPromise = null;
+        }
+        console.log('ERROR: ', err);
+      });
+  };
+
+  this.pollForMetadata = () => {
+    this.pollPromise = this.dataSrc.poll({
       _cdapPath: '/metrics/query',
       method: 'POST',
       body: MyMetricsQueryHelper.constructQuery(
         'qid',
-        MyMetricsQueryHelper.contextToTags(apiSettings.metric.context),
-        apiSettings.metric
+        MyMetricsQueryHelper.contextToTags(this.apiSettings.metric.context),
+        this.apiSettings.metric
       )
     },
     (res) => {
       $scope.metadata = res;
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
-      if (res.status === 'KILLED' || res.status==='COMPLETED' || res.status === 'FAILED' || res.status === 'STOPPED') {
-        dataSrc.stopPoll(pollPromise.__pollId__);
-        pollPromise = null;
-      }
+      this.getStatus();
     }, (err) => {
       // FIXME: We need to fix this. Right now this fails and we need to handle this more gracefully.
       $scope.initialize();
@@ -113,30 +139,29 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
   };
 
   LogViewerStore.subscribe(() => {
-    if(screenSize !== LogViewerStore.getState().fullScreen){
-      screenSize = LogViewerStore.getState().fullScreen;
+    let state = LogViewerStore.getState();
+    if(this.screenSize !== state.fullScreen){
+      this.screenSize = state.fullScreen;
       $timeout($scope.initialize);
     }
 
     //Keep the slider handle in sync with the api call
     if(typeof $scope.updateSliderHandle !== 'undefined'){
-      $scope.updateSliderHandle(LogViewerStore.getState().startTime);
+      $scope.updateSliderHandle(state.startTime);
 
       //Check if the pinScrollPosition is less than the value of the query handle
-      this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
+      this.pinScrollPosition = state.scrollPosition;
       if(typeof $scope.updatePin !== 'undefined'){
         $scope.pinScrollingPosition = this.pinScrollPosition;
         $scope.updatePin();
       }
 
-      if($scope.searchResultTimes !== LogViewerStore.getState().searchResults){
-        $scope.searchResultTimes = LogViewerStore.getState().searchResults;
+      if($scope.searchResultTimes !== state.searchResults){
+        $scope.searchResultTimes = state.searchResults;
         $scope.renderSearchCircles($scope.searchResultTimes);
       }
     }
   });
-
-  screenSize = LogViewerStore.getState().fullScreen;
 
   if (!this.namespaceId || !this.appId || !this.programType || !this.programId || !this.runId) {
     this.setDefaultTimeWindow();
@@ -148,17 +173,17 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     appId : this.appId,
     programType : this.programType,
     programId : this.programId,
-    runId : this.runId,
+    runId : this.runId
   }).$promise.then(
     (res) => {
       $scope.metadata = res;
       if(res.start === res.end){
         res.end++;
       }
-      apiSettings.metric.startTime = res.start;
-      apiSettings.metric.endTime = res.end;
+      this.apiSettings.metric.startTime = res.start;
+      this.apiSettings.metric.endTime = res.end;
       $scope.renderSearchCircles([]);
-      pollForMetadata();
+      this.pollForMetadata();
     },
     (err) => {
       this.setDefaultTimeWindow();

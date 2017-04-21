@@ -19,7 +19,7 @@ import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 
-const appPath = '/namespaces/:namespace/apps/wrangler';
+const appPath = '/namespaces/:namespace/apps/dataprep';
 const baseServicePath = `${appPath}/services/service`;
 const basepath = `${baseServicePath}/methods/workspaces/:workspaceId`;
 
@@ -27,16 +27,21 @@ const MyDataPrepApi = {
   create: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', basepath),
   upload: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/upload`),
-  execute: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/execute`),
-  summary: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/summary`),
-  getSchema: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/schema`),
+  execute: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/execute`),
+  summary: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/summary`),
+  getSchema: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/schema`),
   getUsage: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/usage`),
+  getInfo: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/info`),
+  getWorkspace: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}`),
+  getWorkspaceList: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/workspaces`),
 
   // WRANGLER SERVICE MANAGEMENT
   getApp: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}`),
   startService: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/start`),
+  stopService: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/stop`),
   pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${baseServicePath}/status`),
-  createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${appPath}`)
+  createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${appPath}`),
+  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/usage`, { interval: 2000 })
 };
 
 export default MyDataPrepApi;

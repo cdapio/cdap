@@ -15,11 +15,10 @@
  */
 
 import React, { Component } from 'react';
+import DataPrepAutoComplete from 'components/DataPrep/AutoComplete';
+import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import MyDataPrepApi from 'api/dataprep';
-import DataPrepAutoComplete from 'components/DataPrep/AutoComplete';
-import NamespaceStore from 'services/NamespaceStore';
 require('./DataPrepCLI.scss');
 
 export default class DataPrepCLI extends Component {
@@ -37,11 +36,25 @@ export default class DataPrepCLI extends Component {
     this.dismissError = this.dismissError.bind(this);
     this.handlePaste = this.handlePaste.bind(this);
     this.execute = this.execute.bind(this);
+
+    this.sub = DataPrepStore.subscribe(() => {
+      let storeState = DataPrepStore.getState().error;
+
+      this.setState({
+        error: storeState.cliError
+      });
+    });
   }
 
   componentDidMount() {
     if (this.directiveRef) {
       this.directiveRef.focus();
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.sub) {
+      this.sub();
     }
   }
 
@@ -57,46 +70,29 @@ export default class DataPrepCLI extends Component {
   }
 
   execute(addDirective) {
-    if (addDirective.length === 0) { return; }
-
-    let store = DataPrepStore.getState().dataprep;
-    let updatedDirectives = store.directives.concat(addDirective);
-
-    let workspaceId = store.workspaceId;
-    let namespace = NamespaceStore.getState().selectedNamespace;
-
-    let params = {
-      namespace,
-      workspaceId,
-      limit: 100,
-      directive: updatedDirectives
-    };
-
-    MyDataPrepApi.execute(params)
-      .subscribe((res) => {
+    execute(addDirective)
+      .subscribe(() => {
         this.setState({
-          error: null,
           directiveInput: ''
         });
+      }, (err) => {
 
         DataPrepStore.dispatch({
-          type: DataPrepActions.setDirectives,
+          type: DataPrepActions.setCLIError,
           payload: {
-            data: res.value,
-            headers: res.header,
-            directives: updatedDirectives
+            message: err.message || err.response.message
           }
         });
-      }, (err) => {
-        this.setState({
-          error: err.message || err.response.message
-        });
       });
-
   }
 
   dismissError() {
-    this.setState({error: null});
+    DataPrepStore.dispatch({
+      type: DataPrepActions.setCLIError,
+      payload: {
+        message: null
+      }
+    });
   }
 
   renderError() {
@@ -146,8 +142,8 @@ export default class DataPrepCLI extends Component {
           execute={this.execute}
         />
 
-        <div className="input-container">
-          <strong>$</strong>
+        <div className="input-container clearfix">
+          <strong className="float-xs-left">$</strong>
           <div className="directive-input">
             <input
               type="text"

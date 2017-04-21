@@ -44,4 +44,10 @@ public class PluginWithPojo {
     }
     return aggregateResult;
   }
+
+  // Endpoint which throws IllegalArgumentException
+  @Path("throwException")
+  public String throwException(String testString) throws Exception {
+    throw new IllegalArgumentException("Invalid user inputs: " + testString);
+  }
 }

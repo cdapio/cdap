@@ -18,8 +18,6 @@ package co.cask.cdap.logging;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
-import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
-import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -31,6 +29,8 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
 import com.google.common.collect.ImmutableList;
@@ -47,7 +47,6 @@ public abstract class KafkaTestBase {
   public static final KafkaTester KAFKA_TESTER = new KafkaTester(
     ImmutableMap.<String, String>builder()
       .put(Constants.Logging.NUM_PARTITIONS, "2")
-      .put(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync")
       .put(LoggingConfiguration.KAFKA_PRODUCER_BUFFER_MS, "100")
       .put(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS, "10")
       .put(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, "10240")

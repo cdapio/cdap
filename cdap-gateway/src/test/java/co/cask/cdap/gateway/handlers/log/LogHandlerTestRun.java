@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers.log;
 
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.metrics.MetricsSuiteTestBase;
 import co.cask.cdap.logging.gateway.handlers.FormattedTextLogEvent;
@@ -245,11 +246,14 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private List<LogLine> getLogs(String namespaceId, String appId, String programType, String programName, String runId,
-                                String endPoint) throws Exception {
+                                String endPoint, int expectedStatusCode) throws Exception {
     String path = String.format("apps/%s/%s/%s/runs/%s/logs/%s?max=1000", appId, programType, programName, runId,
                                 endPoint);
     HttpResponse response = doGet(getVersionedAPIPath(path, namespaceId));
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
+    if (response.getStatusLine().getStatusCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
+      return ImmutableList.of();
+    }
     String out = EntityUtils.toString(response.getEntity());
     return GSON.fromJson(out, LIST_LOGLINE_TYPE);
   }
@@ -309,6 +313,40 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testNextSystemLogs(Constants.Service.MASTER_SERVICES);
   }
 
+  // Verify the Json returned for logs has isNativeMethod set correctly
+  @Test
+  public void testNativeMethodField() throws Exception {
+    ProgramId programId =
+      new NamespaceId(MockLogReader.TEST_NAMESPACE).app("testTemplate1").program(ProgramType.
+        valueOfCategoryName("workflows"), "testWorkflow1");
+    RunRecord runRecord = mockLogReader.getRunRecord(programId);
+    String logsUrl = String.format("apps/%s/%s/%s/runs/%s/logs/next?format=json",
+                            "testTemplate1", "workflows", "testWorkflow1", runRecord.getPid());
+    HttpResponse response = doGet(getVersionedAPIPath(logsUrl, MockLogReader.TEST_NAMESPACE));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    String out = EntityUtils.toString(response.getEntity());
+    List<LogDataOffset> logDataOffsetList = GSON.fromJson(out, LIST_LOGDATA_OFFSET_TYPE);
+    Assert.assertEquals(logDataOffsetList.size(), 15);
+    Assert.assertEquals(logDataOffsetList.get(0).getLog().getNativeMethod(), true);
+    Assert.assertEquals(logDataOffsetList.get(1).getLog().getNativeMethod(), false);
+    Assert.assertEquals(logDataOffsetList.get(2).getLog().getNativeMethod(), false);
+  }
+
+
+  private List<LogLine> getLogs(String namespaceId, String appId, String programType, String programName, String runId,
+                                                                   String endPoint) throws Exception {
+    return getLogs(namespaceId, appId, programType, programName, runId, endPoint, HttpResponseStatus.OK.getCode());
+  }
+
+  @Test
+  public void testNonExistenceRunLogs() throws Exception {
+    getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP.getApplication(), "workflows",
+            MockLogReader.SOME_WORKFLOW, RunIds.generate().getId(), "next", HttpResponseStatus.NOT_FOUND.getCode());
+
+    getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP.getApplication(), "workflows",
+            MockLogReader.SOME_WORKFLOW, RunIds.generate().getId(), "prev", HttpResponseStatus.NOT_FOUND.getCode());
+  }
+  
   private void testNext(String appId, String entityType, String entityId, boolean escape, String namespace)
     throws Exception {
     String nextUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&max=10&escape=%s",
@@ -472,6 +510,29 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
                                          entityType, entityId, startTime, stopTime);
     HttpResponse response = doGet(getVersionedAPIPath(logsFilterUrl, namespace));
     verifyLogs(response, entityId, "text", true, true, true, 8, 20);
+
+    // Test origin filter
+    String originFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&filter=.origin=plugin", appId,
+                                             entityType, entityId, startTime, stopTime);
+    // There are 2 logs with .origin=plugin and loglevel=ERROR starting from 24
+    response = doGet(getVersionedAPIPath(originFilterUrl + "%20AND%20loglevel=ERROR", namespace));
+    verifyLogs(response, entityId, "text", 6, true, true, 2, 24, ImmutableList.<String>of());
+
+    // There are 3 logs with .origin=program and MDC:eventType=lifeCycle starting from 22
+    originFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&filter=.origin=program", appId,
+                                    entityType, entityId, startTime, stopTime);
+    response = doGet(getVersionedAPIPath(originFilterUrl + "%20AND%20MDC:eventType=lifecycle", namespace));
+    verifyLogs(response, entityId, "text", 6, true, true, 3, 22, ImmutableList.<String>of());
+
+    originFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&filter=loglevel=ERROR", appId,
+                                    entityType, entityId, startTime, stopTime);
+    // Test complex filters with combining AndFilter and OrFilter. Filters are combined from right to left.
+    // Therefore, ".origin=plugin OR .origin=program OR .origin=system" is first combined to a single OrFilter,
+    // which all logs can pass. Then loglevel=ERROR is combined with this OrFilter to form an AndFilter.
+    // The whole filter therefore filters out logs with loglevel=ERROR.
+    response = doGet(getVersionedAPIPath(
+      originFilterUrl + "%20AND%20.origin=plugin%20OR%20.origin=program%20OR%20.origin=system", namespace));
+    verifyLogs(response, entityId, "text", 2, true, true, 8, 20, ImmutableList.<String>of());
   }
 
   /**
@@ -511,6 +572,29 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
    * @throws IOException
    */
   private void verifyLogs(HttpResponse response, String entityId, String format, boolean runIdOrFilter,
+                          boolean fullLogs, boolean escapeChoice, int expectedEvents, int expectedStartValue,
+                          List<String> suppress) throws IOException {
+    int stepSize = runIdOrFilter ? 2 : 1;
+    verifyLogs(response, entityId, format, stepSize, fullLogs, escapeChoice, expectedEvents, expectedStartValue,
+               suppress);
+  }
+
+  /**
+   * Verify the logs returned in the {@link HttpResponse}.
+   *
+   * @param response {@link HttpResponse}
+   * @param entityId Entity for which the logs were fetched
+   * @param format {@link LogHandler.LogFormatType}
+   * @param stepSize the number used to increment expected integer value in the log message every time
+   * @param fullLogs true if /logs endpoint was used (this is because the response format is different
+   *                 for /logs vs /next or /prev)
+   * @param escapeChoice true if the response was chosen to be escaped
+   * @param expectedEvents number of expected logs events
+   * @param expectedStartValue expected value in the log message
+   * @param suppress log fields to suppress
+   * @throws IOException
+   */
+  private void verifyLogs(HttpResponse response, String entityId, String format, int stepSize,
                           boolean fullLogs, boolean escapeChoice, int expectedEvents, int expectedStartValue,
                           List<String> suppress) throws IOException {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -554,7 +638,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
         Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       }
       // Figure out what is the next expected integer value in the log message
-      expected = expected + (runIdOrFilter ? 2 : 1);
+      expected = expected + stepSize;
     }
   }
 

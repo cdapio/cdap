@@ -40,7 +40,6 @@ import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
-import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -65,7 +64,7 @@ public class PreviewDataModules {
     });
   }
 
-  public Module getDataSetsModule(final DatasetFramework remoteDatasetFramework, final Set<String> datasetNames) {
+  public Module getDataSetsModule(final DatasetFramework remoteDatasetFramework) {
 
     return new PrivateModule() {
       @Override
@@ -76,9 +75,6 @@ public class PreviewDataModules {
 
         bind(MetadataStore.class).to(DefaultMetadataStore.class);
         expose(MetadataStore.class);
-
-        bind(new TypeLiteral<Set<String>>() { })
-          .annotatedWith(Names.named("realDatasets")).toInstance(datasetNames);
 
         bind(DatasetFramework.class)
           .annotatedWith(Names.named("localDatasetFramework"))
@@ -115,26 +111,23 @@ public class PreviewDataModules {
   private static final class PreviewDatasetFrameworkProvider implements Provider<DatasetFramework> {
     private final DatasetFramework inMemoryDatasetFramework;
     private final DatasetFramework remoteDatasetFramework;
-    private final Set<String> datasetNames;
     private final AuthenticationContext authenticationContext;
     private final AuthorizationEnforcer authorizationEnforcer;
 
     @Inject
     PreviewDatasetFrameworkProvider(@Named("localDatasetFramework")DatasetFramework inMemoryDatasetFramework,
                                     @Named("actualDatasetFramework")DatasetFramework remoteDatasetFramework,
-                                    @Named("realDatasets") Set<String> datasetNames,
                                     AuthenticationContext authenticationContext,
                                     AuthorizationEnforcer authorizationEnforcer) {
       this.inMemoryDatasetFramework = inMemoryDatasetFramework;
       this.remoteDatasetFramework = remoteDatasetFramework;
-      this.datasetNames = datasetNames;
       this.authenticationContext = authenticationContext;
       this.authorizationEnforcer = authorizationEnforcer;
     }
 
     @Override
     public DatasetFramework get() {
-      return new PreviewDatasetFramework(inMemoryDatasetFramework, remoteDatasetFramework, datasetNames,
+      return new PreviewDatasetFramework(inMemoryDatasetFramework, remoteDatasetFramework,
                                          authenticationContext, authorizationEnforcer);
     }
   }

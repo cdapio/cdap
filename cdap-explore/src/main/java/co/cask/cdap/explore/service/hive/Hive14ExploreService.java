@@ -35,6 +35,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.FetchType;
 import org.apache.hive.service.cli.HiveSQLException;
@@ -45,6 +46,8 @@ import org.apache.hive.service.cli.SessionHandle;
 import org.apache.tephra.TransactionSystemClient;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 
@@ -52,6 +55,11 @@ import java.util.List;
  * Hive 14 implementation of {@link co.cask.cdap.explore.service.ExploreService}.
  */
 public class Hive14ExploreService extends BaseHiveExploreService {
+
+  // Used to store the getOperationStatus from Hive's CLIService class. The number of arguments for this method
+  // varies between versions, so we get this method on startup using reflection and then call the correct version
+  // based on the number of argument it takes.
+  private Method getOperationStatus;
 
   @Inject
   public Hive14ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
@@ -72,6 +80,34 @@ public class Hive14ExploreService extends BaseHiveExploreService {
   }
 
   @Override
+  protected void startUp() throws Exception {
+    super.startUp();
+    getOperationStatus = initOperationStatus();
+  }
+
+  private Method initOperationStatus() {
+    /*
+    Hive 1.2.1000.2.6.0.0-598, that ships with HDP 2.6.0 introduced a change as part of
+    https://issues.apache.org/jira/browse/HIVE-15473 in the getOperationStatus method and introduced a boolean argument
+    to get the progress update for the operation. Previous versions of the method just took an {@link OperationHandle}
+    as the single argument.
+    To handle this we are using reflection to find out how many arguments the method takes and then call it accordingly.
+     */
+    CLIService cliService = getCliService();
+    Method getOperationStatus = null;
+    for (Method method : cliService.getClass().getMethods()) {
+      if ("getOperationStatus".equals(method.getName())) {
+        getOperationStatus = method;
+        break;
+      }
+    }
+    if (getOperationStatus == null) {
+      throw new RuntimeException("Unable to find getOperationStatus method from the Hive CLIService.");
+    }
+    return getOperationStatus;
+  }
+
+  @Override
   protected List<QueryResult> doFetchNextResults(OperationHandle handle, FetchOrientation fetchOrientation,
                                                  int size) throws Exception {
     RowSet rowSet = getCliService().fetchResults(handle, fetchOrientation, size, FetchType.QUERY_OUTPUT);
@@ -86,7 +122,21 @@ public class Hive14ExploreService extends BaseHiveExploreService {
   @Override
   protected QueryStatus doFetchStatus(OperationHandle operationHandle)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
-    OperationStatus operationStatus = getCliService().getOperationStatus(operationHandle);
+
+    OperationStatus operationStatus;
+    CLIService cliService = getCliService();
+
+    // Call the getOperationStatus method based on the number of arguments it expects.
+    try {
+      if (getOperationStatus.getParameterTypes().length == 2) {
+        operationStatus = (OperationStatus) getOperationStatus.invoke(cliService, operationHandle, true);
+      } else {
+        operationStatus = (OperationStatus) getOperationStatus.invoke(cliService, operationHandle);
+      }
+    } catch (IndexOutOfBoundsException | IllegalAccessException | InvocationTargetException e) {
+      throw new RuntimeException("Failed to get the status of the operation.", e);
+    }
+
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     HiveSQLException hiveExn = operationStatus.getOperationException();
     if (hiveExn != null) {

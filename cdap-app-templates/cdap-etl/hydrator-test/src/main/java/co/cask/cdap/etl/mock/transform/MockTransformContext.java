@@ -25,6 +25,7 @@ import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.mock.common.MockLookupProvider;
 import co.cask.cdap.etl.mock.common.MockStageMetrics;
 
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -112,5 +113,19 @@ public class MockTransformContext implements TransformContext {
   @Override
   public <T> Lookup<T> provide(String table, Map<String, String> arguments) {
     return lookup.provide(table, arguments);
+  }
+
+  @Nullable
+  @Override
+  public URL getServiceURL(String applicationId, String serviceId) {
+    //no-op
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public URL getServiceURL(String serviceId) {
+    //no-op
+    return null;
   }
 }

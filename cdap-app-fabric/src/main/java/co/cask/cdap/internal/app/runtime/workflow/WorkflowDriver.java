@@ -53,6 +53,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -181,7 +183,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
-
   }
 
   @Override
@@ -375,19 +376,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
           String branchInfo = retValue.getKey();
           WorkflowToken branchToken = retValue.getValue();
           ((BasicWorkflowToken) token).mergeToken(branchToken);
-          LOG.info("Execution of branch {} for fork {} completed", branchInfo, fork);
-        } catch (Throwable t) {
-          Throwable rootCause = Throwables.getRootCause(t);
-          if (rootCause instanceof ExecutionException) {
-            LOG.error("Exception occurred in the execution of the fork node {}.", fork, rootCause);
-            throw (ExecutionException) rootCause;
-          }
-          if (rootCause instanceof InterruptedException) {
-            LOG.error("Workflow execution aborted.", rootCause);
-            break;
-          }
-          Throwables.propagateIfPossible(rootCause, Exception.class);
-          throw Throwables.propagate(rootCause);
+          LOG.trace("Execution of branch {} for fork {} completed.", branchInfo, fork);
+        } catch (InterruptedException e) {
+          // Due to workflow abortion, so just break the loop
+          break;
+        } catch (ExecutionException e) {
+          // Unwrap the cause
+          Throwables.propagateIfPossible(e.getCause(), Exception.class);
+          throw Throwables.propagate(e.getCause());
         }
       }
     } finally {
@@ -510,31 +506,52 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private void createLocalDatasets() throws IOException, DatasetManagementException {
-    for (Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
-      String localInstanceName = entry.getValue();
-      DatasetId instanceId = new DatasetId(workflowRunId.getNamespace(), localInstanceName);
-      DatasetCreationSpec instanceSpec = workflowSpec.getLocalDatasetSpecs().get(entry.getKey());
+    for (final Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
+      final String localInstanceName = entry.getValue();
+      final DatasetId instanceId = new DatasetId(workflowRunId.getNamespace(), localInstanceName);
+      final DatasetCreationSpec instanceSpec = workflowSpec.getLocalDatasetSpecs().get(entry.getKey());
       LOG.debug("Adding Workflow local dataset instance: {}", localInstanceName);
-      datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId,
-                                   addLocalDatasetProperty(instanceSpec.getProperties()));
+
+      try {
+        Retries.callWithRetries(new Retries.Callable<Void, Exception>() {
+          @Override
+          public Void call() throws Exception {
+            datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId,
+                                         addLocalDatasetProperty(instanceSpec.getProperties()));
+            return null;
+          }
+        }, RetryStrategies.fixDelay(Constants.Retry.LOCAL_DATASET_OPERATION_RETRY_DELAY_SECONDS, TimeUnit.SECONDS));
+      } catch (IOException | DatasetManagementException e) {
+        throw e;
+      } catch (Exception e) {
+        // this should never happen
+        throw new IllegalStateException(e);
+      }
     }
   }
 
   private void deleteLocalDatasets() {
-    for (Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
-      Map<String, String> datasetArguments = RuntimeArguments.extractScope(Scope.DATASET, entry.getKey(),
+    for (final Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
+      final Map<String, String> datasetArguments = RuntimeArguments.extractScope(Scope.DATASET, entry.getKey(),
                                                                            basicWorkflowContext.getRuntimeArguments());
       if (Boolean.parseBoolean(datasetArguments.get("keep.local"))) {
         continue;
       }
 
-      String localInstanceName = entry.getValue();
-      DatasetId instanceId = new DatasetId(workflowRunId.getNamespace(), localInstanceName);
+      final String localInstanceName = entry.getValue();
+      final DatasetId instanceId = new DatasetId(workflowRunId.getNamespace(), localInstanceName);
       LOG.debug("Deleting Workflow local dataset instance: {}", localInstanceName);
+
       try {
-        datasetFramework.deleteInstance(instanceId);
-      } catch (Throwable t) {
-        LOG.warn("Failed to delete the Workflow local dataset instance {}", localInstanceName, t);
+        Retries.callWithRetries(new Retries.Callable<Void, Exception>() {
+          @Override
+          public Void call() throws Exception {
+            datasetFramework.deleteInstance(instanceId);
+            return null;
+          }
+        }, RetryStrategies.fixDelay(Constants.Retry.LOCAL_DATASET_OPERATION_RETRY_DELAY_SECONDS, TimeUnit.SECONDS));
+      } catch (Exception e) {
+        LOG.warn("Failed to delete the Workflow local dataset instance {}", localInstanceName, e);
       }
     }
   }
@@ -542,14 +559,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   @Override
   protected void run() throws Exception {
     LOG.info("Start workflow execution for {} with run id {}.", workflowSpec.getName(), workflowRunId.getRun());
-    LOG.debug("Workflow specification is {}", workflowSpec);
+    LOG.trace("Workflow specification is {}", workflowSpec);
     basicWorkflowContext.setState(new ProgramState(ProgramStatus.RUNNING, null));
     executeAll(workflowSpec.getNodes().iterator(), program.getApplicationSpecification(),
                new InstantiatorFactory(false), program.getClassLoader(), basicWorkflowToken);
     if (runningThread != null) {
       basicWorkflowContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
     }
-    LOG.info("Workflow execution succeeded for {}", workflowSpec.getName());
+    LOG.info("Execution of workflow {} with run id {} is completed.", workflowSpec.getName(), workflowRunId.getRun());
   }
 
   private void executeAll(Iterator<WorkflowNode> iterator, ApplicationSpecification appSpec,
@@ -562,7 +579,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       } catch (Throwable t) {
         Throwable rootCause = Throwables.getRootCause(t);
         if (rootCause instanceof InterruptedException) {
-          LOG.error("Workflow execution aborted.", rootCause);
+          LOG.debug("Execution of workflow {} with run id {} is aborted.", workflowSpec.getName(),
+                    workflowRunId.getRun());
           basicWorkflowContext.setState(new ProgramState(ProgramStatus.KILLED, rootCause.getMessage()));
           break;
         }

@@ -56,7 +56,7 @@ export default class Market extends Component {
           let placeholderIcon = MarketCategoriesIconMap[missingTab] || `icon-${missingTab[0].toUpperCase()}`;
           return {
             id: shortid.generate(),
-            icon: `fa ${placeholderIcon}`,
+            icon: `fa ${placeholderIcon} fa-fw`,
             content: TabConfig.defaultTabContent
           };
         };

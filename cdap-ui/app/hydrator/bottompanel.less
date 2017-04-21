@@ -220,6 +220,21 @@ body.theme-cdap.state-hydrator {
       }
     }
   }
+  .form-input-attr {
+    padding-right: 0;
+
+    &.col-xs-11 {
+      padding-left: 100px;
+    }
+    .highlight-error {
+      border: 1px solid #d15668;
+      border-radius: 4px;
+    }
+  }
+
+  .info-attr {
+    padding-left: 5px;
+  }
   div.console-type {
     border-top: 1px solid @table-border-color;
     h4 {
@@ -228,6 +243,25 @@ body.theme-cdap.state-hydrator {
       font-weight: 500;
       margin-top: 0;
     }
+    .field-header {
+      &.subtitle {
+        color: #999999;
+        border-bottom: 1px solid #666666;
+        clear: both;
+        width: 100%;
+        margin-bottom: 15px;
+
+        h4 {
+          display: inline-block;
+          background-color: #ffffff;
+          padding-right: 15px;
+          font-size: 16px;
+          font-weight: bold;
+          margin-bottom: 4px;
+        }
+      }
+    }
+
     .select-wrapper {
       .select-wrapper(transparent);
     }
@@ -438,6 +472,30 @@ body.theme-cdap.state-hydrator {
           label {
             &:not(:first-child) {
               margin-top: 10px;
+            }
+          }
+        }
+      }
+      .empty-hidden-properties-message {
+        margin: 0 0 5px 0;
+      }
+      .config-table {
+        form[plugin-property-edit-view] {
+          .form-group {
+            display: flex;
+            align-items: center;
+
+            .control-label {
+              padding-top: 0;
+              padding-right: 0;
+            }
+            .form-input-attr {
+              position: relative;
+              padding-right: 0;
+              .macro-indicator {
+                position: absolute;
+                right: 0;
+              }
             }
           }
         }

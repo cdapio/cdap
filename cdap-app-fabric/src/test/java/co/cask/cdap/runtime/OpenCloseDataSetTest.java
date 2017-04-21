@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -94,7 +94,7 @@ public class OpenCloseDataSetTest {
   public static void setup() throws Exception {
     NamespacedLocationFactory namespacedLocationFactory =
       AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
-    namespaceHomeLocation = namespacedLocationFactory.get(DefaultId.NAMESPACE.toId());
+    namespaceHomeLocation = namespacedLocationFactory.get(DefaultId.NAMESPACE);
     NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(DefaultId.NAMESPACE).build());
     Locations.mkdirsIfNotExists(namespaceHomeLocation);

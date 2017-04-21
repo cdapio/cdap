@@ -24,9 +24,8 @@ import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
 import org.apache.twill.common.Threads;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -35,14 +34,12 @@ import java.util.concurrent.Executors;
 /**
  * A Kafka producer that publishes log messages to Kafka brokers.
  */
-public final class SimpleKafkaProducer {
-  private static final Logger LOG = LoggerFactory.getLogger(SimpleKafkaProducer.class);
+final class SimpleKafkaProducer {
 
-  private final String kafkaTopic;
   // Kafka producer is thread safe
   private final Producer<String, byte[]> producer;
 
-  public SimpleKafkaProducer(CConfiguration cConf) {
+  SimpleKafkaProducer(CConfiguration cConf) {
     Properties props = new Properties();
     props.setProperty("metadata.broker.list", cConf.get(LoggingConfiguration.KAFKA_SEED_BROKERS));
     props.setProperty("serializer.class", "kafka.serializer.DefaultEncoder");
@@ -56,18 +53,14 @@ public final class SimpleKafkaProducer {
     props.setProperty(Constants.Logging.NUM_PARTITIONS, cConf.get(Constants.Logging.NUM_PARTITIONS));
 
     ProducerConfig config = new ProducerConfig(props);
-    kafkaTopic = cConf.get(Constants.Logging.KAFKA_TOPIC);
     producer = createProducer(config);
   }
 
-  public void publish(String key, byte[] bytes) {
+  void publish(List<KeyedMessage<String, byte[]>> messages) {
     // Clear the interrupt flag, otherwise it won't be able to publish
     boolean threadInterrupted = Thread.interrupted();
     try {
-      KeyedMessage<String, byte[]> data = new KeyedMessage<>(kafkaTopic, key, bytes);
-      producer.send(data);
-    } catch (Throwable t) {
-      LOG.error("Exception when trying to publish log message to kafka with key {} and topic {}", key, kafkaTopic, t);
+      producer.send(messages);
     } finally {
       // Reset the interrupt flag if needed
       if (threadInterrupted) {
@@ -76,7 +69,7 @@ public final class SimpleKafkaProducer {
     }
   }
 
-  public void stop() {
+  void stop() {
     producer.close();
   }
 

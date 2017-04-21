@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,245 +16,41 @@
 
 package co.cask.cdap.cli.commandset;
 
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
-import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.english.Article;
-import co.cask.cdap.cli.english.Fragment;
-import co.cask.cdap.cli.exception.CommandInputError;
-import co.cask.cdap.cli.util.AbstractCommand;
-import co.cask.cdap.cli.util.RowMaker;
-import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.client.ScheduleClient;
-import co.cask.cdap.internal.schedule.StreamSizeSchedule;
-import co.cask.cdap.internal.schedule.TimeSchedule;
-import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.WorkflowId;
-import co.cask.common.cli.Arguments;
+import co.cask.cdap.cli.command.schedule.AddTimeScheduleCommand;
+import co.cask.cdap.cli.command.schedule.DeleteScheduleCommand;
+import co.cask.cdap.cli.command.schedule.GetScheduleStatusCommand;
+import co.cask.cdap.cli.command.schedule.ListWorkflowSchedulesCommand;
+import co.cask.cdap.cli.command.schedule.ResumeScheduleCommand;
+import co.cask.cdap.cli.command.schedule.SuspendScheduleCommand;
+import co.cask.cdap.cli.command.schedule.UpdateTimeScheduleCommand;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-
-import java.io.PrintStream;
-import java.util.List;
 
 /**
  * Schedule commands.
  */
 public class ScheduleCommands extends CommandSet<Command> implements Categorized {
-
-  private static final Gson GSON = new Gson();
-
   @Inject
   public ScheduleCommands(Injector injector) {
     super(
       ImmutableList.<Command>builder()
+        .add(injector.getInstance(AddTimeScheduleCommand.class))
+        .add(injector.getInstance(DeleteScheduleCommand.class))
         .add(injector.getInstance(GetScheduleStatusCommand.class))
-        .add(injector.getInstance(SuspendScheduleCommand.class))
-        .add(injector.getInstance(ResumeScheduleCommand.class))
         .add(injector.getInstance(ListWorkflowSchedulesCommand.class))
+        .add(injector.getInstance(ResumeScheduleCommand.class))
+        .add(injector.getInstance(SuspendScheduleCommand.class))
+        .add(injector.getInstance(UpdateTimeScheduleCommand.class))
         .build());
   }
 
   @Override
   public String getCategory() {
     return CommandCategory.APPLICATION_LIFECYCLE.getName();
-  }
-
-  /**
-   * Gets the status of a schedule.
-   */
-  public static final class GetScheduleStatusCommand extends AbstractCommand {
-
-    private final ScheduleClient scheduleClient;
-
-    @Inject
-    public GetScheduleStatusCommand(CLIConfig cliConfig, ScheduleClient scheduleClient) {
-      super(cliConfig);
-      this.scheduleClient = scheduleClient;
-    }
-
-    @Override
-    public void perform(Arguments arguments, PrintStream printStream) throws Exception {
-      String[] programIdParts = arguments.get("app-id.schedule-id").split("\\.");
-      if (programIdParts.length < 2) {
-        throw new CommandInputError(this);
-      }
-
-      String appId = programIdParts[0];
-      String scheduleName = programIdParts[1];
-      ScheduleId scheduleId = cliConfig.getCurrentNamespace().app(appId).schedule(scheduleName);
-
-      printStream.println(scheduleClient.getStatus(scheduleId));
-    }
-
-    @Override
-    public String getPattern() {
-      return "get schedule status <app-id.schedule-id>";
-    }
-
-    @Override
-    public String getDescription() {
-      return "Gets the status of a schedule";
-    }
-  }
-
-  /**
-   * Suspends a schedule.
-   */
-  public static final class SuspendScheduleCommand extends AbstractCommand {
-
-    private final ScheduleClient scheduleClient;
-
-    @Inject
-    public SuspendScheduleCommand(CLIConfig cliConfig, ScheduleClient scheduleClient) {
-      super(cliConfig);
-      this.scheduleClient = scheduleClient;
-    }
-
-    @Override
-    public void perform(Arguments arguments, PrintStream printStream) throws Exception {
-      String[] programIdParts = arguments.get("app-id.schedule-id").split("\\.");
-      if (programIdParts.length < 2) {
-        throw new CommandInputError(this);
-      }
-
-      String appId = programIdParts[0];
-      String scheduleName = programIdParts[1];
-      ScheduleId scheduleId = cliConfig.getCurrentNamespace().app(appId).schedule(scheduleName);
-
-      scheduleClient.suspend(scheduleId);
-      printStream.printf("Successfully suspended schedule '%s' in app '%s'\n", scheduleName, appId);
-    }
-
-    @Override
-    public String getPattern() {
-      return "suspend schedule <app-id.schedule-id>";
-    }
-
-    @Override
-    public String getDescription() {
-      return "Suspends a schedule";
-    }
-  }
-
-  /**
-   * Resumes a schedule.
-   */
-  public static final class ResumeScheduleCommand extends AbstractCommand {
-
-    private final ScheduleClient scheduleClient;
-
-    @Inject
-    public ResumeScheduleCommand(CLIConfig cliConfig, ScheduleClient scheduleClient) {
-      super(cliConfig);
-      this.scheduleClient = scheduleClient;
-    }
-
-    @Override
-    public void perform(Arguments arguments, PrintStream printStream) throws Exception {
-      String[] programIdParts = arguments.get("app-id.schedule-id").split("\\.");
-      if (programIdParts.length < 2) {
-        throw new CommandInputError(this);
-      }
-
-      String appId = programIdParts[0];
-      String scheduleName = programIdParts[1];
-      ScheduleId schedule = cliConfig.getCurrentNamespace().app(appId).schedule(scheduleName);
-
-      scheduleClient.resume(schedule);
-      printStream.printf("Successfully resumed schedule '%s' in app '%s'\n", scheduleName, appId);
-    }
-
-    @Override
-    public String getPattern() {
-      return "resume schedule <app-id.schedule-id>";
-    }
-
-    @Override
-    public String getDescription() {
-      return "Resumes a schedule";
-    }
-  }
-
-  /**
-   * Lists the schedules for a given workflow.
-   */
-  private static final class ListWorkflowSchedulesCommand extends AbstractCommand {
-
-    private final ScheduleClient scheduleClient;
-
-    @Inject
-    ListWorkflowSchedulesCommand(CLIConfig cliConfig, ScheduleClient scheduleClient) {
-      super(cliConfig);
-      this.scheduleClient = scheduleClient;
-    }
-
-    @Override
-    public void perform(Arguments arguments, PrintStream output) throws Exception {
-      String[] programIdParts = arguments.get(ElementType.WORKFLOW.getArgumentName().toString()).split("\\.");
-      if (programIdParts.length < 2) {
-        throw new CommandInputError(this);
-      }
-
-      final String appId = programIdParts[0];
-      String workflowName = programIdParts[1];
-      WorkflowId workflowId = cliConfig.getCurrentNamespace().app(appId).workflow(workflowName);
-
-      List<ScheduleSpecification> list = scheduleClient.list(workflowId);
-      Table table = Table.builder()
-        .setHeader("application", "program", "program type", "name", "type", "description", "properties",
-                   "runtime args")
-        .setRows(list, new RowMaker<ScheduleSpecification>() {
-          @Override
-          public List<?> makeRow(ScheduleSpecification object) {
-            return Lists.newArrayList(appId,
-                                      object.getProgram().getProgramName(),
-                                      object.getProgram().getProgramType().name(),
-                                      object.getSchedule().getName(),
-                                      getScheduleType(object.getSchedule()),
-                                      object.getSchedule().getDescription(),
-                                      getScheduleProperties(object.getSchedule()),
-                                      GSON.toJson(object.getProperties()));
-          }
-        }).build();
-      cliConfig.getTableRenderer().render(cliConfig, output, table);
-    }
-
-    private String getScheduleType(Schedule schedule) {
-      return schedule.getClass().getName();
-    }
-
-    private String getScheduleProperties(Schedule schedule) {
-      if (schedule instanceof TimeSchedule) {
-        TimeSchedule timeSchedule = (TimeSchedule) schedule;
-        return String.format("cron entry: %s", timeSchedule.getCronEntry());
-      } else if (schedule instanceof StreamSizeSchedule) {
-        StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
-        return String.format("stream: %s trigger MB: %d",
-                             streamSizeSchedule.getStreamName(), streamSizeSchedule.getDataTriggerMB());
-      } else {
-        return "";
-      }
-    }
-
-    @Override
-    public String getPattern() {
-      return String.format("get %s schedules <%s>",
-                           ElementType.WORKFLOW.getName(), ElementType.WORKFLOW.getArgumentName());
-    }
-
-    @Override
-    public String getDescription() {
-      return String.format("Gets schedules of %s", Fragment.of(Article.A, ElementType.WORKFLOW.getName()));
-      
-    }
   }
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.io;
 
+import com.google.common.base.Function;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Type adapter that serializes enums in lowercase and deserializes enums in a case insensitive way.
@@ -35,6 +37,33 @@ import java.util.Map;
  * instead of deserializing lowercase only.
  */
 public class CaseInsensitiveEnumTypeAdapterFactory implements TypeAdapterFactory {
+
+  private static final Function<Object, String> UPPER_CASE_FUNC = new Function<Object, String>() {
+    @Nullable
+    @Override
+    public String apply(@Nullable Object input) {
+      return input == null ? null : input.toString().toUpperCase(Locale.US);
+    }
+  };
+
+  private static final Function<Object, String> LOWER_CASE_FUNC = new Function<Object, String>() {
+    @Nullable
+    @Override
+    public String apply(@Nullable Object input) {
+      return input == null ? null : input.toString().toLowerCase(Locale.US);
+    }
+  };
+
+  private final Function<Object, String> normalizeFunction;
+
+  public CaseInsensitiveEnumTypeAdapterFactory() {
+    this(false);
+  }
+
+  public CaseInsensitiveEnumTypeAdapterFactory(final boolean useUpperCase) {
+    this.normalizeFunction = useUpperCase ? UPPER_CASE_FUNC : LOWER_CASE_FUNC;
+  }
+
   public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
     @SuppressWarnings("unchecked")
     Class<T> rawType = (Class<T>) type.getRawType();
@@ -42,32 +71,27 @@ public class CaseInsensitiveEnumTypeAdapterFactory implements TypeAdapterFactory
       return null;
     }
 
-    final Map<String, T> lowercaseToConstant = new HashMap<>();
+    final Map<String, T> stringToConstants = new HashMap<>();
     for (T constant : rawType.getEnumConstants()) {
-      lowercaseToConstant.put(toLowercase(constant), constant);
+      stringToConstants.put(normalizeFunction.apply(constant), constant);
     }
 
     return new TypeAdapter<T>() {
       public void write(JsonWriter out, T value) throws IOException {
         if (value == null) {
           out.nullValue();
-        } else {
-          out.value(toLowercase(value));
+          return;
         }
+        out.value(normalizeFunction.apply(value));
       }
 
       public T read(JsonReader reader) throws IOException {
         if (reader.peek() == JsonToken.NULL) {
           reader.nextNull();
           return null;
-        } else {
-          return lowercaseToConstant.get(toLowercase(reader.nextString()));
         }
+        return stringToConstants.get(normalizeFunction.apply(reader.nextString()));
       }
     };
-  }
-
-  private String toLowercase(Object o) {
-    return o.toString().toLowerCase(Locale.US);
   }
 }

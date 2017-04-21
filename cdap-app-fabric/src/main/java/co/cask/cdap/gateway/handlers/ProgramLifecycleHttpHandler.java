@@ -31,12 +31,14 @@ import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.MethodNotAllowedException;
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.NotImplementedException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.common.service.ServiceDiscoverable;
@@ -48,6 +50,8 @@ import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
+import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.BatchProgramResult;
 import co.cask.cdap.proto.BatchProgramStart;
@@ -65,8 +69,8 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ScheduleUpdateDetail;
 import co.cask.cdap.proto.ServiceInstances;
-import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -77,6 +81,7 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -138,7 +143,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Gson GSON = ApplicationSpecificationAdapter
     .addTypeAdapters(new GsonBuilder())
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
-    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .create();
 
   private static final Function<RunRecordMeta, RunRecord> CONVERT_TO_RUN_RECORD =
@@ -155,6 +159,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final PreferencesStore preferencesStore;
   private final MetricStore metricStore;
   private final MRJobInfoFetcher mrJobInfoFetcher;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   /**
    * Store manages non-runtime lifecycle.
@@ -173,7 +178,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               QueueAdmin queueAdmin,
                               PreferencesStore preferencesStore,
                               MRJobInfoFetcher mrJobInfoFetcher,
-                              MetricStore metricStore) {
+                              MetricStore metricStore,
+                              NamespaceQueryAdmin namespaceQueryAdmin) {
     this.store = store;
     this.runtimeService = runtimeService;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -182,6 +188,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.queueAdmin = queueAdmin;
     this.preferencesStore = preferencesStore;
     this.mrJobInfoFetcher = mrJobInfoFetcher;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
@@ -540,6 +547,61 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, specification);
   }
 
+  @GET
+  @Path("apps/{app-name}/schedules/{schedule-name}")
+  public void getSchedule(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId,
+                          @PathParam("app-name") String appName,
+                          @PathParam("schedule-name") String scheduleName)
+    throws NotFoundException, SchedulerException {
+    doGetSchedule(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+  }
+
+  @GET
+  @Path("apps/{app-name}/versions/{app-version}/schedules/{schedule-name}")
+  public void getSchedule(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId,
+                          @PathParam("app-name") String appName,
+                          @PathParam("app-version") String appVersion,
+                          @PathParam("schedule-name") String scheduleName)
+    throws NotFoundException, SchedulerException {
+    doGetSchedule(responder, namespaceId, appName, appVersion, scheduleName);
+  }
+
+  private void doGetSchedule(HttpResponder responder, String namespaceId, String appName,
+                             String appVersion, String scheduleName) throws NotFoundException {
+    ApplicationId applicationId = new ApplicationId(namespaceId, appName, appVersion);
+    ScheduleSpecification specification = lifecycleService.getSchedule(applicationId, scheduleName);
+    responder.sendJson(HttpResponseStatus.OK, specification, ScheduleSpecification.class, GSON);
+  }
+
+  @GET
+  @Path("apps/{app-name}/schedules")
+  public void getAllSchedules(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace-id") String namespaceId,
+                              @PathParam("app-name") String appName)
+    throws NotFoundException, SchedulerException {
+    doGetAllSchedules(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION);
+  }
+
+  @GET
+  @Path("apps/{app-name}/versions/{app-version}/schedules")
+  public void getAllSchedules(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace-id") String namespaceId,
+                              @PathParam("app-name") String appName,
+                              @PathParam("app-version") String appVersion)
+    throws NotFoundException, SchedulerException {
+    doGetAllSchedules(responder, namespaceId, appName, appVersion);
+  }
+
+  private void doGetAllSchedules(HttpResponder responder, String namespaceId, String appName,
+                                 String appVersion) throws NotFoundException {
+    ApplicationId applicationId = new ApplicationId(namespaceId, appName, appVersion);
+    List<ScheduleSpecification> specification = lifecycleService.getAllSchedules(applicationId);
+    Type scheduleSpecsType = new TypeToken<List<ScheduleSpecification>>() { }.getType();
+    responder.sendJson(HttpResponseStatus.OK, specification, scheduleSpecsType, GSON);
+  }
+
   @PUT
   @Path("apps/{app-name}/schedules/{schedule-name}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
@@ -587,8 +649,31 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           scheduleSpecFromRequest.getSchedule().getName(), scheduleName));
     }
 
+    if (scheduleSpecFromRequest.getSchedule().getName() == null) {
+      scheduleSpecFromRequest = addNameToSpec(scheduleSpecFromRequest, scheduleName);
+    }
+
     lifecycleService.addSchedule(applicationId, scheduleSpecFromRequest);
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private ScheduleSpecification addNameToSpec(ScheduleSpecification scheduleSpecification, String name)
+    throws BadRequestException {
+    if (scheduleSpecification.getSchedule() instanceof TimeSchedule) {
+      TimeSchedule ts = (TimeSchedule) scheduleSpecification.getSchedule();
+      return new ScheduleSpecification(
+        new TimeSchedule(name, ts.getDescription(), ts.getCronEntry(), ts.getRunConstraints()),
+        scheduleSpecification.getProgram(), scheduleSpecification.getProperties());
+    } else if (scheduleSpecification.getSchedule() instanceof StreamSizeSchedule) {
+      StreamSizeSchedule s = (StreamSizeSchedule) scheduleSpecification.getSchedule();
+      return new ScheduleSpecification(
+        new StreamSizeSchedule(name, s.getDescription(), s.getStreamName(), s.getDataTriggerMB(),
+                               s.getRunConstraints()),
+        scheduleSpecification.getProgram(), scheduleSpecification.getProperties()
+      );
+    } else {
+      throw new BadRequestException("Unknown schedule type given");
+    }
   }
 
   @POST
@@ -619,27 +704,17 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                 String appVersion, String scheduleName)
     throws IOException, BadRequestException, NotFoundException, SchedulerException, AlreadyExistsException {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, appVersion);
-    ScheduleSpecification scheduleSpecFromRequest;
+    ScheduleUpdateDetail scheduleUpdateDetail;
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
-      // The schedule spec in the request body can contain only the changed information or more, but should always
-      // contain the schedule type for deserialization
-      scheduleSpecFromRequest = GSON.fromJson(reader, ScheduleSpecification.class);
+      scheduleUpdateDetail = GSON.fromJson(reader, ScheduleUpdateDetail.class);
     } catch (IOException e) {
-      LOG.debug("Error reading schedule specification from request body", e);
+      LOG.debug("Error reading schedule update details from request body", e);
       throw new IOException("Error reading request body");
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());
     }
 
-    // If the schedule name is present in the request body, it should match the name in path params
-    if (!scheduleName.equals(scheduleSpecFromRequest.getSchedule().getName())) {
-      throw new BadRequestException(
-        String.format(
-          "schedule name in the body of the request (%s) does not match the schedule name in the path parameter (%s)",
-          scheduleSpecFromRequest.getSchedule().getName(), scheduleName));
-    }
-
-    lifecycleService.updateSchedule(applicationId, scheduleSpecFromRequest);
+    lifecycleService.updateSchedule(applicationId, scheduleName, scheduleUpdateDetail);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -1015,7 +1090,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/flows")
   public void getAllFlows(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(new NamespaceId(namespaceId), ProgramType.FLOW));
+    responder.sendJson(HttpResponseStatus.OK,
+                       lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.FLOW));
   }
 
   /**
@@ -1026,7 +1102,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllMapReduce(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-                       lifecycleService.list(new NamespaceId(namespaceId), ProgramType.MAPREDUCE));
+                       lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.MAPREDUCE));
   }
 
   /**
@@ -1036,7 +1112,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/spark")
   public void getAllSpark(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(new NamespaceId(namespaceId), ProgramType.SPARK));
+    responder.sendJson(HttpResponseStatus.OK,
+                       lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.SPARK));
   }
 
   /**
@@ -1047,7 +1124,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllWorkflows(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-                       lifecycleService.list(new NamespaceId(namespaceId), ProgramType.WORKFLOW));
+                       lifecycleService.list(validateAndGetNamespace(namespaceId),
+                                             ProgramType.WORKFLOW));
   }
 
   /**
@@ -1057,14 +1135,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/services")
   public void getAllServices(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(new NamespaceId(namespaceId), ProgramType.SERVICE));
+    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(validateAndGetNamespace(namespaceId),
+                                                                    ProgramType.SERVICE));
   }
 
   @GET
   @Path("/workers")
   public void getAllWorkers(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(new NamespaceId(namespaceId), ProgramType.WORKER));
+    responder.sendJson(HttpResponseStatus.OK, lifecycleService.list(validateAndGetNamespace(namespaceId),
+                                                                    ProgramType.WORKER));
   }
 
   /**
@@ -1075,9 +1155,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getWorkerInstances(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("app-id") String appId,
-                                 @PathParam("worker-id") String workerId) {
+                                 @PathParam("worker-id") String workerId) throws Exception {
     try {
-      int count = store.getWorkerInstances(new NamespaceId(namespaceId).app(appId).worker(workerId));
+      int count = store.getWorkerInstances(validateAndGetNamespace(namespaceId).app(appId).worker(workerId));
       responder.sendJson(HttpResponseStatus.OK, new Instances(count));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1385,7 +1465,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/queues")
   public synchronized void deleteQueues(HttpRequest request, HttpResponder responder,
-                                        @PathParam("namespace-id") String namespaceId) {
+                                        @PathParam("namespace-id") String namespaceId)
+    throws NamespaceNotFoundException {
     // synchronized to avoid a potential race condition here:
     // 1. the check for state returns that all flows are STOPPED
     // 2. The API deletes queues because
@@ -1394,9 +1475,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // runtimeService. This should work because the method that is used to start a flow - startStopProgram - is also
     // synchronized on this.
     // This synchronization works in HA mode because even in HA mode there is only one leader at a time.
-    NamespaceId namespace = new NamespaceId(namespaceId);
+    NamespaceId namespace = validateAndGetNamespace(namespaceId);
     try {
-      List<ProgramRecord> flows = lifecycleService.list(new NamespaceId(namespaceId), ProgramType.FLOW);
+      List<ProgramRecord> flows = lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.FLOW);
       for (ProgramRecord flow : flows) {
         String appId = flow.getApp();
         String flowId = flow.getName();
@@ -1615,5 +1696,20 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
     }
     return result;
+  }
+
+  private NamespaceId validateAndGetNamespace(String namespace) throws NamespaceNotFoundException {
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    try {
+      namespaceQueryAdmin.get(namespaceId);
+    } catch (NamespaceNotFoundException e) {
+      throw e;
+    } catch (Exception e) {
+      // This can only happen when NamespaceAdmin uses HTTP to interact with namespaces.
+      // Within AppFabric, NamespaceAdmin is bound to DefaultNamespaceAdmin which directly interacts with MDS.
+      // Hence, this should never happen.
+      throw Throwables.propagate(e);
+    }
+    return namespaceId;
   }
 }

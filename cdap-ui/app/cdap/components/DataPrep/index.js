@@ -14,11 +14,13 @@
  * the License.
  */
 
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import DataPrepTopPanel from 'components/DataPrep/TopPanel';
 import DataPrepTable from 'components/DataPrep/DataPrepTable';
 import DataPrepSidePanel from 'components/DataPrep/DataPrepSidePanel';
 import DataPrepCLI from 'components/DataPrep/DataPrepCLI';
+import DataPrepLoading from 'components/DataPrep/DataPrepLoading';
+import DataPrepErrorAlert from 'components/DataPrep/DataPrepErrorAlert';
 import MyDataPrepApi from 'api/dataprep';
 import cookie from 'react-cookie';
 import DataPrepStore from 'components/DataPrep/store';
@@ -26,7 +28,10 @@ import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
 import ee from 'event-emitter';
 import NamespaceStore from 'services/NamespaceStore';
-
+import {MyArtifactApi} from 'api/artifact';
+import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
+import Version from 'services/VersionRange/Version';
+import {setWorkspace} from 'components/DataPrep/store/DataPrepActionCreator';
 require('./DataPrep.scss');
 
 /**
@@ -39,37 +44,87 @@ export default class DataPrep extends Component {
 
     this.state = {
       backendDown: false,
-      loading: true
+      loading: true,
+      onSubmitError: null
     };
 
     this.toggleBackendDown = this.toggleBackendDown.bind(this);
     this.eventEmitter = ee(ee);
 
     this.eventEmitter.on('DATAPREP_BACKEND_DOWN', this.toggleBackendDown);
-
+    this.eventEmitter.on('REFRESH_DATAPREP', () => {
+      this.setState({
+        loading: true
+      });
+      /*
+        Not sure if this is necessary but added it is safer when doing an upgrade.
+        - Modified directives?
+        - Modified API calls that are not compatible with earlier version?
+      */
+      DataPrepStore.dispatch({
+        type: DataPrepActions.reset
+      });
+      let workspaceId = this.props.singleWorkspaceMode ? this.props.workspaceId : cookie.load('DATAPREP_WORKSPACE');
+      this.setCurrentWorkspace(workspaceId);
+      setTimeout(() => {
+        this.setState({
+          loading: false
+        });
+      });
+    });
   }
 
   componentWillMount() {
-    let workspaceId = cookie.load('DATAPREP_WORKSPACE');
+    let workspaceId = this.props.singleWorkspaceMode ? this.props.workspaceId : cookie.load('DATAPREP_WORKSPACE');
     let namespace = NamespaceStore.getState().selectedNamespace;
 
-    let params = {
-      namespace,
-      workspaceId: workspaceId,
-      limit: 100
-    };
-
-    MyDataPrepApi.execute(params)
+    MyArtifactApi.list({ namespace })
+      .combineLatest(MyDataPrepApi.getApp({ namespace }))
       .subscribe((res) => {
-        DataPrepStore.dispatch({
-          type: DataPrepActions.setWorkspace,
-          payload: {
-            data: res.value,
-            headers: res.header,
-            workspaceId
-          }
+        let wranglerArtifactVersions = res[0].filter((artifact) => {
+          return artifact.name === 'wrangler-service';
+        }).map((artifact) => {
+          return artifact.version;
         });
 
+        let highestVersion = findHighestVersion(wranglerArtifactVersions);
+        let currentAppArtifactVersion = new Version(res[1].artifact.version);
+
+        if (highestVersion.compareTo(currentAppArtifactVersion) === 1) {
+          DataPrepStore.dispatch({
+            type: DataPrepActions.setHigherVersion,
+            payload: {
+              higherVersion: highestVersion.toString()
+            }
+          });
+        }
+
+        if (this.props.singleWorkspaceMode) {
+          DataPrepStore.dispatch({
+            type: DataPrepActions.setWorkspaceMode,
+            payload: {
+              singleWorkspaceMode: true
+            }
+          });
+        }
+      });
+      this.setCurrentWorkspace(workspaceId);
+  }
+
+  componentWillUnmount() {
+    if (this.props.onSubmit) {
+      let workspaceId = DataPrepStore.getState().dataprep.workspaceId;
+      this.props.onSubmit({workspaceId});
+    }
+    DataPrepStore.dispatch({
+      type: DataPrepActions.reset
+    });
+    this.eventEmitter.off('DATAPREP_BACKEND_DOWN', this.toggleBackendDown);
+  }
+
+  setCurrentWorkspace(workspaceId) {
+    setWorkspace(workspaceId)
+      .subscribe(() => {
         this.setState({loading: false});
       }, (err) => {
         this.setState({loading: false});
@@ -86,24 +141,35 @@ export default class DataPrep extends Component {
         });
         this.eventEmitter.emit('DATAPREP_NO_WORKSPACE_ID');
       });
-
-  }
-
-  componentWillUnmount() {
-    DataPrepStore.dispatch({
-      type: DataPrepActions.reset
-    });
-    this.eventEmitter.off('DATAPREP_BACKEND_DOWN', this.toggleBackendDown);
   }
 
   toggleBackendDown() {
     this.setState({backendDown: true});
   }
 
+  onServiceStart() {
+    this.setState({backendDown: false});
+    let workspaceId = this.props.singleWorkspaceMode ? this.props.workspaceId : cookie.load('DATAPREP_WORKSPACE');
+    this.setCurrentWorkspace(workspaceId);
+  }
+
   renderBackendDown() {
     return (
-      <DataPrepServiceControl />
+      <DataPrepServiceControl
+        onServiceStart={this.onServiceStart.bind(this)}
+      />
     );
+  }
+
+  onSubmitToListener({workspaceId, directives, schema}) {
+    if (!this.props.onSubmit) {
+      return;
+    }
+    this.props.onSubmit({
+      workspaceId,
+      directives,
+      schema: schema
+    });
   }
 
   render() {
@@ -121,7 +187,12 @@ export default class DataPrep extends Component {
 
     return (
       <div className="dataprep-container">
-        <DataPrepTopPanel />
+        <DataPrepErrorAlert />
+        <DataPrepTopPanel
+          singleWorkspaceMode={this.props.singleWorkspaceMode}
+          workspaceId={this.props.workspaceId}
+          onSubmit={this.onSubmitToListener.bind(this)}
+        />
 
         <div className="row dataprep-body">
           <div className="dataprep-main col-xs-9">
@@ -131,7 +202,14 @@ export default class DataPrep extends Component {
 
           <DataPrepSidePanel />
         </div>
+
+        <DataPrepLoading />
       </div>
     );
   }
 }
+DataPrep.propTypes = {
+  singleWorkspaceMode: PropTypes.bool,
+  workspaceId: PropTypes.string,
+  onSubmit: PropTypes.func
+};

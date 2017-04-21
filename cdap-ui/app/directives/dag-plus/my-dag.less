@@ -22,6 +22,109 @@
 @brown: #988470;
 @yellow-shadow: lighten(#f1c40f, 20%);
 @error-transform: #e74c3c;
+@darkblue: #34495e;
+
+.action-octagon(@node-color) {
+  color: @node-color;
+
+  .plugin-name {
+    margin-top: 32px;
+  }
+
+  .node {
+    @border: 15px solid rgba(0, 0, 0, 0);
+    @border-offset: 17px;
+    @border-top-bottom: @border-offset solid @node-color;
+
+    width: 55px;
+    height: 20px;
+    position: relative;
+    top: 13px;
+    border-radius: 0;
+    background: @node-color;
+
+    &:before,
+    &:after {
+      box-sizing: content-box;
+      width: 25px;
+      position: absolute;
+      content: "";
+      left: 0;
+      border: @border;
+    }
+
+    &:before {
+      top: -@border-offset;
+      border-top: 0 solid;
+      border-bottom: @border-top-bottom;
+    }
+
+    &:after {
+      bottom: -@border-offset;
+      border-top: @border-top-bottom;
+      border-bottom: 0 solid;
+      z-index: -1;
+    }
+
+    .inner {
+      @bg-color: white;
+      @border: 13px solid rgba(0, 0, 0, 0);
+      @border-offset: 14px;
+      @border-top-bottom: (@border-offset + 1px) solid @bg-color;
+
+      width: 49px;
+      height: 20px;
+      position: relative;
+      top: 0;
+      left: 3px;
+      border-radius: 0;
+      background: @bg-color;
+      border-radius: 2px;
+
+      &:before,
+      &:after {
+        box-sizing: content-box;
+        width: 23px;
+        position: absolute;
+        content: "";
+        left: 0;
+        border: @border;
+      }
+
+      &:before {
+        top: -@border-offset;
+        border-top: 0 solid;
+        border-bottom: @border-top-bottom;
+      }
+
+      &:after {
+        bottom: -@border-offset;
+        border-top: @border-top-bottom;
+        border-bottom: 0 solid;
+      }
+    }
+
+    .icon.fa {
+      position: absolute;
+      color: @node-color;
+      top: -9px;
+      left: 22px;
+    }
+
+    .fa.fa-close {
+      position: absolute;
+      top: -14px;
+      right: 14px;
+      color: @node-color;
+    }
+
+    .error-node-notification {
+      top: -20px;
+      left: -5px;
+    }
+
+  }
+}
 
 my-dag-plus {
   .zoom-control {
@@ -102,7 +205,7 @@ my-dag-plus {
           border: 3px solid #48c038;
         }
       }
-      &:not(.realtimesource):not(.batchsource):not(.streamingsource):not(.realtimesink):not(.batchsink):not(.sparksink):not(.action) {
+      &:not(.realtimesource):not(.batchsource):not(.streamingsource):not(.realtimesink):not(.batchsink):not(.sparksink):not(.action):not(.sparkprogram) {
         color: #4586f3;
         left: 30vw;
         .node {
@@ -129,105 +232,11 @@ my-dag-plus {
       }
 
       &.action {
-        color: @brown;
+        .action-octagon(@brown);
+      }
 
-        .plugin-name {
-          margin-top: 32px;
-        }
-
-        .node {
-          @border: 15px solid rgba(0, 0, 0, 0);
-          @border-offset: 17px;
-          @border-top-bottom: @border-offset solid @brown;
-
-          width: 55px;
-          height: 20px;
-          position: relative;
-          top: 13px;
-          border-radius: 0;
-          background: @brown;
-
-          &:before,
-          &:after {
-            box-sizing: content-box;
-            width: 25px;
-            position: absolute;
-            content: "";
-            left: 0;
-            border: @border;
-          }
-
-          &:before {
-            top: -@border-offset;
-            border-top: 0 solid;
-            border-bottom: @border-top-bottom;
-          }
-
-          &:after {
-            bottom: -@border-offset;
-            border-top: @border-top-bottom;
-            border-bottom: 0 solid;
-            z-index: -1;
-          }
-
-          .inner {
-            @bg-color: white;
-            @border: 13px solid rgba(0, 0, 0, 0);
-            @border-offset: 14px;
-            @border-top-bottom: (@border-offset + 1px) solid @bg-color;
-
-            width: 49px;
-            height: 20px;
-            position: relative;
-            top: 0;
-            left: 3px;
-            border-radius: 0;
-            background: @bg-color;
-            border-radius: 2px;
-
-            &:before,
-            &:after {
-              box-sizing: content-box;
-              width: 23px;
-              position: absolute;
-              content: "";
-              left: 0;
-              border: @border;
-            }
-
-            &:before {
-              top: -@border-offset;
-              border-top: 0 solid;
-              border-bottom: @border-top-bottom;
-            }
-
-            &:after {
-              bottom: -@border-offset;
-              border-top: @border-top-bottom;
-              border-bottom: 0 solid;
-            }
-          }
-
-          .icon.fa {
-            position: absolute;
-            color: @brown;
-            top: -9px;
-            left: 22px;
-          }
-
-          .fa.fa-close {
-            position: absolute;
-            top: -14px;
-            right: 14px;
-            color: @brown;
-          }
-
-          .error-node-notification {
-            top: -20px;
-            left: -5px;
-          }
-
-        }
+      &.sparkprogram {
+        .action-octagon(@darkblue);
       }
 
       .icon.fa,
@@ -371,8 +380,14 @@ my-dag-plus {
           stroke: #8367df;
         }
       }
-      &-anchor-actionAnchor rect {
-        stroke: #988470;
+      &-anchor-actionAnchor {
+        rect {
+          stroke: #988470;
+        }
+
+        &.sparkprogram-anchor {
+          rect { stroke: @darkblue; }
+        }
       }
     }
 

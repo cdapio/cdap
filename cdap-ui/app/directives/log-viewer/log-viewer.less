@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -115,6 +115,7 @@ body {
       border-radius: 3px;
       font-size: 11px;
       max-width: 600px;
+      white-space: pre-wrap;
       &.top {
         margin-top: -2px;
         .tooltip-arrow {
@@ -129,7 +130,10 @@ body {
   }
 }
 
-my-log-viewer {
+my-log-viewer,
+my-log-viewer-preview {
+  font-family: Helvetica, Arial, sans-serif;
+
   .empty-buffer {
     display: none;
   }
@@ -137,7 +141,7 @@ my-log-viewer {
   .row-expanded {
     td,
     span {
-      white-space: normal;
+      white-space: pre-wrap;
     }
 
     td.source {
@@ -145,8 +149,6 @@ my-log-viewer {
       word-break: break-all;
       text-overflow: inherit;
     }
-
-    background-color: @selected-row-color;
   }
 
   .dropdown-menu {
@@ -358,6 +360,11 @@ my-log-viewer {
           margin-right: 3px;
           outline: grey;
         }
+        .include-system {
+          color: white;
+          margin-right: 15px;
+          cursor: pointer;
+        }
         .view-raw {
           max-width: 110px;
           text-decoration: none;
@@ -427,21 +434,30 @@ my-log-viewer {
       border-bottom: none;
     }
 
-    table.scroll thead {
-      border-bottom: 1px solid #cccccc;
-    }
+    table.scroll thead { border-bottom: 1px solid #cccccc; }
 
     .logs-table {
-      overflow: auto;
       height: ~"-moz-calc(100vh - 356px)";
       height: ~"-webkit-calc(100vh - 356px)";
       height: ~"calc(100vh - 356px)";
+      font-weight: 300;
 
-      tbody td {
-        color: #666666;
-        font-size: 11px;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+      .logs-table-body {
+        overflow-y: auto;
+        overflow-x: hidden;
+        height: ~"-moz-calc(100% - 47px)";
+        height: ~"-webkit-calc(100% - 47px)";
+        height: ~"calc(100% - 47px)";
+        background-color: @selected-row-color;
+
+        .table { border-top: 0; }
+
+        td {
+          color: #333333;
+          font-size: 14px;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
       }
 
       .has-stack-trace {
@@ -454,64 +470,76 @@ my-log-viewer {
         height: 100%;
         width: 10px;
       }
-      tr td {
-        line-height: 18px;
 
-        .fa-chevron-right {
-          color: #393939;
+      tr {
+        width: 100%;
+        background-color: @table-background-color;
+
+        &.display-time {
           position: relative;
-          font-size: 8px;
-          bottom: 1px;
-          margin-left: 4px;
-          margin-right: 2px;
-        }
-        .fa-chevron-down {
-          color: #393939;
-          position: relative;
-          top: -12px;
-          font-size: 8px;
-          bottom: 1px;
-          margin-left: 4px;
-          margin-right: 0;
-        }
-      }
-
-      tr .log-message {
-        padding-right: 5px;
-      }
-
-      tr.display-time {
-        position: relative;
-        top: 0;
-      }
-      tr.level {
-        position: relative;
-        top: 0;
-      }
-
-      tr.row-selected {
-        white-space: normal;
-        background-color: @selected-row-color;
-
-        .display-time,
-        .level {
-          position: relative;
-          top: -9px;
+          top: 0;
         }
 
-        td,
-        span {
+        &.level {
+          position: relative;
+          top: 0;
+        }
+
+        &.row-expanded {
+          background-color: @selected-row-color;
+        }
+
+        &.row-selected {
           white-space: normal;
-          border-bottom: none;
+          background-color: @selected-row-color;
 
-          .source {
-            word-break: break-all;
-            text-overflow: inherit;
+          td,
+          span {
+            white-space: normal;
+            border-bottom: none;
+
+            .source {
+              word-break: break-all;
+              text-overflow: inherit;
+            }
           }
         }
-      }
-      tr.well i {
-        font-size: 12px;
+
+        &.well i {
+          font-size: 12px;
+        }
+
+        td {
+          line-height: 30px;
+          border-top: 0;
+          color: #666666;
+          font-size: 11px;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          border-left: 0;
+          border-right: 0;
+
+          .fa-chevron-right {
+            color: #393939;
+            position: relative;
+            font-size: 8px;
+            bottom: 1px;
+            margin-left: 4px;
+            margin-right: 2px;
+          }
+          .fa-chevron-down {
+            color: #393939;
+            font-size: 8px;
+            bottom: 1px;
+            margin-left: 4px;
+            margin-right: 0;
+          }
+        }
+
+        .log-message {
+          width: 100%;
+          padding-right: 5px;
+        }
       }
 
       .stack-trace {
@@ -534,7 +562,7 @@ my-log-viewer {
           padding-left: 5px;
           padding-right: 0;
           padding-top: 10px;
-          font-size: 12px;
+          font-size: 14px;
           font-family: inherit;
           background-color: @stack-trace-background-color;
           color: @stack-trace-font-color;
@@ -548,12 +576,12 @@ my-log-viewer {
         color: #333333;
       }
 
-      font-weight: 300;
-
       tbody tr:hover {
         background-color: @selected-row-color;
       }
       tr.message-holder {
+        background-color: @table-background-color;
+
         &:hover {
           background-color: transparent;
         }
@@ -573,12 +601,11 @@ my-log-viewer {
       td {
         padding: 0;
         padding-left: 10px;
-        max-width: 0;
         vertical-align: middle;
         line-height: 12px;
         height: 10px;
         overflow: hidden;
-        font-size: 12px;
+        font-size: 14px;
         border-color: @border-color;
       }
       td.time-stack-trace {
@@ -586,12 +613,12 @@ my-log-viewer {
       }
       .table {
         &.table-bordered {
-          border-color: #cccccc;
+          border-color: @border-color;
           margin-bottom: 0;
+          table-layout: fixed;
         }
         margin-top: 0;
         background-color: @table-background-color;
-        overflow: visible;
         font-size: 12px;
         border: 1px solid @border-color;
 
@@ -599,6 +626,10 @@ my-log-viewer {
         th:hover,
         th:focus {
           cursor: default;
+          font-size: 14px;
+          border-left: 0;
+          border-right: 0;
+
           ul.dropdown-menu { width: 30px; }
 
           li {
@@ -606,7 +637,7 @@ my-log-viewer {
           }
         }
         td {
-          line-height: 18px;
+          line-height: 30px;
         }
         .table-text-content {
           display: inline-block;
@@ -627,6 +658,7 @@ my-log-viewer {
       }
 
       tbody {
+        background-color: @selected-row-color;
         .message {
           padding-left: 10px;
         }
@@ -636,17 +668,13 @@ my-log-viewer {
         background: blue;
       }
 
-      thead tr {
-        width: 100%;
-      }
-
       .log-header {
         font-size: 14px;
       }
 
       .time {
-        width: 4%;
-        min-width: 130px;
+        width: 150px;
+        max-width: initial;
         padding-left: 15px;
       }
       .time.log-header {
@@ -665,7 +693,8 @@ my-log-viewer {
       .level-header {
         padding-right: 10px;
         padding-left: 15px;
-        min-width: 80px;
+        width: 80px;
+        max-width: initial;
 
         .dropdown-menu {
           min-width: 88px;
@@ -678,7 +707,7 @@ my-log-viewer {
 
       .source,
       .source-header {
-        width: 20%;
+        width: 320px;
       }
 
       .source {

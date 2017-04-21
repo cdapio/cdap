@@ -41,7 +41,7 @@ class HydratorPlusPlusStudioCtrl {
     };
     let artifact = getValidArtifact();
     if (rConfig) {
-      if (!rConfig.artifact){
+      if (!rConfig.artifact) {
         rConfig.artifact = artifact;
       }
       HydratorPlusPlusConfigActions.initializeConfigStore(rConfig);
@@ -67,7 +67,7 @@ class HydratorPlusPlusStudioCtrl {
       HydratorPlusPlusConfigActions.initializeConfigStore(config);
     }
 
-    function customConfirm(message){
+    function customConfirm(message) {
       var start = Date.now();
       var result = confirm(message);
       var timeDifference = Date.now() - start;
@@ -82,12 +82,12 @@ class HydratorPlusPlusStudioCtrl {
 
          The reasoning behind this is the user has selected 'Prevent this page from showing any additional dialogs' while clicking OK in the popup and so any dirty state checks are inherently skipped based on that choice.
       */
-      for(var i=0; i < 10 && !result && timeDifference < 50; i++){
+      for (var i=0; i < 10 && !result && timeDifference < 50; i++) {
         start = Date.now();
         result = confirm(message);
         timeDifference = Date.now() - start;
       }
-      if(timeDifference < 50) {
+      if (timeDifference < 50) {
         return true;
       }
       return result;

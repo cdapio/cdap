@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,6 +49,7 @@ angular.module(PKG.name + '.commons')
         }
         function delayOpen(delay) {
           cancelTimers();
+          scope.contentData.hovering = true;
           delayOpenTimer = $timeout(showPopover, delay);
           return delayOpenTimer;
         }
@@ -65,6 +66,7 @@ angular.module(PKG.name + '.commons')
           return delayCloseTimer;
         }
         function destroyPopover() {
+          scope.contentData.hovering = false;
           if (mypopover) {
             mypopover.destroy();
             mypopover = null;
@@ -90,7 +92,7 @@ angular.module(PKG.name + '.commons')
             mypopover.$scope.popoverContext = scope.popoverContext;
           }
           mypopover.$scope.delayClose = delayClose;
-          delayOpen(200);
+          delayOpen(1000);
           return mypopover.$promise;
         }
         function initPopover() {
@@ -99,9 +101,9 @@ angular.module(PKG.name + '.commons')
               if (!mypopover) {
                 /*
                   We are not using the promise retuned by createpopover.
-                  TL;DR - Async delayed rendering(200ms) + executing stuff in promises' next tick = fucked up.
+                  TL;DR - Async delayed rendering(1000ms) + executing stuff in promises' next tick = fucked up.
 
-                  Long version - We already open and close with a delay of 200ms and promise executes its then handler
+                  Long version - We already open and close with a delay of 1000ms and promise executes its then handler
                   in the next tick. This adds one more delay in opening. By that time the user might have left the
                   target element. At that point opening the popover in the next tick makes it stay there forever as
                   we have already executed mouse leave at that point in time. that is the reason createPopover function
@@ -110,10 +112,10 @@ angular.module(PKG.name + '.commons')
 
                 createPopover();
               } else {
-                delayOpen(200);
+                delayOpen(1000);
               }
             })
-            .on('mouseleave', delayClose.bind(null, 200))
+            .on('mouseleave', delayClose.bind(null))
             .on('click', delayClose.bind(null));
         }
         function showPopover() {
@@ -121,7 +123,7 @@ angular.module(PKG.name + '.commons')
           mypopover.show();
           popoverElement = mypopover.$element;
           popoverElement.on('mouseenter', cancelTimers);
-          popoverElement.on('mouseleave', delayClose.bind(null, 200));
+          popoverElement.on('mouseleave', delayClose.bind(null));
         }
         initPopover();
         scope.$on('$destroy', function () {

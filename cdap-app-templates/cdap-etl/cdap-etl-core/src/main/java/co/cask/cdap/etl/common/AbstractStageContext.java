@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
@@ -26,6 +27,7 @@ import co.cask.cdap.etl.log.LogContext;
 import co.cask.cdap.etl.planner.StageInfo;
 import com.google.common.base.Throwables;
 
+import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -39,14 +41,17 @@ import javax.annotation.Nullable;
 public abstract class AbstractStageContext implements StageContext {
 
   private final PluginContext pluginContext;
+  private final ServiceDiscoverer serviceDiscoverer;
   private final String stageName;
   private final StageMetrics metrics;
   private final Map<String, Schema> inputSchemas;
   private final Schema inputSchema;
   private final Schema outputSchema;
 
-  public AbstractStageContext(PluginContext pluginContext, Metrics metrics, StageInfo stageInfo) {
+  public AbstractStageContext(PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer,
+                              Metrics metrics, StageInfo stageInfo) {
     this.pluginContext = pluginContext;
+    this.serviceDiscoverer = serviceDiscoverer;
     this.stageName = stageInfo.getName();
     this.metrics = new DefaultStageMetrics(metrics, stageName);
     this.outputSchema = stageInfo.getOutputSchema();
@@ -131,4 +136,15 @@ public abstract class AbstractStageContext implements StageContext {
     return String.format("%s%s%s", stageName, Constants.ID_SEPARATOR, childPluginId);
   }
 
+  @Nullable
+  @Override
+  public URL getServiceURL(String applicationId, String serviceId) {
+    return serviceDiscoverer.getServiceURL(applicationId, serviceId);
+  }
+
+  @Nullable
+  @Override
+  public URL getServiceURL(String serviceId) {
+    return serviceDiscoverer.getServiceURL(serviceId);
+  }
 }

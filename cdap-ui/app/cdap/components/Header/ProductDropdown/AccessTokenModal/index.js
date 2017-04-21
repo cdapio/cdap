@@ -192,7 +192,6 @@ export default class AccessTokenModal extends Component {
 }
 
 AccessTokenModal.propTypes = {
-  cdapVersion: PropTypes.string,
   isOpen: PropTypes.bool,
   toggle: PropTypes.func
 };

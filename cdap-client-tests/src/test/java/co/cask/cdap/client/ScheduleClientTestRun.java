@@ -50,7 +50,7 @@ public class ScheduleClientTestRun extends ClientTestBase {
   private final NamespaceId namespace = NamespaceId.DEFAULT;
   private final ApplicationId app = namespace.app(FakeApp.NAME);
   private final WorkflowId workflow = app.workflow(FakeWorkflow.NAME);
-  private final ScheduleId schedule = app.schedule(FakeApp.SCHEDULE_NAME);
+  private final ScheduleId schedule = app.schedule(FakeApp.TIME_SCHEDULE_NAME);
 
   private ScheduleClient scheduleClient;
   private ApplicationClient appClient;
@@ -87,7 +87,7 @@ public class ScheduleClientTestRun extends ClientTestBase {
       timeSchedule = (TimeSchedule) list.get(1).getSchedule();
     }
 
-    Assert.assertEquals(FakeApp.SCHEDULE_NAME, timeSchedule.getName());
+    Assert.assertEquals(FakeApp.TIME_SCHEDULE_NAME, timeSchedule.getName());
     Assert.assertEquals(FakeApp.SCHEDULE_CRON, timeSchedule.getCronEntry());
 
     Assert.assertEquals(FakeApp.STREAM_SCHEDULE_NAME, streamSchedule.getName());
@@ -128,5 +128,41 @@ public class ScheduleClientTestRun extends ClientTestBase {
       Assert.fail("Expected not to be able to retrieve next run times for a nonexistent workflow.");
     } catch (NotFoundException expected) {
     }
+  }
+
+  @Test
+  public void testScheduleChanges() throws Exception {
+    // deploy the app with time and stream size schedule
+    FakeApp.AppConfig config = new FakeApp.AppConfig(true, true, null, null, null);
+    appClient.deploy(namespace, createAppJarFile(FakeApp.class), config);
+    // now there should be two schedule
+    List<ScheduleSpecification> list = scheduleClient.list(workflow);
+    Assert.assertEquals(2, list.size());
+
+    // re-deploy the app with only time schedule i.e. we deleted the stream size schedule
+    config = new FakeApp.AppConfig(true, false, null, null, null);
+    appClient.deploy(namespace, createAppJarFile(FakeApp.class), config);
+    // now there should be one schedule
+    list = scheduleClient.list(workflow);
+    Assert.assertEquals(1, list.size());
+
+    // Try to redeploy the app with stream size schedule and with the name of existing time schedule i.e we are trying
+    // to change the schedule type
+    config = new FakeApp.AppConfig(false, true, null, FakeApp.TIME_SCHEDULE_NAME, null);
+    appClient.deploy(namespace, createAppJarFile(FakeApp.class), config);
+
+    // Try to change the schedule type from stream size to time again
+    config = new FakeApp.AppConfig(true, false, FakeApp.TIME_SCHEDULE_NAME, null, null);
+    appClient.deploy(namespace, createAppJarFile(FakeApp.class), config);
+    list = scheduleClient.list(workflow);
+    Assert.assertEquals(1, list.size());
+
+    // test updating the schedule cron
+    config = new FakeApp.AppConfig(true, false, FakeApp.TIME_SCHEDULE_NAME, null, "0 2 1 1 *");
+    appClient.deploy(namespace, createAppJarFile(FakeApp.class), config);
+    list = scheduleClient.list(workflow);
+    Assert.assertEquals(1, list.size());
+    TimeSchedule schedule = (TimeSchedule) list.get(0).getSchedule();
+    Assert.assertEquals("0 2 1 1 *", schedule.getCronEntry());
   }
 }

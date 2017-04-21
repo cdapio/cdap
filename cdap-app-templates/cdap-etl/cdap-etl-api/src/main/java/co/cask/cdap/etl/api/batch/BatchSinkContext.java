@@ -72,4 +72,11 @@ public interface BatchSinkContext extends BatchContext {
    * @param output output to be used
    */
   void addOutput(Output output);
+
+  /**
+   * Indicates whether the pipeline is running in preview.
+   *
+   * @return a boolean value which indicates the pipeline is running in preview mode.
+   */
+  boolean isPreviewEnabled();
 }

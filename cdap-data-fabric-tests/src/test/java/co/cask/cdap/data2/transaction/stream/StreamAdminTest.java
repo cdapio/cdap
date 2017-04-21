@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,6 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.data.file.FileWriter;
@@ -46,6 +45,7 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -91,8 +91,8 @@ public abstract class StreamAdminTest {
   protected abstract OwnerAdmin getOwnerAdmin();
 
   protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
-    namespacedLocationFactory.get(FOO_NAMESPACE.toId()).mkdirs();
-    namespacedLocationFactory.get(OTHER_NAMESPACE.toId()).mkdirs();
+    namespacedLocationFactory.get(FOO_NAMESPACE).mkdirs();
+    namespacedLocationFactory.get(OTHER_NAMESPACE).mkdirs();
   }
 
   @ClassRule

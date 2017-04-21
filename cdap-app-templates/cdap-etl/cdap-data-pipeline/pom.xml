@@ -23,7 +23,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap-etl</artifactId>
-    <version>4.1.0</version>
+    <version>4.2.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-data-pipeline</artifactId>
@@ -122,6 +122,11 @@
       </plugins>
     </pluginManagement>
     <plugins>
+      <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <version>3.2.2</version>
+      </plugin>
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>

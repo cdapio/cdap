@@ -227,7 +227,7 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set worker instances failed");
   }
 
-  public Instances getWorkerInstances(String namespaceId, String appId, String workerId) {
+  public Instances getWorkerInstances(String namespaceId, String appId, String workerId) throws Exception {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/worker/%s/instances", getNamespacePath(namespaceId), appId, workerId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
@@ -431,7 +431,7 @@ public class AppFabricClient {
     }
     MockResponder mockResponder = new MockResponder();
     BodyConsumer bodyConsumer = appLifecycleHttpHandler.deploy(request, mockResponder, namespace.getId(), archiveName,
-                                                               config, owner);
+                                                               config, owner, true);
     Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from deploy call should not be null");
 
     try (BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024)) {

@@ -18,6 +18,10 @@
   font-size: 14px;
   height: calc(100% - 45px);
   margin: 0;
+  word-break: break-word;
+  height: inherit;
+  overflow-y: auto;
+  margin-bottom: 20px;
 
   li {
     margin-top: 10px;

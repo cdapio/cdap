@@ -49,7 +49,7 @@ installation and its security configuration.
     .. |cloudera| replace:: **Cloudera Manager:**
     .. _cloudera: installation/cloudera.html
 
-    - |cloudera|_ Installing on `CDH (Cloudera Distribution of Apache Hadoop) <http://www.cloudera.com/>`__ 
+    - |cloudera|_ Installing on `CDH (Cloudera Distribution of Apache Hadoop) <http://www.cloudera.com/>`__
       clusters managed with `Cloudera Manager
       <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__.
 
@@ -69,6 +69,12 @@ installation and its security configuration.
     .. _mapr: installation/mapr.html
 
     - |mapr|_ Installing on the `MapR Converged Data Platform <https://www.mapr.com>`__.
+
+    .. |hdinsight| replace:: **Microsoft Azure HDInsight:**
+    .. _hdinsight: installation/azure-hdinsight.html
+
+    - |hdinsight|_ Installing on `Microsoft Azure HDInsight
+      <https://azure.microsoft.com/en-us/services/hdinsight/>`__ clusters.
 
     .. |packages| replace:: **Manual Installation using Packages**
     .. _packages: installation/packages.html
@@ -115,15 +121,17 @@ installation and its security configuration.
 
     - |logging|_ CDAP collects **logs** for all of its internal services and user
       applications; at the same time, CDAP can be **monitored through external systems**.
-      Covers **log location**, **logging messages**, the **master services logback
-      configuration** and **CDAP support for logging** through standard SLF4J (Simple
-      Logging Facade for Java) APIs.
+      Covers **log location**, **logging messages**, the **system services and user
+      application logback configuration** and **CDAP support for logging** through the
+      standard `SLF4J (Simple Logging Facade for Java)
+      <http://www.slf4j.org/manual.html>`__ APIs and `Logback
+      <https://logback.qos.ch/manual>`__.
 
     .. |metrics| replace:: **Metrics:**
     .. _metrics: operations/metrics.html
 
     - |metrics|_ CDAP collects **metrics about the application’s behavior and performance**.
-  
+
     .. |preferences| replace:: **Preferences and Runtime Arguments:**
     .. _preferences: operations/preferences.html
 
@@ -132,7 +140,7 @@ installation and its security configuration.
     .. |scaling-instances| replace:: **Scaling Instances:**
     .. _scaling-instances: operations/scaling-instances.html
 
-    - |scaling-instances|_ Covers **querying and setting the number of instances of flowlets, services, and workers.** 
+    - |scaling-instances|_ Covers **querying and setting the number of instances of flowlets, services, and workers.**
 
     .. |resource-guarantees| replace:: **Resource Guarantees:**
     .. _resource-guarantees: operations/resource-guarantees.html
@@ -147,7 +155,7 @@ installation and its security configuration.
     .. |cdap-ui| replace:: **CDAP UI:**
     .. _cdap-ui: operations/cdap-ui.html
 
-    - |cdap-ui|_ The CDAP UI is available for **deploying, querying, and managing CDAP.** 
+    - |cdap-ui|_ The CDAP UI is available for **deploying, querying, and managing CDAP.**
 
 
 .. |appendices| replace:: **Appendices:**

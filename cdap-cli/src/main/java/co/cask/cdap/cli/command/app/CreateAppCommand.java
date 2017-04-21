@@ -27,6 +27,7 @@ import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.artifact.preview.PreviewConfig;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
@@ -66,6 +67,8 @@ public class CreateAppCommand extends AbstractAuthCommand {
 
     JsonObject config = new JsonObject();
     String ownerPrincipal = null;
+    Boolean updateSchedules = null;
+    PreviewConfig previewConfig = null;
     String configPath = arguments.getOptional(ArgumentName.APP_CONFIG_FILE.toString());
     if (configPath != null) {
       File configFile = resolver.resolvePathToFile(configPath);
@@ -73,10 +76,13 @@ public class CreateAppCommand extends AbstractAuthCommand {
         AppRequest<JsonObject> appRequest = GSON.fromJson(reader, configType);
         config = appRequest.getConfig();
         ownerPrincipal = appRequest.getOwnerPrincipal();
+        previewConfig = appRequest.getPreview();
+        updateSchedules = appRequest.canUpdateSchedules();
       }
     }
 
-    AppRequest<JsonObject> appRequest = new AppRequest<>(artifact, config, ownerPrincipal);
+    AppRequest<JsonObject> appRequest = new AppRequest<>(artifact, config, previewConfig,
+                                                         ownerPrincipal, updateSchedules);
     applicationClient.deploy(appId, appRequest);
     output.println("Successfully created application");
   }
@@ -96,7 +102,7 @@ public class CreateAppCommand extends AbstractAuthCommand {
                            "containing the application config. For example, the file contents could contain: " +
                            "'{ \"config\": { \"stream\": \"purchases\" } }'. In this case, the application would " +
                            "receive '{ \"stream\": \"purchases\" }' as its config object. Finally, an optional " +
-                           "principal may be given",
+                           "principal may be given.",
       Fragment.of(Article.A, ElementType.APP.getName()), ApplicationId.DEFAULT_VERSION);
   }
 }

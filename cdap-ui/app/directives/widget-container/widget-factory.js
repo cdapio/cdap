@@ -22,7 +22,8 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'ng-model': 'model',
           'data-config': 'myconfig',
-          'disabled': 'disabled'
+          'disabled': 'disabled',
+          'is-field-required': 'isFieldRequired'
         }
       },
       'textbox': {
@@ -31,7 +32,7 @@ angular.module(PKG.name + '.commons')
           'class': 'form-control',
           'ng-trim': 'false',
           'ng-model': 'model',
-          placeholder: '{{ ::myconfig["widget-attributes"].default}}'
+          placeholder: '{{ ::myconfig["widget-attributes"].placeholder}}'
         }
       },
       'textarea': {
@@ -41,7 +42,7 @@ angular.module(PKG.name + '.commons')
           'ng-trim': 'false',
           'ng-model': 'model',
           'rows': '{{myconfig["widget-attributes"].rows}}',
-          placeholder: '{{::myconfig["widget-attributes"].default}}'
+          placeholder: '{{::myconfig["widget-attributes"].placeholder}}'
         }
       },
       'password': {
@@ -87,6 +88,7 @@ angular.module(PKG.name + '.commons')
         element: '<my-json-textbox></my-json-textbox>',
         attributes: {
           'ng-model': 'model',
+          'disabled': 'disabled',
           placeholder: 'myconfig.properties.default || myconfig["widget-attributes"].default'
         }
       },
@@ -166,14 +168,16 @@ angular.module(PKG.name + '.commons')
         element: '<my-dataset-selector></my-dataset-selector>',
         attributes: {
           'ng-model': 'model',
-          'dataset-type': 'stream'
+          'dataset-type': 'stream',
+          'config': 'myconfig'
         }
       },
       'dataset-selector': {
         element: '<my-dataset-selector></my-dataset-selector>',
         attributes: {
           'ng-model': 'model',
-          'dataset-type': 'dataset'
+          'dataset-type': 'dataset',
+          'config': 'myconfig'
         }
       },
       'sql-select-fields': {
@@ -205,6 +209,14 @@ angular.module(PKG.name + '.commons')
           'disabled': 'disabled',
           'input-schema': 'inputSchema',
           'config': 'myconfig'
+        }
+      },
+      'wrangler-directives': {
+        element: '<my-wrangler-directives></my-wrangler-directives>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig',
+          'properties': 'properties'
         }
       }
     };

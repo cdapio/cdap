@@ -17,6 +17,8 @@
 @import "../../../styles/variables.less";
 
 my-function-dropdown-with-alias {
+  padding: 5px;
+  display: block;
   .row {
     margin-bottom: 5px;
     > div {
@@ -33,22 +35,25 @@ my-function-dropdown-with-alias {
           margin-right: 4px;
         }
         input.form-control {
-          width: 85%;
+          width: 73%;
           display: inline-block;
         }
       }
     }
     [class*="col-xs-"] {
       padding-left: 0;
+      padding-right: 5px;
 
       &:first-child {
         padding-right: 0;
         padding-left: 15px;
       }
     }
-    .btn-info {
-      @media(min-width: @screen-lg-min) {
-        margin-top: 5px;
+
+    .field-actions {
+      > span {
+        cursor: pointer;
+        line-height: 32px;
       }
     }
   }

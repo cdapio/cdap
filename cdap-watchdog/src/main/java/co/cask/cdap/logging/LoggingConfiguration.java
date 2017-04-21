@@ -31,11 +31,10 @@ public final class LoggingConfiguration {
   public static final String LOG_MAX_FILE_SIZE_BYTES = "log.max.file.size.bytes";
   public static final String KAFKA_PRODUCER_TYPE = "kafka.producer.type";
   public static final String KAFKA_PRODUCER_BUFFER_MS = "kafka.producer.buffer.ms";
-  public static final String LOG_CLEANUP_MAX_NUM_FILES = "log.cleanup.max.num.files";
 
   // Defaults
   public static final String DEFAULT_LOG_PATTERN = "%d{ISO8601} - %-5p [%t:%c{1}@%L] - %m%n";
-  public static final String DEFAULT_KAFKA_PRODUCER_TYPE = "async";
+  public static final String DEFAULT_KAFKA_PRODUCER_TYPE = "sync";
 
   public static final long DEFAULT_KAFKA_PRODUCER_BUFFER_MS = 1000;
 

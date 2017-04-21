@@ -261,7 +261,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(200, getNamespace(OTHER_NAME));
 
     NamespacedLocationFactory namespacedLocationFactory = getInjector().getInstance(NamespacedLocationFactory.class);
-    Location nsLocation = namespacedLocationFactory.get(Id.Namespace.from(NAME));
+    Location nsLocation = namespacedLocationFactory.get(new NamespaceId(NAME));
     Assert.assertTrue(nsLocation.exists());
 
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
@@ -313,7 +313,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(200, getNamespace(NAME));
 
     NamespacedLocationFactory namespacedLocationFactory = getInjector().getInstance(NamespacedLocationFactory.class);
-    Location nsLocation = namespacedLocationFactory.get(Id.Namespace.from(NAME));
+    Location nsLocation = namespacedLocationFactory.get(new NamespaceId(NAME));
     Assert.assertTrue(nsLocation.exists());
 
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);

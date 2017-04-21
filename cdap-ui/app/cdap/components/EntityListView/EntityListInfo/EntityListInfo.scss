@@ -23,6 +23,13 @@ $hovered-page-background-color: rgba(219, 219, 219, 1);
 
   .title {
     display: inline-block;
+    max-width: 85%;
+
+    h3 {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   .pagination {
@@ -31,10 +38,13 @@ $hovered-page-background-color: rgba(219, 219, 219, 1);
     margin-bottom: initial;
 
     .total-entities {
-      font-weight: bold;
-      font-size: 12px;
       display: inline-block;
       vertical-align: top;
+
+      span {
+        font-weight: bold;
+        font-size: 12px;
+      }
     }
 
     .page-list {
@@ -42,13 +52,15 @@ $hovered-page-background-color: rgba(219, 219, 219, 1);
       list-style-type: none;
       display: inline-block;
       margin-bottom: 0;
+      vertical-align: top;
 
       li {
         font-weight: bold;
         display: inline-block;
         border-radius: 100%;
 
-        a {
+        a,
+        span {
           display: flex;
           height: $page-li-size;
           width: $page-li-size;

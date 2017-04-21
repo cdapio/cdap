@@ -28,7 +28,6 @@ import co.cask.cdap.internal.asm.Classes;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import com.google.common.io.ByteStreams;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -49,7 +48,7 @@ import javax.annotation.Nullable;
  * The main {@link ClassLoader} used by CDAP. This class performs necessary class rewriting for the whole CDAP
  * system.
  */
-public final class MainClassLoader extends InterceptableClassLoader {
+public class MainClassLoader extends InterceptableClassLoader {
 
   private static final String DATASET_CLASS_NAME = Dataset.class.getName();
   private final DatasetClassRewriter datasetRewriter;
@@ -138,15 +137,20 @@ public final class MainClassLoader extends InterceptableClassLoader {
     }
   }
 
+  @Nullable
   @Override
   public byte[] rewriteClass(String className, InputStream input) throws IOException {
+    byte[] rewrittenCode = null;
+
     if (isDatasetRewriteNeeded(className)) {
-      input = new ByteArrayInputStream(datasetRewriter.rewriteClass(className, input));
+      rewrittenCode = datasetRewriter.rewriteClass(className, input);
     }
+
     if (isAuthRewriteNeeded(className)) {
-      input = new ByteArrayInputStream(authEnforceRewriter.rewriteClass(className, input));
+      rewrittenCode = authEnforceRewriter.rewriteClass(
+        className, rewrittenCode == null ? input : new ByteArrayInputStream(rewrittenCode));
     }
-    return ByteStreams.toByteArray(input);
+    return rewrittenCode;
   }
 
   /**

@@ -596,15 +596,14 @@ public class MetadataDataset extends AbstractDataset {
     }
 
     // cursors are currently not supported for default indexes
-    return new SearchResults(results, Collections.<String>emptyList(), results);
+    return new SearchResults(results, Collections.<String>emptyList());
   }
 
   private SearchResults searchByCustomIndex(String namespaceId, Set<EntityTypeSimpleName> types,
                                             SortInfo sortInfo, int offset, int limit, int numCursors,
                                             @Nullable String cursor, boolean showHidden,
                                             Set<EntityScope> entityScope) {
-    List<MetadataEntry> resultsFromOffset = new LinkedList<>();
-    List<MetadataEntry> resultsFromBeginning = new LinkedList<>();
+    List<MetadataEntry> results = new LinkedList<>();
     String indexColumn = getIndexColumn(sortInfo.getSortBy(), sortInfo.getSortOrder());
     // we want to return the first chunk of 'limit' elements after offset
     // in addition, we want to pre-fetch 'numCursors' chunks of size 'limit'.
@@ -626,31 +625,22 @@ public class MetadataDataset extends AbstractDataset {
       int mod = (limit == 1) ? 0 : 1;
       try (Scanner scanner = indexedTable.scanByIndex(Bytes.toBytes(indexColumn), startKey, stopKey)) {
         Row next;
-        while ((next = scanner.next()) != null && resultsFromBeginning.size() < fetchSize) {
+        while ((next = scanner.next()) != null && results.size() < fetchSize) {
           Optional<MetadataEntry> metadataEntry = parseRow(next, indexColumn, types, showHidden);
           if (!metadataEntry.isPresent()) {
             continue;
           }
-          resultsFromBeginning.add(metadataEntry.get());
+          results.add(metadataEntry.get());
 
-          // skip until we reach offset
-          if (resultsFromBeginning.size() <= offset) {
-            continue;
-          }
-
-          if (resultsFromOffset.size() < limit) {
-            resultsFromOffset.add(metadataEntry.get());
-          } else {
-            if ((resultsFromBeginning.size() - offset) % limit == mod) {
-              // add the cursor, with the namespace removed.
-              String cursorWithNamespace = Bytes.toString(next.get(indexColumn));
-              cursors.add(cursorWithNamespace.substring(cursorWithNamespace.indexOf(KEYVALUE_SEPARATOR) + 1));
-            }
+          if (results.size() > limit + offset && (results.size() - offset) % limit == mod) {
+            // add the cursor, with the namespace removed.
+            String cursorWithNamespace = Bytes.toString(next.get(indexColumn));
+            cursors.add(cursorWithNamespace.substring(cursorWithNamespace.indexOf(KEYVALUE_SEPARATOR) + 1));
           }
         }
       }
     }
-    return new SearchResults(resultsFromOffset, cursors, resultsFromBeginning);
+    return new SearchResults(results, cursors);
   }
 
   // there may not be a MetadataEntry in the row or it may for a different targetType (entityFilter),

@@ -162,6 +162,13 @@ let hasAtLeastOneSink = (myHelpers, GLOBALS, nodes, cb) => {
 };
 
 let allNodesConnected = (GLOBALS, nodes, connections, cb) => {
+  // check if there is only 1 node and node is of type action
+  if (connections.length === 0 && nodes.length === 1) {
+    if (GLOBALS.pluginConvert[nodes[0].type] === 'action') {
+      return;
+    }
+  }
+
   let inputConnection = {};
   let outputConnection = {};
 

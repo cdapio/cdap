@@ -16,6 +16,16 @@
 
 my-join-types {
   .multi-checkboxes-container {
+    background-color: #efefef;
+    padding: 15px 10px;
+
+    &.empty {
+      background-color: initial;
+      padding: initial;
+    }
+
+    h4 { margin-bottom: 0; }
+
     .checkboxes-group {
       .subtitle {
         color: #3c4355;
@@ -25,6 +35,8 @@ my-join-types {
         margin-bottom: 5px;
       }
 
+      .text-warning { margin-bottom: 5px; }
+
       .checkboxes {
         margin-right: 0;
         margin-left: 0;
@@ -32,10 +44,11 @@ my-join-types {
         & > .col-xs-6 {
           padding-right: 75px;
         }
-      }
 
-      .input-name { float: left; }
-      .checkbox { float: right; }
+        input[type="checkbox"] {
+          margin-top: 3px;
+        }
+      }
     }
   }
 }

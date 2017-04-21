@@ -85,7 +85,7 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     // Get the RunRecord
     List<RunRecord> runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING.toString());
     Assert.assertEquals(1, runRecords.size());
-    RunRecord rr = runRecords.get(0);
+    final RunRecord rr = runRecords.get(0);
 
     // Check the RunRecords status
     Assert.assertEquals(ProgramRunStatus.RUNNING, rr.getStatus());
@@ -95,11 +95,14 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     ProgramController programController = runtimeInfo.getController();
     programController.stop();
 
-    Thread.sleep(2000);
-
     // Verify that the status of that run is KILLED
-    RunRecordMeta runRecordMeta = store.getRun(wordcountFlow1.toEntityId(), rr.getPid());
-    Assert.assertEquals(ProgramRunStatus.KILLED, runRecordMeta.getStatus());
+    Tasks.waitFor(ProgramRunStatus.KILLED, new Callable<ProgramRunStatus>() {
+      @Override
+      public ProgramRunStatus call() throws Exception {
+        RunRecordMeta runRecord = store.getRun(wordcountFlow1.toEntityId(), rr.getPid());
+        return runRecord == null ? null : runRecord.getStatus();
+      }
+    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // Use the store manipulate state to be RUNNING
     long now = System.currentTimeMillis();
@@ -107,7 +110,8 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     store.setStart(wordcountFlow1.toEntityId(), rr.getPid(), nowSecs);
 
     // Now check again via Store to assume data store is wrong.
-    runRecordMeta = store.getRun(wordcountFlow1.toEntityId(), rr.getPid());
+    RunRecord runRecordMeta = store.getRun(wordcountFlow1.toEntityId(), rr.getPid());
+    Assert.assertNotNull(runRecordMeta);
     Assert.assertEquals(ProgramRunStatus.RUNNING, runRecordMeta.getStatus());
 
     // Verify there is NO FAILED run record for the application
@@ -121,7 +125,6 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     // Verify there is one FAILED run record for the application
     runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.FAILED.toString());
     Assert.assertEquals(1, runRecords.size());
-    rr = runRecords.get(0);
-    Assert.assertEquals(ProgramRunStatus.FAILED, rr.getStatus());
+    Assert.assertEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
   }
 }

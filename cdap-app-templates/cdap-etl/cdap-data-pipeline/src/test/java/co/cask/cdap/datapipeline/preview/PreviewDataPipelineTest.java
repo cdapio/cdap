@@ -19,7 +19,11 @@ package co.cask.cdap.datapipeline.preview;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.app.preview.PreviewRunner;
 import co.cask.cdap.app.preview.PreviewStatus;
@@ -30,6 +34,7 @@ import co.cask.cdap.datapipeline.SmartWorkflow;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.MockSource;
 import co.cask.cdap.etl.mock.test.HydratorTestBase;
+import co.cask.cdap.etl.mock.transform.ExceptionTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
@@ -38,24 +43,28 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.preview.PreviewConfig;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.TestConfiguration;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonElement;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Test for preview for data pipeline app
@@ -108,11 +117,9 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
       .build();
 
 
-    // Construct the preview config with the program name and program type, also, mark the mock table as a real dataset.
-    // Otherwise, no data will be emitted in the preview run.
+    // Construct the preview config with the program name and program type
     PreviewConfig previewConfig = new PreviewConfig(SmartWorkflow.NAME, ProgramType.WORKFLOW,
-                                                    ImmutableSet.of(sourceTableName),
-                                                    Collections.<String, String>emptyMap());
+                                                    Collections.<String, String>emptyMap(), 10);
 
     // Create the table for the mock source
     addDatasetInstance(Table.class.getName(), sourceTableName,
@@ -125,7 +132,8 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig, previewConfig);
 
     // Start the preview and get the corresponding PreviewRunner.
-    final PreviewRunner previewRunner = previewManager.getRunner(previewManager.start(NamespaceId.DEFAULT, appRequest));
+    ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
+    final PreviewRunner previewRunner = previewManager.getRunner(previewId);
 
     // Wait for the preview status go into COMPLETED.
     Tasks.waitFor(PreviewStatus.Status.COMPLETED, new Callable<PreviewStatus.Status>() {
@@ -145,15 +153,140 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     // Get the data for stage "sink" in the PreviewStore, should contain two records.
     checkPreviewStore(previewRunner, "sink", 2);
 
+    // Validate the metrics for preview
+    validateMetric(2, previewId, "source.records.in", previewRunner);
+    validateMetric(2, previewId, "source.records.out", previewRunner);
+    validateMetric(2, previewId, "transform.records.in", previewRunner);
+    validateMetric(2, previewId, "transform.records.out", previewRunner);
+    validateMetric(2, previewId, "sink.records.out", previewRunner);
+    validateMetric(2, previewId, "sink.records.in", previewRunner);
+
     // Check the sink table is not created in the real space.
     DataSetManager<Table> sinkManager = getDataset(sinkTableName);
     Assert.assertNull(sinkManager.get());
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sourceTableName));
   }
 
-  private void checkPreviewStore(PreviewRunner previewRunner, String tracerName, int expectedNumber) {
+  @Test
+  public void testPreviewFailedRun() throws Exception {
+    testPreviewFailedRun(Engine.MAPREDUCE);
+    testPreviewFailedRun(Engine.SPARK);
+  }
+
+  private void testPreviewFailedRun(Engine engine) throws Exception {
+    PreviewManager previewManager = getPreviewManager();
+
+    String sourceTableName = "singleInput";
+    String sinkTableName = "singleOutput";
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    /*
+     * source --> transform -> sink
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceTableName, schema)))
+      .addStage(new ETLStage("transform", ExceptionTransform.getPlugin("name", "samuel")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkTableName)))
+      .addConnection("source", "transform")
+      .addConnection("transform", "sink")
+      .setNumOfRecordsPreview(100)
+      .setEngine(engine)
+      .build();
+
+    // Construct the preview config with the program name and program type.
+    PreviewConfig previewConfig = new PreviewConfig(SmartWorkflow.NAME, ProgramType.WORKFLOW,
+                                                    Collections.<String, String>emptyMap(), 10);
+
+    // Create the table for the mock source
+    addDatasetInstance(Table.class.getName(), sourceTableName,
+                       DatasetProperties.of(ImmutableMap.of("schema", schema.toString())));
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(sourceTableName));
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+    MockSource.writeInput(inputManager, "1", recordSamuel);
+    MockSource.writeInput(inputManager, "2", recordBob);
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig, previewConfig);
+
+    // Start the preview and get the corresponding PreviewRunner.
+    ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
+    final PreviewRunner previewRunner = previewManager.getRunner(previewId);
+
+    // Wait for the preview status go into FAILED.
+    Tasks.waitFor(PreviewStatus.Status.RUN_FAILED, new Callable<PreviewStatus.Status>() {
+      @Override
+      public PreviewStatus.Status call() throws Exception {
+        PreviewStatus status = previewRunner.getStatus();
+        return status == null ? null : status.getStatus();
+      }
+    }, 5, TimeUnit.MINUTES);
+
+    // Get the data for stage "source" in the PreviewStore.
+    checkPreviewStore(previewRunner, "source", 2);
+
+    // Get the data for stage "transform" in the PreviewStore, should contain one less record than source.
+    checkPreviewStore(previewRunner, "transform", 1);
+
+    // Get the data for stage "sink" in the PreviewStore, should contain one less record than source.
+    checkPreviewStore(previewRunner, "sink", 1);
+
+    // Validate the metrics for preview
+    validateMetric(2, previewId, "source.records.in", previewRunner);
+    validateMetric(2, previewId, "source.records.out", previewRunner);
+    validateMetric(2, previewId, "transform.records.in", previewRunner);
+    validateMetric(1, previewId, "transform.records.out", previewRunner);
+    validateMetric(1, previewId, "sink.records.out", previewRunner);
+    validateMetric(1, previewId, "sink.records.in", previewRunner);
+
+    // Check the sink table is not created in the real space.
+    DataSetManager<Table> sinkManager = getDataset(sinkTableName);
+    Assert.assertNull(sinkManager.get());
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sourceTableName));
+  }
+
+  private void checkPreviewStore(PreviewRunner previewRunner, String tracerName, int numExpectedRecords) {
     Map<String, List<JsonElement>> result = previewRunner.getData(tracerName);
-    Assert.assertTrue(!result.isEmpty());
-    Assert.assertEquals(expectedNumber, result.get(DATA_TRACER_PROPERTY).size());
+    List<JsonElement> data = result.get(DATA_TRACER_PROPERTY);
+    if (data == null) {
+      Assert.assertEquals(numExpectedRecords, 0);
+    } else {
+      Assert.assertEquals(numExpectedRecords, data.size());
+    }
+  }
+
+  private void validateMetric(long expected, ApplicationId previewId,
+                              String metric, PreviewRunner runner) throws TimeoutException, InterruptedException {
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, previewId.getNamespace(),
+                                               Constants.Metrics.Tag.APP, previewId.getEntityName(),
+                                               Constants.Metrics.Tag.WORKFLOW, SmartWorkflow.NAME);
+    String metricName = "user." + metric;
+    long value = getTotalMetric(tags, metricName, runner);
+
+    // Min sleep time is 10ms, max sleep time is 1 seconds
+    long sleepMillis = TimeUnit.SECONDS.toMillis(1);
+    Stopwatch stopwatch = new Stopwatch().start();
+    while (value < expected && stopwatch.elapsedTime(TimeUnit.SECONDS) < 20) {
+      TimeUnit.MILLISECONDS.sleep(sleepMillis);
+      value = getTotalMetric(tags, metricName, runner);
+    }
+    // wait for won't throw an exception if the metric count is greater than expected
+    Assert.assertEquals(expected, value);
+  }
+
+  private long getTotalMetric(Map<String, String> tags, String metricName, PreviewRunner runner) {
+    MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
+                                                tags, new ArrayList<String>());
+    Collection<MetricTimeSeries> result = runner.getMetricsQueryHelper().getMetricStore().query(query);
+    if (result.isEmpty()) {
+      return 0;
+    }
+    List<TimeValue> timeValues = result.iterator().next().getTimeValues();
+    if (timeValues.isEmpty()) {
+      return 0;
+    }
+    return timeValues.get(0).getValue();
   }
 }

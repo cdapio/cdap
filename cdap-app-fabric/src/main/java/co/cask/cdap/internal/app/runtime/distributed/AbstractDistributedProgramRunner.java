@@ -22,6 +22,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.distributed.DistributedProgramControllerFactory;
+import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
@@ -42,7 +43,7 @@ import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
-import co.cask.cdap.security.TokenSecureStoreUpdater;
+import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.base.Charsets;
@@ -61,6 +62,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tephra.TxConstants;
+import org.apache.twill.api.Configs;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
@@ -71,6 +73,7 @@ import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.yarn.YarnSecureStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,7 +118,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
   protected final CConfiguration cConf;
   protected final EventHandler eventHandler;
   private final TwillRunner twillRunner;
-  private final TokenSecureStoreUpdater secureStoreUpdater;
+  private final TokenSecureStoreRenewer secureStoreRenewer;
   private final Impersonator impersonator;
 
   /**
@@ -153,13 +156,13 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
   }
 
   protected AbstractDistributedProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
-                                             TokenSecureStoreUpdater tokenSecureStoreUpdater,
+                                             TokenSecureStoreRenewer tokenSecureStoreRenewer,
                                              Impersonator impersonator) {
     this.twillRunner = twillRunner;
     this.hConf = new YarnConfiguration(hConf);
     this.cConf = CConfiguration.copy(cConf);
     this.eventHandler = createEventHandler(cConf);
-    this.secureStoreUpdater = tokenSecureStoreUpdater;
+    this.secureStoreRenewer = tokenSecureStoreRenewer;
     this.impersonator = impersonator;
   }
 
@@ -276,7 +279,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
 
               String logLevelConf = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
               if ("OFF".equals(logLevelConf)) {
-                twillPreparer.addJVMOptions("-Dtwill.disable.kafka=true");
+                twillPreparer.withConfiguration(Collections.singletonMap(Configs.Keys.LOG_COLLECTION_ENABLED, "false"));
               } else {
                 LogEntry.Level logLevel = LogEntry.Level.ERROR;
                 if ("ALL".equals(logLevelConf)) {
@@ -294,8 +297,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
 
               // Add secure tokens
               if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
-                // TokenSecureStoreUpdater.update() ignores parameters
-                twillPreparer.addSecureStore(secureStoreUpdater.update());
+                twillPreparer.addSecureStore(YarnSecureStore.create(secureStoreRenewer.createCredentials()));
               }
 
               Iterable<Class<?>> dependencies = Iterables.concat(
@@ -343,7 +345,9 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
                   "--" + RunnableOptions.APP_SPEC_FILE, APP_SPEC_FILE_NAME,
                   "--" + RunnableOptions.PROGRAM_OPTIONS, programOptions,
                   "--" + RunnableOptions.PROGRAM_ID, GSON.toJson(program.getId())
-                );
+                )
+                // Use the MainClassLoader for class rewriting
+                .setClassLoader(MainClassLoader.class.getName());
 
               TwillController twillController;
               // Change the context classloader to the combine classloader of this ProgramRunner and

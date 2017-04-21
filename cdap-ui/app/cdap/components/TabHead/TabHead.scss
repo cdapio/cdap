@@ -23,6 +23,8 @@
   color: #333333;
   font-size: 14px;
 
+  &.vertical { white-space: nowrap; }
+
   &.active-tab {
     &.horizontal {
       transition: border-bottom 0.2s ease;

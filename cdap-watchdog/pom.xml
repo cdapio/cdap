@@ -24,7 +24,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>4.1.0</version>
+    <version>4.2.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-watchdog</artifactId>
@@ -76,14 +76,6 @@
     <dependency>
       <groupId>org.apache.twill</groupId>
       <artifactId>twill-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_2.10</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-clients</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>

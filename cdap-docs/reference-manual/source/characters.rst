@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. highlight:: console
 
@@ -14,12 +14,16 @@ The Cask Data Application Platform (CDAP) has different naming conventions for d
 We distinguish these different character sets, and note which entities use them:
 
 
+.. _supported-characters-alphanumeric-character-set:
+
 Alphanumeric Character Set
 --------------------------
 This is the basic character set that all entities support:
 
 - Alphanumeric characters (``a-z A-Z 0-9``)
 
+
+.. _supported-characters-alphanumeric-extended-character-set:
 
 Alphanumeric Extended Character Set
 -----------------------------------
@@ -28,6 +32,8 @@ Alphanumeric Extended Character Set
 - Alphanumeric characters (``a-z A-Z 0-9``)
 - Underscores (``_``)
 
+
+.. _supported-characters-alphanumeric-extra-extended-character-set:
 
 Alphanumeric Extra Extended Character Set
 -----------------------------------------

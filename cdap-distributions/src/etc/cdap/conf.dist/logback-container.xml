@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2015-2017 Cask Data, Inc.
     
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -17,13 +17,11 @@
   -->
 
 <!--
-  Logback used by containers that run in YARN eg. Flows, MR, Explore
+  Logback used by containers that run in YARN, such as Explore, Flows, MapReduce, Spark
 -->
 <configuration>
 
-  <!--
-    Disabling some chatty loggers.
-  -->
+  <!-- Quieting some chatty loggers -->
   <logger name="org.apache.commons.beanutils" level="ERROR"/>
   <logger name="org.apache.zookeeper.server" level="ERROR"/>
   <logger name="org.apache.zookeeper" level="ERROR"/>
@@ -44,24 +42,23 @@
   <logger name="Explore.stdout" level="INFO"/>
   <logger name="Explore.stderr" level="INFO"/>
 
-    <appender name="Rolling" class="ch.qos.logback.core.rolling.RollingFileAppender">
-      <!-- CDAP_LOG_DIR is the environment variable set by CDAP for logs -->
-      <file>${CDAP_LOG_DIR}/program.log</file>
-      <encoder>
-        <pattern>%d{ISO8601} - %-5p [%t:%logger{1}@%L] - %m%n</pattern>
-      </encoder>
-      <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-        <!-- Daily rollover at midnight-->
-        <fileNamePattern>${CDAP_LOG_DIR}/program.%d.log</fileNamePattern>
+  <appender name="Rolling" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <!-- CDAP_LOG_DIR is the environment variable set by CDAP for logs -->
+    <file>${CDAP_LOG_DIR}/program.log</file>
+    <encoder>
+      <pattern>%d{ISO8601} - %-5p [%t:%logger{1}@%L] - %m%n</pattern>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- Daily rollover at midnight -->
+      <fileNamePattern>${CDAP_LOG_DIR}/program.%d.log</fileNamePattern>
 
-        <!-- Keep 2 weeks of history -->
-        <maxHistory>14</maxHistory>
-      </rollingPolicy>
-    </appender>
+      <!-- Keep 2 weeks of history -->
+      <maxHistory>14</maxHistory>
+    </rollingPolicy>
+  </appender>
 
   <root level="INFO">
     <appender-ref ref="Rolling"/>
   </root>
 
 </configuration>
-

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.datapipeline;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
@@ -25,6 +26,7 @@ import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.etl.api.LookupProvider;
+import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
@@ -41,6 +43,7 @@ import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.planner.ControlDag;
 import co.cask.cdap.etl.planner.PipelinePlan;
@@ -50,9 +53,11 @@ import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.spark.batch.ETLSpark;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +73,8 @@ public class SmartWorkflow extends AbstractWorkflow {
   public static final String NAME = "DataPipelineWorkflow";
   public static final String DESCRIPTION = "Data Pipeline Workflow";
   private static final Logger LOG = LoggerFactory.getLogger(SmartWorkflow.class);
+  private static final Logger WRAPPERLOGGER = new LocationAwareMDCWrapperLogger(LOG, Constants.EVENT_TYPE_TAG,
+                                                                                Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
 
@@ -82,6 +89,7 @@ public class SmartWorkflow extends AbstractWorkflow {
   private ControlDag dag;
   private int phaseNum;
   private Map<String, PostAction> postActions;
+  private Map<String, StageSpec> stageSpecs;
 
   // injected by cdap
   @SuppressWarnings("unused")
@@ -111,9 +119,11 @@ public class SmartWorkflow extends AbstractWorkflow {
     properties.put(Constants.PIPELINE_SPEC_KEY, GSON.toJson(spec));
     setProperties(properties);
 
+    stageSpecs = new HashMap<>();
     useSpark = engine == Engine.SPARK;
     if (!useSpark) {
       for (StageSpec stageSpec : spec.getStages()) {
+        stageSpecs.put(stageSpec.getName(), stageSpec);
         String pluginType = stageSpec.getPlugin().getType();
         if (SparkCompute.PLUGIN_TYPE.equals(pluginType) || SparkSink.PLUGIN_TYPE.equals(pluginType)) {
           useSpark = true;
@@ -123,14 +133,17 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
 
     PipelinePlanner planner;
+    Set<String> actionTypes = ImmutableSet.of(Action.PLUGIN_TYPE, Constants.SPARK_PROGRAM_PLUGIN_TYPE);
     if (useSpark) {
       // if the pipeline uses spark, we don't need to break the pipeline up into phases, we can just have
       // a single phase.
-      planner = new PipelinePlanner(supportedPluginTypes, ImmutableSet.<String>of(), ImmutableSet.<String>of());
+      planner = new PipelinePlanner(supportedPluginTypes, ImmutableSet.<String>of(), ImmutableSet.<String>of(),
+                                    actionTypes);
     } else {
       planner = new PipelinePlanner(supportedPluginTypes,
                                     ImmutableSet.of(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE),
-                                    ImmutableSet.of(SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE));
+                                    ImmutableSet.of(SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE),
+                                    actionTypes);
     }
     plan = planner.plan(spec);
 
@@ -166,6 +179,13 @@ public class SmartWorkflow extends AbstractWorkflow {
   @Override
   public void initialize(WorkflowContext context) throws Exception {
     super.initialize(context);
+
+    String arguments = Joiner.on(", ").withKeyValueSeparator("=").join(context.getRuntimeArguments());
+    WRAPPERLOGGER.info("Pipeline '{}' is started by user '{}' with arguments {}",
+                       context.getApplicationSpecification().getName(),
+                       UserGroupInformation.getCurrentUser().getShortUserName(),
+                       arguments);
+
     postActions = new LinkedHashMap<>();
     BatchPipelineSpec batchPipelineSpec =
       GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
@@ -177,29 +197,36 @@ public class SmartWorkflow extends AbstractWorkflow {
       postActions.put(actionSpec.getName(), (PostAction) context.newPluginInstance(actionSpec.getName(),
                                                                                    macroEvaluator));
     }
+
+    WRAPPERLOGGER.info("Pipeline '{}' running", context.getApplicationSpecification().getName());
   }
 
   @Override
   public void destroy() {
     WorkflowContext workflowContext = getContext();
-    if (workflowContext.getDataTracer(PostAction.PLUGIN_TYPE).isEnabled()) {
-      return;
-    }
-    LookupProvider lookupProvider = new DatasetContextLookupProvider(workflowContext);
-    Map<String, String> runtimeArgs = workflowContext.getRuntimeArguments();
-    long logicalStartTime = workflowContext.getLogicalStartTime();
-    for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
-      String name = endingActionEntry.getKey();
-      PostAction action = endingActionEntry.getValue();
-      StageInfo stageInfo = StageInfo.builder(name, PostAction.PLUGIN_TYPE).build();
-      BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics, lookupProvider,
-                                                                   logicalStartTime, runtimeArgs, stageInfo);
-      try {
-        action.run(context);
-      } catch (Throwable t) {
-        LOG.error("Error while running ending action {}.", name, t);
+
+    if (!workflowContext.getDataTracer(PostAction.PLUGIN_TYPE).isEnabled()) {
+      // Execute the post actions only if pipeline is not running in preview mode.
+      LookupProvider lookupProvider = new DatasetContextLookupProvider(workflowContext);
+      Map<String, String> runtimeArgs = workflowContext.getRuntimeArguments();
+      long logicalStartTime = workflowContext.getLogicalStartTime();
+      for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
+        String name = endingActionEntry.getKey();
+        PostAction action = endingActionEntry.getValue();
+        StageInfo stageInfo = StageInfo.builder(name, PostAction.PLUGIN_TYPE).build();
+        BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics, lookupProvider,
+                                                                     logicalStartTime, runtimeArgs, stageInfo);
+        try {
+          action.run(context);
+        } catch (Throwable t) {
+          LOG.error("Error while running post action {}.", name, t);
+        }
       }
     }
+
+    ProgramStatus status = getContext().getState().getStatus();
+    WRAPPERLOGGER.info("Pipeline '{}' {}", getContext().getApplicationSpecification().getName(),
+                       status == ProgramStatus.COMPLETED ? "succeeded" : status.name().toLowerCase());
   }
 
   private void addPrograms(String node, WorkflowConfigurer configurer) {
@@ -279,16 +306,17 @@ public class SmartWorkflow extends AbstractWorkflow {
                                                        spec.isStageLoggingEnabled(), phaseConnectorDatasets,
                                                        spec.getNumOfRecordsPreview());
 
-    // Custom action is the only phase in the pipeline which has no associated dag
-    boolean hasCustomAction = batchPhaseSpec.getPhase().getSources().isEmpty()
-      && batchPhaseSpec.getPhase().getSinks().isEmpty();
-    if (hasCustomAction) {
-      // Add custom action to the Workflow
+    Set<String> pluginTypes = batchPhaseSpec.getPhase().getPluginTypes();
+    if (pluginTypes.contains(Action.PLUGIN_TYPE)) {
+      // actions will be all by themselves in a phase
       programAdder.addAction(new PipelineAction(batchPhaseSpec));
-      return;
-    }
-
-    if (useSpark) {
+    } else if (pluginTypes.contains(Constants.SPARK_PROGRAM_PLUGIN_TYPE)) {
+      // spark programs will be all by themselves in a phase
+      String stageName = phase.getStagesOfType(Constants.SPARK_PROGRAM_PLUGIN_TYPE).iterator().next().getName();
+      StageSpec stageSpec = stageSpecs.get(stageName);
+      applicationConfigurer.addSpark(new ExternalSparkProgram(programName, stageSpec));
+      programAdder.addSpark(programName);
+    } else if (useSpark) {
       applicationConfigurer.addSpark(new ETLSpark(batchPhaseSpec));
       programAdder.addSpark(programName);
     } else {

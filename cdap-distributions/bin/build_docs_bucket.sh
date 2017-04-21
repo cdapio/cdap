@@ -44,7 +44,7 @@ TARGET_DIR=${DOCS_HOME}/target
 
 S3_BUCKET=${S3_BUCKET:-docs.cask.co}
 S3_REPO_PATH=${S3_REPO_PATH:-cdap} # No leading or trailing slashes
-VERSION=${VERSION:-4.1.0}
+VERSION=${VERSION:-4.2.0-SNAPSHOT}
 
 function die() { __code=${2:-1}; echo "[ERROR] ${1}" >&2; exit ${__code}; };
 
@@ -86,7 +86,7 @@ function get_repo_version() {
 }
 
 function sync_from_s3() {
-  s3cmd sync s3://${S3_BUCKET}/${S3_REPO_PATH}/${__repo_version}/ ${TARGET_DIR}
+  s3cmd sync --no-preserve s3://${S3_BUCKET}/${S3_REPO_PATH}/${__repo_version}/ ${TARGET_DIR}/${__repo_version}/
 }
 
 function robots_tags() {

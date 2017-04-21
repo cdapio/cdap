@@ -38,19 +38,23 @@ public class ApplicationDeployable {
   private final ApplicationDeployScope applicationDeployScope;
   @SerializedName("principal")
   private final KerberosPrincipalId ownerPrincipal;
+  @SerializedName("update-schedules")
+  private final boolean updateSchedules;
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
                                ApplicationId applicationId, ApplicationSpecification specification,
                                @Nullable ApplicationSpecification existingAppSpec,
                                ApplicationDeployScope applicationDeployScope) {
-    this(artifactId, artifactLocation, applicationId, specification, existingAppSpec, applicationDeployScope, null);
+    this(artifactId, artifactLocation, applicationId, specification, existingAppSpec, applicationDeployScope,
+         null, true);
   }
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
                                ApplicationId applicationId, ApplicationSpecification specification,
                                @Nullable ApplicationSpecification existingAppSpec,
                                ApplicationDeployScope applicationDeployScope,
-                               @Nullable KerberosPrincipalId ownerPrincipal) {
+                               @Nullable KerberosPrincipalId ownerPrincipal,
+                               boolean updateSchedules) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.applicationId = applicationId;
@@ -58,6 +62,7 @@ public class ApplicationDeployable {
     this.existingAppSpec = existingAppSpec;
     this.applicationDeployScope = applicationDeployScope;
     this.ownerPrincipal = ownerPrincipal;
+    this.updateSchedules = updateSchedules;
   }
 
   /**
@@ -110,5 +115,12 @@ public class ApplicationDeployable {
   @Nullable
   public KerberosPrincipalId getOwnerPrincipal() {
     return ownerPrincipal;
+  }
+
+  /**
+   * @return true if we can update the schedules of the app
+   */
+  public boolean canUpdateSchedules() {
+    return updateSchedules;
   }
 }

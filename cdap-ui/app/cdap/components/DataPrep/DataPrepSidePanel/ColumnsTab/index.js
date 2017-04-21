@@ -21,6 +21,7 @@ import shortid from 'shortid';
 import ColumnsTabRow from 'components/DataPrep/DataPrepSidePanel/ColumnsTab/ColumnsTabRow';
 import {objectQuery} from 'services/helpers';
 import NamespaceStore from 'services/NamespaceStore';
+import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 
 export default class ColumnsTab extends Component {
   constructor(props) {
@@ -53,20 +54,20 @@ export default class ColumnsTab extends Component {
 
     let params = {
       namespace,
-      workspaceId: state.workspaceId,
-      limit: 100,
-      directive: state.directives
+      workspaceId: state.workspaceId
     };
 
-    MyDataPrepApi.summary(params)
+    let requestBody = directiveRequestBodyCreator(state.directives);
+
+    MyDataPrepApi.summary(params, requestBody)
       .subscribe((res) => {
         let columns = {};
 
         state.headers.forEach((head) => {
           columns[head] = {
-            general: objectQuery(res, 'value', 'statistics', head, 'general'),
-            types: objectQuery(res, 'value', 'statistics', head, 'types'),
-            isValid: objectQuery(res, 'value', 'validation', head, 'valid')
+            general: objectQuery(res, 'values', 'statistics', head, 'general'),
+            types: objectQuery(res, 'values', 'statistics', head, 'types'),
+            isValid: objectQuery(res, 'values', 'validation', head, 'valid')
           };
         });
 

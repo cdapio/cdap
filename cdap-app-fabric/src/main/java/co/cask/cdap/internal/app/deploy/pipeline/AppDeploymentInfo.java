@@ -42,16 +42,19 @@ public class AppDeploymentInfo {
   private final String configString;
   @SerializedName("principal")
   private final KerberosPrincipalId ownerPrincipal;
+  @SerializedName("update-schedules")
+  private final boolean updateSchedules;
 
   public AppDeploymentInfo(ArtifactDescriptor artifactDescriptor, NamespaceId namespaceId,
                            String appClassName, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString) {
-    this(artifactDescriptor, namespaceId, appClassName, appName, appVersion, configString, null);
+    this(artifactDescriptor, namespaceId, appClassName, appName, appVersion, configString, null, true);
   }
 
   public AppDeploymentInfo(ArtifactDescriptor artifactDescriptor, NamespaceId namespaceId,
                            String appClassName, @Nullable String appName, @Nullable String appVersion,
-                           @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal) {
+                           @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
+                           boolean updateSchedules) {
     this.artifactId = Artifacts.toArtifactId(namespaceId, artifactDescriptor.getArtifactId());
     this.artifactLocation = artifactDescriptor.getLocation();
     this.namespaceId = namespaceId;
@@ -60,6 +63,7 @@ public class AppDeploymentInfo {
     this.appVersion = appVersion;
     this.configString = configString;
     this.ownerPrincipal = ownerPrincipal;
+    this.updateSchedules = updateSchedules;
   }
 
   /**
@@ -120,5 +124,12 @@ public class AppDeploymentInfo {
   @Nullable
   public KerberosPrincipalId getOwnerPrincipal() {
     return ownerPrincipal;
+  }
+
+  /**
+   * return true if we can update the schedules of the app
+   */
+  public boolean canUpdateSchedules() {
+    return updateSchedules;
   }
 }

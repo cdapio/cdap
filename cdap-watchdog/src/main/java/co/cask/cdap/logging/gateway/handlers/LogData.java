@@ -16,6 +16,8 @@
 
 package co.cask.cdap.logging.gateway.handlers;
 
+import java.util.Map;
+
 /**
  * Represents the structure of a log event.
  */
@@ -37,9 +39,16 @@ public final class LogData {
   private final String message;
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
   private final String stackTrace;
+  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
+  private final String loggerName;
+  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
+  private final Map<String, String> mdc;
+  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
+  private final boolean isNativeMethod;
 
   LogData(Long timestamp, String logLevel, String threadName, String className, String simpleClassName,
-          Integer lineNumber, String message, String stackTrace) {
+          Integer lineNumber, String message, String stackTrace, String loggerName, Map<String, String> mdc,
+          boolean isNativeMethod) {
     this.timestamp = timestamp;
     this.logLevel = logLevel;
     this.threadName = threadName;
@@ -48,6 +57,9 @@ public final class LogData {
     this.lineNumber = lineNumber;
     this.message = message;
     this.stackTrace = stackTrace;
+    this.loggerName = loggerName;
+    this.mdc = mdc;
+    this.isNativeMethod = isNativeMethod;
   }
 
   public Long getTimestamp() {
@@ -80,5 +92,17 @@ public final class LogData {
 
   public String getStackTrace() {
     return stackTrace;
+  }
+
+  public String getLoggerName() {
+    return loggerName;
+  }
+
+  public Map<String, String> getMDC() {
+    return mdc;
+  }
+
+  public boolean getNativeMethod() {
+    return isNativeMethod;
   }
 }

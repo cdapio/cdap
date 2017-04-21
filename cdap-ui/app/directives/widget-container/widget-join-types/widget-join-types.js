@@ -20,23 +20,24 @@ function JoinTypesController() {
   let vm = this;
 
   vm.optionsDropdown = ['Inner', 'Outer'];
+  vm.selectedCount = 0;
 
   vm.changeJoinType = () => {
-    if (vm.joinType === 'Inner') {
-      angular.forEach(vm.inputs, (input) => {
-        input.selected = true;
-      });
+    angular.forEach(vm.inputs, (input) => {
+      input.selected = vm.joinType === 'Inner';
+    });
 
-      vm.formatOutput();
-    }
+    vm.formatOutput();
   };
 
   vm.formatOutput = () => {
     let outputArr = [];
+    vm.selectedCount = 0;
 
     angular.forEach(vm.inputs, (input) => {
       if (input.selected) {
         outputArr.push(input.name);
+        vm.selectedCount++;
       }
     });
 

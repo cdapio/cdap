@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusConfigStore {
-  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES, myHelpers){
+  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES, myHelpers, avsc){
     this.state = {};
     this.mySettings = mySettings;
     this.myHelpers = myHelpers;
@@ -30,6 +30,7 @@ class HydratorPlusPlusConfigStore {
     this.uuid = uuid;
     this.$state = $state;
     this.HYDRATOR_DEFAULT_VALUES = HYDRATOR_DEFAULT_VALUES;
+    this.avsc = avsc;
 
     this.changeListeners = [];
     this.setDefaults();
@@ -214,6 +215,15 @@ class HydratorPlusPlusConfigStore {
       connection.to = toConnectionName;
     });
     config.connections = connections;
+
+
+    // Adding leftover nodes
+    if (Object.keys(nodesMap).length !== 0) {
+      angular.forEach(nodesMap, (node, id) => {
+        addPluginToConfig(node, id);
+      });
+    }
+
 
     let appType = this.getAppType();
     if ( this.GLOBALS.etlBatchPipelines.indexOf(appType) !== -1) {
@@ -472,10 +482,29 @@ class HydratorPlusPlusConfigStore {
       if (nodesMap[node] && nodesMap[node].implicitSchema) {
         return;
       }
+
+      // Stop propagating if outputSchema is a macro schema
+      if (outputSchema && outputSchema.length > 0) {
+        try {
+          this.avsc.parse(outputSchema);
+        } catch (e) {
+          return;
+        }
+      }
+
       node.forEach( n => {
         // If we encounter an implicit schema down the stream while propagation stop there and return.
         if (nodesMap[n].implicitSchema) {
           return;
+        }
+
+        // If we encounter a macro schema, stop propagataion
+        if (nodesMap[n].outputSchema && nodesMap[n].outputSchema.length > 0) {
+          try {
+            this.avsc.parse(this.state.node.outputSchema);
+          } catch (e) {
+            return;
+          }
         }
 
         let schemaToPropagate = outputSchema;
@@ -802,6 +831,6 @@ class HydratorPlusPlusConfigStore {
   }
 }
 
-HydratorPlusPlusConfigStore.$inject = ['HydratorPlusPlusConfigDispatcher', 'HydratorPlusPlusCanvasFactory', 'GLOBALS', 'mySettings', 'HydratorPlusPlusConsoleActions', '$stateParams', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$q', 'HydratorPlusPlusPluginConfigFactory', 'uuid', '$state', 'HYDRATOR_DEFAULT_VALUES', 'myHelpers'];
+HydratorPlusPlusConfigStore.$inject = ['HydratorPlusPlusConfigDispatcher', 'HydratorPlusPlusCanvasFactory', 'GLOBALS', 'mySettings', 'HydratorPlusPlusConsoleActions', '$stateParams', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$q', 'HydratorPlusPlusPluginConfigFactory', 'uuid', '$state', 'HYDRATOR_DEFAULT_VALUES', 'myHelpers', 'avsc'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('HydratorPlusPlusConfigStore', HydratorPlusPlusConfigStore);

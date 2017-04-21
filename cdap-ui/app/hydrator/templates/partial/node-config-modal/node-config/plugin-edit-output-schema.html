@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016 Cask Data, Inc.
+  Copyright © 2016-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -34,6 +34,11 @@
       </button>
 
       <ul class="output-schema-actions" uib-dropdown-menu>
+        <!-- If node is a sink and it's macro enabled -->
+        <li ng-if="!isDisabled && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties['schema'] && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties['schema'].macroSupported">
+          <a href="" ng-click="HydratorPlusPlusNodeConfigCtrl.toggleAdvance()">Advanced</a>
+        </li>
+
         <li ng-if="(!HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema && !isDisabled)">
           <a href="#" onclick="document.getElementById('schema-import-link').click()">Import</a>
         </li>
@@ -61,19 +66,50 @@
     </div>
     <div ng-if="isDisabled">
       <my-complex-schema-editor
+        ng-if="!HydratorPlusPlusNodeConfigCtrl.state.schemaAdvance"
         ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
         is-disabled="true"
         plugin-name="::HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name">
       </my-complex-schema-editor>
+
+      <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.schemaAdvance">
+        <textarea
+          class="form-control"
+          ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
+          disabled>
+        </textarea>
+        <span class="badge macro-indicator pull-right"
+              uib-tooltip="A placeholder that will be substituted at runtime. eg. ${placeholder} or ${secure(key)}"
+              tooltip-append-to-body="true"
+              tooltip-popup-delay="300"
+              tooltip-placement="left">
+          Macro
+        </span>
+      </div>
     </div>
     <div ng-if="!isDisabled">
       <my-complex-schema-editor
+        ng-if="!HydratorPlusPlusNodeConfigCtrl.state.schemaAdvance"
         ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
         is-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema"
         plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
         config="::HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties"
         plugin-name="::HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name">
       </my-complex-schema-editor>
+
+      <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.schemaAdvance">
+        <textarea
+          class="form-control"
+          ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema">
+        </textarea>
+        <span class="badge macro-indicator pull-right"
+              uib-tooltip="A placeholder that will be substituted at runtime. eg. ${placeholder} or ${secure(key)}"
+              tooltip-append-to-body="true"
+              tooltip-popup-delay="300"
+              tooltip-placement="left">
+          Macro
+        </span>
+      </div>
     </div>
   </fieldset>
 

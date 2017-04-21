@@ -19,7 +19,14 @@ const DataPrepActions = {
   setDirectives: 'DATAPREP_SET_DIRECTIVES',
   setWorkspace: 'DATAPREP_SET_WORKSPACE',
   setInitialized: 'DATAPREP_SET_INITIALIZED',
-  reset: 'DATAPREP_RESET'
+  setHigherVersion: 'DATAPREP_SET_HIGHER_VERSION',
+  setWorkspaceMode: 'DATAPREP_SET_WORKSPACE_MODE',
+  enableLoading: 'DATAPREP_ENABLE_LOADING',
+  disableLoading: 'DATAPREP_DISABLE_LOADING',
+  reset: 'DATAPREP_RESET',
+  setError: 'DATAPREP_SET_ERROR',
+  setCLIError: 'DATAPREP_CLI_ERROR',
+  dismissError: 'DATAPREP_DISMISS_ERROR'
 };
 
 export default DataPrepActions;

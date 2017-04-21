@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _http-restful-api-monitor:
 
@@ -27,6 +27,8 @@ For the detailed information of all available CDAP system services, use::
 
   GET /v3/system/services
 
+.. highlight:: json-ellipsis
+
 The response body will contain a JSON-formatted list of the existing system services::
 
   [
@@ -42,8 +44,10 @@ The response body will contain a JSON-formatted list of the existing system serv
       }
       ...
   ]
-  
-See :ref:`downloading System Logs <http-restful-api-logging_downloading_system_logs>` for
+
+.. highlight:: console
+
+See :ref:`downloading System Logs <http-restful-api-logging-downloading-system-logs>` for
 information and an example of using these system services.
 
 .. rubric:: HTTP Responses
@@ -85,7 +89,7 @@ The status of these CDAP system services can be checked:
 .. list-table::
    :header-rows: 1
    :widths: 25 25 50
-   
+
    * - Service
      - Service ID
      - Description of the service
@@ -106,10 +110,10 @@ The status of these CDAP system services can be checked:
      - Service that aggregates all system and application logs
    * - ``Metrics Processor``
      - ``metrics.processor``
-     - Service that aggregates all system and application metrics 
+     - Service that aggregates all system and application metrics
    * - ``Dataset Executor``
      - ``dataset.executor``
-     - Service that handles all data-related HTTP requests 
+     - Service that handles all data-related HTTP requests
    * - ``Explore Service``
      - ``explore.service``
      - Service that handles all HTTP requests for ad-hoc data exploration
@@ -132,7 +136,7 @@ The status of these CDAP system services can be checked:
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
-   
+
    * - HTTP Method
      - ``GET /v3/system/services/metrics/status``
    * - Description
@@ -141,10 +145,11 @@ The status of these CDAP system services can be checked:
 
 Container Information of a System Service
 =========================================
-If you are trying to debug a CDAP system service, you can retrieve container info for a system service with::
+If you are trying to debug a CDAP system service, you can retrieve container info for a
+system service with::
 
   GET /v3/system/services/<service-id>/live-info
-  
+
 where
 
 .. list-table::
@@ -155,9 +160,39 @@ where
      - Description
    * - ``service-id``
      - Name (ID) of the system service
-     
+
 **Note:** This returns useful information only for Distributed CDAP installations.
 
+
+.. rubric:: Example
+
+For example, to retrieve the list of CDAP Master services, issue an HTTP GET request to
+the URL::
+
+  GET /v3/system/services/appfabric/live-info
+
+.. highlight:: json-ellipsis
+
+The response body will contain a JSON-formatted list of CDAP Master services, with the
+first container listed being the active CDAP Master in an HA deployment::
+
+  {
+      "containers":[
+                      {
+                          "host":"host1.example.com",
+                          "name":"appfabric",
+                          "type":"system_service"
+                      },
+                      {
+                          "host":"host2.example.com",
+                          "name":"appfabric",
+                          "type":"system_service"
+                      }
+                   ]
+  }
+
+
+.. highlight:: console
 
 Restarting System Service Instances
 ===================================
@@ -202,6 +237,8 @@ To retrieve details of the last restart attempt made for a particular service, i
 
   GET /v3/system/services/<service-id>/latest-restart
 
+.. highlight:: json-ellipsis
+
 The response body will contain a JSON-formatted status of the last restart attempt for that service::
 
   {
@@ -209,8 +246,10 @@ The response body will contain a JSON-formatted status of the last restart attem
       "serviceName":"dataset.executor",
       "startTimeInMs":1437070039984,
       "endTimeInMs":1437070039992,
-      "status":"SUCCESS"}
+      "status":"SUCCESS"
   }
+
+.. highlight:: console
 
 .. list-table::
    :widths: 20 80
@@ -237,15 +276,19 @@ The response body will contain a JSON-formatted status of the last restart attem
 
 Scaling System Services
 =======================
-In distributed CDAP installations, the number of instances for CDAP system services 
+In Distributed CDAP installations, the number of instances for CDAP system services
 can be queried and changed by using these commands::
 
   GET /v3/system/services/<service-id>/instances
   PUT /v3/system/services/<service-id>/instances
 
+.. highlight:: json
+
 with the arguments as a JSON string in the body::
 
         { "instances" : <quantity> }
+
+.. highlight:: console
 
 .. list-table::
    :widths: 20 80
@@ -254,11 +297,11 @@ with the arguments as a JSON string in the body::
    * - Parameter
      - Description
    * - ``service-id``
-     - Name (ID) of the system service 
+     - Name (ID) of the system service
    * - ``quantity``
      - Number of instances to be used
-     
-**Note:** In standalone CDAP, trying to set the instances of system services will return a Status Code ``400 Bad Request``.
+
+**Note:** In Standalone CDAP, trying to set the instances of system services will return a Status Code ``400 Bad Request``.
 
 .. rubric:: Examples
 .. list-table::
@@ -268,16 +311,20 @@ with the arguments as a JSON string in the body::
    * - HTTP Method
      - ``GET /v3/system/services/metrics/instances``
    * - Description
-     - Determine the number of instances being used for the metrics HTTP service 
-   * - 
-     - 
+     - Determine the number of instances being used for the metrics HTTP service
+   * -
+     -
    * - HTTP Method
      - ``PUT /v3/system/services/metrics/instances``
        ``instances``
 
+       .. highlight:: json-ellipsis
+
        with the arguments as a JSON string in the body::
 
           { "instances" : 2 }
+
+       .. highlight:: console
 
    * - Description
      - Sets the number of instances of the metrics HTTP service to 2

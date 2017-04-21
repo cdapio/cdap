@@ -51,7 +51,7 @@ DEFAULT_INPUT_DIRECTORY = os.path.abspath(os.path.join(SCRIPT_DIR_PATH, "../targ
 DEFAULT_OUTPUT_SITEMAP_XML_FILE = os.path.abspath(os.path.join(DEFAULT_INPUT_DIRECTORY, 'sitemap.xml'))
 
 SITEMAP_XML_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"> 
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 %s</urlset>
 """
 
@@ -81,13 +81,13 @@ class FileURL:
 def parse_options():
     """ Parses args options.
     """
-    
+
     description = """Reads either the default documentation directory
 (%(default_input)s) or a specified directory, walks the directory, generates a
-site-map.xml file, uses the CDAP version of either the default (%(default_version)s) or a
+sitemap.xml file, uses the CDAP version of either the default (%(default_version)s) or a
 specified version, and writes it to either the default (%(default_output)s) or a specified
-output.
-""" % {'default_input': DEFAULT_INPUT_DIRECTORY, 
+output. Also writes a 'current.xml' and 'develop.xml' version of the sitemap.xml.
+""" % {'default_input': DEFAULT_INPUT_DIRECTORY,
        'default_version': DEFAULT_CDAP_VERSION,
        'default_output': DEFAULT_OUTPUT_SITEMAP_XML_FILE,
        }
@@ -127,7 +127,7 @@ output.
     (options, args) = parser.parse_args()
 
     return options, args, parser
-    
+
 def build_sitemap(input):
     sitemap = []
     print "Using input directory: %s" % input
@@ -148,7 +148,7 @@ def write_sitemap(sitemap, output, version, compare=False):
     if not os.path.dirname(output):
         print "Output file parent directory does not exist: %s" % output
         return 1
-    
+
     sitemap_urls = ''
     unique_files = []
     for fileURL in sitemap:
@@ -159,7 +159,7 @@ def write_sitemap(sitemap, output, version, compare=False):
                 unique_files.append(md5_hash)
     
     sitemap_xml = SITEMAP_XML_TEMPLATE % sitemap_urls
-    
+
     f = open(output, 'w')
     f.write(sitemap_xml)
     f.close()
@@ -175,18 +175,21 @@ def main():
     """ Main program entry point.
     """
     options, args, parser = parse_options()
-    
+
     if args:
         parser.print_help()
         sys.exit(1)
-        
+
     sitemap = build_sitemap(options.input)
-    
+
     if sitemap:
         return_code = write_sitemap(sitemap, options.output, options.version, options.compare)
+        for v in ('current', 'develop'):
+            if not return_code:
+                return_code = write_sitemap(sitemap, "%s.%s.xml" % (options.output, v), v, options.compare)
     else:
         return_code = 1
-        
+
     return return_code
 
 if __name__ == '__main__':

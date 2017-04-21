@@ -24,7 +24,7 @@ CDAP_BRANCH='release/4.1'
 # Optional tag to checkout - All released versions of this script should set this
 CDAP_TAG='v4.1.0'
 # The CDAP package version passed to Chef
-CDAP_VERSION='4.1.0-2'
+CDAP_VERSION='4.2.0-1'
 # The version of Chef to install
 CHEF_VERSION='12.10.24'
 # cdap-site.xml configuration parameters
@@ -73,7 +73,7 @@ ${__packerdir}/cookbook-setup.sh || die "Failed to install cookbooks"
 
 # CDAP cli install, ensures package dependencies are present
 # We must specify the cdap version
-echo "{\"cdap\": {\"version\": \"${CDAP_VERSION}\"}}" > ${__tmpdir}/cli-conf.json
+echo "{\"cdap\": {\"version\": \"${CDAP_VERSION}\", \"skip_prerequisites\": \"true\"}}" > ${__tmpdir}/cli-conf.json
 chef-solo -o 'recipe[cdap::cli]' -j ${__tmpdir}/cli-conf.json || die 'Failed during Chef CDAP CLI install'
 
 # Read zookeeper quorum from hbase-site.xml, using sourced init script function

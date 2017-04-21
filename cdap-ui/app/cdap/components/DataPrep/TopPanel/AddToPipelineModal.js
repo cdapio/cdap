@@ -21,6 +21,27 @@ import find from 'lodash/find';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepStore from 'components/DataPrep/store';
 import NamespaceStore from 'services/NamespaceStore';
+import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
+import {objectQuery} from 'services/helpers';
+import T from 'i18n-react';
+import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers';
+import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
+
+const mapErrorToMessage = (e) => {
+  let message = e.message;
+  if (message.indexOf('invalid field name') !== -1) {
+    let splitMessage = e.message.split("field name: ");
+    let fieldName = objectQuery(splitMessage, 1) || e.message;
+    return {
+      message: T.translate('features.DataPrep.TopPanel.invalidFieldNameMessage', {fieldName}),
+      remedies: `
+${T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies1')}
+${T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies2')}
+      `
+    };
+  }
+  return {message: e.message};
+};
 
 export default class AddToHydratorModal extends Component {
   constructor(props) {
@@ -30,7 +51,10 @@ export default class AddToHydratorModal extends Component {
       loading: true,
       batchUrl: null,
       realtimeUrl: null,
-      error: null
+      error: null,
+      workspaceId: null,
+      realtimeConfig: null,
+      batchConfig: null
     };
   }
 
@@ -41,6 +65,61 @@ export default class AddToHydratorModal extends Component {
   generateLinks() {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
+    MyDataPrepApi.getInfo({ namespace })
+      .subscribe((res) => {
+        let pluginVersion = res.values[0]['plugin.version'];
+
+        this.constructProperties(pluginVersion);
+      }, (err) => {
+        if (err.statusCode === 404) {
+          console.log('cannot find method');
+          // can't find method; use latest wrangler-transform
+          this.constructProperties();
+        }
+      });
+  }
+
+  findWranglerArtifacts(artifacts, pluginVersion) {
+    let wranglerArtifacts = artifacts.filter((artifact) => {
+      if (pluginVersion) {
+        return artifact.name === 'wrangler-transform' && artifact.version === pluginVersion;
+      }
+
+      return artifact.name === 'wrangler-transform';
+    });
+
+    if (wranglerArtifacts.length === 0) {
+      // cannot find plugin. Error out
+      this.setState({
+        error: 'Cannot find wrangler-transform plugin. Please load wrangler transform from Cask Market'
+      });
+
+      return null;
+    }
+
+    let filteredArtifacts = wranglerArtifacts;
+
+    if (!pluginVersion) {
+      let highestVersion = findHighestVersion(wranglerArtifacts.map((artifact) => {
+        return artifact.version;
+      }), true);
+
+      filteredArtifacts = wranglerArtifacts.filter((artifact) => {
+        return artifact.version === highestVersion;
+      });
+    }
+
+    let returnArtifact = filteredArtifacts[0];
+
+    if (filteredArtifacts.length > 1) {
+      returnArtifact.scope = 'USER';
+    }
+
+    return returnArtifact;
+  }
+
+  constructProperties(pluginVersion) {
+    let namespace = NamespaceStore.getState().selectedNamespace;
     let state = DataPrepStore.getState().dataprep;
     let workspaceId = state.workspaceId;
 
@@ -50,16 +129,15 @@ export default class AddToHydratorModal extends Component {
     };
 
     let directives = state.directives;
-    if (directives) {
-      requestObj.directive = directives;
-    }
+
+    let requestBody = directiveRequestBodyCreator(directives);
 
     MyArtifactApi.list({ namespace })
-      .combineLatest(MyDataPrepApi.getSchema(requestObj))
+      .combineLatest(MyDataPrepApi.getSchema(requestObj, requestBody))
       .subscribe((res) => {
         let batchArtifact = find(res[0], { 'name': 'cdap-data-pipeline' });
         let realtimeArtifact = find(res[0], { 'name': 'cdap-data-streams' });
-        let wranglerArtifact = find(res[0], { 'name': 'wrangler-transform' });
+        let wranglerArtifact = this.findWranglerArtifacts(res[0], pluginVersion);
 
         let tempSchema = {
           name: 'avroSchema',
@@ -68,10 +146,22 @@ export default class AddToHydratorModal extends Component {
         };
 
         let properties = {
-          field: '*',
+          workspaceId,
           directives: directives.join('\n'),
-          schema: JSON.stringify(tempSchema)
+          schema: JSON.stringify(tempSchema),
+          field: '*'
         };
+
+        try {
+          getParsedSchemaForDataPrep(tempSchema);
+        } catch (e) {
+          let {message, remedies = null} = mapErrorToMessage(e);
+          this.setState({
+            error: {message, remedies},
+            loading: false
+          });
+          return;
+        }
 
         // Generate hydrator config as URL parameters
         let config = {
@@ -92,13 +182,15 @@ export default class AddToHydratorModal extends Component {
         };
 
         let realtimeConfig = Object.assign({}, config, {artifact: realtimeArtifact});
+        realtimeConfig.config.batchInterval = '10s';
         let batchConfig = Object.assign({}, config, {artifact: batchArtifact});
 
         let realtimeUrl = window.getHydratorUrl({
           stateName: 'hydrator.create',
           stateParams: {
             namespace,
-            configParams: realtimeConfig
+            workspaceId,
+            artifactType: realtimeArtifact.name
           }
         });
 
@@ -106,20 +198,23 @@ export default class AddToHydratorModal extends Component {
           stateName: 'hydrator.create',
           stateParams: {
             namespace,
-            configParams: batchConfig
+            workspaceId,
+            artifactType: batchArtifact.name
           }
         });
 
         this.setState({
           loading: false,
           realtimeUrl,
-          batchUrl
+          batchUrl,
+          workspaceId,
+          realtimeConfig,
+          batchConfig
         });
 
       }, (err) => {
-        console.log('Failed to fetch schema', err);
         this.setState({
-          error: err.message,
+          error: objectQuery(err, 'response', 'message')  || T.translate('features.DataPrep.TopPanel.PipelineModal.defaultErrorMessage'),
           loading: false
         });
       });
@@ -130,7 +225,7 @@ export default class AddToHydratorModal extends Component {
 
     if (this.state.loading) {
       content = (
-        <div>
+        <div className="loading-container">
           <h4 className="text-xs-center">
             <span className="fa fa-spin fa-spinner" />
           </h4>
@@ -139,9 +234,17 @@ export default class AddToHydratorModal extends Component {
     } else if (this.state.error) {
       content = (
         <div>
-          <h4 className="text-danger text-xs-center">
-            {this.state.error}
-          </h4>
+          <div className="text-danger error-message-container loading-container">
+            <span className="fa fa-exclamation-triangle"></span>
+            <span>
+              {typeof this.state.error === 'object' ? this.state.error.message : this.state.error}
+            </span>
+            <pre>
+              {
+                objectQuery(this.state, 'error', 'remedies') ? this.state.error.remedies : null
+              }
+            </pre>
+          </div>
         </div>
       );
     } else {
@@ -154,6 +257,9 @@ export default class AddToHydratorModal extends Component {
             <a
               href={this.state.batchUrl}
               className="btn btn-secondary"
+              onClick={(() => {
+                window.localStorage.setItem(this.state.workspaceId, JSON.stringify(this.state.batchConfig));
+              }).bind(this)}
             >
               <i className="fa icon-ETLBatch"/>
               <span>Batch Pipeline</span>
@@ -161,6 +267,9 @@ export default class AddToHydratorModal extends Component {
             <a
               href={this.state.realtimeUrl}
               className="btn btn-secondary"
+              onClick={(() => {
+                window.localStorage.setItem(this.state.workspaceId, JSON.stringify(this.state.realtimeConfig));
+              }).bind(this)}
             >
               <i className="fa icon-sparkstreaming"/>
               <span>Realtime Pipeline</span>
@@ -174,7 +283,7 @@ export default class AddToHydratorModal extends Component {
       <Modal
         isOpen={true}
         toggle={this.props.toggle}
-        zIndex="1070"
+        size="lg"
         className="add-to-pipeline-dataprep-modal"
       >
         <ModalHeader>
@@ -200,4 +309,3 @@ export default class AddToHydratorModal extends Component {
 AddToHydratorModal.propTypes = {
   toggle: PropTypes.func
 };
-

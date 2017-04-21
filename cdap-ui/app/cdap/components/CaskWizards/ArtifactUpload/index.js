@@ -37,6 +37,15 @@ export default class ArtifactUploadWizard extends Component {
     };
     this.eventEmitter = ee(ee);
   }
+  componentWillMount() {
+    ArtifactUploadStore.dispatch({
+      type: ArtifactUploadActions.setType,
+      payload: {
+        type: 'jdbc'
+      }
+    });
+  }
+
   componentWillUnmount() {
     ArtifactUploadStore.dispatch({
       type: ArtifactUploadActions.onReset

@@ -56,13 +56,13 @@
       </div>
     </div>
 
-    <div class="action-buttons">
+    <div class="rule-action-buttons">
       <span class="btn btn-sm btn-field-actions"
             ng-if="!$last">
         AND
       </span>
 
-      <button class="btn btn-sm btn-field-actions"
+      <button class="btn btn-sm btn-field-actions plus"
               ng-if="$last"
               type="button"
               ng-click="SqlConditions.addRule()">
@@ -72,6 +72,6 @@
   </div>
 
   <div ng-if="SqlConditions.stageList.length === 0">
-    <h4>No input stages</h4>
+    <h4 class="empty-message">No input stages</h4>
   </div>
 </div>

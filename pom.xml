@@ -22,7 +22,7 @@
 
   <groupId>co.cask.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>4.1.0</version>
+  <version>4.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -145,17 +145,17 @@
     <slf4j.version>1.7.5</slf4j.version>
     <snappy.version>1.1.1.7</snappy.version>
     <spark.version>1.6.1</spark.version>
-    <tephra.version>0.10.0-incubating</tephra.version>
+    <tephra.version>0.11.0-incubating</tephra.version>
     <tez.version>0.8.4</tez.version>
     <thrift.version>0.9.3</thrift.version>
-    <twill.version>0.10.0</twill.version>
+    <twill.version>0.11.0</twill.version>
     <twitter4j.version>4.0.3</twitter4j.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
 
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
-    <release.iteration>2</release.iteration>
+    <release.iteration>1</release.iteration>
   </properties>
 
   <dependencyManagement>
@@ -507,11 +507,6 @@
             <artifactId>scala-compiler</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka-clients</artifactId>
-        <version>${kafka.version}</version>
       </dependency>
       <dependency>
         <groupId>org.iq80.leveldb</groupId>
@@ -1027,11 +1022,23 @@
         <groupId>org.quartz-scheduler</groupId>
         <artifactId>quartz</artifactId>
         <version>${quartz.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>c3p0</groupId>
+            <artifactId>c3p0</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.quartz-scheduler</groupId>
         <artifactId>quartz-jobs</artifactId>
         <version>${quartz.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>c3p0</groupId>
+            <artifactId>c3p0</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.ning</groupId>

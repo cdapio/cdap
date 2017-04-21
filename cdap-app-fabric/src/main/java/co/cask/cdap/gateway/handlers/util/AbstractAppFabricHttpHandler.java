@@ -74,6 +74,7 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
   public static final String APP_CONFIG_HEADER = "X-App-Config";
 
   public static final String PRINCIPAL_HEADER = "X-Principal";
+  public static final String SCHEDULES_HEADER = "X-App-Deploy-Update-Schedules";
 
   protected int getInstances(HttpRequest request) throws BadRequestException {
     Instances instances;

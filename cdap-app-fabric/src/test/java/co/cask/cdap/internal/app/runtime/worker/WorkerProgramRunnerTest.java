@@ -34,7 +34,6 @@ import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
-import co.cask.cdap.internal.TempFolder;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -76,9 +75,9 @@ import java.util.concurrent.atomic.AtomicReference;
 @Category(SlowTests.class)
 public class WorkerProgramRunnerTest {
 
-  private static final TempFolder TEMP_FOLDER = new TempFolder();
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
-  private static Injector injector;
   private static TransactionExecutorFactory txExecutorFactory;
 
   private static TransactionManager txService;
@@ -88,14 +87,11 @@ public class WorkerProgramRunnerTest {
 
   private static Collection<ProgramController> runningPrograms = new HashSet<>();
 
-  @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
-
   private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
     @Override
     public File get() {
       try {
-        return tmpFolder.newFolder();
+        return TEMP_FOLDER.newFolder();
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
@@ -103,14 +99,14 @@ public class WorkerProgramRunnerTest {
   };
 
   @BeforeClass
-  public static void beforeClass() {
+  public static void beforeClass() throws IOException {
     // we are only gonna do long-running transactions here. Set the tx timeout to a ridiculously low value.
     // that will test that the long-running transactions actually bypass that timeout.
     CConfiguration conf = CConfiguration.create();
-    conf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
     conf.setInt(TxConstants.Manager.CFG_TX_TIMEOUT, 1);
     conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
-    injector = AppFabricTestHelper.getInjector(conf);
+
+    Injector injector = AppFabricTestHelper.getInjector(conf);
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = injector.getInstance(DatasetFramework.class);

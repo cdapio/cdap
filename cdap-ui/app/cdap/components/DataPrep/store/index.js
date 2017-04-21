@@ -27,7 +27,15 @@ const defaultInitialState = {
   workspaceId: '',
   data: [],
   headers: [],
-  directives: []
+  directives: [],
+  higherVersion: null,
+  loading: false,
+  singleWorkspaceMode: false
+};
+
+const errorInitialState = {
+  showError: null,
+  cliError: null
 };
 
 const dataprep = (state = defaultInitialState, action = defaultAction) => {
@@ -37,27 +45,50 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
     case DataPrepActions.setData:
       stateCopy = Object.assign({}, state, {
         data: action.payload.data,
-        headers: action.payload.headers
+        headers: action.payload.headers,
+        loading: false
       });
       break;
     case DataPrepActions.setDirectives:
       stateCopy = Object.assign({}, state, {
         data: action.payload.data,
         headers: action.payload.headers,
-        directives: action.payload.directives
+        directives: action.payload.directives,
+        loading: false
       });
       break;
     case DataPrepActions.setWorkspace:
       stateCopy = Object.assign({}, state, {
         workspaceId: action.payload.workspaceId,
         headers: action.payload.headers || [],
-        directives: [],
+        directives: action.payload.directives || [],
         data: action.payload.data || [],
-        initialized: true
+        initialized: true,
+        loading: false
       });
       break;
     case DataPrepActions.setInitialized:
       stateCopy = Object.assign({}, state, { initialized: true });
+      break;
+    case DataPrepActions.setHigherVersion:
+      stateCopy = Object.assign({}, state, {
+        higherVersion: action.payload.higherVersion
+      });
+      break;
+    case DataPrepActions.setWorkspaceMode:
+      stateCopy = Object.assign({}, state, {
+        singleWorkspaceMode: action.payload.singleWorkspaceMode
+      });
+      break;
+    case DataPrepActions.enableLoading:
+      stateCopy = Object.assign({}, state, {
+        loading: true
+      });
+      break;
+    case DataPrepActions.disableLoading:
+      stateCopy = Object.assign({}, state, {
+        loading: false
+      });
       break;
     case DataPrepActions.reset:
       return defaultInitialState;
@@ -68,9 +99,47 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
   return Object.assign({}, state, stateCopy);
 };
 
+const error = (state = errorInitialState, action = defaultAction) => {
+  let stateCopy;
+
+  switch (action.type) {
+    case DataPrepActions.setError:
+      stateCopy = Object.assign({}, state, {
+        showError: action.payload.message,
+        cliError: null
+      });
+      break;
+    case DataPrepActions.setCLIError:
+      stateCopy = Object.assign({}, state, {
+        showError: null,
+        cliError: action.payload.message
+      });
+      break;
+    case DataPrepActions.setWorkspace:
+    case DataPrepActions.setDirectives:
+      stateCopy = Object.assign({}, state, {
+        showError: null,
+        cliError: null
+      });
+      break;
+    case DataPrepActions.dismissError:
+      stateCopy = Object.assign({}, state, {
+        showError: null
+      });
+      break;
+    case DataPrepActions.reset:
+      return errorInitialState;
+    default:
+      return state;
+  }
+
+  return Object.assign({}, state, stateCopy);
+};
+
 const DataPrepStore = createStore(
   combineReducers({
-    dataprep
+    dataprep,
+    error
   }),
   defaultInitialState,
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()

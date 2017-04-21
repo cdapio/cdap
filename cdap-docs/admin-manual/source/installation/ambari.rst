@@ -11,13 +11,13 @@ Installation using Apache Ambari
 ================================
 
 .. include:: ../_includes/installation/installation-steps-images.txt
-   
+
 .. rubric:: Notes
 
 - `Apache Ambari <https://ambari.apache.org/>`__ can only be used to add CDAP to an **existing**
   Hadoop cluster, one that already has the required services (Hadoop: HDFS, YARN, HBase,
   ZooKeeper, and |---| optionally |---| Hive and Spark) installed.
-- Ambari is for setting up HDP (Hortonworks Data Platform) on bare clusters; it can't be 
+- Ambari is for setting up HDP (Hortonworks Data Platform) on bare clusters; it can't be
   used for clusters with HDP already installed, where the original installation was
   **not** with Ambari.
 - A number of features are currently planned to be added, including:
@@ -27,7 +27,7 @@ Installation using Apache Ambari
 
 - If you are installing CDAP with the intention of using *replication,* see these
   instructions on :ref:`CDAP Replication <installation-replication>` *before* installing or starting CDAP.
-  
+
 
 Preparing the Cluster
 =====================
@@ -35,8 +35,8 @@ Preparing the Cluster
 .. Hadoop Configuration
 .. --------------------
 .. include:: ../_includes/installation/hadoop-configuration.txt
-      
-You can make these changes during the configuration of your cluster `using Ambari 
+
+You can make these changes during the configuration of your cluster `using Ambari
 <http://docs.hortonworks.com/HDPDocuments/Ambari-2.4.2.0/bk_ambari-installation/content/customize_services.html>`__.
 
 .. HDFS Permissions
@@ -51,7 +51,7 @@ Downloading CDAP Ambari Service
 -------------------------------
 To install CDAP on a cluster managed by Ambari, we have available packages for
 RHEL-compatible and Ubuntu systems, which you can install onto your Ambari management server.
-These packages add CDAP to the list of available services which Ambari can install. 
+These packages add CDAP to the list of available services which Ambari can install.
 
 .. highlight:: console
 
@@ -59,7 +59,7 @@ To install the ``cdap-ambari-service`` package, first add the appropriate CDAP r
 to your system’s package manager by following the steps below. These steps will install a
 Cask repository on your Ambari server.
 
-The **repository version** (shown in the commands below as |literal-cdap-slash-short-version|) 
+The **repository version** (shown in the commands below as |literal-cdap-slash-short-version|)
 must match the **CDAP series** which you’d like installed on your cluster. To install the
 **latest** version of the *CDAP 4.1 series,* you would install the *CDAP 4.1 repository.*
 
@@ -73,7 +73,7 @@ with the CDAP Repository from the list below that you would like to use:
 +----------------+-----------------+-------------------------+
 | CDAP Series    | CDAP Repository | Hadoop Distributions    |
 +================+=================+=========================+
-| CDAP 4.1.x     | ``cdap/4.1``    | HDP 2.0 through HDP 2.5 |
+| CDAP 4.1.x     | ``cdap/4.1``    | HDP 2.0 through HDP 2.6 |
 +----------------+-----------------+-------------------------+
 | CDAP 4.0.x     | ``cdap/4.0``    | HDP 2.0 through HDP 2.5 |
 +----------------+-----------------+-------------------------+
@@ -135,43 +135,43 @@ Start the Ambari Service Wizard
       :width: 800px
       :align: center
       :class: bordered-image
- 
+
       **Ambari Dashboard:** Starting the *Add Service* Wizard
 
- 
+
 #. Select CDAP from the list and click *Next*. If there are core dependencies which are not
    currently installed on the cluster, Ambari will prompt you to install them.
- 
+
    .. figure:: ../_images/ambari/ss02-select-cdap.png
       :figwidth: 100%
       :width: 800px
       :align: center
       :class: bordered-image
- 
+
       **Ambari Dashboard:** Selecting *CDAP*
- 
+
 Assign CDAP Services to Hosts
 -----------------------------
 
 3. Next, assign CDAP services to hosts.
 
    CDAP consists of five daemons:
- 
+
    #. **Master:** Coordinator service which launches CDAP system services into YARN
    #. **Router:** Serves HTTP endpoints for CDAP applications and REST API
    #. **Auth Server:** For managing authentication tokens on CDAP clusters with perimeter security enabled
    #. **Kafka Server:** For transporting CDAP metrics and CDAP system service log data
    #. **UI:** Web interface to CDAP and :ref:`CDAP Studio <cdap-studio>`
       (for CDAP 3.2.x and later installations)
- 
+
    .. figure:: ../_images/ambari/ss03-assign-masters.png
       :figwidth: 100%
       :width: 800px
       :align: center
       :class: bordered-image-top-margin
- 
+
       **Ambari Dashboard:** Assigning Masters
- 
+
    We recommended you install all CDAP services onto an edge node (or the *NameNode*, for
    smaller clusters) such as in our example above. After assigning the master hosts, click
    *Next*.
@@ -184,9 +184,9 @@ Assign CDAP Services to Hosts
       :width: 800px
       :align: center
       :class: bordered-image
- 
+
       **Ambari Dashboard:** Selecting hosts for *CDAP*
- 
+
 #. Click *Next* to customize the CDAP installation.
 
 Customize CDAP
@@ -201,7 +201,7 @@ Customize CDAP
       :width: 800px
       :align: center
       :class: bordered-image
- 
+
       **Ambari Dashboard:** Customizing Services 1
 
 #. Under *Advanced cdap-site*, you can configure all options for the operation and running
@@ -212,7 +212,7 @@ Customize CDAP
       :width: 800px
       :align: center
       :class: bordered-image
- 
+
       **Ambari Dashboard:** Customizing Services 2
 
 #. **Router Bind Port, Router Server Port:** These two ports should match; *Router Server
@@ -223,7 +223,7 @@ Customize CDAP
       :width: 800px
       :align: center
       :class: bordered-image
- 
+
       **Ambari Dashboard:** Enabling *CDAP Explore*
 
    **Additional CDAP configuration properties**, not shown in the web interface, can be
@@ -231,9 +231,9 @@ Customize CDAP
    of the available CDAP properties is in the :ref:`appendix-cdap-site.xml`.
 
    For a **complete explanation of these options,** refer to the :ref:`CDAP documentation
-   of cdap-site.xml <appendix-cdap-site.xml>`. 
-   
-   **Additional environment variables** can be set, as required, using Ambari's 
+   of cdap-site.xml <appendix-cdap-site.xml>`.
+
+   **Additional environment variables** can be set, as required, using Ambari's
    "Configs > Advanced > Advanced cdap-env".
 
    .. Environment variables
@@ -257,7 +257,7 @@ Deploying CDAP
       :width: 800px
       :align: center
       :class: bordered-image
- 
+
       **Ambari Dashboard:** Summary of Services
 
 #. Ambari will install CDAP and start the services.
@@ -267,9 +267,9 @@ Deploying CDAP
       :width: 800px
       :align: center
       :class: bordered-image
- 
+
       **Ambari Dashboard:** Install, Start, and Test
-      
+
 #. After the services are installed and started, you will click *Next* to get to the
    Summary screen.
 
@@ -281,7 +281,7 @@ Deploying CDAP
       :width: 800px
       :align: center
       :class: bordered-image
- 
+
       **Ambari Dashboard:** Summary
 
 #. Click *Complete* to complete the CDAP installation.
@@ -358,24 +358,24 @@ of ``min.user.id`` needs to be used instead.)
 
 A. If you are **adding CDAP** to an existing Kerberos cluster, in order to configure **CDAP for
    Kerberos authentication**:
-   
+
    #. The ``<cdap-principal>`` is shown in the commands that follow as ``cdap``;
       however, you are free to use a different appropriate name.
 
       .. highlight:: console
-      
+
    #. When running on a secure HBase cluster, as the ``hbase`` user, issue the command::
 
         $ echo "grant 'cdap', 'RWCA'" | hbase shell
 
    #. In order to configure **CDAP Explore Service for secure Hadoop:**
- 
+
       .. highlight:: xml
- 
+
       i. To allow CDAP to act as a Hive client, it must be given ``proxyuser`` permissions and allowed
-         from all hosts. For example: set the following properties in the configuration file ``core-site.xml``, 
+         from all hosts. For example: set the following properties in the configuration file ``core-site.xml``,
          where ``cdap`` is a system group to which the ``cdap`` user is a member::
-   
+
            <property>
              <name>hadoop.proxyuser.hive.groups</name>
              <value>cdap,hadoop,hive</value>
@@ -384,43 +384,43 @@ A. If you are **adding CDAP** to an existing Kerberos cluster, in order to confi
              <name>hadoop.proxyuser.hive.hosts</name>
              <value>*</value>
            </property>
-   
-      #. To execute Hive queries on a secure cluster, the cluster must be running the MapReduce ``JobHistoryServer`` 
+
+      #. To execute Hive queries on a secure cluster, the cluster must be running the MapReduce ``JobHistoryServer``
          service. Consult your distribution documentation on the proper configuration of this service.
-         
-      #. To execute Hive queries on a secure cluster using the CDAP Explore Service, the Hive MetaStore service 
-         must be configured for Kerberos authentication. Consult your distribution documentation on the proper 
+
+      #. To execute Hive queries on a secure cluster using the CDAP Explore Service, the Hive MetaStore service
+         must be configured for Kerberos authentication. Consult your distribution documentation on the proper
          configuration of the Hive MetaStore service.
- 
+
       With all these properties set, the CDAP Explore Service will run on secure Hadoop clusters.
 
 B. If you are **adding Kerberos** to an existing cluster, in order to configure **CDAP for
    Kerberos authentication**:
-   
+
    .. highlight:: console
 
    #. The ``/cdap`` directory needs to be owned by the ``<cdap-principal>``; you can set
-      that by running the following command as the ``hdfs`` user (change the ownership in the 
+      that by running the following command as the ``hdfs`` user (change the ownership in the
       command from ``cdap`` to whatever is the ``<cdap-principal>``)::
-   
+
         $ su hdfs && hadoop fs -mkdir -p /cdap && hadoop fs -chown cdap /cdap
-        
+
    #. When converting an existing CDAP cluster to being Kerberos-enabled, you may
       run into YARN usercache directory permission problems. A non-Kerberos cluster with
       default settings will run CDAP containers as the user ``yarn``. A Kerberos cluster will
       run them as the user ``cdap``. When converting, the usercache directory that YARN
       creates will already exist and be owned by a different user. On all datanodes, run this
       command, substituting in the correct value of the YARN parameter ``yarn.nodemanager.local-dirs``::
-    
+
         $ rm -rf <YARN.NODEMANAGER.LOCAL-DIRS>/usercache/cdap
-  
+
       (As ``yarn.nodemanager.local-dirs`` can be a comma-separated list of directories, you may
       need to run this command multiple times, once for each entry.)
-  
+
       If, for example, the setting for ``yarn.nodemanager.local-dirs`` is ``/yarn/nm``, you would use::
-  
+
         $ rm -rf /yarn/nm/usercache/cdap
-  
+
       Restart CDAP after removing the usercache(s).
 
 
@@ -436,7 +436,7 @@ CDAP Components
 For each of the CDAP components listed below (Master, Router, Kafka, UI, Authentication Server), these
 comments apply:
 
-- Sync the configuration files (such as ``cdap-site.xml`` and ``cdap-security.xml``) on all the nodes. 
+- Sync the configuration files (such as ``cdap-site.xml`` and ``cdap-security.xml``) on all the nodes.
 - While the default *bind.address* settings (``0.0.0.0``, used for ``app.bind.address``,
   ``data.tx.bind.address``, ``router.bind.address``, and so on) can be synced across hosts,
   if you customize them to a particular IP address, they will |---| as a result |---| be

@@ -91,15 +91,15 @@ export default class LogAction extends Component {
     const renderLog = (
       <a
         href={link}
-        target="_tab"
+        target="_blank"
         className="btn btn-link"
       >
-        <span className="fa fa-file-text-o" />
+        <span className="fa fa-file-text" />
       </a>
     );
 
     return (
-      <span>
+      <span className="btn btn-secondary btn-sm">
         <span id={tooltipID}>
           {this.state.runId ? renderLog : renderDisabled}
         </span>
@@ -112,7 +112,7 @@ export default class LogAction extends Component {
           toggle={this.toggleTooltip}
           delay={0}
         >
-          {T.translate('features.FastAction.logLabel')}
+          {this.state.runId ? T.translate('features.FastAction.logLabel') : T.translate('features.FastAction.logNotAvailable')}
         </Tooltip>
       </span>
     );

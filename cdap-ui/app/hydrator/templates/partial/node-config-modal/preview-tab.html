@@ -14,15 +14,15 @@
   the License.
 -->
 
-<div class="row" ng-if="!HydratorPlusPlusNodeConfigCtrl.previewData && !HydratorPlusPlusNodeConfigCtrl.previewLoading">
+<div class="row preview-no-data" ng-if="!HydratorPlusPlusNodeConfigCtrl.previewData && !HydratorPlusPlusNodeConfigCtrl.previewLoading">
   <div class="col-xs-12">
     <h3 class="text-center">
-      No preview data.
+      Preview Data for stage "{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label }}" is not available.
     </h3>
   </div>
 </div>
 
-<div class="row" ng-if="HydratorPlusPlusNodeConfigCtrl.previewLoading">
+<div class="row preview-no-data" ng-if="HydratorPlusPlusNodeConfigCtrl.previewLoading">
   <div class="col-xs-12">
     <h3 class="text-center">
       <span class="fa fa-spin fa-refresh"></span>
@@ -64,13 +64,39 @@
 
       <div class="text-center"
            ng-if="!value.records || value.records.length === 0">
-        <h4>No input records</h4>
+        <h4 class="message"
+            ng-if="HydratorPlusPlusNodeConfigCtrl.previewStatus &&
+            HydratorPlusPlusNodeConfigCtrl.previewStatus === 'RUNNING'">
+          Input records have not been generated yet. Please try again in some time.
+        </h4>
+        <h4 class="message"
+            ng-if="HydratorPlusPlusNodeConfigCtrl.previewStatus &&
+            HydratorPlusPlusNodeConfigCtrl.previewStatus !== 'RUNNING'">
+          Input records have not been generated. Please verify your logic, or try sending more data
+        </h4>
+        <h4 class="message"
+            ng-if="!HydratorPlusPlusNodeConfigCtrl.previewStatus">
+          Input records are not available. Please try running preview again.
+        </h4>
       </div>
     </div>
 
     <div class="text-center"
          ng-if="HydratorPlusPlusNodeConfigCtrl.previewData.numInputStages === 0">
-      <h4>No input records</h4>
+      <h4 class="message"
+          ng-if="HydratorPlusPlusNodeConfigCtrl.previewStatus &&
+          HydratorPlusPlusNodeConfigCtrl.previewStatus === 'RUNNING'">
+        Input records have not been generated for stage "{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label }}" yet. Please try again in some time.
+      </h4>
+      <h4 class="message"
+          ng-if="HydratorPlusPlusNodeConfigCtrl.previewStatus &&
+          HydratorPlusPlusNodeConfigCtrl.previewStatus !== 'RUNNING'">
+        Input records have not been generated for stage "{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label }}". Please verify your logic, or try sending more data
+      </h4>
+      <h4 class="message"
+          ng-if="!HydratorPlusPlusNodeConfigCtrl.previewStatus">
+        Input records are not available for stage "{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label }}". Please try running preview again.
+      </h4>
     </div>
 
   </div>
@@ -102,7 +128,20 @@
 
     <div class="text-center"
          ng-if="!HydratorPlusPlusNodeConfigCtrl.previewData.output.records || HydratorPlusPlusNodeConfigCtrl.previewData.output.records.length === 0">
-      <h4>No output records</h4>
+      <h4 class="message"
+          ng-if="HydratorPlusPlusNodeConfigCtrl.previewStatus &&
+          HydratorPlusPlusNodeConfigCtrl.previewStatus === 'RUNNING'">
+        Output records have not been generated for stage "{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label }}" yet. Please try again in some time.
+      </h4>
+      <h4 class="message"
+          ng-if="HydratorPlusPlusNodeConfigCtrl.previewStatus &&
+          HydratorPlusPlusNodeConfigCtrl.previewStatus !== 'RUNNING'">
+        Output records have not been generated for stage "{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label }}". Please verify your logic, or try sending more data
+      </h4>
+      <h4 class="message"
+          ng-if="!HydratorPlusPlusNodeConfigCtrl.previewStatus">
+        Output records are not available for stage "{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label }}". Please try running preview again.
+      </h4>
     </div>
 
   </div>

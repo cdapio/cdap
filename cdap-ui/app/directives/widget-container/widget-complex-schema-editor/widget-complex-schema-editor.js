@@ -152,7 +152,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
 
   EventPipe.on('schema.import', (data, append) => {
     vm.clearDOM = true;
-
+    vm.error = '';
     let jsonSchema;
 
     try {
@@ -186,10 +186,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
       vm.schemaObj = avsc.parse(jsonSchema, { wrapUnions: true });
 
     } catch (e) {
-      myAlertOnValium.show({
-        type: 'danger',
-        content: 'Imported schema is not a valid Avro schema: ' + e
-      });
+      vm.error = 'Imported schema is not a valid Avro schema: ' + e;
       vm.clearDOM = false;
       return;
     }

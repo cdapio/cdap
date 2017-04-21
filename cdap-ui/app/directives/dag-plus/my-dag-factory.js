@@ -188,7 +188,7 @@ angular.module(PKG.name + '.commons')
         'sparkstreaming': 'icon-sparkstreaming',
         'rename': 'icon-rename',
         'archive': 'icon-archive',
-        'wrangler': 'icon-DataWrangler',
+        'wrangler': 'icon-DataPreparation',
         'normalize': 'icon-normalize',
         'xmlmultiparser': 'icon-XMLmultiparser',
         'xmltojson': 'icon-XMLtoJSON',
@@ -209,7 +209,27 @@ angular.module(PKG.name + '.commons')
         'run': 'icon-Run',
         'oracleexport': 'icon-OracleDump',
         'snapshottext': 'icon-SnapshotTextSink',
-        'errorcollector': 'fa-exclamation-triangle'
+        'errorcollector': 'fa-exclamation-triangle',
+        'mainframereader': 'icon-MainframeReader',
+        'fastfilter': 'icon-fastfilter',
+        'trash': 'icon-TrashSink',
+        'staterestore': 'icon-Staterestore',
+        'topn': 'icon-TopN',
+        'wordcount': 'icon-WordCount',
+        'datetransform': 'icon-DateTransform',
+        'sftpcopy': 'icon-FTPcopy',
+        'sftpdelete': 'icon-FTPdelete',
+        'validatingxmlconverter': 'icon-XMLvalidator',
+        'wholefilereader': 'icon-Filereader',
+        'xmlschemaaction': 'icon-XMLschemagenerator',
+        's3toredshift': 'icon-S3toredshift',
+        'redshifttos3': 'icon-redshifttoS3',
+        'verticabulkexportaction': 'icon-Verticabulkexport',
+        'verticabulkimportaction': 'icon-Verticabulkload',
+        'loadtosnowflake': 'icon-snowflake',
+        'kudu': 'icon-apachekudu',
+        'orientdb': 'icon-OrientDB',
+        'recordsplitter': 'icon-recordsplitter'
       };
 
       var pluginName = plugin.toLowerCase();

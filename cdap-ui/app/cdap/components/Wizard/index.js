@@ -261,13 +261,17 @@ export default class Wizard extends Component {
           <span className="fa fa-times" />
         </div>
         <div className="result-container">
-          <span className="success-message">
+          <span
+            className="success-message"
+            title={callToActionInfo.message}
+          >
             {callToActionInfo.message}
             <p>{callToActionInfo.subtitle}</p>
           </span>
           <div className="clearfix">
             <a
               href={callToActionInfo.buttonUrl}
+              title={callToActionInfo.buttonLabel}
               className="call-to-action btn btn-primary"
               onClick={this.handleCallToActionClick}
             >
@@ -292,7 +296,13 @@ export default class Wizard extends Component {
       wizardFooter = this.getCallsToAction();
     }
     if (this.state.error) {
-      let step = T.translate(`features.Wizard.${this.props.wizardType}.headerlabel`);
+      let footertitle = this.props.wizardConfig.footertitle;
+      let step;
+      if (!footertitle) {
+        step = T.translate(`features.Wizard.${this.props.wizardType}.headerlabel`);
+      } else {
+        step = footertitle;
+      }
       wizardFooter = (
         <CardActionFeedback
           type='DANGER'

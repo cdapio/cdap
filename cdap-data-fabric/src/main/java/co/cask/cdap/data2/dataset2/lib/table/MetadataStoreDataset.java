@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Function;
@@ -157,40 +156,85 @@ public class MetadataStoreDataset extends AbstractDataset {
   // returns mapping of all that has first id parts in range of startId and stopId
   public <T> Map<MDSKey, T> listKV(MDSKey startId, @Nullable MDSKey stopId, Type typeOfT, int limit,
                                    Predicate<T> filter) {
+    return listKV(startId, stopId, typeOfT, limit, null, filter);
+  }
+
+  public <T> Map<MDSKey, T> listKV(MDSKey startId, @Nullable MDSKey stopId, Type typeOfT, int limit,
+                                   Predicate<MDSKey> keyFilter, Predicate<T> valueFilter) {
     byte[] startKey = startId.getKey();
     byte[] stopKey = stopId == null ? Bytes.stopKeyForPrefix(startKey) : stopId.getKey();
 
     Scan scan = new Scan(startKey, stopKey);
-    return listKV(scan, typeOfT, limit, filter);
+    return listKV(scan, typeOfT, limit, keyFilter, valueFilter);
   }
 
-  // returns mapping of all that has first id parts in range of startId and stopId
-  private <T> Map<MDSKey, T> listKV(Scan runScan, Type typeOfT, int limit, Predicate<T> filter) {
+  private <T> Map<MDSKey, T> listCombinedFilterKV(Scan runScan, Type typeOfT, int limit,
+                                                  @Nullable Predicate<KeyValue<T>> combinedFilter) {
     try {
       Map<MDSKey, T> map = Maps.newLinkedHashMap();
-      Scanner scan = table.scan(runScan);
-      try {
+      try (Scanner scan = table.scan(runScan)) {
         Row next;
         while ((limit > 0) && (next = scan.next()) != null) {
+          MDSKey key = new MDSKey(next.getRow());
           byte[] columnValue = next.get(COLUMN);
           if (columnValue == null) {
             continue;
           }
           T value = deserialize(columnValue, typeOfT);
 
-          if (filter.apply(value)) {
-            MDSKey key = new MDSKey(next.getRow());
-            map.put(key, value);
-            --limit;
+          KeyValue<T> kv = new KeyValue<>(key, value);
+          // Combined Filter doesn't pass
+          if (combinedFilter != null && !combinedFilter.apply(kv)) {
+            continue;
           }
+
+          map.put(kv.getKey(), kv.getValue());
+          limit--;
         }
         return map;
-      } finally {
-        scan.close();
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  private <T> Map<MDSKey, T> listKV(Scan runScan, Type typeOfT, int limit, @Nullable Predicate<MDSKey> keyFilter,
+                                    @Nullable Predicate<T> valueFilter) {
+    try {
+      Map<MDSKey, T> map = Maps.newLinkedHashMap();
+      try (Scanner scan = table.scan(runScan)) {
+        Row next;
+        while ((limit > 0) && (next = scan.next()) != null) {
+          MDSKey key = new MDSKey(next.getRow());
+          byte[] columnValue = next.get(COLUMN);
+          if (columnValue == null) {
+            continue;
+          }
+          T value = deserialize(columnValue, typeOfT);
+
+          // Key Filter doesn't pass
+          if (keyFilter != null && !keyFilter.apply(key)) {
+            continue;
+          }
+
+          // If Value Filter doesn't pass
+          if (valueFilter != null && !valueFilter.apply(value)) {
+            continue;
+          }
+
+          map.put(key, value);
+          limit--;
+        }
+        return map;
+      }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  // returns mapping of all that has first id parts in range of startId and stopId
+  private <T> Map<MDSKey, T> listKV(Scan runScan, Type typeOfT, int limit, Predicate<T> filter) {
+    return listKV(runScan, typeOfT, limit, null, filter);
   }
 
   // TODO: We should avoid this duplicate code. CDAP-7569.
@@ -206,9 +250,9 @@ public class MetadataStoreDataset extends AbstractDataset {
     return new ImmutablePair<>(Bytes.concat(keyBytes, new byte[1]), infoBytes);
   }
 
-  // returns mapping of all that match the given keySet
-  public <T> Map<MDSKey, T> listKV(Set<MDSKey> keySet, Type typeOfT, int limit) {
-
+  // returns mapping of all that match the given keySet provided they pass the combinedFilter predicate
+  public <T> Map<MDSKey, T> listKV(Set<MDSKey> keySet, Type typeOfT, int limit,
+                                   @Nullable Predicate<KeyValue<T>> combinedFilter) {
     // Sort fuzzy keys
     List<MDSKey> sortedKeys = Lists.newArrayList(keySet);
     Collections.sort(sortedKeys);
@@ -223,7 +267,12 @@ public class MetadataStoreDataset extends AbstractDataset {
     }
 
     Scan scan = new Scan(startKey, stopKey, new FuzzyRowFilter(fuzzyKeys));
-    return listKV(scan, typeOfT, limit, Predicates.<T>alwaysTrue());
+    return listCombinedFilterKV(scan, typeOfT, limit, combinedFilter);
+  }
+
+  // returns mapping of all that match the given keySet
+  public <T> Map<MDSKey, T> listKV(Set<MDSKey> keySet, Type typeOfT, int limit) {
+    return listKV(keySet, typeOfT, limit, Predicates.<KeyValue<T>>alwaysTrue());
   }
 
   /**
@@ -241,8 +290,7 @@ public class MetadataStoreDataset extends AbstractDataset {
     byte[] startKey = startId.getKey();
     byte[] stopKey = stopId == null ? Bytes.stopKeyForPrefix(startKey) : stopId.getKey();
 
-    Scanner scan = table.scan(startKey, stopKey);
-    try {
+    try (Scanner scan = table.scan(startKey, stopKey)) {
       Row next;
       while ((next = scan.next()) != null) {
         byte[] columnValue = next.get(COLUMN);
@@ -257,8 +305,6 @@ public class MetadataStoreDataset extends AbstractDataset {
           break;
         }
       }
-    } finally {
-      scan.close();
     }
   }
 
@@ -286,23 +332,37 @@ public class MetadataStoreDataset extends AbstractDataset {
   }
 
   public void deleteAll(MDSKey id) {
+    deleteAll(id, Predicates.<MDSKey>alwaysTrue());
+  }
+
+  public void deleteAll(MDSKey id, @Nullable Predicate<MDSKey> filter) {
     byte[] prefix = id.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(prefix);
 
     try {
-      Scanner scan = table.scan(prefix, stopKey);
-      try {
+      try (Scanner scan = table.scan(prefix, stopKey)) {
         Row next;
         while ((next = scan.next()) != null) {
           String columnValue = next.getString(COLUMN);
           if (columnValue == null) {
             continue;
           }
+
+          MDSKey key = new MDSKey(next.getRow());
+          if (filter != null && !filter.apply(key)) {
+            continue;
+          }
           table.delete(new Delete(next.getRow()).add(COLUMN));
         }
-      } finally {
-        scan.close();
       }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public void delete(MDSKey id) {
+    try {
+      table.delete(id.getKey(), COLUMN);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -340,21 +400,25 @@ public class MetadataStoreDataset extends AbstractDataset {
     return builder;
   }
 
-  /**
-   * Returns a ProgramId given the MDS key
-   *
-   * @param key the MDS key to be used
-   * @return ProgramId created from the MDS key
-   */
-  protected ProgramId getProgramID(MDSKey key) {
-    MDSKey.Splitter splitter = key.split();
-    splitter.getString(); // skip recordType
-    String namespace = splitter.getString(); // namespaceId
-    String application = splitter.getString(); // appId
-    splitter.getString(); // skip VersionId
-    String type = splitter.getString(); // type
-    String program = splitter.getString(); // program
-    return (new ProgramId(namespace, application, ProgramType.valueOf(type), program));
+  protected MDSKey.Builder getVersionLessProgramKeyBuilder(String recordType, @Nullable ProgramId programId) {
+    MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
+    if (programId != null) {
+      builder.add(programId.getNamespace());
+      builder.add(programId.getApplication());
+      builder.add(programId.getType().name());
+      builder.add(programId.getProgram());
+    }
+    return builder;
   }
 
+  protected MDSKey.Builder getVersionLessProgramKeyBuilder(String recordType, @Nullable ProgramRunId programRunId) {
+    MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
+    if (programRunId != null) {
+      builder.add(programRunId.getNamespace());
+      builder.add(programRunId.getApplication());
+      builder.add(programRunId.getType().name());
+      builder.add(programRunId.getProgram());
+    }
+    return builder;
+  }
 }

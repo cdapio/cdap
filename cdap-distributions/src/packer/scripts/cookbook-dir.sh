@@ -31,8 +31,10 @@ if [[ $(which apt-get 2>/dev/null) ]]; then
 else
   yum install -y git || exit 1
 fi
+git config --global user.email "ops@cask.co"
+git config --global user.name "Cask Ops"
 git init || exit 1
-git add .gitignore
-git commit -m 'Initial commit'
+git add .gitignore || exit 1
+git commit -m 'Initial commit' || exit 1
 
 exit 0

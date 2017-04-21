@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2015-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -72,48 +72,45 @@
   <div class="btn-group action-buttons"
        ng-if="!HydratorPlusPlusTopPanelCtrl.previewMode">
     <div class="btn"
-         ng-click="HydratorPlusPlusTopPanelCtrl.togglePreviewMode()"
-         ng-if="HydratorPlusPlusTopPanelCtrl.isPreviewEnabled"
-         uib-tooltip="Preview"
+         ng-click="HydratorPlusPlusTopPanelCtrl.isPreviewEnabled && HydratorPlusPlusTopPanelCtrl.togglePreviewMode()"
+         uib-tooltip="Pipeline preview is not available in distributed mode."
          tooltip-placement="bottom"
-         tooltip-class="toppanel-tooltip">
+         tooltip-class="toppanel-tooltip"
+         tooltip-enable="!HydratorPlusPlusTopPanelCtrl.isPreviewEnabled"
+         ng-disabled="!HydratorPlusPlusTopPanelCtrl.isPreviewEnabled">
       <span class="fa icon-eye"></span>
+      <div class="button-label">Preview</div>
     </div>
     <div class="btn"
          ng-click="HydratorPlusPlusTopPanelCtrl.showSettings()"
-         uib-tooltip="Settings"
-         tooltip-placement="bottom"
-         tooltip-class="toppanel-tooltip">
+         ng-class="{'active': HydratorPlusPlusTopPanelCtrl.state.viewSettings}">
       <span class="fa fa-sliders"></span>
-      <span class="fa fa-caret-down" ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings"></span>
+      <div class="button-label">Settings</div>
     </div>
     <div class="btn"
-         ng-click="HydratorPlusPlusTopPanelCtrl.onExport()"
-         uib-tooltip="Export"
-         tooltip-placement="bottom"
-         tooltip-class="toppanel-tooltip">
+         ng-click="HydratorPlusPlusTopPanelCtrl.onImport()">
+      <span class="fa icon-import"></span>
+      <div class="button-label">Import</div>
+    </div>
+    <div class="btn"
+         ng-click="HydratorPlusPlusTopPanelCtrl.onExport()">
       <span class="fa icon-export"></span>
+      <div class="button-label">Export</div>
     </div>
     <div class="btn"
-         ng-click="HydratorPlusPlusTopPanelCtrl.onSaveDraft()"
-         uib-tooltip="Save"
-         tooltip-placement="bottom"
-         tooltip-class="toppanel-tooltip">
+         ng-click="HydratorPlusPlusTopPanelCtrl.onSaveDraft()">
       <span class="fa icon-savedraft"></span>
+      <div class="button-label">Save</div>
     </div>
     <div class="btn"
-         ng-click="HydratorPlusPlusTopPanelCtrl.onValidate()"
-         uib-tooltip="Validate"
-         tooltip-placement="bottom"
-         tooltip-class="toppanel-tooltip">
+         ng-click="HydratorPlusPlusTopPanelCtrl.onValidate()">
       <span class="fa icon-validate"></span>
+      <div class="button-label">Validate</div>
     </div>
     <div class="btn"
-         ng-click="HydratorPlusPlusTopPanelCtrl.onPublish()"
-         uib-tooltip="Publish"
-         tooltip-placement="bottom"
-         tooltip-class="toppanel-tooltip">
+         ng-click="HydratorPlusPlusTopPanelCtrl.onPublish()">
       <span class="fa icon-publish"></span>
+      <div class="button-label">Deploy</div>
     </div>
   </div>
 
@@ -123,53 +120,58 @@
     <div class="btn active"
          ng-click="HydratorPlusPlusTopPanelCtrl.togglePreviewMode()">
       <span class="fa icon-eye"></span>
+      <div class="button-label">Preview</div>
     </div>
     <div class="btn"
+         ng-class="{'btn-select': HydratorPlusPlusTopPanelCtrl.showRunTimeArguments}"
          ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.toggleRuntimeArguments()"
          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading">
-      <span class="fa fa-play"
+      <span class="fa fa-play text-success"
             ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && !HydratorPlusPlusTopPanelCtrl.previewRunning">
       </span>
+      <div class="button-label"
+           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && !HydratorPlusPlusTopPanelCtrl.previewRunning">
+           Start
+      </div>
       <span class="fa fa-stop text-danger"
             ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.previewRunning">
       </span>
+      <div class="button-label"
+           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.previewRunning">
+           Stop
+      </div>
       <span ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading">
         <span class="fa fa-refresh fa-spin"></span>
       </span>
+      <div class="button-label"
+           ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading">
+           {{HydratorPlusPlusTopPanelCtrl.loadingLabel}}
+      </div>
     </div>
     <div class="btn run-time">
       <span>
         {{ HydratorPlusPlusTopPanelCtrl.displayDuration.minutes }}:{{ HydratorPlusPlusTopPanelCtrl.displayDuration.seconds }}
       </span>
+      <div class="button-label">Duration</div>
     </div>
-    <div class="pipeline-run-section text-left" ng-if="HydratorPlusPlusTopPanelCtrl.showRunTimeArguments">
-      <h5>
-        <strong>Runtime Arguments</strong>
-      </h5>
-      <div class="arguments-container">
-        <key-value-widget
-          ng-model="HydratorPlusPlusTopPanelCtrl.macrosMap"
-          data-config="HydratorPlusPlusTopPanelCtrl.runTimeWidgetConfig"
-        ></key-value-widget>
-      </div>
-      <div class="clearfix">
-        <div class="pull-right">
-
-
-          <button class="btn btn-blue"
-            ng-click="HydratorPlusPlusTopPanelCtrl.runPreview()">
-            Start Now
-          </button>
-        </div>
-      </div>
+    <div class="btn log-viewer"
+         ng-class="{'btn-select': HydratorPlusPlusTopPanelCtrl.viewLogs}"
+         ng-click="HydratorPlusPlusTopPanelCtrl.viewLogs = !HydratorPlusPlusTopPanelCtrl.viewLogs">
+      <span class="fa fa-file-text-o"></span>
+      <div class="button-label">Logs</div>
     </div>
   </div>
 
   <cask-resource-center-button></cask-resource-center-button>
 </div>
 <div class="pipeline-settings-backdrop"
-     ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings || HydratorPlusPlusTopPanelCtrl.showRunTimeArguments"
-     ng-click="HydratorPlusPlusTopPanelCtrl.state.viewSettings = HydratorPlusPlusTopPanelCtrl.showRunTimeArguments = false"></div>
+     ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings ||
+     HydratorPlusPlusTopPanelCtrl.viewLogs ||
+     HydratorPlusPlusTopPanelCtrl.showRunTimeArguments"
+     ng-click="HydratorPlusPlusTopPanelCtrl.state.viewSettings =
+     HydratorPlusPlusTopPanelCtrl.viewLogs =
+     HydratorPlusPlusTopPanelCtrl.showRunTimeArguments = false">
+</div>
 <div class="pipeline-settings">
   <div
     store="HydratorPlusPlusTopPanelCtrl.HydratorPlusPlusConfigStore"
@@ -180,3 +182,42 @@
     my-pipeline-settings>
   </div>
 </div>
+<div class="pipeline-run-section text-left" ng-if="HydratorPlusPlusTopPanelCtrl.showRunTimeArguments">
+  <h5>
+    <strong>Runtime Arguments</strong>
+  </h5>
+  <div class="arguments-container">
+    <key-value-widget
+      ng-model="HydratorPlusPlusTopPanelCtrl.macrosMap"
+      data-config="HydratorPlusPlusTopPanelCtrl.runTimeWidgetConfig"
+    ></key-value-widget>
+  </div>
+  <div class="clearfix preview-start-section">
+    <span ng-if="HydratorPlusPlusTopPanelCtrl.state.artifact.name === HydratorPlusPlusTopPanelCtrl.GLOBALS.etlDataStreams">
+      <span class="fa fa-info-circle"></span>
+      <span>
+        For realtime pipelines, preview runs for 2 mins
+      </span>
+    </span>
+    <span class="preview-start-button">
+      <button class="btn btn-blue"
+        ng-click="HydratorPlusPlusTopPanelCtrl.onPreviewStart()">
+        Start Now
+      </button>
+    </span>
+  </div>
+</div>
+<div class="pipeline-settings pipeline-logs-section" ng-if="HydratorPlusPlusTopPanelCtrl.viewLogs">
+  <my-log-viewer-preview
+    namespace-id="{{HydratorPlusPlusTopPanelCtrl.$state.params.namespace}}"
+    preview-id="{{HydratorPlusPlusTopPanelCtrl.currentPreviewId}}"
+    entity-name="{{HydratorPlusPlusTopPanelCtrl.state.metadata['name']}}">
+  </my-log-viewer-preview>
+</div>
+
+<my-file-select class="sr-only"
+                id="pipeline-import-config-link"
+                data-button-icon="fa-upload"
+                on-file-select="HydratorPlusPlusTopPanelCtrl.importFile($files)"
+                data-button-label="Import">
+</my-file-select>

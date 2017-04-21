@@ -32,7 +32,7 @@ angular.module(PKG.name + '.commons')
         var genericSubtitle = 'Trying to connect...';
         var hideLoadingTimeout = null;
 
-        EventPipe.on('backendDown', function(message, subtitle) {
+        EventPipe.on('backendDown', function(message, subtitle, userCloseEnabled) {
           if (!isBackendDown) {
             if (modal) {
               modal.close();
@@ -40,6 +40,11 @@ angular.module(PKG.name + '.commons')
             isBackendDown = true;
             $scope.message = message || genericServiceErrorMsg;
             $scope.subtitle = subtitle || genericSubtitle;
+            if (!userCloseEnabled) {
+              modalObj.keyboard = false;
+            } else {
+              modalObj.keyboard = true;
+            }
             modal = $uibModal.open(modalObj);
             modal.result.finally(function() {
               $state.go('overview', {reload: true});
@@ -92,9 +97,14 @@ angular.module(PKG.name + '.commons')
           }
         });
 
-        EventPipe.on('showLoadingIcon', function(message) {
+        EventPipe.on('showLoadingIcon', function(message, userCloseEnabled) {
           if(!modal && !isBackendDown) {
-            $scope.message = message || '';
+            $scope.message = message || 'Loading...';
+            if (!userCloseEnabled) {
+              modalObj.keyboard = false;
+            } else {
+              modalObj.keyboard = true;
+            }
             modal = $uibModal.open(modalObj);
           }
         }.bind($scope));

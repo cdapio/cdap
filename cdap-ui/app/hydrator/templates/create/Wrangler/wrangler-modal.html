@@ -22,9 +22,10 @@
   </a>
 </div>
 <div class="modal-body">
-  <wrangler
-    hydrator="Wrangler.applyToHydrator"
-    source="'hydrator'"
+  <dataprep
+    single-workspace-mode="true"
+    workspace-id="Wrangler.workspaceId"
+    on-submit="Wrangler.onSubmit"
     watch-depth="reference">
-  </wrangler>
+  </dataprep>
 </div>

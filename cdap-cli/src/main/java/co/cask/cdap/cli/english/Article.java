@@ -22,6 +22,7 @@ package co.cask.cdap.cli.english;
 public abstract class Article {
 
   public static final Article A = new A();
+  public static final Article THE = new The();
 
   public abstract String toString(Word word);
 
@@ -39,4 +40,13 @@ public abstract class Article {
     }
   }
 
+  /**
+   * "the"
+   */
+  private static class The extends Article {
+    @Override
+    public String toString(Word word) {
+      return "the";
+    }
+  }
 }

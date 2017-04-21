@@ -16,9 +16,10 @@
 
 package co.cask.cdap.app.preview;
 
-import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.metrics.query.MetricsQueryHelper;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.gson.JsonElement;
-import org.apache.twill.api.logging.LogEntry;
 
 import java.util.List;
 import java.util.Map;
@@ -63,14 +64,20 @@ public interface PreviewRunner {
   Map<String, List<JsonElement>> getData(String tracerName);
 
   /**
-   * Get metric associated with the preview run represented by this {@link PreviewRunner}.
-   * @return the {@link List} of metrics emitted during the preview run
+   * Get the run id of the program executed as a part of preview.
+   * @return the {@link ProgramRunId} associated with the preview
    */
-  List<MetricTimeSeries> getMetrics();
+  ProgramRunId getProgramRunId();
 
   /**
-   * Get the logs for the preview run represented by this {@link PreviewRunner}.
-   * @return the logs
+   * Get the run record of the program executed as a part of preview.
+   * @return the {@link RunRecordMeta} associated with the preview
    */
-  List<LogEntry> getLogs();
+  RunRecordMeta getRunRecord();
+
+  /**
+   * Get the helper object to query for metrics for the preview run.
+   * @return the {@link MetricsQueryHelper} associated with the preview
+   */
+  MetricsQueryHelper getMetricsQueryHelper();
 }

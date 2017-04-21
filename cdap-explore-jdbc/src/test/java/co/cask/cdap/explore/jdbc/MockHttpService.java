@@ -42,7 +42,7 @@ public class MockHttpService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    NettyHttpService.Builder builder = NettyHttpService.builder();
+    NettyHttpService.Builder builder = NettyHttpService.builder(MockHttpService.class.getName());
     builder.addHttpHandlers(httpHandlers);
     builder.setHost("localhost");
     builder.setPort(0);

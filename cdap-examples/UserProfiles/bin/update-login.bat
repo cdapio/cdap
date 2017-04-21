@@ -1,27 +1,28 @@
+:: ##############################################################################
+:: ##
+:: ## Copyright (c) 2016-2017 Cask Data, Inc.
+:: ##
+:: ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
+:: ## use this file except in compliance with the License. You may obtain a copy
+:: ## of the License at
+:: ##
+:: ## http://www.apache.org/licenses/LICENSE-2.0
+:: ##
+:: ## Unless required by applicable law or agreed to in writing, software
+:: ## distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+:: ## WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+:: ## License for the specific language governing permissions and limitations
+:: ## under the License.
+:: ##
+:: ##############################################################################
+
 @echo OFF
-
-REM ############################################################################
-REM ## Copyright (C) 2016 Cask Data, Inc.
-REM ##
-REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may
-REM ## not use this file except in compliance with the License. You may obtain a
-REM ## copy of the License at
-REM ##
-REM ## http://www.apache.org/licenses/LICENSE-2.0
-REM ##
-REM ## Unless required by applicable law or agreed to in writing, software
-REM ## distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-REM ## WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-REM ## License for the specific language governing permissions and limitations
-REM ## under the License.
-REM ##
-REM ############################################################################
-
 REM Set the base directory
 for %%i in ("%~dp0..\") do (SET $APP_HOME=%%~dpi)
 
 REM Set path for curl.exe
-set $PATH=%PATH%;%APP_HOME%\..\..\libexec\bin
+SET "ORIG_PATH=%PATH%"
+SET "PATH=%PATH%;%APP_HOME%\..\..\libexec\bin"
 
 REM Process access token
 set $ACCESS_TOKEN=
@@ -45,10 +46,10 @@ if DEFINED $ERROR goto :USAGE
 if not DEFINED $DELAY set $ERROR=Delay must be set
 if DEFINED $ERROR goto :USAGE
 
-goto :PROGRAM
+GOTO PROGRAM
 
 :USAGE
-SET $PROGRAM_NAME=%0 
+SET $PROGRAM_NAME=%0
 echo Tool for updating user's last login time randomly
 echo Usage: %$PROGRAM_NAME% seconds delay [host]
 echo:
@@ -59,7 +60,7 @@ echo     host      Specifies the host that CDAP is running on (default: localhos
 echo:
 if DEFINED $ERROR echo Error: !$ERROR!
 set $ERROR=
-goto :FINALLY
+GOTO FINALLY
 
 :PROGRAM
 set $MAX_EVENTS=2147483647
@@ -76,7 +77,7 @@ FOR /F "tokens=*" %%G IN (!$APP_HOME!resources\users.txt) DO (
     for /F "tokens=1 delims=," %%H IN ('echo !$BODY!') DO set $USERID=%%H
     set $USERID=!$USERID:~9,-1!
     set $USERS_ARRAY[!$USERS_ARRAY_COUNT!]=!$USERID!
-    REM for /L %%n in (!$USERS_ARRAY_COUNT!,1,!$USERS_ARRAY_COUNT!) do ( 
+    REM for /L %%n in (!$USERS_ARRAY_COUNT!,1,!$USERS_ARRAY_COUNT!) do (
     REM     echo !$USERS_ARRAY[%%n]!
     REM )
 )
@@ -89,9 +90,9 @@ echo Randomly updating user's last login time for !$SECONDS! seconds with delay 
 for /L %%G IN (1 1 %$MAX_EVENTS%) DO (
     call :GET_EPOCH $CURRENT_TIME
     if !$CURRENT_TIME! GTR !$END_TIME! goto :FINALLY
-    
+
     set /a "$RID=(!RANDOM!*!$USERS_ARRAY_COUNT!/32768)+1"
-    for /L %%n in (!$RID!,1,!$RID!) do ( 
+    for /L %%n in (!$RID!,1,!$RID!) do (
         set $USERID=!$USERS_ARRAY[%%n]!
     )
     for /f %%a in ('copy /Z "%~f0" nul') do set "CR=%%a"
@@ -112,10 +113,11 @@ for /L %%G IN (1 1 %$MAX_EVENTS%) DO (
     set /a $PING_DELAY=!$DELAY!+1
     ping -n !$PING_DELAY! localhost >nul
 )
-goto :FINALLY
+GOTO FINALLY
 
 :GET_EPOCH
 for /f "delims=" %%x in ('cscript /nologo %$APP_HOME%\bin\to-epoch.vbs') do set "%~1=%%x"
 goto :eof
 
 :FINALLY
+SET "PATH=%ORIG_PATH%"

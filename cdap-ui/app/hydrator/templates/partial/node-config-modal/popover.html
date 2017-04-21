@@ -61,9 +61,12 @@
             {{::HydratorPlusPlusNodeConfigCtrl.tabs[0].label}}
           </li>
           <li role="presentation"
-              ng-click="HydratorPlusPlusNodeConfigCtrl.activeTab = 2"
-              ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 2}"
-              ng-if="HydratorPlusPlusNodeConfigCtrl.isPreviewMode">
+              ng-click="!HydratorPlusPlusNodeConfigCtrl.state.isAction ? HydratorPlusPlusNodeConfigCtrl.activeTab = 2 : null"
+              ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 2, disabled: HydratorPlusPlusNodeConfigCtrl.state.isAction}"
+              ng-if="HydratorPlusPlusNodeConfigCtrl.isPreviewMode"
+              uib-tooltip="Preview data is not supported for action plugins"
+              tooltip-enable="HydratorPlusPlusNodeConfigCtrl.state.isAction"
+              tooltip-append-to-body="true">
             {{::HydratorPlusPlusNodeConfigCtrl.tabs[1].label}}
           </li>
           <li role="presentation"

@@ -24,6 +24,20 @@ body.theme-cdap {
         font-size: 84px;
         color: @cdap-orange;
       }
+
+      .icon-loading-bars {
+        background-color: rgba(255, 255, 255, 0.7);
+        color: #666666;
+        font-size: 84px;
+
+        > .loading-bar {
+          transform: translateY(-75%) scale(2);
+
+          rect {
+            fill: @cdap-orange;
+          }
+        }
+      }
     }
   }
 

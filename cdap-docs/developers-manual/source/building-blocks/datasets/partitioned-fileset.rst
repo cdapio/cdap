@@ -53,6 +53,20 @@ embedded FileSet becomes read-only. You can still add partitions for locations t
 external process. But dropping a partition will only delete the partition's metadata, whereas the actual file
 remains intact. Similarly, if you drop or truncate an external PartitionedFileSet, its files will not be deleted.
 
+Similarly to a :ref:`FileSet <datasets-fileset-reuse>`, a PartitionedFileSet can reuse an existing location
+in HDFS and an existing Hive table for Explore. Use one of these two options:
+
+- ``setUseExisting(true)``: This directs the PartitionedFileSet to accept an existing location as its base
+  path and an existing table in Hive for exploring. Because the existing location may contain pre-existing files,
+  and the Hive table may have pre-existing partitions, the location and the Hive table will not be deleted when
+  the dataset is dropped, and truncating the FileSet will have no effect on the file system or the Hive table.
+  This is to ensure that no pre-existing data is deleted.
+
+- ``setPossessExisting(true)``: This also allows reuse of an existing location. However, the
+  PartitionedFileSet will assume ownership of existing files in that location and of the Hive table and
+  all its existing partitions, which means that these files and partitions will be deleted if the dataset
+  is either dropped or truncated.
+
 In order to make the PartitionedFileSet explorable, additional properties are needed, as described
 in :ref:`exploring-partitionedfilesets`.
 

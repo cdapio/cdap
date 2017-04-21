@@ -19,7 +19,8 @@
  var Store = require('../cdap/services/NamespaceStore').default;
  var Header = require('../cdap/components/Header').default;
  var ResourceCenterButton = require('../cdap/components/ResourceCenterButton').default;
- var Wrangler = require('../wrangler/components/Wrangler').default;
+ var DataPrep = require('../cdap/components/DataPrep').default;
+ var DataPrepHelper = require('../cdap/components/DataPrep/helper');
  var globalEvents = require('../cdap/services/global-events').default;
  var ee = require('event-emitter');
  var VersionStore = require('../cdap/services/VersionStore').default;
@@ -28,7 +29,8 @@
  export {
   Store,
   Header,
-  Wrangler,
+  DataPrep,
+  DataPrepHelper,
   globalEvents,
   ee,
   VersionStore,

@@ -18,6 +18,7 @@ import React, { Component } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
 import shortid from 'shortid';
 import ee from 'event-emitter';
+import ColumnActionsDropdown from 'components/DataPrep/ColumnActionsDropdown';
 
 require('./DataPrepTable.scss');
 
@@ -31,11 +32,13 @@ export default class DataPrepTable extends Component {
       headers: storeState.headers,
       data: storeState.data,
       loading: !storeState.initialized,
-      directivesLength: storeState.directives.length
+      directivesLength: storeState.directives.length,
+      workspaceId: storeState.workspaceId
     };
 
     this.eventEmitter = ee(ee);
-    this.openWorkspace = this.openWorkspace.bind(this);
+    this.openUploadData = this.openUploadData.bind(this);
+    this.openCreateWorkspaceModal = this.openCreateWorkspaceModal.bind(this);
 
     this.sub = DataPrepStore.subscribe(() => {
       let state = DataPrepStore.getState().dataprep;
@@ -43,7 +46,8 @@ export default class DataPrepTable extends Component {
         data: state.data,
         headers: state.headers,
         loading: !state.initialized,
-        directivesLength: state.directives.length
+        directivesLength: state.directives.length,
+        workspaceId: state.workspaceId
       });
     });
   }
@@ -52,8 +56,12 @@ export default class DataPrepTable extends Component {
     this.sub();
   }
 
-  openWorkspace() {
-    this.eventEmitter.emit('DATAPREP_NO_WORKSPACE_ID');
+  openCreateWorkspaceModal() {
+    this.eventEmitter.emit('DATAPREP_CREATE_WORKSPACE');
+  }
+
+  openUploadData() {
+    this.eventEmitter.emit('DATAPREP_OPEN_UPLOAD');
   }
 
   render() {
@@ -70,20 +78,37 @@ export default class DataPrepTable extends Component {
     let headers = this.state.headers;
     let data = this.state.data;
 
+    if (!this.state.workspaceId) {
+      return (
+        <div className="dataprep-table empty">
+          <div>
+            <h5 className="text-xs-center">Please create a workspace to wrangle data</h5>
+            <div className="button-container text-xs-center">
+              <button
+                className="btn btn-primary"
+                onClick={this.openCreateWorkspaceModal}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     if (data.length === 0 || headers.length === 0) {
       return (
         <div className="dataprep-table empty">
-          <h4 className="text-xs-center">No Data</h4>
           {
             this.state.directivesLength === 0 ? (
               <div>
-                <h5 className="text-xs-center">Please create workspace and upload data</h5>
+                <h5 className="text-xs-center">Start by uploading data to this workspace</h5>
                 <div className="button-container text-xs-center">
                   <button
                     className="btn btn-primary"
-                    onClick={this.openWorkspace}
+                    onClick={this.openUploadData}
                   >
-                    Create Workspace
+                    Upload
                   </button>
                 </div>
               </div>
@@ -94,7 +119,7 @@ export default class DataPrepTable extends Component {
     }
 
     return (
-      <div className="dataprep-table">
+      <div className="dataprep-table" id="dataprep-table-id">
         <table className="table table-bordered table-striped">
           <thead className="thead-inverse">
             {
@@ -104,7 +129,15 @@ export default class DataPrepTable extends Component {
                     id={`column-${head}`}
                     key={head}
                   >
-                    {head}
+                    <span className="header-text">
+                      {head}
+                    </span>
+
+                    <span className="float-xs-right directives-dropdown-button">
+                      <ColumnActionsDropdown
+                        column={head}
+                      />
+                    </span>
                   </th>
                 );
               })

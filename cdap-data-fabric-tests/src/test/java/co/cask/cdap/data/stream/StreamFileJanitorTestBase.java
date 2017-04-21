@@ -73,7 +73,7 @@ public abstract class StreamFileJanitorTestBase {
     // FileStreamAdmin expects namespace directory to exist.
     // Simulate namespace create, since its an inmemory-namespace admin
     getNamespaceAdmin().create(NamespaceMeta.DEFAULT);
-    getNamespacedLocationFactory().get(NamespaceId.DEFAULT.toId()).mkdirs();
+    getNamespacedLocationFactory().get(NamespaceId.DEFAULT).mkdirs();
     impersonator = new DefaultImpersonator(cConf, new UnsupportedUGIProvider());
   }
 

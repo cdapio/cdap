@@ -17,8 +17,8 @@ import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import ResourceCenterEntity from 'components/ResourceCenterEntity';
 import StreamCreateWithUploadWizard from 'components/CaskWizards/StreamCreateWithUpload';
-import HydratorPipeline from 'components/CaskWizards/HydratorPipeline';
 import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadStore';
+import NamespaceStore from 'services/NamespaceStore';
 import AbstractWizard from 'components/AbstractWizard';
 import T from 'i18n-react';
 
@@ -38,39 +38,63 @@ export default class ResourceCenter extends Component {
     super(props);
     this.state = {
       createStreamWizard: false,
-      hydratorPipeline: false,
-      entities: [{
-        title: T.translate('features.Resource-Center.Stream.label'),
-        description: T.translate('features.Resource-Center.Stream.description'),
-        actionLabel: T.translate('features.Resource-Center.Stream.actionbtn0'),
-        iconClassName: 'fa icon-streams',
-        wizardId: 'createStreamWizard'
-      }, {
-        title: T.translate('features.Resource-Center.Artifact.label'),
-        description: T.translate('features.Resource-Center.Artifact.description'),
-        actionLabel: T.translate('features.Resource-Center.Artifact.actionbtn0'),
-        iconClassName: 'fa icon-artifacts',
-        wizardId: 'createArtifactWizard'
-      }, {
-        title: T.translate('features.Resource-Center.Application.label'),
-        description: T.translate('features.Resource-Center.Application.description'),
-        actionLabel: T.translate('features.Resource-Center.Application.actionbtn0'),
-        iconClassName: 'fa icon-app',
-        wizardId: 'createApplicationWizard'
-      }, {
-        title: T.translate('features.Resource-Center.HydratorPipeline.label'),
-        description: T.translate('features.Resource-Center.HydratorPipeline.description'),
-        actionLabel: T.translate('features.Resource-Center.HydratorPipeline.actionbtn0'),
-        iconClassName: 'fa icon-hydrator',
-        wizardId: 'hydratorPipeline',
-        disabled: false
-      }, {
-        title: T.translate('features.Resource-Center.Plugins.label'),
-        description: T.translate('features.Resource-Center.Plugins.description'),
-        actionLabel: T.translate('features.Resource-Center.Plugins.actionbtn0'),
-        iconClassName: 'fa fa-plug',
-        wizardId: 'createPluginArtifactWizard'
-      }]
+      entities: [
+        {
+          // Pipeline
+          title: T.translate('features.Resource-Center.HydratorPipeline.label'),
+          description: T.translate('features.Resource-Center.HydratorPipeline.description'),
+          actionLabel: T.translate('features.Resource-Center.HydratorPipeline.actionbtn0'),
+          iconClassName: 'fa icon-hydrator',
+          disabled: false,
+          actionLink: window.getHydratorUrl({
+            stateName: 'hydrator.create',
+            stateParams: {
+              namespace: NamespaceStore.getState().selectedNamespace,
+              artifactType: 'cdap-data-pipeline'
+            }
+          })
+        },
+        {
+          // Application
+          title: T.translate('features.Resource-Center.Application.label'),
+          description: T.translate('features.Resource-Center.Application.description'),
+          actionLabel: T.translate('features.Resource-Center.Application.actionbtn0'),
+          iconClassName: 'fa icon-app',
+          wizardId: 'createApplicationWizard'
+        },
+        {
+          // Plugin
+          title: T.translate('features.Resource-Center.Plugins.label'),
+          description: T.translate('features.Resource-Center.Plugins.description'),
+          actionLabel: T.translate('features.Resource-Center.Plugins.actionbtn0'),
+          iconClassName: 'fa fa-plug',
+          wizardId: 'createPluginArtifactWizard'
+        },
+        {
+          // Driver
+          title: T.translate('features.Resource-Center.Artifact.label'),
+          description: T.translate('features.Resource-Center.Artifact.description'),
+          actionLabel: T.translate('features.Resource-Center.Artifact.actionbtn0'),
+          iconClassName: 'fa icon-artifacts',
+          wizardId: 'createArtifactWizard'
+        },
+        {
+          // Library
+          title: T.translate('features.Resource-Center.Library.label'),
+          description: T.translate('features.Resource-Center.Library.description'),
+          actionLabel: T.translate('features.Resource-Center.Library.actionbtn0'),
+          iconClassName: 'fa icon-library',
+          wizardId: 'createLibraryWizard'
+        },
+        {
+          // Stream
+          title: T.translate('features.Resource-Center.Stream.label'),
+          description: T.translate('features.Resource-Center.Stream.description'),
+          actionLabel: T.translate('features.Resource-Center.Stream.actionbtn0'),
+          iconClassName: 'fa icon-streams',
+          wizardId: 'createStreamWizard'
+        }
+      ]
     };
   }
   toggleWizard(wizardName) {
@@ -89,14 +113,6 @@ export default class ResourceCenter extends Component {
           store={CreateStreamWithUploadStore}
           onClose={this.toggleWizard.bind(this, 'createStreamWizard')}
           withUploadStep
-        />
-      );
-    }
-    if (this.state.hydratorPipeline) {
-      return (
-        <HydratorPipeline
-          isOpen={this.state.hydratorPipeline}
-          onClose={this.toggleWizard.bind(this, 'hydratorPipeline')}
         />
       );
     }
@@ -130,6 +146,16 @@ export default class ResourceCenter extends Component {
         />
       );
     }
+    if (this.state.createLibraryWizard) {
+      return (
+        <AbstractWizard
+          isOpen={true}
+          wizardType="create_library_rc"
+          input={{headerLabel: T.translate('features.Resource-Center.Library.modalheadertitle')}}
+          onClose={this.toggleWizard.bind(this, 'createLibraryWizard')}
+        />
+      );
+    }
   }
   render() {
     return (
@@ -147,6 +173,7 @@ export default class ResourceCenter extends Component {
                   key={index}
                   disabled={entity.disabled}
                   onClick={this.toggleWizard.bind(this, entity.wizardId)}
+                  actionLink={entity.actionLink}
                 />
               ))
           }

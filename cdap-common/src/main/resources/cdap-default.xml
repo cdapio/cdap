@@ -20,6 +20,19 @@
   <!-- General Configuration -->
 
   <property>
+    <name>cluster.name</name>
+    <value></value>
+    <description>
+      A cluster-based name for CDAP. It is used for scope resolution of
+      preferences and runtime arguments. For example: the preference key
+      "cluster.[cluster.name].my.key" would be resolved to "my.key" at
+      runtime; a program can then retrieve the preference value by using
+      just "my.key". The administrator can use this property to set
+      different preferences for each cluster.
+    </description>
+  </property>
+
+  <property>
     <name>hdfs.lib.dir</name>
     <value>${hdfs.namespace}/lib</value>
     <description>
@@ -52,18 +65,6 @@
       alphanumeric, and should not be changed after CDAP has been started.
       If it is changed, there is a risk of losing data (for example,
       authorization policies).
-    </description>
-  </property>
-
-  <property>
-    <name>cluster.name</name>
-    <value></value>
-    <description>
-      A cluster-based name for CDAP. It is used for scope resolution of preferences and
-      runtime arguments. For example: the preference key "cluster.[cluster.name].my.key"
-      would be resolved to "my.key" at runtime; a program can then retrieve the preference
-      value by using just "my.key". The administrator can use this property to set
-      different preferences for each cluster.
     </description>
   </property>
 
@@ -170,20 +171,18 @@
   </property>
 
   <property>
-    <name>twill.java.reserved.memory.mb</name>
-    <value>250</value>
+    <name>twill.java.heap.memory.ratio</name>
+    <value>0.7</value>
     <description>
-      Reserved non-heap memory in megabytes for Apache Twill container
+      The minimum ratio of heap to non-heap memory for Apache Twill container
     </description>
   </property>
 
   <property>
-    <name>twill.location.cache.dir</name>
-    <value>.cache</value>
+    <name>twill.java.reserved.memory.mb</name>
+    <value>250</value>
     <description>
-      The relative directory name on the distributed file system for Apache Twill to cache
-      generated files, to speed up launching applications. This directory is relative to
-      ${root.namespace}/twill on the file system.
+      Reserved non-heap memory in megabytes for Apache Twill container
     </description>
   </property>
 
@@ -199,10 +198,38 @@
   </property>
 
   <property>
+    <name>twill.location.cache.dir</name>
+    <value>.cache</value>
+    <description>
+      The relative directory name on the distributed file system for Apache
+      Twill to cache generated files, to speed up launching applications.
+      This directory is relative to ${root.namespace}/twill on the file
+      system.
+    </description>
+  </property>
+
+  <property>
     <name>twill.no.container.timeout</name>
     <value>120000</value>
     <description>
-      Duration in milliseconds to wait for at least one container for Apache Twill runnable
+      Duration in milliseconds to wait for at least one container for Apache
+      Twill runnable
+    </description>
+  </property>
+
+  <property>
+    <name>twill.yarn.am.memory.mb</name>
+    <value>512</value>
+    <description>
+      The memory size in megabytes of the Apache Twill application master container
+    </description>
+  </property>
+
+  <property>
+    <name>twill.yarn.am.reserved.memory.mb</name>
+    <value>${twill.java.reserved.memory.mb}</value>
+    <description>
+      Reserved non-heap memory in megabytes for Apache Twill application master container
     </description>
   </property>
 
@@ -215,11 +242,19 @@
   </property>
 
   <property>
+    <name>upgrade.thread.pool.size</name>
+    <value>10</value>
+    <description>
+      Number of threads to be used running operations concurrently during a CDAP upgrade
+    </description>
+  </property>
+
+  <property>
     <name>zookeeper.client.startup.timeout.millis</name>
     <value>60000</value>
     <description>
-      Duration in milliseconds to wait for a successful connection to a server in the
-      ZooKeeper quorum
+      Duration in milliseconds to wait for a successful connection to a
+      server in the ZooKeeper quorum
     </description>
   </property>
 
@@ -247,9 +282,9 @@
     <name>dataset.unchecked.upgrade</name>
     <value>false</value>
     <description>
-      If false, any changes made to existing datasets are not deployed
-      when an app is redeployed; setting this value to true allows the
-      dataset changes to be deployed upon app redeployment
+      If false, any changes made to existing datasets are not deployed when
+      an app is redeployed; setting this value to true allows the dataset
+      changes to be deployed upon app redeployment
     </description>
   </property>
 
@@ -276,26 +311,18 @@
   </property>
 
   <property>
-    <name>app.meta.upgrade.timeout.secs</name>
-    <value>60</value>
-    <description>
-      Timeout value in seconds while upgrading application versions
-    </description>
-  </property>
-
-  <property>
-    <name>master.services.bind.address</name>
-    <value>0.0.0.0</value>
-    <description>
-      Bind address for app fabric service and dataset service
-    </description>
-  </property>
-
-  <property>
     <name>app.bind.port</name>
     <value>0</value>
     <description>
       App Fabric service bind port; if 0, binds to a random port
+    </description>
+  </property>
+
+  <property>
+    <name>app.meta.upgrade.timeout.secs</name>
+    <value>60</value>
+    <description>
+      Timeout value in seconds while upgrading application versions
     </description>
   </property>
 
@@ -311,9 +338,9 @@
     <name>app.program.extra.classpath</name>
     <value></value>
     <description>
-      Additional Java classpath for CDAP programs. These extra classpaths must
-      be present on all nodes in the cluster. Supports wildcard suffix "*"
-      to include all JAR files under a directory.
+      Additional Java classpath for CDAP programs. These extra classpaths
+      must be present on all nodes in the cluster. Supports wildcard suffix
+      "*" to include all JAR files under a directory.
     </description>
   </property>
 
@@ -329,7 +356,8 @@
     <name>app.program.max.start.seconds</name>
     <value>300</value>
     <description>
-      Maximum number of seconds to wait for a program to start before killing it
+      Maximum number of seconds to wait for a program to start before
+      killing it
     </description>
   </property>
 
@@ -337,7 +365,8 @@
     <name>app.program.max.stop.seconds</name>
     <value>300</value>
     <description>
-      Maximum number of seconds to wait for a program to stop before killing it
+      Maximum number of seconds to wait for a program to stop before killing
+      it
     </description>
   </property>
 
@@ -345,8 +374,8 @@
     <name>app.program.runid.corrector.interval</name>
     <value>180</value>
     <description>
-      Interval in seconds of how often the run id corrector thread will run; this value
-      should be greater than 0
+      Interval in seconds of how often the run id corrector thread will run;
+      this value should be greater than 0
     </description>
   </property>
 
@@ -363,15 +392,9 @@
     <name>app.program.spark.yarn.client.rewrite.enabled</name>
     <value>true</value>
     <description>
-      Specify whether to rewrite the YARN 'Client.scala' class in Spark to work
-      around issue SPARK-13441 in CDH clusters
+      Specify whether to rewrite the YARN 'Client.scala' class in Spark to
+      work around issue SPARK-13441 in CDH clusters
     </description>
-  </property>
-
-  <property>
-    <name>apps.scheduler.queue</name>
-    <value></value>
-    <description>Scheduler queue for CDAP programs and CDAP Explore queries</description>
   </property>
 
   <property>
@@ -391,13 +414,41 @@
   </property>
 
   <property>
+    <name>apps.scheduler.queue</name>
+    <value></value>
+    <description>
+      Scheduler queue for CDAP programs and CDAP Explore queries
+    </description>
+  </property>
+
+  <property>
+    <name>app.deploy.update.schedules</name>
+    <value>true</value>
+    <description>
+      If true, redeploying an application will modify any schedules that currently exist
+      for the application; if false, redeploying an application does not create any new
+      schedules and existing schedules are neither deleted nor updated. This property only
+      affects the redeployment of an application; all related actions or endpoints are
+      unaffected.
+    </description>
+  </property>
+
+  <property>
+    <name>master.services.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      Bind address for app fabric service and dataset service
+    </description>
+  </property>
+
+  <property>
     <name>program.container.dist.jars</name>
     <value></value>
     <description>
       Additional jars to be localized to every program container and to be
-      added to classpaths of CDAP programs. They can be local file paths
-      on the CDAP Master or URIs of remote files. Multiple JAR files
-      are comma-separated.
+      added to classpaths of CDAP programs. They can be local file paths on
+      the CDAP Master or URIs of remote files. Multiple JAR files are comma-
+      separated.
     </description>
   </property>
 
@@ -422,8 +473,8 @@
     <name>workflow.token.max.size.mb</name>
     <value>30</value>
     <description>
-      Maximum allowed size in megabytes of a workflow token; if the
-      workflow token exceeds this size, no further updates are allowed
+      Maximum allowed size in megabytes of a workflow token; if the workflow
+      token exceeds this size, no further updates are allowed
     </description>
   </property>
 
@@ -450,7 +501,7 @@
     <name>audit.topic</name>
     <value>audit</value>
     <description>
-      Topic name in the messaging system to which audit messages are published
+      Topic name used to publish audit messages in the messaging system
     </description>
   </property>
 
@@ -550,6 +601,15 @@
   </property>
 
   <property>
+    <name>data.tx.max.timeout</name>
+    <value>600</value>
+    <description>
+      The limit for the allowed transaction timeout, in seconds. Attempts to
+      start a transaction with a longer timeout will fail.
+    </description>
+  </property>
+
+  <property>
     <name>data.tx.memory.mb</name>
     <value>${master.service.memory.mb}</value>
     <description>
@@ -570,6 +630,40 @@
     <value>1</value>
     <description>
       Requested number of transaction service instances
+    </description>
+  </property>
+
+  <property>
+    <name>data.tx.prune.enable</name>
+    <value>false</value>
+    <description>
+      Enable invalid transaction list pruning
+    </description>
+  </property>
+
+  <property>
+    <name>data.tx.prune.plugins</name>
+    <value>data.tx.pruning.plugin</value>
+    <description>
+      List of transaction pruning plugins; for CDAP HBase tables that use
+      transaction functionality to skip or clean invalid data
+    </description>
+  </property>
+
+  <property>
+    <name>data.tx.prune.state.table</name>
+    <value>${dataset.table.prefix}_system:tephra.state</value>
+    <description>
+      Table used to store intermediate state when invalid transaction list
+      pruning is enabled
+    </description>
+  </property>
+
+  <property>
+    <name>data.tx.pruning.plugin.class</name>
+    <value>co.cask.data2.txprune.DefaultHBaseTransactionPruningPlugin</value>
+    <description>
+      Class name for the default transaction pruning plugin
     </description>
   </property>
 
@@ -638,9 +732,9 @@
     <name>data.tx.thrift.max.read.buffer</name>
     <value>${thrift.max.read.buffer}</value>
     <description>
-      Maximum read buffer size in bytes used by the transaction service;
-      the value should be set to something greater than the maximum frame
-      sent on the RPC channel
+      Maximum read buffer size in bytes used by the transaction service; the
+      value should be set to something greater than the maximum frame sent
+      on the RPC channel
     </description>
   </property>
 
@@ -654,53 +748,18 @@
   </property>
 
   <property>
-    <name>data.tx.max.timeout</name>
-    <value>600</value>
-    <description>
-      The limit for the allowed transaction timeout, in seconds. Attempts to
-      start a transaction with a longer timeout will fail.
-    </description>
-  </property>
-
-  <property>
-    <name>data.tx.prune.enable</name>
-    <value>false</value>
-    <description>
-      Enable invalid transaction list pruning
-    </description>
-  </property>
-
-  <property>
-    <name>data.tx.prune.plugins</name>
-    <value>data.tx.pruning.plugin</value>
-    <description>
-      List of transaction pruning plugins; for CDAP HBase tables that use transaction
-      functionality to skip or clean invalid data
-    </description>
-  </property>
-
-  <property>
-    <name>data.tx.prune.state.table</name>
-    <value>${dataset.table.prefix}_system:tephra.state</value>
-    <description>
-      Table used to store intermediate state when invalid transaction list pruning is
-      enabled
-    </description>
-  </property>
-
-  <property>
-    <name>data.tx.pruning.plugin.class</name>
-    <value>co.cask.data2.txprune.DefaultHBaseTransactionPruningPlugin</value>
-    <description>
-      Class name for the default transaction pruning plugin
-    </description>
-  </property>
-
-  <property>
     <name>dataset.data.dir</name>
     <value>data</value>
     <description>
       Base directory for user data on the filesystem
+    </description>
+  </property>
+
+  <property>
+    <name>dataset.executor.bind.port</name>
+    <value>0</value>
+    <description>
+      Dataset executor bind port; if 0, binds to a random port
     </description>
   </property>
 
@@ -733,14 +792,6 @@
     <value>${master.service.max.instances}</value>
     <description>
       Maximum number of dataset executor instances
-    </description>
-  </property>
-
-  <property>
-    <name>dataset.executor.bind.port</name>
-    <value>0</value>
-    <description>
-      Dataset executor bind port; if 0, binds to a random port
     </description>
   </property>
 
@@ -800,7 +851,8 @@
     <name>explore.container.yarn.app.classpath.first</name>
     <value>false</value>
     <description>
-      Determines if the YARN application classpath precedes the query engine classpath
+      Determines if the YARN application classpath precedes the query engine
+      classpath
     </description>
   </property>
 
@@ -814,11 +866,11 @@
 
   <property>
     <name>explore.executor.container.memory.mb</name>
-    <value>1024</value>
+    <value>2048</value>
     <description>
-      Memory in megabytes for each CDAP Explore executor instance.
-      This is explicitly set differently than ${master.service.memory.mb} as
-      Explore requires more memory to run than the CDAP Master service.
+      Memory in megabytes for each CDAP Explore executor instance. This is
+      explicitly set differently than ${master.service.memory.mb} as Explore
+      requires more memory to run than the CDAP Master service.
     </description>
   </property>
 
@@ -834,9 +886,10 @@
     <name>explore.http.timeout</name>
     <value>20</value>
     <description>
-      The timeout in seconds for HTTP requests to the CDAP Explore service. Because requests
-      may happen within a transaction, it is recommended to keep this timeout noticeably
-      shorter than the default transaction timeout, ${data.tx.timeout}.
+      The timeout in seconds for HTTP requests to the CDAP Explore service.
+      Because requests may happen within a transaction, it is recommended to
+      keep this timeout noticeably shorter than the default transaction
+      timeout, ${data.tx.timeout}.
     </description>
   </property>
 
@@ -871,8 +924,8 @@
     <description>
       Determines the start-up of the CDAP Explore service (ad-hoc SQL
       queries); if false, the Explore service starts up when CDAP is
-      started; if true, the Explore service will start upon the first
-      query it receives
+      started; if true, the Explore service will start upon the first query
+      it receives
     </description>
   </property>
 
@@ -927,7 +980,7 @@
     <name>kafka.seed.brokers</name>
     <value>127.0.0.1:9092</value>
     <description>
-      Comma-separated list of CDAP Kafka service brokers; for distributed
+      Comma-separated list of CDAP Kafka service brokers; for Distributed
       CDAP, replace with list of FQDN:port brokers
     </description>
   </property>
@@ -965,8 +1018,8 @@
     <name>kafka.server.log.flush.interval.messages</name>
     <value>10000</value>
     <description>
-      The interval length (in number of messages in the CDAP Kafka service) at which to
-      force an fsync of data written to the log
+      The interval length (in number of messages in the CDAP Kafka service)
+      at which to force an fsync of data written to the log
     </description>
   </property>
 
@@ -974,9 +1027,9 @@
     <name>kafka.server.log.retention.hours</name>
     <value>24</value>
     <description>
-      The number of hours to keep a log file before deleting it; this is the time-to-live
-      in the CDAP Kafka service, while a log is in-flight between the container and the
-      CDAP log saver
+      The number of hours to keep a log file before deleting it; this is the
+      time-to-live in the CDAP Kafka service, while a log is in-flight
+      between the container and the CDAP log saver
     </description>
   </property>
 
@@ -1017,13 +1070,14 @@
     <name>kafka.zookeeper.quorum</name>
     <value></value>
     <description>
-      CDAP Kafka service ZooKeeper quorum and namespace. If set, this will override
-      the ZooKeeper quorum (set by ${zookeeper.quorum}) and the ZooKeeper namespace
-      (set by ${kafka.zookeeper.namespace}) when setting up a connection to
-      the Kafka service used by CDAP. If the same Kafka service ZooKeeper quorum
-      and namespace are shared by multiple CDAP instances, each CDAP instance
-      needs to distinguish its Kafka topics from those of other CDAP instances
-      with unique values for ${log.kafka.topic} and ${metrics.topic.prefix}.
+      CDAP Kafka service ZooKeeper quorum and namespace. If set, this will
+      override the ZooKeeper quorum (set by ${zookeeper.quorum}) and the
+      ZooKeeper namespace (set by ${kafka.zookeeper.namespace}) when setting
+      up a connection to the Kafka service used by CDAP. If the same Kafka
+      service ZooKeeper quorum and namespace are shared by multiple CDAP
+      instances, each CDAP instance needs to distinguish its Kafka topics
+      from those of other CDAP instances with unique values for
+      ${log.kafka.topic} and ${metrics.topic.prefix}.
     </description>
   </property>
 
@@ -1034,7 +1088,8 @@
     <name>log.base.dir</name>
     <value>/logs/avro</value>
     <description>
-      Base log directory
+      In Distributed CDAP, the HDFS directory under which the system log pipeline saves
+      log files
     </description>
   </property>
 
@@ -1042,7 +1097,8 @@
     <name>log.collection.root</name>
     <value>${local.data.dir}/logs</value>
     <description>
-      Root location for collecting logs when in Standalone CDAP
+      In Standalone CDAP, the local directory under which the system log pipeline saves
+      log files
     </description>
   </property>
 
@@ -1055,67 +1111,10 @@
   </property>
 
   <property>
-    <name>log.publish.num.partitions</name>
-    <value>10</value>
-    <description>
-      Number of CDAP Kafka service partitions to publish the logs to
-    </description>
-  </property>
-
-  <property>
     <name>log.pipeline.cdap.dir.permissions</name>
     <value>700</value>
     <description>
-      Permissions to use for directories created by the system log appender
-    </description>
-  </property>
-
-  <property>
-    <name>log.pipeline.cdap.file.max.lifetime.ms</name>
-    <value>21600000</value>
-    <description>
-      Maximum time in milliseconds a file is kept open by the system log appender
-    </description>
-  </property>
-
-  <property>
-    <name>log.pipeline.cdap.file.max.size.bytes</name>
-    <value>104857600</value>
-    <description>
-      Maximum size in bytes of a file kept open by the system log appender
-    </description>
-  </property>
-
-  <property>
-    <name>log.pipeline.cdap.file.permissions</name>
-    <value>600</value>
-    <description>
-      Permissions to set for files created by the system log appender
-    </description>
-  </property>
-
-  <property>
-    <name>log.pipeline.cdap.file.sync.interval.bytes</name>
-    <value>10485760</value>
-    <description>
-      Number of bytes for the sync interval setting of the Avro file written by the system log appender
-    </description>
-  </property>
-
-  <property>
-    <name>log.pipeline.cdap.file.retention.duration.days</name>
-    <value>7</value>
-    <description>
-      Maximum time in days a file is kept before it can be deleted by log cleanup.
-    </description>
-  </property>
-
-  <property>
-    <name>log.pipeline.cdap.file.cleanup.transaction.timeout</name>
-    <value>60</value>
-    <description>
-      Transaction timeout in seconds for running file cleanup tasks.
-      This should not be larger than ${data.tx.max.timeout}.
+      Permissions used by the system log pipeline when creating directories
     </description>
   </property>
 
@@ -1123,18 +1122,68 @@
     <name>log.pipeline.cdap.file.cleanup.interval.mins</name>
     <value>1440</value>
     <description>
-      Time in minutes for each interval of the log cleanup thread to run
+      Time in minutes between runs of the log cleanup thread
     </description>
   </property>
 
+  <property>
+    <name>log.pipeline.cdap.file.cleanup.transaction.timeout</name>
+    <value>60</value>
+    <description>
+      Transaction timeout in seconds used by the log cleanup thread. This
+      should not be greater than ${data.tx.max.timeout}.
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.max.lifetime.ms</name>
+    <value>21600000</value>
+    <description>
+      Maximum time span in milliseconds of a log file created by the system log pipeline
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.max.size.bytes</name>
+    <value>104857600</value>
+    <description>
+      Maximum size in bytes of a log file created by the system log pipeline
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.permissions</name>
+    <value>600</value>
+    <description>
+      Permissions used by the system log pipeline when creating files
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.retention.duration.days</name>
+    <value>7</value>
+    <description>
+      Time in days a log file is retained
+    </description>
+  </property>
+
+  <property>
+    <name>log.pipeline.cdap.file.sync.interval.bytes</name>
+    <value>10485760</value>
+    <description>
+      Number of bytes for the sync interval setting of the Avro file written
+      by the system log pipeline
+    </description>
+  </property>
 
   <property>
     <name>log.process.pipeline.auto.buffer.ratio</name>
     <value>0.7</value>
     <description>
-      The ratio of total memory used for determining processing pipeline buffer size.
-      This property is only used if ${log.process.pipeline.buffer.size}
-      is set to zero and the value should be greater than zero and less than one.
+      The ratio of total memory used for determining processing pipeline
+      buffer size. This property is only used if
+      ${log.process.pipeline.buffer.size} is set to zero and this value
+      should be greater than zero and less than one.
     </description>
   </property>
 
@@ -1143,8 +1192,9 @@
     <value>0</value>
     <description>
       The internal buffer size in bytes for each log processing pipeline.
-      Setting it to zero means the system will determine it dynamically based
-      on the container size as given by ${log.saver.container.memory.mb}.
+      Setting it to zero means the system will determine it dynamically
+      based on the container size as given by
+      ${log.saver.container.memory.mb}.
     </description>
   </property>
 
@@ -1160,9 +1210,9 @@
     <name>log.process.pipeline.config.dir</name>
     <value>/opt/cdap/master/ext/logging/config</value>
     <description>
-      A local directory on the CDAP Master that is scanned for log processing pipeline
-      configurations. Each pipeline is defined by a file in the logback XML format, with
-      ".xml" as the file name extension.
+      A local directory on the CDAP Master that is scanned for log
+      processing pipeline configurations. Each pipeline is defined by a file
+      in the logback XML format, with ".xml" as the file name extension.
     </description>
   </property>
 
@@ -1170,10 +1220,10 @@
     <name>log.process.pipeline.event.delay.ms</name>
     <value>2000</value>
     <description>
-      The time a log event stays in the log processing pipeline buffer before
-      writing out to log appenders in milliseconds. A longer delay will result
-      in better time ordering of log events before presenting to log appenders
-      but will consume more memory.
+      The time a log event stays in the log processing pipeline buffer
+      before writing out to log appenders in milliseconds. A longer delay
+      will result in better time ordering of log events before presenting to
+      log appenders but will consume more memory.
     </description>
   </property>
 
@@ -1181,7 +1231,8 @@
     <name>log.process.pipeline.kafka.fetch.size</name>
     <value>1048576</value>
     <description>
-      The buffer size in bytes, per topic partition, for fetching log events from Kafka
+      The buffer size in bytes, per topic partition, for fetching log events
+      from Kafka
     </description>
   </property>
 
@@ -1189,16 +1240,9 @@
     <name>log.process.pipeline.lib.dir</name>
     <value>/opt/cdap/master/ext/logging/lib</value>
     <description>
-      Semicolon-separated list of local directories on the CDAP Master scanned
-      for additional library JAR files to be included for log processing
-    </description>
-  </property>
-
-  <property>
-    <name>log.process.pipeline.logger.cache.size</name>
-    <value>1000</value>
-    <description>
-      The number of loggers that each log processing pipeline will cache
+      Comma-separated list of local directories on the CDAP Master
+      scanned for additional library JAR files to be included for log
+      processing
     </description>
   </property>
 
@@ -1211,14 +1255,49 @@
   </property>
 
   <property>
+    <name>log.process.pipeline.logger.cache.size</name>
+    <value>1000</value>
+    <description>
+      The number of loggers that each log processing pipeline will cache
+    </description>
+  </property>
+
+  <property>
+    <name>log.publish.num.partitions</name>
+    <value>10</value>
+    <description>
+      Number of CDAP Kafka service partitions to publish the logs to
+    </description>
+  </property>
+
+  <property>
     <name>log.publish.partition.key</name>
     <value>program</value>
     <description>
-      Publish logs from an application or a program to the same partition. Valid values
-      are "application" or "program". If set to "application", logs from all the programs
-      of an application go to the same partition. If set to "program", logs from the same
-      program go to the same partition. Changes to this property requires restarting of
-      all CDAP applications.
+      Publish logs from an application or a program to the same partition.
+      Valid values are "application" or "program". If set to "application",
+      logs from all the programs of an application go to the same partition.
+      If set to "program", logs from the same program go to the same
+      partition. Changes to this property requires restarting of all CDAP
+      applications.
+    </description>
+  </property>
+
+  <property>
+    <name>log.saver.container.memory.mb</name>
+    <value>1024</value>
+    <description>
+      Memory in megabytes for each log saver instance to run in YARN. This
+      is explicitly set differently than ${master.service.memory.mb} as the
+      log saver requires more memory to run than the CDAP Master service.
+    </description>
+  </property>
+
+  <property>
+    <name>log.saver.container.num.cores</name>
+    <value>2</value>
+    <description>
+      Number of virtual cores for each log saver instance in YARN
     </description>
   </property>
 
@@ -1239,28 +1318,10 @@
   </property>
 
   <property>
-    <name>log.saver.container.memory.mb</name>
-    <value>1024</value>
-    <description>
-      Memory in megabytes for each log saver instance to run in YARN.
-      This is explicitly set differently than ${master.service.memory.mb} as
-      Log saver requires more memory to run than the CDAP Master service.
-    </description>
-  </property>
-
-  <property>
-    <name>log.saver.container.num.cores</name>
-    <value>2</value>
-    <description>
-      Number of virtual cores for each log saver instance in YARN
-    </description>
-  </property>
-
-  <property>
     <name>log.saver.status.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Log Saver HTTP service bind address
+      Log saver HTTP service bind address
     </description>
   </property>
 
@@ -1271,13 +1332,31 @@
     <name>market.base.url</name>
     <value>http://market.cask.co/v2</value>
     <description>
-      The base URL of the Cask Market used by the CDAP UI for the Cask Market RESTful API.
-      The default value shown is that of the public Cask Market.
+      The base URL of the Cask Market used by the CDAP UI for the Cask
+      Market RESTful API. The default value shown is that of the public Cask
+      Market.
     </description>
   </property>
 
 
   <!-- Master Configuration -->
+
+  <property>
+    <name>hbase.client.retries.number</name>
+    <value>2</value>
+    <description>
+      Maximum number of retries while performing HBase operations from
+      master services
+    </description>
+  </property>
+
+  <property>
+    <name>hbase.rpc.timeout</name>
+    <value>15000</value>
+    <description>
+      RPC timeout from HBase operations performed from master services
+    </description>
+  </property>
 
   <property>
     <name>http.service.boss.threads</name>
@@ -1331,22 +1410,6 @@
   </property>
 
   <property>
-    <name>hbase.client.retries.number</name>
-    <value>2</value>
-    <description>
-      Maximum number of retries while performing HBase operations from master services
-    </description>
-  </property>
-
-  <property>
-    <name>hbase.rpc.timeout</name>
-    <value>15000</value>
-    <description>
-      RPC timeout from HBase operations performed from master services
-    </description>
-  </property>
-
-  <property>
     <name>master.service.max.instances</name>
     <value>5</value>
     <description>
@@ -1371,6 +1434,14 @@
   </property>
 
   <property>
+    <name>master.services.scheduler.queue</name>
+    <value></value>
+    <description>
+      Scheduler queue for CDAP Master services
+    </description>
+  </property>
+
+  <property>
     <name>master.startup.service.timeout.seconds</name>
     <value>600</value>
     <description>
@@ -1385,14 +1456,6 @@
     </description>
   </property>
 
-  <property>
-    <name>master.services.scheduler.queue</name>
-    <value></value>
-    <description>
-      Scheduler queue for CDAP Master services
-    </description>
-  </property>
-
 
   <!-- Messaging System Configuration -->
 
@@ -1401,15 +1464,6 @@
     <value>1</value>
     <description>
       Number of instances for the messaging service
-    </description>
-    <final>true</final>
-  </property>
-
-  <property>
-    <name>messaging.max.instances</name>
-    <value>1</value>
-    <description>
-      Maximum number of instances for the messaging service
     </description>
     <final>true</final>
   </property>
@@ -1431,11 +1485,20 @@
   </property>
 
   <property>
-    <name>messaging.local.data.cleanup.frequency.secs</name>
-    <value>3600</value>
+    <name>messaging.coprocessor.dir</name>
+    <value>tms</value>
     <description>
-      Scheduling frequency of time-to-live cleanup thread in seconds (only used in
-      Standalone CDAP)
+      Directory to store messaging service table coprocessors. This path is
+      relative to ${hdfs.namespace}.
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.coprocessor.metadata.cache.expiration.seconds</name>
+    <value>120</value>
+    <description>
+      Number of seconds after which the metadata cache in HBase data table
+      coprocessors will expire
     </description>
   </property>
 
@@ -1452,16 +1515,8 @@
     <value>1000</value>
     <description>
       Number of rows for caching that will be passed to HBase scanners.
-      Higher caching values will enable faster scanning but will use more memory.
-    </description>
-  </property>
-
-  <property>
-    <name>messaging.http.server.executor.threads</name>
-    <value>0</value>
-    <description>
-      Number of executor threads for the HTTP server in the messaging system.
-      If set to 0, no executor threads will be used and requests will be handled directly in the IO thread.
+      Higher caching values will enable faster scanning but will use more
+      memory.
     </description>
   </property>
 
@@ -1474,10 +1529,21 @@
   </property>
 
   <property>
+    <name>messaging.http.server.executor.threads</name>
+    <value>0</value>
+    <description>
+      Number of executor threads for the HTTP server in the messaging
+      system. If set to 0, no executor threads will be used and requests
+      will be handled directly in the IO thread.
+    </description>
+  </property>
+
+  <property>
     <name>messaging.http.server.max.request.size.mb</name>
     <value>10</value>
     <description>
-      Maximum request content size in megabytes for each request to the HTTP server in the messaging system
+      Maximum request content size in megabytes for each request to the HTTP
+      server in the messaging system
     </description>
   </property>
 
@@ -1490,18 +1556,38 @@
   </property>
 
   <property>
+    <name>messaging.local.data.cleanup.frequency.secs</name>
+    <value>3600</value>
+    <description>
+      Scheduling frequency of time-to-live cleanup thread in seconds (only
+      used in Standalone CDAP)
+    </description>
+  </property>
+
+  <property>
     <name>messaging.local.data.dir</name>
     <value>${local.data.dir}/messaging</value>
     <description>
-      Local storage directory for the messaging system (used only in Standalone CDAP)
+      Local storage directory for the messaging system (used only in
+      Standalone CDAP)
     </description>
+  </property>
+
+  <property>
+    <name>messaging.max.instances</name>
+    <value>1</value>
+    <description>
+      Maximum number of instances for the messaging service
+    </description>
+    <final>true</final>
   </property>
 
   <property>
     <name>messaging.message.table.hbase.splits</name>
     <value>16</value>
     <description>
-      Number of splits to use for the message table in HBase upon table creation
+      Number of splits to use for the message table in HBase upon table
+      creation
     </description>
   </property>
 
@@ -1525,7 +1611,8 @@
     <name>messaging.payload.table.hbase.splits</name>
     <value>16</value>
     <description>
-      Number of splits to use for the payload table in HBase upon table creation
+      Number of splits to use for the payload table in HBase upon table
+      creation
     </description>
   </property>
 
@@ -1541,11 +1628,13 @@
     <name>messaging.system.topics</name>
     <value>${audit.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic}</value>
     <description>
-      A comma-separated list of topics that are always available in the system namespace.
-      Multiple topics sharing the same prefix and distinguished by different numerical suffixes
-      can be specified with the syntax &lt;common.prefix&gt;:&lt;total.topic.number&gt;,
-      where the &lt;total.topic.number&gt; is the total number of topics sharing the &lt;common.prefix&gt;,
-      and the numerical suffixes will range from 0 to (&lt;total.topic.number&gt; - 1).
+      A comma-separated list of topics that are always available in the
+      system namespace. Multiple topics sharing the same prefix and
+      distinguished by different numerical suffixes can be specified with
+      the syntax &lt;common.prefix&gt;:&lt;total.topic.number&gt;, where the
+      &lt;total.topic.number&gt; is the total number of topics sharing the
+      &lt;common.prefix&gt;, and the numerical suffixes will range from 0 to
+      (&lt;total.topic.number&gt; - 1).
     </description>
   </property>
 
@@ -1562,22 +1651,6 @@
     <value>604800</value>
     <description>
       The default time-to-live in seconds for messages in a topic
-    </description>
-  </property>
-
-  <property>
-    <name>messaging.coprocessor.metadata.cache.expiration.seconds</name>
-    <value>120</value>
-    <description>
-      Number of seconds after which the metadata cache in HBase data table coprocessors will expire
-    </description>
-  </property>
-
-  <property>
-    <name>messaging.coprocessor.dir</name>
-    <value>tms</value>
-    <description>
-      Directory to store Messaging Service Table coprocessors. This path is relative to ${hdfs.namespace}.
     </description>
   </property>
 
@@ -1656,8 +1729,8 @@
     <name>metrics.data.table.retention.resolution.3600.seconds</name>
     <value>2592000</value>
     <description>
-      Retention resolution in seconds of the 1-hour resolution table; default
-      retention period is 30 days
+      Retention resolution in seconds of the 1-hour resolution table;
+      default retention period is 30 days
     </description>
   </property>
 
@@ -1754,9 +1827,10 @@
     <name>metrics.messaging.fetcher.limit</name>
     <value>200</value>
     <description>
-      Maximum number of metrics messages to be fetched from the messaging fetcher at a
-      time. It is also the maximum number of metric values to be persisted in the metrics
-      store after the number of fetched messages reaches the limit.
+      Maximum number of metrics messages to be fetched from the messaging
+      fetcher at a time. It is also the maximum number of metric values to
+      be persisted in the metrics store after the number of fetched messages
+      reaches the limit.
     </description>
   </property>
 
@@ -1772,11 +1846,11 @@
     <name>metrics.messaging.topic.num</name>
     <value>10</value>
     <description>
-      Number of topics for metrics messages. This property also sets the number of threads
-      used to fetch and process metrics in parallel from the messaging service. For a
-      value of N, topics will be created for metrics with names beginning at
-      ${metrics.topic.prefix}0, ${metrics.topic.prefix}1, up to
-      ${metrics.topic.prefix}(N-1).
+      Number of topics for metrics messages. This property also sets the
+      number of threads used to fetch and process metrics in parallel from
+      the messaging service. For a value of N, topics will be created for
+      metrics with names beginning at ${metrics.topic.prefix}0,
+      ${metrics.topic.prefix}1, up to ${metrics.topic.prefix}(N-1).
     </description>
   </property>
 
@@ -1818,7 +1892,8 @@
     <name>metrics.processor.num.cores</name>
     <value>1</value>
     <description>
-      Number of virtual cores for metrics processor service Apache Twill runnable
+      Number of virtual cores for metrics processor service Apache Twill
+      runnable
     </description>
   </property>
 
@@ -1835,7 +1910,7 @@
     <name>metrics.processor.status.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Metrics Processor HTTP service bind address
+      Metrics processor HTTP service bind address
     </description>
   </property>
 
@@ -1843,7 +1918,7 @@
     <name>metrics.query.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Metrics Query service bind address
+      Metrics query service bind address
     </description>
   </property>
 
@@ -1851,7 +1926,7 @@
     <name>metrics.query.bind.port</name>
     <value>45005</value>
     <description>
-      Metrics Query service bind port
+      Metrics query service bind port
     </description>
   </property>
 
@@ -1890,7 +1965,7 @@
     <name>notification.topic</name>
     <value>notifications</value>
     <description>
-      Topic name used to publish notifications
+      Topic name used to publish notifications in the messaging system
     </description>
   </property>
 
@@ -1901,8 +1976,8 @@
     <name>operational.stats.extensions.dir</name>
     <value>/opt/cdap/master/ext/operations</value>
     <description>
-      Semicolon-separated list of local directories on the CDAP Master
-      that are scanned for operational statistics extensions
+      Semicolon-separated list of local directories on the CDAP Master that
+      are scanned for operational statistics extensions
     </description>
   </property>
 
@@ -1910,7 +1985,8 @@
     <name>operational.stats.refresh.interval.secs</name>
     <value>60</value>
     <description>
-      Number of seconds after which operational statistics should be refreshed
+      Number of seconds after which operational statistics should be
+      refreshed
     </description>
   </property>
 
@@ -1950,7 +2026,8 @@
     <name>remote.system.op.exec.threads</name>
     <value>${http.service.exec.threads}</value>
     <description>
-      Number of Netty service executor threads for the remote system operation HTTP service
+      Number of Netty service executor threads for the remote system
+      operation HTTP service
     </description>
   </property>
 
@@ -1966,7 +2043,8 @@
     <name>remote.system.op.worker.threads</name>
     <value>${http.service.worker.threads}</value>
     <description>
-      Number of Netty service IO worker threads for the remote system operation HTTP service
+      Number of Netty service IO worker threads for the remote system
+      operation HTTP service
     </description>
   </property>
 
@@ -2091,8 +2169,8 @@
     <name>mapreduce.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for MapReduce programs. Allowed options: "none",
-      "fixed.delay", or "exponential.backoff".
+      The type of retry policy for MapReduce programs. Allowed options:
+      "none", "fixed.delay", or "exponential.backoff".
     </description>
   </property>
 
@@ -2239,8 +2317,8 @@
     <name>system.metrics.retry.policy.type</name>
     <value>fixed.delay</value>
     <description>
-      The type of retry policy for metrics publishing. Allowed options: "none",
-      "fixed.delay", or "exponential.backoff".
+      The type of retry policy for metrics publishing. Allowed options:
+      "none", "fixed.delay", or "exponential.backoff".
     </description>
   </property>
 
@@ -2438,11 +2516,12 @@
     <name>router.userservice.fallback.strategy</name>
     <value>random</value>
     <description>
-      If a RouteConfig is not found for a particular user service, this property is used
-      to set the fallback routing strategy. Allowed options: "random", "smallest",
-      "largest", or "drop". A string comparison of the versions of the user service is
-      used for "smallest" or "largest". The "drop" option will not route the request to
-      any service and will return "service not found".
+      If a RouteConfig is not found for a particular user service, this
+      property is used to set the fallback routing strategy. Allowed
+      options: "random", "smallest", "largest", or "drop". A string
+      comparison of the versions of the user service is used for "smallest"
+      or "largest". The "drop" option will not route the request to any
+      service and will return "service not found".
     </description>
   </property>
 
@@ -2474,8 +2553,8 @@
     <name>cdap.ugi.cache.expiration.ms</name>
     <value>3600000</value>
     <description>
-      UserGroupInformation cache entry expiration time in milliseconds. It is only used when impersonation is
-      enabled.
+      UserGroupInformation cache entry expiration time in milliseconds. It
+      is only used when impersonation is enabled.
     </description>
   </property>
 
@@ -2496,11 +2575,11 @@
   </property>
 
   <property>
-    <name>security.auth.server.announce.address</name>
+    <name>security.auth.server.announce.urls</name>
     <value></value>
     <description>
-      CDAP Authentication service announce address, in the format of host:port. This is
-      the address that clients should use to communicate with the Authentication Server.
+      CDAP Authentication service announce URL's separated by comma. Each URL is in the format of protocol://host:port.
+      These are the URL's that clients should use to communicate with the Authentication Server.
       Leave empty to use the default value generated by the Authentication Server.
     </description>
   </property>
@@ -2561,14 +2640,16 @@
     <name>security.authorization.admin.users</name>
     <value></value>
     <description>
-      A comma-separated list of users for whom admin privileges are to be granted on the
-      CDAP instance during CDAP startup, so that these users can create namespaces. These
-      users are also granted admin privileges on the 'default' namespace, so that they can
-      manage privileges on the 'default' namespace. This provides a method to bootstrap CDAP on
-      an authorization-enabled cluster. The default value is empty, in which case no users have
-      access to creating namespaces or to managing privileges on the 'default' namespace.
-      In that scenario, authorization in CDAP has to be bootstrapped externally using interfaces
-      provided by the configured authorization extension.
+      A comma-separated list of users for whom admin privileges are to be
+      granted on the CDAP instance during CDAP startup, so that these users
+      can create namespaces. These users are also granted admin privileges
+      on the 'default' namespace, so that they can manage privileges on the
+      'default' namespace. This provides a method to bootstrap CDAP on an
+      authorization-enabled cluster. The default value is empty, in which
+      case no users have access to creating namespaces or to managing
+      privileges on the 'default' namespace. In that scenario, authorization
+      in CDAP has to be bootstrapped externally using interfaces provided by
+      the configured authorization extension.
     </description>
   </property>
 
@@ -2585,11 +2666,12 @@
     <name>security.authorization.cache.refresh.interval.secs</name>
     <value>50</value>
     <description>
-      The interval in seconds after which a background thread will refresh cached
-      authorization policies. It is recommended to keep this value slightly lower than
-      ${security.authorization.cache.ttl.secs}, so that the cached authorization policies
-      do not expire unless they have been explicitly revoked. This setting only takes
-      effect if ${security.authorization.cache.enabled} is set to true.
+      The interval in seconds after which a background thread will refresh
+      cached authorization policies. It is recommended to keep this value
+      slightly lower than ${security.authorization.cache.ttl.secs}, so that
+      the cached authorization policies do not expire unless they have been
+      explicitly revoked. This setting only takes effect if
+      ${security.authorization.cache.enabled} is set to true.
     </description>
   </property>
 
@@ -2597,9 +2679,9 @@
     <name>security.authorization.cache.ttl.secs</name>
     <value>60</value>
     <description>
-      The time-to-live in seconds for entries in the authorization cache used by programs.
-      This setting only takes effect if ${security.authorization.cache.enabled} is set to
-      true.
+      The time-to-live in seconds for entries in the authorization cache
+      used by programs. This setting only takes effect if
+      ${security.authorization.cache.enabled} is set to true.
     </description>
   </property>
 
@@ -2646,9 +2728,9 @@
     <name>security.keytab.path</name>
     <value></value>
     <description>
-      The location of Kerberos keytabs used for impersonation. The location can contain
-      ${name}, which will be replaced by the short user name of the principal being
-      impersonated.
+      The location of Kerberos keytabs used for impersonation. The location
+      can contain ${name}, which will be replaced by the short user name of
+      the principal being impersonated.
     </description>
   </property>
 
@@ -2723,8 +2805,8 @@
     <name>security.token.digest.key.expiration.ms</name>
     <value>3600000</value>
     <description>
-      Duration in milliseconds after which an active secret key used for signing tokens should
-      be retired
+      Duration in milliseconds after which an active secret key used for
+      signing tokens should be retired
     </description>
   </property>
 
@@ -2742,7 +2824,7 @@
     <value>/${root.namespace}/security/auth</value>
     <description>
       Parent node in ZooKeeper used for secret key distribution in
-      distributed mode
+      Distributed CDAP
     </description>
   </property>
 
@@ -2844,8 +2926,8 @@
     <name>stream.container.memory.mb</name>
     <value>${master.service.memory.mb}</value>
     <description>
-      Memory in megabytes for each YARN container that runs the
-      stream handler
+      Memory in megabytes for each YARN container that runs the stream
+      handler
     </description>
   </property>
 
@@ -2887,8 +2969,7 @@
     <name>stream.index.interval</name>
     <value>10000</value>
     <description>
-      Interval in milliseconds for emitting new index entry in
-      stream file
+      Interval in milliseconds for emitting new index entry in stream file
     </description>
   </property>
 
@@ -2958,8 +3039,9 @@
     <name>dashboard.router.check.timeout.secs</name>
     <value>0</value>
     <description>
-      Interval in seconds that the CDAP UI waits before exiting when unable to connect to
-      the CDAP Router service on startup; use a timeout of 0 to wait indefinitely
+      Interval in seconds that the CDAP UI waits before exiting when unable
+      to connect to the CDAP Router service on startup; use a timeout of 0
+      to wait indefinitely
     </description>
   </property>
 

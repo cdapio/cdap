@@ -18,7 +18,6 @@ package co.cask.cdap.store;
 
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.kerberos.OwnerStore;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -26,6 +25,7 @@ import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.impersonation.OwnerStore;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionManager;

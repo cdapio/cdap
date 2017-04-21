@@ -30,17 +30,24 @@ import java.util.UUID;
  */
 public class SparkBatchSourceContext extends AbstractSparkBatchContext implements BatchSourceContext {
   private final SparkBatchSourceFactory sourceFactory;
+  private final boolean isPreviewEnabled;
 
   public SparkBatchSourceContext(SparkBatchSourceFactory sourceFactory, SparkClientContext sparkContext,
-                                 LookupProvider lookupProvider, StageInfo stageInfo) {
+                                 LookupProvider lookupProvider, StageInfo stageInfo, boolean isPreviewEnabled) {
     super(sparkContext, lookupProvider, stageInfo);
     this.sourceFactory = sourceFactory;
+    this.isPreviewEnabled = isPreviewEnabled;
   }
 
   @Override
   public void setInput(Input input) {
     Input trackableInput = ExternalDatasets.makeTrackable(admin, suffixInput(input));
     sourceFactory.addInput(getStageName(), trackableInput);
+  }
+
+  @Override
+  public boolean isPreviewEnabled() {
+    return isPreviewEnabled;
   }
 
   private Input suffixInput(Input input) {

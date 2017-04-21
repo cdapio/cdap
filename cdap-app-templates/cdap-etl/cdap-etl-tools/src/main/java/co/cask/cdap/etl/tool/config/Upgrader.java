@@ -46,6 +46,8 @@ public class Upgrader {
   public static final Set<String> ARTIFACT_NAMES =
     ImmutableSet.of(BATCH_NAME, REALTIME_NAME, DATA_PIPELINE_NAME, DATA_STREAMS_NAME);
   private static final Gson GSON = new Gson();
+  private static final ArtifactVersion CURRENT_VERSION = new ArtifactVersion(ETLVersion.getVersion());
+  private static final ArtifactVersion LOWEST_VERSION = new ArtifactVersion("3.2.0");
 
   private final UpgradeContext etlBatchContext;
   private final UpgradeContext etlRealtimeContext;
@@ -76,9 +78,7 @@ public class Upgrader {
 
     // check the version is in range [3.2.0 - 4.0.0)
     ArtifactVersion artifactVersion = new ArtifactVersion(artifactSummary.getVersion());
-    Integer majorVersion = artifactVersion.getMajor();
-    Integer minorVersion = artifactVersion.getMinor();
-    return majorVersion != null && majorVersion == 3 && minorVersion != null && minorVersion >= 2;
+    return LOWEST_VERSION.compareTo(artifactVersion) <= 0 && CURRENT_VERSION.compareTo(artifactVersion) > 0;
   }
 
   public boolean upgrade(ArtifactSummary oldArtifact, String oldConfigStr,
@@ -93,7 +93,7 @@ public class Upgrader {
     Integer majorVersion = artifactVersion.getMajor();
     Integer minorVersion = artifactVersion.getMinor();
 
-    if (majorVersion == null || minorVersion == null || majorVersion != 3) {
+    if (majorVersion == null || minorVersion == null || !shouldUpgrade(oldArtifact)) {
       return false;
     }
 
@@ -101,13 +101,15 @@ public class Upgrader {
     AppRequest<? extends ETLConfig> appRequest;
     switch (artifactName) {
       case BATCH_NAME:
-        appRequest = new AppRequest<>(newArtifact, convertBatchConfig(minorVersion, oldConfigStr, etlBatchContext));
+        appRequest = new AppRequest<>(newArtifact, convertBatchConfig(majorVersion, minorVersion,
+                                                                      oldConfigStr, etlBatchContext));
         break;
       case REALTIME_NAME:
-        appRequest = new AppRequest<>(newArtifact, convertRealtimeConfig(minorVersion, oldConfigStr));
+        appRequest = new AppRequest<>(newArtifact, convertRealtimeConfig(majorVersion, minorVersion, oldConfigStr));
         break;
       case DATA_PIPELINE_NAME:
-        appRequest = new AppRequest<>(newArtifact, convertBatchConfig(minorVersion, oldConfigStr, dataPipelineContext));
+        appRequest = new AppRequest<>(newArtifact, convertBatchConfig(majorVersion, minorVersion,
+                                                                      oldConfigStr, dataPipelineContext));
         break;
       case DATA_STREAMS_NAME:
         appRequest = new AppRequest<>(newArtifact, convertStreamsConfig(oldConfigStr));
@@ -145,12 +147,13 @@ public class Upgrader {
     return builder.build();
   }
 
-  private ETLBatchConfig convertBatchConfig(int minorVersion, String configStr, UpgradeContext upgradeContext) {
+  private ETLBatchConfig convertBatchConfig(int majorVersion, int minorVersion, String configStr,
+                                            UpgradeContext upgradeContext) {
     UpgradeableConfig config;
 
-    if (minorVersion == 2) {
+    if (majorVersion == 3 && minorVersion == 2) {
       config = GSON.fromJson(configStr, co.cask.cdap.etl.proto.v0.ETLBatchConfig.class);
-    } else if (minorVersion == 3) {
+    } else if (majorVersion == 3 && minorVersion == 3) {
       config = GSON.fromJson(configStr, co.cask.cdap.etl.proto.v1.ETLBatchConfig.class);
     } else {
       // 3.4.x and up all have the same config format, but the plugin artifacts may need to be upgraded
@@ -176,12 +179,12 @@ public class Upgrader {
     return (ETLBatchConfig) config;
   }
 
-  private ETLRealtimeConfig convertRealtimeConfig(int minorVersion, String configStr) {
+  private ETLRealtimeConfig convertRealtimeConfig(int majorVersion, int minorVersion, String configStr) {
     UpgradeableConfig config;
 
-    if (minorVersion == 2) {
+    if (majorVersion == 3 && minorVersion == 2) {
       config = GSON.fromJson(configStr, co.cask.cdap.etl.proto.v0.ETLRealtimeConfig.class);
-    } else if (minorVersion == 3) {
+    } else if (majorVersion == 3 && minorVersion == 3) {
       config = GSON.fromJson(configStr, co.cask.cdap.etl.proto.v1.ETLRealtimeConfig.class);
     } else {
       // 3.4.x and up all have the same config format, but the plugin artifacts may need to be upgraded

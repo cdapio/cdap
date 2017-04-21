@@ -19,19 +19,19 @@ import co.cask.cdap.app.runtime.LogLevelUpdater;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.Futures;
 import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
 import org.apache.twill.api.RunId;
+import org.apache.twill.api.ServiceController;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.common.Threads;
-import org.apache.twill.yarn.YarnTwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /**
@@ -80,29 +80,35 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
         if (stopRequested) {
           // Service was killed
           stop();
-        } else {
+          return;
+        }
+
+        ServiceController.TerminationStatus terminationStatus = twillController.getTerminationStatus();
+        // The terminationStatus shouldn't be null when the twillController state is terminated
+        // In case it does (e.g. bug or twill changes), rely on the termination future to determine the state
+        if (terminationStatus == null) {
           try {
-            // This never blocks since the twill controller is already terminated. It will throw exception if
-            // the twill program failed.
-            twillController.awaitTerminated();
-            // Service completed by itself. Simply signal the state change of this controller.
-            // TODO (CDAP-6806): this should not be done with reflection but through a proper Twill API
-            // Figure out whether the final Yarn status is in error, if so, set state accordingly
-            if (twillController instanceof YarnTwillController) {
-              FinalApplicationStatus finalStatus = ((YarnTwillController) twillController).getTerminationStatus();
-              if (FinalApplicationStatus.FAILED.equals(finalStatus)) {
-                complete(State.ERROR);
-                return;
-              } else if (FinalApplicationStatus.KILLED.equals(finalStatus)) {
-                complete(State.KILLED);
-                return;
-              }
-            }
-            // normal termination
+            Futures.getUnchecked(twillController.terminate());
             complete();
           } catch (Exception e) {
-            error(e);
+            complete(State.ERROR);
           }
+          return;
+        }
+        // Based on the terminationStatus to set the completion state of the program controller.
+        switch (terminationStatus) {
+          case SUCCEEDED:
+            complete();
+            break;
+          case FAILED:
+            complete(State.ERROR);
+            break;
+          case KILLED:
+            complete(State.KILLED);
+            break;
+          default:
+            // This is just to protect against if more status are added in Twill in future
+            complete();
         }
       }
     }, Threads.SAME_THREAD_EXECUTOR);

@@ -16,6 +16,8 @@
 
 import React, { Component } from 'react';
 import DataPrep from 'components/DataPrep';
+import Helmet from 'react-helmet';
+import T from 'i18n-react';
 
 /**
  *  Routing container for DataPrep for React
@@ -23,14 +25,15 @@ import DataPrep from 'components/DataPrep';
 export default class DataPrepHome extends Component {
   constructor(props) {
     super(props);
-
   }
 
   render() {
     return (
       <div>
+        <Helmet
+          title={T.translate('features.DataPrep.pageTitle')}
+        />
         <DataPrep />
-
       </div>
     );
   }

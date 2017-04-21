@@ -27,7 +27,7 @@ import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.security.TokenSecureStoreUpdater;
+import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -53,9 +53,9 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
 
   @Inject
   DistributedMapReduceProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
-                                    TokenSecureStoreUpdater tokenSecureStoreUpdater,
+                                    TokenSecureStoreRenewer tokenSecureStoreRenewer,
                                     Impersonator impersonator) {
-    super(twillRunner, hConf, cConf, tokenSecureStoreUpdater, impersonator);
+    super(twillRunner, hConf, cConf, tokenSecureStoreRenewer, impersonator);
   }
 
   @Override

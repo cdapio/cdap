@@ -66,6 +66,9 @@ body.theme-cdap {
     .fa-asterisk {
       font-size: 9px;
       color: @brand-danger;
+      top: -2px;
+      position: relative;
+      margin-right: 1px;
     }
 
     fieldset.view-plugin-json {
@@ -337,6 +340,19 @@ body.theme-cdap {
           &.status-green { background-color: @brand-success; }
           &.status-red { background-color: @brand-danger; }
           &.status-grey { background-color: @cdap-gray; }
+
+          &.status-light-grey { background-color: @cdap-light-grey; }
+          &.status-light-green { background-color: @cdap-light-green; }
+          &.status-blue { background-color: @cdap-blue; }
+          &.status-outline-grey { 
+            background-color: @cdap-white; 
+            border: 3px solid @cdap-light-grey;
+
+            &.status-thin {
+              border: 2px solid @cdap-light-grey;
+            }
+          }
+          &.status-light-red { background-color: @cdap-light-red; }
         }
 
         .delete-draft {

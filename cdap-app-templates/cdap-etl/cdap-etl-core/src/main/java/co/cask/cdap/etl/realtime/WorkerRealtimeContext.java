@@ -31,7 +31,7 @@ public class WorkerRealtimeContext extends AbstractTransformContext implements R
   private final WorkerContext context;
 
   public WorkerRealtimeContext(WorkerContext context, Metrics metrics, LookupProvider lookup, StageInfo stageInfo) {
-    super(context, metrics, lookup, stageInfo);
+    super(context, context, metrics, lookup, stageInfo);
     this.context = context;
   }
 

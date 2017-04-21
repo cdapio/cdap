@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 
 # Copyright © 2016-2017 Cask Data, Inc.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
 # the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
-  
+
 # Build script for docs
 #
 # Builds all manuals
@@ -38,7 +38,7 @@ function usage() {
   fi
   echo "Build script for 'cdap' docs"
   echo "Usage: ${SCRIPT} <action>"
-  echo 
+  echo
   echo "  Action (select one)"
   echo
   echo "    docs-all          alias to \"docs-set\""
@@ -46,12 +46,16 @@ function usage() {
   echo "    docs-set          Clean build of HTML, CLI, including Javadocs, zipped"
   echo "    docs-set-local    Clean build of HTML, CLI, including Javadocs, zipped, but using local copies"
   echo "    docs-web-only     Clean build of HTML, CLI, zipped, skipping Javadocs"
-  echo 
+  echo
   echo "    docs              Dirty build of HTML, skipping CLI, Javadocs, or zipping"
   echo "    docs-local        Dirty build of HTML, skipping CLI, Javadocs, or zipping, but using local copies"
-  echo 
+  echo
   echo "    clean             Clean up any previous build's target directories"
   echo "    docs-cli          Build CLI input file for documentation"
+  echo
+  echo "    docs-2-pass       Builds the second pass of the docs and the outer docs"
+  echo "    docs-2-pass-local Builds the second pass of the docs and the outer docs, but using local copies"
+  echo "    docs-outer        Builds the outer docs and copies the inner docs"
   echo "    docs-package      Package (zip up) docs"
   echo "    javadocs          Build Javadocs for documentation"
   echo "    javadocs-all      Build Javadocs for all modules"
@@ -59,7 +63,7 @@ function usage() {
   echo "    version           Print the version information"
   echo
   echo "    check             Runs build without running Sphinx, to check all downloads and includes"
-  echo 
+  echo
   return ${warnings}
 }
 
@@ -72,7 +76,9 @@ function run_command() {
     docs-all )          build_docs_set; warnings=$?;;
     docs-cli )          build_docs_cli;;
     docs-first-pass )   build_docs_first_pass;;
-    docs-second-pass )  build_docs_second_pass;;
+    docs-2-pass )       build_docs_second_pass;;
+    docs-2-pass-local ) build_docs_second_pass_local;;
+    docs-outer )        build_docs_outer;;
     docs-package )      build_docs_package;;
     docs-set )          build_docs_set; warnings=$?;;
     docs-set-local )    build_docs_set_local; warnings=$?;;
@@ -93,7 +99,7 @@ function display_start_title() {
   echo "--------------------------------------------------------"
   echo
 }
-  
+
 function display_end_title() {
   echo "--------------------------------------------------------"
   echo "Completed \"${1}\""
@@ -161,11 +167,11 @@ function _build_docs() {
     fi
   fi
   build_docs_second_pass
-  
+
   if [[ ${type} == "docs_set" ]] || [[ ${type} == "docs_web_only" ]]; then
     build_docs_package
   fi
-  
+
   set_and_display_version
   display_messages
   warnings=$?
@@ -179,7 +185,7 @@ function build_docs_first_pass() {
   display_start_title "${title}"
 
   build_docs_inner_level build-docs
-  
+
   display_end_title ${title}
 }
 
@@ -188,6 +194,24 @@ function build_docs_second_pass() {
   display_start_title "${title}"
 
   build_docs_inner_level build-web
+  build_docs_outer_level ${GOOGLE_TAG_MANAGER_CODE}
+  copy_docs_inner_level
+
+  display_end_title ${title}
+}
+
+function build_docs_second_pass_local() {
+  LOCAL_INCLUDES="${TRUE}"
+  export LOCAL_INCLUDES
+  local title="Building Docs Only, 2nd Pass w/local files"
+  display_start_title "${title}"
+  build_docs_second_pass
+}
+
+function build_docs_outer() {
+  local title="Building Docs Outer"
+  display_start_title "${title}"
+
   build_docs_outer_level ${GOOGLE_TAG_MANAGER_CODE}
   copy_docs_inner_level
 
@@ -203,7 +227,7 @@ function build_javadocs() {
   display_start_title "${title}"
   local warnings
   check_build_rst
-  set_environment    
+  set_environment
   if [[ ${DEBUG} == ${TRUE} ]]; then
     local debug_flag="-X"
   else
@@ -217,14 +241,23 @@ function build_javadocs() {
   local start=`date`
   cd ${PROJECT_PATH}
   MAVEN_OPTS="-Xmx4g -XX:MaxPermSize=256m" # match other CDAP builds
-  mvn clean package ${javadoc_run} -P examples,templates,release -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
-  warnings=$?
-  if [[ ${warnings} -eq 0 ]]; then
+  local temp_repo="${TARGET_PATH}/temp-repo"
+  echo "Building temp_repo ${temp_repo}"
+  mkdir -p ${temp_repo}
+  if [[ -d ${HOME}/.m2/repository ]]; then
+    cp -a ${HOME}/.m2/repository/* ${temp_repo}
+    # Cleanup any CDAP JARs, so we use our own
+    rm -rf ${temp_repo}/co/cask/cdap
+  fi
+  display_start_title "Building and installing CDAP to ${temp_repo}"
+  mvn clean package ${javadoc_run} -P examples,templates,release -Dmaven.repo.local=${temp_repo} -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
+  errors=${?}
+  if [[ ${errors} -eq 0 ]]; then
     echo
     echo "Javadocs Build Start: ${start}"
     echo "                 End: `date`"
   else
-    echo "Error building Javadocs: ${warnings}"
+    echo "Error building Javadocs"
   fi
   display_end_title ${title}
   return ${warnings}
@@ -331,7 +364,7 @@ function build_docs_outer_level() {
     mkdir -p ${TARGET_PATH}/${SOURCE}/${i}
     rewrite ${SCRIPT_PATH}/${COMMON_PLACEHOLDER} ${TARGET_PATH}/${SOURCE}/${i}/index.rst "<placeholder-title>" ${i}
     echo
-  done  
+  done
 
   # Build outer-level docs
   cp ${SCRIPT_PATH}/${COMMON_HIGHLEVEL_PY}  ${TARGET_PATH}/${SOURCE}/conf.py
@@ -348,7 +381,7 @@ function build_docs_outer_level() {
   add_html_redirect
   echo
 }
- 
+
 function copy_docs_inner_level() {
   local title="Copying lower-level documentation"
   display_start_title "${title}"
@@ -396,49 +429,49 @@ function build_docs_package() {
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not create ${PROJECT_VERSION}"
-      return ${errors}   
+      return ${errors}
   fi
   echo "Adding a redirect index.html file"
   cp ${SCRIPT_PATH}/${COMMON_SOURCE}/redirect.html ${PROJECT_VERSION}/index.html
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not add redirect file"
-      return ${errors}   
+      return ${errors}
   fi
   echo "Adding .htaccess file (404 file)"
   rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/htaccess ${TARGET_PATH}/${PROJECT_VERSION}/.htaccess "<version>" "${PROJECT_VERSION}"
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not create a .htaccess file"
-      return ${errors}   
+      return ${errors}
   fi
   echo "Canonical numbered version ${zip_dir_name}"
   python ${docs_change_py} ${TARGET_PATH}/${PROJECT_VERSION}
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not change doc set ${TARGET_PATH}/${PROJECT_VERSION}"
-      return ${errors}   
+      return ${errors}
   fi
   echo "Creating zip ${zip_dir_name}"
   zip -qr ${zip_dir_name}.zip ${PROJECT_VERSION}/* ${PROJECT_VERSION}/.htaccess --exclude *.DS_Store* *.buildinfo*
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not create zipped doc set ${TARGET_PATH}/${PROJECT_VERSION}"
-      return ${errors}   
+      return ${errors}
   fi
   echo "Copying zip ${zip_dir_name}"
   cp ${zip_dir_name}.zip ${TARGET_PATH}/${PROJECT_VERSION}
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not copy zipped doc set into ${TARGET_PATH}/${PROJECT_VERSION}"
-      return ${errors}   
+      return ${errors}
   fi
   echo "Building sitemap.xml"
   python ${sitemap_xml_py} -i ${TARGET_PATH}/${PROJECT_VERSION} -o ${TARGET_PATH}/${PROJECT_VERSION}/sitemap.xml -v ${PROJECT_VERSION}
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not build sitemap for ${TARGET_PATH}/${PROJECT_VERSION}"
-      return ${errors}   
+      return ${errors}
   fi
   display_end_title ${title}
 }
@@ -480,7 +513,7 @@ function set_project_path() {
 
 function setup() {
   # Check that we're starting in the correct directory
-  local quiet={$1}
+  local quiet=${1}
   E_WRONG_DIRECTORY=85
   if [[ -z ${MANUAL} ]] || [[ -z ${CDAP_DOCS} ]]; then
     echo "Manual or CDAP_DOCS set incorrectly: are you in the correct directory?"
@@ -495,7 +528,7 @@ function setup() {
       DEBUG="${FALSE}"
     fi
     return 0
-  else  
+  else
     echo "Did not find MANUAL \"${MANUAL}\": are you in the correct directory?"
     exit ${E_WRONG_DIRECTORY}
   fi
@@ -504,6 +537,6 @@ function setup() {
 
 setup quiet
 if [[ $? -ne 0 ]]; then
-    exit $?   
+    exit $?
 fi
 run_command ${1}

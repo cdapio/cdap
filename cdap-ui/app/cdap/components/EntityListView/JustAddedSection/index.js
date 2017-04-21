@@ -25,17 +25,19 @@ import EntityCard from 'components/EntityCard';
 import T from 'i18n-react';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
-
+import SearchStore from 'components/EntityListView/SearchStore';
+import {JUSTADDED_THRESHOLD_TIME} from 'components/EntityListView/SearchStore/SearchConstants';
+import isNil from 'lodash/isNil';
+import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
 require('./JustAddedSection.scss');
-
-const TIME_THRESHOLD = 300000; // 5 minutes in millisecond
 
 export default class JustAddedSection extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      entities: []
+      entities: [],
+      selectedEntity: {}
     };
 
     this.fetchEntities = this.fetchEntities.bind(this);
@@ -49,25 +51,58 @@ export default class JustAddedSection extends Component {
   }
 
   componentWillMount() {
-    this.fetchEntities();
+    this.searchStoreSubscription = SearchStore.subscribe(() => {
+      let overviewEntity = SearchStore.getState().search.overviewEntity;
+      if (isNil(overviewEntity)) {
+        this.setState({
+          selectedEntity: {}
+        });
+        return;
+      }
+      let matchingEntity = this.state.entities
+        // The unique id check to make sure not to highlight entities in both Just added section and the normal grid view.
+        .find(entity => entity.id === overviewEntity.id && entity.type === overviewEntity.type && entity.uniqueId === overviewEntity.uniqueId);
+      if (matchingEntity) {
+        this.setState({
+          selectedEntity: matchingEntity
+        });
+      } else {
+        this.setState({
+          selectedEntity: {}
+        });
+      }
+    });
   }
 
+  componentDidMount() {
+    SearchStore.dispatch({
+      type: SearchStoreActions.SETPAGESIZE,
+      payload: {
+        element: document.getElementsByClassName('entity-list-view')
+      }
+    });
+    this.fetchEntities();
+  }
   componentWillUnmount() {
     this.eventEmitter.off(globalEvents.APPUPLOAD, this.fetchEntities);
     this.eventEmitter.off(globalEvents.STREAMCREATE, this.fetchEntities);
     this.eventEmitter.off(globalEvents.PUBLISHPIPELINE, this.fetchEntities);
     this.eventEmitter.off(globalEvents.DELETEENTITY, this.fetchEntities);
     this.eventEmitter.off(globalEvents.ARTIFACTUPLOAD, this.fetchEntities);
+    if (this.searchStoreSubscription) {
+      this.searchStoreSubscription();
+    }
     this.namespaceSub();
   }
 
   fetchEntities() {
     this.setState({loading: true});
     let namespace = NamespaceStore.getState().selectedNamespace;
+    let numColumns = SearchStore.getState().search.numColumns;
     const params = {
       namespace,
       target: ['app', 'artifact', 'dataset', 'stream'],
-      limit: this.props.limit,
+      limit: numColumns,
       query: '*',
       sort: 'creation-time desc'
     };
@@ -80,7 +115,7 @@ export default class JustAddedSection extends Component {
             let creationTime = objectQuery(entity, 'metadata', 'metadata', 'SYSTEM', 'properties', 'creation-time');
 
             creationTime = parseInt(creationTime, 10);
-            let thresholdTime = Date.now() - TIME_THRESHOLD;
+            let thresholdTime = Date.now() - JUSTADDED_THRESHOLD_TIME;
             return creationTime >= thresholdTime;
           })
           .map((entity) => {
@@ -99,6 +134,12 @@ export default class JustAddedSection extends Component {
       });
   }
 
+  onClick(entity) {
+    this.setState({
+      selectedEntity: entity
+    });
+    this.props.clickHandler(entity);
+  }
   render() {
     if (this.props.currentPage !== 1 || this.state.entities.length === 0 || this.state.loading) {
       return null;
@@ -109,12 +150,12 @@ export default class JustAddedSection extends Component {
         <EntityCard
           className={
             classnames('entity-card-container',
-              { active: entity.uniqueId === objectQuery(this.props, 'activeEntity', 'uniqueId') }
+              { active: entity.uniqueId === objectQuery(this.state.selectedEntity, 'uniqueId') }
             )
           }
           key={entity.uniqueId}
           id={entity.uniqueId}
-          onClick={this.props.clickHandler.bind(this, entity)}
+          onClick={this.onClick.bind(this, entity)}
           entity={entity}
           onFastActionSuccess={this.props.onFastActionSuccess}
           onUpdate={this.props.onUpdate}

@@ -1,0 +1,65 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+.parse-directive.action-item {
+  .parse-detail.second-level-popover { padding: 0; }
+
+  .parse-options {
+    .option {
+      padding: 10px;
+      cursor: pointer;
+      line-height: 1.5;
+
+      &:hover {
+        background-color: #dddddd;
+      }
+    }
+  }
+}
+
+.dataprep-parse-modal.modal-dialog {
+  margin-top: 100px;
+
+  .close-section { cursor: pointer; }
+
+  .modal-body {
+    h5 {
+      font-weight: 500;
+      font-size: 15px;
+    }
+
+    .list-options,
+    .optional-config {
+      span:first-child {
+        margin-right: 5px;
+      }
+    }
+
+    .list-options > div,
+    .optional-config > span {
+      cursor: pointer;
+      margin-bottom: 5px;
+    }
+
+    .list-options { margin-bottom: 10px; }
+  }
+
+  .modal-footer {
+    .btn {
+      margin-left: 5px;
+    }
+  }
+}

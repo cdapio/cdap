@@ -16,10 +16,17 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.Config;
+import co.cask.cdap.api.annotation.ProcessInput;
+import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
+import co.cask.cdap.api.flow.AbstractFlow;
+import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Preconditions;
@@ -29,33 +36,79 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Application with workflow scheduling.
  */
-public class AppWithSchedule extends AbstractApplication {
+public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConfig> {
+
+  public static final String NAME = "AppWithSchedule";
+  public static final String WORKFLOW_NAME = "SampleWorkflow";
+  public static final String SCHEDULE = "SampleSchedule";
+  public static final String SCHEDULE_2 = "SampleSchedule2";
 
   @Override
   public void configure() {
     try {
-      setName("AppWithSchedule");
+      setName(NAME);
       setDescription("Sample application");
       ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
-      addWorkflow(new SampleWorkflow());
+      AppConfig config = getConfig();
+      // if add workflow is false, we want to add a flow, so the app will have at least one program, for testing deploy
+      if (!config.addWorkflow) {
+        addFlow(new AllProgramsApp.NoOpFlow());
+      }
+
+      if (config.addWorkflow) {
+        addWorkflow(new SampleWorkflow());
+      }
 
       Map<String, String> scheduleProperties = Maps.newHashMap();
       scheduleProperties.put("oneKey", "oneValue");
       scheduleProperties.put("anotherKey", "anotherValue");
       scheduleProperties.put("someKey", "someValue");
 
-      scheduleWorkflow(Schedules.builder("SampleSchedule")
-                         .setDescription("Sample schedule")
-                         .createTimeSchedule("0/15 * * * * ?"),
-                       "SampleWorkflow",
-                       scheduleProperties);
+      if (config.addWorkflow && config.addSchedule1) {
+        scheduleWorkflow(Schedules.builder(SCHEDULE)
+                           .setDescription("Sample schedule")
+                           .createTimeSchedule("0/15 * * * * ?"),
+                         WORKFLOW_NAME,
+                         scheduleProperties);
+      }
+      if (config.addWorkflow && config.addSchedule2) {
+        scheduleWorkflow(Schedules.builder(SCHEDULE_2)
+                           .setDescription("Sample schedule")
+                           .createTimeSchedule("0/30 * * * * ?"),
+                         WORKFLOW_NAME,
+                         scheduleProperties);
+      }
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
+    }
+  }
+
+
+
+  /**
+   * Application Config Class to control schedule creation
+   */
+  public static class AppConfig extends Config {
+    private final boolean addWorkflow;
+    private final boolean addSchedule1;
+    private final boolean addSchedule2;
+
+    public AppConfig() {
+      this.addSchedule1 = true;
+      this.addSchedule2 = false;
+      this.addWorkflow = true;
+    }
+
+    public AppConfig(boolean addWorkflow, boolean addSchedule1, boolean addSchedule2) {
+      this.addWorkflow = addWorkflow;
+      this.addSchedule1 = addSchedule1;
+      this.addSchedule2 = addSchedule2;
     }
   }
 

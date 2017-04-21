@@ -87,14 +87,18 @@ or deleting of files: it treats the contents of the base path as read-only::
 
 If you want to use an existing location and still be able to write to it, you have two options:
 
+.. _datasets-fileset-reuse:
+
 - ``setUseExisting(true)``: This directs the FileSet to accept an existing location as its base
-  path. However, because the existing location may contain files prior to the FileSet creation,
-  the location will not be deleted when the dataset is dropped, and truncating the FileSet will
-  have no effect. This is to ensure that no pre-existing data is deleted.
+  path and an existing table in Hive for exploring. However, because the existing location may
+  contain files prior to the FileSet creation, the location and the Hive table will not be
+  deleted when the dataset is dropped, and truncating the FileSet will have no effect. 
+  This is to ensure that no pre-existing data is deleted.
 
 - ``setPossessExisting(true)``: Similarly, this allows reuse of an existing location.
-  The FileSet will assume ownership of existing files in that location, which means that these
-  files will be deleted when the dataset is dropped or truncated.
+  The FileSet will assume ownership of existing files in that location and of the Hive table,
+  which means that those files and the Hive table will be deleted when the dataset is dropped
+  or truncated.
 
 Using a FileSet in MapReduce
 ============================

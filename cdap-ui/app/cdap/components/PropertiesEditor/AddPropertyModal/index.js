@@ -119,6 +119,7 @@ export default class AddPropertyModal extends Component {
       <Modal
         isOpen={this.state.isOpen}
         toggle={this.toggleModal}
+        backdrop='static'
         size="lg"
         className="add-property-modal"
       >

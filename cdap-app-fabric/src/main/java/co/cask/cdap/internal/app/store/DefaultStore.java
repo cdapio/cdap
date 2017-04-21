@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;
@@ -42,6 +43,8 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -67,6 +70,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
@@ -75,6 +81,9 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
+import org.apache.tephra.TransactionConflictException;
+import org.apache.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionNotInProgressException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
@@ -89,25 +98,34 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
 /**
  * Implementation of the Store that ultimately places data into MetaDataTable.
  */
 public class DefaultStore implements Store {
-
   private static final Logger LOG = LoggerFactory.getLogger(DefaultStore.class);
   private static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
+  private static final byte[] APP_VERSION_UPGRADE_KEY = Bytes.toBytes("version.default.store");
+  private static final String NAME = DefaultStore.class.getSimpleName();
+
   // mds is specific for metadata, we do not want to add workflow stats related information to the mds,
   // as it is not specifically metadata
   private static final DatasetId WORKFLOW_STATS_INSTANCE_ID = NamespaceId.SYSTEM.dataset("workflow.stats");
   private static final Gson GSON = new Gson();
   private static final Map<String, String> EMPTY_STRING_MAP = ImmutableMap.of();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final AtomicBoolean appMetaStoreInitialized = new AtomicBoolean(false);
+  private static final AtomicBoolean upgradeComplete = new AtomicBoolean(false);
+  private static final AtomicBoolean cacheLoaderInitialized = new AtomicBoolean(false);
 
   private final CConfiguration configuration;
   private final DatasetFramework dsFramework;
   private final Transactional transactional;
+
+  private static LoadingCache<byte[], Boolean> upgradeCacheLoader;
 
   @Inject
   public DefaultStore(CConfiguration conf, DatasetFramework framework, TransactionSystemClient txClient) {
@@ -119,6 +137,18 @@ public class DefaultStore implements Store {
         NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
+
+    if (cacheLoaderInitialized.compareAndSet(false, true)) {
+      upgradeCacheLoader = CacheBuilder.newBuilder()
+        .expireAfterWrite(1, TimeUnit.MINUTES)
+        .build(new DefaultStoreUpgradeCacheLoader(transactional, dsFramework, configuration));
+    }
+  }
+
+  // Returns true if the upgrade flag is set. Upgrade could have completed earlier than this since this flag is
+  // updated asynchronously.
+  public boolean isUpgradeComplete() {
+    return upgradeCacheLoader.getUnchecked(APP_VERSION_UPGRADE_KEY);
   }
 
   /**
@@ -135,7 +165,8 @@ public class DefaultStore implements Store {
                                                                                      DatasetManagementException {
     Table table = DatasetsUtil.getOrCreateDataset(datasetContext, dsFramework, APP_META_INSTANCE_ID,
                                                   Table.class.getName(), DatasetProperties.EMPTY);
-    return new AppMetadataStore(table, configuration);
+    appMetaStoreInitialized.compareAndSet(false, true);
+    return new AppMetadataStore(table, configuration, upgradeComplete);
   }
 
   private WorkflowDataset getWorkflowDataset(DatasetContext datasetContext) throws IOException,
@@ -630,7 +661,7 @@ public class DefaultStore implements Store {
       public void run(DatasetContext context) throws Exception {
         AppMetadataStore metaStore = getAppMetadataStore(context);
         metaStore.deleteApplication(id.getNamespace(), id.getApplication(), id.getVersion());
-        metaStore.deleteProgramHistory(id.getNamespace(), id.getApplication());
+        metaStore.deleteProgramHistory(id.getNamespace(), id.getApplication(), id.getVersion());
       }
     });
   }
@@ -881,14 +912,74 @@ public class DefaultStore implements Store {
     truncate(dsFramework.getAdmin(WORKFLOW_STATS_INSTANCE_ID, null));
   }
 
-  public void upgradeAppVersion() throws Exception {
-    Transactions.executeUnchecked(transactional, configuration.getInt(Constants.APP_META_UPGRADE_TIMEOUT_SECS),
-                                  new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        getAppMetadataStore(context).upgradeVersionKeys();
+  /**
+   * Method to add version in DefaultStore.
+   *
+   * @throws InterruptedException
+   * @throws IOException
+   * @throws DatasetManagementException
+   */
+  public void upgrade() throws InterruptedException, IOException, DatasetManagementException {
+    // Wait until the startFlag is set, that is until the app meta store is initialized.
+    while (!appMetaStoreInitialized.get()) {
+      try {
+        TimeUnit.SECONDS.sleep(10);
+      } catch (InterruptedException ex) {
+        LOG.debug("Received an interrupt.", ex);
+        Thread.currentThread().interrupt();
       }
-    });
+    }
+
+    // If upgrade is already complete, then simply return.
+    if (isUpgradeComplete()) {
+      LOG.info("{} is already upgraded.", NAME);
+      return;
+    }
+
+    final AtomicInteger maxRows = new AtomicInteger(1000);
+    final AtomicInteger sleepTimeInSecs = new AtomicInteger(60);
+
+    LOG.info("Starting upgrade of {}.", NAME);
+    // Repeated calls to upgradeComplete are necessary since it will trigger the cache to load the value from the table
+    // and that will eventually set the upgradeComplete flag to true, which is used by the methods in AppMetadataStore
+    // to check whether they need to do additional scans to accommodate old data formats.
+    while (!isUpgradeComplete()) {
+      sleepTimeInSecs.set(60);
+      try {
+        Transactions.execute(transactional, new TxCallable<Void>() {
+          @Override
+          public Void call(DatasetContext context) throws Exception {
+            AppMetadataStore store = getAppMetadataStore(context);
+            boolean upgradeComplete = store.upgradeVersionKeys(maxRows.get());
+            if (upgradeComplete) {
+              store.setUpgradeComplete(APP_VERSION_UPGRADE_KEY);
+            }
+            return null;
+          }
+        });
+      } catch (TransactionFailureException e) {
+        if (e instanceof TransactionConflictException) {
+          LOG.debug("Upgrade step faced Transaction Conflict exception. Retrying operation now.", e);
+          sleepTimeInSecs.set(10);
+        } else if (e instanceof TransactionNotInProgressException) {
+          int currMaxRows = maxRows.get();
+          if (currMaxRows > 500) {
+            maxRows.decrementAndGet();
+          } else {
+            LOG.warn("Could not complete upgrade of {}, tried for 500 times", NAME);
+            return;
+          }
+          sleepTimeInSecs.set(10);
+          LOG.debug("Upgrade step faced a Transaction Timeout exception. " +
+                      "Reducing the number of max rows to : {} and retrying the operation now.", maxRows.get(), e);
+        } else {
+          LOG.error("Upgrade step faced exception. Will retry operation after some delay.", e);
+          sleepTimeInSecs.set(60);
+        }
+      }
+      TimeUnit.SECONDS.sleep(sleepTimeInSecs.get());
+    }
+    LOG.info("Upgrade of {} is complete.", NAME);
   }
 
   private void truncate(DatasetAdmin admin) throws Exception {
@@ -980,10 +1071,14 @@ public class DefaultStore implements Store {
   }
 
   private ApplicationSpecification getAppSpecOrFail(AppMetadataStore mds, ProgramId id) {
-    ApplicationSpecification appSpec = getApplicationSpec(mds, id.getParent());
+    return getAppSpecOrFail(mds, id.getParent());
+  }
+
+  private ApplicationSpecification getAppSpecOrFail(AppMetadataStore mds, ApplicationId id) {
+    ApplicationSpecification appSpec = getApplicationSpec(mds, id);
     if (appSpec == null) {
       throw new NoSuchElementException("no such application @ namespace id: " + id.getNamespaceId() +
-                                           ", app id: " + id.getApplication());
+                                         ", app id: " + id.getApplication());
     }
     return appSpec;
   }
@@ -1071,5 +1166,53 @@ public class DefaultStore implements Store {
         return getAppMetadataStore(context).getRunningInRange(startTimeInSecs, endTimeInSecs);
       }
     });
+  }
+
+  private static final class DefaultStoreUpgradeCacheLoader extends CacheLoader<byte[], Boolean> {
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultStoreUpgradeCacheLoader.class);
+    private static final Logger LIMITED_LOGGER = Loggers.sampling(LOG, LogSamplers.onceEvery(100));
+
+    private final Transactional transactional;
+    private final DatasetFramework dsFramework;
+    private final CConfiguration cConf;
+
+    DefaultStoreUpgradeCacheLoader(Transactional transactional, DatasetFramework dsFramework, CConfiguration cConf) {
+      this.transactional = transactional;
+      this.dsFramework = dsFramework;
+      this.cConf = cConf;
+    }
+
+    @Override
+    public Boolean load(byte[] key) throws Exception {
+      if (upgradeComplete.get()) {
+        // Result flag is already set, so no need to check the table.
+        return true;
+      }
+
+      if (!appMetaStoreInitialized.get()) {
+        // Not initialized yet.
+        return false;
+      }
+
+      try {
+        Transactions.execute(transactional, new TxCallable<Void>() {
+          @Override
+          public Void call(DatasetContext context) throws Exception {
+            Table table = DatasetsUtil.getOrCreateDataset(context, dsFramework, APP_META_INSTANCE_ID,
+                                                          Table.class.getName(), DatasetProperties.EMPTY);
+            AppMetadataStore appMetadataStore = new AppMetadataStore(table, cConf, upgradeComplete);
+            boolean isUpgradeComplete = appMetadataStore.isUpgradeComplete(APP_VERSION_UPGRADE_KEY);
+            if (isUpgradeComplete) {
+              upgradeComplete.set(true);
+            }
+            return null;
+          }
+        });
+      } catch (Exception ex) {
+        LIMITED_LOGGER.debug("Upgrade Check got an exception while trying to read the " +
+                               "upgrade version of {} table.", NAME, ex);
+      }
+      return upgradeComplete.get();
+    }
   }
 }

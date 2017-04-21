@@ -14,75 +14,150 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
 import { Dropdown, DropdownToggle, DropdownItem } from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
 import T from 'i18n-react';
 import debounce from 'lodash/debounce';
 import ResourceCenterButton from 'components/ResourceCenterButton';
+import {isDescendant} from 'services/helpers';
+import Rx from 'rx';
+import SearchStore from 'components/EntityListView/SearchStore';
+import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
+import {DEFAULT_SEARCH_SORT_OPTIONS, DEFAULT_SEARCH_QUERY} from 'components/EntityListView/SearchStore/SearchConstants';
+import {search, updateQueryString} from 'components/EntityListView/SearchStore/ActionCreator';
 
 require('./EntityListHeader.scss');
 
 export default class EntityListHeader extends Component {
   constructor(props) {
     super(props);
+    let searchState = SearchStore.getState().search;
     this.state = {
       isFilterExpanded: false,
       isSortExpanded: false,
-      searchText: props.searchText,
-      sortOptions: props.sortOptions,
-      filterOptions: props.filterOptions,
-      activeFilter: props.activeFilter,
-      activeSort: props.activeSort
+      searchText: searchState.query === '*' ? '' : searchState.query,
+      sortOptions: searchState.sort,
+      filterOptions: searchState.filters,
+      activeFilters: searchState.activeFilters,
+      activeSort: searchState.activeSort
     };
     this.debouncedHandleSearch = debounce(this.handleSearch.bind(this), 500);
   }
 
-  componentWillReceiveProps(nextProps) {
-    this.setState({
-      searchText: nextProps.searchText,
-      sortOptions: nextProps.sortOptions,
-      filterOptions: nextProps.filterOptions,
-      activeFilter: nextProps.activeFilter,
-      activeSort: nextProps.activeSort
+  componentWillMount() {
+    this.searchStoreSubscription = SearchStore.subscribe(() => {
+      let {
+        query,
+        activeFilters,
+        activeSort
+      } = SearchStore.getState().search;
+      this.setState({
+        searchText: query === '*' ? '' : query,
+        activeFilters,
+        activeSort
+      });
     });
+  }
+  componentWillUnmount() {
+    if (this.documentClick$ && this.documentClick$.dispose) {
+      this.documentClick$.dispose();
+    }
+    if (this.searchStoreSubscription) {
+      this.searchStoreSubscription();
+    }
   }
 
   handleFilterToggle() {
-    this.setState({isFilterExpanded: !this.state.isFilterExpanded});
+    let newState = !this.state.isFilterExpanded;
+
+    this.setState({isFilterExpanded: newState});
+
+    if (newState) {
+      let element = document.getElementById('app-container');
+
+      this.documentClick$ = Rx.Observable.fromEvent(element, 'click')
+        .subscribe((e) => {
+          if (isDescendant(this.dropdownButtonRef, e.target) || !this.state.isFilterExpanded) {
+            return;
+          }
+
+          this.handleFilterToggle();
+        });
+    } else {
+      this.documentClick$.dispose();
+    }
   }
 
   handleSortToggle() {
-    if (this.props.isSortDisabled) {
-      return;
-    }
     this.setState({isSortExpanded: !this.state.isSortExpanded});
   }
 
   onSearchChange(e) {
     this.setState({
       searchText: e.target.value
-    });
-    this.debouncedHandleSearch();
+    }, this.debouncedHandleSearch.bind(this));
   }
 
   handleSearch() {
-    this.props.onSearch(this.state.searchText);
+    SearchStore.dispatch({
+      type: SearchStoreActions.SETQUERY,
+      payload: {
+        query: this.state.searchText
+      }
+    });
+    if (!this.state.searchText.length) {
+      SearchStore.dispatch({
+        type: SearchStoreActions.SETACTIVESORT,
+        payload: {
+          activeSort: DEFAULT_SEARCH_SORT_OPTIONS[4]
+        }
+      });
+    }
+    search();
+    updateQueryString();
   }
 
-  toggleSortDropdownTooltip() {
-    if (this.props.isSortDisabled) {
-      this.setState({sortDropdownTooltip: !this.state.sortDropdownTooltip});
+  onFilterClick(option, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation();
+    let activeFilters = SearchStore.getState().search.activeFilters;
+    if (activeFilters.indexOf(option.id) !== -1) {
+      activeFilters = activeFilters.filter(entityFilter => entityFilter !== option.id);
+    } else {
+      activeFilters.push(option.id);
     }
-  }
-  onFilterClick(option) {
-    if (this.props.onFilterClick) {
-      this.props.onFilterClick(option);
-    }
+    SearchStore.dispatch({
+      type: SearchStoreActions.SETACTIVEFILTERS,
+      payload: {
+        activeFilters
+      }
+    });
     this.setState({
-      isFilterExpanded: false
+      activeFilters
+    }, () => {
+      search();
+      updateQueryString();
     });
   }
+
+  onSortClick(option) {
+    SearchStore.dispatch({
+      type: SearchStoreActions.SETACTIVESORT,
+      payload: {
+        activeSort: option,
+        query: DEFAULT_SEARCH_QUERY
+      }
+    });
+    this.setState({
+      activeSort: option
+    }, () => {
+      search();
+      updateQueryString();
+    });
+  }
+
   render() {
     let tooltipId = 'filter-tooltip-target-id';
     const placeholder = T.translate('features.EntityListView.Header.search-placeholder');
@@ -107,7 +182,7 @@ export default class EntityListHeader extends Component {
                   tag="li"
                   key={index}
                   className="clearfix"
-                  onClick={this.props.onSortClick.bind(this, option)}
+                  onClick={this.onSortClick.bind(this, option)}
                 >
                   <span className="float-xs-left">{option.displayName}</span>
                   {
@@ -127,7 +202,8 @@ export default class EntityListHeader extends Component {
     const filterDropdown = (
       <Dropdown
         isOpen={this.state.isFilterExpanded}
-        toggle={this.handleFilterToggle.bind(this)}
+        toggle={() => {}}
+        onClick={this.handleFilterToggle.bind(this)}
       >
         <DropdownToggle
           tag='div'
@@ -153,7 +229,7 @@ export default class EntityListHeader extends Component {
                       <input
                         type="checkbox"
                         className="form-check-input"
-                        checked={this.state.activeFilter.indexOf(option.id) !== -1}
+                        checked={this.state.activeFilters.indexOf(option.id) !== -1}
                         onChange={this.onFilterClick.bind(this, option)}
                       />
                       {option.displayName}
@@ -182,7 +258,7 @@ export default class EntityListHeader extends Component {
               onChange={this.onSearchChange.bind(this)}
             />
           </div>
-          <div className="filter">
+          <div className="filter" ref={(ref) => this.dropdownButtonRef = ref}>
             {filterDropdown}
           </div>
           <div className="sort">
@@ -197,32 +273,3 @@ export default class EntityListHeader extends Component {
     );
   }
 }
-
-EntityListHeader.propTypes = {
-  filterOptions: PropTypes.arrayOf(
-    PropTypes.shape({
-      displayName : PropTypes.string,
-      id: PropTypes.string
-    })
-  ),
-  onFilterClick: PropTypes.func,
-  activeFilter: PropTypes.arrayOf(PropTypes.string),
-  sortOptions: PropTypes.arrayOf(
-    PropTypes.shape({
-      displayName : PropTypes.string,
-      sort: PropTypes.string,
-      order: PropTypes.string,
-      fullSort: PropTypes.string
-    })
-  ),
-  activeSort: PropTypes.shape({
-    displayName : PropTypes.string,
-    sort: PropTypes.string,
-    order: PropTypes.string,
-    fullSort: PropTypes.string
-  }),
-  isSortDisabled: PropTypes.bool,
-  onSortClick: PropTypes.func,
-  onSearch: PropTypes.func,
-  searchText: PropTypes.string
-};

@@ -72,11 +72,15 @@ body.state-logviewerhome {
 
   my-log-viewer .log-viewer-container {
     .logs-table {
-      height: calc(~"100vh - 277px");
+      height: ~"calc(100vh - 277px)";
+      height: ~"-moz-calc(100vh - 277px)";
+      height: ~"-webkit-calc(100vh - 277px)";
     }
 
     &.full-screen .logs-table {
-      height: calc(~"100vh - 166px");
+      height: ~"calc(100vh - 166px)";
+      height: ~"-moz-calc(100vh - 166px)";
+      height: ~"-webkit-calc(100vh - 166px)";
     }
   }
 }

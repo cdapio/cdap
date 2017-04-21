@@ -55,6 +55,11 @@ public abstract class InterceptableClassLoader extends URLClassLoader implements
     try (InputStream is = resource.openStream()) {
       byte[] bytecode = rewriteClass(name, is);
 
+      // If no rewriting is needed, just load the name normally.
+      if (bytecode == null) {
+        return super.findClass(name);
+      }
+
       // Define the package based on the class package name
       String packageName = getPackageName(name);
       if (packageName != null && getPackage(packageName) == null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -208,7 +208,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       ArtifactDescriptor descriptor = detail.getDescriptor();
       // info hides some fields that are available in detail, such as the location of the artifact
       ArtifactInfo info = new ArtifactInfo(descriptor.getArtifactId(),
-                                           detail.getMeta().getClasses(), detail.getMeta().getProperties());
+                                           detail.getMeta().getClasses(), detail.getMeta().getProperties(),
+                                           detail.getMeta().getUsableBy());
       responder.sendJson(HttpResponseStatus.OK, info, ArtifactInfo.class, GSON);
     } catch (IOException e) {
       LOG.error("Exception reading artifacts named {} for namespace {} from the store.", artifactName, namespaceId, e);
@@ -466,9 +467,11 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       Object response = pluginEndpoint.invoke(GSON.fromJson(requestBody, pluginEndpoint.getMethodParameterType()));
       responder.sendString(HttpResponseStatus.OK, GSON.toJson(response));
     } catch (JsonSyntaxException e) {
+      LOG.error("Exception while invoking plugin method.", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            "Unable to deserialize request body to method parameter type");
     } catch (InvocationTargetException e) {
+      LOG.error("Exception while invoking plugin method.", e);
       if (e.getCause() instanceof javax.ws.rs.NotFoundException) {
         throw new NotFoundException(e.getCause());
       } else if (e.getCause() instanceof javax.ws.rs.BadRequestException) {
@@ -476,7 +479,12 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       } else if (e.getCause() instanceof IllegalArgumentException && e.getCause() != null) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getCause().getMessage());
       } else {
-        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while invoking plugin method");
+        Throwable rootCause = Throwables.getRootCause(e);
+        String message = String.format("Error while invoking plugin method %s.", methodName);
+        if (rootCause != null && rootCause.getMessage() != null) {
+          message = String.format("%s %s", message, rootCause.getMessage());
+        }
+        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, message);
       }
     }
   }

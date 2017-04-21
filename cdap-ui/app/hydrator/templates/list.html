@@ -22,28 +22,14 @@
       <span>Total</span>
     </li>
     <li>
-      <i class="fa fa-circle text-success"></i>
+      <i class="fa text-light-running"></i>
       <span>
         {{ ListController.statusCount.running }}
       </span>
       <span>Running</span>
     </li>
     <li>
-      <i class="fa fa-circle text-success"></i>
-      <span>
-        {{ ListController.statusCount.scheduled }}
-      </span>
-      <span>Scheduled</span>
-    </li>
-    <li>
-      <i class="fa fa-circle text-danger"></i>
-      <span>
-        {{ ListController.statusCount.suspended }}
-      </span>
-      <span>Suspended</span>
-    </li>
-    <li>
-      <i class="fa fa-circle text-muted"></i>
+      <i class="fa text-outline-grey"></i>
       <span>
         {{ ListController.statusCount.draft }}
       </span>
@@ -61,11 +47,12 @@
           <tr ng-class="{'sort-enabled': ListController.pipelineList.length>0}">
             <th data-predicate="name">Pipeline Name</th>
             <th data-predicate="artifact.name">Type</th>
-            <th data-predicate="_status">Status</th>
+            <th data-predicate="displayStatus">Status</th>
             <th data-predicate="_stats.numRuns">Total Runs</th>
             <th data-predicate="_stats.lastStartTime"
                   data-predicate-default>Last Start Time</th>
-            <th data-predicate="_latest.end">Last Finished Run</th>
+            <th data-predicate="duration">Duration</th>
+            <th data-predicate="_stats.nextRun">Next Run</th>
             <th skip-sort></th>
           </tr>
         </thead>
@@ -85,29 +72,26 @@
             </td>
             <td>
               <span class="status-bubble"
-                ng-class="{'status-green': pipeline._status === 'Running' ||
-                pipeline._status === 'Scheduled',
-                'status-red': pipeline._status !== 'Running' && pipeline._status !== 'Scheduled',
-                'status-grey': pipeline._status === 'Draft' }"></span>
-              <span>{{ pipeline._status }}</span>
+                ng-class="ListController.MyPipelineStatusMapper.getStatusIndicatorClass(pipeline.displayStatus)"></span>
+              <span>{{ pipeline.displayStatus }}</span>
             </td>
             <td>
               <span ng-if="pipeline._stats.numRuns !== 'N/A'">{{ pipeline._stats.numRuns }}</span>
               <span ng-if="pipeline._stats.numRuns === 'N/A'"> &mdash; </span>
             </td>
             <td>
-              <span ng-if="pipeline._stats.lastStartTime === 'N/A'"> &mdash; </span>
+              <span ng-if="pipeline._stats.lastStartTime === 'N/A' || !pipeline._stats.lastStartTime"> &mdash; </span>
               <span ng-if="pipeline._stats.lastStartTime !== 'N/A'">{{ pipeline._stats.lastStartTime * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A' }}</span>
             </td>
+
             <td>
-              <span ng-if="pipeline._latest">
-                <strong ng-class="{ 'text-success': pipeline._latest.status === 'COMPLETED',
-                  'text-danger': pipeline._latest.status === 'KILLED' || pipeline._latest.status === 'FAILED' }">{{ pipeline._latest.status | uppercase }}</strong>
-                  {{ pipeline._latest.end * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A'}}
-              </span>
-              <span ng-if="!pipeline._latest">
-                &mdash;
-              </span>
+              <span class="metric-value" ng-if="!pipeline.duration"> &mdash; </span>
+              <span class="metric-value" ng-if="pipeline.duration" ng-bind="pipeline.duration"></span>
+            </td>
+
+            <td>
+              <span ng-if="!pipeline._stats.nextRun"> &mdash; </span>
+              <span ng-if="pipeline._stats.nextRun !== 'N/A'">{{ pipeline._stats.nextRun | amDateFormat: 'MM/DD/YY h:mm:ss A' }}</span>
             </td>
 
             <td>

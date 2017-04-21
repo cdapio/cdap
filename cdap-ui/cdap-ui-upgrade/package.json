@@ -1,0 +1,17 @@
+{
+  "name": "cdap-ui-upgrade",
+  "version": "1.0.0",
+  "description": "UI Pack Installer.",
+  "main": "index.js",
+  "scripts": {
+    "upgrade": "node index.js"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "archiver": "1.3.0",
+    "chalk": "1.1.3",
+    "listr": "0.11.0",
+    "yauzl": "2.7.0"
+  }
+}

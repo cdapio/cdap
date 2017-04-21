@@ -1,27 +1,29 @@
-@echo OFF
+:: ##############################################################################
+:: ##
+:: ## Copyright (c) 2016-2017 Cask Data, Inc.
+:: ##
+:: ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
+:: ## use this file except in compliance with the License. You may obtain a copy
+:: ## of the License at
+:: ##
+:: ## http://www.apache.org/licenses/LICENSE-2.0
+:: ##
+:: ## Unless required by applicable law or agreed to in writing, software
+:: ## distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+:: ## WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+:: ## License for the specific language governing permissions and limitations
+:: ## under the License.
+:: ##
+:: ##############################################################################
 
-REM ############################################################################
-REM ## Copyright (C) 2016 Cask Data, Inc.
-REM ##
-REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may
-REM ## not use this file except in compliance with the License. You may obtain a
-REM ## copy of the License at
-REM ##
-REM ## http://www.apache.org/licenses/LICENSE-2.0
-REM ##
-REM ## Unless required by applicable law or agreed to in writing, software
-REM ## distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-REM ## WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-REM ## License for the specific language governing permissions and limitations
-REM ## under the License.
-REM ##
-REM ############################################################################
+@echo OFF
 
 REM Set the base directory
 for %%i in ("%~dp0..\") do (SET $APP_HOME=%%~dpi)
 
 REM Set path for curl.exe
-set $PATH=%PATH%;%APP_HOME%\..\..\libexec\bin
+SET "ORIG_PATH=%PATH%"
+SET "PATH=%PATH%;%APP_HOME%\..\..\libexec\bin"
 
 REM Process access token
 set $ACCESS_TOKEN=
@@ -41,10 +43,10 @@ set $ERROR=
 if not DEFINED $ACTION set $ERROR=Action (either 'add' or 'delete') must be set
 if DEFINED $ERROR goto :USAGE
 
-goto :PROGRAM
+GOTO PROGRAM
 
 :USAGE
-SET PROGRAM_NAME=%0 
+SET PROGRAM_NAME=%0
 echo Tool for adding to or deleting users from the '%$TABLE%' table
 echo Usage: !PROGRAM_NAME! add ^| delete ^[host^]
 echo:
@@ -55,7 +57,7 @@ echo     host      Specifies the host that CDAP is running on (default: localhos
 echo:
 if DEFINED $ERROR echo Error: !$ERROR!
 set $ERROR=
-goto :FINALLY
+GOTO FINALLY
 
 :PROGRAM
 if DEFINED $HOST set $GATEWAY=!$HOST!
@@ -76,7 +78,7 @@ FOR /F "tokens=*" %%G IN (!$APP_HOME!resources\users.txt) DO (
     )
     if /I not "!$RESULTS!"=="!$EXPECTED!" echo Failed to !$ACTION!: return code !$RESULTS!
 )
-goto :FINALLY
+GOTO FINALLY
 
 :SET_ADD
 set $CURLX=-X PUT -d"!$BODY!"
@@ -89,3 +91,4 @@ set $EXPECTED=200
 goto :eof
 
 :FINALLY
+SET "PATH=%ORIG_PATH%"

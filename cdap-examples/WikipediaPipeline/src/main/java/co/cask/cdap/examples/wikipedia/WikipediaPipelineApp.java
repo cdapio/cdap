@@ -38,6 +38,7 @@ public class WikipediaPipelineApp extends AbstractApplication<WikipediaPipelineA
   static final String MAPREDUCE_TOPN_OUTPUT = "topn";
   static final String LIKES_TO_DATASET_MR_NAME = "LikesToDataset";
   static final String WIKIPEDIA_TO_DATASET_MR_NAME = "WikiDataToDataset";
+  static final String NAMESPACE_ARG = "namespace";
 
   @Override
   public void configure() {

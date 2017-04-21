@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
@@ -34,7 +35,7 @@ public abstract class AbstractJoinerContext extends AbstractBatchContext impleme
   private Class<?> joinKeyClass;
   private Class<?> joinInputRecordClass;
 
-  protected AbstractJoinerContext(PluginContext pluginContext,
+  protected AbstractJoinerContext(PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer,
                                   DatasetContext datasetContext,
                                   Metrics metrics,
                                   LookupProvider lookup,
@@ -42,7 +43,8 @@ public abstract class AbstractJoinerContext extends AbstractBatchContext impleme
                                   Map<String, String> runtimeArgs,
                                   Admin admin,
                                   StageInfo stageInfo) {
-    super(pluginContext, datasetContext, metrics, lookup, logicalStartTime, runtimeArgs, admin, stageInfo);
+    super(pluginContext, serviceDiscoverer, datasetContext, metrics, lookup, logicalStartTime, runtimeArgs, admin,
+          stageInfo);
   }
 
   @Override

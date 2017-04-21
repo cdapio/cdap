@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -113,8 +113,8 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
   /**
    * Intercepts the HttpMessage for getting the access token in authorization header
    *
-   * @param ctx            channel handler context delegated from MessageReceived callback
-   * @param msg            intercepted HTTP message
+   * @param ctx channel handler context delegated from MessageReceived callback
+   * @param msg intercepted HTTP message
    * @param inboundChannel
    * @return {@code true} if the HTTP message has valid Access token
    * @throws Exception
@@ -222,6 +222,17 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     boolean done = false;
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
+
+    String[] announceURLs = configuration.getTrimmedStrings(Constants.Security.AUTH_SERVER_ANNOUNCE_URLS);
+    // If the announceURLs is set in configuration, add the URL's to the list
+    if (announceURLs.length > 0) {
+      for (String url : announceURLs) {
+        String urlWithToken = String.format("%s/%s", url, GrantAccessToken.Paths.GET_TOKEN);
+        externalAuthenticationURIs.add(new JsonPrimitive(urlWithToken));
+      }
+      return;
+    }
+
     String protocol;
     int port;
     if (configuration.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED)) {
@@ -231,13 +242,15 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       protocol = "http";
       port = configuration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
     }
-
-    String announceAddress = configuration.get(Constants.Security.AUTH_SERVER_ANNOUNCE_ADDRESS);
-    // If the announceAddress is set in configuration, only add it to the list
+    String announceAddress = configuration.get(Constants.Security.AUTH_SERVER_ANNOUNCE_ADDRESS_DEPRECATED);
     if (announceAddress != null) {
-      // announceAddress should follow the format host:port
-      String url = String.format("%s://%s/%s", protocol, announceAddress,
-                                 GrantAccessToken.Paths.GET_TOKEN);
+      String url;
+      if (announceAddress.matches(".+:[0-9]+")) {
+        // announceAddress already contains port
+        url = String.format("%s://%s/%s", protocol, announceAddress, GrantAccessToken.Paths.GET_TOKEN);
+      } else {
+        url = String.format("%s://%s:%d/%s", protocol, announceAddress, port, GrantAccessToken.Paths.GET_TOKEN);
+      }
       externalAuthenticationURIs.add(new JsonPrimitive(url));
       return;
     }

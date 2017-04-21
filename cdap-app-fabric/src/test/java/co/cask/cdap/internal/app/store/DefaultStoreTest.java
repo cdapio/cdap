@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -119,7 +119,7 @@ public class DefaultStoreTest {
     store.clear();
     NamespacedLocationFactory namespacedLocationFactory =
       AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
-    namespacedLocationFactory.get(Id.Namespace.DEFAULT).delete(true);
+    namespacedLocationFactory.get(NamespaceId.DEFAULT).delete(true);
     NamespaceAdmin admin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     admin.create(NamespaceMeta.DEFAULT);
   }
@@ -260,7 +260,7 @@ public class DefaultStoreTest {
     store.setStop(programId, run2.getId(), nowSecs, ProgramController.State.COMPLETED.getRunStatus());
 
     Map<ProgramRunId, RunRecordMeta> historymap = store.getRuns(programId, ProgramRunStatus.ALL,
-                                                            0, Long.MAX_VALUE, Integer.MAX_VALUE);
+                                                                0, Long.MAX_VALUE, Integer.MAX_VALUE);
 
     Assert.assertEquals(2, historymap.size());
   }

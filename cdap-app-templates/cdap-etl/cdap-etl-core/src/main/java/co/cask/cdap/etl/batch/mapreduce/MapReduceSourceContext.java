@@ -36,11 +36,13 @@ import java.util.concurrent.Callable;
  */
 public class MapReduceSourceContext extends MapReduceBatchContext implements BatchSourceContext {
   private final Set<String> inputNames;
+  private final boolean isPreviewEnabled;
 
   public MapReduceSourceContext(MapReduceContext context, Metrics metrics, LookupProvider lookup,
-                                Map<String, String> runtimeArgs, StageInfo stageInfo) {
+                                Map<String, String> runtimeArgs, StageInfo stageInfo, boolean isPreviewEnabled) {
     super(context, metrics, lookup, runtimeArgs, stageInfo);
     this.inputNames = new HashSet<>();
+    this.isPreviewEnabled = isPreviewEnabled;
   }
 
   @Override
@@ -54,6 +56,11 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
       }
     });
     inputNames.add(trackableInput.getAlias());
+  }
+
+  @Override
+  public boolean isPreviewEnabled() {
+    return isPreviewEnabled;
   }
 
   /**

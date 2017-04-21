@@ -263,12 +263,6 @@ export default class MarketPlaceEntity extends Component {
                     </span>
                     <span> {this.props.entity.author} </span>
                   </div>
-                  <div>
-                    <span>
-                      <strong> {T.translate('features.MarketPlaceEntity.Metadata.cdapversion')} </strong>
-                    </span>
-                    <span> {this.props.entity.cdapVersion} </span>
-                  </div>
                 </div>
               </div>
             </div>
