@@ -454,7 +454,7 @@ public class MasterServiceMain extends DaemonMain {
   private void checkExploreRequirements() {
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       // This check will throw an exception if Hive is not present or if it's distribution is unsupported
-      ExploreServiceUtils.checkHiveSupport();
+      ExploreServiceUtils.checkHiveSupport(cConf);
     }
   }
 

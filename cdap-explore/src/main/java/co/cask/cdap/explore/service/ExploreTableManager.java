@@ -34,6 +34,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.DatasetNotFoundException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
@@ -98,11 +99,12 @@ public class ExploreTableManager {
   public ExploreTableManager(ExploreService exploreService,
                              SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
                              ExploreTableNaming tableNaming,
+                             CConfiguration cConf,
                              Configuration hConf) {
     this.exploreService = exploreService;
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
     this.tableNaming = tableNaming;
-    this.shouldEscapeColumns = ExploreServiceUtils.shouldEscapeColumns(hConf);
+    this.shouldEscapeColumns = ExploreServiceUtils.shouldEscapeColumns(cConf, hConf);
   }
 
   /**
