@@ -30,6 +30,8 @@ import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.common.ArtifactSelector;
+import co.cask.cdap.etl.common.ArtifactSelectorProvider;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.etl.common.DefaultStageConfigurer;
@@ -260,7 +262,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    */
   protected PluginSpec configurePlugin(String pluginId, ETLPlugin etlPlugin,
                                        DefaultPipelineConfigurer pipelineConfigurer) {
-    TrackedPluginSelector pluginSelector = new TrackedPluginSelector(etlPlugin.getPluginSelector());
+    TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
+      new ArtifactSelectorProvider(etlPlugin.getType(), etlPlugin.getName())
+        .getPluginSelector(etlPlugin.getArtifactConfig()));
     String type = etlPlugin.getType();
     Object plugin = configurer.usePlugin(etlPlugin.getType(),
                                          etlPlugin.getName(),

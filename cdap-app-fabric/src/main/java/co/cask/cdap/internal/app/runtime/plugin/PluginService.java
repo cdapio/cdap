@@ -31,6 +31,7 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.artifact.ArtifactSortOrder;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.EntityImpersonator;
 import co.cask.cdap.security.impersonation.Impersonator;
@@ -130,7 +131,9 @@ public class PluginService extends AbstractIdleService {
     if (parentArtifactRanges.isEmpty()) {
       throw new ArtifactNotFoundException(artifact.toEntityId());
     }
-    List<ArtifactDetail> artifactDetails = artifactRepository.getArtifacts(parentArtifactRanges.iterator().next());
+    List<ArtifactDetail> artifactDetails = artifactRepository.getArtifactDetails(parentArtifactRanges.iterator().next(),
+                                                                                 Integer.MAX_VALUE,
+                                                                                 ArtifactSortOrder.UNORDERED);
     return artifactDetails.iterator().next().getDescriptor();
   }
 

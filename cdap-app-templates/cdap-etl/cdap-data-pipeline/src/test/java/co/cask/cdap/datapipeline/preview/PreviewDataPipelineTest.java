@@ -73,6 +73,7 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
 
   private static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
+  private static final ArtifactSummary APP_ARTIFACT_RANGE = new ArtifactSummary("app", "[0.1.0,1.1.0)");
   private static int startCount = 0;
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
@@ -129,7 +130,7 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
 
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig, previewConfig);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig, previewConfig);
 
     // Start the preview and get the corresponding PreviewRunner.
     ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT, appRequest);

@@ -33,6 +33,10 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClass;
 import co.cask.cdap.proto.artifact.ArtifactClasses;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.artifact.ArtifactSortOrder;
+import co.cask.cdap.proto.artifact.ArtifactVersionRange;
+import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.DefaultImpersonator;
@@ -40,6 +44,7 @@ import co.cask.cdap.security.impersonation.EntityImpersonator;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -61,11 +66,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.annotation.Nullable;
 
 /**
  */
@@ -93,11 +100,11 @@ public class ArtifactStoreTest {
     // no artifacts in range should return an empty collection
     ArtifactRange range = new ArtifactRange(
       namespace, "something", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
-    Assert.assertTrue(artifactStore.getArtifacts(range).isEmpty());
+    Assert.assertTrue(artifactStore.getArtifacts(range, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED).isEmpty());
 
     // no artifact by namespace and artifact name should throw an exception
     try {
-      artifactStore.getArtifacts(namespace, "something");
+      artifactStore.getArtifacts(namespace, "something", Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
       Assert.fail();
     } catch (ArtifactNotFoundException e) {
       // expected
@@ -132,7 +139,8 @@ public class ArtifactStoreTest {
     }
 
     try {
-      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifact, "sometype", "somename");
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifact, "sometype", "somename", null,
+                                     Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
       Assert.fail();
     } catch (ArtifactNotFoundException e) {
       // expected
@@ -150,7 +158,8 @@ public class ArtifactStoreTest {
 
     // no plugins in namespace of a given type and name should throw an exception about no plugins
     try {
-      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifact, "sometype", "somename");
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifact, "sometype", "somename", null,
+                                     Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
       Assert.fail();
     } catch (PluginNotExistsException e) {
       // expected
@@ -199,7 +208,8 @@ public class ArtifactStoreTest {
 
     // test plugins for specific type and name
     Map<ArtifactDescriptor, PluginClass> pluginClasses =
-      artifactStore.getPluginClasses(NamespaceId.DEFAULT, artifactId, "btype", "plugin3");
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, artifactId, "btype", "plugin3", null, Integer.MAX_VALUE,
+                                     ArtifactSortOrder.UNORDERED);
     Assert.assertEquals(1, pluginClasses.size());
     Assert.assertTrue(pluginClasses.containsKey(artifactDetail.getDescriptor()));
     Assert.assertEquals(plugin3, pluginClasses.get(artifactDetail.getDescriptor()));
@@ -303,9 +313,11 @@ public class ArtifactStoreTest {
 
     // check that plugin1 was deleted and plugin2 remains
     Assert.assertEquals(ImmutableMap.of(detail.getDescriptor(), plugin2),
-      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, plugin2.getType(), plugin2.getName()));
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, plugin2.getType(), plugin2.getName(),
+                                     null, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED));
     try {
-      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, plugin1.getType(), plugin1.getName());
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, plugin1.getType(), plugin1.getName(),
+                                     null, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
       Assert.fail();
     } catch (PluginNotExistsException e) {
       // expected
@@ -411,56 +423,115 @@ public class ArtifactStoreTest {
     // add 2 versions of an artifact2
     Id.Artifact artifact2V1 = Id.Artifact.from(Id.Namespace.DEFAULT, "artifact2", "0.1.0");
     Id.Artifact artifact2V2 = Id.Artifact.from(Id.Namespace.DEFAULT, "artifact2", "0.1.1");
+    Id.Artifact artifact2V3 = Id.Artifact.from(Id.Namespace.DEFAULT, "artifact2", "0.1.1-SNAPSHOT");
     String contents2V1 = "second contents v1";
     String contents2V2 = "second contents v2";
+    String contents2V3 = "second contents v3";
     PluginClass plugin2V1 =
       new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of());
     PluginClass plugin2V2 =
       new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+    PluginClass plugin2V3 =
+      new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of());
     ArtifactMeta meta2V1 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin2V1).build());
     ArtifactMeta meta2V2 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin2V2).build());
+    ArtifactMeta meta2V3 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin2V3).build());
     writeArtifact(artifact2V1, meta2V1, contents2V1);
     writeArtifact(artifact2V2, meta2V2, contents2V2);
+    writeArtifact(artifact2V3, meta2V3, contents2V3);
 
     // test we get 1 version of artifact1 and 2 versions of artifact2
     List<ArtifactDetail> artifact1Versions =
-      artifactStore.getArtifacts(artifact1V1.getNamespace().toEntityId(), artifact1V1.getName());
+      artifactStore.getArtifacts(artifact1V1.getNamespace().toEntityId(), artifact1V1.getName(), Integer.MAX_VALUE,
+                                 ArtifactSortOrder.UNORDERED);
     Assert.assertEquals(1, artifact1Versions.size());
     assertEqual(artifact1V1, meta1V1, contents1V1, artifact1Versions.get(0));
 
     List<ArtifactDetail> artifact2Versions =
-      artifactStore.getArtifacts(artifact2V1.getNamespace().toEntityId(), artifact2V1.getName());
+      artifactStore.getArtifacts(artifact2V1.getNamespace().toEntityId(), artifact2V1.getName(), Integer.MAX_VALUE,
+                                 ArtifactSortOrder.UNORDERED);
+    Assert.assertEquals(3, artifact2Versions.size());
+    assertEqual(artifact2V1, meta2V1, contents2V1, artifact2Versions.get(0));
+    assertEqual(artifact2V2, meta2V2, contents2V2, artifact2Versions.get(1));
+    assertEqual(artifact2V3, meta2V3, contents2V3, artifact2Versions.get(2));
+
+    // test get 2 versions of artifact 2
+    artifact2Versions = artifactStore.getArtifacts(artifact2V1.getNamespace().toEntityId(), artifact2V1.getName(),
+                                                   2, ArtifactSortOrder.UNORDERED);
     Assert.assertEquals(2, artifact2Versions.size());
     assertEqual(artifact2V1, meta2V1, contents2V1, artifact2Versions.get(0));
     assertEqual(artifact2V2, meta2V2, contents2V2, artifact2Versions.get(1));
 
-    // test we get all 3 in the getArtifacts() call for the namespace
+    // test get sorted version of artifact 2
+    artifact2Versions = artifactStore.getArtifacts(artifact2V1.getNamespace().toEntityId(), artifact2V1.getName(),
+                                                   3, ArtifactSortOrder.DESC);
+    Assert.assertEquals(3, artifact2Versions.size());
+    assertEqual(artifact2V2, meta2V2, contents2V2, artifact2Versions.get(0));
+    assertEqual(artifact2V3, meta2V3, contents2V3, artifact2Versions.get(1));
+    assertEqual(artifact2V1, meta2V1, contents2V1, artifact2Versions.get(2));
+
+    // test get sorted and limited version of artifact 2
+    artifact2Versions = artifactStore.getArtifacts(artifact2V1.getNamespace().toEntityId(), artifact2V1.getName(),
+                                                   2, ArtifactSortOrder.DESC);
+    Assert.assertEquals(2, artifact2Versions.size());
+    assertEqual(artifact2V2, meta2V2, contents2V2, artifact2Versions.get(0));
+    assertEqual(artifact2V3, meta2V3, contents2V3, artifact2Versions.get(1));
+
+    artifact2Versions = artifactStore.getArtifacts(artifact2V1.getNamespace().toEntityId(), artifact2V1.getName(),
+                                                   3, ArtifactSortOrder.ASC);
+    Assert.assertEquals(3, artifact2Versions.size());
+    assertEqual(artifact2V1, meta2V1, contents2V1, artifact2Versions.get(0));
+    assertEqual(artifact2V3, meta2V3, contents2V3, artifact2Versions.get(1));
+    assertEqual(artifact2V2, meta2V2, contents2V2, artifact2Versions.get(2));
+
+    // test we get all 3 in the getArtifactSummaries() call for the namespace
     List<ArtifactDetail> artifactVersions = artifactStore.getArtifacts(NamespaceId.DEFAULT);
-    Assert.assertEquals(3, artifactVersions.size());
+    Assert.assertEquals(4, artifactVersions.size());
     assertEqual(artifact1V1, meta1V1, contents1V1, artifactVersions.get(0));
     assertEqual(artifact2V1, meta2V1, contents2V1, artifactVersions.get(1));
     assertEqual(artifact2V2, meta2V2, contents2V2, artifactVersions.get(2));
+    assertEqual(artifact2V3, meta2V3, contents2V3, artifactVersions.get(3));
 
     // test get using a range
     // this range should get everything
     ArtifactRange range = new ArtifactRange(
       NamespaceId.DEFAULT, "artifact2", new ArtifactVersion("0.1.0"), new ArtifactVersion("0.1.2"));
-    artifactVersions = artifactStore.getArtifacts(range);
-    Assert.assertEquals(2, artifactVersions.size());
+    artifactVersions = artifactStore.getArtifacts(range, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
+    Assert.assertEquals(3, artifactVersions.size());
     assertEqual(artifact2V1, meta2V1, contents2V1, artifactVersions.get(0));
     assertEqual(artifact2V2, meta2V2, contents2V2, artifactVersions.get(1));
+    assertEqual(artifact2V3, meta2V3, contents2V3, artifactVersions.get(2));
+    // test get one version
+    artifactVersions = artifactStore.getArtifacts(range, 1, ArtifactSortOrder.UNORDERED);
+    Assert.assertEquals(1, artifactVersions.size());
+    assertEqual(artifact2V1, meta2V1, contents2V1, artifactVersions.get(0));
+    // test get sorted versions
+    artifactVersions = artifactStore.getArtifacts(range, 3, ArtifactSortOrder.DESC);
+    Assert.assertEquals(3, artifact2Versions.size());
+    assertEqual(artifact2V2, meta2V2, contents2V2, artifactVersions.get(0));
+    assertEqual(artifact2V3, meta2V3, contents2V3, artifactVersions.get(1));
+    assertEqual(artifact2V1, meta2V1, contents2V1, artifactVersions.get(2));
+
+    artifactVersions = artifactStore.getArtifacts(range, 3, ArtifactSortOrder.ASC);
+    Assert.assertEquals(3, artifact2Versions.size());
+    assertEqual(artifact2V1, meta2V1, contents2V1, artifactVersions.get(0));
+    assertEqual(artifact2V3, meta2V3, contents2V3, artifactVersions.get(1));
+    assertEqual(artifact2V2, meta2V2, contents2V2, artifactVersions.get(2));
+
+
     // this range should get just v0.1.1
     range = new ArtifactRange(
       NamespaceId.DEFAULT, "artifact2", new ArtifactVersion("0.1.1"), new ArtifactVersion("1.0.0"));
-    artifactVersions = artifactStore.getArtifacts(range);
+    artifactVersions = artifactStore.getArtifacts(range, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
     Assert.assertEquals(1, artifactVersions.size());
     assertEqual(artifact2V2, meta2V2, contents2V2, artifactVersions.get(0));
-    // this range should get just v0.1.0
+    // this range should get just v0.1.0 and v0.1.1-SNAPSHOT
     range = new ArtifactRange(
       NamespaceId.DEFAULT, "artifact2", new ArtifactVersion("0.0.0"), new ArtifactVersion("0.1.1"));
-    artifactVersions = artifactStore.getArtifacts(range);
-    Assert.assertEquals(1, artifactVersions.size());
+    artifactVersions = artifactStore.getArtifacts(range, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
+    Assert.assertEquals(2, artifactVersions.size());
     assertEqual(artifact2V1, meta2V1, contents2V1, artifactVersions.get(0));
+    assertEqual(artifact2V3, meta2V3, contents2V3, artifactVersions.get(1));
   }
 
   @Test
@@ -660,26 +731,56 @@ public class ArtifactStoreTest {
     expectedMap.put(artifactZv100Info, pluginA1);
     expectedMap.put(artifactZv200Info, pluginA1);
     Map<ArtifactDescriptor, PluginClass> actualMap =
-      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A", "p1");
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A", "p1", null, Integer.MAX_VALUE,
+                                     ArtifactSortOrder.UNORDERED);
     Assert.assertEquals(expectedMap, actualMap);
+    // test get limited number
+    actualMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A", "p1", null, 1,
+                                               ArtifactSortOrder.UNORDERED);
+    Assert.assertEquals(ImmutableMap.of(artifactXv100Info, pluginA1), actualMap);
+    // test get DESC order
+    actualMap = new TreeMap<>(artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A", "p1", null,
+                                                             Integer.MAX_VALUE, ArtifactSortOrder.DESC));
+    Assert.assertEquals(expectedMap, new TreeMap<>(actualMap).descendingMap());
+    // test Predicate
+    Predicate<ArtifactId> predicate = new Predicate<ArtifactId>() {
+      @Override
+      public boolean apply(ArtifactId input) {
+        try {
+          return input.getParent().equals(NamespaceId.DEFAULT) && input.getArtifact().equals("artifactX")
+            && ArtifactVersionRange.parse("[1.0.0, 1.1.0)").versionIsInRange(new ArtifactVersion(input.getVersion()));
+        } catch (InvalidArtifactRangeException e) {
+          return false;
+        }
+      }
+    };
+    expectedMap = Maps.newHashMap();
+    expectedMap.put(artifactXv100Info, pluginA1);
+    actualMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A", "p1", predicate
+      , Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
+    Assert.assertEquals(expectedMap, actualMap);
+
     // get all of type A and name p2
     expectedMap = Maps.newHashMap();
     expectedMap.put(artifactXv200Info, pluginA2);
     expectedMap.put(artifactZv200Info, pluginA2);
-    actualMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A", "p2");
+    actualMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A", "p2", null,
+                                               Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
     Assert.assertEquals(expectedMap, actualMap);
     // get all of type B and name p1
     expectedMap = Maps.newHashMap();
     expectedMap.put(artifactYv100Info, pluginB1);
     expectedMap.put(artifactZv100Info, pluginB1);
     expectedMap.put(artifactZv200Info, pluginB1);
-    actualMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "B", "p1");
+    actualMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "B", "p1", null,
+                                               Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
     Assert.assertEquals(expectedMap, actualMap);
     // get all of type B and name p2
     expectedMap = Maps.newHashMap();
     expectedMap.put(artifactYv200Info, pluginB2);
     expectedMap.put(artifactZv200Info, pluginB2);
-    actualMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "B", "p2");
+    actualMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "B", "p2", null,
+                                               Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
     Assert.assertEquals(expectedMap, actualMap);
   }
 
@@ -764,7 +865,17 @@ public class ArtifactStoreTest {
     expectedMap.put(artifactXv110Info, pluginA1);
     expectedMap.put(artifactXv200Info, pluginA1);
     expectedMap.put(artifactZv200Info, pluginA1);
-    Assert.assertEquals(expectedMap, artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifacts1, "A", "p1"));
+    Assert.assertEquals(expectedMap, artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifacts1, "A", "p1",
+                                                                    null, Integer.MAX_VALUE,
+                                                                    ArtifactSortOrder.UNORDERED));
+    // test limited number
+    Assert.assertEquals(ImmutableMap.of(artifactXv100Info, pluginA1),
+                        artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifacts1, "A", "p1",
+                                                       null, 1, ArtifactSortOrder.UNORDERED));
+    // test DESC order
+    Assert.assertEquals(expectedMap, new TreeMap<>(
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifacts1, "A", "p1", null, Integer.MAX_VALUE,
+                                     ArtifactSortOrder.DESC)).descendingMap());
 
     ArtifactRange parentArtifactsSub1 = new ArtifactRange(
       NamespaceId.DEFAULT, "parent1", new ArtifactVersion("1.1.0"), new ArtifactVersion("2.0.0"));
@@ -776,16 +887,20 @@ public class ArtifactStoreTest {
     //artifactZv200Info wont be here, as the parent range 3.0.0-5.0.0 for artifactZv200 plugin
     // wont match the 1.2.1 parent artifact version
     Assert.assertEquals(expectedMap, artifactStore.getPluginClasses(NamespaceId.DEFAULT,
-                                                                    parentArtifactsSub1, "A", "p1"));
+                                                                    parentArtifactsSub1, "A", "p1", null,
+                                                                    Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED));
     expectedMap = Maps.newHashMap();
     expectedMap.put(artifactXv200Info, pluginA2);
     expectedMap.put(artifactZv200Info, pluginA2);
-    Assert.assertEquals(expectedMap, artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifacts1, "A", "p2"));
+    Assert.assertEquals(expectedMap, artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifacts1, "A", "p2",
+                                                                    null, Integer.MAX_VALUE,
+                                                                    ArtifactSortOrder.UNORDERED));
 
     ArtifactRange parentArtifactsSub2 = new ArtifactRange(
       NamespaceId.DEFAULT, "parent1", new ArtifactVersion("5.0.0"), new ArtifactVersion("10.0.0"));
     try {
-      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactsSub2, "A", "p1");
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactsSub2, "A", "p1", null, Integer.MAX_VALUE,
+                                     ArtifactSortOrder.UNORDERED);
       Assert.fail("Get plugin class for invalid range should not retrun result");
     } catch (ArtifactNotFoundException e) {
       //no-op
@@ -953,7 +1068,8 @@ public class ArtifactStoreTest {
       Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.DEFAULT, badId).isEmpty());
       Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.DEFAULT, badId, "atype").isEmpty());
       try {
-        artifactStore.getPluginClasses(NamespaceId.DEFAULT, badId, "atype", "plugin1");
+        artifactStore.getPluginClasses(NamespaceId.DEFAULT, badId, "atype", "plugin1", null, Integer.MAX_VALUE,
+                                       ArtifactSortOrder.UNORDERED);
         Assert.fail();
       } catch (PluginNotExistsException e) {
         // expected
@@ -979,7 +1095,8 @@ public class ArtifactStoreTest {
       Assert.assertEquals(expectedPluginsMapList,
                           artifactStore.getPluginClasses(NamespaceId.DEFAULT, goodId, "atype"));
       Assert.assertEquals(expectedPluginsMap,
-                          artifactStore.getPluginClasses(NamespaceId.DEFAULT, goodId, "atype", "plugin1"));
+                          artifactStore.getPluginClasses(NamespaceId.DEFAULT, goodId, "atype", "plugin1",
+                                                         null, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED));
     }
   }
 

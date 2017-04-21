@@ -14,13 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto;
+package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
+import co.cask.cdap.proto.artifact.ArtifactVersionRange;
 
 import java.util.Map;
 import java.util.NavigableMap;
@@ -35,17 +36,17 @@ import javax.annotation.Nullable;
 public class ArtifactSelector extends PluginSelector {
   private final ArtifactScope scope;
   private final String name;
-  private final ArtifactVersion version;
   private final String errMsg;
+  private final ArtifactVersionRange range;
 
   public ArtifactSelector(String pluginType,
                           String pluginName,
                           @Nullable ArtifactScope scope,
                           @Nullable String name,
-                          @Nullable ArtifactVersion version) {
+                          @Nullable ArtifactVersionRange range) {
     this.scope = scope;
     this.name = name;
-    this.version = version;
+    this.range = range;
     StringBuilder msg = new StringBuilder("Could not find an artifact that matches");
     if (scope != null) {
       msg.append(" scope ");
@@ -55,9 +56,8 @@ public class ArtifactSelector extends PluginSelector {
       msg.append(" name ");
       msg.append(name);
     }
-    if (version != null) {
-      msg.append(" version ");
-      msg.append(version.getVersion());
+    if (range != null) {
+      msg.append(range.getVersionString());
     }
     msg.append(" for plugin of type ");
     msg.append(pluginType);
@@ -80,7 +80,7 @@ public class ArtifactSelector extends PluginSelector {
       ArtifactId artifactId = entry.getKey();
       if ((scope == null || artifactId.getScope().equals(scope)) &&
         (name == null || artifactId.getName().equals(name)) &&
-        (version == null || artifactId.getVersion().equals(version))) {
+        (range == null || range.versionIsInRange(artifactId.getVersion()))) {
         return entry;
       }
     }

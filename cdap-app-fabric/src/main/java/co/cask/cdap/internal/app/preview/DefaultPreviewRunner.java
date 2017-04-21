@@ -42,7 +42,9 @@ import co.cask.cdap.metrics.query.MetricsQueryHelper;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.artifact.ArtifactVersionRange;
 import co.cask.cdap.proto.artifact.preview.PreviewConfig;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -132,17 +134,13 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     ArtifactSummary artifactSummary = request.getArtifact();
     ApplicationId preview = programId.getParent();
     DataTracerFactoryProvider.setDataTracerFactory(preview, dataTracerFactory);
-    NamespaceId artifactNamespace = ArtifactScope.SYSTEM.equals((artifactSummary.getScope())) ? NamespaceId.SYSTEM
-      : preview.getParent();
-
-    ArtifactId artifactId = new ArtifactId(artifactNamespace.getNamespace(), artifactSummary.getName(),
-                                           artifactSummary.getVersion());
 
     String config = request.getConfig() == null ? null : GSON.toJson(request.getConfig());
 
     try {
       applicationLifecycleService.deployApp(preview.getParent(), preview.getApplication(), preview.getVersion(),
-                                            artifactId.toId(), config, NOOP_PROGRAM_TERMINATOR);
+                                            artifactSummary, config, NOOP_PROGRAM_TERMINATOR, null,
+                                            request.canUpdateSchedules());
     } catch (Exception e) {
       this.status = new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED, new BasicThrowable(e), null, null);
       throw e;
