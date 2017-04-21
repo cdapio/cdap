@@ -20,8 +20,11 @@ import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkMain;
+import co.cask.cdap.etl.batch.BatchPhaseSpec;
+import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.spec.PluginSpec;
 import co.cask.cdap.etl.spec.StageSpec;
+import com.google.gson.Gson;
 import org.apache.spark.SparkConf;
 
 import java.util.HashMap;
@@ -34,21 +37,23 @@ import java.util.UUID;
  */
 public class ExternalSparkProgram extends AbstractSpark {
   public static final String STAGE_NAME = "stage.name";
+  private static final Gson GSON = new Gson();
   static final String PROGRAM_ARGS = "program.args";
-  private final String phaseName;
+  private final BatchPhaseSpec phaseSpec;
   private final StageSpec stageSpec;
 
-  public ExternalSparkProgram(String phaseName, StageSpec stageSpec) {
-    this.phaseName = phaseName;
+  public ExternalSparkProgram(BatchPhaseSpec phaseSpec, StageSpec stageSpec) {
+    this.phaseSpec = phaseSpec;
     this.stageSpec = stageSpec;
   }
 
   @Override
   protected void configure() {
-    setName(phaseName);
+    setName(phaseSpec.getPhaseName());
 
     Map<String, String> properties = new HashMap<>();
     properties.put(STAGE_NAME, stageSpec.getName());
+    properties.put(Constants.PIPELINEID, GSON.toJson(phaseSpec, BatchPhaseSpec.class));
     setProperties(properties);
 
     PluginSpec pluginSpec = stageSpec.getPlugin();

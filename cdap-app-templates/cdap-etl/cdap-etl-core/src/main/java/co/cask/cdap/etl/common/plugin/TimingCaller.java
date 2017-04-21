@@ -33,8 +33,8 @@ public class TimingCaller extends Caller {
   private long minTime;
   private long maxTime;
   private long numValues;
-  private long sumOfValues;
-  private long sumOfSquaresOfValues;
+  private double mean;
+  private double m2;
 
   private TimingCaller(Caller delegate, StageMetrics stageMetrics) {
     this.delegate = delegate;
@@ -43,8 +43,8 @@ public class TimingCaller extends Caller {
     this.minTime = Long.MAX_VALUE;
     this.maxTime = Long.MIN_VALUE;
     this.numValues = 0;
-    this.sumOfValues = 0L;
-    this.sumOfSquaresOfValues = 0L;
+    this.mean = 0d;
+    this.m2 = 0d;
   }
 
   @Override
@@ -65,9 +65,6 @@ public class TimingCaller extends Caller {
   private void emitTimeMetrics(long micros) {
     maxTime = maxTime < micros ? micros : maxTime;
     minTime = minTime > micros ? micros : minTime;
-    numValues++;
-    sumOfValues += micros;
-    sumOfSquaresOfValues += micros * micros;
     // this shouldn't normally happen, it means ~35 minutes were spent in a method call
     while (micros > Integer.MAX_VALUE) {
       stageMetrics.count(Constants.Metrics.TOTAL_TIME, Integer.MAX_VALUE);
@@ -77,10 +74,14 @@ public class TimingCaller extends Caller {
     stageMetrics.gauge(Constants.Metrics.MAX_TIME, maxTime);
     stageMetrics.gauge(Constants.Metrics.MIN_TIME, minTime);
 
-    double mean = (double) sumOfValues / numValues;
-    double squareOfMean = mean * mean;
-    double meanOfSquares = (double) sumOfSquaresOfValues / numValues;
-    double stddev = Math.sqrt(meanOfSquares - squareOfMean);
+    // see https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
+    numValues++;
+    double delta = micros - mean;
+    mean += delta / numValues;
+    double delta2 = micros - mean;
+    m2 += delta * delta2;
+    double stddev = Math.sqrt(m2 / numValues);
+
     stageMetrics.gauge(Constants.Metrics.AVG_TIME, (long) mean);
     stageMetrics.gauge(Constants.Metrics.STD_DEV_TIME, (long) stddev);
   }

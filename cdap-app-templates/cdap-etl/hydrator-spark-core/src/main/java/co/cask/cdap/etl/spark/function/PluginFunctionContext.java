@@ -1,4 +1,3 @@
-
 /*
  * Copyright © 2016 Cask Data, Inc.
  *

@@ -18,6 +18,8 @@ package co.cask.cdap.etl.spark.plugin;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.api.spark.JavaSparkMain;
+import co.cask.cdap.api.spark.SparkMain;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
@@ -46,6 +48,10 @@ public class SparkPipelinePluginContext extends PipelinePluginContext {
       return new WrappedSparkSink<>((SparkSink) plugin, caller);
     } else if (plugin instanceof StreamingSource) {
       return new WrappedStreamingSource<>((StreamingSource) plugin, caller);
+    } else if (plugin instanceof JavaSparkMain) {
+      return new WrappedJavaSparkMain((JavaSparkMain) plugin, caller);
+    } else if (plugin instanceof SparkMain) {
+      return new WrappedSparkMain((SparkMain) plugin, caller);
     }
 
     return plugin;

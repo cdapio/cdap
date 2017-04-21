@@ -323,7 +323,7 @@ public class SmartWorkflow extends AbstractWorkflow {
       // spark programs will be all by themselves in a phase
       String stageName = phase.getStagesOfType(Constants.SPARK_PROGRAM_PLUGIN_TYPE).iterator().next().getName();
       StageSpec stageSpec = stageSpecs.get(stageName);
-      applicationConfigurer.addSpark(new ExternalSparkProgram(programName, stageSpec));
+      applicationConfigurer.addSpark(new ExternalSparkProgram(batchPhaseSpec, stageSpec));
       programAdder.addSpark(programName);
     } else if (useSpark) {
       applicationConfigurer.addSpark(new ETLSpark(batchPhaseSpec));

@@ -73,14 +73,7 @@ public class PipelinePluginContext implements PluginContext {
   }
 
   private Object wrapPlugin(String pluginId, Object plugin) {
-    Caller caller = Caller.DEFAULT;
-    if (processTimingEnabled) {
-      caller = TimingCaller.wrap(caller, new DefaultStageMetrics(metrics, pluginId));
-    }
-    if (stageLoggingEnabled) {
-      caller = StageLoggingCaller.wrap(caller, pluginId);
-    }
-
+    Caller caller = getCaller(pluginId);
     if (plugin instanceof Action) {
       return new WrappedAction((Action) plugin, caller);
     } else if (plugin instanceof BatchSource) {
@@ -100,6 +93,17 @@ public class PipelinePluginContext implements PluginContext {
     }
 
     return wrapUnknownPlugin(pluginId, plugin, caller);
+  }
+
+  public Caller getCaller(String pluginId) {
+    Caller caller = Caller.DEFAULT;
+    if (processTimingEnabled) {
+      caller = TimingCaller.wrap(caller, new DefaultStageMetrics(metrics, pluginId));
+    }
+    if (stageLoggingEnabled) {
+      caller = StageLoggingCaller.wrap(caller, pluginId);
+    }
+    return caller;
   }
 
   protected Object wrapUnknownPlugin(String pluginId, Object plugin, Caller caller) {
