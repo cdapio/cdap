@@ -69,7 +69,7 @@ Cask Market HTTP RESTful API
 
 The Cask Market HTTP RESTful APIs are simply a contract about the directory structure of the marketplace.
 All APIs are relative to a base path. For example, the base path for the public Cask-hosted market
-is ``'market.cask.co'``. 
+is ``market.cask.co``.
 
 .. directory-structure-start
 
@@ -698,18 +698,19 @@ Example action:
 
     {
       "type": "one_step_deploy_app",
-      "label": "Deploy Word Count Example App"
+      "label": "Deploy Word Count Example App",
       "arguments": [
         {
           "name": "jar",
           "value": "WordCount-|release|.jar",
-        }      
+        }
+      ]
     }
 
 
 create_pipeline
 ...............
-Creates a CDAP pipeline. 
+Creates a CDAP pipeline.
 
 .. list-table::
    :widths: 20 50 10 20
@@ -909,8 +910,8 @@ the signature files.
 Another possible setup is to serve the market catalog and packages from Amazon S3.
 
 To configure the location of the Cask Market, when you are using a custom market instead
-of the public Cask Market, configure the property ``market.base.url`` in the 
+of the public Cask Market, configure the property ``market.base.url`` in the
 ``cdap-site.xml`` file to point to the location of your custom market. See the
-:ref:`Market <appendix-cdap-default-market>` section in the :ref:`Appendix 
+:ref:`Market <appendix-cdap-default-market>` section in the :ref:`Appendix
 <appendix-cdap-site.xml>` of the :ref:`Administration Manual <admin-index>`
 for details on configuring the file.
