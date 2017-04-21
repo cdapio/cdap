@@ -1047,7 +1047,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Class<? extends HBaseDDLExecutor> ddlExecutorClass = new HBaseDDLExecutorFactory(cConf, hConf)
       .get().getClass();
     try {
-      Class<?> hbaseTableUtilClass = HBaseTableUtilFactory.getHBaseTableUtilClass();
+      Class<?> hbaseTableUtilClass = HBaseTableUtilFactory.getHBaseTableUtilClass(cConf);
       classes.add(hbaseTableUtilClass);
       classes.add(ddlExecutorClass);
     } catch (ProvisionException e) {

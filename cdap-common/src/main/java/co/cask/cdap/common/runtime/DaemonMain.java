@@ -34,7 +34,6 @@ public abstract class DaemonMain {
    * as if the program is started by jsvc.
    */
   protected void doMain(final String[] args) throws Exception {
-    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     init(args);
 
     final CountDownLatch shutdownLatch = new CountDownLatch(1);
@@ -58,6 +57,9 @@ public abstract class DaemonMain {
     });
 
     start();
+    // Set uncaught exception handler after startup, this is so that if startup throws exception then we
+    // want it to be logged as error (the handler logs it as debug)
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     shutdownLatch.await();
   }
 
