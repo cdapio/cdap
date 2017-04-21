@@ -498,6 +498,54 @@ public class ProgramLifecycleService extends AbstractIdleService {
   }
 
   /**
+   * Update log levels for the given program. Only supported program types for this action are {@link ProgramType#FLOW},
+   * {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
+   *
+   * @param programId the {@link ProgramId} of the program for which log levels are to be updated
+   * @param logLevels the {@link Map} of the log levels to be updated.
+   * @param component the flowlet name. Only used when the program is a {@link ProgramType#FLOW flow}.
+   * @param runId the run id of the program. {@code null} if update log levels for flowlet
+   * @throws InterruptedException if there is an error while asynchronously updating log levels.
+   * @throws ExecutionException if there is an error while asynchronously updating log levels.
+   * @throws BadRequestException if the log level is not valid or the program type is not supported.
+   * @throws UnauthorizedException if the user does not have privileges to update log levels for the specified program.
+   *                               To update log levels for a program, a user needs {@link Action#ADMIN} on the program.
+   */
+  public void updateProgramLogLevels(ProgramId programId, Map<String, LogEntry.Level> logLevels,
+                                     @Nullable String component, @Nullable String runId) throws Exception {
+    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
+    if (!EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programId.getType())) {
+      throw new BadRequestException(String.format("Updating log levels for program type %s is not supported",
+                                                  programId.getType().getPrettyName()));
+    }
+    updateLogLevels(programId, logLevels, component, runId);
+  }
+
+  /**
+   * Reset log levels for the given program. Only supported program types for this action are {@link ProgramType#FLOW},
+   * {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
+   *
+   * @param programId the {@link ProgramId} of the program for which log levels are to be reset.
+   * @param loggerNames the {@link String} set of the logger names to be updated, empty means reset for all
+   *                    loggers.
+   * @param component the flowlet name. Only used when the program is a {@link ProgramType#FLOW flow}.
+   * @param runId the run id of the program. {@code null} if set log levels for flowlet
+   * @throws InterruptedException if there is an error while asynchronously resetting log levels.
+   * @throws ExecutionException if there is an error while asynchronously resetting log levels.
+   * @throws UnauthorizedException if the user does not have privileges to reset log levels for the specified program.
+   *                               To reset log levels for a program, a user needs {@link Action#ADMIN} on the program.
+   */
+  public void resetProgramLogLevels(ProgramId programId, Set<String> loggerNames,
+                                    @Nullable String component, @Nullable String runId) throws Exception {
+    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
+    if (!EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programId.getType())) {
+      throw new BadRequestException(String.format("Resetting log levels for program type %s is not supported",
+                                                  programId.getType().getPrettyName()));
+    }
+    resetLogLevels(programId, loggerNames, component, runId);
+  }
+
+  /**
    * Gets runtime arguments for the program from the {@link PreferencesStore}
    *
    * @param programId the {@link ProgramId program} for which runtime arguments needs to be retrieved
