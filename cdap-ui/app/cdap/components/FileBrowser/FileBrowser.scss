@@ -27,6 +27,10 @@ $subpanel-height: 46px;
 $gutter-width: 15px;
 
 .file-browser-container {
+  // Whichever component is using this component will need to
+  // overwrite this height styling
+  height: calc(100vh - 50px - 54px);
+
   .top-panel {
     height: $top-panel-height;
     background-color: $top-panel-bg-color;
@@ -69,6 +73,7 @@ $gutter-width: 15px;
 
   .directory-content-table {
     padding: 0 $gutter-width;
+    height: calc(100% - 56px - 46px);
 
     .row { margin: 0; }
 
@@ -78,9 +83,17 @@ $gutter-width: 15px;
       background-color: $table-header-color;
       line-height: 36px;
       font-weight: 600;
+
+      span { cursor: pointer; }
+      .sort-caret {
+        margin-left: 5px;
+      }
     }
 
     .content-body {
+      height: calc(100% - 38px);
+      overflow-y: auto;
+
       .row-container { cursor: pointer; }
       .content-row {
         border-bottom: 1px solid $border-color;
