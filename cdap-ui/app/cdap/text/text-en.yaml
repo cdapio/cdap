@@ -203,6 +203,54 @@ features:
     Directives:
       apply: Apply
       cancel: Cancel
+      Copy:
+        copySuffix: _copy
+        duplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
+        inputLabel: Name New Column
+        placeholder: Destination Column
+        title: Copy Column
+      Drop:
+        title:
+          singular: Delete Column
+          plural: Delete Selected Columns
+      ExtractFields:
+        title: Extract Fields
+        extractBtnLabel: Extract
+        patternSubmenuTitle: Using Patterns
+        UsingPatterns:
+          modalTitle: Extract Fields Using Patterns
+          patternDescription: Select a regex pattern to extract a group of data in a new column named "{column}"
+          selectPatternMessage: Select a Regex Pattern
+          ndigitnumberPattern: N Digits Number
+          startEndPattern: Start/End Pattern
+          customPattern: Custom
+          phoneNumberPattern: Phone numbers
+          phoneNumberPatternExample: 'e.g. (###) - ###-####'
+          ssnPattern: SSN
+          ssnPatternExample: '###-##-####'
+          creditCardPattern: Credit Cards
+          creditCardPatternExample: '#### #### #### ####'
+          datePattern: Date
+          timePattern: Time
+          datetimePattern: Date Time
+          upscodePattern: UPS Codes
+          isbncodePattern: ISBN Codes
+          emailPattern: Email
+          urlPattern: URL
+          ipv4Pattern: IPv4 Address
+          macaddressPattern: Mac Addresses
+          htmlHyperlinkPattern: HTML Hyperlinks
+          exampleLabel: 'E.g.'
+          hidePatternLabel: Hide Pattern
+          showPatternLabel: Show Pattern
+          startEndPatternContent:
+            description1: Extract text that start with
+            description2: and end with
+          ndigitnumberPatternContent:
+            description1: Extract numbers with
+            description2: digits
+          customPatternContent:
+            description: Write your own regex pattern
       Filter:
         Conditions:
           CUSTOMCONDITION: Custom condition
@@ -233,6 +281,27 @@ features:
         title: Find and Replace
         exactMatchLabel: Exact Match
         ignoreCaseLabel: Ignore Case
+      Keep:
+       title:
+          singular: Keep Column
+          plural: Keep Selected Columns
+      Merge:
+        buttonLabel: Join
+        chooseDelimiter: Choose delimiter
+        customDelimiterPlaceholder: e.g. $
+        Delimiters:
+          COLON: Colon
+          COMMA: Comma
+          CUSTOMDELIMITER: Custom delimiter
+          DASH: Dash
+          PERIOD: Period
+          PIPE: Pipe
+          UNDERSCORE: Underscore
+        duplicate: A column with the same name already exists. Pick a new name, or click “Join” to overwrite.
+        newColumn: Name new column
+        newColumnPlaceholder: Destination Column
+        setOrder: Set order
+        title: Join Two Columns
       Parse:
         modalTitle: Parse as {parser}
         Parsers:
@@ -299,54 +368,15 @@ features:
             label: XML to JSON
             placeholder: Enter depth
         title: Parse
-      Copy:
-        copySuffix: _copy
-        duplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
-        inputLabel: Name New Column
-        placeholder: Destination Column
-        title: Copy Column
-      Keep:
-       title: Delete Other Columns
-      ExtractFields:
-        title: Extract Fields
-        extractBtnLabel: Extract
-        patternSubmenuTitle: Using Patterns
-        UsingPatterns:
-          modalTitle: Extract Fields Using Patterns
-          patternDescription: Select a regex pattern to extract a group of data in a new column named "{column}"
-          selectPatternMessage: Select a Regex Pattern
-          ndigitnumberPattern: N Digits Number
-          startEndPattern: Start/End Pattern
-          customPattern: Custom
-          phoneNumberPattern: Phone numbers
-          phoneNumberPatternExample: 'e.g. (###) - ###-####'
-          ssnPattern: SSN
-          ssnPatternExample: '###-##-####'
-          creditCardPattern: Credit Cards
-          creditCardPatternExample: '#### #### #### ####'
-          datePattern: Date
-          timePattern: Time
-          datetimePattern: Date Time
-          upscodePattern: UPS Codes
-          isbncodePattern: ISBN Codes
-          emailPattern: Email
-          urlPattern: URL
-          ipv4Pattern: IPv4 Address
-          macaddressPattern: Mac Addresses
-          htmlHyperlinkPattern: HTML Hyperlinks
-
-          exampleLabel: 'E.g.'
-          hidePatternLabel: Hide Pattern
-          showPatternLabel: Show Pattern
-          startEndPatternContent:
-            description1: Extract text that start with
-            description2: and end with
-          ndigitnumberPatternContent:
-            description1: Extract numbers with
-            description2: digits
-          customPatternContent:
-            description: Write your own regex pattern
+      Swap:
+        title: Swap Two Column Names
     pageTitle: CDAP | Data Preparation
+    SidePanel:
+      ColumnsTab:
+        toggle:
+          clearAll: Clear All
+          selectAll: Select All
+        searchPlaceholder: search
     TopPanel:
       applyBtnLabel: Apply
       addToPipelineBtnLabel: Add to Pipeline

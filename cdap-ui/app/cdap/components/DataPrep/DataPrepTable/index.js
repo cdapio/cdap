@@ -16,12 +16,13 @@
 
 import React, { Component } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
+import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import shortid from 'shortid';
 import ee from 'event-emitter';
+import classnames from 'classnames';
 import ColumnActionsDropdown from 'components/DataPrep/ColumnActionsDropdown';
 require('./DataPrepTable.scss');
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
-import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import TextboxOnValium from 'components/TextboxOnValium';
 
 export default class DataPrepTable extends Component {
@@ -42,6 +43,10 @@ export default class DataPrepTable extends Component {
     this.openUploadData = this.openUploadData.bind(this);
     this.openCreateWorkspaceModal = this.openCreateWorkspaceModal.bind(this);
     this.switchToEditColumnName = this.switchToEditColumnName.bind(this);
+    this.toggleColumnSelect = this.toggleColumnSelect.bind(this);
+    this.columnIsSelected = this.columnIsSelected.bind(this);
+    this.columnDropdownOpened = this.columnDropdownOpened.bind(this);
+
     this.sub = DataPrepStore.subscribe(() => {
       let state = DataPrepStore.getState().dataprep;
       this.setState({
@@ -49,13 +54,49 @@ export default class DataPrepTable extends Component {
         headers: state.headers.map(header => ({name: header, edit: false})),
         loading: !state.initialized,
         directivesLength: state.directives.length,
-        workspaceId: state.workspaceId
+        workspaceId: state.workspaceId,
+        selectedHeaders: state.selectedHeaders
       });
     });
   }
 
   componentWillUnmount() {
     this.sub();
+  }
+
+  toggleColumnSelect(columnName) {
+    let currentSelectedHeaders = this.state.selectedHeaders.slice();
+    if (!this.columnIsSelected(columnName)) {
+      currentSelectedHeaders.push(columnName);
+      let elem = document.querySelector(`#columns-tab-row-${columnName} .row-header`);
+      if (elem) {
+        elem.scrollIntoView();
+      }
+    } else {
+      currentSelectedHeaders.splice(currentSelectedHeaders.indexOf(columnName), 1);
+    }
+    DataPrepStore.dispatch({
+      type: DataPrepActions.setSelectedHeaders,
+      payload: {
+        selectedHeaders: currentSelectedHeaders
+      }
+    });
+  }
+
+  columnDropdownOpened(columnDropdown, openState) {
+    if (openState) {
+      this.setState({
+        columnDropdownOpen: columnDropdown
+      });
+    } else {
+      this.setState({
+        columnDropdownOpen: null
+      });
+    }
+  }
+
+  columnIsSelected(columnName) {
+    return this.state.selectedHeaders.indexOf(columnName) !== -1;
   }
 
   openCreateWorkspaceModal() {
@@ -166,13 +207,17 @@ export default class DataPrepTable extends Component {
 
     return (
       <div className="dataprep-table" id="dataprep-table-id">
-        <table className="table table-bordered table-striped">
+        <table className="table table-bordered">
           <thead className="thead-inverse">
             {
               headers.map((head, index) => {
                 return (
                   <th
                     id={`column-${head.name}`}
+                    className={classnames({
+                      'selected': this.columnIsSelected(head.name),
+                      'dropdownOpened': this.state.columnDropdownOpen === head.name
+                    })}
                     key={head.name}
                   >
                     <div
@@ -181,7 +226,7 @@ export default class DataPrepTable extends Component {
                       {
                         !head.edit ?
                           <span
-                            className="header-text float-xs-left"
+                            className="header-text"
                             onClick={this.switchToEditColumnName.bind(this, head)}
                           >
                             {head.name}
@@ -195,8 +240,16 @@ export default class DataPrepTable extends Component {
                       <span className="float-xs-right directives-dropdown-button">
                         <ColumnActionsDropdown
                           column={head.name}
+                          dropdownOpened={this.columnDropdownOpened}
                         />
                       </span>
+                      <span
+                        onClick={this.toggleColumnSelect.bind(this, head.name)}
+                        className={classnames('float-xs-right fa column-header-checkbox', {
+                          'fa-square-o': !this.columnIsSelected(head.name),
+                          'fa-check-square': this.columnIsSelected(head.name)
+                        })}
+                      />
                     </div>
                   </th>
                 );

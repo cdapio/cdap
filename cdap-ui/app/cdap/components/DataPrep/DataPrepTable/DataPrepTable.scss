@@ -14,6 +14,9 @@
  * the License.
  */
 
+$border-and-selected-color: #dbdbdb;
+$header-bg-color: #eeeeee;
+
 .dataprep-container {
   .dataprep-table {
     padding: 0;
@@ -26,39 +29,76 @@
 
     .table {
       margin-bottom: 0;
+      font-size: 14px;
+      font-family: Helvetica, Arial, sans-serif;
 
       &.table-bordered { border: 0; }
 
+      td {
+        border: 1px solid $border-and-selected-color;
+      }
+
       th {
         color: #333333;
-        background-color: #bcbcbc;
+        background-color: $header-bg-color;
+        border-bottom: 2px solid $border-and-selected-color;
+        border-right: 1px solid #cccccc;
         border-top: 0;
-        padding-right: 35px;
 
-        .header-text {
+        .column-wrapper {
+          display: inline-flex;
+          align-items: center;
           width: 100%;
-          &:hover {
-            background: white;
-          }
-        }
 
-        .directives-dropdown-button {
-          margin-right: -25px;
-        }
-        input {
-          padding: 0;
-          width: auto;
-          height: 20px;
-        }
-        > span:first-child {
-          cursor: initial;
+          .header-text {
+            width: 100%;
+            cursor: initial;
+          }
+
+          .directives-dropdown-button,
+          .column-header-checkbox {
+            visibility: hidden;
+          }
+
+          .directives-dropdown-button {
+            margin-right: 8px;
+          }
+
+          .column-header-checkbox {
+            margin-right: 5px;
+            width: 12px;
+          }
+
+          input {
+            padding: 0;
+            width: auto;
+            height: 20px;
+          }
+          > span:first-child {
+            cursor: initial;
+          }
         }
 
         &:first-child { border-left: 0; }
         &:last-child { border-right: 0; }
 
+        &.selected,
+        &.dropdownOpened,
+        &:hover {
+          .directives-dropdown-button,
+          .column-header-checkbox {
+            visibility: visible;
+          }
+        }
+
+        &:hover {
+          .header-text {
+            background: white;
+          }
+        }
+
         &.selected {
-          background-color: lighten(#3498db, 15%);
+          background-color: $border-and-selected-color;
         }
       }
     }
