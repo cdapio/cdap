@@ -187,7 +187,7 @@ function add_html_redirect() {
 </html>
 EOF
 )
-  echo_set_message "Adding redirect"
+  echo "Adding redirect"
   echo ${redirect_text} >> ${TARGET}/redirect.html
 }
 
@@ -501,7 +501,7 @@ function consolidate_messages() {
   if [[ -z ${TMP_MESSAGES_FILE} ]]; then
     return
   fi
-  local m="Warning Messages for \"${MANUAL}\":"
+  local m="Messages for \"${MANUAL}\":"
   local l="--------------------------------------------------------"
   if [[ -n ${MESSAGES} ]]; then
     echo_red_bold "Consolidating messages"
@@ -531,7 +531,7 @@ function display_messages() {
   if [[ -n ${TMP_MESSAGES_FILE} && -s ${TMP_MESSAGES_FILE} ]]; then
     echo
     echo "--------------------------------------------------------"
-    echo_red_bold "Warning Messages: $(basename ${TMP_MESSAGES_FILE})"
+    echo_red_bold "Messages: $(basename ${TMP_MESSAGES_FILE})"
     echo "--------------------------------------------------------"
     echo
     cat ${TMP_MESSAGES_FILE} | while read line
@@ -540,7 +540,7 @@ function display_messages() {
     done
     echo
     echo "--------------------------------------------------------"
-    echo_red_bold "End Warning Messages"
+    echo_red_bold "End Messages"
     echo "--------------------------------------------------------"
     echo
     warnings=1 # Indicates warning messages present
