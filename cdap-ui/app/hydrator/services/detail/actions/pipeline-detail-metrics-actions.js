@@ -69,7 +69,7 @@ angular.module(PKG.name + '.feature.hydrator')
              **/
             dataSrc.request({
               method: 'POST',
-              _cdapPath: '/metrics/query?' + metricParams + '&metric=' + metricQuery.join('&metric=')
+              _cdapPath: encodeURI('/metrics/query?' + metricParams + '&metric=' + metricQuery.join('&metric='))
             }).then(function(metrics) {
               dispatcher.dispatch('onMetricsFetch', metrics);
             });
