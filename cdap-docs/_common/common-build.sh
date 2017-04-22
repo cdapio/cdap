@@ -116,6 +116,7 @@ function clean() {
 }
 
 function build_docs() {
+  local errors=0
   local google_tag
   if [[ -n ${1} ]] ; then
     google_tag="-A html_google_tag_manager_code=${1}"
@@ -126,6 +127,8 @@ function build_docs() {
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
     echo_set_message "Error in check_includes: ${errors}"
+    consolidate_messages
+    return ${errors}
   fi
   if [[ ${USE_SPHINX_BUILD} == ${FALSE} ]]; then
     echo "Not building using Sphinx."
@@ -135,13 +138,14 @@ function build_docs() {
     ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_tag} ${SOURCE} ${TARGET}/${HTML}
     errors=$?
     if [[ ${errors} -ne 0 ]]; then
-        echo "Could not build using Sphinx."
+        echo_set_message "Could not build using Sphinx."
+        consolidate_messages
         return ${errors}
     fi
   fi
   build_extras
-  consolidate_messages
   add_html_redirect
+  consolidate_messages
 }
 
 function build_docs_local() {
@@ -204,6 +208,7 @@ function check_build_rst() {
 }
 
 function check_includes() {
+  local errors
   if [[ ${DOCS_LOCAL} == ${TRUE} ]]; then
     LOCAL_INCLUDES="${TRUE}"
   fi
@@ -548,6 +553,7 @@ function rewrite() {
   # or if $4=='', substitutes text in-place in file $1, replacing text $2 with text $3
   # or if $3 & $4=='', substitutes text in-place in file $1, using sed command $2
   local rewrite_source=${1}
+  local errors
   pushd ${SCRIPT_PATH} > /dev/null
   echo "Re-writing"
   echo "    $rewrite_source"
