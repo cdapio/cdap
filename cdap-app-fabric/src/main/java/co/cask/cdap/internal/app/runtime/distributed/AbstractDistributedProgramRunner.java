@@ -29,6 +29,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
@@ -38,16 +40,19 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
+import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -71,6 +76,7 @@ import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.api.logging.PrinterLogHandler;
+import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.yarn.YarnSecureStore;
@@ -264,6 +270,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
               if (options.isDebug()) {
                 twillPreparer.enableDebugging();
               }
+
+              logProgramStart(program, options);
               LOG.info("Starting {} with debugging enabled: {}, programOptions: {}, and logback: {}",
                        program.getId(), options.isDebug(), programOptions, logbackURI);
               // Add scheduler queue name if defined
@@ -378,6 +386,23 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
       deleteDirectory(tempDir);
       throw Throwables.propagate(e);
     }
+  }
+
+  /**
+   * Set up Logging Context so the Log is tagged correctly for the Program.
+   * Reset the context once done.
+   */
+  private void logProgramStart(Program program, ProgramOptions options) {
+    LoggingContext loggingContext =
+      LoggingContextHelper.getLoggingContext(program.getNamespaceId(), program.getApplicationId(),
+                                             program.getName(), program.getType(),
+                                             ProgramRunners.getRunId(options).getId(),
+                                             options.getArguments().asMap());
+    Cancellable saveContextCancellable =
+      LoggingContextAccessor.setLoggingContext(loggingContext);
+    String userArguments = Joiner.on(", ").withKeyValueSeparator("=").join(options.getUserArguments());
+    LOG.info("Starting {} Program {} with Arguments [{}]", program.getType(), program.getName(), userArguments);
+    saveContextCancellable.cancel();
   }
 
   private static List<? extends Class<?>> getKMSSecureStore(CConfiguration cConf) {
