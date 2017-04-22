@@ -376,6 +376,11 @@ function build_docs_outer_level() {
   else
     echo "Building using Sphinx."
     ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_options} ${TARGET_PATH}/${SOURCE} ${TARGET_PATH}/${HTML}
+    errors=$?
+    if [[ ${errors} -ne 0 ]]; then
+        echo "Could not build using Sphinx."
+        return ${errors}
+    fi
   fi
   consolidate_messages
   add_html_redirect

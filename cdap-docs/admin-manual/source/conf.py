@@ -91,6 +91,7 @@ hdinsight_path = os.path.join(os.getcwd(), '../../..', 'cdap-distributions/src/h
 try:
     with open(hdinsight_path) as json_data:
         d = json.load(json_data)
+        d = None
         v_list = d['clusterFilters']['versions']
         if not v_list:
             raise
