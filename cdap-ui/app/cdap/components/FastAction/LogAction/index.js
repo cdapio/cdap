@@ -15,6 +15,7 @@
  */
 
 import React, { Component, PropTypes } from 'react';
+import SVG from 'components/SVG';
 import {MyProgramApi} from 'api/program';
 import NamespaceStore from 'services/NamespaceStore';
 import {convertProgramToApi} from 'services/program-api-converter';
@@ -82,7 +83,7 @@ export default class LogAction extends Component {
         className="btn btn-link"
         disabled
       >
-        <span className="fa fa-file-text-o" />
+        <SVG icon='icon-file-text-o' />
       </button>
     );
 
@@ -94,7 +95,7 @@ export default class LogAction extends Component {
         target="_blank"
         className="btn btn-link"
       >
-        <span className="fa fa-file-text" />
+        <SVG icon='icon-file-text' />
       </a>
     );
 

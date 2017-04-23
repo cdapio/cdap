@@ -92,7 +92,7 @@
       .btn.btn-link {
         text-decoration: none;
         font-size: 13px;
-        color: #4f5050;
+        fill: #4f5050;
         padding: 0;
         vertical-align: top;
 
@@ -100,8 +100,8 @@
           background-color: $cdap-gray;
         }
 
-        [class*="fa"] {
-          padding: 8px 19px;
+        [class*="icon"] {
+          margin: 8px 19px;
         }
       }
     }

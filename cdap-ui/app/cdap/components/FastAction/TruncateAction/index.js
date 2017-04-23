@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -103,7 +103,7 @@ export default class TruncateAction extends Component {
     const actionLabel = T.translate('features.FastAction.truncateLabel');
     const headerTitle = `${actionLabel} ${this.props.entity.type}`;
     const tooltipID = `${this.props.entity.uniqueId}-truncate`;
-    let truncateActionClassNames = 'fa fa-scissors';
+    let truncateActionClassNames = 'icon-cut';
     return (
       <span className="btn btn-secondary btn-sm">
         <FastActionButton

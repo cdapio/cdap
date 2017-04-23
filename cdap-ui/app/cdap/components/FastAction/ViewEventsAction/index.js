@@ -58,7 +58,7 @@ export default class ViewEventsAccess extends Component {
     return (
       <span className="btn btn-secondary btn-sm">
         <FastActionButton
-          icon="fa fa-filter"
+          icon="icon-filter"
           action={this.toggleModal}
           id={tooltipId}
         />

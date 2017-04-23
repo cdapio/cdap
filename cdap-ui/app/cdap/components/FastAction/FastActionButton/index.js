@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,9 +15,9 @@
  */
 
 import React, {PropTypes} from 'react';
+import SVG from 'components/SVG';
 
-export default function FastActionButton({icon, action, disabled, id}) {
-
+export default function FastActionButton({icon, action, disabled, id, iconClassName}) {
   let preventPropagation = (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -41,16 +41,19 @@ export default function FastActionButton({icon, action, disabled, id}) {
         disabled={disabled}
         onClick={onButtonClick.bind(this)}
       >
-        <span className={icon}></span>
+        <SVG
+          className={iconClassName}
+          icon={icon}
+        />
       </button>
     </span>
   );
 }
 
-
 FastActionButton.propTypes = {
   icon: PropTypes.string,
   action: PropTypes.func,
   disabled: PropTypes.bool,
-  id: PropTypes.string
+  id: PropTypes.string,
+  iconClassName: PropTypes.string
 };

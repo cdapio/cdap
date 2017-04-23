@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,20 +14,26 @@
  * the License.
  */
 
-const EntityIconMap = {
-  application: 'icon-fist',
-  artifact: 'icon-archive',
-  'cdap-data-pipeline': 'icon-ETLBatch',
-  'cdap-data-streams': 'icon-sparkstreaming',
-  datasetinstance: 'icon-datasets',
-  stream: 'icon-streams',
-  view: 'icon-streamview',
-  'Workflow': 'icon-workflow',
-  'Spark': 'icon-spark',
-  'Mapreduce': 'icon-mapreduce',
-  'Service': 'icon-service',
-  'Worker': 'icon-worker',
-  'Flow': 'icon-tigon'
-};
+import React, {PropTypes} from 'react';
+import classnames from 'classnames';
+require('./SVG.scss');
 
-export default EntityIconMap;
+const pathToSvgSprite = '/cdap_assets/fonts/symbol-defs.svg';
+
+export default function SVG({icon, className, onClick}) {
+  let path = pathToSvgSprite + `#${icon}`;
+  return (
+    <svg
+      className={classnames('icon-svg', className)}
+      onClick={onClick}
+    >
+      <use xlinkHref={path} />
+    </svg>
+  );
+}
+
+SVG.propTypes = {
+  icon: PropTypes.string,
+  className: PropTypes.string,
+  onClick: PropTypes.func
+};

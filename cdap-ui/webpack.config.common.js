@@ -71,7 +71,8 @@ var webpackConfig = {
       'rx',
       'rx-dom',
       'react-dropzone',
-      'react-redux'
+      'react-redux',
+      'svg4everybody'
     ]
   },
   module: {
