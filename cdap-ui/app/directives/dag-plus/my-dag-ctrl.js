@@ -445,6 +445,18 @@ angular.module(PKG.name + '.commons')
           from: conn.sourceId,
           to: conn.targetId
         });
+
+        if(!vm.isDisabled && !conn.getOverlay(['detachLabel' + conn.targetId])) {
+          conn.addOverlay(['Label', {
+              label: '<span class="fa fa-times connection-detach"></span>',
+              id: 'detachLabel' + conn.targetId,
+              location: 0.5,
+              length: 13,
+              width: 13,
+              height: 13
+            }
+          ]);
+        }
       });
       DAGPlusPlusNodesActionsFactory.setConnections(connections);
     }
@@ -454,6 +466,12 @@ angular.module(PKG.name + '.commons')
 
       jsPlumb.setContainer('dag-container');
       vm.instance = jsPlumb.getInstance(dagSettings);
+
+      if(!vm.isDisabled) {
+        vm.instance.bind('click', function(connection) {
+          vm.instance.detach(connection);
+        });
+      }
 
       init();
 
