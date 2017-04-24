@@ -823,6 +823,30 @@ cdap_version() {
   echo ${__version}
 }
 
+#
+# cdap_version_command
+# returns the version of CDAP SDK or all locally installed CDAP Distributed components
+#
+cdap_version_command() {
+  local readonly __context=$(cdap_context)
+  local __component __name
+  if [[ ${__context} == sdk ]]; then
+    echo "CDAP SDK version $(cdap_version)"
+    echo
+  else # Distributed, possibly CLI-only
+    if [[ -r ${CDAP_HOME}/VERSION ]]; then
+      echo "CDAP configuration version $(cdap_version)"
+    fi
+    for __component in cli gateway kafka master security ui; do
+      if [[ -r ${CDAP_HOME}/${__component}/VERSION ]]; then
+        echo "CDAP ${__component} version $(cdap_version ${__component})"
+      fi
+    done
+    echo
+  fi
+  return 0
+}
+
 ###
 #
 # CDAP SDK functions
