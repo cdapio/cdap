@@ -20,13 +20,17 @@ import cookie from 'react-cookie';
 import isNil from 'lodash/isNil';
 
 function createApi (dataSrc, method, type, path, options = {}) {
-  return (params = {}, body) => {
+  return (params = {}, body, headers) => {
 
     let url = buildUrl(path, params);
 
     let reqObj = Object.assign({ _cdapPath: url, method }, options);
     if (body) {
       reqObj = Object.assign({}, reqObj, { body });
+    }
+
+    if (headers) {
+      reqObj = Object.assign({}, reqObj, { headers });
     }
 
     if (cookie.load('CDAP_Auth_Token')) {
@@ -46,12 +50,16 @@ function createApi (dataSrc, method, type, path, options = {}) {
 
 /* The following function might be able to be merged to createApi */
 function createApiFromExactPath (dataSrc, method, type, path, options = {}) {
-  return (params = {}, body) => {
+  return (params = {}, body, headers) => {
     let url = buildUrl(path, params);
 
     let reqObj = Object.assign({ url, method }, options);
     if (body) {
       reqObj = Object.assign({}, reqObj, { body });
+    }
+
+    if (headers) {
+      reqObj = Object.assign({}, reqObj, { headers });
     }
 
     if (type === 'REQUEST') {
