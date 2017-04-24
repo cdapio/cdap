@@ -270,7 +270,7 @@ echo     cli         - Starts a CDAP CLI session
 echo     sdk         - Sends the arguments to the SDK service
 echo     tx-debugger - Sends the arguments to the CDAP transaction debugger
 echo     apply-pack  - Installs a CDAP Pack specified as an argument
-echo     version     - Displays version of CDAP SDK
+echo     version     - Displays version of the CDAP SDK
 echo:
 echo   Get help for a command by executing:
 echo:
