@@ -41,13 +41,15 @@ public final class DataStreamsConfig extends ETLConfig {
                             Resources driverResources,
                             Resources clientResources,
                             boolean stageLoggingEnabled,
+                            boolean processTimingEnabled,
                             String batchInterval,
                             boolean isUnitTest,
                             boolean disableCheckpoints,
                             @Nullable String checkpointDir,
                             int numOfRecordsPreview,
                             boolean stopGracefully) {
-    super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, numOfRecordsPreview);
+    super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
+          numOfRecordsPreview);
     this.batchInterval = batchInterval;
     this.isUnitTest = isUnitTest;
     this.extraJavaOpts = "";
@@ -131,11 +133,13 @@ public final class DataStreamsConfig extends ETLConfig {
     private String batchInterval;
     private String checkpointDir;
     private boolean stopGraceFully;
+    private boolean disableCheckpoints;
 
     public Builder() {
       this.isUnitTest = true;
       this.batchInterval = "1m";
       this.stopGraceFully = true;
+      this.disableCheckpoints = false;
     }
 
     public Builder setBatchInterval(String batchInterval) {
@@ -153,10 +157,15 @@ public final class DataStreamsConfig extends ETLConfig {
       return this;
     }
 
+    public Builder disableCheckpoints() {
+      this.disableCheckpoints = true;
+      return this;
+    }
+
     public DataStreamsConfig build() {
       return new DataStreamsConfig(stages, connections, resources, driverResources, clientResources,
-                                   stageLoggingEnabled, batchInterval, isUnitTest, false, checkpointDir,
-                                   numOfRecordsPreview, stopGraceFully);
+                                   stageLoggingEnabled, processTimingEnabled, batchInterval, isUnitTest,
+                                   disableCheckpoints, checkpointDir, numOfRecordsPreview, stopGraceFully);
     }
   }
 }

@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.spark;
 
 import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.ErrorRecord;
 import co.cask.cdap.etl.api.ErrorTransform;
@@ -31,6 +32,7 @@ import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelinePhase;
+import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.function.BatchSinkFunction;
 import co.cask.cdap.etl.spark.function.ErrorFilter;
@@ -41,6 +43,7 @@ import co.cask.cdap.etl.spark.function.LeftJoinFlattenFunction;
 import co.cask.cdap.etl.spark.function.OuterJoinFlattenFunction;
 import co.cask.cdap.etl.spark.function.OutputFilter;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
+import co.cask.cdap.etl.spec.PipelineSpec;
 import scala.Tuple2;
 
 import java.util.HashMap;
@@ -68,7 +71,8 @@ public abstract class SparkPipelineRunner {
 
   public void runPipeline(PipelinePhase pipelinePhase, String sourcePluginType,
                           JavaSparkExecutionContext sec,
-                          Map<String, Integer> stagePartitions) throws Exception {
+                          Map<String, Integer> stagePartitions,
+                          PipelinePluginContext pluginContext) throws Exception {
 
     MacroEvaluator macroEvaluator =
       new DefaultMacroEvaluator(sec.getWorkflowToken(), sec.getRuntimeArguments(), sec.getLogicalStartTime(), sec,
@@ -179,13 +183,12 @@ public abstract class SparkPipelineRunner {
 
       } else if (SparkCompute.PLUGIN_TYPE.equals(pluginType)) {
 
-        SparkCompute<Object, Object> sparkCompute =
-          sec.getPluginContext().newPluginInstance(stageName, macroEvaluator);
+        SparkCompute<Object, Object> sparkCompute = pluginContext.newPluginInstance(stageName, macroEvaluator);
         stageData = stageData.compute(stageInfo, sparkCompute);
 
       } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
 
-        SparkSink<Object> sparkSink = sec.getPluginContext().newPluginInstance(stageName, macroEvaluator);
+        SparkSink<Object> sparkSink = pluginContext.newPluginInstance(stageName, macroEvaluator);
         stageData.store(stageInfo, sparkSink);
 
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
@@ -201,8 +204,7 @@ public abstract class SparkPipelineRunner {
 
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
 
-        BatchJoiner<Object, Object, Object> joiner =
-          sec.getPluginContext().newPluginInstance(stageName, macroEvaluator);
+        BatchJoiner<Object, Object, Object> joiner = pluginContext.newPluginInstance(stageName, macroEvaluator);
         BatchJoinerRuntimeContext joinerRuntimeContext = pluginFunctionContext.createBatchRuntimeContext();
         joiner.initialize(joinerRuntimeContext);
 
@@ -267,7 +269,7 @@ public abstract class SparkPipelineRunner {
 
       } else if (Windower.PLUGIN_TYPE.equals(pluginType)) {
 
-        Windower windower = sec.getPluginContext().newPluginInstance(stageName, macroEvaluator);
+        Windower windower = pluginContext.newPluginInstance(stageName, macroEvaluator);
         stageData = stageData.window(stageInfo, windower);
 
       } else {

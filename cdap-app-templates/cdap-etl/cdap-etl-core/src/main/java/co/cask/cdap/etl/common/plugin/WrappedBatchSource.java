@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch;
+package co.cask.cdap.etl.common.plugin;
 
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.etl.api.Emitter;
@@ -22,89 +22,90 @@ import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.etl.log.LogContext;
 
 import java.util.concurrent.Callable;
 
 /**
- * Wrapper around {@link BatchSource} that makes sure logging is set up correctly.
+ * Wrapper around {@link BatchSource} that makes sure logging, classloading, and other pipeline capabilities
+ * are setup correctly.
  *
  * @param <KEY_IN> the input key type
  * @param <VAL_IN> the input value type
  * @param <OUT> the output type
  */
-public class LoggedBatchSource<KEY_IN, VAL_IN, OUT> extends BatchSource<KEY_IN, VAL_IN, OUT> {
-  private final String name;
+public class WrappedBatchSource<KEY_IN, VAL_IN, OUT> extends BatchSource<KEY_IN, VAL_IN, OUT> {
   private final BatchSource<KEY_IN, VAL_IN, OUT> batchSource;
+  private final Caller caller;
 
-  public LoggedBatchSource(String name, BatchSource<KEY_IN, VAL_IN, OUT> batchSource) {
-    this.name = name;
+  public WrappedBatchSource(BatchSource<KEY_IN, VAL_IN, OUT> batchSource,
+                            Caller caller) {
     this.batchSource = batchSource;
+    this.caller = caller;
   }
 
   @Override
   public void prepareRun(final BatchSourceContext context) throws Exception {
-    LogContext.run(new Callable<Void>() {
+    caller.call(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         batchSource.prepareRun(context);
         return null;
       }
-    }, name);
+    });
   }
 
   @Override
   public void initialize(final BatchRuntimeContext context) throws Exception {
-    LogContext.run(new Callable<Void>() {
+    caller.call(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         batchSource.initialize(context);
         return null;
       }
-    }, name);
+    });
   }
 
   @Override
   public void transform(final KeyValue<KEY_IN, VAL_IN> input, final Emitter<OUT> emitter) throws Exception {
-    LogContext.run(new Callable<Void>() {
+    caller.call(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         batchSource.transform(input, emitter);
         return null;
       }
-    }, name);
+    }, CallArgs.TRACK_TIME);
   }
 
   @Override
   public void destroy() {
-    LogContext.runUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         batchSource.destroy();
         return null;
       }
-    }, name);
+    });
   }
 
   @Override
   public void onRunFinish(final boolean succeeded, final BatchSourceContext context) {
-    LogContext.runUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         batchSource.onRunFinish(succeeded, context);
         return null;
       }
-    }, name);
+    });
   }
 
   @Override
   public void configurePipeline(final PipelineConfigurer pipelineConfigurer) {
-    LogContext.runUnchecked(new Callable<Void>() {
+    caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         batchSource.configurePipeline(pipelineConfigurer);
         return null;
       }
-    }, name);
+    });
   }
 }

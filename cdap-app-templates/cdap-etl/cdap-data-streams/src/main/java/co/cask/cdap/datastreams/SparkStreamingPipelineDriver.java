@@ -32,6 +32,7 @@ import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.api.streaming.Windower;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
+import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -75,6 +76,8 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
                               .addInputSchemas(stageSpec.getInputSchemas())
                               .setOutputSchema(stageSpec.getOutputSchema())
                               .setErrorSchema(stageSpec.getErrorSchema())
+                              .setStageLoggingEnabled(pipelineSpec.isStageLoggingEnabled())
+                              .setProcessTimingEnabled(pipelineSpec.isProcessTimingEnabled())
                               .build());
     }
     final PipelinePhase pipelinePhase = phaseBuilder.build();
@@ -128,12 +131,15 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
       public JavaStreamingContext create() {
         JavaStreamingContext jssc = new JavaStreamingContext(
           new JavaSparkContext(), Durations.milliseconds(pipelineSpec.getBatchIntervalMillis()));
-        SparkStreamingPipelineRunner runner = new SparkStreamingPipelineRunner(sec, jssc, false,
-                                                                               pipelineSpec.getNumOfRecordsPreview());
+        SparkStreamingPipelineRunner runner = new SparkStreamingPipelineRunner(sec, jssc, pipelineSpec, false);
+        PipelinePluginContext pluginContext = new PipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
+                                                                        pipelineSpec.isStageLoggingEnabled(),
+                                                                        pipelineSpec.isProcessTimingEnabled());
         // TODO: figure out how to get partitions to use for aggregators and joiners.
         // Seems like they should be set at configure time instead of runtime? but that requires an API change.
         try {
-          runner.runPipeline(pipelinePhase, StreamingSource.PLUGIN_TYPE, sec, new HashMap<String, Integer>());
+          runner.runPipeline(pipelinePhase, StreamingSource.PLUGIN_TYPE,
+                             sec, new HashMap<String, Integer>(), pluginContext);
         } catch (Exception e) {
           throw new RuntimeException(e);
         }

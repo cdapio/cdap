@@ -53,6 +53,7 @@ import co.cask.cdap.etl.mock.transform.DropNullTransform;
 import co.cask.cdap.etl.mock.transform.FilterErrorTransform;
 import co.cask.cdap.etl.mock.transform.FlattenErrorTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
+import co.cask.cdap.etl.mock.transform.SleepTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
 import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
@@ -107,8 +108,8 @@ import java.util.concurrent.TimeoutException;
  */
 public class DataPipelineTest extends HydratorTestBase {
 
-  protected static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
-  protected static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
+  private static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
+  private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
   private static int startCount = 0;
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
@@ -583,7 +584,7 @@ public class DataPipelineTest extends HydratorTestBase {
   private void testSimpleMultiSource(Engine engine) throws Exception {
     /*
      * source1 --|
-     *           |--> sink
+     *           |--> sleep --> sink
      * source2 --|
      */
     String source1Name = String.format("simpleMSInput1-%s", engine);
@@ -592,9 +593,11 @@ public class DataPipelineTest extends HydratorTestBase {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .addStage(new ETLStage("source1", MockSource.getPlugin(source1Name)))
       .addStage(new ETLStage("source2", MockSource.getPlugin(source2Name)))
+      .addStage(new ETLStage("sleep", SleepTransform.getPlugin(2L)))
       .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
-      .addConnection("source1", "sink")
-      .addConnection("source2", "sink")
+      .addConnection("source1", "sleep")
+      .addConnection("source2", "sleep")
+      .addConnection("sleep", "sink")
       .setEngine(engine)
       .build();
 
@@ -611,10 +614,11 @@ public class DataPipelineTest extends HydratorTestBase {
     );
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+    StructuredRecord recordVincent = StructuredRecord.builder(schema).set("name", "vincent").build();
 
     // write one record to each source
     DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(source1Name));
-    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel));
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordVincent));
     inputManager = getDataset(NamespaceId.DEFAULT.dataset(source2Name));
     MockSource.writeInput(inputManager, ImmutableList.of(recordBob));
 
@@ -624,13 +628,16 @@ public class DataPipelineTest extends HydratorTestBase {
 
     // check sink
     DataSetManager<Table> sinkManager = getDataset(sinkName);
-    Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
+    Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob, recordVincent);
     Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
     Assert.assertEquals(expected, actual);
 
-    validateMetric(1, appId, "source1.records.out");
+    validateMetric(2, appId, "source1.records.out");
     validateMetric(1, appId, "source2.records.out");
-    validateMetric(2, appId, "sink.records.in");
+    validateMetric(3, appId, "sleep.records.in");
+    validateMetric(3, appId, "sleep.records.out");
+    validateMetric(3, appId, "sink.records.in");
+    Assert.assertTrue(getMetric(appId, "sleep." + co.cask.cdap.etl.common.Constants.Metrics.TOTAL_TIME) > 0L);
   }
 
   @Test
@@ -1387,16 +1394,6 @@ public class DataPipelineTest extends HydratorTestBase {
       Schema.Field.of("i_id", Schema.of(Schema.Type.STRING))
     );
 
-    Schema outSchema1 = Schema.recordOf(
-      "join.output",
-      Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("customer_name", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("item_id", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("item_price", Schema.of(Schema.Type.LONG)),
-      Schema.Field.of("cust_id", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("cust_name", Schema.of(Schema.Type.STRING))
-    );
-
     Schema outSchema2 = Schema.recordOf(
       "join.output",
       Schema.Field.of("t_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
@@ -1957,5 +1954,12 @@ public class DataPipelineTest extends HydratorTestBase {
 
     serviceManager.stop();
     serviceManager.waitForRun(ProgramRunStatus.KILLED, 180, TimeUnit.SECONDS);
+  }
+
+  private long getMetric(ApplicationId appId, String metric) {
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, appId.getNamespace(),
+                                               Constants.Metrics.Tag.APP, appId.getEntityName(),
+                                               Constants.Metrics.Tag.WORKFLOW, SmartWorkflow.NAME);
+    return getMetricsManager().getTotalMetric(tags, "user." + metric);
   }
 }

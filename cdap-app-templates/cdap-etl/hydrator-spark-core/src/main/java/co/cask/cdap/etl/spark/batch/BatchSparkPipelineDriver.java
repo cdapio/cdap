@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.etl.api.JoinElement;
@@ -28,6 +29,7 @@ import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.SetMultimapCodec;
+import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
@@ -44,6 +46,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import scala.Tuple2;
 
 import java.io.BufferedReader;
+import java.nio.channels.Pipe;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -121,6 +124,9 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner
     }
     datasetContext = context;
     numOfRecordsPreview = phaseSpec.getNumOfRecordsPreview();
-    runPipeline(phaseSpec.getPhase(), BatchSource.PLUGIN_TYPE, sec, stagePartitions);
+    PipelinePluginContext pluginContext = new PipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
+                                                                    phaseSpec.isStageLoggingEnabled(),
+                                                                    phaseSpec.isProcessTimingEnabled());
+    runPipeline(phaseSpec.getPhase(), BatchSource.PLUGIN_TYPE, sec, stagePartitions, pluginContext);
   }
 }

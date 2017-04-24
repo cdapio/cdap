@@ -17,18 +17,28 @@
 package co.cask.cdap.datapipeline
 
 import co.cask.cdap.api.spark.{SparkExecutionContext, SparkMain}
-import co.cask.cdap.etl.common.DefaultMacroEvaluator
+import co.cask.cdap.etl.batch.BatchPhaseSpec
+import co.cask.cdap.etl.common.plugin.PipelinePluginContext
+import co.cask.cdap.etl.common.{Constants, DefaultMacroEvaluator}
+import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext
+import com.google.gson.Gson
 
 /**
  * Instantiates a SparkMain plugin and runs it.
  */
 class ScalaSparkMainWrapper extends SparkMain {
+  val GSON = new Gson()
 
   override def run(implicit sec: SparkExecutionContext): Unit = {
     val stageName = sec.getSpecification.getProperty(ExternalSparkProgram.STAGE_NAME)
+    val batchPhaseSpec = GSON.fromJson(sec.getSpecification.getProperty(Constants.PIPELINEID), classOf[BatchPhaseSpec])
+    val pluginContext = new SparkPipelinePluginContext(sec.getPluginContext, sec.getMetrics,
+                                                       batchPhaseSpec.isStageLoggingEnabled,
+                                                       batchPhaseSpec.isProcessTimingEnabled)
+
     val macroEvaluator = new DefaultMacroEvaluator(sec.getWorkflowToken.orNull, sec.getRuntimeArguments,
       sec.getLogicalStartTime, sec.getSecureStore, sec.getNamespace)
-    val sparkMain: SparkMain = sec.getPluginContext.newPluginInstance(stageName, macroEvaluator)
+    val sparkMain: SparkMain = pluginContext.newPluginInstance(stageName, macroEvaluator)
     sparkMain.run(sec)
   }
 }

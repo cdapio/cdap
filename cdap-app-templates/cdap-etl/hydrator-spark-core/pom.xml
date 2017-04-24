@@ -32,10 +32,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-    </dependency>
-    <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api</artifactId>
       <version>${project.version}</version>
@@ -88,5 +84,12 @@
         </excludes>
       </resource>
     </resources>
+    <plugins>
+      <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <version>3.2.2</version>
+      </plugin>
+    </plugins>
   </build>
 </project>

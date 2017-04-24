@@ -33,7 +33,7 @@ import javax.annotation.Nullable;
  * Class to encapsulate information needed about a plugin at runtime.
  */
 public class StageInfo implements Serializable {
-  private static final long serialVersionUID = 8512654022528299831L;
+  private static final long serialVersionUID = 8959882372273534195L;
   private final String name;
   private final String pluginType;
   private final Set<String> inputs;
@@ -42,10 +42,12 @@ public class StageInfo implements Serializable {
   private final Schema outputSchema;
   private final Schema errorSchema;
   private final String errorDatasetName;
+  private final boolean stageLoggingEnabled;
+  private final boolean processTimingEnabled;
 
   private StageInfo(String name, String pluginType, Set<String> inputs, Map<String, Schema> inputSchemas,
                     Set<String> outputs, @Nullable Schema outputSchema, @Nullable Schema errorSchema,
-                    @Nullable String errorDatasetName) {
+                    @Nullable String errorDatasetName, boolean stageLoggingEnabled, boolean processTimingEnabled) {
     this.name = name;
     this.pluginType = pluginType;
     this.inputSchemas = Collections.unmodifiableMap(inputSchemas);
@@ -54,6 +56,8 @@ public class StageInfo implements Serializable {
     this.inputs = ImmutableSet.copyOf(inputs);
     this.outputs = ImmutableSet.copyOf(outputs);
     this.errorDatasetName = errorDatasetName;
+    this.stageLoggingEnabled = stageLoggingEnabled;
+    this.processTimingEnabled = processTimingEnabled;
   }
 
   public String getName() {
@@ -91,6 +95,14 @@ public class StageInfo implements Serializable {
     return errorSchema;
   }
 
+  public boolean isStageLoggingEnabled() {
+    return stageLoggingEnabled;
+  }
+
+  public boolean isProcessTimingEnabled() {
+    return processTimingEnabled;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -109,13 +121,15 @@ public class StageInfo implements Serializable {
       Objects.equals(outputs, that.outputs) &&
       Objects.equals(outputSchema, that.outputSchema) &&
       Objects.equals(errorSchema, that.errorSchema) &&
-      Objects.equals(errorDatasetName, that.errorDatasetName);
+      Objects.equals(errorDatasetName, that.errorDatasetName) &&
+      stageLoggingEnabled == that.stageLoggingEnabled &&
+      processTimingEnabled == that.processTimingEnabled;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, pluginType, inputs, inputSchemas,
-                        outputs, outputSchema, errorSchema, errorDatasetName);
+    return Objects.hash(name, pluginType, inputs, inputSchemas, outputs, outputSchema,
+                        errorSchema, errorDatasetName, stageLoggingEnabled, processTimingEnabled);
   }
 
   @Override
@@ -129,6 +143,8 @@ public class StageInfo implements Serializable {
       ", outputSchema=" + outputSchema +
       ", errorSchema=" + errorSchema +
       ", errorDatasetName='" + errorDatasetName + '\'' +
+      ", stageLoggingEnabled=" + stageLoggingEnabled +
+      ", processTimingEnabled=" + processTimingEnabled +
       '}';
   }
 
@@ -148,6 +164,8 @@ public class StageInfo implements Serializable {
     private Schema outputSchema;
     private Schema errorSchema;
     private String errorDatasetName;
+    private boolean stageLoggingEnabled;
+    private boolean processTimingEnabled;
 
     public Builder(String name, String pluginType) {
       this.name = name;
@@ -155,6 +173,8 @@ public class StageInfo implements Serializable {
       this.inputs = new HashSet<>();
       this.outputs = new HashSet<>();
       this.inputSchemas = new HashMap<>();
+      this.stageLoggingEnabled = true;
+      this.processTimingEnabled = true;
     }
 
     public Builder addInputs(String... inputs) {
@@ -202,9 +222,19 @@ public class StageInfo implements Serializable {
       return this;
     }
 
+    public Builder setStageLoggingEnabled(boolean stageLoggingEnabled) {
+      this.stageLoggingEnabled = stageLoggingEnabled;
+      return this;
+    }
+
+    public Builder setProcessTimingEnabled(boolean processTimingEnabled) {
+      this.processTimingEnabled = processTimingEnabled;
+      return this;
+    }
+
     public StageInfo build() {
       return new StageInfo(name, pluginType, inputs, inputSchemas, outputs,
-                           outputSchema, errorSchema, errorDatasetName);
+                           outputSchema, errorSchema, errorDatasetName, stageLoggingEnabled, processTimingEnabled);
     }
   }
 }

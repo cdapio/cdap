@@ -21,6 +21,7 @@ import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowContext;
@@ -45,6 +46,7 @@ import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
 import co.cask.cdap.etl.common.PipelinePhase;
+import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.planner.ControlDag;
 import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.PipelinePlanner;
@@ -78,7 +80,6 @@ public class SmartWorkflow extends AbstractWorkflow {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
 
-  private final BatchPipelineSpec spec;
   private final ApplicationConfigurer applicationConfigurer;
   private final Set<String> supportedPluginTypes;
   // connector stage -> local dataset name
@@ -95,6 +96,7 @@ public class SmartWorkflow extends AbstractWorkflow {
   @SuppressWarnings("unused")
   private Metrics workflowMetrics;
 
+  private BatchPipelineSpec spec;
   private int connectorNum = 0;
 
   public SmartWorkflow(BatchPipelineSpec spec,
@@ -187,15 +189,17 @@ public class SmartWorkflow extends AbstractWorkflow {
                        arguments);
 
     postActions = new LinkedHashMap<>();
-    BatchPipelineSpec batchPipelineSpec =
-      GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
-                    BatchPipelineSpec.class);
+    spec = GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
+                         BatchPipelineSpec.class);
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(context.getToken(), context.getRuntimeArguments(),
                                                               context.getLogicalStartTime(), context,
                                                               context.getNamespace());
-    for (ActionSpec actionSpec : batchPipelineSpec.getEndingActions()) {
-      postActions.put(actionSpec.getName(), (PostAction) context.newPluginInstance(actionSpec.getName(),
-                                                                                   macroEvaluator));
+    PluginContext pluginContext = new PipelinePluginContext(context, workflowMetrics,
+                                                            spec.isStageLoggingEnabled(),
+                                                            spec.isProcessTimingEnabled());
+    for (ActionSpec actionSpec : spec.getEndingActions()) {
+      postActions.put(actionSpec.getName(), (PostAction) pluginContext.newPluginInstance(actionSpec.getName(),
+                                                                                         macroEvaluator));
     }
 
     WRAPPERLOGGER.info("Pipeline '{}' running", context.getApplicationSpecification().getName());
@@ -213,7 +217,10 @@ public class SmartWorkflow extends AbstractWorkflow {
       for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
         String name = endingActionEntry.getKey();
         PostAction action = endingActionEntry.getValue();
-        StageInfo stageInfo = StageInfo.builder(name, PostAction.PLUGIN_TYPE).build();
+        StageInfo stageInfo = StageInfo.builder(name, PostAction.PLUGIN_TYPE)
+          .setStageLoggingEnabled(spec.isStageLoggingEnabled())
+          .setProcessTimingEnabled(spec.isProcessTimingEnabled())
+          .build();
         BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics, lookupProvider,
                                                                      logicalStartTime, runtimeArgs, stageInfo);
         try {
@@ -303,7 +310,9 @@ public class SmartWorkflow extends AbstractWorkflow {
     BatchPhaseSpec batchPhaseSpec = new BatchPhaseSpec(programName, phase, spec.getResources(),
                                                        spec.getDriverResources(),
                                                        spec.getClientResources(),
-                                                       spec.isStageLoggingEnabled(), phaseConnectorDatasets,
+                                                       spec.isStageLoggingEnabled(),
+                                                       spec.isProcessTimingEnabled(),
+                                                       phaseConnectorDatasets,
                                                        spec.getNumOfRecordsPreview());
 
     Set<String> pluginTypes = batchPhaseSpec.getPhase().getPluginTypes();
@@ -314,7 +323,7 @@ public class SmartWorkflow extends AbstractWorkflow {
       // spark programs will be all by themselves in a phase
       String stageName = phase.getStagesOfType(Constants.SPARK_PROGRAM_PLUGIN_TYPE).iterator().next().getName();
       StageSpec stageSpec = stageSpecs.get(stageName);
-      applicationConfigurer.addSpark(new ExternalSparkProgram(programName, stageSpec));
+      applicationConfigurer.addSpark(new ExternalSparkProgram(batchPhaseSpec, stageSpec));
       programAdder.addSpark(programName);
     } else if (useSpark) {
       applicationConfigurer.addSpark(new ETLSpark(batchPhaseSpec));

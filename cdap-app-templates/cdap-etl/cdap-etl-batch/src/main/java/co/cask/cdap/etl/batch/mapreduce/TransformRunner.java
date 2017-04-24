@@ -75,7 +75,7 @@ public class TransformRunner<KEY, VALUE> {
     this.outputWriter = getSinkWriter(context, phaseSpec.getPhase(), hConf);
 
     // instantiate and initialize all transformations and setup the TransformExecutor
-    PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(context, phaseSpec);
+    PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(context, metrics, phaseSpec);
     // stage name -> runtime args for that stage
     Map<String, Map<String, String>> runtimeArgs = GSON.fromJson(
       hConf.get(ETLMapReduce.RUNTIME_ARGS_KEY), ETLMapReduce.RUNTIME_ARGS_TYPE);

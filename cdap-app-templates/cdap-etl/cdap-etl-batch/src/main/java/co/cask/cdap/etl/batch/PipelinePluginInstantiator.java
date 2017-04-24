@@ -17,10 +17,12 @@
 package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.etl.batch.connector.ConnectorSink;
 import co.cask.cdap.etl.batch.connector.ConnectorSource;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.planner.StageInfo;
 
 import java.util.HashSet;
@@ -37,8 +39,10 @@ public class PipelinePluginInstantiator {
   private final Set<String> connectorSources;
   private final Set<String> connectorSinks;
 
-  public PipelinePluginInstantiator(PluginContext pluginContext, BatchPhaseSpec phaseSpec) {
-    this.pluginContext = pluginContext;
+  public PipelinePluginInstantiator(PluginContext pluginContext, Metrics metrics, BatchPhaseSpec phaseSpec) {
+    this.pluginContext = new PipelinePluginContext(pluginContext, metrics,
+                                                   phaseSpec.isStageLoggingEnabled(),
+                                                   phaseSpec.isProcessTimingEnabled());
     this.phaseSpec = phaseSpec;
     this.connectorSources = new HashSet<>();
     this.connectorSinks = new HashSet<>();

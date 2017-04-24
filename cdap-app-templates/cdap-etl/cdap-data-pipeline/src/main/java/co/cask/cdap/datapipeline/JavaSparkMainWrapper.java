@@ -21,38 +21,58 @@ import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
+import co.cask.cdap.etl.batch.BatchPhaseSpec;
+import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.common.plugin.Caller;
+import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
+import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
+import com.google.gson.Gson;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
  * This class is a wrapper for the vanilla spark programs.
  */
 public class JavaSparkMainWrapper implements JavaSparkMain {
+  private static final Gson GSON = new Gson();
 
   @Override
   public void run(JavaSparkExecutionContext sec) throws Exception {
     String stageName = sec.getSpecification().getProperty(ExternalSparkProgram.STAGE_NAME);
+    BatchPhaseSpec batchPhaseSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
+                                                  BatchPhaseSpec.class);
+    PipelinePluginContext pluginContext = new SparkPipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
+                                                                         batchPhaseSpec.isStageLoggingEnabled(),
+                                                                         batchPhaseSpec.isProcessTimingEnabled());
 
-    Class<?> mainClass = sec.getPluginContext().loadPluginClass(stageName);
+    Class<?> mainClass = pluginContext.loadPluginClass(stageName);
 
     // if it's a CDAP JavaSparkMain, instantiate it and call the run method
     if (mainClass.isAssignableFrom(JavaSparkMain.class)) {
       MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(sec.getWorkflowToken(), sec.getRuntimeArguments(),
                                                                 sec.getLogicalStartTime(), sec.getSecureStore(),
                                                                 sec.getNamespace());
-      JavaSparkMain javaSparkMain = sec.getPluginContext().newPluginInstance(stageName, macroEvaluator);
+      JavaSparkMain javaSparkMain = pluginContext.newPluginInstance(stageName, macroEvaluator);
       javaSparkMain.run(sec);
     } else {
       // otherwise, assume there is a 'main' method and call it
       String programArgs = getProgramArgs(sec, stageName);
       String[] args = programArgs == null ?
         RuntimeArguments.toPosixArray(sec.getRuntimeArguments()) : programArgs.split(" ");
-      Method mainMethod = mainClass.getMethod("main", String[].class);
-      Object[] methodArgs = new Object[1];
+      final Method mainMethod = mainClass.getMethod("main", String[].class);
+      final Object[] methodArgs = new Object[1];
       methodArgs[0] = args;
-      mainMethod.invoke(null, methodArgs);
+      Caller caller = pluginContext.getCaller(stageName);
+      caller.call(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          mainMethod.invoke(null, methodArgs);
+          return null;
+        }
+      });
     }
   }
 
