@@ -31,7 +31,6 @@ import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
@@ -41,9 +40,6 @@ import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationStatus;
 import org.apache.hive.service.cli.SessionHandle;
-import org.apache.hive.service.cli.thrift.TColumnValue;
-import org.apache.hive.service.cli.thrift.TRow;
-import org.apache.hive.service.cli.thrift.TRowSet;
 import org.apache.tephra.TransactionSystemClient;
 
 import java.io.File;
@@ -93,16 +89,16 @@ public class Hive12CDH5ExploreService extends BaseHiveExploreService {
     Object rowSet = fetchResultsMethod.invoke(getCliService(), handle, fetchOrientation, size);
 
     ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
-    Class<?> rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
-    Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
-    TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
-    for (TRow tRow : tRowSet.getRows()) {
-      List<Object> cols = Lists.newArrayList();
-      for (TColumnValue tColumnValue : tRow.getColVals()) {
-        cols.add(tColumnToObject(tColumnValue));
-      }
-      rowsBuilder.add(new QueryResult(cols));
-    }
+//    Class<?> rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
+//    Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
+//    TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
+//    for (TRow tRow : tRowSet.getRows()) {
+//      List<Object> cols = Lists.newArrayList();
+//      for (TColumnValue tColumnValue : tRow.getColVals()) {
+//        cols.add(tColumnToObject(tColumnValue));
+//      }
+//      rowsBuilder.add(new QueryResult(cols));
+//    }
     return rowsBuilder.build();
   }
 

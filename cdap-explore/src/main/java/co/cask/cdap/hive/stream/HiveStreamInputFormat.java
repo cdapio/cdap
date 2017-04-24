@@ -27,6 +27,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.ql.exec.SerializationUtilities;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.index.IndexPredicateAnalyzer;
 import org.apache.hadoop.hive.ql.index.IndexSearchCondition;
@@ -131,7 +132,7 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
       // Utilities.deserializeExpression(String, Configuration),
       // whereas newer versions use Utilities.deserializeExpression(String).
       try {
-        expr = Utilities.deserializeExpression(serializedExpr);
+        expr = SerializationUtilities.deserializeExpression(serializedExpr);
       } catch (NoSuchMethodError e) {
         expr = (ExprNodeGenericFuncDesc) Utilities.class.getMethod(
           "deserializeExpression", String.class, Configuration.class).invoke(null, serializedExpr, conf);

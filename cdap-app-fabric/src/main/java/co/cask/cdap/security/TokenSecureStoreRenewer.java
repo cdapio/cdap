@@ -31,7 +31,6 @@ import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
-import org.apache.hadoop.hive.thrift.HadoopThriftAuthBridge;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -175,10 +174,10 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
       // Renewal interval for Hive. Also see: https://issues.apache.org/jira/browse/HIVE-9214
       Configuration hiveConf = getHiveConf();
       if (hiveConf != null) {
-        renewalTimes.add(hiveConf.getLong(HadoopThriftAuthBridge.Server.DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
-                                          HadoopThriftAuthBridge.Server.DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
+        renewalTimes.add(hiveConf.getLong("hive.cluster.delegation.token.renew-interval",
+                                          TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
       } else {
-        renewalTimes.add(HadoopThriftAuthBridge.Server.DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT);
+        renewalTimes.add(TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS));
       }
 
       // Renewal interval for JHS
