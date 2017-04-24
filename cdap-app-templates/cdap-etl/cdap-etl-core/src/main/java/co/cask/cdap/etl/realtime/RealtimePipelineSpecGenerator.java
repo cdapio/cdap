@@ -19,6 +19,7 @@ package co.cask.cdap.etl.realtime;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.proto.v2.ETLRealtimeConfig;
 import co.cask.cdap.etl.spec.PipelineSpec;
 import co.cask.cdap.etl.spec.PipelineSpecGenerator;
@@ -35,7 +36,10 @@ public class RealtimePipelineSpecGenerator extends PipelineSpecGenerator<ETLReal
                                        Set<String> sinkPluginTypes,
                                        Class<? extends Dataset> errorDatasetClass,
                                        DatasetProperties errorDatasetProperties) {
-    super(configurer, sourcePluginTypes, sinkPluginTypes, errorDatasetClass, errorDatasetProperties);
+    super(configurer, sourcePluginTypes, sinkPluginTypes, errorDatasetClass, errorDatasetProperties,
+          // this is not technically correct, but deprecated realtime pipeline doesn't do anything with engine
+          // and we don't want to introduce a new deprecated engine.
+          Engine.MAPREDUCE);
   }
 
   @Override

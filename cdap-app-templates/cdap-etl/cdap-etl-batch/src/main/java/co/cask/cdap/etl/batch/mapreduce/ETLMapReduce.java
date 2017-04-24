@@ -171,6 +171,11 @@ public class ETLMapReduce extends AbstractMapReduce {
                                                          context, context.getNamespace());
 
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
+
+    for (Map.Entry<String, String> pipelineProperty : phaseSpec.getPipelineProperties().entrySet()) {
+      hConf.set(pipelineProperty.getKey(), pipelineProperty.getValue());
+    }
+
     PipelinePhase phase = phaseSpec.getPhase();
     PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(context, mrMetrics, phaseSpec);
 

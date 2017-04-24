@@ -23,10 +23,13 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
+import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.MultiInputPipelineConfigurer;
 import co.cask.cdap.etl.api.MultiInputStageConfigurer;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -35,14 +38,18 @@ import javax.annotation.Nullable;
  * a sink can also use a plugin with id 'jdbcdriver' without clobbering each other.
  */
 public class DefaultPipelineConfigurer implements PipelineConfigurer, MultiInputPipelineConfigurer {
+  private final Engine engine;
   private final PluginConfigurer configurer;
   private final String stageName;
   private final DefaultStageConfigurer stageConfigurer;
+  private final Map<String, String> properties;
 
-  public DefaultPipelineConfigurer(PluginConfigurer configurer, String stageName) {
+  public DefaultPipelineConfigurer(PluginConfigurer configurer, String stageName, Engine engine) {
     this.configurer = configurer;
     this.stageName = stageName;
     this.stageConfigurer = new DefaultStageConfigurer();
+    this.engine = engine;
+    this.properties = new HashMap<>();
   }
 
   @Override
@@ -122,7 +129,22 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer, MultiInput
   }
 
   @Override
+  public Engine getEngine() {
+    return engine;
+  }
+
+  @Override
+  public void setPipelineProperties(Map<String, String> properties) {
+    this.properties.clear();
+    this.properties.putAll(properties);
+  }
+
+  @Override
   public MultiInputStageConfigurer getMultiInputStageConfigurer() {
     return stageConfigurer;
+  }
+
+  public Map<String, String> getPipelineProperties() {
+    return properties;
   }
 }

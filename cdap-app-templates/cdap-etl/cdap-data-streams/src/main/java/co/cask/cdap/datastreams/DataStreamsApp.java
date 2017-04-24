@@ -42,7 +42,7 @@ public class DataStreamsApp extends AbstractApplication<DataStreamsConfig> {
         ImmutableSet.of(BatchSink.PLUGIN_TYPE)
       );
     DataStreamsPipelineSpec spec = specGenerator.generateSpec(config);
-    addSpark(new DataStreamsSparkLauncher(spec, config));
+    addSpark(new DataStreamsSparkLauncher(spec));
 
     if (!config.checkpointsDisabled()) {
       createDataset(CHECKPOINT_FILESET, FileSet.class);

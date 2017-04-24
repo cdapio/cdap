@@ -19,6 +19,8 @@ package co.cask.cdap.etl.api;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 
+import java.util.Map;
+
 /**
  * Configures an ETL Pipeline. Allows adding datasets and streams, which will be created when a pipeline is created.
  * Using this as a layer between plugins and CDAP's PluginConfigurer in case pipelines need etl specific methods.
@@ -31,4 +33,18 @@ public interface PipelineConfigurer extends PluginConfigurer {
    * @return stage configurer
    */
   StageConfigurer getStageConfigurer();
+
+  /**
+   * @return the engine for this pipeline
+   */
+  Engine getEngine();
+
+  /**
+   * Set pipeline properties that will be applied to each run of the pipeline.
+   * Depending on the engine used, the properties will be added to the SparkConf for each run or the mapreduce
+   * Configuration for each run.
+   *
+   * @param properties the properties to set
+   */
+  void setPipelineProperties(Map<String, String> properties);
 }

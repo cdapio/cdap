@@ -67,7 +67,8 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
         .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
         .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
         .setTableProperty("avro.schema.literal", Constants.ERROR_SCHEMA.toString())
-        .build());
+        .build(),
+      config.getEngine());
 
     BatchPipelineSpec spec = specGenerator.generateSpec(config);
 
@@ -101,7 +102,8 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
                                                            config.isStageLoggingEnabled(),
                                                            config.isProcessTimingEnabled(),
                                                            new HashMap<String, String>(),
-                                                           config.getNumOfRecordsPreview());
+                                                           config.getNumOfRecordsPreview(),
+                                                           config.getProperties());
         addMapReduce(new ETLMapReduce(batchPhaseSpec));
         break;
       case SPARK:
@@ -111,7 +113,8 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
                                             config.getClientResources(),
                                             config.isStageLoggingEnabled(),
                                             config.isProcessTimingEnabled(),
-                                            new HashMap<String, String>(), config.getNumOfRecordsPreview());
+                                            new HashMap<String, String>(), config.getNumOfRecordsPreview(),
+                                            config.getProperties());
         addSpark(new ETLSpark(batchPhaseSpec));
         break;
       default:

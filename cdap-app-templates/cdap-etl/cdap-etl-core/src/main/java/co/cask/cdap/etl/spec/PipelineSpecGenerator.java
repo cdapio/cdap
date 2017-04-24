@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.MultiInputPipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurable;
@@ -39,7 +40,9 @@ import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Table;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,6 +65,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
   private static final Set<String> VALID_ERROR_INPUTS = ImmutableSet.of(
     BatchSource.PLUGIN_TYPE, Transform.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE);
   protected final PluginConfigurer configurer;
+  protected final Engine engine;
   private final Class<? extends Dataset> errorDatasetClass;
   private final DatasetProperties errorDatasetProperties;
   private final Set<String> sourcePluginTypes;
@@ -71,12 +75,14 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
                                   Set<String> sourcePluginTypes,
                                   Set<String> sinkPluginTypes,
                                   Class<? extends Dataset> errorDatasetClass,
-                                  DatasetProperties errorDatasetProperties) {
+                                  DatasetProperties errorDatasetProperties,
+                                  Engine engine) {
     this.configurer = configurer;
     this.sourcePluginTypes = sourcePluginTypes;
     this.sinkPluginTypes = sinkPluginTypes;
     this.errorDatasetClass = errorDatasetClass;
     this.errorDatasetProperties = errorDatasetProperties;
+    this.engine = engine;
   }
 
   /**
@@ -111,18 +117,32 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     for (StageConnections stageConnections : traversalOrder) {
       String stageName = stageConnections.getStage().getName();
       pluginTypes.put(stageName, stageConnections.getStage().getPlugin().getType());
-      pluginConfigurers.put(stageName, new DefaultPipelineConfigurer(configurer, stageName));
+      pluginConfigurers.put(stageName, new DefaultPipelineConfigurer(configurer, stageName, engine));
     }
 
+    // anything prefixed by 'system.[engine].' is a pipeline property.
+    Map<String, String> pipelineProperties = new HashMap<>();
+    String prefix = String.format("system.%s.", engine.name().toLowerCase());
+    int prefixLength = prefix.length();
+    for (Map.Entry<String, String> property : config.getProperties().entrySet()) {
+      if (property.getKey().startsWith(prefix)) {
+        String strippedKey = property.getKey().substring(prefixLength);
+        pipelineProperties.put(strippedKey, property.getValue());
+      }
+    }
+
+    // row = property name, column = property value, val = stage that set the property
+    // this is used so that we can error with a nice message about which stages are setting conflicting properties
+    Table<String, String, String> propertiesFromStages = HashBasedTable.create();
     // configure the stages in order and build up the stage specs
     for (StageConnections stageConnections : traversalOrder) {
       ETLStage stage = stageConnections.getStage();
       String stageName = stage.getName();
       DefaultPipelineConfigurer pluginConfigurer = pluginConfigurers.get(stageName);
 
-      StageSpec stageSpec = configureStage(stageConnections, pluginConfigurer);
-      Schema outputSchema = stageSpec.getOutputSchema();
-      Schema outputErrorSchema = stageSpec.getErrorSchema();
+      ConfiguredStage configuredStage = configureStage(stageConnections, pluginConfigurer);
+      Schema outputSchema = configuredStage.stageSpec.getOutputSchema();
+      Schema outputErrorSchema = configuredStage.stageSpec.getErrorSchema();
 
       // for each output, set their input schema to our output schema
       for (String outputStageName : stageConnections.getOutputs()) {
@@ -154,7 +174,29 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
         outputStageConfigurer.addInputSchema(stageName, nextStageInputSchema);
       }
-      specBuilder.addStage(stageSpec);
+      specBuilder.addStage(configuredStage.stageSpec);
+      for (Map.Entry<String, String> propertyEntry : configuredStage.pipelineProperties.entrySet()) {
+        propertiesFromStages.put(propertyEntry.getKey(), propertyEntry.getValue(), stageName);
+      }
+    }
+
+    // check that multiple stages did not set conflicting properties
+    for (String propertyName : propertiesFromStages.rowKeySet()) {
+      // go through all values set for the property name. If there is more than one, we have a conflict.
+      Map<String, String> propertyValues = propertiesFromStages.row(propertyName);
+      if (propertyValues.size() > 1) {
+        StringBuilder errMsg = new StringBuilder("Pipeline property '")
+          .append(propertyName)
+          .append("' is being set to different values by stages.");
+        for (Map.Entry<String, String> valueEntry : propertyValues.entrySet()) {
+          String propertyValue = valueEntry.getKey();
+          String fromStage = valueEntry.getValue();
+          errMsg.append(" stage '").append(fromStage).append("' = '").append(propertyValue).append("',");
+        }
+        errMsg.deleteCharAt(errMsg.length() - 1);
+        throw new IllegalArgumentException(errMsg.toString());
+      }
+      pipelineProperties.put(propertyName, propertyValues.keySet().iterator().next());
     }
 
     specBuilder.addConnections(config.getConnections())
@@ -162,7 +204,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       .setDriverResources(config.getDriverResources())
       .setClientResources(config.getClientResources())
       .setStageLoggingEnabled(config.isStageLoggingEnabled())
-      .setNumOfRecordsPreview(config.getNumOfRecordsPreview());
+      .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
+      .setProperties(pipelineProperties)
+      .build();
   }
 
   private boolean hasSameSchema(Map<String, Schema> inputSchemas, Schema inputSchema) {
@@ -181,7 +225,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    * @param pluginConfigurer configurer used to configure the stage
    * @return the spec for the stage
    */
-  private StageSpec configureStage(StageConnections stageConnections, DefaultPipelineConfigurer pluginConfigurer) {
+  private ConfiguredStage configureStage(StageConnections stageConnections,
+                                         DefaultPipelineConfigurer pluginConfigurer) {
     ETLStage stage = stageConnections.getStage();
     String stageName = stage.getName();
     ETLPlugin stagePlugin = stage.getPlugin();
@@ -193,7 +238,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     PluginSpec pluginSpec = configurePlugin(stageName, stagePlugin, pluginConfigurer);
     Schema outputSchema = pluginConfigurer.getStageConfigurer().getOutputSchema();
     Map<String, Schema> inputSchemas = pluginConfigurer.getStageConfigurer().getInputSchemas();
-    return StageSpec.builder(stageName, pluginSpec)
+    StageSpec stageSpec = StageSpec.builder(stageName, pluginSpec)
       .setErrorDatasetName(stage.getErrorDatasetName())
       .addInputSchemas(inputSchemas)
       .setOutputSchema(outputSchema)
@@ -201,6 +246,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       .addInputs(stageConnections.getInputs())
       .addOutputs(stageConnections.getOutputs())
       .build();
+    return new ConfiguredStage(stageSpec, pluginConfigurer.getPipelineProperties());
   }
 
 
@@ -385,5 +431,18 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
   private boolean isSink(String pluginType) {
     return sinkPluginTypes.contains(pluginType);
+  }
+
+  /**
+   * Just a container for StageSpec and pipeline properties set by the stage
+   */
+  private static class ConfiguredStage {
+    private final StageSpec stageSpec;
+    private final Map<String, String> pipelineProperties;
+
+    private ConfiguredStage(StageSpec stageSpec, Map<String, String> pipelineProperties) {
+      this.stageSpec = stageSpec;
+      this.pipelineProperties = pipelineProperties;
+    }
   }
 }

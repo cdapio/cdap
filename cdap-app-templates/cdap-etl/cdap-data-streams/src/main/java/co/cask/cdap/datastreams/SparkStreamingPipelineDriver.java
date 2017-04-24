@@ -82,14 +82,13 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
     }
     final PipelinePhase pipelinePhase = phaseBuilder.build();
 
-    boolean checkpointsDisabled = Boolean.parseBoolean(
-      sec.getSpecification().getProperty(DataStreamsSparkLauncher.CHECKPOINTS_DISABLED));
+    boolean checkpointsDisabled = pipelineSpec.isCheckpointsDisabled();
 
     String checkpointDir = null;
     if (!checkpointsDisabled) {
       // Get the location of the checkpoint directory.
       String pipelineName = sec.getApplicationSpecification().getName();
-      String pipelineId = sec.getSpecification().getProperty(DataStreamsSparkLauncher.CHECKPOINT_DIR);
+      String relativeCheckpointDir = pipelineSpec.getCheckpointDirectory();
 
       // there isn't any way to instantiate the fileset except in a TxRunnable, so need to use a reference.
       final AtomicReference<Location> checkpointBaseRef = new AtomicReference<>();
@@ -100,7 +99,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
           checkpointBaseRef.set(checkpointFileSet.getBaseLocation());
         }
       });
-      Location pipelineCheckpointDir = checkpointBaseRef.get().append(pipelineName).append(pipelineId);
+      Location pipelineCheckpointDir = checkpointBaseRef.get().append(pipelineName).append(relativeCheckpointDir);
       checkpointDir = pipelineCheckpointDir.toURI().toString();
     }
 

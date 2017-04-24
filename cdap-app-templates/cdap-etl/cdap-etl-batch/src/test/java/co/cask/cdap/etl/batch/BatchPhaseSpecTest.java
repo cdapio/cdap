@@ -21,13 +21,8 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
-import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.planner.StageInfo;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.SetMultimap;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -37,10 +32,6 @@ import java.util.Collections;
  * Tests description of BatchPhaseSpec.
  */
 public class BatchPhaseSpecTest {
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .create();
 
   @Test
   public void testDescription() throws Exception {
@@ -61,7 +52,8 @@ public class BatchPhaseSpecTest {
 
     BatchPhaseSpec phaseSpec =
       new BatchPhaseSpec("phase-1", builder.build(), new Resources(), new Resources(), new Resources(),
-                         false, false, Collections.<String, String>emptyMap(), 0);
+                         false, false, Collections.<String, String>emptyMap(),
+                         0, Collections.<String, String>emptyMap());
     Assert.assertEquals("Sources 'source1', 'source2' to sinks 'sink.connector'.", phaseSpec.getDescription());
   }
 }

@@ -19,10 +19,13 @@ package co.cask.cdap.etl.spec;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.proto.v2.ETLConfig;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -42,6 +45,7 @@ public class PipelineSpec {
   private final boolean stageLoggingEnabled;
   private final boolean processTimingEnabled;
   private final int numOfRecordsPreview;
+  private final Map<String, String> properties;
 
   protected PipelineSpec(Set<StageSpec> stages,
                          Set<Connection> connections,
@@ -50,7 +54,8 @@ public class PipelineSpec {
                          Resources clientResources,
                          boolean stageLoggingEnabled,
                          boolean processTimingEnabled,
-                         int numOfRecordsPreview) {
+                         int numOfRecordsPreview,
+                         Map<String, String> properties) {
     this.stages = ImmutableSet.copyOf(stages);
     this.connections = ImmutableSet.copyOf(connections);
     this.resources = resources;
@@ -59,6 +64,7 @@ public class PipelineSpec {
     this.stageLoggingEnabled = stageLoggingEnabled;
     this.processTimingEnabled = processTimingEnabled;
     this.numOfRecordsPreview = numOfRecordsPreview;
+    this.properties = ImmutableMap.copyOf(properties);
   }
 
   public Set<StageSpec> getStages() {
@@ -93,6 +99,10 @@ public class PipelineSpec {
     return numOfRecordsPreview;
   }
 
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -109,6 +119,7 @@ public class PipelineSpec {
       Objects.equals(resources, that.resources) &&
       Objects.equals(driverResources, that.driverResources) &&
       Objects.equals(clientResources, that.clientResources) &&
+      Objects.equals(properties, that.properties) &&
       stageLoggingEnabled == that.stageLoggingEnabled &&
       processTimingEnabled == that.processTimingEnabled &&
       numOfRecordsPreview == that.numOfRecordsPreview;
@@ -117,7 +128,7 @@ public class PipelineSpec {
   @Override
   public int hashCode() {
     return Objects.hash(stages, connections, resources, driverResources, clientResources,
-                        stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview);
+                        stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview, properties);
   }
 
   @Override
@@ -131,7 +142,8 @@ public class PipelineSpec {
       ", stageLoggingEnabled=" + stageLoggingEnabled +
       ", processTimingEnabled=" + processTimingEnabled +
       ", numOfRecordsPreview=" + numOfRecordsPreview +
-      '}';
+      ", properties=" + properties +
+      "}";
   }
 
   /**
@@ -156,6 +168,7 @@ public class PipelineSpec {
     protected boolean stageLoggingEnabled;
     protected boolean processTimingEnabled;
     protected int numOfRecordsPreview;
+    protected Map<String, String> properties;
 
     protected Builder() {
       this.stages = new HashSet<>();
@@ -163,6 +176,7 @@ public class PipelineSpec {
       this.resources = new Resources();
       this.stageLoggingEnabled = true;
       this.processTimingEnabled = true;
+      this.properties = new HashMap<>();
     }
 
     public T addStage(StageSpec stage) {
@@ -215,9 +229,15 @@ public class PipelineSpec {
       return (T) this;
     }
 
+    public T setProperties(Map<String, String> properties) {
+      this.properties.clear();
+      this.properties.putAll(properties);
+      return (T) this;
+    }
+
     public PipelineSpec build() {
       return new PipelineSpec(stages, connections, resources, driverResources, clientResources,
-                              stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview);
+                              stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview, properties);
     }
   }
 }

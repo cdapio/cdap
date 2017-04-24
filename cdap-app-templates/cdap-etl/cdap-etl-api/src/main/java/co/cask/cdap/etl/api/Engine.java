@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,18 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.proto;
+package co.cask.cdap.etl.api;
 
 /**
  * Execution engines.
- * @deprecated use {@link co.cask.cdap.etl.api.Engine} instead
  */
-@Deprecated
 public enum Engine {
   MAPREDUCE,
-  SPARK;
-
-  public co.cask.cdap.etl.api.Engine toEngine() {
-    return co.cask.cdap.etl.api.Engine.valueOf(name());
-  }
+  SPARK
 }

@@ -24,7 +24,6 @@ import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
-import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Joiner;
@@ -39,7 +38,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * CDAP Spark client that configures and launches the actual Spark program.
@@ -48,23 +46,15 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
   private static final Logger LOG = LoggerFactory.getLogger(DataStreamsSparkLauncher.class);
   private static final Logger WRAPPERLOGGER = new LocationAwareMDCWrapperLogger(LOG, Constants.EVENT_TYPE_TAG,
                                                                                 Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
-
-  static final String IS_UNIT_TEST = "hydrator.is.unit.test";
-  static final String NUM_SOURCES = "hydrator.num.sources";
-  static final String EXTRA_OPTS = "hydrator.extra.opts";
-  static final String CHECKPOINT_DIR = "hydrator.checkpoint.dir";
-  static final String CHECKPOINTS_DISABLED = "hydrator.checkpoints.disabled";
-  public static final String NAME = "DataStreamsSparkStreaming";
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
+  public static final String NAME = "DataStreamsSparkStreaming";
 
   private final DataStreamsPipelineSpec pipelineSpec;
-  private final DataStreamsConfig config;
 
-  public DataStreamsSparkLauncher(DataStreamsPipelineSpec pipelineSpec, DataStreamsConfig config) {
+  DataStreamsSparkLauncher(DataStreamsPipelineSpec pipelineSpec) {
     this.pipelineSpec = pipelineSpec;
-    this.config = config;
   }
 
   @Override
@@ -76,22 +66,9 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     setDriverResources(pipelineSpec.getDriverResources());
     setClientResources(pipelineSpec.getClientResources());
 
-    int numSources = 0;
-    for (StageSpec stageSpec : pipelineSpec.getStages()) {
-      if (StreamingSource.PLUGIN_TYPE.equals(stageSpec.getPlugin().getType())) {
-        numSources++;
-      }
-    }
-
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.PIPELINEID, GSON.toJson(pipelineSpec));
-    properties.put(IS_UNIT_TEST, String.valueOf(config.isUnitTest()));
-    properties.put(NUM_SOURCES, String.valueOf(numSources));
-    properties.put(EXTRA_OPTS, pipelineSpec.getExtraJavaOpts());
-    properties.put(CHECKPOINT_DIR,
-                   config.getCheckpointDir() == null ? UUID.randomUUID().toString() : config.getCheckpointDir());
-    properties.put(CHECKPOINTS_DISABLED, String.valueOf(config.checkpointsDisabled()));
     setProperties(properties);
   }
 
@@ -104,27 +81,38 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
                        UserGroupInformation.getCurrentUser().getShortUserName(),
                        arguments);
 
+    DataStreamsPipelineSpec spec = GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID),
+                                                 DataStreamsPipelineSpec.class);
+
+    int numSources = 0;
+    for (StageSpec stageSpec : spec.getStages()) {
+      if (StreamingSource.PLUGIN_TYPE.equals(stageSpec.getPlugin().getType())) {
+        numSources++;
+      }
+    }
+
     SparkConf sparkConf = new SparkConf();
+    sparkConf.set("spark.streaming.backpressure.enabled", "true");
+    for (Map.Entry<String, String> property : spec.getProperties().entrySet()) {
+      sparkConf.set(property.getKey(), property.getValue());
+    }
+
     // spark... makes you set this to at least the number of receivers (streaming sources)
     // because it holds one thread per receiver, or one core in distributed mode.
     // so... we have to set this hacky master variable based on the isUnitTest setting in the config
-    Map<String, String> programProperties = context.getSpecification().getProperties();
-    String extraOpts = programProperties.get(EXTRA_OPTS);
+    String extraOpts = spec.getExtraJavaOpts();
     if (extraOpts != null && !extraOpts.isEmpty()) {
       sparkConf.set("spark.driver.extraJavaOptions", extraOpts);
       sparkConf.set("spark.executor.extraJavaOptions", extraOpts);
     }
-    Integer numSources = Integer.valueOf(programProperties.get(NUM_SOURCES));
     // without this, stopping will hang on machines with few cores.
     sparkConf.set("spark.rpc.netty.dispatcher.numThreads", String.valueOf(numSources + 2));
-    Boolean isUnitTest = Boolean.valueOf(programProperties.get(IS_UNIT_TEST));
-    if (isUnitTest) {
+    if (spec.isUnitTest()) {
       sparkConf.setMaster(String.format("local[%d]", numSources + 1));
     }
     context.setSparkConf(sparkConf);
 
-    boolean checkpointsDisabled = Boolean.valueOf(programProperties.get(CHECKPOINTS_DISABLED));
-    if (!checkpointsDisabled) {
+    if (!spec.isCheckpointsDisabled()) {
       // Each pipeline has its own checkpoint directory within the checkpoint fileset.
       // Ideally, when a pipeline is deleted, we would be able to delete that checkpoint directory.
       // This is because we don't want another pipeline created with the same name to pick up the old checkpoint.
@@ -133,7 +121,7 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
       // On start, we check for any other pipeline ids for that pipeline name, and delete them if they exist.
       FileSet checkpointFileSet = context.getDataset(DataStreamsApp.CHECKPOINT_FILESET);
       String pipelineName = context.getApplicationSpecification().getName();
-      String checkpointDir = context.getSpecification().getProperty(CHECKPOINT_DIR);
+      String checkpointDir = spec.getCheckpointDirectory();
       Location pipelineCheckpointBase = checkpointFileSet.getBaseLocation().append(pipelineName);
       Location pipelineCheckpointDir = pipelineCheckpointBase.append(checkpointDir);
 

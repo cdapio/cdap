@@ -36,6 +36,10 @@ public class ETLPlugin {
   private final Map<String, String> properties;
   private final ArtifactSelectorConfig artifact;
 
+  public ETLPlugin(String name, String type, Map<String, String> properties) {
+    this(name, type, properties, null);
+  }
+
   public ETLPlugin(String name,
                    String type,
                    Map<String, String> properties,

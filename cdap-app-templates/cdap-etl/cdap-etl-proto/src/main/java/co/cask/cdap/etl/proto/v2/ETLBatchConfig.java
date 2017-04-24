@@ -17,10 +17,10 @@
 package co.cask.cdap.etl.proto.v2;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.proto.Connection;
-import co.cask.cdap.etl.proto.Engine;
 import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -51,9 +52,10 @@ public final class ETLBatchConfig extends ETLConfig {
                          String schedule,
                          Resources driverResources,
                          Resources clientResources,
-                         int numOfRecordsPreview) {
+                         int numOfRecordsPreview,
+                         Map<String, String> engineProperties) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
-          numOfRecordsPreview);
+          numOfRecordsPreview, engineProperties);
     this.postActions = ImmutableList.copyOf(postActions);
     this.engine = engine;
     this.schedule = schedule;
@@ -146,6 +148,12 @@ public final class ETLBatchConfig extends ETLConfig {
       this.endingActions = new ArrayList<>();
     }
 
+    @Deprecated
+    public Builder setEngine(co.cask.cdap.etl.proto.Engine engine) {
+      this.engine = engine.toEngine();
+      return this;
+    }
+
     public Builder setEngine(Engine engine) {
       this.engine = engine;
       return this;
@@ -169,7 +177,7 @@ public final class ETLBatchConfig extends ETLConfig {
     public ETLBatchConfig build() {
       return new ETLBatchConfig(stages, connections, endingActions, resources, stageLoggingEnabled,
                                 processTimingEnabled, engine, schedule, driverResources, clientResources,
-                                numOfRecordsPreview);
+                                numOfRecordsPreview, properties);
     }
   }
 }

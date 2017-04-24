@@ -23,6 +23,7 @@ import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
@@ -44,8 +45,10 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Tests for converting a {@link ETLConfig} into a {@link PipelineSpec}.
@@ -76,18 +79,23 @@ public class PipelineSpecGeneratorTest {
     // populate some mock plugins.
     MockPluginConfigurer pluginConfigurer = new MockPluginConfigurer();
     Set<ArtifactId> artifactIds = ImmutableSet.of(ARTIFACT_ID);
-    pluginConfigurer.addMockPlugin(BatchSource.PLUGIN_TYPE, "mocksource", new MockPlugin(SCHEMA_A), artifactIds);
-    pluginConfigurer.addMockPlugin(Transform.PLUGIN_TYPE, "mockA", new MockPlugin(SCHEMA_A, SCHEMA_B), artifactIds);
-    pluginConfigurer.addMockPlugin(Transform.PLUGIN_TYPE, "mockB", new MockPlugin(SCHEMA_B), artifactIds);
-    pluginConfigurer.addMockPlugin(BatchSink.PLUGIN_TYPE, "mocksink", new MockPlugin(), artifactIds);
-    pluginConfigurer.addMockPlugin(Action.PLUGIN_TYPE, "mockaction", new MockPlugin(), artifactIds);
-    pluginConfigurer.addMockPlugin(BatchJoiner.PLUGIN_TYPE, "mockjoiner", new MockPlugin(), artifactIds);
-    pluginConfigurer.addMockPlugin(ErrorTransform.PLUGIN_TYPE, "mockerror", new MockPlugin(), artifactIds);
+    pluginConfigurer.addMockPlugin(BatchSource.PLUGIN_TYPE, "mocksource",
+                                   MockPlugin.builder().setOutputSchema(SCHEMA_A).build(), artifactIds);
+    pluginConfigurer.addMockPlugin(Transform.PLUGIN_TYPE, "mockA",
+                                   MockPlugin.builder().setOutputSchema(SCHEMA_A).setErrorSchema(SCHEMA_B).build(),
+                                   artifactIds);
+    pluginConfigurer.addMockPlugin(Transform.PLUGIN_TYPE, "mockB",
+                                   MockPlugin.builder().setOutputSchema(SCHEMA_B).build(), artifactIds);
+    pluginConfigurer.addMockPlugin(BatchSink.PLUGIN_TYPE, "mocksink", MockPlugin.builder().build(), artifactIds);
+    pluginConfigurer.addMockPlugin(Action.PLUGIN_TYPE, "mockaction", MockPlugin.builder().build(), artifactIds);
+    pluginConfigurer.addMockPlugin(BatchJoiner.PLUGIN_TYPE, "mockjoiner", MockPlugin.builder().build(), artifactIds);
+    pluginConfigurer.addMockPlugin(ErrorTransform.PLUGIN_TYPE, "mockerror", MockPlugin.builder().build(), artifactIds);
 
     specGenerator = new BatchPipelineSpecGenerator(pluginConfigurer,
                                                    ImmutableSet.of(BatchSource.PLUGIN_TYPE),
                                                    ImmutableSet.of(BatchSink.PLUGIN_TYPE),
-                                                   FileSet.class, DatasetProperties.EMPTY);
+                                                   FileSet.class, DatasetProperties.EMPTY,
+                                                   Engine.MAPREDUCE);
   }
 
 
@@ -426,21 +434,87 @@ public class PipelineSpecGeneratorTest {
     specGenerator.generateSpec(etlConfig);
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testConflictingPipelineProperties() {
+    // populate some mock plugins.
+    MockPluginConfigurer pluginConfigurer = new MockPluginConfigurer();
+    Set<ArtifactId> artifactIds = ImmutableSet.of(ARTIFACT_ID);
+    pluginConfigurer.addMockPlugin(Action.PLUGIN_TYPE, "action1",
+                                   MockPlugin.builder().putPipelineProperty("prop1", "val1").build(), artifactIds);
+    pluginConfigurer.addMockPlugin(Action.PLUGIN_TYPE, "action2",
+                                   MockPlugin.builder().putPipelineProperty("prop1", "val2").build(), artifactIds);
+
+    PipelineSpecGenerator specGenerator = new BatchPipelineSpecGenerator(pluginConfigurer,
+                                                                         ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+                                                                         ImmutableSet.of(BatchSink.PLUGIN_TYPE),
+                                                                         FileSet.class, DatasetProperties.EMPTY,
+                                                                         Engine.MAPREDUCE);
+
+    Map<String, String> empty = ImmutableMap.of();
+    ETLConfig config = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("a1", new ETLPlugin("action1", Action.PLUGIN_TYPE, empty)))
+      .addStage(new ETLStage("a2", new ETLPlugin("action2", Action.PLUGIN_TYPE, empty)))
+      .addConnection("a1", "a2")
+      .setEngine(Engine.MAPREDUCE)
+      .build();
+    specGenerator.generateSpec(config);
+  }
+
+  @Test
+  public void testPipelineProperties() {
+    // populate some mock plugins.
+    MockPluginConfigurer pluginConfigurer = new MockPluginConfigurer();
+    Set<ArtifactId> artifactIds = ImmutableSet.of(ARTIFACT_ID);
+    pluginConfigurer.addMockPlugin(Action.PLUGIN_TYPE, "action1",
+                                   MockPlugin.builder()
+                                     .putPipelineProperty("prop1", "val1")
+                                     .putPipelineProperty("prop2", "val2").build(), artifactIds);
+    pluginConfigurer.addMockPlugin(Action.PLUGIN_TYPE, "action2",
+                                   MockPlugin.builder().putPipelineProperty("prop2", "val2").build(), artifactIds);
+
+    PipelineSpecGenerator specGenerator = new BatchPipelineSpecGenerator(pluginConfigurer,
+                                                                         ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+                                                                         ImmutableSet.of(BatchSink.PLUGIN_TYPE),
+                                                                         FileSet.class, DatasetProperties.EMPTY,
+                                                                         Engine.MAPREDUCE);
+
+    Map<String, String> empty = ImmutableMap.of();
+    ETLConfig config = ETLBatchConfig.builder("* * * * *")
+      .setProperties(ImmutableMap.of("system.spark.spark.test", "abc", "system.mapreduce.prop3", "val3"))
+      .addStage(new ETLStage("a1", new ETLPlugin("action1", Action.PLUGIN_TYPE, empty)))
+      .addStage(new ETLStage("a2", new ETLPlugin("action2", Action.PLUGIN_TYPE, empty)))
+      .addConnection("a1", "a2")
+      .setEngine(Engine.MAPREDUCE)
+      .build();
+    PipelineSpec actual = specGenerator.generateSpec(config);
+    PipelineSpec expected = BatchPipelineSpec.builder()
+      .addConnection("a1", "a2")
+      // properties should not include the spark property, but should include the one from the config
+      // plus the ones from the plugins
+      .setProperties(ImmutableMap.of("prop1", "val1", "prop2", "val2", "prop3", "val3"))
+      .addStage(StageSpec.builder("a1", new PluginSpec(Action.PLUGIN_TYPE, "action1", empty, ARTIFACT_ID))
+                  .addOutputs("a2")
+                  .build())
+      .addStage(StageSpec.builder("a2", new PluginSpec(Action.PLUGIN_TYPE, "action2", empty, ARTIFACT_ID))
+                  .addInputs("a1")
+                  .build())
+      .setResources(new Resources(1024))
+      .setDriverResources(new Resources(1024))
+      .setClientResources(new Resources(1024))
+      .build();
+    Assert.assertEquals(expected, actual);
+  }
+
   private static class MockPlugin implements PipelineConfigurable {
     private final Schema outputSchema;
     private final Schema errorSchema;
+    private final Map<String, String> pipelineProperties;
 
-    MockPlugin() {
-      this(null, null);
-    }
-
-    MockPlugin(Schema outputSchema) {
-      this(outputSchema, null);
-    }
-
-    MockPlugin(Schema outputSchema, Schema errorSchema) {
+    private MockPlugin(@Nullable Schema outputSchema, @Nullable Schema errorSchema,
+                       Map<String, String> pipelineProperties) {
       this.outputSchema = outputSchema;
       this.errorSchema = errorSchema;
+      this.pipelineProperties = ImmutableMap.copyOf(pipelineProperties);
     }
 
     @Override
@@ -450,6 +524,41 @@ public class PipelineSpecGeneratorTest {
       }
       if (errorSchema != null) {
         pipelineConfigurer.getStageConfigurer().setErrorSchema(errorSchema);
+      }
+      pipelineConfigurer.setPipelineProperties(pipelineProperties);
+    }
+
+    private static Builder builder() {
+      return new Builder();
+    }
+
+    private static class Builder {
+      private Schema outputSchema;
+      private Schema errorSchema;
+      private Map<String, String> pipelineProperties = new HashMap<>();
+
+      public Builder setOutputSchema(Schema schema) {
+        outputSchema = schema;
+        return this;
+      }
+
+      public Builder setErrorSchema(Schema schema) {
+        errorSchema = schema;
+        return this;
+      }
+
+      public Builder putPipelineProperties(Map<String, String> properties) {
+        pipelineProperties.putAll(properties);
+        return this;
+      }
+
+      public Builder putPipelineProperty(String name, String val) {
+        pipelineProperties.put(name, val);
+        return this;
+      }
+
+      public MockPlugin build() {
+        return new MockPlugin(outputSchema, errorSchema, pipelineProperties);
       }
     }
   }

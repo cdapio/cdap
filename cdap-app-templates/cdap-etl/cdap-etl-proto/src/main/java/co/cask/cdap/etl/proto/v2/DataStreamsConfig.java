@@ -19,6 +19,7 @@ package co.cask.cdap.etl.proto.v2;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.etl.proto.Connection;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -47,9 +48,10 @@ public final class DataStreamsConfig extends ETLConfig {
                             boolean disableCheckpoints,
                             @Nullable String checkpointDir,
                             int numOfRecordsPreview,
-                            boolean stopGracefully) {
+                            boolean stopGracefully,
+                            Map<String, String> properties) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
-          numOfRecordsPreview);
+          numOfRecordsPreview, properties);
     this.batchInterval = batchInterval;
     this.isUnitTest = isUnitTest;
     this.extraJavaOpts = "";
@@ -165,7 +167,8 @@ public final class DataStreamsConfig extends ETLConfig {
     public DataStreamsConfig build() {
       return new DataStreamsConfig(stages, connections, resources, driverResources, clientResources,
                                    stageLoggingEnabled, processTimingEnabled, batchInterval, isUnitTest,
-                                   disableCheckpoints, checkpointDir, numOfRecordsPreview, stopGraceFully);
+                                   disableCheckpoints, checkpointDir, numOfRecordsPreview, stopGraceFully,
+                                   properties);
     }
   }
 }
