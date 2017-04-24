@@ -15,6 +15,8 @@
  */
 
 $path-color: #333333;
+$dropdown-box-shadow: 0 3px 15px 1px rgba(0, 0, 0, 0.3);
+$dropdown-item-height: 35px;
 
 .file-path-container {
   color: $path-color;
@@ -35,5 +37,42 @@ $path-color: #333333;
   .path-divider {
     margin-left: 5px;
     margin-right: 5px;
+  }
+
+  .collapsed-dropdown,
+  .paths {
+    display: inline-block;
+  }
+
+  .collapsed-dropdown {
+    .collapsed-dropdown-toggle > button {
+      border: none;
+      padding: 5px;
+      margin-top: -5px;
+
+      &:focus { outline: none; }
+    }
+
+    .dropdown-menu {
+      top: calc(100% - 15px);
+      line-height: $dropdown-item-height;
+      box-shadow: $dropdown-box-shadow;
+
+      .dropdown-item {
+        padding: 0;
+        height: $dropdown-item-height;
+
+        a {
+          display: inline-block;
+          width: 100%;
+          max-width: 350px;
+          padding-left: 10px;
+          padding-right: 10px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
   }
 }
