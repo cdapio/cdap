@@ -78,7 +78,7 @@ export default class WorkspaceTabs extends Component {
     MyDataPrepApi.getWorkspaceList({ namespace })
       .subscribe((res) => {
         if (!this.state.activeWorkspace && res.values.length > 0 && !this.props.singleWorkspaceMode) {
-          this.setActiveWorkspace(res.values[0]);
+          this.setActiveWorkspace(res.values[0].id);
         }
 
         let workspaceList = res.values.sort();
@@ -105,14 +105,14 @@ export default class WorkspaceTabs extends Component {
       });
   }
 
-  setActiveWorkspace(workspaceId) {
+  setActiveWorkspace(workspace) {
     DataPrepStore.dispatch({
       type: DataPrepActions.enableLoading
     });
 
-    setWorkspace(workspaceId)
+    setWorkspace(workspace.id)
       .subscribe(() => {
-        cookie.save('DATAPREP_WORKSPACE', workspaceId, { path: '/' });
+        cookie.save('DATAPREP_WORKSPACE', workspace.id, { path: '/' });
         DataPrepStore.dispatch({
           type: DataPrepActions.disableLoading
         });
@@ -181,12 +181,12 @@ export default class WorkspaceTabs extends Component {
   renderActiveWorkspace(workspace) {
     return (
       <div
-        key={workspace}
+        key={workspace.id}
         className="workspace-tab active"
         onClick={this.toggleWorkspacePropertiesModal}
       >
-        <span title={workspace}>
-          {workspace}
+        <span title={workspace.name}>
+          {workspace.name}
         </span>
         <span className="fa fa-pencil" />
         {this.renderWorkspacePropertiesModal()}
@@ -197,12 +197,12 @@ export default class WorkspaceTabs extends Component {
   renderInactiveWorkspace(workspace) {
     return (
       <div
-        key={workspace}
+        key={workspace.id}
         className="workspace-tab"
         onClick={this.setActiveWorkspace.bind(this, workspace)}
-        title={workspace}
+        title={workspace.name}
       >
-        {workspace}
+        {workspace.name}
       </div>
     );
   }
@@ -243,7 +243,7 @@ export default class WorkspaceTabs extends Component {
 
         {
           displayWorkspace.map((workspace) => {
-            return this.state.activeWorkspace === workspace ?
+            return this.state.activeWorkspace === workspace.id ?
               this.renderActiveWorkspace(workspace)
             :
               this.renderInactiveWorkspace(workspace);
