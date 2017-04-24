@@ -231,6 +231,8 @@ features:
         replacePlaceholder: New value
         replaceWith: Replace with
         title: Find and Replace
+        exactMatchLabel: Exact Match
+        ignoreCaseLabel: Ignore Case
       Parse:
         modalTitle: Parse as {parser}
         Parsers:
