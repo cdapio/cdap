@@ -486,10 +486,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         extraClassPath = logbackJarName + File.pathSeparator + extraClassPath;
       }
 
-      LOG.debug("Setting spark.driver.extraClassPath and spark.executor.extraClassPath to {}.", extraClassPath);
-      // These are system specific and shouldn't allow user to modify them
-      configs.put("spark.driver.extraClassPath", extraClassPath);
-      configs.put("spark.executor.extraClassPath", extraClassPath);
+      // Set extraClasspath config by appending user specified extra classpath
+      prependConfig(configs, "spark.driver.extraClassPath", extraClassPath, File.pathSeparator);
+      prependConfig(configs, "spark.executor.extraClassPath", extraClassPath, File.pathSeparator);
     } else {
       // Only need to set this for local mode.
       // In distributed mode, Spark will not use this but instead use the yarn container directory.
@@ -500,6 +499,19 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     SparkRuntimeUtils.setLocalizedResources(localizedResources.keySet(), configs);
 
     return configs;
+  }
+
+  /**
+   * Sets a key value pair to the given configuration map. If the key already exist, the given value will be
+   * prepended to the existing value.
+   */
+  private void prependConfig(Map<String, String> configs, String key, String prepend, String separator) {
+    String existing = configs.get(key);
+    if (existing == null) {
+      configs.put(key, prepend);
+    } else {
+      configs.put(key, prepend + separator + existing);
+    }
   }
 
   /**
