@@ -107,6 +107,7 @@ public class ETLSpark extends AbstractSpark {
     SparkConf sparkConf = new SparkConf();
     sparkConf.set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m");
     sparkConf.set("spark.executor.extraJavaOptions", "-XX:MaxPermSize=256m");
+    sparkConf.set("spark.speculation", "false");
     context.setSparkConf(sparkConf);
 
     Map<String, String> properties = context.getSpecification().getProperties();
