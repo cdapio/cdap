@@ -39,6 +39,10 @@ $height-of-image: 75px;
       &.empty {
         background: gray;
       }
+
+      .icon-svg {
+        vertical-align: inherit;
+      }
     }
     .btn.btn-primary {
       margin-top: 5px;

@@ -14,31 +14,28 @@
  * the License.
  */
 
-@import '../../styles/variables.scss';
+import React, {PropTypes} from 'react';
+import classnames from 'classnames';
+require('./IconSVG.scss');
+require('../../styles/fonts/symbol-defs.svg');
 
-.view-switch {
-  height: inherit;
-  .nav.nav-tabs {
-    .nav-item {
-      margin: 0;
-      .nav-link {
-        margin: 0;
-        border: 0;
-        border-radius: 0;
-        fill: #373a3c;
-        &.active {
-          font-weight: bold;
-          background: darkgray;
-          border: 0;
-          fill: #55595c;
-        }
-        &.active:hover {
-          border-bottom: 0;
-        }
-        &:not(.active):hover {
-          background-color: $cdap-gray;
-        }
-      }
-    }
-  }
+export default function IconSVG(props) {
+  const {name, className, ...moreProps} = props;
+  const iconClassName = classnames('icon-svg', name, className);
+  const path = `#${name}`;
+
+  return (
+    <svg
+      className={iconClassName}
+      {...moreProps}
+    >
+      <use xlinkHref={path} />
+    </svg>
+  );
 }
+
+IconSVG.propTypes = {
+  name: PropTypes.string.isRequired,
+  className: PropTypes.string,
+  onClick: PropTypes.func
+};

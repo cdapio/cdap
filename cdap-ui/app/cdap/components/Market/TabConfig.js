@@ -29,56 +29,56 @@ const TabConfig = {
     {
       id: 1,
       filter: '*',
-      icon: 'icon-all fa-fw',
+      icon: 'icon-all',
       name: T.translate('features.Market.tabs.all'),
       content: <AllTabContents />
     },
     {
       id: 3,
       filter: 'usecase',
-      icon: 'icon-usecases fa-fw',
+      icon: 'icon-usecases',
       name: T.translate('features.Market.tabs.useCases'),
       content: <UsecaseTab />
     },
     {
       id: 4,
       filter: 'pipeline',
-      icon: 'icon-pipelines fa-fw',
+      icon: 'icon-pipelines',
       name: T.translate('features.Market.tabs.pipelines'),
       content: <AllTabContents />
     },
     {
       id: 5,
       filter: 'example',
-      icon: 'icon-app fa-fw',
+      icon: 'icon-app',
       name: T.translate('features.Market.tabs.examples'),
       content: <AllTabContents />
     },
     {
       id: 7,
       filter: 'hydrator-plugin',
-      icon: 'fa fa-plug fa-fw',
+      icon: 'icon-plug',
       name: T.translate('features.Market.tabs.plugins'),
       content: <AllTabContents />
     },
     {
       id: 6,
       filter: 'datapack',
-      icon: 'icon-datapacks fa-fw',
+      icon: 'icon-datapacks',
       name: T.translate('features.Market.tabs.datapacks'),
       content: <AllTabContents />
     },
     {
       id: 9,
       filter: '3rd-party-artifact',
-      icon: 'icon-artifacts fa-fw',
+      icon: 'icon-artifacts',
       name: T.translate('features.Market.tabs.artifacts'),
       content: <AllTabContents />
     },
     {
       id: 10,
       filter: 'EDW Offloading',
-      icon: 'fa fa-database fa-fw',
+      icon: 'icon-database',
       name: T.translate('features.Market.tabs.edwOffload'),
       content: <AllTabContents />
     }

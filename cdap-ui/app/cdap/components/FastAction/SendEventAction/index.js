@@ -59,7 +59,7 @@ export default class SendEventAction extends Component {
     return (
       <span className="btn btn-secondary btn-sm">
         <FastActionButton
-          icon="fa fa-upload"
+          icon="icon-upload"
           action={this.toggleModal}
           id={tooltipID}
         />

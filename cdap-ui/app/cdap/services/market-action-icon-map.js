@@ -20,10 +20,10 @@ const iconMap = {
   create_pipeline: 'icon-pipelines',
   create_pipeline_draft: 'icon-pipelines',
   create_artifact: 'icon-artifacts',
-  informational: 'fa-info',
-  load_datapack: 'fa-upload',
-  load_app: 'fa-upload',
-  __default__: 'fa-tasks'
+  informational: 'icon-info',
+  load_datapack: 'icon-upload',
+  load_app: 'icon-upload',
+  __default__: 'icon-tasks'
 };
 
 const getIcon = (action) => {
