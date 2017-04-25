@@ -183,7 +183,7 @@ This then requires administrator access and permission.
 
 Plugin Packaging
 ----------------
-A *Plugin* is packaged as a JAR file, which contains inside the plugin classes and their dependencies.
+A *Plugin* is packaged as a JAR file, which contains the plugin classes and their dependencies.
 CDAP uses the "Export-Package" attribute in the JAR file manifest to determine
 which classes are *visible*. A *visible* class is one that can be used by another class
 that is not from the plugin JAR itself. This means the Java package which the plugin class
