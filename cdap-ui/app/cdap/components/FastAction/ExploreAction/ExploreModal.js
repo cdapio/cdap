@@ -344,7 +344,19 @@ export default class ExploreModal extends Component {
                                   "No Results"
                                 :
                                   row.columns.map(column => {
-                                    return (<td key={shortid.generate()}>{column}</td>);
+                                    let content = column;
+
+                                    if (content === null) {
+                                      content = 'null';
+                                    } else if (typeof content === 'boolean') {
+                                      content = content === true ? 'true' : 'false';
+                                    }
+
+                                    return (
+                                      <td key={shortid.generate()}>
+                                        {content}
+                                      </td>
+                                    );
                                   })
                               }
                             </tr>
