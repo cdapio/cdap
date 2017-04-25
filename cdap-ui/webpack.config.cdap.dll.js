@@ -44,9 +44,7 @@ var webpackConfig = {
       'moment',
       'react-file-download',
       'mousetrap',
-      'papaparse',
       'd3',
-      'chart.js',
       'cdap-avsc',
       'react-datetime',
       'svg4everybody'

@@ -15,11 +15,9 @@
 */
 
 var cdapdllconfig = require('./webpack.config.cdap.dll.js');
-var wranglerdllconfig = require('./webpack.config.wrangler.dll.js');
 var shareddllconfig = require('./webpack.config.shared.dll.js');
 
 module.exports = [
   cdapdllconfig,
-  wranglerdllconfig,
   shareddllconfig
 ];
