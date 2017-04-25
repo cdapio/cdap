@@ -52,6 +52,7 @@ export default function ResourceCenterEntity({className, iconClassName, title, d
           :
             (
               <button
+                id={(actionLabel + "-" + title).toLowerCase()}
                 className={classnames("btn btn-primary")}
                 onClick={onClick}
                 disabled={disabled}
