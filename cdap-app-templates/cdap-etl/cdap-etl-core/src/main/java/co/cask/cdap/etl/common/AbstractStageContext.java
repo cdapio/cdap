@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.etl.api.Arguments;
 import co.cask.cdap.etl.api.StageContext;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.common.plugin.Caller;
@@ -49,9 +50,10 @@ public abstract class AbstractStageContext implements StageContext {
   private final Schema inputSchema;
   private final Schema outputSchema;
   private final Caller caller;
+  protected final BasicArguments arguments;
 
-  public AbstractStageContext(PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer,
-                              Metrics metrics, StageInfo stageInfo) {
+  protected AbstractStageContext(PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer, Metrics metrics,
+                                 StageInfo stageInfo, BasicArguments arguments) {
     this.pluginContext = pluginContext;
     this.serviceDiscoverer = serviceDiscoverer;
     this.stageName = stageInfo.getName();
@@ -61,6 +63,7 @@ public abstract class AbstractStageContext implements StageContext {
     // all plugins except joiners have just a single input schema
     this.inputSchema = inputSchemas.isEmpty() ? null : inputSchemas.values().iterator().next();
     this.caller = NoStageLoggingCaller.wrap(Caller.DEFAULT);
+    this.arguments = arguments;
   }
 
   @Override
@@ -133,6 +136,11 @@ public abstract class AbstractStageContext implements StageContext {
   @Override
   public Schema getOutputSchema() {
     return outputSchema;
+  }
+
+  @Override
+  public Arguments getArguments() {
+    return arguments;
   }
 
   private String scopePluginId(String childPluginId) {

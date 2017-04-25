@@ -1804,6 +1804,50 @@ public class DataPipelineTest extends HydratorTestBase {
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset("outputTable"));
   }
 
+  @Test
+  public void testRuntimeArguments() throws Exception {
+    testRuntimeArgs(Engine.MAPREDUCE);
+    testRuntimeArgs(Engine.SPARK);
+  }
+
+  private void testRuntimeArgs(Engine engine) throws Exception {
+    String sourceName = "runtimeArgInput-" + engine;
+    String sinkName = "runtimeArgOutput-" + engine;
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      // 'filter' stage is configured to remove samuel, but action will set an argument that will make it filter dwayne
+      .addStage(new ETLStage("action", MockAction.getPlugin("dumy", "val", "ue", "dwayne")))
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("filter", StringValueFilterTransform.getPlugin("name", "samuel")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
+      .addConnection("action", "source")
+      .addConnection("source", "filter")
+      .addConnection("filter", "sink")
+      .setEngine(engine)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("RuntimeArgApp-" + engine);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    // there should be only two programs - one workflow and one mapreduce/spark
+    Schema schema = Schema.recordOf("testRecord", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordDwayne = StructuredRecord.builder(schema).set("name", "dwayne").build();
+
+    // write one record to each source
+    DataSetManager<Table> inputManager = getDataset(sourceName);
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordDwayne));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    // check sink
+    DataSetManager<Table> sinkManager = getDataset(sinkName);
+    Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+  }
 
   @Test
   public void testTableLookup() throws Exception {

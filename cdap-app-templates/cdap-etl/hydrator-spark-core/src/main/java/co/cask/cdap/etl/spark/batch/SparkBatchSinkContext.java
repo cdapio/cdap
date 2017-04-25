@@ -39,18 +39,17 @@ public class SparkBatchSinkContext extends AbstractSparkBatchContext implements 
   private final boolean isPreviewEnabled;
 
   public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, SparkClientContext sparkContext,
-                               LookupProvider lookupProvider, StageInfo stageInfo, boolean isPreviewEnabled) {
+                               LookupProvider lookupProvider, StageInfo stageInfo) {
     super(sparkContext, lookupProvider, stageInfo);
     this.sinkFactory = sinkFactory;
-    this.isPreviewEnabled = isPreviewEnabled;
+    this.isPreviewEnabled = sparkContext.getDataTracer(stageInfo.getName()).isEnabled();
   }
 
   public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, JavaSparkExecutionContext sec,
-                               DatasetContext datasetContext, long logicalStartTime, StageInfo stageInfo,
-                               boolean isPreviewEnabled) {
+                               DatasetContext datasetContext, long logicalStartTime, StageInfo stageInfo) {
     super(sec, datasetContext, logicalStartTime, stageInfo);
     this.sinkFactory = sinkFactory;
-    this.isPreviewEnabled = isPreviewEnabled;
+    this.isPreviewEnabled = sec.getDataTracer(stageInfo.getName()).isEnabled();
   }
 
   @Override
