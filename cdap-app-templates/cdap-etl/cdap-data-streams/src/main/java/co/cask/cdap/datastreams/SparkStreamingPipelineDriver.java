@@ -149,6 +149,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
       }
     };
 
-    return JavaStreamingContext.getOrCreate(checkpointDir, contextFactory);
+    return checkpointDir == null ? contextFactory.create() :
+      JavaStreamingContext.getOrCreate(checkpointDir, contextFactory);
   }
 }
