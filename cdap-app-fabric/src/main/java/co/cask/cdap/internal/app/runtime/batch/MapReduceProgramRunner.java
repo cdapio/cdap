@@ -199,7 +199,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       final ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
 
-      LOG.info("Starting MapReduce Job: {}", context.toString());
+      LOG.debug("Starting MapReduce Job: {}", context);
       // if security is not enabled, start the job as the user we're using to access hdfs with.
       // if this is not done, the mapred job will be launched as the user that runs the program
       // runner, which is probably the yarn user. This may cause permissions issues if the program
