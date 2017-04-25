@@ -315,7 +315,9 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
       if (pluginArchive == null) {
         return null;
       }
-      return new PluginInstantiator(contextConfig.getCConf(), programClassLoader, new File(pluginArchive));
+      // temporary hack - shoult not pass null
+      return new PluginInstantiator(contextConfig.getCConf(), programClassLoader, new File(pluginArchive),
+                                    null);
     }
   }
 

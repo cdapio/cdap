@@ -32,6 +32,7 @@ import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.messaging.MessagingService;
@@ -61,13 +62,14 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
+  private final ArtifactRepository artifactRepository;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
                               SecureStore secureStore, SecureStoreManager secureStoreManager,
-                              MessagingService messagingService) {
+                              MessagingService messagingService, ArtifactRepository artifactRepository) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -77,6 +79,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
+    this.artifactRepository = artifactRepository;
   }
 
   @Override
@@ -107,7 +110,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
       ((ProgramContextAware) datasetFramework).initContext(programId.run(runId));
     }
 
-    final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
+    final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader(),
+                                                                           artifactRepository);
     try {
       ServiceHttpServer component = new ServiceHttpServer(host, program, options, cConf, spec,
                                                           instanceId, instanceCount, serviceAnnouncer,

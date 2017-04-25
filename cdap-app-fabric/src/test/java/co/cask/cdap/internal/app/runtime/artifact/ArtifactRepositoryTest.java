@@ -290,7 +290,8 @@ public class ArtifactRepositoryTest {
     copyArtifacts(pluginDir, plugins);
 
     // Instantiate the plugins and execute them
-    try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
+    try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir,
+                                                                  artifactRepository)) {
       for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> entry : plugins.entrySet()) {
         for (PluginClass pluginClass : entry.getValue()) {
           Plugin pluginInfo = new Plugin(entry.getKey().getArtifactId(), pluginClass,
@@ -369,7 +370,8 @@ public class ArtifactRepositoryTest {
       .build();
 
     // Instantiate the plugins and execute them
-    try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
+    try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir,
+                                                                  artifactRepository)) {
       for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> entry : plugins.entrySet()) {
         for (PluginClass pluginClass : entry.getValue()) {
           Plugin pluginInfo = new Plugin(entry.getKey().getArtifactId(), pluginClass,
@@ -447,7 +449,8 @@ public class ArtifactRepositoryTest {
                new File(pluginDir, Artifacts.getFileName(plugin.getKey().getArtifactId())));
 
     // Load the Plugin class from the classLoader.
-    try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
+    try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir,
+                                                                  artifactRepository)) {
       ClassLoader pluginClassLoader = instantiator.getArtifactClassLoader(plugin.getKey().getArtifactId());
       Class<?> pluginClass = pluginClassLoader.loadClass(TestPlugin2.class.getName());
 

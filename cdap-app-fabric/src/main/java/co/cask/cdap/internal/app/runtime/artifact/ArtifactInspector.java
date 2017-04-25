@@ -93,11 +93,14 @@ final class ArtifactInspector {
   private final CConfiguration cConf;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final ReflectionSchemaGenerator schemaGenerator;
+  private final ArtifactRepository artifactRepository;
 
-  ArtifactInspector(CConfiguration cConf, ArtifactClassLoaderFactory artifactClassLoaderFactory) {
+  ArtifactInspector(CConfiguration cConf, ArtifactClassLoaderFactory artifactClassLoaderFactory,
+                    ArtifactRepository artifactRepository) {
     this.cConf = cConf;
     this.artifactClassLoaderFactory = artifactClassLoaderFactory;
     this.schemaGenerator = new ReflectionSchemaGenerator(false);
+    this.artifactRepository = artifactRepository;
   }
 
   /**
@@ -131,7 +134,7 @@ final class ArtifactInspector {
 
         try (PluginInstantiator pluginInstantiator =
                new PluginInstantiator(cConf, parentClassLoader == null ? artifactClassLoader : parentClassLoader,
-                                      Files.createTempDirectory(stageDir, "plugins-").toFile())) {
+                                      Files.createTempDirectory(stageDir, "plugins-").toFile(),  artifactRepository)) {
           pluginInstantiator.addArtifact(artifactLocation, artifactId.toArtifactId());
           inspectPlugins(builder, artifactFile, artifactId.toArtifactId(), pluginInstantiator);
         }

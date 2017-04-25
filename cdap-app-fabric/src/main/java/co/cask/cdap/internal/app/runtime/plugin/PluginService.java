@@ -190,7 +190,7 @@ public class PluginService extends AbstractIdleService {
 
     private void addInstantiatorAndAddArtifact(ArtifactDetail artifactDetail,
                                                ArtifactId artifactId) throws IOException {
-      PluginInstantiator instantiator = new PluginInstantiator(cConf, parentClassLoader, pluginDir);
+      PluginInstantiator instantiator = new PluginInstantiator(cConf, parentClassLoader, pluginDir, artifactRepository);
       instantiatorInfoMap.put(artifactDetail.getDescriptor(),
                               new InstantiatorInfo(artifactDetail.getDescriptor().getLocation(), instantiator));
       instantiator.addArtifact(artifactDetail.getDescriptor().getLocation(), artifactId);

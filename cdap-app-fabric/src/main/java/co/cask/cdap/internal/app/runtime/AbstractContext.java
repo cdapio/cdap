@@ -408,6 +408,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     return pluginContext.newPluginInstance(pluginId);
   }
 
+  @Nullable
+  @Override
+  public <T> T newPluginInstance(String pluginType, String pluginName, PluginProperties properties) {
+    return pluginContext.newPluginInstance(pluginType, pluginName, properties);
+  }
+
   @Override
   public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
     return pluginContext.newPluginInstance(pluginId, evaluator);

@@ -32,6 +32,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.lang.FieldVisitor;
 import co.cask.cdap.internal.lang.Fields;
@@ -95,8 +96,10 @@ public class PluginInstantiator implements Closeable {
   private final File tmpDir;
   private final File pluginDir;
   private final ClassLoader parentClassLoader;
+  private final ArtifactRepository artifactRepository;
 
-  public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader, File pluginDir) {
+  public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader, File pluginDir,
+                            ArtifactRepository artifactRepository) {
     this.instantiatorFactory = new InstantiatorFactory(false);
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
@@ -107,6 +110,7 @@ public class PluginInstantiator implements Closeable {
       .removalListener(new ClassLoaderRemovalListener())
       .build(new ClassLoaderCacheLoader());
     this.parentClassLoader = PluginClassLoader.createParent(parentClassLoader);
+    this.artifactRepository = artifactRepository;
   }
 
   /**
@@ -340,6 +344,10 @@ public class PluginInstantiator implements Closeable {
       // It's the cleanup step. Nothing much can be done if cleanup failed.
       LOG.warn("Failed to delete directory {}", tmpDir);
     }
+  }
+
+  public <T> T newInstance(String pluginType, String pluginName, PluginProperties properties) {
+    return null;
   }
 
   /**

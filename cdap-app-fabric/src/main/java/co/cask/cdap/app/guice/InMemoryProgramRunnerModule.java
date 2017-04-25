@@ -26,6 +26,7 @@ import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;

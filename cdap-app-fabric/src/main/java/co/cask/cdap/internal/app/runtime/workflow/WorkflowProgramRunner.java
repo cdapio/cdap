@@ -39,6 +39,7 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
@@ -82,6 +83,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
   private final CConfiguration cConf;
+  private final ArtifactRepository artifactRepository;
 
   @Inject
   public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory, ServiceAnnouncer serviceAnnouncer,
@@ -89,7 +91,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
                                RuntimeStore runtimeStore, CConfiguration cConf, SecureStore secureStore,
-                               SecureStoreManager secureStoreManager, MessagingService messagingService) {
+                               SecureStoreManager secureStoreManager, MessagingService messagingService,
+                               ArtifactRepository artifactRepository) {
     super(cConf);
     this.programRunnerFactory = programRunnerFactory;
     this.serviceAnnouncer = serviceAnnouncer;
@@ -103,6 +106,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
     this.cConf = cConf;
+    this.artifactRepository = artifactRepository;
   }
 
   @Override
@@ -129,7 +133,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     // List of all Closeable resources that needs to be cleanup
     final List<Closeable> closeables = new ArrayList<>();
     try {
-      PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
+      PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader(),
+                                                                       artifactRepository);
       if (pluginInstantiator != null) {
         closeables.add(pluginInstantiator);
       }

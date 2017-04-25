@@ -102,6 +102,19 @@ public class DefaultPluginContext implements PluginContext {
     }
   }
 
+  @Nullable
+  @Override
+  public <T> T newPluginInstance(String pluginType, String pluginName, PluginProperties properties) {
+      return pluginInstantiator.newInstance(pluginType, pluginName, properties);
+//    } catch (ClassNotFoundException e) {
+//      // Shouldn't happen, unless there is bug in file localization
+//      throw new IllegalArgumentException("Plugin class not found", e);
+//    } catch (IOException e) {
+//      // This is fatal, since jar cannot be expanded.
+//      throw Throwables.propagate(e);
+//    }
+  }
+
   private Plugin getPlugin(String pluginId) {
     Plugin plugin = plugins.get(pluginId);
     Preconditions.checkArgument(plugin != null, "Plugin with id %s does not exist in program %s of application %s.",

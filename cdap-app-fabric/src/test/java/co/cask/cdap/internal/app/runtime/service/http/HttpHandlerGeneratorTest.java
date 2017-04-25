@@ -83,6 +83,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -742,6 +743,12 @@ public class HttpHandlerGeneratorTest {
 
     @Override
     public <T> T newPluginInstance(String pluginId) throws InstantiationException {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public <T> T newPluginInstance(String pluginType, String pluginName, PluginProperties properties) {
       return null;
     }
 

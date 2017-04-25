@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 
 import java.io.File;
@@ -44,11 +45,13 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
    * @return A new {@link PluginInstantiator} or {@code null} if no plugin is available.
    */
   @Nullable
-  protected PluginInstantiator createPluginInstantiator(ProgramOptions options, ClassLoader classLoader) {
+  protected PluginInstantiator createPluginInstantiator(ProgramOptions options, ClassLoader classLoader,
+                                                        ArtifactRepository artifactRepository) {
     if (!options.getArguments().hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
       return null;
     }
     return new PluginInstantiator(
-      cConf, classLoader, new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR)));
+      cConf, classLoader, new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR)),
+      artifactRepository);
   }
 }

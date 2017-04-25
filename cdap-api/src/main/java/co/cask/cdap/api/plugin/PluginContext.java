@@ -20,6 +20,8 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
 
+import javax.annotation.Nullable;
+
 /**
  * Provides access to plugin context when a program is executing.
  */
@@ -83,4 +85,19 @@ public interface PluginContext {
    */
   <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException,
     InvalidMacroException;
+
+  /**
+   * Adds a Plugin usage to the Application and create a new instance.
+   * The Plugin will be accessible at execution time via the {@link PluginContext}.
+   *
+   * @param pluginType plugin type name
+   * @param pluginName plugin name
+   * @param properties properties for the plugin. The same set of properties will be used to instantiate the plugin
+   *                   instance at execution time
+   * @param <T> type of the plugin class
+   * @return A new instance of the plugin class or {@code null} if no plugin was found
+   * @throws IllegalArgumentException if the pluginId has been used already
+   */
+  @Nullable
+  <T> T newPluginInstance(String pluginType, String pluginName, PluginProperties properties);
 }

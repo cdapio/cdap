@@ -260,6 +260,12 @@ final class BasicSparkClientContext implements SparkClientContext {
     return sparkRuntimeContext.newPluginInstance(pluginId);
   }
 
+  @Nullable
+  @Override
+  public <T> T newPluginInstance(String pluginType, String pluginName, PluginProperties properties) {
+    return sparkRuntimeContext.newPluginInstance(pluginType, pluginName, properties);
+  }
+
   @Override
   public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
     return sparkRuntimeContext.newPluginInstance(pluginId, evaluator);

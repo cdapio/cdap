@@ -39,6 +39,7 @@ import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ProgramDiscoveryExploreClient;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.store.remote.RemoteLineageWriter;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeUsageRegistry;
@@ -186,6 +187,8 @@ public class DistributedProgramRunnableModule {
 
           // bind explore client to ProgramDiscoveryExploreClient which is aware of the programId
           bind(ExploreClient.class).to(ProgramDiscoveryExploreClient.class).in(Scopes.SINGLETON);
+
+          bind(ArtifactStore.class).in(Scopes.SINGLETON);
         }
       }
     );

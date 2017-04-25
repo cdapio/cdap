@@ -161,6 +161,11 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return delegate.newPluginInstance(pluginId);
   }
+  @Nullable
+  @Override
+  public <T> T newPluginInstance(String pluginType, String pluginName, PluginProperties properties) {
+    return delegate.newPluginInstance(pluginType, pluginName, properties);
+  }
 
   @Override
   public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {

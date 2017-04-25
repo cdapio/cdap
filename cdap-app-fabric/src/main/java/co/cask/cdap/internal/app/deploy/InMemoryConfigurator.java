@@ -144,7 +144,8 @@ public final class InMemoryConfigurator implements Configurator {
 
     File tempDir = DirUtils.createTempDir(baseUnpackDir);
     try (
-      PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, app.getClass().getClassLoader(), tempDir)
+      PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, app.getClass().getClassLoader(), tempDir,
+                                                                     artifactRepository)
     ) {
       configurer = new DefaultAppConfigurer(appNamespace, artifactId, app,
                                             configString, artifactRepository, pluginInstantiator);

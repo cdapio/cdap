@@ -35,6 +35,7 @@ import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
@@ -65,13 +66,14 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
+  private final ArtifactRepository artifactRepository;
 
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                              TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
                              SecureStore secureStore, SecureStoreManager secureStoreManager,
-                             MessagingService messagingService) {
+                             MessagingService messagingService, ArtifactRepository artifactRepository) {
     super(cConf);
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
@@ -82,6 +84,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
+    this.artifactRepository = artifactRepository;
   }
 
   @Override
@@ -120,7 +123,8 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
       ((ProgramContextAware) datasetFramework).initContext(programId.run(runId));
     }
 
-    final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
+    final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader(),
+                                                                           artifactRepository);
     try {
       BasicWorkerContext context = new BasicWorkerContext(newWorkerSpec, program, options,
                                                           cConf, instanceId, instanceCount,

@@ -37,6 +37,7 @@ import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -183,7 +184,8 @@ public final class SparkRuntimeContextProvider {
         ((ProgramContextAware) programDatasetFramework).initContext(programRunId);
       }
 
-      PluginInstantiator pluginInstantiator = createPluginInstantiator(cConf, contextConfig, program.getClassLoader());
+      PluginInstantiator pluginInstantiator = createPluginInstantiator(cConf, contextConfig, program.getClassLoader(),
+                                                                       injector.getInstance(ArtifactRepository.class));
 
       // Create the context object
       sparkRuntimeContext = new SparkRuntimeContext(
@@ -255,12 +257,13 @@ public final class SparkRuntimeContextProvider {
   @Nullable
   private static PluginInstantiator createPluginInstantiator(CConfiguration cConf,
                                                              SparkRuntimeContextConfig contextConfig,
-                                                             ClassLoader parentClassLoader) {
+                                                             ClassLoader parentClassLoader,
+                                                             ArtifactRepository artifactRepository) {
     String pluginArchive = contextConfig.getPluginArchive();
     if (pluginArchive == null) {
       return null;
     }
-    return new PluginInstantiator(cConf, parentClassLoader, new File(pluginArchive));
+    return new PluginInstantiator(cConf, parentClassLoader, new File(pluginArchive), artifactRepository);
   }
 
   private static Injector createInjector(CConfiguration cConf, Configuration hConf,

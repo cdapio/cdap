@@ -24,6 +24,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import javax.annotation.Nullable;
 
 /**
  * A {@link Externalizable} implementation of {@link PluginContext} used in Spark program execution.
@@ -61,6 +62,12 @@ public final class SparkPluginContext implements PluginContext, Externalizable {
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return delegate.newPluginInstance(pluginId);
+  }
+
+  @Nullable
+  @Override
+  public <T> T newPluginInstance(String pluginType, String pluginName, PluginProperties properties) {
+    return delegate.newPluginInstance(pluginType, pluginName, properties);
   }
 
   @Override

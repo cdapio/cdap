@@ -44,6 +44,7 @@ import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -101,6 +102,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final MessagingService messagingService;
+  private final ArtifactRepository artifactRepository;
 
   @Inject
   public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
@@ -113,7 +115,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 SecureStore secureStore, SecureStoreManager secureStoreManager,
                                 AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext,
-                                MessagingService messagingService) {
+                                MessagingService messagingService, ArtifactRepository artifactRepository) {
     super(cConf);
     this.injector = injector;
     this.cConf = cConf;
@@ -130,6 +132,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.messagingService = messagingService;
+    this.artifactRepository = artifactRepository;
   }
 
   @Override
@@ -170,7 +173,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     // List of all Closeable resources that needs to be cleanup
     List<Closeable> closeables = new ArrayList<>();
     try {
-      PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
+      PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader(),
+                                                                       artifactRepository);
       if (pluginInstantiator != null) {
         closeables.add(pluginInstantiator);
       }
