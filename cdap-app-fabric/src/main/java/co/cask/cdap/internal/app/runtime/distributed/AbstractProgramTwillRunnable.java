@@ -321,7 +321,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     try {
       state.get();
-      LOG.info("Program {} stopped.", name);
+      LOG.debug("Program {} stopped.", name);
     } catch (InterruptedException e) {
       LOG.warn("Program {} interrupted.", name, e);
     } catch (ExecutionException e) {
@@ -341,7 +341,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   @Override
   public void destroy() {
-    LOG.info("Releasing resources: {}", name);
+    LOG.debug("Releasing resources: {}", name);
     try {
       if (program != null) {
         Closeables.closeQuietly(program);
@@ -351,7 +351,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       Futures.getUnchecked(
         Services.chainStop(services.get(0),
                            services.subList(1, services.size()).toArray(new Service[services.size() - 1])));
-      LOG.info("Runnable stopped: {}", name);
+      LOG.debug("Runnable stopped: {}", name);
     } finally {
       if (logAppenderInitializer != null) {
         logAppenderInitializer.close();

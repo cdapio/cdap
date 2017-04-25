@@ -39,7 +39,7 @@ public class LocalClientProtocolProvider extends ClientProtocolProvider {
   public ClientProtocol create(Configuration conf) throws IOException {
     String framework =
       conf.get(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
-    LOG.info("Using framework: " + framework);
+    LOG.debug("Using framework: " + framework);
     if (!MRConfig.LOCAL_FRAMEWORK_NAME.equals(framework)) {
       return null;
     }
