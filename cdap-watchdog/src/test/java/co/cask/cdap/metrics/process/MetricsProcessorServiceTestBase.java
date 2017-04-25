@@ -76,12 +76,13 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
   protected final Map<String, Long> expected = new HashMap<>();
   private final Encoder encoder = new BinaryEncoder(encoderOutputStream);
 
-  protected void publishMessagingMetrics(int metricIndex, Map<String, String> metricsContext,
+  protected void publishMessagingMetrics(int metricIndex, long startTimeSecs, Map<String, String> metricsContext,
                                          Map<String, Long> expected, String expectedMetricPrefix,
                                          MetricType metricType) {
 
     try {
-      getMetricValuesAddToExpected(metricIndex, metricsContext, expected, expectedMetricPrefix, metricType);
+      getMetricValuesAddToExpected(metricIndex, startTimeSecs,
+                                   metricsContext, expected, expectedMetricPrefix, metricType);
       messagingService.publish(
         StoreRequestBuilder.of(NamespaceId.SYSTEM.topic(TOPIC_PREFIX + (metricIndex % PARTITION_SIZE)))
           .addPayloads(encoderOutputStream.toByteArray()).build());
@@ -99,7 +100,7 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
    *
    * @param expectedMetricPrefix The prefix added to metric names by {@link MetricStore}
    */
-  protected MetricValues getMetricValuesAddToExpected(int i, Map<String, String> metricsContext,
+  protected MetricValues getMetricValuesAddToExpected(int i, long startTimeSecs, Map<String, String> metricsContext,
                                                       Map<String, Long> expected, String expectedMetricPrefix,
                                                       MetricType metricType)
     throws TopicNotFoundException, IOException {
@@ -107,7 +108,7 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
     if (MetricType.GAUGE.equals(metricType)) {
       String metricName = GAUGE_METRIC_NAME_PREFIX + i;
       metric =
-        new MetricValues(metricsContext, metricName, i, i, metricType);
+        new MetricValues(metricsContext, metricName, startTimeSecs, i, metricType);
       expected.put(expectedMetricPrefix + metricName, (long) i);
     } else {
       metric =

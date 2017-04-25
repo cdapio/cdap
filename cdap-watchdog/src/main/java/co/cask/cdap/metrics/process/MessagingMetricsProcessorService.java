@@ -216,9 +216,13 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
       }
     }
     // Persist metricsFromAllTopics and messageId's after all ProcessMetricsThread's complete.
+    // No need to make a copy of metricsFromAllTopics and topicMessageIds because no thread is writing to them
     if (!metricsFromAllTopics.isEmpty()) {
       persistMetricsMessageIds(metricsFromAllTopics, topicMessageIds);
     }
+    // Persist topicMessageIds even when metricsFromAllTopics is empty, because topicMessageIds can be updated after
+    // metricsFromAllTopics is persisted
+    persistLastMessageIds(topicMessageIds);
   }
 
   @Override
@@ -253,17 +257,31 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
       metricsProcessedCount += metricValues.size();
       PROGRESS_LOG.debug("{} metrics metrics persisted. Last metric metric's timestamp: {}. " +
                            "Metrics process delay: {}ms", metricsProcessedCount, lastMetricTime, delay);
-      try {
-        // messageIds can be empty if the current thread fetches nothing while other threads keep fetching new metrics
-        // and haven't updated messageId's of the corresponding topics
-        if (!messageIds.isEmpty()) {
-          metaTable.saveMessageIds(messageIds);
-        }
-      } catch (Exception e) {
-        LOG.error("Failed to persist messageId's of consumed messages.", e);
-      }
+      persistLastMessageIds(messageIds);
     } catch (Exception e) {
       LOG.error("Failed to persist metrics.", e);
+    }
+  }
+
+  /**
+   * Persist messageId's of the last persisted metrics of each topic into metrics meta table
+   *
+   * @param messageIds   a map with each key {@link TopicIdMetaKey} representing a topic and messageId's
+   *                     of the last persisted metric of the topic
+   */
+  private void persistLastMessageIds(Map<TopicIdMetaKey, byte[]> messageIds) {
+    try {
+      // messageIds can be empty if the current thread fetches nothing while other threads keep fetching new metrics
+      // and haven't updated messageId's of the corresponding topics
+      if (!messageIds.isEmpty()) {
+        metaTable.saveMessageIds(messageIds);
+        for (Map.Entry<TopicIdMetaKey, byte[]> entry : messageIds.entrySet()) {
+          LOG.info("Persist {} in topic {}", Bytes.toStringBinary(entry.getValue()),
+                   entry.getKey().getTopicId().getTopic());
+        }
+      }
+    } catch (Exception e) {
+      LOG.error("Failed to persist messageId's of consumed messages.", e);
     }
   }
 
@@ -330,7 +348,9 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
             try {
               payloadInput.reset(input.getPayload());
               MetricValues metricValues = metricReader.read(decoder, metricSchema);
-              metricsFromAllTopics.put(metricValues);
+              if (!metricsFromAllTopics.offer(metricValues)) {
+                break;
+              }
               lastMetricTimeSecs = metricValues.getTimestamp();
               currentMessageId = input.getId();
               if (LOG.isTraceEnabled()) {

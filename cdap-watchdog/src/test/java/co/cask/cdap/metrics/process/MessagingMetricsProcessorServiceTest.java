@@ -65,16 +65,19 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
       partitions.add(i);
     }
 
+    long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+
     for (int iteration = 0; iteration < 50; iteration++) {
+      System.out.println("Iteration:" + iteration);
       // First publish all metrics before MessagingMetricsProcessorService starts, so that fetchers of different topics
       // will fetch metrics concurrently.
       for (int i = 0; i < 50; i++) {
         // TOPIC_PREFIX + (i % PARTITION_SIZE) decides which topic the metric is published to
-        publishMessagingMetrics(i, METRICS_CONTEXT, expected, "", MetricType.COUNTER);
+        publishMessagingMetrics(i, startTime, METRICS_CONTEXT, expected, "", MetricType.COUNTER);
       }
       for (int i = 50; i < 100; i++) {
         // TOPIC_PREFIX + (i % PARTITION_SIZE) decides which topic the metric is published to
-        publishMessagingMetrics(i, METRICS_CONTEXT, expected, "", MetricType.GAUGE);
+        publishMessagingMetrics(i, startTime, METRICS_CONTEXT, expected, "", MetricType.GAUGE);
       }
 
       final MockMetricStore metricStore = new MockMetricStore();
