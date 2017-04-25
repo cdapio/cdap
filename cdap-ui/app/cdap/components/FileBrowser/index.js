@@ -24,6 +24,7 @@ import {Link} from 'react-router';
 import FilePath from 'components/FileBrowser/FilePath';
 import {convertBytesToHumanReadable, HUMANREADABLESTORAGE_NODECIMAL} from 'services/helpers';
 import T from 'i18n-react';
+import orderBy from 'lodash/orderBy';
 
 require('./FileBrowser.scss');
 
@@ -40,7 +41,9 @@ export default class FileBrowser extends Component {
       statePath: this.props.pathname,
       error: null,
       loading: true,
-      search: ''
+      search: '',
+      sort: 'name',
+      sortOrder: 'asc'
     };
 
     this.handleSearch = this.handleSearch.bind(this);
@@ -96,8 +99,13 @@ export default class FileBrowser extends Component {
     return contents.map((content) => {
       content.uniqueId = shortid.generate();
       content['last-modified'] = moment(content['last-modified']).format('MM/DD/YY HH:mm');
-      content.size = convertBytesToHumanReadable(content.size, HUMANREADABLESTORAGE_NODECIMAL);
+      content.displaySize = convertBytesToHumanReadable(content.size, HUMANREADABLESTORAGE_NODECIMAL, true);
+
+      if (content.directory) {
+        content.type = T.translate(`${PREFIX}.directory`);
+      }
       content.type = content.type === 'UNKNOWN' ? '--' : content.type;
+
       return content;
     });
   }
@@ -106,10 +114,20 @@ export default class FileBrowser extends Component {
     this.setState({search: e.target.value});
   }
 
-  renderRow(row) {
-    const directoryText = T.translate(`${PREFIX}.directory`);
-    let directoryDisplay = row.directory ? directoryText : row.type;
+  orderBy(sort) {
+    if (sort !== this.state.sort) {
+      this.setState({
+        sort,
+        sortOrder: 'asc'
+      });
+    } else {
+      this.setState({
+        sortOrder: this.state.sortOrder === 'asc' ? 'desc' : 'asc'
+      });
+    }
+  }
 
+  renderRow(row) {
     return (
       <div
         key={row.uniqueId}
@@ -125,13 +143,13 @@ export default class FileBrowser extends Component {
           <span title={row.name}>{row.name}</span>
         </div>
         <div className="col-xs-2">
-          <span title={directoryDisplay}>
-            {directoryDisplay}
+          <span title={row.type}>
+            {row.type}
           </span>
         </div>
         <div className="col-xs-1">
-          <span title={row.size}>
-            {row.size}
+          <span title={row.displaySize}>
+            {row.displaySize}
           </span>
         </div>
         <div className="col-xs-2">
@@ -219,38 +237,71 @@ export default class FileBrowser extends Component {
 
         return contentName.indexOf(searchText) !== -1;
       });
+
+      if (displayContent.length === 0) {
+        return (
+          <div className="empty-container">
+            <br />
+            <h4 className="text-xs-center">
+              {T.translate(`${PREFIX}.emptySearch`, { searchTerm: this.state.search })}
+            </h4>
+          </div>
+        );
+      }
     }
+
+    displayContent = orderBy(displayContent, [(content) => {
+      let sortedItem = content[this.state.sort];
+      if (typeof sortedItem !== 'string') {
+        return sortedItem;
+
+      }
+      return sortedItem.toLowerCase();
+    }], [this.state.sortOrder]);
+
+    const TABLE_COLUMNS_PROPERTIES = {
+      name: 'col-xs-3',
+      type: 'col-xs-2',
+      size: 'col-xs-1',
+      'last-modified': 'col-xs-2',
+      owner: 'col-xs-1',
+      group: 'col-xs-1',
+      permission: 'col-xs-2'
+    };
+
+    const COLUMN_HEADERS = Object.keys(TABLE_COLUMNS_PROPERTIES);
 
     return (
       <div className="directory-content-table">
         <div className="content-header row">
-          <div className="col-xs-3">
-            {T.translate(`${PREFIX}.Table.name`)}
-          </div>
+          {
+            COLUMN_HEADERS.map((head) => {
+              return (
+                <div
+                  key={head}
+                  className={TABLE_COLUMNS_PROPERTIES[head]}
+                >
+                  <span
+                    onClick={this.orderBy.bind(this, head)}
+                  >
+                    {T.translate(`${PREFIX}.Table.${head}`)}
 
-          <div className="col-xs-2">
-            {T.translate(`${PREFIX}.Table.type`)}
-          </div>
-
-          <div className="col-xs-1">
-            {T.translate(`${PREFIX}.Table.size`)}
-          </div>
-
-          <div className="col-xs-2">
-            {T.translate(`${PREFIX}.Table.lastModified`)}
-          </div>
-
-          <div className="col-xs-1">
-            {T.translate(`${PREFIX}.Table.owner`)}
-          </div>
-
-          <div className="col-xs-1">
-            {T.translate(`${PREFIX}.Table.group`)}
-          </div>
-
-          <div className="col-xs-2">
-            {T.translate(`${PREFIX}.Table.permission`)}
-          </div>
+                    {
+                      this.state.sort !== head ? null :
+                      (
+                        <span
+                          className={classnames('fa sort-caret', {
+                            'fa-caret-down': this.state.sortOrder === 'asc',
+                            'fa-caret-up': this.state.sortOrder === 'desc'
+                          })}
+                        />
+                      )
+                    }
+                  </span>
+                </div>
+              );
+            })
+          }
         </div>
 
         <div className="content-body clearfix">
@@ -260,7 +311,6 @@ export default class FileBrowser extends Component {
             })
           }
         </div>
-
       </div>
     );
   }

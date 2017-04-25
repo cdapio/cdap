@@ -339,9 +339,10 @@ features:
 
   FileBrowser:
     directory: Directory
+    emptySearch: "There is no file or directory matching \"{searchTerm}\""
     Table:
       group: Group
-      lastModified: Last Modified
+      last-modified: Last Modified
       name: Name
       owner: Owner
       permission: Permission
