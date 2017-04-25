@@ -362,6 +362,7 @@ public class DataStreamsTest extends HydratorTestBase {
       .addConnection("source2", "agg2")
       .addConnection("agg1", "sink1")
       .addConnection("agg2", "sink2")
+      .disableCheckpoints()
       .build();
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, pipelineConfig);
