@@ -90,7 +90,7 @@ public class SparkCredentialsUpdater extends AbstractIdleService implements Runn
     scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("credentials-updater"));
     scheduler.submit(this).get();
 
-    LOG.info("Credentials updater started");
+    LOG.debug("Credentials updater started");
   }
 
   @Override
@@ -100,7 +100,7 @@ public class SparkCredentialsUpdater extends AbstractIdleService implements Runn
       executor.shutdownNow();
     }
 
-    LOG.info("Credentials updater stopped");
+    LOG.debug("Credentials updater stopped");
   }
 
   @Override
@@ -127,7 +127,7 @@ public class SparkCredentialsUpdater extends AbstractIdleService implements Runn
         throw new IOException("Failed to rename from " + tempFile + " to " + credentialsFile);
       }
 
-      LOG.info("Credentials written to {}", credentialsFile);
+      LOG.debug("Credentials written to {}", credentialsFile);
 
       // Schedule the next update.
       // Use the same logic as the Spark executor to calculate the update time.

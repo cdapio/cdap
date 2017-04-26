@@ -46,6 +46,8 @@
   <logger name="io.netty.util.internal" level="WARN"/>
   <logger name="co.cask.cdap.operations.OperationalStats" level="ERROR"/>
   <logger name="co.cask.cdap.extension.AbstractExtensionLoader" level="ERROR"/>
+  <logger name="akka" level="WARN"/>
+  <logger name="Remoting" level="WARN"/>
 
   <appender name="Rolling" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>logs/cdap.log</file>

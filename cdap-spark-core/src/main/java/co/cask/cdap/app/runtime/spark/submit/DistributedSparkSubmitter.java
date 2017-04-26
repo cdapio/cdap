@@ -67,6 +67,9 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
     config.put("spark.yarn.appMasterEnv.CDAP_LOG_DIR",  ApplicationConstants.LOG_DIR_EXPANSION_VAR);
     config.put("spark.executorEnv.CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
 
+    config.put("spark.yarn.security.tokens.hbase.enabled", "false");
+    config.put("spark.yarn.security.tokens.hive.enabled", "false");
+
     return config;
   }
 
