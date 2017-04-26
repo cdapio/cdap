@@ -165,6 +165,8 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     Job job = context.getHadoopJob();
     Configuration hConf = job.getConfiguration();
+    hConf.setBoolean("mapreduce.map.speculative", false);
+    hConf.setBoolean("mapreduce.reduce.speculative", false);
 
     // plugin name -> runtime args for that plugin
     Map<String, Map<String, String>> runtimeArgs = new HashMap<>();
