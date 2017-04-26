@@ -108,12 +108,12 @@ export default class FileDataUpload extends Component {
                     (
                       <div>
                         <h4>
-                          {T.translate('features.Wrangler.InputScreen.HelperText.click')}
+                          {T.translate('features.FileDataUpload.click')}
                           <span className="fa fa-upload" />
-                          {T.translate('features.Wrangler.InputScreen.HelperText.upload')}
+                          {T.translate('features.FileDataUpload.upload')}
                         </h4>
-                        <h5>{T.translate('features.Wrangler.InputScreen.HelperText.or')}</h5>
-                        <h4>{T.translate('features.Wrangler.InputScreen.HelperText.paste')}</h4>
+                        <h5>{T.translate('features.FileDataUpload.or')}</h5>
+                        <h4>{T.translate('features.FileDataUpload.paste')}</h4>
                       </div>
                     )
                   }

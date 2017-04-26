@@ -29,7 +29,7 @@ BUILD_RST_HASH="5db96f8c4866f62b2f28b4ca3c99448c"
 # All "GIT_" variables are loaded by the Sphinx build and need to be static as they are not sourced
 #
 
-GIT_CDH_VERSIONS="5.1 through 5.10"
+GIT_CDH_VERSIONS="5.1 through 5.11"
 GIT_HDP_VERSIONS="2.0 through 2.6"
 GIT_MAPR_VERSIONS="4.1 through 5.2"
 GIT_EMR_VERSIONS="4.6 through 4.8"

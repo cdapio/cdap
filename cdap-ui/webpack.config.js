@@ -16,7 +16,6 @@
 
 var cdapWebpackConfig = require('./webpack.config.cdap.js');
 var loginWebpackConfig = require('./webpack.config.login.js');
-var wranglerWebpackConfig = require('./webpack.config.wrangler.js');
 var commonWebpackConfig = require('./webpack.config.common.js');
 
 var multiConfigs = [];
@@ -27,13 +26,11 @@ if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'browser-
   multiConfigs = [
     cdapWebpackConfig,
     loginWebpackConfig,
-    wranglerWebpackConfig
   ];
 } else {
   multiConfigs = [
     cdapWebpackConfig,
     loginWebpackConfig,
-    wranglerWebpackConfig,
     commonWebpackConfig
   ];
 }

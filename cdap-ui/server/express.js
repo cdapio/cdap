@@ -43,7 +43,6 @@ var express = require('express'),
     OLD_DIST_PATH = path.normalize(__dirname + '/../old_dist'),
     LOGIN_DIST_PATH= path.normalize(__dirname + '/../login_dist'),
     CDAP_DIST_PATH= path.normalize(__dirname + '/../cdap_dist'),
-    WRANGLER_DIST_PATH= path.normalize(__dirname + '/../wrangler_dist'),
     MARKET_DIST_PATH= path.normalize(__dirname + '/../common_dist'),
     fs = require('fs');
 
@@ -328,14 +327,6 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       finalhandler(req, res)(false);
     }
   ]);
-  app.use('/wrangler_assets', [
-    express.static(WRANGLER_DIST_PATH + '/wrangler_assets', {
-      index: false
-    }),
-    function(req, res) {
-      finalhandler(req, res)(false); // 404
-    }
-  ]);
   app.use('/login_assets', [
     express.static(LOGIN_DIST_PATH + '/login_assets', {
       index: false
@@ -592,11 +583,6 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
     }
   ]);
 
-  app.all(['/wrangler', '/wrangler*'], [
-    function(req, res) {
-      res.sendFile(WRANGLER_DIST_PATH + '/wrangler_assets/wrangler.html');
-    }
-  ]);
   app.all(['/', '/cdap', '/cdap*'], [
     function(req, res) {
       res.sendFile(CDAP_DIST_PATH + '/cdap_assets/cdap.html');

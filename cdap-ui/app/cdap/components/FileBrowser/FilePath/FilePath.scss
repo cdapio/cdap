@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,9 +13,27 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-require("babel-polyfill");
-import T from 'i18n-react';
-// Initialize i18n
-T.setTexts(require('../cdap/text/text-en.yaml'));
 
-require('./main.js');
+$path-color: #333333;
+
+.file-path-container {
+  color: $path-color;
+
+  a {
+    color: $path-color;
+
+    &:hover {
+      text-decoration: none;
+      color: $path-color;
+    }
+
+    &.active-directory {
+      font-weight: 600;
+    }
+  }
+
+  .path-divider {
+    margin-left: 5px;
+    margin-right: 5px;
+  }
+}
