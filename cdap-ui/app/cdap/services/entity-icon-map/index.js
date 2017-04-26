@@ -16,7 +16,7 @@
 
 const EntityIconMap = {
   application: 'icon-fist',
-  artifact: 'fa fa-archive',
+  artifact: 'icon-archive',
   'cdap-data-pipeline': 'icon-ETLBatch',
   'cdap-data-streams': 'icon-sparkstreaming',
   datasetinstance: 'icon-datasets',

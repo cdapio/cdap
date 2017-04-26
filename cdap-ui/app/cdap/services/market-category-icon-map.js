@@ -19,7 +19,7 @@ const MarketCategoriesIconMap = {
   usecase: 'icon-usecases',
   pipeline: 'icon-pipelines',
   example: 'icon-app',
-  'hydrator-plugin': 'fa-plug',
+  'hydrator-plugin': 'icon-plug',
   datapack: 'icon-datapacks',
   '3rd-party-artifact': 'icon-artifacts',
   cloudera: 'icon-cloudera',

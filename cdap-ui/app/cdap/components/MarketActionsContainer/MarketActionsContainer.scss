@@ -73,12 +73,10 @@
         word-wrap: break-word;
         height: calc(100% - 100px);
       }
-      .fa {
-        &[class*="icon-"],
-        &.fa-upload,
-        &.fa-tasks,
-        &.fa-info {
-          font-size: 30px;
+      svg {
+        &[class*="icon-"] {
+          height: 30px;
+          width: 30px;
           margin: 5px 0;
         }
       }

@@ -17,12 +17,12 @@
 import React, {Component, PropTypes} from 'react';
 import FastActions from 'components/EntityCard/FastActions';
 import SortableTable from 'components/SortableTable';
+import IconSVG from 'components/IconSVG';
 import shortid from 'shortid';
 import {humanReadableDate} from 'services/helpers';
 import EntityIconMap from 'services/entity-icon-map';
 import T from 'i18n-react';
 import isEmpty from 'lodash/isEmpty';
-import classnames from 'classnames';
 import moment from 'moment';
 require('./ProgramTable.scss');
 
@@ -101,7 +101,10 @@ export default class ProgramTable extends Component {
                   </span>
                 </td>
                 <td>
-                  <i className={classnames('fa', icon)} />
+                  <IconSVG
+                    name={icon}
+                    className="program-type-icon"
+                  />
                   {program.programType}
                 </td>
                 <td>

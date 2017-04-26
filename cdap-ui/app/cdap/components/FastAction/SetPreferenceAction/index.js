@@ -74,7 +74,7 @@ export default class SetPreferenceAction extends Component {
 
   render() {
     const actionLabel = T.translate('features.FastAction.setPreferencesActionLabel');
-    let wrenchClasses = classnames('fa fa-wrench', {'fa-lg': this.props.setAtNamespaceLevel}, {'saved-success': this.state.preferencesSaved});
+    let iconClasses = classnames({'fa-lg': this.props.setAtNamespaceLevel}, {'text-success': this.state.preferencesSaved});
     let tooltipID = `${this.namespace}-setpreferences`;
     if (this.props.entity) {
       tooltipID = `${this.props.entity.uniqueId}-setpreferences`;
@@ -82,7 +82,8 @@ export default class SetPreferenceAction extends Component {
     return (
       <span className="btn btn-secondary btn-sm">
         <FastActionButton
-          icon={wrenchClasses}
+          icon='icon-wrench'
+          iconClasses={iconClasses}
           action={this.toggleModal}
           id={tooltipID}
         />

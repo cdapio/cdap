@@ -95,6 +95,10 @@
 
       .cask-market-button {
         display: block;
+
+        [class*="icon-"] {
+          margin-right: 5px;
+        }
       }
 
       li {
@@ -107,10 +111,6 @@
           margin-right: 0;
           min-width: 120px;
           cursor: pointer;
-
-          [class*="icon-"] {
-            margin-right: 5px;
-          }
         }
         .namespace-dropdown {
           border: 0;

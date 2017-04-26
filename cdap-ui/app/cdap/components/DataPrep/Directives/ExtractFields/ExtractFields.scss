@@ -12,31 +12,27 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
-@import '../../styles/variables.scss';
+$menu-hover-bg: #dddddd;
 
-.view-switch {
-  height: inherit;
-  .nav.nav-tabs {
-    .nav-item {
-      margin: 0;
-      .nav-link {
-        margin: 0;
-        border: 0;
-        border-radius: 0;
-        fill: #373a3c;
-        &.active {
-          font-weight: bold;
-          background: darkgray;
-          border: 0;
-          fill: #55595c;
-        }
-        &.active:hover {
-          border-bottom: 0;
-        }
-        &:not(.active):hover {
-          background-color: $cdap-gray;
+#extract-fields-directive {
+  &.clearfix.action-item {
+    .extract-fields {
+      &.second-level-popover {
+        padding: 0;
+      }
+      .extract-field-options {
+        .option {
+          // FIXME: single second level popover menu has a border that makes it look
+          // slightly bigger than the top level menu.
+          // Once we add more elements we should rever this back to 10px;
+          padding: 9px;
+          cursor: pointer;
+          line-height: 1.5;
+          &:hover {
+            background-color: $menu-hover-bg;
+          }
         }
       }
     }

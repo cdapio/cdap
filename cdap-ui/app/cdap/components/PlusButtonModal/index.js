@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,11 @@
 import React, {PropTypes, Component} from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 
-import Market from '../Market';
-import ResourceCenter from '../ResourceCenter';
+import Market from 'components/Market';
+import ResourceCenter from 'components/ResourceCenter';
+import IconSVG from 'components/IconSVG';
 
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
-import classNames from 'classnames';
 import T from 'i18n-react';
 
 require('./PlusButtonModal.scss');
@@ -74,9 +74,12 @@ export default class PlusButtonModal extends Component {
       >
         <ModalHeader>
           <span className="float-xs-left">
-            <span
-              className={classNames("modal-header-icon", this.getIconForView(this.state.viewMode))}
-            />
+            <span className="header-icon-container">
+              <IconSVG
+                name={this.getIconForView(this.state.viewMode)}
+                className="modal-header-icon"
+              />
+            </span>
             <span className="plus-modal-header-text">
             { this.state.viewMode === 'resourcecenter' ? resourceCenter : market }
             </span>
@@ -86,7 +89,7 @@ export default class PlusButtonModal extends Component {
               className="modal-close-btn"
               onClick={this.closeHandler}
             >
-              <span className="fa fa-times" />
+              <IconSVG name="icon-close" />
             </div>
           </div>
         </ModalHeader>

@@ -238,7 +238,8 @@ gulp.task('js:lib', function() {
       './node_modules/react-dom/dist/react-dom.min.js',
       './node_modules/ngreact/ngReact.min.js',
 
-      './node_modules/cdap-avsc/dist/cdap-avsc-lib.js'
+      './node_modules/cdap-avsc/dist/cdap-avsc-lib.js',
+      './node_modules/svg4everybody/dist/svg4everybody.min.js'
     ].concat([
       './bower_components/cask-angular-*/*/module.js'
     ], mainBowerFiles({
@@ -393,7 +394,29 @@ gulp.task('css:minify', ['css'], function() {
     .pipe(plug.cssnano({ safe: true }))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
-gulp.task('minify', ['js:minify', 'css:minify']);
+gulp.task('fonts:minify', ['fonts'], function() {
+  return gulp.src('./dist/assets/fonts/*.svg')
+    .pipe(plug.svgmin({
+      plugins: [{
+        removeUselessDefs: false
+      }, {
+        cleanupIDs: false
+      }]
+    }))
+    .pipe(gulp.dest('./dist/assets/fonts'));
+});
+gulp.task('img:minify', ['img'], function() {
+  return gulp.src('./dist/assets/img/*.svg')
+    .pipe(plug.svgmin({
+      plugins: [{
+        removeUselessDefs: false
+      }, {
+        cleanupIDs: false
+      }]
+    }))
+    .pipe(gulp.dest('./dist/assets/img'));
+});
+gulp.task('minify', ['js:minify', 'css:minify', 'fonts:minify', 'img:minify']);
 
 /*
   rev'd assets

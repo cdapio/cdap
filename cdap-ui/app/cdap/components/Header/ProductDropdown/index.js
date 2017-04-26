@@ -24,6 +24,7 @@ import cookie from 'react-cookie';
 import VersionStore from 'services/VersionStore';
 import AboutPageModal from 'components/Header/ProductDropdown/AboutPageModal';
 import AccessTokenModal from 'components/Header/ProductDropdown/AccessTokenModal';
+import IconSVG from 'components/IconSVG';
 import getLastSelectedNamespace from 'services/get-last-selected-namespace';
 import T from 'i18n-react';
 
@@ -102,7 +103,9 @@ export default class ProductDropdown extends Component {
             header
           >
             <a className="user-section">
-              <span className="fa fa-user"></span>
+              <span className="user-icon-container">
+                <IconSVG name="icon-user" />
+              </span>
               <span className="user-name">{this.state.username}</span>
             </a>
           </DropdownItem>
@@ -137,7 +140,7 @@ export default class ProductDropdown extends Component {
             <div className="cdap-logo">
               <img src="/cdap_assets/img/cdap_logo.png" />
             </div>
-            <span className="fa fa-caret-down"></span>
+            <IconSVG name="icon-caret-down" />
           </DropdownToggle>
           <CustomDropdownMenu right>
             <DropdownItem
