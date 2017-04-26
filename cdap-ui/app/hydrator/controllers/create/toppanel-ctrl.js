@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl {
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myPreviewLogsApi) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myPreviewLogsApi, DAGPlusPlusNodesStore) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -35,6 +35,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.$interval = $interval;
     this.myPipelineApi = myPipelineApi;
     this.myPreviewLogsApi = myPreviewLogsApi;
+    this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.$state = $state;
     this.dataSrc = new MyCDAPDataSource($scope);
     this.myAlertOnValium = myAlertOnValium;
@@ -50,7 +51,9 @@ class HydratorPlusPlusTopPanelCtrl {
     this.macrosMap = {};
     this.$stateParams = $stateParams;
     this.setState();
+    this.setActiveNodes();
     this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
+    this.DAGPlusPlusNodesStore.registerOnChangeListener(this.setActiveNodes.bind(this));
     this.focusTimeout = null;
     this.timeoutInMinutes = 2;
 
@@ -146,6 +149,9 @@ class HydratorPlusPlusTopPanelCtrl {
       viewSettings: this.myHelpers.objectQuery(this.state, 'viewSettings') || false,
       artifact: this.HydratorPlusPlusConfigStore.getArtifact()
     };
+  }
+  setActiveNodes() {
+    this.hasNodes = !!this.DAGPlusPlusNodesStore.getNodes().length;
   }
 
   openMetadata() {
@@ -641,6 +647,6 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 }
 
-HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', '$interval', 'myPipelineApi', '$state', 'MyCDAPDataSource', 'myAlertOnValium', 'MY_CONFIG', 'PREVIEWSTORE_ACTIONS', '$q', 'NonStorePipelineErrorFactory', 'rArtifacts', '$window', 'LogViewerStore', 'LOGVIEWERSTORE_ACTIONS', 'myPreviewLogsApi'];
+HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', '$interval', 'myPipelineApi', '$state', 'MyCDAPDataSource', 'myAlertOnValium', 'MY_CONFIG', 'PREVIEWSTORE_ACTIONS', '$q', 'NonStorePipelineErrorFactory', 'rArtifacts', '$window', 'LogViewerStore', 'LOGVIEWERSTORE_ACTIONS', 'myPreviewLogsApi', 'DAGPlusPlusNodesStore'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);
