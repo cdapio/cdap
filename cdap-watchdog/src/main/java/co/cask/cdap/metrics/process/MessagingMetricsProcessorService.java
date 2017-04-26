@@ -217,12 +217,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     }
     // Persist metricsFromAllTopics and messageId's after all ProcessMetricsThread's complete.
     // No need to make a copy of metricsFromAllTopics and topicMessageIds because no thread is writing to them
-    if (!metricsFromAllTopics.isEmpty()) {
-      persistMetricsMessageIds(metricsFromAllTopics, topicMessageIds);
-    }
-    // Persist topicMessageIds even when metricsFromAllTopics is empty, because topicMessageIds can be updated after
-    // metricsFromAllTopics is persisted
-    persistLastMessageIds(topicMessageIds);
+    persistMetricsMessageIds(metricsFromAllTopics, topicMessageIds);
   }
 
   @Override
@@ -239,28 +234,39 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
    * Persist metrics from all topics into metric store and messageId's of the last persisted metrics of each topic
    * into metrics meta table
    *
-   * @param metricValues a non-empty deque of {@link MetricValues}
+   * @param metricValues a deque of {@link MetricValues}
    * @param messageIds a map with each key {@link TopicIdMetaKey} representing a topic and messageId's
    *                   of the last persisted metric of the topic
    */
   private void persistMetricsMessageIds(Deque<MetricValues> metricValues, Map<TopicIdMetaKey, byte[]> messageIds) {
     try {
-      long now = System.currentTimeMillis();
-      long lastMetricTime = metricValues.peekLast().getTimestamp();
-      long delay = now - TimeUnit.SECONDS.toMillis(lastMetricTime);
-      metricValues.add(
-        new MetricValues(metricsContextMap, TimeUnit.MILLISECONDS.toSeconds(now),
-                         ImmutableList.of(
-                           new MetricValue("metrics.process.count", MetricType.COUNTER, metricValues.size()),
-                           new MetricValue("metrics.process.delay.ms", MetricType.GAUGE, delay))));
-      metricStore.add(metricValues);
-      metricsProcessedCount += metricValues.size();
-      PROGRESS_LOG.debug("{} metrics metrics persisted. Last metric metric's timestamp: {}. " +
-                           "Metrics process delay: {}ms", metricsProcessedCount, lastMetricTime, delay);
-      persistLastMessageIds(messageIds);
+      if (!metricValues.isEmpty()) {
+        persistMetrics(metricValues);
+      }
+      persistMessageIds(messageIds);
     } catch (Exception e) {
-      LOG.error("Failed to persist metrics.", e);
+      LOG.warn("Failed to persist metrics.", e);
     }
+  }
+
+  /**
+   * Persist metrics into metric store
+   *
+   * @param metricValues a non-empty deque of {@link MetricValues}
+   */
+  private void persistMetrics(Deque<MetricValues> metricValues) throws Exception {
+    long now = System.currentTimeMillis();
+    long lastMetricTime = metricValues.peekLast().getTimestamp();
+    long delay = now - TimeUnit.SECONDS.toMillis(lastMetricTime);
+    metricValues.add(
+      new MetricValues(metricsContextMap, TimeUnit.MILLISECONDS.toSeconds(now),
+                       ImmutableList.of(
+                         new MetricValue("metrics.process.count", MetricType.COUNTER, metricValues.size()),
+                         new MetricValue("metrics.process.delay.ms", MetricType.GAUGE, delay))));
+    metricStore.add(metricValues);
+    metricsProcessedCount += metricValues.size();
+    PROGRESS_LOG.debug("{} metrics metrics persisted. Last metric metric's timestamp: {}. " +
+                         "Metrics process delay: {}ms", metricsProcessedCount, lastMetricTime, delay);
   }
 
   /**
@@ -269,19 +275,15 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
    * @param messageIds   a map with each key {@link TopicIdMetaKey} representing a topic and messageId's
    *                     of the last persisted metric of the topic
    */
-  private void persistLastMessageIds(Map<TopicIdMetaKey, byte[]> messageIds) {
+  private void persistMessageIds(Map<TopicIdMetaKey, byte[]> messageIds) {
     try {
       // messageIds can be empty if the current thread fetches nothing while other threads keep fetching new metrics
       // and haven't updated messageId's of the corresponding topics
       if (!messageIds.isEmpty()) {
         metaTable.saveMessageIds(messageIds);
-        for (Map.Entry<TopicIdMetaKey, byte[]> entry : messageIds.entrySet()) {
-          LOG.info("Persist {} in topic {}", Bytes.toStringBinary(entry.getValue()),
-                   entry.getKey().getTopicId().getTopic());
-        }
       }
     } catch (Exception e) {
-      LOG.error("Failed to persist messageId's of consumed messages.", e);
+      LOG.warn("Failed to persist messageId's of consumed messages.", e);
     }
   }
 
@@ -408,12 +410,10 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
           metricsCopy.add(iterator.next());
           iterator.remove();
         }
-        // Persist the copy of metrics and MessageId's only if the copy of metrics is not empty
-        if (!metricsCopy.isEmpty()) {
-          persistMetricsMessageIds(metricsCopy, topicMessageIdsCopy);
-        }
+        // Persist the copy of metrics and MessageId's
+        persistMetricsMessageIds(metricsCopy, topicMessageIdsCopy);
       } catch (Exception e) {
-        LOG.error("Failed to persist consumed messages.", e);
+        LOG.warn("Failed to persist metrics. Will be retried in next iteration.", e);
       } finally {
         // Set persistingFlag back to false after persisting completes.
         persistingFlag.set(false);

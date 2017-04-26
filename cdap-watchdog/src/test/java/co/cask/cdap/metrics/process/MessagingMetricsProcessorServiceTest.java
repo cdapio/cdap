@@ -68,7 +68,6 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
     long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 
     for (int iteration = 0; iteration < 50; iteration++) {
-      System.out.println("Iteration:" + iteration);
       // First publish all metrics before MessagingMetricsProcessorService starts, so that fetchers of different topics
       // will fetch metrics concurrently.
       for (int i = 0; i < 50; i++) {
