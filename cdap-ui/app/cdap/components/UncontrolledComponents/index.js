@@ -57,8 +57,7 @@ Object.keys(components).forEach(key => {
 
 const UncontrolledDropdown = components.UncontrolledDropdown;
 const UncontrolledTooltip = components.UncontrolledTooltip;
-
 export {
-  UncontrolledDropdown,
-  UncontrolledTooltip
+  UncontrolledTooltip,
+  UncontrolledDropdown
 };

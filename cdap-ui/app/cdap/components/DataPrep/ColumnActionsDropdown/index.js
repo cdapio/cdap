@@ -31,6 +31,7 @@ import DropColumn from 'components/DataPrep/Directives/DropColumn';
 import FilterDirective from 'components/DataPrep/Directives/Filter';
 import FindAndReplaceDirective from 'components/DataPrep/Directives/FindAndReplace';
 import CopyColumnDirective from 'components/DataPrep/Directives/CopyColumn';
+import ExtractFields from 'components/DataPrep/Directives/ExtractFields';
 import ee from 'event-emitter';
 require('./ColumnActionsDropdown.scss');
 
@@ -69,6 +70,10 @@ export default class ColumnActionsDropdown extends Component {
       {
         id: shortid.generate(),
         tag: SplitColumn
+      },
+      {
+        id: shortid.generate(),
+        tag: ExtractFields
       },
       {
         id: shortid.generate(),
