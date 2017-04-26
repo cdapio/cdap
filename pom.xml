@@ -139,12 +139,14 @@
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
     <rs-api.version>2.0</rs-api.version>
-    <scala.version>2.10.4</scala.version>
+    <scala2.10.version>2.10.4</scala2.10.version>
+    <scala2.11.version>2.11.8</scala2.11.version>
     <servlet.api.version>3.0.1</servlet.api.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
     <snappy.version>1.1.1.7</snappy.version>
-    <spark.version>1.6.1</spark.version>
+    <spark1.version>1.6.1</spark1.version>
+    <spark2.version>2.1.0</spark2.version>
     <tephra.version>0.11.0-incubating</tephra.version>
     <tez.version>0.8.4</tez.version>
     <thrift.version>0.9.3</thrift.version>
@@ -1343,7 +1345,7 @@
       <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-core_2.10</artifactId>
-        <version>${spark.version}</version>
+        <version>${spark1.version}</version>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -1388,14 +1390,67 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.scala-lang</groupId>
-        <artifactId>scala-library</artifactId>
-        <version>${scala.version}</version>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-core_2.11</artifactId>
+        <version>${spark2.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.esotericsoftware.reflectasm</groupId>
+            <artifactId>reflectasm</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-recipes</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.eclipse.jetty.orbit</groupId>
+            <artifactId>javax.servlet</artifactId>
+          </exclusion>
+          <!--
+            Need to exclude this since Spark brings in an older version that makes
+            S3 not work in standalone. This doesn't affect distributed mode.
+          -->
+          <exclusion>
+            <groupId>net.java.dev.jets3t</groupId>
+            <artifactId>jets3t</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>asm</groupId>
+            <artifactId>asm</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-sql_2.10</artifactId>
-        <version>${spark.version}</version>
+        <version>${spark1.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-sql_2.11</artifactId>
+        <version>${spark2.version}</version>
         <exclusions>
           <exclusion>
             <groupId>org.scala-lang</groupId>
@@ -1406,12 +1461,22 @@
       <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-streaming_2.10</artifactId>
-        <version>${spark.version}</version>
+        <version>${spark1.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-streaming_2.11</artifactId>
+        <version>${spark2.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-mllib_2.10</artifactId>
-        <version>${spark.version}</version>
+        <version>${spark1.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-mllib_2.11</artifactId>
+        <version>${spark2.version}</version>
       </dependency>
       <dependency>
         <groupId>co.cask.cdap</groupId>
@@ -2517,6 +2582,8 @@
         <module>cdap-spi</module>
         <module>cdap-api</module>
         <module>cdap-api-spark</module>
+        <module>cdap-api-spark2</module>
+        <module>cdap-api-spark-base</module>
         <module>cdap-formats</module>
         <module>cdap-hbase-compat-base</module>
         <module>cdap-hbase-compat-0.96</module>

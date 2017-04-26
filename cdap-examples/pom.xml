@@ -361,12 +361,12 @@
       <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-streaming-kafka_2.10</artifactId>
-        <version>${spark.version}</version>
+        <version>${spark1.version}</version>
       </dependency>
       <dependency>
         <groupId>org.scala-lang</groupId>
         <artifactId>scala-library</artifactId>
-        <version>${scala.version}</version>
+        <version>${scala2.10.version}</version>
         <scope>provided</scope>
       </dependency>
 

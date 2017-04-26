@@ -213,7 +213,7 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <includeArtifactIds>cdap-api-spark</includeArtifactIds>
+                  <includeArtifactIds>cdap-api-spark,cdap-api-spark-base</includeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
                   <includeScope>runtime</includeScope>
@@ -250,7 +250,7 @@
                       </excludes>
                     </filter>
                   </filters>
-                  <outputFile>${project.build.directory}/libexec/${project.groupId}.spark-assembly-${spark.version}.jar</outputFile>
+                  <outputFile>${project.build.directory}/libexec/${project.groupId}.spark-assembly-${spark1.version}.jar</outputFile>
                   <!-- Needed to merge akka config files -->
                   <transformers>
                     <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">

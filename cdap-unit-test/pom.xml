@@ -151,7 +151,7 @@
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-streaming-kafka_2.10</artifactId>
-      <version>${spark.version}</version>
+      <version>${spark1.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.scala-lang</groupId>
