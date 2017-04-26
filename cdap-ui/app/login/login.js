@@ -113,6 +113,7 @@ class Login extends Component {
           >
             <div className="form-group">
               <input
+                id="username"
                 className="form-control"
                 name="username"
                 value={this.state.username}
@@ -122,6 +123,7 @@ class Login extends Component {
             </div>
             <div className="form-group">
               <input
+                id="password"
                 className="form-control"
                 placeholder={T.translate('login.placeholders.password')}
                 onChange={this.onPasswordUpdate.bind(this)}
@@ -147,6 +149,7 @@ class Login extends Component {
             </div>
             <div className="form-group">
               <button
+                id="submit"
                 type="submit"
                 className="btn btn-primary btn-block"
                 disabled={!this.state.formState}

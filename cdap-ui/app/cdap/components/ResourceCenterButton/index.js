@@ -52,6 +52,7 @@ export default class ResourceCenterButton extends Component {
         onClick={this.onClickHandler.bind(this)}
       >
         <img
+          id="resource-center-btn"
           className="button-container"
           src="/cdap_assets/img/plus_ico.svg"
         />

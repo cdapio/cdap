@@ -115,6 +115,7 @@ class SplashScreen extends Component {
         <h3>{cardTitle}</h3>
         <h3>{cardTitleTwo}</h3>
         <div
+          id="splash-close-btn"
           className="fa fa-times"
           onClick={this.onClose}
         />
