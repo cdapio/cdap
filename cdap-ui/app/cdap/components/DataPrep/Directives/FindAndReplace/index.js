@@ -30,6 +30,8 @@ export default class FindAndReplaceDirective extends Component {
     this.state = {
       findInput: '',
       replaceInput: '',
+      exactMatch: false,
+      ignoreCase: false,
       isOpen: this.props.isOpen
     };
 
@@ -37,6 +39,8 @@ export default class FindAndReplaceDirective extends Component {
     this.handleReplaceInputChange = this.handleReplaceInputChange.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
     this.applyDirective = this.applyDirective.bind(this);
+    this.handleExactMatchChange = this.handleExactMatchChange.bind(this);
+    this.handleIgnoreCaseChange = this.handleIgnoreCaseChange.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -65,6 +69,17 @@ export default class FindAndReplaceDirective extends Component {
     this.setState({replaceInput: e.target.value});
   }
 
+  handleExactMatchChange() {
+    this.setState({
+      exactMatch: !this.state.exactMatch
+    });
+  }
+
+  handleIgnoreCaseChange() {
+    this.setState({
+      ignoreCase: !this.state.ignoreCase
+    });
+  }
   handleKeyPress(e) {
     if (e.nativeEvent.keyCode === 13) {
       this.applyDirective();
@@ -77,9 +92,16 @@ export default class FindAndReplaceDirective extends Component {
     let column = this.props.column;
     let findInput = this.state.findInput;
     let replaceInput = this.state.replaceInput;
+    if (this.state.exactMatch) {
+      findInput = `^${findInput}$`;
+    }
+    let directive = `find-and-replace ${column} s/${findInput}/${replaceInput}`;
 
-    let directive = `find-and-replace ${column} s/${findInput}/${replaceInput}/g`;
-
+    if (this.state.ignoreCase) {
+      directive = `${directive}/Ig`;
+    } else {
+      directive = `${directive}/g`;
+    }
     execute([directive])
       .subscribe(() => {
         this.props.close();
@@ -107,15 +129,49 @@ export default class FindAndReplaceDirective extends Component {
         <h5>{T.translate(`${PREFIX}.find`)}</h5>
 
         <div className="input">
-          <input
-            type="text"
-            className="form-control mousetrap"
-            value={this.state.findInput}
-            onKeyPress={this.handleKeyPress}
-            onChange={this.handleFindInputChange}
-            placeholder={T.translate(`${PREFIX}.findPlaceholder`)}
-            ref={ref => this.findInputBox = ref}
-          />
+          <div className="form-check">
+            <input
+              type="text"
+              className="form-control mousetrap"
+              value={this.state.findInput}
+              onKeyPress={this.handleKeyPress}
+              onChange={this.handleFindInputChange}
+              placeholder={T.translate(`${PREFIX}.findPlaceholder`)}
+              ref={ref => this.findInputBox = ref}
+            />
+          </div>
+          <div>
+            <span
+              className="cursor-pointer"
+              onClick={this.handleExactMatchChange}
+            >
+              <span
+                className={classnames('fa', {
+                  'fa-square-o': !this.state.exactMatch,
+                  'fa-check-square': this.state.exactMatch
+                })}
+              />
+              <span>
+                {T.translate(`${PREFIX}.exactMatchLabel`)}
+              </span>
+            </span>
+          </div>
+          <div>
+            <span
+              className="cursor-pointer"
+              onClick={this.handleIgnoreCaseChange}
+            >
+              <span
+                className={classnames('fa', {
+                  'fa-square-o': !this.state.ignoreCase,
+                  'fa-check-square': this.state.ignoreCase
+                })}
+              />
+              <span>
+                {T.translate(`${PREFIX}.ignoreCaseLabel`)}
+              </span>
+            </span>
+          </div>
         </div>
 
         <br />

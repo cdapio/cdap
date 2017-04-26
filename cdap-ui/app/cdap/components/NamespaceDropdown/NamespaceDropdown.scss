@@ -1,5 +1,5 @@
 /*
-* Copyright © 2016 Cask Data, Inc.
+* Copyright © 2016-2017 Cask Data, Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License"); you may not
 * use this file except in compliance with the License. You may obtain a copy of
@@ -44,9 +44,10 @@ $star-color: #373a3c;
 
   .dropdown-toggle { height: 50px; }
 
-  .fa.fa-caret-down {
+  .icon-caret-down {
     line-height: 50px;
-    font-size: 13px;
+    height: 13px;
+    width: 13px;
   }
 
   .namespace-display {
@@ -116,7 +117,7 @@ $star-color: #373a3c;
         font-size: 12px;
         background-color: $success-color;
 
-        .fa-times {
+        .icon-close {
           float: right;
           cursor: pointer;
           line-height: 28px;
@@ -148,7 +149,7 @@ $star-color: #373a3c;
             margin-right: 5px;
           }
 
-          i {
+          svg {
             cursor: pointer;
             color: $star-color;
           }
@@ -222,10 +223,10 @@ $star-color: #373a3c;
           }
         }
 
-        .fa-wrench {
-          width: 100%;
+        .icon-wrench {
           color: #333333;
-          font-size: 16px;
+          height: 16px;
+          width: 16px;
 
           &.saved-success {
             color: $success-color;
@@ -258,7 +259,7 @@ $star-color: #373a3c;
           }
 
           .namespace-name {
-            width: calc(100% - 12.5px);
+            width: calc(100% - 13px);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -268,7 +269,7 @@ $star-color: #373a3c;
         .default-ns-section {
           cursor: pointer;
           position: relative;
-          .fa-star-o {
+          .icon-star-o {
             display: none;
           }
         }
@@ -276,7 +277,7 @@ $star-color: #373a3c;
         &:hover {
           background-color: $namespace-hover-bg;
           color: #ffffff;
-          .fa-star-o {
+          .icon-star-o {
             display: inline-block;
           }
         }

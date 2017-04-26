@@ -231,6 +231,8 @@ features:
         replacePlaceholder: New value
         replaceWith: Replace with
         title: Find and Replace
+        exactMatchLabel: Exact Match
+        ignoreCaseLabel: Ignore Case
       Parse:
         modalTitle: Parse as {parser}
         Parsers:
@@ -305,6 +307,45 @@ features:
         title: Copy Column
       Keep:
        title: Delete Other Columns
+      ExtractFields:
+        title: Extract Fields
+        extractBtnLabel: Extract
+        patternSubmenuTitle: Using Patterns
+        UsingPatterns:
+          modalTitle: Extract Fields Using Patterns
+          patternDescription: Select a regex pattern to extract a group of data in a new column named "{column}"
+          selectPatternMessage: Select a Regex Pattern
+          ndigitnumberPattern: N Digits Number
+          startEndPattern: Start/End Pattern
+          customPattern: Custom
+          phoneNumberPattern: Phone numbers
+          phoneNumberPatternExample: 'e.g. (###) - ###-####'
+          ssnPattern: SSN
+          ssnPatternExample: '###-##-####'
+          creditCardPattern: Credit Cards
+          creditCardPatternExample: '#### #### #### ####'
+          datePattern: Date
+          timePattern: Time
+          datetimePattern: Date Time
+          upscodePattern: UPS Codes
+          isbncodePattern: ISBN Codes
+          emailPattern: Email
+          urlPattern: URL
+          ipv4Pattern: IPv4 Address
+          macaddressPattern: Mac Addresses
+          htmlHyperlinkPattern: HTML Hyperlinks
+
+          exampleLabel: 'E.g.'
+          hidePatternLabel: Hide Pattern
+          showPatternLabel: Show Pattern
+          startEndPatternContent:
+            description1: Extract text that start with
+            description2: and end with
+          ndigitnumberPatternContent:
+            description1: Extract numbers with
+            description2: digits
+          customPatternContent:
+            description: Write your own regex pattern
     pageTitle: CDAP | Data Preparation
     TopPanel:
       applyBtnLabel: Apply
@@ -337,9 +378,10 @@ features:
 
   FileBrowser:
     directory: Directory
+    emptySearch: "There is no file or directory matching \"{searchTerm}\""
     Table:
       group: Group
-      lastModified: Last Modified
+      last-modified: Last Modified
       name: Name
       owner: Owner
       permission: Permission

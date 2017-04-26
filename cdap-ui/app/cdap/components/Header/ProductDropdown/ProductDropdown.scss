@@ -78,7 +78,7 @@
           margin-left: 10px;
         }
       }
-      .fa.fa-caret-down {
+      .icon-caret-down {
         line-height: 50px;
         vertical-align: middle;
       }
@@ -139,13 +139,14 @@
             white-space: nowrap;
             display: inline-block;
           }
-          .fa.fa-user {
+          .user-icon-container {
             border: 1px solid rgba(255, 205, 128, 1);
             border-radius: 50%;
-            padding: 5px 6px;
+            padding: 5px 5px;
             background: rgba(255, 205, 128, 1);
             margin-right: 8px;
             color: $navbar-bg;
+            display: inline-flex;
           }
         }
       }

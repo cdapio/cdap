@@ -35,12 +35,23 @@
         border-top: 0;
         padding-right: 35px;
 
-        > span:first-child {
-          cursor: initial;
+        .header-text {
+          width: 100%;
+          &:hover {
+            background: white;
+          }
         }
 
         .directives-dropdown-button {
           margin-right: -25px;
+        }
+        input {
+          padding: 0;
+          width: auto;
+          height: 20px;
+        }
+        > span:first-child {
+          cursor: initial;
         }
 
         &:first-child { border-left: 0; }

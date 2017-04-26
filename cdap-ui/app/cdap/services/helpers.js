@@ -104,14 +104,17 @@ function contructUrl ({path}) {
 }
 
 
-function convertBytesToHumanReadable(bytes, type) {
+function convertBytesToHumanReadable(bytes, type, includeSpace) {
   if (!bytes || typeof bytes !== 'number') {
     return bytes;
   }
+  let format = includeSpace ? '0.00 b' : '0.00b';
+
   if (type === HUMANREADABLESTORAGE_NODECIMAL) {
-    return numeral(bytes).format('0b');
+    format = includeSpace ? '0 b' : '0b';
   }
-  return numeral(bytes).format('0.00b');
+
+  return numeral(bytes).format(format);
 }
 
 function isDescendant(parent, child) {

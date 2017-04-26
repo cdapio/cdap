@@ -54,8 +54,14 @@ var loaders = [
     loader: 'url-loader?limit=10000&mimetype=application/font-woff'
   },
   {
-    test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+    test: /\.(ttf|eot)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
     loader: 'file-loader'
+  },
+  {
+    test: /\.svg$/,
+    loader: 'svg-sprite?'+ JSON.stringify({
+      prefixize: false
+    })
   }
 ];
 var webpackConfig = {
@@ -71,7 +77,8 @@ var webpackConfig = {
       'rx',
       'rx-dom',
       'react-dropzone',
-      'react-redux'
+      'react-redux',
+      'svg4everybody'
     ]
   },
   module: {

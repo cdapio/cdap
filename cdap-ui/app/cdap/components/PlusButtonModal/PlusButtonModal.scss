@@ -49,16 +49,23 @@
         padding: 10px 8px;
         background: $cdap-orange;
         color: white;
+        fill: white;
         border-bottom: 0;
 
-        .modal-header-icon {
-          font-size: 26px;
-          height: 30px;
-          vertical-align: top;
+        .header-icon-container {
           margin-right: 2px;
+          height: 30px;
+          display: inline-flex;
+          align-items: center;
+
+          .modal-header-icon {
+            width: 26px;
+            height: 26px;
+          }
         }
 
         .modal-close-btn {
+          height: 30px;
           cursor: pointer;
         }
 

@@ -18,8 +18,12 @@ import React, { Component, PropTypes } from 'react';
 import shortid from 'shortid';
 import {Link} from 'react-router';
 import classnames from 'classnames';
+import {UncontrolledDropdown} from 'components/UncontrolledComponents';
+import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 
 require('./FilePath.scss');
+
+const VIEW_LIMIT = 3;
 
 export default class FilePath extends Component {
   constructor(props) {
@@ -65,25 +69,87 @@ export default class FilePath extends Component {
     });
   }
 
-  render() {
+  renderCollapsedDropdown(collapsedLinks) {
     return (
-      <div className="file-path-container">
+      <div className="collapsed-dropdown">
+        <UncontrolledDropdown
+          className="collapsed-dropdown-toggle"
+        >
+          <DropdownToggle>
+            ...
+          </DropdownToggle>
+          <DropdownMenu>
+            {
+              collapsedLinks.map((path) => {
+                return (
+                  <DropdownItem
+                    title={path.name}
+                  >
+                    <Link
+                      key={path.id}
+                      to={path.link}
+                    >
+                      {path.name}
+                    </Link>
+                  </DropdownItem>
+                );
+              })
+            }
+          </DropdownMenu>
+        </UncontrolledDropdown>
+      </div>
+    );
+  }
+
+  renderBreadcrumb(links) {
+    return (
+      <div className="paths">
         {
-          this.state.paths.map((path, index) => {
+          links.map((path, index) => {
             return (
               <Link
                 key={path.id}
                 to={path.link}
-                className={classnames({'active-directory': index === this.state.paths.length - 1})}
+                className={classnames({'active-directory': index === links.length - 1})}
               >
                 {path.name}
                 {
-                  index !== this.state.paths.length - 1 ? <span className="fa fa-chevron-right path-divider"></span> : null
+                  index !== links.length - 1 ? <span className="path-divider">/</span> : null
                 }
               </Link>
-
             );
           })
+        }
+      </div>
+    );
+  }
+
+  renderCollapsedView() {
+    let splitIndex = this.state.paths.length - VIEW_LIMIT + 1;
+
+    let collapsedLinks = this.state.paths.slice(0, splitIndex);
+    let displayLinks = this.state.paths.slice(splitIndex);
+
+    const collapsed = this.renderCollapsedDropdown(collapsedLinks);
+    const breadcrumb = this.renderBreadcrumb(displayLinks);
+
+    return (
+      <div className="collapsed-paths">
+        {collapsed}
+        <span className="path-divider">/</span>
+        {breadcrumb}
+      </div>
+    );
+  }
+
+  render() {
+    return (
+      <div className="file-path-container">
+        {
+          this.state.paths.length > VIEW_LIMIT ?
+            this.renderCollapsedView()
+          :
+            this.renderBreadcrumb(this.state.paths)
         }
       </div>
     );

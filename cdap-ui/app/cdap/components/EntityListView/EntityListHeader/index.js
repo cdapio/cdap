@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import SearchStore from 'components/EntityListView/SearchStore';
 import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
 import {DEFAULT_SEARCH_SORT_OPTIONS, DEFAULT_SEARCH_QUERY} from 'components/EntityListView/SearchStore/SearchConstants';
 import {search, updateQueryString} from 'components/EntityListView/SearchStore/ActionCreator';
+import IconSVG from 'components/IconSVG';
 
 require('./EntityListHeader.scss');
 
@@ -172,7 +173,9 @@ export default class EntityListHeader extends Component {
           className="sort-toggle"
         >
           <span>{this.state.activeSort.displayName}</span>
-          <span className="fa fa-angle-down float-xs-right"></span>
+          <span className="float-xs-right">
+            <IconSVG name="icon-angle-down" />
+          </span>
         </DropdownToggle>
         <CustomDropdownMenu>
           {
@@ -187,7 +190,9 @@ export default class EntityListHeader extends Component {
                   <span className="float-xs-left">{option.displayName}</span>
                   {
                     this.state.activeSort.fullSort === option.fullSort ?
-                      <span className="fa fa-check float-xs-right"></span>
+                      <span className="float-xs-right">
+                        <IconSVG name="icon-check" />
+                      </span>
                     :
                       null
                   }
@@ -210,7 +215,9 @@ export default class EntityListHeader extends Component {
           className="filter-toggle"
         >
           <span>{T.translate('features.EntityListView.Header.filterBy')}</span>
-          <span className="fa fa-angle-down float-xs-right"></span>
+          <span className="float-xs-right">
+            <IconSVG name="icon-angle-down" />
+          </span>
         </DropdownToggle>
         <CustomDropdownMenu onClick={e => e.stopPropagation()}>
           {
@@ -248,7 +255,7 @@ export default class EntityListHeader extends Component {
         <div className="entity-list-header">
           <div className="search-box input-group">
             <span className="input-feedback input-group-addon">
-              <span className="fa fa-search"></span>
+              <IconSVG name="icon-search" />
             </span>
             <input
               type="text"

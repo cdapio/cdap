@@ -93,22 +93,46 @@
       <div class="button-label">Import</div>
     </div>
     <div class="btn"
-         ng-click="HydratorPlusPlusTopPanelCtrl.onExport()">
+         ng-click="!HydratorPlusPlusTopPanelCtrl.hasNodes || HydratorPlusPlusTopPanelCtrl.onExport()"
+         uib-tooltip="Start building a pipeline before exporting"
+         tooltip-placement="bottom auto"
+         tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
+         tooltip-class="toppanel-tooltip"
+         tooltip-append-to-body="true"
+         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes">
       <span class="fa icon-export"></span>
       <div class="button-label">Export</div>
     </div>
     <div class="btn"
-         ng-click="HydratorPlusPlusTopPanelCtrl.onSaveDraft()">
+         ng-click="!HydratorPlusPlusTopPanelCtrl.hasNodes || HydratorPlusPlusTopPanelCtrl.onSaveDraft()"
+         uib-tooltip="Start building a pipeline before saving"
+         tooltip-placement="bottom auto"
+         tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
+         tooltip-class="toppanel-tooltip"
+         tooltip-append-to-body="true"
+         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes">
       <span class="fa icon-savedraft"></span>
       <div class="button-label">Save</div>
     </div>
     <div class="btn"
-         ng-click="HydratorPlusPlusTopPanelCtrl.onValidate()">
+         ng-click="!HydratorPlusPlusTopPanelCtrl.hasNodes ||HydratorPlusPlusTopPanelCtrl.onValidate()"
+         uib-tooltip="Start building a pipeline before validating"
+         tooltip-placement="bottom auto"
+         tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
+         tooltip-class="toppanel-tooltip"
+         tooltip-append-to-body="true"
+         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes">
       <span class="fa icon-validate"></span>
       <div class="button-label">Validate</div>
     </div>
     <div class="btn"
-         ng-click="HydratorPlusPlusTopPanelCtrl.onPublish()">
+         ng-click="!HydratorPlusPlusTopPanelCtrl.hasNodes || HydratorPlusPlusTopPanelCtrl.onPublish()"
+         uib-tooltip="Start building a pipeline before deploying"
+         tooltip-placement="bottom auto"
+         tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
+         tooltip-class="toppanel-tooltip"
+         tooltip-append-to-body="true"
+         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes">
       <span class="fa icon-publish"></span>
       <div class="button-label">Deploy</div>
     </div>

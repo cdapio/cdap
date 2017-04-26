@@ -44,7 +44,7 @@ export default class ResourceCenter extends Component {
           title: T.translate('features.Resource-Center.HydratorPipeline.label'),
           description: T.translate('features.Resource-Center.HydratorPipeline.description'),
           actionLabel: T.translate('features.Resource-Center.HydratorPipeline.actionbtn0'),
-          iconClassName: 'fa icon-hydrator',
+          iconClassName: 'icon-hydrator',
           disabled: false,
           actionLink: window.getHydratorUrl({
             stateName: 'hydrator.create',
@@ -59,7 +59,7 @@ export default class ResourceCenter extends Component {
           title: T.translate('features.Resource-Center.Application.label'),
           description: T.translate('features.Resource-Center.Application.description'),
           actionLabel: T.translate('features.Resource-Center.Application.actionbtn0'),
-          iconClassName: 'fa icon-app',
+          iconClassName: 'icon-app',
           wizardId: 'createApplicationWizard'
         },
         {
@@ -67,7 +67,7 @@ export default class ResourceCenter extends Component {
           title: T.translate('features.Resource-Center.Plugins.label'),
           description: T.translate('features.Resource-Center.Plugins.description'),
           actionLabel: T.translate('features.Resource-Center.Plugins.actionbtn0'),
-          iconClassName: 'fa fa-plug',
+          iconClassName: 'icon-plug',
           wizardId: 'createPluginArtifactWizard'
         },
         {
@@ -75,7 +75,7 @@ export default class ResourceCenter extends Component {
           title: T.translate('features.Resource-Center.Artifact.label'),
           description: T.translate('features.Resource-Center.Artifact.description'),
           actionLabel: T.translate('features.Resource-Center.Artifact.actionbtn0'),
-          iconClassName: 'fa icon-artifacts',
+          iconClassName: 'icon-artifacts',
           wizardId: 'createArtifactWizard'
         },
         {
@@ -83,7 +83,7 @@ export default class ResourceCenter extends Component {
           title: T.translate('features.Resource-Center.Library.label'),
           description: T.translate('features.Resource-Center.Library.description'),
           actionLabel: T.translate('features.Resource-Center.Library.actionbtn0'),
-          iconClassName: 'fa icon-library',
+          iconClassName: 'icon-library',
           wizardId: 'createLibraryWizard'
         },
         {
@@ -91,7 +91,7 @@ export default class ResourceCenter extends Component {
           title: T.translate('features.Resource-Center.Stream.label'),
           description: T.translate('features.Resource-Center.Stream.description'),
           actionLabel: T.translate('features.Resource-Center.Stream.actionbtn0'),
-          iconClassName: 'fa icon-streams',
+          iconClassName: 'icon-streams',
           wizardId: 'createStreamWizard'
         }
       ]

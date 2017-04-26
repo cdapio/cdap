@@ -23,7 +23,8 @@
 
   a {
     color: #ff6600;
-    margin: 0 5px;
+    padding: 0 5px;
+    border-right: 1px solid darkgray;
 
     &:hover {
       color: #ff6600;
@@ -32,9 +33,8 @@
       content: '< ';
     }
   }
-  > span.fa {
-    border-left: 1px solid darkgray;
-    padding-left: 5px;
+  > svg {
+    margin: 0 2px 0 5px;
   }
   span {
     padding: 0 2px;

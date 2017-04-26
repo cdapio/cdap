@@ -21,10 +21,11 @@
   upgraded reactstrap.
 */
 import React, { Component } from 'react';
-import {Tooltip} from 'reactstrap';
+import {Tooltip, Dropdown} from 'reactstrap';
 
 const components = {
-  UncontrolledTooltip: Tooltip,
+  UncontrolledDropdown: Dropdown,
+  UncontrolledTooltip: Tooltip
 };
 
 Object.keys(components).forEach(key => {
@@ -54,8 +55,9 @@ Object.keys(components).forEach(key => {
   components[key] = Uncontrolled;
 });
 
+const UncontrolledDropdown = components.UncontrolledDropdown;
 const UncontrolledTooltip = components.UncontrolledTooltip;
-
 export {
   UncontrolledTooltip,
+  UncontrolledDropdown
 };

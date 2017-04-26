@@ -12,33 +12,28 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
+$link-color: #0275d8;
 
-@import '../../styles/variables.scss';
-
-.view-switch {
-  height: inherit;
-  .nav.nav-tabs {
-    .nav-item {
-      margin: 0;
-      .nav-link {
-        margin: 0;
-        border: 0;
-        border-radius: 0;
-        fill: #373a3c;
-        &.active {
-          font-weight: bold;
-          background: darkgray;
-          border: 0;
-          fill: #55595c;
-        }
-        &.active:hover {
-          border-bottom: 0;
-        }
-        &:not(.active):hover {
-          background-color: $cdap-gray;
-        }
+.using-patterns-modal {
+  .pattern-details {
+    margin: 10px 0;
+    :not(.custom-pattern) {
+      input {
+        display: inline-block;
+        width: 90px;
+        margin: 0 10px;
       }
     }
+  }
+  .dropdown {
+    display: inline-block;
+    margin-right: 10px;
+  }
+  .showhidelink {
+    color: $link-color;
+    cursor: pointer;
+    margin-top: 6px;
+    display: inline-block;
   }
 }

@@ -71,13 +71,16 @@
     flex: 1;
     display: flex;
     align-items: center;
-    i,
+    svg,
     h4 {
       margin: 0 2px;
+    }
+    h4 {
       font-size: 17px;
     }
-    i {
-      font-size: 15px;
+    svg {
+      height: 15px;
+      width: 15px;
     }
   }
   .link-to-detail {
@@ -91,8 +94,9 @@
 
     &:hover { text-decoration: none; }
   }
-  .fa.fa-times {
-    font-size: 19px;
+  .icon-close {
+    height: 19px;
+    width: 19px;
     cursor: pointer;
   }
 }
