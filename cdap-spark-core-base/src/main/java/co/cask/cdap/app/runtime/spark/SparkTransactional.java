@@ -23,6 +23,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.spark.SparkExecutionContext;
 import co.cask.cdap.common.service.RetryStrategy;
+import co.cask.cdap.data.LineageDatasetContext;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.RetryingLongTransactionSystemClient;
@@ -229,7 +230,7 @@ final class SparkTransactional implements Transactional {
   private SparkTxRunnable wrap(final TxRunnable runnable) {
     return new SparkTxRunnable() {
       @Override
-      public void run(SparkDatasetContext context) throws Exception {
+      public void run(LineageDatasetContext context) throws Exception {
         runnable.run(context);
       }
     };
@@ -243,7 +244,7 @@ final class SparkTransactional implements Transactional {
    * with multiple threads that drive computation concurrently within the same transaction.
    */
   @ThreadSafe
-  private final class TransactionalDatasetContext implements SparkDatasetContext, TransactionInfo {
+  private final class TransactionalDatasetContext implements LineageDatasetContext, TransactionInfo {
 
     private final Transaction transaction;
     private final DynamicDatasetCache datasetCache;

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,11 +19,11 @@ package co.cask.cdap.internal.app.runtime;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data.ProgramContext;
+import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
-import co.cask.cdap.data2.metadata.writer.ProgramContext;
-import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
@@ -34,8 +34,6 @@ import co.cask.cdap.data2.transaction.stream.ForwardingStreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -57,7 +55,7 @@ public final class LineageWriterDataFabricFacade implements DataFabricFacade, Pr
   private final TransactionExecutorFactory txExecutorFactory;
   private final Id.Program programId;
   private final LineageWriter lineageWriter;
-  private final ProgramContext programContext;
+  private volatile ProgramContext programContext;
 
   @Inject
   public LineageWriterDataFabricFacade(TransactionExecutorFactory txExecutorFactory,
@@ -71,23 +69,14 @@ public final class LineageWriterDataFabricFacade implements DataFabricFacade, Pr
     this.txExecutorFactory = txExecutorFactory;
     this.datasetCache = datasetCache;
     this.programId = program.getId().toId();
-    this.programContext = new ProgramContext();
     this.lineageWriter = lineageWriter;
   }
 
   @Override
-  public void initContext(ProgramRunId run) {
-    programContext.initContext(run);
+  public void setContext(ProgramContext programContext) {
+    this.programContext = programContext;
     if (queueClientFactory instanceof ProgramContextAware) {
-      ((ProgramContextAware) queueClientFactory).initContext(run);
-    }
-  }
-
-  @Override
-  public void initContext(ProgramRunId run, NamespacedEntityId componentId) {
-    programContext.initContext(run, componentId);
-    if (queueClientFactory instanceof ProgramContextAware) {
-      ((ProgramContextAware) queueClientFactory).initContext(run, componentId);
+      ((ProgramContextAware) queueClientFactory).setContext(programContext);
     }
   }
 
@@ -138,8 +127,10 @@ public final class LineageWriterDataFabricFacade implements DataFabricFacade, Pr
 
     datasetCache.addExtraTransactionAware(consumer);
 
-    if (programContext.getRun() != null) {
-      lineageWriter.addAccess(programContext.getRun(), streamName, AccessType.READ, programContext.getComponentId());
+    ProgramContext programContext = this.programContext;
+    if (programContext != null) {
+      lineageWriter.addAccess(programContext.getProgramRunId(), streamName,
+                              AccessType.READ, programContext.getComponentId());
     }
 
     return new ForwardingStreamConsumer(consumer) {

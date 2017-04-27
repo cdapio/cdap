@@ -51,13 +51,17 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.data.RuntimeProgramContext;
+import co.cask.cdap.data.RuntimeProgramContextAware;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -88,15 +92,25 @@ import javax.annotation.Nullable;
 /**
  * Implementation of partitioned datasets using a Table to store the meta data.
  */
-public class PartitionedFileSetDataset extends AbstractDataset implements PartitionedFileSet, DatasetOutputCommitter {
+public class PartitionedFileSetDataset extends AbstractDataset
+  implements PartitionedFileSet, DatasetOutputCommitter, RuntimeProgramContextAware {
 
   private static final Logger LOG = LoggerFactory.getLogger(PartitionedFileSetDataset.class);
   private static final Gson GSON =
     new GsonBuilder().registerTypeAdapter(PartitionKey.class, new PartitionKeyCodec()).create();
   private static final String QUARANTINE_DIR = ".quarantine";
 
+  // A function to convert PartitionOperation into PartitionKey by getting the key from the operation.
+  private static final Function<PartitionOperation, PartitionKey> OP_TO_KEY =
+    new Function<PartitionOperation, PartitionKey>() {
+      @Override
+      public PartitionKey apply(PartitionOperation operation) {
+        return operation.getPartitionKey();
+      }
+    };
+
   /**
-   * A key that is guaranteed to be in the input format inconfiguration, where the value represents a GSON-serialized
+   * A key that is guaranteed to be in the input format in configuration, where the value represents a GSON-serialized
    * mapping from a partition's path to its partition key.
    */
   public static final String PATH_TO_PARTITIONING_MAPPING = "path.to.partition.mapping";
@@ -118,13 +132,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   protected boolean ignoreInvalidRowsSilently = false;
 
   private final DatasetId datasetInstanceId;
-
-  // In this map we keep track of the partitions that were added in the same transaction.
-  // If the exact same partition is added again, we will not throw an error but only log a message that
-  // the partition already exists. The reason for this is to provide backward-compatibility for CDAP-1227:
-  // by adding the partition in the onSuccess() of this dataset, map/reduce programs do not need to do that in
-  // their onFinish() any longer. But existing map/reduce programs may still do that, and would now fail.
-  private final Map<String, PartitionKey> partitionsAddedInSameTx = new HashMap<>();
+  private RuntimeProgramContext runtimeProgramContext;
 
   // Keep track of all partitions' being added/dropped in this transaction, so we can rollback their paths,
   // if necessary.
@@ -152,11 +160,43 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   @Override
+  public void setContext(RuntimeProgramContext context) {
+    this.runtimeProgramContext = context;
+  }
+
+  /**
+   * Returns the current {@link RuntimeProgramContext} or {@code null} if it is not available.
+   */
+  @Nullable
+  protected RuntimeProgramContext getRuntimeProgramContext() {
+    return runtimeProgramContext;
+  }
+
+  @Override
   public void startTx(Transaction tx) {
-    partitionsAddedInSameTx.clear();
     operationsInThisTx.clear();
     super.startTx(tx);
     this.tx = tx;
+  }
+
+  @Override
+  public boolean commitTx() throws Exception {
+    if (!super.commitTx()) {
+      return false;
+    }
+
+    // Publish a notification if there was new partition added.
+    RuntimeProgramContext runtimeProgramContext = getRuntimeProgramContext();
+    if (runtimeProgramContext != null && !operationsInThisTx.isEmpty()) {
+      List<PartitionKey> newPartitions = Lists.newArrayList(
+        Iterables.transform(Iterables.filter(operationsInThisTx, AddPartitionOperation.class), OP_TO_KEY));
+
+      // Only fire notification if there is new partition added
+      if (!newPartitions.isEmpty()) {
+        runtimeProgramContext.notifyNewPartitions(newPartitions);
+      }
+    }
+    return true;
   }
 
   @Override
@@ -299,7 +339,6 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     put.add(WRITE_PTR_COL, tx.getWritePointer());
 
     partitionsTable.put(put);
-    partitionsAddedInSameTx.put(path, key);
 
     addPartitionToExplore(key, path);
     operation.setExplorePartitionCreated();
