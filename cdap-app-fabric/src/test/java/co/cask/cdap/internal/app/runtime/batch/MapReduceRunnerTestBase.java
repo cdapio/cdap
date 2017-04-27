@@ -19,10 +19,14 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.messaging.Message;
+import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
@@ -37,13 +41,17 @@ import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.MockResponder;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
+import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionManager;
@@ -68,6 +76,9 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -77,6 +88,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Base class for test cases that need to run MapReduce programs.
  */
 public class MapReduceRunnerTestBase {
+
+  private static final Gson GSON = new Gson();
 
   private static Injector injector;
   private static TransactionManager txService;
@@ -189,6 +202,29 @@ public class MapReduceRunnerTestBase {
   protected boolean runProgram(ApplicationWithPrograms app, Class<?> programClass, Arguments args) throws Exception {
     return waitForCompletion(AppFabricTestHelper.submit(app, programClass.getName(), args, TEMP_FOLDER_SUPPLIER));
   }
+
+  /**
+   * Returns a list of {@link Notification} object fetched from the data event topic in TMS that was published
+   * starting from the given time.
+   */
+  protected List<Notification> getDataNotifications(long startTime) throws Exception {
+    // Get data notifications from TMS
+    List<Notification> notifications = new ArrayList<>();
+    MessagingContext messagingContext = new MultiThreadMessagingContext(injector.getInstance(MessagingService.class));
+
+    try (CloseableIterator<Message> messages = messagingContext.getMessageFetcher()
+      .fetch(NamespaceId.SYSTEM.getNamespace(),
+             injector.getInstance(CConfiguration.class).get(Constants.Dataset.DATA_EVENT_TOPIC), 10, startTime)) {
+
+      while (messages.hasNext()) {
+        notifications.add(GSON.fromJson(new String(messages.next().getPayload(), StandardCharsets.UTF_8),
+                                        Notification.class));
+      }
+    }
+
+    return notifications;
+  }
+
 
   private boolean waitForCompletion(ProgramController controller) throws InterruptedException {
     final AtomicBoolean success = new AtomicBoolean(false);

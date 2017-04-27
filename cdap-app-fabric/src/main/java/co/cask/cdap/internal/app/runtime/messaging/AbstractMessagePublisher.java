@@ -33,7 +33,7 @@ import java.util.Iterator;
  * An abstract implementation of {@link MessagePublisher} that implement most of the publish methods by
  * delegating to the {@link #publish(String, String, Iterator)}.
  */
-abstract class AbstractMessagePublisher implements MessagePublisher {
+public abstract class AbstractMessagePublisher implements MessagePublisher {
 
   @Override
   public final void publish(String namespace,
@@ -68,9 +68,6 @@ abstract class AbstractMessagePublisher implements MessagePublisher {
   public final void publish(String namespace, String topic,
                             Iterator<byte[]> payloads) throws TopicNotFoundException, IOException {
     NamespaceId namespaceId = new NamespaceId(namespace);
-    if (NamespaceId.SYSTEM.equals(namespaceId)) {
-      throw new IllegalArgumentException("Publish to '" + namespace + "' namespace is not allowed");
-    }
     publish(namespaceId.topic(topic), payloads);
   }
 

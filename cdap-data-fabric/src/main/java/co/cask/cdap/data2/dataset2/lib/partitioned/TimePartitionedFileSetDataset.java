@@ -71,8 +71,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
                                        FileSet fileSet, IndexedTable partitionTable,
                                        DatasetSpecification spec, Map<String, String> arguments,
                                        Provider<ExploreFacade> exploreFacadeProvider) {
-    super(datasetContext, name, PARTITIONING, fileSet, partitionTable, spec, arguments,
-          exploreFacadeProvider);
+    super(datasetContext, name, PARTITIONING, fileSet, partitionTable, spec, arguments, exploreFacadeProvider);
 
     // the first version of TPFS in CDAP 2.7 did not have the partitioning in the properties. It is not supported.
     if (PartitionedFileSetProperties.getPartitioning(spec.getProperties()) == null) {
