@@ -24,7 +24,8 @@ import ColumnActionsDropdown from 'components/DataPrep/ColumnActionsDropdown';
 require('./DataPrepTable.scss');
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import TextboxOnValium from 'components/TextboxOnValium';
-
+import WarningContainer from 'components/WarningContainer';
+import T from 'i18n-react';
 export default class DataPrepTable extends Component {
   constructor(props) {
     super(props);
@@ -111,16 +112,50 @@ export default class DataPrepTable extends Component {
     let newHeaders = this.state.headers.map(header => {
       if (header.name === head.name) {
         return Object.assign({}, header, {
-          edit: !header.edit
+          edit: !header.edit,
+          showWarning: false,
         });
       }
-      return header;
+      return {
+        name: header.name,
+        edit: false
+      };
     });
     this.setState({
       headers: newHeaders
     });
   }
 
+  showWarningMessage(index, currentValue) {
+    let showWarning = this.state.headers
+      .filter(header => header.name === currentValue);
+    let headers = this.state.headers;
+    let matchedHeader = headers[index];
+    if (!showWarning.length || headers[index].name === currentValue) {
+      if (matchedHeader.showWarning) {
+        matchedHeader.showWarning = false;
+        delete matchedHeader.editedColumnName;
+        this.setState({
+          headers: [
+            ...headers.slice(0, index),
+            matchedHeader,
+            ...headers.slice(index + 1)
+          ]
+        });
+      }
+      return;
+    }
+    matchedHeader.showWarning = true;
+    matchedHeader.editedColumnName = currentValue;
+    this.setState({
+      headers: [
+        ...headers.slice(0, index),
+        matchedHeader,
+        ...headers.slice(index + 1)
+      ]
+    });
+    return true;
+  }
   handleSaveEditedColumnName(index, changedValue, noChange) {
     let headers = this.state.headers;
     let matchedHeader = headers[index];
@@ -129,6 +164,8 @@ export default class DataPrepTable extends Component {
       matchedHeader.name = changedValue;
     }
     matchedHeader.edit = false;
+    matchedHeader.showWarning = false;
+    delete matchedHeader.editedColumnName;
     this.setState({
       headers: [
         ...headers.slice(0, index),
@@ -204,7 +241,6 @@ export default class DataPrepTable extends Component {
         </div>
       );
     }
-
     return (
       <div className="dataprep-table" id="dataprep-table-id">
         <table className="table table-bordered">
@@ -232,10 +268,36 @@ export default class DataPrepTable extends Component {
                             {head.name}
                           </span>
                         :
-                          <TextboxOnValium
-                            onChange={this.handleSaveEditedColumnName.bind(this, index)}
-                            value={head.name}
-                          />
+                          <div className="warning-container-wrapper float-xs-left">
+                            <TextboxOnValium
+                              onChange={this.handleSaveEditedColumnName.bind(this, index)}
+                              value={head.name}
+                              onWarning={this.showWarningMessage.bind(this, index)}
+                            />
+                            {
+                              head.showWarning ?
+                                <WarningContainer
+                                  message={T.translate('features.DataPrep.DataPrepTable.columnEditWarningMessage')}
+                                >
+                                  <div className="warning-btns-container">
+                                    <div
+                                      className="btn btn-primary"
+                                      onClick={this.handleSaveEditedColumnName.bind(this, index, head.editedColumnName, false)}
+                                    >
+                                      {T.translate('features.DataPrep.Directives.apply')}
+                                    </div>
+                                    <div
+                                      className="btn"
+                                      onClick={this.handleSaveEditedColumnName.bind(this, index, head.name, true)}
+                                    >
+                                      {T.translate('features.DataPrep.Directives.cancel')}
+                                    </div>
+                                  </div>
+                                </WarningContainer>
+                              :
+                                null
+                            }
+                          </div>
                       }
                       <span className="float-xs-right directives-dropdown-button">
                         <ColumnActionsDropdown

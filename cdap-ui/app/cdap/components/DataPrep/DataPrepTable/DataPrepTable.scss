@@ -13,6 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+$th-bg-color: #bcbcbc;
+$warning-container-border-color: #cccccc;
+$selected-header-bg-color: #3498db;
 
 $border-and-selected-color: #dbdbdb;
 $header-bg-color: #eeeeee;
@@ -74,9 +77,38 @@ $header-bg-color: #eeeeee;
             width: auto;
             height: 20px;
           }
+
+          .warning-container-wrapper {
+            width: 100%;
+            position: relative;
+            .warning-container {
+              position: absolute;
+              top: 32px;
+              width: calc(100% + 62px);
+              left: -10px;
+              background: white;
+              padding: 10px;
+              border: 1px solid $warning-container-border-color;
+              border-top: 0;
+              padding-bottom: 0;
+              .warning-title-container {
+                margin-left: -10px;
+                margin-right: -10px;
+                margin-top: -10px;
+              }
+              .warning-btns-container {
+                margin-left: -10px;
+                margin-right: -10px;
+                border-top: 1px solid $warning-container-border-color;
+                margin-top: 10px;
+                padding: 10px;
+              }
+            }
+          }
           > span:first-child {
             cursor: initial;
           }
+
         }
 
         &:first-child { border-left: 0; }

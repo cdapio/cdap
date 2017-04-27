@@ -34,9 +34,22 @@ export default class TextboxOnValium extends Component {
   updateTextValue(e) {
     this.setState({
       textValue: e.target.value
+    }, () => {
+      if (this.state.originalValue !== this.state.textValue && this.props.onWarning) {
+        let isWarning = this.props.onWarning(this.state.textValue);
+        if (isWarning || (!isWarning && this.state.isWarning)) {
+          this.setState({
+            isWarning
+          });
+          return;
+        }
+      }
     });
   }
   onBlur() {
+    if (this.state.isWarning) {
+      return;
+    }
     this.props.onChange(this.state.textValue, this.state.originalValue === this.state.textValue);
   }
   handleKeyPress(e) {
@@ -62,5 +75,6 @@ export default class TextboxOnValium extends Component {
 }
 TextboxOnValium.propTypes = {
   onChange: PropTypes.func,
-  value: PropTypes.string
+  value: PropTypes.string,
+  onWarning: PropTypes.func
 };
