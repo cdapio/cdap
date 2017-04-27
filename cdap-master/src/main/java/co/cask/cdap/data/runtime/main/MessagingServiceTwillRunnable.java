@@ -33,6 +33,7 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.messaging.server.MessagingHttpService;
+import co.cask.cdap.messaging.store.ForwardingTableFactory;
 import co.cask.cdap.messaging.store.TableFactory;
 import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -51,6 +52,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * A {@link TwillRunnable} for messaging system.
@@ -84,19 +86,21 @@ public class MessagingServiceTwillRunnable extends AbstractMasterTwillRunnable {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.MESSAGING_SERVICE));
-    HBaseTableFactory tableFactory = (HBaseTableFactory) injector.getInstance(TableFactory.class);
+    HBaseTableFactory tableFactory = getHBaseTableFactory(injector.getInstance(TableFactory.class));
 
     // Upgrade the TMS Message and Payload Tables
-    try {
-      tableFactory.upgradeMessageTable(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
-    } catch (IOException ex) {
-      LOG.warn("Exception while trying to upgrade TMS MessageTable.", ex);
-    }
+    if (tableFactory != null) {
+      try {
+        tableFactory.upgradeMessageTable(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
+      } catch (IOException ex) {
+        LOG.warn("Exception while trying to upgrade TMS MessageTable.", ex);
+      }
 
-    try {
-      tableFactory.upgradePayloadTable(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
-    } catch (IOException ex) {
-      LOG.warn("Exception while trying to upgrade TMS PayloadTable.", ex);
+      try {
+        tableFactory.upgradePayloadTable(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
+      } catch (IOException ex) {
+        LOG.warn("Exception while trying to upgrade TMS PayloadTable.", ex);
+      }
     }
 
     return injector;
@@ -118,5 +122,16 @@ public class MessagingServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new AuthenticationContextModules().getMasterModule(),
       new MessagingServerRuntimeModule().getDistributedModules()
     );
+  }
+
+  @Nullable
+  private HBaseTableFactory getHBaseTableFactory(TableFactory tableFactory) {
+    TableFactory factory = tableFactory;
+
+    while (!(factory instanceof HBaseTableFactory) && factory instanceof ForwardingTableFactory) {
+      factory = ((ForwardingTableFactory) factory).getDelegate();
+    }
+
+    return factory instanceof HBaseTableFactory ? (HBaseTableFactory) factory : null;
   }
 }
