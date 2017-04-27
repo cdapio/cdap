@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -45,8 +46,11 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.artifact.ArtifactVersionRange;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -377,19 +381,17 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
           AppRequest<?> appRequest = GSON.fromJson(fileReader, AppRequest.class);
           ArtifactSummary artifactSummary = appRequest.getArtifact();
-          NamespaceId artifactNamespace =
-            ArtifactScope.SYSTEM.equals(artifactSummary.getScope()) ? NamespaceId.SYSTEM : appId.getParent();
-          Id.Artifact artifactId =
-            Id.Artifact.from(artifactNamespace.toId(), artifactSummary.getName(), artifactSummary.getVersion());
 
           KerberosPrincipalId ownerPrincipalId =
             appRequest.getOwnerPrincipal() == null ? null : new KerberosPrincipalId(appRequest.getOwnerPrincipal());
 
           // if we don't null check, it gets serialized to "null"
           String configString = appRequest.getConfig() == null ? null : GSON.toJson(appRequest.getConfig());
+
           applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
-                                                artifactId, configString, createProgramTerminator(), ownerPrincipalId,
-                                                appRequest.canUpdateSchedules());
+                                                artifactSummary, configString, createProgramTerminator(),
+                                                ownerPrincipalId, appRequest.canUpdateSchedules());
+
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (ArtifactNotFoundException e) {
           responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());

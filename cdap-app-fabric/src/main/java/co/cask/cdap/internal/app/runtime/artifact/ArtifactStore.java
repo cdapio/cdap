@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
@@ -33,6 +35,7 @@ import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.common.ArtifactRangeNotFoundException;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.ImmutablePair;
@@ -49,6 +52,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClass;
 import co.cask.cdap.proto.artifact.ArtifactClasses;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.artifact.ArtifactSortOrder;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -83,13 +87,16 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /**
  * This class manages artifacts as well as metadata for each artifact. Artifacts and their metadata cannot be changed
@@ -213,7 +220,7 @@ public class ArtifactStore {
           try (Scanner scanner = getMetaTable(context).scan(scanArtifacts(namespace))) {
             Row row;
             while ((row = scanner.next()) != null) {
-              addArtifactsToList(artifacts, row);
+              addArtifactsToList(artifacts, row, Integer.MAX_VALUE, null);
             }
           }
           return Collections.unmodifiableList(artifacts);
@@ -228,15 +235,18 @@ public class ArtifactStore {
    * Get all artifacts that match artifacts in the given ranges.
    *
    * @param range the range to match artifacts in
+   * @param limit the limit number of the result
+   * @param order the order of the result
    * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an empty list
    *         is returned
    */
-  public List<ArtifactDetail> getArtifacts(final ArtifactRange range) {
+  public List<ArtifactDetail> getArtifacts(final ArtifactRange range, final int limit,
+                                           final ArtifactSortOrder order) {
     try {
       return Transactions.execute(transactional, new TxCallable<List<ArtifactDetail>>() {
         @Override
         public List<ArtifactDetail> call(DatasetContext context) throws Exception {
-          return getArtifacts(getMetaTable(context), range);
+          return getArtifacts(getMetaTable(context), range, limit, order);
         }
       });
     } catch (TransactionFailureException e) {
@@ -244,22 +254,72 @@ public class ArtifactStore {
     }
   }
 
-  private List<ArtifactDetail> getArtifacts(Table metaTable, ArtifactRange range) {
+  private List<ArtifactDetail> getArtifacts(
+    Table metaTable, ArtifactRange range, int limit,
+    ArtifactSortOrder order) throws IOException, ArtifactRangeNotFoundException, ArtifactNotFoundException {
     List<ArtifactDetail> artifacts = Lists.newArrayList();
     ArtifactKey artifactKey = new ArtifactKey(range.getNamespace(), range.getName());
 
     Row row = metaTable.get(artifactKey.getRowKey());
+    addArtifacts(artifacts, row, limit, order, range);
+    return Collections.unmodifiableList(artifacts);
+  }
+
+  private void addArtifacts(List<ArtifactDetail> artifacts, Row row, int limit,
+                            final ArtifactSortOrder order, @Nullable ArtifactRange range) throws IOException {
+    if (row.isEmpty()) {
+      return;
+    }
+    if (order == ArtifactSortOrder.UNORDERED) {
+      addArtifactsToList(artifacts, row, limit, range);
+    } else {
+      addAndSortArtifacts(artifacts, row, limit, order, range);
+    }
+  }
+
+  private void addAndSortArtifacts(List<ArtifactDetail> artifacts, Row row, int limit,
+                                   final ArtifactSortOrder order, @Nullable ArtifactRange range) {
+    ArtifactKey artifactKey = ArtifactKey.parse(row.getRow());
+    PriorityQueue<ArtifactDetail> queue = getPriorityQueue(limit, order);
+
     for (Map.Entry<byte[], byte[]> columnEntry : row.getColumns().entrySet()) {
       String version = Bytes.toString(columnEntry.getKey());
-      if (range.versionIsInRange(new ArtifactVersion(version))) {
-        ArtifactData data = GSON.fromJson(Bytes.toString(columnEntry.getValue()), ArtifactData.class);
-        Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace.toId(), artifactKey.name, version);
-        artifacts.add(new ArtifactDetail(new ArtifactDescriptor(
-          artifactId.toArtifactId(),
-          Locations.getLocationFromAbsolutePath(locationFactory, data.getLocationPath())), data.meta));
+      if (range != null && !range.versionIsInRange(new ArtifactVersion(version))) {
+        continue;
+      }
+
+      ArtifactData data = GSON.fromJson(Bytes.toString(columnEntry.getValue()), ArtifactData.class);
+      ArtifactId artifactId = new ArtifactId(artifactKey.name, new ArtifactVersion(version),
+                                             artifactKey.namespace.equals(NamespaceId.SYSTEM) ?
+                                               ArtifactScope.SYSTEM : ArtifactScope.USER);
+      queue.add(new ArtifactDetail(
+        new ArtifactDescriptor(artifactId, Locations.getLocationFromAbsolutePath(locationFactory,
+                                                                                 data.getLocationPath())),
+        data.meta));
+      if (limit != Integer.MAX_VALUE && queue.size() > limit) {
+        queue.poll();
       }
     }
-    return Collections.unmodifiableList(artifacts);
+    while (!queue.isEmpty()) {
+      artifacts.add(queue.poll());
+    }
+    Collections.reverse(artifacts.subList(0, artifacts.size()));
+  }
+
+  private PriorityQueue<ArtifactDetail> getPriorityQueue(int limit, final ArtifactSortOrder order) {
+    Comparator<ArtifactDetail> comparator = order == ArtifactSortOrder.ASC ? new Comparator<ArtifactDetail>() {
+      @Override
+      public int compare(ArtifactDetail o1, ArtifactDetail o2) {
+        return -o1.getDescriptor().compareTo(o2.getDescriptor());
+      }
+    } : new Comparator<ArtifactDetail>() {
+      @Override
+      public int compare(ArtifactDetail o1, ArtifactDetail o2) {
+        return o1.getDescriptor().compareTo(o2.getDescriptor());
+      }
+    };
+    // new PriorityQueue(comparator) is available since 1.8, have to provide a default value here
+    return limit == Integer.MAX_VALUE ? new PriorityQueue<>(11, comparator) : new PriorityQueue<>(limit, comparator);
   }
 
   /**
@@ -267,12 +327,17 @@ public class ArtifactStore {
    *
    * @param namespace the namespace to get artifacts from
    * @param artifactName the name of the artifact to get
+   * @param limit the limit number of the result
+   * @param order the order of the result
    * @return unmodifiable list of information about all versions of the given artifact
    * @throws ArtifactNotFoundException if no version of the given artifact exists
    * @throws IOException if there was an exception reading the artifact information from the metastore
    */
   public List<ArtifactDetail> getArtifacts(final NamespaceId namespace,
-                                           final String artifactName) throws ArtifactNotFoundException, IOException {
+                                           final String artifactName,
+                                           final int limit,
+                                           final ArtifactSortOrder order)
+    throws ArtifactNotFoundException, IOException {
     try {
       return Transactions.execute(transactional, new TxCallable<List<ArtifactDetail>>() {
         @Override
@@ -280,9 +345,8 @@ public class ArtifactStore {
           List<ArtifactDetail> artifacts = Lists.newArrayList();
           ArtifactKey artifactKey = new ArtifactKey(namespace, artifactName);
           Row row = getMetaTable(context).get(artifactKey.getRowKey());
-          if (!row.isEmpty()) {
-            addArtifactsToList(artifacts, row);
-          }
+          addArtifacts(artifacts, row, limit, order, null);
+
           if (artifacts.isEmpty()) {
             throw new ArtifactNotFoundException(namespace, artifactName);
           }
@@ -507,18 +571,22 @@ public class ArtifactStore {
    * @param parentArtifactId the id of the artifact to find plugins for
    * @param type the type of plugin to look for
    * @param name the name of the plugin to look for
+   * @param pluginPredicate the predicate for the plugins
+   * @param limit the limit number of the result
+   * @param order the order of the result
    * @return an unmodifiable map of plugin artifact to plugin classes of the given type and name, accessible by the
    *         given artifact. The map will never be null, and will never be empty.
    * @throws PluginNotExistsException if no plugin with the given type and name exists in the namespace
    * @throws IOException if there was an exception reading metadata from the metastore
    */
-  public SortedMap<ArtifactDescriptor, PluginClass> getPluginClasses(final NamespaceId namespace,
-                                                                     final Id.Artifact parentArtifactId,
-                                                                     final String type, final String name)
-    throws IOException, ArtifactNotFoundException, PluginNotExistsException {
+  public SortedMap<ArtifactDescriptor, PluginClass> getPluginClasses(
+    final NamespaceId namespace, final Id.Artifact parentArtifactId, final String type, final String name,
+    @Nullable Predicate<co.cask.cdap.proto.id.ArtifactId> pluginPredicate,
+    int limit, ArtifactSortOrder order) throws IOException, ArtifactNotFoundException, PluginNotExistsException {
     return getPluginClasses(namespace, new ArtifactRange(parentArtifactId.getNamespace(), parentArtifactId.getName(),
                                                          parentArtifactId.getVersion(), true,
-                                                         parentArtifactId.getVersion(), true), type, name);
+                                                         parentArtifactId.getVersion(), true), type, name,
+                            pluginPredicate, limit, order);
   }
 
   /**
@@ -528,28 +596,34 @@ public class ArtifactStore {
    * @param parentArtifactRange the parent artifact range to find plugins for
    * @param type the type of plugin to look for
    * @param name the name of the plugin to look for
+   * @param pluginRange the predicate for the plugins
+   * @param limit the limit number of the result
+   * @param order the order of the result
    * @return an unmodifiable map of plugin artifact to plugin classes of the given type and name, accessible by the
    *         given artifact. The map will never be null, and will never be empty.
    * @throws PluginNotExistsException if no plugin with the given type and name exists in the namespace
    * @throws IOException if there was an exception reading metadata from the metastore
    */
-  public SortedMap<ArtifactDescriptor, PluginClass> getPluginClasses(final NamespaceId namespace,
-                                                                     final ArtifactRange parentArtifactRange,
-                                                                     final String type, final String name)
-    throws IOException, ArtifactNotFoundException, PluginNotExistsException {
+  public SortedMap<ArtifactDescriptor, PluginClass> getPluginClasses(
+    final NamespaceId namespace, final ArtifactRange parentArtifactRange, final String type, final String name,
+    @Nullable final Predicate<co.cask.cdap.proto.id.ArtifactId> pluginRange, final int limit,
+    final ArtifactSortOrder order) throws IOException, ArtifactNotFoundException, PluginNotExistsException {
     try {
       SortedMap<ArtifactDescriptor, PluginClass> result =
         Transactions.execute(transactional, new TxCallable<SortedMap<ArtifactDescriptor, PluginClass>>() {
           @Override
           public SortedMap<ArtifactDescriptor, PluginClass> call(DatasetContext context) throws Exception {
             Table metaTable = getMetaTable(context);
-            List<ArtifactDetail> parentArtifactDetails = getArtifacts(metaTable, parentArtifactRange);
+            List<ArtifactDetail> parentArtifactDetails = getArtifacts(metaTable, parentArtifactRange, limit, null);
 
             if (parentArtifactDetails.isEmpty()) {
               throw new ArtifactNotFoundException(parentArtifactRange.getNamespace(), parentArtifactRange.getName());
             }
 
-            SortedMap<ArtifactDescriptor, PluginClass> plugins = new TreeMap<>();
+            SortedMap<ArtifactDescriptor, PluginClass> plugins = order == ArtifactSortOrder.DESC ?
+              new TreeMap<ArtifactDescriptor, PluginClass>(Collections.<ArtifactDescriptor>reverseOrder()) :
+              new TreeMap<ArtifactDescriptor, PluginClass>();
+
             List<Id.Artifact> parentArtifacts = new ArrayList<>();
             for (ArtifactDetail parentArtifactDetail : parentArtifactDetails) {
               Id.Artifact parentArtifactId =
@@ -568,7 +642,7 @@ public class ArtifactStore {
                                                 parentArtifactRange.getName(), type, name);
             Row row = metaTable.get(pluginKey.getRowKey());
             if (!row.isEmpty()) {
-              addPluginsInRangeToMap(namespace, parentArtifacts, row.getColumns(), plugins);
+              addPluginsInRangeToMap(namespace, parentArtifacts, row.getColumns(), plugins, pluginRange, limit);
             }
             return Collections.unmodifiableSortedMap(plugins);
           }
@@ -929,11 +1003,18 @@ public class ArtifactStore {
     return result;
   }
 
-  private void addArtifactsToList(List<ArtifactDetail> artifactDetails, Row row) throws IOException {
+  private void addArtifactsToList(List<ArtifactDetail> artifactDetails, Row row, int limit,
+                                  @Nullable ArtifactRange range) throws IOException {
     ArtifactKey artifactKey = ArtifactKey.parse(row.getRow());
 
     for (Map.Entry<byte[], byte[]> columnVal : row.getColumns().entrySet()) {
+      if (limit != Integer.MAX_VALUE && artifactDetails.size() == limit) {
+        break;
+      }
       String version = Bytes.toString(columnVal.getKey());
+      if (range != null && !range.versionIsInRange(new ArtifactVersion(version))) {
+        continue;
+      }
       ArtifactData data = GSON.fromJson(Bytes.toString(columnVal.getValue()), ArtifactData.class);
       Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace.toId(), artifactKey.name, version);
       artifactDetails.add(new ArtifactDetail(
@@ -989,15 +1070,28 @@ public class ArtifactStore {
     return null;
   }
 
-  private void addPluginsInRangeToMap(NamespaceId namespace, List<Id.Artifact> parentArtifacts,
+  private void addPluginsInRangeToMap(final NamespaceId namespace, List<Id.Artifact> parentArtifacts,
                                       Map<byte[], byte[]> columns,
-                                      SortedMap<ArtifactDescriptor, PluginClass> plugins) {
+                                      SortedMap<ArtifactDescriptor, PluginClass> plugins,
+                                      @Nullable Predicate<co.cask.cdap.proto.id.ArtifactId> range,
+                                      int limit) {
+    // if predicate is null,
+    // filter out plugins whose artifacts are not in the system namespace and not in this namespace
+    range = range != null ? range : new Predicate<co.cask.cdap.proto.id.ArtifactId>() {
+      @Override
+      public boolean apply(co.cask.cdap.proto.id.ArtifactId input) {
+        return NamespaceId.SYSTEM.equals(input.getParent()) || input.getParent().equals(namespace);
+      }
+    };
+
     for (Map.Entry<byte[], byte[]> column : columns.entrySet()) {
+      if (limit != Integer.MAX_VALUE && limit == plugins.size()) {
+        break;
+      }
       // column is the artifact namespace, name, and version. value is the serialized PluginData
       ArtifactColumn artifactColumn = ArtifactColumn.parse(column.getKey());
-      Id.Namespace artifactNamespace = artifactColumn.artifactId.getNamespace();
-      // filter out plugins whose artifacts are not in the system namespace and not in this namespace
-      if (!Id.Namespace.SYSTEM.equals(artifactNamespace) && !artifactNamespace.equals(namespace.toId())) {
+
+      if (!range.apply(artifactColumn.artifactId.toEntityId())) {
         continue;
       }
       PluginData pluginData = GSON.fromJson(Bytes.toString(column.getValue()), PluginData.class);

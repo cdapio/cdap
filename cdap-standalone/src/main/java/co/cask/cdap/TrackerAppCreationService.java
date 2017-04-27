@@ -81,7 +81,7 @@ public class TrackerAppCreationService extends AbstractExecutionThreadService {
 
           List<ArtifactSummary> artifacts = null;
           try {
-            artifacts = artifactRepository.getArtifacts(NamespaceId.SYSTEM, "tracker");
+            artifacts = artifactRepository.getArtifactSummaries(NamespaceId.SYSTEM, "tracker", -1, null);
           } catch (ArtifactNotFoundException ex) {
             // expected, so suppress it
           }
@@ -89,7 +89,8 @@ public class TrackerAppCreationService extends AbstractExecutionThreadService {
         }
       }, 5, TimeUnit.MINUTES, 2, TimeUnit.SECONDS, "Waiting for Tracker Artifact to become available.");
       // Find the latest tracker artifact based on the version
-      List<ArtifactSummary> artifacts = new ArrayList<>(artifactRepository.getArtifacts(NamespaceId.SYSTEM, "tracker"));
+      List<ArtifactSummary> artifacts = new ArrayList<>(artifactRepository.getArtifactSummaries(NamespaceId.SYSTEM,
+                                                                                                "tracker", -1, null));
       if (stopping) {
         LOG.debug("TrackerAppService shutting down.");
         // Service was stopped, otherwise a TimeoutException would have been thrown

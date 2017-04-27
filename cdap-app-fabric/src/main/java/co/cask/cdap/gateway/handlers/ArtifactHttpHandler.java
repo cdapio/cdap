@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.app.program.ManifestFields;
@@ -47,10 +48,13 @@ import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.artifact.ArtifactSortOrder;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.artifact.ArtifactVersionRange;
 import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -58,6 +62,7 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
@@ -162,10 +167,10 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     try {
       if (scope == null) {
         NamespaceId namespace = validateAndGetNamespace(namespaceId);
-        responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifacts(namespace, true));
+        responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifactSummaries(namespace, true));
       } else {
         NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
-        responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifacts(namespace, false));
+        responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifactSummaries(namespace, false));
       }
     } catch (IOException e) {
       LOG.error("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);
@@ -178,13 +183,28 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   public void getArtifactVersions(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("artifact-name") String artifactName,
-                                  @QueryParam("scope") @DefaultValue("user") String scope)
+                                  @QueryParam("scope") @DefaultValue("user") String scope,
+                                  @QueryParam("versionRange") String versionRange,
+                                  @QueryParam("limit") @DefaultValue("2147483647") String limit,
+                                  @QueryParam("order") @DefaultValue("UNORDERED") String order)
     throws Exception {
 
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
 
+    ArtifactRange range = versionRange == null ? null :
+      new ArtifactRange(namespace, artifactName, ArtifactVersionRange.parse(versionRange));
+    int limitNumber = Integer.valueOf(limit);
+    limitNumber = limitNumber <= 0 ? Integer.MAX_VALUE : limitNumber;
+    ArtifactSortOrder sortOrder = ArtifactSortOrder.valueOf(order);
+
     try {
-      responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifacts(namespace, artifactName));
+      if (range == null) {
+        responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifactSummaries(namespace, artifactName,
+                                                                                          limitNumber, sortOrder));
+      } else {
+        responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifactSummaries(range, limitNumber,
+                                                                                          sortOrder));
+      }
     } catch (IOException e) {
       LOG.error("Exception reading artifacts named {} for namespace {} from the store.", artifactName, namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading artifact metadata from the store.");
@@ -498,16 +518,38 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                 @PathParam("artifact-version") String artifactVersion,
                                 @PathParam("plugin-type") String pluginType,
                                 @PathParam("plugin-name") String pluginName,
-                                @QueryParam("scope") @DefaultValue("user") String scope)
-    throws NamespaceNotFoundException, BadRequestException, ArtifactNotFoundException {
+                                @QueryParam("scope") @DefaultValue("user") final String scope,
+                                @QueryParam("artifactName") final String pluginArtifactName,
+                                @QueryParam("artifactVersion") String pluginVersion,
+                                @QueryParam("artifactScope") final String pluginScope,
+                                @QueryParam("limit") @DefaultValue("2147483647") String limit,
+                                @QueryParam("order") @DefaultValue("UNORDERED") String order)
+    throws NamespaceNotFoundException, BadRequestException, ArtifactNotFoundException, InvalidArtifactRangeException {
 
     NamespaceId namespace = Ids.namespace(namespaceId);
     NamespaceId artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
-    Id.Artifact artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
+    final NamespaceId pluginArtifactNamespace = validateAndGetScopedNamespace(namespace, pluginScope);
+    Id.Artifact parentArtifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
+    final ArtifactVersionRange pluginRange = pluginVersion == null ? null : ArtifactVersionRange.parse(pluginVersion);
+    int limitNumber = Integer.valueOf(limit);
+    limitNumber = limitNumber <= 0 ? Integer.MAX_VALUE : limitNumber;
+    ArtifactSortOrder sortOrder = ArtifactSortOrder.valueOf(order);
+    Predicate<ArtifactId> predicate = new Predicate<ArtifactId>() {
+      @Override
+      public boolean apply(ArtifactId input) {
+        // should check if the artifact is from SYSTEM namespace, if not, check if it is from the scoped namespace.
+        // by default, the scoped namespace is for USER scope
+        return (((pluginScope == null && NamespaceId.SYSTEM.equals(input.getParent()))
+          || pluginArtifactNamespace.equals(input.getParent())) &&
+          (pluginArtifactName == null || pluginArtifactName.equals(input.getArtifact())) &&
+          (pluginRange == null || pluginRange.versionIsInRange(new ArtifactVersion(input.getVersion()))));
+      }
+    };
 
     try {
       SortedMap<ArtifactDescriptor, PluginClass> plugins =
-        artifactRepository.getPlugins(namespace, artifactId, pluginType, pluginName);
+        artifactRepository.getPlugins(namespace, parentArtifactId, pluginType, pluginName, predicate, limitNumber,
+                                      sortOrder);
       List<PluginInfo> pluginInfos = Lists.newArrayList();
 
       // flatten the map
@@ -524,7 +566,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     } catch (PluginNotExistsException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (IOException e) {
-      LOG.error("Exception looking up plugins for artifact {}", artifactId, e);
+      LOG.error("Exception looking up plugins for artifact {}", parentArtifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            "Error reading plugins for the artifact from the store.");
     }
@@ -707,7 +749,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     return validateAndGetScopedNamespace(Ids.namespace(namespaceId), ArtifactScope.USER);
   }
 
-  private NamespaceId validateAndGetScopedNamespace(NamespaceId namespace, String scope)
+  private NamespaceId validateAndGetScopedNamespace(NamespaceId namespace, @Nullable String scope)
     throws NamespaceNotFoundException, BadRequestException {
     if (scope != null) {
       return validateAndGetScopedNamespace(namespace, validateScope(scope));

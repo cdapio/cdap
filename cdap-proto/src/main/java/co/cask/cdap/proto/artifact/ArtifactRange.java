@@ -25,13 +25,9 @@ import java.util.Objects;
 /**
  * Represents a range of versions for an artifact. The lower version is inclusive and the upper version is exclusive.
  */
-public class ArtifactRange {
+public class ArtifactRange extends ArtifactVersionRange {
   private final NamespaceId namespace;
   private final String name;
-  private final ArtifactVersion lower;
-  private final ArtifactVersion upper;
-  private final boolean isLowerInclusive;
-  private final boolean isUpperInclusive;
 
   public ArtifactRange(Id.Namespace namespace, String name, ArtifactVersion lower, ArtifactVersion upper) {
     this(namespace, name, lower, true, upper, false);
@@ -43,22 +39,20 @@ public class ArtifactRange {
 
   public ArtifactRange(Id.Namespace namespace, String name, ArtifactVersion lower, boolean isLowerInclusive,
                        ArtifactVersion upper, boolean isUpperInclusive) {
+    super(lower, isLowerInclusive, upper, isUpperInclusive);
     this.namespace = namespace.toEntityId();
     this.name = name;
-    this.lower = lower;
-    this.upper = upper;
-    this.isLowerInclusive = isLowerInclusive;
-    this.isUpperInclusive = isUpperInclusive;
   }
 
   public ArtifactRange(NamespaceId namespace, String name, ArtifactVersion lower, boolean isLowerInclusive,
                        ArtifactVersion upper, boolean isUpperInclusive) {
+    super(lower, isLowerInclusive, upper, isUpperInclusive);
     this.namespace = namespace;
     this.name = name;
-    this.lower = lower;
-    this.upper = upper;
-    this.isLowerInclusive = isLowerInclusive;
-    this.isUpperInclusive = isUpperInclusive;
+  }
+
+  public ArtifactRange(NamespaceId namespace, String name, ArtifactVersionRange range) {
+    this(namespace, name, range.lower, range.isLowerInclusive, range.upper, range.isUpperInclusive);
   }
 
   public NamespaceId getNamespace() {
@@ -67,22 +61,6 @@ public class ArtifactRange {
 
   public String getName() {
     return name;
-  }
-
-  public ArtifactVersion getLower() {
-    return lower;
-  }
-
-  public ArtifactVersion getUpper() {
-    return upper;
-  }
-
-  public boolean versionIsInRange(ArtifactVersion version) {
-    int lowerCompare = version.compareTo(lower);
-    boolean lowerSatisfied = isLowerInclusive ? lowerCompare >= 0 : lowerCompare > 0;
-    int upperCompare = version.compareTo(upper);
-    boolean upperSatisfied = isUpperInclusive ? upperCompare <= 0 : upperCompare < 0;
-    return lowerSatisfied && upperSatisfied;
   }
 
   @Override
@@ -107,15 +85,6 @@ public class ArtifactRange {
   @Override
   public int hashCode() {
     return Objects.hash(namespace, name, lower, isLowerInclusive, upper, isUpperInclusive);
-  }
-
-  /**
-   * Return the range as a string without the namespace. For example, 'my-functions[1.0.0,2.0.0)'.
-   *
-   * @return the range as a string without the namespace.
-   */
-  public String toNonNamespacedString() {
-    return toString(new StringBuilder());
   }
 
   @Override
@@ -194,61 +163,7 @@ public class ArtifactRange {
         String.format("Invalid artifact range %s. Artifact name '%s' is invalid.", artifactRangeStr, name));
     }
 
-    boolean isLowerInclusive = artifactRangeStr.charAt(versionStartIndex) == '[';
-
-    // search for the comma separating versions
-    int commaIndex = artifactRangeStr.indexOf(',', versionStartIndex + 1);
-    if (commaIndex < 0) {
-      throw new InvalidArtifactRangeException(
-        String.format("Invalid artifact range %s. Could not find ',' separating lower and upper verions.",
-                      artifactRangeStr));
-    }
-    String lowerStr = artifactRangeStr.substring(versionStartIndex + 1, commaIndex).trim();
-    ArtifactVersion lower = new ArtifactVersion(lowerStr);
-    if (lower.getVersion() == null) {
-      throw new InvalidArtifactRangeException(String.format(
-        "Invalid artifact range %s. Lower version %s is invalid.", artifactRangeStr, lowerStr));
-    }
-
-    // search for the ']' or ')' marking the end of the upper version
-    int versionEndIndex = indexOf(artifactRangeStr, ']', ')', commaIndex + 1);
-    if (versionEndIndex < 0) {
-      throw new InvalidArtifactRangeException(String.format(
-        "Invalid artifact range %s. Could not find enclosing ']' or ')'.", artifactRangeStr));
-    }
-    String upperStr = artifactRangeStr.substring(commaIndex + 1, versionEndIndex).trim();
-    ArtifactVersion upper = new ArtifactVersion(upperStr);
-    if (upper.getVersion() == null) {
-      throw new InvalidArtifactRangeException(String.format(
-        "Invalid artifact range %s. Upper version %s is invalid.", artifactRangeStr, upperStr));
-    }
-    boolean isUpperInclusive = artifactRangeStr.charAt(versionEndIndex) == ']';
-
-    // check that lower is not greater than upper
-    int comp = lower.compareTo(upper);
-    if (comp > 0) {
-      throw new InvalidArtifactRangeException(String.format(
-        "Invalid artifact range %s. Lower version %s is greater than upper version %s.",
-        artifactRangeStr, lowerStr, upperStr));
-    } else if (comp == 0 && isLowerInclusive && !isUpperInclusive) {
-      // if lower and upper are equal, but lower is inclusive and upper is exclusive, this is also invalid
-      throw new InvalidArtifactRangeException(String.format(
-        "Invalid artifact range %s. Lower and upper versions %s are equal, " +
-          "but lower is inclusive and upper is exclusive.",
-        artifactRangeStr, lowerStr));
-    }
-
-    return new ArtifactRange(namespace, name, lower, isLowerInclusive, upper, isUpperInclusive);
-  }
-
-  // like String's indexOf(char, int), except it looks for either one of 2 characters
-  private static int indexOf(String str, char option1, char option2, int startIndex) {
-    for (int i = startIndex; i < str.length(); i++) {
-      char charAtIndex = str.charAt(i);
-      if (charAtIndex == option1 || charAtIndex == option2) {
-        return i;
-      }
-    }
-    return -1;
+    return new ArtifactRange(namespace, name,
+                             ArtifactVersionRange.parse(artifactRangeStr.substring(versionStartIndex)));
   }
 }

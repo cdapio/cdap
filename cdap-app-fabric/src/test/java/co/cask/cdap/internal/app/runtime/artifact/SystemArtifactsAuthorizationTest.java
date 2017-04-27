@@ -142,7 +142,7 @@ public class SystemArtifactsAuthorizationTest {
     authorizer.revoke(instance);
 
     // test that system artifacts are available to everyone
-    List<ArtifactSummary> artifacts = artifactRepository.getArtifacts(namespaceId, true);
+    List<ArtifactSummary> artifacts = artifactRepository.getArtifactSummaries(namespaceId, true);
     Assert.assertEquals(1, artifacts.size());
     ArtifactSummary artifactSummary = artifacts.get(0);
     Assert.assertEquals(SYSTEM_ARTIFACT.getArtifact(), artifactSummary.getName());
