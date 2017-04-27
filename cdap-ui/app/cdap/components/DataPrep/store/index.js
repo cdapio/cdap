@@ -25,6 +25,7 @@ const defaultAction = {
 const defaultInitialState = {
   initialized: false,
   workspaceId: '',
+  workspaceUri: '',
   data: [],
   headers: [],
   directives: [],
@@ -60,6 +61,7 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
     case DataPrepActions.setWorkspace:
       stateCopy = Object.assign({}, state, {
         workspaceId: action.payload.workspaceId,
+        workspaceUri: action.payload.workspaceUri,
         headers: action.payload.headers || [],
         directives: action.payload.directives || [],
         data: action.payload.data || [],

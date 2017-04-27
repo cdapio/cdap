@@ -45,7 +45,8 @@ const MyDataPrepApi = {
 
   // File System Browser
   explorer: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/fs/explorer`),
-  readFile: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/fs/explorer/read`)
+  readFile: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/fs/explorer/read`),
+  getSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/fs/explorer/specification`)
 };
 
 export default MyDataPrepApi;

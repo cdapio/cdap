@@ -24,6 +24,7 @@ import {setWorkspace} from 'components/DataPrep/store/DataPrepActionCreator';
 import WorkspaceModal from 'components/DataPrep/TopPanel/WorkspaceTabs/WorkspaceModal';
 import WorkspacePropertiesModal from 'components/DataPrep/TopPanel/WorkspaceTabs/WorkspacePropertiesModal';
 import ee from 'event-emitter';
+import sortBy from 'lodash/sortBy';
 
 require('./WorkspaceTabs.scss');
 
@@ -81,7 +82,7 @@ export default class WorkspaceTabs extends Component {
           this.setActiveWorkspace(res.values[0].id);
         }
 
-        let workspaceList = res.values.sort();
+        let workspaceList = sortBy(res.values, ['name']);
         let beginIndex = workspaceList.indexOf(this.state.activeWorkspace);
 
         if (beginIndex > (workspaceList.length - MAX_NUM_TABS)) {
