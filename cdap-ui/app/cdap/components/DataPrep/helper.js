@@ -34,3 +34,7 @@ export function directiveRequestBodyCreator(directivesArray, wsId) {
     }
   };
 }
+
+export function isCustomOption(selectedOption) {
+  return selectedOption.substr(0, 6) === 'CUSTOM';
+}

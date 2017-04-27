@@ -22,25 +22,21 @@ export default class ColumnsTabRow extends Component {
     super(props);
 
     this.state = {
-      expanded: false
+      selected: props.selected
     };
 
-    this.toggleRowExpand = this.toggleRowExpand.bind(this);
+    this.toggleRowSelect = this.toggleRowSelect.bind(this);
   }
 
-  toggleRowExpand() {
-    if (!this.state.expanded) {
-      let elem = document.getElementById(`column-${this.props.columnName}`);
+  toggleRowSelect() {
+    let newState = !this.state.selected;
+    let elem = document.getElementById(`column-${this.props.columnName}`);
+    if (newState) {
       elem.scrollIntoView();
-
-      elem.classList.add('selected');
-
-      setTimeout(() => {
-        elem.classList.remove('selected');
-      }, 3000);
     }
 
-    this.setState({expanded: !this.state.expanded});
+    this.setState({selected: newState});
+    this.props.setSelect(this.props.columnName, newState);
   }
 
   renderTypesTable() {
@@ -76,8 +72,8 @@ export default class ColumnsTabRow extends Component {
     );
   }
 
-  renderExpanded() {
-    if (!this.state.expanded) { return null; }
+  renderSelected() {
+    if (!this.state.selected) { return null; }
 
     let generalInfo = this.props.rowInfo.general;
 
@@ -88,7 +84,7 @@ export default class ColumnsTabRow extends Component {
     let filled = nonNull - empty;
 
     return (
-      <div className="expanded-row">
+      <div className="selected-row">
         <div className="quality-bar">
           <span
             className="filled"
@@ -114,18 +110,29 @@ export default class ColumnsTabRow extends Component {
 
   render() {
     return (
-      <div className="columns-tab-row">
+      <div
+        className="columns-tab-row"
+        id={`columns-tab-row-${this.props.columnName}`}
+      >
         <div
           className={classnames('row-header', {
-            'expanded': this.state.expanded,
+            'selected': this.state.selected,
             'invalid': !this.props.rowInfo.isValid
           })}
-          onClick={this.toggleRowExpand}
         >
-          {this.props.index + 1}. {this.props.columnName}
+          <span
+            onClick={this.toggleRowSelect}
+            className={classnames('fa row-header-checkbox', {
+              'fa-square-o': !this.state.selected,
+              'fa-check-square': this.state.selected
+            })}
+          />
+          <span>
+            {this.props.index + 1}. {this.props.columnName}
+          </span>
         </div>
 
-        {this.renderExpanded()}
+        {this.renderSelected()}
       </div>
     );
   }
@@ -134,5 +141,7 @@ export default class ColumnsTabRow extends Component {
 ColumnsTabRow.propTypes = {
   rowInfo: PropTypes.object,
   index: PropTypes.number,
-  columnName: PropTypes.string
+  columnName: PropTypes.string,
+  selected: PropTypes.bool,
+  setSelect: PropTypes.func
 };
