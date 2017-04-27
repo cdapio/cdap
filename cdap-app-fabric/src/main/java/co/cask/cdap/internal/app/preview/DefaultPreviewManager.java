@@ -43,7 +43,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.logging.guice.LoggingModules;
-import co.cask.cdap.messaging.guice.MessagingClientModule;
+import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -80,9 +80,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
@@ -191,20 +188,20 @@ public class DefaultPreviewManager implements PreviewManager {
    */
   @VisibleForTesting
   Injector createPreviewInjector(ApplicationId applicationId) throws IOException {
-    CConfiguration previewcConf = CConfiguration.copy(cConf);
+    CConfiguration previewCConf = CConfiguration.copy(cConf);
     java.nio.file.Path previewDirPath = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview").toAbsolutePath();
 
     Files.createDirectories(previewDirPath);
     java.nio.file.Path previewDir = Files.createDirectories(Paths.get(previewDirPath.toAbsolutePath().toString(),
                                                                       applicationId.getApplication()));
-    previewcConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
-    Configuration previewhConf = new Configuration(hConf);
-    previewhConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
-    previewcConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
-    previewcConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
+    previewCConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
+    Configuration previewHConf = new Configuration(hConf);
+    previewHConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
+    previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
+    previewCConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
 
     return Guice.createInjector(
-      new ConfigModule(previewcConf, previewhConf),
+      new ConfigModule(previewCConf, previewHConf),
       new IOModule(),
       new AuthenticationContextModules().getMasterModule(),
       new SecurityModules().getStandaloneModules(),
@@ -221,7 +218,7 @@ public class DefaultPreviewManager implements PreviewManager {
       new MetricsClientRuntimeModule().getStandaloneModules(),
       new LoggingModules().getStandaloneModules(),
       new NamespaceStoreModule().getStandaloneModules(),
-      new MessagingClientModule(),
+      new MessagingServerRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
