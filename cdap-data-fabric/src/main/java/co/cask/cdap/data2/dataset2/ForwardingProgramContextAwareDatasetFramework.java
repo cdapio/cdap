@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,9 +15,8 @@
  */
 package co.cask.cdap.data2.dataset2;
 
-import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.data.ProgramContext;
+import co.cask.cdap.data.ProgramContextAware;
 
 /**
  * Implementation of the {@link ForwardingDatasetFramework} which is also {@link ProgramContextAware}.
@@ -30,16 +29,9 @@ public class ForwardingProgramContextAwareDatasetFramework extends ForwardingDat
   }
 
   @Override
-  public void initContext(ProgramRunId run) {
+  public void setContext(ProgramContext programContext) {
     if (delegate instanceof ProgramContextAware) {
-      ((ProgramContextAware) delegate).initContext(run);
-    }
-  }
-
-  @Override
-  public void initContext(ProgramRunId run, NamespacedEntityId componentId) {
-    if (delegate instanceof ProgramContextAware) {
-      ((ProgramContextAware) delegate).initContext(run, componentId);
+      ((ProgramContextAware) delegate).setContext(programContext);
     }
   }
 }

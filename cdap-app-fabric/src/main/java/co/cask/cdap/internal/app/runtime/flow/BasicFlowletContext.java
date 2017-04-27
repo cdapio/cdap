@@ -32,6 +32,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.proto.id.FlowletId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -41,14 +43,14 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Internal implementation of {@link FlowletContext}.
  */
 final class BasicFlowletContext extends AbstractContext implements FlowletContext {
 
-  private final String flowId;
-  private final String flowletId;
+  private final FlowletId flowletId;
   private final long groupId;
   private final int instanceId;
   private final FlowletSpecification flowletSpec;
@@ -57,7 +59,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   private final LoadingCache<String, MetricsContext> queueMetrics;
   private final LoadingCache<ImmutablePair<String, String>, MetricsContext> producerMetrics;
 
-  BasicFlowletContext(Program program, ProgramOptions programOptions, final String flowletId,
+  BasicFlowletContext(Program program, ProgramOptions programOptions, FlowletId flowletId,
                       int instanceId, int instanceCount, Set<String> datasets,
                       FlowletSpecification flowletSpec,
                       MetricsCollectionService metricsService,
@@ -69,13 +71,12 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       MessagingService messagingService,
                       CConfiguration cConf) {
     super(program, programOptions, cConf, datasets, dsFramework, txClient, discoveryServiceClient, false,
-          metricsService, ImmutableMap.of(Constants.Metrics.Tag.FLOWLET, flowletId,
+          metricsService, ImmutableMap.of(Constants.Metrics.Tag.FLOWLET, flowletId.getFlowlet(),
                                           Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
-          secureStore, secureStoreManager, messagingService);
+          secureStore, secureStoreManager, messagingService, null);
 
-    this.flowId = program.getName();
     this.flowletId = flowletId;
-    this.groupId = FlowUtils.generateConsumerGroupId(program.getId(), flowletId);
+    this.groupId = FlowUtils.generateConsumerGroupId(program.getId(), flowletId.getFlowlet());
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
     this.flowletSpec = flowletSpec;
@@ -97,9 +98,10 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
         @Override
         public MetricsContext load(ImmutablePair<String, String> key) throws Exception {
           return getProgramMetrics()
-            .childContext(ImmutableMap.of(Constants.Metrics.Tag.PRODUCER, key.getFirst(),
-                                          Constants.Metrics.Tag.FLOWLET_QUEUE, key.getSecond(),
-                                          Constants.Metrics.Tag.CONSUMER, BasicFlowletContext.this.flowletId));
+            .childContext(ImmutableMap.of(
+              Constants.Metrics.Tag.PRODUCER, key.getFirst(),
+              Constants.Metrics.Tag.FLOWLET_QUEUE, key.getSecond(),
+              Constants.Metrics.Tag.CONSUMER, BasicFlowletContext.this.flowletId.getFlowlet()));
         }
       });
   }
@@ -125,16 +127,22 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     return flowletSpec;
   }
 
+  @Nullable
+  @Override
+  protected NamespacedEntityId getComponentId() {
+    return flowletId;
+  }
+
   public void setInstanceCount(int count) {
     instanceCount = count;
   }
 
   public String getFlowId() {
-    return flowId;
+    return getProgramName();
   }
 
   public String getFlowletId() {
-    return flowletId;
+    return flowletId.getFlowlet();
   }
 
   @Override
@@ -147,11 +155,11 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                                      getRunId().getId(), String.valueOf(getInstanceId()));
   }
 
-  public MetricsContext getQueueMetrics(String flowletQueueName) {
+  MetricsContext getQueueMetrics(String flowletQueueName) {
     return queueMetrics.getUnchecked(flowletQueueName);
   }
 
-  public MetricsContext getProducerMetrics(ImmutablePair<String, String> producerAndQueue) {
+  MetricsContext getProducerMetrics(ImmutablePair<String, String> producerAndQueue) {
     return producerMetrics.getUnchecked(producerAndQueue);
   }
 

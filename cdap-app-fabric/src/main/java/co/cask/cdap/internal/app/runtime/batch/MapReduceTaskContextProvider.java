@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,8 +25,9 @@ import co.cask.cdap.app.program.DefaultProgram;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
+import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -187,7 +188,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         // Setup dataset framework context, if required
         if (programDatasetFramework instanceof ProgramContextAware) {
           ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(contextConfig.getProgramOptions()));
-          ((ProgramContextAware) programDatasetFramework).initContext(programRunId);
+          ((ProgramContextAware) programDatasetFramework).setContext(new BasicProgramContext(programRunId));
         }
 
         MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
