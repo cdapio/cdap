@@ -23,6 +23,8 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.ServiceUnavailableException;
+import co.cask.cdap.data.ProgramContext;
+import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
@@ -79,7 +81,7 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   private final LineageWriter lineageWriter;
   private final AuthenticationContext authenticationContext;
   private final AuthorizationEnforcer authorizationEnforcer;
-  private final ProgramContext programContext;
+  private volatile ProgramContext programContext;
 
   private AuditPublisher auditPublisher;
 
@@ -94,7 +96,6 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
     this.runtimeUsageRegistry = runtimeUsageRegistry;
     this.authenticationContext = authenticationContext;
     this.authorizationEnforcer = authorizationEnforcer;
-    this.programContext = new ProgramContext();
   }
 
   @SuppressWarnings("unused")
@@ -104,13 +105,8 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   }
 
   @Override
-  public void initContext(ProgramRunId run) {
-    programContext.initContext(run);
-  }
-
-  @Override
-  public void initContext(ProgramRunId run, NamespacedEntityId componentId) {
-    programContext.initContext(run, componentId);
+  public void setContext(ProgramContext programContext) {
+    this.programContext = programContext;
   }
 
   @Override
@@ -200,8 +196,9 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   }
 
   private void doWriteLineage(DatasetId datasetInstanceId, AccessType accessType) {
-    ProgramRunId programRunId = programContext.getRun();
-    if (programRunId != null) {
+    ProgramContext programContext = this.programContext;
+    if (programContext != null) {
+      ProgramRunId programRunId = programContext.getProgramRunId();
       NamespacedEntityId componentId = programContext.getComponentId();
       try {
         lineageWriter.addAccess(programRunId, datasetInstanceId, accessType, componentId);
@@ -217,8 +214,9 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   }
 
   private void publishAudit(DatasetId datasetInstanceId, AccessType accessType) {
-    ProgramRunId programRunId = programContext.getRun();
-    if (programRunId != null) {
+    ProgramContext programContext = this.programContext;
+    if (programContext != null) {
+      ProgramRunId programRunId = programContext.getProgramRunId();
       try {
         AuditPublishers.publishAccess(auditPublisher, datasetInstanceId, accessType, programRunId);
       } catch (Throwable t) {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,9 +29,10 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
+import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
@@ -117,7 +118,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     // Setup dataset framework context, if required
     if (datasetFramework instanceof ProgramContextAware) {
       ProgramId programId = program.getId();
-      ((ProgramContextAware) datasetFramework).initContext(programId.run(runId));
+      ((ProgramContextAware) datasetFramework).setContext(new BasicProgramContext(programId.run(runId)));
     }
 
     final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
