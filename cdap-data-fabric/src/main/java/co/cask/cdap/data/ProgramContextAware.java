@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,27 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.writer;
-
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramRunId;
+package co.cask.cdap.data;
 
 /**
  * Interface implemented by classes that need program context information.
  */
 public interface ProgramContextAware {
-  /**
-   * Initialize with program run information.
-
-   * @param run program run
-   */
-  void initContext(ProgramRunId run);
 
   /**
-   * Initalize with program run and program component (i.e, flowlet Id, etc.) information.
-
-   * @param run program run
-   * @param componentId program component
+   * Set the {@link ProgramContext}.
    */
-  void initContext(ProgramRunId run, NamespacedEntityId componentId);
+  void setContext(ProgramContext programContext);
 }

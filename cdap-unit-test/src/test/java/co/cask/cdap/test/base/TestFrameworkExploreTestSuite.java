@@ -23,6 +23,7 @@ import co.cask.cdap.partitioned.PartitionRollbackTestRun;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.app.DummyBaseCloneTestRun;
 import co.cask.cdap.test.app.DummyBaseTestRun;
+import co.cask.cdap.test.app.DynamicPartitioningTestRun;
 import co.cask.cdap.test.app.TestSQLQueryTestRun;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -37,6 +38,7 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
   DummyBaseTestRun.class,
   DummyBaseCloneTestRun.class,
+  DynamicPartitioningTestRun.class,
   PartitionConsumingTestRun.class,
   PartitionCorrectorTestRun.class,
   PartitionRollbackTestRun.class,

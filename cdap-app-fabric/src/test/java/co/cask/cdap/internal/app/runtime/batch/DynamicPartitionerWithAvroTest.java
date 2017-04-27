@@ -24,6 +24,9 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.proto.Notification;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -123,6 +126,8 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
     ImmutableMap<String, String> arguments =
       ImmutableMap.of(OUTPUT_PARTITION_KEY, Long.toString(now),
                       allowConcurrencyKey, Boolean.toString(allowConcurrentWriters));
+
+    long startTime = System.currentTimeMillis();
     boolean status = runProgram(app, AppWithMapReduceUsingAvroDynamicPartitioner.DynamicPartitioningMapReduce.class,
                                 new BasicArguments(arguments));
     Assert.assertEquals(expectedStatus, status);
@@ -131,6 +136,12 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
       // if we expect the program to fail, no need to check the output data for expected results
       return;
     }
+
+    // Verify notifications
+    List<Notification> notifications = getDataNotifications(startTime);
+    Assert.assertEquals(1, notifications.size());
+    Assert.assertEquals(NamespaceId.DEFAULT.dataset(OUTPUT_DATASET),
+                        DatasetId.fromString(notifications.get(0).getProperties().get("datasetId")));
 
     // this should have created a partition in the pfs
     final PartitionedFileSet pfs = datasetCache.getDataset(OUTPUT_DATASET);

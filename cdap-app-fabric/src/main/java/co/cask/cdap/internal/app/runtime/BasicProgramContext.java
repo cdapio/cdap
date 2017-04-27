@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,37 +14,39 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.writer;
+package co.cask.cdap.internal.app.runtime;
 
+import co.cask.cdap.data.ProgramContext;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
 
-import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
- * Helper classs to store program context for lineage writing.
+ * Straight forward implementation of {@link ProgramContext}.
  */
-public class ProgramContext {
-  private final AtomicReference<ProgramRunId> runRef = new AtomicReference<>();
-  private final AtomicReference<NamespacedEntityId> componentIdRef = new AtomicReference<>();
+public class BasicProgramContext implements ProgramContext {
 
-  public void initContext(ProgramRunId run) {
-    runRef.set(run);
+  private final ProgramRunId programRunId;
+  private final NamespacedEntityId componentId;
+
+  public BasicProgramContext(ProgramRunId programRunId) {
+    this(programRunId, null);
   }
 
-  public void initContext(ProgramRunId run, NamespacedEntityId componentId) {
-    runRef.set(run);
-    componentIdRef.set(componentId);
+  public BasicProgramContext(ProgramRunId programRunId, @Nullable NamespacedEntityId componentId) {
+    this.programRunId = programRunId;
+    this.componentId = componentId;
+  }
+
+  @Override
+  public ProgramRunId getProgramRunId() {
+    return programRunId;
   }
 
   @Nullable
-  public ProgramRunId getRun() {
-    return runRef.get();
-  }
-
-  @Nullable
+  @Override
   public NamespacedEntityId getComponentId() {
-    return componentIdRef.get();
+    return componentId;
   }
 }

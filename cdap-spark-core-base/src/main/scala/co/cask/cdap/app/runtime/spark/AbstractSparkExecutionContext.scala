@@ -39,6 +39,7 @@ import co.cask.cdap.app.runtime.spark.SparkTransactional.TransactionType
 import co.cask.cdap.app.runtime.spark.preview.SparkDataTracer
 import co.cask.cdap.app.runtime.spark.stream.SparkStreamInputFormat
 import co.cask.cdap.common.conf.ConfigurationUtil
+import co.cask.cdap.data.LineageDatasetContext
 import co.cask.cdap.data.stream.{AbstractStreamInputFormat, StreamUtils}
 import co.cask.cdap.data2.metadata.lineage.AccessType
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext
@@ -252,7 +253,7 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
   override def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], namespace: String, datasetName: String,
                                                        arguments: Map[String, String]): Unit = {
     transactional.execute(new SparkTxRunnable {
-      override def run(context: SparkDatasetContext) = {
+      override def run(context: LineageDatasetContext) = {
         val sc = rdd.sparkContext
         val dataset: Dataset = context.getDataset(namespace, datasetName, arguments, AccessType.WRITE)
         val outputCommitter = dataset match {
@@ -348,7 +349,7 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
         // but leave it open so that it will be used for all stages in same job execution and get committed when
         // the job ended.
         transactional.execute(new SparkTxRunnable {
-          override def run(context: SparkDatasetContext) = {
+          override def run(context: LineageDatasetContext) = {
             val dataset: Dataset = context.getDataset(namespace, datasetName, arguments, AccessType.READ)
             try {
               result(0) = f(dataset)

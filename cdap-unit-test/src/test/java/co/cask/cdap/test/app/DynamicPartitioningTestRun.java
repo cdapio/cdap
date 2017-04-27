@@ -22,8 +22,10 @@ import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -32,6 +34,8 @@ import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Before;
@@ -46,14 +50,18 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
  */
 @Category(SlowTests.class)
-public class DynamicPartioningTestRun extends TestFrameworkTestBase {
+public class DynamicPartitioningTestRun extends TestFrameworkTestBase {
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", true);
@@ -128,9 +136,26 @@ public class DynamicPartioningTestRun extends TestFrameworkTestBase {
     validatePartitions(dsWithExistingPartition, true);
 
     Map<String, String> arguments = ImmutableMap.of("outputs", outputArg);
-    MapReduceManager mrManager = appManager.getMapReduceManager("DynamicPartitioningMR");
+    final MapReduceManager mrManager = appManager.getMapReduceManager("DynamicPartitioningMR");
+    final Set<RunRecord> oldRunRecords = new HashSet<>(mrManager.getHistory());
     mrManager.start(arguments);
-    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    // Wait for the new run record to appear and finished running.
+    final AtomicReference<RunRecord> lastRunRecord = new AtomicReference<>();
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        Set<RunRecord> runRecords = Sets.difference(new HashSet<>(mrManager.getHistory()), oldRunRecords);
+        if (runRecords.isEmpty()) {
+          return false;
+        }
+        // Get the last run record
+        RunRecord runRecord = Iterables.getFirst(runRecords, null);
+        if (runRecord != null && runRecord.getStatus() != ProgramRunStatus.RUNNING) {
+          lastRunRecord.set(runRecord);
+        }
+        return lastRunRecord.get() != null;
+      }
+    }, 5, TimeUnit.MINUTES, 1, TimeUnit.SECONDS);
 
     for (String dataset : outputs) {
       validatePartitions(dataset, dataset.equals(dsWithExistingPartition));

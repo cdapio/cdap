@@ -29,6 +29,8 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
+import co.cask.cdap.api.messaging.MessagingContext;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -46,9 +48,13 @@ import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext;
 import co.cask.cdap.internal.app.runtime.batch.dataset.CloseableBatchWritable;
 import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
+import co.cask.cdap.internal.app.runtime.messaging.AbstractMessagePublisher;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.client.StoreRequestBuilder;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -56,6 +62,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
@@ -68,6 +75,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -84,6 +92,7 @@ import javax.annotation.Nullable;
 public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   implements MapReduceTaskContext<KEYOUT, VALUEOUT> {
 
+  private final CConfiguration cConf;
   private final MapReduceSpecification spec;
   private final WorkflowProgramInfo workflowProgramInfo;
   private final Transaction transaction;
@@ -123,6 +132,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     super(program, programOptions, cConf,  ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient,
           true, metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo), secureStore,
           secureStoreManager, messagingService, pluginInstantiator);
+    this.cConf = cConf;
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
     this.spec = spec;
@@ -240,21 +250,43 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   }
 
   @Override
-  public MessagePublisher getMessagePublisher() {
-    // TODO: CDAP-7807
-    throw new UnsupportedOperationException("Messaging is not supported in MapReduce task-level context");
-  }
+  protected MessagingContext getMessagingContext() {
+    // Override to have transactional publisher use "store" instead of "payload"
+    // since a task is executed with long transaction.
+    // The actual publish will be done in the MR driver.
+    final MessagingContext context = super.getMessagingContext();
 
-  @Override
-  public MessagePublisher getDirectMessagePublisher() {
-    // TODO: CDAP-7807
-    throw new UnsupportedOperationException("Messaging is not supported in MapReduce task-level context");
-  }
+    // TODO: CDAP-7807 Make it available for any topic
+    final TopicId allowedTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
 
-  @Override
-  public MessageFetcher getMessageFetcher() {
-    // TODO: CDAP-7807
-    throw new UnsupportedOperationException("Messaging is not supported in MapReduce task-level context");
+    return new MessagingContext() {
+      @Override
+      public MessagePublisher getMessagePublisher() {
+        return new AbstractMessagePublisher() {
+          @Override
+          protected void publish(TopicId topicId,
+                                 Iterator<byte[]> payloads) throws IOException, TopicNotFoundException {
+            if (!allowedTopic.equals(topicId)) {
+              throw new UnsupportedOperationException("Publish to topic '" + topicId.getTopic() + "' is not supported");
+            }
+            // Use storePayload
+            getMessagingService().storePayload(StoreRequestBuilder.of(topicId)
+                                                 .setTransaction(transaction.getWritePointer())
+                                                 .addPayloads(payloads).build());
+          }
+        };
+      }
+
+      @Override
+      public MessagePublisher getDirectMessagePublisher() {
+        return context.getDirectMessagePublisher();
+      }
+
+      @Override
+      public MessageFetcher getMessageFetcher() {
+        return context.getMessageFetcher();
+      }
+    };
   }
 
   private static Map<String, String> createMetricsTags(@Nullable String taskId,
@@ -277,26 +309,29 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   //---- be refactored after [TEPHRA-99] and [CDAP-3893] are resolved.
 
   /**
-   * Initializes the transaction-awares to be only the static datasets.
+   * Initializes the transaction-awares.
    */
   private void initializeTransactionAwares() {
-    for (TransactionAware txAware : getDatasetCache().getStaticTransactionAwares()) {
-      txAwares.add(txAware);
+    Iterable<TransactionAware> txAwares = Iterables.concat(getDatasetCache().getStaticTransactionAwares(),
+                                                           getDatasetCache().getExtraTransactionAwares());
+    for (TransactionAware txAware : txAwares) {
+      this.txAwares.add(txAware);
       txAware.startTx(transaction);
     }
   }
 
   @Override
-  protected <T extends Dataset> T getDataset(String name, Map<String, String> arguments, AccessType accessType)
-    throws DatasetInstantiationException {
+  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments,
+                                          AccessType accessType) throws DatasetInstantiationException {
     T dataset = super.getDataset(name, adjustRuntimeArguments(arguments), accessType);
     startDatasetTransaction(dataset);
     return dataset;
   }
 
   @Override
-  protected <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments,
-                                             AccessType accessType) throws DatasetInstantiationException {
+  public <T extends Dataset> T getDataset(String namespace, String name,
+                                          Map<String, String> arguments,
+                                          AccessType accessType) throws DatasetInstantiationException {
     T dataset = super.getDataset(namespace, name, adjustRuntimeArguments(arguments), accessType);
     startDatasetTransaction(dataset);
     return dataset;

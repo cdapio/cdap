@@ -64,8 +64,10 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLau
 import co.cask.cdap.internal.app.runtime.batch.stream.MapReduceStreamInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
+import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
@@ -399,6 +401,16 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     try {
       if (success) {
         LOG.debug("Committing MapReduce Job transaction: {}", context);
+
+        // "Commit" the data event topic by publishing an empty message.
+        // Need to do it with the raw MessagingService.
+        context.getMessagingService().publish(
+          StoreRequestBuilder
+            .of(NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC)))
+            .setTransaction(transaction.getWritePointer())
+            .build()
+        );
+
         // committing long running tx: no need to commit datasets, as they were committed in external processes
         // also no need to rollback changes if commit fails, as these changes where performed by mapreduce tasks
         // NOTE: can't call afterCommit on datasets in this case: the changes were made by external processes.

@@ -316,6 +316,8 @@ public final class Constants {
 
     public static final String DATASET_UNCHECKED_UPGRADE = "dataset.unchecked.upgrade";
 
+    public static final String DATA_EVENT_TOPIC = "data.event.topic";
+
     /**
      * Constants for PartitionedFileSet's DynamicPartitioner
      */
