@@ -249,8 +249,10 @@ function build_javadocs() {
     # Cleanup any CDAP JARs, so we use our own
     rm -rf ${temp_repo}/co/cask/cdap
   fi
-  display_start_title "Building and installing CDAP to ${temp_repo}"
-  mvn clean package ${javadoc_run} -P examples,templates,release -Dmaven.repo.local=${temp_repo} -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
+  display_start_title "Building and installing CDAP to ${temp_repo} and building Javadocs"
+  local javadoc_output_file="${TARGET_PATH}/javadoc_output.log"
+  echo "Saving Javadoc output to ${javadoc_output_file}"
+  mvn clean package ${javadoc_run} -P examples,templates,release -Dmaven.repo.local=${temp_repo} -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag} 2>&1 | tee -a ${javadoc_output_file}
   errors=${?}
   if [[ ${errors} -eq 0 ]]; then
     echo
