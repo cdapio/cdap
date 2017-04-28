@@ -36,6 +36,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import org.apache.twill.api.logging.LogEntry;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -47,8 +48,10 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -64,7 +67,8 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
 
-  protected static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  protected static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  protected static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
 
   /**
    * Name of the header that should specify the application archive
@@ -152,5 +156,17 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Helper method to transform the type of the log level map.
+   */
+  protected Map<String, LogEntry.Level> transformLogLevelsMap(Map<String, String> logLevels) {
+    Map<String, LogEntry.Level> result = new HashMap<>();
+    for (Map.Entry<String, String> entry : logLevels.entrySet()) {
+      String logLevel = entry.getValue();
+      result.put(entry.getKey(), logLevel == null ? null : LogEntry.Level.valueOf(logLevel.toUpperCase()));
+    }
+    return result;
   }
 }

@@ -23,8 +23,11 @@ import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.SystemServiceLiveInfo;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.twill.api.logging.LogEntry;
 
 import java.net.InetAddress;
+import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 
@@ -126,6 +129,16 @@ public class AppFabricServiceManager implements MasterServiceManager {
 
   @Override
   public void restartInstances(int instanceId, int... moreInstanceIds) {
+    // no-op
+  }
+
+  @Override
+  public void updateServiceLogLevels(Map<String, LogEntry.Level> logLevels) {
+    // no-op
+  }
+
+  @Override
+  public void resetServiceLogLevels(Set<String> loggerNames) {
     // no-op
   }
 }

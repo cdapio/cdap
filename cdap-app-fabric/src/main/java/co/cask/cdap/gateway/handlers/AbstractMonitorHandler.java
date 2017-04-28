@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.app.store.ServiceStore;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -24,6 +25,7 @@ import co.cask.cdap.proto.SystemServiceMeta;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -31,11 +33,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import javax.ws.rs.PathParam;
 
 /**
  * Monitor Handler returns the status of different discoverable services
@@ -267,5 +272,66 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("No restart instances request found or %s", serviceName));
     }
+  }
+
+  public void updateServiceLogLevels(HttpRequest request, HttpResponder responder,
+                                     @PathParam("service-name") String serviceName) {
+    if (!serviceManagementMap.containsKey(serviceName)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Invalid service name %s", serviceName));
+      return;
+    }
+
+    MasterServiceManager masterServiceManager = serviceManagementMap.get(serviceName);
+    if (!masterServiceManager.isServiceEnabled()) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+                           String.format("Failed to update log levels for service %s " +
+                                           "because the service is not enabled", serviceName));
+      return;
+    }
+
+    try {
+      // we are decoding the body to Map<String, String> instead of Map<String, LogEntry.Level> here since Gson will
+      // serialize invalid enum values to null, which is allowed for log level, instead of throw an Exception.
+      masterServiceManager.updateServiceLogLevels(transformLogLevelsMap(decodeArguments(request)));
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (IllegalStateException ise) {
+      responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE,
+                           String.format("Failed to update log levels for service %s " +
+                                           "because the service may not be ready yet", serviceName));
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (JsonSyntaxException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Json in the body");
+    }
+
+  }
+
+  public void resetServiceLogLevels(HttpRequest request, HttpResponder responder,
+                                    @PathParam("service-name") String serviceName) {
+    if (!serviceManagementMap.containsKey(serviceName)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Invalid service name %s", serviceName));
+      return;
+    }
+
+    MasterServiceManager masterServiceManager = serviceManagementMap.get(serviceName);
+    if (!masterServiceManager.isServiceEnabled()) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+                           String.format("Failed to reset log levels for service %s " +
+                                           "because the service is not enabled", serviceName));
+      return;
+    }
+
+    try {
+      Set<String> loggerNames = parseBody(request, SET_STRING_TYPE);
+      masterServiceManager.resetServiceLogLevels(loggerNames == null ? Collections.<String>emptySet() : loggerNames);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (IllegalStateException ise) {
+      responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE,
+                           String.format("Failed to reset log levels for service %s " +
+                                           "because the service may not be ready yet", serviceName));
+    }  catch (JsonSyntaxException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid Json in the body");
+    }
+
   }
 }

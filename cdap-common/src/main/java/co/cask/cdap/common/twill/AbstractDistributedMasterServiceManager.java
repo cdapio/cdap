@@ -26,6 +26,7 @@ import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunResources;
 import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -37,6 +38,8 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -204,6 +207,25 @@ public abstract class AbstractDistributedMasterServiceManager implements MasterS
     for (TwillController twillController : twillControllers) {
       // Call restart instances
       Futures.getUnchecked(twillController.restartInstances(serviceName, instanceId, moreInstanceIds));
+    }
+  }
+
+  @Override
+  public void updateServiceLogLevels(Map<String, LogEntry.Level> logLevels) {
+    Iterable<TwillController> twillControllers = twillRunnerService.lookup(Constants.Service.MASTER_SERVICES);
+    for (TwillController twillController : twillControllers) {
+      // Call update log levels
+      Futures.getUnchecked(twillController.updateLogLevels(serviceName, logLevels));
+    }
+  }
+
+  @Override
+  public void resetServiceLogLevels(Set<String> loggerNames) {
+    Iterable<TwillController> twillControllers = twillRunnerService.lookup(Constants.Service.MASTER_SERVICES);
+    for (TwillController twillController : twillControllers) {
+      // Call reset log levels
+      Futures.getUnchecked(twillController.resetRunnableLogLevels(serviceName,
+                                                                  loggerNames.toArray(new String[loggerNames.size()])));
     }
   }
 }

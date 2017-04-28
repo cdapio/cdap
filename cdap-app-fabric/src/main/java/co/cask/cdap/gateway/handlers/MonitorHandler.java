@@ -127,4 +127,17 @@ public class MonitorHandler extends AbstractMonitorHandler {
     super.getLatestRestartServiceInstanceStatus(request, responder, serviceName);
   }
 
+  @Path("system/services/{service-name}/loglevels")
+  @PUT
+  public void updateServiceLogLevels(HttpRequest request, HttpResponder responder,
+                                     @PathParam("service-name") String serviceName) {
+    super.updateServiceLogLevels(request, responder, serviceName);
+  }
+
+  @Path("system/services/{service-name}/resetLoglevels")
+  @POST
+  public void resetServiceLogLevels(HttpRequest request, HttpResponder responder,
+                                     @PathParam("service-name") String serviceName) {
+    super.resetServiceLogLevels(request, responder, serviceName);
+  }
 }
