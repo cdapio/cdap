@@ -966,8 +966,9 @@ public class ProgramClient {
   public Map<String, String> getRuntimeArgs(ProgramId program)
     throws IOException, UnauthenticatedException, ProgramNotFoundException, UnauthorizedException {
 
-    String path = String.format("apps/%s/%s/%s/runtimeargs",
-                                program.getApplication(), program.getType().getCategoryName(), program.getProgram());
+    String path = String.format("apps/%s/versions/%s/%s/%s/runtimeargs",
+                                program.getApplication(), program.getVersion(),
+                                program.getType().getCategoryName(), program.getProgram());
     URL url = config.resolveNamespacedURLV3(program.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -1006,8 +1007,9 @@ public class ProgramClient {
   public void setRuntimeArgs(ProgramId program, Map<String, String> runtimeArgs)
     throws IOException, UnauthenticatedException, ProgramNotFoundException, UnauthorizedException {
 
-    String path = String.format("apps/%s/%s/%s/runtimeargs",
-                                program.getApplication(), program.getType().getCategoryName(), program.getProgram());
+    String path = String.format("apps/%s/versions/%s/%s/%s/runtimeargs",
+                                program.getApplication(), program.getVersion(),
+                                program.getType().getCategoryName(), program.getProgram());
     URL url = config.resolveNamespacedURLV3(program.getNamespaceId(), path);
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(runtimeArgs)).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
