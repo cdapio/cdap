@@ -17,6 +17,10 @@
 package co.cask.cdap.common.twill;
 
 import co.cask.cdap.proto.SystemServiceLiveInfo;
+import org.apache.twill.api.logging.LogEntry;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Interface that defines a set of methods that will be used for management of CDAP Services.
@@ -99,5 +103,20 @@ public interface MasterServiceManager {
    * @param instanceId the instance id to be restarted.
    * @param moreInstanceIds optional additional instance ids to be restarted.
    */
-   void restartInstances(int instanceId, int... moreInstanceIds);
+  void restartInstances(int instanceId, int... moreInstanceIds);
+
+  /**
+   * Update log levels for this service
+   *
+   * @param logLevels The {@link Map} contains the requested logger name and log level.
+   */
+  void updateServiceLogLevels(Map<String, LogEntry.Level> logLevels);
+
+  /**
+   * Reset the log levels of the service.
+   * All loggers will be reset to the level when the service started.
+   *
+   * @param loggerNames The set of logger names to be reset, if empty, all loggers will be reset.
+   */
+  void resetServiceLogLevels(Set<String> loggerNames);
 }
