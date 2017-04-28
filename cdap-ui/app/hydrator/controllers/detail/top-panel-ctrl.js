@@ -156,7 +156,7 @@ class HydratorDetailTopPanelController {
         err => this.macroError = err
       )
       .then(
-        () => this.myPreferenceApi.getAppPreference(preferenceParams).$promise,
+        () => this.myPreferenceApi.getAppPreferenceResolved(preferenceParams).$promise,
         errorHandler
       )
       .then(
@@ -165,14 +165,20 @@ class HydratorDetailTopPanelController {
       );
   }
 
-  syncPreferencesStoreWithMacros(appPreferences = {}) {
+  syncPreferencesStoreWithMacros(resolvedPrefs = {}) {
     try {
-      appPreferences = JSON.parse(angular.toJson(appPreferences));
+      resolvedPrefs = JSON.parse(angular.toJson(resolvedPrefs));
     } catch(e) {
       console.log('ERROR: ', e);
-      appPreferences = {};
+      resolvedPrefs = {};
     }
-    this.macrosMap = Object.assign({}, this.macrosMap, appPreferences);
+    let relevantPrefs = {};
+    for (let pref in resolvedPrefs) {
+      if (this.macrosMap.hasOwnProperty(pref)) {
+        relevantPrefs[pref] = resolvedPrefs[pref];
+      }
+    }
+    this.macrosMap = Object.assign({}, this.macrosMap, relevantPrefs);
   }
 
   isValidToStartOrSchedule() {
