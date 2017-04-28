@@ -33,6 +33,7 @@ angular.module(PKG.name + '.services')
       setSystemPreference: myHelpers.getConfig('PUT', 'REQUEST', '/preferences'),
       getNamespacePreference: myHelpers.getConfig('GET', 'REQUEST', basepath + '/preferences'),
       setNamespacePreference: myHelpers.getConfig('PUT', 'REQUEST', basepath + '/preferences'),
+      getNamespacePreferenceResolved: myHelpers.getConfig('GET', 'REQUEST', basepath + '/preferences?resolved=true'),
       getAppPreference: myHelpers.getConfig('GET', 'REQUEST', basepath + '/apps/:appId/preferences'),
       setAppPreference: myHelpers.getConfig('PUT', 'REQUEST', basepath + '/apps/:appId/preferences'),
       getAppPreferenceResolved: myHelpers.getConfig('GET', 'REQUEST', basepath + '/apps/:appId/preferences?resolved=true'),
