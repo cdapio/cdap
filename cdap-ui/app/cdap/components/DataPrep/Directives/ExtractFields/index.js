@@ -19,6 +19,8 @@ import classnames from 'classnames';
 const PREFIX = 'features.DataPrep.Directives.ExtractFields';
 import T from 'i18n-react';
 import UsingPatternsModal from 'components/DataPrep/Directives/ExtractFields/UsingPatternsModal';
+import UsingDelimiterModal from 'components/DataPrep/Directives/ExtractFields/UsingDelimiterModal';
+
 require('./ExtractFields.scss');
 export default class ExtractFields extends Component {
   constructor(props) {
@@ -27,6 +29,7 @@ export default class ExtractFields extends Component {
       activeModal: null
     };
     this.parseUsingPatterns = this.parseUsingPatterns.bind(this);
+    this.parseUsingDelimiters = this.parseUsingDelimiters.bind(this);
     this.preventPropagation = this.preventPropagation.bind(this);
   }
 
@@ -46,6 +49,14 @@ export default class ExtractFields extends Component {
             {T.translate(`${PREFIX}.patternSubmenuTitle`)}
           </div>
         </div>
+        <div className="extract-field-options">
+          <div
+            onClick={this.parseUsingDelimiters}
+            className="option"
+          >
+            {T.translate(`${PREFIX}.delimitersSubmenuTitle`)}
+          </div>
+        </div>
       </div>
     );
   }
@@ -55,6 +66,18 @@ export default class ExtractFields extends Component {
       activeModal: (
         <UsingPatternsModal
           isOpen={true}
+          column={this.props.column}
+          onComplete={this.props.onComplete}
+          onClose={() => this.setState({activeModal: null})}
+        />
+      )
+    });
+  }
+
+  parseUsingDelimiters() {
+    this.setState({
+      activeModal: (
+        <UsingDelimiterModal
           column={this.props.column}
           onComplete={this.props.onComplete}
           onClose={() => this.setState({activeModal: null})}

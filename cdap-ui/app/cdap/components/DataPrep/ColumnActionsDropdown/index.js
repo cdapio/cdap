@@ -25,7 +25,6 @@ import isEqual from 'lodash/isEqual';
 import DataPrepStore from 'components/DataPrep/store';
 
 // Directives List
-import SplitColumn from 'components/DataPrep/Directives/SplitColumn';
 import ParseDirective from 'components/DataPrep/Directives/Parse';
 import FillNullOrEmpty from 'components/DataPrep/Directives/FillNullOrEmpty';
 import DropColumnDirective from 'components/DataPrep/Directives/DropColumn';
@@ -36,6 +35,7 @@ import FilterDirective from 'components/DataPrep/Directives/Filter';
 import FindAndReplaceDirective from 'components/DataPrep/Directives/FindAndReplace';
 import CopyColumnDirective from 'components/DataPrep/Directives/CopyColumn';
 import ExtractFields from 'components/DataPrep/Directives/ExtractFields';
+import Format from 'components/DataPrep/Directives/Format';
 import ee from 'event-emitter';
 require('./ColumnActionsDropdown.scss');
 
@@ -105,17 +105,17 @@ export default class ColumnActionsDropdown extends Component {
       },
       {
         id: shortid.generate(),
-        tag: SplitColumn,
-        requiredColCount: 1
-      },
-      {
-        id: shortid.generate(),
         tag: ExtractFields,
         requiredColCount: 1
       },
       {
         id: shortid.generate(),
         tag: ParseDirective,
+        requiredColCount: 1
+      },
+      {
+        id: shortid.generate(),
+        tag: Format,
         requiredColCount: 1
       }
     ];
