@@ -18,7 +18,6 @@ import React, {Component, PropTypes} from 'react';
 import SearchStore from 'components/EntityListView/SearchStore';
 import {search, updateQueryString} from 'components/EntityListView/SearchStore/ActionCreator';
 import HomeListView from 'components/EntityListView/ListView';
-import MyUserStoreApi from 'api/userstore';
 import isNil from 'lodash/isNil';
 import EntityListHeader from 'components/EntityListView/EntityListHeader';
 import EntityListInfo from 'components/EntityListView/EntityListInfo';
@@ -36,7 +35,6 @@ import isEqual from 'lodash/isEqual';
 import isEmpty from 'lodash/isEmpty';
 import intersection from 'lodash/intersection';
 import {objectQuery} from 'services/helpers';
-import WelcomeScreen from 'components/EntityListView/WelcomeScreen';
 import Page404 from 'components/404';
 import classnames from 'classnames';
 import T from 'i18n-react';
@@ -57,8 +55,6 @@ export default class EntityListView extends Component {
       limit: DEFAULT_SEARCH_PAGE_SIZE,
       total: 0,
       overview: true, // Start showing spinner until we get a response from backend.
-      userStoreObj: null,
-      showSplash: true,
       namespaceNotFound: false
     };
     this.eventEmitter = ee(ee);
@@ -71,16 +67,7 @@ export default class EntityListView extends Component {
     this.eventEmitter.on(globalEvents.PUBLISHPIPELINE, this.refreshSearchByCreationTime);
     this.eventEmitter.on(globalEvents.ARTIFACTUPLOAD, this.refreshSearchByCreationTime);
   }
-  componentWillMount() {
-    MyUserStoreApi.get().subscribe((res) => {
-      let userProperty = typeof res.property === 'object' ? res.property : {};
-      let showSplash = userProperty['user-has-visited'] || false;
-      this.setState({
-        userStoreObj : res,
-        showSplash : showSplash
-      });
-    });
-  }
+
   componentDidMount() {
     let namespaces = NamespaceStore.getState().namespaces.map(ns => ns.name);
     // for when we are already on the non-existing namespace
@@ -291,12 +278,6 @@ export default class EntityListView extends Component {
     });
     search();
   }
-  dismissSplash() {
-    this.setState({
-      showSplash: true
-    });
-    this.parseUrlAndUpdateStore();
-  }
   render() {
     let namespace = NamespaceStore.getState().selectedNamespace;
     let searchState = SearchStore.getState();
@@ -308,13 +289,6 @@ export default class EntityListView extends Component {
     let {statusCode:errorStatusCode, message:errorMessage } = searchState.search.error;
     let errorContent;
 
-    if (!this.state.showSplash) {
-      return (
-        <WelcomeScreen
-          onClose={this.dismissSplash.bind(this)}
-        />
-      );
-    }
     if (this.state.namespaceNotFound) {
       return (
         <Page404
