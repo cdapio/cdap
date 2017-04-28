@@ -348,6 +348,10 @@ features:
         title:
           plural: Delete Selected Columns
           singular: Delete Column
+      Explode:
+        title: Explode
+        filtersSubmenuTitle: Delimited Text
+        flatteningSubmenuTitle: Array (By Flattening)
       ExtractFields:
         delimitersSubmenuTitle: Using Delimiters
         extractBtnLabel: Extract
