@@ -41,8 +41,52 @@
         font-size: 84px;
         color: $cdap-orange;
       }
+
       h2 {
         margin-top: 10px;
+      }
+
+      h4:after {
+        overflow: hidden;
+        display: inline-block;
+        vertical-align: bottom;
+        -webkit-animation: ellipsis steps(4, end) 1000ms infinite;
+        -moz-animation: ellipsis steps(4, end) 1000ms infinite;
+        animation: ellipsis steps(4, end) 1000ms infinite;
+        content: "\2026"; /* ascii code for the ellipsis character */
+      }
+
+      @-webkit-keyframes ellipsis {
+        from {
+          width: 0px;
+          margin-right: 20px;
+        }
+        to {
+          width: 20px;
+          margin-right: 0px;
+        }
+      }
+
+      @-moz-keyframes ellipsis {
+        from {
+          width: 0px;
+          margin-right: 20px;
+        }
+        to {
+          width: 20px;
+          margin-right: 0px;
+        }
+      }
+
+      @keyframes ellipsis {
+        from {
+          width: 0px;
+          margin-right: 20px;
+        }
+        to {
+          width: 20px;
+          margin-right: 0px;
+        }
       }
     }
   }

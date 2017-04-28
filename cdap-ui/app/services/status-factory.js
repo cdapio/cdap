@@ -32,7 +32,7 @@ angular.module(PKG.name + '.services')
       _.debounce(function() {
         if (isPollingEnabled) {
           $http.get(
-            '/backendstatus',
+            '/namespacestatus',
             {ignoreLoadingBar: true}
           )
                .success(success.bind(this))

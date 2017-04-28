@@ -395,7 +395,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   */
   app.post('/login', authentication);
 
-  app.get('/backendstatus', [
+  app.get('/namespacestatus', [
     function (req, res) {
       var protocol,
           port;
@@ -441,6 +441,58 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
           res.status(500).send(err);
         } else {
           res.status(response.statusCode).send('OK');
+        }
+      }).on('error', function (err) {
+        try {
+          res.status(500).send(err);
+        } catch(e) {
+          log.error('Failed sending exception to client', e);
+        }
+        log.error(err);
+      });
+    }
+  ]);
+
+  app.get('/servicestatus', [
+    function (req, res) {
+      var protocol,
+          port;
+      if (cdapConfig['ssl.external.enabled'] === 'true') {
+        protocol = 'https://';
+      } else {
+        protocol = 'http://';
+      }
+
+      if (cdapConfig['ssl.external.enabled'] === 'true') {
+        port = cdapConfig['router.ssl.bind.port'];
+      } else {
+        port = cdapConfig['router.server.port'];
+      }
+
+      var link = [
+        protocol,
+        cdapConfig['router.server.address'],
+        ':',
+        port,
+        '/v3/system/services/status'
+      ].join('');
+
+      request({
+        method: 'GET',
+        url: link,
+        rejectUnauthorized: false,
+        requestCert: true,
+        agent: false,
+        headers: req.headers
+      }, function (err, response) {
+        if (err) {
+          if (err.code === 'ECONNREFUSED') {
+            res.status(404).send(err);
+            return;
+          }
+          res.status(500).send(err);
+        } else {
+          res.status(response.statusCode).send(response);
         }
       }).on('error', function (err) {
         try {
