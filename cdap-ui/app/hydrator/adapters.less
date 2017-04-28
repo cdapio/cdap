@@ -383,35 +383,3 @@ body.theme-cdap {
   }
 }
 
-// have to define these dropdown values here since styling for DropdownItem is in Bootstrap 4, but not in Bootstrap 3
-.dropdown-item {
-  display: block;
-  width: 100%;
-  padding: 3px 1.5rem;
-  clear: both;
-  font-weight: 400;
-  color: #373a3c;
-  text-align: inherit;
-  white-space: nowrap;
-  background: none;
-  border: 0;
-
-  &:focus,
-  &:hover {
-    color: #2b2d2f;
-    text-decoration: none;
-    background-color: #f5f5f5;
-  }
-}
-
-.dropdown-toggle::after {
-  display: inline-block;
-  width: 0;
-  height: 0;
-  margin-left: .3em;
-  vertical-align: middle;
-  content: "";
-  border-top: .3em solid;
-  border-right: .3em solid transparent;
-  border-left: .3em solid transparent;
-}
