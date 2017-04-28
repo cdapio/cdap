@@ -333,6 +333,8 @@ features:
       welcomeMessage2: User Experience
     Title: CDAP | Overview
   DataPrep:
+    DataPrepTable:
+      columnEditWarningMessage: 'A column with the same name already exists. Pick a new name, or click "Apply" to overwrite'
     Directives:
       apply: Apply
       cancel: Cancel
