@@ -2582,7 +2582,7 @@
         <module>cdap-spi</module>
         <module>cdap-api</module>
         <module>cdap-api-spark</module>
-        <module>cdap-api-spark2</module>
+        <module>cdap-api-spark2_2.11</module>
         <module>cdap-api-spark-base</module>
         <module>cdap-formats</module>
         <module>cdap-hbase-compat-base</module>

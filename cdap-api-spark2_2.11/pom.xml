@@ -26,16 +26,11 @@
     <version>4.2.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>cdap-api-spark2</artifactId>
-  <name>CDAP Spark API</name>
+  <artifactId>cdap-api-spark2_2.11</artifactId>
+  <name>CDAP Spark2 API Scala 2.11</name>
   <packaging>jar</packaging>
 
   <dependencies>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-api-spark-base</artifactId>
-      <version>${project.version}</version>
-    </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api</artifactId>
@@ -186,7 +181,41 @@
         <artifactId>scala-maven-plugin</artifactId>
         <version>3.2.2</version>
       </plugin>
+      <!-- copy the source from cdap-api-spark-base in order to compile everything as scala 2.11 -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.parent.basedir}/cdap-api-spark-base/src/main</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>cdap-dev</id>
+      <dependencies>
+        <!-- here for IDEs, so that cdap-api-spark-base is recognized as a source for both cdap-api-spark modules -->
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-api-spark-base</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 
 </project>
