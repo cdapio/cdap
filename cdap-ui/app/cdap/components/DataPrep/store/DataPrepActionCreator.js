@@ -83,17 +83,20 @@ export function setWorkspace(workspaceId) {
         let directives = objectQuery(res, 'values', '0', 'recipe', 'directives') || [];
         let requestBody = directiveRequestBodyCreator(directives);
 
+        let workspaceUri = objectQuery(res, 'values', '0', 'properties', 'path');
+
         MyDataPrepApi.execute(params, requestBody)
-          .subscribe((res) => {
-            observer.onNext(res);
+          .subscribe((response) => {
+            observer.onNext(response);
 
             DataPrepStore.dispatch({
               type: DataPrepActions.setWorkspace,
               payload: {
-                data: res.values,
-                headers: res.header,
+                data: response.values,
+                headers: response.header,
                 directives,
-                workspaceId
+                workspaceId,
+                workspaceUri
               }
             });
           }, (err) => {
@@ -105,7 +108,8 @@ export function setWorkspace(workspaceId) {
               payload: {
                 data: [],
                 headers: [],
-                workspaceId
+                workspaceId,
+                workspaceUri
               }
             });
           });

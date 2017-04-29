@@ -22,6 +22,7 @@ $folder-icon-color: #2980b9;
 $file-icon-color: #f39c12;
 $table-font-color: #333333;
 $info-font-color: #999999;
+$row-disabled-color: #aaaaaa;
 $top-panel-height: 56px;
 $subpanel-height: 46px;
 $gutter-width: 15px;
@@ -101,6 +102,11 @@ $gutter-width: 15px;
         color: $table-font-color;
 
         &:hover { background-color: $table-row-hover-color; }
+
+        &.disabled {
+          cursor: not-allowed;
+          color: $row-disabled-color;
+        }
 
         .type-icon { margin-right: 5px; }
         .folder-icon { color: $folder-icon-color; }

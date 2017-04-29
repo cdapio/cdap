@@ -118,6 +118,50 @@ export default class AddToHydratorModal extends Component {
     return returnArtifact;
   }
 
+  constructSource(artifactsList, properties) {
+    if (!properties) { return null; }
+
+    let plugin = objectQuery(properties, 'values', '0');
+
+    let pluginName = Object.keys(plugin)[0];
+
+    plugin = plugin[pluginName];
+    let batchArtifact = find(artifactsList, { 'name': 'core-plugins' });
+    let realtimeArtifact = find(artifactsList, { 'name': 'spark-plugins' });
+
+    let batchPluginInfo = {
+      name: plugin.name,
+      label: plugin.name,
+      type: 'batchsource',
+      artifact: batchArtifact,
+      properties: plugin.properties
+    };
+
+    let realtimePluginInfo = Object.assign({}, batchPluginInfo, {
+      type: 'streamingsource',
+      artifact: realtimeArtifact
+    });
+
+    let batchStage = {
+      name: 'File',
+      plugin: batchPluginInfo
+    };
+
+    let realtimeStage = {
+      name: 'File',
+      plugin: realtimePluginInfo
+    };
+
+    return {
+      batchSource: batchStage,
+      realtimeSource: realtimeStage,
+      connections: [{
+        from: 'File',
+        to: 'Wrangler'
+      }]
+    };
+  }
+
   constructProperties(pluginVersion) {
     let namespace = NamespaceStore.getState().selectedNamespace;
     let state = DataPrepStore.getState().dataprep;
@@ -132,8 +176,21 @@ export default class AddToHydratorModal extends Component {
 
     let requestBody = directiveRequestBodyCreator(directives);
 
+    let rxArray = [
+      MyDataPrepApi.getSchema(requestObj, requestBody)
+    ];
+
+    if (state.workspaceUri.length > 0) {
+      let specParams = {
+        namespace,
+        path: state.workspaceUri
+      };
+
+      rxArray.push(MyDataPrepApi.getSpecification(specParams));
+    }
+
     MyArtifactApi.list({ namespace })
-      .combineLatest(MyDataPrepApi.getSchema(requestObj, requestBody))
+      .combineLatest(rxArray)
       .subscribe((res) => {
         let batchArtifact = find(res[0], { 'name': 'cdap-data-pipeline' });
         let realtimeArtifact = find(res[0], { 'name': 'cdap-data-streams' });
@@ -163,27 +220,45 @@ export default class AddToHydratorModal extends Component {
           return;
         }
 
-        // Generate hydrator config as URL parameters
-        let config = {
-          config: {
-            source: {},
-            transforms: [{
-              name: 'Wrangler',
-              plugin: {
-                name: 'Wrangler',
-                label: 'Wrangler',
-                artifact: wranglerArtifact,
-                properties
-              }
-            }],
-            sinks:[],
-            connections: []
+        let wranglerStage = {
+          name: 'Wrangler',
+          plugin: {
+            name: 'Wrangler',
+            label: 'Wrangler',
+            type: 'transform',
+            artifact: wranglerArtifact,
+            properties
           }
         };
 
-        let realtimeConfig = Object.assign({}, config, {artifact: realtimeArtifact});
-        realtimeConfig.config.batchInterval = '10s';
-        let batchConfig = Object.assign({}, config, {artifact: batchArtifact});
+        let connections = [];
+
+        let realtimeStages = [wranglerStage];
+        let batchStages = [wranglerStage];
+
+        let sourceConfigs = this.constructSource(res[0], res[2]);
+        if (sourceConfigs) {
+          realtimeStages.push(sourceConfigs.realtimeSource);
+          batchStages.push(sourceConfigs.batchSource);
+          connections = sourceConfigs.connections;
+        }
+
+        let realtimeConfig = {
+          artifact: realtimeArtifact,
+          config: {
+            stages: realtimeStages,
+            batchInterval: '10s',
+            connections
+          }
+        };
+
+        let batchConfig = {
+          artifact: batchArtifact,
+          config: {
+            stages: batchStages,
+            connections
+          }
+        };
 
         let realtimeUrl = window.getHydratorUrl({
           stateName: 'hydrator.create',

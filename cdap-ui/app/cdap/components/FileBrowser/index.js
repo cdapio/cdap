@@ -23,6 +23,7 @@ import moment from 'moment';
 import {Link} from 'react-router';
 import FilePath from 'components/FileBrowser/FilePath';
 import {convertBytesToHumanReadable, HUMANREADABLESTORAGE_NODECIMAL} from 'services/helpers';
+import cookie from 'react-cookie';
 import T from 'i18n-react';
 import orderBy from 'lodash/orderBy';
 
@@ -126,12 +127,41 @@ export default class FileBrowser extends Component {
       });
     }
   }
+  ingestFile(content) {
+    console.log('content', content);
 
-  renderRow(row) {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+
+    let params = {
+      namespace,
+      path: content.path,
+      lines: 10000,
+      sampler: 'first'
+    };
+
+    let headers = {
+      'Content-Type': content.type
+    };
+
+    MyDataPrepApi.readFile(params, null, headers)
+      .subscribe((res) => {
+
+        let workspaceId = res.values[0].id;
+        cookie.save('DATAPREP_WORKSPACE', workspaceId, { path: '/' });
+
+        let navigatePath = `${window.location.origin}/cdap/ns/${namespace}/dataprep`;
+        window.location.href = navigatePath;
+      });
+
+  }
+
+  renderRowContent(row) {
     return (
       <div
         key={row.uniqueId}
-        className="row content-row"
+        className={classnames('row content-row', {
+          'disabled': !row.directory && !row.wrangle
+        })}
       >
         <div className="col-xs-3 name">
           <span
@@ -183,7 +213,7 @@ export default class FileBrowser extends Component {
           className="row-container"
           onClick={this.goToPath.bind(this, content.path)}
         >
-          {this.renderRow(content)}
+          {this.renderRowContent(content)}
         </div>
       );
     }
@@ -192,9 +222,30 @@ export default class FileBrowser extends Component {
 
     return (
       <Link to={linkPath}>
-        {this.renderRow(content)}
+        {this.renderRowContent(content)}
       </Link>
     );
+  }
+
+  renderFileContent(content) {
+    return (
+      <div
+        className="row-container"
+        onClick={this.ingestFile.bind(this, content)}
+      >
+        {this.renderRowContent(content)}
+      </div>
+    );
+  }
+
+  renderRow(content) {
+    if (content.directory) {
+      return this.renderDirectory(content);
+    } else if (!content.wrangle) {
+      return this.renderRowContent(content);
+    } else {
+      return this.renderFileContent(content);
+    }
   }
 
   renderContent() {
@@ -307,7 +358,7 @@ export default class FileBrowser extends Component {
         <div className="content-body clearfix">
           {
             displayContent.map((content) => {
-              return content.directory ? this.renderDirectory(content) : this.renderRow(content);
+              return this.renderRow(content);
             })
           }
         </div>
