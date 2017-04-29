@@ -262,7 +262,7 @@ features:
     callToAction3:
       message1: "Create a new namespace "
       message2: "(Note: You will require ADMIN privileges on CDAP for creating a namespace)"
-    mainMessage: " You do not have authorization to access existing namespaces"
+    mainMessage: " You are not authorized to access any existing namespace"
   ConfirmationModal:
     cancelDefaultText: Cancel
     confirmDefaultText: OK
