@@ -16,9 +16,6 @@
 import React, {Component, PropTypes} from 'react';
 import {Modal, ModalHeader, ModalBody, ModalFooter} from 'reactstrap';
 import classnames from 'classnames';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
-import DataPrepStore from 'components/DataPrep/store';
-import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import T from 'i18n-react';
 import Mousetrap from 'mousetrap';
 import isEmpty from 'lodash/isEmpty';
@@ -91,7 +88,6 @@ export default class UsingDelimiterModal extends Component {
   applyDirective() {
 
     let delimiter = DELIMITER_MAP[this.state.delimiterSelection];
-    let column = this.props.column;
 
     if (delimiter === 'CUSTOM') {
       if (this.state.customDelimiter.length === 0) { return; }
@@ -99,27 +95,11 @@ export default class UsingDelimiterModal extends Component {
       delimiter = this.state.customDelimiter;
     }
 
-    let directive = `split-to-columns ${column} ${delimiter}`;
-
-    this.execute([directive]);
+    if (this.props.onApply) {
+      this.props.onApply(delimiter);
+    }
   }
 
-  execute(addDirective) {
-    execute(addDirective)
-      .subscribe(() => {
-        this.props.onClose();
-        this.props.onComplete();
-      }, (err) => {
-        console.log('error', err);
-
-        DataPrepStore.dispatch({
-          type: DataPrepActions.setError,
-          payload: {
-            message: err.message || err.response.message
-          }
-        });
-      });
-  }
   render() {
     const OPTIONS = Object.keys(DELIMITER_MAP);
     const isCustomDelimiter = () => DELIMITER_MAP[this.state.delimiterSelection] === 'CUSTOM';
@@ -187,7 +167,5 @@ export default class UsingDelimiterModal extends Component {
 
 UsingDelimiterModal.propTypes = {
   onClose: PropTypes.func,
-  onComplete: PropTypes.func,
-  isOpen: PropTypes.bool,
-  column: PropTypes.string
+  onApply: PropTypes.func
 };
