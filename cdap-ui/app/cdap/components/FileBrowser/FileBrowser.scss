@@ -42,6 +42,11 @@ $gutter-width: 15px;
       margin-bottom: 0;
       line-height: $top-panel-height;
       font-weight: 500;
+
+      .fa {
+        margin-right: 10px;
+        cursor: pointer;
+      }
     }
   }
 
