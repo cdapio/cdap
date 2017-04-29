@@ -16,6 +16,9 @@
 $link-color: #0275d8;
 
 .using-patterns-modal {
+  .modal-body {
+    overflow: initial;
+  }
   .pattern-details {
     margin: 10px 0;
     :not(.custom-pattern) {
@@ -29,6 +32,10 @@ $link-color: #0275d8;
   .dropdown {
     display: inline-block;
     margin-right: 10px;
+
+    .dropdown-item {
+      cursor: initial;
+    }
   }
   .showhidelink {
     color: $link-color;

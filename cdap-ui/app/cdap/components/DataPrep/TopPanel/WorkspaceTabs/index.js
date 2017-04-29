@@ -259,7 +259,6 @@ export default class WorkspaceTabs extends Component {
     if (this.props.singleWorkspaceMode) {
       return (
         <div>
-          {this.renderWorkspacePropertiesModal()}
           {this.renderCreateWorkspaceModal()}
           {this.renderActiveWorkspace(this.state.activeWorkspace)}
         </div>

@@ -265,7 +265,9 @@ export default class DataPrepTable extends Component {
                             className="header-text"
                             onClick={this.switchToEditColumnName.bind(this, head)}
                           >
-                            {head.name}
+                            <span>
+                              {head.name}
+                            </span>
                           </span>
                         :
                           <div className="warning-container-wrapper float-xs-left">

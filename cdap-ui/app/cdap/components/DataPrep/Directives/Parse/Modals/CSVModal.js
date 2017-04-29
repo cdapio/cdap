@@ -90,6 +90,7 @@ export default class CSVModal extends Component {
           value={this.state.customDelimiter}
           onChange={this.handleCustomDelimiterChange}
           placeholder={T.translate(`${PREFIX}.Parsers.CSV.customPlaceholder`)}
+          autoFocus
         />
       </div>
     );

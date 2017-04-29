@@ -22,6 +22,10 @@ $option-hover-bg-color: #eeeeee;
 $tab-bg-color: #aaaaaa;
 $invalid-column-color: #c0392b;
 $dark-icon-color: #373a3c;
+$types-table-border-color: #eceeef;
+$quality-bar-filled-color: #2ecc71;
+$quality-bar-empty-color: #e74c3c;
+$quality-bar-null-color: #95a5a6;
 
 .dataprep-container {
   .dataprep-side-panel {
@@ -206,15 +210,28 @@ $dark-icon-color: #373a3c;
               height: 15px;
               display: inline-block;
 
-              // Colors here are not extracted since this look will soon be removed
               &.filled {
-                background-color: #2ecc71;
+                background-color: $quality-bar-filled-color;
                 font-size: 8px;
               }
-              &.empty { background-color: #e74c3c; }
-              &.null-cell { background-color: #95a5a6; }
+              &.empty { background-color: $quality-bar-empty-color; }
+              &.null-cell { background-color: $quality-bar-null-color; }
             }
+          }
 
+          .types-table-container {
+            table {
+              background-color: transparent;
+
+              th,
+              td {
+                border-top: 1px solid $types-table-border-color;
+              }
+
+              th {
+                border-bottom: 2px solid $types-table-border-color;
+              }
+            }
           }
         }
       }
