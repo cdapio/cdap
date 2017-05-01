@@ -17,7 +17,8 @@
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.app.runtime.schedule.constraint.Constraint;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
+import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableList;
@@ -29,10 +30,9 @@ import org.junit.Test;
 
 public class TriggerJsonCodecTest {
 
-  static final Gson GSON = new GsonBuilder()
+  private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Trigger.class, new TriggerJsonCodec())
     .create();
-
 
 
   @Test

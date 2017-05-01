@@ -17,6 +17,7 @@
 package co.cask.cdap.api.schedule;
 
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * Configurer for scheduling.
@@ -32,6 +33,8 @@ public interface ScheduleConfigurer {
   ScheduleConfigurer delayRun(long delayMillis);
 
   ScheduleConfigurer setTimeRange(int startHour, int endHour);
+
+  ScheduleConfigurer setTimeRange(int startHour, int endHour, TimeZone timeZone);
 
   ScheduleConfigurer setDurationSinceLastRun(long delayMillis);
 

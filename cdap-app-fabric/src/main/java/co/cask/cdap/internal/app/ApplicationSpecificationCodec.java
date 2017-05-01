@@ -28,6 +28,7 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.proto.codec.AbstractSpecificationCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import com.google.gson.JsonDeserializationContext;
@@ -65,6 +66,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     jsonObj.add("workflows", serializeMap(src.getWorkflows(), context, WorkflowSpecification.class));
     jsonObj.add("services", serializeMap(src.getServices(), context, ServiceSpecification.class));
     jsonObj.add("schedules", serializeMap(src.getSchedules(), context, ScheduleSpecification.class));
+    jsonObj.add("programSchedules", serializeMap(src.getProgramSchedules(), context, ScheduleCreationSpec.class));
     jsonObj.add("workers", serializeMap(src.getWorkers(), context, WorkerSpecification.class));
     jsonObj.add("plugins", serializeMap(src.getPlugins(), context, Plugin.class));
 
@@ -109,7 +111,10 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
                                                                 context, ServiceSpecification.class);
 
     Map<String, ScheduleSpecification> schedules = deserializeMap(jsonObj.get("schedules"),
-                                                                context, ScheduleSpecification.class);
+                                                                  context, ScheduleSpecification.class);
+
+    Map<String, ScheduleCreationSpec> programSchedules = deserializeMap(jsonObj.get("programSchedules"),
+                                                                        context, ScheduleCreationSpec.class);
 
     Map<String, WorkerSpecification> workers = deserializeMap(jsonObj.get("workers"), context,
                                                               WorkerSpecification.class);
@@ -118,6 +123,6 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     return new DefaultApplicationSpecification(name, appVersion, description, configuration, artifactId, streams,
                                                datasetModules, datasetInstances,
                                                flows, mapReduces, sparks,
-                                               workflows, services, schedules, workers, plugins);
+                                               workflows, services, schedules, programSchedules, workers, plugins);
   }
 }

@@ -17,15 +17,18 @@
 package co.cask.cdap.internal.app.runtime.schedule.constraint;
 
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
 
 import javax.annotation.Nullable;
 
 /**
  * A constraint that is checked before executing a schedule.
  */
-public abstract class Constraint {
+public class ConstraintChecker {
 
-  public abstract Result check(ProgramSchedule schedule, ConstraintContext context);
+  public Result check(ProgramSchedule schedule, Constraint constraint, ConstraintContext context) {
+    return Result.SATISFIED;
+  }
 
   static class Result {
     public static final Result SATISFIED = new Result(SatisfiedState.SATISFIED, null);

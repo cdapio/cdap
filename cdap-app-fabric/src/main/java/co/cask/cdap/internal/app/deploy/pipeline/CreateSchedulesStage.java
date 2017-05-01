@@ -37,7 +37,7 @@ import java.util.Map;
  * This {@link co.cask.cdap.pipeline.Stage} is responsible for automatic creation of any new schedules
  * specified by the application. If the schedules already exist, it will update them. For schedule deletion see
  * {@link DeleteScheduleStage}. They are broken into separate stages because we want schedule creation and update to
- * happen after the app is registered in the app store as it might be possible that a schedule gets trigged instantly
+ * happen after the app is registered in the app store as it might be possible that a schedule gets triggered instantly
  * after being added when the app is still to be registered. See CDAP-8918 for details.
  */
 public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms> {
