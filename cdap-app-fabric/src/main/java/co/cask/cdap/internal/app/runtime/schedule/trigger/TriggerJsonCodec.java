@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
+import co.cask.cdap.internal.schedule.trigger.Trigger;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -28,7 +29,7 @@ import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 
 /**
- * Serialization and deserializtion of Triggers as Json.
+ * Serialization and deserialization of Triggers as Json.
  *
  * All triggers must be serialized by passing in the {@link Trigger} class as the type of the object.
  * Without that, the "className" field will not be generated, and we use that during deserialization
@@ -41,6 +42,7 @@ public class TriggerJsonCodec implements JsonSerializer<Trigger>, JsonDeserializ
 
   @Override
   public JsonElement serialize(Trigger src, Type typeOfSrc, JsonSerializationContext context) {
+    // this assumes that Trigger is an abstract class (every instance will have a concrete type that's not Trigger)
     JsonObject object = (JsonObject) context.serialize(src, src.getClass());
     object.add("className", new JsonPrimitive(src.getClass().getName()));
     return object;

@@ -14,10 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
+package co.cask.cdap.internal.schedule.constraint;
 
 /**
- * The mechanism by which a ProgramSchedule is scheduled.
+ * A constraint that is checked before executing a schedule.
  */
-public abstract class Trigger {
+public abstract class Constraint {
 }

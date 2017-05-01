@@ -31,8 +31,10 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerJsonCodec;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.codec.BasicThrowableCodec;
 import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
@@ -98,6 +100,7 @@ public final class ApplicationSpecificationAdapter {
       .registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec())
       .registerTypeAdapter(WorkerSpecification.class, new WorkerSpecificationCodec())
       .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
+      .registerTypeAdapter(Trigger.class, new TriggerJsonCodec())
       .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory());
   }
 

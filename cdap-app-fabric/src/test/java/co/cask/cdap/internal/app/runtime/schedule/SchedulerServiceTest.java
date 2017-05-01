@@ -360,6 +360,7 @@ public class SchedulerServiceTest {
       spec.getWorkflows(),
       spec.getServices(),
       builder.build(),
+      spec.getProgramSchedules(),
       spec.getWorkers(),
       spec.getPlugins()
     );
@@ -380,6 +381,7 @@ public class SchedulerServiceTest {
       spec.getWorkflows(),
       spec.getServices(),
       ImmutableMap.<String, ScheduleSpecification>of(),
+      spec.getProgramSchedules(),
       spec.getWorkers(),
       spec.getPlugins()
     );

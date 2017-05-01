@@ -51,24 +51,24 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   private static final String STORE_TYPE_NAME = ProgramScheduleStoreDataset.class.getName();
   private static final DatasetId STORE_DATASET_ID = NamespaceId.SYSTEM.dataset("schedule.store");
 
-  private final TransactionSystemClient txClient;
   private final DatasetFramework datasetFramework;
   private final MultiThreadDatasetCache datasetCache;
   private final Transactional transactional;
 
   @Inject
   CoreSchedulerService(TransactionSystemClient txClient, DatasetFramework datasetFramework) {
-    this.txClient = txClient;
     this.datasetFramework = datasetFramework;
     this.datasetCache = new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
                                                     txClient, STORE_DATASET_ID.getParent(),
                                                     Collections.<String, String>emptyMap(), null, null);
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(datasetCache), RetryStrategies.retryOnConflict(10, 100L));
+    System.out.println("alianwar4 - abcd");
   }
 
   @Override
   protected void startUp() throws Exception {
+    System.out.println("alianwar4 - wxyz");
     if (!datasetFramework.hasInstance(STORE_DATASET_ID)) {
       datasetFramework.addInstance(STORE_TYPE_NAME, STORE_DATASET_ID, DatasetProperties.EMPTY);
     }
