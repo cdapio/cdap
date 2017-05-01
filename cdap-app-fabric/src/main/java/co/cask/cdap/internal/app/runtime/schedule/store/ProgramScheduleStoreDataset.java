@@ -28,6 +28,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.Trigger;
@@ -35,21 +36,45 @@ import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerJsonDeserialize
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Dataset that stores and oindexes proram schedules, so that they can be looked by their trigger keys.
+ * Dataset that stores and indexes proram schedules, so that they can be looked by their trigger keys.
+ *
+ * This uses an IndexedTable to allow reverse lookup. The table stores:
+ * <ul>
+ *   <li>Schedules: the row key is
+ *     <code>&lt;namespace>.&lt;app-name>.&lt;app-version>.&lt;schedule-name></app-id>)</code>,
+ *     which is gobally unique (see {@link #rowKeyForSchedule(ScheduleId)}. The schedule itself is stored as JSON
+ *     in the <code>sch</code> ({@link #SCHEDULE_COLUMN} column.</li>
+ *   <li>Triggers: as every schedule can have multiple triggers, each trigger is stored and indexed in its row. The
+ *     triggers of a schedule are enumerated, and each trigger is stored with a row key that is the same as the
+ *     schedule's row key, with <code>@&lt;sequential-id></code> appended. This ensures that a schedules and its
+ *     triggered are stored in adjacent rows. The only column of trigger row is the trigger key (that is, the
+ *     key that can be constructed from an event to look up the schedules that have a trigger for it), in column
+ *     <code>tk</code> ({@link #TRIGGER_KEY_COLUMN}</li>.
+ * </ul>
+ *
+ * Lookup of schedules by trigger key is by first finding the all triggers for that event key (using the index),
+ * then mapping each of these triggers to the schedule it belongs to.
  */
 public class ProgramScheduleStoreDataset extends AbstractDataset {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramScheduleStoreDataset.class);
 
   private static final String SCHEDULE_COLUMN = "sch";
   private static final byte[] SCHEDULE_COLUMN_BYTES = Bytes.toBytes(SCHEDULE_COLUMN);
@@ -72,10 +97,19 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   }
 
   /**
+   * Add a schedule to the store.
+   *
+   * @param schedule the schedule to add
+   * @throws AlreadyExistsException if the schedule already exists
+   */
+  public void addSchedule(ProgramSchedule schedule) throws AlreadyExistsException {
+    addSchedules(Collections.singleton(schedule));
+  }
+
+  /**
    * Add one or more schedules to the store.
    *
    * @param schedules the schedules to add
-   *
    * @throws AlreadyExistsException if one of the schedules already exists
    */
   public void addSchedules(Collection<? extends ProgramSchedule> schedules) throws AlreadyExistsException {
@@ -140,6 +174,8 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * @param appId the application id for which to delete the schedules
    */
   public void deleteSchedules(ApplicationId appId) {
+    // since all trigger row keys are prefixed by <scheduleRowKey>@,
+    // a scan for that prefix finds exactly the schedules and all of its triggers
     byte[] prefix = keyPrefixForApplicationScan(appId);
     try (Scanner scanner = store.scan(new Scan(prefix, Bytes.stopKeyForPrefix(prefix)))) {
       Row row;
@@ -153,14 +189,16 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * Read a schedule from the store.
    *
    * @param scheduleId the id of the schedule to read
-   *
-   * @return the schedule from the store, or null if it was not found
+   * @return the schedule from the store
+   * @throws NotFoundException is the schedule does not exist in the store
    */
-  @Nullable
-  public ProgramSchedule getSchedule(ScheduleId scheduleId) {
+  public ProgramSchedule getSchedule(ScheduleId scheduleId) throws NotFoundException {
     Row row = store.get(new Get(rowKeyForSchedule(scheduleId)));
     byte[] serialized = row.get(SCHEDULE_COLUMN_BYTES);
-    return serialized == null ? null : GSON.fromJson(Bytes.toString(serialized), ProgramSchedule.class);
+    if (serialized == null) {
+      throw new NotFoundException(scheduleId);
+    }
+    return GSON.fromJson(Bytes.toString(serialized), ProgramSchedule.class);
   }
 
   /**
@@ -192,19 +230,29 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    *
    * @return a list of all schedules that are triggered by this key; never null
    */
-  public List<ProgramSchedule> findSchedules(String triggerKey) {
-    List<ProgramSchedule> result = new ArrayList<>();
+  public Collection<ProgramSchedule> findSchedules(String triggerKey) {
+    Map<ScheduleId, ProgramSchedule> schedulesFound = new HashMap<>();
     try (Scanner scanner = store.readByIndex(TRIGGER_KEY_COLUMN_BYTES, Bytes.toBytes(triggerKey))) {
       Row row;
       while ((row = scanner.next()) != null) {
-        byte[] serialized = row.get(SCHEDULE_COLUMN_BYTES);
-        if (serialized != null) {
-          ProgramSchedule schedule = GSON.fromJson(Bytes.toString(serialized), ProgramSchedule.class);
-          result.add(schedule);
+        String triggerRowKey = Bytes.toString(row.getRow());
+        try {
+          ScheduleId scheduleId = extractScheduleIdFromTriggerKey(triggerRowKey);
+          if (schedulesFound.containsKey(scheduleId)) {
+            continue;
+          }
+          ProgramSchedule schedule = getSchedule(scheduleId);
+          schedulesFound.put(scheduleId, schedule);
+        } catch (IllegalArgumentException | NotFoundException e) {
+          // the only exceptions we know to be thrown here are IllegalArgumentException (ill-formed key) or
+          // NotFoundException (if the schedule does not exist). Both should never happen, so we warn and ignore.
+          // we will let any other exception propagate up, because it would be a DataSetException or similarly serious.
+          LOG.warn("Problem with trigger id '{}' found for trigger key '{}': {}. Skipping entry.",
+                   triggerRowKey, triggerKey, e.getMessage());
         }
       }
     }
-    return result;
+    return schedulesFound.values();
   }
 
   /*------------------- private helpers ---------------------*/
@@ -227,7 +275,14 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
     return result;
   }
 
-  private List<String> extractTriggerKeys(ProgramSchedule schedule) {
+  /**
+   * This method extracts all trigger keys from a schedule. These are the keys for which we need to index
+   * the schedule, so that we can do a reverse lookup for an event received.
+   *
+   * For now, we do not support composite trigger, but in the future this is where the triggers need to be
+   * extracted from composite triggers. Hence the return type of this method is a list.
+   */
+  private static List<String> extractTriggerKeys(ProgramSchedule schedule) {
     Trigger trigger = schedule.getTrigger();
     // current assumption is a single data trigger. This code needs to change
     // when adding more trigger types / complex triggers
@@ -238,23 +293,40 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
     return Collections.emptyList();
   }
 
-  private String rowKeyForSchedule(ApplicationId appId, String scheduleName) {
-    return appId.getNamespace() + '.' + appId.getApplication() + '.' + scheduleName;
+  private static String rowKeyForSchedule(ApplicationId appId, String scheduleName) {
+    return rowKeyForSchedule(appId.schedule(scheduleName));
   }
 
-  private String rowKeyForSchedule(ScheduleId scheduleId) {
-    return rowKeyForSchedule(scheduleId.getParent(), scheduleId.getSchedule());
+  private static String rowKeyForSchedule(ScheduleId scheduleId) {
+    return Joiner.on('.').join(Schedulers.toIdParts(scheduleId));
   }
 
-  private String rowKeyForTrigger(String scheduleRowKey, int count) {
+  private static ScheduleId rowKeyToScheduleId(byte[] rowKey) {
+    return rowKeyToScheduleId(Bytes.toString(rowKey));
+  }
+
+  private static ScheduleId rowKeyToScheduleId(String rowKey) {
+    return ScheduleId.fromIdParts(Lists.newArrayList(rowKey.split("\\.")));
+  }
+
+  private static String rowKeyForTrigger(String scheduleRowKey, int count) {
     return scheduleRowKey + '@' + count;
   }
 
-  private byte[] keyPrefixForTriggerScan(String scheduleRowKey) {
+  private static ScheduleId extractScheduleIdFromTriggerKey(String triggerRowKey) {
+    int index = triggerRowKey.lastIndexOf('@');
+    if (index > 0) {
+      return rowKeyToScheduleId(triggerRowKey.substring(0, index));
+    }
+    throw new IllegalArgumentException(
+      "Trigger key is expected to be of the form <scheduleId>@<n> but is '" + triggerRowKey + "' (no '@' found)");
+  }
+
+  private static byte[] keyPrefixForTriggerScan(String scheduleRowKey) {
     return Bytes.toBytes(scheduleRowKey + '@');
   }
 
-  private byte[] keyPrefixForApplicationScan(ApplicationId appId) {
+  private static byte[] keyPrefixForApplicationScan(ApplicationId appId) {
     return Bytes.toBytes(appId.getNamespace() + '.' + appId.getApplication() + '.');
   }
 }

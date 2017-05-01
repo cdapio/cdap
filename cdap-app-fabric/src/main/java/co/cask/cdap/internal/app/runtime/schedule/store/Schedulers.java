@@ -17,9 +17,11 @@
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.ScheduleId;
+import com.google.common.collect.ImmutableList;
 
 /**
- * Common static methods for scheduler.
+ * Common utility methods for scheduling.
  */
 public final class Schedulers {
 
@@ -27,5 +29,15 @@ public final class Schedulers {
 
   public static String triggerKeyForPartition(DatasetId datasetId) {
     return "partition:" + datasetId.getNamespace() + '.' + datasetId.getDataset();
+  }
+
+  /**
+   * This replicates what {@link ScheduleId#toIdParts()} does, but that method is protected.
+   */
+  public static Iterable<String> toIdParts(ScheduleId scheduleId) {
+    return ImmutableList.of(scheduleId.getNamespace(),
+                            scheduleId.getApplication(),
+                            scheduleId.getVersion(),
+                            scheduleId.getSchedule());
   }
 }
