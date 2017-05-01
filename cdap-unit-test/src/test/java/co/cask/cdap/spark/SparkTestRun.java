@@ -166,7 +166,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
 
     KeyValueTable resultTable = this.<KeyValueTable>getDataset("ResultTable").get();
     Assert.assertEquals(1L, Bytes.toLong(resultTable.read(ClassicSparkProgram.class.getName())));
-//    Assert.assertEquals(1L, Bytes.toLong(resultTable.read(ScalaClassicSparkProgram.class.getName())));
+    Assert.assertEquals(1L, Bytes.toLong(resultTable.read(ScalaClassicSparkProgram.class.getName())));
   }
 
   @Test
