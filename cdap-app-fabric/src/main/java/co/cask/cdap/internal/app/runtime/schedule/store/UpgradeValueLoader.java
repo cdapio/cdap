@@ -39,7 +39,7 @@ public class UpgradeValueLoader extends CacheLoader<byte[], Boolean> {
   public static final byte[] COLUMN = Bytes.toBytes('c');
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeValueLoader.class);
   private static final Logger LIMITED_LOGGER = Loggers.sampling(LOG, LogSamplers.onceEvery(100));
-  private static final ProjectInfo.Version EXPECTED_VERSION = new ProjectInfo.Version("4.1.2-SNAPSHOT");
+  private static final ProjectInfo.Version EXPECTED_VERSION = new ProjectInfo.Version("4.1.1");
 
   private final String name;
   private final TransactionExecutorFactory factory;
