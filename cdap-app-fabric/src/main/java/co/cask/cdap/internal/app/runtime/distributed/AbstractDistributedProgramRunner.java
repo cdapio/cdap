@@ -401,7 +401,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
     Cancellable saveContextCancellable =
       LoggingContextAccessor.setLoggingContext(loggingContext);
     String userArguments = Joiner.on(", ").withKeyValueSeparator("=").join(options.getUserArguments());
-    LOG.info("Starting {} Program {} with Arguments [{}]", program.getType(), program.getName(), userArguments);
+    LOG.info("Starting {} Program '{}' with Arguments [{}]", program.getType(), program.getName(), userArguments);
     saveContextCancellable.cancel();
   }
 
