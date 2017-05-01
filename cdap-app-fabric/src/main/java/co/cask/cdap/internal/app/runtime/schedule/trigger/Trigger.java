@@ -21,7 +21,7 @@ package co.cask.cdap.internal.app.runtime.schedule.trigger;
  */
 public abstract class Trigger {
 
-  // used to deserialize the actual trigger subclass, in TriggeJsonDeserializer
+  // used to deserialize the actual trigger subclass, in TriggerJsonDeserializer
   private final String className = getClass().getName();
 
 }

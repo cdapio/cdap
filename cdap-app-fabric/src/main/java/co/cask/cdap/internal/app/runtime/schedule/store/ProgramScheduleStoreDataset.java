@@ -35,10 +35,13 @@ import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerJsonDeserialize
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -57,7 +60,8 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   static final String EMBEDDED_TABLE_NAME = "it"; // indexed table
   static final String INDEX_COLUMNS = TRIGGER_KEY_COLUMN; // trigger key
 
-  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(Trigger.class, new TriggerJsonDeserializer()).create();
+  private static final Gson GSON =
+    new GsonBuilder().registerTypeAdapter(Trigger.class, new TriggerJsonDeserializer()).create();
 
   private final IndexedTable store;
 
@@ -74,7 +78,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    *
    * @throws AlreadyExistsException if one of the schedules already exists
    */
-  public void addSchedules(ProgramSchedule... schedules) throws AlreadyExistsException {
+  public void addSchedules(Collection<? extends ProgramSchedule> schedules) throws AlreadyExistsException {
     for (ProgramSchedule schedule : schedules) {
       String scheduleKey = rowKeyForSchedule(schedule.getProgramId().getParent(), schedule.getName());
       if (!store.get(new Get(scheduleKey)).isEmpty()) {
@@ -90,15 +94,28 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   }
 
   /**
+   * Add one or more schedules to the store.
+   *
+   * @param schedules the schedules to add
+   *
+   * @throws AlreadyExistsException if one of the schedules already exists
+   */
+  public void addSchedules(ProgramSchedule... schedules) throws AlreadyExistsException {
+    addSchedules(Arrays.asList(schedules));
+  }
+
+  /**
    * Removes one or more schedules from the store. Succeeds whether the schedules exist or not.
    *
    * @param scheduleIds the schedules to delete
    */
-  public void deleteSchedules(ScheduleId ... scheduleIds) {
+  public void deleteSchedules(Collection<? extends ScheduleId> scheduleIds) {
     for (ScheduleId scheduleId : scheduleIds) {
       String scheduleKey = rowKeyForSchedule(scheduleId);
       store.delete(new Delete(scheduleKey));
       byte[] prefix = keyPrefixForTriggerScan(scheduleKey);
+      // all schedule's trigger keys are prefixed by the scheduleKey, hence scan and delete would remove the
+      // schedule and all triggers
       try (Scanner scanner = store.scan(new Scan(prefix, Bytes.stopKeyForPrefix(prefix)))) {
         Row row;
         while ((row = scanner.next()) != null) {
@@ -106,6 +123,15 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
         }
       }
     }
+  }
+
+  /**
+   * Removes one or more schedules from the store. Succeeds whether the schedules exist or not.
+   *
+   * @param scheduleIds the schedules to delete
+   */
+  public void deleteSchedules(ScheduleId ... scheduleIds) {
+    deleteSchedules(Arrays.asList(scheduleIds));
   }
 
   /**
@@ -203,8 +229,10 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
 
   private List<String> extractTriggerKeys(ProgramSchedule schedule) {
     Trigger trigger = schedule.getTrigger();
+    // current assumption is a single data trigger. This code needs to change
+    // when adding more trigger types / complex triggers
     if (trigger instanceof PartitionTrigger) {
-      String triggerKey = TriggerKeys.triggerKeyForPartition(((PartitionTrigger) trigger).getDatasetId());
+      String triggerKey = Schedulers.triggerKeyForPartition(((PartitionTrigger) trigger).getDatasetId());
       return Collections.singletonList(triggerKey);
     }
     return Collections.emptyList();

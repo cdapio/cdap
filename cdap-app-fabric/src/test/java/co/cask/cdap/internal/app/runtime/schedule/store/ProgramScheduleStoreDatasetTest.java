@@ -19,8 +19,6 @@ package co.cask.cdap.internal.app.runtime.schedule.store;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
 
   @Test

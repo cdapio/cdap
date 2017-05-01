@@ -19,11 +19,13 @@ package co.cask.cdap.internal.app.runtime.schedule.store;
 import co.cask.cdap.proto.id.DatasetId;
 
 /**
- * Common static methods to handle trigger keys.
+ * Common static methods for scheduler.
  */
-public class TriggerKeys {
+public final class Schedulers {
 
-  public static final String triggerKeyForPartition(DatasetId datasetId) {
+  private Schedulers() { }
+
+  public static String triggerKeyForPartition(DatasetId datasetId) {
     return "partition:" + datasetId.getNamespace() + '.' + datasetId.getDataset();
   }
 }
