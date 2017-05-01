@@ -18,7 +18,6 @@ package co.cask.cdap.datapipeline
 
 import co.cask.cdap.api.spark.{SparkExecutionContext, SparkMain}
 import co.cask.cdap.etl.batch.BatchPhaseSpec
-import co.cask.cdap.etl.common.plugin.PipelinePluginContext
 import co.cask.cdap.etl.common.{Constants, DefaultMacroEvaluator}
 import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext
 import com.google.gson.Gson
