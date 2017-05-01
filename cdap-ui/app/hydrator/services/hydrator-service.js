@@ -159,7 +159,6 @@ class HydratorPlusPlusHydratorService {
   }
 
   formatSchema (node) {
-
     let isStreamSource = node.name === 'Stream';
     let schema;
     let input;
@@ -274,6 +273,7 @@ class HydratorPlusPlusHydratorService {
       return null;
     }
   }
+
   formatOutputSchemaToAvro(schema) {
     let typeMap = 'map<string, string>';
     let mapObj = {
@@ -316,7 +316,24 @@ class HydratorPlusPlusHydratorService {
       fields: outputSchema.fields || fields
     });
   }
+
+  getPrefsRelevantToMacros(resolvedPrefs = {}, macrosMap = {}) {
+    try {
+      resolvedPrefs = JSON.parse(angular.toJson(resolvedPrefs));
+    } catch(e) {
+      console.log('ERROR: ', e);
+      resolvedPrefs = {};
+    }
+    let relevantPrefs = {};
+    for (let pref in resolvedPrefs) {
+      if (macrosMap.hasOwnProperty(pref)) {
+        relevantPrefs[pref] = resolvedPrefs[pref];
+      }
+    }
+    return relevantPrefs;
+  }
 }
+
 HydratorPlusPlusHydratorService.$inject = ['GLOBALS', 'DAGPlusPlusFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'IMPLICIT_SCHEMA', 'DAGPlusPlusNodesStore', 'myHelpers'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('HydratorPlusPlusHydratorService', HydratorPlusPlusHydratorService);
