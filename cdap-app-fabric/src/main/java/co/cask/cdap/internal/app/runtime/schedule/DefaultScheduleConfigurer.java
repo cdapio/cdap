@@ -17,20 +17,23 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.schedule.ScheduleConfigurer;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
+import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
-import co.cask.cdap.internal.app.runtime.schedule.constraint.Constraint;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.DelayConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.DurationSinceLastRunConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.TimeRangeConstraint;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
-import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * The default implementation of {@link ScheduleConfigurer}.
@@ -38,17 +41,23 @@ import java.util.Map;
 public class DefaultScheduleConfigurer implements ScheduleConfigurer {
 
   private final String name;
-  private final ProgramId programId;
+  private final Map<String, ScheduleCreationSpec> programSchedules;
+  private final NamespaceId namespace;
+  private final String programName;
+  private final List<Constraint> constraints;
   private String description;
   private Map<String, String> properties;
-  private final List<Constraint> constraints;
 
-  public DefaultScheduleConfigurer(String name, ProgramId programId) {
+  public DefaultScheduleConfigurer(String name, NamespaceId namespace, String programName,
+                                   Map<String, ScheduleCreationSpec> programSchedules) {
     this.name = name;
     this.description = "";
-    this.programId = programId;
+    this.namespace = namespace;
+    this.programName = programName;
     this.properties = new HashMap<>();
     this.constraints = new ArrayList<>();
+
+    this.programSchedules = programSchedules;
   }
 
   @Override
@@ -81,7 +90,13 @@ public class DefaultScheduleConfigurer implements ScheduleConfigurer {
 
   @Override
   public ScheduleConfigurer setTimeRange(int startHour, int endHour) {
-    constraints.add(new TimeRangeConstraint(startHour, endHour));
+    constraints.add(new TimeRangeConstraint(startHour, endHour, TimeZone.getDefault()));
+    return this;
+  }
+
+  @Override
+  public ScheduleConfigurer setTimeRange(int startHour, int endHour, TimeZone timeZone) {
+    constraints.add(new TimeRangeConstraint(startHour, endHour, timeZone));
     return this;
   }
 
@@ -93,18 +108,19 @@ public class DefaultScheduleConfigurer implements ScheduleConfigurer {
 
   @Override
   public void triggerByTime(String cronExpression) {
-    setSchedule(new ProgramSchedule(name, description, programId, properties,
-                                    new TimeTrigger(cronExpression), constraints));
+    setSchedule(new ScheduleCreationSpec(name, description, programName, properties,
+                                         new TimeTrigger(cronExpression), constraints));
   }
 
   @Override
   public void triggerOnPartitions(String datasetName, int numPartitions) {
-    setSchedule(new ProgramSchedule(name, description, programId, properties,
-                                    new PartitionTrigger(programId.getNamespaceId().dataset(datasetName),
-                                                         numPartitions),
-                                    constraints));
+    setSchedule(new ScheduleCreationSpec(name, description, programName, properties,
+                                         new PartitionTrigger(namespace.dataset(datasetName), numPartitions),
+                                         constraints));
   }
 
-  private void setSchedule(ProgramSchedule schedule) {
+  private void setSchedule(ScheduleCreationSpec schedule) {
+    // setSchedule can not be called twice on the same configurer (semantics are not defined)
+    Preconditions.checkArgument(null == programSchedules.put(schedule.getName(), schedule));
   }
 }

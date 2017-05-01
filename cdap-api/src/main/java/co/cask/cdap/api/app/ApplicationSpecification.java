@@ -34,6 +34,7 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -127,6 +128,11 @@ public interface ApplicationSpecification {
    * @return An immutable {@link Map} from Schedule name to {@link ScheduleSpecification}
    */
   Map<String, ScheduleSpecification> getSchedules();
+
+  /**
+   * @return An immutable {@link Map} from Schedule name to {@link ScheduleCreationSpec}
+   */
+  Map<String, ScheduleCreationSpec> getProgramSchedules();
 
   /**
    * @return An immutable {@link Map} from plugin id to {@link Plugin}

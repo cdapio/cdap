@@ -28,12 +28,18 @@ import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleConfigurer;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.internal.app.runtime.schedule.DefaultScheduleConfigurer;
+import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
+import co.cask.cdap.proto.id.NamespaceId;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -100,6 +106,13 @@ public final class MockAppConfigurer implements ApplicationConfigurer {
   public void addSchedule(Schedule schedule, SchedulableProgramType programType, String programName,
                           Map<String, String> properties) {
 
+  }
+
+  @Override
+  public ScheduleConfigurer configureWorkflowSchedule(String scheduleName, String workflowName) {
+    // the result of this won't actually be used, but the returned object will have its methods called
+    return new DefaultScheduleConfigurer(scheduleName, NamespaceId.DEFAULT, workflowName,
+                                         new HashMap<String, ScheduleCreationSpec>());
   }
 
   @Nullable

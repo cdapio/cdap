@@ -27,6 +27,7 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleConfigurer;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -44,10 +45,12 @@ import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.flow.DefaultFlowConfigurer;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.schedule.DefaultScheduleConfigurer;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
 import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
+import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -56,6 +59,7 @@ import com.google.common.base.Preconditions;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -72,6 +76,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   private final Map<String, WorkflowSpecification> workflows = new HashMap<>();
   private final Map<String, ServiceSpecification> services = new HashMap<>();
   private final Map<String, ScheduleSpecification> schedules = new HashMap<>();
+  private final Map<String, ScheduleCreationSpec> programSchedules = new HashMap<>();
   private final Map<String, WorkerSpecification> workers = new HashMap<>();
   private String name;
   private String description;
@@ -194,6 +199,11 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     schedules.put(schedule.getName(), spec);
   }
 
+  @Override
+  public ScheduleConfigurer configureWorkflowSchedule(String scheduleName, String workflowName) {
+    return new DefaultScheduleConfigurer(scheduleName, deployNamespace.toEntityId(), workflowName, programSchedules);
+  }
+
   /**
    * Creates a {@link ApplicationSpecification} based on values in this configurer.
    *
@@ -214,11 +224,12 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
 
     String appName = applicationName == null ? name : applicationName;
     String appVersion = applicationVersion == null ? ApplicationId.DEFAULT_VERSION : applicationVersion;
+
     return new DefaultApplicationSpecification(appName, appVersion, description,
                                                configuration, artifactId, getStreams(),
                                                getDatasetModules(), getDatasetSpecs(),
                                                flows, mapReduces, sparks, workflows, services,
-                                               schedules, workers, getPlugins());
+                                               schedules, programSchedules, workers, getPlugins());
   }
 
   private void addDatasetsAndPlugins(DefaultPluginConfigurer configurer) {

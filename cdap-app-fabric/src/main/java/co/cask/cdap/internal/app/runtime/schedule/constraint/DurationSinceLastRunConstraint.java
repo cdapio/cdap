@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.constraint;
 
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
 
 /**
  * A Constraint which requires a certain duration pass since the last execution of the schedule.
@@ -27,10 +27,5 @@ public class DurationSinceLastRunConstraint extends Constraint {
 
   public DurationSinceLastRunConstraint(long millisSinceLastRun) {
     this.millisSinceLastRun = millisSinceLastRun;
-  }
-
-  @Override
-  public Result check(ProgramSchedule schedule, ConstraintContext context) {
-    return null;
   }
 }
