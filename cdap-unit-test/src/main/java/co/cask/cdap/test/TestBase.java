@@ -102,6 +102,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
@@ -201,6 +202,7 @@ public class TestBase {
   private static SecureStore secureStore;
   private static SecureStoreManager secureStoreManager;
   private static MessagingService messagingService;
+  private static Scheduler programScheduler;
   private static MessagingContext messagingContext;
   private static PreviewManager previewManager;
 
@@ -322,6 +324,11 @@ public class TestBase {
     }
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     streamCoordinatorClient.startAndWait();
+    programScheduler = injector.getInstance(Scheduler.class);
+    if (programScheduler instanceof Service) {
+      ((Service) programScheduler).startAndWait();
+    }
+
     testManager = injector.getInstance(UnitTestManager.class);
     metricsManager = injector.getInstance(MetricsManager.class);
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
@@ -469,6 +476,10 @@ public class TestBase {
 
     namespaceAdmin.delete(NamespaceId.DEFAULT);
     authorizerInstantiator.close();
+
+    if (programScheduler instanceof Service) {
+      ((Service) programScheduler).stopAndWait();
+    }
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.stopAndWait();
@@ -484,7 +495,7 @@ public class TestBase {
     txService.stopAndWait();
 
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).stopAndWait();
     }
   }
 
