@@ -184,7 +184,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("artifact-name") String artifactName,
                                   @QueryParam("scope") @DefaultValue("user") String scope,
-                                  @QueryParam("versionRange") String versionRange,
+                                  @QueryParam("artifactVersion") String versionRange,
                                   @QueryParam("limit") @DefaultValue("2147483647") String limit,
                                   @QueryParam("order") @DefaultValue("UNORDERED") String order)
     throws Exception {
