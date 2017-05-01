@@ -119,7 +119,7 @@ public final class ScheduleTaskRunner {
    *
    * @return a {@link ListenableFuture} object that completes when the program completes
    */
-  private ListenableFuture<?> execute(final ProgramId id, Map<String, String> sysArgs,
+  public ListenableFuture<?> execute(final ProgramId id, Map<String, String> sysArgs,
                                       Map<String, String> userArgs) throws Exception {
     ProgramRuntimeService.RuntimeInfo runtimeInfo;
     String originalUserId = SecurityRequestContext.getUserId();
