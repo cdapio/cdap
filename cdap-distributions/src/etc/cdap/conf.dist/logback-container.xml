@@ -36,6 +36,7 @@
   <logger name="SecurityLogger.org.apache.hadoop.ipc.Server" level="WARN"/>
   <!-- Because of HADOOP-11180 move this to Error -->
   <logger name="org.apache.hadoop.security.token.Token" level="ERROR"/>
+  <logger name="org.apache.hadoop.metrics2" level="ERROR"/>
   <logger name="akka" level="WARN"/>
   <logger name="Remoting" level="WARN"/>
   <logger name="org.quartz.core" level="WARN"/>
