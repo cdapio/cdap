@@ -21,6 +21,7 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleConfigurer;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.worker.Worker;
@@ -100,4 +101,13 @@ public interface ApplicationConfigurer extends PluginConfigurer {
    */
   void addSchedule(Schedule schedule, SchedulableProgramType programType, String programName,
                    Map<String, String> properties);
+
+  /**
+   * Schedule the specified {@link Workflow}
+   * @param scheduleName the name of the schedule
+   * @param workflowName the name of the Workflow
+   *
+   * @return The {@link ScheduleConfigurer} used to configure the schedule
+   */
+  ScheduleConfigurer configureWorkflowSchedule(String scheduleName, String workflowName);
 }

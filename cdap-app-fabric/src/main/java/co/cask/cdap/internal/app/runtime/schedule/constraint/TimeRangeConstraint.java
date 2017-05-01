@@ -16,7 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.constraint;
 
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
+
+import java.util.TimeZone;
 
 /**
  * A Constraint that defines a time range in which the schedule is allowed to execute.
@@ -27,14 +29,11 @@ public class TimeRangeConstraint extends Constraint {
   // TODO: Allow minute granularity
   private final int startHour;
   private final int endHour;
+  private final TimeZone timeZone;
 
-  public TimeRangeConstraint(int startHour, int endHour) {
+  public TimeRangeConstraint(int startHour, int endHour, TimeZone timeZone) {
     this.startHour = startHour;
     this.endHour = endHour;
-  }
-
-  @Override
-  public Result check(ProgramSchedule schedule, ConstraintContext context) {
-    return null;
+    this.timeZone = timeZone;
   }
 }

@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.internal.app.runtime.schedule.constraint.Constraint;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.Trigger;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
+import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Objects;
 

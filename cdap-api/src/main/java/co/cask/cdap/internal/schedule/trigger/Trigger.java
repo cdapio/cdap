@@ -14,18 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.constraint;
-
-import co.cask.cdap.internal.schedule.constraint.Constraint;
+package co.cask.cdap.internal.schedule.trigger;
 
 /**
- * A constraint which requires a certain amount of delay pass after the trigger is fired, before executing the program.
+ * The mechanism by which a ProgramSchedule is scheduled.
  */
-public class DelayConstraint extends Constraint {
+public abstract class Trigger {
 
-  private final long millisAfterTrigger;
-
-  public DelayConstraint(long millisAfterTrigger) {
-    this.millisAfterTrigger = millisAfterTrigger;
-  }
 }
