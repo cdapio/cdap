@@ -41,18 +41,18 @@ public class TimeTrigger extends Trigger {
       return false;
     }
     TimeTrigger that = (TimeTrigger) o;
-    return Objects.equal(cronExpr, that.cronExpr);
+    return Objects.equal(cronExpression, that.cronExpression);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(cronExpr);
+    return Objects.hashCode(cronExpression);
   }
 
   @Override
   public String toString() {
     return "TimeTrigger{" +
-      "cronExpr='" + cronExpr + '\'' +
+      "cronExpression='" + cronExpression + '\'' +
       '}';
   }
 }
