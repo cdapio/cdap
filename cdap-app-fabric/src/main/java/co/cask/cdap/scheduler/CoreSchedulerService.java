@@ -28,9 +28,8 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -48,34 +47,34 @@ import java.util.List;
  */
 public class CoreSchedulerService extends AbstractIdleService implements Scheduler {
 
-  private static final String STORE_TYPE_NAME = ProgramScheduleStoreDataset.class.getName();
-  public static final DatasetId STORE_DATASET_ID = NamespaceId.SYSTEM.dataset("schedule.store");
-
   private final DatasetFramework datasetFramework;
   private final MultiThreadDatasetCache datasetCache;
   private final Transactional transactional;
+  private final NotificationSubscriberService notificationSubscriberService;
 
   @Inject
-  CoreSchedulerService(TransactionSystemClient txClient, DatasetFramework datasetFramework) {
+  CoreSchedulerService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
+                       NotificationSubscriberService notificationSubscriberService) {
     this.datasetFramework = datasetFramework;
     this.datasetCache = new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
-                                                    txClient, STORE_DATASET_ID.getParent(),
+                                                    txClient, Schedulers.STORE_DATASET_ID.getParent(),
                                                     Collections.<String, String>emptyMap(), null, null);
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(datasetCache), RetryStrategies.retryOnConflict(10, 100L));
-    System.out.println("alianwar4 - abcd");
+    this.notificationSubscriberService = notificationSubscriberService;
   }
 
   @Override
   protected void startUp() throws Exception {
-    System.out.println("alianwar4 - wxyz");
-    if (!datasetFramework.hasInstance(STORE_DATASET_ID)) {
-      datasetFramework.addInstance(STORE_TYPE_NAME, STORE_DATASET_ID, DatasetProperties.EMPTY);
+    if (!datasetFramework.hasInstance(Schedulers.STORE_DATASET_ID)) {
+      datasetFramework.addInstance(Schedulers.STORE_TYPE_NAME, Schedulers.STORE_DATASET_ID, DatasetProperties.EMPTY);
     }
+    notificationSubscriberService.startAndWait();
   }
 
   @Override
   protected void shutDown() throws Exception {
+    notificationSubscriberService.stopAndWait();
   }
 
   @Override
@@ -161,7 +160,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       return Transactions.execute(transactional, new TxCallable<V>() {
         @Override
         public V call(DatasetContext context) throws Exception {
-          ProgramScheduleStoreDataset store = context.getDataset(STORE_DATASET_ID.getDataset());
+          ProgramScheduleStoreDataset store = context.getDataset(Schedulers.STORE_DATASET_ID.getDataset());
           return runnable.run(store);
         }
       });

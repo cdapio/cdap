@@ -68,7 +68,7 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
     TransactionSystemClient txClient = getInjector().getInstance(TransactionSystemClient.class);
     TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txClient);
-    final ProgramScheduleStoreDataset store = dsFramework.getDataset(CoreSchedulerService.STORE_DATASET_ID,
+    final ProgramScheduleStoreDataset store = dsFramework.getDataset(Schedulers.STORE_DATASET_ID,
                                                                      new HashMap<String, String>(), null);
     Assert.assertNotNull(store);
     TransactionExecutor txExecutor = txExecutorFactory.createExecutor(Collections.singleton((TransactionAware) store));
