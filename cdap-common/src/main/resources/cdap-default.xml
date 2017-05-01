@@ -534,6 +534,14 @@
   </property>
 
   <property>
+    <name>data.event.topic</name>
+    <value>dataevent</value>
+    <description>
+      Topic name for publishing data events to the messaging system
+    </description>
+  </property>
+
+  <property>
     <name>data.tx.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -657,6 +665,15 @@
       Table used to store intermediate state when invalid transaction list
       pruning is enabled
     </description>
+  </property>
+
+  <property>
+    <name>data.tx.grace.period</name>
+    <value>86400</value>
+    <description>
+      The time in seconds used to pad transaction max lifetime while pruning.
+    </description>
+    <final>true</final>
   </property>
 
   <property>
@@ -1460,6 +1477,17 @@
   <!-- Messaging System Configuration -->
 
   <property>
+    <name>messaging.cache.size.mb</name>
+    <value>30</value>
+    <description>
+      Memory in megabytes for the cache size used by the messaging service
+      for caching recently published messages. Currently, only topics listed
+      in the ${messaging.system.topics} configuration have caching enabled.
+      Set it to 0 to disable caching.
+    </description>
+  </property>
+
+  <property>
     <name>messaging.container.instances</name>
     <value>1</value>
     <description>
@@ -1626,7 +1654,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic}</value>
+    <value>${audit.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic}</value>
     <description>
       A comma-separated list of topics that are always available in the
       system namespace. Multiple topics sharing the same prefix and

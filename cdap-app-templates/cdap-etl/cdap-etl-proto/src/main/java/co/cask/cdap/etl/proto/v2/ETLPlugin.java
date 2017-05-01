@@ -17,8 +17,6 @@
 package co.cask.cdap.etl.proto.v2;
 
 import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.etl.proto.ArtifactSelector;
 import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
 
 import java.util.Collections;
@@ -69,6 +67,10 @@ public class ETLPlugin {
     return PluginProperties.builder().addAll(properties).build();
   }
 
+  public ArtifactSelectorConfig getArtifactConfig() {
+    return artifact;
+  }
+
   /**
    * Validate correctness. Since this object is created through deserialization, some fields that should not be null
    * may be null.
@@ -82,15 +84,6 @@ public class ETLPlugin {
     if (type == null || type.isEmpty()) {
       throw new IllegalArgumentException("Invalid plugin " + toString() + ": type must be specified.");
     }
-  }
-
-  /**
-   * @return the plugin selector for this plugin. If artifact settings have been given, the selector will try to
-   *         match the specified artifact settings using an {@link ArtifactSelector}.
-   *         If not, the default {@link PluginSelector} is returned.
-   */
-  public PluginSelector getPluginSelector() {
-    return artifact == null ? new PluginSelector() : artifact.getArtifactSelector(type, name);
   }
 
   @Override

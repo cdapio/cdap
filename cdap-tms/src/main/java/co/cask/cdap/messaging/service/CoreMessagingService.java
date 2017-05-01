@@ -25,6 +25,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeProvider;
 import co.cask.cdap.messaging.MessageFetcher;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.MessagingServiceUtils;
 import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.RollbackDetail;
 import co.cask.cdap.messaging.StoreRequest;
@@ -54,12 +55,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -92,8 +93,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   }
 
   @VisibleForTesting
-  CoreMessagingService(CConfiguration cConf, TableFactory tableFactory, TimeProvider timeProvider,
-                       MetricsCollectionService metricsCollectionService) {
+  CoreMessagingService(CConfiguration cConf, TableFactory tableFactory,
+                       TimeProvider timeProvider, MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.tableFactory = tableFactory;
     this.topicCache = createTopicCache();
@@ -227,38 +228,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   protected void startUp() throws Exception {
     Queue<TopicId> asyncCreationTopics = new LinkedList<>();
 
-    for (String topic : new HashSet<>(cConf.getTrimmedStringCollection(Constants.MessagingSystem.SYSTEM_TOPICS))) {
-      // If the current topic matches the format <common.prefix>:<total.topic.number>, create totally
-      // <total.topic.number> topics with the prefix <common.prefix> with numerical suffices
-      // ranging from 0 to (<total.topic.number> - 1)
-      if (topic.contains(":")) {
-        String[] topicParts = topic.split(":");
-        int totalTopicNum;
-        if (topicParts.length != 2) {
-          LOG.warn("Ignore creation of invalid topic '{}'. Expecting topic in the format " +
-                     "<common.prefix>:<total.topic.number>.", topic);
-          continue;
-        }
-        String topicPrefix = topicParts[0];
-        try {
-          totalTopicNum = Integer.parseInt(topicParts[1]);
-          if (totalTopicNum <= 0) {
-            LOG.warn("Ignore creation of invalid topic '{}' because " +
-                       "the total topics number {} in it is not positive integer.", topic, topicParts[1]);
-            continue;
-          }
-        } catch (NumberFormatException e) {
-          LOG.warn(String.format(
-            "Ignore creation of invalid topic '%s' because of the invalid total topics number in it.", topic), e);
-          continue;
-        }
-
-        for (int i = 0; i < totalTopicNum; i++) {
-          createSystemTopic(topicPrefix + i, asyncCreationTopics);
-        }
-      } else {
-        createSystemTopic(topic, asyncCreationTopics);
-      }
+    Set<TopicId> systemTopics = MessagingServiceUtils.getSystemTopics(cConf, true);
+    for (TopicId topic : systemTopics) {
+      createSystemTopic(topic, asyncCreationTopics);
     }
 
     if (!asyncCreationTopics.isEmpty()) {
@@ -272,22 +244,15 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
    * Creates the given topic if it is not yet created. Adds a topic to the {@code creationFailureTopics}
    * if creation fails.
    */
-  private void createSystemTopic(String topicName,  Queue<TopicId> creationFailureTopics) {
+  private void createSystemTopic(TopicId topicId, Queue<TopicId> creationFailureTopics) {
     try {
-      TopicId topicId = NamespaceId.SYSTEM.topic(topicName);
-      try {
-        createTopicIfNotExists(topicId);
-      } catch (Exception e) {
-        // If failed, add it to a list so that the retry will happen asynchronously
-        LOG.warn("Topic {} creation failed with exception {}. Will retry.", topicId, e.getMessage());
-        LOG.debug("Topic {} creation failure stacktrace", topicId, e);
-        creationFailureTopics.add(topicId);
-      }
-    } catch (IllegalArgumentException e) {
-      // Ignore invalid topic
-      LOG.warn(String.format("Ignore creation of invalid topic '%s'", topicName), e);
+      createTopicIfNotExists(topicId);
+    } catch (Exception e) {
+      // If failed, add it to a list so that the retry will happen asynchronously
+      LOG.warn("Topic {} creation failed with exception {}. Will retry.", topicId, e.getMessage());
+      LOG.debug("Topic {} creation failure stacktrace", topicId, e);
+      creationFailureTopics.add(topicId);
     }
-
   }
 
   @Override

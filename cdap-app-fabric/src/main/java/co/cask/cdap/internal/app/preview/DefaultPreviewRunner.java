@@ -38,11 +38,14 @@ import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.gateway.handlers.store.ProgramStore;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.metrics.query.MetricsQueryHelper;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.artifact.ArtifactVersionRange;
 import co.cask.cdap.proto.artifact.preview.PreviewConfig;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -51,6 +54,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.inject.Inject;
@@ -82,6 +86,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     }
   };
 
+  private final MessagingService messagingService;
   private final DatasetService datasetService;
   private final LogAppenderInitializer logAppenderInitializer;
   private final ApplicationLifecycleService applicationLifecycleService;
@@ -102,13 +107,15 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private Timer timer;
 
   @Inject
-  DefaultPreviewRunner(DatasetService datasetService, LogAppenderInitializer logAppenderInitializer,
+  DefaultPreviewRunner(MessagingService messagingService, DatasetService datasetService,
+                       LogAppenderInitializer logAppenderInitializer,
                        ApplicationLifecycleService applicationLifecycleService,
                        SystemArtifactLoader systemArtifactLoader, ProgramRuntimeService programRuntimeService,
                        ProgramLifecycleService programLifecycleService,
                        PreviewStore previewStore, DataTracerFactory dataTracerFactory,
                        NamespaceAdmin namespaceAdmin, ProgramStore programStore,
                        MetricsCollectionService metricsCollectionService, MetricsQueryHelper metricsQueryHelper) {
+    this.messagingService = messagingService;
     this.datasetService = datasetService;
     this.logAppenderInitializer = logAppenderInitializer;
     this.applicationLifecycleService = applicationLifecycleService;
@@ -132,17 +139,13 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     ArtifactSummary artifactSummary = request.getArtifact();
     ApplicationId preview = programId.getParent();
     DataTracerFactoryProvider.setDataTracerFactory(preview, dataTracerFactory);
-    NamespaceId artifactNamespace = ArtifactScope.SYSTEM.equals((artifactSummary.getScope())) ? NamespaceId.SYSTEM
-      : preview.getParent();
-
-    ArtifactId artifactId = new ArtifactId(artifactNamespace.getNamespace(), artifactSummary.getName(),
-                                           artifactSummary.getVersion());
 
     String config = request.getConfig() == null ? null : GSON.toJson(request.getConfig());
 
     try {
       applicationLifecycleService.deployApp(preview.getParent(), preview.getApplication(), preview.getVersion(),
-                                            artifactId.toId(), config, NOOP_PROGRAM_TERMINATOR);
+                                            artifactSummary, config, NOOP_PROGRAM_TERMINATOR, null,
+                                            request.canUpdateSchedules());
     } catch (Exception e) {
       this.status = new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED, new BasicThrowable(e), null, null);
       throw e;
@@ -246,6 +249,9 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
   @Override
   protected void startUp() throws Exception {
+    if (messagingService instanceof Service) {
+      ((Service) messagingService).startAndWait();
+    }
     datasetService.startAndWait();
 
     // It is recommended to initialize log appender after datasetService is started,
@@ -268,6 +274,9 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   protected void shutDown() throws Exception {
     shutDownUnrequiredServices();
     datasetService.stopAndWait();
+    if (messagingService instanceof Service) {
+      ((Service) messagingService).stopAndWait();
+    }
   }
 
   private void shutDownUnrequiredServices() {

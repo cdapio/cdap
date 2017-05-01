@@ -42,6 +42,7 @@ import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.ArtifactClasses;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.artifact.ArtifactSortOrder;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -156,7 +157,8 @@ public class ArtifactRepository {
    * @return an unmodifiable list of artifacts that belong to the given namespace
    * @throws IOException if there as an exception reading from the meta store
    */
-  public List<ArtifactSummary> getArtifacts(final NamespaceId namespace, boolean includeSystem) throws Exception {
+  public List<ArtifactSummary> getArtifactSummaries(final NamespaceId namespace,
+                                                    boolean includeSystem) throws Exception {
     List<ArtifactSummary> summaries = new ArrayList<>();
     if (includeSystem) {
       convertAndAdd(summaries, artifactStore.getArtifacts(NamespaceId.SYSTEM));
@@ -171,15 +173,35 @@ public class ArtifactRepository {
    *
    * @param namespace the namespace to get artifacts from
    * @param name the name of artifacts to get
+   * @param limit the limit number of the result
+   * @param order the order of the result
    * @return an unmodifiable list of artifacts in the given namespace of the given name
    * @throws IOException if there as an exception reading from the meta store
    * @throws ArtifactNotFoundException if no artifacts of the given name in the given namespace exist
    */
-  public List<ArtifactSummary> getArtifacts(NamespaceId namespace, String name)
+  public List<ArtifactSummary> getArtifactSummaries(NamespaceId namespace, String name, int limit,
+                                                    ArtifactSortOrder order)
     throws Exception {
     List<ArtifactSummary> summaries = new ArrayList<>();
-    List<ArtifactSummary> artifacts = convertAndAdd(summaries, artifactStore.getArtifacts(namespace, name));
+    List<ArtifactSummary> artifacts = convertAndAdd(summaries, artifactStore.getArtifacts(namespace, name,
+                                                                                          limit, order));
     return Collections.unmodifiableList(Lists.newArrayList(filterAuthorizedArtifacts(artifacts, namespace)));
+  }
+
+  /**
+   * Get all artifacts in the given artifact range. Will never return null.
+   *
+   * @param range the range of the artifact
+   * @param limit the limit number of the result
+   * @param order the order of the result
+   * @return an unmodifiable list of artifacts in the given namespace of the given name
+   * @throws IOException if there as an exception reading from the meta store
+   */
+  public List<ArtifactSummary> getArtifactSummaries(final ArtifactRange range, int limit,
+                                                    ArtifactSortOrder order) throws Exception {
+    List<ArtifactSummary> summaries = new ArrayList<>();
+    List<ArtifactSummary> artifacts = convertAndAdd(summaries, artifactStore.getArtifacts(range, limit, order));
+    return Collections.unmodifiableList(Lists.newArrayList(filterAuthorizedArtifacts(artifacts, range.getNamespace())));
   }
 
   /**
@@ -197,13 +219,16 @@ public class ArtifactRepository {
   }
 
   /**
-   * Get all artifacts that match artifacts in the given ranges.
+   * Get all artifact details that match artifacts in the given ranges.
    *
    * @param range the range to match artifacts in
+   * @param limit the limit number of the result
+   * @param order the order of the result
    * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an empty list is returned
    */
-  public List<ArtifactDetail> getArtifacts(final ArtifactRange range) throws Exception {
-    List<ArtifactDetail> artifacts = artifactStore.getArtifacts(range);
+  public List<ArtifactDetail> getArtifactDetails(final ArtifactRange range, int limit,
+                                                 ArtifactSortOrder order) throws Exception {
+    List<ArtifactDetail> artifacts = artifactStore.getArtifacts(range, limit, order);
     // No authorization for system artifacts
     if (NamespaceId.SYSTEM.equals(range.getNamespace())) {
       return artifacts;
@@ -307,14 +332,18 @@ public class ArtifactRepository {
    * @param artifactId the id of the artifact to get plugins for
    * @param pluginType the type of plugins to get
    * @param pluginName the name of plugins to get
+   * @param pluginPredicate the predicate for the plugin
+   * @param limit the limit number of the result
+   * @param order the order of the result
    * @return an unmodifiable sorted map from plugin artifact to plugins in that artifact
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(NamespaceId namespace, Id.Artifact artifactId,
-                                                               String pluginType, String pluginName)
-    throws IOException, PluginNotExistsException, ArtifactNotFoundException {
-    return artifactStore.getPluginClasses(namespace, artifactId, pluginType, pluginName);
+  public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(
+    NamespaceId namespace, Id.Artifact artifactId, String pluginType, String pluginName,
+    com.google.common.base.Predicate<co.cask.cdap.proto.id.ArtifactId> pluginPredicate,
+    int limit, ArtifactSortOrder order) throws IOException, PluginNotExistsException, ArtifactNotFoundException {
+    return artifactStore.getPluginClasses(namespace, artifactId, pluginType, pluginName, pluginPredicate, limit, order);
   }
 
   /**
@@ -335,7 +364,7 @@ public class ArtifactRepository {
                                                                PluginSelector selector)
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     SortedMap<ArtifactDescriptor, PluginClass> pluginClasses = artifactStore.getPluginClasses(
-      namespace, artifactRange, pluginType, pluginName);
+      namespace, artifactRange, pluginType, pluginName, null, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
     return getPluginEntries(pluginClasses, selector, artifactRange.getNamespace().toId(), pluginType, pluginName);
   }
 
@@ -805,7 +834,7 @@ public class ArtifactRepository {
 
     List<ArtifactDetail> parents = new ArrayList<>();
     for (ArtifactRange parentRange : parentArtifacts) {
-      parents.addAll(artifactStore.getArtifacts(parentRange));
+      parents.addAll(artifactStore.getArtifacts(parentRange, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED));
     }
 
     if (parents.isEmpty()) {

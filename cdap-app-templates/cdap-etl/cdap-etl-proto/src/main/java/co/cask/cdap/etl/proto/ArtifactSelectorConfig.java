@@ -18,7 +18,6 @@ package co.cask.cdap.etl.proto;
 
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
-import com.google.common.base.CharMatcher;
 
 import java.util.Objects;
 
@@ -27,12 +26,6 @@ import java.util.Objects;
  * deserialization by the CDAP framework. Programmatic creation is only used for unit tests.
  */
 public class ArtifactSelectorConfig {
-  private static final CharMatcher nameMatcher =
-    CharMatcher.inRange('A', 'Z')
-      .or(CharMatcher.inRange('a', 'z'))
-      .or(CharMatcher.inRange('0', '9'))
-      .or(CharMatcher.is('_'))
-      .or(CharMatcher.is('-'));
   private final String scope;
   private final String name;
   private final String version;
@@ -50,32 +43,16 @@ public class ArtifactSelectorConfig {
     this.version = version;
   }
 
-  /**
-   * Gets the corresponding {@link ArtifactSelector} for this config.
-   * Validates that any given scope, name, and version are all valid or null. The scope must be an
-   * {@link ArtifactScope}, the version must be an {@link ArtifactVersion}, and the name only contains
-   * alphanumeric, '-', or '_'. Also checks that at least one field is non-null.
-   *
-   * @return an {@link ArtifactSelector} using these config settings
-   * @throws IllegalArgumentException if any one of the fields are invalid
-   */
-  public ArtifactSelector getArtifactSelector(String pluginType, String pluginName) {
-    if (name != null && !nameMatcher.matchesAllOf(name)) {
-      throw new IllegalArgumentException(String.format("'%s' is an invalid artifact name. " +
-                                                         "Must contain only alphanumeric, '-', or '_' characters.",
-                                                       name));
-    }
+  public String getScope() {
+    return scope;
+  }
 
-    ArtifactVersion artifactVersion = null;
-    if (version != null) {
-      artifactVersion = new ArtifactVersion(version);
-      if (artifactVersion.getVersion() == null) {
-        throw new IllegalArgumentException(String.format("Could not parse '%s' as an artifact version.", version));
-      }
-    }
+  public String getName() {
+    return name;
+  }
 
-    ArtifactScope artifactScope = scope == null ? null : ArtifactScope.valueOf(scope.toUpperCase());
-    return new ArtifactSelector(pluginType, pluginName, artifactScope, name, artifactVersion);
+  public String getVersion() {
+    return version;
   }
 
   @Override

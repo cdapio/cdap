@@ -16,8 +16,6 @@
 
 package co.cask.cdap.etl.proto.v1;
 
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.etl.proto.ArtifactSelector;
 import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
 
 import java.util.Collections;
@@ -54,19 +52,6 @@ public class Plugin {
 
   public ArtifactSelectorConfig getArtifact() {
     return artifact == null ? new ArtifactSelectorConfig() : artifact;
-  }
-
-  /**
-   * @param pluginType the plugin type to get a selector for. Only used for error messages when no matching artifact
-   *                   for the plugin is found
-   * @param pluginName the plugin name to get a selector for. Only used for error messages when no matching artifact
-   *                   for the plugin is found
-   * @return the plugin selector for this plugin. If artifact settings have been given, the selector will try to
-   *         match the specified artifact settings using an {@link ArtifactSelector}.
-   *         If not, the default {@link PluginSelector} is returned.
-   */
-  public PluginSelector getPluginSelector(String pluginType, String pluginName) {
-    return artifact == null ? new PluginSelector() : artifact.getArtifactSelector(pluginType, pluginName);
   }
 
   @Override

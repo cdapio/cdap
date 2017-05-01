@@ -18,6 +18,7 @@ package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.data.LineageDatasetContext;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 
 /**
@@ -29,7 +30,7 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 public interface SparkTxRunnable {
 
   /**
-   * Provides a {@link SparkDatasetContext} to get instances of {@link Dataset}s.
+   * Provides a {@link LineageDatasetContext} to get instances of {@link Dataset}s.
    *
    * <p>
    *   Operations executed on a dataset within the execution of this method are committed as a single transaction.
@@ -40,5 +41,5 @@ public interface SparkTxRunnable {
    *
    * @param context to get datasets from
    */
-  void run(SparkDatasetContext context) throws Exception;
+  void run(LineageDatasetContext context) throws Exception;
 }

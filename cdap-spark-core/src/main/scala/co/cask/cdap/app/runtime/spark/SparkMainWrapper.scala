@@ -214,7 +214,8 @@ object SparkMainWrapper {
           executor.awaitTermination(5L, TimeUnit.SECONDS)
           // Send the complete call
           client.completed(workflowToken)
-          LOG.info("Spark program execution completed: {}", programRunId)
+          LOG.info("Spark program {} completed. Program RunID: [{}]",
+            programRunId.getProgram, programRunId.getRun : Any)
         }
       }
     })

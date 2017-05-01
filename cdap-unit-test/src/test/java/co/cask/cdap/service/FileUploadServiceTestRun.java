@@ -24,6 +24,8 @@ import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.proto.Notification;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
@@ -41,6 +43,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -65,6 +68,8 @@ public class FileUploadServiceTestRun extends TestFrameworkTestBase {
                           upload(serviceURI.resolve("upload/" + FileUploadApp.PFS_NAME + "/1").toURL(), content,
                                  "123", 30));
 
+      long beforeUploadTime = System.currentTimeMillis();
+
       // Upload with right MD5, should get 200
       Assert.assertEquals(HttpURLConnection.HTTP_OK,
                           upload(serviceURI.resolve("upload/" + FileUploadApp.PFS_NAME + "/1").toURL(), content,
@@ -75,6 +80,15 @@ public class FileUploadServiceTestRun extends TestFrameworkTestBase {
       PartitionDetail partition = pfs.getPartition(PartitionKey.builder().addLongField("time", 1).build());
 
       Assert.assertNotNull(partition);
+
+      // Verify a notification should have been published for the new partition
+      List<Notification> notifications = getDataNotifications(beforeUploadTime);
+
+      // Should have one message
+      Assert.assertEquals(1, notifications.size());
+      verifyDataNotification(notifications.get(0),
+                             NamespaceId.DEFAULT.dataset(FileUploadApp.PFS_NAME),
+                             Collections.singletonList(PartitionKey.builder().addLongField("time", 1L).build()));
 
       // There should be one file under the partition directory
       List<Location> locations = partition.getLocation().list();

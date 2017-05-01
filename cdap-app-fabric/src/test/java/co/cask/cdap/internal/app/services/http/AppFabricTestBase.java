@@ -46,6 +46,7 @@ import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.DatasetMeta;
@@ -72,6 +73,7 @@ import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -162,6 +164,7 @@ public abstract class AppFabricTestBase {
   private static int port;
   private static Injector injector;
 
+  private static MessagingService messagingService;
   private static TransactionManager txManager;
   private static AppFabricServer appFabricServer;
   private static MetricsQueryService metricsService;
@@ -196,6 +199,10 @@ public abstract class AppFabricTestBase {
         }
       }));
 
+    messagingService = injector.getInstance(MessagingService.class);
+    if (messagingService instanceof Service) {
+      ((Service) messagingService).startAndWait();
+    }
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
@@ -240,6 +247,9 @@ public abstract class AppFabricTestBase {
     txManager.stopAndWait();
     serviceStore.stopAndWait();
     metadataService.stopAndWait();
+    if (messagingService instanceof Service) {
+      ((Service) messagingService).stopAndWait();
+    }
   }
 
   protected static CConfiguration createBasicCConf() throws IOException {

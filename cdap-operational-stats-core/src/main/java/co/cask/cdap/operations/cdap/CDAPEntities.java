@@ -118,7 +118,7 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
       for (ProgramType programType : programTypes) {
         programs += programLifecycleService.list(meta.getNamespaceId(), programType).size();
       }
-      artifacts += artifactRepository.getArtifacts(meta.getNamespaceId(), true).size();
+      artifacts += artifactRepository.getArtifactSummaries(meta.getNamespaceId(), true).size();
       datasets += dsFramework.getInstances(meta.getNamespaceId()).size();
       List<StreamSpecification> streamSpecs = streamAdmin.listStreams(meta.getNamespaceId());
       streams += streamSpecs.size();

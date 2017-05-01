@@ -55,8 +55,8 @@ public class GetProgramRuntimeArgsCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get %s runtimeargs <%s>", elementType.getShortName(),
-                         elementType.getArgumentName());
+    return String.format("get %s runtimeargs <%s> [version <%s>]", elementType.getShortName(),
+                         elementType.getArgumentName(), ArgumentName.APP_VERSION);
   }
 
   @Override

@@ -443,6 +443,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     // Setup configs from the default spark conf
     setSparkDefaultConfigs(configs);
 
+    // Setup app.id and executor.id for Metric System
+    configs.put("spark.app.id", context.getApplicationSpecification().getName());
+    configs.put("spark.executor.id", context.getApplicationSpecification().getName());
+
     // Setups the resources requirements for driver and executor. The user can override it with the SparkConf.
     configs.put("spark.driver.memory", context.getDriverResources().getMemoryMB() + "m");
     configs.put("spark.driver.cores", String.valueOf(context.getDriverResources().getVirtualCores()));
