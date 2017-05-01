@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.collect.ImmutableList;
 
@@ -24,6 +25,8 @@ import com.google.common.collect.ImmutableList;
  * Common utility methods for scheduling.
  */
 public class Schedulers {
+  public static final String STORE_TYPE_NAME = ProgramScheduleStoreDataset.class.getName();
+  public static final DatasetId STORE_DATASET_ID = NamespaceId.SYSTEM.dataset("schedule.store");
 
   public static final String triggerKeyForPartition(DatasetId datasetId) {
     return "partition:" + datasetId.getNamespace() + '.' + datasetId.getDataset();
