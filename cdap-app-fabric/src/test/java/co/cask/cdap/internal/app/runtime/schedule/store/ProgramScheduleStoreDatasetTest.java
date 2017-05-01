@@ -14,14 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
+package co.cask.cdap.internal.app.runtime.schedule.store;
 
-/**
- * The mechanism by which a ProgramSchedule is scheduled.
- */
-public abstract class Trigger {
+import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import org.junit.Test;
 
-  // used to deserialize the actual trigger subclass, in TriggeJsonDeserializer
-  private final String className = getClass().getName();
+import static org.junit.Assert.*;
+
+public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
+
+  @Test
+  public void findSchedules() throws Exception {
+    // TODO
+  }
 
 }
