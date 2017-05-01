@@ -279,12 +279,13 @@ class HydratorPlusPlusTopPanelCtrl {
 
   fetchMacros() {
     this.macrosMap = [];
-    let configStages = this.myHelpers.objectQuery(this.HydratorPlusPlusConfigStore.getDisplayConfig(), 'config', 'stages');
+    let nodes = this.HydratorPlusPlusConfigStore.getNodes();
 
-    for (let i = 0; i < configStages.length; i++) {
-      let properties = this.myHelpers.objectQuery(configStages[i], 'plugin', 'properties');
+    for (let i = 0; i < nodes.length; i++) {
+      let properties = this.myHelpers.objectQuery(nodes[i], 'plugin', 'properties');
+      let backendProperties = this.myHelpers.objectQuery(nodes[i], '_backendProperties');
       for (let prop in properties) {
-        if (properties.hasOwnProperty(prop)) {
+        if (properties.hasOwnProperty(prop) && backendProperties[prop].macroSupported) {
           let propValue = properties[prop];
           if (propValue.substring(0, 2) === '${' && propValue[propValue.length - 1] === '}') {
             this.macrosMap[propValue.substring(2, propValue.length - 1)] = '';
