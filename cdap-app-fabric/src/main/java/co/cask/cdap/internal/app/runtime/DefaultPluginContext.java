@@ -25,6 +25,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -34,6 +36,7 @@ import javax.annotation.Nullable;
  * An implementation of {@link PluginContext} that uses {@link PluginInstantiator}.
  */
 public class DefaultPluginContext implements PluginContext {
+  private static final Logger LOG = LoggerFactory.getLogger(PluginInstantiator.class);
 
   @Nullable
   private final PluginInstantiator pluginInstantiator;
@@ -105,7 +108,23 @@ public class DefaultPluginContext implements PluginContext {
   @Nullable
   @Override
   public <T> T newPluginInstance(String pluginType, String pluginName, PluginProperties properties) {
-      return pluginInstantiator.newInstance(pluginType, pluginName, properties);
+    // temporary hack - we need a way to load plugin without parents CDAP-9080
+    for (Plugin plugin : plugins.values()) {
+      LOG.info("Trying to instantiate plugin type {} name {} with artifact of plugin",
+               pluginType, pluginName, plugin.getArtifactId());
+
+      T newPlugin = pluginInstantiator.newInstance(programId.getNamespace(), plugin.getArtifactId(),
+                                                   pluginType, pluginName, properties);
+
+      if (newPlugin != null) {
+        LOG.info("instantiated plugin type {} name {} with artifact of plugin {}",
+                 pluginType, pluginName, plugin.getArtifactId());
+        return newPlugin;
+      }
+    }
+    // we return null if we cant load the plugin.
+    return null;
+
 //    } catch (ClassNotFoundException e) {
 //      // Shouldn't happen, unless there is bug in file localization
 //      throw new IllegalArgumentException("Plugin class not found", e);

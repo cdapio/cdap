@@ -26,17 +26,23 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginPropertyField;
+import co.cask.cdap.api.plugin.PluginSelector;
+import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.lang.FieldVisitor;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Defaults;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -346,7 +352,32 @@ public class PluginInstantiator implements Closeable {
     }
   }
 
-  public <T> T newInstance(String pluginType, String pluginName, PluginProperties properties) {
+  public <T> T newInstance(String namespaceId, ArtifactId artifactId,
+                           String pluginType, String pluginName, PluginProperties properties) {
+    try {
+      ArtifactDetail artifactDetail = artifactRepository.getArtifact(
+        Id.Artifact.from(Id.Namespace.from(namespaceId), artifactId));
+      Set<ArtifactRange> artifactRanges = artifactDetail.getMeta().getUsableBy();
+
+      for (ArtifactRange artifactRange : artifactRanges) {
+        LOG.info("Trying to load plugin with type {} name {} with Artifact Range {}",
+                 pluginType, pluginName, artifactRange);
+        try {
+          Plugin plugin = FindPluginHelper.findPlugin(artifactRepository, this, new NamespaceId(namespaceId),
+                                                      artifactRange, pluginType, pluginName,
+                                                      properties, new PluginSelector());
+          LOG.info("loaded plugin with type {} name {} with Artifact Range {}",
+                   pluginType, pluginName, artifactRange);
+          return newInstance(plugin);
+        } catch (ArtifactNotFoundException | PluginNotExistsException e) {
+          continue;
+        }
+      }
+    } catch (Exception e) {
+      LOG.debug("Exception while trying to create new instance of plugin, " +
+                  "will try with new parent and artifact range", e);
+    }
+
     return null;
   }
 

@@ -21,9 +21,12 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.HttpURLConnection;
 import javax.ws.rs.GET;
@@ -34,7 +37,7 @@ import javax.ws.rs.PathParam;
  * A {@link Service} for querying a customer's purchase history from a Dataset.
  */
 public class PurchaseHistoryService extends AbstractService {
-
+  private static final Logger LOG = LoggerFactory.getLogger(PurchaseHistoryService.class);
   public static final String SERVICE_NAME = "PurchaseHistoryService";
 
   @Override
@@ -52,6 +55,18 @@ public class PurchaseHistoryService extends AbstractService {
 
     @UseDataSet("history")
     private PurchaseHistoryStore store;
+
+    @Override
+    public void initialize(HttpServiceContext context) throws Exception {
+      try {
+        // Load plugin in service
+        Class<?> classz = context.loadPluginClass("JDBCPlugin");
+        // Following line is logged as - XXX Found class com.mysql.jdbc.Driver
+        LOG.info("XXX Found class {}", classz.getName());
+      } catch (Exception e) {
+        LOG.error("Failed to load the JDBCPlugin", e);
+      }
+    }
 
     /**
      * Retrieves a specified customer's purchase history in a JSON format.

@@ -23,14 +23,17 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.schedule.Schedules;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This implements a simple purchase history application via a scheduled MapReduce Workflow --
  * see package-info for more details.
  */
 public class PurchaseApp extends AbstractApplication {
-
+  private static final Logger LOG = LoggerFactory.getLogger(PurchaseApp.class);
   public static final String APP_NAME = "PurchaseHistory";
 
   @Override
@@ -93,6 +96,14 @@ public class PurchaseApp extends AbstractApplication {
       // no auto-magic way deserialize an object.) In this case that will not happen
       // because PurchaseHistory and Purchase are actual classes.
       throw new RuntimeException(e);
+    }
+    // Configure Service to use the plugin
+    Class<?> classz = usePluginClass("jdbc", "mysql", "JDBCPlugin", PluginProperties.builder().build());
+    if (classz == null) {
+      throw new IllegalStateException("Failed to find plugin type: 'jdbc', name: 'mysql'");
+    } else {
+      // Following line is logged as  - Class was found com.mysql.jdbc.Driver
+      LOG.info("Class was found {}", classz.getName());
     }
   }
 }
