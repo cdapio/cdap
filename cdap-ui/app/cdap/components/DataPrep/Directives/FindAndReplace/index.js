@@ -20,6 +20,8 @@ import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import T from 'i18n-react';
+import {setPopoverOffset} from 'components/DataPrep/helper';
+import debounce from 'lodash/debounce';
 
 const PREFIX = `features.DataPrep.Directives.FindAndReplace`;
 
@@ -41,6 +43,21 @@ export default class FindAndReplaceDirective extends Component {
     this.applyDirective = this.applyDirective.bind(this);
     this.handleExactMatchChange = this.handleExactMatchChange.bind(this);
     this.handleIgnoreCaseChange = this.handleIgnoreCaseChange.bind(this);
+  }
+
+  componentDidMount() {
+    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('find-and-replace-directive'));
+    this.offsetCalcDebounce = debounce(this.calculateOffset, 1000);
+  }
+
+  componentDidUpdate() {
+    if (this.props.isOpen && this.calculateOffset) {
+      this.calculateOffset();
+    }
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.offsetCalcDebounce);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -215,6 +232,7 @@ export default class FindAndReplaceDirective extends Component {
   render() {
     return (
       <div
+        id="find-and-replace-directive"
         className={classnames('fill-null-or-empty-directive clearfix action-item', {
           'active': this.state.isOpen
         })}

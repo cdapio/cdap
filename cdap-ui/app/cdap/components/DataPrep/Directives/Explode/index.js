@@ -22,6 +22,9 @@ import UsingDelimiterModal from 'components/DataPrep/Directives/ExtractFields/Us
 import DataPrepStore from 'components/DataPrep/store';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+import {setPopoverOffset} from 'components/DataPrep/helper';
+import debounce from 'lodash/debounce';
+
 require('./Explode.scss');
 export default class Explode extends Component {
   constructor(props) {
@@ -33,6 +36,20 @@ export default class Explode extends Component {
     this.preventPropagation = this.preventPropagation.bind(this);
     this.explodeByFlattening = this.explodeByFlattening.bind(this);
     this.handleUsingFilters = this.handleUsingFilters.bind(this);
+  }
+  componentDidMount() {
+    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('explode-fields-directive'));
+    this.offsetCalcDebounce = debounce(this.calculateOffset, 1000);
+  }
+
+  componentDidUpdate() {
+    if (this.props.isOpen && this.calculateOffset) {
+      this.calculateOffset();
+    }
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.offsetCalcDebounce);
   }
 
   execute(addDirective) {
