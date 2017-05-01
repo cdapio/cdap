@@ -40,6 +40,7 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.test.TestRunner;
+import co.cask.cdap.data.ProgramContext;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
@@ -61,6 +62,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.auth.context.AuthenticationTestContext;
@@ -94,6 +96,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -608,7 +611,7 @@ public abstract class AbstractDatasetFrameworkTest {
     LineageWriterDatasetFramework lineageFramework =
       new LineageWriterDatasetFramework(framework, new NoOpLineageWriter(), new NoOpUsageRegistry(),
                                         new AuthenticationTestContext(), new NoOpAuthorizer());
-    lineageFramework.initContext(runId);
+    lineageFramework.setContext(new TestProgramContext(runId));
     lineageFramework.setAuditPublisher(inMemoryAuditPublisher);
     lineageFramework.getDataset(MY_TABLE, null, getClass().getClassLoader());
     expectedMessages.add(new AuditMessage(0, MY_TABLE, "", AuditType.ACCESS,
@@ -631,5 +634,28 @@ public abstract class AbstractDatasetFrameworkTest {
 
     // cleanup
     framework.deleteModule(IN_MEMORY);
+  }
+
+  /**
+   * A {@link ProgramContext} for testing lineage writing.
+   */
+  private static final class TestProgramContext implements ProgramContext {
+
+    private final ProgramRunId programRunId;
+
+    private TestProgramContext(ProgramRunId programRunId) {
+      this.programRunId = programRunId;
+    }
+
+    @Override
+    public ProgramRunId getProgramRunId() {
+      return programRunId;
+    }
+
+    @Nullable
+    @Override
+    public NamespacedEntityId getComponentId() {
+      return null;
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,10 +53,11 @@ import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.data.ProgramContext;
+import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
@@ -68,6 +69,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.queue.RoundRobinQueueReader;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
+import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -125,7 +127,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.Nullable;
 
 /**
- *
+ * The {@link ProgramRunner} for execution a flowlet instance.
  */
 public final class FlowletProgramRunner implements ProgramRunner {
 
@@ -215,14 +217,15 @@ public final class FlowletProgramRunner implements ProgramRunner {
       ProgramId programId = program.getId();
       FlowletId flowletId = programId.flowlet(flowletName);
       ProgramRunId run = programId.run(runId);
+      ProgramContext programContext = new BasicProgramContext(run, flowletId);
       if (dsFramework instanceof ProgramContextAware) {
-        ((ProgramContextAware) dsFramework).initContext(run, flowletId);
+        ((ProgramContextAware) dsFramework).setContext(programContext);
       }
 
       Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>) clz;
 
       // Creates flowlet context
-      flowletContext = new BasicFlowletContext(program, options, flowletName, instanceId, instanceCount,
+      flowletContext = new BasicFlowletContext(program, options, flowletId, instanceId, instanceCount,
                                                flowletDef.getDatasets(), flowletDef.getFlowletSpec(),
                                                metricsCollectionService, discoveryServiceClient, txClient,
                                                dsFramework, secureStore, secureStoreManager, messageService, cConf);
@@ -231,7 +234,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       DataFabricFacade dataFabricFacade =
         dataFabricFacadeFactory.create(program, flowletContext.getDatasetCache());
       if (dataFabricFacade instanceof ProgramContextAware) {
-        ((ProgramContextAware) dataFabricFacade).initContext(run, flowletId);
+        ((ProgramContextAware) dataFabricFacade).setContext(programContext);
       }
 
       // Creates QueueSpecification

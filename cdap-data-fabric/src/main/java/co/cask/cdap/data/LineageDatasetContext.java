@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package co.cask.cdap.data;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
@@ -24,10 +24,9 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import java.util.Map;
 
 /**
- * Extends {@link DatasetContext} with extra methods that take {@link AccessType}.
- * TODO (CDAP-5363): This interface shouldn't be Spark specific.
+ * Extends {@link DatasetContext} with extra methods that take {@link AccessType} for lineage recording.
  */
-public interface SparkDatasetContext extends DatasetContext {
+public interface LineageDatasetContext extends DatasetContext {
 
   /**
    * Get an instance of the specified dataset, with the specified access type.
@@ -51,5 +50,4 @@ public interface SparkDatasetContext extends DatasetContext {
    */
   <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments,
                                    AccessType accessType) throws DatasetInstantiationException;
-
 }
