@@ -14,14 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
+package co.cask.cdap.internal.app.runtime.schedule.store;
+
+import co.cask.cdap.proto.id.DatasetId;
 
 /**
- * The mechanism by which a ProgramSchedule is scheduled.
+ * Common static methods to handle trigger keys.
  */
-public abstract class Trigger {
+public class TriggerKeys {
 
-  // used to deserialize the actual trigger subclass, in TriggeJsonDeserializer
-  private final String className = getClass().getName();
-
+  public static final String triggerKeyForPartition(DatasetId datasetId) {
+    return "partition:" + datasetId.getNamespace() + '.' + datasetId.getDataset();
+  }
 }
