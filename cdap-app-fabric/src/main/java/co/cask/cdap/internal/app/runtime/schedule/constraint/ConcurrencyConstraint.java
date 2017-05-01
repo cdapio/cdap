@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.constraint;
 
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
 
 /**
  * A constraint which dictates an upper bound on the number of concurrent schedule runs.
@@ -27,11 +27,5 @@ public class ConcurrencyConstraint extends Constraint {
 
   public ConcurrencyConstraint(int maxConcurrency) {
     this.maxConcurrency = maxConcurrency;
-  }
-
-  @Override
-  public Result check(ProgramSchedule schedule, ConstraintContext context) {
-    // TODO: Implement constraints: CDAP-11338
-    return Result.SATISFIED;
   }
 }

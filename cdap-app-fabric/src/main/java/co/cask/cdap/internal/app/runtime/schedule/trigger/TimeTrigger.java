@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
+import co.cask.cdap.internal.schedule.trigger.Trigger;
 import com.google.common.base.Objects;
 
 /**

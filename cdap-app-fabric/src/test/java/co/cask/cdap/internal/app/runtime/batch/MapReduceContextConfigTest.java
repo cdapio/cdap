@@ -31,6 +31,7 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
@@ -62,6 +63,7 @@ public class MapReduceContextConfigTest {
       Collections.<String, WorkflowSpecification>emptyMap(),
       Collections.<String, ServiceSpecification>emptyMap(),
       Collections.<String, ScheduleSpecification>emptyMap(),
+      Collections.<String, ScheduleCreationSpec>emptyMap(),
       Collections.<String, WorkerSpecification>emptyMap(),
       Collections.<String, Plugin>emptyMap()
     );
