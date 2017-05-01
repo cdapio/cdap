@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
+import com.google.common.base.Objects;
+
 /**
  * A Trigger that schedules a ProgramSchedule, based upon a particular cron expression.
  */
@@ -28,5 +30,29 @@ public class TimeTrigger extends Trigger {
 
   public String getCronExpression() {
     return cronExpression;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    TimeTrigger that = (TimeTrigger) o;
+    return Objects.equal(cronExpression, that.cronExpression);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(cronExpression);
+  }
+
+  @Override
+  public String toString() {
+    return "TimeTrigger{" +
+      "cronExpression='" + cronExpression + '\'' +
+      '}';
   }
 }
