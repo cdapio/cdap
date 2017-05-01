@@ -52,13 +52,13 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Dataset that stores and indexes proram schedules, so that they can be looked by their trigger keys.
+ * Dataset that stores and indexes program schedules, so that they can be looked by their trigger keys.
  *
  * This uses an IndexedTable to allow reverse lookup. The table stores:
  * <ul>
  *   <li>Schedules: the row key is
  *     <code>&lt;namespace>.&lt;app-name>.&lt;app-version>.&lt;schedule-name></app-id>)</code>,
- *     which is gobally unique (see {@link #rowKeyForSchedule(ScheduleId)}. The schedule itself is stored as JSON
+ *     which is globally unique (see {@link #rowKeyForSchedule(ScheduleId)}. The schedule itself is stored as JSON
  *     in the <code>sch</code> ({@link #SCHEDULE_COLUMN} column.</li>
  *   <li>Triggers: as every schedule can have multiple triggers, each trigger is stored and indexed in its row. The
  *     triggers of a schedule are enumerated, and each trigger is stored with a row key that is the same as the
@@ -111,7 +111,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * @param schedules the schedules to add
    * @throws AlreadyExistsException if one of the schedules already exists
    */
-  public void addSchedules(Iterable<ProgramSchedule> schedules) throws AlreadyExistsException {
+  public void addSchedules(Iterable<? extends ProgramSchedule> schedules) throws AlreadyExistsException {
     for (ProgramSchedule schedule : schedules) {
       String scheduleKey = rowKeyForSchedule(schedule.getProgramId().getParent(), schedule.getName());
       if (!store.get(new Get(scheduleKey)).isEmpty()) {
@@ -140,7 +140,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    *
    * @param scheduleIds the schedules to delete
    */
-  public void deleteSchedules(Collection<ScheduleId> scheduleIds) {
+  public void deleteSchedules(Iterable<? extends ScheduleId> scheduleIds) {
     for (ScheduleId scheduleId : scheduleIds) {
       String scheduleKey = rowKeyForSchedule(scheduleId);
       store.delete(new Delete(scheduleKey));
