@@ -62,8 +62,8 @@
     <guava.version>@guava.version@</guava.version>
     <slf4j.version>@slf4j.version@</slf4j.version>
     <junit.version>@junit.version@</junit.version>
-    <spark.version>@spark.version@</spark.version>
-    <scala.version>@scala.version@</scala.version>
+    <spark.version>@spark1.version@</spark.version>
+    <scala.version>@scala2.10.version@</scala.version>
     <cask.common.version>@cask.common.version@</cask.common.version>
   </properties>
 
