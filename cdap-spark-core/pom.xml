@@ -175,6 +175,18 @@
 
   <profiles>
     <profile>
+      <id>cdap-dev</id>
+      <dependencies>
+        <!-- here for IDEs, so that cdap-api-spark-base is recognized as a source for both cdap-api-spark modules -->
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-api-spark-base</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+
+    <profile>
       <id>dist</id>
       <build>
         <plugins>
