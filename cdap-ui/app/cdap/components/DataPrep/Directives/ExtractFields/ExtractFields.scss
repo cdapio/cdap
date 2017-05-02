@@ -24,10 +24,7 @@ $menu-hover-bg: #dddddd;
       }
       .extract-field-options {
         .option {
-          // FIXME: single second level popover menu has a border that makes it look
-          // slightly bigger than the top level menu.
-          // Once we add more elements we should rever this back to 10px;
-          padding: 9px;
+          padding: 10px;
           cursor: pointer;
           line-height: 1.5;
           &:hover {

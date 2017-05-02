@@ -14,19 +14,76 @@
  * the License.
 */
 
+@tbody-font-color: #373a3c;
+@tag-success-color: #5cb85c;
+
 body.state-hydrator-create.state-hydrator {
   .modal.wrangler-modal {
     .modal-dialog {
       margin-top: 0;
       margin-bottom: 0;
-      .modal-content {
-        dataprep {
-          .dataprep-container {
-            .dataprep-table {
-              .table thead th {
-                border-right: 1px solid white;
-                padding-right: 35px;
+
+      dataprep .dataprep-container {
+        .dataprep-loading {
+          z-index: 1063;
+        }
+        .top-panel {
+          .left-title {
+            width: auto;
+            margin-top: 5px;
+            .workspace-tab {
+              padding: 0 10px;
+              cursor: pointer;
+              .fa.fa-pencil {
+                margin-left: 5px;
               }
+
+            }
+            .tag {
+              display: inline-block;
+              padding: 3px;
+              font-weight: bold;
+              line-height: 1;
+              color: #ffffff;
+              text-align: center;
+              white-space: nowrap;
+              border-radius: 4px;
+              &.tag-success {
+                background-color: @tag-success-color;
+              }
+            }
+          }
+          .action-buttons {
+            min-width: auto;
+          }
+        }
+        .dataprep-main {
+          .dataprep-cli {
+            .dataprep-auto-complete-container .result-row .directive-usage pre {
+              background: transparent;
+              border: 0;
+            }
+          }
+        }
+        .dataprep-table .table {
+          thead th {
+            font-size: 14px;
+            padding: 0.75rem;
+
+            input {
+              padding: 0;
+              width: auto;
+              height: 20px;
+            }
+            &:last-child {
+              border-right: 0;
+            }
+          }
+          tbody {
+            color: @tbody-font-color;
+
+            tr {
+              background-color: white;
             }
           }
         }
@@ -75,71 +132,4 @@ body.state-hydrator-create.state-hydrator {
       min-width: auto;
     }
   }
-  dataprep .dataprep-container {
-    .dataprep-loading {
-      z-index: 1063;
-    }
-    .top-panel {
-      .left-title {
-        width: auto;
-        margin-top: 5px;
-        .workspace-tab {
-          padding: 0 10px;
-          cursor: pointer;
-          .fa.fa-pencil {
-            margin-left: 5px;
-          }
-
-        }
-        .tag {
-          display: inline-block;
-          padding: 3px;
-          font-weight: bold;
-          line-height: 1;
-          color: #ffffff;
-          text-align: center;
-          white-space: nowrap;
-          border-radius: 4px;
-          &.tag-success {
-            background-color: #5cb85c;
-          }
-        }
-      }
-      .action-buttons {
-        min-width: auto;
-      }
-    }
-    .dataprep-main {
-      .dataprep-cli {
-        .dataprep-auto-complete-container .result-row .directive-usage pre {
-          background: transparent;
-          border: 0;
-        }
-      }
-    }
-    .dataprep-table .table {
-      thead th {
-        border-right: 1px solid white;
-
-        input {
-          padding: 0;
-          width: auto;
-          height: 20px;
-        }
-        &:last-child {
-          border-right: 0;
-        }
-        &:hover {
-          background: #bcbcbc;
-        }
-      }
-      tbody tr {
-        background-color: white;
-        &:nth-of-type(odd) {
-          background-color: rgba(0, 0, 0, 0.05);
-        }
-      }
-    }
-  }
-
 }

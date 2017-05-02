@@ -56,6 +56,10 @@ $header-bg-color: #eeeeee;
           .header-text {
             width: 100%;
             cursor: initial;
+
+            span {
+              margin-left: 3px;
+            }
           }
 
           .directives-dropdown-button,
@@ -81,6 +85,9 @@ $header-bg-color: #eeeeee;
           .warning-container-wrapper {
             width: 100%;
             position: relative;
+            input {
+              padding-left: 3px;
+            }
             .warning-container {
               position: absolute;
               top: 32px;

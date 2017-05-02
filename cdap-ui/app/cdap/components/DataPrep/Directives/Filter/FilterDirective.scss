@@ -32,6 +32,12 @@
 
         div { width: calc(100% - 15px); }
       }
+
+      textarea.form-control {
+        min-width: 100%;
+        max-width: 100%;
+        min-height: 40px;
+      }
     }
 
     .row-filter {

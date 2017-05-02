@@ -106,9 +106,12 @@ export default class UsingDelimiterModal extends Component {
     const getApplyBtnDisabledState = () => isCustomDelimiter() && isEmpty(this.state.customDelimiter);
     return (
       <Modal
-      isOpen={true}
-      toggle={this.props.onClose}
-      className="dataprep-parse-modal using-delimiter-modal"
+        isOpen={true}
+        toggle={this.props.onClose}
+        size="md"
+        backdrop="static"
+        zIndex="1061"
+        className="dataprep-parse-modal using-delimiter-modal"
       >
         <ModalHeader>
 
