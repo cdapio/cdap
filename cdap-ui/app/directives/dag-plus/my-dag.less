@@ -116,6 +116,9 @@
       top: -14px;
       right: 14px;
       color: @node-color;
+      // this is needed so the close button has a greater z-index than the node itself
+      // runtime arguments, namespace drop-down, etc have a z-index of 1000, keeping this just less than those
+      z-index: 999;
     }
 
     .error-node-notification {

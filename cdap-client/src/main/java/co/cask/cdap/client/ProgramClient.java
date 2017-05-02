@@ -60,6 +60,8 @@ import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -79,7 +81,7 @@ import javax.inject.Inject;
  */
 @Beta
 public class ProgramClient {
-
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramClient.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
     .registerTypeAdapter(CustomActionSpecification.class, new CustomActionSpecificationCodec())
@@ -353,7 +355,19 @@ public class ProgramClient {
           ProgramId program = appId.program(programRecord.getType(), programRecord.getName());
           String status = this.getStatus(program);
           if (!status.equals("STOPPED")) {
-            this.stop(program);
+            try {
+              this.stop(program);
+            } catch (IOException ioe) {
+              // ProgramClient#stop calls RestClient, which throws an IOException if the HTTP response code is 400,
+              // which can be due to the program already being stopped when calling stop on it.
+              if (!"STOPPED".equals(getStatus(program))) {
+                throw ioe;
+              }
+              // Most likely, there was a race condition that the program stopped between the time we checked its
+              // status and calling the stop method.
+              LOG.warn("Program {} is already stopped, proceeding even though the following exception is raised.",
+                       program, ioe);
+            }
             this.waitForStatus(program, ProgramStatus.STOPPED, 60, TimeUnit.SECONDS);
           }
         } catch (ProgramNotFoundException e) {

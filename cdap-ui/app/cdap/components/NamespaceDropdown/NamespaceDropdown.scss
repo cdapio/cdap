@@ -32,6 +32,7 @@ $star-color: #373a3c;
   user-select: none;
   display: inline-block;
   line-height: 50px;
+  cursor: initial;
 
   .dropdown {
     &.open {
@@ -116,11 +117,13 @@ $star-color: #373a3c;
       .preferences-saved-message {
         font-size: 12px;
         background-color: $success-color;
+        display: flex;
+        align-items: center;
+        color: white;
 
         .icon-close {
-          float: right;
+          margin-left: auto;
           cursor: pointer;
-          line-height: 28px;
         }
       }
 
@@ -185,6 +188,10 @@ $star-color: #373a3c;
             color: $dark-font;
             text-align: center;
             line-height: 8px;
+          }
+
+          tbody tr {
+            height: 15px;
           }
         }
       }

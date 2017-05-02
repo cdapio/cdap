@@ -19,7 +19,7 @@ import T from 'i18n-react';
 
 require('./WarningContainer.scss');
 
-export default function WarningContainer({title, message}) {
+export default function WarningContainer({title, message, children}) {
   return (
     <div className="warning-container">
       <div className="warning-title-container">
@@ -36,6 +36,7 @@ export default function WarningContainer({title, message}) {
       <div className="warning-message-container">
         {message}
       </div>
+      {children}
     </div>
   );
 }
@@ -47,5 +48,6 @@ WarningContainer.defaultProps = {
 
 WarningContainer.propTypes = {
   title: PropTypes.string,
-  message: PropTypes.string
+  message: PropTypes.string,
+  children: PropTypes.node
 };

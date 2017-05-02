@@ -19,17 +19,16 @@ import T from 'i18n-react';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-const PREFIX = 'features.DataPrep.Directives.Keep';
 
-export default class KeepColumnDirective extends Component {
+export default class SwapColumnsDirective extends Component {
   constructor(props) {
     super(props);
     this.applyDirective = this.applyDirective.bind(this);
   }
 
   applyDirective() {
-    let column = this.props.column.toString();
-    let directive = `keep ${column}`;
+    let columns = this.props.column;
+    let directive = `swap ${columns[0]} ${columns[1]}`;
 
     execute([directive])
       .subscribe(() => {
@@ -47,28 +46,20 @@ export default class KeepColumnDirective extends Component {
   }
 
   render() {
-    let title = T.translate(`${PREFIX}.title.singular`);
-    if (Array.isArray(this.props.column) && this.props.column.length >= 2) {
-      title = T.translate(`${PREFIX}.title.plural`);
-    }
-
     return (
       <div
-        className="keep-column-directive clearfix action-item"
+        className="swap-column-directive clearfix action-item"
         onClick={this.applyDirective}
       >
         <span>
-          {title}
+          {T.translate('features.DataPrep.Directives.Swap.title')}
         </span>
       </div>
     );
   }
 }
 
-KeepColumnDirective.propTypes = {
-  column: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.array
-  ]),
+SwapColumnsDirective.propTypes = {
+  column: PropTypes.array,
   onComplete: PropTypes.func
 };

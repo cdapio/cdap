@@ -15,10 +15,21 @@
  */
 
 $tab-header-height: 37px;
+$element-selected-color: #dbdbdb;
+$border-color: #cccccc;
+$dark-border-color: #999999;
+$option-hover-bg-color: #eeeeee;
+$tab-bg-color: #aaaaaa;
+$invalid-column-color: #c0392b;
+$dark-icon-color: #373a3c;
+$types-table-border-color: #eceeef;
+$quality-bar-filled-color: #2ecc71;
+$quality-bar-empty-color: #e74c3c;
+$quality-bar-null-color: #95a5a6;
 
 .dataprep-container {
   .dataprep-side-panel {
-    border-left: 1px solid #cccccc;
+    border-left: 1px solid $border-color;
     height: 100%;
     padding: 0;
 
@@ -32,7 +43,7 @@ $tab-header-height: 37px;
         padding: 0 10px;
         line-height: $tab-header-height;
         cursor: pointer;
-        background-color: #aaaaaa;
+        background-color: $tab-bg-color;
         color: white;
 
         &.active {
@@ -41,7 +52,7 @@ $tab-header-height: 37px;
         }
 
         &:not(:last-child) {
-          border-right: 1px solid #cccccc;
+          border-right: 1px solid $border-color;
         }
       }
     }
@@ -60,7 +71,7 @@ $tab-header-height: 37px;
     .directives-tab {
       .directives-tab-header,
       .directives-row {
-        border-bottom: 1px solid #cccccc;
+        border-bottom: 1px solid $border-color;
         padding: 10px;
 
         > span {
@@ -91,7 +102,7 @@ $tab-header-height: 37px;
 
         .btn-link {
           padding: 0;
-          color: #373a3c;
+          color: $dark-icon-color;
 
           &:focus,
           &:active {
@@ -102,7 +113,7 @@ $tab-header-height: 37px;
 
       .directives-row {
         &.inactive {
-          background-color: #cccccc;
+          background-color: $border-color;
           color: white;
         }
       }
@@ -113,26 +124,42 @@ $tab-header-height: 37px;
     .columns-tab {
       height: 100%;
 
-      .search-box {
+      .columns-tab-heading {
         height: 40px;
-        padding: 5px;
-        border-bottom: 1px solid #cccccc;
-        position: relative;
+        padding: 5px 0 5px 10px;
+        border-bottom: 1px solid $border-color;
 
-        .form-control {
-          border-radius: 13px;
-          padding-right: 28px;
-          height: 26px;
+        #toggle-all-dropdown {
+          cursor: pointer;
+          margin-right: 10px;
+
+          &.expanded {
+            background-color: $element-selected-color;
+          }
         }
 
-        .fa {
-          position: absolute;
-          right: 13px;
-          top: 11px;
-          color: #999999;
-          font-size: 14px;
-          &.fa-search { top: 10px; }
-          &.fa-times-circle { cursor: pointer; }
+        .search-box {
+          position: relative;
+
+          .form-control {
+            display: inline-block;
+            border-radius: 13px;
+            height: 26px;
+
+            /* 28px = 10px left padding + 13px width of caret + 10px right margin - 5px right padding */
+            width: calc(100% - 28px);
+          }
+
+          .fa {
+            position: absolute;
+            right: 13px;
+            top: 1px;
+            color: $dark-border-color;
+            font-size: 14px;
+            &.fa-times-circle {
+              cursor: pointer;
+            }
+          }
         }
       }
 
@@ -142,34 +169,38 @@ $tab-header-height: 37px;
       }
 
       .columns-tab-row {
-        border-bottom: 1px solid #cccccc;
+        border-bottom: 1px solid $border-color;
+
+        .row-header-checkbox {
+          cursor: pointer;
+          margin-right: 10px;
+        }
 
         .row-header {
           padding: 5px 10px;
-          cursor: pointer;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
 
-          &.expanded {
-            background-color: #dedede;
+          &.selected {
+            background-color: $element-selected-color;
             white-space: pre-wrap;
             word-break: break-all;
           }
 
           &.invalid {
-            background-color: #c0392b;
+            background-color: $invalid-column-color;
             color: white;
           }
         }
 
-        .expanded-row {
-          background-color: #dedede;
+        .selected-row {
+          background-color: $element-selected-color;
           padding: 10px;
-          border-bottom: 1px solid #999999;
+          border-bottom: 1px solid $dark-border-color;
 
           .quality-bar {
-            border: 1px solid #999999;
+            border: 1px solid $dark-border-color;
             border-radius: 4px;
             height: 15px;
             overflow: hidden;
@@ -180,15 +211,44 @@ $tab-header-height: 37px;
               display: inline-block;
 
               &.filled {
-                background-color: #2ecc71;
+                background-color: $quality-bar-filled-color;
                 font-size: 8px;
               }
-              &.empty { background-color: #e74c3c; }
-              &.null-cell { background-color: #95a5a6; }
+              &.empty { background-color: $quality-bar-empty-color; }
+              &.null-cell { background-color: $quality-bar-null-color; }
             }
+          }
 
+          .types-table-container {
+            table {
+              background-color: transparent;
+
+              th,
+              td {
+                border-top: 1px solid $types-table-border-color;
+              }
+
+              th {
+                border-bottom: 2px solid $types-table-border-color;
+              }
+            }
           }
         }
+      }
+    }
+  }
+}
+
+.dataprep-toggle-all-dropdown {
+  .popover-content {
+    padding: 0;
+
+    .toggle-all-option {
+      padding: 5px 10px;
+
+      &:hover {
+        cursor: pointer;
+        background-color: $option-hover-bg-color;
       }
     }
   }

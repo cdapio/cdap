@@ -16,83 +16,25 @@
 
 import React, {Component, PropTypes} from 'react';
 import classnames from 'classnames';
-const PREFIX = 'features.DataPrep.Directives.ExtractFields';
+const PREFIX = 'features.DataPrep.Directives.Explode';
 import T from 'i18n-react';
-import UsingPatternsModal from 'components/DataPrep/Directives/ExtractFields/UsingPatternsModal';
 import UsingDelimiterModal from 'components/DataPrep/Directives/ExtractFields/UsingDelimiterModal';
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
+import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-
-require('./ExtractFields.scss');
-export default class ExtractFields extends Component {
+require('./Explode.scss');
+export default class Explode extends Component {
   constructor(props) {
     super(props);
     this.state = {
       activeModal: null
     };
-    this.parseUsingPatterns = this.parseUsingPatterns.bind(this);
-    this.parseUsingDelimiters = this.parseUsingDelimiters.bind(this);
+    this.explodeUsingFilters = this.explodeUsingFilters.bind(this);
     this.preventPropagation = this.preventPropagation.bind(this);
-    this.handleUsingDelimiters = this.handleUsingDelimiters.bind(this);
+    this.explodeByFlattening = this.explodeByFlattening.bind(this);
+    this.handleUsingFilters = this.handleUsingFilters.bind(this);
   }
 
-  renderDetail() {
-    if (!this.props.isOpen) { return null; }
-
-    return (
-      <div
-        className="extract-fields second-level-popover"
-        onClick={this.preventPropagation}
-      >
-        <div className="extract-field-options">
-          <div
-            onClick={this.parseUsingPatterns}
-            className="option"
-          >
-            {T.translate(`${PREFIX}.patternSubmenuTitle`)}
-          </div>
-        </div>
-        <div className="extract-field-options">
-          <div
-            onClick={this.parseUsingDelimiters}
-            className="option"
-          >
-            {T.translate(`${PREFIX}.delimitersSubmenuTitle`)}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  parseUsingPatterns() {
-    this.setState({
-      activeModal: (
-        <UsingPatternsModal
-          isOpen={true}
-          column={this.props.column}
-          onComplete={this.props.onComplete}
-          onClose={() => this.setState({activeModal: null})}
-        />
-      )
-    });
-  }
-
-  parseUsingDelimiters() {
-    this.setState({
-      activeModal: (
-        <UsingDelimiterModal
-          onApply={this.handleUsingDelimiters}
-          onClose={() => this.setState({activeModal: null})}
-        />
-      )
-    });
-  }
-  handleUsingDelimiters(delimiter) {
-    let column = this.props.column;
-    let directive = `split-to-columns ${column} ${delimiter}`;
-    this.execute([directive]);
-  }
   execute(addDirective) {
     execute(addDirective)
       .subscribe(() => {
@@ -110,6 +52,28 @@ export default class ExtractFields extends Component {
       });
   }
 
+  handleUsingFilters(delimiter) {
+    let directive = `split-to-rows ${this.props.column} ${delimiter}`;
+    this.execute([directive]);
+  }
+
+  explodeUsingFilters() {
+    this.setState({
+      activeModal: (
+        <UsingDelimiterModal
+          isOpen={true}
+          onClose={() => this.setState({activeModal: null})}
+          onApply={this.handleUsingFilters}
+        />
+      )
+    });
+  }
+
+  explodeByFlattening() {
+    let directive = `flatten ${this.props.column.toString()}`;
+    this.execute([directive]);
+  }
+
   renderModal() {
     return this.state.activeModal;
   }
@@ -120,10 +84,40 @@ export default class ExtractFields extends Component {
     e.preventDefault();
   }
 
+  renderDetail() {
+    if (!this.props.isOpen) { return null; }
+    let disableFilterSubmenu = DataPrepStore.getState().dataprep.selectedHeaders.length > 1;
+    return (
+      <div
+        className="explode-fields second-level-popover"
+        onClick={this.preventPropagation}
+      >
+        <div className={classnames("explode-field-options", {
+          'disabled': disableFilterSubmenu
+        })}>
+          <div
+            onClick={this.explodeUsingFilters}
+            className="option"
+          >
+            {T.translate(`${PREFIX}.filtersSubmenuTitle`)}
+          </div>
+        </div>
+        <div className="explode-field-options">
+          <div
+            onClick={this.explodeByFlattening}
+            className="option"
+          >
+            {T.translate(`${PREFIX}.flatteningSubmenuTitle`)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   render() {
     return (
       <div
-        id="extract-fields-directive"
+        id="explode-fields-directive"
         className={classnames('clearfix action-item', {
           'active': this.props.isOpen
         })}
@@ -143,7 +137,7 @@ export default class ExtractFields extends Component {
   }
 }
 
-ExtractFields.propTypes = {
+Explode.propTypes = {
   isOpen: PropTypes.bool,
   column: PropTypes.string,
   onComplete: PropTypes.func

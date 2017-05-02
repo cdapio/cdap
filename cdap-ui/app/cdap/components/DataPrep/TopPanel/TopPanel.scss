@@ -89,6 +89,12 @@
       }
     }
 
+    .file-input {
+      input.form-control {
+        height: initial;
+      }
+    }
+
     .record-delimiter {
       margin-top: 10px;
       .label-control { margin-right: 10px; }
