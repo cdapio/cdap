@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,7 +44,6 @@ import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
-import com.google.inject.name.Names;
 
 /**
  * Provides guice bindings for {@link DatasetModule} that are by default available in the system.
@@ -60,8 +59,8 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        MapBinder<String, DatasetModule> mapBinder = MapBinder.newMapBinder(binder(), String.class, DatasetModule.class,
-                                                                            Names.named("defaultDatasetModules"));
+        MapBinder<String, DatasetModule> mapBinder = MapBinder.newMapBinder(
+          binder(), String.class, DatasetModule.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
         // NOTE: order is important due to dependencies between modules
         mapBinder.addBinding("orderedTable-memory").toInstance(new InMemoryTableModule());
         mapBinder.addBinding("metricsTable-memory").toInstance(new InMemoryMetricsTableModule());
@@ -75,8 +74,8 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        MapBinder<String, DatasetModule> mapBinder = MapBinder.newMapBinder(binder(), String.class, DatasetModule.class,
-                                                                            Names.named("defaultDatasetModules"));
+        MapBinder<String, DatasetModule> mapBinder = MapBinder.newMapBinder(
+          binder(), String.class, DatasetModule.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
         // NOTE: order is important due to dependencies between modules
         mapBinder.addBinding("orderedTable-leveldb").toInstance(new LevelDBTableModule());
         mapBinder.addBinding("metricsTable-leveldb").toInstance(new LevelDBMetricsTableModule());
@@ -115,8 +114,8 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        MapBinder<String, DatasetModule> mapBinder = MapBinder.newMapBinder(binder(), String.class, DatasetModule.class,
-                                                                            Names.named("defaultDatasetModules"));
+        MapBinder<String, DatasetModule> mapBinder = MapBinder.newMapBinder(
+          binder(), String.class, DatasetModule.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
 
         // NOTE: order is important due to dependencies between modules
         mapBinder.addBinding("orderedTable-hbase").toProvider(OrderedTableModuleProvider.class).in(Singleton.class);
