@@ -2744,6 +2744,19 @@
   </property>
 
   <property>
+    <name>security.authorization.propagate.privileges</name>
+    <value></value>
+    <description>
+      Allows propagation of privileges to descendants. If this is set to true
+      then having a privilege on an entity will allow the user to perform that
+      action on all the descendants of that entity. For example, if this is true
+      have READ on namespace will allow an user to READ all datasets in that
+      namespace. If this is set to false then the users will need privileges on
+      the entity the action is being performed on.
+    </description>
+  </property>
+
+  <property>
     <name>security.data.keyfile.path</name>
     <value>${local.data.dir}/security/keyfile</value>
     <description>

@@ -57,6 +57,7 @@ public class AbstractAuthorizationService extends AbstractScheduledService {
   protected final boolean securityEnabled;
   protected final boolean authorizationEnabled;
   protected final boolean cacheEnabled;
+  protected final boolean propagatePrivileges;
 
   private final PrivilegesFetcher privilegesFetcher;
   private final int cacheTtlSecs;
@@ -87,6 +88,7 @@ public class AbstractAuthorizationService extends AbstractScheduledService {
           return fetchPrivileges(principal);
         }
       });
+    propagatePrivileges = cConf.getBoolean(Constants.Security.Authorization.PROPAGATE_PRIVILEGES);
   }
 
   @Override
