@@ -87,6 +87,7 @@ export default class SimpleDateModal extends Component {
           value={this.state.customFormat}
           onChange={this.handleCustomFormatChange}
           placeholder={T.translate(`${PREFIX}.Parsers.SIMPLEDATE.customPlaceholder`)}
+          autoFocus
         />
       </div>
     );

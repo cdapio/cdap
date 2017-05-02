@@ -135,7 +135,8 @@ class TrackerResultsController {
     let params = {
       namespace: this.$state.params.namespace,
       query: this.$state.params.searchQuery,
-      scope: this.$scope
+      scope: this.$scope,
+      entityScope: 'USER'
     };
 
     if (params.query === '*') {
@@ -162,19 +163,27 @@ class TrackerResultsController {
   }
   parseResult (entity) {
     let obj = {};
+    let query = this.myHelpers.objectQuery;
+    let system = query(entity, 'metadata', 'SYSTEM');
+    let sysProps = query(system, 'properties');
     if (entity.entityId.type === 'datasetinstance') {
       angular.extend(obj, {
         name: entity.entityId.id.instanceId,
         type: 'Dataset',
         entityTypeState: 'datasets',
-        icon: 'icon-datasets',
-        description: entity.metadata.SYSTEM.properties.description || 'No description provided for this Dataset.',
-        createDate: entity.metadata.SYSTEM.properties['creation-time'],
-        datasetType: entity.metadata.SYSTEM.properties.type
+        icon: 'icon-datasets'
       });
-      if(entity.metadata.SYSTEM.tags.indexOf('explore') !== -1) {
-        obj.datasetExplorable = true;
+      if (system && sysProps) {
+        angular.extend(obj, {
+          description: query(sysProps, 'description') || 'No description provided for this Dataset.',
+          createDate: query(sysProps, 'creation-time') || null,
+          datasetType: query(sysProps, 'type') || null
+        });
+        if (query(system, 'tags') && system.tags.indexOf('explore') !== -1) {
+          obj.datasetExplorable = true;
+        }
       }
+
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[0].count++;
     } else if (entity.entityId.type === 'stream') {
@@ -182,10 +191,14 @@ class TrackerResultsController {
         name: entity.entityId.id.streamName,
         type: 'Stream',
         entityTypeState: 'streams',
-        icon: 'icon-streams',
-        description: entity.metadata.SYSTEM.properties.description || 'No description provided for this Stream.',
-        createDate: entity.metadata.SYSTEM.properties['creation-time']
+        icon: 'icon-streams'
       });
+      if (system && sysProps) {
+        angular.extend(obj, {
+          description: query(sysProps, 'description') || 'No description provided for this Stream.',
+          createDate: query(sysProps, 'creation-time') || null,
+        });
+      }
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[1].count++;
     } else if (entity.entityId.type === 'view') {
@@ -194,10 +207,14 @@ class TrackerResultsController {
         name: entity.entityId.id.id,
         type: 'Stream View',
         entityTypeState: 'views:' + entity.entityId.id.stream.streamName,
-        icon: 'icon-streams',
-        description: entity.metadata.SYSTEM.properties.description || 'No description provided for this Stream View.',
-        createDate: entity.metadata.SYSTEM.properties['creation-time']
+        icon: 'icon-streams'
       });
+      if (system && sysProps) {
+        angular.extend(obj, {
+          description: query(sysProps, 'description') || 'No description provided for this Stream View.',
+          createDate: query(sysProps, 'creation-time') || null
+        });
+      }
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[2].count++;
     }
@@ -218,7 +235,7 @@ class TrackerResultsController {
       foundIn.push('Name');
       this.metadataFiltersList[0].count++;
     }
-    if (entity.metadata.SYSTEM.properties.description && entity.metadata.SYSTEM.properties.description.search(regex) > -1) {
+    if (entity.metadata.SYSTEM && entity.metadata.SYSTEM.properties.description && entity.metadata.SYSTEM.properties.description.search(regex) > -1) {
       foundIn.push('Description');
       this.metadataFiltersList[1].count++;
     }

@@ -82,6 +82,7 @@ export default class LogModal extends Component {
           value={this.state.customFormat}
           onChange={this.handleCustomFormatChange}
           placeholder={T.translate(`${PREFIX}.Parsers.LOG.customPlaceholder`)}
+          autoFocus
         />
       </div>
     );

@@ -13,34 +13,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
 */
-$link-color: #0275d8;
 
-.using-patterns-modal {
-  .modal-body {
-    overflow: initial;
-  }
-  .pattern-details {
-    margin: 10px 0;
-    :not(.custom-pattern) {
-      input {
-        display: inline-block;
-        width: 90px;
-        margin: 0 10px;
+$menu-hover-bg: #dddddd;
+
+#explode-fields-directive {
+  &.clearfix.action-item {
+    .explode-fields {
+      &.second-level-popover {
+        padding: 0;
+      }
+      .explode-field-options {
+        .option {
+          padding: 9px;
+          cursor: pointer;
+          line-height: 1.5;
+          &:hover {
+            background-color: $menu-hover-bg;
+          }
+        }
       }
     }
-  }
-  .dropdown {
-    display: inline-block;
-    margin-right: 10px;
-
-    .dropdown-item {
-      cursor: initial;
-    }
-  }
-  .showhidelink {
-    color: $link-color;
-    cursor: pointer;
-    margin-top: 6px;
-    display: inline-block;
   }
 }

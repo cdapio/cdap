@@ -28,6 +28,7 @@ const defaultInitialState = {
   workspaceUri: '',
   data: [],
   headers: [],
+  selectedHeaders: [],
   directives: [],
   higherVersion: null,
   loading: false,
@@ -55,7 +56,12 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         data: action.payload.data,
         headers: action.payload.headers,
         directives: action.payload.directives,
-        loading: false
+        loading: false,
+        // after any directive, remove selected header(s) if they're no longer in
+        // the list of headers
+        selectedHeaders: state.selectedHeaders.filter((head) => {
+          return action.payload.headers.indexOf(head) !== -1;
+        })
       });
       break;
     case DataPrepActions.setWorkspace:
@@ -66,7 +72,13 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         directives: action.payload.directives || [],
         data: action.payload.data || [],
         initialized: true,
-        loading: false
+        loading: false,
+        selectedHeaders: []
+      });
+      break;
+    case DataPrepActions.setSelectedHeaders:
+      stateCopy = Object.assign({}, state, {
+        selectedHeaders: action.payload.selectedHeaders
       });
       break;
     case DataPrepActions.setInitialized:

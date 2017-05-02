@@ -60,7 +60,7 @@ export default class CopyColumnDirective extends Component {
 
   columnAlreadyExists(colName) {
     let headers = DataPrepStore.getState().dataprep.headers;
-    return headers.includes(colName);
+    return headers.indexOf(colName) !== -1;
   }
 
   applyDirective() {
