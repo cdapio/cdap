@@ -15,8 +15,8 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-import {MyMetricApi} from '../../../api/metric';
-import {MyStreamApi} from '../../../api/stream';
+import {MyMetricApi} from 'api/metric';
+import {MyStreamApi} from 'api/stream';
 import NamespaceStore from 'services/NamespaceStore';
 import {humanReadableNumber, HUMANREADABLESTORAGE_NODECIMAL} from 'services/helpers';
 import T from 'i18n-react';

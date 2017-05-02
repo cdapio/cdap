@@ -15,8 +15,8 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-import {MyAppApi} from '../../../api/app';
-import {MyArtifactApi} from '../../../api/artifact';
+import {MyAppApi} from 'api/app';
+import {MyArtifactApi} from 'api/artifact';
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 

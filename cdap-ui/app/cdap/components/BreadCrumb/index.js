@@ -16,7 +16,7 @@
 
 import React, {PropTypes} from 'react';
 import IconSVG from 'components/IconSVG';
-import Link from 'react-router/Link';
+import {Link} from 'react-router-dom';
 require('./BreadCrumb.scss');
 
 export default function BreadCrumb({previousPaths, currentStateIcon, currentStateLabel}) {

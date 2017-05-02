@@ -17,7 +17,7 @@
 import React, {PropTypes, Component} from 'react';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
-import {Link} from 'react-router';
+import {Link} from 'react-router-dom';
 require('./OverviewHeader.scss');
 
 export default class OverviewHeader extends Component {

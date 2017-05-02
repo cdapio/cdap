@@ -14,10 +14,25 @@
  * the License.
 */
 
+import Rx from 'rx';
+
 const MySearchApi = {};
 
-MySearchApi.search = function getIcon() {
-  return '/some/random/Image/path';
+MySearchApi.search = function () {
+  let subject = new Rx.Subject();
+  setTimeout(() => {
+    if (this.__isError) {
+      subject.onError(this.__searchResults);
+      return;
+    }
+    subject.onNext(this.__searchResults);
+  });
+  return subject;
 };
 
-module.exports = MySearchApi;
+MySearchApi.__setSearchResults = function __setSearchResults(searchResult, isError) {
+  this.__isError = isError;
+  this.__searchResults = searchResult;
+};
+
+module.exports = {MySearchApi};

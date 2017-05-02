@@ -15,7 +15,7 @@
  */
 
 import React, {PropTypes} from 'react';
-import Link from 'react-router/Link';
+import {Link} from 'react-router-dom';
 import NamespaceStore from 'services/NamespaceStore';
 import isEmpty from 'lodash/isEmpty';
 import T from 'i18n-react';

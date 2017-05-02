@@ -99,7 +99,7 @@ const search = () => {
           type: SearchStoreActions.SETERROR,
           payload: {
             errorStatusCode: error.statusCode,
-            errorMessage: typeof err === 'object' ? error.response : error,
+            errorMessage: typeof error === 'object' ? error.response : error,
           }
         });
       }

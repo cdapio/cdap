@@ -20,7 +20,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import shortid from 'shortid';
 import classnames from 'classnames';
 import moment from 'moment';
-import {Link} from 'react-router';
+import {Link} from 'react-router-dom';
 import FilePath from 'components/FileBrowser/FilePath';
 import {convertBytesToHumanReadable, HUMANREADABLESTORAGE_NODECIMAL} from 'services/helpers';
 import cookie from 'react-cookie';
@@ -40,7 +40,7 @@ export default class FileBrowser extends Component {
     this.state = {
       contents: [],
       path: '',
-      statePath: this.props.pathname,
+      statePath: this.props.match.url,
       error: null,
       loading: true,
       search: '',
@@ -66,7 +66,7 @@ export default class FileBrowser extends Component {
       hdfsPath = this.props.initialDirectoryPath;
       return;
     } else {
-      hdfsPath = props.location.pathname.slice(props.pathname.length);
+      hdfsPath = props.location.pathname.slice(props.match.url.length);
       hdfsPath = hdfsPath || this.props.initialDirectoryPath || BASEPATH;
     }
 
@@ -426,13 +426,9 @@ export default class FileBrowser extends Component {
 }
 
 FileBrowser.propTypes = {
-  location: PropTypes.shape({
-    pathname: PropTypes.string
-  }),
-  pathname: PropTypes.string,
+  location: PropTypes.object,
+  match: PropTypes.object,
   initialDirectoryPath: PropTypes.string,
   noState: PropTypes.bool,
   toggle: PropTypes.func.isRequired
 };
-
-

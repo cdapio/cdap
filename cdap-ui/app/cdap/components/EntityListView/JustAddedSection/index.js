@@ -48,6 +48,7 @@ export default class JustAddedSection extends Component {
     this.eventEmitter.on(globalEvents.DELETEENTITY, this.fetchEntities);
     this.eventEmitter.on(globalEvents.ARTIFACTUPLOAD, this.fetchEntities);
     this.namespaceSub = NamespaceStore.subscribe(this.fetchEntities);
+    this.unmounted = false;
   }
 
   componentWillMount() {
@@ -93,6 +94,7 @@ export default class JustAddedSection extends Component {
       this.searchStoreSubscription();
     }
     this.namespaceSub();
+    this.unmounted = true;
   }
 
   fetchEntities() {
@@ -124,13 +126,13 @@ export default class JustAddedSection extends Component {
           });
       })
       .subscribe((res) => {
-        this.setState({
+        !this.unmounted && this.setState({
           entities: res,
           loading: false
         });
       }, (err) => {
         console.log('Error', err);
-        this.setState({loading: false});
+        !this.unmounted && this.setState({loading: false});
       });
   }
 

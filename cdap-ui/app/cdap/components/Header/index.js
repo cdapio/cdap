@@ -15,7 +15,7 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-import {Link} from 'react-router';
+import {NavLink} from 'react-router-dom';
 import T from 'i18n-react';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceDropdown from 'components/NamespaceDropdown';
@@ -113,11 +113,11 @@ export default class Header extends Component {
         <div className="brand-section">
           {
             !this.props.nativeLink ?
-              <Link
+              <NavLink
                 to={`/ns/${this.state.currentNamespace}`}
               >
                 <img src="/cdap_assets/img/company_logo.png" />
-              </Link>
+              </NavLink>
             :
               <a href={window.getAbsUIUrl({namespaceId: this.state.currentNamespace})}>
                 <img src="/cdap_assets/img/company_logo.png" />
@@ -128,12 +128,12 @@ export default class Header extends Component {
           <li>
             {
               !this.props.nativeLink ?
-                <Link
+                <NavLink
                   activeClassName="active"
                   to={`/ns/${this.state.currentNamespace}`}
                 >
                   {T.translate('features.Navbar.overviewLabel')}
-                </Link>
+                </NavLink>
               :
                 <a href={overviewUrl}>
                   {T.translate('features.Navbar.overviewLabel')}

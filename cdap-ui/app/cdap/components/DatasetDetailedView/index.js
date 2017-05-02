@@ -26,17 +26,19 @@ import shortid from 'shortid';
 import T from 'i18n-react';
 import DatasetDetaildViewTab from 'components/DatasetDetailedView/Tabs';
 import FastActionToMessage from 'services/fast-action-message-helper';
-import Redirect from 'react-router/Redirect';
+import {Redirect} from 'react-router-dom';
 import capitalize from 'lodash/capitalize';
 import Page404 from 'components/404';
 import BreadCrumb from 'components/BreadCrumb';
 import ResourceCenterButton from 'components/ResourceCenterButton';
 import Helmet from 'react-helmet';
+import queryString from 'query-string';
 require('./DatasetDetailedView.scss');
 
 export default class DatasetDetailedView extends Component {
   constructor(props) {
     super(props);
+    let searchObj = queryString.parse(objectQuery(this.props, 'location', 'search'));
     this.state = {
       entityDetail: objectQuery(this.props, 'location', 'state', 'entityDetail') | {
         schema: null,
@@ -47,14 +49,14 @@ export default class DatasetDetailedView extends Component {
       routeToHome: false,
       successMessage: null,
       notFound: false,
-      modalToOpen: objectQuery(this.props, 'location', 'query', 'modalToOpen') || '',
+      modalToOpen: objectQuery(searchObj, 'modalToOpen') || '',
       previousPathName: null
     };
   }
 
   componentWillMount() {
     let selectedNamespace = NamespaceStore.getState().selectedNamespace;
-    let {namespace, datasetId} = this.props.params;
+    let {namespace, datasetId} = this.props.match.params;
     let previousPathName = objectQuery(this.props, 'location', 'state', 'previousPathname')  || `/ns/${selectedNamespace}?overviewid=${datasetId}&overviewtype=dataset`;
     if (!namespace) {
       namespace = NamespaceStore.getState().selectedNamespace;
@@ -76,12 +78,12 @@ export default class DatasetDetailedView extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    let {namespace: currentNamespace, datasetId: currentDatasetId} = this.props.params;
-    let {namespace: nextNamespace, datasetId: nextDatasetId} = nextProps.params;
+    let {namespace: currentNamespace, datasetId: currentDatasetId} = this.props.match.params;
+    let {namespace: nextNamespace, datasetId: nextDatasetId} = nextProps.match.params;
     if (currentNamespace === nextNamespace && currentDatasetId === nextDatasetId) {
       return;
     }
-    let {namespace, datasetId} = nextProps.params;
+    let {namespace, datasetId} = nextProps.match.params;
     if (!namespace) {
       namespace = NamespaceStore.getState().selectedNamespace;
     }
@@ -197,7 +199,7 @@ export default class DatasetDetailedView extends Component {
       return (
         <Page404
           entityType="dataset"
-          entityName={this.props.params.datasetId}
+          entityName={this.props.match.params.datasetId}
         />
       );
     }
@@ -208,7 +210,7 @@ export default class DatasetDetailedView extends Component {
     return (
       <div className="app-detailed-view dataset-detailed-view">
         <Helmet
-          title={T.translate('features.DatasetDetailedView.Title', {datasetId: this.props.params.datasetId})}
+          title={T.translate('features.DatasetDetailedView.Title', {datasetId: this.props.match.params.datasetId})}
         />
         <ResourceCenterButton />
         <BreadCrumb
@@ -224,7 +226,7 @@ export default class DatasetDetailedView extends Component {
           showFullCreationTime={true}
         />
         <DatasetDetaildViewTab
-          params={this.props.params}
+          params={this.props.match.params}
           pathname={this.props.location.pathname}
           entity={this.state.entityDetail}
         />
@@ -240,9 +242,6 @@ export default class DatasetDetailedView extends Component {
 }
 
 DatasetDetailedView.propTypes = {
-  params: PropTypes.shape({
-    datasetId: PropTypes.string,
-    namespace: PropTypes.string
-  }),
-  location: PropTypes.any
+  match: PropTypes.object,
+  location: PropTypes.object,
 };
