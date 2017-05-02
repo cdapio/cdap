@@ -30,6 +30,7 @@ import co.cask.cdap.api.dataset.Updatable;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -61,7 +62,6 @@ import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,7 +114,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Inject
   public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
-                                  @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules) {
+                                  @Constants.Dataset.Manager.DefaultDatasetModules Map<String, DatasetModule> modules) {
     this.registryFactory = registryFactory;
     this.namespaces = Sets.newHashSet();
     this.nonDefaultTypes = HashMultimap.create();
@@ -134,7 +134,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     // add default dataset modules to system namespace
     namespaces.add(NamespaceId.SYSTEM);
     DatasetDefinitionRegistry systemRegistry = registryFactory.create();
-    for (Map.Entry<String, DatasetModule> entry : defaultModules.entrySet()) {
+    for (Map.Entry<String, DatasetModule> entry : modules.entrySet()) {
       LOG.debug("Adding Default module {} to system namespace", entry.getKey());
       String moduleName = entry.getKey();
       DatasetModule module = entry.getValue();
