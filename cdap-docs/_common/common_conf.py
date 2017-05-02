@@ -80,10 +80,10 @@ def print_sdk_version():
 def get_spark_version():
     spark_version = None
     try:
-        p1 = subprocess.Popen(['grep' , '<spark.version>', '../../../pom.xml' ], stdout=subprocess.PIPE)
+        p1 = subprocess.Popen(['grep' , '<spark1.version>', '../../../pom.xml' ], stdout=subprocess.PIPE)
         p2 = subprocess.Popen(['awk', 'NR==1;START{print $1}'], stdin=p1.stdout, stdout=subprocess.PIPE)
         version = p2.communicate()[0]
-        version = version.strip().replace('<spark.version>', '').replace('</spark.version>', '')
+        version = version.strip().replace('<spark1.version>', '').replace('</spark1.version>', '')
     except:
         print "Unexpected error: %s" % sys.exc_info()[0]
         pass
