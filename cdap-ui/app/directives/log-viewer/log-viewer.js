@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -112,7 +112,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     vm.configOptions[key] = value;
   });
 
-  vm.logEvents = ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
+  vm.logEvents = {ERROR: 'ERROR', WARN: 'WARN', INFO: 'INFO', DEBUG: 'DEBUG', TRACE: 'TRACE'};
 
   vm.activeLogLevels = {
     'ERROR' : true,
@@ -123,7 +123,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   };
 
   // dynamically sets the default log level filter
-  vm.logEvents.forEach(logLevel => {
+  Object.keys(vm.logEvents).forEach(logLevel => {
     if (vm.activeLogLevels[logLevel] === true) {
       vm.selectedLogLevel = logLevel;
     }

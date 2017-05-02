@@ -30,11 +30,11 @@
           <div class="stat-count total-num">
             <span class="stat-count-number">{{LogViewerPreview.totalCount}}</span></div>
       </div>
-      <div class="log-stats-errors log-stats text-center">
+      <div class="log-stats-errors log-stats text-center" ng-click="LogViewerPreview.includeEvent($event, LogViewerPreview.logEvents.ERROR)">
         <span class="stat-name log-stats-errors-text">Error</span>
           <div class="stat-count errors-num"><span class="stat-count-number">{{LogViewerPreview.errorCount}}</span></div>
       </div>
-      <div class="log-stats-warnings log-stats text-center">
+      <div class="log-stats-warnings log-stats text-center" ng-click="LogViewerPreview.includeEvent($event, LogViewerPreview.logEvents.WARN)">
         <span class="stat-name log-stats-warnings-text">Warning</span>
         <div class="stat-count warnings-num">
           <span class="stat-count-number">{{LogViewerPreview.warningCount}}</span>
@@ -168,8 +168,11 @@
             </td>
 
             <td class="level"
-                ng-if="!entry.stackTrace && LogViewerPreview.configOptions.level && !LogViewerPreview.hiddenColumns.level"
-                ng-bind="entry.log.logLevel"></td>
+                ng-if="!entry.stackTrace && LogViewerPreview.configOptions.level && !LogViewerPreview.hiddenColumns.level">
+                <span class="display-level" ng-class="{ warning: entry.log.logLevel === LogViewerPreview.logEvents.WARN, error: entry.log.logLevel === LogViewerPreview.logEvents.ERROR }"
+                      ng-bind="entry.log.logLevel">
+                </span>
+            </td>
 
             <td class="source"
                 ng-if="!entry.stackTrace && LogViewerPreview.configOptions.source && !LogViewerPreview.hiddenColumns.source"
