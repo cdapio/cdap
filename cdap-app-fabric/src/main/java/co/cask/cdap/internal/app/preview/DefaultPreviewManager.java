@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.preview;
 
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.preview.PreviewManager;
@@ -41,6 +42,7 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.preview.PreviewStreamAdminModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.AppFabricDatasetModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -69,6 +71,7 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Provides;
+import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
@@ -224,6 +227,12 @@ public class DefaultPreviewManager implements PreviewManager {
       new AbstractModule() {
         @Override
         protected void configure() {
+          // Bind system datasets defined in App-fabric.
+          // Have to do it here as public binding, instead of inside PreviewRunnerModule due to Guice 3
+          // doesn't support exporting multi-binder from private module
+          MapBinder<String, DatasetModule> datasetModuleBinder = MapBinder.newMapBinder(
+            binder(), String.class, DatasetModule.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
+          datasetModuleBinder.addBinding("app-fabric").toInstance(new AppFabricDatasetModule());
         }
 
         @Provides

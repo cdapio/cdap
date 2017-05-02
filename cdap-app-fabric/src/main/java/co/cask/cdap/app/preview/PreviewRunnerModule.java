@@ -16,11 +16,13 @@
 
 package co.cask.cdap.app.preview;
 
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.preview.PreviewStore;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.config.PreferencesStore;
@@ -29,6 +31,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.inmemory.InMemoryStreamConsumerFactory;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.MockExploreClient;
+import co.cask.cdap.internal.app.AppFabricDatasetModule;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
@@ -61,6 +64,7 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.multibindings.MapBinder;
 
 /**
  * Provides bindings required to create injector for running preview.

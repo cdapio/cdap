@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,6 +37,7 @@ import co.cask.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.http.HttpHandler;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
@@ -57,107 +58,126 @@ public class DataSetServiceModules extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return new PrivateModule() {
+    return new AbstractModule() {
       @Override
       protected void configure() {
+        // Add the system dataset runtime module as public binding so that adding bindings could be added
         install(new SystemDatasetRuntimeModule().getInMemoryModules());
-        install(new FactoryModuleBuilder()
-                  .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                  .build(DatasetDefinitionRegistryFactory.class));
-        bind(DatasetFramework.class)
-          .annotatedWith(Names.named("datasetMDS"))
-          .toProvider(DatasetMdsProvider.class)
-          .in(Singleton.class);
-        expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
-        bind(DatasetService.class);
-        expose(DatasetService.class);
+        install(new PrivateModule() {
+          @Override
+          protected void configure() {
+            install(new FactoryModuleBuilder()
+                      .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                      .build(DatasetDefinitionRegistryFactory.class));
+            bind(DatasetFramework.class)
+              .annotatedWith(Names.named("datasetMDS"))
+              .toProvider(DatasetMdsProvider.class)
+              .in(Singleton.class);
+            expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
+            bind(DatasetService.class);
+            expose(DatasetService.class);
 
-        Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
-        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
-        CommonHandlers.add(handlerBinder);
-        handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
+            Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
+            Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(),
+                                                                              HttpHandler.class, datasetUserName);
+            CommonHandlers.add(handlerBinder);
+            handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
 
-        Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class);
+            Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class);
 
-        bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
-        expose(DatasetOpExecutorService.class);
+            bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
+            expose(DatasetOpExecutorService.class);
 
-        bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
-        expose(DatasetOpExecutor.class);
+            bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
+            expose(DatasetOpExecutor.class);
+          }
+        });
       }
     };
-
   }
 
   @Override
   public Module getStandaloneModules() {
-    return new PrivateModule() {
+    return new AbstractModule() {
       @Override
       protected void configure() {
+        // Add the system dataset runtime module as public binding so that adding bindings could be added
         install(new SystemDatasetRuntimeModule().getStandaloneModules());
-        install(new FactoryModuleBuilder()
-                  .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                  .build(DatasetDefinitionRegistryFactory.class));
-        bind(DatasetFramework.class)
-          .annotatedWith(Names.named("datasetMDS"))
-          .toProvider(DatasetMdsProvider.class)
-          .in(Singleton.class);
-        expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
+        install(new PrivateModule() {
+          @Override
+          protected void configure() {
+            install(new FactoryModuleBuilder()
+                      .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                      .build(DatasetDefinitionRegistryFactory.class));
+            bind(DatasetFramework.class)
+              .annotatedWith(Names.named("datasetMDS"))
+              .toProvider(DatasetMdsProvider.class)
+              .in(Singleton.class);
+            expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
 
-        Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class)
-          .addBinding().to(LevelDBDatasetMetricsReporter.class);
+            Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class)
+              .addBinding().to(LevelDBDatasetMetricsReporter.class);
 
-        bind(DatasetService.class);
-        expose(DatasetService.class);
+            bind(DatasetService.class);
+            expose(DatasetService.class);
 
-        Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
-        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
-        CommonHandlers.add(handlerBinder);
-        handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
+            Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
+            Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(),
+                                                                              HttpHandler.class, datasetUserName);
+            CommonHandlers.add(handlerBinder);
+            handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
 
-        bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
-        expose(DatasetOpExecutorService.class);
+            bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
+            expose(DatasetOpExecutorService.class);
 
-        bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
-        expose(DatasetOpExecutor.class);
+            bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
+            expose(DatasetOpExecutor.class);
+          }
+        });
       }
     };
-
   }
 
   @Override
   public Module getDistributedModules() {
-    return new PrivateModule() {
+    return new AbstractModule() {
       @Override
       protected void configure() {
+        // Add the system dataset runtime module as public binding so that adding bindings could be added
         install(new SystemDatasetRuntimeModule().getDistributedModules());
-        install(new FactoryModuleBuilder()
-                  .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                  .build(DatasetDefinitionRegistryFactory.class));
-        bind(DatasetFramework.class)
-          .annotatedWith(Names.named("datasetMDS"))
-          .toProvider(DatasetMdsProvider.class)
-          .in(Singleton.class);
-        expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
+        install(new PrivateModule() {
+          @Override
+          protected void configure() {
+            install(new FactoryModuleBuilder()
+                      .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                      .build(DatasetDefinitionRegistryFactory.class));
+            bind(DatasetFramework.class)
+              .annotatedWith(Names.named("datasetMDS"))
+              .toProvider(DatasetMdsProvider.class)
+              .in(Singleton.class);
+            expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
 
-        Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class)
-          .addBinding().to(HBaseDatasetMetricsReporter.class);
+            Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class)
+              .addBinding().to(HBaseDatasetMetricsReporter.class);
 
-        // NOTE: this cannot be a singleton, because MasterServiceMain needs to obtain a new instance
-        //       every time it becomes leader and starts a dataset service.
-        bind(DatasetService.class);
-        expose(DatasetService.class);
+            // NOTE: this cannot be a singleton, because MasterServiceMain needs to obtain a new instance
+            //       every time it becomes leader and starts a dataset service.
+            bind(DatasetService.class);
+            expose(DatasetService.class);
 
-        Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
-        Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
-        CommonHandlers.add(handlerBinder);
-        handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
+            Named datasetUserName = Names.named(Constants.Service.DATASET_EXECUTOR);
+            Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(),
+                                                                              HttpHandler.class, datasetUserName);
+            CommonHandlers.add(handlerBinder);
+            handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
 
-        bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
-        expose(DatasetOpExecutorService.class);
+            bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
+            expose(DatasetOpExecutorService.class);
 
-        bind(DatasetOpExecutor.class).to(YarnDatasetOpExecutor.class);
-        expose(DatasetOpExecutor.class);
+            bind(DatasetOpExecutor.class).to(YarnDatasetOpExecutor.class);
+            expose(DatasetOpExecutor.class);
+          }
+        });
       }
     };
   }
@@ -168,7 +188,7 @@ public class DataSetServiceModules extends RuntimeModule {
 
     @Inject
     DatasetMdsProvider(DatasetDefinitionRegistryFactory registryFactory,
-                       @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules) {
+                       @Constants.Dataset.Manager.DefaultDatasetModules Map<String, DatasetModule> defaultModules) {
       this.registryFactory = registryFactory;
       this.defaultModules = defaultModules;
     }
