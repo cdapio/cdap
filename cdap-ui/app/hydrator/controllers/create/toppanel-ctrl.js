@@ -289,8 +289,11 @@ class HydratorPlusPlusTopPanelCtrl {
               backendProperties.hasOwnProperty(prop) &&
               backendProperties[prop].macroSupported) {
           let propValue = properties[prop];
-          if (propValue.substring(0, 2) === '${' && propValue[propValue.length - 1] === '}') {
-            this.macrosMap[propValue.substring(2, propValue.length - 1)] = '';
+          if (propValue.indexOf('${') !== -1 && propValue.indexOf('}') !== -1) {
+            let nestedMacros = propValue.split('${');
+            let innerMostMacro = nestedMacros[nestedMacros.length - 1];
+            let innerMostMacroVal = innerMostMacro.substring(0, innerMostMacro.indexOf('}'));
+            this.macrosMap[innerMostMacroVal] = '';
           }
         }
       }
