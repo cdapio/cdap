@@ -96,9 +96,11 @@ public class DefaultAuthorizationEnforcementService extends AbstractAuthorizatio
 
   private boolean doEnforce(EntityId entity, Principal principal,
                             Set<Action> actions, boolean exceptionOnFailure) throws Exception {
-    if (entity instanceof ParentedId) {
-      if (doEnforce(((ParentedId) entity).getParent(), principal, actions, false)) {
-        return true;
+    if (propagatePrivileges) {
+      if (entity instanceof ParentedId) {
+        if (doEnforce(((ParentedId) entity).getParent(), principal, actions, false)) {
+          return true;
+        }
       }
     }
 
