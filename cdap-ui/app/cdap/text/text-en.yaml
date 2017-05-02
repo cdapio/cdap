@@ -369,6 +369,12 @@ features:
         uploadBtnLabel: Upload
     Upgrade:
       minimumVersionError: "Data Preparation requires wrangler-service artifact version 1.3.0 or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
+
+  DataPrepConnections:
+    hdfs: HDFS
+    title: "Connections in \"{namespace}\""
+    upload: Upload
+
   Dashboard:
     Title: Dashboard
 

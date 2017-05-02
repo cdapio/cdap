@@ -26,6 +26,7 @@ import {convertBytesToHumanReadable, HUMANREADABLESTORAGE_NODECIMAL} from 'servi
 import cookie from 'react-cookie';
 import T from 'i18n-react';
 import orderBy from 'lodash/orderBy';
+import IconSVG from 'components/IconSVG';
 
 require('./FileBrowser.scss');
 
@@ -50,6 +51,10 @@ export default class FileBrowser extends Component {
     this.handleSearch = this.handleSearch.bind(this);
   }
 
+  componentWillMount() {
+    this.fetchDirectory(this.props);
+  }
+
   componentWillReceiveProps(nextProps) {
     this.fetchDirectory(nextProps);
   }
@@ -71,7 +76,10 @@ export default class FileBrowser extends Component {
   }
 
   goToPath(path) {
-    this.setState({loading: true});
+    this.setState({
+      loading: true,
+      path
+    });
 
     let namespace = NamespaceStore.getState().selectedNamespace;
 
@@ -83,15 +91,13 @@ export default class FileBrowser extends Component {
         loading: false,
         contents: this.formatResponse(res.values),
         error: null,
-        search: '',
-        path
+        search: ''
       });
     }, (err) => {
       this.setState({
         loading: false,
         error: err.response,
-        search: '',
-        path
+        search: ''
       });
     });
   }
@@ -372,7 +378,16 @@ export default class FileBrowser extends Component {
         <div className="top-panel">
           <div className="title">
             <h5>
-              {T.translate(`${PREFIX}.TopPanel.selectData`)}
+              <span
+                className="fa fa-fw"
+                onClick={this.props.toggle}
+              >
+                <IconSVG name="icon-bars" />
+              </span>
+
+              <span>
+                {T.translate(`${PREFIX}.TopPanel.selectData`)}
+              </span>
             </h5>
           </div>
         </div>
@@ -416,7 +431,8 @@ FileBrowser.propTypes = {
   }),
   pathname: PropTypes.string,
   initialDirectoryPath: PropTypes.string,
-  noState: PropTypes.bool
+  noState: PropTypes.bool,
+  toggle: PropTypes.func.isRequired
 };
 
 
