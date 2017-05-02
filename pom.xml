@@ -1257,6 +1257,7 @@
                   <!-- Excludes examples by default, include it in the examples profile -->
                   <exclude>cdap-examples/**</exclude>
                   <exclude>archetypes/**/resources/**/*.txt</exclude>
+                  <exclude>**/*.iml</exclude>
                 </excludes>
               </configuration>
             </execution>
