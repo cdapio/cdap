@@ -537,8 +537,8 @@ public class SparkClassRewriter implements ClassRewriter {
    * delegation tokens causes a spark program submission failure.
    */
   private byte[] rewriteSparkHadoopUtil(String name, InputStream byteCodeStream) throws IOException {
-    Set<String> methods =
-      ImmutableSet.of("obtainTokensForNamenodes", "obtainTokenForHiveMetastore", "obtainTokenForHBase");
+    // we can't rewrite 'obtainTokenForHiveMetastore', because it doesn't have Void return type
+    Set<String> methods = ImmutableSet.of("obtainTokensForNamenodes", "obtainTokenForHBase");
     return Classes.rewriteMethodToNoop(name, byteCodeStream, methods);
   }
 
