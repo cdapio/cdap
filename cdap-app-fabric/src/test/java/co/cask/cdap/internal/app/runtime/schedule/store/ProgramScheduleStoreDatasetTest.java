@@ -16,14 +16,18 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
+import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.id.NamespaceId;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
 
   @Test
-  public void findSchedules() throws Exception {
-    // TODO
+  public void checkDatasetType() throws DatasetManagementException {
+    DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
+    Assert.assertTrue(dsFramework.hasType(NamespaceId.SYSTEM.datasetType(ProgramScheduleStoreDataset.class.getName())));
   }
-
 }

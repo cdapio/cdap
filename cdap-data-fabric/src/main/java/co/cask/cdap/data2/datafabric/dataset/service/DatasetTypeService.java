@@ -122,7 +122,7 @@ public class DatasetTypeService extends AbstractIdleService {
                             TransactionSystemClientService txClientService,
                             @Named("datasetMDS") DatasetFramework datasetFramework,
                             TransactionExecutorFactory txExecutorFactory,
-                            @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules) {
+                            @Constants.Dataset.Manager.DefaultDatasetModules Map<String, DatasetModule> modules) {
     this.typeManager = typeManager;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.namespacedLocationFactory = namespacedLocationFactory;
@@ -141,7 +141,7 @@ public class DatasetTypeService extends AbstractIdleService {
         DatasetMetaTableUtil.META_TABLE_NAME, emptyArgs,
         DatasetMetaTableUtil.INSTANCE_TABLE_NAME, emptyArgs
       ));
-    this.defaultModules = new LinkedHashMap<>(defaultModules);
+    this.defaultModules = new LinkedHashMap<>(modules);
     this.extensionModules = getExtensionModules(cConf);
   }
 

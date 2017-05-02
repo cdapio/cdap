@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -34,7 +35,6 @@ import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.name.Named;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -273,9 +273,9 @@ public class SystemDatasetDefinitionTest {
 class DatasetDefinitionRegistryWithDefaultModules extends DefaultDatasetDefinitionRegistry {
 
   @Inject
-  DatasetDefinitionRegistryWithDefaultModules(Injector injector,
-                                              @Named("defaultDatasetModules")
-                                                Map<String, DatasetModule> defaultModules) {
+  DatasetDefinitionRegistryWithDefaultModules(
+    Injector injector, @Constants.Dataset.Manager.DefaultDatasetModules Map<String, DatasetModule> defaultModules) {
+
     injector.injectMembers(this);
     for (Map.Entry<String, DatasetModule> entry : defaultModules.entrySet()) {
       entry.getValue().register(this);
