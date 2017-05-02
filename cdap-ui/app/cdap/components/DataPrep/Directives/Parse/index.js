@@ -25,6 +25,7 @@ import T from 'i18n-react';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import debounce from 'lodash/debounce';
+import {setPopoverOffset} from 'components/DataPrep/helper';
 
 const SUFFIX = 'features.DataPrep.Directives.Parse';
 
@@ -64,44 +65,22 @@ export default class ParseDirective extends Component {
       'HL7'
     ];
 
-    this.calculateOffset = this.calculateOffset.bind(this);
-
-    this.offsetCalcDebounce = debounce(this.calculateOffset, 1000);
-
     window.addEventListener('resize', this.offsetCalcDebounce);
   }
 
   componentDidUpdate() {
-    if (this.props.isOpen) {
+    if (this.props.isOpen && this.calculateOffset) {
       this.calculateOffset();
     }
   }
 
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.offsetCalcDebounce);
+  componentDidMount() {
+    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('parse-directive'));
+    this.offsetCalcDebounce = debounce(this.calculateOffset, 1000);
   }
 
-  calculateOffset() {
-    let elem = document.getElementById('parse-directive');
-    let elemBounding = elem.getBoundingClientRect();
-
-    const HEADER_HEIGHT = 50;
-    const FOOTER_HEIGHT = 54;
-    let bodyHeight = document.documentElement.clientHeight - HEADER_HEIGHT - FOOTER_HEIGHT;
-
-    let popover = document.getElementsByClassName('second-level-popover');
-    let popoverHeight = popover[0].getBoundingClientRect().height;
-
-    let tableContainerScroll = document.getElementById('dataprep-table-id').scrollTop;
-
-    // out of bound check
-    let diff = bodyHeight - (elemBounding.top + popoverHeight) - tableContainerScroll;
-
-    if (diff < 0) {
-      popover[0].style.top = `${diff}px`;
-    } else {
-      popover[0].style.top = 0;
-    }
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.offsetCalcDebounce);
   }
 
   preventPropagation(e) {

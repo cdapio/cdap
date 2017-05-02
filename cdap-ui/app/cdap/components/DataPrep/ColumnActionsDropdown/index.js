@@ -195,8 +195,8 @@ export default class ColumnActionsDropdown extends Component {
     let tableContainer = document.getElementById('dataprep-table-id');
 
     const tetherOption = {
-      attachment: 'top right',
-      targetAttachment: 'bottom left',
+      attachment: 'top left',
+      targetAttachment: 'bottom right',
       constraints: [
         {
           to: tableContainer,
