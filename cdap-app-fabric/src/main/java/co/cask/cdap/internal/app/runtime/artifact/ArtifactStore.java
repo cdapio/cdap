@@ -61,6 +61,7 @@ import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
@@ -88,6 +89,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -1137,6 +1139,57 @@ public class ArtifactStore {
     return new Scan(
       Bytes.toBytes(String.format("%s:%s:", APPCLASS_PREFIX, namespace.getNamespace())),
       Bytes.toBytes(String.format("%s:%s;", APPCLASS_PREFIX, namespace.getNamespace())));
+  }
+
+  private Scan scanPlugins() {
+    return new Scan(Bytes.toBytes(String.format("%s::", PLUGIN_PREFIX)),
+                    Bytes.toBytes(String.format("%s;", PLUGIN_PREFIX)));
+  }
+
+  public Set<ArtifactRange> getArtifactParentsForPlugin(final String namespaceId, final String pluginType,
+                                                        final String pluginName) {
+    try {
+      return Transactions.execute(
+        transactional, new TxCallable<Set<ArtifactRange>>() {
+          @Override
+          public Set<ArtifactRange> call(DatasetContext context) throws Exception {
+            Set<ArtifactRange> parentArtifacts = new HashSet<>();
+            try (Scanner scanner = getMetaTable(context).scan(scanPlugins())) {
+              Row row;
+              while ((row = scanner.next()) != null) {
+                // plugin rowkey is in format p:system:etlbatch:sink:stream
+                String rowStr = Bytes.toString(row.getRow());
+                Iterator<String> parts = Splitter.on(':').limit(5).split(rowStr).iterator();
+                Preconditions.checkArgument(PLUGIN_PREFIX.equals(parts.next()),
+                                            String.format("Got a row key that is not a plugin %s", rowStr));
+
+                // skip parent namespace and artifact name
+                String parentNamespace = parts.next();
+                String parentArtifactName = parts.next();
+
+                String pluginTypeVal = parts.next();
+                String pluginNameVal = parts.next();
+
+                if (pluginType.equals(pluginTypeVal) && pluginName.equals(pluginNameVal)) {
+                  // plugin name and type matched
+                  for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
+                    String columnStr = Bytes.toString(entry.getKey());
+                    Iterator<String> columnParts = Splitter.on(':').limit(2).split(columnStr).iterator();
+                    // if namespace of plugin artifact matches
+                    if (namespaceId.equals(columnParts.next())) {
+                      PluginData pluginData = GSON.fromJson(Bytes.toString(entry.getValue()), PluginData.class);
+                      parentArtifacts.add(pluginData.usableBy);
+                    }
+                  }
+                }
+              }
+            }
+            return Collections.unmodifiableSet(parentArtifacts);
+          }
+        });
+    } catch (TransactionFailureException e) {
+      throw Transactions.propagate(e);
+    }
   }
 
   private static class AppClassKey {

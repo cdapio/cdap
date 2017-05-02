@@ -110,29 +110,14 @@ public class DefaultPluginContext implements PluginContext {
   public <T> T newPluginInstance(String pluginType, String pluginName, PluginProperties properties) {
     // temporary hack - we need a way to load plugin without parents CDAP-9080
     LOG.info("ProgramId is {}", programId);
-    for (Plugin plugin : plugins.values()) {
-      LOG.info("Trying to instantiate plugin type {} name {} with artifact of plugin",
-               pluginType, pluginName, plugin.getArtifactId());
-
-      T newPlugin = pluginInstantiator.newInstance(programId.getNamespace(), plugin.getArtifactId(),
-                                                   pluginType, pluginName, properties);
-
-      if (newPlugin != null) {
-        LOG.info("instantiated plugin type {} name {} with artifact of plugin {}",
-                 pluginType, pluginName, plugin.getArtifactId());
-        return newPlugin;
-      }
+    LOG.info("Trying to instantiate plugin type {} name {} ", pluginType, pluginName);
+    T newPlugin = pluginInstantiator.newInstance(programId.getNamespace(), pluginType, pluginName, properties);
+    if (newPlugin != null) {
+      LOG.info("instantiated plugin type {} name {} with artifact of plugin {}", pluginType, pluginName);
+      return newPlugin;
     }
     // we return null if we cant load the plugin.
     return null;
-
-//    } catch (ClassNotFoundException e) {
-//      // Shouldn't happen, unless there is bug in file localization
-//      throw new IllegalArgumentException("Plugin class not found", e);
-//    } catch (IOException e) {
-//      // This is fatal, since jar cannot be expanded.
-//      throw Throwables.propagate(e);
-//    }
   }
 
   private Plugin getPlugin(String pluginId) {

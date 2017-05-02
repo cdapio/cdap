@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 
 /**
@@ -145,4 +146,7 @@ public class ReadOnlyArtifactRepository {
     throw new PluginNotExistsException(namespace, pluginType, pluginName);
   }
 
+  public Set<ArtifactRange> getArtifactParentsForPlugin(String namespaceId, String pluginType, String pluginName) {
+    return artifactStore.getArtifactParentsForPlugin(namespaceId, pluginType, pluginName);
+  }
 }
