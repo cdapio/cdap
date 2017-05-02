@@ -29,6 +29,7 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
+import co.cask.cdap.internal.app.runtime.artifact.ReadOnlyArtifactRepository;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
@@ -190,7 +191,8 @@ public class PluginService extends AbstractIdleService {
 
     private void addInstantiatorAndAddArtifact(ArtifactDetail artifactDetail,
                                                ArtifactId artifactId) throws IOException {
-      PluginInstantiator instantiator = new PluginInstantiator(cConf, parentClassLoader, pluginDir, artifactRepository);
+      PluginInstantiator instantiator = new PluginInstantiator(cConf, parentClassLoader, pluginDir,
+                                                               new ReadOnlyArtifactRepository(artifactRepository));
       instantiatorInfoMap.put(artifactDetail.getDescriptor(),
                               new InstantiatorInfo(artifactDetail.getDescriptor().getLocation(), instantiator));
       instantiator.addArtifact(artifactDetail.getDescriptor().getLocation(), artifactId);

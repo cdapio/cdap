@@ -20,6 +20,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.ReadOnlyArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 
 import java.io.File;
@@ -46,7 +47,7 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
    */
   @Nullable
   protected PluginInstantiator createPluginInstantiator(ProgramOptions options, ClassLoader classLoader,
-                                                        ArtifactRepository artifactRepository) {
+                                                        ReadOnlyArtifactRepository artifactRepository) {
     if (!options.getArguments().hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
       return null;
     }

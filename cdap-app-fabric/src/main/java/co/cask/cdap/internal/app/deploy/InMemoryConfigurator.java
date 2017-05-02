@@ -31,6 +31,7 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
+import co.cask.cdap.internal.app.runtime.artifact.ReadOnlyArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
@@ -71,6 +72,7 @@ public final class InMemoryConfigurator implements Configurator {
   private final Id.Namespace appNamespace;
 
   private final ArtifactRepository artifactRepository;
+  private final ReadOnlyArtifactRepository readOnlyArtifactRepository;
   private final ClassLoader artifactClassLoader;
   private final String appClassName;
   private final Id.Artifact artifactId;
@@ -99,6 +101,7 @@ public final class InMemoryConfigurator implements Configurator {
     this.artifactClassLoader = artifactClassLoader;
     this.baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.readOnlyArtifactRepository = new ReadOnlyArtifactRepository(artifactRepository);
   }
 
   /**
@@ -145,7 +148,7 @@ public final class InMemoryConfigurator implements Configurator {
     File tempDir = DirUtils.createTempDir(baseUnpackDir);
     try (
       PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, app.getClass().getClassLoader(), tempDir,
-                                                                     artifactRepository)
+                                                                     readOnlyArtifactRepository)
     ) {
       configurer = new DefaultAppConfigurer(appNamespace, artifactId, app,
                                             configString, artifactRepository, pluginInstantiator);

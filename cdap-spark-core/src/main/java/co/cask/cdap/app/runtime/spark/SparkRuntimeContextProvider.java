@@ -38,6 +38,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.ReadOnlyArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -263,7 +264,8 @@ public final class SparkRuntimeContextProvider {
     if (pluginArchive == null) {
       return null;
     }
-    return new PluginInstantiator(cConf, parentClassLoader, new File(pluginArchive), artifactRepository);
+    return new PluginInstantiator(cConf, parentClassLoader, new File(pluginArchive),
+                                  new ReadOnlyArtifactRepository(artifactRepository));
   }
 
   private static Injector createInjector(CConfiguration cConf, Configuration hConf,

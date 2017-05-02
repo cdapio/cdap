@@ -960,4 +960,16 @@ public class ArtifactRepository {
     ArtifactSystemMetadataWriter writer = new ArtifactSystemMetadataWriter(metadataStore, artifactId, artifactInfo);
     writer.write();
   }
+
+  ArtifactStore getArtifactStore() {
+    return artifactStore;
+  }
+
+  AuthorizationEnforcer getAuthorizationEnforcer() {
+    return authorizationEnforcer;
+  }
+
+  AuthenticationContext getAuthenticationContext() {
+    return authenticationContext;
+  }
 }

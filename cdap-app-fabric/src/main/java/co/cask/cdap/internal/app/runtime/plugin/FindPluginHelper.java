@@ -25,6 +25,7 @@ import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.ReadOnlyArtifactRepository;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -86,6 +87,36 @@ public final class FindPluginHelper {
    * @throws ArtifactNotFoundException
    */
   public static Plugin findPlugin(ArtifactRepository artifactRepository,
+                                  PluginInstantiator pluginInstantiator,
+                                  NamespaceId namespace,
+                                  ArtifactRange parentArtifactRange, String pluginType, String pluginName,
+                                  PluginProperties properties, PluginSelector selector)
+    throws PluginNotExistsException, ArtifactNotFoundException {
+    Preconditions.checkArgument(properties != null, "Plugin properties cannot be null");
+    Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry;
+    try {
+      pluginEntry = artifactRepository.findPlugin(namespace, parentArtifactRange, pluginType, pluginName, selector);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+    return getPlugin(pluginEntry, properties, pluginType, pluginName, pluginInstantiator);
+  }
+
+  /**
+   * Find and return the requested plugin using the artifact repository, if found.
+   * @param artifactRepository artifact repository to find plugin artifact.
+   * @param pluginInstantiator plugin instantiator to add the identified plugin artifact.
+   * @param namespace namespace of plugin
+   * @param parentArtifactRange parent artifact range
+   * @param pluginType plugin type
+   * @param pluginName name of the plugin
+   * @param properties plugin properties
+   * @param selector seelector used to select a plugin
+   * @return {@link Plugin}
+   * @throws PluginNotExistsException
+   * @throws ArtifactNotFoundException
+   */
+  public static Plugin findPlugin(ReadOnlyArtifactRepository artifactRepository,
                                   PluginInstantiator pluginInstantiator,
                                   NamespaceId namespace,
                                   ArtifactRange parentArtifactRange, String pluginType, String pluginName,

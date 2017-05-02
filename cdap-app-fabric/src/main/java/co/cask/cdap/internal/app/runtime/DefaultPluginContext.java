@@ -109,6 +109,7 @@ public class DefaultPluginContext implements PluginContext {
   @Override
   public <T> T newPluginInstance(String pluginType, String pluginName, PluginProperties properties) {
     // temporary hack - we need a way to load plugin without parents CDAP-9080
+    LOG.info("ProgramId is {}", programId);
     for (Plugin plugin : plugins.values()) {
       LOG.info("Trying to instantiate plugin type {} name {} with artifact of plugin",
                pluginType, pluginName, plugin.getArtifactId());

@@ -35,8 +35,8 @@ import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
+import co.cask.cdap.internal.app.runtime.artifact.ReadOnlyArtifactRepository;
 import co.cask.cdap.internal.lang.FieldVisitor;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
@@ -102,10 +102,10 @@ public class PluginInstantiator implements Closeable {
   private final File tmpDir;
   private final File pluginDir;
   private final ClassLoader parentClassLoader;
-  private final ArtifactRepository artifactRepository;
+  private final ReadOnlyArtifactRepository artifactRepository;
 
   public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader, File pluginDir,
-                            ArtifactRepository artifactRepository) {
+                            ReadOnlyArtifactRepository artifactRepository) {
     this.instantiatorFactory = new InstantiatorFactory(false);
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
@@ -128,6 +128,7 @@ public class PluginInstantiator implements Closeable {
    */
   public void addArtifact(Location artifactLocation, ArtifactId destArtifact) throws IOException {
     File destFile = new File(pluginDir, Artifacts.getFileName(destArtifact));
+    LOG.info("Copying Artifact from {} to {}", artifactLocation, destFile);
     Files.copy(Locations.newInputSupplier(artifactLocation), destFile);
   }
 

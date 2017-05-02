@@ -18,6 +18,7 @@ package co.cask.cdap.examples.purchase;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -29,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.HttpURLConnection;
+import java.sql.Driver;
+import java.util.HashMap;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -60,6 +63,7 @@ public class PurchaseHistoryService extends AbstractService {
     public void initialize(HttpServiceContext context) throws Exception {
       try {
         // Load plugin in service
+        super.initialize(context);
         Class<?> classz = context.loadPluginClass("JDBCPlugin");
         // Following line is logged as - XXX Found class com.mysql.jdbc.Driver
         LOG.info("XXX Found class {}", classz.getName());
@@ -83,6 +87,34 @@ public class PurchaseHistoryService extends AbstractService {
                              String.format("No purchase history found for %s", customer), Charsets.UTF_8);
       } else {
         responder.sendJson(history);
+      }
+    }
+
+    /**
+     * Retrieves a specified customer's purchase history in a JSON format.
+     *
+     * @param plugin name to load
+     */
+    @Path("load/{plugin}")
+    @GET
+    public void load(HttpServiceRequest request, HttpServiceResponder responder,
+                        @PathParam("plugin") String plugin) {
+      try {
+        HttpServiceContext context = getContext();
+
+        if (context == null) {
+          responder.sendError(500, "Context is null");
+          return;
+        }
+
+        Driver driver = getContext().newPluginInstance("jdbc", plugin,
+                                                                        PluginProperties.builder().build());
+        LOG.info("Driver class Major version {} Minor Version {} JDBC Compliant {}", driver.getMajorVersion(),
+                 driver.getMinorVersion(), driver.jdbcCompliant());
+        responder.sendJson(200, String.format("Loaded plugin successfully %s", plugin));
+      } catch (Exception e) {
+        LOG.error("Exception while loading plugin", e);
+        responder.sendError(500, String.format("Error While loading plugin %s, %s", plugin, e));
       }
     }
   }
