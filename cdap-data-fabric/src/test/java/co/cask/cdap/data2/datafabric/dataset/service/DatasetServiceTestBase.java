@@ -91,7 +91,6 @@ import com.google.inject.Key;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Names;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
@@ -214,7 +213,7 @@ public abstract class DatasetServiceTestBase {
 
     Map<String, DatasetModule> defaultModules =
       injector.getInstance(Key.get(new TypeLiteral<Map<String, DatasetModule>>() { },
-                                   Names.named("defaultDatasetModules")));
+                                   Constants.Dataset.Manager.DefaultDatasetModules.class));
 
     ImmutableMap<String, DatasetModule> modules = ImmutableMap.<String, DatasetModule>builder()
       .putAll(defaultModules)
