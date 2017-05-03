@@ -22,16 +22,30 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
 
 /**
  * Serialization and deserializtion of Triggers as Json.
  *
- * All triggers inherit the {@link Trigger#className} field from the base class. Here we use that
- * during deserialization to determine the actual subclass, and then deserialize based on that.
+ * All triggers must be serialized by passing in the {@link Trigger} class as the type of the object.
+ * Without that, the "className" field will not be generated, and we use that during deserialization
+ * to determine the actual subclass, and then deserialize based on that.
+ *
+ * Note that when serializing an object that contains a Trigger, Gson calls serialize with Trigger as
+ * the class of the object, and this is exactly the behavior that is needed.
  */
-public class TriggerJsonDeserializer implements JsonDeserializer<Trigger> {
+public class TriggerJsonCodec implements JsonSerializer<Trigger>, JsonDeserializer<Trigger> {
+
+  @Override
+  public JsonElement serialize(Trigger src, Type typeOfSrc, JsonSerializationContext context) {
+    JsonObject object = (JsonObject) context.serialize(src, src.getClass());
+    object.add("className", new JsonPrimitive(src.getClass().getName()));
+    return object;
+  }
+
   @Override
   public Trigger deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
     throws JsonParseException {
@@ -50,39 +64,4 @@ public class TriggerJsonDeserializer implements JsonDeserializer<Trigger> {
       throw new JsonParseException("Unable to load class " + prim.getAsString(), e);
     }
   }
-
-  // this would serialize into { "class" : "<className>", "value": { ... <actual object> ... } }
-  // however, it does not seem to work, Gson goes into infinite loop with this approach.
-  /*
-  @Override
-  public Trigger deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-    throws JsonParseException {
-    if (json == null) {
-      return null;
-    }
-    if (!(json instanceof JsonObject)) {
-      throw new JsonParseException("Expected a JsonObject but found a " + json.getClass().getName());
-    }
-    JsonObject object = (JsonObject) json;
-    JsonPrimitive prim = object.getAsJsonPrimitive("class");
-    String className = prim.getAsString();
-    JsonElement elem = object.get("value");
-    try {
-      return context.deserialize(elem, Class.forName(className));
-    } catch (ClassNotFoundException e) {
-      throw new JsonParseException("Unable to load class " + className, e);
-    }
-  }
-
-  @Override
-  public JsonElement serialize(Trigger trigger, Type typeOfSrc, JsonSerializationContext context) {
-    if (trigger == null) {
-      return null;
-    }
-    JsonObject result = new JsonObject();
-    result.add("class", new JsonPrimitive(trigger.getClass().getName()));
-    result.add("value", context.serialize(trigger));
-    return result;
-  }
-  */
 }

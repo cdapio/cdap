@@ -30,6 +30,7 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.route.store.RouteStore;
+import co.cask.cdap.scheduler.CoreSchedulerService;
 import co.cask.http.HttpHandler;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -68,11 +69,12 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    MetricStore metricStore,
                                    SystemArtifactLoader systemArtifactLoader,
                                    PluginService pluginService,
-                                   RouteStore routeStore) {
+                                   RouteStore routeStore,
+                                   CoreSchedulerService coreSchedulerService) {
     super(cConf, sConf, discoveryService, schedulerService, notificationService, hostname, handlers,
           metricsCollectionService, programRuntimeService, applicationLifecycleService,
           programLifecycleService, streamCoordinatorClient, servicesNames, handlerHookNames, namespaceAdmin,
-          systemArtifactLoader, pluginService, null, routeStore);
+          systemArtifactLoader, pluginService, null, routeStore, coreSchedulerService);
     this.metricStore = metricStore;
   }
 

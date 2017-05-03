@@ -36,6 +36,7 @@ import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.route.store.RouteStore;
+import co.cask.cdap.scheduler.CoreSchedulerService;
 import co.cask.cdap.security.tools.KeyStores;
 import co.cask.cdap.security.tools.SSLHandlerFactory;
 import co.cask.http.HandlerHook;
@@ -86,6 +87,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final ProgramLifecycleService programLifecycleService;
   private final SystemArtifactLoader systemArtifactLoader;
   private final PluginService pluginService;
+  private final CoreSchedulerService coreSchedulerService;
   private final AppVersionUpgradeService appVersionUpgradeService;
   private final RouteStore routeStore;
   private final CConfiguration cConf;
@@ -118,7 +120,8 @@ public class AppFabricServer extends AbstractIdleService {
                          SystemArtifactLoader systemArtifactLoader,
                          PluginService pluginService,
                          @Nullable AppVersionUpgradeService appVersionUpgradeService,
-                         RouteStore routeStore) {
+                         RouteStore routeStore,
+                         CoreSchedulerService coreSchedulerService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
@@ -139,6 +142,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.routeStore = routeStore;
     this.defaultNamespaceEnsurer = new DefaultNamespaceEnsurer(namespaceAdmin);
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
+    this.coreSchedulerService =  coreSchedulerService;
   }
 
   /**
@@ -158,7 +162,8 @@ public class AppFabricServer extends AbstractIdleService {
         programRuntimeService.start(),
         streamCoordinatorClient.start(),
         programLifecycleService.start(),
-        pluginService.start()
+        pluginService.start(),
+        coreSchedulerService.start()
       )
     ).get();
 
@@ -266,6 +271,7 @@ public class AppFabricServer extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
+    coreSchedulerService.stopAndWait();
     routeStore.close();
     defaultNamespaceEnsurer.stopAndWait();
     httpService.stopAndWait();
