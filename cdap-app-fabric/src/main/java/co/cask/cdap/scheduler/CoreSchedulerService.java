@@ -49,7 +49,7 @@ import java.util.List;
 public class CoreSchedulerService extends AbstractIdleService implements Scheduler {
 
   private static final String STORE_TYPE_NAME = ProgramScheduleStoreDataset.class.getName();
-  private static final DatasetId STORE_DATASET_ID = NamespaceId.SYSTEM.dataset("schedule.store");
+  public static final DatasetId STORE_DATASET_ID = NamespaceId.SYSTEM.dataset("schedule.store");
 
   private final TransactionSystemClient txClient;
   private final DatasetFramework datasetFramework;
