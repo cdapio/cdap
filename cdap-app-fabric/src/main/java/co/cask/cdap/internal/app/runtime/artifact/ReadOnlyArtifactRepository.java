@@ -25,6 +25,7 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.artifact.ArtifactSortOrder;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
@@ -122,7 +123,7 @@ public class ReadOnlyArtifactRepository {
                                                                PluginSelector selector)
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     SortedMap<ArtifactDescriptor, PluginClass> pluginClasses = artifactStore.getPluginClasses(
-      namespace, artifactRange, pluginType, pluginName);
+      namespace, artifactRange, pluginType, pluginName, null, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
     return getPluginEntries(pluginClasses, selector, artifactRange.getNamespace().toId(), pluginType, pluginName);
   }
 
