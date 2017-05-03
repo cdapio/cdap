@@ -31,7 +31,11 @@
 
   <properties>
     <app.main.class>co.cask.cdap.ui.ConfigurationJsonTool</app.main.class>
-    <ui.pack.version>1</ui.pack.version>
+    <!-- 
+      Note: Do not update this while bumping versions for a CDAP release. 
+      Only update this when releasing a new UI pack.
+    -->
+    <ui.pack.version>4.1.1_p3</ui.pack.version>
   </properties>
 
   <dependencies>
