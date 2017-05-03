@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.schedule;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.Constraint;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.Trigger;
 import co.cask.cdap.proto.id.ProgramId;
+import com.google.common.base.Objects;
 
 import java.util.List;
 import java.util.Map;
@@ -70,4 +71,39 @@ public class ProgramSchedule {
   public List<Constraint> getConstraints() {
     return constraints;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ProgramSchedule schedule = (ProgramSchedule) o;
+    return Objects.equal(name, schedule.name) &&
+      Objects.equal(description, schedule.description) &&
+      Objects.equal(programId, schedule.programId) &&
+      Objects.equal(properties, schedule.properties) &&
+      Objects.equal(trigger, schedule.trigger) &&
+      Objects.equal(constraints, schedule.constraints);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(name, description, programId, properties, trigger, constraints);
+  }
+
+  @Override
+  public String toString() {
+    return "ProgramSchedule{" +
+      "name='" + name + '\'' +
+      ", description='" + description + '\'' +
+      ", programId=" + programId +
+      ", properties=" + properties +
+      ", trigger=" + trigger +
+      ", constraints=" + constraints +
+      '}';
+  }
 }
+
