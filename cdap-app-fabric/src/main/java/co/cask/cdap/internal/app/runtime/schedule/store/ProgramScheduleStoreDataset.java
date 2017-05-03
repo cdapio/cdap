@@ -32,7 +32,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.Trigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerJsonDeserializer;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerJsonCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
@@ -85,7 +85,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   static final String INDEX_COLUMNS = TRIGGER_KEY_COLUMN; // trigger key
 
   private static final Gson GSON =
-    new GsonBuilder().registerTypeAdapter(Trigger.class, new TriggerJsonDeserializer()).create();
+    new GsonBuilder().registerTypeAdapter(Trigger.class, new TriggerJsonCodec()).create();
 
   private final IndexedTable store;
 
@@ -130,8 +130,9 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * Removes a schedule from the store. Succeeds whether the schedule exists or not.
    *
    * @param scheduleId the schedule to delete
+   * @throws NotFoundException if the schedule does not exist in the store
    */
-  public void deleteSchedules(ScheduleId scheduleId) {
+  public void deleteSchedules(ScheduleId scheduleId) throws NotFoundException {
     deleteSchedules(Collections.singleton(scheduleId));
   }
 
@@ -139,10 +140,14 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * Removes one or more schedules from the store. Succeeds whether the schedules exist or not.
    *
    * @param scheduleIds the schedules to delete
+   * @throws NotFoundException if one of the schedules does not exist in the store
    */
-  public void deleteSchedules(Iterable<? extends ScheduleId> scheduleIds) {
+  public void deleteSchedules(Iterable<? extends ScheduleId> scheduleIds) throws NotFoundException {
     for (ScheduleId scheduleId : scheduleIds) {
       String scheduleKey = rowKeyForSchedule(scheduleId);
+      if (store.get(new Get(scheduleKey)).isEmpty()) {
+        throw new NotFoundException(scheduleId);
+      }
       store.delete(new Delete(scheduleKey));
       byte[] prefix = keyPrefixForTriggerScan(scheduleKey);
       try (Scanner scanner = store.scan(new Scan(prefix, Bytes.stopKeyForPrefix(prefix)))) {
@@ -176,7 +181,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    *
    * @param scheduleId the id of the schedule to read
    * @return the schedule from the store
-   * @throws NotFoundException is the schedule does not exist in the store
+   * @throws NotFoundException if the schedule does not exist in the store
    */
   public ProgramSchedule getSchedule(ScheduleId scheduleId) throws NotFoundException {
     Row row = store.get(new Get(rowKeyForSchedule(scheduleId)));
@@ -191,7 +196,6 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * Retrieve all schedules for a given application.
    *
    * @param appId the application for which to list the schedules.
-   *
    * @return a list of schedules for the application; never null
    */
   public List<ProgramSchedule> listSchedules(ApplicationId appId) {
@@ -202,7 +206,6 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * Retrieve all schedules for a given program.
    *
    * @param programId the program for which to list the schedules.
-   *
    * @return a list of schedules for the program; never null
    */
   public List<ProgramSchedule> listSchedules(ProgramId programId) {
@@ -213,7 +216,6 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * Find all schedules that have a trigger with a given trigger key.
    *
    * @param triggerKey the trigger key to look up
-   *
    * @return a list of all schedules that are triggered by this key; never null
    */
   public Collection<ProgramSchedule> findSchedules(String triggerKey) {
