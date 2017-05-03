@@ -4,6 +4,8 @@
 
 :section-numbering: true
 
+.. |su_hdfs| replace:: su hdfs
+
 .. _admin-installation-cloudera:
 
 ===================================
