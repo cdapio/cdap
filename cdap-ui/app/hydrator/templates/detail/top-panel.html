@@ -56,6 +56,12 @@
     </div>
 
     <div class="app-status-container">
+      <div class="btn"
+           ng-class="{'btn-select': TopPanelCtrl.viewSettings}"
+           ng-click="TopPanelCtrl.viewSettings = !TopPanelCtrl.viewSettings">
+        <span class="fa fa-sliders"></span>
+        <div class="button-label">Configure</div>
+      </div>
       <!-- IF ETL BATCH -->
       <div ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1">
         <div ng-if="['Starting', 'Succeeded', 'Failed', 'Stopped', 'Deployed'].indexOf(TopPanelCtrl.appStatus) !== -1">
@@ -65,7 +71,7 @@
                ng-disabled="TopPanelCtrl.appStatus === 'Starting'">
             <span ng-if="TopPanelCtrl.appStatus !== 'Starting'">
               <span class="fa fa-play text-success"></span>
-              <div class="button-label">Start</div>
+              <div class="button-label">Run</div>
             </span>
             <span ng-if="TopPanelCtrl.appStatus === 'Starting'">
               <span class="fa fa-spinner fa-spin"></span>
@@ -130,7 +136,7 @@
             ng-disabled="TopPanelCtrl.appStatus === 'Starting'">
             <span ng-if="TopPanelCtrl.appStatus !== 'Starting'">
               <span class="fa fa-play text-success"></span>
-              <div class="button-label">Start</div>
+              <div class="button-label">Run</div>
             </span>
             <span ng-if="TopPanelCtrl.appStatus === 'Starting'">
               <span class="fa fa-spinner fa-spin"></span>
@@ -192,13 +198,13 @@
                  ng-if="TopPanelCtrl.runPlayer.action === 'Starting'"
                  ng-disabled="!TopPanelCtrl.isValidToStartOrSchedule()"
                  ng-click="TopPanelCtrl.startPipeline()">
-              Start Now
+              Apply & Run
             </button>
             <button class="btn btn-blue"
                  ng-if="TopPanelCtrl.runPlayer.action === 'Scheduling'"
                  ng-disabled="!TopPanelCtrl.isValidToStartOrSchedule()"
                  ng-click="TopPanelCtrl.schedulePipeline()">
-              Schedule
+              Apply & Schedule
             </button>
           </div>
         </div>
@@ -218,12 +224,6 @@
          ng-click="TopPanelCtrl.viewSummary = !TopPanelCtrl.viewSummary">
       <span class="fa fa-line-chart"></span>
       <div class="button-label">Summary</div>
-    </div>
-    <div class="btn"
-         ng-class="{'btn-select': TopPanelCtrl.viewSettings}"
-         ng-click="TopPanelCtrl.viewSettings = !TopPanelCtrl.viewSettings">
-      <span class="fa fa-sliders"></span>
-      <div class="button-label">Settings</div>
     </div>
     <div class="btn"
          ui-sref="hydrator.create({data: TopPanelCtrl.cloneConfig, type: TopPanelCtrl.app.type, isClone: true})">

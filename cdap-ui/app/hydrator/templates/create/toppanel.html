@@ -85,7 +85,7 @@
          ng-click="HydratorPlusPlusTopPanelCtrl.showSettings()"
          ng-class="{'active': HydratorPlusPlusTopPanelCtrl.state.viewSettings}">
       <span class="fa fa-sliders"></span>
-      <div class="button-label">Settings</div>
+      <div class="button-label">Configure</div>
     </div>
     <div class="btn"
          ng-click="HydratorPlusPlusTopPanelCtrl.onImport()">
@@ -147,6 +147,12 @@
       <div class="button-label">Preview</div>
     </div>
     <div class="btn"
+         ng-click="HydratorPlusPlusTopPanelCtrl.showSettings()"
+         ng-class="{'active': HydratorPlusPlusTopPanelCtrl.state.viewSettings}">
+      <span class="fa fa-sliders"></span>
+      <div class="button-label">Configure</div>
+    </div>
+    <div class="btn"
          ng-class="{'btn-select': HydratorPlusPlusTopPanelCtrl.showRunTimeArguments}"
          ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.toggleRuntimeArguments()"
          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading">
@@ -155,7 +161,7 @@
       </span>
       <div class="button-label"
            ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && !HydratorPlusPlusTopPanelCtrl.previewRunning">
-           Start
+           Run
       </div>
       <span class="fa fa-stop text-danger"
             ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.previewRunning">
@@ -226,7 +232,7 @@
     <span class="preview-start-button">
       <button class="btn btn-blue"
         ng-click="HydratorPlusPlusTopPanelCtrl.onPreviewStart()">
-        Start Now
+        Run Now
       </button>
     </span>
   </div>
