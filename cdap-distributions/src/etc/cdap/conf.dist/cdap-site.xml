@@ -20,5 +20,21 @@
     Your site level configuration goes here 
   -->
 
+  <property>
+    <name>dataset.service.exec.threads</name>
+    <value>300</value>
+    <description>
+      Set size of executor ThreadPool in netty for Dataset Service.
+    </description>
+  </property>
+
+  <property>
+    <name>dataset.service.worker.threads</name>
+    <value>30</value>
+    <description>
+      Set size of worker ThreadPool in netty for Dataset Service.
+    </description>
+  </property>
+
 </configuration>
 

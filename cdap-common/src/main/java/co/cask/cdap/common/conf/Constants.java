@@ -339,9 +339,9 @@ public final class Constants {
 
       // Defaults
       public static final int DEFAULT_BACKLOG = 20000;
-      public static final int DEFAULT_EXEC_THREADS = 300;
+      public static final int DEFAULT_EXEC_THREADS = 10;
       public static final int DEFAULT_BOSS_THREADS = 1;
-      public static final int DEFAULT_WORKER_THREADS = 30;
+      public static final int DEFAULT_WORKER_THREADS = 4;
     }
 
     /**
