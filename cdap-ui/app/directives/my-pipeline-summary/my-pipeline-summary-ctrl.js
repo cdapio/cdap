@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -64,12 +64,6 @@ class MyPipelineSummaryCtrl {
     this.programId = params.programName;
     this.appId = params.app;
 
-    var nextRunTime = this.store.getNextRunTime();
-    if (nextRunTime && nextRunTime.length) {
-      this.nextRunTime = nextRunTime[0].time? nextRunTime[0].time: null;
-    } else {
-      this.nextRunTime = 'N/A';
-    }
     var averageRunTime = this.store.getStatistics().avgRunTime;
     // We get time as seconds from backend. So multiplying it by 1000 to give moment.js in milliseconds.
     if (averageRunTime) {
@@ -77,6 +71,14 @@ class MyPipelineSummaryCtrl {
     } else {
       this.avgRunTime = 'N/A';
     }
+
+    var nextRunTime = this.store.getNextRunTime();
+    if (nextRunTime && nextRunTime.length) {
+      this.nextRunTime = nextRunTime[0].time? nextRunTime[0].time: null;
+    } else {
+      this.nextRunTime = 'N/A';
+    }
+
   }
 }
 MyPipelineSummaryCtrl.$inject = ['$scope', 'moment', '$interval', 'GLOBALS'];

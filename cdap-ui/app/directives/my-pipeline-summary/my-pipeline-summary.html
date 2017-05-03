@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016 Cask Data, Inc.
+  Copyright © 2016-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -33,10 +33,17 @@
     <tbody>
       <tr>
         <td>{{MyPipelineSummaryCtrl.totalRunsCount}}</td>
-        <td>{{MyPipelineSummaryCtrl.avgRunTime}}</td>
         <td>
-          {{ MyPipelineSummaryCtrl.nextRunTime | amDateFormat:'h:mm:ss A'}}
-          <small> {{ MyPipelineSummaryCtrl.nextRunTime | amDateFormat:'MM/DD/YYYY'}}</small>
+            {{ MyPipelineSummaryCtrl.avgRunTime !== 'N/A' ? MyPipelineSummaryCtrl.avgRunTime : '—' }}
+        </td>
+        <td>
+          <span ng-if="MyPipelineSummaryCtrl.nextRunTime !== 'N/A'">
+            {{ MyPipelineSummaryCtrl.nextRunTime | amDateFormat:'h:mm:ss A'}}
+            <small> {{ MyPipelineSummaryCtrl.nextRunTime | amDateFormat:'MM/DD/YYYY' }}</small>
+          </span>
+          <span ng-if="MyPipelineSummaryCtrl.nextRunTime === 'N/A'">
+            —
+          </span>
         </td>
       </tr>
     </tbody>
