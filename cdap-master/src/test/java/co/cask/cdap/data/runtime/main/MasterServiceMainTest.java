@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.zookeeper.election.LeaderElectionInfoService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.internal.app.services.AppFabricServer;
@@ -25,7 +26,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.multibindings.MapBinder;
-import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.Assert;
@@ -56,15 +56,15 @@ public class MasterServiceMainTest {
     Guice.createInjector(new AbstractModule() {
       @Override
       protected void configure() {
-        MapBinder<String, String> mapBinder = MapBinder.newMapBinder(binder(), String.class, String.class,
-                                                                     Names.named("defaultDatasetModules"));
+        MapBinder<String, String> mapBinder = MapBinder.newMapBinder(
+          binder(), String.class, String.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
         mapBinder.addBinding("key1").toInstance("value1");
       }
     }, new AbstractModule() {
       @Override
       protected void configure() {
-        MapBinder<String, String> mapBinder = MapBinder.newMapBinder(binder(), String.class, String.class,
-                                                                     Names.named("defaultDatasetModules"));
+        MapBinder<String, String> mapBinder = MapBinder.newMapBinder(
+          binder(), String.class, String.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
         mapBinder.addBinding("key2").toInstance("value2");
       }
     });

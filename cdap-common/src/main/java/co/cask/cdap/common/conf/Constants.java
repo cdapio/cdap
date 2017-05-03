@@ -19,9 +19,15 @@ package co.cask.cdap.common.conf;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.BindingAnnotation;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Constants used by different systems are all defined here.
@@ -344,6 +350,14 @@ public final class Constants {
       public static final int DEFAULT_EXEC_THREADS = 10;
       public static final int DEFAULT_BOSS_THREADS = 1;
       public static final int DEFAULT_WORKER_THREADS = 4;
+
+      /**
+       * Annotation for binding default dataset modules for the dataset service
+       */
+      @Retention(RUNTIME)
+      @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
+      @BindingAnnotation
+      public @interface DefaultDatasetModules { }
     }
 
     /**
