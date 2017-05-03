@@ -102,6 +102,7 @@ import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.route.store.LocalRouteStore;
 import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.route.store.ZKRouteStore;
+import co.cask.cdap.scheduler.CoreSchedulerService;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.DefaultUGIProvider;
@@ -348,7 +349,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-
+      bind(CoreSchedulerService.class).in(Scopes.SINGLETON);
+      bind(co.cask.cdap.scheduler.Scheduler.class).to(CoreSchedulerService.class);
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
 
