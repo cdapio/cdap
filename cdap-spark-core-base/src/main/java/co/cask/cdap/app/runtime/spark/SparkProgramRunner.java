@@ -201,7 +201,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);
 
-      LOG.info("Starting Spark Job: {}", runtimeContext);
+      LOG.debug("Starting Spark Job. Context: {}", runtimeContext);
       if (SparkRuntimeContextConfig.isLocal(hConf) || UserGroupInformation.isSecurityEnabled()) {
         sparkRuntimeService.start();
       } else {

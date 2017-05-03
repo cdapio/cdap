@@ -190,7 +190,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     LoggingContextAccessor.setLoggingContext(loggingContext);
 
     // Using small size thread pool is enough, as the API we supported are just simple lookup.
-    httpService = NettyHttpService.builder()
+    httpService = NettyHttpService.builder(workflowRunId.getProgram() + "-workflow-driver")
       .setWorkerThreadPoolSize(2)
       .setExecThreadPoolSize(4)
       .setHost(hostname.getHostName())
@@ -558,7 +558,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void run() throws Exception {
-    LOG.info("Start workflow execution for {} with run id {}.", workflowSpec.getName(), workflowRunId.getRun());
+    LOG.info("Starting workflow execution for '{}' with Run id '{}'", workflowSpec.getName(), workflowRunId.getRun());
     LOG.trace("Workflow specification is {}", workflowSpec);
     basicWorkflowContext.setState(new ProgramState(ProgramStatus.RUNNING, null));
     executeAll(workflowSpec.getNodes().iterator(), program.getApplicationSpecification(),
@@ -566,7 +566,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     if (runningThread != null) {
       basicWorkflowContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
     }
-    LOG.info("Execution of workflow {} with run id {} is completed.", workflowSpec.getName(), workflowRunId.getRun());
+    LOG.info("Workflow '{}' with run id '{}' completed", workflowSpec.getName(), workflowRunId.getRun());
   }
 
   private void executeAll(Iterator<WorkflowNode> iterator, ApplicationSpecification appSpec,
@@ -579,7 +579,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       } catch (Throwable t) {
         Throwable rootCause = Throwables.getRootCause(t);
         if (rootCause instanceof InterruptedException) {
-          LOG.debug("Execution of workflow {} with run id {} is aborted.", workflowSpec.getName(),
+          LOG.debug("Workflow '{}' with run id '{}' aborted", workflowSpec.getName(),
                     workflowRunId.getRun());
           basicWorkflowContext.setState(new ProgramState(ProgramStatus.KILLED, rootCause.getMessage()));
           break;

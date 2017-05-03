@@ -75,15 +75,15 @@ final class WorkflowProgramController extends AbstractProgramController {
       public void running() {
         InetSocketAddress endpoint = driver.getServiceEndpoint();
         cancelAnnounce = serviceAnnouncer.announce(serviceName, endpoint.getPort());
-        LOG.info("Workflow service {} announced at {}", serviceName, endpoint);
+        LOG.debug("Workflow service {} announced at {}", serviceName, endpoint);
         started();
       }
 
       @Override
       public void terminated(Service.State from) {
-        LOG.info("Workflow service terminated from {}. Un-registering service {}.", from, serviceName);
+        LOG.debug("Workflow service terminated from {}. Un-registering service {}.", from, serviceName);
         cancelAnnounce.cancel();
-        LOG.info("Service {} unregistered.", serviceName);
+        LOG.debug("Service {} unregistered.", serviceName);
         if (getState() != State.STOPPING) {
           // service completed itself.
           complete();

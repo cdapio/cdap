@@ -90,7 +90,7 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
 
       @Override
       public void failed(Service.State from, Throwable failure) {
-        LOG.error("Program terminated with exception", failure);
+        LOG.error("{} Program '{}' failed.", getProgramRunId().getType(), getProgramRunId().getProgram(), failure);
         serviceStoppedLatch.countDown();
         error(failure);
       }
