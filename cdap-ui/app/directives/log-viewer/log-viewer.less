@@ -29,8 +29,8 @@
 @searchbar-placeholder-color: #787878;
 @searchbar-input-color: #9cbcfc;
 @timeline-buffer-color: #a6a6a6;
-@error-color: #f65454;
-@warning-color: #f6b354;
+@error-color: #ff1744;
+@warning-color: #ffa726;
 @selected-row-color: #e4e4e4;
 @application-primary-color: #43b82f;
 @application-secondary-color: #d15668;
@@ -328,6 +328,10 @@ my-log-viewer-preview {
           margin-bottom: 4px;
           margin-left: 9px;
         }
+        .log-stats-errors,
+        .log-stats-warnings {
+          cursor: pointer;
+        }
         .log-stats {
           font-size: @headerbar-font-size;
           margin-right: 15px;
@@ -457,6 +461,12 @@ my-log-viewer-preview {
           font-size: 14px;
           text-overflow: ellipsis;
           white-space: nowrap;
+          .display-level {
+            font-size: 12px;
+            font-weight: 400;
+          }
+          .warning { color: @warning-color; }
+          .error { color: @error-color; }
         }
       }
 

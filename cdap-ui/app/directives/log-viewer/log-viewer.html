@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016 Cask Data, Inc.
+  Copyright © 2016-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -30,11 +30,11 @@
           <div class="stat-count total-num">
             <span class="stat-count-number">{{LogViewer.totalCount}}</span></div>
       </div>
-      <div class="log-stats-errors log-stats text-center">
+      <div class="log-stats-errors log-stats text-center" ng-click="LogViewer.includeEvent($event, LogViewer.logEvents.ERROR)">
         <span class="stat-name log-stats-errors-text">Error</span>
           <div class="stat-count errors-num"><span class="stat-count-number">{{LogViewer.errorCount}}</span></div>
       </div>
-      <div class="log-stats-warnings log-stats text-center">
+      <div class="log-stats-warnings log-stats text-center" ng-click="LogViewer.includeEvent($event, LogViewer.logEvents.WARN)">
         <span class="stat-name log-stats-warnings-text">Warning</span>
         <div class="stat-count warnings-num">
           <span class="stat-count-number">{{LogViewer.warningCount}}</span>
@@ -172,8 +172,11 @@
             </td>
 
             <td class="level"
-                ng-if="!entry.stackTrace && LogViewer.configOptions.level && !LogViewer.hiddenColumns.level"
-                ng-bind="entry.log.logLevel"></td>
+                ng-if="!entry.stackTrace && LogViewer.configOptions.level && !LogViewer.hiddenColumns.level">
+                <span class="display-level" ng-class="{ warning: entry.log.logLevel === LogViewer.logEvents.WARN, error: entry.log.logLevel === LogViewer.logEvents.ERROR }"
+                      ng-bind="entry.log.logLevel">
+                </span>
+            </td>
 
             <td class="source"
                 ng-if="!entry.stackTrace && LogViewer.configOptions.source && !LogViewer.hiddenColumns.source"
