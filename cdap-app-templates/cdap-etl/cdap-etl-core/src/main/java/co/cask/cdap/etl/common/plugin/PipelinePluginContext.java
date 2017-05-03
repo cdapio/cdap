@@ -31,6 +31,8 @@ import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 
+import javax.annotation.Nullable;
+
 /**
  * Creates pipeline plugins. Any call made on the plugins will be wrapped so that the context classloader is set
  * to the plugin's classloader, the stage name will be injected into log messages, and metrics on time spent will
@@ -70,6 +72,12 @@ public class PipelinePluginContext implements PluginContext {
   public <T> T newPluginInstance(String pluginId,
                                  MacroEvaluator evaluator) throws InstantiationException, InvalidMacroException {
     return (T) wrapPlugin(pluginId, delegate.newPluginInstance(pluginId, evaluator));
+  }
+
+  @Nullable
+  @Override
+  public <T> T newPluginInstance(String pluginType, String pluginName, PluginProperties properties) {
+    return (T) wrapPlugin(pluginName, delegate.newPluginInstance(pluginType, pluginName, properties));
   }
 
   private Object wrapPlugin(String pluginId, Object plugin) {
