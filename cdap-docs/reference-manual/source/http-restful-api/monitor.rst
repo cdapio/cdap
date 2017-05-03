@@ -237,16 +237,16 @@ To retrieve details of the last restart attempt made for a particular service, i
 
   GET /v3/system/services/<service-id>/latest-restart
 
-.. highlight:: json-ellipsis
+.. highlight:: json
 
 The response body will contain a JSON-formatted status of the last restart attempt for that service::
 
   {
-      "instanceIds":[0],
-      "serviceName":"dataset.executor",
-      "startTimeInMs":1437070039984,
-      "endTimeInMs":1437070039992,
-      "status":"SUCCESS"
+      "instanceIds": [0],
+      "serviceName": "dataset.executor",
+      "startTimeInMs": 1437070039984,
+      "endTimeInMs": 1437070039992,
+      "status": "SUCCESS"
   }
 
 .. highlight:: console
@@ -276,7 +276,7 @@ The response body will contain a JSON-formatted status of the last restart attem
 
 Scaling System Services
 =======================
-In Distributed CDAP installations, the number of instances for CDAP system services
+In distributed CDAP installations, the number of instances for CDAP system services
 can be queried and changed by using these commands::
 
   GET /v3/system/services/<service-id>/instances
@@ -301,7 +301,7 @@ with the arguments as a JSON string in the body::
    * - ``quantity``
      - Number of instances to be used
 
-**Note:** In Standalone CDAP, trying to set the instances of system services will return a Status Code ``400 Bad Request``.
+**Note:** In standalone CDAP, trying to set the instances of system services will return a Status Code ``400 Bad Request``.
 
 .. rubric:: Examples
 .. list-table::
@@ -318,7 +318,7 @@ with the arguments as a JSON string in the body::
      - ``PUT /v3/system/services/metrics/instances``
        ``instances``
 
-       .. highlight:: json-ellipsis
+       .. highlight:: json
 
        with the arguments as a JSON string in the body::
 

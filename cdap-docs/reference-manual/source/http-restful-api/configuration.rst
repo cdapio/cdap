@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _http-restful-api-configuration:
 .. _http-restful-api-v3-configuration:
@@ -13,7 +13,7 @@ Configuration HTTP RESTful API
 .. highlight:: console
 
 Use the CDAP Configuration HTTP RESTful API to retrieve the version of CDAP and the
-configurations of CDAP and HBase. 
+configurations of CDAP and HBase.
 Configurations and their settings are described in the
 :ref:`Administration Manual: Installation <installation-index>` instructions.
 
@@ -39,8 +39,8 @@ CDAP Configurations
 
 To retrieve all the configurations used by CDAP, issue an HTTP GET request::
 
-  GET /v3/config/cdap?format=<type>
-  
+  GET /v3/config/cdap[?format=<type>]
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -48,27 +48,37 @@ To retrieve all the configurations used by CDAP, issue an HTTP GET request::
    * - Parameter
      - Description
    * - ``type``
-     - Format for returned type, either ``json`` (default) or ``xml``
+     - Optional format for returned type, either ``json`` (default) or ``xml``
 
-.. highlight:: json
+.. highlight:: json-ellipsis
 
-The response is a string in the specified format. For example, using the default JSON
-format, the output would be similar to (showing the first portion, reformatted to fit)::
+The response is a string with the property name, its value, and the source of that value,
+in the specified format. For example, using the default JSON format, the output would be
+similar to (showing the first portion, reformatted to fit)::
 
-  {
-    "security.enabled": "false",
-    "app.output.dir": "\/programs",
-    "router.server.port": "11015",
-    "metrics.kafka.partition.size": "10",
-    "data.tx.snapshot.local.dir": "data\/tx.snapshot",
-    "metrics.worker.threads": "10",
-    "security.server.maxthreads": "100",
-    "app.worker.threads": "10",
-    "security.token.digest.keylength": "128",
-    "metrics.memory.mb": "256",
-    "data.tx.server.io.threads": "2",
-
-   }
+  [
+      {
+          "name": "log.process.pipeline.logger.cache.expiration.ms",
+          "value": "300000",
+          "source": "cdap-default.xml"
+      },
+      {
+          "name": "http.service.exec.threads",
+          "value": "20",
+          "source": "cdap-default.xml"
+      },
+      {
+          "name": "flow.retry.policy.base.delay.ms",
+          "value": "100",
+          "source": "cdap-default.xml"
+      },
+      {
+          "name": "dashboard.ssl.bind.port",
+          "value": "9443",
+          "source": "cdap-default.xml"
+      },
+      ...
+  ]
 
 .. highlight:: console
 
@@ -79,8 +89,8 @@ HBase Configurations
 
 To retrieve all the configurations used by HBase, issue an HTTP GET request::
 
-  GET /v3/config/hbase?format=<type>
-  
+  GET /v3/config/hbase[?format=<type>]
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -88,7 +98,7 @@ To retrieve all the configurations used by HBase, issue an HTTP GET request::
    * - Parameter
      - Description
    * - ``type``
-     - Format for returned type, either ``json`` (default) or ``xml``
+     - Optional format for returned type, either ``json`` (default) or ``xml``
 
 .. highlight:: xml
 

@@ -18,7 +18,7 @@ Namespaces, their use and examples, are described in the :ref:`Developers' Manua
 <namespaces>`.
 
 The definition of namespace names supported by this API is described under
-:ref:`http-restful-api-namespace-characters`. 
+:ref:`http-restful-api-namespace-characters`.
 
 .. Base URL explanation
 .. --------------------
@@ -41,7 +41,7 @@ To create a namespace, submit an HTTP PUT request::
    * - ``namespace-id``
      - Namespace
 
-The ``namespace-id`` must be of the limited character set for namespaces, as 
+The ``namespace-id`` must be of the limited character set for namespaces, as
 described in the :ref:`Introduction <http-restful-api-namespace-characters>`.
 Properties for the namespace are passed in the JSON request body:
 
@@ -80,11 +80,15 @@ To list all of the existing namespaces, issue an HTTP GET request::
 
   GET /v3/namespaces
 
+.. highlight:: json
+
 This will return a JSON String map that lists each namespace with its name and description
 (reformatted to fit)::
 
-  [{"name":"default","description":"Default Namespace","config":{"scheduler.queue.name":""},
-   {"name":"demo_namespace","description":"My Demo Namespace","config":{"scheduler.queue.name":"demo"}]
+  [{"name": "default", "description": "Default Namespace", "config": {"scheduler.queue.name": ""}},
+   {"name": "demo_namespace", "description": "My Demo Namespace", "config": {"scheduler.queue.name": "demo"}}]
+
+.. highlight:: console
 
 Details of a Namespace
 ======================
@@ -93,10 +97,14 @@ For detailed information on a specific namespace, use::
 
   GET /v3/namespaces/<namespace-id>
 
+.. highlight:: json
+
 The information (*namespace*, *description*, *config*) will be returned in the body of the
 response, such as::
 
   {"name":"default","description":"Default Namespace","config":{"scheduler.queue.name":""}}
+
+.. highlight:: console
 
 .. list-table::
    :widths: 20 80
@@ -173,16 +181,16 @@ for when you `Create a Namespace`_.
    * - HTTP Method
      - ``PUT /v3/namespaces/dev/properties``::
 
-         { 
-           "description" : "Namespace for development of applications",
+         {
+           "description": "Namespace for development of applications",
            "config": {
              "scheduler.queue.name": "A",
            },
          }
-     
+
    * - Description
      - Set the *description* property of the Namespace named *dev*,
-       and set the *scheduler.queue.name* to *A*. 
+       and set the *scheduler.queue.name* to *A*.
 
 .. _http-restful-api-namespace-deleting:
 
@@ -207,13 +215,13 @@ To prevent accidental use of this method, it will only work if the ``cdap-site.x
 ``enable.unrecoverable.reset`` has been enabled.
 This method must be exercised with extreme caution, as there is no recovery from it.
 
-Both the CDAP CLI and the CDAP UI expose this function; they also require the parameter to be 
+Both the CDAP CLI and the CDAP UI expose this function; they also require the parameter to be
 enabled in order for their functions to work.
 
-In the case of the ``default`` namespace, after everything has been deleted, the ``default`` 
+In the case of the ``default`` namespace, after everything has been deleted, the ``default``
 namespace is retained, as it is always available in CDAP.
 
-To delete only the datasets of a namespace, there is a 
+To delete only the datasets of a namespace, there is a
 :ref:`specific dataset endpoint <http-restful-api-dataset-deleting-all>` for that.
 
 .. _http-restful-api-namespace-configs:
@@ -223,7 +231,7 @@ Namespace Configurations
 
 When creating or editing a namespace, namespace configurations can be supplied as part of the
 request body. These are in the form of a JSON string of configuration key-value pairs. Note
-that the values for these keys cannot be modified once the namespace has been created, with 
+that the values for these keys cannot be modified once the namespace has been created, with
 the exception of the property ``scheduler.queue.name``.
 
 .. rubric:: Namespace Configurations

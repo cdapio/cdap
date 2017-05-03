@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _http-restful-api-workflow:
 
@@ -29,11 +29,11 @@ Returned values can be specified for a particular scope, node or key.
 
 Obtaining a Token's Values
 --------------------------
-To retrieve the values that were put into the workflow token for a particular run, 
+To retrieve the values that were put into the workflow token for a particular run,
 use an HTTP GET request to the query's URL::
 
   GET /v3/namespaces/<namespace-id>/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}[/nodes/{node-id}]/token
-  
+
 The request can (optionally) contain a *node-id* to limit the request to a particular node in workflow.
 
 .. list-table::
@@ -52,9 +52,9 @@ The request can (optionally) contain a *node-id* to limit the request to a parti
      - UUID of the workflow run
    * - ``node-id``
      - Name of a node in the workflow (optional)
-     
+
 .. rubric:: Extending the Request
-   
+
 The request can be extended with query parameters:
 
 .. list-table::
@@ -72,13 +72,15 @@ The request can be extended with query parameters:
 
 .. rubric:: Comments
 
+.. highlight:: json-ellipsis
+
 If the query was successful, the body will contain the workflow token for a particular workflow
 run, such as::
 
   {
     "key1": [
         {
-          "nodeName": "node1", 
+          "nodeName": "node1",
           "value": "value1"
         }, {
           "nodeName": "node2",
@@ -92,6 +94,8 @@ run, such as::
         }
       ]
   }
+
+.. highlight:: console
 
 .. rubric:: HTTP Responses
 
@@ -119,7 +123,7 @@ run, such as::
    * - HTTP Response
      - ``{"key1":[{"nodeName": "node1", "value":"1"}]}``
    * - Description
-     - | Retrieves the token for a specific run of *PurchaseHistoryWorkflow* 
+     - | Retrieves the token for a specific run of *PurchaseHistoryWorkflow*
        |
 
    * - HTTP Request
@@ -137,7 +141,7 @@ run, such as::
    * - Description
      - | Retrieves the values for the key "key1" from the token in the scope *User* for a specific run of *MyWorkflow*
        |
-       
+
    * - HTTP Request
      - ``GET /v3/namespaces/default/apps/Purchase/workflows/MyWorkflow/runs/57c...75e2/nodes/MyExitNode/token?key=key1``
    * - HTTP Response
@@ -221,12 +225,14 @@ where
      - Name of the workflow
    * - ``run-id``
      - UUID of the workflow run
-     
+
 .. rubric:: Example
 
 The query::
 
   GET /v3/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/53280521-0ce3-11e6-873e-da6a50dd7318/nodes/state
+
+.. highlight:: json-ellipsis
 
 would return results similar to these, pretty-printed for display::
 
@@ -242,6 +248,8 @@ would return results similar to these, pretty-printed for display::
       }
   }
 
+.. highlight:: console
+
 
 Workflow Statistics
 ===================
@@ -251,12 +259,12 @@ in determining which jobs are responsible for delays or problems.
 
 Statistics of Successful Runs
 -----------------------------
-This request returns general statistics about all *successful* workflow runs in a particular time interval, 
+This request returns general statistics about all *successful* workflow runs in a particular time interval,
 with an analysis based on a series of (optionally) provided percentiles::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/statistics?
     start=<start-time>&end=<end-time>&percentile=<percentile-1>&percentile=<percentile-2>...
-    
+
 where
 
 .. list-table::
@@ -272,19 +280,19 @@ where
    * - ``workflow-id``
      - Name of the workflow
    * - ``start-time``
-     - Start time of runs (in seconds); if not provided, defaults to ``now`` (optional) 
+     - Start time of runs (in seconds); if not provided, defaults to ``now`` (optional)
    * - ``end-time``
-     - End time of runs (in seconds); if not provided, defaults to ``now-1d`` (optional) 
+     - End time of runs (in seconds); if not provided, defaults to ``now-1d`` (optional)
    * - ``percentile-1``
      - List of percentiles (each greater than zero and less than 100) to be used for generating statistics;
-       if not provided, defaults to 90 (optional) 
+       if not provided, defaults to 90 (optional)
 
 If the query was successful, the body will contain a JSON structure of statistics.
 
 **Note:** When specifying start and end times, in addition to giving an absolute timestamp
 in seconds, you can specify a relative time, using ``now`` minus an increment with units.
 Examples: ``now-<n>s``, ``now-<n>m``,  ``now-<n>h``, or ``now-<n>d``.
- 
+
 .. rubric:: HTTP Responses
 
 .. list-table::
@@ -306,9 +314,11 @@ The query::
 
   GET /v3/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/statistics?
     start=1441918778&end=1442005182&percentile=80&percentile=90&percentile=95&percentile=99
-  
+
+.. highlight:: json-ellipsis
+
 would return results similar to these, pretty-printed for display::
-    
+
   {
       "startTime": 0,
       "endTime": 1442008469,
@@ -356,7 +366,9 @@ would return results similar to these, pretty-printed for display::
           }
       }
   }
-  
+
+.. highlight:: console
+
 Comparing a Run to Runs Before and After
 ----------------------------------------
 This request returns a list of workflow metrics, based on a workflow run and a surrounding
@@ -365,7 +377,7 @@ each other::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/statistics?
     limit=<limit>&interval=<interval>
-    
+
 where
 
 .. list-table::
@@ -383,9 +395,9 @@ where
    * - ``run-id``
      - UUID of the workflow run
    * - ``limit``
-     - The number of the records to compare against (before and after) the run; if not provided, defaults to ``10`` (optional) 
+     - The number of the records to compare against (before and after) the run; if not provided, defaults to ``10`` (optional)
    * - ``interval``
-     - The time interval with which to space out the runs before and after, with units; if not provided, defaults to ``10s`` (optional) 
+     - The time interval with which to space out the runs before and after, with units; if not provided, defaults to ``10s`` (optional)
 
 If the query was successful, the body will contain a JSON structure of statistics.
 
@@ -409,8 +421,10 @@ If the query was successful, the body will contain a JSON structure of statistic
 The query::
 
   GET /v3/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/
-    1873ade0-58d9-11e5-b79d-8cae4cfd0e64/statistics?limit=10&interval=10s'  
-  
+    1873ade0-58d9-11e5-b79d-8cae4cfd0e64/statistics?limit=10&interval=10s'
+
+.. highlight:: json-ellipsis
+
 would return results similar to these, pretty-printed for display::
 
   {
@@ -455,13 +469,15 @@ would return results similar to these, pretty-printed for display::
       ]
   }
 
+.. highlight:: console
+
 Comparing Two Runs
 ------------------
 This request compares the metrics of two runs of a workflow::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/compare?
     other-run-id=<other-run-id>
-    
+
 where
 
 .. list-table::
@@ -507,7 +523,9 @@ Comparing two runs (``14b8710a-58cd-11e5-98ca-8cae4cfd0e64`` and ``e0cc5b98-58cc
 
   GET /v3/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/
     runs/14b8710a-58cd-11e5-98ca-8cae4cfd0e64/compare?other-run-id=e0cc5b98-58cc-11e5-84a1-8cae4cfd0e64
-  
+
+.. highlight:: json-ellipsis
+
 would return results similar to these, pretty-printed for display::
 
   [
@@ -544,3 +562,5 @@ would return results similar to these, pretty-printed for display::
           "programType": "Mapreduce"
       }
   ]
+
+.. highlight:: console

@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _http-restful-api-metadata:
 .. _http-restful-api-v3-metadata:
@@ -49,7 +49,7 @@ Annotating Properties
 To annotate user metadata properties for an application, dataset, or stream, submit an HTTP POST request::
 
   POST /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/properties
-  
+
 or, for a particular program of a specific application::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/properties
@@ -62,15 +62,19 @@ or, for a particular view of a stream::
 
   POST /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/properties
 
+.. highlight:: json-ellipsis
+
 with the metadata properties as a JSON string map of string-string pairs, passed in the
 request body::
 
   {
     "key1" : "value1",
     "key2" : "value2",
-    // ...
+    ...
   }
-  
+
+.. highlight:: console
+
 If the entity requested is found, new keys will be added and existing keys will be
 updated. Existing keys not in the properties map will not be deleted.
 
@@ -116,14 +120,14 @@ updated. Existing keys not in the properties map will not be deleted.
 
 **Note**: When using this API, properties can be added to the metadata of the specified entity
 only in the *user* scope.
-     
+
 
 Retrieving Properties
 ---------------------
 To retrieve user metadata properties for an application, dataset, or stream, submit an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/properties[?scope=<scope>]
-  
+
 or, for a particular program of a specific application::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/properties[?scope=<scope>]
@@ -136,14 +140,18 @@ or, for a particular view of a stream::
 
   GET /v3/namespaces/<namespace-id>/streams/<stream-id>/views/<view-id>/metadata/properties[?scope=<scope>]
 
+.. highlight:: json-ellipsis
+
 with the metadata properties returned as a JSON string map of string-string pairs, passed
 in the response body (pretty-printed)::
 
   {
     "key1" : "value1",
     "key2" : "value2",
-    // ...
+    ...
   }
+
+.. highlight:: console
 
 .. list-table::
    :widths: 20 80
@@ -195,7 +203,7 @@ To delete **all** user metadata properties for an application, dataset, or strea
 HTTP DELETE request::
 
   DELETE /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/properties
-  
+
 or, for all user metadata properties of a particular program of a specific application::
 
   DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/properties
@@ -212,7 +220,7 @@ To delete **a specific property** for an application, dataset, or stream, submit
 an HTTP DELETE request with the property key::
 
   DELETE /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/properties/<key>
-  
+
 or, for a particular property of a program of a specific application::
 
   DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/properties/<key>
@@ -280,7 +288,7 @@ Adding Tags
 To add user metadata tags for an application, dataset, or stream, submit an HTTP POST request::
 
   POST /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/tags
-  
+
 or, for a particular program of a specific application::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/tags
@@ -345,7 +353,7 @@ Retrieving Tags
 To retrieve user metadata tags for an application, dataset, or stream, submit an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/tags[?scope=<scope>
-  
+
 or, for a particular program of a specific application::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/tags[?scope=<scope>
@@ -404,15 +412,15 @@ with the metadata tags returned as a JSON string in the return body::
      - The properties requested were returned as a JSON string in the body of the response
    * - ``404 NOT FOUND``
      - The entity or program for which properties are being retrieved was not found
-     
-     
+
+
 Removing Tags
 -------------
 To delete all user metadata tags for an application, dataset, or stream, submit an
 HTTP DELETE request::
 
   DELETE /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/tags
-  
+
 or, for all user metadata tags of a particular program of a specific application::
 
   DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/tags
@@ -429,7 +437,7 @@ To delete a specific user metadata tag for an application, dataset, or stream, s
 an HTTP DELETE request with the tag::
 
   DELETE /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/tags/<tag>
-  
+
 or, for a particular user metadata tag of a program of a specific application::
 
   DELETE /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/metadata/tags/<tag>
@@ -521,7 +529,7 @@ metadata property or metadata tag, submit an HTTP GET request::
             - Option Value, Description, and Notes
           * - ``sort``
             - The sorting order for the ``results`` being returned. Default is to sort search results as a function of
-              relative weights for the specified search query. Specify the sort order as the field name followed by the 
+              relative weights for the specified search query. Specify the sort order as the field name followed by the
               sort order (either ``asc`` or ``desc``) with a space separating the two. Using URL-encoding, an example:
               ``&sort=creation-time+asc``. Note that this field is only applicable when the search query is ``*``.
           * - ``offset``
@@ -544,6 +552,8 @@ metadata property or metadata tag, submit an HTTP GET request::
               ``USER`` to include only user entities; set this to ``SYSTEM`` to include only system entities.
 
        Format for an option: ``&<option-name>=<option-value>``
+
+.. highlight:: json-ellipsis
 
 Entities that match the specified query and entity type are returned in the body of the response in JSON format::
 
@@ -618,6 +628,7 @@ Entities that match the specified query and entity type are returned in the body
     ]
   }
 
+.. highlight:: console
 
 .. rubric:: HTTP Responses
 
@@ -670,6 +681,8 @@ Since CDAP also annotates *system* metadata to entities by default as mentioned 
     - simple types: ``int``, ``long``, ``boolean``, ``float``, ``double``, ``bytes``, ``string``, ``enum``
     - complex types: ``array``, ``map``, ``record``, ``union``
 
+.. highlight:: json-ellipsis
+
 ::
 
   {
@@ -689,6 +702,8 @@ Since CDAP also annotates *system* metadata to entities by default as mentioned 
         }
      ]
   }
+
+.. highlight:: console
 
 With a schema as shown above, queries such as ``employee:record``, ``employeeName:string``, ``departments``,
 ``departments:array`` can be issued.
@@ -723,8 +738,8 @@ where:
      - Number of levels of lineage output to return. Defaults to 10. Determines how far back the provenance
        of the data in the lineage chain is calculated.
    * - ``collapse``
-     - An optional set of ``collapse`` types (any of ``access``, ``run``, or ``component``) by which to 
-       :ref:`collapse the lineage output <http-restful-api-metadata-lineage-collapse>`. 
+     - An optional set of ``collapse`` types (any of ``access``, ``run``, or ``component``) by which to
+       :ref:`collapse the lineage output <http-restful-api-metadata-lineage-collapse>`.
        By default, lineage output is not collapsed. Multiple collapse parameters are supported.
    * - ``rollup``
      - An optional ``rollup`` type to use to :ref:`rollup the lineage output
@@ -746,12 +761,14 @@ Lineage JSON consists of three main sections:
 
 - **Relations:** contains information on data accessed by programs.
   Access type can be *read*, *write*, *both*, or *unknown*.
-  It also contains the *runid* of the program that accessed the data, 
+  It also contains the *runid* of the program that accessed the data,
   and the specifics of any *component* of a program
   that also accessed the data. For example, a flowlet is a *component* of a flow.
 - **Data:** contains Datasets or Streams that were accessed by programs.
-- **Programs:** contains information on programs (flows, MapReduce, Spark, workers, etc.) 
+- **Programs:** contains information on programs (flows, MapReduce, Spark, workers, etc.)
   that accessed the data.
+
+.. highlight:: json-ellipsis
 
 Here is an example, pretty-printed::
 
@@ -825,6 +842,8 @@ Here is an example, pretty-printed::
       }
   }
 
+.. highlight:: console
+
 .. rubric:: HTTP Responses
 
 .. list-table::
@@ -846,238 +865,248 @@ Collapsing Lineage Output
 -------------------------
 Lineage output can be collapsed by ``access``, ``run``, or ``component``. Collapsing allows you to group all the lineage
 relations for the specified collapse-type together in the lineage output. Collapsing is useful when you do not want
-to differentiate between multiple lineage relations that only differ by the collapse-type. 
+to differentiate between multiple lineage relations that only differ by the collapse-type.
 
-For example, consider a program that wrote to a dataset in multiple runs over a specified time interval. 
-If you do not want to differentiate between lineage relations involving different runs of this program 
-(so you only want to know that a program accessed a data entity in a given time interval), you could provide 
-the query parameter ``collapse=run`` to the lineage API. This would collapse the lineage relations in the 
-output to group the multiple runs of the program together. 
+For example, consider a program that wrote to a dataset in multiple runs over a specified time interval.
+If you do not want to differentiate between lineage relations involving different runs of this program
+(so you only want to know that a program accessed a data entity in a given time interval), you could provide
+the query parameter ``collapse=run`` to the lineage API. This would collapse the lineage relations in the
+output to group the multiple runs of the program together.
 
-You can also collapse lineage relations by `access` (which will group together those relations that 
-differ only by access type) or by `component` (which will group together those that differ only by 
+You can also collapse lineage relations by `access` (which will group together those relations that
+differ only by access type) or by `component` (which will group together those that differ only by
 component together). The lineage HTTP RESTful API also allows you to use multiple `collapse`` parameters
 in the same query.
 
+.. highlight:: json-ellipsis
+
 Consider these relations from the output of a lineage API request::
 
-  "relations": [
-    {
-      "accesses": [
-        "read"
-      ],
-      "components": [
-        "collector"
-      ],
-      "data": "dataset.default.purchases",
-      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
-      "runs": [
-        "a442db61-0c2f-11e6-bc75-561602fdb525"
-      ]
-    },
-    {
-      "accesses": [
-        "read"
-      ],
-      "components": [
-        "reader"
-      ],
-      "data": "dataset.default.purchases",
-      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
-      "runs": [
-        "a442db61-0c2f-11e6-bc75-561602fdb525"
-      ]
-    },
-    {
-      "accesses": [
-        "read"
-      ],
-      "components": [
-        "collector"
-      ],
-      "data": "dataset.default.purchases",
-      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
-      "runs": [
-        "ae188ea2-0c2f-11e6-b499-561602fdb525"
-      ]
-    },
-    {
-      "accesses": [
-        "write"
-      ],
-      "components": [
-        "collector"
-      ],
-      "data": "dataset.default.purchases",
-      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
-      "runs": [
-        "a442db61-0c2f-11e6-bc75-561602fdb525"
-      ]
-    },
-    {
-      "accesses": [
-        "write"
-      ],
-      "components": [
-        "collector"
-      ],
-      "data": "dataset.default.purchase",
-      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
-      "runs": [
-        "ae188ea2-0c2f-11e6-b499-561602fdb525"
-      ]
-    }
-  ]
+  {
+    "relations": [
+      {
+        "accesses": [
+          "read"
+        ],
+        "components": [
+          "collector"
+        ],
+        "data": "dataset.default.purchases",
+        "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+        "runs": [
+          "a442db61-0c2f-11e6-bc75-561602fdb525"
+        ]
+      },
+      {
+        "accesses": [
+          "read"
+        ],
+        "components": [
+          "reader"
+        ],
+        "data": "dataset.default.purchases",
+        "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+        "runs": [
+          "a442db61-0c2f-11e6-bc75-561602fdb525"
+        ]
+      },
+      {
+        "accesses": [
+          "read"
+        ],
+        "components": [
+          "collector"
+        ],
+        "data": "dataset.default.purchases",
+        "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+        "runs": [
+          "ae188ea2-0c2f-11e6-b499-561602fdb525"
+        ]
+      },
+      {
+        "accesses": [
+          "write"
+        ],
+        "components": [
+          "collector"
+        ],
+        "data": "dataset.default.purchases",
+        "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+        "runs": [
+          "a442db61-0c2f-11e6-bc75-561602fdb525"
+        ]
+      },
+      {
+        "accesses": [
+          "write"
+        ],
+        "components": [
+          "collector"
+        ],
+        "data": "dataset.default.purchase",
+        "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+        "runs": [
+          "ae188ea2-0c2f-11e6-b499-561602fdb525"
+        ]
+      }
+    ]
+  }
 
 Collapsing the above by ``run`` would group the runs together as::
 
-  "relations": [
-    {
-      "accesses": [
-        "read"
-      ],
-      "components": [
-        "collector"
-      ],
-      "data": "dataset.default.purchases",
-      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
-      "runs": [
-        "a442db61-0c2f-11e6-bc75-561602fdb525",
-        "ae188ea2-0c2f-11e6-b499-561602fdb525"
-      ]
-    },
-    {
-      "accesses": [
-        "read"
-      ],
-      "components": [
-        "reader"
-      ],
-      "data": "dataset.default.purchases",
-      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
-      "runs": [
-        "a442db61-0c2f-11e6-bc75-561602fdb525"
-      ]
-    },
-    {
-      "accesses": [
-        "write"
-      ],
-      "components": [
-        "collector"
-      ],
-      "data": "dataset.default.purchases",
-      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
-      "runs": [
-        "a442db61-0c2f-11e6-bc75-561602fdb525",
-        "ae188ea2-0c2f-11e6-b499-561602fdb525"
-      ]
-    }
-  ]
+  {
+    "relations": [
+      {
+        "accesses": [
+          "read"
+        ],
+        "components": [
+          "collector"
+        ],
+        "data": "dataset.default.purchases",
+        "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+        "runs": [
+          "a442db61-0c2f-11e6-bc75-561602fdb525",
+          "ae188ea2-0c2f-11e6-b499-561602fdb525"
+        ]
+      },
+      {
+        "accesses": [
+          "read"
+        ],
+        "components": [
+          "reader"
+        ],
+        "data": "dataset.default.purchases",
+        "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+        "runs": [
+          "a442db61-0c2f-11e6-bc75-561602fdb525"
+        ]
+      },
+      {
+        "accesses": [
+          "write"
+        ],
+        "components": [
+          "collector"
+        ],
+        "data": "dataset.default.purchases",
+        "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+        "runs": [
+          "a442db61-0c2f-11e6-bc75-561602fdb525",
+          "ae188ea2-0c2f-11e6-b499-561602fdb525"
+        ]
+      }
+    ]
+  }
 
 Collapsing by ``access`` would produce::
 
-  "relations": [
-    {
-      "accesses": [
-        "read",
-        "write"
-      ],
-      "components": [
-        "collector"
-      ],
-      "data": "dataset.default.purchases",
-      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
-      "runs": [
-        "a442db61-0c2f-11e6-bc75-561602fdb525"
-      ]
-    },
-    {
-      "accesses": [
-        "read",
-        "write"
-      ],
-      "components": [
-        "collector"
-      ],
-      "data": "dataset.default.purchases",
-      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
-      "runs": [
-        "ae188ea2-0c2f-11e6-b499-561602fdb525"
-      ]
-    },
-    {
-      "accesses": [
-        "read"
-      ],
-      "components": [
-        "reader"
-      ],
-      "data": "dataset.default.purchases",
-      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
-      "runs": [
-        "a442db61-0c2f-11e6-bc75-561602fdb525"
-      ]
-    }
-  ]
+  {
+    "relations": [
+      {
+        "accesses": [
+          "read",
+          "write"
+        ],
+        "components": [
+          "collector"
+        ],
+        "data": "dataset.default.purchases",
+        "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+        "runs": [
+          "a442db61-0c2f-11e6-bc75-561602fdb525"
+        ]
+      },
+      {
+        "accesses": [
+          "read",
+          "write"
+        ],
+        "components": [
+          "collector"
+        ],
+        "data": "dataset.default.purchases",
+        "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+        "runs": [
+          "ae188ea2-0c2f-11e6-b499-561602fdb525"
+        ]
+      },
+      {
+        "accesses": [
+          "read"
+        ],
+        "components": [
+          "reader"
+        ],
+        "data": "dataset.default.purchases",
+        "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+        "runs": [
+          "a442db61-0c2f-11e6-bc75-561602fdb525"
+        ]
+      }
+    ]
+  }
 
 Similarly, collapsing by ``component`` will generate::
 
-  "relations": [
-    {
-      "accesses": [
-        "read"
-      ],
-      "components": [
-        "collector",
-        "reader"
-      ],
-      "data": "dataset.default.purchases",
-      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
-      "runs": [
-        "a442db61-0c2f-11e6-bc75-561602fdb525"
-      ]
-    },
-    {
-      "accesses": [
-        "read"
-      ],
-      "components": [
-        "collector"
-      ],
-      "data": "dataset.default.purchases",
-      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
-      "runs": [
-        "ae188ea2-0c2f-11e6-b499-561602fdb525"
-      ]
-    },
-    {
-      "accesses": [
-        "write"
-      ],
-      "components": [
-        "collector"
-      ],
-      "data": "dataset.default.purchases",
-      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
-      "runs": [
-        "a442db61-0c2f-11e6-bc75-561602fdb525"
-      ]
-    },
-    {
-      "accesses": [
-        "write"
-      ],
-      "components": [
-        "collector"
-      ],
-      "data": "dataset.default.purchase",
-      "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
-      "runs": [
-        "ae188ea2-0c2f-11e6-b499-561602fdb525"
-      ]
-    }
-  ]
+  {
+    "relations": [
+      {
+        "accesses": [
+          "read"
+        ],
+        "components": [
+          "collector",
+          "reader"
+        ],
+        "data": "dataset.default.purchases",
+        "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+        "runs": [
+          "a442db61-0c2f-11e6-bc75-561602fdb525"
+        ]
+      },
+      {
+        "accesses": [
+          "read"
+        ],
+        "components": [
+          "collector"
+        ],
+        "data": "dataset.default.purchases",
+        "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+        "runs": [
+          "ae188ea2-0c2f-11e6-b499-561602fdb525"
+        ]
+      },
+      {
+        "accesses": [
+          "write"
+        ],
+        "components": [
+          "collector"
+        ],
+        "data": "dataset.default.purchases",
+        "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+        "runs": [
+          "a442db61-0c2f-11e6-bc75-561602fdb525"
+        ]
+      },
+      {
+        "accesses": [
+          "write"
+        ],
+        "components": [
+          "collector"
+        ],
+        "data": "dataset.default.purchase",
+        "program": "mapreduce.default.PurchaseHistory.PurchaseFlow",
+        "runs": [
+          "ae188ea2-0c2f-11e6-b499-561602fdb525"
+        ]
+      }
+    ]
+  }
 
 .. _http-restful-api-metadata-lineage-rollup:
 
@@ -1085,7 +1114,7 @@ Rolling Up Lineage Output
 -------------------------
 Lineage rollup allows you to group multiple entities together for a condensed view in the lineage output.
 
-Currently, for the parameter ``rollup``, only the value ``workflow`` is supported, which allows programs 
+Currently, for the parameter ``rollup``, only the value ``workflow`` is supported, which allows programs
 to be grouped together into workflows if multiple programs are created as part of a workflow.
 
 For example, suppose you have a workflow that starts two programs to complete an associated task. If you do not want to
@@ -1222,6 +1251,8 @@ Rolling up the above using ``rollup=workflow`` would group the programs together
     },
   }
 
+.. highlight:: console
+
 .. _http-restful-api-metadata-run:
 
 Retrieving Metadata for a Program Run
@@ -1230,6 +1261,8 @@ At every run of a program, the metadata associated with the program, the applica
 and streams used by the program run are recorded. To retrieve the metadata for a program run, submit an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/metadata
+
+.. highlight:: json-ellipsis
 
 with the metadata returned as a JSON string in the return body::
 
@@ -1299,6 +1332,8 @@ with the metadata returned as a JSON string in the return body::
           ]
       }
   ]
+
+.. highlight:: console
 
 .. list-table::
    :widths: 20 80

@@ -66,7 +66,7 @@ and an optional application configuration. For example:
       "config": {
         "stream": "purchaseStream"
       },
-      "principal":"user/example.net@examplekdc.net",
+      "principal":"user/example.net@EXAMPLEKDC.NET",
       "app.deploy.update.schedules":"true"
     }
 
@@ -78,7 +78,7 @@ Optionally, you can specify a Kerberos principal with which the application shou
 If a Kerberos principal is specified, then all the streams and datasets created by the
 application will be created with the application's Kerberos principal.
 
-Optionally, you can set or reset the flag "app.deploy.update.schedules". If true,
+Optionally, you can set or reset the flag ``app.deploy.update.schedules``. If true,
 redeploying an application will modify any schedules that currently exist for the application;
 if false, redeploying an application does not create any new schedules and existing schedules
 are neither deleted nor updated.
@@ -105,7 +105,7 @@ config. For example, a request body of:
       "config": {
         "stream": "logStream";
       },
-      "principal":"user/example.net@examplekdc.net"
+      "principal":"user/example.net@EXAMPLEKDC.NET"
     }
 
 will update the ``purchaseWordCount`` application to use version |release| of the ``WordCount`` artifact,
@@ -149,12 +149,16 @@ The application's content is the body of the request::
 Invoke the same command to update an application to a newer version.
 However, be sure to stop all of its flows, Spark and MapReduce programs before updating the application.
 
+.. highlight:: java
+
 For an application that has a configuration class such as::
 
   public static class MyAppConfig extends Config {
     String streamName;
     String datasetName;
   }
+
+.. highlight:: console
 
 We can deploy it with this RESTful call::
 
@@ -219,7 +223,6 @@ Kerberos principal, if that was provided during the deployment.
    * - ``200 OK``
      - The event successfully called the method, and the body contains the results
 
-
 Listing Versions of an Application
 ----------------------------------
 
@@ -245,10 +248,13 @@ For example, depending on the versions deployed::
 
   GET /v3/namespaces/default/apps/HelloWorld/versions
 
+.. highlight:: json
+
 could return in a JSON array a list of the versions of the application::
 
   ["1.0.1", "2.0.3"]
 
+.. highlight:: console
 
 Delete an Application
 ---------------------
@@ -323,6 +329,8 @@ For example::
 
   GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow
 
+.. highlight:: json-ellipsis
+
 will return in a JSON array information about the *WhoFlow* of the application *HelloWorld*. The results will
 be similar to this (pretty-printed and portions deleted to fit)::
 
@@ -359,7 +367,7 @@ be similar to this (pretty-printed and portions deleted to fit)::
               ],
               "inputs": {
 
-                . . .
+                ...
 
               },
               "outputs": {
@@ -374,6 +382,8 @@ be similar to this (pretty-printed and portions deleted to fit)::
           }
       ]
   }
+
+.. highlight:: console
 
 .. _http-restful-api-lifecycle-start:
 
@@ -442,14 +452,14 @@ with a JSON array in the request body consisting of multiple JSON objects with t
 
    * - Parameter
      - Description
-   * - ``"appId"``
+   * - ``appId``
      - Name of the application being called
-   * - ``"programType"``
+   * - ``programType``
      - One of ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``
-   * - ``"programId"``
+   * - ``programId``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
        being started
-   * - ``"runtimeargs"``
+   * - ``runtimeargs``
      - Optional JSON object containing a string to string mapping of runtime arguments to start the program with
 
 The response will be a JSON array containing a JSON object for each object in the input.
@@ -461,16 +471,16 @@ Each JSON object will contain these parameters:
 
    * - Parameter
      - Description
-   * - ``"appId"``
+   * - ``appId``
      - Name of the application being called
-   * - ``"programType"``
+   * - ``programType``
      - One of ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``
-   * - ``"programId"``
+   * - ``programId``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
        being started
-   * - ``"statusCode"``
+   * - ``statusCode``
      - The status code from starting an individual JSON object
-   * - ``"error"``
+   * - ``error``
      - If an error, a description of why the program could not be started (for example,
        the specified program was not found)
 
@@ -483,13 +493,17 @@ For example::
       {"appId": "App2", "programType": "Flow", "programId": "Flow1", "runtimeargs": { "arg1":"val1" }}
     ]'
 
-will attempt to start the three programs listed in the request body. It will receive a response such as::
+.. highlight:: json-ellipsis
+
+will attempt to start the three programs listed in the request body. It will return a response such as::
 
   [
     {"appId": "App1", "programType": "Service", "programId": "Service1", "statusCode": 200},
     {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 200},
     {"appId": "App2", "programType":"Flow", "programId":"Flow1", "statusCode":404, "error": "App: App2 not found"}
   ]
+
+.. highlight:: console
 
 In this particular example, the service and mapreduce programs in the *App1* application were successfully
 started, and there was an error starting the last program because the *App2* application does not exist.
@@ -585,11 +599,11 @@ with a JSON array in the request body consisting of multiple JSON objects with t
 
    * - Parameter
      - Description
-   * - ``"appId"``
+   * - ``appId``
      - Name of the application being called
-   * - ``"programType"``
+   * - ``programType``
      - One of ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``
-   * - ``"programId"``
+   * - ``programId``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
        being stopped
 
@@ -602,16 +616,16 @@ Each JSON object will contain these parameters:
 
    * - Parameter
      - Description
-   * - ``"appId"``
+   * - ``appId``
      - Name of the application being called
-   * - ``"programType"``
+   * - ``programType``
      - One of ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``
-   * - ``"programId"``
+   * - ``programId``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
        being stopped
-   * - ``"statusCode"``
+   * - ``statusCode``
      - The status code from stopping an individual JSON object
-   * - ``"error"``
+   * - ``error``
      - If an error, a description of why the program could not be stopped (for example,
        the specified program was not found)
 
@@ -624,13 +638,17 @@ For example::
       {"appId": "App2", "programType": "Flow", "programId": "Flow1"}
     ]'
 
-will attempt to stop the three programs listed in the request body. It will receive a response such as::
+.. highlight:: json-ellipsis
+
+will attempt to stop the three programs listed in the request body. It will return a response such as::
 
   [
     {"appId": "App1", "programType": "Service", "programId": "Service1", "statusCode": 200},
     {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 200},
     {"appId": "App2", "programType":"Flow", "programId":"Flow1", "statusCode":404, "error": "App: App2 not found"}
   ]
+
+.. highlight:: console
 
 In this particular example, the service and mapreduce programs in the *App1* application were successfully
 stopped, and there was an error starting the last program because the *App2* application does not exist.
@@ -664,11 +682,15 @@ The response will be a JSON array with status of the program. For example, retri
 
   GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/status
 
+.. highlight:: json-ellipsis
+
 will return (pretty-printed) a response such as::
 
   {
       "status": "STOPPED"
   }
+
+.. highlight:: console
 
 .. _http-restful-api-lifecycle-status-multi:
 
@@ -687,11 +709,11 @@ with a JSON array in the request body consisting of multiple JSON objects with t
 
    * - Parameter
      - Description
-   * - ``"appId"``
+   * - ``appId``
      - Name of the application being called
-   * - ``"programType"``
+   * - ``programType``
      - One of ``flow``, ``mapreduce``, ``schedule``, ``service``, ``spark``, ``worker``, or ``workflow``
-   * - ``"programId"``
+   * - ``programId``
      - Name of the *flow*, *MapReduce*, *schedule*, *custom service*, *Spark*, *worker*, or *workflow*
        being called
 
@@ -704,12 +726,12 @@ of the underlying JSON objects:
 
    * - Parameter
      - Description
-   * - ``"status"``
+   * - ``status``
      - Maps to the status of an individual JSON object's queried program
        if the query is valid and the program was found
-   * - ``"statusCode"``
+   * - ``statusCode``
      - The status code from retrieving the status of an individual JSON object
-   * - ``"error"``
+   * - ``error``
      - If an error, a description of why the status was not retrieved (for example, the specified program was not found)
 
 The ``status`` and ``error`` fields are mutually exclusive meaning if there is an error,
@@ -723,19 +745,22 @@ For example::
       { "appId": "MyApp2", "programType": "service", "programId": "MyService" }
     ]
 
-will retrieve the status of two programs. It will receive a response such as::
+.. highlight:: json-ellipsis
+
+will retrieve the status of two programs. It will return a response such as::
 
   [
     { "appId":"MyApp", "programType":"flow", "programId":"MyFlow", "status":"RUNNING", "statusCode":200 },
     { "appId":"MyApp2", "programType":"service", "programId":"MyService", "error":"Program not found", "statusCode":404 }
   ]
 
+.. highlight:: console
 
 .. _http-restful-api-lifecycle-schedule:
 
 Schedule Lifecycle
 ==================
-Currently (CDAP v\|release|), schedules can only be created for :ref:`workflows
+Currently (as of CDAP |release|), schedules can only be created for :ref:`workflows
 <workflows>`. Future releases of CDAP will expand this to encompass other program types.
 
 .. _http-restful-api-lifecycle-schedule-add:
@@ -771,6 +796,8 @@ request with the version specified::
 The request body is a JSON object specifying the schedule to be created. Two different schedule
 types are currently supported for workflows: :ref:`time schedules <schedules-time>` and
 :ref:`stream-size schedules <schedules-stream-size>`:
+
+.. highlight:: json-ellipsis
 
 - To specify a :ref:`time schedule <schedules-time>`, use ``"scheduleType": "TIME"``, as
   shown in this example for scheduling the *PurchaseHistoryWorkflow* of the :ref:`Purchase
@@ -814,6 +841,8 @@ types are currently supported for workflows: :ref:`time schedules <schedules-tim
       "properties":{
       }
     }
+
+.. highlight:: console
 
 *Note:* For any schedule, the program must be for a workflow and the ``programType`` must be set to ``WORKLFLOW``.
 
@@ -861,6 +890,8 @@ request with the version specified::
 The request body is a JSON object specifying the schedule configurations to be updated, and follows
 the same form as documented in :ref:`http-restful-api-lifecycle-schedule-add`.
 
+.. highlight:: json-ellipsis
+
 - To update a :ref:`time schedule <schedules-time>`, use::
 
     {
@@ -891,6 +922,8 @@ the same form as documented in :ref:`http-restful-api-lifecycle-schedule-add`.
         "aKey": "aValue"
       }
     }
+
+.. highlight:: console
 
 Only changes to the schedule configurations are supported; changes to the schedule name,
 type, or the program associated with it are not allowed. If *any* properties are provided,
@@ -1191,13 +1224,13 @@ with a JSON array in the request body consisting of multiple JSON objects with t
 
    * - Parameter
      - Description
-   * - ``"appId"``
+   * - ``appId``
      - Name of the application being called
-   * - ``"programType"``
+   * - ``programType``
      - One of ``flow``, ``service``, or ``worker``
-   * - ``"programId"``
+   * - ``programId``
      - Name of the program (*flow*, *service*, or *worker*) being called
-   * - ``"runnableId"``
+   * - ``runnableId``
      - Name of the *flowlet*, only required if the program type is ``flow``
 
 The response will be the same JSON array as submitted with additional parameters for each
@@ -1209,13 +1242,13 @@ of the underlying JSON objects:
 
    * - Parameter
      - Description
-   * - ``"requested"``
+   * - ``requested``
      - Number of instances the user requested for the program defined by the individual JSON object's parameters
-   * - ``"provisioned"``
+   * - ``provisioned``
      - Number of instances that are actually running for the program defined by the individual JSON object's parameters.
-   * - ``"statusCode"``
+   * - ``statusCode``
      - The status code from retrieving the instance count of an individual JSON object
-   * - ``"error"``
+   * - ``error``
      - If an error, a description of why the status was not retrieved (for example, the
        specified program was not found, or the requested JSON object was missing a parameter)
 
@@ -1285,10 +1318,13 @@ with the arguments as a JSON string in the body::
 
     PUT /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances
 
+  .. highlight:: json-ellipsis
+
   with the arguments as a JSON string in the body::
 
     { "instances" : 2 }
 
+  .. highlight:: console
 
 Scaling Services
 ----------------
@@ -1332,9 +1368,13 @@ with the arguments as a JSON string in the body::
 
     PUT /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/instances
 
+  .. highlight:: json-ellipsis
+
   with the arguments as a JSON string in the body::
 
     { "instances" : 2 }
+
+  .. highlight:: console
 
 - Using ``curl`` and the :ref:`Standalone CDAP <standalone-index>`:
 

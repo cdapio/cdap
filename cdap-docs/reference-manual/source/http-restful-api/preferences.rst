@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _http-restful-api-preferences:
 .. _http-restful-api-v3-preferences:
@@ -82,9 +82,13 @@ To retrieve the current preferences, issue an HTTP GET request::
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/preferences
 
+.. highlight:: json
+
 This will return a JSON String map of the preferences::
 
-  {"key1":"value1", "key2":"value2"}
+  {"key1": "value1", "key2": "value2"}
+
+.. highlight:: console
 
 To retrieve the resolved preferences (collapsing preferences from higher levels into a single level), set the
 ``resolved`` query parameter to ``true``::
