@@ -21,8 +21,10 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
@@ -32,7 +34,9 @@ import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
+import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionFailureException;
@@ -40,6 +44,7 @@ import org.apache.tephra.TransactionSystemClient;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Service that implements the Scheduler interface. This implements the actual Scheduler using
@@ -47,34 +52,49 @@ import java.util.List;
  */
 public class CoreSchedulerService extends AbstractIdleService implements Scheduler {
 
-  private final DatasetFramework datasetFramework;
-  private final MultiThreadDatasetCache datasetCache;
   private final Transactional transactional;
-  private final NotificationSubscriberService notificationSubscriberService;
+  private final Service internalService;
 
   @Inject
-  CoreSchedulerService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                       NotificationSubscriberService notificationSubscriberService) {
-    this.datasetFramework = datasetFramework;
-    this.datasetCache = new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
-                                                    txClient, Schedulers.STORE_DATASET_ID.getParent(),
-                                                    Collections.<String, String>emptyMap(), null, null);
+  CoreSchedulerService(TransactionSystemClient txClient, final DatasetFramework datasetFramework,
+                       final NotificationSubscriberService notificationSubscriberService) {
+    DynamicDatasetCache datasetCache = new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
+                                                                   txClient, Schedulers.STORE_DATASET_ID.getParent(),
+                                                                   Collections.<String, String>emptyMap(), null, null);
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(datasetCache), RetryStrategies.retryOnConflict(10, 100L));
-    this.notificationSubscriberService = notificationSubscriberService;
+
+    // Use a retry on failure service to make it resilience to transient service unavailability during startup
+    this.internalService = new RetryOnStartFailureService(new Supplier<Service>() {
+      @Override
+      public Service get() {
+        return new AbstractIdleService() {
+          @Override
+          protected void startUp() throws Exception {
+            if (!datasetFramework.hasInstance(Schedulers.STORE_DATASET_ID)) {
+              datasetFramework.addInstance(Schedulers.STORE_TYPE_NAME,
+                                           Schedulers.STORE_DATASET_ID, DatasetProperties.EMPTY);
+            }
+            notificationSubscriberService.startAndWait();
+          }
+
+          @Override
+          protected void shutDown() throws Exception {
+            notificationSubscriberService.stopAndWait();
+          }
+        };
+      }
+    }, co.cask.cdap.common.service.RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS));
   }
 
   @Override
   protected void startUp() throws Exception {
-    if (!datasetFramework.hasInstance(Schedulers.STORE_DATASET_ID)) {
-      datasetFramework.addInstance(Schedulers.STORE_TYPE_NAME, Schedulers.STORE_DATASET_ID, DatasetProperties.EMPTY);
-    }
-    notificationSubscriberService.startAndWait();
+    internalService.startAndWait();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    notificationSubscriberService.stopAndWait();
+    internalService.stopAndWait();
   }
 
   @Override
