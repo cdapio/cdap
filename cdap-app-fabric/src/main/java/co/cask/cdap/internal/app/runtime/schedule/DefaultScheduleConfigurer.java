@@ -121,6 +121,8 @@ public class DefaultScheduleConfigurer implements ScheduleConfigurer {
 
   private void setSchedule(ScheduleCreationSpec schedule) {
     // setSchedule can not be called twice on the same configurer (semantics are not defined)
-    Preconditions.checkArgument(null == programSchedules.put(schedule.getName(), schedule));
+    Preconditions.checkArgument(null == programSchedules.put(schedule.getName(), schedule),
+                                "Attempted to configure a schedule with name '%s' that was already " +
+                                  "configured.", schedule.getName());
   }
 }

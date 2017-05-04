@@ -21,6 +21,9 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
+import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDatasetDefinition;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDefinition;
 
@@ -31,10 +34,11 @@ public class AppFabricDatasetModule implements DatasetModule {
 
   @Override
   public void register(DatasetDefinitionRegistry registry) {
+    DatasetDefinition<Table, ? extends DatasetAdmin> tableDef = registry.get(Table.class.getName());
+    registry.add(new JobQueueDatasetDefinition(JobQueueDataset.class.getName(), tableDef));
+
     DatasetDefinition<IndexedTable, ? extends DatasetAdmin> indexedTableDef =
       registry.get(IndexedTable.class.getName());
-
     registry.add(new ProgramScheduleStoreDefinition(ProgramScheduleStoreDataset.class.getName(), indexedTableDef));
-    registry.add(new ProgramScheduleStoreDefinition("programScheduleStoreDataset", indexedTableDef));
   }
 }
