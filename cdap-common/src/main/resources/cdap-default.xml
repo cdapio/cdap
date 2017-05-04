@@ -470,6 +470,14 @@
   </property>
 
   <property>
+    <name>time.event.topic</name>
+    <value>timeevent</value>
+    <description>
+      Topic name for publishing time events from time scheduler to the messaging system
+    </description>
+  </property>
+
+  <property>
     <name>workflow.token.max.size.mb</name>
     <value>30</value>
     <description>
@@ -1654,7 +1662,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic}</value>
+    <value>${audit.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic},${time.event.topic}</value>
     <description>
       A comma-separated list of topics that are always available in the
       system namespace. Multiple topics sharing the same prefix and
