@@ -57,7 +57,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Inject
   CoreSchedulerService(TransactionSystemClient txClient, final DatasetFramework datasetFramework,
-                       final NotificationSubscriberService notificationSubscriberService) {
+                       final NotificationSubscriberService notificationSubscriberService,
+                       final ConstraintCheckerService constraintCheckerService) {
     DynamicDatasetCache datasetCache = new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
                                                                    txClient, Schedulers.STORE_DATASET_ID.getParent(),
                                                                    Collections.<String, String>emptyMap(), null, null);
@@ -75,12 +76,14 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
               datasetFramework.addInstance(Schedulers.STORE_TYPE_NAME,
                                            Schedulers.STORE_DATASET_ID, DatasetProperties.EMPTY);
             }
+            constraintCheckerService.startAndWait();
             notificationSubscriberService.startAndWait();
           }
 
           @Override
           protected void shutDown() throws Exception {
             notificationSubscriberService.stopAndWait();
+            constraintCheckerService.stopAndWait();
           }
         };
       }

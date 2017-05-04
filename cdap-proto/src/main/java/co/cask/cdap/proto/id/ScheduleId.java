@@ -117,7 +117,7 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
   }
 
   @Override
-  protected Iterable<String> toIdParts() {
+  public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(Arrays.asList(namespace, application, version, schedule));
   }
 

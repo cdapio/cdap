@@ -16,10 +16,19 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ScheduleId;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+
+import java.io.IOException;
 
 /**
  * Common utility methods for scheduling.
@@ -27,18 +36,19 @@ import com.google.common.collect.ImmutableList;
 public class Schedulers {
   public static final String STORE_TYPE_NAME = ProgramScheduleStoreDataset.class.getName();
   public static final DatasetId STORE_DATASET_ID = NamespaceId.SYSTEM.dataset("schedule.store");
+  public static final DatasetId JOB_QUEUE_DATASET_ID = NamespaceId.SYSTEM.dataset("job.queue");
 
-  public static final String triggerKeyForPartition(DatasetId datasetId) {
+  public static String triggerKeyForPartition(DatasetId datasetId) {
     return "partition:" + datasetId.getNamespace() + '.' + datasetId.getDataset();
   }
 
-  /**
-   * This replicates what {@link ScheduleId#toIdParts()} does, but that method is protected.
-   */
-  public static final Iterable<String> toIdParts(ScheduleId scheduleId) {
-    return ImmutableList.of(scheduleId.getNamespace(),
-                            scheduleId.getApplication(),
-                            scheduleId.getVersion(),
-                            scheduleId.getSchedule());
+  public static JobQueueDataset getJobQueue(DatasetContext context, DatasetFramework dsFramework) {
+    try {
+      return DatasetsUtil.getOrCreateDataset(context, dsFramework, Schedulers.JOB_QUEUE_DATASET_ID,
+                                             JobQueueDataset.class.getName(), DatasetProperties.EMPTY);
+    } catch (DatasetManagementException | IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
+
 }

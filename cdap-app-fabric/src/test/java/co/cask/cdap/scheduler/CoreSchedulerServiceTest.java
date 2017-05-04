@@ -216,6 +216,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     final ProgramId workflow2 = APP_ID.program(ProgramType.WORKFLOW, AppWithMultipleWorkflows.AnotherWorkflow.NAME);
     AppRequest<? extends Config> appRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
+    // TODO: doesn't have to be deployed from artifact (separate, 2-step process)
     deploy(APP_ID, appRequest);
     Assert.assertEquals(0, store.getRuns(workflow1, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).size());
     Assert.assertEquals(0, store.getRuns(workflow2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).size());
