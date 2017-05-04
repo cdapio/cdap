@@ -20,6 +20,7 @@ const PREFIX = 'features.DataPrep.Directives.ExtractFields';
 import T from 'i18n-react';
 import UsingPatternsModal from 'components/DataPrep/Directives/ExtractFields/UsingPatternsModal';
 import UsingDelimiterModal from 'components/DataPrep/Directives/ExtractFields/UsingDelimiterModal';
+import CutMenuItem from 'components/DataPrep/Directives/ExtractFields/UsingPositions/CutMenuItem';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
@@ -59,6 +60,15 @@ export default class ExtractFields extends Component {
             className="option"
           >
             {T.translate(`${PREFIX}.delimitersSubmenuTitle`)}
+          </div>
+        </div>
+        <div className="extract-field-options">
+          <div
+            onClick={this.parseUsingPosition}>
+            <CutMenuItem
+              column={Array.isArray(this.props.column) ? this.props.column[0] : this.props.column}
+              onComplete={this.props.onComplete}
+            />
           </div>
         </div>
       </div>

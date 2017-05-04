@@ -25,6 +25,14 @@ $header-bg-color: #eeeeee;
     padding: 0;
     overflow: auto;
     height: calc(100% - 30px);
+    position: relative;
+
+    &.column-highlighted {
+      overflow: hidden;
+      > .table.table-bordered {
+        display: none;
+      }
+    }
 
     &.empty { padding-top: 15px; }
 
@@ -39,6 +47,13 @@ $header-bg-color: #eeeeee;
 
       td {
         border: 1px solid $border-and-selected-color;
+      }
+      tbody {
+        tr {
+          td {
+            white-space: nowrap;
+          }
+        }
       }
 
       th {

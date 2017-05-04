@@ -344,6 +344,13 @@ features:
         inputLabel: Name New Column
         placeholder: Destination Column
         title: Copy Column
+      CutDirective:
+        cancelBtnLabel: Exit 'Extract' mode
+        extractDescription: Extract characters *_{range}_* from this column to a new column
+        inputLabel: Name of destination column
+        popoverTitle: Extract Using Position
+      CutMenuItem:
+        menuLabel: Using Positions
       Drop:
         title:
           plural: Delete Selected Columns
@@ -356,6 +363,7 @@ features:
         delimitersSubmenuTitle: Using Delimiters
         extractBtnLabel: Extract
         patternSubmenuTitle: Using Patterns
+        positionsSubmenuTitle: Using Positions
         title: Extract Fields
         UsingPatterns:
           creditCardPattern: Credit Cards

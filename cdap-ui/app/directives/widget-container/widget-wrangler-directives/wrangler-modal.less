@@ -87,6 +87,14 @@ body.state-hydrator-create.state-hydrator {
             }
           }
         }
+        #cut-directive {
+          z-index: 1;
+          .table.table-bordered {
+            tr {
+              background-color: transparent;
+            }
+          }
+        }
       }
     }
   }
@@ -107,10 +115,16 @@ body.state-hydrator-create.state-hydrator {
       font-size: 14px;
     }
   }
-  .popover.bs-tether-element {
+  .popover.bs-tether-element,
+  .highlight-popover-element {
     display: block;
     z-index: 1060;
     min-width: initial;
+  }
+  .popover {
+    &[class*="highlight-popover-out-of-bounds-"] {
+      display: none;
+    }
   }
   .dataprep-columns-action-dropdown {
     .action-item {
