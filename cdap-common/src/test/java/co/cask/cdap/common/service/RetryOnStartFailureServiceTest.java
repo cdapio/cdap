@@ -24,7 +24,10 @@ import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.MDC;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -91,6 +94,38 @@ public class RetryOnStartFailureServiceTest {
     } catch (Exception e) {
       Assert.assertEquals("Intentional failure to shutdown", Throwables.getRootCause(e).getMessage());
     }
+  }
+
+  @Test
+  public void testLoggingContext() {
+    // This test logging context set before the service started is propagated into the service
+    final Map<String, String> context = Collections.singletonMap("key", "value");
+
+    // Create the service before setting the context.
+    Service service = new RetryOnStartFailureService(new Supplier<Service>() {
+      @Override
+      public Service get() {
+        return new AbstractIdleService() {
+
+          @Override
+          protected void startUp() throws Exception {
+            Assert.assertEquals(context, MDC.getCopyOfContextMap());
+          }
+
+          @Override
+          protected void shutDown() throws Exception {
+            Assert.assertEquals(context, MDC.getCopyOfContextMap());
+          }
+        };
+      }
+    }, RetryStrategies.noRetry());
+
+    // Set the MDC context
+    MDC.setContextMap(context);
+
+    // Start and stop shouldn't throw
+    service.startAndWait();
+    service.stopAndWait();
   }
 
   /**
