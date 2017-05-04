@@ -67,9 +67,23 @@ angular.module(PKG.name + '.feature.hydrator')
              *  Since the parent block is already a poll, we don't need another poll for
              *  the values of each metrics.
              **/
+            var payload = {
+              metric: {
+                context: params,
+                names: metricQuery,
+                startTime: '0',
+                endTime: 'now',
+                resolution: '2147483647s'
+              }
+            };
             dataSrc.request({
               method: 'POST',
-              _cdapPath: '/metrics/query?' + metricParams + '&metric=' + metricQuery.join('&metric=')
+              _cdapPath: '/metrics/query',
+              body: MyMetricsQueryHelper.constructQuery(
+                'qid',
+                payload.metric.context,
+                payload.metric
+              )
             }).then(function(metrics) {
               dispatcher.dispatch('onMetricsFetch', metrics);
             });
