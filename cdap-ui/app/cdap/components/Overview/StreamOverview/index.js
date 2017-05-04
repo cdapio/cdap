@@ -26,7 +26,6 @@ import {MyStreamApi} from 'api/stream';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';
 import FastActionToMessage from 'services/fast-action-message-helper';
-import {createRouterPath} from 'react-router/LocationUtils';
 import capitalize from 'lodash/capitalize';
 
 export default class StreamOverview extends Component {
@@ -145,7 +144,7 @@ export default class StreamOverview extends Component {
             state: {
               entityDetail: this.state.entityDetail,
               entityMetadata: this.props.entity,
-              previousPathname: createRouterPath(location).replace(/\/cdap\//g, '/')
+              previousPathname: (location.pathname + location.search).replace(/\/cdap\//g, '/')
             }
           }}
           onClose={this.props.onClose}

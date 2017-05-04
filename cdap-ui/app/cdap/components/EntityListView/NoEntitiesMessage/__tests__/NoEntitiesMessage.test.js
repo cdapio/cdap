@@ -24,9 +24,12 @@ const filterEmptyMessagePath = 'features.EntityListView.emptyMessage.filter';
 const searchEmptyMessagePath = 'features.EntityListView.emptyMessage.search';
 let noEntitiesMessage;
 
-let filtersAreApplied = jest.fn();
+let filtersAreApplied;
 
 describe('NoEntitiesMessage Unit tests - ', () => {
+  beforeEach(() => {
+    filtersAreApplied = jest.fn();
+  });
   it('Should render', () => {
     filtersAreApplied.mockReturnValueOnce(false);
     noEntitiesMessage = mount(
@@ -45,7 +48,7 @@ describe('NoEntitiesMessage Unit tests - ', () => {
     filtersAreApplied.mockReturnValueOnce(false);
     noEntitiesMessage = mount(
       <NoEntitiesMessage
-        searchText=''
+        searchText='*'
         filtersAreApplied={filtersAreApplied}
       />
     );
@@ -59,7 +62,7 @@ describe('NoEntitiesMessage Unit tests - ', () => {
     filtersAreApplied.mockReturnValueOnce(true);
     noEntitiesMessage = mount(
       <NoEntitiesMessage
-        searchText=''
+        searchText='*'
         filtersAreApplied={filtersAreApplied}
       />
     );

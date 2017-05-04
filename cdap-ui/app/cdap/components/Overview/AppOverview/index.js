@@ -26,7 +26,6 @@ import {MyMetadataApi} from 'api/metadata';
 import shortid from 'shortid';
 import T from 'i18n-react';
 import FastActionToMessage from 'services/fast-action-message-helper';
-import {createRouterPath} from 'react-router/LocationUtils';
 import capitalize from 'lodash/capitalize';
 
 export default class AppOverview extends Component {
@@ -56,14 +55,15 @@ export default class AppOverview extends Component {
       loading: true
     });
     let namespace = NamespaceStore.getState().selectedNamespace;
+    let entityId = objectQuery(this.props, 'entity', 'id');
     const metadataParams = {
       namespace,
       entityType: 'apps',
-      entityId: this.props.entity.id,
+      entityId,
       scope: 'SYSTEM'
     };
 
-    if (objectQuery(this.props, 'entity', 'id')) {
+    if (entityId) {
       MyMetadataApi
         .getProperties(metadataParams)
         .combineLatest(
@@ -163,7 +163,7 @@ export default class AppOverview extends Component {
             state: {
               entityDetail: this.state.entityDetail,
               entityMetadata: this.props.entity,
-              previousPathname: createRouterPath(location).replace(/\/cdap\//g, '/')
+              previousPathname: (location.pathname + location.search).replace(/\/cdap\//g, '/')
             }
           }}
           entityType={entityType}

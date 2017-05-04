@@ -17,9 +17,7 @@
 import React, { Component } from 'react';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
-import Match from 'react-router/Match';
-import Redirect from 'react-router/Redirect';
-import Link from 'react-router/Link';
+import {Route, Link, Redirect} from 'react-router-dom';
 import FileBrowser from 'components/FileBrowser';
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
@@ -130,21 +128,21 @@ export default class DataPrepConnections extends Component {
         <div className={classnames('connections-content', {
           'expanded': !this.state.sidePanelExpanded
         })}>
-          <Match pattern={`${BASEPATH}/browser`}
-            render={({pathname, location}) => {
+          <Route path={`${BASEPATH}/browser`}
+            render={({match, location}) => {
               return (
                 <FileBrowser
-                  pathname={pathname}
+                  match={match}
                   location={location}
                   toggle={this.toggleSidePanel}
                 />
               );
             }}
           />
-          <Match pattern={`${BASEPATH}/upload`} component={UploadPlaceholder} />
+          <Route path={`${BASEPATH}/upload`} component={UploadPlaceholder} />
         </div>
 
-        <Match exactly pattern={`${BASEPATH}`} component={RouteToHDFS} />
+        <Route exactly path={`${BASEPATH}`} component={RouteToHDFS} />
       </div>
     );
   }

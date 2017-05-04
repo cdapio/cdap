@@ -19,7 +19,7 @@ import React, {Component} from 'react';
 import TabConfig from './TabConfig';
 import ConfigurableTab from '../ConfigurableTab';
 
-import {MyMarketApi} from '../../api/market';
+import {MyMarketApi} from 'api/market';
 import MarketAction from './action/market-action.js';
 import find from 'lodash/find';
 import MarketStore from 'components/Market/store/market-store.js';

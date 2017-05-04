@@ -233,6 +233,10 @@ export default class Overview extends Component {
         );
       }
 
+      if (Tag === 'div') {
+        return (<div></div>);
+      }
+
       return React.createElement(
         Tag,
         {

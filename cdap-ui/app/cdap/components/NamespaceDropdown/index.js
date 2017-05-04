@@ -25,7 +25,7 @@ import {MySearchApi} from 'api/search';
 import isObject from 'lodash/isObject';
 import sortBy from 'lodash/sortBy';
 import T from 'i18n-react';
-import {Link} from 'react-router';
+import {Link} from 'react-router-dom';
 const shortid = require('shortid');
 import globalEvents from 'services/global-events';
 import ee from 'event-emitter';

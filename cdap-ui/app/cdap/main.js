@@ -31,10 +31,8 @@ import Footer from 'components/Footer';
 import SplashScreen from 'components/SplashScreen';
 import ConnectionExample from 'components/ConnectionExample';
 import cookie from 'react-cookie';
-import Router from 'react-router/BrowserRouter';
+import {BrowserRouter, Route, Switch} from 'react-router-dom';
 import T from 'i18n-react';
-import Match from 'react-router/Match';
-import Miss from 'react-router/Miss';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import RouteToNamespace from 'components/RouteToNamespace';
@@ -96,7 +94,7 @@ class CDAP extends Component {
   render() {
 
     return (
-      <Router basename="/cdap" history={history}>
+      <BrowserRouter basename="/cdap">
         <div className="cdap-container">
           <Helmet
             title={T.translate('features.EntityListView.Title')}
@@ -110,27 +108,28 @@ class CDAP extends Component {
               <AuthorizationErrorMessage />
             :
               <div className="container-fluid">
-                <Match exactly pattern="/" component={RouteToNamespace} />
-                <Match exactly pattern="/notfound" component={Page404} />
-                <Match exactly pattern="/administration" component={Administration} />
-                <Match exactly pattern="/ns" component={RouteToNamespace} />
-                <Match pattern="/ns/:namespace" history={history} component={Home} />
-                <Match exactly pattern="/ns/:namespace/dashboard" component={Dashboard} />
-                <Match pattern="/socket-example" component={ConnectionExample} />
-                <Match pattern="/schemaeditor" component={SchemaEditor} />
-                <Miss component={Page404} />
+                <Switch>
+                  <Route exact path="/" component={RouteToNamespace} />
+                  <Route exact path="/notfound" component={Page404} />
+                  <Route exact path="/administration" component={Administration} />
+                  <Route exact path="/ns" component={RouteToNamespace} />
+                  <Route path="/ns/:namespace" history={history} component={Home} />
+                  <Route exact path="/ns/:namespace/dashboard" component={Dashboard} />
+                  <Route path="/socket-example" component={ConnectionExample} />
+                  <Route path="/schemaeditor" component={SchemaEditor} />
+                  <Route component={Page404} />
+                </Switch>
               </div>
           }
           <Footer version={this.state.version} />
         </div>
-      </Router>
+      </BrowserRouter>
     );
   }
 }
 
 CDAP.propTypes = {
-  children: React.PropTypes.node,
-  params: PropTypes.object
+  children: PropTypes.node
 };
 
 ReactDOM.render(

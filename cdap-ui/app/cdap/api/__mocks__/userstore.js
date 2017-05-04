@@ -14,13 +14,23 @@
  * the License.
 */
 
+import Rx from 'rx';
 const MyUserStoreApi = {};
 
-MyUserStoreApi.get  = function() {
+function setUserStore(__userStore) {
+  this.__userStore = __userStore;
+}
 
+MyUserStoreApi.get  = function() {
+  let subject = new Rx.Subject();
+  setTimeout(() => {
+    subject.onNext(this.__userStore);
+  });
+  return subject;
 };
 MyUserStoreApi.set  = function() {
 
 };
 
-module.exports = MyUserStoreApi;
+MyUserStoreApi.__setUserStore = setUserStore.bind(MyUserStoreApi);
+export default MyUserStoreApi;

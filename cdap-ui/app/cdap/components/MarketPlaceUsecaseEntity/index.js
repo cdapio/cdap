@@ -14,7 +14,7 @@
  * the License.
  */
 import React, {PropTypes, Component} from 'react';
-import {MyMarketApi} from '../../api/market';
+import {MyMarketApi} from 'api/market';
 import Card from 'components/Card';
 import moment from 'moment';
 require('./MarketPlaceUsecaseEntity.scss');

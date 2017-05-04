@@ -62,22 +62,15 @@ export default class ProgramsTab extends Component {
         .entity
         .programs
         .forEach(program => {
+          let params = {
+            namespace,
+            appId: program.app,
+            programType: convertProgramToApi(program.type),
+            programId: program.id
+          };
           let subscription =  MyProgramApi
-            .pollRuns({
-              namespace,
-              appId: program.app,
-              programType: convertProgramToApi(program.type),
-              programId: program.id
-            })
-            .combineLatest(
-              MyProgramApi
-                .pollStatus({
-                  namespace,
-                  appId: program.app,
-                  programType: convertProgramToApi(program.type),
-                  programId: program.id
-                })
-            )
+            .pollRuns(params)
+            .combineLatest(MyProgramApi.pollStatus(params))
             .subscribe(res => {
               let runningPrograms = this.state.runningPrograms;
               let programState = runningPrograms.filter(prog => prog.name === program.id && prog.app === program.app);

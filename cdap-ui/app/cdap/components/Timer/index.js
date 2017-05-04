@@ -23,23 +23,35 @@ export default class Timer extends Component {
     super(props);
 
     this.state = {
-      time: this.props.time
+      time: this.props.time || 0
     };
-
-    this.startTimer();
     this.currentTimer = 0;
+    this.unmounted = false;
+  }
+
+  componentDidMount() {
+    this.startTimer();
   }
 
   componentWillReceiveProps(nextProps) {
     if (!isNil(nextProps.time) && this.props.time !== nextProps.time) {
       clearTimeout(this.currentTimer);
-      this.setState({time: nextProps.time}, this.startTimer.bind(this));
+      !this.unmounted && this.setState({time: nextProps.time}, this.startTimer.bind(this));
     }
   }
 
+  componentWillUnmount() {
+    if (this.currentTimer) {
+      clearTimeout(this.currentTimer);
+    }
+    this.unmounted = true;
+  }
   startTimer() {
     let newTime = this.state.time - 1;
-    this.setState({time: newTime});
+    if (this.unmounted) {
+      return;
+    }
+    !this.unmounted && this.setState({time: newTime});
 
     if (newTime > 0) {
       this.currentTimer = setTimeout(() => {

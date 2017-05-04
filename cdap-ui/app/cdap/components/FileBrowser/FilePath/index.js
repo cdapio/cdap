@@ -16,7 +16,7 @@
 
 import React, { Component, PropTypes } from 'react';
 import shortid from 'shortid';
-import {Link} from 'react-router';
+import {Link} from 'react-router-dom';
 import classnames from 'classnames';
 import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';

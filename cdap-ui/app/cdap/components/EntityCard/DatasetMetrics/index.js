@@ -15,8 +15,8 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-import {MyMetricApi} from '../../../api/metric';
-import {MyDatasetApi} from '../../../api/dataset';
+import {MyMetricApi} from 'api/metric';
+import {MyDatasetApi} from 'api/dataset';
 import NamespaceStore from 'services/NamespaceStore';
 import {humanReadableNumber} from 'services/helpers';
 import T from 'i18n-react';

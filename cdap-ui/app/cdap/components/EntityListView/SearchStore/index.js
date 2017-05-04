@@ -77,7 +77,7 @@ const getPageSize = (element) => {
     let entityListViewEle = element;
 
     if (!entityListViewEle.length) {
-      return;
+      return {};
     }
 
     // Subtract 65px to account for entity-list-info's height (45px) and paddings (20px)
@@ -151,7 +151,7 @@ const search = (state = defaultSearchState, action = defaultAction) => {
         loading: action.payload.loading || false
       });
     case SearchStoreActions.SETPAGESIZE: {
-      let {limit, numColumns} = getPageSize(action.payload.element);
+      let {limit = DEFAULT_SEARCH_PAGE_SIZE, numColumns = 10} = getPageSize(action.payload.element);
       return Object.assign({}, state, {
         limit,
         numColumns
