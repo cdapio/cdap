@@ -42,7 +42,7 @@ const getClonePipelineName = (name) => {
 };
 
 class HydratorDetailTopPanelController {
-  constructor(HydratorPlusPlusDetailRunsStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailActions, GLOBALS, $state, myLoadingService, $timeout, $scope, moment, myAlertOnValium, myPipelineExportModalService, myPipelineApi, myHelpers, myPreferenceApi, $q, $interval, MyPipelineStatusMapper) {
+  constructor(HydratorPlusPlusDetailRunsStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailActions, GLOBALS, $state, myLoadingService, $timeout, $scope, moment, myAlertOnValium, myPipelineExportModalService, myPipelineApi, myHelpers, myPreferenceApi, $q, $interval, MyPipelineStatusMapper, HydratorPlusPlusHydratorService) {
     this.GLOBALS = GLOBALS;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.myAlertOnValium = myAlertOnValium;
@@ -64,6 +64,7 @@ class HydratorDetailTopPanelController {
     this.$q = $q;
     this.$interval = $interval;
     this.MyPipelineStatusMapper = MyPipelineStatusMapper;
+    this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.app = {
       name: HydratorPlusPlusDetailNonRunsStore.getPipelineName(),
       description: this.config.description,
@@ -156,23 +157,16 @@ class HydratorDetailTopPanelController {
         err => this.macroError = err
       )
       .then(
-        () => this.myPreferenceApi.getAppPreference(preferenceParams).$promise,
+        () => this.myPreferenceApi.getAppPreferenceResolved(preferenceParams).$promise,
         errorHandler
       )
       .then(
-        res => this.syncPreferencesStoreWithMacros(res),
+        (res) => {
+          let relevantPrefs = this.HydratorPlusPlusHydratorService.getPrefsRelevantToMacros(res, this.macrosMap);
+          this.macrosMap = Object.assign({}, this.macrosMap, relevantPrefs);
+        },
         errorHandler
       );
-  }
-
-  syncPreferencesStoreWithMacros(appPreferences = {}) {
-    try {
-      appPreferences = JSON.parse(angular.toJson(appPreferences));
-    } catch(e) {
-      console.log('ERROR: ', e);
-      appPreferences = {};
-    }
-    this.macrosMap = Object.assign({}, this.macrosMap, appPreferences);
   }
 
   isValidToStartOrSchedule() {
@@ -444,6 +438,6 @@ class HydratorDetailTopPanelController {
   }
 }
 
-HydratorDetailTopPanelController.$inject = ['HydratorPlusPlusDetailRunsStore', 'HydratorPlusPlusDetailNonRunsStore', 'HydratorPlusPlusDetailActions', 'GLOBALS', '$state', 'myLoadingService', '$timeout', '$scope', 'moment', 'myAlertOnValium', 'myPipelineExportModalService', 'myPipelineApi', 'myHelpers', 'myPreferenceApi', '$q', '$interval', 'MyPipelineStatusMapper'];
+HydratorDetailTopPanelController.$inject = ['HydratorPlusPlusDetailRunsStore', 'HydratorPlusPlusDetailNonRunsStore', 'HydratorPlusPlusDetailActions', 'GLOBALS', '$state', 'myLoadingService', '$timeout', '$scope', 'moment', 'myAlertOnValium', 'myPipelineExportModalService', 'myPipelineApi', 'myHelpers', 'myPreferenceApi', '$q', '$interval', 'MyPipelineStatusMapper', 'HydratorPlusPlusHydratorService'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorDetailTopPanelController', HydratorDetailTopPanelController);

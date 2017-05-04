@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl {
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myPreviewLogsApi, DAGPlusPlusNodesStore) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myPreviewLogsApi, DAGPlusPlusNodesStore, myPreferenceApi, HydratorPlusPlusHydratorService) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -35,6 +35,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.$interval = $interval;
     this.myPipelineApi = myPipelineApi;
     this.myPreviewLogsApi = myPreviewLogsApi;
+    this.myPreferenceApi = myPreferenceApi;
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.$state = $state;
     this.dataSrc = new MyCDAPDataSource($scope);
@@ -45,6 +46,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.viewLogs = false;
     this.$q = $q;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
+    this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.artifacts = rArtifacts;
     // This is for now run time arguments. It will be a map of macroMap
     // in the future once we get list of macros for a pipeline config.
@@ -117,6 +119,8 @@ class HydratorPlusPlusTopPanelCtrl {
       this.previewMode = state.isPreviewModeEnabled;
     });
 
+    this.fetchMacros();
+
     $scope.$on('$destroy', () => {
       unsub();
       this.stopPreview();
@@ -152,6 +156,7 @@ class HydratorPlusPlusTopPanelCtrl {
   }
   setActiveNodes() {
     this.hasNodes = !!this.DAGPlusPlusNodesStore.getNodes().length;
+    this.fetchMacros();
   }
 
   openMetadata() {
@@ -272,9 +277,77 @@ class HydratorPlusPlusTopPanelCtrl {
     };
   }
 
+  fetchMacros() {
+    this.macrosMap = [];
+    let nodes = this.HydratorPlusPlusConfigStore.getNodes();
+
+    for (let i = 0; i < nodes.length; i++) {
+      let properties = this.myHelpers.objectQuery(nodes[i], 'plugin', 'properties');
+      let backendProperties = this.myHelpers.objectQuery(nodes[i], '_backendProperties');
+      for (let prop in properties) {
+        if (properties.hasOwnProperty(prop) &&
+              backendProperties &&
+              backendProperties.hasOwnProperty(prop) &&
+              backendProperties[prop].macroSupported) {
+          let macroString = properties[prop];
+          /* Can handle:
+            - Simple nested macro (e.g. '${function(${macro1})}')
+            - Multiple macros (e.g. '${macro1}${macro2}')
+            - And combined (e,g, '${function(${macro1})}${macro2}')
+            More complicated cases will be handled by the backend
+          */
+          if (macroString.indexOf('${') !== -1 && macroString.indexOf('}') !== -1) {
+            let macroKeys = [];
+            let currentMacroDepth = 0;
+            let maxMacroDepth = 0;
+            let lastClosingBraceIndex = 0;
+            for (let i = macroString.length - 1; i >=1; i--) {
+              let macroChar = macroString[i];
+              if (macroChar === '}') {
+                lastClosingBraceIndex = i;
+                currentMacroDepth += 1;
+              }
+              if (macroChar === '{' && macroString[i-1] === '$') {
+                currentMacroDepth -= 1;
+                if (currentMacroDepth >= maxMacroDepth) {
+                  maxMacroDepth = currentMacroDepth;
+                  macroKeys.push(macroString.substring(i + 1, lastClosingBraceIndex));
+                }
+              }
+            }
+            macroKeys.forEach((key) => {
+              this.macrosMap[key] = '';
+            });
+          }
+        }
+      }
+    }
+
+    let preferenceParams = {
+      namespace: this.$state.params.namespace
+    };
+
+    return this.myPreferenceApi
+      .getNamespacePreferenceResolved(preferenceParams)
+      .$promise
+      .then(
+        (res) => {
+          let relevantPrefs = this.HydratorPlusPlusHydratorService.getPrefsRelevantToMacros(res, this.macrosMap);
+          this.macrosMap = Object.assign({}, this.macrosMap, relevantPrefs);
+        },
+        err => {
+          console.log('ERROR', err);
+        }
+      );
+  }
+
   toggleRuntimeArguments() {
     if (!this.previewRunning) {
-      this.showRunTimeArguments = !this.showRunTimeArguments;
+      this.fetchMacros()
+      .then(() => {
+        this.showRunTimeArguments = !this.showRunTimeArguments;
+      });
+
     } else {
       this.stopPreview();
     }
@@ -376,7 +449,10 @@ class HydratorPlusPlusTopPanelCtrl {
           type: 'danger',
           content: err.data
         });
-      });
+      })
+      .then(
+        () => this.fetchMacros()
+      );
   }
 
   stopPreview() {
@@ -647,6 +723,6 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 }
 
-HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', '$interval', 'myPipelineApi', '$state', 'MyCDAPDataSource', 'myAlertOnValium', 'MY_CONFIG', 'PREVIEWSTORE_ACTIONS', '$q', 'NonStorePipelineErrorFactory', 'rArtifacts', '$window', 'LogViewerStore', 'LOGVIEWERSTORE_ACTIONS', 'myPreviewLogsApi', 'DAGPlusPlusNodesStore'];
+HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', '$interval', 'myPipelineApi', '$state', 'MyCDAPDataSource', 'myAlertOnValium', 'MY_CONFIG', 'PREVIEWSTORE_ACTIONS', '$q', 'NonStorePipelineErrorFactory', 'rArtifacts', '$window', 'LogViewerStore', 'LOGVIEWERSTORE_ACTIONS', 'myPreviewLogsApi', 'DAGPlusPlusNodesStore', 'myPreferenceApi', 'HydratorPlusPlusHydratorService'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);
