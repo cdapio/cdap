@@ -64,9 +64,6 @@ public class PurchaseHistoryService extends AbstractService {
       try {
         // Load plugin in service
         super.initialize(context);
-        Class<?> classz = context.loadPluginClass("JDBCPlugin");
-        // Following line is logged as - XXX Found class com.mysql.jdbc.Driver
-        LOG.info("XXX Found class {}", classz.getName());
       } catch (Exception e) {
         LOG.error("Failed to load the JDBCPlugin", e);
       }

@@ -215,7 +215,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private ProgramOptions createPluginSnapshot(ProgramOptions options, ProgramId programId, File tempDir,
                                               @Nullable ApplicationSpecification appSpec) throws Exception {
     // appSpec is null in an unit test
-    if (appSpec == null || appSpec.getPlugins().isEmpty()) {
+    if (appSpec == null) {
       return options;
     }
 

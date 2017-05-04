@@ -97,13 +97,5 @@ public class PurchaseApp extends AbstractApplication {
       // because PurchaseHistory and Purchase are actual classes.
       throw new RuntimeException(e);
     }
-    // Configure Service to use the plugin
-    Class<?> classz = usePluginClass("jdbc", "mysql", "JDBCPlugin", PluginProperties.builder().build());
-    if (classz == null) {
-      throw new IllegalStateException("Failed to find plugin type: 'jdbc', name: 'mysql'");
-    } else {
-      // Following line is logged as  - Class was found com.mysql.jdbc.Driver
-      LOG.info("Class was found {}", classz.getName());
-    }
   }
 }

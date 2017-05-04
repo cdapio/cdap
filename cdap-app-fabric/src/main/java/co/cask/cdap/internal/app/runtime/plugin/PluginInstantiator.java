@@ -353,8 +353,11 @@ public class PluginInstantiator implements Closeable {
 
   public <T> T newInstance(String namespaceId, String pluginType, String pluginName, PluginProperties properties) {
     try {
+      LOG.info("Trying to get Parent Artifact Range for namespaceId {} pluginType {} pluginName {}",
+               namespaceId, pluginType, pluginName);
       Set<ArtifactRange> artifactRanges = artifactRepository.getArtifactParentsForPlugin(namespaceId,
                                                                                          pluginType, pluginName);
+
       for (ArtifactRange artifactRange : artifactRanges) {
         LOG.info("Trying to load plugin with type {} name {} with Artifact Range {}",
                  pluginType, pluginName, artifactRange);

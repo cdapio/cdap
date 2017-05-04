@@ -20,8 +20,6 @@ import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
@@ -30,10 +28,8 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
@@ -64,10 +60,8 @@ public class ReadOnlyArtifactRepository {
 
   @VisibleForTesting
   @Inject
-  public ReadOnlyArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore, MetadataStore metadataStore,
-                                     PrivilegesManager privilegesManager,
-                                     Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
-                                     AuthenticationContext authenticationContext) {
+  public ReadOnlyArtifactRepository(ArtifactStore artifactStore, AuthorizationEnforcer authorizationEnforcer,
+                                    AuthenticationContext authenticationContext) {
     this.artifactStore = artifactStore;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
