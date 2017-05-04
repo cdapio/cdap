@@ -57,7 +57,7 @@ import javax.annotation.Nullable;
  * This uses an IndexedTable to allow reverse lookup. The table stores:
  * <ul>
  *   <li>Schedules: the row key is
- *     <code>&lt;namespace>.&lt;app-name>.&lt;app-version>.&lt;schedule-name></app-id>)</code>,
+ *     <code>&lt;namespace>.&lt;app-name>.&lt;app-version>.&lt;schedule-name>)</code>,
  *     which is globally unique (see {@link #rowKeyForSchedule(ScheduleId)}. The schedule itself is stored as JSON
  *     in the <code>sch</code> ({@link #SCHEDULE_COLUMN} column.</li>
  *   <li>Triggers: as every schedule can have multiple triggers, each trigger is stored and indexed in its row. The
@@ -89,8 +89,8 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
 
   private final IndexedTable store;
 
-  public ProgramScheduleStoreDataset(DatasetSpecification spec,
-                                     @EmbeddedDataset(EMBEDDED_TABLE_NAME) IndexedTable store) {
+  ProgramScheduleStoreDataset(DatasetSpecification spec,
+                              @EmbeddedDataset(EMBEDDED_TABLE_NAME) IndexedTable store) {
     super(spec.getName(), store);
     this.store = store;
   }
@@ -284,7 +284,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   }
 
   private static String rowKeyForSchedule(ScheduleId scheduleId) {
-    return Joiner.on('.').join(Schedulers.toIdParts(scheduleId));
+    return Joiner.on('.').join(scheduleId.toIdParts());
   }
 
   private static ScheduleId rowKeyToScheduleId(byte[] rowKey) {
