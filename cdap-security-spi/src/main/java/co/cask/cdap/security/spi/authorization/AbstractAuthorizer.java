@@ -20,11 +20,10 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Privilege;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Abstract class that implements {@link Authorizer} and provides default no-op implementations of
@@ -62,16 +61,17 @@ public abstract class AbstractAuthorizer implements Authorizer {
   }
 
   @Override
-  public Predicate<EntityId> createFilter(Principal principal) throws Exception {
-    Set<Privilege> privileges = listPrivileges(principal);
-    final Set<EntityId> allowedEntities = new HashSet<>();
-    for (Privilege privilege : privileges) {
-      allowedEntities.add(privilege.getEntity());
-    }
+  public Predicate<EntityId> createFilter(final Principal principal) throws Exception {
+    System.out.println("Authorizer's create Filter");
     return new Predicate<EntityId>() {
       @Override
       public boolean apply(EntityId entityId) {
-        return allowedEntities.contains(entityId);
+        try {
+          enforce(entityId, principal, new HashSet<>(Arrays.asList(Action.values())));
+          return true;
+        } catch (Exception e) {
+          return false;
+        }
       }
     };
   }

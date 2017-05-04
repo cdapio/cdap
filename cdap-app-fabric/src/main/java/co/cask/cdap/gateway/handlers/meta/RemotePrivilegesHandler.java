@@ -50,14 +50,23 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
   private static final Type SET_OF_ACTIONS = new TypeLiteral<Set<Action>>() { }.getType();
 
   private final Authorizer authorizer;
-  private final PrivilegesFetcher privilegesFetcher;
 
   @Inject
   RemotePrivilegesHandler(
-    AuthorizerInstantiator authorizerInstantiator,
-    @Named(AuthorizationEnforcementModule.PRIVILEGES_FETCHER_PROXY_CACHE) PrivilegesFetcher privilegesFetcher) {
+    AuthorizerInstantiator authorizerInstantiator) {
     this.authorizer = authorizerInstantiator.get();
-    this.privilegesFetcher = privilegesFetcher;
+  }
+
+  @POST
+  @Path("/enforce")
+  public void enforce(HttpRequest request, HttpResponder responder) throws Exception {
+    Iterator<MethodArgument> arguments = parseArguments(request);
+    EntityId entityId = deserializeNext(arguments);
+    Principal principal = deserializeNext(arguments);
+    Action action = deserializeNext(arguments);
+    LOG.trace("Enforcing {} on {} to {}", action, entityId, principal);
+    authorizer.enforce(entityId, principal, action);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @POST
@@ -66,7 +75,7 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
     Iterator<MethodArgument> arguments = parseArguments(request);
     Principal principal = deserializeNext(arguments);
     LOG.trace("Listing privileges for principal {}", principal);
-    Set<Privilege> privileges = privilegesFetcher.listPrivileges(principal);
+    Set<Privilege> privileges = authorizer.listPrivileges(principal);
     LOG.debug("Returning privileges for principal {} as {} via {}", principal, privileges, authorizer);
     responder.sendJson(HttpResponseStatus.OK, privileges);
   }

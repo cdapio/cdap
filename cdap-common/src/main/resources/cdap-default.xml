@@ -2743,7 +2743,7 @@
 
   <property>
     <name>security.authorization.propagate.privileges</name>
-    <value></value>
+    <value>true</value>
     <description>
       Allows propagation of privileges to descendants. If this is set to true
       then having a privilege on an entity will allow the user to perform that

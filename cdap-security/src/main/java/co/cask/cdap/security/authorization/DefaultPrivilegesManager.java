@@ -36,33 +36,21 @@ public class DefaultPrivilegesManager implements PrivilegesManager {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPrivilegesManager.class);
 
   private final Authorizer delegateAuthorizer;
-  private final AuthorizationEnforcementService authorizationEnforcementService;
-  private final PrivilegesFetcherProxyService privilegesFetcherProxyService;
 
   @Inject
-  DefaultPrivilegesManager(AuthorizerInstantiator authorizerInstantiator,
-                           AuthorizationEnforcementService authorizationEnforcementService,
-                           PrivilegesFetcherProxyService privilegesFetcherProxyService) {
-    this.privilegesFetcherProxyService = privilegesFetcherProxyService;
+  DefaultPrivilegesManager(AuthorizerInstantiator authorizerInstantiator) {
     this.delegateAuthorizer = authorizerInstantiator.get();
-    this.authorizationEnforcementService = authorizationEnforcementService;
   }
 
   @Override
   public void grant(EntityId entity, final Principal principal, Set<Action> actions) throws Exception {
     delegateAuthorizer.grant(entity, principal, actions);
-    Predicate<Principal> invalidationPredicate = createInvalidationPredicate(principal);
-    authorizationEnforcementService.invalidate(invalidationPredicate);
-    privilegesFetcherProxyService.invalidate(invalidationPredicate);
 
   }
 
   @Override
   public void revoke(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
     delegateAuthorizer.revoke(entity, principal, actions);
-    Predicate<Principal> invalidationPredicate = createInvalidationPredicate(principal);
-    authorizationEnforcementService.invalidate(invalidationPredicate);
-    privilegesFetcherProxyService.invalidate(invalidationPredicate);
   }
 
   @Override
@@ -70,24 +58,5 @@ public class DefaultPrivilegesManager implements PrivilegesManager {
     delegateAuthorizer.revoke(entity);
     // no need to invalidate. This is called only when the entity is deleted. As a result, even if cache is not
     // invalidated, it should be ok because the entity will not exist.
-  }
-
-  private Predicate<Principal> createInvalidationPredicate(final Principal principal) {
-    return new Predicate<Principal>() {
-      @Override
-      public boolean apply(Principal input) {
-        if (Principal.PrincipalType.ROLE != principal.getType()) {
-          return input.equals(principal);
-        }
-        Role role = new Role(principal.getName());
-        try {
-          return delegateAuthorizer.listRoles(input).contains(role);
-        } catch (Exception e) {
-          LOG.warn("Error while listing roles of principal {}. Cannot invalidate cache for role {}. Operations " +
-                     "may fail until the next cache refresh.", input, role, e);
-          return false;
-        }
-      }
-    };
   }
 }

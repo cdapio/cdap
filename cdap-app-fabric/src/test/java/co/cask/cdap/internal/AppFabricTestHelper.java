@@ -62,7 +62,6 @@ import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -122,7 +121,6 @@ public class AppFabricTestHelper {
       if (configuration.getBoolean(Constants.Security.ENABLED) &&
         configuration.getBoolean(Constants.Security.Authorization.ENABLED)) {
         injector.getInstance(AuthorizationBootstrapper.class).run();
-        injector.getInstance(AuthorizationEnforcementService.class).startAndWait();
       }
       injector.getInstance(TransactionManager.class).startAndWait();
       injector.getInstance(DatasetOpExecutor.class).startAndWait();

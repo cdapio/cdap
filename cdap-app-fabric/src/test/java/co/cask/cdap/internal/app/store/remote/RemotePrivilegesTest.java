@@ -72,7 +72,6 @@ public class RemotePrivilegesTest {
   private static final ProgramId PROGRAM = APP.program(ProgramType.FLOW, "flo");
 
   private static Authorizer authorizer;
-  private static PrivilegesFetcher privilegesFetcher;
   private static PrivilegesManager privilegesManager;
   private static DiscoveryServiceClient discoveryService;
   private static AppFabricServer appFabricServer;
@@ -96,7 +95,6 @@ public class RemotePrivilegesTest {
     appFabricServer.startAndWait();
     waitForService(Constants.Service.APP_FABRIC_HTTP);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
-    privilegesFetcher = injector.getInstance(PrivilegesFetcher.class);
     privilegesManager = injector.getInstance(PrivilegesManager.class);
   }
 
@@ -104,27 +102,6 @@ public class RemotePrivilegesTest {
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryService.discover(name));
     Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
                                "%s service is not up after 5 seconds", name);
-  }
-
-  @Test
-  public void testPrivilegesFetcher() throws Exception {
-    // In this test, grants and revokes happen via authorizer, whereas privilege listing happens via PrivilegeFetcher
-    authorizer.grant(NS, ALICE, ImmutableSet.of(Action.WRITE));
-    authorizer.grant(APP, ALICE, ImmutableSet.of(Action.ADMIN));
-    authorizer.grant(PROGRAM, ALICE, ImmutableSet.of(Action.EXECUTE));
-    Assert.assertEquals(
-      ImmutableSet.of(
-        new Privilege(NS, Action.WRITE),
-        new Privilege(APP, Action.ADMIN),
-        new Privilege(PROGRAM, Action.EXECUTE)
-      ),
-      privilegesFetcher.listPrivileges(ALICE));
-    authorizer.revoke(NS);
-    authorizer.revoke(APP);
-    authorizer.revoke(PROGRAM);
-    Set<Privilege> privileges = privilegesFetcher.listPrivileges(ALICE);
-    Assert.assertTrue(String.format("Expected all of alice's privileges to be revoked, but found %s", privileges),
-                      privileges.isEmpty());
   }
 
   @Test

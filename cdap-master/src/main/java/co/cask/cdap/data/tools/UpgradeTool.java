@@ -72,7 +72,6 @@ import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.store.DefaultOwnerStore;
@@ -114,7 +113,6 @@ public class UpgradeTool {
   private final DatasetFramework dsFramework;
   private final DatasetUpgrader dsUpgrade;
   private final QueueAdmin queueAdmin;
-  private final AuthorizationEnforcementService authorizationService;
   private final HBaseTableFactory tmsTableFactory;
   private final CoprocessorManager coprocessorManager;
 
@@ -159,7 +157,6 @@ public class UpgradeTool {
     this.dsFramework = injector.getInstance(DatasetFramework.class);
     this.dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     this.queueAdmin = injector.getInstance(QueueAdmin.class);
-    this.authorizationService = injector.getInstance(AuthorizationEnforcementService.class);
     this.tmsTableFactory = injector.getInstance(HBaseTableFactory.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     HBaseTableUtil tableUtil = injector.getInstance(HBaseTableUtil.class);
@@ -276,7 +273,6 @@ public class UpgradeTool {
                                           "Currently configured as: %s", cConf.get(Constants.Zookeeper.QUORUM)));
     LOG.info("Starting Transaction Service...");
     txService.startAndWait();
-    authorizationService.startAndWait();
     LOG.info("Initializing Dataset Framework...");
     initializeDSFramework(cConf, dsFramework, includeNewDatasets);
     LOG.info("Building and uploading new HBase coprocessors...");
@@ -290,7 +286,6 @@ public class UpgradeTool {
     try {
       txService.stopAndWait();
       zkClientService.stopAndWait();
-      authorizationService.stopAndWait();
     } catch (Throwable e) {
       LOG.error("Exception while trying to stop upgrade process", e);
       Runtime.getRuntime().halt(1);
