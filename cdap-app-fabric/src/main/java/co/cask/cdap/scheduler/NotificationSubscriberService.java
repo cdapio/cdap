@@ -17,7 +17,6 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -38,6 +37,7 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
@@ -168,8 +168,7 @@ public class NotificationSubscriberService extends AbstractExecutionThreadServic
   private abstract class NotificationSubscriberThread extends Thread {
     private final String topic;
     private final RetryStrategy scheduleStrategy;
-    protected final Deque<Job> readyJobs;
-    private boolean emptyFetch;
+    private final Deque<Job> readyJobs;
     private int failureCount;
     private String messageId;
 
@@ -182,6 +181,10 @@ public class NotificationSubscriberService extends AbstractExecutionThreadServic
       scheduleStrategy =
         co.cask.cdap.common.service.RetryStrategies.exponentialDelay(100, 30000, TimeUnit.MILLISECONDS);
       this.readyJobs = new ArrayDeque<>();
+    }
+
+    void addJob(Job job) {
+      readyJobs.add(job);
     }
 
     @Override
@@ -205,41 +208,43 @@ public class NotificationSubscriberService extends AbstractExecutionThreadServic
      * @return sleep time in milliseconds before next fetch
      */
     private long processNotifications() {
+      boolean emptyFetch = false;
       try {
         final MessageFetcher fetcher = messagingContext.getMessageFetcher();
-        transactional.execute(new TxRunnable() {
+        emptyFetch = Transactions.execute(transactional, new TxCallable<Boolean>() {
           @Override
-          public void run(DatasetContext context) throws Exception {
-            fetchAndProcessNotifications(context, fetcher);
+          public Boolean call(DatasetContext context) throws Exception {
+            return fetchAndProcessNotifications(context, fetcher);
           }
         });
+        failureCount = 0;
       } catch (Exception e) {
         LOG.warn("Failed to get notification. Will retry in next run", e);
         failureCount++;
+      }
+
+      // Still need to run jobs if the queue is not empty to avoid unlimited growth on the job queue
+      // This can happen if it fetches some notification from TMS
+      runReadyJobs();
+
+      // If there is any failure during fetching of notifications or looking up of schedules,
+      // delay the next fetch based on the strategy
+      if (failureCount > 0) {
         // Exponential strategy doesn't use the time component, so doesn't matter what we passed in as startTime
         return scheduleStrategy.nextRetry(failureCount, 0);
       }
-      failureCount = 0;
 
-      try {
-        runReadyJobs();
-      } catch (Exception e) {
-        LOG.error("Failed to run scheduled programs", e);
-      }
-      // Sleep for 2 seconds if there's no notification
-      if (emptyFetch) {
-        return 2000L;
-      }
-      return 0L; // No sleep if the fetch is non-empty
+      // Sleep for 2 seconds if there's no notification, otherwise don't sleep
+      return emptyFetch ? 2000L : 0L;
     }
 
-    private void fetchAndProcessNotifications(DatasetContext context, MessageFetcher fetcher) throws Exception {
-      emptyFetch = true;
+    private boolean fetchAndProcessNotifications(DatasetContext context, MessageFetcher fetcher) throws Exception {
+      boolean emptyFetch = true;
       try (CloseableIterator<Message> iterator = fetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
                                                                topic, 100, messageId)) {
-        emptyFetch = !iterator.hasNext();
         LOG.trace("Fetch with messageId = {}", messageId);
         while (iterator.hasNext() && isRunning()) {
+          emptyFetch = false;
           Message message = iterator.next();
           Notification notification;
           try {
@@ -257,6 +262,7 @@ public class NotificationSubscriberService extends AbstractExecutionThreadServic
         SAMPLING_LOG.info("Failed to fetch from TMS. Will retry later.", e);
         failureCount++;
       }
+      return emptyFetch;
     }
 
     private void runReadyJobs() {
@@ -277,7 +283,7 @@ public class NotificationSubscriberService extends AbstractExecutionThreadServic
       }
     }
 
-    protected abstract void updateJobQueue(DatasetContext context, Notification notification) throws Exception;
+    abstract void updateJobQueue(DatasetContext context, Notification notification) throws Exception;
   }
 
   private class TimeEventNotificationSubscriberThread extends NotificationSubscriberThread {
@@ -306,18 +312,8 @@ public class NotificationSubscriberService extends AbstractExecutionThreadServic
         return;
       }
       DatasetId datasetId = DatasetId.fromString(datasetIdString);
-      Collection<ProgramSchedule> triggeredSchedules =
-        getSchedules(context, Schedulers.triggerKeyForPartition(datasetId));
-      if (triggeredSchedules == null) {
-        return;
-      }
-
-      List<Job> newReadyJobs = new ArrayList<>();
-      for (ProgramSchedule schedule : triggeredSchedules) {
-        newReadyJobs.add(new Job(schedule));
-      }
-      for (Job job : newReadyJobs) {
-        readyJobs.add(job);
+      for (ProgramSchedule schedule : getSchedules(context, Schedulers.triggerKeyForPartition(datasetId))) {
+        addJob(new Job(schedule));
       }
     }
   }
@@ -334,7 +330,6 @@ public class NotificationSubscriberService extends AbstractExecutionThreadServic
     }
   }
 
-  @Nullable
   private Collection<ProgramSchedule> getSchedules(DatasetContext context, String triggerKey)
     throws IOException, DatasetManagementException {
     return getScheduleDataset(context).findSchedules(triggerKey);
