@@ -141,6 +141,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
     // Since Alice has some privileges on the namespace, the list API should return all datasets under the namespace
     SecurityRequestContext.setUserId(ALICE.getName());
+    System.out.println("Start here");
     Assert.assertEquals(ImmutableSet.of(dsId, dsId1, dsId2),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
 

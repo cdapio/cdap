@@ -26,7 +26,6 @@ import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceContextConfig;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Guice;
@@ -48,7 +47,6 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   private final ZKClientService zkClientService;
   private final KafkaClientService kafkaClientService;
   private final MetricsCollectionService metricsCollectionService;
-  private final AuthorizationEnforcementService authorizationEnforcementService;
   private final MapReduceContextConfig mapReduceContextConfig;
   private final LogAppenderInitializer logAppenderInitializer;
 
@@ -61,7 +59,6 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     this.kafkaClientService = injector.getInstance(KafkaClientService.class);
     this.metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     this.logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-    this.authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
     this.mapReduceContextConfig = new MapReduceContextConfig(hConf);
   }
 
@@ -71,13 +68,11 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     try {
       List<ListenableFuture<State>> startFutures = Services.chainStart(zkClientService,
                                                                        kafkaClientService,
-                                                                       metricsCollectionService,
-                                                                       authorizationEnforcementService).get();
+                                                                       metricsCollectionService).get();
       // All services should be started
       for (ListenableFuture<State> future : startFutures) {
         Preconditions.checkState(future.get() == State.RUNNING, "Failed to start services: %s, %s, %s, %s",
-                                 zkClientService, kafkaClientService, metricsCollectionService,
-                                 authorizationEnforcementService);
+                                 zkClientService, kafkaClientService, metricsCollectionService);
       }
       logAppenderInitializer.initialize();
       ProgramOptions programOptions = mapReduceContextConfig.getProgramOptions();
@@ -103,8 +98,7 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
       failure = e;
     }
     try {
-      Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService,
-                         authorizationEnforcementService).get();
+      Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService).get();
     } catch (Exception e) {
       if (failure != null) {
         failure.addSuppressed(e);

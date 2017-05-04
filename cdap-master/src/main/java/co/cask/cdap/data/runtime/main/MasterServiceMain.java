@@ -74,7 +74,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.impersonation.SecurityUtil;
@@ -635,7 +634,7 @@ public class MasterServiceMain extends DaemonMain {
       injector.getInstance(AuthorizationBootstrapper.class).run();
       services.add(getAndStart(injector, KafkaClientService.class));
       services.add(getAndStart(injector, MetricsCollectionService.class));
-      services.add(getAndStart(injector, AuthorizationEnforcementService.class));
+
       services.add(getAndStart(injector, OperationalStatsService.class));
       ServiceStore serviceStore = getAndStart(injector, ServiceStore.class);
       services.add(serviceStore);

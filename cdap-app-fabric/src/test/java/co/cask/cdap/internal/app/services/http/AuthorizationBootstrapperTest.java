@@ -48,7 +48,6 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -95,7 +94,6 @@ public class AuthorizationBootstrapperTest {
   private static SystemArtifactLoader systemArtifactLoader;
   private static NamespaceQueryAdmin namespaceQueryAdmin;
   private static NamespaceAdmin namespaceAdmin;
-  private static AuthorizationEnforcementService authorizationEnforcementService;
   private static ArtifactRepository artifactRepository;
   private static DatasetFramework dsFramework;
   private static DiscoveryServiceClient discoveryServiceClient;
@@ -126,8 +124,6 @@ public class AuthorizationBootstrapperTest {
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     txManager = injector.getInstance(TransactionManager.class);
     datasetService = injector.getInstance(DatasetService.class);
-    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
-    authorizationEnforcementService.startAndWait();
     systemArtifactLoader = injector.getInstance(SystemArtifactLoader.class);
     authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
     artifactRepository = injector.getInstance(ArtifactRepository.class);
@@ -214,7 +210,6 @@ public class AuthorizationBootstrapperTest {
   public static void teardown() {
     datasetService.stopAndWait();
     txManager.stopAndWait();
-    authorizationEnforcementService.stopAndWait();
   }
 
   private void waitForService(final AbstractService service) throws Exception {

@@ -17,7 +17,6 @@
 package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.Service;
 
@@ -25,7 +24,7 @@ import com.google.common.util.concurrent.Service;
  * A service that runs inside a system service to act as a proxy for requests to list privileges from system services
  * (explore, stream service) or program containers.
  */
-public interface PrivilegesFetcherProxyService extends Service, PrivilegesFetcher {
+public interface PrivilegesFetcherProxyService extends Service {
   /**
    * Invalidates privileges of all principals matching the specified {@link Predicate}.
    */

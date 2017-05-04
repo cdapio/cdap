@@ -76,7 +76,6 @@ import co.cask.cdap.operations.OperationalStatsService;
 import co.cask.cdap.operations.guice.OperationalStatsModule;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.guice.SecurityModules;
@@ -131,7 +130,6 @@ public class StandaloneMain {
   private final TrackerAppCreationService trackerAppCreationService;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final RemoteSystemOperationsService remoteSystemOperationsService;
-  private final AuthorizationEnforcementService authorizationEnforcementService;
   private final AuthorizationBootstrapper authorizationBootstrapper;
   private final MessagingService messagingService;
   private final OperationalStatsService operationalStatsService;
@@ -159,7 +157,6 @@ public class StandaloneMain {
     txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
-    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
@@ -235,7 +232,6 @@ public class StandaloneMain {
     authorizationBootstrapper.run();
     txService.startAndWait();
     metricsCollectionService.startAndWait();
-    authorizationEnforcementService.startAndWait();
     datasetService.startAndWait();
     serviceStore.startAndWait();
     streamService.startAndWait();
@@ -318,7 +314,6 @@ public class StandaloneMain {
       appFabricServer.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now
       datasetService.stopAndWait();
-      authorizationEnforcementService.stopAndWait();
       metricsQueryService.stopAndWait();
       txService.stopAndWait();
 

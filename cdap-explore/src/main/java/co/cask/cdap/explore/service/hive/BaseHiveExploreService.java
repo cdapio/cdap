@@ -49,7 +49,6 @@ import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Charsets;
@@ -168,7 +167,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final File credentialsDir;
   private final ScheduledExecutorService metastoreClientsExecutorService;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
-  private final AuthorizationEnforcementService authorizationEnforcementService;
 
   private final ThreadLocal<Supplier<IMetaStoreClient>> metastoreClientLocal;
 
@@ -199,7 +197,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                                    File previewsDir, File credentialsDir, StreamAdmin streamAdmin,
                                    NamespaceQueryAdmin namespaceQueryAdmin,
                                    SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                                   AuthorizationEnforcementService authorizationEnforcementService,
                                    AuthorizationEnforcer authorizationEnforcer,
                                    AuthenticationContext authenticationContext) {
     this.cConf = cConf;
@@ -232,7 +229,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.cliService = createCLIService();
 
     this.txClient = txClient;
-    this.authorizationEnforcementService = authorizationEnforcementService;
 
     ContextManager.saveContext(datasetFramework, streamAdmin, datasetInstantiatorFactory, authorizationEnforcer,
                                authenticationContext);
@@ -319,7 +315,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     HiveConf hiveConf = getHiveConf();
     setupSparkConf();
 
-    authorizationEnforcementService.startAndWait();
     cliService.init(hiveConf);
     cliService.start();
 
@@ -366,7 +361,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     scheduledExecutorService.awaitTermination(10, TimeUnit.SECONDS);
     scheduledExecutorService.shutdown();
 
-    authorizationEnforcementService.stopAndWait();
     metastoreClientsExecutorService.shutdownNow();
     // Go through all non-cleanup'ed clients and call close() upon them
     for (IMetaStoreClient client : metastoreClientReferences.values()) {

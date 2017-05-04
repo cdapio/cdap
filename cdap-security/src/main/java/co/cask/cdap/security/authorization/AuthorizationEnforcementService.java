@@ -27,7 +27,7 @@ import com.google.common.util.concurrent.Service;
  * {@link Constants.Security.Authorization#CACHE_ENABLED}, authorization policies are cached locally.
  * A thread refreshes the cached policies periodically.
  */
-public interface AuthorizationEnforcementService extends Service, AuthorizationEnforcer {
+public interface AuthorizationEnforcementService extends AuthorizationEnforcer {
   /**
    * Invalidates cached privileges of all principals that satisfy the specified {@link Predicate}.
    */

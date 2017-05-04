@@ -81,9 +81,7 @@ import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.guice.SecureStoreModules;
-import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
@@ -139,15 +137,13 @@ public class HBaseQueueDebugger extends AbstractIdleService {
   private final TransactionExecutorFactory txExecutorFactory;
   private final Store store;
   private final Impersonator impersonator;
-  private final AuthorizationEnforcementService authorizationEnforcementService;
 
   @Inject
   public HBaseQueueDebugger(HBaseTableUtil tableUtil, HBaseQueueAdmin queueAdmin,
                             HBaseQueueClientFactory queueClientFactory,
                             ZKClientService zkClientService,
                             TransactionExecutorFactory txExecutorFactory,
-                            Store store, Impersonator impersonator,
-                            AuthorizationEnforcementService authorizationEnforcementService) {
+                            Store store, Impersonator impersonator) {
     this.tableUtil = tableUtil;
     this.queueAdmin = queueAdmin;
     this.queueClientFactory = queueClientFactory;
@@ -155,18 +151,15 @@ public class HBaseQueueDebugger extends AbstractIdleService {
     this.txExecutorFactory = txExecutorFactory;
     this.store = store;
     this.impersonator = impersonator;
-    this.authorizationEnforcementService = authorizationEnforcementService;
   }
 
   @Override
   protected void startUp() throws Exception {
     zkClientService.startAndWait();
-    authorizationEnforcementService.startAndWait();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    authorizationEnforcementService.stopAndWait();
     zkClientService.stopAndWait();
   }
 

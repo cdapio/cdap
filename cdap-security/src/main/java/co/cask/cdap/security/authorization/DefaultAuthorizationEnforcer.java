@@ -18,42 +18,47 @@ package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.ParentedId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 
 /**
  * Default implementation of {@link AuthorizationEnforcementService}.
  */
 @Singleton
-public class DefaultAuthorizationEnforcementService extends AbstractAuthorizationService
-  implements AuthorizationEnforcementService {
+public class DefaultAuthorizationEnforcer implements AuthorizationEnforcer {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultAuthorizationEnforcementService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultAuthorizationEnforcer.class);
+  final AuthorizerInstantiator authorizerInstantiator;
+
   private static final Predicate<EntityId> ALLOW_ALL = new Predicate<EntityId>() {
     @Override
     public boolean apply(EntityId entityId) {
       return true;
     }
   };
+  private final boolean securityEnabled;
+  private final boolean authorizationEnabled;
+  private final boolean propagatePrivileges;
 
   @Inject
-  DefaultAuthorizationEnforcementService(PrivilegesFetcher privilegesFetcher, CConfiguration cConf,
-                                         AuthenticationContext authenticationContext) {
-    super(cConf, privilegesFetcher, authenticationContext, "enforcement");
+  DefaultAuthorizationEnforcer(CConfiguration cConf, AuthorizerInstantiator authorizerInstantiator) {
+    this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
+    this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
+    this.propagatePrivileges = cConf.getBoolean(Constants.Security.Authorization.PROPAGATE_PRIVILEGES);
+    this.authorizerInstantiator = authorizerInstantiator;
   }
 
   @Override
@@ -70,61 +75,65 @@ public class DefaultAuthorizationEnforcementService extends AbstractAuthorizatio
     doEnforce(entity, principal, actions, true);
   }
 
-  @Override
-  public Predicate<EntityId> createFilter(Principal principal) throws Exception {
-    if (!isSecurityAuthorizationEnabled()) {
-      return ALLOW_ALL;
-    }
-    Map<EntityId, Set<Action>> privileges = getPrivileges(principal);
-    final Set<EntityId> allowedEntities = privileges != null ? privileges.keySet() : Collections.<EntityId>emptySet();
 
+  @Override
+  public Predicate<EntityId> createFilter(final Principal principal) throws Exception {
     return new Predicate<EntityId>() {
       @Override
       public boolean apply(EntityId entityId) {
-        boolean parentPassed = false;
-        if (entityId instanceof ParentedId) {
-          parentPassed = apply(((ParentedId) entityId).getParent());
+        System.out.println("Filtering for " + entityId.getEntityName());
+        for (Action action : Action.values()) {
+          try {
+            enforce(entityId, principal, action);
+            return true;
+          } catch (Exception ignored) {
+            System.out.println("Don't have " + action.name() + " on " + entityId.getEntityName());
+          }
         }
-        return (parentPassed || allowedEntities.contains(entityId));
+        return false;
       }
     };
   }
 
-  protected boolean isSecurityAuthorizationEnabled() {
-    return securityEnabled && authorizationEnabled;
-  }
+//  @Override
+//  public Predicate<EntityId> createFilter(Principal principal) throws Exception {
+//    if (!isSecurityAuthorizationEnabled()) {
+//      return ALLOW_ALL;
+//    }
+//
+//    return authorizer.createFilter(principal);
+//  }
+
 
   private boolean doEnforce(EntityId entity, Principal principal,
                             Set<Action> actions, boolean exceptionOnFailure) throws Exception {
-    if (propagatePrivileges) {
+    if (isPrivilegePropagationEnabled()) {
       if (entity instanceof ParentedId) {
+        System.out.println("Checking parent for " + entity.getEntityName());
         if (doEnforce(((ParentedId) entity).getParent(), principal, actions, false)) {
           return true;
         }
       }
     }
-
-    Set<Action> allowedActions = getPrivileges(principal).get(entity);
-    LOG.trace("Enforcing actions {} on {} for {}. Allowed actions are {}", actions, entity, principal, allowedActions);
-    if (allowedActions == null) {
+    LOG.trace("Enforcing actions {} on {} for principal {}.", actions, entity, principal);
+    try {
+      authorizerInstantiator.get().enforce(entity, principal, actions);
+    } catch (Exception e) {
       if (exceptionOnFailure) {
         throw new UnauthorizedException(principal, actions, entity);
+      } else {
+        return false;
       }
-      return false;
     }
 
-    // Check for the specific actions requested
-    if (allowedActions.containsAll(actions)) {
-      return true;
-    }
-    if (exceptionOnFailure) {
-      throw new UnauthorizedException(principal, Sets.difference(actions, allowedActions), entity);
-    }
-    return false;
+    return true;
   }
 
-  @Override
-  public void invalidate(com.google.common.base.Predicate<Principal> predicate) {
-    doInvalidate(predicate);
+  private boolean isSecurityAuthorizationEnabled() {
+    return securityEnabled && authorizationEnabled;
+  }
+
+  private boolean isPrivilegePropagationEnabled() {
+    return propagatePrivileges;
   }
 }

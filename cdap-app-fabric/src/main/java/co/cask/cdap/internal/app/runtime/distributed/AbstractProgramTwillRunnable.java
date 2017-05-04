@@ -40,7 +40,6 @@ import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -184,7 +183,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       coreServices.add(injector.getInstance(BrokerService.class));
       coreServices.add(injector.getInstance(MetricsCollectionService.class));
       coreServices.add(injector.getInstance(StreamCoordinatorClient.class));
-      coreServices.add(injector.getInstance(AuthorizationEnforcementService.class));
 
       // Initialize log appender
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
