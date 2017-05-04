@@ -19,6 +19,7 @@ package co.cask.cdap.common.logging;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.MDC;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -61,7 +62,7 @@ public class LoggingContextAccessor {
       @Override
       public void cancel() {
         if (Thread.currentThread() == saveCurrentThread && !cancelled) {
-          MDC.setContextMap(saveContextMap);
+          MDC.setContextMap(saveContextMap == null ? Collections.emptyMap() : saveContextMap);
           loggingContext.set(saveLoggingContext);
           cancelled = true;
         }
