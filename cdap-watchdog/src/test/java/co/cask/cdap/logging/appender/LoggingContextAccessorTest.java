@@ -38,12 +38,13 @@ public class LoggingContextAccessorTest {
 
   @Test
   public void testReset() {
-    LoggingContextAccessor.setLoggingContext(new GenericLoggingContext(OLD_NS, OLD_APP, OLD_ENTITY));
+    Cancellable cancellable = LoggingContextAccessor.setLoggingContext(
+      new GenericLoggingContext(OLD_NS, OLD_APP, OLD_ENTITY));
     Assert.assertEquals(MDC.get(NamespaceLoggingContext.TAG_NAMESPACE_ID), OLD_NS);
     Assert.assertEquals(MDC.get(ApplicationLoggingContext.TAG_APPLICATION_ID), OLD_APP);
     Assert.assertEquals(MDC.get(GenericLoggingContext.TAG_ENTITY_ID), OLD_ENTITY);
 
-    final Cancellable cancellable =
+    final Cancellable cancellable2 =
       LoggingContextAccessor.setLoggingContext(new GenericLoggingContext(NS, APP, ENTITY));
 
     Assert.assertEquals(MDC.get(NamespaceLoggingContext.TAG_NAMESPACE_ID), NS);
@@ -54,7 +55,7 @@ public class LoggingContextAccessorTest {
     Thread thread = new Thread(new Runnable() {
       @Override
       public void run() {
-        cancellable.cancel();
+        cancellable2.cancel();
       }
     });
     thread.start();
@@ -70,10 +71,14 @@ public class LoggingContextAccessorTest {
     Assert.assertEquals(MDC.get(GenericLoggingContext.TAG_ENTITY_ID), ENTITY);
 
     // Reset in the same thread
-    cancellable.cancel();
+    cancellable2.cancel();
 
     Assert.assertEquals(MDC.get(NamespaceLoggingContext.TAG_NAMESPACE_ID), OLD_NS);
     Assert.assertEquals(MDC.get(ApplicationLoggingContext.TAG_APPLICATION_ID), OLD_APP);
     Assert.assertEquals(MDC.get(GenericLoggingContext.TAG_ENTITY_ID), OLD_ENTITY);
+
+    // Check reset back to nothing
+    cancellable.cancel();
+    Assert.assertTrue(MDC.getCopyOfContextMap().isEmpty());
   }
 }
