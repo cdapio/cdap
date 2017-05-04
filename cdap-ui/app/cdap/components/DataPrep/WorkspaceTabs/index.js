@@ -19,12 +19,10 @@ import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
+import {Link, Redirect} from 'react-router-dom';
+import {setWorkspace, getWorkspaceList} from 'components/DataPrep/store/DataPrepActionCreator';
+import IconSVG from 'components/IconSVG';
 import cookie from 'react-cookie';
-import {setWorkspace} from 'components/DataPrep/store/DataPrepActionCreator';
-import WorkspaceModal from 'components/DataPrep/TopPanel/WorkspaceTabs/WorkspaceModal';
-import WorkspacePropertiesModal from 'components/DataPrep/TopPanel/WorkspaceTabs/WorkspacePropertiesModal';
-import ee from 'event-emitter';
-import sortBy from 'lodash/sortBy';
 
 require('./WorkspaceTabs.scss');
 
@@ -34,76 +32,40 @@ export default class WorkspaceTabs extends Component {
   constructor(props) {
     super(props);
 
-    let initialState = DataPrepStore.getState().dataprep;
+    let initialState = DataPrepStore.getState();
 
     this.state = {
-      activeWorkspace: initialState.workspaceId,
-      workspaceList: [],
-      workspaceModal: false,
-      workspacePropertiesModal: false,
-      beginIndex: 0
+      activeWorkspace: initialState.dataprep.workspaceId,
+      workspaceList: initialState.workspaces.list,
+      beginIndex: 0,
+      isEmpty: false,
+      reroute: false
     };
 
-    this.toggleCreateWorkspace = this.toggleCreateWorkspace.bind(this);
-    this.toggleWorkspacePropertiesModal = this.toggleWorkspacePropertiesModal.bind(this);
+    this.namespace = NamespaceStore.getState().selectedNamespace;
+
     this.getWorkspaceList = this.getWorkspaceList.bind(this);
     this.next = this.next.bind(this);
     this.prev = this.prev.bind(this);
-    this.eventEmitter = ee(ee);
 
-    this.eventEmitter.on('DATAPREP_OPEN_UPLOAD', this.toggleWorkspacePropertiesModal);
-    this.eventEmitter.on('DATAPREP_CREATE_WORKSPACE', this.toggleCreateWorkspace);
     this.sub = DataPrepStore.subscribe(() => {
+      let state = DataPrepStore.getState();
+
       this.setState({
-        activeWorkspace: DataPrepStore.getState().dataprep.workspaceId
+        activeWorkspace: state.dataprep.workspaceId,
+        workspaceList: state.workspaces.list
       });
     });
-  }
-
-  componentWillMount() {
-    this.getWorkspaceList();
   }
 
   componentWillUnmount() {
     if (this.sub) {
       this.sub();
     }
-
-    this.eventEmitter.off('DATAPREP_OPEN_UPLOAD', this.toggleWorkspacePropertiesModal);
-    this.eventEmitter.off('DATAPREP_CREATE_WORKSPACE', this.toggleCreateWorkspace);
   }
 
   getWorkspaceList() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
-
-    MyDataPrepApi.getWorkspaceList({ namespace })
-      .subscribe((res) => {
-        if (!this.state.activeWorkspace && res.values.length > 0 && !this.props.singleWorkspaceMode) {
-          this.setActiveWorkspace(res.values[0].id);
-        }
-
-        let workspaceList = sortBy(res.values, ['name']);
-        let beginIndex = workspaceList.indexOf(this.state.activeWorkspace);
-
-        if (beginIndex > (workspaceList.length - MAX_NUM_TABS)) {
-          beginIndex = workspaceList.length - MAX_NUM_TABS;
-        }
-
-        if (beginIndex < 0) {
-          beginIndex = 0;
-        }
-
-        this.setState({
-          workspaceList: workspaceList,
-          beginIndex
-        });
-
-        if (res.values.length === 0 || this.props.singleWorkspaceMode && !(this.props.workspaceId || this.state.activeWorkspace)) {
-          this.toggleCreateWorkspace();
-        }
-      }, (err) => {
-        console.log('Workspace List Error', err);
-      });
+    getWorkspaceList();
   }
 
   setActiveWorkspace(workspace) {
@@ -123,44 +85,24 @@ export default class WorkspaceTabs extends Component {
           type: DataPrepActions.disableLoading
         });
       });
-  }
+    }
 
-  toggleCreateWorkspace() {
-    this.setState({
-      workspaceModal: !this.state.workspaceModal
+  deleteWorkspace(workspaceId) {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+
+    MyDataPrepApi.delete({
+      namespace,
+      workspaceId
+    }).subscribe(() => {
+      if (workspaceId === this.state.activeWorkspace) {
+        this.setState({reroute: true});
+        return;
+      }
+      this.getWorkspaceList();
+
+    }, (err) => {
+      console.log("Error Deleting", err);
     });
-  }
-
-  toggleWorkspacePropertiesModal() {
-    this.setState({
-      workspacePropertiesModal: !this.state.workspacePropertiesModal
-    });
-  }
-
-  renderCreateWorkspaceModal() {
-    if (!this.state.workspaceModal) { return null; }
-
-    return (
-      <WorkspaceModal
-        toggle={this.toggleCreateWorkspace}
-        onCreate={this.getWorkspaceList}
-        singleWorkspaceMode={this.props.singleWorkspaceMode}
-        isEmpty={this.state.workspaceList.length === 0}
-      />
-    );
-  }
-
-  renderWorkspacePropertiesModal() {
-    if (!this.state.workspacePropertiesModal) { return null; }
-
-    return (
-      <WorkspacePropertiesModal
-        toggle={this.toggleWorkspacePropertiesModal}
-        workspace={this.state.activeWorkspace}
-        onDelete={this.getWorkspaceList}
-        singleWorkspaceMode={this.props.singleWorkspaceMode}
-      />
-    );
   }
 
   next() {
@@ -184,13 +126,19 @@ export default class WorkspaceTabs extends Component {
       <div
         key={workspace.id}
         className="workspace-tab active"
-        onClick={this.toggleWorkspacePropertiesModal}
       >
         <span title={workspace.name}>
           {workspace.name}
         </span>
-        <span className="fa fa-pencil" />
-        {this.renderWorkspacePropertiesModal()}
+
+        <span
+          className="fa fa-fw delete-workspace"
+          onClick={this.deleteWorkspace.bind(this, workspace.id)}
+        >
+          <IconSVG
+            name="icon-close"
+          />
+        </span>
       </div>
     );
   }
@@ -200,12 +148,25 @@ export default class WorkspaceTabs extends Component {
       <div
         key={workspace.id}
         className="workspace-tab"
-        onClick={this.setActiveWorkspace.bind(this, workspace)}
-        title={workspace.name}
       >
-        {workspace.name}
+        <Link
+          to={`/ns/${this.namespace}/dataprep/${workspace.id}`}
+          title={workspace.name}
+        >
+          {workspace.name}
+        </Link>
+
+        <span
+          className="fa fa-fw delete-workspace"
+          onClick={this.deleteWorkspace.bind(this, workspace.id)}
+        >
+          <IconSVG
+            name="icon-close"
+          />
+        </span>
       </div>
     );
+
   }
 
   renderWorkspaceTabs() {
@@ -257,10 +218,21 @@ export default class WorkspaceTabs extends Component {
   }
 
   render() {
+    if (this.state.isEmpty) {
+      return (
+        <Redirect to={`/ns/${this.namespace}/connections/browser`} />
+      );
+    }
+
+    if (this.state.reroute) {
+      return (
+        <Redirect to={`/ns/${this.namespace}/dataprep`} />
+      );
+    }
+
     if (this.props.singleWorkspaceMode) {
       return (
         <div>
-          {this.renderCreateWorkspaceModal()}
           {this.renderActiveWorkspace(this.state.activeWorkspace)}
         </div>
       );
@@ -268,15 +240,6 @@ export default class WorkspaceTabs extends Component {
     return (
       <div className="workspace-tabs">
         {this.renderWorkspaceTabs()}
-
-        <div
-          className="workspace-tab add-workspace-button text-xs-center"
-          onClick={this.toggleCreateWorkspace}
-        >
-          <span className="fa fa-plus" />
-
-          {this.renderCreateWorkspaceModal()}
-        </div>
       </div>
     );
   }

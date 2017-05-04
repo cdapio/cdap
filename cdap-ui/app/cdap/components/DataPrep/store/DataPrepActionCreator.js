@@ -22,6 +22,8 @@ import Rx from 'rx';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import {objectQuery} from 'services/helpers';
 import ee from 'event-emitter';
+import {sortBy, find} from 'lodash';
+
 
 export function execute(addDirective, shouldReset) {
   let eventEmitter = ee(ee);
@@ -86,6 +88,7 @@ export function setWorkspace(workspaceId) {
         let requestBody = directiveRequestBodyCreator(directives);
 
         let workspaceUri = objectQuery(res, 'values', '0', 'properties', 'path');
+        let workspaceInfo = objectQuery(res, 'values', '0');
 
         MyDataPrepApi.execute(params, requestBody)
           .subscribe((response) => {
@@ -98,7 +101,8 @@ export function setWorkspace(workspaceId) {
                 headers: response.header,
                 directives,
                 workspaceId,
-                workspaceUri
+                workspaceUri,
+                workspaceInfo
               }
             });
 
@@ -148,5 +152,47 @@ function fetchColumnsInformation(params, requestBody, headers) {
 
     }, (err) => {
       console.log('error fetching summary', err);
+    });
+}
+
+export function getWorkspaceList(workspaceId) {
+  let namespace = NamespaceStore.getState().selectedNamespace;
+
+  MyDataPrepApi.getWorkspaceList({ namespace })
+    .subscribe((res) => {
+      if (res.values.length === 0) {
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setWorkspaceList,
+          payload: {
+            list: []
+          }
+        });
+
+        return;
+      }
+
+      let workspaceList = sortBy(res.values, ['name']);
+
+      DataPrepStore.dispatch({
+        type: DataPrepActions.setWorkspaceList,
+        payload: {
+          list: workspaceList
+        }
+      });
+
+      if (workspaceId) {
+        // Set active workspace
+        // Check for existance of the workspaceId
+        let workspaceObj = find(workspaceList, { id: workspaceId });
+
+        let workspaceStream;
+        if (workspaceObj) {
+          workspaceStream = setWorkspace(workspaceId);
+        } else {
+          workspaceStream = setWorkspace(workspaceList[0].id);
+        }
+
+        workspaceStream.subscribe();
+      }
     });
 }

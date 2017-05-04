@@ -42,7 +42,8 @@ export default class DataPrepTable extends Component {
       loading: !storeState.dataprep.initialized,
       directivesLength: storeState.dataprep.directives.length,
       workspaceId: storeState.dataprep.workspaceId,
-      columns: storeState.columnsInformation.columns
+      columns: storeState.columnsInformation.columns,
+      selectedHeaders: storeState.dataprep.selectedHeaders
     };
 
     this.eventEmitter = ee(ee);

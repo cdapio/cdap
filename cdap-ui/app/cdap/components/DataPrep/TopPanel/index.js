@@ -19,7 +19,6 @@ import DataPrepStore from 'components/DataPrep/store';
 import SchemaModal from 'components/DataPrep/TopPanel/SchemaModal';
 import AddToPipelineModal from 'components/DataPrep/TopPanel/AddToPipelineModal';
 import UpgradeModal from 'components/DataPrep/TopPanel/UpgradeModal';
-import WorkspaceTabs from 'components/DataPrep/TopPanel/WorkspaceTabs';
 import {objectQuery} from 'services/helpers';
 import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
@@ -41,7 +40,8 @@ export default class DataPrepTopPanel extends Component {
       upgradeModal: false,
       higherVersion: initialState.higherVersion,
       onSubmitError: null,
-      onSubmitLoading: false
+      onSubmitLoading: false,
+      workspaceInfo: initialState.workspaceInfo
     };
 
     this.toggleSchemaModal = this.toggleSchemaModal.bind(this);
@@ -51,7 +51,8 @@ export default class DataPrepTopPanel extends Component {
     this.sub = DataPrepStore.subscribe(() => {
       let state = DataPrepStore.getState().dataprep;
       this.setState({
-        higherVersion: state.higherVersion
+        higherVersion: state.higherVersion,
+        workspaceInfo: state.workspaceInfo
       });
     });
   }
@@ -146,15 +147,39 @@ export default class DataPrepTopPanel extends Component {
     }
   }
 
+  renderTopPanelDisplay() {
+    let info = this.state.workspaceInfo;
+    if (info) {
+      if (info.properties.connection === 'file') {
+        return (
+          <div className="data-prep-name">
+            <div className="connection-type">
+              {T.translate('features.DataPrep.TopPanel.file')}
+            </div>
+            <div className="title">
+              {info.properties.file}
+            </div>
+          </div>
+        );
+      }
+    }
+
+    return (
+      <div className="data-prep-name">
+        <strong>
+          {T.translate('features.DataPrep.TopPanel.title')}
+        </strong>
+        <span className="tag tag-success">BETA</span>
+      </div>
+    );
+  }
+
   render() {
     return (
       <div className="top-panel clearfix">
         <div className="left-title float-xs-left">
           <div className="upper-section">
-            <div className="data-prep-name">
-              <strong>Data Preparation</strong>
-              <span className="tag tag-success">BETA</span>
-            </div>
+            {this.renderTopPanelDisplay()}
 
             <div className="upgrade-button">
               {
@@ -171,11 +196,6 @@ export default class DataPrepTopPanel extends Component {
               {this.renderUpgradeModal()}
             </div>
           </div>
-
-          <WorkspaceTabs
-            singleWorkspaceMode={this.props.singleWorkspaceMode}
-            workspaceId={this.props.workspaceId}
-          />
         </div>
 
         <div className="action-buttons float-xs-right">
@@ -211,7 +231,7 @@ export default class DataPrepTopPanel extends Component {
           {this.renderAddToPipelineModal()}
 
           <button
-            className="btn btn-secondary"
+            className="btn btn-link"
             onClick={this.toggleSchemaModal}
           >
             {T.translate('features.DataPrep.TopPanel.viewSchemaBtnLabel')}
@@ -225,6 +245,5 @@ export default class DataPrepTopPanel extends Component {
 
 DataPrepTopPanel.propTypes = {
   singleWorkspaceMode: PropTypes.bool,
-  workspaceId: PropTypes.string,
   onSubmit: PropTypes.func
 };

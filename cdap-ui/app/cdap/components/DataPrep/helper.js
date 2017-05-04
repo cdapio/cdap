@@ -15,6 +15,12 @@
  */
 
 import DataPrepStore from 'components/DataPrep/store';
+import {MyArtifactApi} from 'api/artifact';
+import MyDataPrepApi from 'api/dataprep';
+import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
+import Version from 'services/VersionRange/Version';
+import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+import NamespaceStore from 'services/NamespaceStore';
 
 export function directiveRequestBodyCreator(directivesArray, wsId) {
   let workspaceId = wsId || DataPrepStore.getState().dataprep.workspaceId;
@@ -59,4 +65,31 @@ export function setPopoverOffset(element, header_height = 50, footer_height = 54
   } else {
     popover[0].style.top = 0;
   }
+}
+
+export function checkDataPrepHigherVersion() {
+  let namespace = NamespaceStore.getState().selectedNamespace;
+
+  // Check artifacts upgrade
+  MyArtifactApi.list({ namespace })
+    .combineLatest(MyDataPrepApi.getApp({ namespace }))
+    .subscribe((res) => {
+      let wranglerArtifactVersions = res[0].filter((artifact) => {
+        return artifact.name === 'wrangler-service';
+      }).map((artifact) => {
+        return artifact.version;
+      });
+
+      let highestVersion = findHighestVersion(wranglerArtifactVersions);
+      let currentAppArtifactVersion = new Version(res[1].artifact.version);
+
+      if (highestVersion.compareTo(currentAppArtifactVersion) === 1) {
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setHigherVersion,
+          payload: {
+            higherVersion: highestVersion.toString()
+          }
+        });
+      }
+    });
 }

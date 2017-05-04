@@ -21,6 +21,9 @@ import {Route, NavLink, Redirect} from 'react-router-dom';
 import FileBrowser from 'components/FileBrowser';
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
+import LoadingSVG from 'components/LoadingSVG';
+import MyDataPrepApi from 'api/dataprep';
+import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -46,10 +49,47 @@ export default class DataPrepConnections extends Component {
     super(props);
 
     this.state = {
-      sidePanelExpanded: true
+      sidePanelExpanded: true,
+      backendChecking: true,
+      backendDown: false
     };
 
     this.toggleSidePanel = this.toggleSidePanel.bind(this);
+    this.onServiceStart = this.onServiceStart.bind(this);
+  }
+
+  componentWillMount() {
+    this.checkBackendUp();
+  }
+
+  checkBackendUp() {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+
+    MyDataPrepApi.ping({ namespace })
+      .subscribe(() => {
+        this.setState({
+          backendChecking: false,
+          backendDown: false
+        });
+      }, (err) => {
+        if (err.statusCode === 503) {
+          console.log('backend not started');
+
+          this.setState({
+            backendChecking: false,
+            backendDown: true
+          });
+
+          return;
+        }
+      });
+  }
+
+  onServiceStart() {
+    this.setState({
+      backendDown: false,
+      backendChecking: false
+    });
   }
 
   toggleSidePanel() {
@@ -115,6 +155,23 @@ export default class DataPrepConnections extends Component {
   }
 
   render() {
+    if (this.state.backendChecking) {
+      return (
+        <div className="text-xs-center">
+          <LoadingSVG />
+        </div>
+      );
+    }
+
+    if (this.state.backendDown) {
+      return (
+        <DataPrepServiceControl
+          onServiceStart={this.onServiceStart}
+        />
+      );
+    }
+
+
     const BASEPATH = '/ns/:namespace/connections';
 
     return (
