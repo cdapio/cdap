@@ -76,7 +76,6 @@ with the ``@UseDataSet`` annotation::
       counters.increment(key.getBytes(), 1L);
     }
 
-
 When starting the program, the runtime system reads the dataset specification from the metadata store and injects
 an instance of the dataset class into the application. This dataset will participate in every transaction that is
 executed by the program. If the program is multi-threaded (for example, an HTTP service handler), CDAP will make
@@ -157,7 +156,7 @@ from the cache, every thread that uses it must individually call ``discardDatase
 Multi-threading and Dataset Access
 ----------------------------------
 
-As mentioned above, if a program is is multi-threaded, CDAP will make sure that every
+As mentioned above, if a program is multi-threaded, CDAP will make sure that every
 thread has its own instance of a dataset. This is because datasets are not thread-safe,
 and each thread must operate on its own instance of a Dataset.
 
