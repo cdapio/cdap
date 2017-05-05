@@ -105,11 +105,17 @@ public final class ExploreUtils {
       throw new RuntimeException("System property " + EXPLORE_CLASSPATH + " is not set.");
     }
 
+    LOG.error("1111111111111111 Explore classpath: {}", property);
+
+    return getClasspathJarFiles(property, extraExtensions);
+  }
+
+  public static Iterable<File> getClasspathJarFiles(String classpath, String...extraExtensions) {
     Set<String> acceptedExts = Sets.newHashSet(extraExtensions);
     acceptedExts.add("jar");
 
     Set<File> result = new LinkedHashSet<>();
-    for (String path : Splitter.on(File.pathSeparator).split(property)) {
+    for (String path : Splitter.on(File.pathSeparator).split(classpath)) {
       List<File> jarFiles;
       // The path has to either ends with "*" or is a jar file. This is because we are only interested in JAR files
       // in the hive classpath.
@@ -134,6 +140,8 @@ public final class ExploreUtils {
         }
       }
     }
+
+    LOG.error("111111111111111 Resolved explore classpath: {}", result);
 
     return Collections.unmodifiableSet(result);
   }
