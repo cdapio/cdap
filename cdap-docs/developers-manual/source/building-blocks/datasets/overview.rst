@@ -18,7 +18,7 @@ The core datasets of CDAP are *Tables* and *FileSets*:
 - Unlike relational database systems, CDAP *Tables* are not organized into rows with a fixed schema.
   They are optimized for efficient storage of semi-structured data, data with unknown or variable
   schema, or sparse data.
-  
+
 - CDAP *FileSets* provide an abstraction over the raw file system, and associate properties such as
   the format or the schema with the files they contain. In addition, partitioned file sets
   allow addressing files by their partition meta data, removing the need for applications to
@@ -43,7 +43,7 @@ You can create a dataset in CDAP using either the :ref:`http-restful-api-dataset
 
 You tell applications to create a dataset if it does not already
 exist by declaring the dataset details in the application specification.
-For example, to create a DataSet named *myCounters* of type 
+For example, to create a DataSet named *myCounters* of type
 `KeyValueTable <../../../reference-manual/javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable.html>`__, write::
 
   public void configure() {
@@ -128,7 +128,7 @@ it marks the dataset to be closed and removed from all transactions. If a transa
 currently in progress, however, this will not happen until after the current transaction
 is complete, because the discarded dataset may have performed data operations and
 therefore still needs to participate in the commit (or rollback) of the transaction.
-  
+
 Discarding a dataset is useful:
 
 - To ensure that the dataset is closed and its resources are released, as soon as a program does not need the dataset
@@ -151,6 +151,26 @@ as the transaction finishes.
 Similarly to static datasets, if a program is multi-threaded, CDAP will make
 sure that every thread has its own instance of each dynamic dataset |---| and in order to discard a dataset
 from the cache, every thread that uses it must individually call ``discardDataset()``.
+
+.. _multi-threading-dataset-access:
+
+Multi-threading and Dataset Access
+----------------------------------
+
+As mentioned above, if a program is is multi-threaded, CDAP will make sure that every
+thread has its own instance of a dataset. This is because datasets are not thread-safe,
+and each thread must operate on its own instance of a Dataset.
+
+As a consequence, multiple threads accessing the same dataset will have different
+instances of the same dataset. If they are in the same transaction, an issue arises if the
+datasets are :ref:`Table-based <datasets-overview-types>`: the threads will buffer writes
+in-memory and will not see each other's writes. Then, upon flush, it is possible that the
+different threads will overwrite each others' changes.
+
+One solution is to design your use of the datasets so that each thread writes to unique
+columns, preventing the overwriting. Another solution is to use a :ref:`dataset type
+<datasets-overview-types>` that is not Table-based, such as a :ref:`FileSet
+<datasets-fileset>`.
 
 .. _cross-namespace-dataset-access:
 
@@ -229,14 +249,16 @@ maximum age (in seconds) that data should be retained.
 When you create a dataset, you can configure its TTL as part of the creation::
 
   public void configure() {
-    createDataset("myCounters", Table.class, 
-                  DatasetProperties.builder().add(Table.PROPERTY_TTL, 
+    createDataset("myCounters", Table.class,
+                  DatasetProperties.builder().add(Table.PROPERTY_TTL,
                                                   "<age in seconds>").build());
     ...
   }
 
 The default TTL for all datasets is infinite, meaning that data will never expire. The TTL
 property of an existing dataset can be changed using the :ref:`http-restful-api-dataset`.
+
+.. _datasets-overview-types:
 
 Types of Datasets
 =================
@@ -318,10 +340,10 @@ such as the format and schema, while abstracting from the actual underlying file
 - An abstraction of FileSets, ``PartitionedFileSets`` allow the associating of meta data (partitioning keys)
   with each file. The file can then be addressed through its meta data, removing the need for programs to
   be aware of actual file paths.
-  
+
 - A ``TimePartitionedFileSet`` is a further variation that uses a timestamp as the partitioning key.
   Though it is not required that data in each partition be organized by time,
-  each partition is assigned a logical time. 
+  each partition is assigned a logical time.
 
   This is in contrast to a :ref:`Timeseries Table <cdap-timeseries-guide>` dataset, where
   time is the primary means of how data is organized, and both the data model and the
@@ -331,17 +353,17 @@ such as the format and schema, while abstracting from the actual underlying file
   Time-partitioned FileSets are typically written in batch: into large files, every *N* minutes or
   hours...while a timeseries table is typically written in real-time, one data point at a
   time.
- 
+
 - A ``CubeDataset`` is a multidimensional dataset, optimized for data warehousing and OLAP
   (Online Analytical Processing) applications. A Cube dataset stores multidimensional facts,
   provides a querying interface for retrieval of data and allows exploring of the stored data.
 
   See :ref:`Cube Dataset <datasets-cube>` for: details on configuring a Cube dataset;
   writing to and reading from it; and querying and exploring the data in a cube.
-  
+
   An example of using the Cube dataset is provided in the :ref:`Data Analysis with OLAP
-  Cube <cdap-cube-guide>` guide. 
-  
+  Cube <cdap-cube-guide>` guide.
+
 
 Dataset Examples
 ================
@@ -366,7 +388,7 @@ Datasets are included in just about every CDAP :ref:`application <apps-and-packs
 - For an example of a **PartitionedFileSet,** see the :ref:`Sport Results <examples-sport-results>`
   example.
 
-- For an example of a **TimePartitionedFileSet,** see the :ref:`StreamConversion 
+- For an example of a **TimePartitionedFileSet,** see the :ref:`StreamConversion
   <examples-stream-conversion>` example.
 
 - For examples of **key-value Table datasets,** see the
