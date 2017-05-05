@@ -22,34 +22,6 @@ if release:
 
 # Build property tables files imported by logging.rst
 
-def build_property_tables(defaults, exclusions, rst_table_header, name, properties):
-    target = os.path.join(os.getcwd(), '../target/_includes', name)
-    table = rst_table_header + '\n'
-    for prop in properties:
-        if prop in exclusions:
-            print "Ignoring prop '%s' as it is in the exclusions list" % prop
-        else:
-            if defaults.has_key(prop):
-                table += defaults[prop].rst()
-            else:
-                print "Unable to find prop '%s' in defaults" % prop
-                raise Exception('build_property_tables', "Unable to find prop '%s' in defaults" % prop)
-    f = open(target, 'w')
-    f.write(table)
-    f.close()
-    print "Wrote property table: %s" % name
-
-defaults_dict = {}
-sys.path.insert(0, os.path.abspath('../../tools/cdap-default'))
-dcd = __import__("doc-cdap-default")
-defaults, tree = dcd.load_xml()
-exclusions = dcd.load_exclusions()
-if defaults:
-    for item in defaults:
-        defaults_dict[item.name] = item
-else:
-    print "Unable to build property tables from the cdap-defaults.xml file"
-
 writing_logs_to_kafka = [
     "log.kafka.topic",
     "log.publish.num.partitions",
@@ -85,7 +57,9 @@ logging_pipeline_configuration_2 = [
     ]
 build_property_tables(defaults_dict, exclusions, dcd.RST_TABLE_HEADER, "logging-pipeline-configuration-2.rst", logging_pipeline_configuration_2)
 
+
 # Add Microsoft Azure HDInsight versions for this branch
+
 hdinsight_versions = ''
 hdinsight_path = os.path.join(os.getcwd(), '../../..', 'cdap-distributions/src/hdinsight/pkg/createUiDefinition.json')
 try:

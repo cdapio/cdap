@@ -897,3 +897,33 @@ def setup(app):
     app.connect('source-read', source_read_handler) # Used for Markdown files
     from jsonEllipsisLexer import JsonEllipsisLexer # Add JsonEllipsisLexer (json-ellipsis)
     app.add_lexer("json-ellipsis", JsonEllipsisLexer())
+
+# -- Load properties from cdap-default.xml for referencing in manuals -------
+
+defaults_dict = {}
+sys.path.insert(0, os.path.abspath('../../tools/cdap-default'))
+dcd = __import__('doc-cdap-default')
+defaults, tree = dcd.load_xml()
+exclusions = dcd.load_exclusions()
+if defaults:
+    for item in defaults:
+        defaults_dict[item.name] = item
+else:
+    print 'Unable to build property tables from the cdap-defaults.xml file'
+
+def build_property_tables(defaults, exclusions, rst_table_header, name, properties):
+    target = os.path.join(os.getcwd(), '../target/_includes', name)
+    table = rst_table_header + '\n'
+    for prop in properties:
+        if prop in exclusions:
+            print "Ignoring prop '%s' as it is in the exclusions list" % prop
+        else:
+            if defaults.has_key(prop):
+                table += defaults[prop].rst()
+            else:
+                print "Unable to find prop '%s' in defaults" % prop
+                raise Exception('build_property_tables', "Unable to find prop '%s' in defaults" % prop)
+    f = open(target, 'w')
+    f.write(table)
+    f.close()
+    print "Wrote property table: %s" % name

@@ -68,8 +68,17 @@ Cask Market HTTP RESTful API
 .. highlight:: console
 
 The Cask Market HTTP RESTful APIs are simply a contract about the directory structure of the marketplace.
-All APIs are relative to a base path. For example, the base path for the public Cask-hosted market
-is ``market.cask.co``.
+
+All APIs are relative to a base path. For the public Cask-hosted market, the base path is
+configured in the :ref:`cdap-site.xml <appendix-cdap-default-market>` property
+``market.base.url`` as:
+
+  |literal-market-base-url|
+
+All methods or endpoints described in this API use that base URL, as described in the
+:ref:`RESTful API Conventions <http-restful-api-conventions-base-url>`. These methods
+return a status code, as listed in the :ref:`RESTful API  Status Codes
+<http-restful-api-status-codes>`.
 
 .. directory-structure-start
 
@@ -77,21 +86,18 @@ The directory structure must be:
 
 .. parsed-literal::
 
-  <base>/|cask-market-version|/packages.json
-  <base>/|cask-market-version|/packages/<package-name>/<version>/icon.png
-  <base>/|cask-market-version|/packages/<package-name>/<version>/spec.json
-  <base>/|cask-market-version|/packages/<package-name>/<version>/spec.json.asc
-  <base>/|cask-market-version|/packages/<package-name>/<version>/<resource1>
-  <base>/|cask-market-version|/packages/<package-name>/<version>/<resource1>.asc
-  <base>/|cask-market-version|/packages/<package-name>/<version>/<resource2>
-  <base>/|cask-market-version|/packages/<package-name>/<version>/<resource2>.asc
+  |market-base-url|/packages.json
+  |market-base-url|/packages/<package-name>/<version>/icon.png
+  |market-base-url|/packages/<package-name>/<version>/spec.json
+  |market-base-url|/packages/<package-name>/<version>/spec.json.asc
+  |market-base-url|/packages/<package-name>/<version>/<resource1>
+  |market-base-url|/packages/<package-name>/<version>/<resource1>.asc
+  |market-base-url|/packages/<package-name>/<version>/<resource2>
+  |market-base-url|/packages/<package-name>/<version>/<resource2>.asc
   ...
 
 .. directory-structure-end
 
-.. Base URL explanation
-.. --------------------
-.. include:: ../../reference-manual/source/http-restful-api/base-url.txt
 
 .. _cask-market-get-catalog:
 
