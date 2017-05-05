@@ -94,6 +94,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   // maximum number of milliseconds to sleep between each run of fetching & processing new metrics
   private final int metricsProcessIntervalMillis;
   private final List<ProcessMetricsThread> processMetricsThreads;
+  private final String processMetricName;
+  private final String delayMetricName;
 
   private long metricsProcessedCount;
 
@@ -111,9 +113,10 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                                           @Named(Constants.Metrics.PROCESSOR_MAX_DELAY_MS) long maxDelayMillis,
                                           @Named(Constants.Metrics.QUEUE_SIZE) int queueSize,
                                           @Assisted Set<Integer> topicNumbers,
-                                          @Assisted MetricsContext metricsContext) {
+                                          @Assisted MetricsContext metricsContext,
+                                          @Assisted Integer instanceId) {
     this(metricDatasetFactory, topicPrefix, messagingService, schemaGenerator, readerFactory, metricStore,
-         maxDelayMillis, queueSize, topicNumbers, metricsContext, 1000);
+         maxDelayMillis, queueSize, topicNumbers, metricsContext, 1000, instanceId);
   }
 
   @VisibleForTesting
@@ -127,7 +130,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                                    int queueSize,
                                    Set<Integer> topicNumbers,
                                    MetricsContext metricsContext,
-                                   int metricsProcessIntervalMillis) {
+                                   int metricsProcessIntervalMillis,
+                                   int instanceId) {
     this.metricDatasetFactory = metricDatasetFactory;
     this.metricsTopics = new ArrayList<>();
     for (int topicNum : topicNumbers) {
@@ -152,6 +156,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     this.topicMessageIds = new ConcurrentHashMap<>();
     this.persistingFlag = new AtomicBoolean();
     this.metricsProcessIntervalMillis = metricsProcessIntervalMillis;
+    processMetricName = String.format("metrics.%s.process.count", instanceId);
+    delayMetricName = String.format("metrics.%s.process.delay.ms", instanceId);
   }
 
   private MetricsConsumerMetaTable getMetaTable() {
@@ -261,8 +267,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     metricValues.add(
       new MetricValues(metricsContextMap, TimeUnit.MILLISECONDS.toSeconds(now),
                        ImmutableList.of(
-                         new MetricValue("metrics.process.count", MetricType.COUNTER, metricValues.size()),
-                         new MetricValue("metrics.process.delay.ms", MetricType.GAUGE, delay))));
+                         new MetricValue(processMetricName, MetricType.COUNTER, metricValues.size()),
+                         new MetricValue(delayMetricName, MetricType.GAUGE, delay))));
     metricStore.add(metricValues);
     metricsProcessedCount += metricValues.size();
     PROGRESS_LOG.debug("{} metrics metrics persisted. Last metric metric's timestamp: {}. " +
