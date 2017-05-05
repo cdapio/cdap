@@ -134,7 +134,7 @@ public class MonitorHandler extends AbstractMonitorHandler {
     super.updateServiceLogLevels(request, responder, serviceName);
   }
 
-  @Path("system/services/{service-name}/resetLoglevels")
+  @Path("system/services/{service-name}/resetloglevels")
   @POST
   public void resetServiceLogLevels(HttpRequest request, HttpResponder responder,
                                      @PathParam("service-name") String serviceName) {

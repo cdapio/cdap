@@ -28,9 +28,11 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -162,11 +164,11 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
    * Helper method to transform the type of the log level map.
    */
   protected Map<String, LogEntry.Level> transformLogLevelsMap(Map<String, String> logLevels) {
-    Map<String, LogEntry.Level> result = new HashMap<>();
-    for (Map.Entry<String, String> entry : logLevels.entrySet()) {
-      String logLevel = entry.getValue();
-      result.put(entry.getKey(), logLevel == null ? null : LogEntry.Level.valueOf(logLevel.toUpperCase()));
-    }
-    return result;
+    return Maps.transformValues(logLevels, new Function<String, LogEntry.Level>() {
+      @Override
+      public LogEntry.Level apply(String input) {
+        return LogEntry.Level.valueOf(input.toUpperCase());
+      }
+    });
   }
 }

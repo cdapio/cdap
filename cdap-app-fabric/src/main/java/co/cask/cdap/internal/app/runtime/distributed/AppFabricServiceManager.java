@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.zookeeper.election.LeaderElectionInfoService;
@@ -24,26 +26,37 @@ import co.cask.cdap.proto.SystemServiceLiveInfo;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.api.logging.LogEntry;
+import org.slf4j.ILoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * App Fabric Service Management in Distributed Mode.
  */
 public class AppFabricServiceManager implements MasterServiceManager {
 
+  private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceManager.class);
   private static final long ELECTION_PARTICIPANTS_TIMEOUT_MS = 2000L;
 
   private final InetAddress hostname;
   private LeaderElectionInfoService electionInfoService;
+  private final Map<String, LogEntry.Level> oldLogLevels;
 
   @Inject
   public AppFabricServiceManager(@Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname) {
     this.hostname = hostname;
+    // this is to remember old log levels, will be used during reset
+    this.oldLogLevels = Collections.synchronizedMap(new HashMap<String, LogEntry.Level>());
   }
 
   @Inject(optional = true)
@@ -134,11 +147,60 @@ public class AppFabricServiceManager implements MasterServiceManager {
 
   @Override
   public void updateServiceLogLevels(Map<String, LogEntry.Level> logLevels) {
-    // no-op
+    LoggerContext context = getLoggerContext();
+    if (context != null) {
+      for (Map.Entry<String, LogEntry.Level> entry : logLevels.entrySet()) {
+        String loggerName = entry.getKey();
+        LogEntry.Level oldLogLevel = setLogLevel(context, loggerName, entry.getValue());
+        // if logger name is not in oldLogLevels, we need to record its original log level
+        if (!oldLogLevels.containsKey(loggerName)) {
+          oldLogLevels.put(loggerName, oldLogLevel);
+        }
+      }
+    }
   }
 
   @Override
   public void resetServiceLogLevels(Set<String> loggerNames) {
-    // no-op
+    LoggerContext context = getLoggerContext();
+    Iterator<Map.Entry<String, LogEntry.Level>> entryIterator = oldLogLevels.entrySet().iterator();
+    while (entryIterator.hasNext()) {
+      Map.Entry<String, LogEntry.Level> entry = entryIterator.next();
+      String loggerName = entry.getKey();
+      // logger name is empty if we are resetting all loggers.
+      if (loggerNames.isEmpty() || loggerNames.contains(loggerName)) {
+        setLogLevel(context, loggerName, entry.getValue());
+        entryIterator.remove();
+      }
+    }
+  }
+
+  /**
+   * Set the log level for the requested logger name.
+   *
+   * @param loggerName name of the logger
+   * @param level the log level to set to.
+   * @return the current log level of the given logger. If there is no log level configured for the given logger,
+   *         {@code null} will be returned
+   */
+  @Nullable
+  private LogEntry.Level setLogLevel(LoggerContext context, String loggerName, @Nullable LogEntry.Level level) {
+    ch.qos.logback.classic.Logger logger = context.getLogger(loggerName);
+    LogEntry.Level oldLogLevel = logger.getLevel() == null ? null :
+      LogEntry.Level.valueOf(logger.getLevel().toString());
+    LOG.debug("Log level of {} changed from {} to {}", loggerName, oldLogLevel, level);
+    logger.setLevel(level == null ? null : Level.toLevel(level.name()));
+    return oldLogLevel;
+  }
+
+  @Nullable
+  private LoggerContext getLoggerContext() {
+    ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
+    if (!(loggerFactory instanceof LoggerContext)) {
+      LOG.warn("LoggerFactory is not a logback LoggerContext. No log appender is added. " +
+                 "Logback might not be in the classpath");
+      return null;
+    }
+    return (LoggerContext) loggerFactory;
   }
 }
