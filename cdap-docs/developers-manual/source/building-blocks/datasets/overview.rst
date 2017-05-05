@@ -161,15 +161,14 @@ thread has its own instance of a dataset. This is because datasets are not threa
 and each thread must operate on its own instance of a Dataset.
 
 As a consequence, multiple threads accessing the same dataset will have different
-instances of the same dataset. If they are in the same transaction, an issue arises if the
+instances of the same dataset. If they are in the same transaction, issues can arise. If the
 datasets are :ref:`Table-based <datasets-overview-types>`: the threads will buffer writes
 in-memory and will not see each other's writes. Then, upon flush, it is possible that the
-different threads will overwrite each others' changes.
+different threads will overwrite each others' changes. For :ref:`FileSets <datasets-fileset>`,
+multiple threads can end up writing to the same file.
 
 One solution is to design your use of the datasets so that each thread writes to unique
-columns, preventing the overwriting. Another solution is to use a :ref:`dataset type
-<datasets-overview-types>` that is not Table-based, such as a :ref:`FileSet
-<datasets-fileset>`.
+columns, preventing overwriting.
 
 .. _cross-namespace-dataset-access:
 
