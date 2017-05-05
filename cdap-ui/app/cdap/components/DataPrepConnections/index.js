@@ -24,6 +24,7 @@ import T from 'i18n-react';
 import LoadingSVG from 'components/LoadingSVG';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
+import ConnectionsUpload from 'components/DataPrepConnections/UploadFile';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -33,14 +34,6 @@ const RouteToHDFS = () => {
 
   return (
     <Redirect to={`/ns/${namespace}/connections/browser`} />
-  );
-};
-
-const UploadPlaceholder = () => {
-  return (
-    <div>
-      <h3 className="text-xs-center">UPLOAD</h3>
-    </div>
   );
 };
 
@@ -192,7 +185,13 @@ export default class DataPrepConnections extends Component {
               );
             }}
           />
-          <Route path={`${BASEPATH}/upload`} component={UploadPlaceholder} />
+          <Route path={`${BASEPATH}/upload`}
+            render={() => {
+              return (
+                <ConnectionsUpload toggle={this.toggleSidePanel} />
+              );
+            }}
+          />
         </div>
 
         <Route exact path={`${BASEPATH}`} component={RouteToHDFS} />

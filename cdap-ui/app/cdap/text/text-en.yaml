@@ -597,6 +597,12 @@ features:
     hdfs: HDFS
     title: "Connections in \"{namespace}\""
     upload: Upload
+    UploadComponent:
+      fileSizeError: "The file you are trying to upload is larger than 10MB. Please select a smaller file and try again."
+      helperText: "Max file size: 10MB"
+      recordDelimiter: Record Delimiter
+      title: Upload data from your computer
+      uploadButton: Upload
 
   DatasetDetailedView:
     Title: CDAP | Dataset | {datasetId}

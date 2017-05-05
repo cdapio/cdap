@@ -1,0 +1,56 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../../styles/variables.scss";
+
+$alert-font-color: white;
+
+.connections-upload-container {
+  .upload-content-container { padding: 10px; }
+  .file-drop-container { padding: 75px; }
+
+  .upload-row {
+    margin-top: 10px;
+
+    .helper-text { margin-left: 25px; }
+    .control-label { margin-right: 10px; }
+    .form-control,
+    .btn-primary { width: 100px; }
+  }
+
+  .upload-error {
+    position: absolute;
+    background-color: $alert-danger-bg;
+    top: 50px;
+    left: 0;
+    right: 0;
+    color: $alert-font-color;
+    height: 40px;
+    line-height: 40px;
+
+    .message {
+      position: absolute;
+      left: 15px;
+      right: 50px;
+    }
+
+    .close-button {
+      position: absolute;
+      right: 25px;
+      cursor: pointer;
+    }
+  }
+}
