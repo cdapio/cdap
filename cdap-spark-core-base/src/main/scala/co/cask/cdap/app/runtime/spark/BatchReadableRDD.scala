@@ -49,7 +49,6 @@ class BatchReadableRDD[K: ClassTag, V: ClassTag](@transient sc: SparkContext,
   }
 
   override def compute(partition: Partition, context: TaskContext): Iterator[(K, V)] = {
-    val inputMetrics = context.taskMetrics.inputMetrics
     val split = partition.asInstanceOf[BatchReadablePartition].split
     val sparkTxClient = new SparkTransactionClient(txServiceBaseURI.value)
 
@@ -70,7 +69,7 @@ class BatchReadableRDD[K: ClassTag, V: ClassTag](@transient sc: SparkContext,
       // Creates the split reader and use it to construct the Iterator to result
       val splitReader = dataset.asInstanceOf[BatchReadable[K, V]].createSplitReader(split)
       splitReader.initialize(split)
-      val iterator = new SplitReaderIterator[K, V](context, splitReader, inputMetrics, () => {
+      val iterator = new SplitReaderIterator[K, V](context, splitReader, () => {
         try {
           splitReader.close()
         } finally {
@@ -87,46 +86,4 @@ class BatchReadableRDD[K: ClassTag, V: ClassTag](@transient sc: SparkContext,
     }
   }
 
-  /**
-    * An [[scala.Iterator]] that is backed by a [[co.cask.cdap.api.data.batch.SplitReader]].
-    */
-  private class SplitReaderIterator[K, V](context: TaskContext,
-                                          splitReader: SplitReader[K, V],
-                                          inputMetrics: Option[InputMetrics],
-                                          closeable: () => Unit) extends Iterator[(K, V)] {
-    val done = new AtomicBoolean
-    var nextKeyValue: Option[(K, V)] = None
-
-    override def hasNext: Boolean = {
-      if (done.get()) {
-        return false
-      }
-      if (context.isInterrupted()) {
-        throw new TaskKilledException
-      }
-
-      // Find the next key value if necessary
-      if (nextKeyValue.isEmpty && splitReader.nextKeyValue()) {
-        nextKeyValue = Some((splitReader.getCurrentKey, splitReader.getCurrentValue))
-      }
-      return nextKeyValue.isDefined
-    }
-
-    override def next: (K, V) = {
-      // Precondition check. It shouldn't fail.
-      require(nextKeyValue.isDefined || hasNext, "No more entries")
-
-      // TODO: Add metrics for size being read. It requires dataset to expose it.
-      inputMetrics.foreach(_.incRecordsRead(1L))
-      val result = nextKeyValue.get
-      nextKeyValue = None
-      result
-    }
-
-    def close: Unit = {
-      if (done.compareAndSet(false, true)) {
-        closeable()
-      }
-    }
-  }
 }

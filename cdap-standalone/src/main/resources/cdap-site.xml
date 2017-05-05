@@ -48,6 +48,14 @@
     </description>
   </property>
 
+  <property>
+    <name>app.program.spark.compat</name>
+    <value>spark1_2.10</value>
+    <description>
+      Spark compatibility version. Must be 'spark1_2.10' or 'spark2_2.11'.
+    </description>
+  </property>
+
   <!-- Preview Configuration -->
 
   <property>

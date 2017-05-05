@@ -90,7 +90,7 @@ object SparkRuntimeEnv {
       }
 
       sparkContext = Some(context)
-      context.addSparkListener(new DelegatingSparkListener)
+      context.addSparkListener(new DelegatingSparkListener(sparkListeners))
     }
   }
 
@@ -272,7 +272,8 @@ object SparkRuntimeEnv {
         }).find(_.isDefined).flatten)
       } catch {
         case t: Throwable => {
-          LOG.warn("Unable to access field {} from object {}", fieldName, obj, t)
+          // causes a strange compilation error in spark2 if we don't use obj.toString
+          LOG.debug("Unable to access field {} from object {}", fieldName, obj.toString, t)
           None
         }
       }
@@ -290,68 +291,12 @@ object SparkRuntimeEnv {
         }).find(_.isDefined).flatten)
       } catch {
         case t: Throwable => {
-          LOG.warn("Unable to invoke method {} from object {}", methodName, obj, t)
+          // causes a strange compilation error in spark2 if we don't use obj.toString
+          LOG.debug("Unable to invoke method {} from object {}", methodName, obj.toString, t)
           None
         }
       }
     }
   }
 
-  /**
-    * A delegating [[org.apache.spark.scheduler.SparkListener]] that simply dispatch all callbacks to a list
-    * of [[org.apache.spark.scheduler.SparkListener]].
-    */
-  private class DelegatingSparkListener extends SparkListener {
-
-    override def onStageCompleted(stageCompleted: SparkListenerStageCompleted) =
-      sparkListeners.foreach(_.onStageCompleted(stageCompleted))
-
-    override def onStageSubmitted(stageSubmitted: SparkListenerStageSubmitted) =
-      sparkListeners.foreach(_.onStageSubmitted(stageSubmitted))
-
-    override def onTaskStart(taskStart: SparkListenerTaskStart) =
-      sparkListeners.foreach(_.onTaskStart(taskStart))
-
-    override def onTaskGettingResult(taskGettingResult: SparkListenerTaskGettingResult) =
-      sparkListeners.foreach(_.onTaskGettingResult(taskGettingResult))
-
-    override def onTaskEnd(taskEnd: SparkListenerTaskEnd) =
-      sparkListeners.foreach(_.onTaskEnd(taskEnd))
-
-    override def onJobStart(jobStart: SparkListenerJobStart) =
-      sparkListeners.foreach(_.onJobStart(jobStart))
-
-    override def onJobEnd(jobEnd: SparkListenerJobEnd) =
-      sparkListeners.foreach(_.onJobEnd(jobEnd))
-
-    override def onEnvironmentUpdate(environmentUpdate: SparkListenerEnvironmentUpdate) =
-      sparkListeners.foreach(_.onEnvironmentUpdate(environmentUpdate))
-
-    override def onBlockManagerAdded(blockManagerAdded: SparkListenerBlockManagerAdded) =
-      sparkListeners.foreach(_.onBlockManagerAdded(blockManagerAdded))
-
-    override def onBlockManagerRemoved(blockManagerRemoved: SparkListenerBlockManagerRemoved) =
-      sparkListeners.foreach(_.onBlockManagerRemoved(blockManagerRemoved))
-
-    override def onUnpersistRDD(unpersistRDD: SparkListenerUnpersistRDD) =
-      sparkListeners.foreach(_.onUnpersistRDD(unpersistRDD))
-
-    override def onApplicationStart(applicationStart: SparkListenerApplicationStart) =
-      sparkListeners.foreach(_.onApplicationStart(applicationStart))
-
-    override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd) =
-      sparkListeners.foreach(_.onApplicationEnd(applicationEnd))
-
-    override def onExecutorMetricsUpdate(executorMetricsUpdate: SparkListenerExecutorMetricsUpdate) =
-      sparkListeners.foreach(_.onExecutorMetricsUpdate(executorMetricsUpdate))
-
-    override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded) =
-      sparkListeners.foreach(_.onExecutorAdded(executorAdded))
-
-    override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved) =
-      sparkListeners.foreach(_.onExecutorRemoved(executorRemoved))
-
-    // Adding noop implementation because of CDAP-5768
-    def onOtherEvent(event: SparkListenerEvent) { }
-  }
 }

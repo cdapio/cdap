@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.proto.ProgramType;
 import com.google.inject.Injector;
 
@@ -57,4 +58,14 @@ public interface ProgramRuntimeProvider {
    * @param injector the CDAP app-fabric Guice {@link Injector} for acquiring system services to interact with CDAP
    */
   ProgramRunner createProgramRunner(ProgramType programType, Mode mode, Injector injector);
+
+  /**
+   * Return whether the specified program type is supported. If not,
+   * {@link #createProgramRunner(ProgramType, Mode, Injector)} will not be called.
+   *
+   * @param programType the {@link ProgramType} to check support for
+   * @param cConf the CDAP configuration
+   * @return whether the specified program type is supported
+   */
+  boolean isSupported(ProgramType programType, CConfiguration cConf);
 }

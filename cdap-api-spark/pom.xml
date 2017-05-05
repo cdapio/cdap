@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>cdap-api-spark</artifactId>
-  <name>CDAP Spark API Scala 2.10</name>
+  <name>CDAP Spark1 API Scala 2.10</name>
   <packaging>jar</packaging>
 
   <dependencies>

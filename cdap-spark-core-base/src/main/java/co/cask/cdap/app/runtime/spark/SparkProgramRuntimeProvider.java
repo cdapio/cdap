@@ -47,13 +47,22 @@ import java.util.List;
  * A {@link ProgramRuntimeProvider} that provides runtime system support for {@link ProgramType#SPARK} program.
  * This class shouldn't have dependency on Spark classes.
  */
-@ProgramRuntimeProvider.SupportedProgramType(ProgramType.SPARK)
 public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRuntimeProvider.class);
 
+  private final SparkCompat providerSparkCompat;
   private ClassLoader distributedRunnerClassLoader;
   private URL[] classLoaderUrls;
+
+  // only used by SparkTwillRunnable to directly call createProgramRunner, not to check whether spark is supported.
+  public SparkProgramRuntimeProvider() {
+    this(SparkCompat.UNKNOWN);
+  }
+
+  protected SparkProgramRuntimeProvider(SparkCompat providerSparkCompat) {
+    this.providerSparkCompat = providerSparkCompat;
+  }
 
   @Override
   public ProgramRunner createProgramRunner(ProgramType type, Mode mode, Injector injector) {
@@ -95,6 +104,16 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
       default:
         throw new IllegalArgumentException("Unsupported Spark execution mode " + mode);
     }
+  }
+
+  @Override
+  public boolean isSupported(ProgramType programType, CConfiguration cConf) {
+    SparkCompat runtimeSparkCompat = SparkCompat.get(cConf);
+    if (runtimeSparkCompat == providerSparkCompat) {
+      LOG.info("using sparkCompat {}", providerSparkCompat);
+      return true;
+    }
+    return false;
   }
 
   private synchronized ClassLoader getDistributedRunnerClassLoader() {

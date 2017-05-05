@@ -345,6 +345,14 @@
   </property>
 
   <property>
+    <name>app.program.spark.compat</name>
+    <value>spark1_2.10</value>
+    <description>
+      TODO: remove this once the logic to discover the Spark version is implemented.
+    </description>
+  </property>
+
+  <property>
     <name>app.program.jvm.opts</name>
     <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts}</value>
     <description>
