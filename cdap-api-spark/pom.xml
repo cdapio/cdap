@@ -181,7 +181,29 @@
         <artifactId>scala-maven-plugin</artifactId>
         <version>3.2.2</version>
       </plugin>
-      <!-- copy the source from cdap-api-spark-base in order to compile everything as scala 2.11 -->
+      <!-- copy the source from cdap-api-spark-base in order to compile everything as scala 2.10 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.6</version>
+        <executions>
+          <execution>
+            <id>copy-api-base</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/generated-sources/cdap-api-spark-base</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.parent.basedir}/cdap-api-spark-base</directory>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
@@ -195,7 +217,8 @@
             </goals>
             <configuration>
               <sources>
-                <source>${project.parent.basedir}/cdap-api-spark-base/src/main</source>
+                <source>${project.build.directory}/generated-sources/cdap-api-spark-base/src/main/java</source>
+                <source>${project.build.directory}/generated-sources/cdap-api-spark-base/src/main/scala</source>
               </sources>
             </configuration>
           </execution>
@@ -203,19 +226,5 @@
       </plugin>
     </plugins>
   </build>
-
-  <profiles>
-    <profile>
-      <id>cdap-dev</id>
-      <dependencies>
-        <!-- here for IDEs, so that cdap-api-spark-base is recognized as a source for both cdap-api-spark modules -->
-        <dependency>
-          <groupId>co.cask.cdap</groupId>
-          <artifactId>cdap-api-spark-base</artifactId>
-          <version>${project.version}</version>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
 
 </project>
