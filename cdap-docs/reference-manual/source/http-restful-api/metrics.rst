@@ -581,6 +581,8 @@ Query Examples
 Query Results
 -------------
 
+.. highlight:: json
+
 Results from a query are returned as a JSON string, in the format::
 
   {"startTime":<start-time>, "endTime":<end-time>, "series":<series-array>}
@@ -613,6 +615,7 @@ formulated::
 will return the empty result, as the metric name will be interpreted as
 ``"user.names.bytes?aggregate=true"`` instead of ``"user.names.bytes"``.
 
+.. highlight:: console
 
 .. _http-restful-api-v3-metrics-multiple:
 .. _http-restful-api-metrics-multiple:
@@ -733,13 +736,14 @@ For example, to retrieve multiple metrics using a ``curl`` call (command and res
               }
   }
 
-.. highlight:: console
+.. highlight:: json
 
 If the context of the requested metric or metric itself doesn't exist, the system returns a
 status 200 (OK) with JSON formed following the above description, with an empty ``series`` for values::
 
   {"query1":{"startTime":1429486465,"endTime":1429486470,"series":[]}}
 
+.. highlight:: console
 
 .. _http-restful-api-metrics-groupby:
 
@@ -922,11 +926,15 @@ Examples of using a run-ID (with both commands and results reformatted to fit)::
   POST /v3/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:CountRandom&tag=run:
     bca50436-9650-448e-9ab1-f1d186eb2285&tag=flowlet:splitter&metric=system.process.events.processed&aggregate=true
 
+.. highlight:: json
+
 The last example will return (where ``"time"=0`` means aggregated total number, and ``endTime`` is
 the time of the query) something similar to::
 
   {"startTime":0,"endTime":1421188775,"series":[{"metricName":"system.process.events.processed",
    "grouping":{},"data":[{"time":0,"value":11188}]}]}
+
+.. highlight:: console
 
 Query Tips
 ----------
