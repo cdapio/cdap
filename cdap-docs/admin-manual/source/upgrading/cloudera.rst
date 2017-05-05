@@ -34,7 +34,7 @@ in the Cloudera Manager UI.
 
 Upgrading CDAP Major/Minor Release Versions
 -------------------------------------------
-Upgrading between major versions of CDAP (for example, from a |previous-short-version|\.x version 
+Upgrading between major versions of CDAP (for example, from a |previous-short-version|\.x version
 to |short-version|\.x) involves the additional step of upgrading the
 CSD. Upgrades between multiple Major/Minor
 versions must be done consecutively, and a version cannot be skipped unless otherwise
@@ -65,15 +65,25 @@ CDAP:
    the CSD.  For example, if new CDAP services were added or removed, you must add or
    remove role instances as necessary. Check the :ref:`release-specific upgrade notes
    <cloudera-release-specific-upgrade-notes>` below for any specific instructions.
-   
+
 #. After CDAP services have started, run the *CDAP Post-Upgrade Tasks* to perform any necessary
    upgrade steps against the running services.  From the CDAP Service page, select "Run CDAP
    Post-Upgrade Tasks."
 
-#. To upgrade existing pipeline applications created using the |previous-short-version|\.x versions of 
+#. To upgrade existing pipeline applications created using the |previous-short-version|\.x versions of
    the system artifacts, there are :ref:`separate instructions <cdap-pipelines-operating-upgrading-pipeline>`.
 
 #. You must recompile and then redeploy your applications prior to using them.
+
+#. Once CDAP has restarted, you can check the :ref:`status of the upgrade
+   <http-restful-api-monitor-status-system-upgrade>` using the :ref:`Monitor
+   HTTP RESTful API <http-restful-api-monitor>`::
+
+      $ curl -w"\n" -X GET "http://<cdap-host>:11015/v3/system/upgrade/status"
+
+   Returning::
+
+      {"defaultStore":true,"streamSizeScheduleStore":true,"timeScheduleStore":true }
 
 
 Upgrading CDH
@@ -96,7 +106,7 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 .. highlight:: console
 
 1. Upgrade CDAP to a version that will support the new CDH version, following the usual
-   :ref:`CDAP-Cloudera Manager upgrade procedure <admin-upgrading-cloudera-upgrading-cdap>`. 
+   :ref:`CDAP-Cloudera Manager upgrade procedure <admin-upgrading-cloudera-upgrading-cdap>`.
 
 #. After upgrading CDAP, start CDAP and check that it is working correctly.
 
@@ -105,17 +115,17 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 #. Disable all CDAP tables; from an HBase shell, run the command::
 
     > disable_all 'cdap.*'
-    
+
 #. Upgrade to the new version of CDH, following Cloudera's `documentation on upgrading
    <http://www.cloudera.com/documentation/enterprise/latest/topics/cm_mc_upgrading_cdh.html>`__.
 
 #. Stop all CDAP services, as CM may have auto-started CDAP.
 
-#. Run the *Post-CDH Upgrade Tasks* to upgrade CDAP for the new version of CDH. From the CDAP Service 
+#. Run the *Post-CDH Upgrade Tasks* to upgrade CDAP for the new version of CDH. From the CDAP Service
    page, select "Run Post-CDH Upgrade Tasks" from the Actions menu.
 
 #. Enable all CDAP tables; from an HBase shell, run this command::
 
     > enable_all 'cdap.*'
-    
+
 #. Start CDAP using Cloudera Manager.
