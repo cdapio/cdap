@@ -38,7 +38,7 @@ ResourceManager*, or *HBase Master*, then the client configurations will already
 A typical client node should have the ``mapr-client``, ``mapr-hbase``, and ``mapr-hive``
 packages installed, and can be configured using the MapR `configure.sh
 <http://doc.mapr.com/display/MapR/configure.sh>`__ utility.
- 
+
 .. Hadoop Configuration
 .. --------------------
 .. include:: ../_includes/installation/hadoop-configuration.txt
@@ -48,7 +48,7 @@ Create the "cdap" User
 ----------------------
 
 .. highlight:: console
-   
+
 To prepare your cluster for CDAP, manually create a ``cdap`` user on all nodes of the
 cluster. As *"...MapR uses each node's native operating system configuration to
 authenticate users and groups for access to the cluster...[MapR documentation]",* make
@@ -56,10 +56,14 @@ sure that the UID and GID for the ``cdap`` user is the same on each node of the 
 
   $ id cdap
   uid=503(cdap) gid=504(cdap) groups=504(cdap)
-  
+
 *Note:* The values returned by ``id cdap`` may differ from these shown depending on your system.
 
-See the MapR documentation (`Common Users 
+When installing CDAP on an edge node, the ``cdap`` system user is only created locally. As
+Hadoop resolves users at the NameNode, the ``cdap`` user must also be added there, or name
+resolution for the user will fail.
+
+See the MapR documentation (`Common Users
 <http://maprdocs.mapr.com/home/AdvancedInstallation/PreparingEachNode-connectivity.html>`__)
 for more information.
 
@@ -67,7 +71,7 @@ for more information.
 .. ----------------
 .. include:: /../target/_includes/mapr-hdfs-permissions.rst
 
-Ensure the Hive DB directory is configured properly to allow CDAP to create Hive tables. 
+Ensure the Hive DB directory is configured properly to allow CDAP to create Hive tables.
 The Hive DB directory (default ``/user/hive/``) by default is only accessible to the ``mapr`` user.
 Change the permissions on this directory::
 
@@ -135,7 +139,7 @@ Create Required Directories
 ---------------------------
 
 .. highlight:: console
-   
+
 To prepare your cluster so that CDAP can write to its default namespace,
 create a top-level ``/cdap`` directory in MapRFS, owned by the MapRFS user ``cdap``::
 
@@ -164,13 +168,13 @@ that value instead for ``/cdap/tx.snapshot``.
 .. include:: /../target/_includes/mapr-configuration.rst
     :end-before:   .. _mapr-configuration-options-may-need:
 
-#. Due to an issue with the version of the Kafka ZooKeeper client shipped with MapR, 
+#. Due to an issue with the version of the Kafka ZooKeeper client shipped with MapR,
    it is necessary to disable use of the embedded Kafka in CDAP by setting these properties:
-   
+
    .. highlight:: xml
 
    ::
-   
+
      <property>
         <name>master.collect.containers.log</name>
         <value>false</value>
@@ -180,11 +184,11 @@ that value instead for ``/cdap/tx.snapshot``.
         <name>master.collect.app.containers.log.level</name>
         <value>OFF</value>
       </property>
-      
+
    As a consequence of this setting, the container logs will not be streamed back to the
-   master process log file. This issue is due to a `known Kafka issue 
-   <https://issues.apache.org/jira/browse/TWILL-139?focusedCommentId=14598628>`__.   
-    
+   master process log file. This issue is due to a `known Kafka issue
+   <https://issues.apache.org/jira/browse/TWILL-139?focusedCommentId=14598628>`__.
+
 #. Depending on your installation, you may need to set these properties:
 
 .. include:: /../target/_includes/mapr-configuration.rst
@@ -196,24 +200,24 @@ that value instead for ``/cdap/tx.snapshot``.
 YARN Application Classpath
 --------------------------
 CDAP requires that an additional entry |---| ``/opt/mapr/lib/*`` |---| be appended to the
-``yarn.application.classpath`` setting of ``yarn-site.xml``. (This file is usually in 
+``yarn.application.classpath`` setting of ``yarn-site.xml``. (This file is usually in
 ``/opt/mapr/hadoop/hadoop-<hadoop-version>/etc/hadoop/yarn-site.xml``.) The default
 ``yarn.application.classpath`` for Linux with this additional entry appended is
 (reformatted to fit)::
 
-  $HADOOP_CONF_DIR, 
-  $HADOOP_COMMON_HOME/share/hadoop/common/*, 
-  $HADOOP_COMMON_HOME/share/hadoop/common/lib/*, 
-  $HADOOP_HDFS_HOME/share/hadoop/hdfs/*, 
-  $HADOOP_HDFS_HOME/share/hadoop/hdfs/lib/*, 
-  $HADOOP_YARN_HOME/share/hadoop/yarn/*, 
-  $HADOOP_YARN_HOME/share/hadoop/yarn/lib/*, 
-  $HADOOP_COMMON_HOME/share/hadoop/mapreduce/*, 
-  $HADOOP_COMMON_HOME/share/hadoop/mapreduce/lib/*, 
+  $HADOOP_CONF_DIR,
+  $HADOOP_COMMON_HOME/share/hadoop/common/*,
+  $HADOOP_COMMON_HOME/share/hadoop/common/lib/*,
+  $HADOOP_HDFS_HOME/share/hadoop/hdfs/*,
+  $HADOOP_HDFS_HOME/share/hadoop/hdfs/lib/*,
+  $HADOOP_YARN_HOME/share/hadoop/yarn/*,
+  $HADOOP_YARN_HOME/share/hadoop/yarn/lib/*,
+  $HADOOP_COMMON_HOME/share/hadoop/mapreduce/*,
+  $HADOOP_COMMON_HOME/share/hadoop/mapreduce/lib/*,
   /opt/mapr/lib/*
-    
-**Notes:** 
-   
+
+**Notes:**
+
 - Since MapR might not dereference the Hadoop variables (such as ``$HADOOP_CONF_DIR``)
   correctly, we recommend specifying their full paths instead of the variables we have
   included here.
@@ -229,8 +233,8 @@ CDAP requires that an additional entry |---| ``/opt/mapr/lib/*`` |---| be append
 
 .. include:: /../target/_includes/mapr-starting.rst
 
-.. _mapr-verification:
 
+.. _mapr-verification:
 
 Verification
 ============

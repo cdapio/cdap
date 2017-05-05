@@ -16,7 +16,7 @@ Manual Installation using Packages
 
 This section describes installing CDAP on Hadoop clusters that are:
 
-- Generic Apache Hadoop distributions; 
+- Generic Apache Hadoop distributions;
 - CDH (Cloudera Distribution of Apache Hadoop) clusters *not managed* with Cloudera Manager; or
 - HDP (Hortonworks Data Platform) clusters *not managed* with Apache Ambari.
 
@@ -24,21 +24,21 @@ Cloudera Manager (CDH), Apache Ambari (HDP), and MapR distributions should be in
 with our other :ref:`distribution instructions <installation-index>`.
 
 - As CDAP depends on HDFS, YARN, HBase, ZooKeeper, and (optionally) Hive and Spark, it must be installed
-  on cluster host(s) with full client configurations for these dependent services. 
+  on cluster host(s) with full client configurations for these dependent services.
 
 - The CDAP Master Service must be co-located on a cluster host with an HDFS client, a YARN
   client, an HBase client, and |---| optionally |---| Hive or Spark clients.
 
-- Note that these clients are redundant if you are co-locating the CDAP Master  
+- Note that these clients are redundant if you are co-locating the CDAP Master
   on a cluster host (or hosts, in the case of a deployment with high availability) with
-  actual services, such as the HDFS Namenode, the YARN resource manager, or the HBase
+  actual services, such as the HDFS NameNode, the YARN resource manager, or the HBase
   Master.
-  
-- You can download the `Hadoop client <http://hadoop.apache.org/releases.html#Download>`__ 
+
+- You can download the `Hadoop client <http://hadoop.apache.org/releases.html#Download>`__
   and `HBase client <http://www.apache.org/dyn/closer.cgi/hbase/>`__ libraries, and then
   install them on the hosts running CDAP services. No Hadoop or HBase services need be running.
 
-- All services run as the ``'cdap'`` user installed by the package manager.
+- All services run as the ``cdap`` user installed by the package manager.
 
 - If you are installing CDAP with the intention of using *replication,* see these
   instructions on :ref:`CDAP Replication <installation-replication>` *before* installing or starting CDAP.
@@ -46,19 +46,38 @@ with our other :ref:`distribution instructions <installation-index>`.
 
 Preparing the Cluster
 =============================
-Please review the :ref:`Software Prerequisites <admin-manual-software-requirements>`, 
+Please review the :ref:`Software Prerequisites <admin-manual-software-requirements>`,
 as a configured Hadoop, HBase, and Hive (plus an optional Spark client) needs to be configured on the
-node(s) where CDAP will run. 
+node(s) where CDAP will run.
 
 .. Hadoop Configuration
 .. --------------------
 .. include:: ../_includes/installation/hadoop-configuration.txt
 
+Create the "cdap" User
+----------------------
+
+.. highlight:: console
+
+To prepare your cluster for CDAP, manually create a ``cdap`` user on all nodes of the
+cluster. Make sure that the UID and GID for the ``cdap`` user is the same on each node of
+the cluster::
+
+  $ id cdap
+  uid=503(cdap) gid=504(cdap) groups=504(cdap)
+
+*Note:* The values returned by ``id cdap`` may differ from these shown depending on your
+system.
+
+When installing CDAP on an edge node, the ``cdap`` system user is only created locally. As
+Hadoop resolves users at the NameNode, the ``cdap`` user must also be added there, or name
+resolution for the user will fail.
+
 .. HDFS Permissions
 .. ----------------
 .. include:: /../target/_includes/packages-hdfs-permissions.rst
 
-  
+
 Downloading and Distributing Packages
 =====================================
 
@@ -92,8 +111,8 @@ Installing CDAP Services
 
 .. include:: /../target/_includes/packages-starting.rst
 
-.. _packages-verification:
 
+.. _packages-verification:
 
 Verification
 ============
