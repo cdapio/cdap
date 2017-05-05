@@ -17,7 +17,6 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.app.store.ServiceStore;
-import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -40,7 +39,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import javax.ws.rs.PathParam;
 
 /**
  * Monitor Handler returns the status of different discoverable services
@@ -274,8 +272,7 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  public void updateServiceLogLevels(HttpRequest request, HttpResponder responder,
-                                     @PathParam("service-name") String serviceName) {
+  public void updateServiceLogLevels(HttpRequest request, HttpResponder responder, String serviceName) {
     if (!serviceManagementMap.containsKey(serviceName)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Invalid service name %s", serviceName));
       return;
@@ -306,8 +303,7 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
 
   }
 
-  public void resetServiceLogLevels(HttpRequest request, HttpResponder responder,
-                                    @PathParam("service-name") String serviceName) {
+  public void resetServiceLogLevels(HttpRequest request, HttpResponder responder, String serviceName) {
     if (!serviceManagementMap.containsKey(serviceName)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Invalid service name %s", serviceName));
       return;

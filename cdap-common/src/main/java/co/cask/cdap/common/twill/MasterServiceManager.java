@@ -107,12 +107,15 @@ public interface MasterServiceManager {
 
   /**
    * Update log levels for this service
+   *
    * @param logLevels The {@link Map} contains the requested logger name and log level.
    */
   void updateServiceLogLevels(Map<String, LogEntry.Level> logLevels);
 
   /**
    * Reset the log levels of the service.
+   * The log levels will be reset back to when the service was launched.
+   *
    * @param loggerNames The set of logger names to be reset, if empty, all log levels will be reset.
    */
   void resetServiceLogLevels(Set<String> loggerNames);
