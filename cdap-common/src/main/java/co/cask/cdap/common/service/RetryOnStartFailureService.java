@@ -36,8 +36,10 @@ public class RetryOnStartFailureService extends AbstractService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RetryOnStartFailureService.class);
 
-  private final Thread startupThread;
+  private final Supplier<Service> delegate;
   private final String delegateServiceName;
+  private final RetryStrategy retryStrategy;
+  private volatile Thread startupThread;
   private volatile Service currentDelegate;
   private volatile Service startedService;
   private volatile boolean stopped = false;
@@ -48,16 +50,21 @@ public class RetryOnStartFailureService extends AbstractService {
    * @param delegate a {@link Supplier} that gives new instance of the delegating Service.
    * @param retryStrategy strategy to use for retrying
    */
-  public RetryOnStartFailureService(final Supplier<Service> delegate, final RetryStrategy retryStrategy) {
-    final Service service = delegate.get();
-    this.delegateServiceName = service.getClass().getSimpleName();
-    this.startupThread = new Thread("Endure-Service-" + delegateServiceName) {
+  public RetryOnStartFailureService(Supplier<Service> delegate, RetryStrategy retryStrategy) {
+    this.delegate = delegate;
+    this.currentDelegate = delegate.get();
+    this.delegateServiceName = currentDelegate.getClass().getSimpleName();
+    this.retryStrategy = retryStrategy;
+  }
+
+  @Override
+  protected void doStart() {
+    startupThread = new Thread("Endure-Service-" + delegateServiceName) {
       @Override
       public void run() {
         int failures = 0;
         long startTime = System.currentTimeMillis();
         long delay = 0L;
-        currentDelegate = service;
 
         while (delay >= 0 && !stopped) {
           try {
@@ -89,16 +96,13 @@ public class RetryOnStartFailureService extends AbstractService {
         }
       }
     };
-  }
-
-  @Override
-  protected void doStart() {
     startupThread.start();
     notifyStarted();
   }
 
   @Override
   protected void doStop() {
+    // doStop() won't be called until doStart() returns, hence the startupThread would never be null
     stopped = true;
     startupThread.interrupt();
     Uninterruptibles.joinUninterruptibly(startupThread);
