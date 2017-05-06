@@ -21,14 +21,21 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
+import co.cask.cdap.internal.schedule.TimeSchedule;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Common utility methods for scheduling.
@@ -51,4 +58,13 @@ public class Schedulers {
     }
   }
 
+  public static ProgramSchedule toProgramSchedule(TimeSchedule timeSchedule, ProgramId programId,
+                                                  Map<String, String> properties) {
+    TimeTrigger trigger = new TimeTrigger(timeSchedule.getCronEntry());
+    Integer maxConcurrentRuns = timeSchedule.getRunConstraints().getMaxConcurrentRuns();
+    List<Constraint> constraints = maxConcurrentRuns == null ? ImmutableList.<Constraint>of() :
+      ImmutableList.<Constraint>of(new ConcurrencyConstraint(maxConcurrentRuns));
+    return new ProgramSchedule(timeSchedule.getName(), timeSchedule.getDescription(), programId,
+                               properties, trigger, constraints);
+  }
 }
