@@ -132,10 +132,10 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory, queueAdmin,
                                                     metricStore, metadataStore, privilegesManager, impersonator));
     pipeline.addLast(new ProgramGenerationStage(privilegesManager, authenticationContext));
-    pipeline.addLast(new DeleteScheduleStage(scheduler));
+    pipeline.addLast(new DeleteScheduleStage(programScheduler, scheduler));
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
-    pipeline.addLast(new CreateSchedulesStage(scheduler));
-    pipeline.addLast(new CreateProgramSchedulesStage(programScheduler));
+    pipeline.addLast(new CreateSchedulesStage(programScheduler, scheduler));
+    pipeline.addLast(new CreateProgramSchedulesStage(programScheduler, scheduler));
     pipeline.addLast(new SystemMetadataWriterStage(metadataStore));
     pipeline.setFinally(new DeploymentCleanupStage());
     return pipeline.execute(input);

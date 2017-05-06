@@ -16,14 +16,18 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
-import co.cask.cdap.internal.schedule.constraint.Constraint;
+import co.cask.cdap.internal.schedule.TimeSchedule;
+import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.pipeline.AbstractStage;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.scheduler.Scheduler;
 import com.google.common.reflect.TypeToken;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -32,10 +36,13 @@ import java.util.Map;
 public class CreateProgramSchedulesStage extends AbstractStage<ApplicationWithPrograms> {
 
   private final Scheduler programScheduler;
+  private final co.cask.cdap.internal.app.runtime.schedule.Scheduler scheduler;
 
-  public CreateProgramSchedulesStage(Scheduler programScheduler) {
+  public CreateProgramSchedulesStage(Scheduler programScheduler,
+                                     co.cask.cdap.internal.app.runtime.schedule.Scheduler scheduler) {
     super(TypeToken.of(ApplicationWithPrograms.class));
     this.programScheduler = programScheduler;
+    this.scheduler = scheduler;
   }
 
   @Override
@@ -49,15 +56,19 @@ public class CreateProgramSchedulesStage extends AbstractStage<ApplicationWithPr
 
     Map<String, ScheduleCreationSpec> programSchedules = input.getSpecification().getProgramSchedules();
     for (final Map.Entry<String, ScheduleCreationSpec> entry : programSchedules.entrySet()) {
-
-        ScheduleCreationSpec scheduleCreationSpec = entry.getValue();
-
-        ProgramSchedule programSchedule =
-          new ProgramSchedule(scheduleCreationSpec.getName(), scheduleCreationSpec.getDescription(),
-                              input.getApplicationId().workflow(scheduleCreationSpec.getProgramName()),
-                              scheduleCreationSpec.getProperties(), scheduleCreationSpec.getTrigger(),
-                              new ArrayList<Constraint>());
-        programScheduler.addSchedule(programSchedule);
+      ScheduleCreationSpec scheduleCreationSpec = entry.getValue();
+      ProgramId programId = input.getApplicationId().workflow(scheduleCreationSpec.getProgramName());
+      Trigger trigger = scheduleCreationSpec.getTrigger();
+      ProgramSchedule programSchedule =
+        new ProgramSchedule(scheduleCreationSpec.getName(), scheduleCreationSpec.getDescription(),
+                            programId, scheduleCreationSpec.getProperties(), trigger,
+                            scheduleCreationSpec.getConstraints());
+      programScheduler.addSchedule(programSchedule);
+      if (trigger instanceof TimeTrigger) {
+        Schedule timeSchedule = new TimeSchedule(scheduleCreationSpec.getName(), scheduleCreationSpec.getDescription(),
+                                                 ((TimeTrigger) trigger).getCronExpression());
+        scheduler.schedule(programId, SchedulableProgramType.WORKFLOW, timeSchedule);
+      }
     }
 
     // Emit the input to next stage.

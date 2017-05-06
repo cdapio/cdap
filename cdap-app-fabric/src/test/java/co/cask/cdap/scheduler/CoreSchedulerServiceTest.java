@@ -16,6 +16,7 @@
 
 package co.cask.cdap.scheduler;
 
+import co.cask.cdap.AppWithFrequentScheduledWorkflows;
 import co.cask.cdap.AppWithMultipleWorkflows;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
@@ -78,6 +79,15 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   private static final ScheduleId TSCHED11_ID = APP1_ID.schedule("tsched11");
   private static final DatasetId DS1_ID = NS_ID.dataset("pfs1");
   private static final DatasetId DS2_ID = NS_ID.dataset("pfs2");
+  private static final ApplicationId APP_ID = NamespaceId.DEFAULT.app("AppWithFrequentScheduledWorkflows");
+  private static final ProgramId WORKFLOW_1 = APP_ID.program(ProgramType.WORKFLOW,
+                                                             AppWithFrequentScheduledWorkflows.SOME_WORKFLOW);
+  private static final ProgramId WORKFLOW_2 = APP_ID.program(ProgramType.WORKFLOW,
+                                                             AppWithFrequentScheduledWorkflows.ANOTHER_WORKFLOW);
+  private static final ProgramId SCHEDULED_WORKFLOW_1 =
+    APP_ID.program(ProgramType.WORKFLOW, AppWithFrequentScheduledWorkflows.SCHEDULED_WORKFLOW_1);
+  private static final ProgramId SCHEDULED_WORKFLOW_2 =
+    APP_ID.program(ProgramType.WORKFLOW, AppWithFrequentScheduledWorkflows.SCHEDULED_WORKFLOW_2);
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -85,9 +95,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
   private static MessagingService messagingService;
   private static Store store;
-
   private static TopicId dataEventTopic;
-  private static final ApplicationId APP_ID = NamespaceId.DEFAULT.app("AppWithMultipleWorkflows");
 
 
   @Test
@@ -188,19 +196,43 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testRunWorkflow() throws Exception {
+  public void testRunScheduledJobs() throws Exception {
     messagingService = getInjector().getInstance(MessagingService.class);
     final Scheduler scheduler = getInjector().getInstance(Scheduler.class);
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     dataEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
     store = getInjector().getInstance(Store.class);
+    // Deploy an app with default version
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appwithmultipleworkflows", VERSION1);
+    addAppArtifact(artifactId, AppWithMultipleWorkflows.class);
+    AppRequest<? extends Config> appRequest = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
+    deploy(APP_ID, appRequest);
+
     if (scheduler instanceof Service) {
       ((Service) scheduler).startAndWait();
     }
     try {
+      // Resume the schedule because schedules are initialized as paused
+      resumeSchedule(APP_ID.getNamespace(), APP_ID.getApplication(),
+                     AppWithFrequentScheduledWorkflows.ONE_MIN_SCHEDULE_1);
+      resumeSchedule(APP_ID.getNamespace(), APP_ID.getApplication(),
+                     AppWithFrequentScheduledWorkflows.ONE_MIN_SCHEDULE_2);
+
+      long startTime = System.currentTimeMillis();
       for (int i = 0; i < 5; i++) {
-        testNewPartition(scheduler);
+        testNewPartition(scheduler, i + 1);
       }
+      long elapsedTime = System.currentTimeMillis() - startTime;
+      // Sleep to wait for one run of WORKFLOW_3 to complete as scheduled
+      long sleepTime = TimeUnit.SECONDS.toMillis(75) - elapsedTime;
+      if (sleepTime > 0) {
+        Thread.sleep(TimeUnit.SECONDS.toMillis(75) - elapsedTime);
+      }
+      Assert.assertEquals(1, store.getRuns(SCHEDULED_WORKFLOW_1, ProgramRunStatus.COMPLETED, 0,
+                                           Long.MAX_VALUE, Integer.MAX_VALUE).size());
+      Assert.assertEquals(1, store.getRuns(SCHEDULED_WORKFLOW_2, ProgramRunStatus.COMPLETED, 0,
+                                           Long.MAX_VALUE, Integer.MAX_VALUE).size());
     } finally {
       if (scheduler instanceof Service) {
         ((Service) scheduler).stopAndWait();
@@ -208,32 +240,21 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     }
   }
 
-  private void testNewPartition(final Scheduler scheduler) throws Exception {
-    // Deploy an app with version
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appwithmultipleworkflows", VERSION1);
-    addAppArtifact(artifactId, AppWithMultipleWorkflows.class);
-    final ProgramId workflow1 = APP_ID.program(ProgramType.WORKFLOW, AppWithMultipleWorkflows.SomeWorkflow.NAME);
-    final ProgramId workflow2 = APP_ID.program(ProgramType.WORKFLOW, AppWithMultipleWorkflows.AnotherWorkflow.NAME);
-    AppRequest<? extends Config> appRequest = new AppRequest<>(
-      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
-    // TODO: doesn't have to be deployed from artifact (separate, 2-step process)
-    deploy(APP_ID, appRequest);
-    Assert.assertEquals(0, store.getRuns(workflow1, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).size());
-    Assert.assertEquals(0, store.getRuns(workflow2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).size());
-    publishNotification(dataEventTopic, workflow1, scheduler);
-    publishNotification(dataEventTopic, workflow2, scheduler);
+  private void testNewPartition(final Scheduler scheduler, int expectedNumRuns) throws Exception {
+    publishNotification(dataEventTopic, WORKFLOW_1, scheduler);
+    publishNotification(dataEventTopic, WORKFLOW_2, scheduler);
 
     try {
-      waitForCompleteRuns(1, workflow1);
-      waitForCompleteRuns(1, workflow2);
+      waitForCompleteRuns(expectedNumRuns, WORKFLOW_1);
+      waitForCompleteRuns(expectedNumRuns, WORKFLOW_2);
     } finally {
-      LOG.info("workflow1 runRecords: {}",
-               store.getRuns(workflow1, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE));
-      LOG.info("workflow2 runRecords: {}",
-               store.getRuns(workflow2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE));
+      LOG.info("WORKFLOW_1 runRecords: {}",
+               store.getRuns(WORKFLOW_1, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE));
+      LOG.info("WORKFLOW_2 runRecords: {}",
+               store.getRuns(WORKFLOW_2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE));
     }
-    store.removeApplication(APP_ID);
-    scheduler.deleteSchedules(APP_ID);
+    scheduler.deleteSchedule(APP_ID.schedule(WORKFLOW_1.getProgram()));
+    scheduler.deleteSchedule(APP_ID.schedule(WORKFLOW_2.getProgram()));
   }
 
   private void waitForCompleteRuns(int numRuns, final ProgramId program)
@@ -250,7 +271,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   private void publishNotification(TopicId topicId, final ProgramId programId, final Scheduler scheduler)
     throws TopicNotFoundException, IOException, TransactionFailureException, AlreadyExistsException {
 
-    final String name = topicId.getTopic() + programId.getProgram();
+    final String name = programId.getProgram();
     final DatasetId datasetId = programId.getNamespaceId().dataset(name);
     Notification notification =
       new Notification(Notification.Type.PARTITION, ImmutableMap.of("datasetId", datasetId.toString()));

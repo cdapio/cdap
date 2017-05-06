@@ -17,6 +17,7 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -24,6 +25,9 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -36,20 +40,22 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -65,6 +71,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -82,16 +89,18 @@ class NotificationSubscriberService extends AbstractIdleService {
   private final DatasetFramework datasetFramework;
   private final MultiThreadDatasetCache multiThreadDatasetCache;
   private final CConfiguration cConf;
+  private final Store store;
   private ListeningExecutorService taskExecutorService;
   private volatile boolean stopping = false;
 
 
   @Inject
   NotificationSubscriberService(MessagingService messagingService,
-                                CConfiguration cConf,
+                                CConfiguration cConf, Store store,
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txClient) {
     this.cConf = cConf;
+    this.store = store;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.multiThreadDatasetCache = new MultiThreadDatasetCache(
       new SystemDatasetInstantiator(datasetFramework), txClient,
@@ -249,8 +258,33 @@ class NotificationSubscriberService extends AbstractIdleService {
     }
 
     @Override
-    protected void updateJobQueue(DatasetContext context, Notification notification) {
+    protected void updateJobQueue(DatasetContext context, Notification notification)
+      throws IOException, DatasetManagementException, NotFoundException {
 
+      Map<String, String> properties = notification.getProperties();
+      ProgramId programId = ProgramId.fromString(properties.get("programId"));
+      ScheduleId scheduleId = programId.getParent().schedule(properties.get(ProgramOptionConstants.SCHEDULE_NAME));
+      ProgramSchedule schedule;
+      try {
+        schedule = getScheduleDataset(context).getSchedule(scheduleId);
+      } catch (NotFoundException e) {
+        // Cannot find the schedule from ScheduleDataset, try to find it in appSpec
+        // TODO: (CDAP-11469) No need to check appSpec once migration from DatasetBasedTimeScheduleStore is done
+        ApplicationSpecification appSpec = store.getApplication(scheduleId.getParent());
+        if (appSpec == null) {
+          LOG.warn("Cannot find application '{}' for schedule '{}' in AppMetadataStore",
+                    scheduleId.getParent(), scheduleId);
+          return;
+        }
+        ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleId.getSchedule());
+        if (scheduleSpec == null) {
+          LOG.debug("Cannot find schedule '{}' in application '{}'", scheduleId.getSchedule(), scheduleId.getParent());
+          return;
+        }
+        schedule = Schedulers.toProgramSchedule((TimeSchedule) scheduleSpec.getSchedule(), programId,
+                                                scheduleSpec.getProperties());
+      }
+      jobQueue.addNotification(schedule, notification);
     }
   }
 
