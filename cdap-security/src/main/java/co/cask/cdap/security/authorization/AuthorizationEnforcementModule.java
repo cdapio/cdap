@@ -32,7 +32,6 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        // bind AuthorizationEnforcer to AuthorizationEnforcementService
         bind(AuthorizationEnforcer.class).to(DefaultAuthorizationEnforcer.class).in(Scopes.SINGLETON);
       }
     };
@@ -43,8 +42,6 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        // bind AuthorizationEnforcementService as a singleton. This binding is used while starting/stopping
-        // the service itself.
         bind(AuthorizationEnforcer.class).to(DefaultAuthorizationEnforcer.class)
           .in(Scopes.SINGLETON);
       }
@@ -53,15 +50,13 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
 
   /**
    * Used by program containers and system services (viz explore service, stream service) that need to enforce
-   * authorization in distributed mode. For fetching privileges, these components are expected to proxy via a proxy
-   * service, which in turn uses the authorization enforcement modules defined by #getProxyModule
+   * authorization in distributed mode.
    */
   @Override
   public Module getDistributedModules() {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        // bind AuthorizationEnforcer to AuthorizationEnforcementService
         bind(AuthorizationEnforcer.class).to(RemoteAuthorizationEnforcer.class).in(Scopes.SINGLETON);
       }
     };
@@ -74,7 +69,6 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        // bind AuthorizationEnforcer to AuthorizationEnforcementService
         bind(AuthorizationEnforcer.class).to(DefaultAuthorizationEnforcer.class).in(Scopes.SINGLETON);
       }
     };

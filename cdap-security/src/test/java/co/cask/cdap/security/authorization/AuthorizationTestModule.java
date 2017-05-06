@@ -39,7 +39,7 @@ public class AuthorizationTestModule extends PrivateModule {
     bind(AuthorizationContextFactory.class).to(NoOpAuthorizationContextFactory.class);
     bind(AuthorizerInstantiator.class).in(Scopes.SINGLETON);
     expose(AuthorizerInstantiator.class);
-    bind(PrivilegesManager.class).to(AuthorizerAsPrivilegesManager.class).in(Scopes.SINGLETON);
+    bind(PrivilegesManager.class).to(DefaultPrivilegesManager.class).in(Scopes.SINGLETON);
     expose(PrivilegesManager.class);
   }
 }

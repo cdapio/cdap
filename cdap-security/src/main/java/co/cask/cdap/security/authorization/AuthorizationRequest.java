@@ -23,7 +23,8 @@ import co.cask.cdap.proto.security.Principal;
 import java.util.Objects;
 
 /**
- * Key for caching Privileges on containers
+ * Key for caching Privileges on containers. This represents a specific privilege on which authorization can be
+ * enforced. The cache stores whether the enforce succeeded of failed.
  */
 public class AuthorizationRequest {
 

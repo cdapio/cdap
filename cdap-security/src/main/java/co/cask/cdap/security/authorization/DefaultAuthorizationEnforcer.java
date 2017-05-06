@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import co.cask.cdap.proto.id.ParentedId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -35,20 +34,20 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * Default implementation of {@link AuthorizationEnforcementService}.
+ * An implementation of {@link AuthorizationEnforcer} that runs on the master.
  */
 @Singleton
 public class DefaultAuthorizationEnforcer implements AuthorizationEnforcer {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAuthorizationEnforcer.class);
-  final AuthorizerInstantiator authorizerInstantiator;
-
   private static final Predicate<EntityId> ALLOW_ALL = new Predicate<EntityId>() {
     @Override
     public boolean apply(EntityId entityId) {
       return true;
     }
   };
+
+  private final AuthorizerInstantiator authorizerInstantiator;
   private final boolean securityEnabled;
   private final boolean authorizationEnabled;
   private final boolean propagatePrivileges;
@@ -78,16 +77,21 @@ public class DefaultAuthorizationEnforcer implements AuthorizationEnforcer {
 
   @Override
   public Predicate<EntityId> createFilter(final Principal principal) throws Exception {
+    if (!isSecurityAuthorizationEnabled()) {
+      return ALLOW_ALL;
+    }
     return new Predicate<EntityId>() {
       @Override
       public boolean apply(EntityId entityId) {
-        System.out.println("Filtering for " + entityId.getEntityName());
         for (Action action : Action.values()) {
           try {
             enforce(entityId, principal, action);
+            LOG.debug("Principal {} has {} privilege on {}. Filter returning true.", principal.getName(), action.name(),
+                      entityId.getEntityName());
             return true;
           } catch (Exception ignored) {
-            System.out.println("Don't have " + action.name() + " on " + entityId.getEntityName());
+            // The principal does not have this particular privilege but for filter as long as they have any privilege
+            // we return true, so ignoring this exception.
           }
         }
         return false;
@@ -95,27 +99,18 @@ public class DefaultAuthorizationEnforcer implements AuthorizationEnforcer {
     };
   }
 
-//  @Override
-//  public Predicate<EntityId> createFilter(Principal principal) throws Exception {
-//    if (!isSecurityAuthorizationEnabled()) {
-//      return ALLOW_ALL;
-//    }
-//
-//    return authorizer.createFilter(principal);
-//  }
-
-
   private boolean doEnforce(EntityId entity, Principal principal,
                             Set<Action> actions, boolean exceptionOnFailure) throws Exception {
+    // If privilege propagation is enabled then check for the privilege on the parent, if any.
     if (isPrivilegePropagationEnabled()) {
       if (entity instanceof ParentedId) {
-        System.out.println("Checking parent for " + entity.getEntityName());
+        LOG.trace("Checking privilege for the parent of {}", entity.getEntityName());
         if (doEnforce(((ParentedId) entity).getParent(), principal, actions, false)) {
           return true;
         }
       }
     }
-    LOG.trace("Enforcing actions {} on {} for principal {}.", actions, entity, principal);
+    LOG.debug("Enforcing actions {} on {} for principal {}.", actions, entity, principal);
     try {
       authorizerInstantiator.get().enforce(entity, principal, actions);
     } catch (Exception e) {
