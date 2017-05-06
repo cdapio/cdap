@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.service;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.FutureCallback;
@@ -27,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * A Guava {@link Service} that wrap around another {@link Service} such that, if the wrapped service failed
@@ -146,5 +148,15 @@ public class RetryOnStartFailureService extends AbstractService {
   @Override
   public String toString() {
     return "EndureService{" + delegateServiceName + "}";
+  }
+
+  /**
+   * Returns the {@link Service} instance that was started successfully by this service. If the underlying
+   * service hasn't been started successfully, {@code null} will be returned.
+   */
+  @VisibleForTesting
+  @Nullable
+  Service getStartedService() {
+    return startedService;
   }
 }

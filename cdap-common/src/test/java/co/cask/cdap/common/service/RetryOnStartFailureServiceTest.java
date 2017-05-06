@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.service;
 
+import co.cask.cdap.common.utils.Tasks;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -28,8 +29,11 @@ import org.slf4j.MDC;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  *
@@ -79,15 +83,25 @@ public class RetryOnStartFailureServiceTest {
   }
 
   @Test
-  public void testStopFailurePropagate() throws InterruptedException {
+  public void testStopFailurePropagate() throws InterruptedException, TimeoutException, ExecutionException {
     // This test the underlying service stop state is propagated if the start was successful
     CountDownLatch startLatch = new CountDownLatch(1);
-    Service service = new RetryOnStartFailureService(
+    final RetryOnStartFailureService service = new RetryOnStartFailureService(
       createServiceSupplier(0, startLatch, new CountDownLatch(1), true),
       RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
     service.startAndWait();
     // block until the underlying service started successfully
     Assert.assertTrue(startLatch.await(1, TimeUnit.SECONDS));
+    // As documented in the RetryOnStartFailureService, there is a small race after the
+    // underlying service started to the time when the wrapping retry service knows about it
+    // In order to capture the stop failure correctly, we need to wait until the retry service captured
+    // the actual service instance that get started
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return service.getStartedService() != null;
+      }
+    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     try {
       service.stopAndWait();
       Assert.fail("Expected failure in stopping");
