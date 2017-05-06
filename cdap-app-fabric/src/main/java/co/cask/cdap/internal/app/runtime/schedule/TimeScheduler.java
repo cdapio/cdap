@@ -23,10 +23,8 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.internal.app.services.ProgramLifecycleService;
-import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.schedule.TimeSchedule;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -74,25 +72,20 @@ final class TimeScheduler implements Scheduler {
 
   private org.quartz.Scheduler scheduler;
   private final Supplier<org.quartz.Scheduler> schedulerSupplier;
-  private final ProgramLifecycleService lifecycleService;
-  private final PropertiesResolver propertiesResolver;
+  private final MessagingService messagingService;
   private ListeningExecutorService taskExecutorService;
   private boolean schedulerStarted;
   private final Store store;
-  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final CConfiguration cConf;
 
   @Inject
-  TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, Store store,
-                ProgramLifecycleService lifecycleService, PropertiesResolver propertiesResolver,
-                NamespaceQueryAdmin namespaceQueryAdmin, CConfiguration cConf) {
+  TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, Store store, MessagingService messagingService,
+                CConfiguration cConf) {
     this.schedulerSupplier = schedulerSupplier;
     this.store = store;
-    this.lifecycleService = lifecycleService;
+    this.messagingService = messagingService;
     this.scheduler = null;
-    this.propertiesResolver = propertiesResolver;
     this.schedulerStarted = false;
-    this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.cConf = cConf;
   }
 
@@ -459,8 +452,7 @@ final class TimeScheduler implements Scheduler {
         Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
 
         if (DefaultSchedulerService.ScheduledJob.class.isAssignableFrom(jobClass)) {
-          return new DefaultSchedulerService.ScheduledJob(store, lifecycleService, propertiesResolver,
-                                                          taskExecutorService, namespaceQueryAdmin, cConf);
+          return new DefaultSchedulerService.ScheduledJob(store, messagingService, cConf);
         } else {
           try {
             return jobClass.newInstance();

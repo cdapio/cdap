@@ -16,11 +16,19 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
+import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
+import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduleType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
@@ -29,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This {@link co.cask.cdap.pipeline.Stage} is responsible for deletion of any schedule which was dropped
@@ -38,10 +47,12 @@ import java.util.Map;
 public class DeleteScheduleStage extends AbstractStage<ApplicationWithPrograms> {
 
   private static final Logger LOG = LoggerFactory.getLogger(DeleteScheduleStage.class);
+  private final co.cask.cdap.scheduler.Scheduler programScheduler;
   private final Scheduler scheduler;
 
-  public DeleteScheduleStage(Scheduler scheduler) {
+  public DeleteScheduleStage(co.cask.cdap.scheduler.Scheduler programScheduler, Scheduler scheduler) {
     super(TypeToken.of(ApplicationWithPrograms.class));
+    this.programScheduler = programScheduler;
     this.scheduler = scheduler;
   }
 
@@ -50,6 +61,8 @@ public class DeleteScheduleStage extends AbstractStage<ApplicationWithPrograms> 
     // do not have to delete any schedule here if update schedule is set to false.
     // deleting of schedules of deleted workflow is handled in DeletedProgramHandlerStage.
     if (!input.canUpdateSchedules()) {
+      // delete schedules whose workflows no longer exist in the new app spec
+      deleteSchedulesWithDeletedWorkflows(input);
       emit(input);
       return;
     }
@@ -63,10 +76,11 @@ public class DeleteScheduleStage extends AbstractStage<ApplicationWithPrograms> 
       // delete schedules that existed in the old app spec, but don't anymore
       ScheduleSpecification scheduleSpec = entry.getValue();
       ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-        LOG.debug("Deleting schedule {} with specification {}", entry.getKey(), scheduleSpec);
-        scheduler.deleteSchedule(input.getApplicationId().program(programType,
-                                                                  scheduleSpec.getProgram().getProgramName()),
-                                 scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule().getName());
+      LOG.debug("Deleting schedule {} with specification {}", entry.getKey(), scheduleSpec);
+      scheduler.deleteSchedule(input.getApplicationId().program(programType,
+                                                                scheduleSpec.getProgram().getProgramName()),
+                               scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule().getName());
+      deleteFromProgramScheduleStore(input.getApplicationId(), scheduleSpec);
     }
 
     // for the entries which differ schedule type delete them here so that we can re-create them again in
@@ -81,13 +95,61 @@ public class DeleteScheduleStage extends AbstractStage<ApplicationWithPrograms> 
         LOG.debug("Deleting existing schedule {} with specification {}. It will be created with specification {} " +
                     "as they differ in schedule type.", entry.getKey(), oldScheduleSpec, newScheduleSpec);
         ProgramType programType = ProgramType.valueOfSchedulableType(newScheduleSpec.getProgram().getProgramType());
-          scheduler.deleteSchedule(input.getApplicationId().program(programType,
-                                                                    oldScheduleSpec.getProgram().getProgramName()),
-                                   oldScheduleSpec.getProgram().getProgramType(),
-                                   oldScheduleSpec.getSchedule().getName());
-        }
+        scheduler.deleteSchedule(input.getApplicationId().program(programType,
+                                                                  oldScheduleSpec.getProgram().getProgramName()),
+                                 oldScheduleSpec.getProgram().getProgramType(),
+                                 oldScheduleSpec.getSchedule().getName());
+        deleteFromProgramScheduleStore(input.getApplicationId(), oldScheduleSpec);
+      }
     }
     // Emit the input to next stage.
     emit(input);
+  }
+
+  private void deleteSchedulesWithDeletedWorkflows(ApplicationWithPrograms input)
+    throws NotFoundException, SchedulerException {
+    ApplicationSpecification existingAppSpec = input.getExistingAppSpec();
+    if (existingAppSpec == null) {
+      return;
+    }
+    final Set<String> deletedWorkflows =
+      Maps.difference(existingAppSpec.getWorkflows(), input.getSpecification().getWorkflows()).
+        entriesOnlyOnLeft().keySet();
+    for (ScheduleCreationSpec scheduleCreationSpec : existingAppSpec.getProgramSchedules().values()) {
+      if (deletedWorkflows.contains(scheduleCreationSpec.getProgramName())) {
+        ScheduleId scheduleId = input.getApplicationId().schedule(scheduleCreationSpec.getName());
+        LOG.debug("Deleting ProgramSchedule {} since program {} no longer exists",
+                  scheduleId, scheduleCreationSpec.getProgramName());
+        tryDeleteProgramSchedule(scheduleId);
+      }
+    }
+    for (Map.Entry<String, ScheduleSpecification> entry : existingAppSpec.getSchedules().entrySet()) {
+      ScheduleSpecification scheduleSpec = entry.getValue();
+      if (deletedWorkflows.contains(scheduleSpec.getProgram().getProgramName())) {
+        ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+        ProgramId programId = input.getApplicationId().program(programType,
+                                                               scheduleSpec.getProgram().getProgramName());
+        LOG.debug("Deleting schedule {} with specification {} since program {} no longer exists",
+                  entry.getKey(), scheduleSpec, scheduleSpec.getProgram().getProgramName());
+        scheduler.deleteSchedule(programId, scheduleSpec.getProgram().getProgramType(),
+                                 scheduleSpec.getSchedule().getName());
+      }
+    }
+  }
+
+  private void deleteFromProgramScheduleStore(ApplicationId appId, ScheduleSpecification scheduleSpec)
+    throws NotFoundException {
+    if (scheduleSpec.getSchedule() instanceof TimeSchedule) {
+      ScheduleId scheduleId = appId.schedule(scheduleSpec.getSchedule().getName());
+      tryDeleteProgramSchedule(scheduleId);
+    }
+  }
+
+  private void tryDeleteProgramSchedule(ScheduleId scheduleId) throws NotFoundException {
+    try {
+      programScheduler.deleteSchedule(scheduleId);
+    } catch (NotFoundException e) {
+      LOG.debug("Schedule '{}' has not been persisted in ProgramScheduleStoreDataset yet", scheduleId);
+    }
   }
 }
