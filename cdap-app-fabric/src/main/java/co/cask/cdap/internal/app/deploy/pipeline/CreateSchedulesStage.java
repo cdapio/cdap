@@ -16,9 +16,14 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduleType;
@@ -43,10 +48,12 @@ import java.util.Map;
 public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms> {
 
   private static final Logger LOG = LoggerFactory.getLogger(CreateSchedulesStage.class);
+  private final co.cask.cdap.scheduler.Scheduler programScheduler;
   private final Scheduler scheduler;
 
-  public CreateSchedulesStage(Scheduler scheduler) {
+  public CreateSchedulesStage(co.cask.cdap.scheduler.Scheduler programScheduler, Scheduler scheduler) {
     super(TypeToken.of(ApplicationWithPrograms.class));
+    this.programScheduler = programScheduler;
     this.scheduler = scheduler;
   }
 
@@ -75,6 +82,7 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
         continue;
       }
       ProgramType programType = ProgramType.valueOfSchedulableType(newScheduleSpec.getProgram().getProgramType());
+      ProgramId programId = appId.program(programType, newScheduleSpec.getProgram().getProgramName());
 
       // if the schedule differ in schedule type then we have deleted the existing one earlier in DeleteScheduleStage.
       // create it with the new type and spec here. See CDAP-8918 for details.
@@ -82,13 +90,17 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
         ScheduleType.fromSchedule(oldScheduleSpec.getSchedule())) {
         LOG.debug("Redeploying schedule {} with specification {} which existed earlier with specification {}",
                   entry.getKey(), newScheduleSpec, oldScheduleSpec);
-        createSchedule(appId.program(programType, newScheduleSpec.getProgram().getProgramName()), newScheduleSpec);
+        createSchedule(programId, newScheduleSpec);
         continue;
       }
 
-      scheduler.updateSchedule(appId.program(programType, newScheduleSpec.getProgram().getProgramName()),
+      scheduler.updateSchedule(programId,
                                newScheduleSpec.getProgram().getProgramType(),
-                               newScheduleSpec.getSchedule());
+                               newScheduleSpec.getSchedule(), newScheduleSpec.getProperties());
+      if (oldScheduleSpec.getSchedule() instanceof TimeSchedule) {
+        programScheduler.deleteSchedule(input.getApplicationId().schedule(oldScheduleSpec.getSchedule().getName()));
+      }
+      addProgramSchedule(programId, newScheduleSpec);
     }
 
     for (Map.Entry<String, ScheduleSpecification> entry : mapDiff.entriesOnlyOnRight().entrySet()) {
@@ -102,6 +114,21 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
   }
 
   private void createSchedule(ProgramId programId, ScheduleSpecification scheduleSpec) throws SchedulerException {
-    scheduler.schedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule());
+    scheduler.schedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
+                       scheduleSpec.getProperties());
+    addProgramSchedule(programId, scheduleSpec);
+  }
+
+  private void addProgramSchedule(ProgramId programId, ScheduleSpecification scheduleSpec) {
+    Schedule schedule = scheduleSpec.getSchedule();
+    if (schedule instanceof TimeSchedule) {
+      ProgramSchedule programSchedule =
+        Schedulers.toProgramSchedule((TimeSchedule) schedule, programId, scheduleSpec.getProperties());
+      try {
+        programScheduler.addSchedule(programSchedule);
+      } catch (AlreadyExistsException e) {
+        LOG.warn("ProgramSchedule {} already exists for program {}", schedule.getName(), programId);
+      }
+    }
   }
 }
