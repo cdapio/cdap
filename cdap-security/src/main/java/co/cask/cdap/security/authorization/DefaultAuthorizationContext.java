@@ -54,10 +54,10 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
 
   @Inject
   @VisibleForTesting
-  public DefaultAuthorizationContext(@Assisted("extension-properties") Properties extensionProperties,
-                                     DatasetContext delegateDatasetContext, Admin delegateAdmin,
-                                     Transactional delegateTxnl, AuthenticationContext delegateAuthenticationContext,
-                                     SecureStore delegateSecureStore) {
+  DefaultAuthorizationContext(@Assisted("extension-properties") Properties extensionProperties,
+                              DatasetContext delegateDatasetContext, Admin delegateAdmin,
+                              Transactional delegateTxnl, AuthenticationContext delegateAuthenticationContext,
+                              SecureStore delegateSecureStore) {
     this.extensionProperties = extensionProperties;
     this.delegateDatasetContext = delegateDatasetContext;
     this.delegateAdmin = delegateAdmin;

@@ -259,7 +259,7 @@ public class ContextManager {
 
     @Override
     public void close() {
-      // authorizationEnforcementService and zkClientService are null if used by the Explore service,
+      // zkClientService is null if used by the Explore service,
       // since Explore manages the lifecycle of the zk service. it is not null if used by a MR job launched by Hive.
 
       if (zkClientService != null) {
