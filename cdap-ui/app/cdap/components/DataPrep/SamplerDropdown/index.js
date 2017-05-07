@@ -26,7 +26,6 @@ import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import {setWorkspace} from 'components/DataPrep/store/DataPrepActionCreator';
-
 require('./SamplerDropdown.scss');
 const samplerMethods = {
   first: 'first',
@@ -40,12 +39,14 @@ const CONTENT_TYPE = 'text/plain';
 export default class SamplerDropdown extends Component {
   constructor(props) {
     super(props);
+    let samplerMethod = objectQuery(DataPrepStore.getState(), 'dataprep', 'workspaceInfo', 'properties', 'sampler');
     this.dropdownOptions = Object.keys(samplerMethods).map(method => ({
       name: method,
       label: T.translate(`${PREFIX}.${method}.label`)
     }));
+    let defaultValue = this.dropdownOptions.filter(option => option.name === samplerMethod);
     this.state = {
-      samplerMethod: this.dropdownOptions[0]
+      samplerMethod: defaultValue.length ? defaultValue[0] : this.dropdownOptions[0]
     };
     this.onSamplerChange = this.onSamplerChange.bind(this);
   }
