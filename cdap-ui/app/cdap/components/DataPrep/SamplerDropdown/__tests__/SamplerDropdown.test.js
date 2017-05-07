@@ -19,7 +19,7 @@ import {mount} from 'enzyme';
 import SamplerDropdown from 'components/DataPrep/SamplerDropdown';
 jest.mock('api/dataprep');
 console.warn = jest.genMockFunction();
-// console.trace = jest.genMockFunction();
+console.trace = jest.genMockFunction();
 console.error = jest.genMockFunction();
 jest.useFakeTimers();
 import DataPrepStore from 'components/DataPrep/store';
@@ -43,8 +43,8 @@ const workspaceObject = {
   "properties": {
     "connection": "file",
     "file": "CustomerStream.csv",
-    "path": "/Users/ajainarayanan/Desktop/CustomerStream.csv",
-    "uri": "file:/Users/ajainarayanan/Desktop/CustomerStream.csv",
+    "path": "/path/CustomerStream.csv",
+    "uri": "file:/path/CustomerStream.csv",
     "sampler": "poisson"
   }
 };
@@ -92,8 +92,8 @@ describe('Unit tests for SamplerDropdown', () => {
       properties: {
         "connection": "file",
         "file": "CustomerStream.csv",
-        "path": "/Users/ajainarayanan/Desktop/CustomerStream.csv",
-        "uri": "file:/Users/ajainarayanan/Desktop/CustomerStream.csv",
+        "path": "/path/CustomerStream.csv",
+        "uri": "file:/path/CustomerStream.csv",
         "sampler": "bernoulli"
       }
     });
