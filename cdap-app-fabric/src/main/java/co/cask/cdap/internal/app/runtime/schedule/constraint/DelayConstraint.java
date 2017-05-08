@@ -16,16 +16,29 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.constraint;
 
-import co.cask.cdap.internal.schedule.constraint.Constraint;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 
 /**
  * A constraint which requires a certain amount of delay pass after the trigger is fired, before executing the program.
  */
-public class DelayConstraint extends Constraint {
+public class DelayConstraint extends AbstractCheckableConstraint {
 
   private final long millisAfterTrigger;
 
   public DelayConstraint(long millisAfterTrigger) {
+    Preconditions.checkArgument(millisAfterTrigger >= 0,
+                                "Configured delay '%s' must not be a negative value.", millisAfterTrigger);
     this.millisAfterTrigger = millisAfterTrigger;
+  }
+
+  @Override
+  public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
+    long elapsedTime = context.getCheckTime() - context.getJob().getCreationTime();
+    if (elapsedTime >= millisAfterTrigger) {
+      return ConstraintResult.SATISFIED;
+    }
+    return new ConstraintResult(ConstraintResult.SatisfiedState.NOT_SATISFIED, millisAfterTrigger - elapsedTime);
   }
 }
