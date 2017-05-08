@@ -44,9 +44,9 @@ const MyDataPrepApi = {
   ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/usage`, { interval: 2000 }),
 
   // File System Browser
-  explorer: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/fs/explorer`),
-  readFile: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/fs/explorer/read`),
-  getSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/fs/explorer/specification`)
+  explorer: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/explorer/fs`),
+  readFile: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/explorer/fs/read`),
+  getSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/explorer/fs/specification`)
 };
 
 export default MyDataPrepApi;
