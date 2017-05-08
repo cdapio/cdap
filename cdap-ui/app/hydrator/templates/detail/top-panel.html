@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016 Cask Data, Inc.
+  Copyright © 2016-2017 Cask Data, Inc.
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
@@ -173,36 +173,6 @@
           </div>
         </div>
       </div>
-      <div class="pipeline-settings pipeline-run-section" ng-if="TopPanelCtrl.runPlayer.view">
-        <h5>
-          <strong>Runtime Arguments</strong>
-        </h5>
-        <div class="arguments-container">
-          <key-value-widget
-            ng-model="TopPanelCtrl.macrosMap"
-            data-config="TopPanelCtrl.runTimeWidgetConfig"
-          ></key-value-widget>
-        </div>
-        <div class="clearfix">
-          <span ng-if="TopPanelCtrl.macroError" class="pull-left macro-error-container">
-            <div class="text-danger" ng-bind="TopPanelCtrl.macroError"></div>
-          </span>
-          <div class="pull-right">
-            <button class="btn btn-blue"
-                 ng-if="TopPanelCtrl.runPlayer.action === 'Starting'"
-                 ng-disabled="!TopPanelCtrl.isValidToStartOrSchedule()"
-                 ng-click="TopPanelCtrl.startPipeline()">
-              Start Now
-            </button>
-            <button class="btn btn-blue"
-                 ng-if="TopPanelCtrl.runPlayer.action === 'Scheduling'"
-                 ng-disabled="!TopPanelCtrl.isValidToStartOrSchedule()"
-                 ng-click="TopPanelCtrl.schedulePipeline()">
-              Schedule
-            </button>
-          </div>
-        </div>
-      </div>
       <div class="btn log-viewer"
            ng-class="{'btn-select': TopPanelCtrl.viewLogs}"
            ng-click="TopPanelCtrl.viewLogs = !TopPanelCtrl.viewLogs">
@@ -265,6 +235,18 @@
       template-type="{{TopPanelCtrl.config.artifact.name}}"
       my-pipeline-settings>
     </div>
+  </div>
+  <div class="pipeline-configurations" ng-if="TopPanelCtrl.runPlayer.view">
+    <my-pipeline-configurations
+      runtime-arguments="TopPanelCtrl.runtimeArguments"
+      apply-runtime-arguments="TopPanelCtrl.applyRuntimeArguments()"
+      resolved-macros="TopPanelCtrl.resolvedMacros"
+      convert-runtime-args-to-macros="TopPanelCtrl.convertRuntimeArgsToMacros()"
+      run-pipeline="TopPanelCtrl.startPipeline()"
+      pipeline-name="{{TopPanelCtrl.app.name}}"
+      on-close="TopPanelCtrl.runPlayer.view = false; TopPanelCtrl.runPlayer.action = null"
+      namespace-id="{{TopPanelCtrl.$state.params.namespace}}">
+    </my-pipeline-configurations>
   </div>
   <div class="pipeline-settings pipeline-logs-section" ng-if="TopPanelCtrl.viewLogs" ng-controller="HydratorPlusPlusDetailLogCtrl as LogsCtrl">
     <my-log-viewer

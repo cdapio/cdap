@@ -1,0 +1,207 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@text-color: #333333;
+@border-color: #cccccc;
+@active-tab-color: #fb8c00;
+@active-bg-color: #dbdbdb;
+@input-box-focus-color: #66afe9;
+@input-label-color: #999999;
+@action-button-color: #666666;
+@modeless-bg-color: lightgray;
+@modeless-header-bg-color: #f5f5f5;
+@modeless-width: 830px;
+@modeless-height: 496px;
+@side-panel-width: 170px;
+@regular-font: 14px;
+
+body.theme-cdap {
+  &.state-hydrator {
+    .pipeline-configurations-content {
+      background: @modeless-bg-color;
+      position: fixed;
+      top: 96px;
+      overflow: auto;
+      right: 15px;
+      z-index: 999;
+      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
+      color: @text-color;
+      background-color: white;
+      width: @modeless-width;
+      height: @modeless-height;
+
+      .pipeline-configurations-header {
+        background-color: @modeless-header-bg-color;
+        height: 60px;
+        padding: 0;
+        border-radius: 4px 4px 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        .modeless-title {
+          color: @text-color;
+          padding-left: 15px;
+          max-width: 80%;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
+          font-weight: 500;
+          margin: 0 auto 0 0;
+          font-size: 16px;
+          line-height: 20px;
+        }
+
+        .btn .fa-remove {
+          color: @text-color;
+          font-size: 16px;
+        }
+      }
+
+      .pipeline-configurations-body {
+        display: flex;
+
+        /* 60px: height of modeless box header */
+        height: ~"calc(100% - 60px)";
+        height: ~"-moz-calc(100% - 60px)";
+        height: ~"-webkit-calc(100% - 60px)";
+
+        .configurations-side-panel {
+          border-right: 1px solid @border-color;
+          border-top: 1px solid @border-color;
+
+          .configurations-headers {
+            border-bottom: 1px solid @border-color;
+
+            .configuration-header {
+              height: 40px;
+              display: flex;
+              align-items: center;
+              padding-left: 23px;
+              font-size: @regular-font;
+              cursor: pointer;
+              width: @side-panel-width;
+
+              &.active {
+                color: @active-tab-color;
+                background-color: @active-bg-color;
+                font-weight: bold;
+              }
+
+              &.toggle-advanced-options {
+                padding-left: 0;
+
+                span.fa {
+                  display: inline-block;
+                  width: 23px;
+                  text-align: center;
+                }
+              }
+            }
+
+            .advanced-options {
+              .configuration-header {
+                pointer-events: none;
+                color: @input-label-color;
+              }
+            }
+          }
+        }
+
+        .configuration-content {
+          width: 100%;
+          margin: 16px 50px 40px 50px;
+          font-size: @regular-font;
+          position: relative;
+
+          .configuration-step-content {
+            border-bottom: 1px solid @border-color;
+
+            /* 50px: height from bottom of buttons to horizontal line */
+            height: ~"calc(100% - 50px)";
+            height: ~"-moz-calc(100% - 50px)";
+            height: ~"-webkit-calc(100% - 50px)";
+
+            .runtime-arguments-text {
+              font-weight: bold;
+              margin-bottom: 16px;
+            }
+
+            .runtime-arguments-labels {
+              .key-label,
+              .value-label {
+                display: inline-block;
+                width: 40%;
+                color: @input-label-color;
+                font-weight: 500;
+              }
+
+              .key-label {
+                margin-right: 22px;
+              }
+            }
+
+            .runtime-arguments-values {
+              margin-top: 10px;
+
+              /* 240px = 32px (height of input box) * 5
+                       + 16px (margin between each boxes) * 5 */
+              max-height: 240px;
+              overflow-x: hidden;
+              overflow-y: auto;
+
+              .key-value-pair-preference {
+                margin-bottom: 16px;
+                justify-content: initial;
+
+                input {
+                  border: 1px solid @border-color;
+                  font-size: @regular-font;
+
+                  &:focus {
+                    border-color: @input-box-focus-color;
+                  }
+                }
+
+                .btn-link {
+                  color: @action-button-color;
+                  font-size: @regular-font;
+                }
+              }
+            }
+          }
+
+          .configuration-step-navigation {
+            position: absolute;
+            bottom: 0;
+
+            .btn {
+              font-size: @regular-font;
+
+              &.apply-run {
+                margin-right: 16px;
+              }
+            }
+
+            .applied-message {
+              margin-left: 10px;
+            }
+          }
+        }
+      }
+    }
+  }
+}

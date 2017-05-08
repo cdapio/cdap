@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -346,6 +346,44 @@ class HydratorPlusPlusHydratorService {
       }
     }
     return flattendVersion;
+  }
+
+  convertMacrosToRuntimeArguments(macrosMap, userRuntimeArgumentsMap) {
+    let runtimeArguments = {};
+    let macros = Object.keys(macrosMap).map(macroKey => {
+      return {
+        key: macroKey,
+        value: macrosMap[macroKey],
+        uniqueId: 'id-' + this.uuid.v4(),
+        notDeletable: true
+      };
+    });
+    let userRuntimeArguments = Object.keys(userRuntimeArgumentsMap).map(argumentKey => {
+      return {
+        key: argumentKey,
+        value: userRuntimeArgumentsMap[argumentKey],
+        uniqueId: 'id-' + this.uuid.v4()
+      };
+    });
+    runtimeArguments.pairs = macros.concat(userRuntimeArguments);
+    return runtimeArguments;
+  }
+
+  convertRuntimeArgsToMacros(runtimeArguments) {
+    let macrosMap = {};
+    let userRuntimeArgumentsMap = {};
+    runtimeArguments.pairs.forEach((currentPair) => {
+      let key = currentPair.key;
+      if (currentPair.notDeletable) {
+        macrosMap[key] = currentPair.value;
+      } else {
+        userRuntimeArgumentsMap[key] = currentPair.value;
+      }
+    });
+    return {
+      macrosMap,
+      userRuntimeArgumentsMap
+    };
   }
 }
 

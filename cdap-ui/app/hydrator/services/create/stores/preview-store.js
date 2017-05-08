@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,28 +19,29 @@ let getInitialState = () => {
   return {
     isPreviewModeEnabled: false,
     startTime: null,
-    previewId: null
+    previewId: null,
+    macros: {},
+    userRuntimeArguments: {}
   };
 };
 
 var preview = (state = getInitialState(), action = {}) => {
-  let stateCopy;
   switch(action.type) {
     case previewActions.TOGGLE_PREVIEW_MODE:
-      stateCopy = Object.assign({}, state);
-      const {isPreviewModeEnabled} = action.payload;
-      stateCopy.isPreviewModeEnabled = isPreviewModeEnabled;
-      return Object.assign({}, state, stateCopy);
+      let isPreviewModeEnabled = action.payload.isPreviewModeEnabled;
+      return Object.assign({}, state, {isPreviewModeEnabled});
     case previewActions.SET_PREVIEW_START_TIME:
-      stateCopy = Object.assign({}, state);
-      const {startTime} = action.payload;
-      stateCopy.startTime = startTime;
-      return Object.assign({}, state, stateCopy);
+      let startTime = action.payload.startTime;
+      return Object.assign({}, state, {startTime});
     case previewActions.SET_PREVIEW_ID:
-      stateCopy = Object.assign({}, state);
-      const {previewId} = action.payload;
-      stateCopy.previewId = previewId;
-      return Object.assign({}, state, stateCopy);
+      let previewId = action.payload.previewId;
+      return Object.assign({}, state, {previewId});
+    case previewActions.SET_MACROS:
+      let macros = action.payload.macros;
+      return Object.assign({}, state, {macros});
+    case previewActions.SET_USER_RUNTIME_ARGUMENTS:
+      let userRuntimeArguments = action.payload.userRuntimeArguments;
+      return Object.assign({}, state, {userRuntimeArguments});
     case previewActions.PREVIEW_RESET:
       return getInitialState();
     default:
@@ -71,6 +72,8 @@ angular.module(`${PKG.name}.feature.hydrator`)
     'TOGGLE_PREVIEW_MODE': 'TOGGLE_PREVIEW_MODE',
     'SET_PREVIEW_START_TIME': 'SET_PREVIEW_START_TIME',
     'SET_PREVIEW_ID': 'SET_PREVIEW_ID',
-    'PREVIEW_RESET': 'PREVIEW_RESET'
+    'PREVIEW_RESET': 'PREVIEW_RESET',
+    'SET_MACROS': 'SET_MACROS',
+    'SET_USER_RUNTIME_ARGUMENTS': 'SET_USER_RUNTIME_ARGUMENTS'
   })
   .factory('HydratorPlusPlusPreviewStore', PreviewStore);

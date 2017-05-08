@@ -42,7 +42,7 @@ const getClonePipelineName = (name) => {
 };
 
 class HydratorDetailTopPanelController {
-  constructor(HydratorPlusPlusDetailRunsStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailActions, GLOBALS, $state, myLoadingService, $timeout, $scope, moment, myAlertOnValium, myPipelineExportModalService, myPipelineApi, myHelpers, myPreferenceApi, $q, $interval, MyPipelineStatusMapper, HydratorPlusPlusHydratorService) {
+  constructor(HydratorPlusPlusDetailRunsStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailActions, GLOBALS, $state, myLoadingService, $timeout, $scope, moment, myAlertOnValium, myPipelineExportModalService, myPipelineApi, myHelpers, myPreferenceApi, $q, $interval, MyPipelineStatusMapper, HydratorPlusPlusHydratorService, uuid) {
     this.GLOBALS = GLOBALS;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.myAlertOnValium = myAlertOnValium;
@@ -62,6 +62,7 @@ class HydratorDetailTopPanelController {
     this.myLoadingService = myLoadingService;
     this.myPreferenceApi = myPreferenceApi;
     this.$q = $q;
+    this.uuid = uuid;
     this.$interval = $interval;
     this.MyPipelineStatusMapper = MyPipelineStatusMapper;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
@@ -94,14 +95,14 @@ class HydratorDetailTopPanelController {
     });
     HydratorPlusPlusDetailNonRunsStore.registerOnChangeListener(this.setScheduleStatus.bind(this));
 
-    this.macrosMap = {};
-    this.runTimeWidgetConfig = {
-      'widget-type': 'map',
-      'widget-attributes': {
-        'key-placeholder': 'Argument name',
-        'value-placeholder': 'Argument value'
-      }
-    };
+    this.macrosMap = HydratorPlusPlusDetailRunsStore.getMacros();
+    this.userRuntimeArgumentsMap = HydratorPlusPlusDetailRunsStore.getUserRuntimeArguments();
+    this.runtimeArguments = {};
+    this.resolvedMacros = {};
+
+    if (Object.keys(this.macrosMap).length === 0) {
+      this.fetchMacros();
+    }
 
     this.viewInCdapLink = window.getOldCDAPUrl({
       stateName: 'apps.detail.overview.status',
@@ -111,7 +112,6 @@ class HydratorDetailTopPanelController {
       }
     });
 
-    this.fetchMacros();
     this.$scope.$on('$destroy', () => {
       this.$timeout.cancel(this.scheduleTimeout);
       this.$interval.cancel(this.pipelineDurationTimer);
@@ -119,7 +119,6 @@ class HydratorDetailTopPanelController {
   }
 
   fetchMacros() {
-
     const parseMacros = macrosSpec => {
       let macrosObj = {};
       for(let i = 0; i < macrosSpec.length; i++){
@@ -136,12 +135,6 @@ class HydratorDetailTopPanelController {
     };
 
     let {namespace, app} = this.HydratorPlusPlusDetailRunsStore.getParams();
-    let preferenceParams = {
-      namespace: this.$state.params.namespace,
-      appId: this.$state.params.pipelineId,
-      scope: this.$scope
-    };
-    const errorHandler = err => console.log('ERROR', err);
 
     return this.myPipelineApi
       .fetchMacros({
@@ -157,16 +150,90 @@ class HydratorDetailTopPanelController {
         err => this.macroError = err
       )
       .then(
-        () => this.myPreferenceApi.getAppPreferenceResolved(preferenceParams).$promise,
-        errorHandler
-      )
-      .then(
-        (res) => {
-          let relevantPrefs = this.HydratorPlusPlusHydratorService.getPrefsRelevantToMacros(res, this.macrosMap);
-          this.macrosMap = Object.assign({}, this.macrosMap, relevantPrefs);
-        },
-        errorHandler
+        () => {
+          this.HydratorPlusPlusDetailActions.setMacros(this.macrosMap);
+          this.getRuntimeArguments();
+        }
       );
+  }
+
+  getRuntimeArguments() {
+    this.macrosMap = this.HydratorPlusPlusDetailRunsStore.getMacros();
+    this.userRuntimeArgumentsMap = this.HydratorPlusPlusDetailRunsStore.getUserRuntimeArguments();
+
+    // if there are no runtime arguments at all
+    if (Object.keys(this.macrosMap).length === 0 && Object.keys(this.userRuntimeArgumentsMap).length === 0) {
+      this.runtimeArguments.pairs = [{
+        key: '',
+        value: '',
+        uniqueId: 'id-' + this.uuid.v4()
+      }];
+      return this.$q.when(this.runtimeArguments);
+    }
+
+    // if there are non-zero number of macros
+    if (Object.keys(this.macrosMap).length !== 0) {
+      let preferenceParams = {
+        namespace: this.$state.params.namespace,
+        appId: this.$state.params.pipelineId,
+        scope: this.$scope
+      };
+
+      return this.myPreferenceApi
+        .getAppPreferenceResolved(preferenceParams)
+        .$promise
+        .then(
+          (res) => {
+            let newResolvedMacros = this.HydratorPlusPlusHydratorService.getPrefsRelevantToMacros(res, this.macrosMap);
+
+            // if the higher level preferences have changed, or if this.resolvedMacros is empty
+            if (!angular.equals(newResolvedMacros, this.resolvedMacros)) {
+              if (Object.keys(this.resolvedMacros).length === 0) {
+                this.macrosMap = Object.assign({}, newResolvedMacros);
+              } else {
+                let newPrefs = {};
+                for (let macroKey in newResolvedMacros) {
+                  if (newResolvedMacros.hasOwnProperty(macroKey) &&
+                    this.resolvedMacros.hasOwnProperty(macroKey) &&
+                    this.macrosMap.hasOwnProperty(macroKey)) {
+                    if (newResolvedMacros[macroKey] !== this.resolvedMacros[macroKey] &&
+                        this.resolvedMacros[macroKey] === this.macrosMap[macroKey]) {
+                      newPrefs[macroKey] = newResolvedMacros[macroKey];
+                    }
+                  }
+                }
+                // only update the macros that have new resolved values
+                if (Object.keys(newPrefs).length > 0) {
+                  this.macrosMap = Object.assign({}, this.macrosMap, newPrefs);
+                }
+              }
+
+              this.resolvedMacros = newResolvedMacros;
+              this.HydratorPlusPlusDetailActions.setMacros(this.macrosMap);
+            }
+
+            if (Object.keys(this.macrosMap).length > 0 || Object.keys(this.userRuntimeArgumentsMap).length > 0) {
+              this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+            }
+            return this.runtimeArguments;
+          },
+          err => this.macroError = err
+        );
+
+    // if there are zero macros, but there are user-set runtime arguments
+    } else {
+      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+      return this.$q.when(this.runtimeArguments);
+    }
+
+  }
+
+  applyRuntimeArguments() {
+    let macros = this.HydratorPlusPlusHydratorService.convertRuntimeArgsToMacros(this.runtimeArguments);
+    this.macrosMap = macros.macrosMap;
+    this.userRuntimeArgumentsMap = macros.userRuntimeArgumentsMap;
+    // have to do this because cannot do two dispatch in a row
+    this.HydratorPlusPlusDetailActions.setMacrosAndUserRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
   }
 
   isValidToStartOrSchedule() {
@@ -220,6 +287,8 @@ class HydratorDetailTopPanelController {
       this.lastRunTime = 'N/A';
     }
     this.config = this.HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
+    this.macrosMap = this.HydratorPlusPlusDetailRunsStore.getMacros();
+    this.userRuntimeArgumentsMap = this.HydratorPlusPlusDetailRunsStore.getUserRuntimeArguments();
   }
 
   setAppStatus() {
@@ -257,14 +326,14 @@ class HydratorDetailTopPanelController {
   do(action) {
     switch(action) {
       case 'Start':
-        this.fetchMacros()
+        this.getRuntimeArguments()
           .then(() => {
             this.runPlayer.view = true;
             this.runPlayer.action = this.MyPipelineStatusMapper.lookupDisplayStatus('STARTING');
           }, (err) => {console.log('Error: ', err); });
         break;
       case 'Schedule':
-        this.fetchMacros()
+        this.getRuntimeArguments()
           .then(() => {
             this.runPlayer.view = true;
             this.runPlayer.action = this.MyPipelineStatusMapper.lookupDisplayStatus('SCHEDULING');
@@ -324,9 +393,6 @@ class HydratorDetailTopPanelController {
           content: angular.isObject(err) ? err.data: err
         });
       }
-    )
-    .then(
-      () => this.fetchMacros()
     );
   }
   stopPipeline() {
@@ -402,7 +468,6 @@ class HydratorDetailTopPanelController {
         () => {
           this.runPlayer.view = false;
           this.runPlayer.action = null;
-          this.fetchMacros();
         }
       );
   }
@@ -438,6 +503,6 @@ class HydratorDetailTopPanelController {
   }
 }
 
-HydratorDetailTopPanelController.$inject = ['HydratorPlusPlusDetailRunsStore', 'HydratorPlusPlusDetailNonRunsStore', 'HydratorPlusPlusDetailActions', 'GLOBALS', '$state', 'myLoadingService', '$timeout', '$scope', 'moment', 'myAlertOnValium', 'myPipelineExportModalService', 'myPipelineApi', 'myHelpers', 'myPreferenceApi', '$q', '$interval', 'MyPipelineStatusMapper', 'HydratorPlusPlusHydratorService'];
+HydratorDetailTopPanelController.$inject = ['HydratorPlusPlusDetailRunsStore', 'HydratorPlusPlusDetailNonRunsStore', 'HydratorPlusPlusDetailActions', 'GLOBALS', '$state', 'myLoadingService', '$timeout', '$scope', 'moment', 'myAlertOnValium', 'myPipelineExportModalService', 'myPipelineApi', 'myHelpers', 'myPreferenceApi', '$q', '$interval', 'MyPipelineStatusMapper', 'HydratorPlusPlusHydratorService', 'uuid'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorDetailTopPanelController', HydratorDetailTopPanelController);

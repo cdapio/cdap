@@ -1,0 +1,95 @@
+<!--
+  Copyright © 2017 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="pipeline-configurations-content">
+  <div class="pipeline-configurations-header">
+    <h3 class="modeless-title">
+      Configure
+      <span ng-if="PipelineConfigCtrl.pipelineName.length > 0">
+        "{{PipelineConfigCtrl.pipelineName}}"
+      </span>
+    </h3>
+    <div class="btn-group">
+      <a class="btn" ng-click="PipelineConfigCtrl.onClose()">
+        <span class="fa fa-remove"></span>
+      </a>
+    </div>
+  </div>
+  <div class="pipeline-configurations-body">
+    <div class="configurations-side-panel">
+      <div class="configurations-headers">
+        <div class="configuration-header active">
+          Runtime Arguments
+        </div>
+        <div class="configuration-header toggle-advanced-options"
+              ng-click="PipelineConfigCtrl.showAdvanced = !PipelineConfigCtrl.showAdvanced">
+          <span class="fa"
+                ng-class="{'fa-caret-down': PipelineConfigCtrl.showAdvanced, 'fa-caret-right': !PipelineConfigCtrl.showAdvanced}">
+           </span>
+          Advanced options
+        </div>
+        <div class="advanced-options"
+              ng-show="PipelineConfigCtrl.showAdvanced">
+          <div class="configuration-header">
+            Engine Config
+          </div>
+          <div class="configuration-header">
+            Resources
+          </div>
+          <div class="configuration-header">
+            Alerts
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="configuration-content">
+      <div class="configuration-step-content">
+        <div class="runtime-arguments-text">
+          Specify Runtime Arguments or Update the Ones Derived from Preferences
+        </div>
+        <div class="runtime-arguments-labels">
+          <span class="key-label">Name</span>
+          <span class="value-label">Value</span>
+        </div>
+        <div class="runtime-arguments-values">
+          <key-value-pairs
+            key-values="PipelineConfigCtrl.runtimeArguments"
+            on-key-value-change="PipelineConfigCtrl.onRuntimeArgumentsChange"
+            get-resetted-key-value="PipelineConfigCtrl.getResettedRuntimeArgument"
+            resetting-fields="PipelineConfigCtrl.resettingFields"
+          ></key-value-pairs>
+        </div>
+      </div>
+      <div class="configuration-step-navigation">
+        <button
+          class="btn btn-primary apply-run"
+          ng-disabled="PipelineConfigCtrl.buttonsAreDisabled()"
+          ng-click="PipelineConfigCtrl.applyAndRunPipeline()">
+          Apply &amp; Run
+        </button>
+        <button
+          class="btn btn-secondary"
+          ng-disabled="PipelineConfigCtrl.buttonsAreDisabled()"
+          ng-click="PipelineConfigCtrl.applyWithMessage()">
+          Apply
+        </button>
+        <span class="applied-message text-success"
+              ng-show="PipelineConfigCtrl.showAppliedMessage">
+          Runtime Arguments Applied
+        </span>
+    </div>
+  </div>
+</div>

@@ -251,6 +251,10 @@ body.theme-cdap {
       opacity: 0;
       z-index: 999;
     }
+
+    .pipeline-configurations {
+      height: 0;
+    }
   }
   &.state-hydrator-create {
     div.pipeline-type {
@@ -674,6 +678,12 @@ body.theme-cdap {
         }
       }
     }
+
+    .pipeline-configurations {
+      .pipeline-configurations-content {
+        left: 119px;
+      }
+    }
   }
   &.state-hydrator-list {
     div.side-panel.top {
@@ -741,7 +751,7 @@ body.theme-cdap {
     top: 94px;
     background: #ebebeb;
     width: 700px;
-    z-index: 1000;
+    z-index: 999;
     box-shadow: 0 7px 7px rgba(0,0,0,.1),0 19px 59px rgba(0,0,0,.2);
     .macro-error-container { width: 70%; }
 
