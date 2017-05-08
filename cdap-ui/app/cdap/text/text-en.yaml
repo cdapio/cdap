@@ -380,7 +380,7 @@ features:
           patternDescription: Select a regex pattern to extract a group of data in a new column named "{column}"
           phoneNumberPattern: Phone numbers
           phoneNumberPatternExample: 'e.g. (###) - ###-####'
-          selectPatternMessage: Select a Regex Pattern
+          selectPatternMessage: Select a Pattern
           showPatternLabel: Show Pattern
           ssnPattern: SSN
           ssnPatternExample: '###-##-####'
