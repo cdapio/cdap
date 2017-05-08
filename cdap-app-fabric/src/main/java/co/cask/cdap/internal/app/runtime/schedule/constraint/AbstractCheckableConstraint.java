@@ -14,11 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.internal.schedule.constraint;
+package co.cask.cdap.internal.app.runtime.schedule.constraint;
+
+import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
 
 /**
  * A constraint that is checked before executing a schedule.
  */
-public abstract class Constraint {
+public abstract class AbstractCheckableConstraint extends Constraint {
+
+  /**
+   * Checks a ConstraintContext against a program schedule.
+   *
+   * @param schedule the schedule that is being checked against
+   * @param context context information for the check
+   * @return the result of the check
+   */
+  public abstract ConstraintResult check(ProgramSchedule schedule, ConstraintContext context);
 
 }
