@@ -16,16 +16,21 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.constraint;
 
-import co.cask.cdap.internal.schedule.constraint.Constraint;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 
 /**
  * A constraint which dictates an upper bound on the number of concurrent schedule runs.
  */
-public class ConcurrencyConstraint extends Constraint {
+public class ConcurrencyConstraint extends AbstractCheckableConstraint {
 
   private final int maxConcurrency;
 
   public ConcurrencyConstraint(int maxConcurrency) {
     this.maxConcurrency = maxConcurrency;
+  }
+
+  @Override
+  public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
+    return ConstraintResult.SATISFIED;
   }
 }

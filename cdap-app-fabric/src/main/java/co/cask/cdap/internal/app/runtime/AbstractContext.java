@@ -653,12 +653,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
         TopicId dataEventTopic = NamespaceId.SYSTEM.topic(topic);
         MessagePublisher publisher = getMessagingContext().getMessagePublisher();
 
-        Map<String, String> properties = new HashMap<>();
-        properties.put("datasetId", datasetId.toString());
-        properties.put("partitionKeys", GSON.toJson(partitionKeys));
-        Notification notification = new Notification(Notification.Type.PARTITION, properties);
-
-        byte[] payload = Bytes.toBytes(GSON.toJson(notification));
+        byte[] payload = Bytes.toBytes(GSON.toJson(Notification.forPartitions(datasetId, partitionKeys)));
         int failure = 0;
         long startTime = System.currentTimeMillis();
         while (true) {

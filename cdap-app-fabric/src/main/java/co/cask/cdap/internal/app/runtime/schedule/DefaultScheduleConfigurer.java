@@ -89,14 +89,14 @@ public class DefaultScheduleConfigurer implements ScheduleConfigurer {
   }
 
   @Override
-  public ScheduleConfigurer setTimeRange(int startHour, int endHour) {
-    constraints.add(new TimeRangeConstraint(startHour, endHour, TimeZone.getDefault()));
+  public ScheduleConfigurer setTimeRange(String startTime, String endTime) {
+    constraints.add(new TimeRangeConstraint(startTime, endTime, TimeZone.getDefault()));
     return this;
   }
 
   @Override
-  public ScheduleConfigurer setTimeRange(int startHour, int endHour, TimeZone timeZone) {
-    constraints.add(new TimeRangeConstraint(startHour, endHour, timeZone));
+  public ScheduleConfigurer setTimeRange(String startTime, String endTime, TimeZone timeZone) {
+    constraints.add(new TimeRangeConstraint(startTime, endTime, timeZone));
     return this;
   }
 

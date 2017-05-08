@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.constraint;
 
+import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
@@ -27,12 +28,12 @@ import javax.annotation.Nullable;
  * Context object, exposing information that may be useful during checking constraints.
  */
 public final class ConstraintContext {
+  private final Job job;
   private final long checkTime;
-  private final Notification notification;
 
-  public ConstraintContext(long checkTime, Notification notification) {
+  public ConstraintContext(Job job, long checkTime) {
+    this.job = job;
     this.checkTime = checkTime;
-    this.notification = notification;
   }
 
   public long getCheckTime() {
@@ -49,7 +50,7 @@ public final class ConstraintContext {
     throw new UnsupportedOperationException();
   }
 
-  public Notification getNotification() {
-    return notification;
+  public Job getJob() {
+    return job;
   }
 }

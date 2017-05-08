@@ -32,9 +32,9 @@ public interface ScheduleConfigurer {
 
   ScheduleConfigurer delayRun(long delayMillis);
 
-  ScheduleConfigurer setTimeRange(int startHour, int endHour);
+  ScheduleConfigurer setTimeRange(String startTime, String endTime);
 
-  ScheduleConfigurer setTimeRange(int startHour, int endHour, TimeZone timeZone);
+  ScheduleConfigurer setTimeRange(String startTime, String endTime, TimeZone timeZone);
 
   ScheduleConfigurer setDurationSinceLastRun(long delayMillis);
 

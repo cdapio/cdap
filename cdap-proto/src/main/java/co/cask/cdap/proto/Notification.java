@@ -16,6 +16,14 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
+import co.cask.cdap.proto.id.DatasetId;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -23,6 +31,10 @@ import java.util.Objects;
  * Notification for events, such as cron expression triggering or data being added to a dataset.
  */
 public class Notification {
+
+  private static final Gson GSON =
+    new GsonBuilder().registerTypeAdapter(PartitionKey.class, new PartitionKeyCodec()).create();
+
   /**
    * The type of the notification.
    */
@@ -37,6 +49,15 @@ public class Notification {
   public Notification(Type notificationType, Map<String, String> properties) {
     this.notificationType = notificationType;
     this.properties = properties;
+  }
+
+  public static Notification forPartitions(DatasetId datasetId,
+                                           Collection<? extends PartitionKey> partitionKeys) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("datasetId", datasetId.toString());
+    properties.put("numPartitions", Integer.toString(partitionKeys.size()));
+    properties.put("partitionKeys", GSON.toJson(partitionKeys));
+    return new Notification(Notification.Type.PARTITION, properties);
   }
 
   public Type getNotificationType() {
