@@ -1041,7 +1041,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
 
     ClassLoader oldCLassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
-      job.getConfiguration().getClassLoader(), Collections.singleton(ddlExecutorClass.getClassLoader())));
+      getClass().getClassLoader(), Collections.singleton(ddlExecutorClass.getClassLoader())));
 
     try {
       appBundler.createBundle(Locations.toLocation(jobJar), classes);
