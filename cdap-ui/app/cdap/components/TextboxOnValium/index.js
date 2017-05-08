@@ -54,15 +54,16 @@ export default class TextboxOnValium extends Component {
   }
   handleKeyPress(e) {
     if (e.nativeEvent.keyCode === 13) {
-      this.props.onChange(e.target.value, this.state.originalValue === this.state.textValue);
+      this.props.onChange(e.target.value, this.state.originalValue === this.state.textValue, e.nativeEvent.keyCode);
     }
     if (e.nativeEvent.keyCode === 27) {
-      this.props.onChange(this.state.originalValue, true);
+      this.props.onChange(this.state.originalValue, true, e.nativeEvent.keyCode);
     }
   }
   render() {
     return (
       <input
+        className={this.props.className}
         ref={ref => this.textboxRef = ref}
         onBlur={this.onBlur}
         onChange={this.updateTextValue}
@@ -76,5 +77,6 @@ export default class TextboxOnValium extends Component {
 TextboxOnValium.propTypes = {
   onChange: PropTypes.func,
   value: PropTypes.string,
-  onWarning: PropTypes.func
+  onWarning: PropTypes.func,
+  className: PropTypes.string
 };

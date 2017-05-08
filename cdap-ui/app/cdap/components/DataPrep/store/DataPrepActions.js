@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
 const DataPrepActions = {
   setData: 'DATAPREP_SET_DATA',
@@ -27,7 +27,8 @@ const DataPrepActions = {
   reset: 'DATAPREP_RESET',
   setError: 'DATAPREP_SET_ERROR',
   setCLIError: 'DATAPREP_CLI_ERROR',
-  dismissError: 'DATAPREP_DISMISS_ERROR'
+  dismissError: 'DATAPREP_DISMISS_ERROR',
+  setHighlightColumns: 'DATAPREP_SET_HIGHLIGHT_COLUMNS'
 };
 
 export default DataPrepActions;

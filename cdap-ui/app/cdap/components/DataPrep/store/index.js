@@ -29,6 +29,10 @@ const defaultInitialState = {
   data: [],
   headers: [],
   selectedHeaders: [],
+  highlightColumns: {
+    directive: null,
+    columns: []
+  },
   directives: [],
   higherVersion: null,
   loading: false,
@@ -92,6 +96,11 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
     case DataPrepActions.setWorkspaceMode:
       stateCopy = Object.assign({}, state, {
         singleWorkspaceMode: action.payload.singleWorkspaceMode
+      });
+      break;
+    case DataPrepActions.setHighlightColumns:
+      stateCopy = Object.assign({}, state, {
+        highlightColumns: action.payload.highlightColumns
       });
       break;
     case DataPrepActions.enableLoading:
