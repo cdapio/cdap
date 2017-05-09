@@ -1,6 +1,11 @@
 {
   "variables": {
-    "sdk_version": "DEFINE ME ON COMMAND LINE"
+    "sdk_version": "DEFINE ME ON COMMAND LINE",
+    "azure_client_id": "{{env `ARM_CLIENT_ID`}}",
+    "azure_client_secret": "{{env `ARM_CLIENT_SECRET`}}",
+    "azure_resource_group": "{{env `ARM_RESOURCE_GROUP`}}",
+    "azure_storage_account": "{{env `ARM_STORAGE_ACCOUNT`}}",
+    "azure_subscription_id": "{{env `ARM_SUBSCRIPTION_ID`}}"
   },
   "builders": [
     {
@@ -65,6 +70,23 @@
       "source_ami": "ami-1ac0120c",
       "ssh_username": "ubuntu",
       "name": "cdap-sdk-ami"
+    },
+    {
+      "type": "azure-arm",
+      "client_id": "{{user `azure_client_id`}}",
+      "client_secret": "{{user `azure_client_secret`}}",
+      "resource_group_name": "{{user `azure_resource_group`}}",
+      "storage_account": "{{user `azure_storage_account`}}",
+      "subscription_id": "{{user `azure_subscription_id`}}",
+      "capture_container_name": "cdap-cloud-sandbox",
+      "capture_name_prefix": "packer",
+      "os_type": "Linux",
+      "image_publisher": "Canonical",
+      "image_offer": "UbuntuServer",
+      "image_sku": "16.04-LTS",
+      "location": "West US",
+      "vm_size": "Standard_DS1_v2",
+      "name": "cdap-cloud-sandbox-azure"
     }
   ],
   "provisioners": [
@@ -224,6 +246,15 @@
       "type": "shell",
       "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
       "scripts": "scripts/ssh-cleanup.sh"
-    }
+    },
+   {
+     "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+     "inline": [
+       "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+     ],
+     "inline_shebang": "/bin/sh -x",
+     "type": "shell",
+     "only": ["cdap-cloud-sandbox-azure"]
+   }
   ]
 }
