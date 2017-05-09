@@ -17,8 +17,13 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.artifact.ArtifactInfo;
+import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.artifact.ArtifactVersionRange;
+import co.cask.cdap.api.artifact.InvalidArtifactRangeException;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.app.program.ManifestFields;
@@ -46,12 +51,8 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
-import co.cask.cdap.proto.artifact.ArtifactInfo;
-import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.artifact.ArtifactRanges;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
-import co.cask.cdap.proto.artifact.ArtifactVersionRange;
-import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -87,6 +88,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,6 +122,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private static final Type APPCLASS_SUMMARIES_TYPE = new TypeToken<List<ApplicationClassSummary>>() { }.getType();
   private static final Type APPCLASS_INFOS_TYPE = new TypeToken<List<ApplicationClassInfo>>() { }.getType();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() { }.getType();
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(PluginClass.class, new PluginClassDeserializer())
@@ -192,7 +195,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
 
     ArtifactRange range = versionRange == null ? null :
-      new ArtifactRange(namespace, artifactName, ArtifactVersionRange.parse(versionRange));
+      new ArtifactRange(namespaceId, artifactName, ArtifactVersionRange.parse(versionRange));
     int limitNumber = Integer.valueOf(limit);
     limitNumber = limitNumber <= 0 ? Integer.MAX_VALUE : limitNumber;
     ArtifactSortOrder sortOrder = ArtifactSortOrder.valueOf(order);
@@ -737,6 +740,39 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     }
   }
 
+  // the following endpoints with path "artifact-internals" are only called by CDAP programs, not exposed via router.
+  @GET
+  @Path("/namespaces/{namespace-id}/artifact-internals/artifacts")
+  public void listArtifactsInternal(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId) {
+    try {
+      List<ArtifactInfo> artifactInfoList = new ArrayList<>();
+      artifactInfoList.addAll(artifactRepository.getArtifactsInfo(new NamespaceId(namespaceId)));
+      artifactInfoList.addAll(artifactRepository.getArtifactsInfo(NamespaceId.SYSTEM));
+      responder.sendJson(HttpResponseStatus.OK, artifactInfoList, ARTIFACT_INFO_LIST_TYPE, GSON);
+    } catch (Exception e) {
+      LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading artifact metadata from the store.");
+    }
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/artifact-internals/artifacts/{artifact-name}/versions/{artifact-version}/location")
+  public void getArtifactLocation(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("artifact-name") String artifactName,
+                                  @PathParam("artifact-version") String artifactVersion) {
+    try {
+      ArtifactDetail artifactDetail = artifactRepository.getArtifact(
+        new ArtifactId(namespaceId, artifactName, artifactVersion).toId());
+      responder.sendString(HttpResponseStatus.OK, artifactDetail.getDescriptor().getLocation().toURI().getPath());
+    } catch (Exception e) {
+      LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           "Error reading artifact metadata from the store.");
+    }
+  }
+
   private ArtifactScope validateScope(String scope) throws BadRequestException {
     try {
       return ArtifactScope.valueOf(scope.toUpperCase());
@@ -799,16 +835,17 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         ArtifactRange range;
         // try parsing it as a namespaced range like system:etl-batch[1.0.0,2.0.0)
         try {
-          range = ArtifactRange.parse(parent);
+          range = ArtifactRanges.parseArtifactRange(parent);
           // only support extending an artifact that is in the same namespace, or system namespace
-          if (!NamespaceId.SYSTEM.equals(range.getNamespace()) && !namespace.equals(range.getNamespace())) {
+          if (!NamespaceId.SYSTEM.getNamespace().equals(range.getNamespace()) &&
+            !namespace.getNamespace().equals(range.getNamespace())) {
             throw new BadRequestException(
               String.format("Parent artifact %s must be in the same namespace or a system artifact.", parent));
           }
         } catch (InvalidArtifactRangeException e) {
           // if this failed, try parsing as a non-namespaced range like etl-batch[1.0.0,2.0.0)
           try {
-            range = ArtifactRange.parse(namespace, parent);
+            range = ArtifactRanges.parseArtifactRange(namespace.getNamespace(), parent);
           } catch (InvalidArtifactRangeException e1) {
             throw new BadRequestException(String.format("Invalid artifact range %s: %s", parent, e1.getMessage()));
           }

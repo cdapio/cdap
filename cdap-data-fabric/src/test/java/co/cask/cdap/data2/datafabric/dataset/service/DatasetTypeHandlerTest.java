@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;

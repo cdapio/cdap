@@ -37,6 +37,8 @@ import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -202,7 +204,8 @@ public final class SparkRuntimeContextProvider {
         injector.getInstance(SecureStoreManager.class),
         injector.getInstance(AuthorizationEnforcer.class),
         injector.getInstance(AuthenticationContext.class),
-        injector.getInstance(MessagingService.class)
+        injector.getInstance(MessagingService.class),
+        injector.getInstance(DefaultArtifactManager.class)
       );
       LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;

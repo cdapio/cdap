@@ -39,6 +39,7 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
@@ -82,6 +83,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
   private final CConfiguration cConf;
+  private final DefaultArtifactManager defaultArtifactManager;
 
   @Inject
   public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory, ServiceAnnouncer serviceAnnouncer,
@@ -89,7 +91,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
                                RuntimeStore runtimeStore, CConfiguration cConf, SecureStore secureStore,
-                               SecureStoreManager secureStoreManager, MessagingService messagingService) {
+                               SecureStoreManager secureStoreManager, MessagingService messagingService,
+                               DefaultArtifactManager defaultArtifactManager) {
     super(cConf);
     this.programRunnerFactory = programRunnerFactory;
     this.serviceAnnouncer = serviceAnnouncer;
@@ -103,6 +106,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
     this.cConf = cConf;
+    this.defaultArtifactManager = defaultArtifactManager;
   }
 
   @Override
@@ -137,7 +141,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
       WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
                                                  metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                  txClient, runtimeStore, cConf, pluginInstantiator,
-                                                 secureStore, secureStoreManager, messagingService);
+                                                 secureStore, secureStoreManager, messagingService,
+                                                 defaultArtifactManager);
 
       // Controller needs to be created before starting the driver so that the state change of the driver
       // service can be fully captured by the controller.

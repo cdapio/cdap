@@ -16,7 +16,12 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.artifact.ApplicationClass;
+import co.cask.cdap.api.artifact.ArtifactClasses;
+import co.cask.cdap.api.artifact.ArtifactInfo;
+import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginClass;
@@ -32,13 +37,8 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.test.PluginJarHelper;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.proto.artifact.ApplicationClass;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
-import co.cask.cdap.proto.artifact.ArtifactClasses;
-import co.cask.cdap.proto.artifact.ArtifactInfo;
-import co.cask.cdap.proto.artifact.ArtifactRange;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -114,7 +114,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
 
     // test adding an artifact that extends a non-existent artifact
     Set<ArtifactRange> parents = Sets.newHashSet(
-      new ArtifactRange(ghostId.getParent(), ghostId.getArtifact(),
+      new ArtifactRange(ghostId.getParent().getNamespace(), ghostId.getArtifact(),
                         new ArtifactVersion("1"), new ArtifactVersion("2")));
     try {
       artifactClient.add(NamespaceId.DEFAULT, "abc", DUMMY_SUPPLIER, "1.0.0", parents);
@@ -168,7 +168,8 @@ public class ArtifactClientTestRun extends ClientTestBase {
   public void testAddSelfExtendingThrowsBadRequest() throws Exception {
     try {
       artifactClient.add(NamespaceId.DEFAULT, "abc", DUMMY_SUPPLIER, "1.0.0", Sets.newHashSet(
-        new ArtifactRange(NamespaceId.DEFAULT, "abc", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))
+        new ArtifactRange(NamespaceId.DEFAULT.getNamespace(), "abc", new ArtifactVersion("1.0.0"),
+                          new ArtifactVersion("2.0.0"))
       ));
       Assert.fail();
     } catch (BadRequestException e) {
@@ -216,7 +217,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
       }
     };
     Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
-      myapp2Id.getParent(), myapp2Id.getArtifact(),
+      myapp2Id.getParent().getNamespace(), myapp2Id.getArtifact(),
       new ArtifactVersion(myapp2Id.getVersion()), new ArtifactVersion("3.0.0")));
     Set<PluginClass> additionalPlugins = Sets.newHashSet(new PluginClass(
       "jdbc", "mysql", "", "com.mysql.jdbc.Driver", null, Collections.<String, PluginPropertyField>emptyMap()));

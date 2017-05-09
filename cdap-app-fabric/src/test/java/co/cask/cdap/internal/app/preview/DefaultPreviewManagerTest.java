@@ -62,8 +62,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.HashSet;
-
 /**
  * Tests for {@link DefaultPreviewManager}.
  */

@@ -32,6 +32,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
 import com.google.common.collect.ImmutableMap;
@@ -61,12 +62,13 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
                        DiscoveryServiceClient discoveryServiceClient, Map<String, WorkflowNodeState> nodeStates,
                        @Nullable PluginInstantiator pluginInstantiator,
                        SecureStore secureStore, SecureStoreManager secureStoreManager,
-                       MessagingService messagingService) {
+                       MessagingService messagingService,
+                       DefaultArtifactManager defaultArtifactManager) {
     super(program, programOptions, cConf, (spec == null) ? new HashSet<String>() : spec.getDatasets(),
           datasetFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, Collections.singletonMap(Constants.Metrics.Tag.WORKFLOW_RUN_ID,
                                                              ProgramRunners.getRunId(programOptions).getId()),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator);
+          secureStore, secureStoreManager, messagingService, pluginInstantiator, defaultArtifactManager);
     this.workflowSpec = workflowSpec;
     this.specification = spec;
     this.token = token;

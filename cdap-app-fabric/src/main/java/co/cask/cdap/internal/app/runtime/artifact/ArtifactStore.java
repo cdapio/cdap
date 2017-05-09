@@ -18,7 +18,10 @@ package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.artifact.ApplicationClass;
+import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.Bytes;
@@ -49,12 +52,8 @@ import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.artifact.ApplicationClass;
-import co.cask.cdap.proto.artifact.ArtifactClasses;
-import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.EntityImpersonator;
 import co.cask.cdap.security.impersonation.Impersonator;
@@ -343,7 +342,7 @@ public class ArtifactStore {
         @Override
         public List<ArtifactDetail> call(DatasetContext context) throws Exception {
           List<ArtifactDetail> artifacts = Lists.newArrayList();
-          ArtifactKey artifactKey = new ArtifactKey(namespace, artifactName);
+          ArtifactKey artifactKey = new ArtifactKey(namespace.getNamespace(), artifactName);
           Row row = getMetaTable(context).get(artifactKey.getRowKey());
           addArtifacts(artifacts, row, limit, order, null);
 
@@ -583,7 +582,8 @@ public class ArtifactStore {
     final NamespaceId namespace, final Id.Artifact parentArtifactId, final String type, final String name,
     @Nullable Predicate<co.cask.cdap.proto.id.ArtifactId> pluginPredicate,
     int limit, ArtifactSortOrder order) throws IOException, ArtifactNotFoundException, PluginNotExistsException {
-    return getPluginClasses(namespace, new ArtifactRange(parentArtifactId.getNamespace(), parentArtifactId.getName(),
+    return getPluginClasses(namespace, new ArtifactRange(parentArtifactId.getNamespace().getId(),
+                                                         parentArtifactId.getName(),
                                                          parentArtifactId.getVersion(), true,
                                                          parentArtifactId.getVersion(), true), type, name,
                             pluginPredicate, limit, order);
@@ -639,7 +639,7 @@ public class ArtifactStore {
                 }
               }
             }
-            PluginKey pluginKey = new PluginKey(parentArtifactRange.getNamespace().toId(),
+            PluginKey pluginKey = new PluginKey(parentArtifactRange.getNamespace(),
                                                 parentArtifactRange.getName(), type, name);
             Row row = metaTable.get(pluginKey.getRowKey());
             if (!row.isEmpty()) {
@@ -650,7 +650,7 @@ public class ArtifactStore {
         });
 
       if (result.isEmpty()) {
-        throw new PluginNotExistsException(parentArtifactRange.getNamespace().toId(), type, name);
+        throw new PluginNotExistsException(new NamespaceId(parentArtifactRange.getNamespace()).toId(), type, name);
       }
       return result;
     } catch (TransactionFailureException e) {
@@ -913,8 +913,8 @@ public class ArtifactStore {
       // write metadata for each artifact this plugin extends
       for (ArtifactRange artifactRange : data.meta.getUsableBy()) {
         // p:{namespace}:{type}:{name}
-        PluginKey pluginKey = new PluginKey(
-          artifactRange.getNamespace().toId(), artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
+        PluginKey pluginKey = new PluginKey(artifactRange.getNamespace(),
+                                            artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
 
         byte[] pluginDataBytes = Bytes.toBytes(
           GSON.toJson(new PluginData(pluginClass, artifactRange, artifactLocation)));
@@ -944,8 +944,8 @@ public class ArtifactStore {
       // delete metadata for each artifact this plugin extends
       for (ArtifactRange artifactRange : oldMeta.meta.getUsableBy()) {
         // p:{namespace}:{type}:{name}
-        PluginKey pluginKey = new PluginKey(
-          artifactRange.getNamespace().toId(), artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
+        PluginKey pluginKey = new PluginKey(artifactRange.getNamespace(),
+                                            artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
         table.delete(pluginKey.getRowKey(), artifactColumn);
       }
     }
@@ -1017,7 +1017,8 @@ public class ArtifactStore {
         continue;
       }
       ArtifactData data = GSON.fromJson(Bytes.toString(columnVal.getValue()), ArtifactData.class);
-      Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace.toId(), artifactKey.name, version);
+      Id.Artifact artifactId = new NamespaceId(artifactKey.namespace).artifact(artifactKey.name, version).toId();
+
       artifactDetails.add(new ArtifactDetail(
         new ArtifactDescriptor(artifactId.toArtifactId(),
                                Locations.getLocationFromAbsolutePath(locationFactory, data.getLocationPath())),
@@ -1155,12 +1156,12 @@ public class ArtifactStore {
   }
 
   private static class PluginKey {
-    private final Id.Namespace parentArtifactNamespace;
+    private final String parentArtifactNamespace;
     private final String parentArtifactName;
     private final String type;
     private final String name;
 
-    private PluginKey(Id.Namespace parentArtifactNamespace, String parentArtifactName, String type, String name) {
+    private PluginKey(String parentArtifactNamespace, String parentArtifactName, String type, String name) {
       this.parentArtifactNamespace = parentArtifactNamespace;
       this.parentArtifactName = parentArtifactName;
       this.type = type;
@@ -1170,7 +1171,7 @@ public class ArtifactStore {
     // p:system:etlbatch:sink:table
     private byte[] getRowKey() {
       return Bytes.toBytes(
-        Joiner.on(':').join(PLUGIN_PREFIX, parentArtifactNamespace.getId(), parentArtifactName, type, name));
+        Joiner.on(':').join(PLUGIN_PREFIX, parentArtifactNamespace, parentArtifactName, type, name));
     }
   }
 
@@ -1197,16 +1198,16 @@ public class ArtifactStore {
 
   // utilities for creating and parsing row keys for artifacts. Keys are of the form 'r:{namespace}:{artifact-name}'
   private static class ArtifactKey {
-    private final NamespaceId namespace;
+    private final String namespace;
     private final String name;
 
-    private ArtifactKey(NamespaceId namespace, String name) {
+    private ArtifactKey(String namespace, String name) {
       this.namespace = namespace;
       this.name = name;
     }
 
     private byte[] getRowKey() {
-      return Bytes.toBytes(Joiner.on(':').join(ARTIFACT_PREFIX, namespace.getNamespace(), name));
+      return Bytes.toBytes(Joiner.on(':').join(ARTIFACT_PREFIX, namespace, name));
     }
 
     private static ArtifactKey parse(byte[] rowkey) {
@@ -1215,7 +1216,7 @@ public class ArtifactStore {
       // first part is the artifact prefix
       parts.next();
       // next is namespace, then name
-      return new ArtifactKey(Ids.namespace(parts.next()), parts.next());
+      return new ArtifactKey(parts.next(), parts.next());
     }
   }
 
@@ -1224,7 +1225,7 @@ public class ArtifactStore {
     private final byte[] column;
 
     private ArtifactCell(Id.Artifact artifactId) {
-      rowkey = new ArtifactKey(artifactId.getNamespace().toEntityId(), artifactId.getName()).getRowKey();
+      rowkey = new ArtifactKey(artifactId.getNamespace().getId(), artifactId.getName()).getRowKey();
       column = Bytes.toBytes(artifactId.getVersion().getVersion());
     }
   }

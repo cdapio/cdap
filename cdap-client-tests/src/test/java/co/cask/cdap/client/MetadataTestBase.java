@@ -16,9 +16,9 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;

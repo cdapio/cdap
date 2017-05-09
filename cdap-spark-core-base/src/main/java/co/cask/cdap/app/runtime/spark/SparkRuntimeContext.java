@@ -29,6 +29,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.context.SparkLoggingContext;
@@ -78,10 +79,10 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       SecureStoreManager secureStoreManager,
                       AuthorizationEnforcer authorizationEnforcer,
                       AuthenticationContext authenticationContext,
-                      MessagingService messagingService) {
+                      MessagingService messagingService, DefaultArtifactManager defaultArtifactManager) {
     super(program, programOptions, cConf, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
           discoveryServiceClient, true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator);
+          secureStore, secureStoreManager, messagingService, pluginInstantiator, defaultArtifactManager);
 
     this.hConf = hConf;
     this.hostname = hostname;

@@ -17,7 +17,6 @@
 package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.spark.SparkClientContext;
-import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.SparkPluginContext;
 import co.cask.cdap.etl.batch.AbstractBatchContext;
 import co.cask.cdap.etl.common.BasicArguments;

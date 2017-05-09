@@ -17,8 +17,13 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.api.artifact.ApplicationClass;
+import co.cask.cdap.api.artifact.ArtifactClasses;
+import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.artifact.ArtifactVersionRange;
+import co.cask.cdap.api.artifact.InvalidArtifactRangeException;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
@@ -30,12 +35,7 @@ import co.cask.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.artifact.ApplicationClass;
-import co.cask.cdap.proto.artifact.ArtifactClasses;
-import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
-import co.cask.cdap.proto.artifact.ArtifactVersionRange;
-import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -72,7 +72,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import javax.annotation.Nullable;
 
 /**
  */
@@ -99,7 +98,7 @@ public class ArtifactStoreTest {
     Assert.assertTrue(artifactStore.getArtifacts(namespace).isEmpty());
     // no artifacts in range should return an empty collection
     ArtifactRange range = new ArtifactRange(
-      namespace, "something", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
+      namespace.getNamespace(), "something", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
     Assert.assertTrue(artifactStore.getArtifacts(range, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED).isEmpty());
 
     // no artifact by namespace and artifact name should throw an exception
@@ -208,7 +207,8 @@ public class ArtifactStoreTest {
 
     // test plugins for specific type and name
     Map<ArtifactDescriptor, PluginClass> pluginClasses =
-      artifactStore.getPluginClasses(NamespaceId.DEFAULT, artifactId, "btype", "plugin3", null, Integer.MAX_VALUE,
+      artifactStore.getPluginClasses(NamespaceId.DEFAULT.getNamespaceId(),
+                                     artifactId, "btype", "plugin3", null, Integer.MAX_VALUE,
                                      ArtifactSortOrder.UNORDERED);
     Assert.assertEquals(1, pluginClasses.size());
     Assert.assertTrue(pluginClasses.containsKey(artifactDetail.getDescriptor()));
@@ -233,7 +233,7 @@ public class ArtifactStoreTest {
       new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
     );
     Set<ArtifactRange> parents = ImmutableSet.of(new ArtifactRange(
-      parentId.getNamespace().toEntityId(), parentId.getName(),
+      parentId.getNamespace().getId(), parentId.getName(),
       new ArtifactVersion("0.1.0"), new ArtifactVersion("2.0.0")));
     artifactMeta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parents);
     writeArtifact(childId, artifactMeta, "child contents");
@@ -291,7 +291,7 @@ public class ArtifactStoreTest {
     writeArtifact(parentArtifactId, parentMeta, "content");
 
     ArtifactRange parentArtifacts = new ArtifactRange(
-      NamespaceId.DEFAULT, "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
+      NamespaceId.DEFAULT.getNamespace(), "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
     // write the snapshot once
     PluginClass plugin1 = new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg",
       ImmutableMap.<String, PluginPropertyField>of());
@@ -369,7 +369,7 @@ public class ArtifactStoreTest {
       ArtifactClasses.builder().addApp(new ApplicationClass("co.cask.class", "desc", null)).build());
     writeArtifact(systemAppArtifact, systemAppMeta, "app contents");
     Set<ArtifactRange> usableBy = ImmutableSet.of(
-      new ArtifactRange(systemAppArtifact.getNamespace().toEntityId(), systemAppArtifact.getName(),
+      new ArtifactRange(systemAppArtifact.getNamespace().getId(), systemAppArtifact.getName(),
                         systemAppArtifact.getVersion(), true, systemAppArtifact.getVersion(), true));
 
     PluginClass plugin =
@@ -495,7 +495,7 @@ public class ArtifactStoreTest {
     // test get using a range
     // this range should get everything
     ArtifactRange range = new ArtifactRange(
-      NamespaceId.DEFAULT, "artifact2", new ArtifactVersion("0.1.0"), new ArtifactVersion("0.1.2"));
+      NamespaceId.DEFAULT.getNamespace(), "artifact2", new ArtifactVersion("0.1.0"), new ArtifactVersion("0.1.2"));
     artifactVersions = artifactStore.getArtifacts(range, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
     Assert.assertEquals(3, artifactVersions.size());
     assertEqual(artifact2V1, meta2V1, contents2V1, artifactVersions.get(0));
@@ -521,13 +521,13 @@ public class ArtifactStoreTest {
 
     // this range should get just v0.1.1
     range = new ArtifactRange(
-      NamespaceId.DEFAULT, "artifact2", new ArtifactVersion("0.1.1"), new ArtifactVersion("1.0.0"));
+      NamespaceId.DEFAULT.getNamespace(), "artifact2", new ArtifactVersion("0.1.1"), new ArtifactVersion("1.0.0"));
     artifactVersions = artifactStore.getArtifacts(range, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
     Assert.assertEquals(1, artifactVersions.size());
     assertEqual(artifact2V2, meta2V2, contents2V2, artifactVersions.get(0));
     // this range should get just v0.1.0 and v0.1.1-SNAPSHOT
     range = new ArtifactRange(
-      NamespaceId.DEFAULT, "artifact2", new ArtifactVersion("0.0.0"), new ArtifactVersion("0.1.1"));
+      NamespaceId.DEFAULT.getNamespace(), "artifact2", new ArtifactVersion("0.0.0"), new ArtifactVersion("0.1.1"));
     artifactVersions = artifactStore.getArtifacts(range, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
     Assert.assertEquals(2, artifactVersions.size());
     assertEqual(artifact2V1, meta2V1, contents2V1, artifactVersions.get(0));
@@ -601,7 +601,7 @@ public class ArtifactStoreTest {
   @Test
   public void testGetPlugins() throws Exception {
     ArtifactRange parentArtifacts = new ArtifactRange(
-      NamespaceId.DEFAULT, "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
+      NamespaceId.DEFAULT.getNamespace(), "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
     // we have 2 plugins of type A and 2 plugins of type B
     PluginClass pluginA1 = new PluginClass(
       "A", "p1", "desc", "c.p1", "cfg",
@@ -800,7 +800,7 @@ public class ArtifactStoreTest {
   @Test
   public void testGetPluginsByParentArtifactRanges() throws Exception {
     ArtifactRange parentArtifacts1 = new ArtifactRange(
-      NamespaceId.DEFAULT, "parent1", new ArtifactVersion("1.0.0"), new ArtifactVersion("5.0.0"));
+      NamespaceId.DEFAULT.getNamespace(), "parent1", new ArtifactVersion("1.0.0"), new ArtifactVersion("5.0.0"));
 
     // we have 2 plugins of type A and 2 plugins of type B
     PluginClass pluginA1 = new PluginClass(
@@ -852,7 +852,7 @@ public class ArtifactStoreTest {
     ArtifactDescriptor artifactXv200Info = artifactStore.getArtifact(artifactXv200).getDescriptor();
 
     ArtifactRange parentArtifactsrange1 = new ArtifactRange(
-      NamespaceId.DEFAULT, "parent1", new ArtifactVersion("3.0.0"), new ArtifactVersion("5.0.0"));
+      NamespaceId.DEFAULT.getNamespace(), "parent1", new ArtifactVersion("3.0.0"), new ArtifactVersion("5.0.0"));
 
     // artifact artifactZ-2.0.0 contains plugins A1, A2
     Id.Artifact artifactZv200 = Id.Artifact.from(Id.Namespace.DEFAULT, "artifactZ", "2.0.0");
@@ -864,7 +864,7 @@ public class ArtifactStoreTest {
 
     // artifact written with this range should not come up as their parent range is out of the parent artifact range.
     ArtifactRange parentArtifactsOutOfRange1 = new ArtifactRange(
-      NamespaceId.DEFAULT, "parent1", new ArtifactVersion("5.0.0"), new ArtifactVersion("8.0.0"));
+      NamespaceId.DEFAULT.getNamespace(), "parent1", new ArtifactVersion("5.0.0"), new ArtifactVersion("8.0.0"));
 
     // artifact artifactZ-2.0.0 contains plugins A1, A2, B1, and B2
     Id.Artifact artifactZv300 = Id.Artifact.from(Id.Namespace.DEFAULT, "artifactZ", "3.0.0");
@@ -891,7 +891,7 @@ public class ArtifactStoreTest {
                                      ArtifactSortOrder.DESC)).descendingMap());
 
     ArtifactRange parentArtifactsSub1 = new ArtifactRange(
-      NamespaceId.DEFAULT, "parent1", new ArtifactVersion("1.1.0"), new ArtifactVersion("2.0.0"));
+      NamespaceId.DEFAULT.getNamespace(), "parent1", new ArtifactVersion("1.1.0"), new ArtifactVersion("2.0.0"));
     expectedMap = Maps.newHashMap();
     expectedMap.put(artifactXv100Info, pluginA1);
     expectedMap.put(artifactXv110Info, pluginA1);
@@ -910,7 +910,7 @@ public class ArtifactStoreTest {
                                                                     ArtifactSortOrder.UNORDERED));
 
     ArtifactRange parentArtifactsSub2 = new ArtifactRange(
-      NamespaceId.DEFAULT, "parent1", new ArtifactVersion("5.0.0"), new ArtifactVersion("10.0.0"));
+      NamespaceId.DEFAULT.getNamespace(), "parent1", new ArtifactVersion("5.0.0"), new ArtifactVersion("10.0.0"));
     try {
       artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactsSub2, "A", "p1", null, Integer.MAX_VALUE,
                                      ArtifactSortOrder.UNORDERED);
@@ -923,7 +923,7 @@ public class ArtifactStoreTest {
   @Test
   public void testSamePluginDifferentArtifacts() throws Exception {
     ArtifactRange parentArtifacts = new ArtifactRange(
-      NamespaceId.DEFAULT, "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
+      NamespaceId.DEFAULT.getNamespace(), "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
     // add one artifact with a couple plugins
     Id.Artifact artifact1 = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins1", "1.0.0");
     Set<PluginClass> plugins = ImmutableSet.of(
@@ -958,7 +958,8 @@ public class ArtifactStoreTest {
     // parent-[1.0.0,1.0.0] -- only visible by parent-1.0.0
     Id.Artifact id1  = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "0.0.1");
     Set<ArtifactRange> parentArtifacts = ImmutableSet.of(new ArtifactRange(
-      NamespaceId.DEFAULT, "parent", new ArtifactVersion("1.0.0"), true, new ArtifactVersion("1.0.0"), true));
+      NamespaceId.DEFAULT.getNamespace(), "parent", new ArtifactVersion("1.0.0"),
+      true, new ArtifactVersion("1.0.0"), true));
     List<PluginClass> plugins = ImmutableList.of(
       new PluginClass("typeA", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of())
     );
@@ -968,7 +969,8 @@ public class ArtifactStoreTest {
     // parent-[2.0.0,2.0.1) -- only visible by parent-2.0.0
     Id.Artifact id2  = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "0.0.2");
     parentArtifacts = ImmutableSet.of(new ArtifactRange(
-      NamespaceId.DEFAULT, "parent", new ArtifactVersion("2.0.0"), true, new ArtifactVersion("2.0.1"), false));
+      NamespaceId.DEFAULT.getNamespace(), "parent", new ArtifactVersion("2.0.0"), true,
+      new ArtifactVersion("2.0.1"), false));
     plugins = ImmutableList.of(
       new PluginClass("typeA", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
     );
@@ -978,7 +980,8 @@ public class ArtifactStoreTest {
     // parent-(3.0.0,3.0.1] -- only visible by parent-3.0.1
     Id.Artifact id3  = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "0.0.3");
     parentArtifacts = ImmutableSet.of(new ArtifactRange(
-      NamespaceId.DEFAULT, "parent", new ArtifactVersion("3.0.0"), false, new ArtifactVersion("3.0.1"), true));
+      NamespaceId.DEFAULT.getNamespace(), "parent", new ArtifactVersion("3.0.0"), false,
+      new ArtifactVersion("3.0.1"), true));
     plugins = ImmutableList.of(
       new PluginClass("typeA", "plugin3", "", "c.c.c.plugin3", "cfg", ImmutableMap.<String, PluginPropertyField>of())
     );
@@ -988,7 +991,8 @@ public class ArtifactStoreTest {
     // parent-(4.0.0,4.0.2) -- only visible by parent-4.0.1
     Id.Artifact id4  = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "0.0.4");
     parentArtifacts = ImmutableSet.of(new ArtifactRange(
-      NamespaceId.DEFAULT, "parent", new ArtifactVersion("4.0.0"), false, new ArtifactVersion("4.0.2"), false));
+      NamespaceId.DEFAULT.getNamespace(), "parent", new ArtifactVersion("4.0.0"), false,
+      new ArtifactVersion("4.0.2"), false));
     plugins = ImmutableList.of(
       new PluginClass("typeA", "plugin4", "", "c.c.c.plugin4", "cfg", ImmutableMap.<String, PluginPropertyField>of())
     );
@@ -1056,7 +1060,7 @@ public class ArtifactStoreTest {
     // write an artifact that extends parent-[1.0.0, 2.0.0)
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "0.1.0");
     Set<ArtifactRange> parentArtifacts = ImmutableSet.of(new ArtifactRange(
-      NamespaceId.DEFAULT, "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT.getNamespace(), "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Set<PluginClass> plugins = ImmutableSet.of(
       new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of())
     );
@@ -1201,7 +1205,7 @@ public class ArtifactStoreTest {
     writeArtifact(parentArtifactId, parentMeta, "content");
 
     final ArtifactRange parentArtifacts = new ArtifactRange(
-      NamespaceId.DEFAULT, "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
+      NamespaceId.DEFAULT.getNamespace(), "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
     // start up a bunch of threads that will try and write the same artifact at the same time
     // only one of them should be able to write it
     int numThreads = 20;

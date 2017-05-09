@@ -18,12 +18,12 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.api.Config;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import org.junit.Assert;
 import org.junit.ClassRule;

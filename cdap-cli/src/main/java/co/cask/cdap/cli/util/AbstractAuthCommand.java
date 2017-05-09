@@ -23,7 +23,6 @@ import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;

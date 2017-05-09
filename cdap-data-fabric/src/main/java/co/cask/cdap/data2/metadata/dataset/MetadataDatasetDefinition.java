@@ -28,7 +28,6 @@ import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.base.Joiner;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 /**

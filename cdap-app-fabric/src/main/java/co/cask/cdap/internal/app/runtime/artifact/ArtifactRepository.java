@@ -17,8 +17,14 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.artifact.ApplicationClass;
+import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactInfo;
+import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactSummary;
+import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
@@ -36,14 +42,9 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.artifact.ApplicationClass;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
-import co.cask.cdap.proto.artifact.ArtifactClasses;
-import co.cask.cdap.proto.artifact.ArtifactInfo;
-import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
@@ -201,7 +202,9 @@ public class ArtifactRepository {
                                                     ArtifactSortOrder order) throws Exception {
     List<ArtifactSummary> summaries = new ArrayList<>();
     List<ArtifactSummary> artifacts = convertAndAdd(summaries, artifactStore.getArtifacts(range, limit, order));
-    return Collections.unmodifiableList(Lists.newArrayList(filterAuthorizedArtifacts(artifacts, range.getNamespace())));
+    // todo - CDAP-11560 should filter in artifact store
+    return Collections.unmodifiableList(Lists.newArrayList(filterAuthorizedArtifacts(
+      artifacts, new NamespaceId(range.getNamespace()))));
   }
 
   /**
@@ -230,7 +233,7 @@ public class ArtifactRepository {
                                                  ArtifactSortOrder order) throws Exception {
     List<ArtifactDetail> artifacts = artifactStore.getArtifacts(range, limit, order);
     // No authorization for system artifacts
-    if (NamespaceId.SYSTEM.equals(range.getNamespace())) {
+    if (NamespaceId.SYSTEM.getNamespace().equals(range.getNamespace())) {
       return artifacts;
     }
     Principal principal = authenticationContext.getPrincipal();
@@ -240,7 +243,7 @@ public class ArtifactRepository {
         @Override
         public boolean apply(ArtifactDetail artifactDetail) {
           ArtifactId artifactId = artifactDetail.getDescriptor().getArtifactId();
-          return filter.apply(range.getNamespace().artifact(artifactId.getName(),
+          return filter.apply(new NamespaceId(range.getNamespace()).artifact(artifactId.getName(),
                                                             artifactId.getVersion().getVersion()));
         }
       })
@@ -365,7 +368,8 @@ public class ArtifactRepository {
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     SortedMap<ArtifactDescriptor, PluginClass> pluginClasses = artifactStore.getPluginClasses(
       namespace, artifactRange, pluginType, pluginName, null, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
-    return getPluginEntries(pluginClasses, selector, artifactRange.getNamespace().toId(), pluginType, pluginName);
+    return getPluginEntries(pluginClasses, selector, new NamespaceId(artifactRange.getNamespace()).toId(),
+                            pluginType, pluginName);
   }
 
   private Map.Entry<ArtifactDescriptor, PluginClass> getPluginEntries(
@@ -770,6 +774,31 @@ public class ArtifactRepository {
     privilegesManager.revoke(artifactId.toEntityId());
   }
 
+  /**
+   * return list of {@link ArtifactInfo} in the namespace
+   * @param namespace
+   * @return list of {@link ArtifactInfo}
+   * @throws Exception
+   */
+  public List<ArtifactInfo> getArtifactsInfo(NamespaceId namespace) throws Exception {
+    final List<ArtifactDetail> artifactDetails = artifactStore.getArtifacts(namespace);
+
+    List<ArtifactInfo> artifactInfoList =
+      Lists.transform(artifactDetails, new Function<ArtifactDetail, ArtifactInfo>() {
+        @Nullable
+        @Override
+        public ArtifactInfo apply(@Nullable ArtifactDetail input) {
+          // transform artifactDetail to artifactInfo
+          ArtifactId artifactId = input.getDescriptor().getArtifactId();
+          return new ArtifactInfo(artifactId.getName(), artifactId.getVersion().getVersion(), artifactId.getScope(),
+                                  input.getMeta().getClasses(), input.getMeta().getProperties(),
+                                  input.getMeta().getUsableBy());
+        }
+      });
+    // todo - CDAP-11560 should filter in artifact store
+    return Collections.unmodifiableList(filterAuthorizedArtifactInfos(artifactInfoList, namespace));
+  }
+
   // convert details to summaries (to hide location and other unnecessary information)
   private List<ArtifactSummary> convertAndAdd(List<ArtifactSummary> summaries, Iterable<ArtifactDetail> details) {
     for (ArtifactDetail detail : details) {
@@ -795,6 +824,28 @@ public class ArtifactRepository {
           // no authorization on system artifacts
           return ArtifactScope.SYSTEM.equals(artifactSummary.getScope()) ||
             filter.apply(namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()));
+        }
+      })
+    );
+  }
+
+  /**
+   * Filter a list of {@link ArtifactInfo} that ensures the logged-in user has a {@link Action privilege} on
+   *
+   * @param artifacts the {@link List<ArtifactInfo>} to filter with
+   * @param namespace namespace of the artifacts
+   * @return filtered list of {@link ArtifactInfo}
+   */
+  private List<ArtifactInfo> filterAuthorizedArtifactInfos(List<ArtifactInfo> artifacts,
+                                                           final NamespaceId namespace) throws Exception {
+    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(authenticationContext.getPrincipal());
+    return Lists.newArrayList(
+      Iterables.filter(artifacts, new com.google.common.base.Predicate<ArtifactInfo>() {
+        @Override
+        public boolean apply(ArtifactInfo artifactInfo) {
+          // no authorization on system artifacts
+          return ArtifactScope.SYSTEM.equals(artifactInfo.getScope()) ||
+            filter.apply(namespace.artifact(artifactInfo.getName(), artifactInfo.getVersion()));
         }
       })
     );
@@ -909,7 +960,7 @@ public class ArtifactRepository {
         isInvalid = true;
       }
       if (artifactId.getName().equals(parentName) &&
-        artifactId.getNamespace().toEntityId().equals(parent.getNamespace())) {
+        artifactId.getNamespace().toEntityId().getNamespace().equals(parent.getNamespace())) {
         throw new InvalidArtifactException(String.format(
           "Invalid parent '%s' for artifact '%s'. An artifact cannot extend itself.", parent, artifactId));
       }

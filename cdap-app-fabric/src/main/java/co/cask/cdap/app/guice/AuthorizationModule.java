@@ -27,6 +27,7 @@ import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.DefaultAdmin;
+import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authorization.AuthorizationContextFactory;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
@@ -131,16 +132,19 @@ public class AuthorizationModule extends PrivateModule {
   private static final class AdminProvider implements Provider<Admin> {
     private final DatasetFramework dsFramework;
     private final SecureStoreManager secureStoreManager;
+    private final DefaultArtifactManager defaultArtifactManager;
 
     @Inject
-    private AdminProvider(DatasetFramework dsFramework, SecureStoreManager secureStoreManager) {
+    private AdminProvider(DatasetFramework dsFramework, SecureStoreManager secureStoreManager,
+                          DefaultArtifactManager defaultArtifactManager) {
       this.dsFramework = dsFramework;
       this.secureStoreManager = secureStoreManager;
+      this.defaultArtifactManager = defaultArtifactManager;
     }
 
     @Override
     public Admin get() {
-      return new DefaultAdmin(dsFramework, NamespaceId.SYSTEM, secureStoreManager);
+      return new DefaultAdmin(dsFramework, NamespaceId.SYSTEM, secureStoreManager, defaultArtifactManager);
     }
   }
 

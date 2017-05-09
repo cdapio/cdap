@@ -35,14 +35,26 @@ public final class ArtifactId implements Comparable<ArtifactId> {
     this.scope = scope;
   }
 
+  /**
+   * get name of the artifact
+   * @return name of the artifact
+   */
   public String getName() {
     return name;
   }
 
+  /**
+   * get the version of artifact
+   * @return {@link ArtifactVersion}
+   */
   public ArtifactVersion getVersion() {
     return version;
   }
 
+  /**
+   * get the scope of artifact
+   * @return {@link ArtifactScope}
+   */
   public ArtifactScope getScope() {
     return scope;
   }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto.artifact;
+package co.cask.cdap.api.artifact;
 
 /**
  * Thrown when an artifact range is invalid.

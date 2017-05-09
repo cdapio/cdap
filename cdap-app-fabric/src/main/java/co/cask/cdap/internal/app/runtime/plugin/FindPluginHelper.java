@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.plugin;
 
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginProperties;
@@ -26,7 +27,6 @@ import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -64,7 +64,7 @@ public final class FindPluginHelper {
                               PluginProperties properties, PluginSelector selector)
     throws PluginNotExistsException, ArtifactNotFoundException {
     return findPlugin(artifactRepository, pluginInstantiator, namespace,
-                      new ArtifactRange(parentArtifactId.getNamespace(), parentArtifactId.getName(),
+                      new ArtifactRange(parentArtifactId.getNamespace().getId(), parentArtifactId.getName(),
                                         parentArtifactId.getVersion(), true,
                                         parentArtifactId.getVersion(), true),
                       pluginType, pluginName, properties, selector);

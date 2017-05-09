@@ -24,8 +24,12 @@ import co.cask.cdap.proto.id.NamespaceId;
  */
 public class ArtifactNotFoundException extends NotFoundException {
 
+  public ArtifactNotFoundException(String namespace, String name) {
+    super("artifact", namespace + ":" + name);
+  }
+
   public ArtifactNotFoundException(NamespaceId namespace, String name) {
-    super("artifact", namespace.getNamespace() + ":" + name);
+    this(namespace.getNamespace(), name);
   }
 
   public ArtifactNotFoundException(ArtifactId artifactId) {
