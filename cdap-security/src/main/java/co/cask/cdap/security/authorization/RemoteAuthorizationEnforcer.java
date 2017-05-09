@@ -19,18 +19,17 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
+import co.cask.cdap.common.internal.remote.MethodArgument;
 import co.cask.cdap.common.internal.remote.RemoteClient;
-import co.cask.cdap.common.internal.remote.RemoteOpsClient;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -43,7 +42,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -62,7 +65,7 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
   private final RemoteClient remoteClient;
   private final boolean cacheEnabled;
 
-  private final LoadingCache<AuthorizationRequest, Boolean> authPolicyCache;
+  private static LoadingCache<AuthorizationPrivilege, Boolean> authPolicyCache;
 
 
   @Inject
@@ -78,11 +81,11 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
       .initialCapacity(minCacheSize)
       .expireAfterWrite(cacheTtlSecs, TimeUnit.SECONDS)
       .maximumSize(cacheMaxEntries)
-      .build(new CacheLoader<AuthorizationRequest, Boolean>() {
+      .build(new CacheLoader<AuthorizationPrivilege, Boolean>() {
         @SuppressWarnings("NullableProblems")
         @Override
-        public Boolean load(AuthorizationRequest authorizationRequest) throws Exception {
-          return doEnforce(authorizationRequest);
+        public Boolean load(AuthorizationPrivilege authorizationPrivilege) throws Exception {
+          return doEnforce(authorizationPrivilege);
         }
       });
   }
@@ -92,24 +95,104 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
     if (!isSecurityAuthorizationEnabled()) {
       return;
     }
-    AuthorizationRequest authorizationRequest = new AuthorizationRequest(principal, entity, action);
+    AuthorizationPrivilege authorizationPrivilege = new AuthorizationPrivilege(principal, entity, action);
 
-    boolean allowed = cacheEnabled ? authPolicyCache.get(authorizationRequest) : doEnforce(authorizationRequest);
+    boolean allowed = cacheEnabled ? authPolicyCache.get(authorizationPrivilege) : doEnforce(authorizationPrivilege);
     if (!allowed) {
       throw new UnauthorizedException(principal, action, entity);
     }
   }
 
-  private boolean doEnforce(AuthorizationRequest authorizationRequest) throws IOException {
-    HttpResponse response = executeRequest(authorizationRequest);
+  @VisibleForTesting
+  @SuppressWarnings("unchecked")
+  void setCache(CacheBuilder builder) {
+    authPolicyCache = builder.build(new CacheLoader<AuthorizationPrivilege, Boolean>() {
+      @SuppressWarnings("NullableProblems")
+      @Override
+      public Boolean load(AuthorizationPrivilege authorizationPrivilege) throws Exception {
+        return doEnforce(authorizationPrivilege);
+      }
+    });
+  }
+
+  private boolean doEnforce(AuthorizationPrivilege authorizationPrivilege) throws IOException {
+    HttpResponse response = executeRequest(authorizationPrivilege);
     return HttpResponseStatus.OK.getCode() == response.getResponseCode();
 
   }
 
-  private HttpResponse executeRequest(AuthorizationRequest authorizationRequest) throws IOException {
+  private HttpResponse executeRequest(AuthorizationPrivilege authorizationPrivilege) throws IOException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "enforce")
-      .withBody(GSON.toJson(authorizationRequest))
+      .withBody(GSON.toJson(createBody(authorizationPrivilege.getEntityId(),
+                                       authorizationPrivilege.getPrincipal(),
+                                       authorizationPrivilege.getAction())))
       .build();
     return remoteClient.execute(request);
+  }
+
+  private static List<MethodArgument> createBody(Object... arguments) {
+    List<MethodArgument> methodArguments = new ArrayList<>();
+    for (Object arg : arguments) {
+      if (arg == null) {
+        methodArguments.add(null);
+      } else {
+        String type = arg.getClass().getName();
+        methodArguments.add(new MethodArgument(type, GSON.toJsonTree(arg)));
+      }
+    }
+    return methodArguments;
+  }
+
+  @VisibleForTesting
+  public Map<AuthorizationPrivilege, Boolean> cacheAsMap() {
+    return Collections.unmodifiableMap(authPolicyCache.asMap());
+  }
+
+  /**
+   * Key for caching Privileges on containers. This represents a specific privilege on which authorization can be
+   * enforced. The cache stores whether the enforce succeeded of failed.
+   */
+  public static class AuthorizationPrivilege {
+
+    private final Principal principal;
+    private final EntityId entityId;
+    private final Action action;
+
+    public AuthorizationPrivilege(Principal principal, EntityId entityId, Action action) {
+      this.principal = principal;
+      this.entityId = entityId;
+      this.action = action;
+    }
+
+    public Principal getPrincipal() {
+      return principal;
+    }
+
+    public EntityId getEntityId() {
+      return entityId;
+    }
+
+    public Action getAction() {
+      return action;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      AuthorizationPrivilege that = (AuthorizationPrivilege) o;
+      return Objects.equals(principal, that.principal) &&
+        Objects.equals(entityId, that.entityId) &&
+        action == that.action;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(principal, entityId, action);
+    }
   }
 }

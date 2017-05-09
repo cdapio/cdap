@@ -128,7 +128,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new MetadataServiceModule());
     install(new RemoteSystemOperationsServiceModule());
     install(new AuthorizationModule());
-    // we want to use RemotePrivilegesFetcher in this module, since app fabric service is started
+    // we want to use RemoteAuthorizationEnforcer in this module, since app fabric service is started
     install(new AuthorizationEnforcementModule().getStandaloneModules());
     install(new SecureStoreModules().getInMemoryModules());
     install(new MessagingServerRuntimeModule().getInMemoryModules());
