@@ -180,7 +180,7 @@ export default class AddToHydratorModal extends Component {
       MyDataPrepApi.getSchema(requestObj, requestBody)
     ];
 
-    if (state.workspaceUri.length > 0) {
+    if (state.workspaceUri && state.workspaceUri.length > 0) {
       let specParams = {
         namespace,
         path: state.workspaceUri
