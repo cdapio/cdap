@@ -86,7 +86,7 @@
       "image_sku": "16.04-LTS",
       "location": "West US",
       "vm_size": "Standard_DS1_v2",
-      "name": "cdap-sdk-azure"
+      "name": "cdap-cloud-sandbox-azure"
     }
   ],
   "provisioners": [
@@ -254,7 +254,7 @@
      ],
      "inline_shebang": "/bin/sh -x",
      "type": "shell",
-     "only": ["cdap-sdk-azure"]
+     "only": ["cdap-cloud-sandbox-azure"]
    }
   ]
 }
