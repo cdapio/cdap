@@ -62,12 +62,23 @@ angular.module(PKG.name + '.feature.hydrator')
             highlightTab: 'hydratorStudioPlusPlus'
           },
           resolve: {
-            rConfig: function($stateParams, mySettings, $q, myHelpers, $window) {
+            rConfig: function($stateParams, mySettings, $q, myHelpers, $window, $rootScope, HydratorPlusPlusHydratorService) {
               var defer = $q.defer();
               if ($stateParams.draftId) {
                 mySettings.get('hydratorDrafts', true)
                   .then(function(res) {
                     var draft = myHelpers.objectQuery(res, $stateParams.namespace, $stateParams.draftId);
+                    let isVersionInRange = HydratorPlusPlusHydratorService
+                      .flattenArtifactVersion({
+                        supportedVersion: $rootScope.cdapVersion,
+                        versionRange: draft.artifact.version
+                      });
+                    if (isVersionInRange) {
+                      draft.artifact.version = $rootScope.cdapVersion;
+                    } else {
+                      defer.resolve(false);
+                      return;
+                    }
                     if (angular.isObject(draft)) {
                       defer.resolve(draft);
                     } else {
@@ -84,6 +95,16 @@ angular.module(PKG.name + '.feature.hydrator')
                 }
               } else if ($stateParams.data) {
                 // This is being used while cloning a published a pipeline.
+                let isVersionInRange = HydratorPlusPlusHydratorService
+                  .isVersionInRange({
+                    supportedVersion: $rootScope.cdapVersion,
+                    versionRange: $stateParams.data.artifact.version
+                  });
+                if (isVersionInRange) {
+                  $stateParams.data.artifact.version = $rootScope.cdapVersion;
+                } else {
+                  defer.resolve(false);
+                }
                 defer.resolve($stateParams.data);
               } else if ($stateParams.workspaceId) {
                 // This is being used by dataprep to pipelines transition

@@ -26,6 +26,7 @@
  var VersionStore = require('../cdap/services/VersionStore').default;
  var VersionActions = require('../cdap/services/VersionStore/VersionActions').default;
  var Version = require('../cdap/services/VersionRange/Version').default;
+ var VersionRange = require('../cdap/services/VersionRange').default;
  export {
   Store,
   Header,
@@ -35,6 +36,7 @@
   ee,
   VersionStore,
   VersionActions,
+  VersionRange,
   Version,
   ResourceCenterButton
 };

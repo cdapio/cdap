@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl {
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myPreviewLogsApi, DAGPlusPlusNodesStore, myPreferenceApi, HydratorPlusPlusHydratorService) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myPreviewLogsApi, DAGPlusPlusNodesStore, myPreferenceApi, HydratorPlusPlusHydratorService, $rootScope) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -48,6 +48,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.artifacts = rArtifacts;
+    this.$rootScope = $rootScope;
     // This is for now run time arguments. It will be a map of macroMap
     // in the future once we get list of macros for a pipeline config.
     this.macrosMap = {};
@@ -556,7 +557,7 @@ class HydratorPlusPlusTopPanelCtrl {
       let connections = [];
       let i;
 
-      for (i=0; i<nodes.length - 1 ; i++) {
+      for (i=0; i<nodes.length - 1; i++) {
         connections.push({ from: nodes[i].name, to: nodes[i+1].name });
       }
       return connections;
@@ -583,7 +584,7 @@ class HydratorPlusPlusTopPanelCtrl {
       var jsonData;
       try {
         jsonData = JSON.parse(data);
-      } catch(e) {
+      } catch (e) {
         this.myAlertOnValium.show({
           type: 'danger',
           content: 'Syntax Error. Ill-formed pipeline configuration.'
@@ -604,10 +605,26 @@ class HydratorPlusPlusTopPanelCtrl {
       if (!jsonData.config.connections) {
         jsonData.config.connections = generateLinearConnections(jsonData.config);
       }
-
+      let invalidFields = [];
+      let isVersionInRange = this.HydratorPlusPlusHydratorService
+        .isVersionInRange({
+          supportedVersion: this.$rootScope.cdapVersion,
+          versionRange: jsonData.artifact.version
+        });
+      if (isVersionInRange) {
+        jsonData.artifact.version = this.$rootScope.cdapVersion;
+      } else {
+        invalidFields.push(
+          `The available version of CDAP Data Pipeline (${this.$rootScope.cdapVersion}) does not support the range of versions specified in the imported pipeline - ${jsonData.artifact.version}. Please update the version ranges in the JSON, and try importing again.`
+        );
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: `${invalidFields}.`
+        });
+        return;
+      }
       let validArtifact = isValidArtifact(jsonData.artifact);
       if (!validArtifact.name || !validArtifact.version || !validArtifact.scope) {
-        let invalidFields = [];
         if (!validArtifact.name) {
           invalidFields.push('Artifact name');
         } else {
@@ -663,7 +680,7 @@ class HydratorPlusPlusTopPanelCtrl {
               var unsub = HydratorPlusPlusConfigStore.registerOnChangeListener( () => {
                 let isStateDirty = HydratorPlusPlusConfigStore.getIsStateDirty();
                 // This is solely used for showing the spinner icon until the modal is closed.
-                if(!isStateDirty) {
+                if (!isStateDirty) {
                   unsub();
                   goTonextStep = true;
                   $scope.$close();
@@ -723,6 +740,6 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 }
 
-HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', '$interval', 'myPipelineApi', '$state', 'MyCDAPDataSource', 'myAlertOnValium', 'MY_CONFIG', 'PREVIEWSTORE_ACTIONS', '$q', 'NonStorePipelineErrorFactory', 'rArtifacts', '$window', 'LogViewerStore', 'LOGVIEWERSTORE_ACTIONS', 'myPreviewLogsApi', 'DAGPlusPlusNodesStore', 'myPreferenceApi', 'HydratorPlusPlusHydratorService'];
+HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', '$interval', 'myPipelineApi', '$state', 'MyCDAPDataSource', 'myAlertOnValium', 'MY_CONFIG', 'PREVIEWSTORE_ACTIONS', '$q', 'NonStorePipelineErrorFactory', 'rArtifacts', '$window', 'LogViewerStore', 'LOGVIEWERSTORE_ACTIONS', 'myPreviewLogsApi', 'DAGPlusPlusNodesStore', 'myPreferenceApi', 'HydratorPlusPlusHydratorService', '$rootScope'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);
