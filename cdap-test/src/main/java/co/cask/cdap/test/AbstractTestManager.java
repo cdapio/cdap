@@ -18,6 +18,7 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -25,7 +26,6 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -186,7 +186,7 @@ public abstract class AbstractTestManager implements TestManager {
 
   private Set<ArtifactRange> toRange(ArtifactId parent) {
     Set<ArtifactRange> parents = new HashSet<>();
-    parents.add(new ArtifactRange(parent.getParent(), parent.getArtifact(),
+    parents.add(new ArtifactRange(parent.getParent().getNamespace(), parent.getArtifact(),
                                   new ArtifactVersion(parent.getVersion()), true,
                                   new ArtifactVersion(parent.getVersion()), true));
     return parents;

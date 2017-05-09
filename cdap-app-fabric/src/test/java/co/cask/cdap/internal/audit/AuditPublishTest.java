@@ -24,7 +24,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.audit.AuditMessage;

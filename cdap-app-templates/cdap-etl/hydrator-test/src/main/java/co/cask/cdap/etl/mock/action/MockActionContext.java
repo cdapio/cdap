@@ -28,8 +28,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 
 import java.net.URL;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import javax.annotation.Nullable;
 

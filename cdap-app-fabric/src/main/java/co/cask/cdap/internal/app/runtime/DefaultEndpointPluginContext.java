@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.plugin.EndpointPluginContext;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginProperties;
@@ -25,7 +26,6 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.FindPluginHelper;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
-import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
 

@@ -14,9 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto.artifact;
-
-import co.cask.cdap.api.artifact.ArtifactVersion;
+package co.cask.cdap.api.artifact;
 
 /**
  * Represents a version range of an artifact.

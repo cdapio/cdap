@@ -38,6 +38,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
+import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
@@ -113,7 +114,8 @@ public class ServiceHttpServer extends AbstractIdleService {
                            TransactionSystemClient txClient, DiscoveryServiceClient discoveryServiceClient,
                            @Nullable PluginInstantiator pluginInstantiator,
                            SecureStore secureStore, SecureStoreManager secureStoreManager,
-                           MessagingService messagingService) {
+                           MessagingService messagingService,
+                           DefaultArtifactManager defaultArtifactManager) {
     this.program = program;
     this.cConf = cConf;
     this.instanceCount = new AtomicInteger(instanceCount);
@@ -123,7 +125,8 @@ public class ServiceHttpServer extends AbstractIdleService {
                                                                          metricsCollectionService,
                                                                          datasetFramework, discoveryServiceClient,
                                                                          txClient, pluginInstantiator, secureStore,
-                                                                         secureStoreManager, messagingService);
+                                                                         secureStoreManager, messagingService,
+                                                                         defaultArtifactManager);
     this.handlerContexts = createHandlerDelegatorContexts(program, spec, contextFactory);
     this.context = contextFactory.create(null);
     this.service = createNettyHttpService(program, host, handlerContexts, context.getProgramMetrics());
@@ -215,14 +218,16 @@ public class ServiceHttpServer extends AbstractIdleService {
                                                               @Nullable final PluginInstantiator pluginInstantiator,
                                                               final SecureStore secureStore,
                                                               final SecureStoreManager secureStoreManager,
-                                                              final MessagingService messagingService) {
+                                                              final MessagingService messagingService,
+                                                              final DefaultArtifactManager defaultArtifactManager) {
     return new BasicHttpServiceContextFactory() {
       @Override
       public BasicHttpServiceContext create(@Nullable HttpServiceHandlerSpecification spec) {
         return new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
                                            metricsCollectionService, datasetFramework, discoveryServiceClient,
                                            txClient, pluginInstantiator, secureStore, secureStoreManager,
-                                           messagingService);
+                                           messagingService,
+                                           defaultArtifactManager);
       }
     };
   }

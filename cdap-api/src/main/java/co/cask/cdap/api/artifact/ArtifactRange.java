@@ -14,11 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto.artifact;
-
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.id.NamespaceId;
+package co.cask.cdap.api.artifact;
 
 import java.util.Objects;
 
@@ -26,36 +22,25 @@ import java.util.Objects;
  * Represents a range of versions for an artifact. The lower version is inclusive and the upper version is exclusive.
  */
 public class ArtifactRange extends ArtifactVersionRange {
-  private final NamespaceId namespace;
+  private final String namespace;
   private final String name;
 
-  public ArtifactRange(Id.Namespace namespace, String name, ArtifactVersion lower, ArtifactVersion upper) {
+  public ArtifactRange(String namespace, String name, ArtifactVersion lower, ArtifactVersion upper) {
     this(namespace, name, lower, true, upper, false);
   }
 
-  public ArtifactRange(NamespaceId namespace, String name, ArtifactVersion lower, ArtifactVersion upper) {
-    this(namespace, name, lower, true, upper, false);
-  }
-
-  public ArtifactRange(Id.Namespace namespace, String name, ArtifactVersion lower, boolean isLowerInclusive,
-                       ArtifactVersion upper, boolean isUpperInclusive) {
-    super(lower, isLowerInclusive, upper, isUpperInclusive);
-    this.namespace = namespace.toEntityId();
-    this.name = name;
-  }
-
-  public ArtifactRange(NamespaceId namespace, String name, ArtifactVersion lower, boolean isLowerInclusive,
+  public ArtifactRange(String namespace, String name, ArtifactVersion lower, boolean isLowerInclusive,
                        ArtifactVersion upper, boolean isUpperInclusive) {
     super(lower, isLowerInclusive, upper, isUpperInclusive);
     this.namespace = namespace;
     this.name = name;
   }
 
-  public ArtifactRange(NamespaceId namespace, String name, ArtifactVersionRange range) {
+  public ArtifactRange(String namespace, String name, ArtifactVersionRange range) {
     this(namespace, name, range.lower, range.isLowerInclusive, range.upper, range.isUpperInclusive);
   }
 
-  public NamespaceId getNamespace() {
+  public String getNamespace() {
     return namespace;
   }
 
@@ -89,7 +74,7 @@ public class ArtifactRange extends ArtifactVersionRange {
 
   @Override
   public String toString() {
-    return toString(new StringBuilder().append(namespace.getNamespace()).append(':'));
+    return toString(new StringBuilder().append(namespace).append(':'));
   }
 
   private String toString(StringBuilder builder) {
@@ -111,7 +96,6 @@ public class ArtifactRange extends ArtifactVersionRange {
    *
    * @param artifactRangeStr the string representation to parse
    * @return the ArtifactRange corresponding to the given string
-   * @throws InvalidArtifactRangeException if the string is malformed, or if the lower version is higher than the upper
    */
   public static ArtifactRange parse(String artifactRangeStr) throws InvalidArtifactRangeException {
     // get the namespace
@@ -121,12 +105,14 @@ public class ArtifactRange extends ArtifactVersionRange {
         "Could not find ':' separating namespace from artifact name.", artifactRangeStr));
     }
     String namespaceStr = artifactRangeStr.substring(0, nameStartIndex);
-    NamespaceId namespace;
-    try {
-      namespace = new NamespaceId(namespaceStr);
-    } catch (Exception e) {
-      throw new InvalidArtifactRangeException(String.format("Invalid namespace %s: %s", namespaceStr, e.getMessage()));
-    }
+    // todo move validation logic to utils
+//    String namespace;
+//    try {
+//      namespace = new NamespaceId(namespaceStr);
+//    } catch (Exception e) {
+//      throw new InvalidArtifactRangeException(String.format("Invalid namespace %s: %s",
+// namespaceStr, e.getMessage()));
+//    }
 
     // check not at the end of the string
     if (nameStartIndex == artifactRangeStr.length()) {
@@ -134,7 +120,7 @@ public class ArtifactRange extends ArtifactVersionRange {
         String.format("Invalid artifact range %s. Nothing found after namespace.", artifactRangeStr));
     }
 
-    return parse(namespace, artifactRangeStr.substring(nameStartIndex + 1));
+    return parse(namespaceStr, artifactRangeStr.substring(nameStartIndex + 1));
   }
 
   /**
@@ -146,9 +132,8 @@ public class ArtifactRange extends ArtifactVersionRange {
    * @param namespace the namespace of the artifact range
    * @param artifactRangeStr the string representation to parse
    * @return the ArtifactRange corresponding to the given string
-   * @throws InvalidArtifactRangeException if the string is malformed, or if the lower version is higher than the upper
    */
-  public static ArtifactRange parse(NamespaceId namespace,
+  public static ArtifactRange parse(String namespace,
                                     String artifactRangeStr) throws InvalidArtifactRangeException {
     // search for the '[' or '(' between the artifact name and lower version
     int versionStartIndex = indexOf(artifactRangeStr, '[', '(', 0);
@@ -158,10 +143,11 @@ public class ArtifactRange extends ArtifactVersionRange {
                         "Could not find '[' or '(' indicating start of artifact lower version.", artifactRangeStr));
     }
     String name = artifactRangeStr.substring(0, versionStartIndex);
-    if (!Id.Artifact.isValidName(name)) {
-      throw new InvalidArtifactRangeException(
-        String.format("Invalid artifact range %s. Artifact name '%s' is invalid.", artifactRangeStr, name));
-    }
+    // todo move validation logic to utils
+//    if (!Id.Artifact.isValidName(name)) {
+//      throw new InvalidArtifactRangeException(
+//        String.format("Invalid artifact range %s. Artifact name '%s' is invalid.", artifactRangeStr, name));
+//    }
 
     return new ArtifactRange(namespace, name,
                              ArtifactVersionRange.parse(artifactRangeStr.substring(versionStartIndex)));

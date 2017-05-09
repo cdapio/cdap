@@ -18,7 +18,6 @@ package co.cask.cdap.etl.api;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.etl.api.batch.BatchSource;
 
 import javax.annotation.Nullable;
 

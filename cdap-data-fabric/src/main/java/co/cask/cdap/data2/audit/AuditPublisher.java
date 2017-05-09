@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.audit;
 
-import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.EntityId;

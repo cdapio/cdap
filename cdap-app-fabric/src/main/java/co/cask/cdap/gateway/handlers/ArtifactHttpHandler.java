@@ -17,8 +17,14 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.artifact.ArtifactInfo;
+import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.artifact.ArtifactVersionRange;
+import co.cask.cdap.api.artifact.InvalidArtifactRangeException;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.app.program.ManifestFields;
@@ -35,7 +41,6 @@ import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
@@ -46,12 +51,7 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
-import co.cask.cdap.proto.artifact.ArtifactInfo;
-import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
-import co.cask.cdap.proto.artifact.ArtifactVersionRange;
-import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -192,7 +192,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
 
     ArtifactRange range = versionRange == null ? null :
-      new ArtifactRange(namespace, artifactName, ArtifactVersionRange.parse(versionRange));
+      new ArtifactRange(namespaceId, artifactName, ArtifactVersionRange.parse(versionRange));
     int limitNumber = Integer.valueOf(limit);
     limitNumber = limitNumber <= 0 ? Integer.MAX_VALUE : limitNumber;
     ArtifactSortOrder sortOrder = ArtifactSortOrder.valueOf(order);
@@ -808,7 +808,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         } catch (InvalidArtifactRangeException e) {
           // if this failed, try parsing as a non-namespaced range like etl-batch[1.0.0,2.0.0)
           try {
-            range = ArtifactRange.parse(namespace, parent);
+            // todo validation for namespace
+            range = ArtifactRange.parse(namespace.getNamespace(), parent);
           } catch (InvalidArtifactRangeException e1) {
             throw new BadRequestException(String.format("Invalid artifact range %s: %s", parent, e1.getMessage()));
           }

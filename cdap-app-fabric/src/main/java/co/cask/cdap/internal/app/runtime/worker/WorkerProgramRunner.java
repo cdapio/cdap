@@ -34,6 +34,7 @@ import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
@@ -62,13 +63,14 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
+  private final DefaultArtifactManager defaultArtifactManager;
 
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                              TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
                              SecureStore secureStore, SecureStoreManager secureStoreManager,
-                             MessagingService messagingService) {
+                             MessagingService messagingService, DefaultArtifactManager defaultArtifactManager) {
     super(cConf);
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
@@ -79,6 +81,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
+    this.defaultArtifactManager = defaultArtifactManager;
   }
 
   @Override
@@ -121,7 +124,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           metricsCollectionService, datasetFramework, txClient,
                                                           discoveryServiceClient, streamWriterFactory,
                                                           pluginInstantiator, secureStore, secureStoreManager,
-                                                          messagingService);
+                                                          messagingService, defaultArtifactManager);
 
       WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 

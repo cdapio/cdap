@@ -17,7 +17,6 @@
 package co.cask.cdap.common.logging;
 
 import org.slf4j.Logger;
-import org.slf4j.spi.LocationAwareLogger;
 
 /**
  * Utility class to provide methods to alter slf4j {@link Logger} behavior.

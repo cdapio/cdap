@@ -26,12 +26,9 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.net.URI;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Objects;
 

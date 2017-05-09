@@ -16,9 +16,9 @@
 
 package co.cask.cdap.common.conf;
 
+import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.artifact.ArtifactRange;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;

@@ -16,11 +16,11 @@
 
 package co.cask.cdap.common.conf;
 
+import co.cask.cdap.api.artifact.ArtifactRange;
+import co.cask.cdap.api.artifact.InvalidArtifactRangeException;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.artifact.ArtifactRange;
-import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Charsets;
 import com.google.common.cache.CacheBuilder;
@@ -83,7 +83,7 @@ public class ArtifactConfigReader {
 
         // check namespaces in parents are either system or the specified namespace
         for (ArtifactRange parent : config.getParents()) {
-          NamespaceId parentNamespace = parent.getNamespace();
+          NamespaceId parentNamespace = new NamespaceId(parent.getNamespace());
           if (!NamespaceId.SYSTEM.equals(parentNamespace) && !namespace.toEntityId().equals(parentNamespace)) {
             throw new InvalidArtifactException(String.format("Invalid parent %s. Parents must be in the same " +
               "namespace or a system artifact.", parent));
@@ -100,7 +100,7 @@ public class ArtifactConfigReader {
 
   /**
    * Deserializer for ArtifactRange in a ArtifactConfig. Artifact ranges are expected to be able to be
-   * parsed via {@link ArtifactRange#parse(String)} or {@link ArtifactRange#parse(NamespaceId, String)}.
+   * parsed via {@link ArtifactRange#parse(String)} or {@link ArtifactRange#parse(String, String)}.
    */
   private static class ArtifactRangeDeserializer implements JsonDeserializer<ArtifactRange> {
     private final Id.Namespace namespace;
@@ -121,7 +121,7 @@ public class ArtifactConfigReader {
         if (rangeStr.indexOf(':') > 0) {
           return ArtifactRange.parse(rangeStr);
         } else {
-          return ArtifactRange.parse(namespace.toEntityId(), rangeStr);
+          return ArtifactRange.parse(namespace.toEntityId().getNamespace(), rangeStr);
         }
       } catch (InvalidArtifactRangeException e) {
         throw new JsonParseException(e.getMessage());

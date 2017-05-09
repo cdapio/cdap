@@ -17,7 +17,6 @@
 package co.cask.cdap.etl.spark;
 
 import co.cask.cdap.api.macro.MacroEvaluator;
-import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.ErrorRecord;
 import co.cask.cdap.etl.api.ErrorTransform;
@@ -43,7 +42,6 @@ import co.cask.cdap.etl.spark.function.LeftJoinFlattenFunction;
 import co.cask.cdap.etl.spark.function.OuterJoinFlattenFunction;
 import co.cask.cdap.etl.spark.function.OutputFilter;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
-import co.cask.cdap.etl.spec.PipelineSpec;
 import scala.Tuple2;
 
 import java.util.HashMap;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto.artifact;
+package co.cask.cdap.api.artifact;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.plugin.PluginClass;

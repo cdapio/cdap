@@ -62,6 +62,7 @@ import co.cask.cdap.data2.transaction.RetryingShortTransactionSystemClient;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.preview.DataTracerFactoryProvider;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
+import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.app.runtime.messaging.BasicMessagingAdmin;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -124,10 +125,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
                             SecureStore secureStore, SecureStoreManager secureStoreManager,
-                            MessagingService messagingService) {
+                            MessagingService messagingService, DefaultArtifactManager defaultArtifactManager) {
     this(program, programOptions, cConf, datasets, dsFramework, txClient,
          discoveryServiceClient, multiThreaded, metricsService, metricsTags,
-         secureStore, secureStoreManager, messagingService, null);
+         secureStore, secureStoreManager, messagingService, null, defaultArtifactManager);
   }
 
   /**
@@ -139,7 +140,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
                             SecureStore secureStore, SecureStoreManager secureStoreManager,
                             MessagingService messagingService,
-                            @Nullable PluginInstantiator pluginInstantiator) {
+                            @Nullable PluginInstantiator pluginInstantiator,
+                            DefaultArtifactManager defaultArtifactManager) {
     super(program.getId());
 
     this.program = program;
@@ -177,7 +179,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                                                   program.getApplicationSpecification().getPlugins());
     this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespaceId(), secureStoreManager,
                                   new BasicMessagingAdmin(messagingService, program.getId().getNamespaceId()),
-                                  retryStrategy);
+                                  retryStrategy, defaultArtifactManager);
     this.secureStore = secureStore;
     this.defaultTxTimeout = determineTransactionTimeout(cConf);
     this.transactional = Transactions.createTransactional(getDatasetCache(), defaultTxTimeout);

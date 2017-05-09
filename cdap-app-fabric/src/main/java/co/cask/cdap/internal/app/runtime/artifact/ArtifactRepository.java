@@ -17,8 +17,14 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.artifact.ApplicationClass;
+import co.cask.cdap.api.artifact.ArtifactClasses;
+import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactInfo;
+import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
@@ -36,14 +42,9 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.artifact.ApplicationClass;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
-import co.cask.cdap.proto.artifact.ArtifactClasses;
-import co.cask.cdap.proto.artifact.ArtifactInfo;
-import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
@@ -201,7 +202,8 @@ public class ArtifactRepository {
                                                     ArtifactSortOrder order) throws Exception {
     List<ArtifactSummary> summaries = new ArrayList<>();
     List<ArtifactSummary> artifacts = convertAndAdd(summaries, artifactStore.getArtifacts(range, limit, order));
-    return Collections.unmodifiableList(Lists.newArrayList(filterAuthorizedArtifacts(artifacts, range.getNamespace())));
+    return Collections.unmodifiableList(Lists.newArrayList(filterAuthorizedArtifacts(
+      artifacts, new NamespaceId(range.getNamespace()))));
   }
 
   /**
@@ -240,7 +242,7 @@ public class ArtifactRepository {
         @Override
         public boolean apply(ArtifactDetail artifactDetail) {
           ArtifactId artifactId = artifactDetail.getDescriptor().getArtifactId();
-          return filter.apply(range.getNamespace().artifact(artifactId.getName(),
+          return filter.apply(new NamespaceId(range.getNamespace()).artifact(artifactId.getName(),
                                                             artifactId.getVersion().getVersion()));
         }
       })
@@ -365,7 +367,8 @@ public class ArtifactRepository {
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     SortedMap<ArtifactDescriptor, PluginClass> pluginClasses = artifactStore.getPluginClasses(
       namespace, artifactRange, pluginType, pluginName, null, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
-    return getPluginEntries(pluginClasses, selector, artifactRange.getNamespace().toId(), pluginType, pluginName);
+    return getPluginEntries(pluginClasses, selector, new NamespaceId(artifactRange.getNamespace()).toId(),
+                            pluginType, pluginName);
   }
 
   private Map.Entry<ArtifactDescriptor, PluginClass> getPluginEntries(

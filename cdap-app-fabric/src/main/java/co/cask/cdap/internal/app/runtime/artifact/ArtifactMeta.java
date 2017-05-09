@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.proto.artifact.ArtifactClasses;
-import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.api.artifact.ArtifactClasses;
+import co.cask.cdap.api.artifact.ArtifactRange;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 

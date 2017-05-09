@@ -17,8 +17,8 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;

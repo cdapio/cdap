@@ -46,8 +46,6 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.tephra.TransactionManager;
 
-import java.util.Set;
-
 /**
  * Data fabric modules for preview
  */

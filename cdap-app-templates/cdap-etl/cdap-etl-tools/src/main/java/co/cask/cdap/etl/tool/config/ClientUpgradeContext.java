@@ -17,10 +17,10 @@
 package co.cask.cdap.etl.tool.config;
 
 import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
 import co.cask.cdap.etl.proto.UpgradeContext;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.id.ArtifactId;
 

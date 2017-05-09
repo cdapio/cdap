@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.proto.artifact.ArtifactRange;
-import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
+import co.cask.cdap.api.artifact.ArtifactRange;
+import co.cask.cdap.api.artifact.InvalidArtifactRangeException;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;

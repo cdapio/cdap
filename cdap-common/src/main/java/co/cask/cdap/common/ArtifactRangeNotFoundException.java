@@ -16,7 +16,7 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.api.artifact.ArtifactRange;
 import com.google.common.base.Joiner;
 
 import java.util.Collection;
