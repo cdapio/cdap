@@ -37,66 +37,26 @@ import java.util.Set;
  * An implementation of {@link AuthorizationEnforcer} that runs on the master.
  */
 @Singleton
-public class DefaultAuthorizationEnforcer implements AuthorizationEnforcer {
+public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAuthorizationEnforcer.class);
-  private static final Predicate<EntityId> ALLOW_ALL = new Predicate<EntityId>() {
-    @Override
-    public boolean apply(EntityId entityId) {
-      return true;
-    }
-  };
 
   private final AuthorizerInstantiator authorizerInstantiator;
-  private final boolean securityEnabled;
-  private final boolean authorizationEnabled;
   private final boolean propagatePrivileges;
 
   @Inject
   DefaultAuthorizationEnforcer(CConfiguration cConf, AuthorizerInstantiator authorizerInstantiator) {
-    this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
-    this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
+    super(cConf);
     this.propagatePrivileges = cConf.getBoolean(Constants.Security.Authorization.PROPAGATE_PRIVILEGES);
     this.authorizerInstantiator = authorizerInstantiator;
   }
 
   @Override
   public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
-    enforce(entity, principal, Collections.singleton(action));
-  }
-
-  @Override
-  public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
     if (!isSecurityAuthorizationEnabled()) {
       return;
     }
-
-    doEnforce(entity, principal, actions, true);
-  }
-
-
-  @Override
-  public Predicate<EntityId> createFilter(final Principal principal) throws Exception {
-    if (!isSecurityAuthorizationEnabled()) {
-      return ALLOW_ALL;
-    }
-    return new Predicate<EntityId>() {
-      @Override
-      public boolean apply(EntityId entityId) {
-        for (Action action : Action.values()) {
-          try {
-            enforce(entityId, principal, action);
-            LOG.debug("Principal {} has {} privilege on {}. Filter returning true.", principal.getName(), action.name(),
-                      entityId.getEntityName());
-            return true;
-          } catch (Exception ignored) {
-            // The principal does not have this particular privilege but for filter as long as they have any privilege
-            // we return true, so ignoring this exception.
-          }
-        }
-        return false;
-      }
-    };
+    doEnforce(entity, principal, Collections.singleton(action), true);
   }
 
   private boolean doEnforce(EntityId entity, Principal principal,
@@ -122,10 +82,6 @@ public class DefaultAuthorizationEnforcer implements AuthorizationEnforcer {
     }
 
     return true;
-  }
-
-  private boolean isSecurityAuthorizationEnabled() {
-    return securityEnabled && authorizationEnabled;
   }
 
   private boolean isPrivilegePropagationEnabled() {

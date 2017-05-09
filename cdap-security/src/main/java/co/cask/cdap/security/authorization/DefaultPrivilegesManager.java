@@ -33,7 +33,6 @@ import java.util.Set;
  * A {@link PrivilegesManager} that also invalidates privileges caches when privileges are updated.
  */
 public class DefaultPrivilegesManager implements PrivilegesManager {
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultPrivilegesManager.class);
 
   private final Authorizer delegateAuthorizer;
 

@@ -16,58 +16,68 @@
 
 package co.cask.cdap.security.authorization;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.DefaultHttpRequestConfig;
+import co.cask.cdap.common.internal.remote.RemoteClient;
 import co.cask.cdap.common.internal.remote.RemoteOpsClient;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import co.cask.common.http.HttpMethod;
+import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Remote implementation of the AuthorizationEnforcer.
+ * Remote implementation of the AuthorizationEnforcer. Contacts master for authorization enforcement and
+ * then caches the results.
  */
-public class RemoteAuthorizationEnforcer extends RemoteOpsClient implements AuthorizationEnforcer {
+public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteAuthorizationEnforcer.class);
-  private static final Predicate<EntityId> ALLOW_ALL = new Predicate<EntityId>() {
-    @Override
-    public boolean apply(EntityId entityId) {
-      return true;
-    }
-  };
+
+  private static final int minCacheSize = 12;
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+    .create();
+
+  private final RemoteClient remoteClient;
+  private final boolean cacheEnabled;
 
   private final LoadingCache<AuthorizationRequest, Boolean> authPolicyCache;
-  private final boolean cacheEnabled;
-  private final boolean securityEnabled;
-  private final boolean authorizationEnabled;
+
 
   @Inject
   public RemoteAuthorizationEnforcer(CConfiguration cConf, final DiscoveryServiceClient discoveryClient) {
-    super(discoveryClient, Constants.Service.REMOTE_SYSTEM_OPERATION);
-    this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
-    this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
-    cacheEnabled = cConf.getBoolean(Constants.Security.Authorization.CACHE_ENABLED);
+    super(cConf);
+    this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP,
+                                         new DefaultHttpRequestConfig(false), "/v1/execute/");
+    this.cacheEnabled = cConf.getBoolean(Constants.Security.Authorization.CACHE_ENABLED);
     int cacheTtlSecs = cConf.getInt(Constants.Security.Authorization.CACHE_TTL_SECS);
+    int cacheMaxEntries = cConf.getInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES);
 
     authPolicyCache = CacheBuilder.newBuilder()
+      .initialCapacity(minCacheSize)
       .expireAfterWrite(cacheTtlSecs, TimeUnit.SECONDS)
+      .maximumSize(cacheMaxEntries)
       .build(new CacheLoader<AuthorizationRequest, Boolean>() {
         @SuppressWarnings("NullableProblems")
         @Override
@@ -90,62 +100,16 @@ public class RemoteAuthorizationEnforcer extends RemoteOpsClient implements Auth
     }
   }
 
-  /**
-   * We don't need to handle privilege propagation here because it is already handled in the master.
-   *
-   * If this privilege is not in the cache then the call will go to the master which will handle privilege propagation
-   * and return the value for this privilege accordingly.
-   *
-   * @param entity the {@link EntityId} on which authorization is to be enforced
-   * @param principal the {@link Principal} that performs the actions
-   * @param actions the {@link Action actions} being performed
-   * @throws Exception
-   */
-  @Override
-  public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    if (!isSecurityAuthorizationEnabled()) {
-      return;
-    }
-    Set<Action> disallowed = new HashSet<>(actions.size());
-    for (Action action : actions) {
-      try {
-        enforce(entity, principal, action);
-      } catch (Exception ex) {
-        disallowed.add(action);
-      }
-    }
-    if (disallowed.size() > 0) {
-      throw new UnauthorizedException(principal, disallowed, entity);
-    }
-  }
-
-  @Override
-  public Predicate<EntityId> createFilter(final Principal principal) throws Exception {
-    if (!isSecurityAuthorizationEnabled()) {
-      return ALLOW_ALL;
-    }
-    return new Predicate<EntityId>() {
-      @Override
-      public boolean apply(EntityId entityId) {
-        try {
-          enforce(entityId, principal, new HashSet<>(Arrays.asList(Action.values())));
-          return true;
-        } catch (Exception e) {
-          return false;
-        }
-      }
-    };
-  }
-
-  private boolean doEnforce(AuthorizationRequest authorizationRequest) {
-    HttpResponse response = executeRequest("enforce", authorizationRequest.getEntityId(),
-                                             authorizationRequest.getPrincipal(),
-                                            authorizationRequest.getAction());
+  private boolean doEnforce(AuthorizationRequest authorizationRequest) throws IOException {
+    HttpResponse response = executeRequest(authorizationRequest);
     return HttpResponseStatus.OK.getCode() == response.getResponseCode();
 
   }
 
-  private boolean isSecurityAuthorizationEnabled() {
-    return securityEnabled && authorizationEnabled;
+  private HttpResponse executeRequest(AuthorizationRequest authorizationRequest) throws IOException {
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "enforce")
+      .withBody(GSON.toJson(authorizationRequest))
+      .build();
+    return remoteClient.execute(request);
   }
 }

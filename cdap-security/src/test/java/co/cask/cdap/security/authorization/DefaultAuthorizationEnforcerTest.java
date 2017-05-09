@@ -181,7 +181,6 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     Principal systemUser =
       new Principal(UserGroupInformation.getCurrentUser().getShortUserName(), Principal.PrincipalType.USER);
-    cConfCopy.setInt(Constants.Security.Authorization.CACHE_REFRESH_INTERVAL_SECS, 1);
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy,
  AUTH_CONTEXT_FACTORY)) {
       Authorizer authorizer = authorizerInstantiator.get();

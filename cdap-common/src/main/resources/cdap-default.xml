@@ -2710,6 +2710,15 @@
   </property>
 
   <property>
+    <name>security.authorization.cache.max.entries</name>
+    <value>1000</value>
+    <description>
+      Number of entries to hold in the container authorization cache. This setting only takes effect if
+      ${security.authorization.cache.enabled} is set to true.
+    </description>
+  </property>
+
+  <property>
     <name>security.authorization.cache.ttl.secs</name>
     <value>60</value>
     <description>
