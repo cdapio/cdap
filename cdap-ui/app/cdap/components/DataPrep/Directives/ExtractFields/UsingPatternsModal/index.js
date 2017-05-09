@@ -124,7 +124,7 @@ export default class UsingPatternsModal extends Component {
       },
       {
         label: T.translate(`${PREFIX}.urlPattern`),
-        value: `((?:(?:http[s]?|ftp):\/)?\/?(?:[^\/\s]+)(?:(?:\/\w+)*\/)(?:[\w\-\.]+[^#?\s]+)(?:.*)?)`,
+        value: `((?:(?:http[s]?|ftp):\/)?\/?(?:[^\/\\s]+)(?:(?:\/\\w+)*\/)(?:[\\w\-\.]+[^#?\\s]+)(?:.*)?)`,
         patternName: 'url'
       },
       {
