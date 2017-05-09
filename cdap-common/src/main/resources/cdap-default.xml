@@ -2722,7 +2722,7 @@
 
   <property>
     <name>security.authorization.cache.ttl.secs</name>
-    <value>60</value>
+    <value>6000</value>
     <description>
       The time-to-live in seconds for entries in the authorization cache
       used by programs. This setting only takes effect if

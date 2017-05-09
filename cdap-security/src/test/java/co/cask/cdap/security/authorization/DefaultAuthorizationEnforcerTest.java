@@ -19,6 +19,7 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.id.DatasetId;
@@ -28,12 +29,16 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -213,7 +218,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
     }
   }
 
-  private void assertAuthorizationFailure(DefaultAuthorizationEnforcer authEnforcementService,
+  private void assertAuthorizationFailure(AuthorizationEnforcer authEnforcementService,
                                           EntityId entityId, Principal principal, Action action) throws Exception {
     try {
       authEnforcementService.enforce(entityId, principal, action);
@@ -224,7 +229,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
     }
   }
 
-  private void assertAuthorizationFailure(DefaultAuthorizationEnforcer authEnforcementService,
+  private void assertAuthorizationFailure(AuthorizationEnforcer authEnforcementService,
                                           EntityId entityId, Principal principal,
                                           Set<Action> actions) throws Exception {
     try {
