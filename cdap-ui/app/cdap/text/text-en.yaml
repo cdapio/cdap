@@ -538,6 +538,8 @@ features:
         label: First N Records
       bernoulli:
         label: Bernoulli
+      reservoir:
+        label: Reservoir
       poisson:
         label: Poisson
     SidePanel:
