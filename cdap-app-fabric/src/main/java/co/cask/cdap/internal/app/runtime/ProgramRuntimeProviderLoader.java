@@ -35,11 +35,13 @@ import java.util.Set;
  */
 @Singleton
 public class ProgramRuntimeProviderLoader extends AbstractExtensionLoader<ProgramType, ProgramRuntimeProvider> {
+  private final CConfiguration cConf;
 
   @VisibleForTesting
   @Inject
   public ProgramRuntimeProviderLoader(CConfiguration cConf) {
     super(cConf.get(Constants.AppFabric.RUNTIME_EXT_DIR, ""));
+    this.cConf = cConf;
   }
 
   @Override
@@ -47,6 +49,13 @@ public class ProgramRuntimeProviderLoader extends AbstractExtensionLoader<Progra
     // See if the provide supports the required program type
     ProgramRuntimeProvider.SupportedProgramType supportedTypes =
       programRuntimeProvider.getClass().getAnnotation(ProgramRuntimeProvider.SupportedProgramType.class);
-    return supportedTypes == null ? ImmutableSet.<ProgramType>of() : ImmutableSet.copyOf(supportedTypes.value());
+    ImmutableSet.Builder<ProgramType> types = ImmutableSet.builder();
+
+    for (ProgramType programType : supportedTypes.value()) {
+      if (programRuntimeProvider.isSupported(programType, cConf)) {
+        types.add(programType);
+      }
+    }
+    return types.build();
   }
 }

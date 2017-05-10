@@ -239,6 +239,12 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-spark-core2_2.11</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
         <!-- Add dependencies on cdap-operational-stats to make sure it is built before standalone -->
         <dependency>
           <groupId>co.cask.cdap</groupId>
@@ -272,7 +278,7 @@
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
                   <excludeGroupIds>org.apache.hbase,asm</excludeGroupIds>
-                  <excludeArtifactIds>zkclient,servlet-api,cdap-cli,cdap-explore-jdbc</excludeArtifactIds>
+                  <excludeArtifactIds>zkclient,servlet-api,cdap-cli,cdap-explore-jdbc,kafka_2.10,scala-library</excludeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
                   <includeScope>runtime</includeScope>
@@ -413,7 +419,14 @@
                     <!-- Copy runtime extensions. Currently only has Spark -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-spark-core/target/libexec</directory>
-                      <targetPath>ext/runtimes/spark</targetPath>
+                      <targetPath>ext/runtimes/spark1_2.10</targetPath>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-spark-core2_2.11/target/libexec</directory>
+                      <targetPath>ext/runtimes/spark2_2.11</targetPath>
                       <includes>
                         <include>*.jar</include>
                       </includes>

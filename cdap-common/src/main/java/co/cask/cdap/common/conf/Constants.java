@@ -55,6 +55,8 @@ public final class Constants {
   public static final String INSTANCE_NAME = "instance.name";
   // Environment variable name for spark home
   public static final String SPARK_HOME = "SPARK_HOME";
+  // Environment variable name for spark compat version
+  public static final String SPARK_COMPAT_ENV = "SPARK_COMPAT";
   // Environment variable for TEZ home
   public static final String TEZ_HOME = "TEZ_HOME";
 
@@ -161,6 +163,7 @@ public final class Constants {
     public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
     public static final String PROGRAM_EXTRA_CLASSPATH = "app.program.extra.classpath";
     public static final String SPARK_YARN_CLIENT_REWRITE = "app.program.spark.yarn.client.rewrite.enabled";
+    public static final String SPARK_COMPAT = "app.program.spark.compat";
     public static final String RUNTIME_EXT_DIR = "app.program.runtime.extensions.dir";
     public static final String PROGRAM_MAX_START_SECONDS = "app.program.max.start.seconds";
     public static final String PROGRAM_MAX_STOP_SECONDS = "app.program.max.stop.seconds";
