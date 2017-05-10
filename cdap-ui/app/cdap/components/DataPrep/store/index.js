@@ -44,6 +44,10 @@ const errorInitialState = {
   cliError: null
 };
 
+const columnsInformationInitialState = {
+  columns: {}
+};
+
 const dataprep = (state = defaultInitialState, action = defaultAction) => {
   let stateCopy;
 
@@ -159,10 +163,29 @@ const error = (state = errorInitialState, action = defaultAction) => {
   return Object.assign({}, state, stateCopy);
 };
 
+const columnsInformation = (state = columnsInformationInitialState, action = defaultAction) => {
+  let stateCopy;
+
+  switch (action.type) {
+    case DataPrepActions.setColumnsInformation:
+      stateCopy = Object.assign({}, state, {
+        columns: action.payload.columns
+      });
+      break;
+    case DataPrepActions.reset:
+      return columnsInformationInitialState;
+    default:
+      return state;
+  }
+
+  return Object.assign({}, state, stateCopy);
+};
+
 const DataPrepStore = createStore(
   combineReducers({
     dataprep,
-    error
+    error,
+    columnsInformation
   }),
   defaultInitialState,
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()

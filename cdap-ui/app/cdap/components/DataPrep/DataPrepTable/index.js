@@ -28,19 +28,21 @@ import WarningContainer from 'components/WarningContainer';
 import ColumnHighlighter from 'components/DataPrep/ColumnHighlighter';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';
+import DataQuality from 'components/DataPrep/DataPrepTable/DataQuality';
 
 export default class DataPrepTable extends Component {
   constructor(props) {
     super(props);
 
-    let storeState = DataPrepStore.getState().dataprep;
+    let storeState = DataPrepStore.getState();
 
     this.state = {
-      headers: storeState.headers.map(header => ({name: header, edit: false})),
-      data: storeState.data,
-      loading: !storeState.initialized,
-      directivesLength: storeState.directives.length,
-      workspaceId: storeState.workspaceId
+      headers: storeState.dataprep.headers.map(header => ({name: header, edit: false})),
+      data: storeState.dataprep.data,
+      loading: !storeState.dataprep.initialized,
+      directivesLength: storeState.dataprep.directives.length,
+      workspaceId: storeState.dataprep.workspaceId,
+      columns: storeState.columnsInformation.columns
     };
 
     this.eventEmitter = ee(ee);
@@ -52,14 +54,15 @@ export default class DataPrepTable extends Component {
     this.columnDropdownOpened = this.columnDropdownOpened.bind(this);
 
     this.sub = DataPrepStore.subscribe(() => {
-      let state = DataPrepStore.getState().dataprep;
+      let state = DataPrepStore.getState();
       this.setState({
-        data: state.data,
-        headers: state.headers.map(header => ({name: header, edit: false})),
-        loading: !state.initialized,
-        directivesLength: state.directives.length,
-        workspaceId: state.workspaceId,
-        selectedHeaders: state.selectedHeaders
+        data: state.dataprep.data,
+        headers: state.dataprep.headers.map(header => ({name: header, edit: false})),
+        loading: !state.dataprep.initialized,
+        directivesLength: state.dataprep.directives.length,
+        workspaceId: state.dataprep.workspaceId,
+        selectedHeaders: state.dataprep.selectedHeaders,
+        columns: state.columnsInformation.columns
       });
     });
   }
@@ -209,6 +212,7 @@ export default class DataPrepTable extends Component {
                   })}
                   key={head.name}
                 >
+                  <DataQuality columnInfo={this.state.columns[head.name]} />
                   <div
                     className="clearfix column-wrapper"
                   >

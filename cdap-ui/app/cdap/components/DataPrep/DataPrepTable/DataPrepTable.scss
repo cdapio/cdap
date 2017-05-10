@@ -62,6 +62,14 @@ $header-bg-color: #eeeeee;
         border-bottom: 2px solid $border-and-selected-color;
         border-right: 1px solid #cccccc;
         border-top: 0;
+        position: relative;
+
+        .quality-bar {
+          position: absolute;
+          top: -10px; // top padding of header
+          left: 0;
+          right: 0;
+        }
 
         .column-wrapper {
           display: inline-flex;

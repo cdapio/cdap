@@ -60,6 +60,8 @@ export function execute(addDirective, shouldReset) {
             directives: updatedDirectives
           }
         });
+
+        fetchColumnsInformation(params, requestBody, res.header);
       }, (err) => {
         observer.onError(err);
         DataPrepStore.dispatch({
@@ -99,6 +101,9 @@ export function setWorkspace(workspaceId) {
                 workspaceUri
               }
             });
+
+            fetchColumnsInformation(params, requestBody, response.header);
+
           }, (err) => {
             // This flow is because of the workspace is empty
 
@@ -119,4 +124,29 @@ export function setWorkspace(workspaceId) {
         observer.onError(err);
       });
   });
+}
+
+function fetchColumnsInformation(params, requestBody, headers) {
+  MyDataPrepApi.summary(params, requestBody)
+    .subscribe((summaryRes) => {
+      let columns = {};
+
+      headers.forEach((head) => {
+        columns[head] = {
+          general: objectQuery(summaryRes, 'values', 'statistics', head, 'general'),
+          types: objectQuery(summaryRes, 'values', 'statistics', head, 'types'),
+          isValid: objectQuery(summaryRes, 'values', 'validation', head, 'valid')
+        };
+      });
+
+      DataPrepStore.dispatch({
+        type: DataPrepActions.setColumnsInformation,
+        payload: {
+          columns
+        }
+      });
+
+    }, (err) => {
+      console.log('error fetching summary', err);
+    });
 }

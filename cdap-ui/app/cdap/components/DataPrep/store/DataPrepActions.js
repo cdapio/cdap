@@ -28,7 +28,8 @@ const DataPrepActions = {
   setError: 'DATAPREP_SET_ERROR',
   setCLIError: 'DATAPREP_CLI_ERROR',
   dismissError: 'DATAPREP_DISMISS_ERROR',
-  setHighlightColumns: 'DATAPREP_SET_HIGHLIGHT_COLUMNS'
+  setHighlightColumns: 'DATAPREP_SET_HIGHLIGHT_COLUMNS',
+  setColumnsInformation: 'DATAPREP_SET_COLUMNS_INFORMATION'
 };
 
 export default DataPrepActions;
