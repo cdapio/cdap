@@ -346,7 +346,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
           }
         }, stateStore);
       } catch (TransactionFailureException e) {
-        // Ignore transaction not in progress exception as it's caued by short TX timeout on commit
+        // Ignore transaction not in progress exception as it's caused by short TX timeout on commit
         if (!(Throwables.getRootCause(e) instanceof TransactionNotInProgressException)) {
           throw Throwables.propagate(e);
         }

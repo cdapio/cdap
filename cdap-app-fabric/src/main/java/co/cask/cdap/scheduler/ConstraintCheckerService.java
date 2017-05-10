@@ -214,7 +214,6 @@ class ConstraintCheckerService extends AbstractIdleService {
         // limit the batches of the scan to 1000ms
         while (!stopping && stopWatch.elapsedMillis() < 1000) {
           if (!jobQueueIter.hasNext()) {
-            jobQueueIter.close();
             lastConsumed = null;
             return emptyScan;
           }

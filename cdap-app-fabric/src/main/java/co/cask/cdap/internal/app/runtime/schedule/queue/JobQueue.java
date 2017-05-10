@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
  * Responsible for keeping track of {@link Job}s, which correspond to schedules that have been triggered,
  * but not yet executed.
  */
-interface JobQueue {
+public interface JobQueue {
 
   /**
    * Returns a {@link CloseableIterator} over all the jobs associated with the given schedule Id.
