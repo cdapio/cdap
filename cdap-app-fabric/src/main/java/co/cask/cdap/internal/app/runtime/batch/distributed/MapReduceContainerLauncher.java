@@ -22,6 +22,7 @@ import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -64,6 +65,16 @@ public class MapReduceContainerLauncher {
     // Create a MainClassLoader for dataset rewrite
     URL[] classLoaderUrls = urls.toArray(new URL[urls.size()]);
     ClassLoader mainClassLoader = new MainClassLoader(classLoaderUrls, systemClassLoader.getParent());
+
+    // Install the JUL to SLF4J Bridge
+    try {
+      mainClassLoader.loadClass(SLF4JBridgeHandler.class.getName())
+        .getDeclaredMethod("install")
+        .invoke(null);
+    } catch (Exception e) {
+      // Log the error and continue
+      LOG.warn("Failed to invoke SLF4JBridgeHandler.install() required for jul-to-slf4j bridge", e);
+    }
 
     ClassLoaders.setContextClassLoader(mainClassLoader);
 

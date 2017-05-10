@@ -78,6 +78,7 @@ import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.Closeable;
 import java.io.File;
@@ -148,6 +149,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   public void initialize(TwillContext context) {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     System.setSecurityManager(new RunnableSecurityManager(System.getSecurityManager()));
+
+    // Install the JUL to SLF4J Bridge
+    SLF4JBridgeHandler.install();
 
     runLatch = new CountDownLatch(1);
     coreServices = new ArrayList<>();

@@ -108,6 +108,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -994,6 +995,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     classes.add(MapReduce.class);
     classes.add(MapperWrapper.class);
     classes.add(ReducerWrapper.class);
+    classes.add(SLF4JBridgeHandler.class);
 
     // We only need to trace the Input/OutputFormat class due to MAPREDUCE-5957 so that those classes are included
     // in the job.jar and be available in the MR system classpath before our job classloader (ApplicationClassLoader)
