@@ -595,9 +595,25 @@ features:
       Swap:
         title: Swap Two Column Names
     pageTitle: CDAP | Data Preparation
+    SamplerDropdown:
+      title: Sample {sampleMethod}
+      first:
+        label: First N Records
+      bernoulli:
+        label: Bernoulli
+      reservoir:
+        label: Reservoir
+      poisson:
+        label: Poisson
     sidePanelTooltip:
       collapse: Collapse the side panel
       expand: Expand the side panel
+    SidePanel:
+      ColumnsTab:
+        toggle:
+          clearAll: Clear All
+          selectAll: Select All
+        searchPlaceholder: search
     TopPanel:
       applyBtnLabel: Apply
       addToPipelineBtnLabel: Create Pipeline

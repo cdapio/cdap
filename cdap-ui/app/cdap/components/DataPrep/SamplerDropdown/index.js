@@ -30,10 +30,12 @@ require('./SamplerDropdown.scss');
 const samplerMethods = {
   first: 'first',
   bernoulli: 'bernoulli',
-  poisson: 'poisson'
+  poisson: 'poisson',
+  reservoir: 'reservoir'
 };
 const PREFIX = `features.DataPrep.SamplerDropdown`;
 const NUMLINES = 10000;
+const DEFAULT_FRACTION = 0.35;
 const CONTENT_TYPE = 'text/plain';
 
 export default class SamplerDropdown extends Component {
@@ -69,7 +71,8 @@ export default class SamplerDropdown extends Component {
     let params = {
       namespace,
       path,
-      lines: samplerMethod.name === samplerMethods.bernoulli ? 1 :  NUMLINES,
+      lines: NUMLINES,
+      fraction: DEFAULT_FRACTION,
       sampler: samplerMethod.name
     };
     const headers = {
