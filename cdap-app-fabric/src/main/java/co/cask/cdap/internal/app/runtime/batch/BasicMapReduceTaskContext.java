@@ -134,7 +134,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
 
   @Override
   public String toString() {
-    return String.format("name=%s,=%s", spec.getName(), super.toString());
+    return String.format("name=%s, %s", spec.getName(), super.toString());
   }
 
   @Override

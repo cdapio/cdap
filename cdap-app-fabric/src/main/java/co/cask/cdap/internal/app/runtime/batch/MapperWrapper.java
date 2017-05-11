@@ -18,8 +18,10 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.InputContexts;
@@ -46,6 +48,8 @@ import java.io.IOException;
 public class MapperWrapper extends Mapper {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapperWrapper.class);
+  private static final Logger PIPELINELOG = Loggers.mdcWrapper(LOG, Constants.Logging.EVENT_TYPE_TAG,
+                                                               Constants.Logging.PIPELINE_USER_LOG_TAG_VALUE);
   private static final String ATTR_MAPPER_CLASS = "c.mapper.class";
 
   /**
@@ -87,8 +91,12 @@ public class MapperWrapper extends Mapper {
       basicMapReduceContext.setInputContext(InputContexts.create((MultiInputTaggedSplit) inputSplit));
     }
 
+    String userProgramSpec = "Program = '" + basicMapReduceContext.getProgramName()
+      + "' Namespace = '" + basicMapReduceContext.getNamespaceId()
+      + "' Pipeline = '" + basicMapReduceContext.getApplicationId() + "'";
     ClassLoader programClassLoader = classLoader.getProgramClassLoader();
-    Mapper delegate = createMapperInstance(programClassLoader, getWrappedMapper(context.getConfiguration()), context);
+    Mapper delegate = createMapperInstance(programClassLoader, getWrappedMapper(context.getConfiguration()), context,
+                                           userProgramSpec);
 
     // injecting runtime components, like datasets, etc.
     try {
@@ -97,8 +105,9 @@ public class MapperWrapper extends Mapper {
                         new MetricsFieldSetter(basicMapReduceContext.getMetrics()),
                         new DataSetFieldSetter(basicMapReduceContext));
     } catch (Throwable t) {
-      LOG.error("Failed to inject fields to {}.", delegate.getClass(), t);
-      throw Throwables.propagate(t);
+      PIPELINELOG.error("Failed to initialize Mapper Context for {}. Please check your Pipeline configuration.",
+                        userProgramSpec, Throwables.getRootCause(t));
+      throw new IOException("Failed to inject fields to " + delegate.getClass(), t);
     }
 
     ClassLoader oldClassLoader;
@@ -107,8 +116,9 @@ public class MapperWrapper extends Mapper {
       try {
         ((ProgramLifecycle) delegate).initialize(new MapReduceLifecycleContext(basicMapReduceContext));
       } catch (Exception e) {
-        LOG.error("Failed to initialize mapper with {}", basicMapReduceContext, e);
-        throw Throwables.propagate(e);
+        PIPELINELOG.error("Failed to initialize Mapper for {}. Please check your Pipeline configuration.",
+                          userProgramSpec, Throwables.getRootCause(e));
+        throw new IOException("Failed to initialize mapper with " + basicMapReduceContext, e);
       } finally {
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
@@ -126,8 +136,8 @@ public class MapperWrapper extends Mapper {
     try {
       basicMapReduceContext.flushOperations();
     } catch (Exception e) {
-      LOG.error("Failed to flush operations at the end of mapper of {}", basicMapReduceContext, e);
-      throw Throwables.propagate(e);
+      PIPELINELOG.error("Failed to flush Mapper data operations for {}.", userProgramSpec, Throwables.getRootCause(e));
+      throw new IOException("Failed to flush operations at the end of mapper of " + basicMapReduceContext, e);
     }
 
     // Close all writers created by MultipleOutputs
@@ -195,7 +205,8 @@ public class MapperWrapper extends Mapper {
     return flushingContext;
   }
 
-  private Mapper createMapperInstance(ClassLoader classLoader, String userMapper, Context context) {
+  private Mapper createMapperInstance(ClassLoader classLoader, String userMapper, Context context,
+                                      String userProgramSpec) {
     if (context.getInputSplit() instanceof MultiInputTaggedSplit) {
       // Find the delegate Mapper from the MultiInputTaggedSplit.
       userMapper = ((MultiInputTaggedSplit) context.getInputSplit()).getMapperClassName();
@@ -204,6 +215,8 @@ public class MapperWrapper extends Mapper {
       return (Mapper) classLoader.loadClass(userMapper).newInstance();
     } catch (Exception e) {
       LOG.error("Failed to create instance of the user-defined Mapper class: " + userMapper);
+      PIPELINELOG.error("Failed to create instance of user-defined Mapper class {} for {}",
+                        userMapper, userProgramSpec, Throwables.getRootCause(e));
       throw Throwables.propagate(e);
     }
   }

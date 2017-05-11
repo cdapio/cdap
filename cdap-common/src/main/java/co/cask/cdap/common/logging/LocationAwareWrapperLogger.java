@@ -17,6 +17,7 @@
 package co.cask.cdap.common.logging;
 
 import org.slf4j.Logger;
+import org.slf4j.MDC;
 import org.slf4j.Marker;
 import org.slf4j.spi.LocationAwareLogger;
 
@@ -25,16 +26,32 @@ import javax.annotation.Nullable;
 /**
  * A {@link Logger} implementation that only emit logs that are accepted by {@link LogSampler}.
  */
-final class LocationAwareSamplingLogger implements Logger, LocationAwareLogger {
+final class LocationAwareWrapperLogger implements Logger, LocationAwareLogger {
 
-  private static final String FQCN = LocationAwareSamplingLogger.class.getName();
+  private static final String FQCN = LocationAwareWrapperLogger.class.getName();
 
   private final Logger logger;
   private final LogSampler sampler;
+  private final String mdcKey;
+  private final String mdcValue;
 
-  LocationAwareSamplingLogger(Logger logger, LogSampler sampler) {
+  LocationAwareWrapperLogger(Logger logger, LogSampler sampler) {
     this.logger = logger;
     this.sampler = sampler;
+    this.mdcKey = null;
+    this.mdcValue = null;
+  }
+
+  LocationAwareWrapperLogger(Logger logger, String mdcKey, String mdcValue) {
+    this.logger = logger;
+    this.mdcKey = mdcKey;
+    this.mdcValue = mdcValue;
+    this.sampler = new LogSampler() {
+      @Override
+      public boolean accept(String message, int logLevel) {
+        return true;
+      }
+    };
   }
 
   @Override
@@ -79,36 +96,56 @@ final class LocationAwareSamplingLogger implements Logger, LocationAwareLogger {
 
   @Override
   public void trace(Marker marker, String msg) {
-    if (isTraceEnabled(marker) && sampler.accept(msg, LocationAwareLogger.TRACE_INT)) {
-      log(marker, FQCN, LocationAwareLogger.TRACE_INT, msg, null, null);
+    try {
+      if (isTraceEnabled(marker) && beforeLog(msg, LocationAwareLogger.TRACE_INT)) {
+        log(marker, FQCN, LocationAwareLogger.TRACE_INT, msg, null, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void trace(Marker marker, String format, Object arg) {
-    if (isTraceEnabled(marker) && sampler.accept(format, LocationAwareLogger.TRACE_INT)) {
-      log(marker, FQCN, LocationAwareLogger.TRACE_INT, format, new Object[]{arg}, null);
+    try {
+      if (isTraceEnabled(marker) && beforeLog(format, LocationAwareLogger.TRACE_INT)) {
+        log(marker, FQCN, LocationAwareLogger.TRACE_INT, format, new Object[]{arg}, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void trace(Marker marker, String format, Object arg1, Object arg2) {
-    if (isTraceEnabled(marker) && sampler.accept(format, LocationAwareLogger.TRACE_INT)) {
-      log(marker, FQCN, LocationAwareLogger.TRACE_INT, format, new Object[]{arg1, arg2}, null);
+    try {
+      if (isTraceEnabled(marker) && beforeLog(format, LocationAwareLogger.TRACE_INT)) {
+        log(marker, FQCN, LocationAwareLogger.TRACE_INT, format, new Object[]{arg1, arg2}, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void trace(Marker marker, String format, Object... arguments) {
-    if (isTraceEnabled(marker) && sampler.accept(format, LocationAwareLogger.TRACE_INT)) {
-      log(marker, FQCN, LocationAwareLogger.TRACE_INT, format, arguments, null);
+    try {
+      if (isTraceEnabled(marker) && beforeLog(format, LocationAwareLogger.TRACE_INT)) {
+        log(marker, FQCN, LocationAwareLogger.TRACE_INT, format, arguments, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void trace(Marker marker, String msg, Throwable t) {
-    if (isTraceEnabled(marker) && sampler.accept(msg, LocationAwareLogger.TRACE_INT)) {
-      log(marker, FQCN, LocationAwareLogger.TRACE_INT, msg, null, t);
+    try {
+      if (isTraceEnabled(marker) && beforeLog(msg, LocationAwareLogger.TRACE_INT)) {
+        log(marker, FQCN, LocationAwareLogger.TRACE_INT, msg, null, t);
+      }
+    } finally {
+      afterLog();
     }
   }
 
@@ -149,36 +186,56 @@ final class LocationAwareSamplingLogger implements Logger, LocationAwareLogger {
 
   @Override
   public void debug(Marker marker, String msg) {
-    if (isDebugEnabled(marker) && sampler.accept(msg, LocationAwareLogger.DEBUG_INT)) {
-      log(marker, FQCN, LocationAwareLogger.DEBUG_INT, msg, null, null);
+    try {
+      if (isDebugEnabled(marker) && beforeLog(msg, LocationAwareLogger.DEBUG_INT)) {
+        log(marker, FQCN, LocationAwareLogger.DEBUG_INT, msg, null, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void debug(Marker marker, String format, Object arg) {
-    if (isDebugEnabled(marker) && sampler.accept(format, LocationAwareLogger.DEBUG_INT)) {
-      log(marker, FQCN, LocationAwareLogger.DEBUG_INT, format, new Object[]{arg}, null);
+    try {
+      if (isDebugEnabled(marker) && beforeLog(format, LocationAwareLogger.DEBUG_INT)) {
+        log(marker, FQCN, LocationAwareLogger.DEBUG_INT, format, new Object[]{arg}, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void debug(Marker marker, String format, Object arg1, Object arg2) {
-    if (isDebugEnabled(marker) && sampler.accept(format, LocationAwareLogger.DEBUG_INT)) {
-      log(marker, FQCN, LocationAwareLogger.DEBUG_INT, format, new Object[]{arg1, arg2}, null);
+    try {
+      if (isDebugEnabled(marker) && beforeLog(format, LocationAwareLogger.DEBUG_INT)) {
+        log(marker, FQCN, LocationAwareLogger.DEBUG_INT, format, new Object[]{arg1, arg2}, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void debug(Marker marker, String format, Object... arguments) {
-    if (isDebugEnabled(marker) && sampler.accept(format, LocationAwareLogger.DEBUG_INT)) {
-      log(marker, FQCN, LocationAwareLogger.DEBUG_INT, format, arguments, null);
+    try {
+      if (isDebugEnabled(marker) && beforeLog(format, LocationAwareLogger.DEBUG_INT)) {
+        log(marker, FQCN, LocationAwareLogger.DEBUG_INT, format, arguments, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void debug(Marker marker, String msg, Throwable t) {
-    if (isDebugEnabled(marker) && sampler.accept(msg, LocationAwareLogger.DEBUG_INT)) {
-      log(marker, FQCN, LocationAwareLogger.DEBUG_INT, msg, null, t);
+    try {
+      if (isDebugEnabled(marker) && beforeLog(msg, LocationAwareLogger.DEBUG_INT)) {
+        log(marker, FQCN, LocationAwareLogger.DEBUG_INT, msg, null, t);
+      }
+    } finally {
+      afterLog();
     }
   }
 
@@ -219,36 +276,56 @@ final class LocationAwareSamplingLogger implements Logger, LocationAwareLogger {
 
   @Override
   public void info(Marker marker, String msg) {
-    if (isInfoEnabled(marker) && sampler.accept(msg, LocationAwareLogger.INFO_INT)) {
-      log(marker, FQCN, LocationAwareLogger.INFO_INT, msg, null, null);
+    try {
+      if (isInfoEnabled(marker) && beforeLog(msg, LocationAwareLogger.INFO_INT)) {
+        log(marker, FQCN, LocationAwareLogger.INFO_INT, msg, null, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void info(Marker marker, String format, Object arg) {
-    if (isInfoEnabled(marker) && sampler.accept(format, LocationAwareLogger.INFO_INT)) {
-      log(marker, FQCN, LocationAwareLogger.INFO_INT, format, new Object[]{arg}, null);
+    try {
+      if (isInfoEnabled(marker) && beforeLog(format, LocationAwareLogger.INFO_INT)) {
+        log(marker, FQCN, LocationAwareLogger.INFO_INT, format, new Object[]{arg}, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void info(Marker marker, String format, Object arg1, Object arg2) {
-    if (isInfoEnabled(marker) && sampler.accept(format, LocationAwareLogger.INFO_INT)) {
-      log(marker, FQCN, LocationAwareLogger.INFO_INT, format, new Object[]{arg1, arg2}, null);
+    try {
+      if (isInfoEnabled(marker) && beforeLog(format, LocationAwareLogger.INFO_INT)) {
+        log(marker, FQCN, LocationAwareLogger.INFO_INT, format, new Object[]{arg1, arg2}, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void info(Marker marker, String format, Object... arguments) {
-    if (isInfoEnabled(marker) && sampler.accept(format, LocationAwareLogger.INFO_INT)) {
-      log(marker, FQCN, LocationAwareLogger.INFO_INT, format, arguments, null);
+    try {
+      if (isInfoEnabled(marker) && beforeLog(format, LocationAwareLogger.INFO_INT)) {
+        log(marker, FQCN, LocationAwareLogger.INFO_INT, format, arguments, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void info(Marker marker, String msg, Throwable t) {
-    if (isInfoEnabled(marker) && sampler.accept(msg, LocationAwareLogger.INFO_INT)) {
-      log(marker, FQCN, LocationAwareLogger.INFO_INT, msg, null, t);
+    try {
+      if (isInfoEnabled(marker) && beforeLog(msg, LocationAwareLogger.INFO_INT)) {
+        log(marker, FQCN, LocationAwareLogger.INFO_INT, msg, null, t);
+      }
+    } finally {
+      afterLog();
     }
   }
 
@@ -289,36 +366,56 @@ final class LocationAwareSamplingLogger implements Logger, LocationAwareLogger {
 
   @Override
   public void warn(Marker marker, String msg) {
-    if (isWarnEnabled(marker) && sampler.accept(msg, LocationAwareLogger.WARN_INT)) {
-      log(marker, FQCN, LocationAwareLogger.WARN_INT, msg, null, null);
+    try {
+      if (isWarnEnabled(marker) && beforeLog(msg, LocationAwareLogger.WARN_INT)) {
+        log(marker, FQCN, LocationAwareLogger.WARN_INT, msg, null, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void warn(Marker marker, String format, Object arg) {
-    if (isWarnEnabled(marker) && sampler.accept(format, LocationAwareLogger.WARN_INT)) {
-      log(marker, FQCN, LocationAwareLogger.WARN_INT, format, new Object[]{arg}, null);
+    try {
+      if (isWarnEnabled(marker) && beforeLog(format, LocationAwareLogger.WARN_INT)) {
+        log(marker, FQCN, LocationAwareLogger.WARN_INT, format, new Object[]{arg}, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void warn(Marker marker, String format, Object arg1, Object arg2) {
-    if (isWarnEnabled(marker) && sampler.accept(format, LocationAwareLogger.WARN_INT)) {
-      log(marker, FQCN, LocationAwareLogger.WARN_INT, format, new Object[]{arg1, arg2}, null);
+    try {
+      if (isWarnEnabled(marker) && beforeLog(format, LocationAwareLogger.WARN_INT)) {
+        log(marker, FQCN, LocationAwareLogger.WARN_INT, format, new Object[]{arg1, arg2}, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void warn(Marker marker, String format, Object... arguments) {
-    if (isWarnEnabled(marker) && sampler.accept(format, LocationAwareLogger.WARN_INT)) {
-      log(marker, FQCN, LocationAwareLogger.WARN_INT, format, arguments, null);
+    try {
+      if (isWarnEnabled(marker) && beforeLog(format, LocationAwareLogger.WARN_INT)) {
+        log(marker, FQCN, LocationAwareLogger.WARN_INT, format, arguments, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void warn(Marker marker, String msg, Throwable t) {
-    if (isWarnEnabled(marker) && sampler.accept(msg, LocationAwareLogger.WARN_INT)) {
-      log(marker, FQCN, LocationAwareLogger.WARN_INT, msg, null, t);
+    try {
+      if (isWarnEnabled(marker) && beforeLog(msg, LocationAwareLogger.WARN_INT)) {
+        log(marker, FQCN, LocationAwareLogger.WARN_INT, msg, null, t);
+      }
+    } finally {
+      afterLog();
     }
   }
 
@@ -359,36 +456,56 @@ final class LocationAwareSamplingLogger implements Logger, LocationAwareLogger {
 
   @Override
   public void error(Marker marker, String msg) {
-    if (isErrorEnabled(marker) && sampler.accept(msg, LocationAwareLogger.ERROR_INT)) {
-      log(marker, FQCN, LocationAwareLogger.ERROR_INT, msg, null, null);
+    try {
+      if (isErrorEnabled(marker) && beforeLog(msg, LocationAwareLogger.ERROR_INT)) {
+        log(marker, FQCN, LocationAwareLogger.ERROR_INT, msg, null, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void error(Marker marker, String format, Object arg) {
-    if (isErrorEnabled(marker) && sampler.accept(format, LocationAwareLogger.ERROR_INT)) {
-      log(marker, FQCN, LocationAwareLogger.ERROR_INT, format, new Object[]{arg}, null);
+    try {
+      if (isErrorEnabled(marker) && beforeLog(format, LocationAwareLogger.ERROR_INT)) {
+        log(marker, FQCN, LocationAwareLogger.ERROR_INT, format, new Object[]{arg}, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void error(Marker marker, String format, Object arg1, Object arg2) {
-    if (isErrorEnabled(marker) && sampler.accept(format, LocationAwareLogger.ERROR_INT)) {
-      log(marker, FQCN, LocationAwareLogger.ERROR_INT, format, new Object[]{arg1, arg2}, null);
+    try {
+      if (isErrorEnabled(marker) && beforeLog(format, LocationAwareLogger.ERROR_INT)) {
+        log(marker, FQCN, LocationAwareLogger.ERROR_INT, format, new Object[]{arg1, arg2}, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void error(Marker marker, String format, Object... arguments) {
-    if (isErrorEnabled(marker) && sampler.accept(format, LocationAwareLogger.ERROR_INT)) {
-      log(marker, FQCN, LocationAwareLogger.ERROR_INT, format, arguments, null);
+    try {
+      if (isErrorEnabled(marker) && beforeLog(format, LocationAwareLogger.ERROR_INT)) {
+        log(marker, FQCN, LocationAwareLogger.ERROR_INT, format, arguments, null);
+      }
+    } finally {
+      afterLog();
     }
   }
 
   @Override
   public void error(Marker marker, String msg, Throwable t) {
-    if (isErrorEnabled(marker) && sampler.accept(msg, LocationAwareLogger.ERROR_INT)) {
-      log(marker, FQCN, LocationAwareLogger.ERROR_INT, msg, null, t);
+    try {
+      if (isErrorEnabled(marker) && beforeLog(msg, LocationAwareLogger.ERROR_INT)) {
+        log(marker, FQCN, LocationAwareLogger.ERROR_INT, msg, null, t);
+      }
+    } finally {
+      afterLog();
     }
   }
 
@@ -470,6 +587,19 @@ final class LocationAwareSamplingLogger implements Logger, LocationAwareLogger {
         break;
       default:
         // This shouldn't happen. Just ignore it
+    }
+  }
+
+  private boolean beforeLog(String message, int logLevel) {
+    if (mdcKey != null) {
+      MDC.put(mdcKey, mdcValue);
+    }
+    return sampler.accept(message, logLevel);
+  }
+
+  private void afterLog() {
+    if (mdcKey != null) {
+      MDC.remove(mdcKey);
     }
   }
 }
