@@ -172,44 +172,11 @@
     {
       "type": "chef-solo",
       "remote_cookbook_paths": "/var/chef/cookbooks",
-      "run_list": "recipe[openssh]",
-      "skip_install": true,
-      "json": {
-        "openssh": {
-          "server": {
-            "permit_root_login": "without-password",
-            "password_authentication": "no",
-            "use_dns": "no"
-          }
-        }
-      },
-      "except": ["cdap-cloud-sandbox-azure"]
-    },
-    {
-      "type": "chef-solo",
-      "remote_cookbook_paths": "/var/chef/cookbooks",
-      "run_list": "recipe[openssh]",
-      "skip_install": true,
-      "json": {
-        "openssh": {
-          "server": {
-            "client_alive_interval": "120",
-            "permit_root_login": "without-password",
-            "password_authentication": "no",
-            "use_dns": "no"
-          }
-        }
-      },
-      "only": ["cdap-cloud-sandbox-azure"]
-    },
-    {
-      "type": "chef-solo",
-      "remote_cookbook_paths": "/var/chef/cookbooks",
-      "run_list": "recipe[cdap::sdk]",
+      "run_list": "recipe[openssh],recipe[cdap::sdk]",
       "skip_install": true,
       "json": {
         "cdap": {
-          "comment": "DO NOT PUT SNAPSHOT IN THE VERSION BELOW, THIS CONTROLS CDAP COOKBOOK CODE",
+          "comment": "DO NOT PUT SNAPHOT IN THE VERSION BELOW, THIS CONTROLS CDAP COOKBOOK CODE",
           "version": "4.2.0-1",
           "sdk": {
             "comment": "COPY SDK ZIP TO files/cdap-sdk.zip BEFORE RUNNING ME",
@@ -227,6 +194,13 @@
             "checksum": {
               "linux_x64": "c6ee1f4303353e3605ff70de180431417eb594fe08daf612e692216236750c55"
             }
+          }
+        },
+        "openssh": {
+          "server": {
+            "permit_root_login": "without-password",
+            "password_authentication": "no",
+            "use_dns": "no"
           }
         }
       }
