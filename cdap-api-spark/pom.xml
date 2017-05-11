@@ -227,4 +227,63 @@
     </plugins>
   </build>
 
+  <profiles>
+    <profile>
+      <!-- This profile is just for Spark development in IDE, don't use it in normal Maven build -->
+      <id>spark1-dev</id>
+      <properties>
+        <spark.api.base.dir>${project.basedir}/../cdap-api-spark-base</spark.api.base.dir>
+      </properties>
+      <build>
+        <plugins>
+          <!-- Disable the copying of files from base -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <version>2.6</version>
+            <executions>
+              <execution>
+                <id>copy-api-base</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+
+          <!-- Symlink the source from base -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.7</version>
+            <executions>
+              <execution>
+                <id>mkdir-symlink-dir</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <mkdir dir="${project.build.directory}/generated-sources/cdap-api-spark-base/src"/>
+                  </target>
+                </configuration>
+              </execution>
+              <execution>
+                <id>symlink-source</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <symlink link="${project.build.directory}/generated-sources/cdap-api-spark-base/src/main" resource="${spark.api.base.dir}/src/main" overwrite="true" />
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
 </project>
