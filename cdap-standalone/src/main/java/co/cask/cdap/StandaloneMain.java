@@ -141,7 +141,6 @@ public class StandaloneMain {
 
 
   private StandaloneMain(List<Module> modules, CConfiguration cConf) {
-    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     this.cConf = cConf;
 
     injector = Guice.createInjector(modules);
@@ -282,6 +281,10 @@ public class StandaloneMain {
       cConf.getInt(Constants.Dashboard.BIND_PORT);
     System.out.println("Standalone CDAP started successfully.");
     System.out.printf("Connect to the CDAP UI at %s://%s:%d\n", protocol, "localhost", dashboardPort);
+
+    // Set uncaught exception handler after startup, this is so that if startup throws exception then we
+    // want it to be logged as error (the handler logs it as debug)
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
   }
 
   /**
