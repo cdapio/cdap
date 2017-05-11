@@ -22,6 +22,8 @@
 # The git branch to clone
 CDAP_BRANCH=${CDAP_BRANCH:-release/4.1}
 # Optional tag to checkout - All released versions of this script should set this
+# like this: CDAP_TAG=${CDAP_TAG:+tag} as this allows setting tag to empty/null
+# otherwise, it should be CDAP_TAG=''
 CDAP_TAG=''
 # The CDAP package version passed to Chef
 CDAP_VERSION=${CDAP_VERSION:-4.1.1-1}
