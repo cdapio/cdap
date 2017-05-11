@@ -60,6 +60,13 @@
       &.LOADING {
         border-top-color: gray;
       }
+
+      .stack-trace {
+        // should be at least tall enough to show the resizable icon
+        min-height: 45px;
+        // 75vh (full height of modal) - 40px (modal header) - 360px (max modal body height) - 35px (error header)
+        max-height: calc(75vh - 40px - 360px - 35px);
+      }
     }
     &.success {
       width: 100%;
