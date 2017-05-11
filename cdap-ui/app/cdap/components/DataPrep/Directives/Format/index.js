@@ -21,6 +21,8 @@ import SimpleDateModal from 'components/DataPrep/Directives/Parse/Modals/SimpleD
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+import {setPopoverOffset} from 'components/DataPrep/helper';
+import debounce from 'lodash/debounce';
 
 const PREFIX = 'features.DataPrep.Directives.Format';
 
@@ -59,6 +61,20 @@ export default class Format extends Component {
         onClick: this.formatTitlecase
       }
     ];
+  }
+  componentDidMount() {
+    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('format-directive'));
+    this.offsetCalcDebounce = debounce(this.calculateOffset, 1000);
+  }
+
+  componentDidUpdate() {
+    if (this.props.isOpen && this.calculateOffset) {
+      this.calculateOffset();
+    }
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.offsetCalcDebounce);
   }
   toggleModal() {
     this.setState({

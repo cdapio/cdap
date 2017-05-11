@@ -49,7 +49,7 @@ angular.module(PKG.name + '.feature.hydrator')
         }
       })
         .state('hydrator.create', {
-          url: '/studio?artifactType&draftId&workspaceId',
+          url: '/studio?artifactType&draftId&workspaceId&configParams',
           onEnter: function() {
             document.title = 'CDAP | Studio';
           },
@@ -74,12 +74,22 @@ angular.module(PKG.name + '.feature.hydrator')
                       defer.resolve(false);
                     }
                   });
+              } else if ($stateParams.configParams) {
+                // This is being used while adding a dataset/stream as source/sink from metadata to pipeline studio
+                try {
+                  let config = JSON.parse($stateParams.configParams);
+                  defer.resolve(config);
+                } catch (e) {
+                  defer.resolve(false);
+                }
               } else if ($stateParams.data) {
+                // This is being used while cloning a published a pipeline.
                 defer.resolve($stateParams.data);
               } else if ($stateParams.workspaceId) {
+                // This is being used by dataprep to pipelines transition
                 try {
                   let configParams = $window.localStorage.getItem($stateParams.workspaceId);
-                  var config = JSON.parse(configParams);
+                  let config = JSON.parse(configParams);
                   defer.resolve(config);
                 } catch (e) {
                   defer.resolve(false);

@@ -1,4 +1,99 @@
 ==============
+CDAP UI Pack 3
+==============
+
+The CDAP UI Pack is a UI-only release that can be applied on top of an existing CDAP installation. 
+The CDAP UI Pack 3 applies on CDAP 4.1.1.
+
+Details
+=======
+- Release Date: 05/08/2017
+- Base CDAP Version: 4.1.1
+- Release branch: release/4.1
+
+Installation
+============
+
+UNIX/Linux Flavors
+------------------
+**Standalone CDAP**
+::
+
+  $ cd <CDAP_HOME>
+  $ ./bin/cdap sdk stop
+  $ ./bin/cdap apply-pack /path/to/download/cdap-ui-pack-4.1.1_p3.zip
+  $ ./bin/cdap sdk start
+
+
+**Distributed CDAP**
+
+*Note:* In the instructions below, ``<CDAP_HOME>`` is either:
+
+- ``/opt/cdap`` on RPM (manual or Apache Ambari) installations; or
+- the **CDAP** sub-directory of the **Parcel Directory** on Cloudera Manager installations (e.g. ``/opt/cloudera/parcels/CDAP``)
+
+::
+
+  $ cd <CDAP_HOME>                         
+  $ /etc/init.d/cdap-ui stop
+  $ cdap apply-pack /path/to/download/cdap-ui-pack-4.1.1_p3.zip
+  $ /etc/init.d/cdap-ui start
+
+
+
+Windows
+-------
+
+::
+
+  > cd <CDAP_HOME>
+  > bin\cdap sdk stop
+  > bin\cdap apply-pack \path\to\download\cdap-ui-pack-4.1.1_p3.zip
+  > bin\cdap sdk start
+
+
+Release Notes
+=============
+
+New Features
+------------
+* `CDAP-9523 <http://issues.cask.co/browse/CDAP-9523>`__ - Added point-and-click interaction for extracting text from a column using Regex Groups
+* `CDAP-9515 <http://issues.cask.co/browse/CDAP-9515>`__ - Added point-and-click interaction for exploding data in a row into multiple rows
+* `CDAP-9514 <http://issues.cask.co/browse/CDAP-9514>`__ - Added point-and-click interaction for swapping and merging columns
+* `CDAP-9510 <http://issues.cask.co/browse/CDAP-9510>`__ - Added point-and-click interaction for changing column name
+* `CDAP-9507 <http://issues.cask.co/browse/CDAP-9507>`__ - Added point-and-click interaction for formatting data
+
+Improvements
+------------
+* `CDAP-9541 <http://issues.cask.co/browse/CDAP-9541>`__ - Improved styling of column directive dropdown icon
+* `CDAP-9441 <http://issues.cask.co/browse/CDAP-9441>`__ - Rephrased message when a user is not authorized to access any namespace
+* `CDAP-9415 <http://issues.cask.co/browse/CDAP-9415>`__ - Switched from font icons to SVGs on the home page for better loading of images
+* `CDAP-9394 <http://issues.cask.co/browse/CDAP-9394>`__ - Added an exact/whole world match option for find and replace
+* `CDAP-9255 <http://issues.cask.co/browse/CDAP-9255>`__ - When there are no nodes on the studio, disabled certain actions
+
+Bug Fixes
+---------
+* `CDAP-10488 <http://issues.cask.co/browse/CDAP-10488>`__ - Made it easier to delete an action plugin easily from Studio
+* `CDAP-10312 <http://issues.cask.co/browse/CDAP-10312>`__ - Fixed an issue where users could open multiple popovers in dataprep modal in Pipeline studio
+* `CDAP-9596 <http://issues.cask.co/browse/CDAP-9596>`__ - Fixed the parsing of search results in the metadata view
+* `CDAP-9445 <http://issues.cask.co/browse/CDAP-9445>`__ - Renaming a column to an existing column should show a warning to users
+* `CDAP-9175 <http://issues.cask.co/browse/CDAP-9175>`__ - Fixed the realtime stream source to have a view details button
+* `CDAP-9051 <http://issues.cask.co/browse/CDAP-9051>`__ - Fixed the help for parse-as-json
+* `CDAP-8963 <http://issues.cask.co/browse/CDAP-8963>`__ - Handled boolean values correctly while previewing explore results
+
+
+
+
+
+==============
+CDAP UI Pack 2
+==============
+CDAP UI Pack 2 was not released separately. The features in CDAP UI Pack 2 were released as part of CDAP 4.1.1. Please refer to the 
+release notes of CDAP 4.1.1 for details about these features.
+
+
+
+==============
 CDAP UI Pack 1
 ==============
 
@@ -98,8 +193,8 @@ Improvements
 * `CDAP-8828 <http://issues.cask.co/browse/CDAP-8828>`__ - Removed dialog to select pipeline type upon pipeline creation
 * `CDAP-8396 <http://issues.cask.co/browse/CDAP-8396>`__ - Added call to action for namespace creation
 
-Bugs
-----
+Bug Fixes
+---------
 * `CDAP-8554 <http://issues.cask.co/browse/CDAP-8554>`__ - Fixed styling issues while showing Call(s) to actions in Application create wizard
 * `CDAP-8412 <http://issues.cask.co/browse/CDAP-8412>`__ - Fixed overflow in namespace creation confirmation modal
 * `CDAP-8433 <http://issues.cask.co/browse/CDAP-8433>`__ - Added units for memory for YARN stats on management page

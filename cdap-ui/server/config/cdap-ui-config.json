@@ -2,7 +2,7 @@
   "tracker": {
     "artifact": {
       "name": "tracker",
-      "version": "0.4.1",
+      "version": "0.5.0-SNAPSHOT",
       "scope": "SYSTEM"
     },
     "appId": "_Tracker",
