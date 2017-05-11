@@ -31,7 +31,11 @@ public final class Loggers {
    * @return a new {@link Logger}.
    */
   public static Logger sampling(Logger logger, LogSampler sampler) {
-    return new LocationAwareSamplingLogger(logger, sampler);
+    return new LocationAwareWrapperLogger(logger, sampler);
+  }
+
+  public static Logger mdcWrapper(Logger logger, String mdcKey, String mdcValue) {
+    return new LocationAwareWrapperLogger(logger, mdcKey, mdcValue);
   }
 
   private Loggers() {
