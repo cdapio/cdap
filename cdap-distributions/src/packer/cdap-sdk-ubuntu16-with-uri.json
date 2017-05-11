@@ -198,6 +198,7 @@
         },
         "openssh": {
           "server": {
+            "client_alive_interval": "180",
             "permit_root_login": "without-password",
             "password_authentication": "no",
             "use_dns": "no"
@@ -247,14 +248,14 @@
       "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
       "scripts": "scripts/ssh-cleanup.sh"
     },
-   {
-     "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
-     "inline": [
-       "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
-     ],
-     "inline_shebang": "/bin/sh -x",
-     "type": "shell",
-     "only": ["cdap-cloud-sandbox-azure"]
-   }
+    {
+      "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+      "inline": [
+        "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+      ],
+      "inline_shebang": "/bin/sh -x",
+      "type": "shell",
+      "only": ["cdap-cloud-sandbox-azure"]
+    }
   ]
 }
