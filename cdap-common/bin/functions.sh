@@ -504,7 +504,7 @@ cdap_set_spark() {
       # Otherwise the spark-shell won't run correctly
       unset SPARK_HOME
       ERR_FILE=$(mktemp)
-      SPARK_VAR_OUT=$(echo 'for ((key, value) <- sys.env) println (key + "=" + value); exit' | spark-shell --master local 2>${ERR_FILE})
+      SPARK_VAR_OUT=$(echo 'for ((key, value) <- sys.env) println (key + "=" + value); sys.exit' | spark-shell --master local 2>${ERR_FILE})
       __ret=$?
       # spark-shell invocation above does not properly restore the stty.
       stty ${__saved_stty}
@@ -524,6 +524,8 @@ cdap_set_spark() {
 
   # Find environment variables setup via spark-env.sh
   cdap_load_spark_env || logecho "[WARN] Fail to source spark-env.sh to setup environment variables for Spark"
+  # Determine Spark Compat version
+  cdap_set_spark_compat
   return 0
 }
 
@@ -551,6 +553,42 @@ cdap_load_spark_env() {
       # Prefix the env variable with _SPARK_ to avoid conflicts
       export "_SPARK_${line%%=*}"="${line#*=}"
     done <<< "${SPARK_ENV}"
+  fi
+
+  return 0
+}
+
+#
+# cdap_set_spark_compat
+# Attempts to determine the spark version and set the SPARK_COMPAT env variable for the CDAP master to use
+#
+cdap_set_spark_compat() {
+  local readonly __saved_stty=$(stty -g 2>/dev/null)
+  # If SPARK_COMPAT is not already set, try to determine it
+  if [[ -z ${SPARK_COMPAT} ]] && [[ $(which spark-shell 2>/dev/null) ]]; then
+    ERR_FILE=$(mktemp)
+    SPARK_VAR_OUT=$(echo 'println("sparkVersion=" + org.apache.spark.SPARK_VERSION); println("scalaVersion=" + scala.util.Properties.releaseVersion.get); sys.exit' | spark-shell --master local 2>${ERR_FILE})
+
+    __ret=$?
+    # spark-shell invocation above does not properly restore the stty.
+    stty ${__saved_stty}
+    SPARK_ERR_MSG=$(< ${ERR_FILE})
+    rm ${ERR_FILE}
+    if [[ ${__ret} -ne 0 ]]; then
+      echo "[ERROR] Failed to get Spark and Scala versions using spark-shell"
+      echo "  stderr:"
+      echo "${SPARK_ERR_MSG}"
+      return 1
+    fi
+
+    SPARK_VERSION=$(echo -e "${SPARK_VAR_OUT}" | grep "^sparkVersion=" | cut -d= -f2)
+    SPARK_MAJOR_VERSION=$(echo ${SPARK_VERSION} | cut -d. -f1)
+    SCALA_VERSION=$(echo -e "${SPARK_VAR_OUT}" | grep "^scalaVersion=" | cut -d= -f2)
+    SCALA_MAJOR_VERSION=$(echo ${SCALA_VERSION} | cut -d. -f1)
+    SCALA_MINOR_VERSION=$(echo ${SCALA_VERSION} | cut -d. -f2)
+    SPARK_COMPAT="spark${SPARK_MAJOR_VERSION}_${SCALA_MAJOR_VERSION}.${SCALA_MINOR_VERSION}"
+
+    export SPARK_COMPAT
   fi
 
   return 0

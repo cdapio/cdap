@@ -239,7 +239,19 @@
         </dependency>
         <dependency>
           <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-api-spark2_2.11</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
           <artifactId>cdap-spark-core</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-spark-core2_2.11</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
@@ -377,17 +389,39 @@
 
               <!-- Copy runtime extensions. Currently only has Spark -->
               <execution>
-                <id>copy-runtime-extensions</id>
+                <id>copy-spark1-extensions</id>
                 <phase>process-resources</phase>
                 <goals>
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.runtime.ext.dir}/spark</outputDirectory>
+                  <outputDirectory>${stage.runtime.ext.dir}/spark1_2.10</outputDirectory>
                   <resources>
                     <resource>
                       <directory>
                         ${project.parent.basedir}/cdap-spark-core/target/libexec
+                      </directory>
+                      <!-- Only package with the cdap extensions, not the spark assembly jar -->
+                      <includes>
+                        <include>co.cask.cdap.cdap-api-spark*.jar</include>
+                        <include>co.cask.cdap.cdap-spark-core*.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-spark2-extensions</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.runtime.ext.dir}/spark2_2.11</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-spark-core2_2.11/target/libexec
                       </directory>
                       <!-- Only package with the cdap extensions, not the spark assembly jar -->
                       <includes>

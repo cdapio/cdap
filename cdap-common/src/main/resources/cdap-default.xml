@@ -348,7 +348,9 @@
     <name>app.program.spark.compat</name>
     <value>spark1_2.10</value>
     <description>
-      TODO: remove this once the logic to discover the Spark version is implemented.
+      The Spark compatibility version, if Spark is available. Must be 'spark1_2.10' or 'spark2_2.11'.
+      In distributed mode, this will be overridden by the detected Spark version.
+      In standalone mode, this can be set to the desired version of Spark.
     </description>
   </property>
 
