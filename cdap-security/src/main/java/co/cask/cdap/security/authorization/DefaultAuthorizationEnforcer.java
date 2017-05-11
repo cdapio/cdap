@@ -16,7 +16,6 @@
 
 package co.cask.cdap.security.authorization;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.EntityId;
@@ -34,7 +33,8 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * An implementation of {@link AuthorizationEnforcer} that runs on the master.
+ * An implementation of {@link AuthorizationEnforcer} that runs on the master. It calls the authorizer directly to
+ * enforce authorization policies.
  */
 @Singleton
 public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer {

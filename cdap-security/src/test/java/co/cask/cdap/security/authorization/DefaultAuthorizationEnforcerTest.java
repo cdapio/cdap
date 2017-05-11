@@ -19,26 +19,19 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.Service;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -47,11 +40,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -63,6 +52,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
   private static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
   private static final Principal BOB = new Principal("bob", Principal.PrincipalType.USER);
   private static final NamespaceId NS = new NamespaceId("ns");
+  private static final ApplicationId APP = NS.app("app");
 
   @BeforeClass
   public static void setupClass() throws IOException {
@@ -96,6 +86,25 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
         new DefaultAuthorizationEnforcer(cConfCopy, authorizerInstantiator);
       authorizerInstantiator.get().grant(NS, ALICE, ImmutableSet.of(Action.ADMIN));
       authEnforcementService.enforce(NS, ALICE, Action.ADMIN);
+    }
+  }
+
+  @Test
+  public void testPropagationDisabled() throws Exception {
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
+    cConfCopy.setBoolean(Constants.Security.Authorization.PROPAGATE_PRIVILEGES, false);
+    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy,
+                                                                                    AUTH_CONTEXT_FACTORY)) {
+      DefaultAuthorizationEnforcer authorizationEnforcer =
+        new DefaultAuthorizationEnforcer(cConfCopy, authorizerInstantiator);
+      authorizerInstantiator.get().grant(NS, ALICE, ImmutableSet.of(Action.ADMIN));
+      authorizationEnforcer.enforce(NS, ALICE, Action.ADMIN);
+      try {
+        authorizationEnforcer.enforce(APP, ALICE, Action.ADMIN);
+        Assert.fail("Alice should not have ADMIN privilege on the APP.");
+      } catch (Exception ignored) {
+
+      }
     }
   }
 

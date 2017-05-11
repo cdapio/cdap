@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,12 +35,9 @@ import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.authorization.RemoteAuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableSet;
 import com.google.inject.Injector;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -77,7 +74,6 @@ public class RemotePrivilegesTest {
   private static final ProgramId PROGRAM = APP.program(ProgramType.FLOW, "flo");
   private static final int CACHE_TIMEOUT = 3;
 
-  private static Authorizer authorizer;
   private static AuthorizationEnforcer authorizationEnforcer;
   private static PrivilegesManager privilegesManager;
   private static DiscoveryServiceClient discoveryService;
@@ -103,7 +99,6 @@ public class RemotePrivilegesTest {
     appFabricServer.startAndWait();
     waitForService(Constants.Service.APP_FABRIC_HTTP);
     authorizationEnforcer = injector.getInstance(RemoteAuthorizationEnforcer.class);
-    authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
     privilegesManager = injector.getInstance(PrivilegesManager.class);
   }
 
@@ -126,7 +121,7 @@ public class RemotePrivilegesTest {
     authorizationEnforcer.enforce(PROGRAM, ALICE, Action.EXECUTE);
 
     try {
-      authorizer.enforce(APP, ALICE, EnumSet.allOf(Action.class));
+      authorizationEnforcer.enforce(APP, ALICE, EnumSet.allOf(Action.class));
       Assert.fail("Expected alice to not have all privileges on the app");
     } catch (UnauthorizedException e) {
       // expected
@@ -134,7 +129,7 @@ public class RemotePrivilegesTest {
     privilegesManager.revoke(PROGRAM);
     privilegesManager.revoke(APP, ALICE, EnumSet.allOf(Action.class));
     privilegesManager.revoke(NS, ALICE, EnumSet.allOf(Action.class));
-    Set<Privilege> privileges = authorizer.listPrivileges(ALICE);
+    Set<Privilege> privileges = privilegesManager.listPrivileges(ALICE);
     Assert.assertTrue(String.format("Expected all of alice's privileges to be revoked, but found %s", privileges),
                       privileges.isEmpty());
   }

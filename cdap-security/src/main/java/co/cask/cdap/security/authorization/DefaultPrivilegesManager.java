@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,13 +19,10 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Role;
+import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
-import com.google.common.base.Predicate;
 import com.google.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
@@ -55,7 +52,10 @@ public class DefaultPrivilegesManager implements PrivilegesManager {
   @Override
   public void revoke(EntityId entity) throws Exception {
     delegateAuthorizer.revoke(entity);
-    // no need to invalidate. This is called only when the entity is deleted. As a result, even if cache is not
-    // invalidated, it should be ok because the entity will not exist.
+  }
+
+  @Override
+  public Set<Privilege> listPrivileges(Principal principal) throws Exception {
+    return delegateAuthorizer.listPrivileges(principal);
   }
 }
