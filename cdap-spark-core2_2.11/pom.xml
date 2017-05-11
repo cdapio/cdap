@@ -226,12 +226,77 @@
               </sources>
             </configuration>
           </execution>
+          <execution>
+            <id>add-test-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-test-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-test-sources/cdap-spark-core-base/src/test/java</source>
+                <source>${project.build.directory}/generated-test-sources/cdap-spark-core-base/src/test/scala</source>
+              </sources>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
     </plugins>
   </build>
 
   <profiles>
+    <profile>
+      <!-- This profile is just for Spark development in IDE, don't use it in normal Maven build -->
+      <id>spark2-dev</id>
+      <properties>
+        <spark.base.dir>${project.basedir}/../cdap-spark-core-base</spark.base.dir>
+      </properties>
+      <build>
+        <plugins>
+          <!-- Disable the copying of files from base -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <version>2.6</version>
+            <executions>
+              <execution>
+                <id>copy-base</id>
+                <phase>none</phase>
+              </execution>
+              <execution>
+                <id>copy-base-test</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+
+          <!-- Symlink the source from base -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.7</version>
+            <executions>
+              <execution>
+                <id>mkdir-symlink-dir</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <mkdir dir="${project.build.directory}/generated-sources/cdap-spark-core-base/src"/>
+                    <mkdir dir="${project.build.directory}/generated-test-sources/cdap-spark-core-base/src"/>
+                    <symlink link="${project.build.directory}/generated-sources/cdap-spark-core-base/src/main" resource="${spark.base.dir}/src/main" overwrite="true" />
+                    <symlink link="${project.build.directory}/generated-test-sources/cdap-spark-core-base/src/test" resource="${spark.base.dir}/src/test" overwrite="true" />
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
     <profile>
       <id>dist</id>
       <build>
