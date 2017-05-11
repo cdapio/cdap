@@ -17,7 +17,10 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.proto.id.ProgramId;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
@@ -38,6 +41,8 @@ import javax.annotation.Nullable;
 public class ProgramControllerServiceAdapter extends AbstractProgramController {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramControllerServiceAdapter.class);
+  private static final Logger PIPELINELOG = Loggers.mdcWrapper(LOG, Constants.Logging.EVENT_TYPE_TAG,
+                                                               Constants.Logging.PIPELINE_USER_LOG_TAG_VALUE);
 
   private final Service service;
   private final CountDownLatch serviceStoppedLatch;
@@ -91,6 +96,9 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
       @Override
       public void failed(Service.State from, Throwable failure) {
         LOG.error("Program terminated with exception", failure);
+        PIPELINELOG.error("Program = '{}' for Pipeline '{}' failed. Please check System logs for more details.",
+                          getProgramRunId().getProgram(), getProgramRunId().getApplication(),
+                          Throwables.getRootCause(failure));
         serviceStoppedLatch.countDown();
         error(failure);
       }
