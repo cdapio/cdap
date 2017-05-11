@@ -614,7 +614,8 @@ public class ArtifactStore {
           @Override
           public SortedMap<ArtifactDescriptor, PluginClass> call(DatasetContext context) throws Exception {
             Table metaTable = getMetaTable(context);
-            List<ArtifactDetail> parentArtifactDetails = getArtifacts(metaTable, parentArtifactRange, limit, null);
+            List<ArtifactDetail> parentArtifactDetails = getArtifacts(metaTable, parentArtifactRange,
+                                                                      Integer.MAX_VALUE, null);
 
             if (parentArtifactDetails.isEmpty()) {
               throw new ArtifactNotFoundException(parentArtifactRange.getNamespace(), parentArtifactRange.getName());
@@ -1085,9 +1086,6 @@ public class ArtifactStore {
     };
 
     for (Map.Entry<byte[], byte[]> column : columns.entrySet()) {
-      if (limit != Integer.MAX_VALUE && limit == plugins.size()) {
-        break;
-      }
       // column is the artifact namespace, name, and version. value is the serialized PluginData
       ArtifactColumn artifactColumn = ArtifactColumn.parse(column.getKey());
 
@@ -1105,6 +1103,9 @@ public class ArtifactStore {
                       pluginData.pluginClass);
           break;
         }
+      }
+      if (limit < plugins.size()) {
+        plugins.remove(plugins.lastKey());
       }
     }
   }
