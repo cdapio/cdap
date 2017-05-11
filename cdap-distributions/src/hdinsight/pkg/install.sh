@@ -22,9 +22,15 @@
 # The git branch to clone
 CDAP_BRANCH='release/4.1'
 # Optional tag to checkout - All released versions of this script should set this
+<<<<<<< HEAD
 CDAP_TAG='v4.1.0'
 # The CDAP package version passed to Chef
 CDAP_VERSION='4.2.0-1'
+=======
+CDAP_TAG='v4.1.1'
+# The CDAP package version passed to Chef
+CDAP_VERSION='4.1.1-2'
+>>>>>>> release/4.1
 # The version of Chef to install
 CHEF_VERSION='12.10.24'
 # cdap-site.xml configuration parameters

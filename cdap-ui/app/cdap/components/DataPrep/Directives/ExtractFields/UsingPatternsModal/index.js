@@ -67,7 +67,7 @@ export default class UsingPatternsModal extends Component {
       },
       {
         label: T.translate(`${PREFIX}.emailPattern`),
-        value: `((?:\\S+|".*?")+@[a-zA-Z0-9\\.-]+(?:\\.[a-zA-Z]{2,6})?)`,
+        value: `([a-zA-Z0-9!#$%&*+/=?^_\`'{|}~-]+@[a-zA-Z0-9\\.-]+(?:\\.[a-zA-Z]{2,6})?)`,
         patternName: 'email'
       },
       {
@@ -94,7 +94,7 @@ export default class UsingPatternsModal extends Component {
         label: T.translate(`${PREFIX}.ndigitnumberPattern`),
         value: null,
         patternName: 'ndigitnumber',
-        getRegex: (n) => `^(\\d{${n}})$`
+        getRegex: (n) => `(\\d{${n}})`
       },
       {
         label: T.translate(`${PREFIX}.phoneNumberPattern`),
@@ -124,7 +124,7 @@ export default class UsingPatternsModal extends Component {
       },
       {
         label: T.translate(`${PREFIX}.urlPattern`),
-        value: `((?:https?:\/\/)?[a-zA-Z0-9\\.-]+\\.[a-zA-Z]{2,6}(?:\/[\\w\\.-]+)*(?:\\?[\\w\\.&=\\-]+)?)`,
+        value: `((?:(?:http[s]?|ftp):\/)?\/?(?:[^\/\\s]+)(?:(?:\/\\w+)*\/)(?:[\\w\-\.]+[^#?\\s]+)(?:.*)?)`,
         patternName: 'url'
       },
       {

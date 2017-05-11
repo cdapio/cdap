@@ -24,6 +24,8 @@ import CutMenuItem from 'components/DataPrep/Directives/ExtractFields/UsingPosit
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+import {setPopoverOffset} from 'components/DataPrep/helper';
+import debounce from 'lodash/debounce';
 
 require('./ExtractFields.scss');
 export default class ExtractFields extends Component {
@@ -36,6 +38,21 @@ export default class ExtractFields extends Component {
     this.parseUsingDelimiters = this.parseUsingDelimiters.bind(this);
     this.preventPropagation = this.preventPropagation.bind(this);
     this.handleUsingDelimiters = this.handleUsingDelimiters.bind(this);
+  }
+
+  componentDidMount() {
+    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('extract-fields-directive'));
+    this.offsetCalcDebounce = debounce(this.calculateOffset, 1000);
+  }
+
+  componentDidUpdate() {
+    if (this.props.isOpen && this.calculateOffset) {
+      this.calculateOffset();
+    }
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.offsetCalcDebounce);
   }
 
   renderDetail() {
