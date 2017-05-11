@@ -28,6 +28,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -90,7 +91,7 @@ public class WebappProgramRunner implements ProgramRunner {
       LOG.info("Initializing Webapp for app {} with jar {}", program.getApplicationId(),
                program.getJarLocation().getName());
 
-      String serviceName = getServiceName(ProgramType.WEBAPP, program);
+      String serviceName = getServiceName(program.getId());
       Preconditions.checkNotNull(serviceName, "Cannot determine service name for program %s", program.getName());
       LOG.info("Got service name {}", serviceName);
 
@@ -133,9 +134,10 @@ public class WebappProgramRunner implements ProgramRunner {
     }
   }
 
-  public static String getServiceName(ProgramType type, Program program) throws Exception {
-    return String.format("%s.%s.%s.%s", type.name().toLowerCase(),
-                         program.getNamespaceId(), program.getApplicationId(), type.name().toLowerCase());
+  public static String getServiceName(ProgramId programId) {
+    return String.format("%s.%s.%s.%s", programId.getType().name().toLowerCase(),
+                         programId.getNamespace(), programId.getApplication(),
+                         programId.getType().name().toLowerCase());
   }
 
   private static final String DEFAULT_DIR_NAME_COLON = ServePathGenerator.DEFAULT_DIR_NAME + ":";

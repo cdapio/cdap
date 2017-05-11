@@ -32,10 +32,8 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.base.Throwables;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Futures;
@@ -74,14 +72,6 @@ public final class InMemoryConfigurator implements Configurator {
   private final ClassLoader artifactClassLoader;
   private final String appClassName;
   private final Id.Artifact artifactId;
-
-  public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
-                              String appClassName, ArtifactRepository artifactRepository,
-                              ClassLoader artifactClassLoader,
-                              @Nullable String applicationName, @Nullable String configString) {
-    this(cConf, appNamespace, artifactId, appClassName, artifactRepository, artifactClassLoader, applicationName,
-         ApplicationId.DEFAULT_VERSION, configString);
-  }
 
   public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
                               String appClassName, ArtifactRepository artifactRepository,
@@ -171,21 +161,21 @@ public final class InMemoryConfigurator implements Configurator {
 
           // If the missing class has "spark" in the name, try to see if Spark is available
           if (missingClass.startsWith("org.apache.spark.") || missingClass.startsWith("co.cask.cdap.api.spark.")) {
-            File sparkAssemblyJar;
+            // Try to load the SparkContext class, which should be available if Spark is available in the platform
             try {
-              sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
-            } catch (Exception e) {
+              artifactClassLoader.loadClass("org.apache.spark.SparkContext");
+            } catch (ClassNotFoundException e) {
               // Spark is not available, it is most likely caused by missing Spark in the platform
               throw new IllegalStateException(
                 "Missing Spark related class " + missingClass +
                   ". It may be caused by unavailability of Spark. " +
-                  "Please verify environment variable " + SparkUtils.SPARK_HOME + " is set correctly", t);
+                  "Please verify environment variable " + Constants.SPARK_HOME + " is set correctly", t);
             }
 
             // Spark is available, can be caused by incompatible Spark version
             throw new InvalidArtifactException(
               "Missing Spark related class " + missingClass +
-                ". Configured to use Spark assembly jar located at " + sparkAssemblyJar +
+                ". Configured to use Spark located at " + System.getenv(Constants.SPARK_HOME) +
                 ", which may be incompatible with the one required by the application", t);
 
           }

@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.batch.distributed;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileContext;
@@ -34,9 +33,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -56,7 +54,7 @@ public final class MapReduceContainerHelper {
    * @param result a list for appending MR framework classpath
    * @return the same {@code result} list from the argument
    */
-  public static List<String> addMapReduceClassPath(Configuration hConf, List<String> result) {
+  public static <T extends Collection<String>> T addMapReduceClassPath(Configuration hConf, T result) {
     String framework = hConf.get(MRJobConfig.MAPREDUCE_APPLICATION_FRAMEWORK_PATH);
 
     // For classpath config get from the hConf, we splits it with both "," and ":" because one can set
@@ -127,19 +125,19 @@ public final class MapReduceContainerHelper {
    * Sets the resources that need to be localized to program runner twill container that used as MapReduce client.
    *
    * @param hConf The hadoop configuration
-   * @param localizeResources the map to be updated with the localized resources.
-   * @return a list of extra classpaths need to be set for the program runner container.
+   * @param result the map to be updated with the localized resources.
+   * @return the result map
    */
-  public static List<String> localizeFramework(Configuration hConf, Map<String, LocalizeResource> localizeResources) {
+  public static <T extends Map<String, LocalizeResource>> T localizeFramework(Configuration hConf, T result) {
     try {
       URI frameworkURI = getFrameworkURI(hConf);
 
       // If MR Application framework is used, need to localize the framework file to Twill container
       if (frameworkURI != null) {
         URI uri = new URI(frameworkURI.getScheme(), frameworkURI.getAuthority(), frameworkURI.getPath(), null, null);
-        localizeResources.put(frameworkURI.getFragment(), new LocalizeResource(uri, true));
+        result.put(frameworkURI.getFragment(), new LocalizeResource(uri, true));
       }
-      return ImmutableList.copyOf(addMapReduceClassPath(hConf, new ArrayList<String>()));
+      return result;
     } catch (URISyntaxException e) {
       // Shouldn't happen since the frameworkURI is already parsed.
       throw Throwables.propagate(e);

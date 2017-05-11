@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.worker;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerSpecification;
@@ -30,7 +29,6 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.twill.api.RunId;
@@ -40,7 +38,6 @@ import org.apache.twill.api.RunId;
  */
 public class InMemoryWorkerRunner extends AbstractInMemoryProgramRunner {
 
-  private static final Gson GSON = new Gson();
   private final Provider<WorkerProgramRunner> workerProgramRunnerProvider;
 
   @Inject
@@ -64,13 +61,10 @@ public class InMemoryWorkerRunner extends AbstractInMemoryProgramRunner {
 
     String instances = options.getArguments().getOption(ProgramOptionConstants.INSTANCES,
                                                         String.valueOf(workerSpec.getInstances()));
-    String resourceString = options.getArguments().getOption(ProgramOptionConstants.RESOURCES, null);
-    Resources newResources = (resourceString != null) ? GSON.fromJson(resourceString, Resources.class) :
-      workerSpec.getResources();
 
     WorkerSpecification newWorkerSpec = new WorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
                                                                 workerSpec.getDescription(), workerSpec.getProperties(),
-                                                                workerSpec.getDatasets(), newResources,
+                                                                workerSpec.getDatasets(), workerSpec.getResources(),
                                                                 Integer.valueOf(instances));
 
     //RunId for worker

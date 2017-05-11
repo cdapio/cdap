@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.worker;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -42,7 +41,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
@@ -54,7 +52,6 @@ import org.apache.twill.internal.ServiceListenerAdapter;
  * A {@link ProgramRunner} that runs a {@link Worker}.
  */
 public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
-  private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
   private final MetricsCollectionService metricsCollectionService;
@@ -105,13 +102,10 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     Preconditions.checkArgument(workerSpec != null, "Missing Worker specification for %s", program.getId());
     String instances = options.getArguments().getOption(ProgramOptionConstants.INSTANCES,
                                                         String.valueOf(workerSpec.getInstances()));
-    String resourceString = options.getArguments().getOption(ProgramOptionConstants.RESOURCES, null);
-    Resources newResources = (resourceString != null) ? GSON.fromJson(resourceString, Resources.class) :
-      workerSpec.getResources();
 
     WorkerSpecification newWorkerSpec = new WorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
                                                                 workerSpec.getDescription(), workerSpec.getProperties(),
-                                                                workerSpec.getDatasets(), newResources,
+                                                                workerSpec.getDatasets(), workerSpec.getResources(),
                                                                 Integer.valueOf(instances));
 
     // Setup dataset framework context, if required

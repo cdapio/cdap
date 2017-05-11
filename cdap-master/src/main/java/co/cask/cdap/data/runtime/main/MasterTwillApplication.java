@@ -386,7 +386,8 @@ public class MasterTwillApplication implements TwillApplication {
 
     // Explore also depends on MR, hence adding MR jars to the classpath.
     // Depending on how the cluster is configured, we might need to localize the MR framework tgz as well.
-    extraClassPath.addAll(MapReduceContainerHelper.localizeFramework(hConf, localizeResources));
+    MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
+    MapReduceContainerHelper.addMapReduceClassPath(hConf, extraClassPath);
     LOG.trace("Jars in extra classpath after adding jars in explore classpath: {}", extraClassPath);
   }
 }

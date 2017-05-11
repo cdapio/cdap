@@ -46,7 +46,6 @@ import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
-import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.security.store.SecureStoreUtils;
@@ -522,7 +521,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * Tries to read the spark default config file and put those configurations into the given map.
    */
   private void setSparkDefaultConfigs(Map<String, String> configs) {
-    File confFile = SparkUtils.locateSparkDefaultsConfFile(System.getenv());
+    File confFile = SparkPackageUtils.locateSparkDefaultsConfFile(System.getenv());
     if (confFile == null) {
       return;
     }

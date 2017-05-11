@@ -27,32 +27,25 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Distributed ProgramRunner for Worker.
  */
-public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRunner {
-
-  private static final Logger LOG = LoggerFactory.getLogger(DistributedWorkerProgramRunner.class);
-  private static final Gson GSON = new Gson();
+public class DistributedWorkerProgramRunner extends DistributedProgramRunner {
 
   @Inject
   DistributedWorkerProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
@@ -64,17 +57,12 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
   @Override
   public ProgramController createProgramController(TwillController twillController,
                                                    ProgramDescriptor programDescriptor, RunId runId) {
-    return createProgramController(twillController, programDescriptor.getProgramId(), runId);
-  }
-
-  private ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
-    return new WorkerTwillProgramController(programId, twillController, runId).startListen();
+    return new WorkerTwillProgramController(programDescriptor.getProgramId(), twillController, runId).startListen();
   }
 
   @Override
-  protected ProgramController launch(Program program, ProgramOptions options,
-                                     Map<String, LocalizeResource> localizeResources,
-                                     File tempDir, ApplicationLauncher launcher) {
+  protected Map<String, ProgramTwillApplication.RunnableResource> getRunnables(Program program,
+                                                                               ProgramOptions programOptions) {
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
@@ -85,24 +73,17 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
     WorkerSpecification workerSpec = appSpec.getWorkers().get(program.getName());
     Preconditions.checkNotNull(workerSpec, "Missing WorkerSpecification for %s", program.getName());
 
-    String instances = options.getArguments().getOption(ProgramOptionConstants.INSTANCES,
+    String instances = programOptions.getArguments().getOption(ProgramOptionConstants.INSTANCES,
                                                         String.valueOf(workerSpec.getInstances()));
-    String resourceString = options.getArguments().getOption(ProgramOptionConstants.RESOURCES, null);
-    Resources newResources = (resourceString != null) ? GSON.fromJson(resourceString, Resources.class) :
-      workerSpec.getResources();
+    Resources resources = SystemArguments.getResources(programOptions.getUserArguments(),
+                                                       workerSpec.getResources());
 
-    WorkerSpecification newWorkerSpec = new WorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
-                                                                workerSpec.getDescription(), workerSpec.getProperties(),
-                                                                workerSpec.getDatasets(), newResources,
-                                                                Integer.valueOf(instances));
-
-    RunId runId = ProgramRunners.getRunId(options);
-    LOG.info("Launching distributed worker {}", program.getId().run(runId));
-
-    TwillController controller = launcher.launch(new WorkerTwillApplication(program, options.getUserArguments(),
-                                                                            newWorkerSpec,
-                                                                            localizeResources, eventHandler));
-    return createProgramController(controller, program.getId(), runId);
+    Map<String, ProgramTwillApplication.RunnableResource> runnables = new HashMap<>();
+    runnables.put(workerSpec.getName(),
+                  new ProgramTwillApplication.RunnableResource(
+                    new WorkerTwillRunnable(workerSpec.getName()),
+                    createResourceSpec(resources, Integer.parseInt(instances))));
+    return runnables;
   }
 
   @Override

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.program.Program;
@@ -25,9 +26,8 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
-import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
@@ -37,18 +37,14 @@ import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Distributed ProgramRunner for Service.
  */
-public class DistributedServiceProgramRunner extends AbstractDistributedProgramRunner {
-
-  private static final Logger LOG = LoggerFactory.getLogger(DistributedServiceProgramRunner.class);
+public class DistributedServiceProgramRunner extends DistributedProgramRunner {
 
   @Inject
   DistributedServiceProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
@@ -60,17 +56,14 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
   @Override
   public ProgramController createProgramController(TwillController twillController,
                                                    ProgramDescriptor programDescriptor, RunId runId) {
-    return createProgramController(twillController, programDescriptor.getProgramId(), runId);
-  }
-
-  private ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
-    return new ServiceTwillProgramController(programId, twillController, runId).startListen();
+    return new ServiceTwillProgramController(programDescriptor.getProgramId(), twillController, runId).startListen();
   }
 
   @Override
-  protected ProgramController launch(Program program, ProgramOptions options,
-                                     Map<String, LocalizeResource> localizeResources,
-                                     File tempDir, ApplicationLauncher launcher) {
+  protected Map<String, ProgramTwillApplication.RunnableResource> getRunnables(Program program,
+                                                                               ProgramOptions programOptions) {
+    Map<String, ProgramTwillApplication.RunnableResource> runnables = new HashMap<>();
+
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -79,17 +72,18 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == ProgramType.SERVICE, "Only SERVICE process type is supported.");
 
-    final ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
+    ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
     Preconditions.checkNotNull(serviceSpec, "Missing ServiceSpecification for %s", program.getName());
 
-    // Launch service runnables program runners
-    RunId runId = ProgramRunners.getRunId(options);
-    LOG.info("Launching distributed service: {}", program.getId().run(runId));
+    // Add a runnable for the service handler
+    Resources resources = SystemArguments.getResources(programOptions.getUserArguments(),
+                                                       serviceSpec.getResources());
+    runnables.put(serviceSpec.getName(), new ProgramTwillApplication.RunnableResource(
+      new ServiceTwillRunnable(serviceSpec.getName()),
+      createResourceSpec(resources, serviceSpec.getInstances())
+    ));
 
-    TwillController controller = launcher.launch(new ServiceTwillApplication(program, options.getUserArguments(),
-                                                                             serviceSpec,
-                                                                             localizeResources, eventHandler));
-    return createProgramController(controller, program.getId(), runId);
+    return runnables;
   }
 
   @Override

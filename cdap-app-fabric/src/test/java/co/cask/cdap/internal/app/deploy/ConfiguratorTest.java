@@ -104,7 +104,7 @@ public class ConfiguratorTest {
                                             new DefaultImpersonator(cConf, null)))) {
       Configurator configurator = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId,
                                                            WordCountApp.class.getName(), artifactRepo,
-                                                           artifactClassLoader, null, "");
+                                                           artifactClassLoader, null, null, "");
       // Extract response from the configurator.
       ListenableFuture<ConfigResponse> result = configurator.config();
       ConfigResponse response = result.get(10, TimeUnit.SECONDS);
@@ -138,7 +138,7 @@ public class ConfiguratorTest {
                                             new DefaultImpersonator(cConf, null)))) {
       Configurator configuratorWithConfig =
         new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
-                                 artifactRepo, artifactClassLoader, null, new Gson().toJson(config));
+                                 artifactRepo, artifactClassLoader, null, null, new Gson().toJson(config));
 
       ListenableFuture<ConfigResponse> result = configuratorWithConfig.config();
       ConfigResponse response = result.get(10, TimeUnit.SECONDS);
@@ -154,7 +154,7 @@ public class ConfiguratorTest {
 
       Configurator configuratorWithoutConfig = new InMemoryConfigurator(
         conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
-        artifactRepo, artifactClassLoader, null, null);
+        artifactRepo, artifactClassLoader, null, null, null);
       result = configuratorWithoutConfig.config();
       response = result.get(10, TimeUnit.SECONDS);
       Assert.assertNotNull(response);

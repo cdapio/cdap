@@ -16,15 +16,16 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
@@ -33,18 +34,14 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Distributed program runner for webapp.
  */
-public final class DistributedWebappProgramRunner extends AbstractDistributedProgramRunner {
-
-  private static final Logger LOG = LoggerFactory.getLogger(DistributedWebappProgramRunner.class);
+public final class DistributedWebappProgramRunner extends DistributedProgramRunner {
 
   @Inject
   DistributedWebappProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
@@ -56,18 +53,12 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
   @Override
   public ProgramController createProgramController(TwillController twillController,
                                                    ProgramDescriptor programDescriptor, RunId runId) {
-    return createProgramController(twillController, programDescriptor.getProgramId(), runId);
-  }
-
-  private ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
-    return new WebappTwillProgramController(programId, twillController, runId).startListen();
+    return new WebappTwillProgramController(programDescriptor.getProgramId(), twillController, runId).startListen();
   }
 
   @Override
-  protected ProgramController launch(Program program, ProgramOptions options,
-                                     Map<String, LocalizeResource> localizeResources,
-                                     File tempDir, ApplicationLauncher launcher) {
-    // Extract and verify parameters
+  protected Map<String, ProgramTwillApplication.RunnableResource> getRunnables(Program program,
+                                                                               ProgramOptions programOptions) {
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
@@ -75,10 +66,13 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == ProgramType.WEBAPP, "Only WEBAPP process type is supported.");
 
-    RunId runId = ProgramRunners.getRunId(options);
-    LOG.info("Launching distributed webapp: {}", program.getId().run(runId));
-    TwillController controller = launcher.launch(new WebappTwillApplication(program, options.getUserArguments(),
-                                                                            localizeResources, eventHandler));
-    return createProgramController(controller, program.getId(), runId);
+    Map<String, ProgramTwillApplication.RunnableResource> runnables = new HashMap<>();
+
+    String serviceName = WebappProgramRunner.getServiceName(program.getId());
+    Resources resources = SystemArguments.getResources(programOptions.getUserArguments().asMap(), null);
+
+    runnables.put(serviceName, new ProgramTwillApplication.RunnableResource(new WebappTwillRunnable(serviceName),
+                                                                            createResourceSpec(resources, 1)));
+    return runnables;
   }
 }

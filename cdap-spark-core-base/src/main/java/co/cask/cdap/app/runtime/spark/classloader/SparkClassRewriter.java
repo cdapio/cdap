@@ -18,9 +18,9 @@ package co.cask.cdap.app.runtime.spark.classloader;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.app.runtime.spark.SparkPackageUtils;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
 import co.cask.cdap.common.lang.ClassRewriter;
-import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.internal.asm.Classes;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -83,7 +83,7 @@ public class SparkClassRewriter implements ClassRewriter {
 
   // File name of the Spark conf directory as defined by the Spark framework
   // This is for the Hack to workaround CDAP-5019 (SPARK-13441)
-  private static final String LOCALIZED_CONF_DIR = SparkUtils.LOCALIZED_CONF_DIR;
+  private static final String LOCALIZED_CONF_DIR = SparkPackageUtils.LOCALIZED_CONF_DIR;
   private static final String LOCALIZED_CONF_DIR_ZIP = LOCALIZED_CONF_DIR + ".zip";
   // File entry name of the SparkConf properties file inside the Spark conf zip
   private static final String SPARK_CONF_FILE = "__spark_conf__.properties";
