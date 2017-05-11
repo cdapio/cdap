@@ -386,7 +386,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // Shutdown will still get executed, but the service will notify failure after that.
     // However, if it's the job is requested to stop (via triggerShutdown, meaning it's a user action), don't throw
     if (!stopRequested) {
-      Preconditions.checkState(job.isSuccessful(), "MapReduce execution failure: %s", job.getStatus());
+      Preconditions.checkState(job.isSuccessful(), "MapReduce JobId {} failed", job.getStatus().getJobID());
     }
   }
 
