@@ -19,8 +19,6 @@
       "hbase_home": "$(until $(which hbase &>/dev/null); do sleep 5; done; echo /usr/lib/hbase)",
       "hive_home": "$(until $(which hive &>/dev/null); do sleep 5; done; echo /usr/lib/hive)",
       "hive_conf_dir": "/etc/hive/conf",
-      "hive_classpath": "$(until $(which hive &>/dev/null); do sleep 5; done)${HIVE_CLASSPATH:-/etc/hive/conf:$(ls -1 /usr/lib/hive/lib/*.jar | tr '\\n' ':')$(if [[ -r /etc/hive/conf/hive-env.sh ]]; then source /etc/hive/conf/hive-env.sh ; fi ; if [[ -d ${HIVE_AUX_JARS_PATH} ]]; then ls -1 ${HIVE_AUX_JARS_PATH}/*.jar | tr '\\n' ':'; else echo ${HIVE_AUX_JARS_PATH} | tr ',' ':'; fi)$(ls -1 /usr/lib/hive/auxlib/*.jar 2>/dev/null | tr '\\n' ':')}",
-      "hive_exec_engine": "mr",
       "spark_home": "/usr/lib/spark",
       "tez_home": "/usr/lib/tez",
       "tez_conf_dir": "/etc/tez/conf",
