@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -62,7 +62,6 @@ public abstract class AbstractAuthorizer implements Authorizer {
 
   @Override
   public Predicate<EntityId> createFilter(final Principal principal) throws Exception {
-    System.out.println("Authorizer's create Filter");
     return new Predicate<EntityId>() {
       @Override
       public boolean apply(EntityId entityId) {

@@ -51,13 +51,12 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Remote implementation of the AuthorizationEnforcer. Contacts master for authorization enforcement and
- * then caches the results.
+ * then caches the results if caching is enabled.
  */
 public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteAuthorizationEnforcer.class);
 
-  private static final int minCacheSize = 12;
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
@@ -66,7 +65,6 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
   private final boolean cacheEnabled;
 
   private static LoadingCache<AuthorizationPrivilege, Boolean> authPolicyCache;
-
 
   @Inject
   public RemoteAuthorizationEnforcer(CConfiguration cConf, final DiscoveryServiceClient discoveryClient) {
@@ -78,13 +76,13 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
     int cacheMaxEntries = cConf.getInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES);
 
     authPolicyCache = CacheBuilder.newBuilder()
-      .initialCapacity(minCacheSize)
       .expireAfterWrite(cacheTtlSecs, TimeUnit.SECONDS)
       .maximumSize(cacheMaxEntries)
       .build(new CacheLoader<AuthorizationPrivilege, Boolean>() {
         @SuppressWarnings("NullableProblems")
         @Override
         public Boolean load(AuthorizationPrivilege authorizationPrivilege) throws Exception {
+          LOG.trace("Cache miss for " + authorizationPrivilege);
           return doEnforce(authorizationPrivilege);
         }
       });
@@ -101,18 +99,6 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
     if (!allowed) {
       throw new UnauthorizedException(principal, action, entity);
     }
-  }
-
-  @VisibleForTesting
-  @SuppressWarnings("unchecked")
-  void setCache(CacheBuilder builder) {
-    authPolicyCache = builder.build(new CacheLoader<AuthorizationPrivilege, Boolean>() {
-      @SuppressWarnings("NullableProblems")
-      @Override
-      public Boolean load(AuthorizationPrivilege authorizationPrivilege) throws Exception {
-        return doEnforce(authorizationPrivilege);
-      }
-    });
   }
 
   private boolean doEnforce(AuthorizationPrivilege authorizationPrivilege) throws IOException {
@@ -150,7 +136,7 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
 
   /**
    * Key for caching Privileges on containers. This represents a specific privilege on which authorization can be
-   * enforced. The cache stores whether the enforce succeeded of failed.
+   * enforced. The cache stores whether the enforce succeeded or failed.
    */
   public static class AuthorizationPrivilege {
 
@@ -193,6 +179,15 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
     @Override
     public int hashCode() {
       return Objects.hash(principal, entityId, action);
+    }
+
+    @Override
+    public String toString() {
+      return "AuthorizationPrivilege{" +
+        "principal=" + principal +
+        ", entityId=" + entityId +
+        ", action=" + action +
+        '}';
     }
   }
 }

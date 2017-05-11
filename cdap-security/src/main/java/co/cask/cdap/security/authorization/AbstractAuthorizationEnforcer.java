@@ -24,13 +24,12 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- *
+ * Abstract Class that implements common methods for the {@link AuthorizationEnforcer} interface.
  */
 public abstract class AbstractAuthorizationEnforcer implements AuthorizationEnforcer {
 
