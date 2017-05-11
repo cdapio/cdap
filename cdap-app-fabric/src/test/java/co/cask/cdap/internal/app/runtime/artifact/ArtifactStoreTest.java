@@ -734,14 +734,17 @@ public class ArtifactStoreTest {
       artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A", "p1", null, Integer.MAX_VALUE,
                                      ArtifactSortOrder.UNORDERED);
     Assert.assertEquals(expectedMap, actualMap);
+
     // test get limited number
     actualMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A", "p1", null, 1,
                                                ArtifactSortOrder.UNORDERED);
     Assert.assertEquals(ImmutableMap.of(artifactXv100Info, pluginA1), actualMap);
+
     // test get DESC order
     actualMap = new TreeMap<>(artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A", "p1", null,
                                                              Integer.MAX_VALUE, ArtifactSortOrder.DESC));
     Assert.assertEquals(expectedMap, new TreeMap<>(actualMap).descendingMap());
+
     // test Predicate
     Predicate<ArtifactId> predicate = new Predicate<ArtifactId>() {
       @Override
@@ -756,9 +759,19 @@ public class ArtifactStoreTest {
     };
     expectedMap = Maps.newHashMap();
     expectedMap.put(artifactXv100Info, pluginA1);
-    actualMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A", "p1", predicate
-      , Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
+    actualMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A", "p1", predicate,
+                                               Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
     Assert.assertEquals(expectedMap, actualMap);
+
+    // test limit and order combined
+    actualMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A", "p1", null,
+                                               1, ArtifactSortOrder.DESC);
+    Assert.assertEquals(ImmutableMap.of(artifactZv200Info, pluginA1), actualMap);
+
+    // test limit, order, predicate combined
+    actualMap = artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentArtifactId, "A", "p1", predicate,
+                                               1, ArtifactSortOrder.DESC);
+    Assert.assertEquals(ImmutableMap.of(artifactXv100Info, pluginA1), actualMap);
 
     // get all of type A and name p2
     expectedMap = Maps.newHashMap();
