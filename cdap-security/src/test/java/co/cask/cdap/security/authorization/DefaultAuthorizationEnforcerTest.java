@@ -29,6 +29,7 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -77,19 +78,6 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
   }
 
   @Test
-  public void testCachingDisabled() throws Exception {
-    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
-    cConfCopy.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
-    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy,
- AUTH_CONTEXT_FACTORY)) {
-      DefaultAuthorizationEnforcer authEnforcementService =
-        new DefaultAuthorizationEnforcer(cConfCopy, authorizerInstantiator);
-      authorizerInstantiator.get().grant(NS, ALICE, ImmutableSet.of(Action.ADMIN));
-      authEnforcementService.enforce(NS, ALICE, Action.ADMIN);
-    }
-  }
-
-  @Test
   public void testPropagationDisabled() throws Exception {
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.setBoolean(Constants.Security.Authorization.PROPAGATE_PRIVILEGES, false);
@@ -103,13 +91,28 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
         authorizationEnforcer.enforce(APP, ALICE, Action.ADMIN);
         Assert.fail("Alice should not have ADMIN privilege on the APP.");
       } catch (Exception ignored) {
-
+        // expected
       }
     }
   }
 
   @Test
-  public void testAuthCacheEnforce() throws Exception {
+  public void testPropagationEnabled() throws Exception {
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
+    cConfCopy.setBoolean(Constants.Security.Authorization.PROPAGATE_PRIVILEGES, true);
+    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy,
+                                                                                    AUTH_CONTEXT_FACTORY)) {
+      DefaultAuthorizationEnforcer authorizationEnforcer =
+        new DefaultAuthorizationEnforcer(cConfCopy, authorizerInstantiator);
+      authorizerInstantiator.get().grant(NS, ALICE, ImmutableSet.of(Action.ADMIN));
+      authorizationEnforcer.enforce(NS, ALICE, Action.ADMIN);
+      // Since propagation is enabled, Alice should have privileges on APP too.
+      authorizationEnforcer.enforce(APP, ALICE, Action.ADMIN);
+    }
+  }
+
+  @Test
+  public void testAuthEnforce() throws Exception {
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       Authorizer authorizer = authorizerInstantiator.get();
       DefaultAuthorizationEnforcer authEnforcementService =
@@ -129,7 +132,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       authEnforcementService.enforce(ds, ALICE, Action.READ);
       authEnforcementService.enforce(ds, ALICE, Action.WRITE);
 
-      // Alice don't have Admin right on NS, hence should fail.
+      // Alice doesn't have Admin right on NS, hence should fail.
       assertAuthorizationFailure(authEnforcementService, NS, ALICE, Action.ADMIN);
       // also, even though bob's privileges were never updated, auth enforcement for bob should not fail,
       // because the LoadingCache should make a blocking call to retrieve his privileges
@@ -144,7 +147,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
   }
 
   @Test
-  public void testAuthCacheFilter() throws Exception {
+  public void testAuthFilter() throws Exception {
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       Authorizer authorizer = authorizerInstantiator.get();
       NamespaceId ns1 = new NamespaceId("ns1");
@@ -218,7 +221,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       DefaultAuthorizationEnforcer authEnforcementService =
         new DefaultAuthorizationEnforcer(cConf, authorizerInstantiator);
       DatasetId ds = NS.dataset("ds");
-      // despite the cache being empty, any enforcement operations should succeed, since authorization is disabled
+      // All enforcement operations should succeed, since authorization is disabled
       authEnforcementService.enforce(NS, ALICE, Action.ADMIN);
       authEnforcementService.enforce(ds, BOB, Action.ADMIN);
       Predicate<EntityId> filter = authEnforcementService.createFilter(BOB);

@@ -30,11 +30,9 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.authorization.RemoteAuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Preconditions;
@@ -119,13 +117,7 @@ public class RemotePrivilegesTest {
     authorizationEnforcer.enforce(NS, ALICE, EnumSet.allOf(Action.class));
     authorizationEnforcer.enforce(APP, ALICE, Action.ADMIN);
     authorizationEnforcer.enforce(PROGRAM, ALICE, Action.EXECUTE);
-
-    try {
-      authorizationEnforcer.enforce(APP, ALICE, EnumSet.allOf(Action.class));
-      Assert.fail("Expected alice to not have all privileges on the app");
-    } catch (UnauthorizedException e) {
-      // expected
-    }
+    authorizationEnforcer.enforce(APP, ALICE, EnumSet.allOf(Action.class));
     privilegesManager.revoke(PROGRAM);
     privilegesManager.revoke(APP, ALICE, EnumSet.allOf(Action.class));
     privilegesManager.revoke(NS, ALICE, EnumSet.allOf(Action.class));
