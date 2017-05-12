@@ -15,23 +15,19 @@
  */
 
 import React, { Component } from 'react';
-import {Popover, PopoverContent} from 'reactstrap';
+import UncontrolledPopover from 'components/UncontrolledComponents/Popover';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import MyDataPrepApi from 'api/dataprep';
 import shortid from 'shortid';
-import classnames from 'classnames';
 import ColumnsTabRow from 'components/DataPrep/DataPrepSidePanel/ColumnsTab/ColumnsTabRow';
 import ColumnsTabDetail from 'components/DataPrep/DataPrepSidePanel/ColumnsTab/ColumnsTabDetail';
 import {objectQuery} from 'services/helpers';
 import NamespaceStore from 'services/NamespaceStore';
 import isEqual from 'lodash/isEqual';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
-import Mousetrap from 'mousetrap';
-import {isDescendant} from 'services/helpers';
 import findIndex from 'lodash/findIndex';
 import difference from 'lodash/difference';
-import Rx from 'rx';
 import T from 'i18n-react';
 
 const PREFIX = 'features.DataPrep.SidePanel.ColumnsTab';
@@ -48,13 +44,12 @@ export default class ColumnsTab extends Component {
       loading: true,
       error: null,
       searchText: '',
-      dropdownOpen: false,
       detailRows: []
     };
 
     this.handleChangeSearch = this.handleChangeSearch.bind(this);
     this.clearSearch = this.clearSearch.bind(this);
-    this.toggleDropdown = this.toggleDropdown.bind(this);
+    this.renderDropdown = this.renderDropdown.bind(this);
     this.clearAllColumns = this.clearAllColumns.bind(this);
     this.selectAllColumns = this.selectAllColumns.bind(this);
     this.setSelect = this.setSelect.bind(this);
@@ -83,34 +78,6 @@ export default class ColumnsTab extends Component {
     this.sub();
   }
 
-  toggleDropdown() {
-    let newState = !this.state.dropdownOpen;
-    this.setState({
-      dropdownOpen: newState
-    });
-
-    if (newState) {
-      let element = document.getElementById('app-container');
-      if (this.singleWorkspaceMode) {
-        element = document.getElementsByClassName('wrangler-modal')[0];
-      }
-      this.documentClick$ = Rx.Observable.fromEvent(element, 'click')
-      .subscribe((e) => {
-        if (isDescendant(this.popover, e.target) || !this.state.dropdownOpen) {
-          return;
-        }
-
-        this.toggleDropdown();
-      });
-      Mousetrap.bind('esc', this.toggleDropdown);
-    } else {
-      if (this.documentClick$) {
-        this.documentClick$.dispose();
-      }
-      Mousetrap.unbind('esc');
-    }
-  }
-
   clearAllColumns() {
     DataPrepStore.dispatch({
       type: DataPrepActions.setSelectedHeaders,
@@ -118,7 +85,6 @@ export default class ColumnsTab extends Component {
         selectedHeaders: []
       }
     });
-    this.toggleDropdown();
   }
 
   selectAllColumns() {
@@ -128,7 +94,6 @@ export default class ColumnsTab extends Component {
         selectedHeaders: DataPrepStore.getState().dataprep.headers
       }
     });
-    this.toggleDropdown();
   }
 
   setSelect(columnName, selectStatus) {
@@ -204,30 +169,29 @@ export default class ColumnsTab extends Component {
       targetAttachment: 'bottom right',
       targetOffset: '-5px 5px'
     };
+    let element = document.getElementById('app-container');
+    if (this.singleWorkspaceMode) {
+      element = document.getElementsByClassName('wrangler-modal')[0];
+    }
 
     return (
-      <Popover
-        placement="bottom right"
-        isOpen={this.state.dropdownOpen}
-        target="toggle-all-dropdown"
-        className="dataprep-toggle-all-dropdown"
-        tether={tetherOption}
+      <UncontrolledPopover
+        tetherOption={tetherOption}
+        documentElement={element}
       >
-        <PopoverContent>
-          <div
-            className="toggle-all-option"
-            onClick={this.clearAllColumns}
-          >
-            {T.translate(`${PREFIX}.toggle.clearAll`)}
-          </div>
-          <div
-            className="toggle-all-option"
-            onClick={this.selectAllColumns}
-          >
-            {T.translate(`${PREFIX}.toggle.selectAll`)}
-          </div>
-        </PopoverContent>
-      </Popover>
+        <div
+          className="toggle-all-option"
+          onClick={this.clearAllColumns}
+        >
+          {T.translate(`${PREFIX}.toggle.clearAll`)}
+        </div>
+        <div
+          className="toggle-all-option"
+          onClick={this.selectAllColumns}
+        >
+          {T.translate(`${PREFIX}.toggle.selectAll`)}
+        </div>
+      </UncontrolledPopover>
     );
   }
 
@@ -287,7 +251,6 @@ export default class ColumnsTab extends Component {
     return (
       <div className="columns-tab">
         <div className="columns-tab-heading">
-          { this.renderDropdown() }
           <span className="search-box">
             <input
               type="text"
@@ -315,14 +278,7 @@ export default class ColumnsTab extends Component {
             <thead>
               <tr>
                 <th>
-                  <span
-                    className={classnames('fa fa-caret-square-o-down', {
-                      'expanded': this.state.dropdownOpen
-                    })}
-                    id="toggle-all-dropdown"
-                    onClick={this.toggleDropdown}
-                    ref={(ref) => this.popover = ref}
-                  />
+                  { this.renderDropdown() }
                 </th>
                 <th>
                   #
