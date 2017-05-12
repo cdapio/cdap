@@ -22,12 +22,15 @@ import MyDataPrepApi from 'api/dataprep';
 import shortid from 'shortid';
 import classnames from 'classnames';
 import ColumnsTabRow from 'components/DataPrep/DataPrepSidePanel/ColumnsTab/ColumnsTabRow';
+import ColumnsTabDetail from 'components/DataPrep/DataPrepSidePanel/ColumnsTab/ColumnsTabDetail';
 import {objectQuery} from 'services/helpers';
 import NamespaceStore from 'services/NamespaceStore';
 import isEqual from 'lodash/isEqual';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import Mousetrap from 'mousetrap';
 import {isDescendant} from 'services/helpers';
+import findIndex from 'lodash/findIndex';
+import difference from 'lodash/difference';
 import Rx from 'rx';
 import T from 'i18n-react';
 
@@ -45,7 +48,8 @@ export default class ColumnsTab extends Component {
       loading: true,
       error: null,
       searchText: '',
-      dropdownOpen: false
+      dropdownOpen: false,
+      detailRows: []
     };
 
     this.handleChangeSearch = this.handleChangeSearch.bind(this);
@@ -57,12 +61,19 @@ export default class ColumnsTab extends Component {
 
     this.sub = DataPrepStore.subscribe(() => {
       let newState = DataPrepStore.getState().dataprep;
+      let headers = newState.headers;
+      let stateHeaders = this.state.headers.map(head => head.name);
       if (!isEqual(this.state.selectedHeaders, newState.selectedHeaders)) {
         this.setState({
           selectedHeaders: newState.selectedHeaders
         });
       }
-      this.getSummary();
+      if (difference(stateHeaders, headers).length) {
+        this.setState({
+          loading: true
+        });
+        this.getSummary();
+      }
     });
 
     this.getSummary();
@@ -220,6 +231,32 @@ export default class ColumnsTab extends Component {
     );
   }
 
+  showDetail(rowId) {
+    let index = findIndex(this.state.headers, (header => header.uniqueId === rowId));
+    let match = this.state.headers[index];
+    let modifiedHeaders = this.state.headers.slice(0);
+    if (match.expanded) {
+      match.expanded = false;
+      modifiedHeaders = [
+        ...modifiedHeaders.slice(0, index + 1),
+        ...modifiedHeaders.slice(index + 2)
+      ];
+    } else {
+      match.expanded = true;
+      modifiedHeaders = [
+        ...modifiedHeaders.slice(0, index + 1),
+        Object.assign({}, modifiedHeaders[index], {
+          isDetail: true,
+          uniqueId: shortid.generate()
+        }),
+        ...modifiedHeaders.slice(index + 1)
+      ];
+    }
+    this.setState({
+      headers: modifiedHeaders
+    });
+  }
+
   render() {
     if (this.state.loading) {
       return (
@@ -229,7 +266,14 @@ export default class ColumnsTab extends Component {
       );
     }
 
-    let displayHeaders = this.state.headers;
+    let index = -1;
+    let displayHeaders = this.state.headers.map(header => {
+      if (!header.isDetail) {
+        index += 1;
+        return Object.assign({}, header, {index});
+      }
+      return header;
+    });
 
     if (this.state.searchText.length > 0) {
       displayHeaders = displayHeaders.filter((head) => {
@@ -243,14 +287,6 @@ export default class ColumnsTab extends Component {
     return (
       <div className="columns-tab">
         <div className="columns-tab-heading">
-          <span
-            className={classnames('fa fa-caret-square-o-down', {
-              'expanded': this.state.dropdownOpen
-            })}
-            id="toggle-all-dropdown"
-            onClick={this.toggleDropdown}
-            ref={(ref) => this.popover = ref}
-          />
           { this.renderDropdown() }
           <span className="search-box">
             <input
@@ -275,20 +311,56 @@ export default class ColumnsTab extends Component {
           </span>
         </div>
         <div className="columns-list">
-          {
-            displayHeaders.map((head, index) => {
-              return (
-                <ColumnsTabRow
-                  rowInfo={this.state.columns[head.name]}
-                  columnName={head.name}
-                  index={index}
-                  key={head.uniqueId}
-                  selected={this.state.selectedHeaders.indexOf(head.name) !== -1}
-                  setSelect={this.setSelect}
-                />
-              );
-            })
-          }
+          <table className="table table-sm table-responsive table-hover">
+            <thead>
+              <tr>
+                <th>
+                  <span
+                    className={classnames('fa fa-caret-square-o-down', {
+                      'expanded': this.state.dropdownOpen
+                    })}
+                    id="toggle-all-dropdown"
+                    onClick={this.toggleDropdown}
+                    ref={(ref) => this.popover = ref}
+                  />
+                </th>
+                <th>
+                  #
+                </th>
+                <th>
+                  Name
+                </th>
+                <th>
+                  Completion
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                displayHeaders.map((head) => {
+                  if (head.isDetail) {
+                    return (
+                      <ColumnsTabDetail
+                        key={head.uniqueId}
+                        columnInfo={this.state.columns[head.name]}
+                      />
+                    );
+                  }
+                  return (
+                    <ColumnsTabRow
+                      rowInfo={this.state.columns[head.name]}
+                      onShowDetails={this.showDetail.bind(this, head.uniqueId)}
+                      columnName={head.name}
+                      index={head.index}
+                      key={head.uniqueId}
+                      selected={this.state.selectedHeaders.indexOf(head.name) !== -1}
+                      setSelect={this.setSelect}
+                    />
+                  );
+                })
+              }
+            </tbody>
+          </table>
         </div>
       </div>
     );
