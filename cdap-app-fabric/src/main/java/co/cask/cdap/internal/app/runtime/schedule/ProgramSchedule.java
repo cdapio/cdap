@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.schedule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.base.Objects;
 
 import java.util.List;
@@ -28,28 +29,26 @@ import java.util.Map;
  * A schedule for a program.
  */
 public class ProgramSchedule {
-  private final String name;
   private final String description;
-
   private final ProgramId programId;
+  private final ScheduleId scheduleId;
   private final Map<String, String> properties;
-
   private final Trigger trigger;
   private final List<Constraint> constraints;
 
   public ProgramSchedule(String name, String description,
                          ProgramId programId, Map<String, String> properties,
                          Trigger trigger, List<Constraint> constraints) {
-    this.name = name;
     this.description = description;
     this.programId = programId;
+    this.scheduleId = programId.getParent().schedule(name);
     this.properties = properties;
     this.trigger = trigger;
     this.constraints = constraints;
   }
 
   public String getName() {
-    return name;
+    return scheduleId.getSchedule();
   }
 
   public String getDescription() {
@@ -72,6 +71,10 @@ public class ProgramSchedule {
     return constraints;
   }
 
+  public ScheduleId getScheduleId() {
+    return scheduleId;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -80,26 +83,27 @@ public class ProgramSchedule {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ProgramSchedule schedule = (ProgramSchedule) o;
-    return Objects.equal(name, schedule.name) &&
-      Objects.equal(description, schedule.description) &&
-      Objects.equal(programId, schedule.programId) &&
-      Objects.equal(properties, schedule.properties) &&
-      Objects.equal(trigger, schedule.trigger) &&
-      Objects.equal(constraints, schedule.constraints);
+    ProgramSchedule that = (ProgramSchedule) o;
+
+    return Objects.equal(this.scheduleId, that.scheduleId) &&
+      Objects.equal(this.programId, that.programId) &&
+      Objects.equal(this.description, that.description) &&
+      Objects.equal(this.properties, that.properties) &&
+      Objects.equal(this.trigger, that.trigger) &&
+      Objects.equal(this.constraints, that.constraints);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, description, programId, properties, trigger, constraints);
+    return Objects.hashCode(scheduleId, programId, description, properties, trigger, constraints);
   }
 
   @Override
   public String toString() {
     return "ProgramSchedule{" +
-      "name='" + name + '\'' +
-      ", description='" + description + '\'' +
+      "scheduleId=" + scheduleId +
       ", programId=" + programId +
+      ", description='" + description + '\'' +
       ", properties=" + properties +
       ", trigger=" + trigger +
       ", constraints=" + constraints +
