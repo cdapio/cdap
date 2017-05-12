@@ -25,6 +25,7 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.plugin.EndpointPluginContext;

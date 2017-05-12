@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.artifact.ArtifactInfo;
+import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.messaging.MessagingAdmin;
 import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
@@ -191,12 +192,13 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
   }
 
   @Override
-  public List<ArtifactInfo> listArtifacts() {
+  public List<ArtifactInfo> listArtifacts() throws IOException {
     return defaultArtifactManager.listArtifacts(namespaceId);
   }
 
   @Override
-  public ClassLoader createClassLoader(ArtifactInfo artifactInfo, @Nullable ClassLoader parentClassLoader) {
-    return defaultArtifactManager.createClassLoader(artifactInfo, parentClassLoader);
+  public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
+                                                @Nullable ClassLoader parentClassLoader) throws Exception {
+    return defaultArtifactManager.createClassLoader(namespaceId.getNamespace(), artifactInfo, parentClassLoader);
   }
 }

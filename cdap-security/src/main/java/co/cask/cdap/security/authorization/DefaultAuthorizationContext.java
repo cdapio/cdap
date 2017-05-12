@@ -19,8 +19,8 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactInfo;
+import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
@@ -42,7 +42,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -206,12 +205,13 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   }
 
   @Override
-  public List<ArtifactInfo> listArtifacts() {
+  public List<ArtifactInfo> listArtifacts() throws IOException {
     return delegateAdmin.listArtifacts();
   }
 
   @Override
-  public ClassLoader createClassLoader(ArtifactInfo artifactInfo, @Nullable ClassLoader parentClassLoader) {
+  public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
+                                                @Nullable ClassLoader parentClassLoader) throws Exception {
     return delegateAdmin.createClassLoader(artifactInfo, parentClassLoader);
   }
 }

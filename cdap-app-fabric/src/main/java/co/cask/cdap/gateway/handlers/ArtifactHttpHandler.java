@@ -801,7 +801,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         try {
           range = ArtifactRange.parse(parent);
           // only support extending an artifact that is in the same namespace, or system namespace
-          if (!NamespaceId.SYSTEM.equals(range.getNamespace()) && !namespace.equals(range.getNamespace())) {
+          if (!NamespaceId.SYSTEM.getNamespace().equals(range.getNamespace()) &&
+            !namespace.getNamespace().equals(range.getNamespace())) {
             throw new BadRequestException(
               String.format("Parent artifact %s must be in the same namespace or a system artifact.", parent));
           }

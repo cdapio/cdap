@@ -25,6 +25,7 @@ import co.cask.cdap.api.artifact.ArtifactInfo;
 import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactSummary;
+import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
