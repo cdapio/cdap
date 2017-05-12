@@ -54,7 +54,7 @@ export default class Bulkset extends Component {
     execute([directive], null, true)
       .subscribe(
         () => {
-          setTimeout(this.props.onClose, 5000);
+          this.props.onClose();
         },
         (err) => {
           this.setState({

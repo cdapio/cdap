@@ -22,7 +22,7 @@ import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import Bulkset from 'components/DataPrep/Directives/ColumnActions/Bulkset';
-
+import T from 'i18n-react';
 require('./ColumnActions.scss');
 
 export default class ColumnActions extends Component {
@@ -95,7 +95,7 @@ export default class ColumnActions extends Component {
           className="collapsed-dropdown-toggle"
         >
           <DropdownToggle>
-            <span>Column Actions</span>
+            <span>{T.translate('features.DataPrep.Directives.ColumnActions.label')}</span>
             <IconSVG name="icon-chevron-down" />
           </DropdownToggle>
           <DropdownMenu>

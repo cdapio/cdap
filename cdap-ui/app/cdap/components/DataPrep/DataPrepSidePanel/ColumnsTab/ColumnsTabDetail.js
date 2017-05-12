@@ -15,7 +15,9 @@
 */
 
 import React, {PropTypes} from 'react';
+import T from 'i18n-react';
 
+const PREFIX = 'features.DataPrep.DataPrepSidePanel.ColumnsTab.ColumnDetail';
 export default function ColumnsTabDetail({columnInfo}) {
   let {types} = columnInfo;
   if (!types) { return null; }
@@ -26,8 +28,8 @@ export default function ColumnsTabDetail({columnInfo}) {
         <table className="table">
           <thead>
             <tr>
-              <th>Inferred Type</th>
-              <th>% Chance</th>
+              <th>{T.translate(`${PREFIX}.Header.inferredType`)}</th>
+              <th>{T.translate(`${PREFIX}.Header.percentageChange`)}</th>
             </tr>
           </thead>
 

@@ -30,7 +30,7 @@ import findIndex from 'lodash/findIndex';
 import difference from 'lodash/difference';
 import T from 'i18n-react';
 import ColumnActions from 'components/DataPrep/Directives/ColumnActions';
-const PREFIX = 'features.DataPrep.SidePanel.ColumnsTab';
+const PREFIX = 'features.DataPrep.DataPrepSidePanel.ColumnsTab';
 
 require('./ColumnsTab.scss');
 
@@ -287,10 +287,10 @@ export default class ColumnsTab extends Component {
                   #
                 </th>
                 <th>
-                  Name
+                  {T.translate(`${PREFIX}.Header.name`)}
                 </th>
                 <th>
-                  Completion
+                  {T.translate(`${PREFIX}.Header.completion`)}
                 </th>
               </tr>
             </thead>

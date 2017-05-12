@@ -333,12 +333,32 @@ features:
       welcomeMessage2: User Experience
     Title: CDAP | Overview
   DataPrep:
+    DataPrepSidePanel:
+      columnsTabLabel: Columns ({columnsCount})
+      ColumnsTab:
+        ColumnDetail:
+          Header:
+            inferredType: Inferred Type
+            percentageChange: "% Chance"
+        Header:
+          completion: Completion
+          name: Name
+        searchPlaceholder: Search
+        toggle:
+          clearAll: Clear All
+          selectAll: Select All
+      directivesTabLabel: Directives ({directivesCount})
+      DirectivesTab:
+        label: Directives
+      noDirectives: No Directives
+      noColumns: No Columns
     DataPrepTable:
       columnEditWarningMessage: 'A column with the same name already exists. Pick a new name, or click "Apply" to overwrite'
     Directives:
       apply: Apply
       cancel: Cancel
       ColumnActions:
+        label: Column Actions
         Bulkset:
           modalTitle: Bulk set column names
           setBtnLabel: Set Columns
@@ -538,12 +558,6 @@ features:
       Swap:
         title: Swap Two Column Names
     pageTitle: CDAP | Data Preparation
-    SidePanel:
-      ColumnsTab:
-        toggle:
-          clearAll: Clear All
-          selectAll: Select All
-        searchPlaceholder: search
     TopPanel:
       applyBtnLabel: Apply
       addToPipelineBtnLabel: Add to Pipeline
