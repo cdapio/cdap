@@ -234,7 +234,7 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
     try {
       return DatasetsUtil.getOrCreateDataset(
         datasetFramework, lineageDatasetId, LineageDataset.class.getName(),
-        DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
+        DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

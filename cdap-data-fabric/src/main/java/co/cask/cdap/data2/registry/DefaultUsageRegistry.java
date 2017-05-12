@@ -70,7 +70,7 @@ public class DefaultUsageRegistry implements UsageRegistry {
     try {
       return DatasetsUtil.getOrCreateDataset(
         datasetFramework, USAGE_INSTANCE_ID, UsageDataset.class.getSimpleName(),
-        DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
+        DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

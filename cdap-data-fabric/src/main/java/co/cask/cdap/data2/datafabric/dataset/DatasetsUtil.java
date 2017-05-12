@@ -42,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.annotation.Nullable;
@@ -64,11 +65,12 @@ public final class DatasetsUtil {
   public static <T extends Dataset> T getOrCreateDataset(DatasetFramework datasetFramework,
                                                          DatasetId datasetInstanceId, String typeName,
                                                          DatasetProperties props,
-                                                         Map<String, String> arguments,
-                                                         ClassLoader cl)
+                                                         @Nullable Map<String, String> arguments)
     throws DatasetManagementException, IOException {
-
     createIfNotExists(datasetFramework, datasetInstanceId, typeName, props);
+    if (arguments == null) {
+      arguments = Collections.emptyMap();
+    }
     return datasetFramework.getDataset(datasetInstanceId, arguments, null);
   }
 

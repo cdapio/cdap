@@ -415,7 +415,7 @@ public class MetricsDataMigrator {
     DatasetId metricsDatasetInstanceId = NamespaceId.DEFAULT.dataset(tableName);
     try {
       table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
-                                              MetricsTable.class.getName(), empty, null, null);
+                                              MetricsTable.class.getName(), empty, null);
     } catch (DatasetManagementException | ServiceUnavailableException e) {
       String msg = String.format("Cannot access or create table %s.", tableName) + " " + e.getMessage();
       LOG.warn(msg);

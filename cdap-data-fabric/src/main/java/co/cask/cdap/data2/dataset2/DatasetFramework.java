@@ -310,7 +310,7 @@ public interface DatasetFramework {
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   @Nullable
-  <T extends Dataset> T getDataset(DatasetId datasetInstanceId, @Nullable Map<String, String> arguments,
+  <T extends Dataset> T getDataset(DatasetId datasetInstanceId, Map<String, String> arguments,
                                    @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException;
 
@@ -331,7 +331,7 @@ public interface DatasetFramework {
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   @Nullable
-  <T extends Dataset> T getDataset(DatasetId datasetInstanceId, @Nullable Map<String, String> arguments,
+  <T extends Dataset> T getDataset(DatasetId datasetInstanceId, Map<String, String> arguments,
                                    @Nullable ClassLoader classLoader,
                                    DatasetClassLoaderProvider classLoaderProvider,
                                    @Nullable Iterable<? extends EntityId> owners,

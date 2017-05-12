@@ -254,7 +254,7 @@ public class PreviewDatasetFramework implements DatasetFramework {
 
   @Nullable
   @Override
-  public <T extends Dataset> T getDataset(DatasetId datasetInstanceId, @Nullable Map<String, String> arguments,
+  public <T extends Dataset> T getDataset(DatasetId datasetInstanceId, Map<String, String> arguments,
                                           @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException {
 
@@ -265,7 +265,7 @@ public class PreviewDatasetFramework implements DatasetFramework {
   @Nullable
   @Override
   public <T extends Dataset> T getDataset(final DatasetId datasetInstanceId,
-                                          @Nullable final Map<String, String> arguments,
+                                          final Map<String, String> arguments,
                                           @Nullable final ClassLoader classLoader,
                                           final DatasetClassLoaderProvider classLoaderProvider,
                                           @Nullable final Iterable<? extends EntityId> owners,

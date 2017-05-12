@@ -107,7 +107,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     MetricsTable table = null;
     try {
       table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId, MetricsTable.class.getName(),
-                                              props, null, null);
+                                              props, null);
     } catch (Exception e) {
       Throwables.propagate(e);
     }

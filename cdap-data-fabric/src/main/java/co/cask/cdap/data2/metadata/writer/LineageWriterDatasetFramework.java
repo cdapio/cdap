@@ -145,7 +145,7 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   @Override
   @Nullable
   public <T extends Dataset> T getDataset(final DatasetId datasetInstanceId,
-                                          @Nullable final Map<String, String> arguments,
+                                          final Map<String, String> arguments,
                                           @Nullable final ClassLoader classLoader)
     throws DatasetManagementException, IOException {
 
@@ -156,7 +156,7 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   @Nullable
   @Override
   public <T extends Dataset> T getDataset(final DatasetId datasetInstanceId,
-                                          @Nullable final Map<String, String> arguments,
+                                          final Map<String, String> arguments,
                                           @Nullable final ClassLoader classLoader,
                                           final DatasetClassLoaderProvider classLoaderProvider,
                                           @Nullable final Iterable<? extends EntityId> owners,

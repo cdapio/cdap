@@ -152,6 +152,6 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     DatasetId metricsDatasetInstanceId = NamespaceId.SYSTEM.dataset(name);
     DatasetProperties props = TableProperties.builder().setReadlessIncrementSupport(true).build();
     return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
-                                           MetricsTable.class.getName(), props, null, null);
+                                           MetricsTable.class.getName(), props, null);
   }
 }

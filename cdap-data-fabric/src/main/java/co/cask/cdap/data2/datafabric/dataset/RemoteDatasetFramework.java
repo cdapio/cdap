@@ -243,7 +243,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   @Nullable
   @Override
-  public <T extends Dataset> T getDataset(DatasetId id, @Nullable Map<String, String> arguments,
+  public <T extends Dataset> T getDataset(DatasetId id, Map<String, String> arguments,
                                           @Nullable ClassLoader classLoader,
                                           DatasetClassLoaderProvider classLoaderProvider,
                                           @Nullable Iterable<? extends EntityId> owners, AccessType accessType)

@@ -140,7 +140,7 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
 
   @Nullable
   @Override
-  public <T extends Dataset> T getDataset(DatasetId datasetInstanceId, @Nullable Map<String, String> arguments,
+  public <T extends Dataset> T getDataset(DatasetId datasetInstanceId, Map<String, String> arguments,
                                           @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException {
     return super.getDataset(getMappedDatasetInstance(datasetInstanceId), arguments, classLoader);
@@ -148,7 +148,7 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
 
   @Nullable
   @Override
-  public <T extends Dataset> T getDataset(DatasetId datasetInstanceId, @Nullable Map<String, String> arguments,
+  public <T extends Dataset> T getDataset(DatasetId datasetInstanceId, Map<String, String> arguments,
                                           @Nullable ClassLoader classLoader,
                                           DatasetClassLoaderProvider classLoaderProvider,
                                           @Nullable Iterable<? extends EntityId> owners, AccessType accessType)

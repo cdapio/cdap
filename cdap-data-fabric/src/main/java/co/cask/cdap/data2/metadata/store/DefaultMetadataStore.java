@@ -649,7 +649,7 @@ public class DefaultMetadataStore implements MetadataStore {
       return DatasetsUtil.getOrCreateDataset(
         dsFramework, getMetadataDatasetInstance(scope), MetadataDataset.class.getName(),
         DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build(),
-        DatasetDefinition.NO_ARGUMENTS, null);
+        DatasetDefinition.NO_ARGUMENTS);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

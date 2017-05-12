@@ -81,7 +81,7 @@ public final class DatasetServiceStore extends AbstractIdleService implements Se
         try {
           return DatasetsUtil.getOrCreateDataset(dsFramework, serviceStoreDatasetInstanceId,
                                                  NoTxKeyValueTable.class.getName(),
-                                                 DatasetProperties.EMPTY, null, null);
+                                                 DatasetProperties.EMPTY, null);
         } catch (Exception e) {
           // Throwing RetryableException here is just to make it retry getting the dataset
           // an exception here usually means there is an hbase problem

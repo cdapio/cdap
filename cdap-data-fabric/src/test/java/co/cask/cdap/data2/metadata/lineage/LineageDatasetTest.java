@@ -191,7 +191,7 @@ public class LineageDatasetTest {
   private static LineageDataset getLineageDataset(String instanceId) throws Exception {
     DatasetId id = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset(instanceId);
     return DatasetsUtil.getOrCreateDataset(dsFrameworkUtil.getFramework(), id,
-                                           LineageDataset.class.getName(), DatasetProperties.EMPTY, null, null);
+                                           LineageDataset.class.getName(), DatasetProperties.EMPTY, null);
   }
 
   @SafeVarargs

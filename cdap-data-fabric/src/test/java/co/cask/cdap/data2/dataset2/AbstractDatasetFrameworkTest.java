@@ -69,6 +69,7 @@ import co.cask.cdap.security.impersonation.InMemoryOwnerStore;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerStore;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -610,7 +611,7 @@ public abstract class AbstractDatasetFrameworkTest {
                                         new AuthenticationTestContext(), new NoOpAuthorizer());
     lineageFramework.initContext(runId);
     lineageFramework.setAuditPublisher(inMemoryAuditPublisher);
-    lineageFramework.getDataset(MY_TABLE, null, getClass().getClassLoader());
+    lineageFramework.getDataset(MY_TABLE, ImmutableMap.<String, String>of(), getClass().getClassLoader());
     expectedMessages.add(new AuditMessage(0, MY_TABLE, "", AuditType.ACCESS,
                                           new AccessPayload(AccessType.UNKNOWN, runId)));
 
