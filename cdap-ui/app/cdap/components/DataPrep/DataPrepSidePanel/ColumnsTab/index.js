@@ -15,88 +15,69 @@
  */
 
 import React, { Component } from 'react';
-import {Popover, PopoverContent} from 'reactstrap';
+import UncontrolledPopover from 'components/UncontrolledComponents/Popover';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import MyDataPrepApi from 'api/dataprep';
 import shortid from 'shortid';
-import classnames from 'classnames';
 import ColumnsTabRow from 'components/DataPrep/DataPrepSidePanel/ColumnsTab/ColumnsTabRow';
-import {objectQuery} from 'services/helpers';
-import NamespaceStore from 'services/NamespaceStore';
-import isEqual from 'lodash/isEqual';
-import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
-import Mousetrap from 'mousetrap';
-import {isDescendant} from 'services/helpers';
-import Rx from 'rx';
+import ColumnsTabDetail from 'components/DataPrep/DataPrepSidePanel/ColumnsTab/ColumnsTabDetail';
+import findIndex from 'lodash/findIndex';
 import T from 'i18n-react';
+import ColumnActions from 'components/DataPrep/Directives/ColumnActions';
+const PREFIX = 'features.DataPrep.DataPrepSidePanel.ColumnsTab';
 
-const PREFIX = 'features.DataPrep.SidePanel.ColumnsTab';
+require('./ColumnsTab.scss');
 
 export default class ColumnsTab extends Component {
   constructor(props) {
     super(props);
+    let {dataprep: dataprepstate, columnsInformation: columnInfo} = DataPrepStore.getState();
 
     this.state = {
-      columns: {},
-      headers: [],
-      selectedHeaders: DataPrepStore.getState().dataprep.selectedHeaders,
-      workspaceId: DataPrepStore.getState().dataprep.workspaceId,
-      loading: true,
+      columns: columnInfo.columns,
+      headers: dataprepstate.headers.map(res => ({
+        name: res,
+        uniqueId: shortid.generate() // FIXME: This might be costly. Need to find a better way to avoid having unique IDs
+      })),
+      selectedHeaders: dataprepstate.selectedHeaders,
+      workspaceId: dataprepstate.workspaceId,
+      loading: dataprepstate.loading,
       error: null,
       searchText: '',
-      dropdownOpen: false
+      searchFocus: false
     };
 
     this.handleChangeSearch = this.handleChangeSearch.bind(this);
     this.clearSearch = this.clearSearch.bind(this);
-    this.toggleDropdown = this.toggleDropdown.bind(this);
+    this.renderDropdown = this.renderDropdown.bind(this);
     this.clearAllColumns = this.clearAllColumns.bind(this);
     this.selectAllColumns = this.selectAllColumns.bind(this);
     this.setSelect = this.setSelect.bind(this);
 
     this.sub = DataPrepStore.subscribe(() => {
-      let newState = DataPrepStore.getState().dataprep;
-      if (!isEqual(this.state.selectedHeaders, newState.selectedHeaders)) {
-        this.setState({
-          selectedHeaders: newState.selectedHeaders
-        });
-      }
-      this.getSummary();
+      let {dataprep: dataprepstate, columnsInformation: columnInfo} = DataPrepStore.getState();
+      this.setState({
+        selectedHeaders: dataprepstate.selectedHeaders,
+        columns: columnInfo.columns,
+        headers: dataprepstate.headers.map((res) => {
+          let obj = {
+            name: res,
+            uniqueId: shortid.generate()
+          };
+          return obj;
+        }),
+        loading: dataprepstate.loading
+      });
     });
-
-    this.getSummary();
   }
 
   componentWillUnmount() {
     this.sub();
   }
 
-  toggleDropdown() {
-    let newState = !this.state.dropdownOpen;
-    this.setState({
-      dropdownOpen: newState
-    });
-
-    if (newState) {
-      let element = document.getElementById('app-container');
-      if (this.singleWorkspaceMode) {
-        element = document.getElementsByClassName('wrangler-modal')[0];
-      }
-      this.documentClick$ = Rx.Observable.fromEvent(element, 'click')
-      .subscribe((e) => {
-        if (isDescendant(this.popover, e.target) || !this.state.dropdownOpen) {
-          return;
-        }
-
-        this.toggleDropdown();
-      });
-      Mousetrap.bind('esc', this.toggleDropdown);
-    } else {
-      if (this.documentClick$) {
-        this.documentClick$.dispose();
-      }
-      Mousetrap.unbind('esc');
+  componentDidUpdate() {
+    if (this.state.searchFocus) {
+      this.searchBox.focus();
     }
   }
 
@@ -107,7 +88,6 @@ export default class ColumnsTab extends Component {
         selectedHeaders: []
       }
     });
-    this.toggleDropdown();
   }
 
   selectAllColumns() {
@@ -117,7 +97,6 @@ export default class ColumnsTab extends Component {
         selectedHeaders: DataPrepStore.getState().dataprep.headers
       }
     });
-    this.toggleDropdown();
   }
 
   setSelect(columnName, selectStatus) {
@@ -135,50 +114,6 @@ export default class ColumnsTab extends Component {
     });
   }
 
-  getSummary() {
-    let state = DataPrepStore.getState().dataprep;
-    if (!state.workspaceId) { return; }
-    let namespace = NamespaceStore.getState().selectedNamespace;
-
-    let params = {
-      namespace,
-      workspaceId: state.workspaceId
-    };
-
-    let requestBody = directiveRequestBodyCreator(state.directives);
-
-    MyDataPrepApi.summary(params, requestBody)
-      .subscribe((res) => {
-        let columns = {};
-
-        state.headers.forEach((head) => {
-          columns[head] = {
-            general: objectQuery(res, 'values', 'statistics', head, 'general'),
-            types: objectQuery(res, 'values', 'statistics', head, 'types'),
-            isValid: objectQuery(res, 'values', 'validation', head, 'valid')
-          };
-        });
-
-        this.setState({
-          columns,
-          loading: false,
-          headers: state.headers.map((res) => {
-            let obj = {
-              name: res,
-              uniqueId: shortid.generate()
-            };
-            return obj;
-          })
-        });
-      }, (err) => {
-        console.log('error fetching summary', err);
-        this.setState({
-          loading: false,
-          error: err.message
-        });
-      });
-  }
-
   handleChangeSearch(e) {
     this.setState({searchText: e.target.value});
   }
@@ -193,31 +128,56 @@ export default class ColumnsTab extends Component {
       targetAttachment: 'bottom right',
       targetOffset: '-5px 5px'
     };
-
+    let element = document.getElementById('app-container');
+    if (this.singleWorkspaceMode) {
+      element = document.getElementsByClassName('wrangler-modal')[0];
+    }
+    // FIXME: Should this be a UncontrolledDropdown instead? One less component?
     return (
-      <Popover
-        placement="bottom right"
-        isOpen={this.state.dropdownOpen}
-        target="toggle-all-dropdown"
-        className="dataprep-toggle-all-dropdown"
-        tether={tetherOption}
+      <UncontrolledPopover
+        tetherOption={tetherOption}
+        documentElement={element}
       >
-        <PopoverContent>
-          <div
-            className="toggle-all-option"
-            onClick={this.clearAllColumns}
-          >
-            {T.translate(`${PREFIX}.toggle.clearAll`)}
-          </div>
-          <div
-            className="toggle-all-option"
-            onClick={this.selectAllColumns}
-          >
-            {T.translate(`${PREFIX}.toggle.selectAll`)}
-          </div>
-        </PopoverContent>
-      </Popover>
+        <div
+          className="toggle-all-option"
+          onClick={this.clearAllColumns}
+        >
+          {T.translate(`${PREFIX}.toggle.clearAll`)}
+        </div>
+        <div
+          className="toggle-all-option"
+          onClick={this.selectAllColumns}
+        >
+          {T.translate(`${PREFIX}.toggle.selectAll`)}
+        </div>
+      </UncontrolledPopover>
     );
+  }
+
+  showDetail(rowId) {
+    let index = findIndex(this.state.headers, (header => header.uniqueId === rowId));
+    let match = this.state.headers[index];
+    let modifiedHeaders = this.state.headers.slice(0);
+    if (match.expanded) {
+      match.expanded = false;
+      modifiedHeaders = [
+        ...modifiedHeaders.slice(0, index + 1),
+        ...modifiedHeaders.slice(index + 2)
+      ];
+    } else {
+      match.expanded = true;
+      modifiedHeaders = [
+        ...modifiedHeaders.slice(0, index + 1),
+        Object.assign({}, modifiedHeaders[index], {
+          isDetail: true,
+          uniqueId: shortid.generate()
+        }),
+        ...modifiedHeaders.slice(index + 1)
+      ];
+    }
+    this.setState({
+      headers: modifiedHeaders
+    });
   }
 
   render() {
@@ -229,7 +189,14 @@ export default class ColumnsTab extends Component {
       );
     }
 
-    let displayHeaders = this.state.headers;
+    let index = -1;
+    let displayHeaders = this.state.headers.map(header => {
+      if (!header.isDetail) {
+        index += 1;
+        return Object.assign({}, header, {index});
+      }
+      return header;
+    });
 
     if (this.state.searchText.length > 0) {
       displayHeaders = displayHeaders.filter((head) => {
@@ -240,25 +207,95 @@ export default class ColumnsTab extends Component {
       });
     }
 
+    const renderContents = () => {
+      if (!displayHeaders.length && this.state.searchText.length) {
+        return (
+          <div className="columns-tab empty-search-container">
+            <div className="empty-search">
+              <strong>
+                {T.translate(`${PREFIX}.EmptyMessage.title`, {searchText: this.state.searchText})}
+              </strong>
+              <hr />
+              <span> {T.translate(`${PREFIX}.EmptyMessage.suggestionTitle`)} </span>
+              <ul>
+                <li>
+                  <span
+                    className="link-text"
+                    onClick={() => {
+                      this.setState({
+                        searchText: '',
+                        searchFocus: true
+                      });
+                    }}
+                  >
+                    {T.translate(`${PREFIX}.EmptyMessage.clearLabel`)}
+                  </span>
+                  <span> {T.translate(`${PREFIX}.EmptyMessage.suggestion1`)} </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        );
+      } else {
+        return (
+          <table className="table table-sm table-responsive table-hover">
+            <thead>
+              <tr>
+                <th>
+                  { this.renderDropdown() }
+                </th>
+                <th>
+                  #
+                </th>
+                <th>
+                  {T.translate(`${PREFIX}.Header.name`)}
+                </th>
+                <th>
+                  {T.translate(`${PREFIX}.Header.completion`)}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                displayHeaders.map((head) => {
+                  if (head.isDetail) {
+                    return (
+                      <ColumnsTabDetail
+                        key={head.uniqueId}
+                        columnInfo={this.state.columns[head.name]}
+                      />
+                    );
+                  }
+                  return (
+                    <ColumnsTabRow
+                      rowInfo={this.state.columns[head.name]}
+                      onShowDetails={this.showDetail.bind(this, head.uniqueId)}
+                      columnName={head.name}
+                      index={head.index}
+                      key={head.uniqueId}
+                      selected={this.state.selectedHeaders.indexOf(head.name) !== -1}
+                      setSelect={this.setSelect}
+                    />
+                  );
+                })
+              }
+            </tbody>
+          </table>
+        );
+      }
+    };
+
     return (
       <div className="columns-tab">
         <div className="columns-tab-heading">
-          <span
-            className={classnames('fa fa-caret-square-o-down', {
-              'expanded': this.state.dropdownOpen
-            })}
-            id="toggle-all-dropdown"
-            onClick={this.toggleDropdown}
-            ref={(ref) => this.popover = ref}
-          />
-          { this.renderDropdown() }
-          <span className="search-box">
+          <div className="search-box">
             <input
               type="text"
               className="form-control"
               placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
               value={this.state.searchText}
               onChange={this.handleChangeSearch}
+              ref={(ref) => this.searchBox = ref}
             />
 
             {
@@ -272,23 +309,11 @@ export default class ColumnsTab extends Component {
                   />
                 )
             }
-          </span>
+          </div>
+          <ColumnActions />
         </div>
         <div className="columns-list">
-          {
-            displayHeaders.map((head, index) => {
-              return (
-                <ColumnsTabRow
-                  rowInfo={this.state.columns[head.name]}
-                  columnName={head.name}
-                  index={index}
-                  key={head.uniqueId}
-                  selected={this.state.selectedHeaders.indexOf(head.name) !== -1}
-                  setSelect={this.setSelect}
-                />
-              );
-            })
-          }
+          {renderContents()}
         </div>
       </div>
     );

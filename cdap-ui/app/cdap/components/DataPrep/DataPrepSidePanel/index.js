@@ -19,8 +19,10 @@ import DataPrepStore from 'components/DataPrep/store';
 import classnames from 'classnames';
 import ColumnsTab from 'components/DataPrep/DataPrepSidePanel/ColumnsTab';
 import DirectivesTab from 'components/DataPrep/DataPrepSidePanel/DirectivesTab';
+import T from 'i18n-react';
 
 require('./DataPrepSidePanel.scss');
+const PREFIX = 'features.DataPrep.DataPrepSidePanel';
 
 export default class DataPrepSidePanel extends Component {
   constructor(props) {
@@ -58,7 +60,7 @@ export default class DataPrepSidePanel extends Component {
     if (this.state.headers.length === 0) {
       return (
         <h5 className="empty-message text-xs-center">
-          No Columns
+          {T.translate(`${PREFIX}.noColumns`)}
         </h5>
       );
     }
@@ -74,7 +76,7 @@ export default class DataPrepSidePanel extends Component {
     if (this.state.directives.length === 0) {
       return (
         <h5 className="empty-message text-xs-center">
-          No Directives
+          {T.translate(`${PREFIX}.noDirectives`)}
         </h5>
       );
     }
@@ -89,9 +91,9 @@ export default class DataPrepSidePanel extends Component {
   renderTabContent() {
     switch (this.state.activeTab) {
       case 1:
-        return this.renderDirectives();
-      case 2:
         return this.renderColumns();
+      case 2:
+        return this.renderDirectives();
       default:
         return null;
     }
@@ -106,13 +108,13 @@ export default class DataPrepSidePanel extends Component {
               className={classnames('tab', { 'active': this.state.activeTab === 1 })}
               onClick={this.setActiveTab.bind(this, 1)}
             >
-              Directives ({this.state.directives.length})
+              {T.translate(`${PREFIX}.columnsTabLabel`, {columnsCount: this.state.headers.length})}
             </div>
             <div
               className={classnames('tab', { 'active': this.state.activeTab === 2 })}
               onClick={this.setActiveTab.bind(this, 2)}
             >
-              Columns ({this.state.headers.length})
+              {T.translate(`${PREFIX}.directivesTabLabel`, {directivesCount: this.state.directives.length})}
             </div>
           </div>
 

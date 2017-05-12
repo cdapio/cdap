@@ -16,6 +16,8 @@
 
 $top-panel-connection-color: #999999;
 
+@import '../../../styles/variables.scss';
+
 .dataprep-container {
   .top-panel {
     height: 50px;
@@ -122,13 +124,13 @@ $top-panel-connection-color: #999999;
       padding: 25px;
       &.error-message-container {
         padding: 15px;
-        pre {
-          margin: 0;
-        }
         .fa.fa-exclamation-triangle {
           font-size: 15px;
           margin-right: 5px;
         }
+      }
+      .remedy-message {
+        margin: 3px 0;
       }
     }
 
@@ -180,8 +182,12 @@ $top-panel-connection-color: #999999;
   .modal-body {
     overflow-y: auto;
     max-height: 75vh;
-    pre {
-      margin: 0;
+    .remedy-message {
+      margin: 3px 0;
+    }
+    .btn-link {
+      cursor: pointer;
+      color: $cdap_orange;
     }
     .fa.fa-exclamation-triangle {
       margin-right: 5px;

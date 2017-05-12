@@ -26,6 +26,8 @@ import NamespaceStore from 'services/NamespaceStore';
 import {objectQuery} from 'services/helpers';
 import T from 'i18n-react';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
+import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 
 const mapErrorToMessage = (e) => {
   let message = e.message;
@@ -34,10 +36,7 @@ const mapErrorToMessage = (e) => {
     let fieldName = objectQuery(splitMessage, 1) || e.message;
     return {
       message: T.translate('features.DataPrep.TopPanel.invalidFieldNameMessage', {fieldName}),
-      remedies: `
-${T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies1')}
-${T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies2')}
-      `
+      remedies: `${T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies1')}`
     };
   }
   return {message: e.message};
@@ -63,6 +62,10 @@ export default class SchemaModal extends Component {
   }
 
   componentDidMount() {
+    this.getSchema();
+  }
+
+  getSchema() {
     let state = DataPrepStore.getState().dataprep;
     let workspaceId = state.workspaceId;
 
@@ -113,6 +116,32 @@ export default class SchemaModal extends Component {
       });
   }
 
+  applyDirective(directive) {
+    execute([directive])
+      .subscribe(
+        () => {
+          this.setState({
+            error: null,
+            loading: true,
+            schema: []
+          });
+          setTimeout(() => {
+            this.getSchema();
+          });
+        },
+        (err) => {
+          console.log('Error', err);
+
+          DataPrepStore.dispatch({
+            type: DataPrepActions.setError,
+            payload: {
+              message: err.message || err.response.message
+            }
+          });
+        }
+      );
+  }
+
   download() {
     let workspaceId = DataPrepStore.getState().dataprep.workspaceId;
     let filename = `${workspaceId}-schema.json`;
@@ -135,16 +164,28 @@ export default class SchemaModal extends Component {
       );
     } else if (this.state.error) {
       content = (
-        <div className="text-danger">
-          <span className="fa fa-exclamation-triangle"></span>
+        <div>
+          <div className="text-danger">
+            <span className="fa fa-exclamation-triangle"></span>
+            <span>
+              {typeof this.state.error === 'object' ? this.state.error.message : this.state.error}
+            </span>
+          </div>
+          <div className="remedy-message">
+              {
+                objectQuery(this.state, 'error', 'remedies') ? this.state.error.remedies : null
+              }
+            </div>
           <span>
-            {typeof this.state.error === 'object' ? this.state.error.message : this.state.error}
+            {T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies2')}
+            <span
+              className="btn-link"
+              onClick={this.applyDirective.bind(this, 'cleanse-column-names')}
+            >
+              {T.translate('features.DataPrep.TopPanel.cleanseLinkLabel')}
+            </span>
+            {T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies3')}
           </span>
-          <pre>
-            {
-              objectQuery(this.state, 'error', 'remedies') ? this.state.error.remedies : null
-            }
-          </pre>
         </div>
       );
     } else {
