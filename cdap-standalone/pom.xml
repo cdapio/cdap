@@ -278,7 +278,7 @@
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
                   <excludeGroupIds>org.apache.hbase,asm</excludeGroupIds>
-                  <excludeArtifactIds>zkclient,servlet-api,cdap-cli,cdap-explore-jdbc,kafka_2.10,scala-library</excludeArtifactIds>
+                  <excludeArtifactIds>zkclient,servlet-api,cdap-cli,cdap-explore-jdbc</excludeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
                   <includeScope>runtime</includeScope>

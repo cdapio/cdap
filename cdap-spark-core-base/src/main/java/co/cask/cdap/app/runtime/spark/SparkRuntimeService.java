@@ -773,6 +773,11 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           LOG.warn("BeanIntrospector.ctorParamNamesCache is not a LoadingCache, may lead to memory leak in SDK." +
                      "Field type is {}", field.getType());
       }
+    } catch (NoSuchFieldException e) {
+      // If there is no ctorParamNamesCache field, there is nothing to invalidate.
+      // This is the case in jackson-module-scala_2.11-2.6.5 used by Spark 2.1.0
+      LOG.trace("No ctorParamNamesCache field in BeanIntrospector. " +
+                  "The current Spark version is not using a BeanIntrospector that has a param names loading cache.");
     } catch (ClassNotFoundException e) {
       // Catch the case when there is no BeanIntrospector class. It is ok since some Spark version may not be using it.
       LOG.debug("No BeanIntrospector class found. The current Spark version is not using BeanIntrospector.");
