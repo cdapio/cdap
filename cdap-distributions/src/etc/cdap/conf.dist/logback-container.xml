@@ -47,6 +47,9 @@
   <logger name="org.apache.twill.internal.kafka.client.SimpleKafkaConsumer" level="WARN"/>
   <logger name="co.cask.cdap" level="INFO"/>
 
+  <!-- HttpRequestLog is not used and expects log4j logging or logs a WARN message -->
+  <logger name="org.apache.hadoop.http.HttpRequestLog" level="ERROR"/>
+
   <!-- Redirected stdout and stderr of Hive operations -->
   <logger name="Explore.stdout" level="INFO"/>
   <logger name="Explore.stderr" level="INFO"/>

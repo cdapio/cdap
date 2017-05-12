@@ -44,6 +44,9 @@
     <logger name="akka" level="WARN"/>
     <logger name="Remoting" level="WARN"/>
 
+    <!-- HttpRequestLog is not used and expects log4j logging or logs a WARN message -->
+    <logger name="org.apache.hadoop.http.HttpRequestLog" level="ERROR"/>
+
     <logger name="org.apache.twill" level="INFO"/>
     <logger name="org.apache.twill.internal.kafka.client.SimpleKafkaConsumer" level="WARN"/>
     <logger name="co.cask.cdap" level="INFO"/>

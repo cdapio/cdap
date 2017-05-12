@@ -50,6 +50,9 @@
   <logger name="akka" level="WARN"/>
   <logger name="Remoting" level="WARN"/>
 
+  <!-- HttpRequestLog is not used and expects log4j logging or logs a WARN message -->
+  <logger name="org.apache.hadoop.http.HttpRequestLog" level="ERROR"/>
+
   <appender name="Rolling" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>logs/cdap.log</file>
     <encoder>
