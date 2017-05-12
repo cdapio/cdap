@@ -613,6 +613,33 @@ features:
       minimumVersionError: "Data Preparation requires wrangler-service artifact version 1.3.0 or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
 
   DataPrepConnections:
+    AddConnections:
+      Database:
+        DatabaseDetail:
+          addConnectionButton: Add Connection
+          advanced: Advanced
+          backButton: View All Drivers
+          basic: Basic
+          connectionString: Connection String
+          connType: JDBC Connections
+          database: Database
+          driverInstalled: Driver Installed
+          host: Host
+          name: Name
+          password: Password
+          port: Port
+          required: Required
+          username: Username
+        DatabaseOptions:
+          install: "Install Driver: "
+          installedLabel: Driver Installed
+          optionsTitle: Select the type of database you want to connect to
+          upload: Upload
+        modalHeader: "Add Connection: Database"
+      label: Add Connections
+      Popover:
+        title: Select a source to connect
+    database: Database ({count})
     hdfs: HDFS
     title: "Connections in \"{namespace}\""
     upload: Upload

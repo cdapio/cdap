@@ -26,6 +26,7 @@ import LoadingSVG from 'components/LoadingSVG';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
 import ConnectionsUpload from 'components/DataPrepConnections/UploadFile';
+import AddConnection from 'components/DataPrepConnections/AddConnection';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -45,11 +46,14 @@ export default class DataPrepConnections extends Component {
     this.state = {
       sidePanelExpanded: true,
       backendChecking: true,
-      backendDown: false
+      backendDown: false,
+      connectionsList: [],
+      database: false
     };
 
     this.toggleSidePanel = this.toggleSidePanel.bind(this);
     this.onServiceStart = this.onServiceStart.bind(this);
+    this.fetchConnectionsList = this.fetchConnectionsList.bind(this);
   }
 
   componentWillMount() {
@@ -68,6 +72,8 @@ export default class DataPrepConnections extends Component {
           backendChecking: false,
           backendDown: false
         });
+
+        this.fetchConnectionsList();
       }, (err) => {
         if (err.statusCode === 503) {
           console.log('backend not started');
@@ -83,14 +89,43 @@ export default class DataPrepConnections extends Component {
   }
 
   onServiceStart() {
-    this.setState({
-      backendDown: false,
-      backendChecking: false
+    this.checkBackendUp();
+  }
+
+  fetchConnectionsList() {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+
+    MyDataPrepApi.listConnections({
+      namespace,
+      type: '*'
+    }).subscribe((res) => {
+      // need to group by connection type
+
+      this.setState({connectionsList: res.values});
     });
   }
 
   toggleSidePanel() {
     this.setState({sidePanelExpanded: !this.state.sidePanelExpanded});
+  }
+
+  renderDatabaseDetail() {
+    if (!this.state.database) { return null; }
+
+    return (
+      <div>
+        {this.state.connectionsList.map((database) => {
+          return (
+            <div
+              className="menu-item-expanded-list"
+              key={database.id}
+            >
+              {database.name}
+            </div>
+          );
+        })}
+      </div>
+    );
   }
 
   renderPanel() {
@@ -146,7 +181,32 @@ export default class DataPrepConnections extends Component {
               </span>
             </NavLink>
           </div>
+
+          <div className="menu-item expandable">
+            <div
+              className="expandable-title"
+              onClick={() => this.setState({database: !this.state.database})}
+            >
+              <span className="fa fa-fw caret">
+                <IconSVG
+                  name={this.state.database ? 'icon-caret-down' : 'icon-caret-right'}
+                />
+              </span>
+              <span className="fa fa-fw">
+                <IconSVG name="icon-database" />
+              </span>
+              <span>
+              {T.translate(`${PREFIX}.database`, {count: this.state.connectionsList.length})}
+              </span>
+            </div>
+
+            {this.renderDatabaseDetail()}
+          </div>
         </div>
+
+        <AddConnection
+          onAdd={this.fetchConnectionsList}
+        />
       </div>
     );
   }
