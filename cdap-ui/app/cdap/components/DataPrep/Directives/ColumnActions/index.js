@@ -21,31 +21,37 @@ import IconSVG from 'components/IconSVG';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+import Bulkset from 'components/DataPrep/Directives/ColumnActions/Bulkset';
 
 require('./ColumnActions.scss');
-
-const ColumnDirectives = [
-  {
-    name: 'bulkset',
-    label: 'Bulk Set',
-    component: '<h1> Bulk Set </h1>'
-  },
-  {
-    name: 'cleanse',
-    label: 'Cleanse',
-    component: '<h1> Cleanse </h1>'
-  }
-];
 
 export default class ColumnActions extends Component {
   constructor(props) {
     super(props);
+    this.resetActiveDirective = this.resetActiveDirective.bind(this);
     this.state = {
-      activeDirective: null
+      activeDirective: null,
+      columnDirectives: [
+        {
+          name: 'bulkset',
+          label: 'Bulk Set',
+          component: <Bulkset onClose={this.resetActiveDirective} />
+        },
+        {
+          name: 'cleanse',
+          label: 'Cleanse'
+        }
+      ]
     };
     this.setActiveDirective = this.setActiveDirective.bind(this);
+    this.renderActiveDirective = this.renderActiveDirective.bind(this);
   }
 
+  resetActiveDirective() {
+    this.setState({
+      activeDirective: null
+    });
+  }
   applyDirective(directive) {
     execute([directive])
       .subscribe(
@@ -64,16 +70,16 @@ export default class ColumnActions extends Component {
   }
 
   setActiveDirective(index) {
-    let activeDirective = ColumnDirectives[index];
-    if (activeDirective.name === 'cleanse') {
+    let currentDirective = this.state.columnDirectives[index];
+    if (currentDirective.name === 'cleanse') {
       this.applyDirective('cleanse-column-names');
       return;
     }
-    if (!activeDirective || !activeDirective.name || !activeDirective.component) {
+    if (!currentDirective || !currentDirective.name || !currentDirective.component) {
       return;
     }
     this.setState({
-      activeDirective: activeDirective.component
+      activeDirective: currentDirective.component
     });
   }
 
@@ -84,29 +90,31 @@ export default class ColumnActions extends Component {
   }
   render() {
     return (
-      <UncontrolledDropdown
-        className="collapsed-dropdown-toggle columns-actions-dropdown"
-      >
-        <DropdownToggle>
-          <span>Column Actions</span>
-          <IconSVG name="icon-chevron-down" />
-        </DropdownToggle>
-        <DropdownMenu>
-          {
-            ColumnDirectives.map((directive, i) => {
-              return (
-                <DropdownItem
-                  title={directive.name}
-                  onClick={this.setActiveDirective.bind(this, i)}
-                >
-                  {directive.label}
-                </DropdownItem>
-              );
-            })
-          }
-        </DropdownMenu>
-        {this.renderActiveDirective}
-      </UncontrolledDropdown>
+      <div className="columns-actions-dropdown">
+        <UncontrolledDropdown
+          className="collapsed-dropdown-toggle"
+        >
+          <DropdownToggle>
+            <span>Column Actions</span>
+            <IconSVG name="icon-chevron-down" />
+          </DropdownToggle>
+          <DropdownMenu>
+            {
+              this.state.columnDirectives.map((directive, i) => {
+                return (
+                  <DropdownItem
+                    title={directive.name}
+                    onClick={this.setActiveDirective.bind(this, i)}
+                  >
+                    {directive.label}
+                  </DropdownItem>
+                );
+              })
+            }
+          </DropdownMenu>
+        </UncontrolledDropdown>
+        {this.renderActiveDirective()}
+      </div>
     );
   }
 }

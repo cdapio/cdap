@@ -338,6 +338,12 @@ features:
     Directives:
       apply: Apply
       cancel: Cancel
+      ColumnActions:
+        Bulkset:
+          modalTitle: Bulk set column names
+          setBtnLabel: Set Columns
+          description: Enter column names in order starting from the first column
+          textareaplaceholder: "Enter column names seperated by comma. No special character (eg., @ - #) are allowed"
       Copy:
         copySuffix: _copy
         duplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
