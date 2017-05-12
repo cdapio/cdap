@@ -29,8 +29,10 @@ import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import findIndex from 'lodash/findIndex';
 import difference from 'lodash/difference';
 import T from 'i18n-react';
-
+import ColumnActions from 'components/DataPrep/Directives/ColumnActions';
 const PREFIX = 'features.DataPrep.SidePanel.ColumnsTab';
+
+require('./ColumnsTab.scss');
 
 export default class ColumnsTab extends Component {
   constructor(props) {
@@ -251,7 +253,7 @@ export default class ColumnsTab extends Component {
     return (
       <div className="columns-tab">
         <div className="columns-tab-heading">
-          <span className="search-box">
+          <div className="search-box">
             <input
               type="text"
               className="form-control"
@@ -271,7 +273,8 @@ export default class ColumnsTab extends Component {
                   />
                 )
             }
-          </span>
+          </div>
+          <ColumnActions />
         </div>
         <div className="columns-list">
           <table className="table table-sm table-responsive table-hover">

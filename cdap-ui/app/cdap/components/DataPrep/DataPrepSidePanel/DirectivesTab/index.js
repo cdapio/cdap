@@ -21,6 +21,7 @@ import DirectivesTabRow from 'components/DataPrep/DataPrepSidePanel/DirectivesTa
 import fileDownload from 'react-file-download';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 
+require('./DirectivesTab.scss');
 export default class DirectivesTab extends Component {
   constructor(props) {
     super(props);
