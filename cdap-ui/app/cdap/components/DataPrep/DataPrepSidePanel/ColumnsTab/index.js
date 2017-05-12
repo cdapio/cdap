@@ -175,7 +175,7 @@ export default class ColumnsTab extends Component {
     if (this.singleWorkspaceMode) {
       element = document.getElementsByClassName('wrangler-modal')[0];
     }
-
+    // FIXME: Should this be a UncontrolledDropdown instead? One less component?
     return (
       <UncontrolledPopover
         tetherOption={tetherOption}

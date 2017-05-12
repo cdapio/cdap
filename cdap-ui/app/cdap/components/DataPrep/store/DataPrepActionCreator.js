@@ -23,12 +23,14 @@ import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import {objectQuery} from 'services/helpers';
 import ee from 'event-emitter';
 
-export function execute(addDirective, shouldReset) {
+export function execute(addDirective, shouldReset, hideLoading = false) {
   let eventEmitter = ee(ee);
   eventEmitter.emit('CLOSE_POPOVER');
-  DataPrepStore.dispatch({
-    type: DataPrepActions.enableLoading
-  });
+  if (!hideLoading) {
+    DataPrepStore.dispatch({
+      type: DataPrepActions.enableLoading
+    });
+  }
 
   let store = DataPrepStore.getState().dataprep;
   let updatedDirectives = store.directives.concat(addDirective);
