@@ -89,9 +89,9 @@ export default class DataPrepSidePanel extends Component {
   renderTabContent() {
     switch (this.state.activeTab) {
       case 1:
-        return this.renderDirectives();
-      case 2:
         return this.renderColumns();
+      case 2:
+        return this.renderDirectives();
       default:
         return null;
     }
@@ -106,13 +106,13 @@ export default class DataPrepSidePanel extends Component {
               className={classnames('tab', { 'active': this.state.activeTab === 1 })}
               onClick={this.setActiveTab.bind(this, 1)}
             >
-              Directives ({this.state.directives.length})
+              Columns ({this.state.headers.length})
             </div>
             <div
               className={classnames('tab', { 'active': this.state.activeTab === 2 })}
               onClick={this.setActiveTab.bind(this, 2)}
             >
-              Columns ({this.state.headers.length})
+              Directives ({this.state.directives.length})
             </div>
           </div>
 

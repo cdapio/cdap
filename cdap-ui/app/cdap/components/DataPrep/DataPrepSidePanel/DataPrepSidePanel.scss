@@ -166,70 +166,43 @@ $quality-bar-null-color: #95a5a6;
       .columns-list {
         height: calc(100% - 40px);
         overflow-y: auto;
-      }
+        padding: 0 10px;
 
-      .columns-tab-row {
-        border-bottom: 1px solid $border-color;
-
-        .row-header-checkbox {
-          cursor: pointer;
-          margin-right: 10px;
-        }
-
-        .row-header {
-          padding: 5px 10px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-
-          &.selected {
-            background-color: $element-selected-color;
-            white-space: pre-wrap;
-            word-break: break-all;
-          }
-
-          &.invalid {
-            background-color: $invalid-column-color;
-            color: white;
-          }
-        }
-
-        .selected-row {
-          background-color: $element-selected-color;
-          padding: 10px;
-          border-bottom: 1px solid $dark-border-color;
-
-          .quality-bar {
-            border: 1px solid $dark-border-color;
-            border-radius: 4px;
-            height: 15px;
-            overflow: hidden;
-            margin-bottom: 10px;
-
-            > span {
-              height: 15px;
-              display: inline-block;
-
-              &.filled {
-                background-color: $quality-bar-filled-color;
-                font-size: 8px;
+        .table {
+          thead {
+            tr {
+              th {
+                border-top: 0;
               }
-              &.empty { background-color: $quality-bar-empty-color; }
-              &.null-cell { background-color: $quality-bar-null-color; }
             }
           }
-
-          .types-table-container {
-            table {
-              background-color: transparent;
-
-              th,
+          tbody {
+            tr {
+              cursor: pointer;
               td {
-                border-top: 1px solid $types-table-border-color;
+                &:nth-child(1),
+                &:nth-child(2) {
+                  width: 5%;
+                }
+                &:nth-child(3) {
+                  width: 70%;
+                  max-width: 250px;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                }
+                &:nth-child(4) {
+                  width: 10%;
+                }
               }
-
-              th {
-                border-bottom: 2px solid $types-table-border-color;
+              &.column-tab-details {
+                background: $element-selected-color;
+                border-left: 3px solid;
+                .table {
+                  background: transparent;
+                }
+              }
+              &.selected {
+                background-color: $element-selected-color;
               }
             }
           }

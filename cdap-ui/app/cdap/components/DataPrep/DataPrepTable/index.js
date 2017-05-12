@@ -56,7 +56,7 @@ export default class DataPrepTable extends Component {
     this.sub = DataPrepStore.subscribe(() => {
       let state = DataPrepStore.getState();
       this.setState({
-        data: state.dataprep.data,
+        data: state.dataprep.data.map(d => Object.assign({}, d, {uniqueId: shortid.generate()})),
         headers: state.dataprep.headers.map(header => ({name: header, edit: false})),
         loading: !state.dataprep.initialized,
         directivesLength: state.dataprep.directives.length,
@@ -281,9 +281,9 @@ export default class DataPrepTable extends Component {
           {
             data.map((row) => {
               return (
-                <tr key={shortid.generate()}>
-                  {headers.map((head) => {
-                    return <td key={shortid.generate()}><div>{row[head.name]}</div></td>;
+                <tr key={row.uniqueId}>
+                  {headers.map((head, i) => {
+                    return <td key={i}><div>{row[head.name]}</div></td>;
                   })}
                 </tr>
               );
