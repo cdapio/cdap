@@ -32,6 +32,7 @@ $connections-menu-item-color: #333333;
     width: 250px;
     background-color: $connections-panel-bg-color;
     border-right: 1px solid $connections-panel-border-color;
+    position: relative;
 
     .panel-title {
       margin: 15px 0;
@@ -46,10 +47,10 @@ $connections-menu-item-color: #333333;
 
     .connections-menu {
       .menu-item {
-        padding: 10px 15px;
+        padding: 10px 15px 10px 35px;
         cursor: pointer;
 
-        .fa { margin-right: 10px; }
+        .fa:not(.caret) { margin-right: 10px; }
 
         &:not(:last-child) {
           border-bottom: 1px solid $connections-panel-border-color;
@@ -75,7 +76,32 @@ $connections-menu-item-color: #333333;
             color: $connections-menu-active-color;
           }
         }
+
+        .menu-item-expanded-list {
+          padding: 10px 27px;
+        }
+
+        &.expandable {
+          .expandable-title {
+            padding-bottom: 5px;
+            position: relative;
+            user-select: none;
+
+            .caret {
+              position: absolute;
+              left: -20px;
+              top: 3px;
+            }
+          }
+        }
       }
+    }
+
+    .add-connection-container {
+      position: absolute;
+      bottom: 30px;
+      left: 0;
+      right: 0;
     }
   }
 

@@ -22,6 +22,7 @@ let dataSrc = DataSourceConfigurer.getInstance();
 const appPath = '/namespaces/:namespace/apps/dataprep';
 const baseServicePath = `${appPath}/services/service`;
 const basepath = `${baseServicePath}/methods/workspaces/:workspaceId`;
+const connectionsPath = `${baseServicePath}/methods/connections`;
 
 const MyDataPrepApi = {
   create: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath),
@@ -50,7 +51,14 @@ const MyDataPrepApi = {
 
   // Database Browser
   listTables: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/methods/list`),
-  readTable: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/methods/execute`)
+  readTable: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/methods/execute`),
+
+  // Connections
+  listConnections: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}`),
+  createConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/create`),
+  deleteConnection: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${connectionsPath}/:connectionId`),
+  getConnection: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId`),
+  listDrivers: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/list/drivers`)
 };
 
 export default MyDataPrepApi;
