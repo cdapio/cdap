@@ -275,6 +275,9 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
             <version>1.7</version>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
             <executions>
               <execution>
                 <id>mkdir-symlink-dir</id>
@@ -282,7 +285,8 @@
                 <goals>
                   <goal>run</goal>
                 </goals>
-                <configuration>
+                <configuration combine.self="override">
+                  <skip>false</skip>
                   <target>
                     <mkdir dir="${project.build.directory}/generated-sources/cdap-spark-core-base/src"/>
                     <mkdir dir="${project.build.directory}/generated-test-sources/cdap-spark-core-base/src"/>
