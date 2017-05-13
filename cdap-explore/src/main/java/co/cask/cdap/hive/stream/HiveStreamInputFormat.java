@@ -21,13 +21,13 @@ import co.cask.cdap.data.stream.StreamInputSplitFactory;
 import co.cask.cdap.data.stream.StreamInputSplitFinder;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.explore.HiveUtilities;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.index.IndexPredicateAnalyzer;
 import org.apache.hadoop.hive.ql.index.IndexSearchCondition;
 import org.apache.hadoop.hive.ql.plan.ExprNodeConstantDesc;
@@ -126,16 +126,7 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
     }
 
     try {
-      ExprNodeGenericFuncDesc expr;
-      // Hack to deal with the fact that older versions of Hive use
-      // Utilities.deserializeExpression(String, Configuration),
-      // whereas newer versions use Utilities.deserializeExpression(String).
-      try {
-        expr = Utilities.deserializeExpression(serializedExpr);
-      } catch (NoSuchMethodError e) {
-        expr = (ExprNodeGenericFuncDesc) Utilities.class.getMethod(
-          "deserializeExpression", String.class, Configuration.class).invoke(null, serializedExpr, conf);
-      }
+      ExprNodeGenericFuncDesc expr = HiveUtilities.deserializeExpression(serializedExpr, conf);
 
       // Analyze the query to extract predicates that can be used for indexing (i.e. setting start/end time)
       IndexPredicateAnalyzer analyzer = new IndexPredicateAnalyzer();

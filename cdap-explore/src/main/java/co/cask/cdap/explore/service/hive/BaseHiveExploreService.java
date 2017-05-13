@@ -92,7 +92,6 @@ import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.TableSchema;
-import org.apache.hive.service.cli.thrift.TColumnValue;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.thrift.TException;
@@ -1559,24 +1558,5 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       throw e;
     }
     throw new ExploreException(e);
-  }
-
-  protected Object tColumnToObject(TColumnValue tColumnValue) throws ExploreException {
-    if (tColumnValue.isSetBoolVal()) {
-      return tColumnValue.getBoolVal().isValue();
-    } else if (tColumnValue.isSetByteVal()) {
-      return tColumnValue.getByteVal().getValue();
-    } else if (tColumnValue.isSetDoubleVal()) {
-      return tColumnValue.getDoubleVal().getValue();
-    } else if (tColumnValue.isSetI16Val()) {
-      return tColumnValue.getI16Val().getValue();
-    } else if (tColumnValue.isSetI32Val()) {
-      return tColumnValue.getI32Val().getValue();
-    } else if (tColumnValue.isSetI64Val()) {
-      return tColumnValue.getI64Val().getValue();
-    } else if (tColumnValue.isSetStringVal()) {
-      return tColumnValue.getStringVal().getValue();
-    }
-    throw new ExploreException("Unknown column value encountered: " + tColumnValue);
   }
 }
