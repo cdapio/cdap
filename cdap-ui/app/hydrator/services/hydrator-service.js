@@ -132,28 +132,25 @@ class HydratorPlusPlusHydratorService {
       pipelineType: appType,
       version: artifactVersion || this.$rootScope.cdapVersion,
       extensionType: node.type,
-      pluginName: node.plugin.name
+      pluginName: node.plugin.name,
+      artifactVersion: node.plugin.artifact.version,
+      artifactName: node.plugin.artifact.name,
+      artifactScope: node.plugin.artifact.scope,
+      limit: 1,
+      order: 'DESC'
     };
 
     return this.myPipelineApi.fetchPluginProperties(params)
       .$promise
       .then((res = []) => {
-        let nodeArtifact = node.plugin.artifact;
-        if (node.plugin && !node.plugin.artifact && res.length) {
-          let lastElementIndex = res.length - 1;
-          node._backendProperties = res[lastElementIndex].properties || {};
-          node.description = res[lastElementIndex].description;
-          node.plugin.artifact = res[lastElementIndex].artifact;
-          defer.resolve(node);
-        } else {
-          let match = res.filter(plug => angular.equals(plug.artifact, nodeArtifact));
-          let pluginProperties = (match.length? match[0].properties: {});
-          if (res.length && !this.myHelpers.objectQuery(node, 'description', 'length')) {
-            node.description = res[0].description;
-          }
-          node._backendProperties = pluginProperties;
-          defer.resolve(node);
-        }
+        // Since now we have added plugin artifact information to be passed in query params
+        // We don't get a list (or list of different versions of the plugin) anymore. Its always a list of 1 item.
+        // Overwriting artifact as UI could have artifact ranges while importing draft.
+        let lastElementIndex = res.length - 1;
+        node._backendProperties = res[lastElementIndex].properties || {};
+        node.description = res[lastElementIndex].description;
+        node.plugin.artifact = res[lastElementIndex].artifact;
+        defer.resolve(node);
         return defer.promise;
       });
   }
@@ -286,7 +283,7 @@ class HydratorPlusPlusHydratorService {
     if (typeof schema === 'string') {
       try {
         outputSchema = JSON.parse(schema);
-      } catch(e) {
+      } catch (e) {
         console.log('ERROR: Parsing schema JSON ', e);
         return schema;
       }
@@ -320,7 +317,7 @@ class HydratorPlusPlusHydratorService {
   getPrefsRelevantToMacros(resolvedPrefs = {}, macrosMap = {}) {
     try {
       resolvedPrefs = JSON.parse(angular.toJson(resolvedPrefs));
-    } catch(e) {
+    } catch (e) {
       console.log('ERROR: ', e);
       resolvedPrefs = {};
     }
@@ -331,6 +328,24 @@ class HydratorPlusPlusHydratorService {
       }
     }
     return relevantPrefs;
+  }
+
+  isVersionInRange({supportedVersion, versionRange} = {}) {
+    let flattendVersion = versionRange;
+    let isNil = (value) => _.isUndefined(value) && _.isNull(value);
+    if (isNil(supportedVersion) || isNil(versionRange)) {
+      return false;
+    }
+    if (['[', '('].indexOf(versionRange[0]) !== -1) {
+      const supportedVersionInst = new window.CaskCommon.Version(supportedVersion);
+      const entityVersionRangeInst = new window.CaskCommon.VersionRange(versionRange);
+      if (entityVersionRangeInst.versionIsInRange(supportedVersionInst)) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+    return flattendVersion;
   }
 }
 
