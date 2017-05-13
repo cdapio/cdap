@@ -105,11 +105,25 @@ public final class ExploreUtils {
       throw new RuntimeException("System property " + EXPLORE_CLASSPATH + " is not set.");
     }
 
+    Iterable<File> classpathJarFiles = getClasspathJarFiles(property, extraExtensions);
+    LOG.trace("Explore classpath jar files: {}", classpathJarFiles);
+    return classpathJarFiles;
+  }
+
+  /**
+   * Returns the set of jars in Java classpath. Only jar files will be included in the result set and paths
+   * ended with a '*' will be expanded to include all jars under the given path.
+   *
+   * @param classpath java classpath separated by the {@link File#pathSeparatorChar}
+   * @param extraExtensions if provided, the set of file extensions that is also accepted when resolving the
+   *                        classpath wildcard
+   */
+  public static Iterable<File> getClasspathJarFiles(String classpath, String...extraExtensions) {
     Set<String> acceptedExts = Sets.newHashSet(extraExtensions);
     acceptedExts.add("jar");
 
     Set<File> result = new LinkedHashSet<>();
-    for (String path : Splitter.on(File.pathSeparator).split(property)) {
+    for (String path : Splitter.on(File.pathSeparator).split(classpath)) {
       List<File> jarFiles;
       // The path has to either ends with "*" or is a jar file. This is because we are only interested in JAR files
       // in the hive classpath.
