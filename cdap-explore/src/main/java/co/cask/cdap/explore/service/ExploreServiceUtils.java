@@ -166,6 +166,8 @@ public class ExploreServiceUtils {
       return HiveSupport.HIVE_1_1;
     }  else if (hiveVersion.startsWith(("1.2"))) {
       return HiveSupport.HIVE_1_2;
+    } else if (hiveVersion.startsWith(("2.1"))) {
+      return HiveSupport.HIVE_1_2;
     }
 
     throw new RuntimeException("Hive distribution not supported. Set the configuration '" +
