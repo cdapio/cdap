@@ -18,7 +18,6 @@ package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
@@ -27,11 +26,13 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHel
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.logging.LoggingUtil;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
@@ -42,15 +43,13 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -347,30 +346,21 @@ public class MasterTwillApplication implements TwillApplication {
   private void prepareExploreResources(Path tempDir, Configuration hConf,
                                        Map<String, LocalizeResource> localizeResources,
                                        Collection<String> extraClassPath) throws IOException {
-    // Collect the set of jar files in the master process classloader
-    final Set<File> masterJars = new HashSet<>();
-    for (URL url : ClassLoaders.getClassLoaderURLs(getClass().getClassLoader(), new HashSet<URL>())) {
-      String path = url.getPath();
-      // Only interested in local jar files
-      if (!"file".equals(url.getProtocol()) || !path.endsWith(".jar")) {
-        continue;
-      }
-      try {
-        masterJars.add(new File(url.toURI()));
-      } catch (URISyntaxException e) {
-        // Should happen. Ignore the file and keep proceeding.
-        LOG.warn("Failed to convert local file url to File", e);
-      }
-    }
+    // Find the jars in the yarn application classpath
+    String yarnAppClassPath = Joiner.on(File.pathSeparatorChar).join(
+      hConf.getTrimmedStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                              YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+    final Set<File> yarnAppJarFiles = new LinkedHashSet<>();
+    Iterables.addAll(yarnAppJarFiles, ExploreUtils.getClasspathJarFiles(yarnAppClassPath));
 
 
-    // Filter out jar files that are already in the master classpath as those will get localized by twill automatically,
-    // hence no need to localize again.
+    // Filter out jar files that are already in the yarn application classpath as those,
+    // are already available in the Explore container.
     Iterable<File> exploreFiles = Iterables.filter(
       ExploreUtils.getExploreClasspathJarFiles("tgz", "gz"), new Predicate<File>() {
         @Override
         public boolean apply(File file) {
-          return !masterJars.contains(file);
+          return !yarnAppJarFiles.contains(file);
         }
       });
 
@@ -397,5 +387,6 @@ public class MasterTwillApplication implements TwillApplication {
     // Explore also depends on MR, hence adding MR jars to the classpath.
     // Depending on how the cluster is configured, we might need to localize the MR framework tgz as well.
     extraClassPath.addAll(MapReduceContainerHelper.localizeFramework(hConf, localizeResources));
+    LOG.trace("Jars in extra classpath after adding jars in explore classpath: {}", extraClassPath);
   }
 }
