@@ -33,13 +33,17 @@ import co.cask.cdap.etl.batch.mapreduce.PipeTransformExecutor;
 import co.cask.cdap.etl.batch.mapreduce.SinkEmitter;
 import co.cask.cdap.etl.batch.mapreduce.TransformEmitter;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.planner.StageInfo;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -59,6 +63,9 @@ public abstract class TransformExecutorFactory<T> {
   protected final Metrics metrics;
   protected final Map<String, Schema> outputSchemas;
   protected boolean isMapPhase;
+  private static final Logger PIPELINE_LOG =
+    new LocationAwareMDCWrapperLogger(LoggerFactory.getLogger(TransformExecutorFactory.class), Constants.EVENT_TYPE_TAG,
+                                      Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
 
   public TransformExecutorFactory(JobContext hadoopContext, PipelinePluginInstantiator pluginInstantiator,
                                   Metrics metrics, @Nullable String sourceStageName, MacroEvaluator macroEvaluator) {
@@ -131,7 +138,15 @@ public abstract class TransformExecutorFactory<T> {
       return;
     }
 
-    addTransformation(pipeline, stageName, transformations, transformErrorSinkMap);
+    try {
+      addTransformation(pipeline, stageName, transformations, transformErrorSinkMap);
+    } catch (Exception e) {
+      // Catch the Exception to generate a User Error Log for the Pipeline
+      PIPELINE_LOG.error("Failed to start pipeline stage '{}' with the error: {}. Please review your pipeline " +
+                          "configuration and check the system logs for more details.", stageName,
+                        Throwables.getRootCause(e).getMessage(), Throwables.getRootCause(e));
+      throw e;
+    }
 
     for (String output : pipeline.getDag().getNodeOutputs(stageName)) {
       setPipeTransformDetail(pipeline, output, transformations, transformErrorSinkMap, outputWriter);
