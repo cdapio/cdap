@@ -49,6 +49,7 @@
   <logger name="co.cask.cdap.extension.AbstractExtensionLoader" level="ERROR"/>
   <logger name="akka" level="WARN"/>
   <logger name="Remoting" level="WARN"/>
+  <logger name="com.sun.jersey" level="WARN"/>
 
   <!-- HttpRequestLog is not used and expects log4j logging or logs a WARN message -->
   <logger name="org.apache.hadoop.http.HttpRequestLog" level="ERROR"/>

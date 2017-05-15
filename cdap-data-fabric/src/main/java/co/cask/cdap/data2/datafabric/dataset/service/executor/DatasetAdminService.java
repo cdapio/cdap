@@ -98,10 +98,10 @@ public class DatasetAdminService {
                                              @Nullable final DatasetSpecification existing) throws Exception {
 
     if (existing == null) {
-      LOG.info("Creating dataset instance {}, type meta: {}, props: {}", datasetInstanceId, typeMeta, props);
+      LOG.info("Creating dataset instance {}, type meta: {}", datasetInstanceId, typeMeta);
     } else {
-      LOG.info("Updating dataset instance {}, type meta: {}, existing: {}, props: {}",
-               datasetInstanceId, typeMeta, existing, props);
+      LOG.info("Updating dataset instance {}, type meta: {}, existing: {}",
+               datasetInstanceId, typeMeta, existing);
     }
     try (DatasetClassLoaderProvider classLoaderProvider =
            new DirectoryClassLoaderProvider(cConf, locationFactory)) {

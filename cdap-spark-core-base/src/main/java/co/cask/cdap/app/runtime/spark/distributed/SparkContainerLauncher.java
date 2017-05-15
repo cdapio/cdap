@@ -23,6 +23,7 @@ import co.cask.cdap.common.logging.StandardOutErrorRedirector;
 import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -65,6 +66,16 @@ public final class SparkContainerLauncher {
     // Spark classes are in the system classloader which we want to rewrite.
     URL[] classLoaderUrls = urls.toArray(new URL[urls.size()]);
     ClassLoader classLoader = new SparkContainerClassLoader(classLoaderUrls, systemClassLoader.getParent());
+
+    // Install the JUL to SLF4J Bridge
+    try {
+      classLoader.loadClass(SLF4JBridgeHandler.class.getName())
+        .getDeclaredMethod("install")
+        .invoke(null);
+    } catch (Exception e) {
+      // Log the error and continue
+      LOG.warn("Failed to invoke SLF4JBridgeHandler.install() required for jul-to-slf4j bridge", e);
+    }
 
     // Sets the context classloader and launch the actual Spark main class.
     Thread.currentThread().setContextClassLoader(classLoader);
