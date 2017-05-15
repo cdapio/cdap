@@ -36,7 +36,8 @@ const defaultInitialState = {
   directives: [],
   higherVersion: null,
   loading: false,
-  singleWorkspaceMode: false
+  singleWorkspaceMode: false,
+  workspaceInfo: null
 };
 
 const errorInitialState = {
@@ -46,6 +47,10 @@ const errorInitialState = {
 
 const columnsInformationInitialState = {
   columns: {}
+};
+
+const workspacesInitialState = {
+  list: []
 };
 
 const dataprep = (state = defaultInitialState, action = defaultAction) => {
@@ -81,7 +86,8 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         data: action.payload.data || [],
         initialized: true,
         loading: false,
-        selectedHeaders: []
+        selectedHeaders: [],
+        workspaceInfo: action.payload.workspaceInfo
       });
       break;
     case DataPrepActions.setSelectedHeaders:
@@ -181,13 +187,36 @@ const columnsInformation = (state = columnsInformationInitialState, action = def
   return Object.assign({}, state, stateCopy);
 };
 
+const workspaces = (state = workspacesInitialState, action = defaultAction) => {
+  let stateCopy;
+
+  switch (action.type) {
+    case DataPrepActions.setWorkspaceList:
+      stateCopy = Object.assign({}, state, {
+        list: action.payload.list
+      });
+      break;
+    case DataPrepActions.reset:
+      return workspacesInitialState;
+    default:
+      return state;
+  }
+
+  return Object.assign({}, state, stateCopy);
+};
+
 const DataPrepStore = createStore(
   combineReducers({
     dataprep,
     error,
-    columnsInformation
+    columnsInformation,
+    workspaces
   }),
-  defaultInitialState,
+  {
+    dataprep: defaultInitialState,
+    error: errorInitialState,
+    workspaces: workspacesInitialState
+  },
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );
 

@@ -14,18 +14,63 @@
  * the License.
  */
 
+$panel-toggle-bg-color: #999999;
+
 .dataprep-container {
   overflow: hidden;
 
   &.error { padding-top: 25px; }
 
+  &.single-workspace {
+    .top-section .panel-toggle {
+      height: 50px;
+      line-height: 50px;
+    }
+
+    .dataprep-body.row {
+      // height calculations
+      // 100vh - height of navbar - top panel - footer
+      // 100vh - 50px - 50px - 54px
+      height: calc(100vh - 154px);
+    }
+  }
+
+  .top-section {
+    .panel-toggle,
+    .top-section-content {
+      display: inline-block;
+    }
+
+    .panel-toggle {
+      width: 25px;
+      height: 80px;
+      line-height: 80px;
+      background-color: $panel-toggle-bg-color;
+
+      .panel-button {
+        display: inline-block;
+        width: 100%;
+        height: 100%;
+        color: white;
+      }
+
+      &:hover {
+        background-color: lighten($panel-toggle-bg-color, 10%);
+      }
+    }
+
+    .top-section-content {
+      width: calc(100% - 26px);
+    }
+  }
+
   .dataprep-body.row {
     // height calculations
-    // 100vh - height of navbar - top panel - footer
-    // 100vh - 50px - 50px - 54px
+    // 100vh - height of navbar - top panel - footer - tabs
+    // 100vh - 50px - 50px - 54px - 30px
     margin-right: 0;
     margin-left: 0;
-    height: calc(100vh - 154px);
+    height: calc(100vh - 184px);
 
     .dataprep-main {
       padding: 0;

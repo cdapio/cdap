@@ -14,6 +14,8 @@
  * the License.
  */
 
+$top-panel-connection-color: #999999;
+
 .dataprep-container {
   .top-panel {
     height: 50px;
@@ -30,6 +32,11 @@
       .data-prep-name {
         font-size: 18px;
         padding: 0 10px;
+
+        .connection-type {
+          font-size: 13px;
+          color: $top-panel-connection-color;
+        }
       }
 
       .upgrade-button {

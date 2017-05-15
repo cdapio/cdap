@@ -43,7 +43,8 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/apps/:appId" component={AppDetailedView} />
           <Route path="/ns/:namespace/datasets/:datasetId" component={DatasetDetailedView} />
           <Route path="/ns/:namespace/streams/:streamId" component={StreamDetailedView} />
-          <Route path="/ns/:namespace/dataprep" component={DataPrepHome} />
+          <Route exact path="/ns/:namespace/dataprep" component={DataPrepHome} />
+          <Route exact path="/ns/:namespace/dataprep/:workspaceId" component={DataPrepHome} />
           <Route path="/ns/:namespace/file" component={FileBrowser} />
           <Route path="/ns/:namespace/connections" component={DataPrepConnections} />
           <Route component={Page404} />

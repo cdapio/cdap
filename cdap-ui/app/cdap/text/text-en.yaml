@@ -541,6 +541,7 @@ features:
     TopPanel:
       applyBtnLabel: Apply
       addToPipelineBtnLabel: Add to Pipeline
+      file: HDFS
       invalidFieldNameMessage: Invalid field name "{fieldName}"
       invalidFieldNameRemedies1: "Your field name contains an invalid character: no space or special character other than - or _ are allowed"
       invalidFieldNameRemedies2: Try to apply directive “cleanse-column-names”
@@ -548,6 +549,7 @@ features:
         defaultErrorMessage: Error generating schema.
       PipelineModal:
         defaultErrorMessage: Error adding to pipeline
+      title: Data Preparation
       upgradeBtnLabel: Upgrade
       viewSchemaBtnLabel: View Schema
       WorkspaceModal:
