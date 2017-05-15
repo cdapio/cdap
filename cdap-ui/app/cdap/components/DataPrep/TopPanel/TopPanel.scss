@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
 $top-panel-connection-color: #999999;
 
@@ -21,8 +21,14 @@ $top-panel-connection-color: #999999;
     height: 50px;
     border-bottom: 1px solid #cccccc;
 
+    .row,
+    .row [class*="col-xs"],
     .left-title {
-      width: calc(100% - 270px);
+      height: inherit;
+    }
+    .left-title {
+      display: flex;
+      justify-content: space-between;
 
       .data-prep-name,
       .upgrade-button {

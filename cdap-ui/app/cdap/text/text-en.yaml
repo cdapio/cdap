@@ -532,6 +532,16 @@ features:
       Swap:
         title: Swap Two Column Names
     pageTitle: CDAP | Data Preparation
+    SamplerDropdown:
+      bernoulli:
+        label: Bernoulli
+      first:
+        label: First N Records
+      poisson:
+        label: Poisson
+      reservoir:
+        label: Reservoir
+      title: Sample {sampleMethod}
     SidePanel:
       ColumnsTab:
         toggle:

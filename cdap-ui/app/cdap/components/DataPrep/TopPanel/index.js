@@ -24,6 +24,8 @@ import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers'
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
+import SamplerDropdown from 'components/DataPrep/SamplerDropdown';
+
 import T from 'i18n-react';
 
 require('./TopPanel.scss');
@@ -176,67 +178,76 @@ export default class DataPrepTopPanel extends Component {
 
   render() {
     return (
-      <div className="top-panel clearfix">
-        <div className="left-title float-xs-left">
-          <div className="upper-section">
-            {this.renderTopPanelDisplay()}
+      <div className="top-panel ">
+        <div className="row">
+          <div className="col-xs-9">
+            <div className="left-title ">
+              <div className="upper-section">
+                {this.renderTopPanelDisplay()}
 
-            <div className="upgrade-button">
-              {
-                this.state.higherVersion ? (
-                  <button
-                    className="btn btn-info btn-sm"
-                    onClick={this.toggleUpgradeModal}
-                  >
-                    <span className="fa fa-wrench fa-fw" />
-                    {T.translate('features.DataPrep.TopPanel.upgradeBtnLabel')}
-                  </button>
-                ) : null
-              }
-              {this.renderUpgradeModal()}
+                <div className="upgrade-button">
+                  {
+                    this.state.higherVersion ? (
+                      <button
+                        className="btn btn-info btn-sm"
+                        onClick={this.toggleUpgradeModal}
+                      >
+                        <span className="fa fa-wrench fa-fw" />
+                        {T.translate('features.DataPrep.TopPanel.upgradeBtnLabel')}
+                      </button>
+                    ) : null
+                  }
+                  {this.renderUpgradeModal()}
+                </div>
+              </div>
+              <SamplerDropdown />
             </div>
           </div>
-        </div>
 
-        <div className="action-buttons float-xs-right">
-          {
-            this.state.onSubmitError ?
-              <span className="text-danger">{this.state.onSubmitError}</span>
-            :
-              null
-          }
-          {
-            !this.props.singleWorkspaceMode ?
-              <button
-                className="btn btn-primary"
-                onClick={this.toggleAddToPipelineModal}
-              >
-                {T.translate('features.DataPrep.TopPanel.addToPipelineBtnLabel')}
-              </button>
-            :
-            <button
-              className="btn btn-primary"
-              onClick={this.onSubmit.bind(this)}
-              disabled={this.state.onSubmitLoading ? 'disabled' : null}
-            >
-              {
-                this.state.onSubmitLoading ?
-                  <span className="fa fa-spinner fa-spin"></span>
-                :
-                  null
-              }
-              <span>{T.translate('features.DataPrep.TopPanel.applyBtnLabel')}</span>
-            </button>
-          }
-          {this.renderAddToPipelineModal()}
+          <div className="col-xs-3">
+            <div className="clearfix">
+              <div className="action-buttons float-xs-right">
+                {
+                  this.state.onSubmitError ?
+                    <span className="text-danger">{this.state.onSubmitError}</span>
+                  :
+                    null
+                }
+                {
+                  !this.props.singleWorkspaceMode ?
+                    <button
+                      className="btn btn-primary"
+                      onClick={this.toggleAddToPipelineModal}
+                    >
+                      {T.translate('features.DataPrep.TopPanel.addToPipelineBtnLabel')}
+                    </button>
+                  :
+                  <button
+                    className="btn btn-primary"
+                    onClick={this.onSubmit.bind(this)}
+                    disabled={this.state.onSubmitLoading ? 'disabled' : null}
+                  >
+                    {
+                      this.state.onSubmitLoading ?
+                        <span className="fa fa-spinner fa-spin"></span>
+                      :
+                        null
+                    }
+                    <span>{T.translate('features.DataPrep.TopPanel.applyBtnLabel')}</span>
+                  </button>
+                }
+                {this.renderAddToPipelineModal()}
 
-          <button
-            className="btn btn-link"
-            onClick={this.toggleSchemaModal}
-          >
-            {T.translate('features.DataPrep.TopPanel.viewSchemaBtnLabel')}
-          </button>
-          {this.renderSchemaModal()}
+                <button
+                  className="btn btn-link"
+                  onClick={this.toggleSchemaModal}
+                >
+                  {T.translate('features.DataPrep.TopPanel.viewSchemaBtnLabel')}
+                </button>
+                {this.renderSchemaModal()}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
