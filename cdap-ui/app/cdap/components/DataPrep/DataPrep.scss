@@ -65,7 +65,9 @@ $toggle-btn-disabled-bg-color: #cccccc;
     }
 
     .top-section-content {
-      width: calc(100% - 26px);
+      // Width calculation:
+      // 100% - 25px for panel-toggle (left arrow for going back to file browser)
+      width: calc(100% - 25px);
     }
   }
 
