@@ -75,17 +75,23 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
     int cacheTtlSecs = cConf.getInt(Constants.Security.Authorization.CACHE_TTL_SECS);
     int cacheMaxEntries = cConf.getInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES);
 
-    authPolicyCache = CacheBuilder.newBuilder()
-      .expireAfterWrite(cacheTtlSecs, TimeUnit.SECONDS)
-      .maximumSize(cacheMaxEntries)
-      .build(new CacheLoader<AuthorizationPrivilege, Boolean>() {
-        @SuppressWarnings("NullableProblems")
-        @Override
-        public Boolean load(AuthorizationPrivilege authorizationPrivilege) throws Exception {
-          LOG.trace("Cache miss for " + authorizationPrivilege);
-          return doEnforce(authorizationPrivilege);
-        }
-      });
+    if (cacheEnabled) {
+      LOG.debug("Initializing authorization cache for containers with TTL {} and max entries as {}", cacheTtlSecs,
+                cacheMaxEntries);
+      authPolicyCache = CacheBuilder.newBuilder()
+        .expireAfterWrite(cacheTtlSecs, TimeUnit.SECONDS)
+        .maximumSize(cacheMaxEntries)
+        .build(new CacheLoader<AuthorizationPrivilege, Boolean>() {
+          @SuppressWarnings("NullableProblems")
+          @Override
+          public Boolean load(AuthorizationPrivilege authorizationPrivilege) throws Exception {
+            LOG.trace("Cache miss for " + authorizationPrivilege);
+            return doEnforce(authorizationPrivilege);
+          }
+        });
+    } else {
+      authPolicyCache = null;
+    }
   }
 
   @Override
@@ -93,6 +99,7 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
     if (!isSecurityAuthorizationEnabled()) {
       return;
     }
+    LOG.debug("Enforcing {} on {} for {}", action, entity, principal);
     AuthorizationPrivilege authorizationPrivilege = new AuthorizationPrivilege(principal, entity, action);
 
     boolean allowed = cacheEnabled ? authPolicyCache.get(authorizationPrivilege) : doEnforce(authorizationPrivilege);
@@ -104,7 +111,6 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
   private boolean doEnforce(AuthorizationPrivilege authorizationPrivilege) throws IOException {
     HttpResponse response = executeRequest(authorizationPrivilege);
     return HttpResponseStatus.OK.getCode() == response.getResponseCode();
-
   }
 
   private HttpResponse executeRequest(AuthorizationPrivilege authorizationPrivilege) throws IOException {

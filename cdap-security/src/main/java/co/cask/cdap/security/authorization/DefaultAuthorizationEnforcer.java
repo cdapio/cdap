@@ -56,6 +56,7 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     if (!isSecurityAuthorizationEnabled()) {
       return;
     }
+    LOG.debug("Enforcing actions {} on {} for principal {}.", action, entity, principal);
     doEnforce(entity, principal, Collections.singleton(action), true);
   }
 
@@ -64,7 +65,7 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     // If privilege propagation is enabled then check for the privilege on the parent, if any.
     if (isPrivilegePropagationEnabled()) {
       if (entity instanceof ParentedId) {
-        LOG.trace("Checking privilege for the parent of {}", entity.getEntityName());
+        LOG.debug("Privilege propagation is enabled. Checking privilege for the parent of {}", entity.getEntityName());
         if (doEnforce(((ParentedId) entity).getParent(), principal, actions, false)) {
           return true;
         }

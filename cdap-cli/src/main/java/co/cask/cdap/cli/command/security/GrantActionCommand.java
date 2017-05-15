@@ -46,7 +46,8 @@ public class GrantActionCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
+    String ent = arguments.get(ArgumentName.ENTITY.toString());
+    EntityId entity = EntityId.fromString(ent);
     String principalName = arguments.get("principal-name");
     Principal.PrincipalType principalType =
       Principal.PrincipalType.valueOf(arguments.get("principal-type").toUpperCase());

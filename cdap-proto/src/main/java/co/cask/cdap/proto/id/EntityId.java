@@ -204,7 +204,7 @@ public abstract class EntityId implements IdCompatible {
   }
 
   protected static String nextAndEnd(Iterator<String> iterator, String fieldName) {
-    String result = next(iterator, fieldName);
+    String result = next(iterator, fieldName) + "." + next(iterator, fieldName);
     if (iterator.hasNext()) {
       throw new IllegalArgumentException(
         String.format("Expected end after field '%s' but got: %s", fieldName, remaining(iterator)));

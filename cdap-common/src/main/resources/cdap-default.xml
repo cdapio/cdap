@@ -2739,6 +2739,35 @@
   </property>
 
   <property>
+    <name>security.authorization.extension.config.cache.enabled</name>
+    <value>true</value>
+    <description>
+      Determines if authorization policies can be cached by the authorization;
+      extension, defaults to true
+    </description>
+  </property>
+
+  <property>
+    <name>security.authorization.extension.config.cache.max.entries</name>
+    <value>10000</value>
+    <description>
+      Number of entries to hold in the authorization extension authorization cache.
+      This setting only takes effect if
+      ${security.authorization.extension.config.cache.enabled} is set to true.
+    </description>
+  </property>
+
+  <property>
+    <name>security.authorization.extension.config.cache.ttl.secs</name>
+    <value>60</value>
+    <description>
+      The time-to-live in seconds for entries in the authorization cache
+      in the authorization extension. This setting only takes effect if
+      ${security.authorization.extension.config.cache.enabled} is set to true.
+    </description>
+  </property>
+
+  <property>
     <name>security.authorization.extension.jar.path</name>
     <value></value>
     <description>
