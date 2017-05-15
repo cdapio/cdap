@@ -75,6 +75,8 @@ export default class SamplerDropdown extends Component {
       fraction: DEFAULT_FRACTION,
       sampler: samplerMethod.name
     };
+    // FIXME: Right now CONTENT_TYPE is 'text/plain' and this is because UI doesn't have the info
+    // yet from backend. Will replace this with appropriate value when we get it from backend.
     const headers = {
       'Content-Type': CONTENT_TYPE
     };
@@ -121,7 +123,7 @@ export default class SamplerDropdown extends Component {
                     {
                       this.state.samplerMethod.name === option.name ?
                         <span>
-                          <IconSVG name="icon-check"/>
+                          <IconSVG name="icon-check" />
                         </span>
                       :
                         null

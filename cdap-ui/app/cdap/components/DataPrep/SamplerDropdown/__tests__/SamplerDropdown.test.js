@@ -49,6 +49,7 @@ const workspaceObject = {
   }
 };
 
+
 const setWorkspace = (workspaceInfo = workspaceObject) => {
   let directives = objectQuery(workspaceInfo, 'recipe', 'directives') || [];
   let workspaceUri = objectQuery(workspaceInfo, 'properties', 'path');
@@ -84,7 +85,7 @@ describe('Unit tests for SamplerDropdown', () => {
     jest.runAllTimers();
     let samplerMethod = samplerdropdown.state('samplerMethod');
     expect(samplerdropdown.find('.dropdown').length).toBe(1);
-    expect(samplerdropdown.find('.dropdown .dropdown-item').length).toBe(3);
+    expect(samplerdropdown.find('.dropdown .dropdown-item').length).toBe(4);
     expect(samplerdropdown.find('.selected.dropdown-item').length).toBe(1);
     expect(samplerMethod.name).toBe('poisson');
 
