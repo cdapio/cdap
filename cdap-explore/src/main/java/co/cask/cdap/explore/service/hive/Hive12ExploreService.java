@@ -22,6 +22,7 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.explore.HiveUtilities;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.proto.QueryResult;
@@ -109,7 +110,7 @@ public class Hive12ExploreService extends BaseHiveExploreService {
     for (TRow tRow : tRowSet.getRows()) {
       List<Object> cols = Lists.newArrayList();
       for (TColumnValue tColumnValue : tRow.getColVals()) {
-        cols.add(tColumnToObject(tColumnValue));
+        cols.add(HiveUtilities.tColumnToObject(tColumnValue));
       }
       rowsBuilder.add(new QueryResult(cols));
     }
