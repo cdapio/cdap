@@ -19,6 +19,7 @@ package co.cask.cdap.scheduler;
 import co.cask.cdap.AppWithFrequentScheduledWorkflows;
 import co.cask.cdap.AppWithMultipleWorkflows;
 import co.cask.cdap.api.Config;
+import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
@@ -273,8 +274,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     final String name = programId.getProgram();
     final DatasetId datasetId = programId.getNamespaceId().dataset(name);
-    Notification notification =
-      new Notification(Notification.Type.PARTITION, ImmutableMap.of("datasetId", datasetId.toString()));
+    PartitionKey partitionKey = PartitionKey.builder().addIntField("age", 12).build();
+    Notification notification = Notification.forPartitions(datasetId, ImmutableList.of(partitionKey));
     scheduler.addSchedule(new ProgramSchedule(name, "",
                                               programId, ImmutableMap.<String, String>of(),
                                               new PartitionTrigger(datasetId, 1),

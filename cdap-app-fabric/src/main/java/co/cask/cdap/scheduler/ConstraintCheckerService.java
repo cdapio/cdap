@@ -31,25 +31,28 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
+import co.cask.cdap.internal.app.runtime.schedule.constraint.AbstractCheckableConstraint;
+import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintContext;
+import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintResult;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
+import co.cask.cdap.internal.schedule.trigger.Trigger;
+import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Stopwatch;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -284,12 +287,38 @@ class ConstraintCheckerService extends AbstractIdleService {
     }
 
     private boolean isTriggerSatisfied(Job job) {
-      // TODO: implement trigger checking
-      return true;
+      Trigger trigger = job.getSchedule().getTrigger();
+      if (trigger instanceof TimeTrigger) {
+        // TimeTrigger is satisfied as soon as the Notification arrive, due to how the Notification is initially created
+        return true;
+      }
+      if (trigger instanceof PartitionTrigger) {
+        PartitionTrigger partitionTrigger = (PartitionTrigger) trigger;
+        int numPartitions = 0;
+        for (Notification notification : job.getNotifications()) {
+          String numPartitionsString = notification.getProperties().get("numPartitions");
+          numPartitions += Integer.valueOf(numPartitionsString);
+        }
+        return numPartitions >= partitionTrigger.getNumPartitions();
+      }
+      throw new IllegalArgumentException("Unknown trigger class: " + trigger.getClass());
     }
 
     private boolean constraintsSatisfied(Job job) {
-      // TODO: implement constraint checking
+      ConstraintContext constraintContext = new ConstraintContext(job, System.currentTimeMillis());
+      for (Constraint constraint : job.getSchedule().getConstraints()) {
+        if (!(constraint instanceof AbstractCheckableConstraint)) {
+          // this shouldn't happen, since all Constraint implementations should extend AbstractConstraint
+          throw new IllegalArgumentException("Implementation of Constraint must extend AbstractConstraint");
+        }
+        AbstractCheckableConstraint abstractConstraint = (AbstractCheckableConstraint) constraint;
+        ConstraintResult result = abstractConstraint.check(job.getSchedule(), constraintContext);
+        if (result != ConstraintResult.SATISFIED) {
+          // if any of the constraints are unsatisfied, return false
+          return false;
+        }
+
+      }
       return true;
     }
 
