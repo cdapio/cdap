@@ -152,7 +152,7 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
     DatasetCreationSpec existingSpec = datasetSpecs.get(datasetInstanceName);
     if (existingSpec != null && !existingSpec.equals(spec)) {
       throw new IllegalArgumentException(String.format("DatasetInstance '%s' was added multiple times with " +
-        "different specifications. Please resolve the conlict so that there is only one specification for " +
+        "different specifications. Please resolve the conflict so that there is only one specification for " +
         "the dataset instance.", datasetInstanceName));
     }
     datasetSpecs.put(datasetInstanceName, spec);
