@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.artifact;
 import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.artifact.InvalidArtifactRangeException;
+import co.cask.cdap.proto.artifact.ArtifactUtil;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
@@ -32,7 +33,7 @@ public class ArtifactRangeTest {
 
   @Test
   public void testWhitespace() throws InvalidArtifactRangeException {
-    ArtifactRange range = ArtifactRange.parse(NamespaceId.DEFAULT.getNamespace(), "name[ 1.0.0 , 2.0.0 )");
+    ArtifactRange range = ArtifactUtil.parseArtifactRange(NamespaceId.DEFAULT.getNamespace(), "name[ 1.0.0 , 2.0.0 )");
     Assert.assertEquals(new ArtifactRange(NamespaceId.DEFAULT.getNamespace(), "name",
                                           new ArtifactVersion("1.0.0"), true,
                                           new ArtifactVersion("2.0.0"), false),
@@ -67,16 +68,18 @@ public class ArtifactRangeTest {
   public void testVersionParse() throws InvalidArtifactRangeException {
     ArtifactRange expected = new ArtifactRange(NamespaceId.DEFAULT.getNamespace(), "test",
       new ArtifactVersion("1.0.0"), true, new ArtifactVersion("2.0.0-SNAPSHOT"), false);
-    ArtifactRange actual = ArtifactRange.parse(NamespaceId.DEFAULT.getNamespace(), "test[1.0.0,2.0.0-SNAPSHOT)");
+    ArtifactRange actual = ArtifactUtil.parseArtifactRange(NamespaceId.DEFAULT.getNamespace(),
+                                                           "test[1.0.0,2.0.0-SNAPSHOT)");
     Assert.assertEquals(expected, actual);
 
     expected = new ArtifactRange(NamespaceId.DEFAULT.getNamespace(), "test",
       new ArtifactVersion("0.1.0-SNAPSHOT"), false, new ArtifactVersion("1.0.0"), true);
-    actual = ArtifactRange.parse(NamespaceId.DEFAULT.getNamespace(), "test(0.1.0-SNAPSHOT,1.0.0]");
+    actual = ArtifactUtil.parseArtifactRange(NamespaceId.DEFAULT.getNamespace(),
+                                             "test(0.1.0-SNAPSHOT,1.0.0]");
     Assert.assertEquals(expected, actual);
 
     // test compatible with toString
-    Assert.assertEquals(expected, ArtifactRange.parse(expected.toString()));
+    Assert.assertEquals(expected, ArtifactUtil.parseArtifactRange(expected.toString()));
   }
 
   @Test
@@ -92,13 +95,13 @@ public class ArtifactRangeTest {
 
     for (String invalidRange : invalidRanges) {
       try {
-        ArtifactRange.parse(NamespaceId.DEFAULT.getNamespace(), invalidRange);
+        ArtifactUtil.parseArtifactRange(NamespaceId.DEFAULT.getNamespace(), invalidRange);
         Assert.fail();
       } catch (InvalidArtifactRangeException e) {
         // expected
       }
       try {
-        ArtifactRange.parse("system:" + invalidRange);
+        ArtifactUtil.parseArtifactRange("system:" + invalidRange);
         Assert.fail();
       } catch (InvalidArtifactRangeException e) {
         // expected
@@ -128,13 +131,13 @@ public class ArtifactRangeTest {
 
     for (String invalidRange : invalidRanges) {
       try {
-        ArtifactRange.parse(NamespaceId.DEFAULT.getNamespace(), invalidRange);
+        ArtifactUtil.parseArtifactRange(NamespaceId.DEFAULT.getNamespace(), invalidRange);
         Assert.fail();
       } catch (InvalidArtifactRangeException e) {
         // expected
       }
       try {
-        ArtifactRange.parse("system:" + invalidRange);
+        ArtifactUtil.parseArtifactRange("system:" + invalidRange);
         Assert.fail();
       } catch (InvalidArtifactRangeException e) {
         // expected

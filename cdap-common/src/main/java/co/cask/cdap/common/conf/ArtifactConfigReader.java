@@ -21,6 +21,7 @@ import co.cask.cdap.api.artifact.InvalidArtifactRangeException;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ArtifactUtil;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Charsets;
 import com.google.common.cache.CacheBuilder;
@@ -100,7 +101,8 @@ public class ArtifactConfigReader {
 
   /**
    * Deserializer for ArtifactRange in a ArtifactConfig. Artifact ranges are expected to be able to be
-   * parsed via {@link ArtifactRange#parse(String)} or {@link ArtifactRange#parse(String, String)}.
+   * parsed via {@link ArtifactUtil#parseArtifactRange(String)}} or
+   * {@link ArtifactUtil#parseArtifactRange(String, String)}.
    */
   private static class ArtifactRangeDeserializer implements JsonDeserializer<ArtifactRange> {
     private final Id.Namespace namespace;
@@ -119,9 +121,9 @@ public class ArtifactConfigReader {
       String rangeStr = json.getAsString();
       try {
         if (rangeStr.indexOf(':') > 0) {
-          return ArtifactRange.parse(rangeStr);
+          return ArtifactUtil.parseArtifactRange(rangeStr);
         } else {
-          return ArtifactRange.parse(namespace.toEntityId().getNamespace(), rangeStr);
+          return ArtifactUtil.parseArtifactRange(namespace.toEntityId().getNamespace(), rangeStr);
         }
       } catch (InvalidArtifactRangeException e) {
         throw new JsonParseException(e.getMessage());

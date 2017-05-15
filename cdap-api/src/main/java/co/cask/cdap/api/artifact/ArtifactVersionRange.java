@@ -121,7 +121,7 @@ public class ArtifactVersionRange {
   }
 
   // like String's indexOf(char, int), except it looks for either one of 2 characters
-  protected static int indexOf(String str, char option1, char option2, int startIndex) {
+  private static int indexOf(String str, char option1, char option2, int startIndex) {
     for (int i = startIndex; i < str.length(); i++) {
       char charAtIndex = str.charAt(i);
       if (charAtIndex == option1 || charAtIndex == option2) {

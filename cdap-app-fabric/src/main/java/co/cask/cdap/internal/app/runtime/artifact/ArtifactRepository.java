@@ -233,7 +233,7 @@ public class ArtifactRepository {
                                                  ArtifactSortOrder order) throws Exception {
     List<ArtifactDetail> artifacts = artifactStore.getArtifacts(range, limit, order);
     // No authorization for system artifacts
-    if (NamespaceId.SYSTEM.equals(range.getNamespace())) {
+    if (NamespaceId.SYSTEM.getNamespace().equals(range.getNamespace())) {
       return artifacts;
     }
     Principal principal = authenticationContext.getPrincipal();
@@ -913,7 +913,7 @@ public class ArtifactRepository {
         isInvalid = true;
       }
       if (artifactId.getName().equals(parentName) &&
-        artifactId.getNamespace().toEntityId().equals(parent.getNamespace())) {
+        artifactId.getNamespace().toEntityId().getNamespace().equals(parent.getNamespace())) {
         throw new InvalidArtifactException(String.format(
           "Invalid parent '%s' for artifact '%s'. An artifact cannot extend itself.", parent, artifactId));
       }

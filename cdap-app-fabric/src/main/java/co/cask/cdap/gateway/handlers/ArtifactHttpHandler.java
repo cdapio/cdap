@@ -52,6 +52,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
+import co.cask.cdap.proto.artifact.ArtifactUtil;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -799,7 +800,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         ArtifactRange range;
         // try parsing it as a namespaced range like system:etl-batch[1.0.0,2.0.0)
         try {
-          range = ArtifactRange.parse(parent);
+          range = ArtifactUtil.parseArtifactRange(parent);
           // only support extending an artifact that is in the same namespace, or system namespace
           if (!NamespaceId.SYSTEM.getNamespace().equals(range.getNamespace()) &&
             !namespace.getNamespace().equals(range.getNamespace())) {
@@ -809,8 +810,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         } catch (InvalidArtifactRangeException e) {
           // if this failed, try parsing as a non-namespaced range like etl-batch[1.0.0,2.0.0)
           try {
-            // todo validation for namespace
-            range = ArtifactRange.parse(namespace.getNamespace(), parent);
+            range = ArtifactUtil.parseArtifactRange(namespace.getNamespace(), parent);
           } catch (InvalidArtifactRangeException e1) {
             throw new BadRequestException(String.format("Invalid artifact range %s: %s", parent, e1.getMessage()));
           }
