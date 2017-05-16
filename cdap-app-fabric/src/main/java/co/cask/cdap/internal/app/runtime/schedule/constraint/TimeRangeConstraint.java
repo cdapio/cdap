@@ -52,8 +52,10 @@ public class TimeRangeConstraint extends ProtoConstraint.TimeRangeConstraint imp
 
   private void initialize() {
     if (calendar == null) {
-      calendar = Calendar.getInstance(TimeZone.getTimeZone(timeZone));
+      TimeZone tz = TimeZone.getTimeZone(timeZone);
+      calendar = Calendar.getInstance(tz);
       DateFormat formatter = new SimpleDateFormat("HH:mm");
+      formatter.setTimeZone(tz);
       Date startDate, endDate;
       try {
         startDate = formatter.parse(startTime);
