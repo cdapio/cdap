@@ -35,6 +35,8 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
     setDescription("Sample application with multiple Workflows");
     addWorkflow(new DummyWorkflow(SOME_WORKFLOW));
     addWorkflow(new DummyWorkflow(ANOTHER_WORKFLOW));
+    addWorkflow(new DummyWorkflow(SCHEDULED_WORKFLOW_1));
+    addWorkflow(new DummyWorkflow(SCHEDULED_WORKFLOW_2));
     // Schedule the workflow to run in every min
     scheduleWorkflow(Schedules.builder(ONE_MIN_SCHEDULE_1).createTimeSchedule("* * * * *"), SCHEDULED_WORKFLOW_1);
     // Schedule the workflow to run in every min with a different cron expression
