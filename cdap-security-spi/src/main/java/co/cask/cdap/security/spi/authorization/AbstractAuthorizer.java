@@ -20,6 +20,8 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,6 +33,8 @@ import java.util.HashSet;
  * have to implement these methods unless necessary.
  */
 public abstract class AbstractAuthorizer implements Authorizer {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractAuthorizer.class);
 
   protected static final Predicate<EntityId> ALLOW_ALL = new Predicate<EntityId>() {
     @Override
@@ -68,8 +72,10 @@ public abstract class AbstractAuthorizer implements Authorizer {
         try {
           enforce(entityId, principal, new HashSet<>(Arrays.asList(Action.values())));
           return true;
-        } catch (Exception e) {
+        } catch (UnauthorizedException e) {
           return false;
+        } catch (Exception ex) {
+          throw new RuntimeException(ex);
         }
       }
     };

@@ -57,7 +57,7 @@ public abstract class AbstractAuthorizationEnforcer implements AuthorizationEnfo
     for (Action action : actions) {
       try {
         enforce(entity, principal, action);
-      } catch (Exception ex) {
+      } catch (UnauthorizedException e) {
         disallowed.add(action);
       }
     }
@@ -78,9 +78,11 @@ public abstract class AbstractAuthorizationEnforcer implements AuthorizationEnfo
           try {
             enforce(entityId, principal, action);
             return true;
-          } catch (Exception ignored) {
+          } catch (UnauthorizedException ignored) {
             // The principal does not have this particular privilege but for filter as long as they have any privilege
             // we return true, so ignoring this exception.
+          } catch (Exception ex) {
+            throw new RuntimeException(ex);
           }
         }
         return false;
