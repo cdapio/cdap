@@ -20,6 +20,7 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -31,6 +32,7 @@ import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
@@ -54,11 +56,13 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   private final Transactional transactional;
   private final Service internalService;
+  private final DatasetFramework datasetFramework;
 
   @Inject
   CoreSchedulerService(TransactionSystemClient txClient, final DatasetFramework datasetFramework,
                        final NotificationSubscriberService notificationSubscriberService,
                        final ConstraintCheckerService constraintCheckerService) {
+    this.datasetFramework = datasetFramework;
     DynamicDatasetCache datasetCache = new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
                                                                    txClient, Schedulers.STORE_DATASET_ID.getParent(),
                                                                    Collections.<String, String>emptyMap(), null, null);
@@ -101,12 +105,20 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
-  public void addSchedule(ProgramSchedule schedule) throws AlreadyExistsException {
+  public void addSchedule(ProgramSchedule schedule) throws AlreadyExistsException, BadRequestException {
     addSchedules(Collections.singleton(schedule));
   }
 
   @Override
-  public void addSchedules(final Iterable<? extends ProgramSchedule> schedules) throws AlreadyExistsException {
+  public void addSchedules(final Iterable<? extends ProgramSchedule> schedules)
+    throws AlreadyExistsException, BadRequestException {
+    for (ProgramSchedule schedule: schedules) {
+      if (!schedule.getProgramId().getType().equals(ProgramType.WORKFLOW)) {
+        throw new BadRequestException(String.format(
+          "Cannot schedule program %s of type %s: Only workflows can be scheduled",
+          schedule.getProgramId().getProgram(), schedule.getProgramId().getType()));
+      }
+    }
     execute(new StoreTxRunnable<Void, AlreadyExistsException>() {
       @Override
       public Void run(ProgramScheduleStoreDataset store) throws AlreadyExistsException {
@@ -194,7 +206,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       return Transactions.execute(transactional, new TxCallable<V>() {
         @Override
         public V call(DatasetContext context) throws Exception {
-          ProgramScheduleStoreDataset store = context.getDataset(Schedulers.STORE_DATASET_ID.getDataset());
+          ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
           return runnable.run(store);
         }
       });

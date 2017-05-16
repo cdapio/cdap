@@ -45,9 +45,9 @@ public class StreamSizeSchedulerPollingTest extends SchedulerTestBase {
       @Override
       public void increment(long size) throws Exception {
         metricStore.add(new MetricValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespaceId(),
-                                                        Constants.Metrics.Tag.STREAM, streamId.getId()),
-                                        "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                        size, MetricType.COUNTER));
+                                                         Constants.Metrics.Tag.STREAM, streamId.getId()),
+                                         "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                         size, MetricType.COUNTER));
       }
     };
   }

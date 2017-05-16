@@ -30,8 +30,10 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerJsonCodec;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -85,7 +87,10 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   static final String INDEX_COLUMNS = TRIGGER_KEY_COLUMN; // trigger key
 
   private static final Gson GSON =
-    new GsonBuilder().registerTypeAdapter(Trigger.class, new TriggerJsonCodec()).create();
+    new GsonBuilder()
+      .registerTypeAdapter(Constraint.class, new ConstraintCodec())
+      .registerTypeAdapter(Trigger.class, new TriggerCodec())
+      .create();
 
   private final IndexedTable store;
 
@@ -296,7 +301,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   private static List<String> extractTriggerKeys(ProgramSchedule schedule) {
     Trigger trigger = schedule.getTrigger();
     if (trigger instanceof PartitionTrigger) {
-      String triggerKey = Schedulers.triggerKeyForPartition(((PartitionTrigger) trigger).getDatasetId());
+      String triggerKey = Schedulers.triggerKeyForPartition(((PartitionTrigger) trigger).getDataset());
       return Collections.singletonList(triggerKey);
     }
     return Collections.emptyList();
@@ -308,10 +313,6 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
 
   private static String rowKeyForSchedule(ScheduleId scheduleId) {
     return Joiner.on('.').join(scheduleId.toIdParts());
-  }
-
-  private static ScheduleId rowKeyToScheduleId(byte[] rowKey) {
-    return rowKeyToScheduleId(Bytes.toString(rowKey));
   }
 
   private static ScheduleId rowKeyToScheduleId(String rowKey) {
@@ -336,6 +337,6 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   }
 
   private static byte[] keyPrefixForApplicationScan(ApplicationId appId) {
-    return Bytes.toBytes(appId.getNamespace() + '.' + appId.getApplication() + '.');
+    return Bytes.toBytes(appId.getNamespace() + '.' + appId.getApplication() + '.' + appId.getVersion());
   }
 }

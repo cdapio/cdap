@@ -25,6 +25,7 @@ import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ScheduleInstanceConfiguration;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
@@ -104,12 +105,12 @@ public class ScheduleClient {
   }
 
   @Deprecated
-  public List<ScheduleSpecification> list(Id.Workflow workflow)
+  public List<ScheduleDetail> list(Id.Workflow workflow)
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
     return list(workflow.toEntityId());
   }
 
-  public List<ScheduleSpecification> list(WorkflowId workflow)
+  public List<ScheduleDetail> list(WorkflowId workflow)
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
 
     String path = String.format("apps/%s/workflows/%s/schedules", workflow.getApplication(), workflow.getProgram());
@@ -120,8 +121,8 @@ public class ScheduleClient {
       throw new NotFoundException(workflow);
     }
 
-    ObjectResponse<List<ScheduleSpecification>> objectResponse = ObjectResponse.fromJsonBody(
-      response, new TypeToken<List<ScheduleSpecification>>() { }.getType(), GSON);
+    ObjectResponse<List<ScheduleDetail>> objectResponse = ObjectResponse.fromJsonBody(
+      response, new TypeToken<List<ScheduleDetail>>() { }.getType(), GSON);
     return objectResponse.getResponseObject();
   }
 

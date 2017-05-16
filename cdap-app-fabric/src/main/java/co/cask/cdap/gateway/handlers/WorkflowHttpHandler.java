@@ -38,15 +38,21 @@ import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
+import co.cask.cdap.internal.app.runtime.schedule.TimeScheduler;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
+import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ProtoConstraintCodec;
+import co.cask.cdap.proto.ProtoTriggerCodec;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
@@ -60,11 +66,11 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.WorkflowId;
+import co.cask.cdap.scheduler.Scheduler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -105,23 +111,25 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
     .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
+    .registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
+    .registerTypeAdapter(Constraint.class, new ProtoConstraintCodec())
     .create();
 
   private final WorkflowClient workflowClient;
   private final DatasetFramework datasetFramework;
-  private final Scheduler scheduler;
+  private final TimeScheduler timeScheduler;
 
   @Inject
   WorkflowHttpHandler(Store store, WorkflowClient workflowClient, ProgramRuntimeService runtimeService,
-                      QueueAdmin queueAdmin, Scheduler scheduler, PreferencesStore preferencesStore,
+                      QueueAdmin queueAdmin, TimeScheduler timeScheduler,
                       MRJobInfoFetcher mrJobInfoFetcher, ProgramLifecycleService lifecycleService,
-                      MetricStore metricStore, NamespaceQueryAdmin namespaceQueryAdmin,
+                      MetricStore metricStore, NamespaceQueryAdmin namespaceQueryAdmin, Scheduler scheduler,
                       DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient) {
-    super(store, runtimeService, discoveryServiceClient, lifecycleService, queueAdmin, preferencesStore,
-          mrJobInfoFetcher, metricStore, namespaceQueryAdmin);
+    super(store, runtimeService, discoveryServiceClient, lifecycleService, queueAdmin,
+          mrJobInfoFetcher, metricStore, namespaceQueryAdmin, scheduler);
     this.workflowClient = workflowClient;
     this.datasetFramework = datasetFramework;
-    this.scheduler = scheduler;
+    this.timeScheduler = timeScheduler;
   }
 
   @POST
@@ -237,9 +245,9 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       }
       List<ScheduledRuntime> runtimes;
       if (previousRuntimeRequested) {
-        runtimes = scheduler.previousScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
+        runtimes = timeScheduler.previousScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
       } else {
-        runtimes = scheduler.nextScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
+        runtimes = timeScheduler.nextScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
       }
       responder.sendJson(HttpResponseStatus.OK, runtimes);
     } catch (SecurityException e) {
@@ -255,28 +263,9 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
                                    @PathParam("namespace-id") String namespaceId,
                                    @PathParam("app-id") String appId,
-                                   @PathParam("workflow-id") String workflowId) {
+                                   @PathParam("workflow-id") String workflowId) throws NotFoundException {
     ApplicationId application = new ApplicationId(namespaceId, appId);
     respondWorkflowSchedules(responder, application, workflowId);
-  }
-
-  private void respondWorkflowSchedules(HttpResponder responder, ApplicationId application, String workflowId) {
-    ApplicationSpecification appSpec = store.getApplication(application);
-    if (appSpec == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "App:" + application + " not found");
-      return;
-    }
-
-    List<ScheduleSpecification> specList = Lists.newArrayList();
-    for (Map.Entry<String, ScheduleSpecification> entry : appSpec.getSchedules().entrySet()) {
-      ScheduleSpecification spec = entry.getValue();
-      if (spec.getProgram().getProgramName().equals(workflowId) &&
-        spec.getProgram().getProgramType() == SchedulableProgramType.WORKFLOW) {
-        specList.add(entry.getValue());
-      }
-    }
-    responder.sendJson(HttpResponseStatus.OK, specList,
-                       new TypeToken<List<ScheduleSpecification>>() { }.getType(), GSON);
   }
 
   /**
@@ -288,9 +277,21 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                    @PathParam("namespace-id") String namespaceId,
                                    @PathParam("app-id") String appId,
                                    @PathParam("app-version") String appVersion,
-                                   @PathParam("workflow-id") String workflowId) {
+                                   @PathParam("workflow-id") String workflowId) throws NotFoundException {
     ApplicationId application = new ApplicationId(namespaceId, appId, appVersion);
     respondWorkflowSchedules(responder, application, workflowId);
+  }
+
+  private void respondWorkflowSchedules(HttpResponder responder, ApplicationId application, String workflow)
+    throws NotFoundException {
+
+    ApplicationSpecification appSpec = store.getApplication(application);
+    if (appSpec == null) {
+      throw new NotFoundException(application);
+    }
+    List<ProgramSchedule> schedules = scheduler.listSchedules(application.workflow(workflow));
+    responder.sendJson(HttpResponseStatus.OK, Schedulers.toScheduleDetails(schedules),
+                       new TypeToken<List<ScheduleDetail>>() { }.getType(), GSON);
   }
 
   @GET

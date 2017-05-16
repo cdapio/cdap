@@ -66,7 +66,7 @@ import java.util.concurrent.Executors;
  * Class that wraps Quartz scheduler. Needed to delegate start stop operations to classes that extend
  * DefaultSchedulerService.
  */
-final class TimeScheduler implements Scheduler {
+public final class TimeScheduler implements Scheduler {
   private static final Logger LOG = LoggerFactory.getLogger(TimeScheduler.class);
   private static final String PAUSED_NEW_TRIGGERS_GROUP = "NewPausedTriggers";
 

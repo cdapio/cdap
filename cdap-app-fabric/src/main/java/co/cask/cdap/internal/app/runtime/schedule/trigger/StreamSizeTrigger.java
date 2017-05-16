@@ -14,22 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.constraint;
+package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.proto.ProtoConstraint;
+import co.cask.cdap.internal.schedule.trigger.Trigger;
+import co.cask.cdap.proto.ProtoTrigger;
+import co.cask.cdap.proto.id.StreamId;
 
 /**
- * A constraint which dictates an upper bound on the number of concurrent schedule runs.
+ * A Trigger that schedules a ProgramSchedule, based on new data in a stream.
  */
-public class ConcurrencyConstraint extends ProtoConstraint.ConcurrenyConstraint implements CheckableConstraint {
+public class StreamSizeTrigger extends ProtoTrigger.StreamSizeTrigger implements Trigger {
 
-  public ConcurrencyConstraint(int maxConcurrency) {
-    super(maxConcurrency);
-  }
-
-  @Override
-  public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
-    return ConstraintResult.SATISFIED;
+  public StreamSizeTrigger(StreamId stream, int triggerMB) {
+    super(stream, triggerMB);
   }
 }

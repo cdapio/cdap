@@ -22,8 +22,8 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.internal.schedule.TimeSchedule;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.pipeline.AbstractStage;
+import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.scheduler.Scheduler;
 import com.google.common.reflect.TypeToken;
@@ -58,11 +58,10 @@ public class CreateProgramSchedulesStage extends AbstractStage<ApplicationWithPr
     for (final Map.Entry<String, ScheduleCreationSpec> entry : programSchedules.entrySet()) {
       ScheduleCreationSpec scheduleCreationSpec = entry.getValue();
       ProgramId programId = input.getApplicationId().workflow(scheduleCreationSpec.getProgramName());
-      Trigger trigger = scheduleCreationSpec.getTrigger();
+      ProtoTrigger trigger = (ProtoTrigger) scheduleCreationSpec.getTrigger();
       ProgramSchedule programSchedule =
-        new ProgramSchedule(scheduleCreationSpec.getName(), scheduleCreationSpec.getDescription(),
-                            programId, scheduleCreationSpec.getProperties(), trigger,
-                            scheduleCreationSpec.getConstraints());
+        new ProgramSchedule(scheduleCreationSpec.getName(), scheduleCreationSpec.getDescription(), programId,
+                            scheduleCreationSpec.getProperties(), trigger, scheduleCreationSpec.getConstraints());
       programScheduler.addSchedule(programSchedule);
       if (trigger instanceof TimeTrigger) {
         Schedule timeSchedule = new TimeSchedule(scheduleCreationSpec.getName(), scheduleCreationSpec.getDescription(),

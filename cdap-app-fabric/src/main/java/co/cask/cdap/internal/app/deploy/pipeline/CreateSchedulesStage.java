@@ -19,10 +19,12 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
@@ -121,13 +123,15 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
 
   private void addProgramSchedule(ProgramId programId, ScheduleSpecification scheduleSpec) {
     Schedule schedule = scheduleSpec.getSchedule();
-    if (schedule instanceof TimeSchedule) {
+    if (schedule instanceof TimeSchedule || schedule instanceof StreamSizeSchedule) {
       ProgramSchedule programSchedule =
-        Schedulers.toProgramSchedule((TimeSchedule) schedule, programId, scheduleSpec.getProperties());
+        Schedulers.toProgramSchedule(schedule, programId, scheduleSpec.getProperties());
       try {
         programScheduler.addSchedule(programSchedule);
       } catch (AlreadyExistsException e) {
-        LOG.warn("ProgramSchedule {} already exists for program {}", schedule.getName(), programId);
+        LOG.warn("Schedule {} already exists for program {}", schedule.getName(), programId);
+      } catch (BadRequestException e) {
+        LOG.warn("Schedule {} for program {} is not valid: {}", schedule.getName(), programId, e.getMessage());
       }
     }
   }

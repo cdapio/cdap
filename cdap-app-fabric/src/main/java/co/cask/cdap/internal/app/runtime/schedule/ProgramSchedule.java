@@ -16,8 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.base.Objects;
@@ -108,6 +110,12 @@ public class ProgramSchedule {
       ", trigger=" + trigger +
       ", constraints=" + constraints +
       '}';
+  }
+
+  public ScheduleDetail toScheduleDetail() {
+    ScheduleProgramInfo programInfo =
+      new ScheduleProgramInfo(programId.getType().getSchedulableType(), programId.getProgram());
+    return new ScheduleDetail(scheduleId.getSchedule(), description, programInfo, properties, trigger, constraints);
   }
 }
 

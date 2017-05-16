@@ -21,6 +21,7 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.schedule.RunConstraints;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
@@ -42,16 +43,18 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.common.service.ServiceDiscoverable;
-import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
+import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.BatchProgramResult;
 import co.cask.cdap.proto.BatchProgramStart;
@@ -59,7 +62,6 @@ import co.cask.cdap.proto.BatchProgramStatus;
 import co.cask.cdap.proto.BatchRunnable;
 import co.cask.cdap.proto.BatchRunnableInstances;
 import co.cask.cdap.proto.Containers;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
@@ -68,7 +70,12 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ProtoConstraint;
+import co.cask.cdap.proto.ProtoConstraintCodec;
+import co.cask.cdap.proto.ProtoTrigger;
+import co.cask.cdap.proto.ProtoTriggerCodec;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ScheduleUpdateDetail;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -76,11 +83,14 @@ import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.ServiceId;
+import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
@@ -88,6 +98,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
@@ -136,6 +147,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Type BATCH_STARTS_TYPE = new TypeToken<List<BatchProgramStart>>() { }.getType();
   private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
 
+  private static final List<Constraint> NO_CONSTRAINTS = Collections.emptyList();
+  private static final Map<String, String> EMPTY_PROPERTIES = new HashMap<>();
+
   private static final String SCHEDULES = "schedules";
   /**
    * Json serializer/deserializer.
@@ -143,6 +157,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Gson GSON = ApplicationSpecificationAdapter
     .addTypeAdapters(new GsonBuilder())
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
+    .registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
+    .registerTypeAdapter(Constraint.class, new ProtoConstraintCodec())
     .create();
 
   private static final Function<RunRecordMeta, RunRecord> CONVERT_TO_RUN_RECORD =
@@ -156,10 +172,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final ProgramLifecycleService lifecycleService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final QueueAdmin queueAdmin;
-  private final PreferencesStore preferencesStore;
   private final MetricStore metricStore;
   private final MRJobInfoFetcher mrJobInfoFetcher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  protected final Scheduler scheduler;
 
   /**
    * Store manages non-runtime lifecycle.
@@ -176,19 +192,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               DiscoveryServiceClient discoveryServiceClient,
                               ProgramLifecycleService lifecycleService,
                               QueueAdmin queueAdmin,
-                              PreferencesStore preferencesStore,
                               MRJobInfoFetcher mrJobInfoFetcher,
                               MetricStore metricStore,
-                              NamespaceQueryAdmin namespaceQueryAdmin) {
+                              NamespaceQueryAdmin namespaceQueryAdmin, Scheduler scheduler) {
     this.store = store;
     this.runtimeService = runtimeService;
     this.discoveryServiceClient = discoveryServiceClient;
     this.lifecycleService = lifecycleService;
     this.metricStore = metricStore;
     this.queueAdmin = queueAdmin;
-    this.preferencesStore = preferencesStore;
     this.mrJobInfoFetcher = mrJobInfoFetcher;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.scheduler = scheduler;
   }
 
   /**
@@ -612,11 +627,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     doGetSchedule(responder, namespaceId, appName, appVersion, scheduleName);
   }
 
-  private void doGetSchedule(HttpResponder responder, String namespaceId, String appName,
-                             String appVersion, String scheduleName) throws NotFoundException {
-    ApplicationId applicationId = new ApplicationId(namespaceId, appName, appVersion);
-    ScheduleSpecification specification = lifecycleService.getSchedule(applicationId, scheduleName);
-    responder.sendJson(HttpResponseStatus.OK, specification, ScheduleSpecification.class, GSON);
+  private void doGetSchedule(HttpResponder responder, String namespace, String app, String version, String scheduleName)
+    throws NotFoundException {
+    ScheduleId scheduleId = new ApplicationId(namespace, app, version).schedule(scheduleName);
+    ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
+    responder.sendJson(HttpResponseStatus.OK, schedule.toScheduleDetail(), ScheduleDetail.class, GSON);
   }
 
   @GET
@@ -638,12 +653,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     doGetAllSchedules(responder, namespaceId, appName, appVersion);
   }
 
-  private void doGetAllSchedules(HttpResponder responder, String namespaceId, String appName,
-                                 String appVersion) throws NotFoundException {
-    ApplicationId applicationId = new ApplicationId(namespaceId, appName, appVersion);
-    List<ScheduleSpecification> specification = lifecycleService.getAllSchedules(applicationId);
-    Type scheduleSpecsType = new TypeToken<List<ScheduleSpecification>>() { }.getType();
-    responder.sendJson(HttpResponseStatus.OK, specification, scheduleSpecsType, GSON);
+  private void doGetAllSchedules(HttpResponder responder, String namespace, String app, String version)
+    throws NotFoundException {
+    ApplicationId applicationId = new ApplicationId(namespace, app, version);
+    List<ProgramSchedule> schedules = scheduler.listSchedules(applicationId);
+    List<ScheduleDetail> details = Schedulers.toScheduleDetails(schedules);
+    responder.sendJson(HttpResponseStatus.OK, details, Schedulers.SCHEDULE_DETAILS_TYPE, GSON);
   }
 
   @PUT
@@ -653,7 +668,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("namespace-id") String namespaceId,
                           @PathParam("app-name") String appName,
                           @PathParam("schedule-name") String scheduleName)
-    throws SchedulerException, BadRequestException, NotFoundException, IOException, AlreadyExistsException {
+    throws Exception {
     doAddSchedule(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
   }
 
@@ -665,59 +680,45 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("app-name") String appName,
                           @PathParam("app-version") String appVersion,
                           @PathParam("schedule-name") String scheduleName)
-    throws SchedulerException, BadRequestException, NotFoundException, IOException, AlreadyExistsException {
+    throws Exception {
     doAddSchedule(request, responder, namespaceId, appName, appVersion, scheduleName);
   }
 
-  private void doAddSchedule(HttpRequest request, HttpResponder responder, String namespaceId, String appId,
+  private void doAddSchedule(HttpRequest request, HttpResponder responder, String namespace, String appName,
                              String appVersion, String scheduleName)
-    throws IOException, BadRequestException, NotFoundException, SchedulerException, AlreadyExistsException {
-    ApplicationId applicationId = new ApplicationId(namespaceId, appId, appVersion);
-    ScheduleSpecification scheduleSpecFromRequest;
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
-      // The schedule spec in the request body does not contain the program information
-      scheduleSpecFromRequest = GSON.fromJson(reader, ScheduleSpecification.class);
-    } catch (IOException e) {
-      LOG.debug("Error reading schedule specification from request body", e);
-      throw new IOException("Error reading request body");
-    } catch (JsonSyntaxException e) {
-      throw new BadRequestException("Request body is invalid json: " + e.getMessage());
+    throws Exception {
+
+    ScheduleDetail scheduleFromRequest = readScheduleDetailBody(request, scheduleName, false);
+
+    if (scheduleFromRequest.getProgram() == null) {
+      throw new BadRequestException("No program was specified for the schedule");
+    }
+    if (scheduleFromRequest.getProgram().getProgramType() == null) {
+      throw new BadRequestException("No program type was specified for the schedule");
+    }
+    if (scheduleFromRequest.getProgram().getProgramName() == null) {
+      throw new BadRequestException("No program name was specified for the schedule");
+    }
+    if (scheduleFromRequest.getTrigger() == null) {
+      throw new BadRequestException("No trigger was specified for the schedule");
     }
 
-    // If the schedule name is present in the request body, it should match the name in path params
-    if (scheduleSpecFromRequest.getSchedule().getName() != null &&
-      !scheduleName.equals(scheduleSpecFromRequest.getSchedule().getName())) {
-      throw new BadRequestException(
-        String.format(
-          "schedule name in the body of the request (%s) does not match the schedule name in the path parameter (%s)",
-          scheduleSpecFromRequest.getSchedule().getName(), scheduleName));
+    ApplicationId applicationId = new ApplicationId(namespace, appName, appVersion);
+    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleFromRequest.getProgram().getProgramType());
+    String programName = scheduleFromRequest.getProgram().getProgramName();
+    ProgramId programId = applicationId.program(programType, programName);
+
+    if (lifecycleService.getProgramSpecification(programId) == null) {
+      throw new NotFoundException(programId);
     }
 
-    if (scheduleSpecFromRequest.getSchedule().getName() == null) {
-      scheduleSpecFromRequest = addNameToSpec(scheduleSpecFromRequest, scheduleName);
-    }
-
-    lifecycleService.addSchedule(applicationId, scheduleSpecFromRequest);
+    String description = Objects.firstNonNull(scheduleFromRequest.getDescription(), "");
+    Map<String, String> properties = Objects.firstNonNull(scheduleFromRequest.getProperties(), EMPTY_PROPERTIES);
+    List<Constraint> constraints = Objects.firstNonNull(scheduleFromRequest.getConstraints(), NO_CONSTRAINTS);
+    ProgramSchedule schedule = new ProgramSchedule(scheduleName, description, programId, properties,
+                                                   scheduleFromRequest.getTrigger(), constraints);
+    scheduler.addSchedule(schedule);
     responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  private ScheduleSpecification addNameToSpec(ScheduleSpecification scheduleSpecification, String name)
-    throws BadRequestException {
-    if (scheduleSpecification.getSchedule() instanceof TimeSchedule) {
-      TimeSchedule ts = (TimeSchedule) scheduleSpecification.getSchedule();
-      return new ScheduleSpecification(
-        new TimeSchedule(name, ts.getDescription(), ts.getCronEntry(), ts.getRunConstraints()),
-        scheduleSpecification.getProgram(), scheduleSpecification.getProperties());
-    } else if (scheduleSpecification.getSchedule() instanceof StreamSizeSchedule) {
-      StreamSizeSchedule s = (StreamSizeSchedule) scheduleSpecification.getSchedule();
-      return new ScheduleSpecification(
-        new StreamSizeSchedule(name, s.getDescription(), s.getStreamName(), s.getDataTriggerMB(),
-                               s.getRunConstraints()),
-        scheduleSpecification.getProgram(), scheduleSpecification.getProperties()
-      );
-    } else {
-      throw new BadRequestException("Unknown schedule type given");
-    }
   }
 
   @POST
@@ -743,23 +744,116 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     doUpdateSchedule(request, responder, namespaceId, appName, appVersion, scheduleName);
   }
 
-  // TODO: refactor doAddSchedule and doUpdateSchedule to reduce code duplication
   private void doUpdateSchedule(HttpRequest request, HttpResponder responder, String namespaceId, String appId,
                                 String appVersion, String scheduleName)
     throws IOException, BadRequestException, NotFoundException, SchedulerException, AlreadyExistsException {
-    ApplicationId applicationId = new ApplicationId(namespaceId, appId, appVersion);
-    ScheduleUpdateDetail scheduleUpdateDetail;
+
+    ScheduleDetail scheduleDetail = readScheduleDetailBody(request, scheduleName, true);
+    ScheduleId scheduleId = new ApplicationId(namespaceId, appId, appVersion).schedule(scheduleName);
+    ProgramSchedule existingSchedule = scheduler.getSchedule(scheduleId);
+    ProgramSchedule updatedSchedule = combineForUpdate(scheduleDetail, existingSchedule);
+    // TODO add an update() method to Scheduler
+    scheduler.deleteSchedule(scheduleId);
+    scheduler.addSchedule(updatedSchedule);
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private ScheduleDetail readScheduleDetailBody(HttpRequest request, String scheduleName, boolean isUpdate)
+    throws IOException, BadRequestException {
+    // TODO: remove backward compatibility with ScheduleSpecification, use fromJson(ScheduleDetail.class)
+    JsonElement json;
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
-      scheduleUpdateDetail = GSON.fromJson(reader, ScheduleUpdateDetail.class);
+      // The schedule spec in the request body does not contain the program information
+      json = GSON.fromJson(reader, JsonElement.class);
     } catch (IOException e) {
-      LOG.debug("Error reading schedule update details from request body", e);
-      throw new IOException("Error reading request body");
+      throw new IOException("Error reading request body", e);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());
     }
+    if (!json.isJsonObject()) {
+      throw new BadRequestException("Expected a json object in the request body but received " + GSON.toJson(json));
+    }
+    ScheduleDetail scheduleDetail;
+    if (((JsonObject) json).get("schedule") != null) { // field only exists in legacy ScheduleSpec/UpdateDetail
+      try {
+        if (isUpdate) {
+          ScheduleUpdateDetail updateDetail = GSON.fromJson(json, ScheduleUpdateDetail.class);
+          scheduleDetail = toScheduleDetail(updateDetail);
+        } else {
+          ScheduleSpecification scheduleSpec = GSON.fromJson(json, ScheduleSpecification.class);
+          scheduleDetail = toScheduleDetail(scheduleSpec);
+        }
+      } catch (JsonSyntaxException e) {
+        throw new BadRequestException("Error parsing request body as a schedule "
+                                        + (isUpdate ? "update details" : "specification") +
+                                        " (in backward compatibility mode): " + e.getMessage());
+      }
+    } else {
+      try {
+        scheduleDetail = GSON.fromJson(json, ScheduleDetail.class);
+      } catch (JsonSyntaxException e) {
+        throw new BadRequestException("Error parsing request body as a schedule specification" + e.getMessage());
+      }
+    }
 
-    lifecycleService.updateSchedule(applicationId, scheduleName, scheduleUpdateDetail);
-    responder.sendStatus(HttpResponseStatus.OK);
+    // If the schedule name is present in the request body, it should match the name in path params
+    if (scheduleDetail.getName() != null && !scheduleName.equals(scheduleDetail.getName())) {
+      throw new BadRequestException(String.format(
+        "Schedule name in the body of the request (%s) does not match the schedule name in the path parameter (%s)",
+        scheduleDetail.getName(), scheduleName));
+    }
+    return scheduleDetail;
+  }
+
+  private ScheduleDetail toScheduleDetail(ScheduleSpecification scheduleSpec) throws BadRequestException {
+    if (scheduleSpec.getSchedule() == null) {
+      throw new BadRequestException("Schedule specification must contain schedule");
+    }
+    ProtoTrigger trigger;
+    if (scheduleSpec.getSchedule() instanceof TimeSchedule) {
+      trigger = new ProtoTrigger.TimeTrigger(((TimeSchedule) scheduleSpec.getSchedule()).getCronEntry());
+    } else {
+      throw new BadRequestException("Only time schedules are supported");
+    }
+    List<Constraint> runConstraints = toConstraints(scheduleSpec.getSchedule().getRunConstraints());
+    return new ScheduleDetail(scheduleSpec.getSchedule().getName(), scheduleSpec.getSchedule().getDescription(),
+                              scheduleSpec.getProgram(), scheduleSpec.getProperties(), trigger, runConstraints);
+  }
+
+  private ScheduleDetail toScheduleDetail(ScheduleUpdateDetail updateDetail) throws BadRequestException {
+    ScheduleUpdateDetail.Schedule scheduleUpdate = updateDetail.getSchedule();
+    if (scheduleUpdate == null) {
+      return new ScheduleDetail(null, null, null, updateDetail.getProperties(), null, null);
+    }
+    ProtoTrigger trigger = null;
+    // TODO support stream size update
+    if (scheduleUpdate.getCronExpression() != null) {
+      trigger = new ProtoTrigger.TimeTrigger(updateDetail.getSchedule().getCronExpression());
+    }
+    List<Constraint> constraints = toConstraints(scheduleUpdate.getRunConstraints());
+    return new ScheduleDetail(null, scheduleUpdate.getDescription(), null,
+                              updateDetail.getProperties(), trigger, constraints);
+  }
+
+  private List<Constraint> toConstraints(RunConstraints runConstraints) {
+    if (runConstraints == null || runConstraints.getMaxConcurrentRuns() == null) {
+      return null;
+    }
+    return Collections.<Constraint>singletonList(
+      new ProtoConstraint.ConcurrenyConstraint(runConstraints.getMaxConcurrentRuns()));
+  }
+
+  private ProgramSchedule combineForUpdate(ScheduleDetail scheduleDetail, ProgramSchedule existing) {
+    String description = Objects.firstNonNull(scheduleDetail.getDescription(), existing.getDescription());
+    ProgramId programId = scheduleDetail.getProgram() == null ? existing.getProgramId()
+      : existing.getProgramId().getParent().program(
+        scheduleDetail.getProgram().getProgramType() == null ? existing.getProgramId().getType()
+        : ProgramType.valueOfSchedulableType(scheduleDetail.getProgram().getProgramType()),
+      Objects.firstNonNull(scheduleDetail.getProgram().getProgramName(), existing.getProgramId().getProgram()));
+    Map<String, String> properties = Objects.firstNonNull(scheduleDetail.getProperties(), existing.getProperties());
+    Trigger trigger = Objects.firstNonNull(scheduleDetail.getTrigger(), existing.getTrigger());
+    List<Constraint> constraints = Objects.firstNonNull(scheduleDetail.getConstraints(), existing.getConstraints());
+    return new ProgramSchedule(existing.getName(), description, programId, properties, trigger, constraints);
   }
 
   @DELETE
@@ -786,8 +880,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private void doDeleteSchedule(HttpResponder responder, String namespaceId, String appName,
                                 String appVersion, String scheduleName)
     throws NotFoundException, SchedulerException {
-    ApplicationId applicationId = new ApplicationId(namespaceId, appName, appVersion);
-    lifecycleService.deleteSchedule(applicationId, scheduleName);
+    ScheduleId scheduleId = new ApplicationId(namespaceId, appName, appVersion).schedule(scheduleName);
+    scheduler.deleteSchedule(scheduleId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -1118,7 +1212,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       ProgramId programId = appId.program(runnable.getProgramType(), runnable.getProgramId());
-      output.add(getProgramInstances(runnable, spec, programId.toId()));
+      output.add(getProgramInstances(runnable, spec, programId));
     }
     responder.sendJson(HttpResponseStatus.OK, output);
   }
@@ -1237,7 +1331,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /********************** Flow/Flowlet APIs ***********************************************************/
+  /* ********************* Flow/Flowlet APIs ***********************************************************/
   /**
    * Returns number of instances for a flowlet within a flow.
    */
@@ -1550,9 +1644,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Requires caller to do this validation.
    */
   private BatchRunnableInstances getProgramInstances(BatchRunnable runnable, ApplicationSpecification spec,
-                                                     Id.Program programId) {
+                                                     ProgramId programId) {
     int requested;
-    String programName = programId.getId();
+    String programName = programId.getProgram();
     String runnableId = programName;
     ProgramType programType = programId.getType();
     if (programType == ProgramType.WORKER) {
@@ -1592,7 +1686,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return new BatchRunnableInstances(runnable, HttpResponseStatus.BAD_REQUEST.getCode(),
                                         "Instances not supported for program type + " + programType);
     }
-    int provisioned = getInstanceCount(programId.toEntityId(), runnableId);
+    int provisioned = getInstanceCount(programId, runnableId);
     // use the pretty name of program types to be consistent
     return new BatchRunnableInstances(runnable, HttpResponseStatus.OK.getCode(), provisioned, requested);
   }

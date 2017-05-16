@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.schedule.constraint;
 
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import com.google.common.annotations.VisibleForTesting;
+import co.cask.cdap.proto.ProtoConstraint;
 import com.google.common.base.Preconditions;
 
 import java.text.DateFormat;
@@ -30,35 +30,48 @@ import java.util.TimeZone;
 /**
  * A Constraint that defines a time range in which the schedule is allowed to execute.
  */
-public class TimeRangeConstraint extends AbstractCheckableConstraint {
+public class TimeRangeConstraint extends ProtoConstraint.TimeRangeConstraint implements CheckableConstraint {
 
   // only is satisfied within the range [startTime, endTime)
-  private final int startHour;
-  private final int startMinute;
-  private final int endHour;
-  private final int endMinute;
+  // this are transient so they don't get serialized to Json
+  private transient int startHour;
+  private transient int startMinute;
+  private transient int endHour;
+  private transient int endMinute;
 
-  private final Calendar calendar;
+  private transient Calendar calendar;
 
   public TimeRangeConstraint(String startTime, String endTime, TimeZone timeZone) {
-    calendar = Calendar.getInstance(timeZone);
+    super(startTime, endTime, timeZone);
+  }
 
-    DateFormat formatter = new SimpleDateFormat("HH:mm");
-    formatter.setTimeZone(timeZone);
-    try {
-      Date startDate = formatter.parse(startTime);
-      calendar.setTime(startDate);
-      startHour = calendar.get(Calendar.HOUR_OF_DAY);
-      startMinute = calendar.get(Calendar.MINUTE);
+  @Override
+  public void validate() {
+    initialize();
+  }
 
-      Date endDate = formatter.parse(endTime);
-      calendar.setTime(endDate);
-      endHour = calendar.get(Calendar.HOUR_OF_DAY);
-      endMinute = calendar.get(Calendar.MINUTE);
-
+  private void initialize() {
+    if (calendar == null) {
+      calendar = Calendar.getInstance(TimeZone.getTimeZone(timeZone));
+      DateFormat formatter = new SimpleDateFormat("HH:mm");
+      Date startDate, endDate;
+      try {
+        startDate = formatter.parse(startTime);
+        calendar.setTime(startDate);
+        startHour = calendar.get(Calendar.HOUR_OF_DAY);
+        startMinute = calendar.get(Calendar.MINUTE);
+      } catch (ParseException e) {
+        throw new IllegalArgumentException(String.format("Failed to parse start time '%s'", startTime), e);
+      }
+      try {
+        endDate = formatter.parse(endTime);
+        calendar.setTime(endDate);
+        endHour = calendar.get(Calendar.HOUR_OF_DAY);
+        endMinute = calendar.get(Calendar.MINUTE);
+      } catch (ParseException e) {
+        throw new IllegalArgumentException(String.format("Failed to parse end time '%s'", endTime), e);
+      }
       Preconditions.checkArgument(startDate.compareTo(endDate) < 0, "The start time must be before the end time.");
-    } catch (ParseException e) {
-      throw new IllegalArgumentException("Failed to parse time.", e);
     }
   }
 
