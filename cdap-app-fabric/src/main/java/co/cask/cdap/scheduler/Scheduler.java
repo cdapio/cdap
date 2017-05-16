@@ -70,6 +70,13 @@ public interface Scheduler {
   void deleteSchedules(ApplicationId appId);
 
   /**
+   * Removes all schedules for a specific program from the store.
+   *
+   * @param programId the program id for which to delete the schedules
+   */
+  void deleteSchedules(ProgramId programId);
+
+  /**
    * Read a schedule from the store.
    *
    * @param scheduleId the id of the schedule to read
