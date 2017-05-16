@@ -113,6 +113,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final ProgramRuntimeService runtimeService;
 
   private final CConfiguration configuration;
+  private final co.cask.cdap.scheduler.Scheduler programScheduler;
   private final Scheduler scheduler;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final NamespacedLocationFactory namespacedLocationFactory;
@@ -121,12 +122,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   AppLifecycleHttpHandler(CConfiguration configuration,
-                          Scheduler scheduler, ProgramRuntimeService runtimeService,
+                          co.cask.cdap.scheduler.Scheduler programScheduler, Scheduler scheduler,
+                          ProgramRuntimeService runtimeService,
                           NamespaceQueryAdmin namespaceQueryAdmin,
                           NamespacedLocationFactory namespacedLocationFactory,
                           ApplicationLifecycleService applicationLifecycleService) {
     this.configuration = configuration;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.programScheduler = programScheduler;
     this.scheduler = scheduler;
     this.runtimeService = runtimeService;
     this.namespacedLocationFactory = namespacedLocationFactory;
@@ -511,6 +514,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             stopProgramIfRunning(programId);
             break;
           case WORKFLOW:
+            programScheduler.deleteSchedules(programId);
             scheduler.deleteSchedules(programId, SchedulableProgramType.WORKFLOW);
             break;
           case MAPREDUCE:

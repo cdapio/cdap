@@ -144,6 +144,17 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
+  public void deleteSchedules(final ProgramId programId) {
+    execute(new StoreTxRunnable<Void, RuntimeException>() {
+      @Override
+      public Void run(ProgramScheduleStoreDataset store) {
+        store.deleteSchedules(programId);
+        return null;
+      }
+    }, RuntimeException.class);
+  }
+
+  @Override
   public ProgramSchedule getSchedule(final ScheduleId scheduleId) throws NotFoundException {
     return execute(new StoreTxRunnable<ProgramSchedule, NotFoundException>() {
       @Override

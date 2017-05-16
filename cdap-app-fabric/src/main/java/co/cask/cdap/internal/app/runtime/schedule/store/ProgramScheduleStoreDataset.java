@@ -177,6 +177,29 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   }
 
   /**
+   * Removes all schedules for a specific program from the store.
+   *
+   * @param programId the program id for which to delete the schedules
+   */
+  public void deleteSchedules(ProgramId programId) {
+    // since all trigger row keys are prefixed by <scheduleRowKey>@,
+    // a scan for that prefix finds exactly the schedules and all of its triggers
+    byte[] prefix = keyPrefixForApplicationScan(programId.getParent());
+    try (Scanner scanner = store.scan(new Scan(prefix, Bytes.stopKeyForPrefix(prefix)))) {
+      Row row;
+      while ((row = scanner.next()) != null) {
+        byte[] serialized = row.get(SCHEDULE_COLUMN_BYTES);
+        if (serialized != null) {
+          ProgramSchedule schedule = GSON.fromJson(Bytes.toString(serialized), ProgramSchedule.class);
+          if (programId.equals(schedule.getProgramId())) {
+            store.delete(row.getRow());
+          }
+        }
+      }
+    }
+  }
+
+  /**
    * Read a schedule from the store.
    *
    * @param scheduleId the id of the schedule to read
