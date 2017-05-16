@@ -170,7 +170,7 @@ public abstract class DataCleanupTest {
 
       metadataTable.deleteTopic(topicId);
       // Sleep so that the metadata cache in coprocessor expires
-      TimeUnit.SECONDS.sleep(1);
+      TimeUnit.SECONDS.sleep(3);
       forceFlushAndCompact(Table.MESSAGE);
       forceFlushAndCompact(Table.PAYLOAD);
 
