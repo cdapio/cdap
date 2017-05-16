@@ -37,6 +37,7 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.TopicId;
+import co.cask.cdap.scheduler.Scheduler;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
@@ -73,6 +74,7 @@ public class AuditPublishTest {
   private static CConfiguration cConf;
   private static MessagingService messagingService;
   private static TopicId auditTopic;
+  private static Scheduler scheduler;
 
 
   @BeforeClass
