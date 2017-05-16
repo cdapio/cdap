@@ -85,7 +85,7 @@ public class FileMetaDataReader {
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), transactionSystemClient,
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null, FileMetaDataReader.class.getSimpleName())),
       RetryStrategies.retryOnConflict(20, 100)
     );
     this.locationFactory = locationFactory;

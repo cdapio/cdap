@@ -67,6 +67,7 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
                                  final Map<String, String> runtimeArguments,
                                  @Nullable final MetricsContext metricsContext,
                                  @Nullable final Map<String, Map<String, String>> staticDatasets,
+                                 @Nullable final String txClientId,
                                  final MultiThreadTransactionAware<?>...multiThreadTxAwares) {
     super(instantiator, txClient, namespace, runtimeArguments);
     this.perThreadMap = CacheBuilder.newBuilder()
@@ -87,7 +88,7 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
           @ParametersAreNonnullByDefault
           public SingleThreadDatasetCache load(Thread thread) throws Exception {
             SingleThreadDatasetCache cache = new SingleThreadDatasetCache(
-              instantiator, txClient, namespace, runtimeArguments, metricsContext, staticDatasets);
+              instantiator, txClient, namespace, runtimeArguments, metricsContext, staticDatasets, txClientId);
             for (MultiThreadTransactionAware<?> txAware : multiThreadTxAwares) {
               cache.addExtraTransactionAware(txAware);
             }

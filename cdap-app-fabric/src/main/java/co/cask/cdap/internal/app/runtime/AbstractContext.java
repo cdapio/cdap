@@ -70,6 +70,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import org.apache.tephra.RetryStrategies;
@@ -166,12 +167,14 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
 
+    ProgramRunId programRunId = program.getId().run(runId);
     TransactionSystemClient retryingTxClient = new RetryingShortTransactionSystemClient(txClient, retryStrategy);
     this.datasetCache = multiThreaded
       ? new MultiThreadDatasetCache(instantiator, retryingTxClient, new NamespaceId(program.getId().getNamespace()),
-                                    runtimeArguments, programMetrics, staticDatasets, messagingContext)
+                                    runtimeArguments, programMetrics, staticDatasets, programRunId.toString(),
+                                    messagingContext)
       : new SingleThreadDatasetCache(instantiator, retryingTxClient, new NamespaceId(program.getId().getNamespace()),
-                                     runtimeArguments, programMetrics, staticDatasets);
+                                     runtimeArguments, programMetrics, staticDatasets, programRunId.toString());
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
                                                   program.getApplicationSpecification().getPlugins());

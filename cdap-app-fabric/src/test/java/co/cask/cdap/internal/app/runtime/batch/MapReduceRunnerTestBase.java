@@ -126,7 +126,7 @@ public class MapReduceRunnerTestBase {
     datasetCache = new SingleThreadDatasetCache(
       new SystemDatasetInstantiator(dsFramework, MapReduceRunnerTestBase.class.getClassLoader(), null),
       injector.getInstance(TransactionSystemClient.class),
-      NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null);
+      NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null, null);
 
     metricStore = injector.getInstance(MetricStore.class);
     txService.startAndWait();

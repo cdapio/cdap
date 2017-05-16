@@ -125,7 +125,7 @@ public class FileMetadataTest {
     Transactional transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), injector.getInstance(TransactionSystemClient.class),
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
 
@@ -173,7 +173,7 @@ public class FileMetadataTest {
     Transactional transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), injector.getInstance(TransactionSystemClient.class),
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);

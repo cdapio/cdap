@@ -87,7 +87,8 @@ public class DefaultOwnerStore extends OwnerStore {
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
                                                                    txClient, DATASET_ID.getParent(),
-                                                                   Collections.<String, String>emptyMap(), null, null)),
+                                                                   Collections.<String, String>emptyMap(), null, null,
+                                                                   DefaultOwnerStore.class.getSimpleName())),
       RetryStrategies.retryOnConflict(20, 100)
     );
   }

@@ -40,11 +40,13 @@ import javax.annotation.Nullable;
 public abstract class AbstractTransactionContext extends TransactionContext {
 
   private final TransactionSystemClient txClient;
+  private final String clientId;
   private Transaction currentTx;
 
-  protected AbstractTransactionContext(TransactionSystemClient txClient) {
+  protected AbstractTransactionContext(String clientId, TransactionSystemClient txClient) {
     // Passing null to parent to make sure nothing in parent class would work
     super(null);
+    this.clientId = clientId;
     this.txClient = txClient;
   }
 

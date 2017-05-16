@@ -122,7 +122,7 @@ public class AuthorizationModule extends PrivateModule {
       return new MultiThreadDatasetCache(
         dsInstantiator, txClient, NamespaceId.SYSTEM, ImmutableMap.<String, String>of(),
         metricsCollectionService.getContext(ImmutableMap.<String, String>of()),
-        ImmutableMap.<String, Map<String, String>>of()
+        ImmutableMap.<String, Map<String, String>>of(), "Authorization"
       );
     }
   }

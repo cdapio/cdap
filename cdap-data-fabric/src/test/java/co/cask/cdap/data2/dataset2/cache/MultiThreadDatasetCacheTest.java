@@ -35,7 +35,7 @@ public class MultiThreadDatasetCacheTest extends DynamicDatasetCacheTest {
   protected DynamicDatasetCache createCache(SystemDatasetInstantiator instantiator,
                                             Map<String, String> arguments,
                                             Map<String, Map<String, String>> staticDatasets) {
-    return new MultiThreadDatasetCache(instantiator, txClient, NAMESPACE, arguments, null, staticDatasets);
+    return new MultiThreadDatasetCache(instantiator, txClient, NAMESPACE, arguments, null, staticDatasets, null);
   }
 
   @Test
