@@ -20,10 +20,13 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.artifact.ArtifactInfo;
+import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -32,14 +35,20 @@ import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
+import co.cask.cdap.common.lang.InstantiatorFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
 import org.apache.tephra.TransactionFailureException;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -189,6 +198,35 @@ public class AppWithServices extends AbstractApplication {
         responder.sendJson(url);
       }
     }
+
+    @GET
+    @Path("call/{name}")
+    public void loadCallablePlugin(HttpServiceRequest request, HttpServiceResponder responder,
+                                   @PathParam("name") String artifactName) {
+      try {
+        List<ArtifactInfo> artifactInfoList = getContext().getAdmin().listArtifacts();
+        ArtifactInfo targetArtifactInfo = null;
+        for (ArtifactInfo artifactInfo : artifactInfoList) {
+          if (artifactInfo.getName().equals(artifactName)) {
+            targetArtifactInfo = artifactInfo;
+            break;
+          }
+        }
+        if (targetArtifactInfo == null) {
+          responder.sendStatus(404);
+        }
+        try (CloseableClassLoader closeableClassLoader =
+              getContext().getAdmin().createClassLoader(targetArtifactInfo, null)) {
+          Class callable = closeableClassLoader.loadClass("co.cask.cdap.test.artifacts.plugins.CallablePlugin");
+          InstantiatorFactory instantiatorFactory = new InstantiatorFactory(false);
+          Callable callablePlugin = (Callable) instantiatorFactory.get(TypeToken.of(callable)).create();
+          responder.sendString(200, callablePlugin.call().toString(), Charset.defaultCharset());
+        }
+      } catch (Exception e) {
+        responder.sendError(500, e.getMessage());
+      }
+    }
+
   }
 
   private static final class DatasetUpdateService extends AbstractService {

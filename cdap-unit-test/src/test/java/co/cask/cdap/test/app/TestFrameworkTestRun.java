@@ -19,6 +19,7 @@ package co.cask.cdap.test.app;
 import co.cask.cdap.AppUsingNamespace;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.common.RuntimeArguments;
@@ -70,6 +71,7 @@ import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.artifacts.AppWithPlugin;
+import co.cask.cdap.test.artifacts.plugins.CallablePlugin;
 import co.cask.cdap.test.artifacts.plugins.ToStringPlugin;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import co.cask.common.http.HttpRequest;
@@ -113,6 +115,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -1555,6 +1558,33 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     result = callServiceGet(noopManager.getServiceURL(), "ping/" + AppWithServices.DATASET_TEST_KEY_STOP_2);
     decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE_STOP_2, decodedResult);
+  }
+
+  @Test
+  public void testLoadingPlugins() throws Exception {
+    ApplicationManager applicationManager = deployApplication(testSpace, AppWithServices.class);
+    LOG.info("Deployed.");
+
+    ArtifactId pluginArtifactId = testSpace.artifact("callable-plugin", "1.0.0-SNAPSHOT");
+    addPluginArtifact(pluginArtifactId, new HashSet<ArtifactRange>(), CallablePlugin.class);
+
+    ServiceManager serviceManager = applicationManager.getServiceManager(AppWithServices.SERVICE_NAME).start();
+    serviceManager.waitForStatus(true);
+
+    LOG.info("Service Started");
+
+    URL serviceURL = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
+    Assert.assertNotNull(serviceURL);
+
+    // Call the ping endpoint
+    URL url = new URL(String.format("%s/call/%s/", serviceURL, "callable-plugin"));
+    HttpRequest request = HttpRequest.get(url).build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(200, response.getResponseCode());
+    Assert.assertEquals(new CallablePlugin().call(), response.getResponseBodyAsString());
+    serviceManager.stop();
+    serviceManager.waitForStatus(false);
+    LOG.info("ServerService Stopped");
   }
 
   @Test
