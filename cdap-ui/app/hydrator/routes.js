@@ -69,7 +69,7 @@ angular.module(PKG.name + '.feature.hydrator')
                   .then(function(res) {
                     var draft = myHelpers.objectQuery(res, $stateParams.namespace, $stateParams.draftId);
                     let isVersionInRange = HydratorPlusPlusHydratorService
-                      .flattenArtifactVersion({
+                      .isVersionInRange({
                         supportedVersion: $rootScope.cdapVersion,
                         versionRange: draft.artifact.version
                       });

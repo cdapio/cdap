@@ -333,11 +333,45 @@ features:
       welcomeMessage2: User Experience
     Title: CDAP | Overview
   DataPrep:
+    DataPrepSidePanel:
+      columnsTabLabel: Columns ({columnsCount})
+      ColumnsTab:
+        EmptyMessage:
+          clearLabel: Clear
+          suggestionTitle: "You can try to:"
+          suggestion1: your search
+          title: No match found for {searchText}
+        ColumnDetail:
+          Header:
+            inferredType: Inferred Type
+            percentageChange: "% Chance"
+        Header:
+          completion: Completion
+          name: Name
+        searchPlaceholder: Search
+        toggle:
+          clearAll: Clear All
+          selectAll: Select All
+      directivesTabLabel: Directives ({directivesCount})
+      DirectivesTab:
+        label: Directives
+      noDirectives: No Directives
+      noColumns: No Columns
     DataPrepTable:
       columnEditWarningMessage: 'A column with the same name already exists. Pick a new name, or click "Apply" to overwrite'
     Directives:
       apply: Apply
       cancel: Cancel
+      ColumnActions:
+        label: Column Actions
+        actions:
+          bulkset: Set column names
+          cleanse: Cleanse column names
+        Bulkset:
+          description: Enter column names in order starting from the first column
+          modalTitle: Bulk set column names
+          setBtnLabel: Set Columns
+          textareaplaceholder: "Enter column names seperated by comma. Special character (eg., @ - #) are not allowed"
       Copy:
         copySuffix: _copy
         duplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
@@ -532,19 +566,15 @@ features:
       Swap:
         title: Swap Two Column Names
     pageTitle: CDAP | Data Preparation
-    SidePanel:
-      ColumnsTab:
-        toggle:
-          clearAll: Clear All
-          selectAll: Select All
-        searchPlaceholder: search
     TopPanel:
       applyBtnLabel: Apply
       addToPipelineBtnLabel: Add to Pipeline
       file: HDFS
-      invalidFieldNameMessage: Invalid field name "{fieldName}"
-      invalidFieldNameRemedies1: "Your field name contains an invalid character: no space or special character other than - or _ are allowed"
-      invalidFieldNameRemedies2: Try to apply directive “cleanse-column-names”
+      invalidFieldNameMessage: Invalid column name "{fieldName}"
+      invalidFieldNameRemedies1: "Spaces and special characters other than - or _ are not allowed in column names."
+      invalidFieldNameRemedies2: "You can try to "
+      cleanseLinkLabel: "cleanse "
+      invalidFieldNameRemedies3: column names.
       SchemaModal:
         defaultErrorMessage: Error generating schema.
       PipelineModal:

@@ -20,7 +20,9 @@ import shortid from 'shortid';
 import DirectivesTabRow from 'components/DataPrep/DataPrepSidePanel/DirectivesTab/DirectivesTabRow';
 import fileDownload from 'react-file-download';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import T from 'i18n-react';
 
+require('./DirectivesTab.scss');
 export default class DirectivesTab extends Component {
   constructor(props) {
     super(props);
@@ -101,7 +103,7 @@ export default class DirectivesTab extends Component {
 
         <div className="directives-tab-header">
           <span>#</span>
-          <span>Directives</span>
+          <span>{T.translate('features.DataPrep.DataPrepSidePanel.DirectivesTab.label')}</span>
           <button
             className="btn btn-link float-xs-right"
             onClick={this.download}

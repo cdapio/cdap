@@ -176,6 +176,19 @@ function getIcon(entity) {
   }
 }
 
+const defaultEventObject = {
+  stopPropagation: () => {},
+  nativeEvent: {
+    stopImmediatePropagation: () => {}
+  },
+  preventDefault: () => {}
+};
+function preventPropagation(e = defaultEventObject) {
+  e.stopPropagation();
+  e.nativeEvent.stopImmediatePropagation();
+  e.preventDefault();
+}
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -186,5 +199,6 @@ export {
   removeAt,
   humanReadableDate,
   contructUrl,
-  getIcon
+  getIcon,
+  preventPropagation
 };
