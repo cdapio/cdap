@@ -77,6 +77,7 @@ public class TimeRangeConstraint extends ProtoConstraint.TimeRangeConstraint imp
 
   @Override
   public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
+    initialize();
     calendar.setTimeInMillis(context.getCheckTime());
     int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
     int minute = calendar.get(Calendar.MINUTE);
