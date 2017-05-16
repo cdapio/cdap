@@ -44,7 +44,7 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
   };
 
   @Test
-  @Ignore // TODO: bring this back
+  @Ignore // TODO (CDAP-11516): bring this back
   public void testUpdateSchedulesFlag() throws Exception {
     // deploy an app with schedule
     AppWithSchedule.AppConfig config = new AppWithSchedule.AppConfig(true, true, true);

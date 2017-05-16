@@ -1144,7 +1144,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
-  @Ignore // TODO: bring this back
+  @Ignore // TODO (CDAP-11516): bring this back
   public void testUpdateSchedulesFlag() throws Exception {
     // deploy an app with schedule
     AppWithSchedule.AppConfig config = new AppWithSchedule.AppConfig(true, true, true);
@@ -1265,7 +1265,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
 
     // adding a schedule with invalid schedule details should fail
-    // TODO bring this back once time scheduling is integrated
+    // TODO (CDAP-11516) bring this back once time scheduling is integrated
     /*
     TimeSchedule invalidTimeSchedule = (TimeSchedule) Schedules.builder("invalidTimeSchedule")
       .setDescription("Something")
@@ -1375,7 +1375,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
 
     // trying to update a time schedule with stream schedule detail set should fail
-    // TODO: figure out what to do about this
+    // TODO (CDAP-11516): figure out what to do about this
     /*
     response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, AppWithSchedule.SCHEDULE,
                               invalidUpdateDetail);
