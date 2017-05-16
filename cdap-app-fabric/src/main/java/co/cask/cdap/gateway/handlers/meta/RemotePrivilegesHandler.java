@@ -62,7 +62,7 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
     EntityId entityId = deserializeNext(arguments);
     Principal principal = deserializeNext(arguments);
     Action action = deserializeNext(arguments);
-    LOG.debug("Enforcing {} on {} for {}", action, entityId, principal);
+    LOG.info("Enforcing {} on {} for {}", action, entityId, principal);
     authorizationEnforcer.enforce(entityId, principal, action);
     responder.sendStatus(HttpResponseStatus.OK);
   }

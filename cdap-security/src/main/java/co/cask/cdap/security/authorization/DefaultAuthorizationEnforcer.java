@@ -71,9 +71,9 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
         }
       }
     }
-    LOG.debug("Enforcing actions {} on {} for principal {}.", actions, entity, principal);
     try {
       authorizerInstantiator.get().enforce(entity, principal, actions);
+      LOG.debug("Enforcing actions {} on {} for principal {}. Succeeded", actions, entity, principal);
     } catch (Exception e) {
       if (exceptionOnFailure) {
         throw new UnauthorizedException(principal, actions, entity);
@@ -81,7 +81,6 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
         return false;
       }
     }
-
     return true;
   }
 
