@@ -1502,7 +1502,7 @@ public class MetadataDatasetTest {
                                            DatasetProperties.builder()
                                              .add(MetadataDatasetDefinition.SCOPE_KEY, scope.name())
                                              .build(),
-                                           null, null);
+                                           null);
   }
 
   private static final class ReversingIndexer implements Indexer {

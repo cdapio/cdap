@@ -74,6 +74,6 @@ public class LevelDBMetricsTableTest extends MetricsTableTest {
   protected MetricsTable getTable(String name) throws Exception {
     DatasetId metricsDatasetInstanceId = NamespaceId.SYSTEM.dataset(name);
     return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId, MetricsTable.class.getName(),
-                                           DatasetProperties.EMPTY, null, null);
+                                           DatasetProperties.EMPTY, null);
   }
 }

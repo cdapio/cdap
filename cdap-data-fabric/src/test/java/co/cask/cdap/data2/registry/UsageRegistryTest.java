@@ -55,7 +55,7 @@ public class UsageRegistryTest extends UsageDatasetTest {
       @Nullable
       @Override
       public <T extends Dataset> T getDataset(DatasetId datasetInstanceId,
-                                              @Nullable Map<String, String> arguments,
+                                              Map<String, String> arguments,
                                               @Nullable ClassLoader classLoader)
         throws DatasetManagementException, IOException {
 

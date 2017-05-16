@@ -53,7 +53,7 @@ public class DatasetWithArgumentsTest {
 
   @Test
   public void testPrefixTable() throws Exception {
-    final PrefixedTable table = dsFrameworkUtil.getInstance(pret, null);
+    final PrefixedTable table = dsFrameworkUtil.getInstance(pret, Collections.<String, String>emptyMap());
     final PrefixedTable aTable = dsFrameworkUtil.getInstance(pret, Collections.singletonMap("prefix", "a"));
     final PrefixedTable bTable = dsFrameworkUtil.getInstance(pret, Collections.singletonMap("prefix", "b"));
 

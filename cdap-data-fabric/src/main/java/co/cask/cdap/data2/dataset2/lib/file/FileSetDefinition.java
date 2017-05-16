@@ -121,7 +121,6 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmi
   @Override
   public FileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> arguments,
                             ClassLoader classLoader) throws IOException {
-    return new FileSetDataset(datasetContext, cConf, spec, locationFactory, namespacedLocationFactory,
-                              arguments == null ? Collections.<String, String>emptyMap() : arguments);
+    return new FileSetDataset(datasetContext, cConf, spec, locationFactory, namespacedLocationFactory, arguments);
   }
 }

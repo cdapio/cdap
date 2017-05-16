@@ -42,7 +42,7 @@ public abstract class MetaTableUtil {
   public Table getMetaTable() throws IOException, DatasetManagementException {
     DatasetId metaTableInstanceId = NamespaceId.SYSTEM.dataset(getMetaTableName());
     return DatasetsUtil.getOrCreateDataset(dsFramework, metaTableInstanceId, Table.class.getName(),
-                                           DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
+                                           DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS);
   }
 
   /**
