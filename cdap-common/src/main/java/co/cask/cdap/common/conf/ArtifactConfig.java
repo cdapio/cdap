@@ -101,7 +101,7 @@ public class ArtifactConfig  {
 
   /**
    * Serializer for ArtifactRange in a ArtifactConfig. Artifact ranges are expected to be able to be
-   * parsed via {@link co.cask.cdap.proto.artifact.ArtifactUtil#parseArtifactRange(String)} (String)}.
+   * parsed via {@link co.cask.cdap.proto.artifact.ArtifactUtil#parseArtifactRange(String)}.
    * Currently, system artifacts can only extend other system artifacts.
    */
   private static final class ArtifactRangeSerializer implements JsonSerializer<ArtifactRange> {

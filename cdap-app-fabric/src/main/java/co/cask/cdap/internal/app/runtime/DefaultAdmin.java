@@ -199,6 +199,6 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
   @Override
   public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
                                                 @Nullable ClassLoader parentClassLoader) throws Exception {
-    return defaultArtifactManager.createClassLoader(namespaceId.getNamespace(), artifactInfo, parentClassLoader);
+    return defaultArtifactManager.createClassLoader(namespaceId, artifactInfo, parentClassLoader);
   }
 }

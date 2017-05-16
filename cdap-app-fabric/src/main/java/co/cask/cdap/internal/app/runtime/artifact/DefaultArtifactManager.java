@@ -119,11 +119,12 @@ public class DefaultArtifactManager {
    * @throws Exception if artifact is not found or there were any error while getting artifact or if its unauthorized
    */
   public CloseableClassLoader createClassLoader(
-    String namespace, ArtifactInfo artifactInfo, @Nullable ClassLoader parentClassLoader) throws Exception {
+    NamespaceId namespace, ArtifactInfo artifactInfo, @Nullable ClassLoader parentClassLoader) throws Exception {
 
-    ensureAccess(new ArtifactId(namespace, artifactInfo.getName(), artifactInfo.getVersion()));
+    ensureAccess(new ArtifactId(namespace.getNamespace(), artifactInfo.getName(), artifactInfo.getVersion()));
     ArtifactDetail artifactDetail = artifactStore.getArtifact(
-      new co.cask.cdap.proto.id.ArtifactId(namespace, artifactInfo.getName(), artifactInfo.getVersion()).toId());
+      new co.cask.cdap.proto.id.ArtifactId(namespace.getNamespace(),
+                                           artifactInfo.getName(), artifactInfo.getVersion()).toId());
 
     final File unpackedDir = DirUtils.createTempDir(tmpDir);
     BundleJarUtil.unJar(artifactDetail.getDescriptor().getLocation(), unpackedDir);
