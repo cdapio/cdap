@@ -32,14 +32,14 @@ import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
 
 /**
  * Distributed ProgramRunner for Service.
@@ -60,9 +60,8 @@ public class DistributedServiceProgramRunner extends DistributedProgramRunner {
   }
 
   @Override
-  protected Map<String, ProgramTwillApplication.RunnableResource> getRunnables(Program program,
-                                                                               ProgramOptions programOptions) {
-    Map<String, ProgramTwillApplication.RunnableResource> runnables = new HashMap<>();
+  protected void validateOptions(Program program, ProgramOptions options) {
+    super.validateOptions(program, options);
 
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
@@ -74,16 +73,19 @@ public class DistributedServiceProgramRunner extends DistributedProgramRunner {
 
     ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
     Preconditions.checkNotNull(serviceSpec, "Missing ServiceSpecification for %s", program.getName());
+  }
+
+  @Override
+  protected void setupLaunchConfig(LaunchConfig launchConfig, Program program, ProgramOptions options,
+                                   CConfiguration cConf, Configuration hConf, File tempDir) {
+
+    ApplicationSpecification appSpec = program.getApplicationSpecification();
+    ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
 
     // Add a runnable for the service handler
-    Resources resources = SystemArguments.getResources(programOptions.getUserArguments(),
-                                                       serviceSpec.getResources());
-    runnables.put(serviceSpec.getName(), new ProgramTwillApplication.RunnableResource(
-      new ServiceTwillRunnable(serviceSpec.getName()),
-      createResourceSpec(resources, serviceSpec.getInstances())
-    ));
-
-    return runnables;
+    Resources resources = SystemArguments.getResources(options.getUserArguments(), serviceSpec.getResources());
+    launchConfig.addRunnable(serviceSpec.getName(), new ServiceTwillRunnable(serviceSpec.getName()),
+                             resources, serviceSpec.getInstances());
   }
 
   @Override

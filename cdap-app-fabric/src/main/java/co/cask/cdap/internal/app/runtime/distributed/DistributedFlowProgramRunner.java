@@ -49,6 +49,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tephra.TransactionExecutorFactory;
 import org.apache.twill.api.EventHandler;
@@ -59,7 +60,7 @@ import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.io.File;
 import java.util.Map;
 import java.util.Set;
 
@@ -111,12 +112,11 @@ public final class DistributedFlowProgramRunner extends DistributedProgramRunner
   }
 
   @Override
-  protected Map<String, ProgramTwillApplication.RunnableResource> getRunnables(Program program,
-                                                                               ProgramOptions programOptions) {
-    Map<String, String> args = programOptions.getUserArguments().asMap();
+  protected void setupLaunchConfig(LaunchConfig launchConfig, Program program, ProgramOptions options,
+                                   CConfiguration cConf, Configuration hConf, File tempDir) {
+    // Add runnables
+    Map<String, String> args = options.getUserArguments().asMap();
     FlowSpecification flowSpec = getFlowSpecification(program);
-
-    Map<String, ProgramTwillApplication.RunnableResource> runnables = new HashMap<>();
 
     for (Map.Entry<String, FlowletDefinition> entry  : flowSpec.getFlowlets().entrySet()) {
       FlowletDefinition flowletDefinition = entry.getValue();
@@ -126,17 +126,13 @@ public final class DistributedFlowProgramRunner extends DistributedProgramRunner
       Map<String, String> flowletArgs = RuntimeArguments.extractScope(FlowUtils.FLOWLET_SCOPE, flowletName, args);
       Resources resources = SystemArguments.getResources(flowletArgs, flowletSpec.getResources());
 
-      runnables.put(entry.getKey(), new ProgramTwillApplication.RunnableResource(
-        new FlowletTwillRunnable(flowletName),
-        createResourceSpec(resources, flowletDefinition.getInstances())
-      ));
+      launchConfig.addRunnable(entry.getKey(), new FlowletTwillRunnable(flowletName),
+                               resources, flowletDefinition.getInstances());
     }
-
-    return runnables;
   }
 
   @Override
-  protected void prepareLaunch(Program program, TwillPreparer preparer) {
+  protected void beforeLaunch(Program program, ProgramOptions options) {
     LOG.info("Configuring flowlets queues");
     FlowUtils.configureQueue(program, getFlowSpecification(program), streamAdmin, queueAdmin, txExecutorFactory);
   }

@@ -30,13 +30,14 @@ import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Distributed program runner for webapp.
@@ -57,22 +58,23 @@ public final class DistributedWebappProgramRunner extends DistributedProgramRunn
   }
 
   @Override
-  protected Map<String, ProgramTwillApplication.RunnableResource> getRunnables(Program program,
-                                                                               ProgramOptions programOptions) {
+  protected void validateOptions(Program program, ProgramOptions options) {
+    super.validateOptions(program, options);
+
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
     ProgramType processorType = program.getType();
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == ProgramType.WEBAPP, "Only WEBAPP process type is supported.");
+  }
 
-    Map<String, ProgramTwillApplication.RunnableResource> runnables = new HashMap<>();
-
+  @Override
+  protected void setupLaunchConfig(LaunchConfig launchConfig, Program program, ProgramOptions options,
+                                   CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
     String serviceName = WebappProgramRunner.getServiceName(program.getId());
-    Resources resources = SystemArguments.getResources(programOptions.getUserArguments().asMap(), null);
+    Resources resources = SystemArguments.getResources(options.getUserArguments().asMap(), null);
 
-    runnables.put(serviceName, new ProgramTwillApplication.RunnableResource(new WebappTwillRunnable(serviceName),
-                                                                            createResourceSpec(resources, 1)));
-    return runnables;
+    launchConfig.addRunnable(serviceName, new WebappTwillRunnable(serviceName), resources, 1);
   }
 }

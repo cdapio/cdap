@@ -30,6 +30,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.logging.LoggerLogHandler;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
@@ -71,10 +72,9 @@ import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
+import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.logging.LogEntry;
-import org.apache.twill.api.logging.LogHandler;
-import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
@@ -85,7 +85,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -97,6 +96,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -163,78 +163,46 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
                                                                ProgramDescriptor programDescriptor, RunId runId);
 
   /**
-   * Creates the set of {@link RunnableResource} for a given program that are going to be launched in the
-   * {@link ProgramTwillApplication}.
+   * Provides the configuration for launching an program container.
    *
-   * @param program the program to be launched
-   * @param programOptions options for the program to be launched
-   * @return A {@link Map} from runnable name to {@link RunnableResource}
+   * @param launchConfig the {@link LaunchConfig} to setup
+   * @param program the program to launch
+   * @param options the program options
+   * @param cConf the configuration for this launch
+   * @param hConf the hadoop configuration for this launch
+   * @param tempDir a temporary directory for creating temp file. The content will be cleanup automatically
+   *                once the program is launch.
    */
-  protected abstract Map<String, RunnableResource> getRunnables(Program program, ProgramOptions programOptions);
+  protected abstract void setupLaunchConfig(LaunchConfig launchConfig, Program program, ProgramOptions options,
+                                            CConfiguration cConf, Configuration hConf, File tempDir) throws IOException;
 
   /**
-   * Returns the launch order for the given set of runnables. By default is an empty list, which means no ordering.
+   * The extra hook to be called right before the program is launch. This method will be called with
+   * user impersonation.
    *
-   * @param runnables the runnables to be launched
-   * @return a {@link Iterable} that gives the start order of runnables. The runnable names in the same set will
-   *         be started in the same order
+   * @param program the program to launch
+   * @param options the program options
    */
-  protected Iterable<Set<String>> getRunnableLaunchOrder(Map<String, RunnableResource> runnables) {
-    return Collections.emptyList();
-  }
-
-  /**
-   * Returns the set of extra resources that need to be localized to Twill containers.
-   *
-   * @param program the program to be launched in Twill container.
-   * @param tempDir a local directory for creating temporary resources. Sub-classes doesn't need to perform any
-   *                cleanup of this directory.
-   * @return A {@link Map} from localized name to {@link LocalizeResource}.
-   */
-  protected Map<String, LocalizeResource> getExtraLocalizeResources(Program program, File tempDir) {
-    return Collections.emptyMap();
-  }
-
-  /**
-   * Prepare launching of the Twill application.
-   *
-   * @param program the program to be launched
-   * @param preparer the {@link TwillPreparer} for extra setup of the launching context
-   */
-  protected void prepareLaunch(Program program, TwillPreparer preparer) {
+  protected void beforeLaunch(Program program, ProgramOptions options) {
     // no-op
-  }
-
-  /**
-   * Returns the {@link ClassAcceptor} used for application bundle creation.
-   * By default it returns the {@link HadoopClassExcluder}.
-   */
-  protected ClassAcceptor getBundlerClassAcceptor(Program program) {
-    return new HadoopClassExcluder();
-  }
-
-  /**
-   * Returns a {@link ResourceSpecification} created from the given {@link Resources} and number of instances.
-   */
-  protected final ResourceSpecification createResourceSpec(Resources resources, int instances) {
-    return ResourceSpecification.Builder.with()
-      .setVirtualCores(resources.getVirtualCores())
-      .setMemory(resources.getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(instances)
-      .build();
   }
 
   @Override
   public final ProgramController run(final Program program, ProgramOptions oldOptions) {
     validateOptions(program, oldOptions);
 
-    final CConfiguration cConf = createContainerCConf(program, this.cConf);
-    final Configuration hConf = createContainerHConf(program, this.hConf);
+    final CConfiguration cConf = createContainerCConf(this.cConf);
+    final Configuration hConf = createContainerHConf(this.hConf);
 
     final File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                          cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
-      final Map<String, LocalizeResource> localizeResources = new HashMap<>();
+      final LaunchConfig launchConfig = new LaunchConfig();
+      setupLaunchConfig(launchConfig, program, oldOptions, cConf, hConf, tempDir);
+
+      // Add extra localize resources needed by the program runner
+      final Map<String, LocalizeResource> localizeResources = new HashMap<>(launchConfig.getExtraResources());
+
       final ProgramOptions options = addArtifactPluginFiles(oldOptions, localizeResources,
                                                             DirUtils.createTempDir(tempDir));
 
@@ -254,6 +222,10 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
       final String programJarName = programJarLocation.getName();
       localizeResources.put(programJarName, new LocalizeResource(program.getJarLocation().toURI(), false));
 
+      // Localize an expanded program jar
+      final String expandedProgramJarName = "expanded." + programJarName;
+      localizeResources.put(expandedProgramJarName, new LocalizeResource(program.getJarLocation().toURI(), true));
+
       // Localize the app spec
       localizeResources.put(APP_SPEC_FILE_NAME,
                             new LocalizeResource(saveAppSpec(program,
@@ -265,20 +237,16 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
         localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackURI, false));
       }
 
-      // All extra localize resources needed by the program runner
-      localizeResources.putAll(getExtraLocalizeResources(program, tempDir));
-
       Callable<ProgramController> callable = new Callable<ProgramController>() {
         @Override
         public ProgramController call() throws Exception {
-          Map<String, RunnableResource> runnables = getRunnables(program, options);
           ProgramTwillApplication twillApplication = new ProgramTwillApplication(program.getId(),
-                                                                                 runnables,
-                                                                                 getRunnableLaunchOrder(runnables),
+                                                                                 launchConfig.getRunnables(),
+                                                                                 launchConfig.getLaunchOrder(),
                                                                                  localizeResources,
                                                                                  createEventHandler(cConf));
 
-          ProgramTwillPreparer twillPreparer = new ProgramTwillPreparer(twillRunner.prepare(twillApplication));
+          TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
           if (options.isDebug()) {
             twillPreparer.enableDebugging();
           }
@@ -315,8 +283,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
                 LOG.warn("Invalid application container log level {}. Defaulting to ERROR.", logLevelConf);
               }
             }
-            twillPreparer.addLogHandler(
-              new ApplicationLogHandler(new PrinterLogHandler(new PrintWriter(System.out)), logLevel));
+            twillPreparer.addLogHandler(new LoggerLogHandler(LOG, logLevel));
           }
 
           // Add secure tokens
@@ -328,16 +295,19 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
           twillPreparer.withEnv(Collections.singletonMap("CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR));
 
           // Add dependencies
-          twillPreparer
-            .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
-            .withDependencies(new HBaseDDLExecutorFactory(cConf, hConf).get().getClass());
-          addKMSSecureStoreClass(cConf, twillPreparer);
+          Set<Class<?>> extraDependencies = new HashSet<>(launchConfig.getExtraDependencies());
+          extraDependencies.add(HBaseTableUtilFactory.getHBaseTableUtilClass());
+          extraDependencies.add(new HBaseDDLExecutorFactory(cConf, hConf).get().getClass());
+          if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
+            extraDependencies.add(SecureStoreUtils.getKMSSecureStore());
+          }
+          twillPreparer.withDependencies(extraDependencies);
 
           // Add the additional classes to the classpath that comes from the container jar setting
           twillPreparer.withClassPaths(additionalClassPaths);
 
-          // Let sub-class to setup the preparer first
-          prepareLaunch(program, twillPreparer);
+          twillPreparer.withClassPaths(launchConfig.getExtraClasspath());
+          twillPreparer.withEnv(launchConfig.getExtraEnv());
 
           // The Yarn app classpath goes last
           List<String> yarnAppClassPath = Arrays.asList(
@@ -346,9 +316,10 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
           twillPreparer
             .withApplicationClassPaths(yarnAppClassPath)
             .withClassPaths(yarnAppClassPath)
-            .withBundlerClassAcceptor(getBundlerClassAcceptor(program))
+            .withBundlerClassAcceptor(launchConfig.getClassAcceptor())
             .withApplicationArguments(
               "--" + RunnableOptions.JAR, programJarName,
+              "--" + RunnableOptions.EXPANDED_JAR, expandedProgramJarName,
               "--" + RunnableOptions.HADOOP_CONF_FILE, HADOOP_CONF_FILE_NAME,
               "--" + RunnableOptions.CDAP_CONF_FILE, CDAP_CONF_FILE_NAME,
               "--" + RunnableOptions.APP_SPEC_FILE, APP_SPEC_FILE_NAME,
@@ -358,12 +329,15 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
             // Use the MainClassLoader for class rewriting
             .setClassLoader(MainClassLoader.class.getName());
 
+          // Invoke the before launch hook
+          beforeLaunch(program, options);
+
           TwillController twillController;
           // Change the context classloader to the combine classloader of this ProgramRunner and
           // all the classloaders of the dependencies classes so that Twill can trace classes.
           ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
             DistributedProgramRunner.this.getClass().getClassLoader(),
-            Iterables.transform(twillPreparer.getDependencies(), new Function<Class<?>, ClassLoader>() {
+            Iterables.transform(extraDependencies, new Function<Class<?>, ClassLoader>() {
               @Override
               public ClassLoader apply(Class<?> input) {
                 return input.getClassLoader();
@@ -392,7 +366,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
   /**
    * Creates the {@link CConfiguration} to be used in the program container.
    */
-  protected CConfiguration createContainerCConf(Program program, CConfiguration cConf) {
+  private CConfiguration createContainerCConf(CConfiguration cConf) {
     CConfiguration result = CConfiguration.copy(cConf);
     // don't have tephra retry in order to give CDAP more control over when to retry and how.
     result.set(TxConstants.Service.CFG_DATA_TX_CLIENT_RETRY_STRATEGY, "n-times");
@@ -417,7 +391,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
   /**
    * Creates the {@link Configuration} to be used in the program container.
    */
-  protected Configuration createContainerHConf(Program program, Configuration hConf) {
+  private Configuration createContainerHConf(Configuration hConf) {
     Configuration result = new YarnConfiguration(hConf);
     // Unset the hbase.client.retries.number and hbase.rpc.timeout so that program container
     // runs with default values for them from hbase-site/hbase-default.
@@ -465,15 +439,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     String userArguments = Joiner.on(", ").withKeyValueSeparator("=").join(options.getUserArguments());
     LOG.info("Starting {} Program '{}' with Arguments [{}]", program.getType(), program.getName(), userArguments);
     saveContextCancellable.cancel();
-  }
-
-  /**
-   * Adds the KMS secure store class to the {@link TwillPreparer} dependencies class.
-   */
-  private void addKMSSecureStoreClass(CConfiguration cConf, TwillPreparer preparer) {
-    if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
-      preparer.withDependencies(SecureStoreUtils.getKMSSecureStore());
-    }
   }
 
   private ProgramOptions addArtifactPluginFiles(ProgramOptions options, Map<String, LocalizeResource> localizeResources,
@@ -594,58 +559,105 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     return controller;
   }
 
-  private static final class ApplicationLogHandler implements LogHandler {
-
-    private final LogHandler delegate;
-    private final LogEntry.Level logLevel;
-
-    private ApplicationLogHandler(LogHandler delegate, LogEntry.Level logLevel) {
-      this.delegate = delegate;
-      this.logLevel = logLevel;
-    }
-
-    @Override
-    public void onLog(LogEntry logEntry) {
-      if (logEntry.getLogLevel().ordinal() <= logLevel.ordinal()) {
-        delegate.onLog(logEntry);
-      }
-    }
-  }
-
   /**
-   * A {@link TwillPreparer} that exposes dependencies added.
+   * Configuration for launching Twill container for a program.
    */
-  private static final class ProgramTwillPreparer extends ForwardingTwillPreparer {
+  protected static final class LaunchConfig {
 
-    private final TwillPreparer preparer;
-    private final List<Class<?>> dependencies;
+    private final Map<String, LocalizeResource> extraResources = new HashMap<>();
+    private final List<String> extraClasspath = new ArrayList<>();
+    private final Map<String, String> extraEnv = new HashMap<>();
+    private final Map<String, RunnableResource> runnables = new HashMap<>();
+    private final List<Set<String>> launchOrder = new ArrayList<>();
+    private final Set<Class<?>> extraDependencies = new HashSet<>();
+    private ClassAcceptor classAcceptor = new HadoopClassExcluder();
 
-    private ProgramTwillPreparer(TwillPreparer preparer) {
-      this.preparer = preparer;
-      this.dependencies = new ArrayList<>();
-    }
-
-    @Override
-    public TwillPreparer getDelegate() {
-      return preparer;
-    }
-
-    @Override
-    public TwillPreparer withDependencies(Class<?>...classes) {
-      super.withDependencies(classes);
-      dependencies.addAll(Arrays.asList(classes));
+    public LaunchConfig addExtraResources(Map<String, LocalizeResource> resources) {
+      extraResources.putAll(resources);
       return this;
     }
 
-    @Override
-    public TwillPreparer withDependencies(Iterable<Class<?>> classes) {
-      super.withDependencies(classes);
-      Iterables.addAll(dependencies, classes);
+    public LaunchConfig addExtraClasspath(String...classpath) {
+      return addExtraClasspath(Arrays.asList(classpath));
+    }
+
+    public LaunchConfig addExtraClasspath(Iterable<String> classpath) {
+      Iterables.addAll(extraClasspath, classpath);
       return this;
     }
 
-    List<Class<?>> getDependencies() {
-      return dependencies;
+    public LaunchConfig addExtraEnv(Map<String, String> env) {
+      extraEnv.putAll(env);
+      return this;
+    }
+
+    public LaunchConfig addRunnable(String name, TwillRunnable runnable, Resources resources, int instances) {
+      runnables.put(name, new RunnableResource(runnable, createResourceSpec(resources, instances)));
+      return this;
+    }
+
+    public LaunchConfig setLaunchOrder(Iterable<? extends Set<String>> order) {
+      launchOrder.clear();
+      Iterables.addAll(launchOrder, order);
+      return this;
+    }
+
+    public LaunchConfig setClassAcceptor(ClassAcceptor classAcceptor) {
+      this.classAcceptor = classAcceptor;
+      return this;
+    }
+
+    public LaunchConfig addExtraDependencies(Class<?>...classes) {
+      return addExtraDependencies(Arrays.asList(classes));
+    }
+
+    public LaunchConfig addExtraDependencies(Iterable<? extends Class<?>> classes) {
+      Iterables.addAll(extraDependencies, classes);
+      return this;
+    }
+
+    public Map<String, LocalizeResource> getExtraResources() {
+      return extraResources;
+    }
+
+    public List<String> getExtraClasspath() {
+      return extraClasspath;
+    }
+
+    public Map<String, String> getExtraEnv() {
+      return extraEnv;
+    }
+
+    public ClassAcceptor getClassAcceptor() {
+      return classAcceptor;
+    }
+
+    public Map<String, RunnableResource> getRunnables() {
+      return runnables;
+    }
+
+    public List<Set<String>> getLaunchOrder() {
+      return launchOrder;
+    }
+
+    public Set<Class<?>> getExtraDependencies() {
+      return extraDependencies;
+    }
+
+    public LaunchConfig clearRunnables() {
+      runnables.clear();
+      return this;
+    }
+
+    /**
+     * Returns a {@link ResourceSpecification} created from the given {@link Resources} and number of instances.
+     */
+    private ResourceSpecification createResourceSpec(Resources resources, int instances) {
+      return ResourceSpecification.Builder.with()
+        .setVirtualCores(resources.getVirtualCores())
+        .setMemory(resources.getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
+        .setInstances(instances)
+        .build();
     }
   }
 }

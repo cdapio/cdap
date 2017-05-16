@@ -19,13 +19,16 @@ package co.cask.cdap.app.runtime.spark;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Spark compat versions
  */
 public enum SparkCompat {
   SPARK1_2_10("spark1_2.10"),
-  SPARK2_2_11("spark2_2.11"),
-  UNKNOWN("unknown");
+  SPARK2_2_11("spark2_2.11");
 
   private final String compat;
 
@@ -45,16 +48,21 @@ public enum SparkCompat {
     // use the value in the system property (expected in distributed)
     // otherwise, check the conf for the spark compat version (expected in standalone and unit tests)
     String compatStr = System.getProperty(Constants.AppFabric.SPARK_COMPAT);
-    compatStr = compatStr == null ? System.getenv(Constants.SPARK_HOME) : compatStr;
+    compatStr = compatStr == null ? System.getenv(Constants.SPARK_COMPAT_ENV) : compatStr;
     compatStr = compatStr == null ? cConf.get(Constants.AppFabric.SPARK_COMPAT) : compatStr;
 
-    if (SPARK1_2_10.compat.equals(compatStr)) {
-      return SPARK1_2_10;
-    } else if (SPARK2_2_11.compat.equals(compatStr)) {
-      return SPARK2_2_11;
-    } else {
-      throw new IllegalArgumentException(String.format("Invalid SparkCompat version '%s'. Must be %s or %s",
-                                                       compatStr, SPARK1_2_10.compat, SPARK2_2_11.compat));
+    for (SparkCompat sparkCompat : values()) {
+      if (sparkCompat.getCompat().equals(compatStr)) {
+        return sparkCompat;
+      }
     }
+
+    List<String> allowedCompatStrings = new ArrayList<>();
+    for (SparkCompat sparkCompat : values()) {
+      allowedCompatStrings.add(sparkCompat.getCompat());
+    }
+
+    throw new IllegalArgumentException(
+      String.format("Invalid SparkCompat version '%s'. Must be one of %s", compatStr, allowedCompatStrings));
   }
 }

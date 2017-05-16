@@ -32,14 +32,15 @@ import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
-import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -64,8 +65,9 @@ public final class DistributedMapReduceProgramRunner extends DistributedProgramR
   }
 
   @Override
-  protected Map<String, ProgramTwillApplication.RunnableResource> getRunnables(Program program,
-                                                                               ProgramOptions programOptions) {
+  protected void validateOptions(Program program, ProgramOptions options) {
+    super.validateOptions(program, options);
+
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -76,30 +78,25 @@ public final class DistributedMapReduceProgramRunner extends DistributedProgramR
 
     MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
+  }
+
+  @Override
+  protected void setupLaunchConfig(LaunchConfig launchConfig, Program program, ProgramOptions options,
+                                   CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
+
+    ApplicationSpecification appSpec = program.getApplicationSpecification();
+    MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
 
     // Get the resource for the container that runs the mapred client that will launch the actual mapred job.
     Map<String, String> clientArgs = RuntimeArguments.extractScope("task", "client",
-                                                                   programOptions.getUserArguments().asMap());
+                                                                   options.getUserArguments().asMap());
     Resources resources = SystemArguments.getResources(clientArgs, spec.getDriverResources());
 
-    Map<String, ProgramTwillApplication.RunnableResource> runnables = new HashMap<>();
-    runnables.put(spec.getName(),
-                  new ProgramTwillApplication.RunnableResource(new MapReduceTwillRunnable(spec.getName()),
-                                                               createResourceSpec(resources, 1)));
-    return runnables;
-  }
-
-  @Override
-  protected Map<String, LocalizeResource> getExtraLocalizeResources(Program program, File tempDir) {
-    Map<String, LocalizeResource> localizeResources = new HashMap<>();
-    MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
-    return localizeResources;
-  }
-
-  @Override
-  protected void prepareLaunch(Program program, TwillPreparer preparer) {
-    preparer
-      .withClassPaths(MapReduceContainerHelper.addMapReduceClassPath(hConf, new ArrayList<String>()))
-      .withDependencies(YarnClientProtocolProvider.class);
+    // Add runnable. Only one instance for the MR driver
+    launchConfig.addRunnable(spec.getName(), new MapReduceTwillRunnable(spec.getName()), resources, 1)
+    // Add extra resources, classpath and dependencies
+      .addExtraResources(MapReduceContainerHelper.localizeFramework(hConf, new HashMap<String, LocalizeResource>()))
+      .addExtraClasspath(MapReduceContainerHelper.addMapReduceClassPath(hConf, new ArrayList<String>()))
+      .addExtraDependencies(YarnClientProtocolProvider.class);
   }
 }

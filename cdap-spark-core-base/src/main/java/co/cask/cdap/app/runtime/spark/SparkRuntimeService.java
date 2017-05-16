@@ -32,14 +32,10 @@ import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
@@ -48,16 +44,15 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGene
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.security.store.SecureStoreUtils;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -66,20 +61,17 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ShutdownHookManager;
 import org.apache.spark.SparkConf;
 import org.apache.spark.deploy.SparkSubmit;
-import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.RunId;
+import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -90,18 +82,19 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.zip.Deflater;
 import javax.annotation.Nullable;
 
 /**
@@ -174,10 +167,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       final List<LocalizeResource> localizeResources = new ArrayList<>();
 
       String metricsConfPath;
-      String logbackJarName = null;
-      File sparkJar = null;
+      String classpath = "";
 
-      List<String> extraJars = new ArrayList<>();
       if (contextConfig.isLocal()) {
         // In local mode, always copy (or link if local) user requested resources
         copyUserResources(context.getLocalizeResources(), tempDir);
@@ -188,7 +179,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         // Localize all user requested files in distributed mode
         distributedUserResources(context.getLocalizeResources(), localizeResources);
 
-        // Localize system files in distributed mode
+        // Localize program jar and the expanding program jar
         File programJar = Locations.linkOrCopy(runtimeContext.getProgram().getJarLocation(),
                                                new File(tempDir, SparkRuntimeContextProvider.PROGRAM_JAR_NAME));
         File expandedProgramJar = Locations.linkOrCopy(runtimeContext.getProgram().getJarLocation(),
@@ -198,20 +189,13 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         localizeResources.add(new LocalizeResource(programJar));
         localizeResources.add(new LocalizeResource(expandedProgramJar, true));
 
-        localizeResources.add(new LocalizeResource(createLauncherJar(tempDir)));
-        sparkJar = buildDependencyJar(tempDir);
-        localizeResources.add(new LocalizeResource(sparkJar, true));
-        localizeResources.add(new LocalizeResource(saveCConf(cConf, tempDir)));
-
+        // Localize plugins
         if (pluginArchive != null) {
           localizeResources.add(new LocalizeResource(pluginArchive, true));
         }
 
-        File logbackJar = ProgramRunners.createLogbackJar(tempDir);
-        if (logbackJar != null) {
-          localizeResources.add(new LocalizeResource(logbackJar));
-          logbackJarName = logbackJar.getName();
-        }
+        // Create and localize the launcher jar, which is for setting up services and classloader for spark containers
+        localizeResources.add(new LocalizeResource(createLauncherJar(tempDir)));
 
         // Create metrics conf file in the current directory since
         // the same value for the "spark.metrics.conf" config needs to be used for both driver and executor processes
@@ -221,20 +205,44 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         metricsConfPath = metricsConf.getName();
         localizeResources.add(new LocalizeResource(metricsConf));
 
-        // Preserves runtime information in the hConf
-        Configuration hConf = contextConfig.set(runtimeContext, pluginArchive).getConfiguration();
+        // Localize the cConf file
+        localizeResources.add(new LocalizeResource(saveCConf(cConf, tempDir)));
 
-        // Localize the hConf file to executor nodes
+        // Preserves and localize runtime information in the hConf
+        Configuration hConf = contextConfig.set(runtimeContext, pluginArchive).getConfiguration();
         localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
 
+        // Joiner for creating classpath for spark containers
+        Joiner joiner = Joiner.on(File.pathSeparator).skipNulls();
+
+        // Localize the spark.jar archive, which contains all CDAP and dependency jars
+        File sparkJar = new File(tempDir, CDAP_SPARK_JAR);
+        classpath = joiner.join(Iterables.transform(buildDependencyJar(sparkJar), new Function<String, String>() {
+          @Override
+          public String apply(String name) {
+            return Paths.get("$PWD", CDAP_SPARK_JAR, name).toString();
+          }
+        }));
+        localizeResources.add(new LocalizeResource(sparkJar, true));
+
+        // Localize logback if there is one. It is placed at the beginning of the classpath
+        File logbackJar = ProgramRunners.createLogbackJar(tempDir);
+        if (logbackJar != null) {
+          localizeResources.add(new LocalizeResource(logbackJar));
+          classpath = joiner.join(Paths.get("$PWD", logbackJar.getName()), classpath);
+        }
+
+        // Localize extra jars and append to the end of the classpath
+        List<String> extraJars = new ArrayList<>();
         for (URI jarURI : CConfigurationUtil.getExtraJars(cConf)) {
-          extraJars.add(LocalizationUtils.getLocalizedName(jarURI));
+          extraJars.add(Paths.get("$PWD", LocalizationUtils.getLocalizedName(jarURI)).toString());
           localizeResources.add(new LocalizeResource(jarURI, false));
         }
+        classpath = joiner.join(classpath, joiner.join(extraJars));
       }
 
-      final Map<String, String> configs = createSubmitConfigs(sparkJar, tempDir, metricsConfPath, logbackJarName,
-                                                              context.getLocalizeResources(), extraJars,
+      final Map<String, String> configs = createSubmitConfigs(tempDir, metricsConfPath, classpath,
+                                                              context.getLocalizeResources(),
                                                               contextConfig.isLocal());
       submitSpark = new Callable<ListenableFuture<RunId>>() {
         @Override
@@ -428,10 +436,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   /**
    * Creates the configurations for the spark submitter.
    */
-  private Map<String, String> createSubmitConfigs(File sparkJar, File localDir,
-                                                  String metricsConfPath, @Nullable String logbackJarName,
+  private Map<String, String> createSubmitConfigs(File localDir, String metricsConfPath, String classpath,
                                                   Map<String, LocalizeResource> localizedResources,
-                                                  List<String> extraJarPaths, boolean localMode) throws Exception {
+                                                  boolean localMode) throws Exception {
     Map<String, String> configs = new HashMap<>();
 
     // Make Spark UI runs on random port. By default, Spark UI runs on port 4040 and it will do a sequential search
@@ -440,7 +447,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     configs.put("spark.ui.port", "0");
 
     // Setup configs from the default spark conf
-    setSparkDefaultConfigs(configs);
+    Properties sparkDefaultConf = SparkPackageUtils.getSparkDefaultConf();
+    configs.putAll(Maps.fromProperties(sparkDefaultConf));
 
     // Setup app.id and executor.id for Metric System
     configs.put("spark.app.id", context.getApplicationSpecification().getName());
@@ -466,28 +474,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     // classpath so adding them is not required. In non-local mode where spark driver and executors runs in a different
     // jvm we are adding these to their classpath.
     if (!localMode) {
-      // Get all the jars in jobJar and sort them lexically before adding to the classpath
-      // This allows CDAP classes to be picked up first before the Twill/Tephra classes
-      List<String> jarFiles = new ArrayList<>();
-      try (JarFile jobJarFile = new JarFile(sparkJar)) {
-        Enumeration<JarEntry> entries = jobJarFile.entries();
-        while (entries.hasMoreElements()) {
-          JarEntry entry = entries.nextElement();
-          if (entry.getName().startsWith("lib/") && entry.getName().endsWith(".jar")) {
-            jarFiles.add(Paths.get("$PWD", CDAP_SPARK_JAR, entry.getName()).toString());
-          }
-        }
-      }
-
-      Collections.sort(jarFiles);
-      Joiner joiner = Joiner.on(File.pathSeparator).skipNulls();
-      String classpath = joiner.join(jarFiles);
-      String extraJarsPath = extraJarPaths.size() == 0 ? null : joiner.join(extraJarPaths);
-      String extraClassPath = joiner.join(Paths.get("$PWD", CDAP_LAUNCHER_JAR), classpath,
-                                          Paths.get("$PWD", CDAP_SPARK_JAR, "lib", "*"), extraJarsPath);
-      if (logbackJarName != null) {
-        extraClassPath = logbackJarName + File.pathSeparator + extraClassPath;
-      }
+      String extraClassPath = Paths.get("$PWD", CDAP_LAUNCHER_JAR) + File.pathSeparator + classpath;
 
       // Set extraClasspath config by appending user specified extra classpath
       prependConfig(configs, "spark.driver.extraClassPath", extraClassPath, File.pathSeparator);
@@ -518,77 +505,37 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Tries to read the spark default config file and put those configurations into the given map.
-   */
-  private void setSparkDefaultConfigs(Map<String, String> configs) {
-    File confFile = SparkPackageUtils.locateSparkDefaultsConfFile(System.getenv());
-    if (confFile == null) {
-      return;
-    }
-    Properties properties = new Properties();
-    try (Reader reader = Files.newReader(confFile, Charsets.UTF_8)) {
-      properties.load(reader);
-      for (String key : properties.stringPropertyNames()) {
-        if (key.startsWith("spark.")) {
-          configs.put(key, properties.getProperty(key));
-        }
-      }
-    } catch (IOException e) {
-      LOG.warn("Failed to load Spark default configurations from {}.", confFile, e);
-    }
-  }
-
-  /**
    * Packages all the dependencies of the Spark job. It contains all CDAP classes that are needed to run the
    * user spark program.
    *
-   * @param targetDir directory for the file to be created in
-   * @return {@link File} of the dependency jar in the given target directory
+   * @param targetFile the target file for the jar created
+   * @return list of jar file name that contains all dependency jars in sorted order
    * @throws IOException if failed to package the jar
    */
-  private File buildDependencyJar(File targetDir) throws IOException {
-    Location tempLocation = new LocalLocationFactory(targetDir).create(CDAP_SPARK_JAR);
+  private Iterable<String> buildDependencyJar(File targetFile) throws IOException, URISyntaxException {
+    Set<String> classpath = new TreeSet<>();
+    try (JarOutputStream jarOut = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(targetFile)))) {
+      jarOut.setLevel(Deflater.NO_COMPRESSION);
 
-    final HadoopClassExcluder hadoopClassExcluder = new HadoopClassExcluder();
-    ApplicationBundler appBundler = new ApplicationBundler(new ClassAcceptor() {
+      // Zip all the jar files under the same directory that contains the jar for this class and twill class.
+      // Those are the directory created by TWILL that contains all dependency jars for this container
+      for (String className : Arrays.asList(getClass().getName(), TwillRunnable.class.getName())) {
+        Enumeration<URL> resources = getClass().getClassLoader().getResources(className.replace('.', '/') + ".class");
+        while (resources.hasMoreElements()) {
+          URL classURL = resources.nextElement();
+          File libDir = new File(ClassLoaders.getClassPathURL(className, classURL).toURI()).getParentFile();
 
-      @Override
-      public boolean accept(String className, URL classUrl, URL classPathUrl) {
-        // Exclude the spark-assembly and scala
-        if (className.startsWith("org.apache.spark")
-          || className.startsWith("scala")
-          || classPathUrl.toString().contains("spark-assembly")) {
-          return false;
+          for (File file : DirUtils.listFiles(libDir, "jar")) {
+            if (classpath.add(file.getName())) {
+              jarOut.putNextEntry(new JarEntry(file.getName()));
+              Files.copy(file, jarOut);
+              jarOut.closeEntry();
+            }
+          }
         }
-        return hadoopClassExcluder.accept(className, classUrl, classPathUrl);
       }
-    });
-
-    List<Class<?>> classes = new ArrayList<>();
-    classes.add(SparkMainWrapper.class);
-    classes.add(HBaseTableUtilFactory.getHBaseTableUtilClass());
-
-    // Add HBase DDL executor dependency
-    Class<? extends HBaseDDLExecutor> ddlExecutorClass =
-      new HBaseDDLExecutorFactory(cConf, runtimeContext.getConfiguration()).get().getClass();
-    classes.add(ddlExecutorClass);
-
-    // Add KMS class
-    if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
-      classes.add(SecureStoreUtils.getKMSSecureStore());
     }
-
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
-      Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader()),
-      Collections.singleton(ddlExecutorClass.getClassLoader())
-    ));
-
-    try {
-      appBundler.createBundle(tempLocation, classes);
-    } finally {
-      ClassLoaders.setContextClassLoader(oldClassLoader);
-    }
-    return new File(tempLocation.toURI());
+    return classpath;
   }
 
   /**

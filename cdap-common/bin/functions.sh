@@ -588,6 +588,7 @@ cdap_set_spark_compat() {
     SCALA_MINOR_VERSION=$(echo ${SCALA_VERSION} | cut -d. -f2)
     SPARK_COMPAT="spark${SPARK_MAJOR_VERSION}_${SCALA_MAJOR_VERSION}.${SCALA_MINOR_VERSION}"
 
+    export SPARK_VERSION
     export SPARK_COMPAT
   fi
 
