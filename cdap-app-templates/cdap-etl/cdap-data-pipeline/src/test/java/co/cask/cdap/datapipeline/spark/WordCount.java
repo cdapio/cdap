@@ -19,13 +19,10 @@ package co.cask.cdap.datapipeline.spark;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
-
-import java.util.Arrays;
 
 /**
  * Spark Word count program in java
@@ -38,15 +35,8 @@ public class WordCount {
     // Create a Java Spark Context.
     SparkConf conf = new SparkConf().setAppName("wordCount");
     JavaSparkContext sc = new JavaSparkContext(conf);
-    // Load our input data.
-    JavaRDD<String> input = sc.textFile(inputFile);
-    // Split up into words.
-    JavaRDD<String> words = input.flatMap(
-      new FlatMapFunction<String, String>() {
-        public Iterable<String> call(String x) {
-          return Arrays.asList(x.split(" "));
-        }
-      });
+    // Load our input data, assuming each line is one word
+    JavaRDD<String> words = sc.textFile(inputFile);
     // Transform into word and count.
     JavaRDD<String> counts = words.mapToPair(
       new PairFunction<String, String, Integer>() {

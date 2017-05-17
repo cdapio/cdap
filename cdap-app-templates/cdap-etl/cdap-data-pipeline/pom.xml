@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>cdap-data-pipeline</artifactId>
-  <name>CDAP Data Pipeline Application</name>
+  <name>CDAP Data Pipeline Application Spark1 Scala 2.10</name>
   <packaging>jar</packaging>
 
   <properties>

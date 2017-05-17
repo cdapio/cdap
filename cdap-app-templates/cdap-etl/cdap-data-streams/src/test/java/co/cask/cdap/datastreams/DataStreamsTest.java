@@ -37,6 +37,7 @@ import co.cask.cdap.etl.mock.transform.SleepTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
 import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
+import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -74,7 +75,9 @@ public class DataStreamsTest extends HydratorTestBase {
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
   private static int startCount = 0;
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
+                                                                       Constants.AppFabric.SPARK_COMPAT,
+                                                                       Compat.SPARK_COMPAT);
 
   @BeforeClass
   public static void setupTest() throws Exception {

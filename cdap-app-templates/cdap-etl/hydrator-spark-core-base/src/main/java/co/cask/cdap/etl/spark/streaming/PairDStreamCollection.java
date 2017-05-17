@@ -17,9 +17,9 @@
 package co.cask.cdap.etl.spark.streaming;
 
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
+import co.cask.cdap.etl.spark.StreamingCompat;
 import com.google.common.base.Optional;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
@@ -72,27 +72,29 @@ public class PairDStreamCollection<K, V> implements SparkPairCollection<K, V> {
   @SuppressWarnings("unchecked")
   @Override
   public <T> SparkPairCollection<K, Tuple2<V, Optional<T>>> leftOuterJoin(SparkPairCollection<K, T> other) {
-    return wrap(Compat.leftOuterJoin(pairStream, (JavaPairDStream<K, T>) other.getUnderlying()));
+    return wrap(StreamingCompat.leftOuterJoin(pairStream, (JavaPairDStream<K, T>) other.getUnderlying()));
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <T> SparkPairCollection<K, Tuple2<V, Optional<T>>> leftOuterJoin(SparkPairCollection<K, T> other,
                                                                           int numPartitions) {
-    return wrap(Compat.leftOuterJoin(pairStream, (JavaPairDStream<K, T>) other.getUnderlying(), numPartitions));
+    return wrap(
+      StreamingCompat.leftOuterJoin(pairStream, (JavaPairDStream<K, T>) other.getUnderlying(), numPartitions));
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <T> SparkPairCollection<K, Tuple2<Optional<V>, Optional<T>>> fullOuterJoin(SparkPairCollection<K, T> other) {
-    return wrap(Compat.fullOuterJoin(pairStream, (JavaPairDStream<K, T>) other.getUnderlying()));
+    return wrap(StreamingCompat.fullOuterJoin(pairStream, (JavaPairDStream<K, T>) other.getUnderlying()));
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <T> SparkPairCollection<K, Tuple2<Optional<V>, Optional<T>>> fullOuterJoin(SparkPairCollection<K, T> other,
                                                                                     int numPartitions) {
-    return wrap(Compat.fullOuterJoin(pairStream, (JavaPairDStream<K, T>) other.getUnderlying(), numPartitions));
+    return wrap(
+      StreamingCompat.fullOuterJoin(pairStream, (JavaPairDStream<K, T>) other.getUnderlying(), numPartitions));
   }
 
   private <T, U> PairDStreamCollection<T, U> wrap(JavaPairDStream<T, U> pairStream) {

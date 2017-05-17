@@ -28,46 +28,34 @@ import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.api.java.function.VoidFunction2;
 import org.apache.spark.streaming.Time;
 import org.apache.spark.streaming.api.java.JavaDStream;
-import org.apache.spark.streaming.api.java.JavaPairDStream;
 import scala.Tuple2;
 
 import java.util.Iterator;
 
 /**
  * Utility class to handle incompatibilities between Spark1 and Spark2. All hydrator-spark-core modules must have this
- * class with the exact same method signatures. Incompatibilities are in a few places.
+ * class with the exact same method signatures. Incompatibilities are in a few places. Should not contain any
+ * classes from Spark streaming.
  *
  * FlatMapFunction and PairFlatMapFunction in Spark2 was changed to return an Iterator instead of an Iterable
  * This class contains convert methods to change a FlatMapFunc and PairFlatMapFunc into the corresponding Spark version
  * specific class.
  *
- * DStream.foreachRDD() no longer takes a Function2 in Spark2 in favor of VoidFunction2.
- * In Spark1.2, a Function2 must be used because VoidFunction2 was not yet introduced.
- *
  * Outer join methods in Spark1 use guava's Optional whereas Spark2 uses its own Optional.
  */
 public final class Compat {
+  public static final String SPARK_COMPAT = "spark2_2.11";
 
   private Compat() {
 
   }
 
-  public static <T, R> FlatMapFunction<T, R> convert(final FlatMapFunc<T, R> func) {
-    return new FlatMapFunction<T, R>() {
-      @Override
-      public Iterator<R> call(T t) throws Exception {
-        return func.call(t).iterator();
-      }
-    };
+  public static <T, R> FlatMapFunction<T, R> convert(FlatMapFunc<T, R> func) {
+    return new FlatMapAdapter<>(func);
   }
 
-  public static <T, K, V> PairFlatMapFunction<T, K, V> convert(final PairFlatMapFunc<T, K, V> func) {
-    return new PairFlatMapFunction<T, K, V>() {
-      @Override
-      public Iterator<Tuple2<K, V>> call(T t) throws Exception {
-        return func.call(t).iterator();
-      }
-    };
+  public static <T, K, V> PairFlatMapFunction<T, K, V> convert(PairFlatMapFunc<T, K, V> func) {
+    return new PairFlatMapAdapter<>(func);
   }
 
   public static <T> void foreachRDD(JavaDStream<T> stream, final Function2<JavaRDD<T>, Time, Void> func) {
@@ -101,32 +89,11 @@ public final class Compat {
     return left.fullOuterJoin(right, numPartitions).mapValues(new ConvertOptional2<V1, V2>());
   }
 
-  public static <K, V1, V2> JavaPairDStream<K, Tuple2<V1, Optional<V2>>> leftOuterJoin(JavaPairDStream<K, V1> left,
-                                                                                       JavaPairDStream<K, V2> right) {
-    return left.leftOuterJoin(right).mapValues(new ConvertOptional<V1, V2>());
-  }
-
-  public static <K, V1, V2> JavaPairDStream<K, Tuple2<V1, Optional<V2>>> leftOuterJoin(JavaPairDStream<K, V1> left,
-                                                                                       JavaPairDStream<K, V2> right,
-                                                                                       int numPartitions) {
-    return left.leftOuterJoin(right, numPartitions).mapValues(new ConvertOptional<V1, V2>());
-  }
-
-  public static <K, V1, V2> JavaPairDStream<K, Tuple2<Optional<V1>, Optional<V2>>> fullOuterJoin(
-    JavaPairDStream<K, V1> left, JavaPairDStream<K, V2> right) {
-    return left.fullOuterJoin(right).mapValues(new ConvertOptional2<V1, V2>());
-  }
-
-  public static <K, V1, V2> JavaPairDStream<K, Tuple2<Optional<V1>, Optional<V2>>> fullOuterJoin(
-    JavaPairDStream<K, V1> left, JavaPairDStream<K, V2> right, int numPartitions) {
-    return left.fullOuterJoin(right, numPartitions).mapValues(new ConvertOptional2<V1, V2>());
-  }
-
   private static <T> Optional<T> convert(org.apache.spark.api.java.Optional<T> opt) {
     return opt.isPresent() ? Optional.of(opt.get()) : Optional.<T>absent();
   }
 
-  private static class ConvertOptional<T, U> implements
+  static class ConvertOptional<T, U> implements
     Function<Tuple2<T, org.apache.spark.api.java.Optional<U>>, Tuple2<T, Optional<U>>> {
 
     @Override
@@ -135,7 +102,7 @@ public final class Compat {
     }
   }
 
-  private static class ConvertOptional2<T, U> implements
+  static class ConvertOptional2<T, U> implements
     Function<Tuple2<org.apache.spark.api.java.Optional<T>, org.apache.spark.api.java.Optional<U>>,
              Tuple2<Optional<T>, Optional<U>>> {
 
@@ -143,6 +110,33 @@ public final class Compat {
     public Tuple2<Optional<T>, Optional<U>> call(Tuple2<org.apache.spark.api.java.Optional<T>,
                                                  org.apache.spark.api.java.Optional<U>> in) throws Exception {
       return new Tuple2<>(convert(in._1()), convert(in._2()));
+    }
+  }
+
+
+  private static final class FlatMapAdapter<T, R> implements FlatMapFunction<T, R> {
+    private final FlatMapFunc<T, R> func;
+
+    FlatMapAdapter(FlatMapFunc<T, R> func) {
+      this.func = func;
+    }
+
+    @Override
+    public Iterator<R> call(T t) throws Exception {
+      return func.call(t).iterator();
+    }
+  }
+
+  private static final class PairFlatMapAdapter<T, K, V> implements PairFlatMapFunction<T, K, V> {
+    private final PairFlatMapFunc<T, K, V> func;
+
+    PairFlatMapAdapter(PairFlatMapFunc<T, K, V> func) {
+      this.func = func;
+    }
+
+    @Override
+    public Iterator<Tuple2<K, V>> call(T t) throws Exception {
+      return func.call(t).iterator();
     }
   }
 }
