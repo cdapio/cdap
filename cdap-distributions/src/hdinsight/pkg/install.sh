@@ -48,6 +48,9 @@ __create_tmpdir() { mkdir -p ${__tmpdir}; };
 
 # Begin CDAP Prep/Install
 
+# Synchronize repos
+apt-get update --yes || die "Failed to run 'apt-get update'"
+
 # Install git
 apt-get install --yes git || die "Failed to install git"
 
