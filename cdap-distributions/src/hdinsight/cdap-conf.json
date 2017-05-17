@@ -22,7 +22,22 @@
       "tez_conf_dir": "/etc/tez/conf"
     },
     "fs_superuser": "root",
+    "kafka": {
+      "init_actions": [ "enable" ]
+    },
+    "master": {
+      "init_actions": [ "enable" ]
+    },
+    "router": {
+      "init_actions": [ "enable" ]
+    },
+    "security": {
+      "init_actions": [ "enable" ]
+    },
     "skip_prerequisites": "true",
+    "ui": {
+      "init_actions": [ "enable" ]
+    },
     "version": "{{CDAP_VERSION}}"
   },
   "hadoop": {
