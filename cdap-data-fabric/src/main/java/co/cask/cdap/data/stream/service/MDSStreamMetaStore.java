@@ -16,6 +16,8 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.Transactionals;
+import co.cask.cdap.api.TxCallable;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.StreamSpecification;
@@ -31,7 +33,6 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
@@ -85,33 +86,33 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
 
   @Override
   public void addStream(final StreamId streamId, @Nullable final String description) throws Exception {
-    transactional.execute(new TxRunnable() {
+    Transactionals.execute(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         String desc = Optional.fromNullable(description).orNull();
         getMetadataStore(context).write(getKey(streamId), createStreamSpec(streamId, desc));
       }
-    });
+    }, Exception.class);
   }
 
   @Override
   public StreamSpecification getStream(final StreamId streamId) throws Exception {
-    return Transactions.execute(transactional, new TxCallable<StreamSpecification>() {
+    return Transactionals.execute(transactional, new TxCallable<StreamSpecification>() {
       @Override
       public StreamSpecification call(DatasetContext context) throws Exception {
         return getMetadataStore(context).getFirst(getKey(streamId), StreamSpecification.class);
       }
-    });
+    }, Exception.class);
   }
 
   @Override
   public void removeStream(final StreamId streamId) throws Exception {
-    transactional.execute(new TxRunnable() {
+    Transactionals.execute(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         getMetadataStore(context).deleteAll(getKey(streamId));
       }
-    });
+    }, Exception.class);
   }
 
   @Override
@@ -121,19 +122,19 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
 
   @Override
   public List<StreamSpecification> listStreams(final NamespaceId namespaceId) throws Exception {
-    return Transactions.execute(transactional, new TxCallable<List<StreamSpecification>>() {
+    return Transactionals.execute(transactional, new TxCallable<List<StreamSpecification>>() {
       @Override
       public List<StreamSpecification> call(DatasetContext context) throws Exception {
         return getMetadataStore(context).list(new MDSKey.Builder().add(TYPE_STREAM,
                                                                        namespaceId.getEntityName()).build(),
                                               StreamSpecification.class);
       }
-    });
+    }, Exception.class);
   }
 
   @Override
   public Multimap<NamespaceId, StreamSpecification> listStreams() throws Exception {
-    return Transactions.execute(transactional, new TxCallable<Multimap<NamespaceId, StreamSpecification>>() {
+    return Transactionals.execute(transactional, new TxCallable<Multimap<NamespaceId, StreamSpecification>>() {
       @Override
       public Multimap<NamespaceId, StreamSpecification> call(DatasetContext context) throws Exception {
         ImmutableMultimap.Builder<NamespaceId, StreamSpecification> builder = ImmutableMultimap.builder();
@@ -149,7 +150,7 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
         }
         return builder.build();
       }
-    });
+    }, Exception.class);
   }
 
   private MDSKey getKey(StreamId streamId) {
