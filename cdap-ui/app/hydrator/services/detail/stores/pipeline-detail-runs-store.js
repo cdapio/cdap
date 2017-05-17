@@ -33,7 +33,9 @@ angular.module(PKG.name + '.feature.hydrator')
         api: app.api,
         type: app.type,
         metricProgramType: app.metricProgramType,
-        statistics: ''
+        statistics: '',
+        macros: {},
+        userRuntimeArguments: {}
       };
     };
     this.setDefaults({});
@@ -96,6 +98,14 @@ angular.module(PKG.name + '.feature.hydrator')
       return this.state.metricProgramType;
     };
 
+    this.getMacros = function() {
+      return this.state.macros;
+    };
+
+    this.getUserRuntimeArguments = function() {
+      return this.state.userRuntimeArguments;
+    };
+
     this.registerOnChangeListener = function(callback) {
       // index of the listener to be removed while un-subscribing
       var index = this.changeListeners.push(callback) - 1;
@@ -128,6 +138,23 @@ angular.module(PKG.name + '.feature.hydrator')
       this.state.statistics = statistics;
       this.emitChange();
     };
+
+    this.setMacros = function(macros) {
+      this.state.macros = macros;
+      this.emitChange();
+    };
+
+    this.setUserRuntimeArguments = function(args) {
+      this.state.userRuntimeArguments = args;
+      this.emitChange();
+    };
+
+    this.setMacrosAndUserRuntimeArguments = function(macros, args) {
+      this.state.macros = macros;
+      this.state.userRuntimeArguments = args;
+      this.emitChange();
+    };
+
     this.init = function(app) {
       var appConfig = {};
       var appLevelParams,
@@ -197,4 +224,7 @@ angular.module(PKG.name + '.feature.hydrator')
     dispatcher.register('onStatisticsFetch', this.setStatistics.bind(this));
     dispatcher.register('onReset', this.setDefaults.bind(this, {}));
     dispatcher.register('onNextRunTime', this.setNextRunTime.bind(this));
+    dispatcher.register('onSetMacros', this.setMacros.bind(this));
+    dispatcher.register('onSetUserRuntimeArguments', this.setUserRuntimeArguments.bind(this));
+    dispatcher.register('onSetMacrosAndUserRuntimeArguments', this.setMacrosAndUserRuntimeArguments.bind(this));
   });

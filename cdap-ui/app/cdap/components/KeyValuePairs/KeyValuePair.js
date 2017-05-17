@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,12 @@
 import React, { Component, PropTypes } from 'react';
 require('./KeyValuePairs.scss');
 import T from 'i18n-react';
+import classnames from 'classnames';
 
 class KeyValuePair extends Component {
-
   constructor(props) {
     super(props);
+
     this.keyDown = this.keyDown.bind(this);
   }
   keyDown(e) {
@@ -29,10 +30,28 @@ class KeyValuePair extends Component {
     }
   }
   render() {
+    let notDeletableCondition = this.props.notDeletable && this.props.notDeletable === true;
+
     return (
       <div className="key-value-pair-preference">
-        <input type="text" value={this.props.name} autoFocus={true} onKeyDown={this.keyDown} onChange={this.props.onChange.bind(null, 'key')} placeholder={T.translate('commons.keyValPairs.keyPlaceholder')} className="form-control key-input" />
-        <input type="text" value={this.props.value} onKeyDown={this.keyDown} onChange={this.props.onChange.bind(null, 'value')} placeholder={T.translate('commons.keyValPairs.valuePlaceholder')} className="form-control value-input" />
+        <input
+          type="text"
+          value={this.props.name}
+          autoFocus
+          onKeyDown={this.keyDown}
+          onChange={this.props.onChange.bind(null, 'key')}
+          placeholder={T.translate('commons.keyValPairs.keyPlaceholder')}
+          className="form-control key-input"
+          disabled={notDeletableCondition}
+        />
+        <input
+          type="text"
+          value={this.props.value}
+          onKeyDown={this.keyDown}
+          onChange={this.props.onChange.bind(null, 'value')}
+          placeholder={T.translate('commons.keyValPairs.valuePlaceholder')}
+          className="form-control value-input"
+        />
         <button
           type="submit"
           className="btn add-row-btn btn-link"
@@ -42,11 +61,23 @@ class KeyValuePair extends Component {
         </button>
         <button
           type="submit"
-          className="btn remove-row-btn btn-link"
+          className={classnames("btn remove-row-btn btn-link", {"hidden": notDeletableCondition})}
           onClick={this.props.removeRow}
         >
           <i className="fa fa-trash" />
         </button>
+        {
+          notDeletableCondition ?
+            (
+              <span
+                className={classnames("reset-action", {"hidden": !this.props.showReset})}
+                onClick={this.props.getResettedKeyValue.bind(this, this.props.index)}
+              >
+                {T.translate('commons.keyValPairs.reset')}
+              </span>
+            )
+          : null
+        }
       </div>
     );
   }
@@ -56,9 +87,13 @@ KeyValuePair.propTypes = {
   className: PropTypes.string,
   name: PropTypes.string,
   value: PropTypes.string,
+  index: PropTypes.number,
+  notDeletable: PropTypes.bool,
+  showReset: PropTypes.bool,
   onChange: PropTypes.func,
   addRow: PropTypes.func,
-  removeRow: PropTypes.func
+  removeRow: PropTypes.func,
+  getResettedKeyValue: PropTypes.func
 };
 
 export default KeyValuePair;

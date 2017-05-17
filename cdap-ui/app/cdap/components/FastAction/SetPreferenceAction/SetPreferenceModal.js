@@ -33,7 +33,7 @@ export default class SetPreferenceModal extends Component {
 
     this.state = {
       saving: false,
-      fieldsResetted: false,
+      resettingFields: false,
       showResetMessage: false,
       keyValues: {},
       inheritedPreferences: [],
@@ -99,11 +99,11 @@ export default class SetPreferenceModal extends Component {
   }
 
   onKeyValueChange(keyValues) {
-    if (!this.state.fieldsResetted) {
+    if (!this.state.resettingFields) {
       this.setState({keyValues});
     }
     else {
-      this.setState({fieldsResetted: false});
+      this.setState({resettingFields: false});
     }
   }
 
@@ -126,7 +126,7 @@ export default class SetPreferenceModal extends Component {
             }
             this.setState({
               keyValues,
-              fieldsResetted: true
+              resettingFields: true
             });
           },
           (error) => {
@@ -324,7 +324,7 @@ export default class SetPreferenceModal extends Component {
                   <KeyValuePairs
                     keyValues = {this.state.keyValues}
                     onKeyValueChange = {this.onKeyValueChange}
-                    fieldsResetted = {this.state.fieldsResetted}
+                    resettingFields = {this.state.resettingFields}
                   />
                 )
               :

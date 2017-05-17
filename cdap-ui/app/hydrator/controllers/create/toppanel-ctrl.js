@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl {
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myPreviewLogsApi, DAGPlusPlusNodesStore, myPreferenceApi, HydratorPlusPlusHydratorService, $rootScope) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myPreviewLogsApi, DAGPlusPlusNodesStore, myPreferenceApi, HydratorPlusPlusHydratorService, $rootScope, uuid) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -49,9 +49,11 @@ class HydratorPlusPlusTopPanelCtrl {
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.artifacts = rArtifacts;
     this.$rootScope = $rootScope;
-    // This is for now run time arguments. It will be a map of macroMap
-    // in the future once we get list of macros for a pipeline config.
+    this.uuid = uuid;
     this.macrosMap = {};
+    this.resolvedMacros = {};
+    this.userRuntimeArgumentsMap = {};
+    this.runtimeArguments = {};
     this.$stateParams = $stateParams;
     this.setState();
     this.setActiveNodes();
@@ -118,16 +120,25 @@ class HydratorPlusPlusTopPanelCtrl {
     let unsub = this.previewStore.subscribe(() => {
       let state = this.previewStore.getState().preview;
       this.previewMode = state.isPreviewModeEnabled;
+      this.macrosMap = state.macros;
+      this.userRuntimeArgumentsMap = state.userRuntimeArguments;
     });
 
-    this.fetchMacros();
+    this.macrosMap = this.previewStore.getState().preview.macros;
+    this.userRuntimeArgumentsMap = this.previewStore.getState().preview.userRuntimeArguments;
+
+    if (Object.keys(this.macrosMap).length === 0) {
+      this.fetchMacros();
+    }
 
     $scope.$on('$destroy', () => {
       unsub();
       this.stopPreview();
+      this.previewStore.dispatch(
+        this.previewActions.togglePreviewMode(false)
+      );
       this.$interval.cancel(this.previewTimerInterval);
       this.$timeout.cancel(this.focusTimeout);
-      this.previewStore.dispatch({ type: this.PREVIEWSTORE_ACTIONS.PREVIEW_RESET });
     });
   }
 
@@ -152,6 +163,7 @@ class HydratorPlusPlusTopPanelCtrl {
         description: this.HydratorPlusPlusConfigStore.getDescription()
       },
       viewSettings: this.myHelpers.objectQuery(this.state, 'viewSettings') || false,
+      viewConfigurations: this.myHelpers.objectQuery(this.state, 'viewConfigurations') || false,
       artifact: this.HydratorPlusPlusConfigStore.getArtifact()
     };
   }
@@ -250,6 +262,9 @@ class HydratorPlusPlusTopPanelCtrl {
   showSettings() {
     this.state.viewSettings = !this.state.viewSettings;
   }
+  showConfigurations() {
+    this.state.viewConfigurations = !this.state.viewConfigurations;
+  }
 
   // PREVIEW
   startTimer() {
@@ -279,7 +294,7 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   fetchMacros() {
-    this.macrosMap = [];
+    let newMacrosMap = {};
     let nodes = this.HydratorPlusPlusConfigStore.getNodes();
 
     for (let i = 0; i < nodes.length; i++) {
@@ -297,7 +312,9 @@ class HydratorPlusPlusTopPanelCtrl {
             - And combined (e,g, '${function(${macro1})}${macro2}')
             More complicated cases will be handled by the backend
           */
-          if (macroString.indexOf('${') !== -1 && macroString.indexOf('}') !== -1) {
+          if (macroString.indexOf('${') !== -1 &&
+            macroString.indexOf('}') !== -1
+          ) {
             let macroKeys = [];
             let currentMacroDepth = 0;
             let maxMacroDepth = 0;
@@ -312,50 +329,151 @@ class HydratorPlusPlusTopPanelCtrl {
                 currentMacroDepth -= 1;
                 if (currentMacroDepth >= maxMacroDepth) {
                   maxMacroDepth = currentMacroDepth;
-                  macroKeys.push(macroString.substring(i + 1, lastClosingBraceIndex));
+                  let macroKey = macroString.substring(i + 1, lastClosingBraceIndex);
+                  macroKeys.push(macroKey);
                 }
               }
             }
             macroKeys.forEach((key) => {
-              this.macrosMap[key] = '';
+              newMacrosMap[key] = '';
             });
           }
         }
       }
     }
 
-    let preferenceParams = {
-      namespace: this.$state.params.namespace
-    };
+    if (Object.keys(newMacrosMap).length > 0) {
+      /*
+        Will resolve macros from preferences, if the new macro object is different than
+        the one we already have (this.macrosMap). We have a new macro object when the
+        user adds or removes macro(s) from the config of a stage.
+      */
 
-    return this.myPreferenceApi
-      .getNamespacePreferenceResolved(preferenceParams)
-      .$promise
-      .then(
-        (res) => {
-          let relevantPrefs = this.HydratorPlusPlusHydratorService.getPrefsRelevantToMacros(res, this.macrosMap);
-          this.macrosMap = Object.assign({}, this.macrosMap, relevantPrefs);
-        },
-        err => {
-          console.log('ERROR', err);
+      let differentMacroKeys = false;
+      if (Object.keys(newMacrosMap).length !== Object.keys(this.macrosMap).length) {
+        differentMacroKeys = true;
+      } else {
+        for (let macroKey in newMacrosMap) {
+          if (newMacrosMap.hasOwnProperty(macroKey) && !this.macrosMap.hasOwnProperty(macroKey)) {
+            differentMacroKeys = true;
+            break;
+          }
         }
+      }
+
+      if (differentMacroKeys) {
+        this.getRuntimeArguments(newMacrosMap);
+      }
+    } else {
+      this.getRuntimeArguments(newMacrosMap);
+    }
+  }
+
+  getRuntimeArguments(newMacrosMap = this.macrosMap) {
+
+    // if there are no runtime arguments at all
+    if (Object.keys(newMacrosMap).length === 0 && Object.keys(this.userRuntimeArgumentsMap).length === 0) {
+      this.macrosMap = newMacrosMap;
+      this.previewStore.dispatch(
+        this.previewActions.setMacros(this.macrosMap)
       );
+      this.runtimeArguments.pairs = [{
+        key: '',
+        value: '',
+        uniqueId: 'id-' + this.uuid.v4()
+      }];
+      return this.$q.when(this.runtimeArguments);
+    }
+
+    this.macrosMap = this.previewStore.getState().preview.macros;
+    this.userRuntimeArgumentsMap = this.previewStore.getState().preview.userRuntimeArguments;
+
+    // if there are non-zero number of macros
+    if (Object.keys(newMacrosMap).length !== 0) {
+      let preferenceParam = {
+        namespace: this.$state.params.namespace
+      };
+
+      return this.myPreferenceApi
+        .getNamespacePreferenceResolved(preferenceParam)
+        .$promise
+        .then(
+          (res) => {
+            let newResolvedMacros = this.HydratorPlusPlusHydratorService.getPrefsRelevantToMacros(res, this.macrosMap);
+            let newPrefs = {};
+
+            // if the higher level preferences have changed
+            if (!angular.equals(newResolvedMacros, this.resolvedMacros)) {
+              for (let macroKey in newResolvedMacros) {
+                if (newResolvedMacros.hasOwnProperty(macroKey) &&
+                  this.resolvedMacros.hasOwnProperty(macroKey) &&
+                  this.macrosMap.hasOwnProperty(macroKey)) {
+                  if (newResolvedMacros[macroKey] !== this.resolvedMacros[macroKey] &&
+                      this.resolvedMacros[macroKey] === this.macrosMap[macroKey]) {
+                    newPrefs[macroKey] = newResolvedMacros[macroKey];
+                  }
+                }
+              }
+              this.resolvedMacros = newResolvedMacros;
+            }
+
+            if (!angular.equals(newMacrosMap, this.macrosMap) || Object.keys(newPrefs).length > 0) {
+              // if user added or removed macros in the stage config
+              if (!angular.equals(newMacrosMap, this.macrosMap)) {
+                this.resolvedMacros = Object.assign({}, this.HydratorPlusPlusHydratorService.getPrefsRelevantToMacros(res, newMacrosMap));
+                this.macrosMap = Object.assign({}, this.resolvedMacros);
+              }
+              // only update the macros that have new resolved values
+              if (Object.keys(newPrefs).length > 0) {
+                this.resolvedMacros = Object.assign({}, this.resolvedMacros, newResolvedMacros);
+                this.macrosMap = Object.assign({}, this.macrosMap, newPrefs);
+              }
+              this.previewStore.dispatch(
+                this.previewActions.setMacros(this.macrosMap)
+              );
+            }
+            this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+            return this.runtimeArguments;
+          },
+          err => {
+            console.log('ERROR', err);
+          }
+        );
+
+    // if there are zero macros, but there are user-set runtime arguments
+    } else {
+      this.macrosMap = newMacrosMap;
+      this.previewStore.dispatch(
+        this.previewActions.setMacros(this.macrosMap)
+      );
+      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+      return this.$q.when(this.runtimeArguments);
+    }
   }
 
   toggleRuntimeArguments() {
     if (!this.previewRunning) {
-      this.fetchMacros()
+      this.getRuntimeArguments()
       .then(() => {
         this.showRunTimeArguments = !this.showRunTimeArguments;
       });
-
     } else {
       this.stopPreview();
     }
   }
 
+  applyRuntimeArguments() {
+    let macros = this.HydratorPlusPlusHydratorService.convertRuntimeArgsToMacros(this.runtimeArguments);
+    this.macrosMap = macros.macrosMap;
+    this.userRuntimeArgumentsMap = macros.userRuntimeArgumentsMap;
+    // have to do this because cannot do two `this.previewStore.dispatch` in a row
+    this.previewStore.dispatch(
+      this.previewActions.setMacrosAndUserRuntimeArgs(this.macrosMap, this.userRuntimeArgumentsMap)
+    );
+  }
+
   onPreviewStart() {
-    this._checkAndShowConfirmationModalOnActionPlugin(this.runPreview.bind(this));
+    this._checkAndShowConfirmationModalOnActionPlugin(this.runPreview());
   }
 
   runPreview() {
@@ -390,19 +508,19 @@ class HydratorPlusPlusTopPanelCtrl {
     let previewConfig = {
       startStages: [],
       endStages: [],
-      runtimeArgs: this.macrosMap
+      runtimeArgs: Object.assign({}, this.macrosMap, this.userRuntimeArguments)
     };
 
     if (this.state.artifact.name === this.GLOBALS.etlDataPipeline) {
       pipelineConfig.preview = Object.assign({}, previewConfig, {
-        'realDatasets' :[],
-        'programName' : 'DataPipelineWorkflow',
+        'realDatasets': [],
+        'programName': 'DataPipelineWorkflow',
         'programType': 'Workflow'
       });
     } else if (this.state.artifact.name === this.GLOBALS.etlDataStreams) {
       pipelineConfig.preview = Object.assign({}, previewConfig, {
-        'realDatasets' :[],
-        'programName' : 'DataStreamsSparkStreaming',
+        'realDatasets':[],
+        'programName': 'DataStreamsSparkStreaming',
         'programType': 'Spark',
         'timeout': this.timeoutInMinutes
       });
@@ -450,10 +568,7 @@ class HydratorPlusPlusTopPanelCtrl {
           type: 'danger',
           content: err.data
         });
-      })
-      .then(
-        () => this.fetchMacros()
-      );
+      });
   }
 
   stopPreview() {
@@ -740,6 +855,6 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 }
 
-HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', '$interval', 'myPipelineApi', '$state', 'MyCDAPDataSource', 'myAlertOnValium', 'MY_CONFIG', 'PREVIEWSTORE_ACTIONS', '$q', 'NonStorePipelineErrorFactory', 'rArtifacts', '$window', 'LogViewerStore', 'LOGVIEWERSTORE_ACTIONS', 'myPreviewLogsApi', 'DAGPlusPlusNodesStore', 'myPreferenceApi', 'HydratorPlusPlusHydratorService', '$rootScope'];
+HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', '$interval', 'myPipelineApi', '$state', 'MyCDAPDataSource', 'myAlertOnValium', 'MY_CONFIG', 'PREVIEWSTORE_ACTIONS', '$q', 'NonStorePipelineErrorFactory', 'rArtifacts', '$window', 'LogViewerStore', 'LOGVIEWERSTORE_ACTIONS', 'myPreviewLogsApi', 'DAGPlusPlusNodesStore', 'myPreferenceApi', 'HydratorPlusPlusHydratorService', '$rootScope', 'uuid'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);

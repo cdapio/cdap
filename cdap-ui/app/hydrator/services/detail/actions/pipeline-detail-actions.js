@@ -67,5 +67,13 @@ angular.module(PKG.name + '.feature.hydrator')
           dispatcher.dispatch('onStatisticsFetch', res);
         });
     };
-
+    this.setMacros = function(macros) {
+      dispatcher.dispatch('onSetMacros', macros);
+    };
+    this.setUserRuntimeArguments = function(args) {
+      dispatcher.dispatch('onSetUserRuntimeArguments', args);
+    };
+    this.setMacrosAndUserRuntimeArguments = function(macros, args) {
+      dispatcher.dispatch('onSetMacrosAndUserRuntimeArguments', macros, args);
+    };
   });

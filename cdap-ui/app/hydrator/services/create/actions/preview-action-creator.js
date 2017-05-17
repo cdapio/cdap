@@ -46,6 +46,37 @@ class HydratorPlusPlusPreviewActions {
       });
     };
   }
+
+  setMacros (macros) {
+    return (dispatch) => {
+      dispatch({
+        type: this.previewActions.SET_MACROS,
+        payload: {macros}
+      });
+    };
+  }
+
+  setUserRuntimeArguments (userRuntimeArguments) {
+    return (dispatch) => {
+      dispatch({
+        type: this.previewActions.SET_USER_RUNTIME_ARGUMENTS,
+        payload: {userRuntimeArguments}
+      });
+    };
+  }
+
+  setMacrosAndUserRuntimeArgs (macros, userRuntimeArguments) {
+    return (dispatch) => {
+      dispatch({
+        type: this.previewActions.SET_MACROS,
+        payload: {macros}
+      });
+      dispatch({
+        type: this.previewActions.SET_USER_RUNTIME_ARGUMENTS,
+        payload: {userRuntimeArguments}
+      });
+    };
+  }
 }
 
 angular.module(`${PKG.name}.feature.hydrator`)
