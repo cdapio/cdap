@@ -851,7 +851,7 @@
 
   <property>
     <name>explore.active.operation.timeout.secs</name>
-    <value>86400</value>
+    <value>82800</value>
     <description>
       Timeout value in seconds for an SQL operation whose result was not
       fetched completely
