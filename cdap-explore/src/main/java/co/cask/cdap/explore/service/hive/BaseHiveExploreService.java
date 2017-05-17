@@ -828,7 +828,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         try {
           sessionHandle = openHiveSession(sessionConf);
 
-          String statement = String.format("DROP DATABASE %s", database);
+          String statement = String.format("DROP DATABASE IF EXISTS %s", database);
           operationHandle = executeAsync(sessionHandle, statement);
           QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, statement, database);
           LOG.info("Deleting database {} with handle {}", database, handle);
