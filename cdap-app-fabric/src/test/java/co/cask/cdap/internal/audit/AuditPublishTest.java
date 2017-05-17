@@ -24,7 +24,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.audit.AuditMessage;
@@ -38,7 +37,6 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.TopicId;
-import co.cask.cdap.scheduler.Scheduler;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
@@ -75,8 +73,6 @@ public class AuditPublishTest {
   private static CConfiguration cConf;
   private static MessagingService messagingService;
   private static TopicId auditTopic;
-  private static Scheduler scheduler;
-
 
   @BeforeClass
   public static void init() throws Exception {
