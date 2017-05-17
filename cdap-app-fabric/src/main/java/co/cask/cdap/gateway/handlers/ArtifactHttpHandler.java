@@ -88,6 +88,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -744,7 +745,11 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   public void listArtifactsInternal(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId) {
     try {
-      responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifactsInfo(new NamespaceId(namespaceId)));
+      List<ArtifactInfo> artifactInfoList = new ArrayList<>();
+      artifactInfoList.addAll(artifactRepository.getArtifactsInfo(new NamespaceId(namespaceId)));
+      artifactInfoList.addAll(artifactRepository.getArtifactsInfo(NamespaceId.SYSTEM));
+      responder.sendJson(HttpResponseStatus.OK, artifactInfoList,
+                         new TypeToken<List<ArtifactInfo>>() { }.getType(), GSON);
     } catch (Exception e) {
       LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading artifact metadata from the store.");

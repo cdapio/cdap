@@ -17,20 +17,26 @@ package co.cask.cdap.internal.app.runtime.artifact;
 
 
 import co.cask.cdap.api.artifact.ArtifactInfo;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.CloseableClassLoader;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.PluginClassDeserializer;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.DirectoryClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -58,7 +64,10 @@ import javax.annotation.Nullable;
  */
 public class DefaultArtifactManager {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultArtifactManager.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(PluginClass.class, new PluginClassDeserializer())
+    .create();
 
   private final DiscoveryServiceClient discoveryServiceClient;
   private final File tmpDir;
@@ -130,19 +139,21 @@ public class DefaultArtifactManager {
    * parentClassLoader, if that parent classloader is null, bootstrap classloader is used as parent.
    * This is a closeabled classloader, caller should call close when he is done using it, during close directory
    * cleanup will be performed.
-   * @param namespace artifact namespace
+   * @param namespaceId artifact namespace
    * @param artifactInfo artifact info whose artiact will be unpacked to create classloader
    * @param parentClassLoader  optional parent classloader, if null bootstrap classloader will be used
    * @return CloseableClassLoader call close on this CloseableClassLoader for cleanup
    * @throws IOException if artifact is not found or there were any error while getting artifact
    */
   public CloseableClassLoader createClassLoader(
-    NamespaceId namespace, ArtifactInfo artifactInfo, @Nullable ClassLoader parentClassLoader) throws IOException {
+    NamespaceId namespaceId, ArtifactInfo artifactInfo, @Nullable ClassLoader parentClassLoader) throws IOException {
 
     ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP);
+    String namespace = ArtifactScope.SYSTEM.equals(artifactInfo.getScope()) ?
+      NamespaceId.SYSTEM.getNamespace() : namespaceId.getEntityName();
     URL url = createURL(new RandomEndpointStrategy(discovered).pick(1, TimeUnit.SECONDS),
                         String.format("%s/artifact-internals/artifacts/%s/versions/%s/location",
-                                      namespace.getEntityName(), artifactInfo.getName(), artifactInfo.getVersion()));
+                                      namespace, artifactInfo.getName(), artifactInfo.getVersion()));
 
     HttpResponse httpResponse = HttpRequests.execute(HttpRequest.get(url).build());
 
