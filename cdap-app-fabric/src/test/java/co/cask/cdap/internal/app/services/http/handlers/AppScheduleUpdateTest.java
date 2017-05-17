@@ -27,7 +27,6 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
 
@@ -44,7 +43,6 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
   };
 
   @Test
-  @Ignore // TODO (CDAP-11516): bring this back
   public void testUpdateSchedulesFlag() throws Exception {
     // deploy an app with schedule
     AppWithSchedule.AppConfig config = new AppWithSchedule.AppConfig(true, true, true);
