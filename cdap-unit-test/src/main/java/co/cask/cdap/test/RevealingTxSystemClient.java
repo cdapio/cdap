@@ -46,6 +46,11 @@ public class RevealingTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
+  public Transaction startLong(String clientId) {
+    return txClient.startLong(clientId);
+  }
+
+  @Override
   public Transaction startShort() {
     return txClient.startShort();
   }
@@ -53,6 +58,16 @@ public class RevealingTxSystemClient implements TransactionSystemClient {
   @Override
   public Transaction startShort(int timeout) {
     return new RevealingTransaction(txClient.startShort(timeout), timeout);
+  }
+
+  @Override
+  public Transaction startShort(String clientId) {
+    return txClient.startShort(clientId);
+  }
+
+  @Override
+  public Transaction startShort(String clientId, int timeout) {
+    return txClient.startShort(clientId, timeout);
   }
 
   @Override

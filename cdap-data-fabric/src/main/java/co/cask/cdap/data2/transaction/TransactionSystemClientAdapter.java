@@ -60,9 +60,36 @@ public class TransactionSystemClientAdapter implements TransactionSystemClient {
   }
 
   @Override
+  public Transaction startShort(String clientId) {
+    try {
+      return delegate.startShort(clientId);
+    } catch (RuntimeException e) {
+      throw handleException(e);
+    }
+  }
+
+  @Override
+  public Transaction startShort(String clientId, int timeout) {
+    try {
+      return delegate.startShort(clientId, timeout);
+    } catch (RuntimeException e) {
+      throw handleException(e);
+    }
+  }
+
+  @Override
   public Transaction startLong() {
     try {
       return delegate.startLong();
+    } catch (RuntimeException e) {
+      throw handleException(e);
+    }
+  }
+
+  @Override
+  public Transaction startLong(String clientId) {
+    try {
+      return delegate.startLong(clientId);
     } catch (RuntimeException e) {
       throw handleException(e);
     }
