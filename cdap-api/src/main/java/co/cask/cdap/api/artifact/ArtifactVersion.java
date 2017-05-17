@@ -88,31 +88,57 @@ public final class ArtifactVersion implements Comparable<ArtifactVersion> {
     this.suffix = suffix;
   }
 
+  /**
+   * get the version string of artifact
+   * @return artifact version string
+   */
   @Nullable
   public String getVersion() {
     return version;
   }
 
+  /**
+   * get the major version of artifact
+   * @return major version of artifact
+   */
   @Nullable
   public Integer getMajor() {
     return major;
   }
 
+  /**
+   * get the minor version of artifact
+   * @return minor version of artifact
+   *
+   */
   @Nullable
   public Integer getMinor() {
     return minor;
   }
 
+  /**
+   * get the fix version of artifact
+   * @return fix version of artifact
+   *
+   */
   @Nullable
   public Integer getFix() {
     return fix;
   }
 
+  /**
+   * get the artifact version suffix
+   * @return artifact version suffix
+   */
   @Nullable
   public String getSuffix() {
     return suffix;
   }
 
+  /**
+   * get if artifact version is a snapshot version
+   * @return true if artifact version is snapshot, false otherwise
+   */
   public boolean isSnapshot() {
     return suffix != null && !suffix.isEmpty() && suffix.toLowerCase().startsWith("snapshot");
   }

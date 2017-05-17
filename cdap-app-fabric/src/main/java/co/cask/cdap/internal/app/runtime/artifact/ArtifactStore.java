@@ -640,7 +640,7 @@ public class ArtifactStore {
                 }
               }
             }
-            PluginKey pluginKey = new PluginKey(Id.Namespace.from(parentArtifactRange.getNamespace()),
+            PluginKey pluginKey = new PluginKey(parentArtifactRange.getNamespace(),
                                                 parentArtifactRange.getName(), type, name);
             Row row = metaTable.get(pluginKey.getRowKey());
             if (!row.isEmpty()) {
@@ -914,9 +914,8 @@ public class ArtifactStore {
       // write metadata for each artifact this plugin extends
       for (ArtifactRange artifactRange : data.meta.getUsableBy()) {
         // p:{namespace}:{type}:{name}
-        PluginKey pluginKey = new PluginKey(
-          new NamespaceId(artifactRange.getNamespace()).toId(),
-          artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
+        PluginKey pluginKey = new PluginKey(artifactRange.getNamespace(),
+                                            artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
 
         byte[] pluginDataBytes = Bytes.toBytes(
           GSON.toJson(new PluginData(pluginClass, artifactRange, artifactLocation)));
@@ -946,9 +945,8 @@ public class ArtifactStore {
       // delete metadata for each artifact this plugin extends
       for (ArtifactRange artifactRange : oldMeta.meta.getUsableBy()) {
         // p:{namespace}:{type}:{name}
-        PluginKey pluginKey = new PluginKey(
-          new NamespaceId(artifactRange.getNamespace()).toId(),
-          artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
+        PluginKey pluginKey = new PluginKey(artifactRange.getNamespace(),
+                                            artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
         table.delete(pluginKey.getRowKey(), artifactColumn);
       }
     }
@@ -1020,8 +1018,8 @@ public class ArtifactStore {
         continue;
       }
       ArtifactData data = GSON.fromJson(Bytes.toString(columnVal.getValue()), ArtifactData.class);
-      Id.Artifact artifactId = Id.Artifact.from(new NamespaceId(artifactKey.namespace).toId(),
-                                                artifactKey.name, version);
+      Id.Artifact artifactId = new NamespaceId(artifactKey.namespace).artifact(artifactKey.name, version).toId();
+
       artifactDetails.add(new ArtifactDetail(
         new ArtifactDescriptor(artifactId.toArtifactId(),
                                Locations.getLocationFromAbsolutePath(locationFactory, data.getLocationPath())),
@@ -1159,12 +1157,12 @@ public class ArtifactStore {
   }
 
   private static class PluginKey {
-    private final Id.Namespace parentArtifactNamespace;
+    private final String parentArtifactNamespace;
     private final String parentArtifactName;
     private final String type;
     private final String name;
 
-    private PluginKey(Id.Namespace parentArtifactNamespace, String parentArtifactName, String type, String name) {
+    private PluginKey(String parentArtifactNamespace, String parentArtifactName, String type, String name) {
       this.parentArtifactNamespace = parentArtifactNamespace;
       this.parentArtifactName = parentArtifactName;
       this.type = type;
@@ -1174,7 +1172,7 @@ public class ArtifactStore {
     // p:system:etlbatch:sink:table
     private byte[] getRowKey() {
       return Bytes.toBytes(
-        Joiner.on(':').join(PLUGIN_PREFIX, parentArtifactNamespace.getId(), parentArtifactName, type, name));
+        Joiner.on(':').join(PLUGIN_PREFIX, parentArtifactNamespace, parentArtifactName, type, name));
     }
   }
 

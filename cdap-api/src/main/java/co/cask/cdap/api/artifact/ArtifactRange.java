@@ -40,10 +40,18 @@ public class ArtifactRange extends ArtifactVersionRange {
     this(namespace, name, range.lower, range.isLowerInclusive, range.upper, range.isUpperInclusive);
   }
 
+  /**
+   * get the namespace the artifact belongs to
+   * @return namespace
+   */
   public String getNamespace() {
     return namespace;
   }
 
+  /**
+   * get the name of the artifact
+   * @return name of artifact
+   */
   public String getName() {
     return name;
   }

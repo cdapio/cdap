@@ -88,15 +88,16 @@ public class DefaultArtifactManager {
   }
 
   /**
-   * For the specified namespace, return the available artifacts in the namespace
+   * For the specified namespace, return the available artifacts in the namespace and also the artifacts in system
+   * namespace
+   *
    * @param namespaceId namespace
    * @return {@link List<ArtifactInfo>}
    * @throws IOException If there are any exception while retrieving artifacts
    */
   public List<ArtifactInfo> listArtifacts(NamespaceId namespaceId) throws IOException {
-    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP);
-    URL url = createURL(new RandomEndpointStrategy(discovered).pick(1, TimeUnit.SECONDS),
-                        String.format("%s/artifact-internals/list/artifacts", namespaceId.getEntityName()));
+    URL url = discoverServiceAndCreateURL(String.format("namespaces/%s/artifact-internals/list/artifacts",
+                                                        namespaceId.getEntityName()));
 
     HttpResponse httpResponse = HttpRequests.execute(HttpRequest.get(url).build());
 
@@ -118,17 +119,19 @@ public class DefaultArtifactManager {
     return responseCode == 200;
   }
 
-  @Nullable
-  private URL createURL(@Nullable Discoverable discoverable, String pathSuffix) throws IOException {
+  private URL discoverServiceAndCreateURL(String pathSuffix) throws IOException {
+    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP);
+    Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(1, TimeUnit.SECONDS);
+
     if (discoverable == null) {
-      return null;
+      throw new IOException(String.format("Could not discover %s Service", Constants.Service.APP_FABRIC_HTTP));
     }
+
     InetSocketAddress address = discoverable.getSocketAddress();
     String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
       Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
 
-    String path = String.format("%s%s:%d%s/namespaces/%s", scheme,
-                                address.getHostName(), address.getPort(),
+    String path = String.format("%s%s:%d%s/%s", scheme, address.getHostName(), address.getPort(),
                                 Constants.Gateway.API_VERSION_3, pathSuffix);
 
     return new URL(path);
@@ -137,8 +140,9 @@ public class DefaultArtifactManager {
   /**
    * Create a class loader with artifact jar unpacked contents and parent for this classloader is the supplied
    * parentClassLoader, if that parent classloader is null, bootstrap classloader is used as parent.
-   * This is a closeabled classloader, caller should call close when he is done using it, during close directory
+   * This is a closeable classloader, caller should call close when he is done using it, during close directory
    * cleanup will be performed.
+   *
    * @param namespaceId artifact namespace
    * @param artifactInfo artifact info whose artiact will be unpacked to create classloader
    * @param parentClassLoader  optional parent classloader, if null bootstrap classloader will be used
@@ -147,13 +151,12 @@ public class DefaultArtifactManager {
    */
   public CloseableClassLoader createClassLoader(
     NamespaceId namespaceId, ArtifactInfo artifactInfo, @Nullable ClassLoader parentClassLoader) throws IOException {
-
-    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP);
     String namespace = ArtifactScope.SYSTEM.equals(artifactInfo.getScope()) ?
       NamespaceId.SYSTEM.getNamespace() : namespaceId.getEntityName();
-    URL url = createURL(new RandomEndpointStrategy(discovered).pick(1, TimeUnit.SECONDS),
-                        String.format("%s/artifact-internals/artifacts/%s/versions/%s/location",
-                                      namespace, artifactInfo.getName(), artifactInfo.getVersion()));
+
+    URL url = discoverServiceAndCreateURL(
+      String.format("namespaces/%s/artifact-internals/artifacts/%s/versions/%s/location",
+                    namespace, artifactInfo.getName(), artifactInfo.getVersion()));
 
     HttpResponse httpResponse = HttpRequests.execute(HttpRequest.get(url).build());
 

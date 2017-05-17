@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
 public interface ArtifactManager {
   /**
    * Get the list of artifacts in the repository in the current and system namespace
+   *
    * @return {@link List<ArtifactInfo>} list of artifact info
    * @throws IOException when there is an error retrieving artifacts
    */
@@ -35,11 +36,12 @@ public interface ArtifactManager {
    * Create a class loader using the artifact represented by artifactInfo with parent as parentClassloader
    * Call to this method might take long based on the size of artifact,
    * if called from short transactions, its possible this call will timeout if artifact size is big
+   *
    * @param artifactInfo artifact info
    * @param parentClassLoader parent class loader, if null bootstrap classLoader shall be used as parent
-   * @throws Exception if there were any exception while creating a class loader
+   * @throws IOException if there were any exception while creating the class loader
    * @return Closeable class loader, calling close on this does the necessary cleanup.
    */
   CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
-                                         @Nullable ClassLoader parentClassLoader) throws Exception;
+                                         @Nullable ClassLoader parentClassLoader) throws IOException;
 }

@@ -37,10 +37,18 @@ public final class ArtifactClasses {
     this.plugins = plugins;
   }
 
+  /**
+   * get set of application classes
+   * @return {@link Set<ApplicationClass>}
+   */
   public Set<ApplicationClass> getApps() {
     return apps;
   }
 
+  /**
+   * get the set of plugin classes
+   * @return {@link Set<PluginClass>}
+   */
   public Set<PluginClass> getPlugins() {
     return plugins;
   }

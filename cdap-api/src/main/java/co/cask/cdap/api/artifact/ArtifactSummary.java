@@ -43,14 +43,26 @@ public class ArtifactSummary {
     this.scope = scope;
   }
 
+  /**
+   * get the name of the artifact
+   * @return name of the artifact
+   */
   public String getName() {
     return name;
   }
 
+  /**
+   * get the version of artifact
+   * @return artifact version
+   */
   public String getVersion() {
     return version;
   }
 
+  /**
+   * get the scope of the artifact
+   * @return artifact scope
+   */
   public ArtifactScope getScope() {
     return scope;
   }

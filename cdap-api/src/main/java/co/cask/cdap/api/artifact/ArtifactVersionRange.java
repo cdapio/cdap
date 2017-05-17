@@ -33,10 +33,18 @@ public class ArtifactVersionRange {
     this.isUpperInclusive = isUpperInclusive;
   }
 
+  /**
+   * lower version of artifact range
+   * @return {@link ArtifactVersion} lower version range
+   */
   public ArtifactVersion getLower() {
     return lower;
   }
 
+  /**
+   * upper version of artifact range
+   * @return {@link ArtifactVersion} upper version range
+   */
   public ArtifactVersion getUpper() {
     return upper;
   }

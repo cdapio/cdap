@@ -211,7 +211,7 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
 
   @Override
   public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
-                                                @Nullable ClassLoader parentClassLoader) throws Exception {
+                                                @Nullable ClassLoader parentClassLoader) throws IOException {
     return delegateAdmin.createClassLoader(artifactInfo, parentClassLoader);
   }
 }
