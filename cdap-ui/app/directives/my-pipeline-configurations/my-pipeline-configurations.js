@@ -19,6 +19,12 @@ class MyPipelineConfigurationsCtrl {
     this.uuid = uuid;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
 
+    this.actionLabel = 'Run';
+
+    if (this.pipelineAction && this.pipelineAction === 'Scheduling') {
+      this.actionLabel = 'Schedule';
+    }
+
     this.checkForReset = (runtimeArguments) => {
       let runtimeArgumentsPairs = runtimeArguments.pairs;
       this.resettingFields = false;
@@ -90,6 +96,7 @@ MyPipelineConfigurationsCtrl.$inject = ['uuid', 'HydratorPlusPlusHydratorService
         resolvedMacros: '=',
         applyRuntimeArguments: '&',
         runPipeline: '&',
+        pipelineAction: '@',
         convertRuntimeArgsToMacros: '&',
         pipelineName: '@',
         onClose: '&',

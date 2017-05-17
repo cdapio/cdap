@@ -373,6 +373,13 @@ class HydratorDetailTopPanelController {
           );
     }
   }
+  startOrSchedulePipeline() {
+    if (this.runPlayer.action === 'Starting') {
+      this.startPipeline();
+    } else if (this.runPlayer.action === 'Scheduling') {
+      this.schedulePipeline();
+    }
+  }
   startPipeline() {
     this.lastRunTime = 'N/A';
     this.lastFinished = null;
@@ -382,7 +389,7 @@ class HydratorDetailTopPanelController {
     this.HydratorPlusPlusDetailActions.startPipeline(
       this.HydratorPlusPlusDetailRunsStore.getApi(),
       this.HydratorPlusPlusDetailRunsStore.getParams(),
-      this.macrosMap
+      Object.assign({}, this.macrosMap, this.userRuntimeArgumentsMap)
     )
     .then(
       () => {},
@@ -421,7 +428,7 @@ class HydratorDetailTopPanelController {
     };
 
     this.myPreferenceApi
-      .setAppPreference(preferenceParams, this.macrosMap)
+      .setAppPreference(preferenceParams, Object.assign({}, this.macrosMap, this.userRuntimeArgumentsMap))
       .$promise
       .then(
         () => {
