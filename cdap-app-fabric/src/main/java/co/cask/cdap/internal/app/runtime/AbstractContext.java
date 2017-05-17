@@ -167,14 +167,13 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
 
-    ProgramRunId programRunId = program.getId().run(runId);
+    String clientId = generateClientId(program.getId(), runId, programOptions);
     TransactionSystemClient retryingTxClient = new RetryingShortTransactionSystemClient(txClient, retryStrategy);
     this.datasetCache = multiThreaded
       ? new MultiThreadDatasetCache(instantiator, retryingTxClient, new NamespaceId(program.getId().getNamespace()),
-                                    runtimeArguments, programMetrics, staticDatasets, programRunId.toString(),
-                                    messagingContext)
+                                    runtimeArguments, programMetrics, staticDatasets, clientId, messagingContext)
       : new SingleThreadDatasetCache(instantiator, retryingTxClient, new NamespaceId(program.getId().getNamespace()),
-                                     runtimeArguments, programMetrics, staticDatasets, programRunId.toString());
+                                     runtimeArguments, programMetrics, staticDatasets, clientId);
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
                                                   program.getApplicationSpecification().getPlugins());
@@ -188,6 +187,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     if (!multiThreaded) {
       datasetCache.addExtraTransactionAware(messagingContext);
     }
+  }
+
+  private static String generateClientId(ProgramId programId, RunId runId, ProgramOptions programOptions) {
+    String clientId = programId.run(runId).toString();
+    String instanceId = programOptions.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID);
+    return instanceId == null ? clientId : String.format("%s.%s", clientId, instanceId);
   }
 
   /**

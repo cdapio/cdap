@@ -99,14 +99,14 @@ public abstract class AbstractTransactionContext extends TransactionContext {
   @Override
   public void start() throws TransactionFailureException {
     Preconditions.checkState(currentTx == null, "Already have an active transaction.");
-    currentTx = txClient.startShort();
+    currentTx = txClient.startShort(clientId);
     startAllTxAwares();
   }
 
   @Override
   public void start(int timeout) throws TransactionFailureException {
     Preconditions.checkState(currentTx == null, "Already have an active transaction.");
-    currentTx = txClient.startShort(timeout);
+    currentTx = txClient.startShort(clientId, timeout);
     startAllTxAwares();
   }
 
