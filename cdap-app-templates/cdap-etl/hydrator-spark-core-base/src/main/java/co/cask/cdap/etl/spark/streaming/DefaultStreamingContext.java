@@ -18,6 +18,7 @@ package co.cask.cdap.etl.spark.streaming;
 
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.etl.common.TransactionsUtility;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -73,12 +74,16 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
       LOG.debug("Dataset with name {} already created. Hence not creating the external dataset.", referenceName);
     }
 
-    sec.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        context.getDataset(referenceName);
-      }
-    });
+    try {
+      sec.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          context.getDataset(referenceName);
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw TransactionsUtility.propagate(e, DatasetManagementException.class);
+    }
   }
 
   @Override

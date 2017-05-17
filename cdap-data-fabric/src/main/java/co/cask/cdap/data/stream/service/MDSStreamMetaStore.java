@@ -41,6 +41,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 
 import java.io.IOException;
@@ -85,33 +86,45 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
 
   @Override
   public void addStream(final StreamId streamId, @Nullable final String description) throws Exception {
-    transactional.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        String desc = Optional.fromNullable(description).orNull();
-        getMetadataStore(context).write(getKey(streamId), createStreamSpec(streamId, desc));
-      }
-    });
+    try {
+      transactional.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          String desc = Optional.fromNullable(description).orNull();
+          getMetadataStore(context).write(getKey(streamId), createStreamSpec(streamId, desc));
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw Transactions.propagate(e, Exception.class);
+    }
   }
 
   @Override
   public StreamSpecification getStream(final StreamId streamId) throws Exception {
-    return Transactions.execute(transactional, new TxCallable<StreamSpecification>() {
-      @Override
-      public StreamSpecification call(DatasetContext context) throws Exception {
-        return getMetadataStore(context).getFirst(getKey(streamId), StreamSpecification.class);
-      }
-    });
+    try {
+      return Transactions.execute(transactional, new TxCallable<StreamSpecification>() {
+        @Override
+        public StreamSpecification call(DatasetContext context) throws Exception {
+          return getMetadataStore(context).getFirst(getKey(streamId), StreamSpecification.class);
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw Transactions.propagate(e, Exception.class);
+    }
   }
 
   @Override
   public void removeStream(final StreamId streamId) throws Exception {
-    transactional.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        getMetadataStore(context).deleteAll(getKey(streamId));
-      }
-    });
+    try {
+      transactional.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          getMetadataStore(context).deleteAll(getKey(streamId));
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw Transactions.propagate(e, Exception.class);
+    }
   }
 
   @Override
@@ -121,35 +134,43 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
 
   @Override
   public List<StreamSpecification> listStreams(final NamespaceId namespaceId) throws Exception {
-    return Transactions.execute(transactional, new TxCallable<List<StreamSpecification>>() {
-      @Override
-      public List<StreamSpecification> call(DatasetContext context) throws Exception {
-        return getMetadataStore(context).list(new MDSKey.Builder().add(TYPE_STREAM,
-                                                                       namespaceId.getEntityName()).build(),
-                                              StreamSpecification.class);
-      }
-    });
+    try {
+      return Transactions.execute(transactional, new TxCallable<List<StreamSpecification>>() {
+        @Override
+        public List<StreamSpecification> call(DatasetContext context) throws Exception {
+          return getMetadataStore(context).list(new MDSKey.Builder().add(TYPE_STREAM,
+                                                                         namespaceId.getEntityName()).build(),
+                                                StreamSpecification.class);
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw Transactions.propagate(e, Exception.class);
+    }
   }
 
   @Override
   public Multimap<NamespaceId, StreamSpecification> listStreams() throws Exception {
-    return Transactions.execute(transactional, new TxCallable<Multimap<NamespaceId, StreamSpecification>>() {
-      @Override
-      public Multimap<NamespaceId, StreamSpecification> call(DatasetContext context) throws Exception {
-        ImmutableMultimap.Builder<NamespaceId, StreamSpecification> builder = ImmutableMultimap.builder();
-        Map<MDSKey, StreamSpecification> streamSpecs =
-          getMetadataStore(context).listKV(new MDSKey.Builder().add(TYPE_STREAM).build(), StreamSpecification.class);
-        for (Map.Entry<MDSKey, StreamSpecification> streamSpecEntry : streamSpecs.entrySet()) {
-          MDSKey.Splitter splitter = streamSpecEntry.getKey().split();
-          // skip the first name ("stream")
-          splitter.skipString();
-          // Namespace id is the next part.
-          String namespaceId = splitter.getString();
-          builder.put(new NamespaceId(namespaceId), streamSpecEntry.getValue());
+    try {
+      return Transactions.execute(transactional, new TxCallable<Multimap<NamespaceId, StreamSpecification>>() {
+        @Override
+        public Multimap<NamespaceId, StreamSpecification> call(DatasetContext context) throws Exception {
+          ImmutableMultimap.Builder<NamespaceId, StreamSpecification> builder = ImmutableMultimap.builder();
+          Map<MDSKey, StreamSpecification> streamSpecs =
+            getMetadataStore(context).listKV(new MDSKey.Builder().add(TYPE_STREAM).build(), StreamSpecification.class);
+          for (Map.Entry<MDSKey, StreamSpecification> streamSpecEntry : streamSpecs.entrySet()) {
+            MDSKey.Splitter splitter = streamSpecEntry.getKey().split();
+            // skip the first name ("stream")
+            splitter.skipString();
+            // Namespace id is the next part.
+            String namespaceId = splitter.getString();
+            builder.put(new NamespaceId(namespaceId), streamSpecEntry.getValue());
+          }
+          return builder.build();
         }
-        return builder.build();
-      }
-    });
+      });
+    } catch (TransactionFailureException e) {
+      throw Transactions.propagate(e, Exception.class);
+    }
   }
 
   private MDSKey getKey(StreamId streamId) {

@@ -17,6 +17,7 @@
 package co.cask.cdap.datastreams;
 
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.etl.common.TransactionsUtility;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSet;
@@ -44,6 +45,8 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function0;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
+import org.apache.spark.streaming.api.java.JavaStreamingContextFactory;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 
 import java.util.HashMap;
@@ -93,13 +96,17 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
 
       // there isn't any way to instantiate the fileset except in a TxRunnable, so need to use a reference.
       final AtomicReference<Location> checkpointBaseRef = new AtomicReference<>();
-      sec.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          FileSet checkpointFileSet = context.getDataset(DataStreamsApp.CHECKPOINT_FILESET);
-          checkpointBaseRef.set(checkpointFileSet.getBaseLocation());
-        }
-      });
+      try {
+        sec.execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            FileSet checkpointFileSet = context.getDataset(DataStreamsApp.CHECKPOINT_FILESET);
+            checkpointBaseRef.set(checkpointFileSet.getBaseLocation());
+          }
+        });
+      } catch (TransactionFailureException e) {
+        throw TransactionsUtility.propagate(e, Exception.class);
+      }
       Location pipelineCheckpointDir = checkpointBaseRef.get().append(pipelineName).append(relativeCheckpointDir);
       checkpointDir = pipelineCheckpointDir.toURI().toString();
     }

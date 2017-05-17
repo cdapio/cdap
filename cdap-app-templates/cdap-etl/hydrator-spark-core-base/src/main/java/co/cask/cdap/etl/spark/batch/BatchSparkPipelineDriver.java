@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.etl.common.TransactionsUtility;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
@@ -43,6 +44,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.tephra.TransactionFailureException;
 import scala.Tuple2;
 
 import java.io.BufferedReader;
@@ -106,7 +108,11 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     // Execution the whole pipeline in one long transaction. This is because the Spark execution
     // currently share the same contract and API as the MapReduce one.
     // The API need to expose DatasetContext, hence it needs to be executed inside a transaction
-    sec.execute(this);
+    try {
+      sec.execute(this);
+    } catch (TransactionFailureException e) {
+      throw TransactionsUtility.propagate(e, Exception.class);
+    }
   }
 
   @Override

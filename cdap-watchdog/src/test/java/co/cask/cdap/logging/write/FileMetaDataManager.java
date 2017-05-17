@@ -32,6 +32,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -96,14 +97,18 @@ public class FileMetaDataManager {
     LOG.debug("Writing meta data for logging context {} as startTimeMs {} and location {}",
               logPartition, startTimeMs, location);
 
-    transactional.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        getMetaTable(context).put(getRowKey(logPartition),
-                                  Bytes.toBytes(startTimeMs),
-                                  Bytes.toBytes(location.toURI().getPath()));
-      }
-    });
+    try {
+      transactional.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          getMetaTable(context).put(getRowKey(logPartition),
+                                    Bytes.toBytes(startTimeMs),
+                                    Bytes.toBytes(location.toURI().getPath()));
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw Transactions.propagate(e, Exception.class);
+    }
   }
 
   private byte[] getRowKey(String logPartition) {

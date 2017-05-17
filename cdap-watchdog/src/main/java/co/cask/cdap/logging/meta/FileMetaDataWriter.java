@@ -22,7 +22,9 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManager;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.logging.appender.system.LogPathIdentifier;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,14 +61,18 @@ public class FileMetaDataWriter {
     LOG.debug("Writing meta data for logging context {} with startTimeMs {} sequence Id {} and location {}",
               identifier.getRowkey(), eventTimeMs, currentTimeMs, location);
 
-    transactional.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        Table table = LoggingStoreTableUtil.getMetadataTable(context, datasetManager);
-        table.put(getRowKey(identifier, eventTimeMs, currentTimeMs),
-                  LoggingStoreTableUtil.META_TABLE_COLUMN_KEY, Bytes.toBytes(location.toURI().getPath()));
-      }
-    });
+    try {
+      transactional.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          Table table = LoggingStoreTableUtil.getMetadataTable(context, datasetManager);
+          table.put(getRowKey(identifier, eventTimeMs, currentTimeMs),
+                    LoggingStoreTableUtil.META_TABLE_COLUMN_KEY, Bytes.toBytes(location.toURI().getPath()));
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw Transactions.propagate(e, Exception.class);
+    }
   }
 
   private byte[] getRowKey(LogPathIdentifier identifier, long eventTime, long currentTime) {
