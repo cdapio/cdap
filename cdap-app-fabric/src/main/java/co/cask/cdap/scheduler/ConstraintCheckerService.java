@@ -141,6 +141,7 @@ class ConstraintCheckerService extends AbstractIdleService {
     private final Deque<Job> readyJobs = new ArrayDeque<>();
     private JobQueueDataset jobQueue;
     private Job lastConsumed;
+    private int failureCount;
 
     ConstraintCheckerThread(int partition) {
       // TODO: [CDAP-11370] Need to be configured in cdap-default.xml. Retry with delay ranging from 0.1s to 30s
@@ -174,7 +175,6 @@ class ConstraintCheckerService extends AbstractIdleService {
      */
     private long checkJobQueue() {
       boolean emptyFetch = false;
-      int failureCount = 0;
       try {
         emptyFetch = Transactions.execute(transactional, new TxCallable<Boolean>() {
           @Override
@@ -182,13 +182,7 @@ class ConstraintCheckerService extends AbstractIdleService {
             return checkJobConstraints();
           }
         });
-        failureCount = 0;
-      } catch (Exception e) {
-        LOG.warn("Failed to check Job constraints. Will retry in next run", e);
-        failureCount++;
-      }
 
-      try {
         Transactions.execute(transactional, new TxCallable<Boolean>() {
           @Override
           public Boolean call(DatasetContext context) throws Exception {
@@ -196,8 +190,9 @@ class ConstraintCheckerService extends AbstractIdleService {
             return runReadyJobs();
           }
         });
+        failureCount = 0;
       } catch (Exception e) {
-        LOG.warn("Failed to launch programs. Will retry in next run", e);
+        LOG.warn("Failed to check Job constraints. Will retry in next run", e);
         failureCount++;
       }
 
@@ -233,16 +228,9 @@ class ConstraintCheckerService extends AbstractIdleService {
     }
 
     private void checkAndUpdateJob(JobQueueDataset jobQueue, Job job) {
-      if (job.getState() == Job.State.PENDING_LAUNCH) {
+      if (job.getState() != Job.State.PENDING_CONSTRAINT) {
         return;
       }
-      if (job.getState() == Job.State.PENDING_TRIGGER) {
-        if (!isTriggerSatisfied(job)) {
-          return;
-        }
-        job = jobQueue.transitState(job, Job.State.PENDING_CONSTRAINT);
-      }
-      // check for constraint satisfaction after trigger satisfaction
       if (!constraintsSatisfied(job)) {
         return;
       }
@@ -284,24 +272,6 @@ class ConstraintCheckerService extends AbstractIdleService {
         }
       }
       return false;
-    }
-
-    private boolean isTriggerSatisfied(Job job) {
-      Trigger trigger = job.getSchedule().getTrigger();
-      if (trigger instanceof TimeTrigger) {
-        // TimeTrigger is satisfied as soon as the Notification arrive, due to how the Notification is initially created
-        return true;
-      }
-      if (trigger instanceof PartitionTrigger) {
-        PartitionTrigger partitionTrigger = (PartitionTrigger) trigger;
-        int numPartitions = 0;
-        for (Notification notification : job.getNotifications()) {
-          String numPartitionsString = notification.getProperties().get("numPartitions");
-          numPartitions += Integer.valueOf(numPartitionsString);
-        }
-        return numPartitions >= partitionTrigger.getNumPartitions();
-      }
-      throw new IllegalArgumentException("Unknown trigger class: " + trigger.getClass());
     }
 
     private boolean constraintsSatisfied(Job job) {
