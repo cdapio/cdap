@@ -15,7 +15,7 @@
   */
 
 class MyPipelineConfigurationsCtrl {
-  constructor(uuid, HydratorPlusPlusHydratorService, $timeout) {
+  constructor(uuid, HydratorPlusPlusHydratorService) {
     this.uuid = uuid;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
 
@@ -55,14 +55,6 @@ class MyPipelineConfigurationsCtrl {
       this.runtimeArguments = this.checkForReset(newRuntimeArguments);
     };
 
-    this.applyWithMessage = () => {
-      this.applyRuntimeArguments();
-      this.showAppliedMessage = true;
-      $timeout(() => {
-        this.showAppliedMessage = false;
-      }, 3000);
-    };
-
     this.applyAndRunPipeline = () => {
       this.applyRuntimeArguments();
       this.runPipeline();
@@ -82,7 +74,7 @@ class MyPipelineConfigurationsCtrl {
   }
 }
 
-MyPipelineConfigurationsCtrl.$inject = ['uuid', 'HydratorPlusPlusHydratorService', '$timeout'];
+MyPipelineConfigurationsCtrl.$inject = ['uuid', 'HydratorPlusPlusHydratorService'];
   angular.module(PKG.name + '.commons')
   .directive('keyValuePairs', function(reactDirective) {
     return reactDirective(window.CaskCommon.KeyValuePairs);
@@ -95,10 +87,9 @@ MyPipelineConfigurationsCtrl.$inject = ['uuid', 'HydratorPlusPlusHydratorService
         runtimeArguments: '=',
         resolvedMacros: '=',
         applyRuntimeArguments: '&',
-        runPipeline: '&',
-        pipelineAction: '@',
         convertRuntimeArgsToMacros: '&',
         pipelineName: '@',
+        runPipeline: '&',
         onClose: '&',
         namespace: '@namespaceId'
       },

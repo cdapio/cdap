@@ -71,12 +71,10 @@ class HydratorDetailTopPanelController {
       description: this.config.description,
       type: this.config.artifact.name
     };
-    this.runPlayer = {
-      view: false,
-      action: null
-    };
     this.viewSettings = false;
     this.viewLogs = false;
+    this.viewScheduler = false;
+    this.viewConfig = false;
     this.pipelineType = HydratorPlusPlusDetailNonRunsStore.getPipelineType();
     this.tooltipDescription = (this.app.description && this.app.description.replace(/\n/g, '<br />')) || '' ;
     this.setState();
@@ -99,6 +97,7 @@ class HydratorDetailTopPanelController {
     this.userRuntimeArgumentsMap = HydratorPlusPlusDetailRunsStore.getUserRuntimeArguments();
     this.runtimeArguments = {};
     this.resolvedMacros = {};
+    this.validToStartOrSchedule = true;
 
     if (Object.keys(this.macrosMap).length === 0) {
       this.fetchMacros();
@@ -215,6 +214,7 @@ class HydratorDetailTopPanelController {
             if (Object.keys(this.macrosMap).length > 0 || Object.keys(this.userRuntimeArgumentsMap).length > 0) {
               this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
             }
+            this.validToStartOrSchedule = this.isValidToStartOrSchedule();
             return this.runtimeArguments;
           },
           err => this.macroError = err
@@ -223,9 +223,9 @@ class HydratorDetailTopPanelController {
     // if there are zero macros, but there are user-set runtime arguments
     } else {
       this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+      this.validToStartOrSchedule = this.isValidToStartOrSchedule();
       return this.$q.when(this.runtimeArguments);
     }
-
   }
 
   applyRuntimeArguments() {
@@ -234,21 +234,20 @@ class HydratorDetailTopPanelController {
     this.userRuntimeArgumentsMap = macros.userRuntimeArgumentsMap;
     // have to do this because cannot do two dispatch in a row
     this.HydratorPlusPlusDetailActions.setMacrosAndUserRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+    this.validToStartOrSchedule = this.isValidToStartOrSchedule();
   }
 
   isValidToStartOrSchedule() {
-    if (Object.keys(this.macrosMap).length === 0) {
-      return true;
+    let fullMacrosMap = Object.assign({}, this.macrosMap, this.userRuntimeArgumentsMap);
+    let hasMissingValues = this.myHelpers.objHasMissingValues(fullMacrosMap);
+    if (hasMissingValues.res) {
+      let notValidRuntimeArgs = hasMissingValues.keysWithMissingValue;
+      this.notValidRuntimeArgsString = '"' + notValidRuntimeArgs.join('", "') + '"';
+    } else {
+      this.notValidRuntimeArgsString = '';
     }
 
-    let res = true;
-
-    for(let key in this.macrosMap){
-      if (this.macrosMap.hasOwnProperty(key) && !this.macrosMap[key]) {
-        res = false;
-      }
-    }
-    return res;
+    return !hasMissingValues.res;
   }
 
   setState() {
@@ -328,15 +327,19 @@ class HydratorDetailTopPanelController {
       case 'Start':
         this.getRuntimeArguments()
           .then(() => {
-            this.runPlayer.view = true;
-            this.runPlayer.action = this.MyPipelineStatusMapper.lookupDisplayStatus('STARTING');
+            this.startPipeline();
           }, (err) => {console.log('Error: ', err); });
         break;
       case 'Schedule':
         this.getRuntimeArguments()
           .then(() => {
-            this.runPlayer.view = true;
-            this.runPlayer.action = this.MyPipelineStatusMapper.lookupDisplayStatus('SCHEDULING');
+            this.viewScheduler = true;
+          });
+        break;
+      case 'Config':
+        this.getRuntimeArguments()
+          .then(() => {
+            this.viewConfig = true;
           });
         break;
       case 'Suspend':
@@ -373,19 +376,11 @@ class HydratorDetailTopPanelController {
           );
     }
   }
-  startOrSchedulePipeline() {
-    if (this.runPlayer.action === 'Starting') {
-      this.startPipeline();
-    } else if (this.runPlayer.action === 'Scheduling') {
-      this.schedulePipeline();
-    }
-  }
   startPipeline() {
     this.lastRunTime = 'N/A';
     this.lastFinished = null;
+    this.viewConfig = false;
     this.appStatus = this.MyPipelineStatusMapper.lookupDisplayStatus('STARTING');
-    this.runPlayer.view = false;
-    this.runPlayer.action = null;
     this.HydratorPlusPlusDetailActions.startPipeline(
       this.HydratorPlusPlusDetailRunsStore.getApi(),
       this.HydratorPlusPlusDetailRunsStore.getParams(),
@@ -473,8 +468,7 @@ class HydratorDetailTopPanelController {
       )
       .then(
         () => {
-          this.runPlayer.view = false;
-          this.runPlayer.action = null;
+          this.viewScheduler = false;
         }
       );
   }

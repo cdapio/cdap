@@ -1,0 +1,338 @@
+<!--
+  Copyright © 2017 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<div class="pipeline-scheduler-content">
+  <div class="pipeline-scheduler-header">
+    <h3 class="modeless-title">
+      Configure Schedule for Pipeline
+      <span ng-if="SchedulerCtrl.pipelineName.length > 0">
+        "{{SchedulerCtrl.pipelineName}}"
+      </span>
+    </h3>
+    <div class="btn-group">
+      <a class="btn" ng-click="SchedulerCtrl.onClose()">
+        <span class="fa fa-remove"></span>
+      </a>
+    </div>
+  </div>
+  <div class="pipeline-scheduler-body">
+    <div class="schedule-content">
+      <fieldset ng-disabled="SchedulerCtrl._isDisabled">
+        <div class="schedule-types row">
+          <span class="col-xs-3 schedule-type schedule-type-basic"
+                ng-class="{'active': SchedulerCtrl.scheduleType === 'basic'}"
+                ng-click="SchedulerCtrl.selectType('basic')">
+            Basic
+          </span>
+          <span class="col-xs-4 schedule-type schedule-type-advanced">
+            <span class="separator">
+              |
+            </span>
+            <span ng-class="{'active': SchedulerCtrl.scheduleType === 'advanced'}"
+                  ng-click="SchedulerCtrl.selectType('advanced')">
+              Advanced
+            </span>
+          </span>
+        </div>
+        <div class="schedule-type-content">
+          <div ng-if="SchedulerCtrl.scheduleType === 'basic'">
+            <div class="form-group row">
+              <label class="col-xs-3 control-label">
+                Pipeline run repeats
+              </label>
+              <div class="col-xs-4 schedule-values-container">
+                <select class="form-control"
+                        ng-change="SchedulerCtrl.switchToDefault()"
+                        ng-model="SchedulerCtrl.intervalOptionKey"
+                        ng-options="optionKey as optionVal for (optionKey,optionVal) in SchedulerCtrl.INTERVAL_OPTIONS">
+                </select>
+              </div>
+            </div>
+            <div class="form-group row"
+                  ng-class="{'invisible': ['Hourly', 'Daily', 'Weekly', 'Monthly', 'Yearly'].indexOf(SchedulerCtrl.intervalOptionKey) === -1}">
+              <label class="col-xs-3 control-label">
+                Repeats every
+              </label>
+              <div class="col-xs-4 schedule-values-container">
+                <span class="schedule-values"
+                      ng-if="SchedulerCtrl.intervalOptionKey === 'Hourly'">
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.repeatEvery.numHours"
+                          ng-options="option as option for option in SchedulerCtrl.HOUR_OPTIONS">
+                  </select>
+                  <span>hour(s)</span>
+                </span>
+                <span class="schedule-values"
+                      ng-if="SchedulerCtrl.intervalOptionKey === 'Daily'">
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.repeatEvery.numDays"
+                          ng-options="option as option for option in SchedulerCtrl.DAY_OF_MONTH_OPTIONS">
+                  </select>
+                  <span>day(s)</span>
+                </span>
+                <span class="schedule-values"
+                      ng-if="SchedulerCtrl.intervalOptionKey === 'Weekly'">
+                  <div class="day-of-week"
+                        ng-repeat="(day, selected) in SchedulerCtrl.timeSelections.repeatEvery.daysOfWeekObj">
+                    <label>
+                      <input ng-model="SchedulerCtrl.timeSelections.repeatEvery.daysOfWeekObj[day]"
+                              ng-change="SchedulerCtrl.updateSelectedDaysInWeek()"
+                              type="checkbox"/>
+                      <span>{{ day | cronDayName | getFirstLetter}}</span>
+                    </label>
+                  </div>
+                </span>
+                <span class="schedule-values"
+                      ng-if="SchedulerCtrl.intervalOptionKey === 'Monthly'">
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.repeatEvery.dayOfMonth"
+                          ng-options="option as (option | cronDayOfMonth) for option in SchedulerCtrl.DAY_OF_MONTH_OPTIONS">
+                  </select>
+                  <span>day of the month</span>
+                </span>
+                <span class="schedule-values"
+                      ng-if="SchedulerCtrl.intervalOptionKey === 'Yearly'">
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.repeatEvery.month"
+                          ng-options="option as (option | cronMonthName) for option in SchedulerCtrl.MONTH_OPTIONS">
+                  </select>
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.repeatEvery.dayOfMonth"
+                          ng-options="option as (option | cronDayOfMonth) for option in SchedulerCtrl.DAY_OF_MONTH_OPTIONS">
+                  </select>
+                </span>
+              </div>
+            </div>
+            <div class="form-group row"
+                  ng-class="{'invisible': ['Hourly', 'Daily', 'Weekly', 'Monthly', 'Yearly'].indexOf(SchedulerCtrl.intervalOptionKey) === -1}">
+              <label class="col-xs-3 control-label">
+                Starting at
+              </label>
+              <div class="col-xs-4 schedule-values-container">
+                <span class="schedule-values"
+                      ng-if="SchedulerCtrl.intervalOptionKey === 'Hourly'">
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.startingAt.min"
+                          ng-options="option as (option | displayTwoDigitNumber) for option in SchedulerCtrl.MINUTE_OPTIONS">
+                  </select>
+                  <span>past the hour</span>
+                </span>
+                <span class="schedule-values"
+                      ng-if="SchedulerCtrl.intervalOptionKey === 'Daily'">
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.startingAt.hour"
+                          ng-options="option as option for option in SchedulerCtrl.HOUR_OPTIONS_CLOCK">
+                  </select>
+                  <span class="separator"> : </span>
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.startingAt.min"
+                          ng-options="option as (option | displayTwoDigitNumber) for option in SchedulerCtrl.MINUTE_OPTIONS">
+                  </select>
+                  <span>&nbsp;</span>
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.startingAt.am_pm"
+                          ng-options="option as option for option in SchedulerCtrl.AM_PM_OPTIONS">
+                  </select>
+                </span>
+                <span class="schedule-values"
+                      ng-if="SchedulerCtrl.intervalOptionKey === 'Weekly'">
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.startingAt.hour"
+                          ng-options="option as option for option in SchedulerCtrl.HOUR_OPTIONS_CLOCK">
+                  </select>
+                  <span class="separator"> : </span>
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.startingAt.min"
+                          ng-options="option as (option | displayTwoDigitNumber) for option in SchedulerCtrl.MINUTE_OPTIONS">
+                  </select>
+                  <span>&nbsp;</span>
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.startingAt.am_pm"
+                          ng-options="option as option for option in SchedulerCtrl.AM_PM_OPTIONS">
+                  </select>
+                </span>
+                <span class="schedule-values"
+                      ng-if="SchedulerCtrl.intervalOptionKey === 'Monthly'">
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.startingAt.hour"
+                          ng-options="option as option for option in SchedulerCtrl.HOUR_OPTIONS_CLOCK">
+                  </select>
+                  <span class="separator"> : </span>
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.startingAt.min"
+                          ng-options="option as (option | displayTwoDigitNumber) for option in SchedulerCtrl.MINUTE_OPTIONS">
+                  </select>
+                  <span>&nbsp;</span>
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.startingAt.am_pm"
+                          ng-options="option as option for option in SchedulerCtrl.AM_PM_OPTIONS">
+                  </select>
+                </span>
+                <span class="schedule-values"
+                      ng-if="SchedulerCtrl.intervalOptionKey === 'Yearly'">
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.startingAt.hour"
+                          ng-options="option as option for option in SchedulerCtrl.HOUR_OPTIONS_CLOCK">
+                  </select>
+                  <span class="separator"> : </span>
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.startingAt.min"
+                          ng-options="option as (option | displayTwoDigitNumber) for option in SchedulerCtrl.MINUTE_OPTIONS">
+                  </select>
+                  <span>&nbsp;</span>
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.timeSelections.startingAt.am_pm"
+                          ng-options="option as option for option in SchedulerCtrl.AM_PM_OPTIONS">
+                  </select>
+                </span>
+              </div>
+            </div>
+            <div class="form-group row summary">
+              <label class="col-xs-3 control-label">
+                Summary
+              </label>
+              <div class="col-xs-8 schedule-values-container">
+                <div>
+                  <span>This pipeline is scheduled to run </span>
+                  <span ng-if="SchedulerCtrl.intervalOptionKey === '5min'">
+                    every 5 minutes
+                  </span>
+                  <span ng-if="SchedulerCtrl.intervalOptionKey === '10min'">
+                    every 10 minutes
+                  </span>
+                  <span ng-if="SchedulerCtrl.intervalOptionKey === '30min'">
+                    every 30 minutes
+                  </span>
+                  <span ng-if="SchedulerCtrl.intervalOptionKey === 'Hourly'">
+                    every
+                    <span ng-if="SchedulerCtrl.timeSelections.repeatEvery.numHours === 1">
+                      hour,
+                    </span>
+                    <span ng-if="SchedulerCtrl.timeSelections.repeatEvery.numHours !== 1">
+                      {{ SchedulerCtrl.timeSelections.repeatEvery.numHours }} hours,
+                    </span>
+                    <span ng-if="SchedulerCtrl.timeSelections.startingAt.min === 0">
+                      on the hour
+                    </span>
+                    <span ng-if="SchedulerCtrl.timeSelections.startingAt.min !== 0">
+                      {{ SchedulerCtrl.timeSelections.startingAt.min | displayTwoDigitNumber }} minutes past the hour
+                    </span>
+                  </span>
+                  <span ng-if="SchedulerCtrl.intervalOptionKey === 'Daily'">
+                    <span ng-if="SchedulerCtrl.timeSelections.repeatEvery.numDays === 1">
+                      everyday,
+                    </span>
+                    <span ng-if="SchedulerCtrl.timeSelections.repeatEvery.numDays !== 1">
+                      every {{ SchedulerCtrl.timeSelections.repeatEvery.numDays }} days,
+                    </span>
+                    <span>
+                      at {{ SchedulerCtrl.timeSelections.startingAt.hour }}:{{ SchedulerCtrl.timeSelections.startingAt.min | displayTwoDigitNumber }}{{ SchedulerCtrl.timeSelections.startingAt.am_pm | lowercase }}
+                    </span>
+                  </span>
+                  <span ng-if="SchedulerCtrl.intervalOptionKey === 'Weekly'">
+                    <span ng-if="SchedulerCtrl.timeSelections.repeatEvery.daysOfWeek.length === 7">
+                      everyday,
+                    </span>
+                    <span ng-if="SchedulerCtrl.timeSelections.repeatEvery.daysOfWeek.length !== 7">
+                      every
+                      <span ng-repeat="day in SchedulerCtrl.timeSelections.repeatEvery.daysOfWeek">
+                        {{ day | cronDayName }},
+                      </span>
+                    </span>
+                    <span>
+                      at {{ SchedulerCtrl.timeSelections.startingAt.hour }}:{{ SchedulerCtrl.timeSelections.startingAt.min | displayTwoDigitNumber }}{{ SchedulerCtrl.timeSelections.startingAt.am_pm | lowercase }}
+                    </span>
+                  </span>
+                  <span ng-if="SchedulerCtrl.intervalOptionKey === 'Monthly'">
+                    <span>
+                      every {{ SchedulerCtrl.timeSelections.repeatEvery.dayOfMonth | cronDayOfMonth }} day of the month,
+                    </span>
+                    <span>
+                      at {{ SchedulerCtrl.timeSelections.startingAt.hour }}:{{ SchedulerCtrl.timeSelections.startingAt.min | displayTwoDigitNumber }}{{ SchedulerCtrl.timeSelections.startingAt.am_pm | lowercase }}
+                    </span>
+                  </span>
+                  <span ng-if="SchedulerCtrl.intervalOptionKey === 'Yearly'">
+                    <span>
+                      every year on {{ SchedulerCtrl.timeSelections.repeatEvery.month | cronMonthName }} {{ SchedulerCtrl.timeSelections.repeatEvery.dayOfMonth | cronDayOfMonth }},
+                    </span>
+                    <span>
+                      at {{ SchedulerCtrl.timeSelections.startingAt.hour }}:{{ SchedulerCtrl.timeSelections.startingAt.min | displayTwoDigitNumber }}{{ SchedulerCtrl.timeSelections.startingAt.am_pm | lowercase }}
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div ng-if="SchedulerCtrl.scheduleType === 'advanced'">
+            <div class="schedule-advanced-header">
+              Schedule this pipeline by using Cron syntax
+            </div>
+            <div class="schedule-advanced-values">
+              <div class="form-group col-xs-2 schedule-advanced-input">
+                <label>Min</label>
+                <input type="text"
+                      ng-model="SchedulerCtrl.advancedScheduleValues.min"
+                      class="form-control"
+                />
+              </div>
+              <div class="form-group col-xs-2 schedule-advanced-input">
+                <label>Hour</label>
+                <input type="text"
+                      ng-model="SchedulerCtrl.advancedScheduleValues.hour"
+                      class="form-control"
+                />
+              </div>
+              <div class="form-group col-xs-2 schedule-advanced-input">
+                <label>Day</label>
+                <input type="text"
+                      ng-model="SchedulerCtrl.advancedScheduleValues.day"
+                      class="form-control"
+                />
+              </div>
+              <div class="form-group col-xs-2 schedule-advanced-input">
+                <label>Month</label>
+                <input type="text"
+                      ng-model="SchedulerCtrl.advancedScheduleValues.month"
+                      class="form-control"
+                />
+              </div>
+              <div class="form-group col-xs-3 schedule-advanced-input">
+                <label>Day of the Week</label>
+                <input type="text"
+                      ng-model="SchedulerCtrl.advancedScheduleValues.daysOfWeek"
+                      class="form-control"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+      <div class="schedule-navigation">
+        <button
+          ng-if="SchedulerCtrl._isDisabled"
+          class="btn btn-primary start-schedule-btn"
+          ng-click="SchedulerCtrl.startSchedule()">
+          Start Schedule
+        </button>
+        <button
+          ng-if="!SchedulerCtrl._isDisabled"
+          class="btn btn-primary save-schedule-btn"
+          ng-click="SchedulerCtrl.saveSchedule()">
+          Save Schedule
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

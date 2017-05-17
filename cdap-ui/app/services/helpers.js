@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -172,6 +172,36 @@ angular.module(PKG.name+'.services')
 
   /* ----------------------------------------------------------------------- */
 
+  function isNumeric(n) {
+    return !isNaN(parseFloat(n)) && isFinite(n);
+  }
+
+  /* ----------------------------------------------------------------------- */
+
+  function objHasMissingValues(obj) {
+    if (Object.keys(obj).length === 0) {
+      return false;
+    }
+
+    let res = false;
+    let keysWithMissingValue = [];
+    for(let key in obj){
+      if (obj.hasOwnProperty(key) &&
+        (typeof obj[key] === 'undefined' ||
+        typeof obj[key] === 'string' && obj[key].length === 0 ||
+        obj[key] === null)) {
+        res = true;
+        keysWithMissingValue.push(key);
+      }
+    }
+    return {
+      res: res,
+      keysWithMissingValue: keysWithMissingValue
+    };
+  }
+
+  /* ----------------------------------------------------------------------- */
+
   return {
     deepSet: deepSet,
     objectSetter: objectSetter,
@@ -179,6 +209,8 @@ angular.module(PKG.name+'.services')
     objectQuery: objectQuery,
     getConfig: getConfig,
     getConfigNs: getConfigNs,
-    getAbsUIUrl: $window.getAbsUIUrl
+    getAbsUIUrl: $window.getAbsUIUrl,
+    isNumeric: isNumeric,
+    objHasMissingValues: objHasMissingValues
   };
 });

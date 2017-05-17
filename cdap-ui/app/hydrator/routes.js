@@ -68,18 +68,18 @@ angular.module(PKG.name + '.feature.hydrator')
                 mySettings.get('hydratorDrafts', true)
                   .then(function(res) {
                     var draft = myHelpers.objectQuery(res, $stateParams.namespace, $stateParams.draftId);
-                    let isVersionInRange = HydratorPlusPlusHydratorService
-                      .isVersionInRange({
-                        supportedVersion: $rootScope.cdapVersion,
-                        versionRange: draft.artifact.version
-                      });
-                    if (isVersionInRange) {
-                      draft.artifact.version = $rootScope.cdapVersion;
-                    } else {
-                      defer.resolve(false);
-                      return;
-                    }
                     if (angular.isObject(draft)) {
+                      let isVersionInRange = HydratorPlusPlusHydratorService
+                        .isVersionInRange({
+                          supportedVersion: $rootScope.cdapVersion,
+                          versionRange: draft.artifact.version
+                        });
+                      if (isVersionInRange) {
+                        draft.artifact.version = $rootScope.cdapVersion;
+                      } else {
+                        defer.resolve(false);
+                        return;
+                      }
                       defer.resolve(draft);
                     } else {
                       defer.resolve(false);
