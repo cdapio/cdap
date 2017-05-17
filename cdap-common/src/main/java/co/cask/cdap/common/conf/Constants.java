@@ -55,8 +55,6 @@ public final class Constants {
   public static final String INSTANCE_NAME = "instance.name";
   // Environment variable name for spark home
   public static final String SPARK_HOME = "SPARK_HOME";
-  // Environment variable name for spark compat version
-  public static final String SPARK_COMPAT_ENV = "SPARK_COMPAT";
   // Environment variable for TEZ home
   public static final String TEZ_HOME = "TEZ_HOME";
 

@@ -710,6 +710,9 @@ cdap_start_java() {
   if [[ ${CDAP_SERVICE} == master ]]; then
     # Determine SPARK_HOME
     cdap_set_spark || logecho "Could not determine SPARK_HOME! Spark support unavailable!"
+    if [[ -n ${SPARK_COMPAT} ]]; then
+      __defines+=" -Dapp.program.spark.compat=${SPARK_COMPAT}"
+    fi
     # Master requires setting hive classpath
     cdap_set_hive_classpath || return 1
     local readonly __explore="-Dexplore.conf.dirs=${EXPLORE_CONF_DIRS} -Dexplore.classpath=${EXPLORE_CLASSPATH}"
