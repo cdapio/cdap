@@ -40,6 +40,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     Constants.Service.EXPLORE_HTTP_USER_SERVICE);
   public static final RouteDestination STREAMS_SERVICE = new RouteDestination(Constants.Service.STREAMS);
   public static final RouteDestination PREVIEW_HTTP = new RouteDestination(Constants.Service.PREVIEW_HTTP);
+  public static final RouteDestination DONT_ROUTE = new RouteDestination(Constants.Router.DONT_ROUTE_SERVICE);
 
   /**
    * Returns the CDAP service which will handle the HttpRequest
@@ -168,6 +169,11 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/properties
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/admin/{method}
       return DATASET_MANAGER;
+    } else if ((uriParts.length >= 4) && uriParts[3].equals("artifact-internals")) {
+      // we don't want to expose endpoints in artifact handler that are internal and can only by called by programs
+      // /v3/namespaces/{namespace-id}/artifact-internals/list/artifacts
+      // /v3/namespaces/{namespace-id}/artifact-internals/artifact/{artifact-name}
+      return DONT_ROUTE;
     }
     return APP_FABRIC_HTTP;
   }

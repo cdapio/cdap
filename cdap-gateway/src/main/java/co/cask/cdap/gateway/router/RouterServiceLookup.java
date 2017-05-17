@@ -126,7 +126,8 @@ public class RouterServiceLookup {
       // Otherwise the destination service will be other cdap services.
       // Path lookup can be skipped for requests to webapp.
       RouteDestination destService = routerPathLookup.getRoutingService(service, path, httpRequest);
-      if (destService == null || Strings.isNullOrEmpty(destService.getServiceName())) {
+      if (destService == null || Strings.isNullOrEmpty(destService.getServiceName())
+        || destService.getServiceName().equals(Constants.Router.DONT_ROUTE_SERVICE)) {
         return null;
       }
 

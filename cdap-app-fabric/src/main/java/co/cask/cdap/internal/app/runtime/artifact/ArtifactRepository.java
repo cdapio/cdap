@@ -774,6 +774,30 @@ public class ArtifactRepository {
     privilegesManager.revoke(artifactId.toEntityId());
   }
 
+  /**
+   * return list of {@link ArtifactInfo} in the namespace
+   * @param namespace
+   * @return list of {@link ArtifactInfo}
+   * @throws Exception
+   */
+  public List<ArtifactInfo> getArtifactsInfo(NamespaceId namespace) throws Exception {
+    final List<ArtifactDetail> artifactDetails = artifactStore.getArtifacts(namespace);
+
+    List<ArtifactInfo> artifactInfoList =
+      Lists.transform(artifactDetails, new Function<ArtifactDetail, ArtifactInfo>() {
+        @Nullable
+        @Override
+        public ArtifactInfo apply(@Nullable ArtifactDetail input) {
+          // transform artifactDetail to artifactInfo
+          ArtifactId artifactId = input.getDescriptor().getArtifactId();
+          return new ArtifactInfo(artifactId.getName(), artifactId.getVersion().getVersion(), artifactId.getScope(),
+                                  input.getMeta().getClasses(), input.getMeta().getProperties(),
+                                  input.getMeta().getUsableBy());
+        }
+      });
+    return Collections.unmodifiableList(filterAuthorizedArtifactInfos(artifactInfoList, namespace));
+  }
+
   // convert details to summaries (to hide location and other unnecessary information)
   private List<ArtifactSummary> convertAndAdd(List<ArtifactSummary> summaries, Iterable<ArtifactDetail> details) {
     for (ArtifactDetail detail : details) {
@@ -799,6 +823,28 @@ public class ArtifactRepository {
           // no authorization on system artifacts
           return ArtifactScope.SYSTEM.equals(artifactSummary.getScope()) ||
             filter.apply(namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()));
+        }
+      })
+    );
+  }
+
+  /**
+   * Filter a list of {@link ArtifactInfo} that ensures the logged-in user has a {@link Action privilege} on
+   *
+   * @param artifacts the {@link List<ArtifactInfo>} to filter with
+   * @param namespace namespace of the artifacts
+   * @return filtered list of {@link ArtifactInfo}
+   */
+  private List<ArtifactInfo> filterAuthorizedArtifactInfos(List<ArtifactInfo> artifacts,
+                                                           final NamespaceId namespace) throws Exception {
+    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(authenticationContext.getPrincipal());
+    return Lists.newArrayList(
+      Iterables.filter(artifacts, new com.google.common.base.Predicate<ArtifactInfo>() {
+        @Override
+        public boolean apply(ArtifactInfo artifactInfo) {
+          // no authorization on system artifacts
+          return ArtifactScope.SYSTEM.equals(artifactInfo.getScope()) ||
+            filter.apply(namespace.artifact(artifactInfo.getName(), artifactInfo.getVersion()));
         }
       })
     );

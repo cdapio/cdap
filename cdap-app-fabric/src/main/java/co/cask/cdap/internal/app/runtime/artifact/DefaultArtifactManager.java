@@ -16,57 +16,60 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.artifact.ArtifactInfo;
 import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.DirectoryClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * Artifact store read only
+ * Implementation for {@link co.cask.cdap.api.artifact.ArtifactManager}
+ * communicating with {@link co.cask.cdap.gateway.handlers.ArtifactHttpHandler} and returning artifact info.
  */
 public class DefaultArtifactManager {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultArtifactManager.class);
+  private static final Gson GSON = new Gson();
 
-  private final ArtifactStore artifactStore;
-  private final AuthorizationEnforcer authorizationEnforcer;
-  private final AuthenticationContext authenticationContext;
+  private final DiscoveryServiceClient discoveryServiceClient;
   private final File tmpDir;
   private final ClassLoader bootstrapClassLoader;
+  private final LocationFactory locationFactory;
 
-  @VisibleForTesting
   @Inject
-  public DefaultArtifactManager(CConfiguration cConf,
-                                ArtifactStore artifactStore, AuthorizationEnforcer authorizationEnforcer,
-                                AuthenticationContext authenticationContext) {
-    this.artifactStore = artifactStore;
-    this.authorizationEnforcer = authorizationEnforcer;
-    this.authenticationContext = authenticationContext;
+  public DefaultArtifactManager(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
+                                LocationFactory locationFactory) {
+    this.discoveryServiceClient = discoveryServiceClient;
+    this.locationFactory = locationFactory;
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.tmpDir = DirUtils.createTempDir(tmpDir);
@@ -75,63 +78,95 @@ public class DefaultArtifactManager {
     this.bootstrapClassLoader = new URLClassLoader(new URL[0], null);
   }
 
-  public List<ArtifactInfo> listArtifacts(NamespaceId namespaceId) throws IOException {
-    List<ArtifactDetail> artifactDetails = artifactStore.getArtifacts(namespaceId);
-    return Lists.transform(artifactDetails, new Function<ArtifactDetail, ArtifactInfo>() {
-      @Nullable
-      @Override
-      public ArtifactInfo apply(@Nullable ArtifactDetail input) {
-        // transform artifactDetail to artifactInfo
-        return new ArtifactInfo(input.getDescriptor().getArtifactId(),
-                                input.getMeta().getClasses(), input.getMeta().getProperties());
-      }
-    });
-  }
-
   /**
-   * Ensures that the logged-in user has a {@link Action privilege} on the specified dataset instance.
-   *
-   * @param artifactId the {@link co.cask.cdap.proto.id.ArtifactId} to check for privileges
-   * @throws UnauthorizedException if the logged in user has no {@link Action privileges} on the specified dataset
+   * For the specified namespace, return the available artifacts in the namespace
+   * @param namespaceId namespace
+   * @return {@link List<ArtifactInfo>}
+   * @throws IOException If there are any exception while retrieving artifacts
    */
-  private void ensureAccess(co.cask.cdap.proto.id.ArtifactId artifactId) throws Exception {
-    // No authorization for system artifacts
-    if (NamespaceId.SYSTEM.equals(artifactId.getParent())) {
-      return;
+  public List<ArtifactInfo> listArtifacts(NamespaceId namespaceId) throws IOException {
+    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP);
+    URL url = createURL(new RandomEndpointStrategy(discovered).pick(1, TimeUnit.SECONDS),
+                        String.format("%s/artifact-internals/list/artifacts", namespaceId.getEntityName()));
+
+    HttpResponse httpResponse = HttpRequests.execute(HttpRequest.get(url).build());
+
+    if (httpResponse.getResponseCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
+      throw new IOException("Could not list artifacts, endpoint not found");
     }
-    Principal principal = authenticationContext.getPrincipal();
-    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!filter.apply(artifactId)) {
-      throw new UnauthorizedException(principal, artifactId);
+
+    if (isSuccessful(httpResponse.getResponseCode())) {
+      List<ArtifactInfo> artifactInfoList =
+        GSON.fromJson(httpResponse.getResponseBodyAsString(), new TypeToken<List<ArtifactInfo>>() { }.getType());
+      return artifactInfoList;
+    } else {
+      throw new IOException(String.format("Exception while getting artifacts list %s",
+                                          httpResponse.getResponseBodyAsString()));
     }
   }
 
+  private boolean isSuccessful(int responseCode) {
+    return responseCode == 200;
+  }
+
+  @Nullable
+  private URL createURL(@Nullable Discoverable discoverable, String pathSuffix) throws IOException {
+    if (discoverable == null) {
+      return null;
+    }
+    InetSocketAddress address = discoverable.getSocketAddress();
+    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
+      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
+
+    String path = String.format("%s%s:%d%s/namespaces/%s", scheme,
+                                address.getHostName(), address.getPort(),
+                                Constants.Gateway.API_VERSION_3, pathSuffix);
+
+    return new URL(path);
+  }
 
   /**
    * Create a class loader with artifact jar unpacked contents and parent for this classloader is the supplied
    * parentClassLoader, if that parent classloader is null, bootstrap classloader is used as parent.
    * This is a closeabled classloader, caller should call close when he is done using it, during close directory
    * cleanup will be performed.
-   * @param namespace
-   * @param artifactInfo
-   * @param parentClassLoader
-   * @return CloseableClassLoader
-   * @throws Exception if artifact is not found or there were any error while getting artifact or if its unauthorized
+   * @param namespace artifact namespace
+   * @param artifactInfo artifact info whose artiact will be unpacked to create classloader
+   * @param parentClassLoader  optional parent classloader, if null bootstrap classloader will be used
+   * @return CloseableClassLoader call close on this CloseableClassLoader for cleanup
+   * @throws IOException if artifact is not found or there were any error while getting artifact
    */
   public CloseableClassLoader createClassLoader(
-    NamespaceId namespace, ArtifactInfo artifactInfo, @Nullable ClassLoader parentClassLoader) throws Exception {
+    NamespaceId namespace, ArtifactInfo artifactInfo, @Nullable ClassLoader parentClassLoader) throws IOException {
 
-    ensureAccess(new ArtifactId(namespace.getNamespace(), artifactInfo.getName(), artifactInfo.getVersion()));
-    ArtifactDetail artifactDetail = artifactStore.getArtifact(
-      new co.cask.cdap.proto.id.ArtifactId(namespace.getNamespace(),
-                                           artifactInfo.getName(), artifactInfo.getVersion()).toId());
+    ServiceDiscovered discovered = discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP);
+    URL url = createURL(new RandomEndpointStrategy(discovered).pick(1, TimeUnit.SECONDS),
+                        String.format("%s/artifact-internals/artifacts/%s/versions/%s/location",
+                                      namespace.getEntityName(), artifactInfo.getName(), artifactInfo.getVersion()));
 
-    final File unpackedDir = DirUtils.createTempDir(tmpDir);
-    BundleJarUtil.unJar(artifactDetail.getDescriptor().getLocation(), unpackedDir);
+    HttpResponse httpResponse = HttpRequests.execute(HttpRequest.get(url).build());
 
-    return new CloseableClassLoader(
-      new DirectoryClassLoader(unpackedDir, parentClassLoader == null ? bootstrapClassLoader : parentClassLoader),
-      new DeleteContents(unpackedDir));
+    if (httpResponse.getResponseCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
+      throw new IOException("Could not get artifact detail, endpoint not found");
+    }
+
+    if (isSuccessful(httpResponse.getResponseCode())) {
+      String path = httpResponse.getResponseBodyAsString();
+      Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
+      if (!location.exists()) {
+        throw new IOException(String.format("Artifact Location does not exist %s for artifact %s version %s",
+                                            path, artifactInfo.getName(), artifactInfo.getVersion()));
+      }
+      final File unpackedDir = DirUtils.createTempDir(tmpDir);
+      BundleJarUtil.unJar(location, unpackedDir);
+
+      return new CloseableClassLoader(
+        new DirectoryClassLoader(unpackedDir, parentClassLoader == null ? bootstrapClassLoader : parentClassLoader),
+        new DeleteContents(unpackedDir));
+    } else {
+      throw new IOException(String.format("Exception while getting artifacts list %s",
+                                          httpResponse.getResponseBodyAsString()));
+    }
   }
 
   class DeleteContents implements Closeable {
