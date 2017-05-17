@@ -53,6 +53,8 @@
     <value>spark1_2.10</value>
     <description>
       Spark compatibility version. Must be 'spark1_2.10' or 'spark2_2.11'.
+      This is only used in standalone mode. In distributed mode, the spark
+      version will be automatically detected.
     </description>
   </property>
 

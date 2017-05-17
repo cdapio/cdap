@@ -378,8 +378,12 @@
                     </filter>
                   </filters>
                   <outputFile>${project.build.directory}/libexec/${project.groupId}.spark-assembly-${spark2.version}.jar</outputFile>
-                  <!-- Needed to merge akka config files -->
                   <transformers>
+                    <!-- Needed to merge data source service loaders, otherwise 'libsvm' format doesn't work -->
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                      <resource>META-INF/services/org.apache.spark.sql.sources.DataSourceRegister</resource>
+                    </transformer>
+                    <!-- Needed to merge akka config files -->
                     <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                       <resource>reference.conf</resource>
                     </transformer>
