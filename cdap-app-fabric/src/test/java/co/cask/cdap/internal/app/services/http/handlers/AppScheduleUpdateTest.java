@@ -81,7 +81,6 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
 
-
     Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
 
     actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
@@ -95,7 +94,6 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
 
-
     Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
 
     actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
@@ -105,5 +103,4 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
     // workflow is deleted, so the schedules will be deleted now
     Assert.assertEquals(0, actualSchSpecs.size());
   }
-
 }

@@ -17,12 +17,12 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.AppWithFrequentScheduledWorkflows;
-import co.cask.cdap.AppWithMultipleWorkflows;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -47,6 +47,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.proto.id.WorkflowId;
+import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
@@ -55,6 +56,7 @@ import org.apache.tephra.TransactionFailureException;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -197,6 +199,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   }
 
   @Test
+  @Category(XSlowTests.class)
   public void testRunScheduledJobs() throws Exception {
     messagingService = getInjector().getInstance(MessagingService.class);
     final Scheduler scheduler = getInjector().getInstance(Scheduler.class);
@@ -204,8 +207,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     dataEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
     store = getInjector().getInstance(Store.class);
     // Deploy an app with default version
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appwithmultipleworkflows", VERSION1);
-    addAppArtifact(artifactId, AppWithMultipleWorkflows.class);
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appwithfrequentschedules", VERSION1);
+    addAppArtifact(artifactId, AppWithFrequentScheduledWorkflows.class);
     AppRequest<? extends Config> appRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
     deploy(APP_ID, appRequest);
@@ -230,10 +233,12 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       if (sleepTime > 0) {
         Thread.sleep(TimeUnit.SECONDS.toMillis(75) - elapsedTime);
       }
-      Assert.assertEquals(1, store.getRuns(SCHEDULED_WORKFLOW_1, ProgramRunStatus.COMPLETED, 0,
-                                           Long.MAX_VALUE, Integer.MAX_VALUE).size());
-      Assert.assertEquals(1, store.getRuns(SCHEDULED_WORKFLOW_2, ProgramRunStatus.COMPLETED, 0,
-                                           Long.MAX_VALUE, Integer.MAX_VALUE).size());
+      // Both workflows must run at least once.
+      // If the testNewPartition() loop took longer than expected, it may be more (quartz fired multiple times)
+      Assert.assertTrue(0 < store.getRuns(SCHEDULED_WORKFLOW_1, ProgramRunStatus.COMPLETED, 0,
+                                          Long.MAX_VALUE, Integer.MAX_VALUE).size());
+      Assert.assertTrue(0 < store.getRuns(SCHEDULED_WORKFLOW_2, ProgramRunStatus.COMPLETED, 0,
+                                          Long.MAX_VALUE, Integer.MAX_VALUE).size());
     } finally {
       if (scheduler instanceof Service) {
         ((Service) scheduler).stopAndWait();
@@ -270,7 +275,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   }
 
   private void publishNotification(TopicId topicId, final ProgramId programId, final Scheduler scheduler)
-    throws TopicNotFoundException, IOException, TransactionFailureException, AlreadyExistsException {
+    throws TopicNotFoundException, IOException, TransactionFailureException,
+    AlreadyExistsException, BadRequestException {
 
     final String name = programId.getProgram();
     final DatasetId datasetId = programId.getNamespaceId().dataset(name);

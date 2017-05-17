@@ -16,8 +16,6 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -46,11 +44,8 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
-import co.cask.cdap.proto.artifact.ArtifactVersionRange;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -113,6 +108,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final ProgramRuntimeService runtimeService;
 
   private final CConfiguration configuration;
+  private final co.cask.cdap.scheduler.Scheduler programScheduler;
   private final Scheduler scheduler;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final NamespacedLocationFactory namespacedLocationFactory;
@@ -121,12 +117,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   AppLifecycleHttpHandler(CConfiguration configuration,
-                          Scheduler scheduler, ProgramRuntimeService runtimeService,
+                          co.cask.cdap.scheduler.Scheduler programScheduler, Scheduler scheduler,
+                          ProgramRuntimeService runtimeService,
                           NamespaceQueryAdmin namespaceQueryAdmin,
                           NamespacedLocationFactory namespacedLocationFactory,
                           ApplicationLifecycleService applicationLifecycleService) {
     this.configuration = configuration;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.programScheduler = programScheduler;
     this.scheduler = scheduler;
     this.runtimeService = runtimeService;
     this.namespacedLocationFactory = namespacedLocationFactory;
@@ -511,6 +509,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             stopProgramIfRunning(programId);
             break;
           case WORKFLOW:
+            programScheduler.deleteSchedules(programId);
             scheduler.deleteSchedules(programId, SchedulableProgramType.WORKFLOW);
             break;
           case MAPREDUCE:
