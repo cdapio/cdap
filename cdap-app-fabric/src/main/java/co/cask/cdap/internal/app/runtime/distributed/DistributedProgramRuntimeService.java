@@ -24,7 +24,6 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.app.runtime.distributed.DistributedProgramControllerFactory;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -292,7 +291,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       return null;
     }
 
-    if (!(programRunner instanceof DistributedProgramControllerFactory)) {
+    if (!(programRunner instanceof DistributedProgramRunner)) {
       // This is also unexpected. If it happen, it means the CDAP core or the runtime provider extension was wrongly
       // implemented
       ResourceReport resourceReport = controller.getResourceReport();
@@ -302,8 +301,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       return null;
     }
 
-    return ((DistributedProgramControllerFactory) programRunner).createProgramController(controller,
-                                                                                         programDescriptor, runId);
+    return ((DistributedProgramRunner) programRunner).createProgramController(controller, programDescriptor, runId);
   }
 
   @Override

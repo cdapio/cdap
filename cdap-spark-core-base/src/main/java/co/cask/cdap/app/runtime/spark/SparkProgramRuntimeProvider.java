@@ -23,7 +23,6 @@ import co.cask.cdap.app.runtime.spark.distributed.DistributedSparkProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -108,9 +107,10 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
 
   @Override
   public boolean isSupported(ProgramType programType, CConfiguration cConf) {
+    // TODO: Need to check if it actually has the corresponding spark version available
     SparkCompat runtimeSparkCompat = SparkCompat.get(cConf);
     if (runtimeSparkCompat == providerSparkCompat) {
-      LOG.info("using sparkCompat {}", providerSparkCompat);
+      LOG.debug("using sparkCompat {}", providerSparkCompat);
       return true;
     }
     return false;
@@ -257,7 +257,7 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
     // This class cannot have dependency on Spark directly, hence using the class resource to discover if SparkContext
     // is there
     if (classLoader.getResource("org/apache/spark/SparkContext.class") == null) {
-      urls.add(SparkUtils.locateSparkAssemblyJar().toURI().toURL());
+      urls.add(SparkPackageUtils.locateSparkAssemblyJar().toURI().toURL());
     }
     return urls.toArray(new URL[urls.size()]);
   }

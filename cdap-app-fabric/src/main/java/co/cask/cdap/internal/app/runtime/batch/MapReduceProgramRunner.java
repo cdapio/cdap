@@ -64,6 +64,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
@@ -188,6 +189,13 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       // note: this sets logging context on the thread level
       LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
+
+      // Set the job queue to hConf if it is provided
+      Configuration hConf = new Configuration(this.hConf);
+      String schedulerQueue = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+      if (schedulerQueue != null && !schedulerQueue.isEmpty()) {
+        hConf.set(JobContext.QUEUE_NAME, schedulerQueue);
+      }
 
       Service mapReduceRuntimeService = new MapReduceRuntimeService(injector, cConf, hConf, mapReduce, spec,
                                                                     context, program.getJarLocation(), locationFactory,

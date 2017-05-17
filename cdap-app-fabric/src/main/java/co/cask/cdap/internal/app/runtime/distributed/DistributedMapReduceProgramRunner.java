@@ -16,17 +16,18 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
@@ -35,21 +36,18 @@ import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Runs Mapreduce program in distributed environment
+ * Runs MapReduce program in distributed environment
  */
-public final class DistributedMapReduceProgramRunner extends AbstractDistributedProgramRunner {
-
-  private static final Logger LOG = LoggerFactory.getLogger(DistributedMapReduceProgramRunner.class);
+public final class DistributedMapReduceProgramRunner extends DistributedProgramRunner {
 
   @Inject
   DistributedMapReduceProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
@@ -61,38 +59,47 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
   @Override
   public ProgramController createProgramController(TwillController twillController,
                                                    ProgramDescriptor programDescriptor, RunId runId) {
-    return createProgramController(twillController, programDescriptor.getProgramId(), runId);
-  }
 
-  private ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
-    return new MapReduceTwillProgramController(programId, twillController, runId).startListen();
+    return new MapReduceTwillProgramController(programDescriptor.getProgramId(), twillController, runId).startListen();
   }
 
   @Override
-  protected ProgramController launch(Program program, ProgramOptions options,
-                                     Map<String, LocalizeResource> localizeResources,
-                                     File tempDir, final ApplicationLauncher launcher) {
+  protected Map<String, ProgramTwillApplication.RunnableResource> getRunnables(Program program,
+                                                                               ProgramOptions programOptions) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
     ProgramType processorType = program.getType();
     Preconditions.checkNotNull(processorType, "Missing processor type.");
-    Preconditions.checkArgument(processorType == ProgramType.MAPREDUCE, "Only MAPREDUCE process type is supported.");
+    Preconditions.checkArgument(processorType == ProgramType.MAPREDUCE, "Only MapReduce process type is supported.");
 
     MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
-    List<String> extraClassPaths = MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
+    // Get the resource for the container that runs the mapred client that will launch the actual mapred job.
+    Map<String, String> clientArgs = RuntimeArguments.extractScope("task", "client",
+                                                                   programOptions.getUserArguments().asMap());
+    Resources resources = SystemArguments.getResources(clientArgs, spec.getDriverResources());
 
-    RunId runId = ProgramRunners.getRunId(options);
-    LOG.info("Launching MapReduce program: {}", program.getId().run(runId));
-    TwillController controller = launcher
-      .addClassPaths(extraClassPaths)
-      .addDependencies(Collections.singleton(YarnClientProtocolProvider.class))
-      .launch(new MapReduceTwillApplication(program, options.getUserArguments(),
-                                            spec, localizeResources, eventHandler));
+    Map<String, ProgramTwillApplication.RunnableResource> runnables = new HashMap<>();
+    runnables.put(spec.getName(),
+                  new ProgramTwillApplication.RunnableResource(new MapReduceTwillRunnable(spec.getName()),
+                                                               createResourceSpec(resources, 1)));
+    return runnables;
+  }
 
-    return createProgramController(controller, program.getId(), runId);
+  @Override
+  protected Map<String, LocalizeResource> getExtraLocalizeResources(Program program, File tempDir) {
+    Map<String, LocalizeResource> localizeResources = new HashMap<>();
+    MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
+    return localizeResources;
+  }
+
+  @Override
+  protected void prepareLaunch(Program program, TwillPreparer preparer) {
+    preparer
+      .withClassPaths(MapReduceContainerHelper.addMapReduceClassPath(hConf, new ArrayList<String>()))
+      .withDependencies(YarnClientProtocolProvider.class);
   }
 }

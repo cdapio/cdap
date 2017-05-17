@@ -16,7 +16,9 @@
 
 package co.cask.cdap.app.runtime.spark.distributed;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.program.Program;
@@ -25,14 +27,17 @@ import co.cask.cdap.app.runtime.ProgramClassLoaderProvider;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.spark.SparkPackageUtils;
+import co.cask.cdap.app.runtime.spark.SparkProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContextConfig;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.internal.app.runtime.ProgramRunners;
-import co.cask.cdap.internal.app.runtime.distributed.AbstractDistributedProgramRunner;
+import co.cask.cdap.common.twill.HadoopClassExcluder;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
-import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
+import co.cask.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
@@ -41,15 +46,19 @@ import co.cask.cdap.security.impersonation.SecurityUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.Collections;
+import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -57,7 +66,7 @@ import java.util.Map;
  * a YARN application to act as the Spark client. A second YARN application will be launched
  * by Spark framework as the actual Spark program execution.
  */
-public final class DistributedSparkProgramRunner extends AbstractDistributedProgramRunner
+public final class DistributedSparkProgramRunner extends DistributedProgramRunner
                                                  implements ProgramClassLoaderProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedSparkProgramRunner.class);
@@ -67,8 +76,7 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
   public DistributedSparkProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
                                        TokenSecureStoreRenewer tokenSecureStoreRenewer,
                                        Impersonator impersonator) {
-    super(twillRunner, createConfiguration(hConf, cConf, tokenSecureStoreRenewer),
-          cConf, tokenSecureStoreRenewer, impersonator);
+    super(twillRunner, hConf, cConf, tokenSecureStoreRenewer, impersonator);
   }
 
   @Override
@@ -82,9 +90,24 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
   }
 
   @Override
-  protected ProgramController launch(Program program, ProgramOptions options,
-                                     Map<String, LocalizeResource> localizeResources,
-                                     File tempDir, AbstractDistributedProgramRunner.ApplicationLauncher launcher) {
+  protected ClassAcceptor getBundlerClassAcceptor(Program program) {
+    final File sparkAssemblyJar = SparkPackageUtils.locateSparkAssemblyJar();
+    return new HadoopClassExcluder() {
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        // Exclude both hadoop and spark classes.
+        if (sparkAssemblyJar != null && sparkAssemblyJar.equals(classPathUrl)) {
+          return false;
+        }
+        return super.accept(className, classUrl, classPathUrl)
+          && !className.startsWith("org.apache.spark.");
+      }
+    };
+  }
+
+  @Override
+  protected Map<String, ProgramTwillApplication.RunnableResource> getRunnables(Program program,
+                                                                               ProgramOptions programOptions) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification for %s", program.getId());
@@ -98,32 +121,44 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
     SparkSpecification spec = appSpec.getSpark().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing SparkSpecification for %s", program.getId());
 
-    // Localize the spark-assembly jar and spark conf zip
-    String sparkAssemblyJarName = SparkUtils.prepareSparkResources(tempDir, localizeResources);
+    Map<String, String> clientArgs = RuntimeArguments.extractScope("task", "client",
+                                                                   programOptions.getUserArguments().asMap());
+    Resources resources = SystemArguments.getResources(clientArgs, spec.getClientResources());
 
-    RunId runId = ProgramRunners.getRunId(options);
-    LOG.info("Launching Spark program: {}", program.getId().run(runId));
-    TwillController controller = launcher
-      .addClassPaths(Collections.singleton(sparkAssemblyJarName))
-      .addEnvironment(SparkUtils.getSparkClientEnv())
-      .launch(new SparkTwillApplication(program, options.getUserArguments(), spec, localizeResources, eventHandler));
-
-    return createProgramController(controller, program.getId(), runId);
+    Map<String, ProgramTwillApplication.RunnableResource> runnables = new HashMap<>();
+    runnables.put(spec.getName(), new ProgramTwillApplication.RunnableResource(new SparkTwillRunnable(spec.getName()),
+                                                                               createResourceSpec(resources, 1)));
+    return runnables;
   }
 
-  private static YarnConfiguration createConfiguration(YarnConfiguration hConf, CConfiguration cConf,
-                                                       TokenSecureStoreRenewer secureStoreRenewer) {
-    YarnConfiguration configuration = new YarnConfiguration(hConf);
-    configuration.setBoolean(SparkRuntimeContextConfig.HCONF_ATTR_CLUSTER_MODE, true);
+  @Override
+  protected Map<String, LocalizeResource> getExtraLocalizeResources(Program program, File tempDir) {
+    Map<String, LocalizeResource> localizeResources = new HashMap<>();
+    SparkPackageUtils.prepareSparkResources(tempDir, localizeResources);
+    return localizeResources;
+  }
+
+  @Override
+  protected void prepareLaunch(Program program, TwillPreparer preparer) {
+    preparer
+      .withClassPaths(SparkPackageUtils.locateSparkAssemblyJar().getName())
+      .withDependencies(SparkProgramRuntimeProvider.class)
+      .withEnv(SparkPackageUtils.getSparkClientEnv());
+  }
+
+  @Override
+  protected Configuration createContainerHConf(Program program, Configuration hConf) {
+    Configuration result = super.createContainerHConf(program, hConf);
+    result.setBoolean(SparkRuntimeContextConfig.HCONF_ATTR_CLUSTER_MODE, true);
 
     if (SecurityUtil.isKerberosEnabled(cConf)) {
       // Need to divide the interval by 0.8 because Spark logic has a 0.8 discount on the interval
       // If we don't offset it, it will look for the new credentials too soon
       // Also add 5 seconds to the interval to give master time to push the changes to the Spark client container
-      configuration.setLong(SparkRuntimeContextConfig.HCONF_ATTR_CREDENTIALS_UPDATE_INTERVAL_MS,
+      result.setLong(SparkRuntimeContextConfig.HCONF_ATTR_CREDENTIALS_UPDATE_INTERVAL_MS,
                             (long) ((secureStoreRenewer.getUpdateInterval() + 5000) / 0.8));
     }
-    return configuration;
+    return result;
   }
 
   @Override

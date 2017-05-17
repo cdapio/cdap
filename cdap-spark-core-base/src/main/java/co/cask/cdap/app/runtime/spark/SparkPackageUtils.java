@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.spark;
+package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.DirUtils;
@@ -46,12 +46,11 @@ import javax.annotation.Nullable;
 
 /**
  * A utility class to help determine Spark supports and locating Spark jar.
- * TODO: CDAP-5506. Ideally this class shouldn't be in app-fabric, but should be in spark-core.
- *
+ * This class shouldn't use any classes from Spark/Scala.
  */
-public final class SparkUtils {
+public final class SparkPackageUtils {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SparkUtils.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SparkPackageUtils.class);
 
   // The prefix for spark environment variable names. It is being setup by the startup script.
   private static final String SPARK_ENV_PREFIX = "_SPARK_";
@@ -170,7 +169,7 @@ public final class SparkUtils {
     if (System.getenv().containsKey(ApplicationConstants.Environment.HADOOP_CONF_DIR.key())) {
       hadoopConfDir = new File(System.getenv(ApplicationConstants.Environment.HADOOP_CONF_DIR.key()));
     } else {
-      URL yarnSiteLocation = SparkUtils.class.getClassLoader().getResource("yarn-site.xml");
+      URL yarnSiteLocation = SparkPackageUtils.class.getClassLoader().getResource("yarn-site.xml");
       if (yarnSiteLocation != null) {
         try {
           hadoopConfDir = new File(yarnSiteLocation.toURI()).getParentFile();
@@ -262,6 +261,6 @@ public final class SparkUtils {
     return confFile == null || !confFile.isFile() ? null : confFile;
   }
 
-  private SparkUtils() {
+  private SparkPackageUtils() {
   }
 }

@@ -17,8 +17,6 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -41,40 +39,32 @@ public abstract class AbstractProgramTwillApplication implements TwillApplicatio
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramTwillApplication.class);
 
-  private final Program program;
+  private final ProgramId programId;
   private final Map<String, LocalizeResource> localizeResources;
   private final EventHandler eventHandler;
 
   /**
    * Constructor.
    *
-   * @param program represents the program to be launched in Twill
+   * @param programId the program of the program that is going to be launch in twill.
    * @param localizeResources set of resources to be localized to the Twill container
    * @param eventHandler An {@link EventHandler} for the Twill application which will be set to the
    *                     Twill application specification
    */
-  protected AbstractProgramTwillApplication(Program program,
+  protected AbstractProgramTwillApplication(ProgramId programId,
                                             Map<String, LocalizeResource> localizeResources,
                                             EventHandler eventHandler) {
-    this.program = program;
+    this.programId = programId;
     this.localizeResources = ImmutableMap.copyOf(localizeResources);
     this.eventHandler = eventHandler;
-    // sanity check, that should not fail, unless there's a bug elsewhere in the code
-    Preconditions.checkArgument(getType().equals(program.getType()),
-                                "Expected=%s, actual=%s", getType(), program.getType());
   }
 
   /**
    * Returns the program id of the program represented by this {@link TwillApplication}.
    */
   public final ProgramId getProgramId() {
-    return program.getId();
+    return programId;
   }
-
-  /**
-   * Returns type of the program started by this {@link TwillApplication}.
-   */
-  protected abstract ProgramType getType();
 
   /**
    * Adds {@link TwillRunnable} to the application.
@@ -107,7 +97,7 @@ public abstract class AbstractProgramTwillApplication implements TwillApplicatio
     addRunnables(runnables);
 
     Builder.MoreRunnable moreRunnable = Builder.with()
-      .setName(TwillAppNames.toTwillAppName(program.getId()))
+      .setName(TwillAppNames.toTwillAppName(programId))
       .withRunnable();
 
     Builder.RunnableSetter runnableSetter = null;
@@ -136,7 +126,7 @@ public abstract class AbstractProgramTwillApplication implements TwillApplicatio
 
     Builder.MoreFile moreFile = null;
     for (Map.Entry<String, LocalizeResource> entry : localizeResources.entrySet()) {
-      LOG.debug("Localizing file for {}: {} {} {}", program.getName(), entry.getKey(), entry.getValue());
+      LOG.debug("Localizing file for {}: {} {} {}", programId, entry.getKey(), entry.getValue());
       moreFile = fileAdder.add(entry.getKey(), entry.getValue().getURI(), entry.getValue().isArchive());
       fileAdder = moreFile;
     }

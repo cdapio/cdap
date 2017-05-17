@@ -68,12 +68,12 @@ public class DistributedProgramRunnerTxTimeoutTest {
   private static Program spark = createProgram(ProgramType.SPARK, "spark");
   private static Program workflow = createProgram(ProgramType.WORKER, "workflow");
 
-  private static AbstractDistributedProgramRunner flowRunner;
-  private static AbstractDistributedProgramRunner serviceRunner;
-  private static AbstractDistributedProgramRunner workerRunner;
-  private static AbstractDistributedProgramRunner mapreduceRunner;
-  private static AbstractDistributedProgramRunner sparkRunner;
-  private static AbstractDistributedProgramRunner workflowRunner;
+  private static DistributedProgramRunner flowRunner;
+  private static DistributedProgramRunner serviceRunner;
+  private static DistributedProgramRunner workerRunner;
+  private static DistributedProgramRunner mapreduceRunner;
+  private static DistributedProgramRunner sparkRunner;
+  private static DistributedProgramRunner workflowRunner;
 
   @BeforeClass
   public static void setup() {
