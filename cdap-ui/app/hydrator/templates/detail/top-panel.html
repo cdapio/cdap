@@ -242,8 +242,9 @@
       apply-runtime-arguments="TopPanelCtrl.applyRuntimeArguments()"
       resolved-macros="TopPanelCtrl.resolvedMacros"
       convert-runtime-args-to-macros="TopPanelCtrl.convertRuntimeArgsToMacros()"
-      run-pipeline="TopPanelCtrl.startPipeline()"
+      run-pipeline="TopPanelCtrl.startOrSchedulePipeline()"
       pipeline-name="{{TopPanelCtrl.app.name}}"
+      pipeline-action="{{TopPanelCtrl.runPlayer.action}}"
       on-close="TopPanelCtrl.runPlayer.view = false; TopPanelCtrl.runPlayer.action = null"
       namespace-id="{{TopPanelCtrl.$state.params.namespace}}">
     </my-pipeline-configurations>
