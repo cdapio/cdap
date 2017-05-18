@@ -19,7 +19,7 @@ package co.cask.cdap.examples.dtree;
 import co.cask.cdap.api.spark.AbstractSpark;
 
 /**
- * Spark Client. Sets up the Main class.
+ * Spark Client that sets up the Main class.
  */
 public class ModelTrainer extends AbstractSpark {
   public static final String NAME = "ModelTrainer";

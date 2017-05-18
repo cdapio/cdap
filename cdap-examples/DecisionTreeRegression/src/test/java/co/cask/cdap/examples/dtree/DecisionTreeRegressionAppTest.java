@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Decision Tree tests.
+ * Decision Tree Example tests.
  */
 public class DecisionTreeRegressionAppTest extends TestBase {
   private static final Gson GSON = new Gson();

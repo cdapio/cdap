@@ -26,7 +26,7 @@ import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 
 /**
  * Application that trains a decision tree regression model.
- * Consists of a Service that is used to upload training data, and a model trainer Spark program.
+ * Consists of a service used to upload training data and a Spark program model trainer.
  */
 public class DecisionTreeRegressionApp extends AbstractApplication {
   public static final String TRAINING_DATASET = "trainingData";
