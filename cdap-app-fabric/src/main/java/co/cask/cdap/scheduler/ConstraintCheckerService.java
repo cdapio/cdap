@@ -29,6 +29,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.AbstractCheckableConstraint;
@@ -37,20 +38,21 @@ import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintResult;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionSystemClient;
@@ -58,9 +60,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -69,6 +73,9 @@ import java.util.concurrent.TimeUnit;
  */
 class ConstraintCheckerService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ConstraintCheckerService.class);
+
+  private static final Gson GSON = new Gson();
+  private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
   private final Transactional transactional;
   private final DatasetFramework datasetFramework;
@@ -238,7 +245,7 @@ class ConstraintCheckerService extends AbstractIdleService {
       readyJobs.add(job);
     }
 
-    private boolean runReadyJobs() throws IOException, DatasetManagementException {
+    private boolean runReadyJobs() throws Exception {
       Iterator<Job> readyJobsIter = readyJobs.iterator();
       while (readyJobsIter.hasNext() && !stopping) {
         Job job = readyJobsIter.next();
@@ -253,10 +260,26 @@ class ConstraintCheckerService extends AbstractIdleService {
 
         if (storedJob.getState() == Job.State.PENDING_LAUNCH) {
           ProgramSchedule schedule = job.getSchedule();
+          ProgramId programId = schedule.getProgramId();
+          Map<String, String> userArgs = Maps.newHashMap();
+          Map<String, String> systemArgs = Maps.newHashMap();
+          Map<String, String> notificationProperties = job.getNotifications().get(0).getProperties();
+          String userOverridesString = notificationProperties.get(ProgramOptionConstants.USER_OVERRIDES);
+          if (userOverridesString != null) {
+            Map<String, String> userOverrides = GSON.fromJson(userOverridesString, STRING_STRING_MAP);
+            userArgs.putAll(userOverrides);
+          }
+          userArgs.putAll(schedule.getProperties());
+          userArgs.putAll(propertiesResolver.getUserProperties(programId.toId()));
+
+          String systemOverridesString = notificationProperties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
+          if (systemOverridesString != null) {
+            Map<String, String> systemOverrides = GSON.fromJson(systemOverridesString, STRING_STRING_MAP);
+            systemArgs.putAll(systemOverrides);
+          }
+          systemArgs.putAll(propertiesResolver.getSystemProperties(programId.toId()));
           try {
-            // TODO: Temporarily execute scheduled program without any checks. Need to check appSpec, scheduleSpec
-            taskRunner.execute(schedule.getProgramId(), ImmutableMap.<String, String>of(),
-                               ImmutableMap.<String, String>of());
+            taskRunner.execute(programId, systemArgs, userArgs);
             LOG.info("Successfully started program {} in schedule {}.", schedule.getProgramId(), schedule.getName());
           } catch (Exception e) {
             LOG.warn("Failed to run program {} in schedule {}. Skip running this program.",

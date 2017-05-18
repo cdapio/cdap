@@ -16,13 +16,11 @@
 
 package co.cask.cdap.app.preview;
 
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.preview.PreviewStore;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.config.PreferencesStore;
@@ -32,7 +30,6 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.inmemory.InMemoryStreamConsumerFactory;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.MockExploreClient;
-import co.cask.cdap.internal.app.AppFabricDatasetModule;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
@@ -44,14 +41,14 @@ import co.cask.cdap.internal.app.preview.DefaultDataTracerFactory;
 import co.cask.cdap.internal.app.preview.DefaultPreviewRunner;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
-import co.cask.cdap.internal.app.runtime.schedule.NoopScheduler;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.preview.DefaultPreviewStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.route.store.LocalRouteStore;
 import co.cask.cdap.route.store.RouteStore;
+import co.cask.cdap.scheduler.NoOpScheduler;
+import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
@@ -65,7 +62,6 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.multibindings.MapBinder;
 
 /**
  * Provides bindings required to create injector for running preview.
@@ -148,7 +144,9 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(PreviewRunner.class);
 
     bind(PreviewStore.class).to(DefaultPreviewStore.class).in(Scopes.SINGLETON);
-    bind(Scheduler.class).to(NoopScheduler.class);
+    bind(Scheduler.class).to(NoOpScheduler.class);
+    bind(co.cask.cdap.internal.app.runtime.schedule.Scheduler.class)
+      .to(co.cask.cdap.internal.app.runtime.schedule.NoOpScheduler.class);
 
     bind(DataTracerFactory.class).to(DefaultDataTracerFactory.class);
     expose(DataTracerFactory.class);

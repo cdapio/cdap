@@ -40,6 +40,7 @@ public class Notification {
    */
   public enum Type {
     TIME,
+    STREAM_SIZE,
     PARTITION
   }
 

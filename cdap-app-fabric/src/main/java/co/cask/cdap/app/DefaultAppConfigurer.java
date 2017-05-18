@@ -46,6 +46,7 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.flow.DefaultFlowConfigurer;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.schedule.DefaultScheduleConfigurer;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
 import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
@@ -193,10 +194,16 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
                                   "Schedule data trigger must be greater than 0.");
     }
 
+    // TODO: [CDAP-11575] Temporary solution before REST API is merged. ScheduleSpecification will be removed and
+    // the block of code below will be refactored
     ScheduleSpecification spec =
       new ScheduleSpecification(schedule, new ScheduleProgramInfo(programType, programName), properties);
 
     schedules.put(schedule.getName(), spec);
+    ScheduleCreationSpec creationSpec = Schedulers.toScheduleCreationSpec(deployNamespace.toEntityId(), schedule,
+                                                                          programName, properties);
+    Preconditions.checkArgument(null == programSchedules.put(schedule.getName(), creationSpec),
+                                "Duplicate schedule name for schedule: '%s'", schedule.getName());
   }
 
   @Override
