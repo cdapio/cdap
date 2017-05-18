@@ -96,17 +96,14 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
 
       // there isn't any way to instantiate the fileset except in a TxRunnable, so need to use a reference.
       final AtomicReference<Location> checkpointBaseRef = new AtomicReference<>();
-      try {
-        sec.execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext context) throws Exception {
-            FileSet checkpointFileSet = context.getDataset(DataStreamsApp.CHECKPOINT_FILESET);
-            checkpointBaseRef.set(checkpointFileSet.getBaseLocation());
-          }
-        });
-      } catch (TransactionFailureException e) {
-        throw TransactionUtil.propagate(e, Exception.class);
-      }
+      TransactionUtil.execute(sec, new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          FileSet checkpointFileSet = context.getDataset(DataStreamsApp.CHECKPOINT_FILESET);
+          checkpointBaseRef.set(checkpointFileSet.getBaseLocation());
+        }
+      }, Exception.class);
+
       Location pipelineCheckpointDir = checkpointBaseRef.get().append(pipelineName).append(relativeCheckpointDir);
       checkpointDir = pipelineCheckpointDir.toURI().toString();
     }

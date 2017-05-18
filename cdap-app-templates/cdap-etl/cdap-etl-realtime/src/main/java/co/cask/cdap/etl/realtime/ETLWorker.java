@@ -193,28 +193,23 @@ public class ETLWorker extends AbstractWorker {
     stateStoreKey = String.format("%s%s%s%s%s", appName, SEPARATOR, uniqueId, SEPARATOR, context.getInstanceId());
     stateStoreKeyBytes = Bytes.toBytes(stateStoreKey);
 
-    try {
-      // Cleanup the rows in statetable for runs with same app name but other runids.
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext dsContext) throws Exception {
-          KeyValueTable stateTable = dsContext.getDataset(ETLRealtimeApplication.STATE_TABLE);
-          byte[] startKey = Bytes.toBytes(String.format("%s%s", appName, SEPARATOR));
-          // Scan the table for appname: prefixes and remove rows which doesn't match the unique id of this application.
-          try (CloseableIterator<KeyValue<byte[], byte[]>> rows = stateTable.scan(startKey,
-                                                                                  Bytes.stopKeyForPrefix(startKey))) {
-            while (rows.hasNext()) {
-              KeyValue<byte[], byte[]> row = rows.next();
-              if (Bytes.compareTo(stateStoreKeyBytes, row.getKey()) != 0) {
-                stateTable.delete(row.getKey());
-              }
+    TransactionUtil.execute(getContext(), new TxRunnable() {
+      @Override
+      public void run(DatasetContext dsContext) throws Exception {
+        KeyValueTable stateTable = dsContext.getDataset(ETLRealtimeApplication.STATE_TABLE);
+        byte[] startKey = Bytes.toBytes(String.format("%s%s", appName, SEPARATOR));
+        // Scan the table for appname: prefixes and remove rows which doesn't match the unique id of this application.
+        try (CloseableIterator<KeyValue<byte[], byte[]>> rows = stateTable.scan(startKey,
+                                                                                Bytes.stopKeyForPrefix(startKey))) {
+          while (rows.hasNext()) {
+            KeyValue<byte[], byte[]> row = rows.next();
+            if (Bytes.compareTo(stateStoreKeyBytes, row.getKey()) != 0) {
+              stateTable.delete(row.getKey());
             }
           }
         }
-      });
-    } catch (TransactionFailureException e) {
-      throw TransactionUtil.propagate(e, Exception.class);
-    }
+      }
+    }, Exception.class);
 
     PipelinePhase pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), PipelinePhase.class);
     Map<String, TransformDetail> transformationMap = new HashMap<>();
@@ -314,21 +309,17 @@ public class ETLWorker extends AbstractWorker {
     Set<String> transformErrorsWithoutDataset = Sets.newHashSet();
     // Fetch SourceState from State Table.
     // Only required at the beginning since we persist the state if there is a change.
-    try {
-      context.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          KeyValueTable stateTable = context.getDataset(ETLRealtimeApplication.STATE_TABLE);
-          byte[] stateBytes = stateTable.read(stateStoreKeyBytes);
-          if (stateBytes != null) {
-            SourceState state = GSON.fromJson(Bytes.toString(stateBytes), SourceState.class);
-            currentState.setState(state);
-          }
+    TransactionUtil.execute(context, new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        KeyValueTable stateTable = context.getDataset(ETLRealtimeApplication.STATE_TABLE);
+        byte[] stateBytes = stateTable.read(stateStoreKeyBytes);
+        if (stateBytes != null) {
+          SourceState state = GSON.fromJson(Bytes.toString(stateBytes), SourceState.class);
+          currentState.setState(state);
         }
-      });
-    } catch (TransactionFailureException e) {
-      throw TransactionUtil.propagate(e);
-    }
+      }
+    });
 
     DefaultEmitter<Object> sourceEmitter = new DefaultEmitter<>();
     TrackedEmitter<Object> trackedSourceEmitter =

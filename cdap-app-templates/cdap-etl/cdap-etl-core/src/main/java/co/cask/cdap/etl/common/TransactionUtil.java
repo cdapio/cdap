@@ -15,6 +15,9 @@
  */
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.data.DatasetContext;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import org.apache.tephra.TransactionFailureException;
@@ -27,6 +30,52 @@ import org.apache.tephra.TransactionFailureException;
 public final class TransactionUtil {
 
   private TransactionUtil() {
+  }
+
+  /**
+   * Executes the given {@link TxRunnable} using the given {@link Transactional}.
+   *
+   * @param transactional the {@link Transactional} to use for transactional execution.
+   * @param runnable the {@link TxRunnable} to be executed inside a transaction
+   * @param <X> exception type of propagate type
+   * @return value returned by the given {@link TxRunnable}.
+   * @throws X if failed to execute the given {@link TxRunnable} in a transaction. If the TransactionFailureException
+   * has a cause in it, the cause is thrown as-is if it is an instance of X.
+   */
+  public static <X extends Throwable> void execute(Transactional transactional,
+                                                   final TxRunnable runnable, Class<X> Exception) throws X {
+    try {
+      transactional.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          runnable.run(context);
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw propagate(e, Exception);
+    }
+  }
+
+  /**
+   * Executes the given {@link TxRunnable} using the given {@link Transactional}.
+   *
+   * @param transactional the {@link Transactional} to use for transactional execution.
+   * @param runnable the {@link TxRunnable} to be executed inside a transaction
+   * @return value returned by the given {@link TxRunnable}.
+   * @throws RuntimeException if failed to execute the given {@link TxRunnable} in a transaction.
+   * If the TransactionFailureException has a cause in it, the cause is propagated.
+   */
+  public static void execute(Transactional transactional, final TxRunnable runnable) {
+    try {
+      transactional.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          runnable.run(context);
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw propagate(e);
+    }
   }
 
   /**

@@ -108,11 +108,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     // Execution the whole pipeline in one long transaction. This is because the Spark execution
     // currently share the same contract and API as the MapReduce one.
     // The API need to expose DatasetContext, hence it needs to be executed inside a transaction
-    try {
-      sec.execute(this);
-    } catch (TransactionFailureException e) {
-      throw TransactionUtil.propagate(e, Exception.class);
-    }
+    TransactionUtil.execute(sec, this, Exception.class);
   }
 
   @Override

@@ -74,16 +74,12 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
       LOG.debug("Dataset with name {} already created. Hence not creating the external dataset.", referenceName);
     }
 
-    try {
-      sec.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          context.getDataset(referenceName);
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw TransactionUtil.propagate(e, DatasetManagementException.class);
-    }
+    TransactionUtil.execute(sec, new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        context.getDataset(referenceName);
+      }
+    }, DatasetManagementException.class);
   }
 
   @Override

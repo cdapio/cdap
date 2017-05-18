@@ -110,19 +110,15 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   public <U> SparkCollection<U> compute(final StageInfo stageInfo, SparkCompute<T, U> compute) throws Exception {
     final SparkCompute<T, U> wrappedCompute =
       new DynamicSparkCompute<>(new DynamicDriverContext(stageInfo, sec), compute);
-    try {
-      sec.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext datasetContext) throws Exception {
-          SparkExecutionPluginContext sparkPluginContext =
-            new BasicSparkExecutionPluginContext(sec, JavaSparkContext.fromSparkContext(stream.context().sparkContext()),
-                                                 datasetContext, stageInfo);
-          wrappedCompute.initialize(sparkPluginContext);
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw TransactionUtil.propagate(e, Exception.class);
-    }
+    TransactionUtil.execute(sec, new TxRunnable() {
+      @Override
+      public void run(DatasetContext datasetContext) throws Exception {
+        SparkExecutionPluginContext sparkPluginContext =
+          new BasicSparkExecutionPluginContext(sec, JavaSparkContext.fromSparkContext(stream.context().sparkContext()),
+                                               datasetContext, stageInfo);
+        wrappedCompute.initialize(sparkPluginContext);
+      }
+    }, Exception.class);
     return wrap(stream.transform(new ComputeTransformFunction<>(sec, stageInfo, wrappedCompute)));
   }
 

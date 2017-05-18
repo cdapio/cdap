@@ -353,10 +353,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // Need to wrap LinkageError. Otherwise, listeners of this Guava Service may not be called if the initialization
       // of the user program is missing dependencies (CDAP-2543)
       throw new Exception(e.getMessage(), e);
-    } catch (TransactionFailureException e) {
+    } catch (Throwable t) {
       cleanupTask.run();
       // don't log the error. It will be logged by the ProgramControllerServiceAdapter.failed()
-      throw Transactions.propagate(e, Exception.class);
+      if (t instanceof TransactionFailureException) {
+        throw Transactions.propagate((TransactionFailureException) t, Exception.class);
+      }
+      throw t;
     }
   }
 

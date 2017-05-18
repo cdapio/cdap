@@ -67,18 +67,14 @@ public class DynamicSparkCompute<T, U> extends SparkCompute<T, U> {
       delegate = pluginFunctionContext.createPlugin();
       final StageInfo stageInfo = pluginFunctionContext.getStageInfo();
       final JavaSparkExecutionContext sec = dynamicDriverContext.getSparkExecutionContext();
-      try {
-        sec.execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext datasetContext) throws Exception {
-            SparkExecutionPluginContext sparkPluginContext =
-              new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageInfo);
-            delegate.initialize(sparkPluginContext);
-          }
-        });
-      } catch (TransactionFailureException e) {
-        throw TransactionUtil.propagate(e, Exception.class);
-      }
+      TransactionUtil.execute(sec, new TxRunnable() {
+        @Override
+        public void run(DatasetContext datasetContext) throws Exception {
+          SparkExecutionPluginContext sparkPluginContext =
+            new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageInfo);
+          delegate.initialize(sparkPluginContext);
+        }
+      }, Exception.class);
     }
   }
 }
