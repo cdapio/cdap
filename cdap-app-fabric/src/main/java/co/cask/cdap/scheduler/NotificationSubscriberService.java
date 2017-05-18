@@ -263,25 +263,20 @@ class NotificationSubscriberService extends AbstractIdleService {
       throws IOException, DatasetManagementException, NotFoundException {
 
       Map<String, String> properties = notification.getProperties();
-      ScheduleId scheduleId = ScheduleId.fromString(properties.get(ProgramOptionConstants.SCHEDULE_ID));
+      String scheduleIdString = properties.get(ProgramOptionConstants.SCHEDULE_ID);
+      if (scheduleIdString == null) {
+        LOG.warn("Cannot find schedule id in the notification with properties {}. Skipping current notification.",
+                 properties);
+        return;
+      }
+      ScheduleId scheduleId = ScheduleId.fromString(scheduleIdString);
       ProgramSchedule schedule;
       try {
         schedule = getScheduleDataset(context).getSchedule(scheduleId);
       } catch (NotFoundException e) {
-        // Cannot find the schedule from ScheduleDataset, try to find it in appSpec
-        // TODO: (CDAP-11469) No need to check appSpec once migration from DatasetBasedTimeScheduleStore is done
-        ApplicationSpecification appSpec = store.getApplication(scheduleId.getParent());
-        if (appSpec == null) {
-          LOG.warn("Cannot find application '{}' for schedule '{}' in AppMetadataStore",
-                    scheduleId.getParent(), scheduleId);
-          return;
-        }
-        ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleId.getSchedule());
-        if (scheduleSpec == null) {
-          LOG.debug("Cannot find schedule '{}' in application '{}'", scheduleId.getSchedule(), scheduleId.getParent());
-          return;
-        }
-        schedule = Schedulers.toProgramSchedule(scheduleId.getParent(), scheduleSpec);
+        LOG.warn("Cannot find schedule {}. Skipping current notification with properties {}.",
+                 scheduleId, properties, e);
+        return;
       }
       jobQueue.addNotification(schedule, notification);
     }
