@@ -24,7 +24,11 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
+import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProtoConstraintCodec;
+import co.cask.cdap.proto.ProtoTriggerCodec;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ScheduleInstanceConfiguration;
 import co.cask.cdap.proto.ScheduledRuntime;
@@ -56,6 +60,8 @@ public class ScheduleClient {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
+    .registerTypeAdapter(Constraint.class, new ProtoConstraintCodec())
     .create();
 
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
