@@ -44,6 +44,7 @@ public class TimeRangeConstraint extends AbstractCheckableConstraint {
     calendar = Calendar.getInstance(timeZone);
 
     DateFormat formatter = new SimpleDateFormat("HH:mm");
+    formatter.setTimeZone(timeZone);
     try {
       Date startDate = formatter.parse(startTime);
       calendar.setTime(startDate);
