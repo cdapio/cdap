@@ -25,7 +25,8 @@ import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import DataPrepHome from 'components/DataPrepHome';
 import FileBrowser from 'components/FileBrowser';
 import DataPrepConnections from 'components/DataPrepConnections';
-
+import DataPrepBrowser from 'components/DataPrep/DataPrepBrowser';
+import {setActiveBrowser, setDatabaseProperties} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 export default class Home extends Component {
   componentWillMount() {
     NamespaceStore.dispatch({
@@ -46,6 +47,20 @@ export default class Home extends Component {
           <Route exact path="/ns/:namespace/dataprep" component={DataPrepHome} />
           <Route exact path="/ns/:namespace/dataprep/:workspaceId" component={DataPrepHome} />
           <Route path="/ns/:namespace/file" component={FileBrowser} />
+          <Route path="/ns/:namespace/databasebrowser" render={() => {
+            setActiveBrowser({ name: 'database' });
+            setDatabaseProperties({
+              properties: {
+                connectionString: 'jdbc:mysql://localhost:3306/test',
+                userName: 'root',
+                password: 'root',
+                databasename: 'test'
+              }
+            });
+            return (
+              <DataPrepBrowser />
+            );
+          }} />
           <Route path="/ns/:namespace/connections" component={DataPrepConnections} />
           <Route component={Page404} />
         </Switch>

@@ -359,6 +359,25 @@ features:
       noColumns: No Columns
     DataPrepTable:
       columnEditWarningMessage: 'A column with the same name already exists. Pick a new name, or click "Apply" to overwrite'
+    DataPrepBrowser:
+      DatabaseBrowser:
+        EmptyMessage:
+          clearLabel: Clear
+          suggestionTitle: "You can try to:"
+          suggestion1: your search
+          title: 'No match found for "{searchText}"'
+        NoPlugin:
+          title: '"mysql" Plugin not installed'
+          suggestion1: Please install "mysql" plugin manually or via market.
+        searchPlaceholder: Search table name
+        table:
+          colcountlabel: NUMBER OF COLUMMNS
+          namecollabel: NAME
+        tableCount:
+          0: No Tables
+          1: '{count} Table'
+          _: "{context.count} Tables"
+        title: Select Table
     Directives:
       apply: Apply
       cancel: Cancel

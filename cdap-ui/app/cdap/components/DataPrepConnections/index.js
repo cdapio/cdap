@@ -18,7 +18,8 @@ import React, { Component } from 'react';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
 import {Route, NavLink, Redirect} from 'react-router-dom';
-import FileBrowser from 'components/FileBrowser';
+import DataPrepBrowser from 'components/DataPrep/DataPrepBrowser';
+import {setActiveBrowser} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 import LoadingSVG from 'components/LoadingSVG';
@@ -53,6 +54,9 @@ export default class DataPrepConnections extends Component {
 
   componentWillMount() {
     this.checkBackendUp();
+    // FIXME: This is temporary. Based on standalone or cluster we will have this default
+    // to different things. For now it defaults to browser.
+    setActiveBrowser({name: 'file'});
   }
 
   checkBackendUp() {
@@ -177,7 +181,7 @@ export default class DataPrepConnections extends Component {
           <Route path={`${BASEPATH}/browser`}
             render={({match, location}) => {
               return (
-                <FileBrowser
+                <DataPrepBrowser
                   match={match}
                   location={location}
                   toggle={this.toggleSidePanel}

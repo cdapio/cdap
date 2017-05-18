@@ -46,7 +46,11 @@ const MyDataPrepApi = {
   // File System Browser
   explorer: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/explorer/fs`),
   readFile: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/explorer/fs/read`),
-  getSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/explorer/fs/specification`)
+  getSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/explorer/fs/specification`),
+
+  // Database Browser
+  listTables: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/methods/list`),
+  readTable: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/methods/execute`)
 };
 
 export default MyDataPrepApi;
