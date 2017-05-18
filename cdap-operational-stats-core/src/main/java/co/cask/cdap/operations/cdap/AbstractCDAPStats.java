@@ -16,6 +16,8 @@
 
 package co.cask.cdap.operations.cdap;
 
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.operations.AbstractOperationalStats;
 import co.cask.cdap.operations.OperationalStats;
 import com.google.common.annotations.VisibleForTesting;
@@ -30,5 +32,13 @@ public abstract class AbstractCDAPStats extends AbstractOperationalStats {
   @Override
   public String getServiceName() {
     return SERVICE_NAME;
+  }
+
+  protected long aggregateMetricValue(MetricTimeSeries metricTimeSery) {
+    long aggregateValue = 0L;
+    for (TimeValue timeValue : metricTimeSery.getTimeValues()) {
+      aggregateValue += timeValue.getValue();
+    }
+    return aggregateValue;
   }
 }

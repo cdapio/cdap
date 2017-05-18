@@ -140,14 +140,6 @@ public class CDAPLoad extends AbstractCDAPStats implements CDAPConnectionsMXBean
     }
   }
 
-  private long aggregateMetricValue(MetricTimeSeries metricTimeSery) {
-    long aggregateValue = 0L;
-    for (TimeValue timeValue : metricTimeSery.getTimeValues()) {
-      aggregateValue += timeValue.getValue();
-    }
-    return aggregateValue;
-  }
-
   private void reset() {
     totalRequests = 0;
     successful = 0;

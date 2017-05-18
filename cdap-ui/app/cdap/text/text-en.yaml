@@ -184,7 +184,6 @@ features:
         Running: Running
         ServerErrors: Server Errors
         Snapshots: Snapshots
-        SnapshotTime: Last Snapshot Time
         Stopped: Stopped
         Streams: Streams
         StreamViews: Stream Views
@@ -205,7 +204,6 @@ features:
         UsedVCores: Used Virtual Cores
         UnusableNodes: Unusable Nodes
         UnusableContainers: Unusable Containers
-        VisibilityUpperBound: Visibility Upper Bound
         WarnLogs: Warnings in Logs
         WritePointer: Write Pointer
     PageTitle: CDAP | Management
