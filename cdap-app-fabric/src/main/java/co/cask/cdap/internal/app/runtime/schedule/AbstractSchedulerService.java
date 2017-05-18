@@ -23,6 +23,7 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.ProgramType;
@@ -184,6 +185,13 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     // the update of schedule will delete and a create new one so we have to suspend it if it was suspended
     if (scheduleState == ScheduleState.SUSPENDED) {
       suspendSchedule(program, programType, schedule.getName());
+    }
+  }
+
+  @Override
+  public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    if (schedule.getTrigger() instanceof TimeTrigger) {
+      timeScheduler.deleteProgramSchedule(schedule);
     }
   }
 

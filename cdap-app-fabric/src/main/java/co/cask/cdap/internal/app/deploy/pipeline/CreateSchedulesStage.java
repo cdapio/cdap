@@ -26,7 +26,6 @@ import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ScheduleType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
@@ -40,7 +39,7 @@ import java.util.Map;
 
 /**
  * This {@link co.cask.cdap.pipeline.Stage} is responsible for automatic creation of any new schedules
- * specified by the application. If the schedules already exist, it will update them. For schedule deletion see
+ * specified by the application. If the schedules already exist, they were already deleted at
  * {@link DeleteScheduleStage}. They are broken into separate stages because we want schedule creation and update to
  * happen after the app is registered in the app store as it might be possible that a schedule gets triggered instantly
  * after being added when the app is still to be registered. See CDAP-8918 for details.
@@ -73,33 +72,19 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
                                                                            input.getSpecification().getSchedules());
     for (Map.Entry<String, MapDifference.ValueDifference<ScheduleSpecification>> entry :
       mapDiff.entriesDiffering().entrySet()) {
-      // Update those schedules - the new schedules have the same IDs but different specs
+      // Update those schedules - the new schedules have the same IDs but different specs, even if their specs only
+      // differ in properties, since now properties are also stored in and retrieved from the schedule store
       ScheduleSpecification newScheduleSpec = entry.getValue().rightValue();
       ScheduleSpecification oldScheduleSpec = entry.getValue().leftValue();
-      if (newScheduleSpec.getSchedule().equals(oldScheduleSpec.getSchedule())) {
-        // The schedules are exactly the same - the difference in spec might come from the properties map -
-        // hence it is useless to update the schedule
-        continue;
-      }
+
       ProgramType programType = ProgramType.valueOfSchedulableType(newScheduleSpec.getProgram().getProgramType());
       ProgramId programId = appId.program(programType, newScheduleSpec.getProgram().getProgramName());
 
-      // if the schedule differ in schedule type then we have deleted the existing one earlier in DeleteScheduleStage.
-      // create it with the new type and spec here. See CDAP-8918 for details.
-      if (ScheduleType.fromSchedule(newScheduleSpec.getSchedule()) !=
-        ScheduleType.fromSchedule(oldScheduleSpec.getSchedule())) {
+      // we have deleted the existing one earlier in DeleteScheduleStage.
+      // create it with the spec here. See CDAP-8918 for details.
         LOG.debug("Redeploying schedule {} with specification {} which existed earlier with specification {}",
                   entry.getKey(), newScheduleSpec, oldScheduleSpec);
-        createSchedule(programId, newScheduleSpec);
-        continue;
-      }
-
-      scheduler.updateSchedule(programId,
-                               newScheduleSpec.getProgram().getProgramType(),
-                               newScheduleSpec.getSchedule(), newScheduleSpec.getProperties());
-      if (oldScheduleSpec.getSchedule() instanceof TimeSchedule) {
-        programScheduler.deleteSchedule(input.getApplicationId().schedule(oldScheduleSpec.getSchedule().getName()));
-      }
+      createSchedule(programId, newScheduleSpec);
       addProgramSchedule(programId, newScheduleSpec);
     }
 
