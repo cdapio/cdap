@@ -19,6 +19,7 @@ package co.cask.cdap.app;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.flow.Flow;
@@ -27,7 +28,7 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.ScheduleConfigurer;
+import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -45,7 +46,7 @@ import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.flow.DefaultFlowConfigurer;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.schedule.DefaultScheduleConfigurer;
+import co.cask.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
@@ -60,7 +61,6 @@ import com.google.common.base.Preconditions;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -202,13 +202,30 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     schedules.put(schedule.getName(), spec);
     ScheduleCreationSpec creationSpec = Schedulers.toScheduleCreationSpec(deployNamespace.toEntityId(), schedule,
                                                                           programName, properties);
-    Preconditions.checkArgument(null == programSchedules.put(schedule.getName(), creationSpec),
-                                "Duplicate schedule name for schedule: '%s'", schedule.getName());
+    doAddSchedule(creationSpec);
+  }
+
+  private void doAddSchedule(ScheduleCreationSpec scheduleCreationSpec) {
+    // setSchedule can not be called twice on the same configurer (semantics are not defined)
+    Preconditions.checkArgument(null == programSchedules.put(scheduleCreationSpec.getName(), scheduleCreationSpec),
+                                "Duplicate schedule name for schedule: '%s'", scheduleCreationSpec.getName());
+
   }
 
   @Override
-  public ScheduleConfigurer configureWorkflowSchedule(String scheduleName, String workflowName) {
-    return new DefaultScheduleConfigurer(scheduleName, deployNamespace.toEntityId(), workflowName, programSchedules);
+  public void schedule(ScheduleCreationSpec scheduleCreationSpec) {
+    doAddSchedule(scheduleCreationSpec);
+  }
+
+  @Override
+  public ScheduleBuilder buildSchedule(String scheduleName, ProgramType schedulableProgramType,
+                                       String programName) {
+    if (ProgramType.WORKFLOW != schedulableProgramType) {
+      throw new IllegalArgumentException(String.format(
+        "Cannot schedule program %s of type %s: Only workflows can be scheduled",
+        programName, schedulableProgramType));
+    }
+    return new DefaultScheduleBuilder(scheduleName, deployNamespace.toEntityId(), programName);
   }
 
   /**

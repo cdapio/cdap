@@ -40,7 +40,7 @@ public class ProtoConstraintCodec implements JsonSerializer<ProtoConstraint>, Js
 
   private static Map<ProtoConstraint.Type, Class<? extends ProtoConstraint>> generateMap() {
     Map<ProtoConstraint.Type, Class<? extends ProtoConstraint>> map = new HashMap<>();
-    map.put(ProtoConstraint.Type.CONCURRENCY, ProtoConstraint.ConcurrenyConstraint.class);
+    map.put(ProtoConstraint.Type.CONCURRENCY, ProtoConstraint.ConcurrencyConstraint.class);
     map.put(ProtoConstraint.Type.DELAY, ProtoConstraint.DelayConstraint.class);
     map.put(ProtoConstraint.Type.LAST_RUN, ProtoConstraint.LastRunConstraint.class);
     map.put(ProtoConstraint.Type.TIME_RANGE, ProtoConstraint.TimeRangeConstraint.class);

@@ -89,6 +89,11 @@ public class TimeRangeConstraint extends ProtoConstraint.TimeRangeConstraint imp
       }
     }
 
+    // not satisfied if code execution reaches here
+    if (!waitUntilMet) {
+      return ConstraintResult.NEVER_SATISFIED;
+    }
+
     // the next satisfy time will always be later today if isStartTimeSmaller is false
     if (pastOrEqualEndRange && isStartTimeSmaller) {
       // we've past the end time range for today

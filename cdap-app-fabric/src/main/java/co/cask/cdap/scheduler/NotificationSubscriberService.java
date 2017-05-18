@@ -243,7 +243,7 @@ class NotificationSubscriberService extends AbstractIdleService {
           jobQueue.persistSubscriberState(topic, messageId);
         }
       } catch (ServiceUnavailableException | TopicNotFoundException e) {
-        SAMPLING_LOG.info("Failed to fetch from TMS. Will retry later.", e);
+        SAMPLING_LOG.warn("Failed to fetch from TMS. Will retry later.", e);
         failureCount++;
       }
       return emptyFetch;
