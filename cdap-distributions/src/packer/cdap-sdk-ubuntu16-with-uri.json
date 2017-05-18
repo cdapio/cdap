@@ -112,10 +112,10 @@
       "skip_install": true,
       "json": {
         "eclipse": {
-          "version": "Luna",
-          "release_code": "SR2",
+          "version": "Neon",
+          "release_code": "3",
           "plugins": [
-            { "http://download.eclipse.org/releases/luna": "org.eclipse.egit.feature.group" },
+            { "http://download.eclipse.org/releases/neon": "org.eclipse.egit.feature.group" },
             { "http://download.eclipse.org/technology/m2e/releases": "org.eclipse.m2e.feature.feature.group" }
           ],
           "url": "file:///tmp/eclipse.tar.gz"
