@@ -117,15 +117,12 @@ public class DefaultStore implements Store {
   private static final Gson GSON = new Gson();
   private static final Map<String, String> EMPTY_STRING_MAP = ImmutableMap.of();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private static final AtomicBoolean appMetaStoreInitialized = new AtomicBoolean(false);
-  private static final AtomicBoolean upgradeComplete = new AtomicBoolean(false);
-  private static final AtomicBoolean cacheLoaderInitialized = new AtomicBoolean(false);
 
   private final CConfiguration configuration;
   private final DatasetFramework dsFramework;
   private final Transactional transactional;
-
-  private static LoadingCache<byte[], Boolean> upgradeCacheLoader;
+  private final AtomicBoolean upgradeComplete;
+  private final LoadingCache<byte[], Boolean> upgradeCacheLoader;
 
   @Inject
   public DefaultStore(CConfiguration conf, DatasetFramework framework, TransactionSystemClient txClient) {
@@ -138,11 +135,10 @@ public class DefaultStore implements Store {
       RetryStrategies.retryOnConflict(20, 100)
     );
 
-    if (cacheLoaderInitialized.compareAndSet(false, true)) {
-      upgradeCacheLoader = CacheBuilder.newBuilder()
-        .expireAfterWrite(1, TimeUnit.MINUTES)
-        .build(new DefaultStoreUpgradeCacheLoader(transactional, dsFramework, configuration));
-    }
+    this.upgradeComplete = new AtomicBoolean(false);
+    this.upgradeCacheLoader = CacheBuilder.newBuilder()
+      .expireAfterWrite(1, TimeUnit.MINUTES)
+      .build(new DefaultStoreUpgradeCacheLoader(transactional, dsFramework, configuration, upgradeComplete));
   }
 
   // Returns true if the upgrade flag is set. Upgrade could have completed earlier than this since this flag is
@@ -165,7 +161,6 @@ public class DefaultStore implements Store {
                                                                                      DatasetManagementException {
     Table table = DatasetsUtil.getOrCreateDataset(datasetContext, dsFramework, APP_META_INSTANCE_ID,
                                                   Table.class.getName(), DatasetProperties.EMPTY);
-    appMetaStoreInitialized.compareAndSet(false, true);
     return new AppMetadataStore(table, configuration, upgradeComplete);
   }
 
@@ -920,16 +915,6 @@ public class DefaultStore implements Store {
    * @throws DatasetManagementException
    */
   public void upgrade() throws InterruptedException, IOException, DatasetManagementException {
-    // Wait until the startFlag is set, that is until the app meta store is initialized.
-    while (!appMetaStoreInitialized.get()) {
-      try {
-        TimeUnit.SECONDS.sleep(10);
-      } catch (InterruptedException ex) {
-        LOG.debug("Received an interrupt.", ex);
-        Thread.currentThread().interrupt();
-      }
-    }
-
     // If upgrade is already complete, then simply return.
     if (isUpgradeComplete()) {
       LOG.info("{} is already upgraded.", NAME);
@@ -1175,11 +1160,14 @@ public class DefaultStore implements Store {
     private final Transactional transactional;
     private final DatasetFramework dsFramework;
     private final CConfiguration cConf;
+    private final AtomicBoolean upgradeComplete;
 
-    DefaultStoreUpgradeCacheLoader(Transactional transactional, DatasetFramework dsFramework, CConfiguration cConf) {
+    DefaultStoreUpgradeCacheLoader(Transactional transactional, DatasetFramework dsFramework, CConfiguration cConf,
+                                   AtomicBoolean upgradeComplete) {
       this.transactional = transactional;
       this.dsFramework = dsFramework;
       this.cConf = cConf;
+      this.upgradeComplete = upgradeComplete;
     }
 
     @Override
@@ -1187,11 +1175,6 @@ public class DefaultStore implements Store {
       if (upgradeComplete.get()) {
         // Result flag is already set, so no need to check the table.
         return true;
-      }
-
-      if (!appMetaStoreInitialized.get()) {
-        // Not initialized yet.
-        return false;
       }
 
       try {

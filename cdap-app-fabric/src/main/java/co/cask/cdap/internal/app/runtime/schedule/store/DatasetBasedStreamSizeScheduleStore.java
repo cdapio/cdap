@@ -57,7 +57,6 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
@@ -89,7 +88,6 @@ public class DatasetBasedStreamSizeScheduleStore {
 
   private final TransactionExecutorFactory factory;
   private final ScheduleStoreTableUtil tableUtil;
-  private final AtomicBoolean storeInitialized;
 
   private LoadingCache<byte[], Boolean> upgradeCacheLoader;
   private Table table;
@@ -98,7 +96,6 @@ public class DatasetBasedStreamSizeScheduleStore {
   public DatasetBasedStreamSizeScheduleStore(TransactionExecutorFactory factory, ScheduleStoreTableUtil tableUtil) {
     this.tableUtil = tableUtil;
     this.factory = factory;
-    this.storeInitialized = new AtomicBoolean(false);
   }
 
   /**
@@ -111,8 +108,7 @@ public class DatasetBasedStreamSizeScheduleStore {
     upgradeCacheLoader = CacheBuilder.newBuilder()
       .expireAfterWrite(1, TimeUnit.MINUTES)
       // Use a new instance of table since Table is not thread safe
-      .build(new UpgradeValueLoader(NAME, factory, tableUtil.getMetaTable(), storeInitialized));
-    storeInitialized.set(true);
+      .build(new UpgradeValueLoader(NAME, factory, tableUtil.getMetaTable()));
   }
 
   /**
@@ -407,20 +403,12 @@ public class DatasetBasedStreamSizeScheduleStore {
     final AtomicInteger maxNumberUpdateRows = new AtomicInteger(1000);
     final AtomicInteger sleepTimeInSecs = new AtomicInteger(60);
     LOG.info("Starting upgrade of {}.", NAME);
-    while (!isUpgradeComplete()) {
+    while (true) {
       sleepTimeInSecs.set(60);
       try {
-        final Table finalMetaTable = metaTable;
-        factory.createExecutor(ImmutableList.of((TransactionAware) finalMetaTable))
-          .execute(new TransactionExecutor.Subroutine() {
-            @Override
-            public void apply() throws Exception {
-              if (upgradeVersionKeys(finalMetaTable, maxNumberUpdateRows.get())) {
-                // Upgrade is complete. Mark that app version upgrade is complete in the table.
-                finalMetaTable.put(APP_VERSION_UPGRADE_KEY, COLUMN, Bytes.toBytes(ProjectInfo.getVersion().toString()));
-              }
-            }
-          });
+        if (executeUpgradeInTransaction(table, maxNumberUpdateRows)) {
+          break;
+        }
       } catch (TransactionFailureException e) {
         if (e instanceof TransactionConflictException) {
           LOG.debug("Upgrade step faced Transaction Conflict exception. Retrying operation now.", e);
@@ -448,12 +436,31 @@ public class DatasetBasedStreamSizeScheduleStore {
   }
 
   // Returns true if the upgrade flag is set. Upgrade could have completed earlier than this since this flag is
-  // updated asynchronously.
+  // updated using a cache loader with a fixed timeout.
   public boolean isUpgradeComplete() {
     if (upgradeCacheLoader == null) {
       return false;
     }
     return upgradeCacheLoader.getUnchecked(APP_VERSION_UPGRADE_KEY);
+  }
+
+  private boolean executeUpgradeInTransaction(final Table table, final AtomicInteger maxNumberUpgradeRows)
+    throws TransactionFailureException, InterruptedException {
+    if (isUpgradeComplete()) {
+      return true;
+    }
+
+    factory.createExecutor(ImmutableList.of((TransactionAware) table))
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          if (upgradeVersionKeys(table, maxNumberUpgradeRows.get())) {
+            // Upgrade is complete. Mark that app version upgrade is complete in the table.
+            table.put(APP_VERSION_UPGRADE_KEY, COLUMN, Bytes.toBytes(ProjectInfo.getVersion().toString()));
+          }
+        }
+      });
+    return false;
   }
 
   // Return whether the upgrade process is complete - determined by checking if there were no rows that were

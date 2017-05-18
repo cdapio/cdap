@@ -21,6 +21,7 @@ import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeSchedule
 import co.cask.cdap.internal.app.store.DefaultStore;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.protobuf.Service;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -34,6 +35,7 @@ import java.util.concurrent.Executors;
 /**
  * {@link Service} that will start the upgrade threads of Datasets and also provides the status of upgrade.
  */
+@Singleton
 public class AppVersionUpgradeService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(AppVersionUpgradeService.class);
 

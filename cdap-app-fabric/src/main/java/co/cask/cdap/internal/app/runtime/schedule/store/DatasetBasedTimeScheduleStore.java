@@ -60,7 +60,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -79,8 +78,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
 
   private final CConfiguration cConf;
 
-  private static LoadingCache<byte[], Boolean> upgradeCacheLoader;
-  private static final AtomicBoolean cacheLoaderInitialized = new AtomicBoolean(false);
+  private volatile LoadingCache<byte[], Boolean> upgradeCacheLoader;
   private Table table;
 
   @Inject
@@ -108,12 +106,10 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     table = tableUtil.getMetaTable();
     Preconditions.checkNotNull(table, "Could not get dataset client for data set: %s",
                                ScheduleStoreTableUtil.SCHEDULE_STORE_DATASET_NAME);
-    if (cacheLoaderInitialized.compareAndSet(false, true)) {
-      upgradeCacheLoader = CacheBuilder.newBuilder()
-        .expireAfterWrite(1, TimeUnit.MINUTES)
+    upgradeCacheLoader = CacheBuilder.newBuilder()
+      .expireAfterWrite(1, TimeUnit.MINUTES)
         // Use a new instance of table since Table is not thread safe
-        .build(new UpgradeValueLoader(NAME, factory, tableUtil.getMetaTable()));
-    }
+      .build(new UpgradeValueLoader(NAME, factory, table));
   }
 
   @Override
@@ -127,7 +123,6 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     super.storeTrigger(newTrigger, replaceExisting);
     persistJobAndTrigger(null, newTrigger);
   }
-
 
   @Override
   public void storeJobsAndTriggers(Map<JobDetail, Set<? extends Trigger>> triggersAndJobs,
@@ -328,7 +323,6 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   // Persist the trigger information to dataset
   private void persistTrigger(Table table, OperableTrigger trigger,
                               Trigger.TriggerState state) {
-
     byte[][] cols = new byte[1][];
     byte[][] values = new byte[1][];
 
@@ -339,7 +333,6 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
 
   // Get schedule information from persistent store
   private void readSchedulesFromPersistentStore() throws Exception {
-
     final List<JobDetail> jobs = Lists.newArrayList();
     final List<TriggerStatusV2> triggers = Lists.newArrayList();
 
@@ -398,7 +391,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   }
 
   // Returns true if the upgrade flag is set. Upgrade could have completed earlier than this since this flag is
-  // updated asynchronously.
+  // updated by a cache loader which has fixed expiry time.
   public boolean isUpgradeComplete() {
     if (upgradeCacheLoader == null) {
       return false;

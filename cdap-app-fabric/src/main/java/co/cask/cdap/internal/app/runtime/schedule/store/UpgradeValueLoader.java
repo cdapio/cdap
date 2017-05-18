@@ -39,36 +39,24 @@ public class UpgradeValueLoader extends CacheLoader<byte[], Boolean> {
   public static final byte[] COLUMN = Bytes.toBytes('c');
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeValueLoader.class);
   private static final Logger LIMITED_LOGGER = Loggers.sampling(LOG, LogSamplers.onceEvery(100));
-  private static final ProjectInfo.Version EXPECTED_VERSION = new ProjectInfo.Version("4.1.1");
 
   private final String name;
   private final TransactionExecutorFactory factory;
   private final Table table;
-  private final AtomicBoolean startFlag;
   private final AtomicBoolean resultFlag;
 
-  UpgradeValueLoader(String name, TransactionExecutorFactory factory, Table table, AtomicBoolean startFlag) {
+  UpgradeValueLoader(String name, TransactionExecutorFactory factory, Table table) {
     this.name = name;
     this.factory = factory;
     this.table = table;
-    this.startFlag = startFlag;
     this.resultFlag = new AtomicBoolean(false);
   }
 
-  UpgradeValueLoader(String name, TransactionExecutorFactory factory, Table table) {
-    this(name, factory, table, null);
-  }
-
   @Override
-  public Boolean load(final byte[] key) throws Exception {
+  public Boolean load(final byte[] key) {
     if (resultFlag.get()) {
       // Result flag is already set, so no need to check the table.
       return true;
-    }
-
-    if (startFlag != null && !startFlag.get()) {
-      // Not initialized yet.
-      return false;
     }
 
     try {
@@ -80,7 +68,7 @@ public class UpgradeValueLoader extends CacheLoader<byte[], Boolean> {
             if (!row.isEmpty()) {
               byte[] value = row.get(COLUMN);
               ProjectInfo.Version actual = new ProjectInfo.Version(Bytes.toString(value));
-              if (actual.compareTo(EXPECTED_VERSION) >= 0) {
+              if (actual.compareTo(ProjectInfo.getVersion()) >= 0) {
                 resultFlag.set(true);
               }
             }
