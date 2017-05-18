@@ -68,21 +68,19 @@ export default function AboutPageModal({cdapVersion, isOpen, toggle}) {
             <p>
               {T.translate('features.AboutPage.copyright.firstLine')}
               <br />
-              {T.translate('features.AboutPage.copyright.secondLine')}
-              <br />
-              {T.translate('features.AboutPage.copyright.thirdLine.view')}
+              {T.translate('features.AboutPage.copyright.secondLine.view')}
               <a
                 href={termsConditionsUrl}
                 target="_blank"
               >
-                {T.translate('features.AboutPage.copyright.thirdLine.termsAndConditions')}
+                {T.translate('features.AboutPage.copyright.secondLine.termsAndConditions')}
               </a>
-              {T.translate('features.AboutPage.copyright.thirdLine.and')}
+              {T.translate('features.AboutPage.copyright.secondLine.and')}
               <a
                 href={privacyPolicyUrl}
                 target="_blank"
               >
-                {T.translate('features.AboutPage.copyright.thirdLine.privacyPolicy')}
+                {T.translate('features.AboutPage.copyright.secondLine.privacyPolicy')}
               </a>
             </p>
           </div>

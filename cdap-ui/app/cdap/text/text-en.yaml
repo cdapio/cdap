@@ -87,9 +87,8 @@ commons:
 features:
   AboutPage:
     copyright:
-      firstLine: The Cask Data Application Platform (CDAP) product is copyrighted
-      secondLine: Copyright © 2014-2017 Cask Data, Inc.
-      thirdLine:
+      firstLine: Copyright © 2014-2017 Cask Data, Inc.
+      secondLine:
         view: "View "
         termsAndConditions: Terms and Conditions
         and: " and "
@@ -787,7 +786,7 @@ features:
       app: Deployed
     errorMessage404: Sorry, we could not find {entityType} "{entityId}"
     errorMessageAuthorization: You are not authorized to view {entityType} "{entityId}"
-    errorMessageSubtitle: Please select another entity
+    errorMessageSubtitle: Select another entity
     Metadata:
       ttl: "Time To Live (TTL): "
       type: "Type: "
