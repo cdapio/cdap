@@ -92,7 +92,7 @@ public interface ApplicationConfigurer extends PluginConfigurer {
   void addWorker(Worker worker);
 
   /**
-   * Adds a {@link Schedule} to the specified program in the Application
+   * Adds a {@link Schedule} to the specified program in the Application.
    *
    * @param schedule the schedule to be included for the program
    * @param programType the type of the program
@@ -103,7 +103,8 @@ public interface ApplicationConfigurer extends PluginConfigurer {
                    Map<String, String> properties);
 
   /**
-   * Schedule the specified {@link Workflow}
+   * Schedule the specified {@link Workflow}.
+   *
    * @param scheduleName the name of the schedule
    * @param workflowName the name of the Workflow
    *
