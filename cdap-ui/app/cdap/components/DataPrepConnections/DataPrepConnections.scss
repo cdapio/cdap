@@ -18,9 +18,31 @@ $connections-panel-bg-color: #efefef;
 $connections-panel-border-color: #cccccc;
 $connections-menu-active-color: #ff6600;
 $connections-menu-item-color: #333333;
+$top-panel-bg-color: #efefef;
+$border-color: #cccccc;
+$top-panel-height: 56px;
+$gutter-width: 15px;
 
 .dataprep-connections-container {
   height: calc(100vh - 104px);
+
+  .top-panel {
+    height: $top-panel-height;
+    background-color: $top-panel-bg-color;
+    border-bottom: 1px solid $border-color;
+
+    .title > h5 {
+      padding-left: $gutter-width;
+      margin-bottom: 0;
+      line-height: $top-panel-height;
+      font-weight: 500;
+
+      .fa {
+        margin-right: 10px;
+        cursor: pointer;
+      }
+    }
+  }
 
   .connections-panel,
   .connections-content {
@@ -80,7 +102,7 @@ $connections-menu-item-color: #333333;
   }
 
   .connections-content {
-    width: calc(100vw - 250px);
+    width: calc(100% - 250px);
 
     &.expanded { width: 100%; }
   }
