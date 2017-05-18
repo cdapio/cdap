@@ -189,6 +189,11 @@ function preventPropagation(e = defaultEventObject) {
   e.preventDefault();
 }
 
+const defaultAction = {
+  action : '',
+  payload : {}
+};
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -200,5 +205,6 @@ export {
   humanReadableDate,
   contructUrl,
   getIcon,
-  preventPropagation
+  preventPropagation,
+  defaultAction
 };
