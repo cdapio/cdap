@@ -30,6 +30,8 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.proto.ProgramType;
@@ -43,6 +45,8 @@ import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
@@ -53,13 +57,16 @@ import java.util.concurrent.TimeUnit;
  * a {@link ProgramScheduleStoreDataset}
  */
 public class CoreSchedulerService extends AbstractIdleService implements Scheduler {
+  private static final Logger LOG = LoggerFactory.getLogger(CoreSchedulerService.class);
 
   private final Transactional transactional;
   private final Service internalService;
   private final DatasetFramework datasetFramework;
+  private final SchedulerService scheduler;
 
   @Inject
   CoreSchedulerService(TransactionSystemClient txClient, final DatasetFramework datasetFramework,
+                       final SchedulerService schedulerService,
                        final NotificationSubscriberService notificationSubscriberService,
                        final ConstraintCheckerService constraintCheckerService) {
     this.datasetFramework = datasetFramework;
@@ -69,6 +76,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(datasetCache), RetryStrategies.retryOnConflict(10, 100L));
 
+    this.scheduler = schedulerService;
     // Use a retry on failure service to make it resilience to transient service unavailability during startup
     this.internalService = new RetryOnStartFailureService(new Supplier<Service>() {
       @Override
@@ -80,6 +88,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
               datasetFramework.addInstance(Schedulers.STORE_TYPE_NAME,
                                            Schedulers.STORE_DATASET_ID, DatasetProperties.EMPTY);
             }
+            schedulerService.startAndWait();
             constraintCheckerService.startAndWait();
             notificationSubscriberService.startAndWait();
           }
@@ -88,6 +97,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
           protected void shutDown() throws Exception {
             notificationSubscriberService.stopAndWait();
             constraintCheckerService.stopAndWait();
+            schedulerService.stopAndWait();
           }
         };
       }
@@ -123,9 +133,41 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       @Override
       public Void run(ProgramScheduleStoreDataset store) throws AlreadyExistsException {
         store.addSchedules(schedules);
+        for (ProgramSchedule schedule : schedules) {
+          try {
+            // TODO: [CDAP-11576] need to clean up the inconsistent state if this operation fails
+            scheduler.addProgramSchedule(schedule);
+          } catch (SchedulerException e) {
+            // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
+            // Need better error handling
+            LOG.error("Exception occurs when adding schedule {}", schedule, e);
+            throw new RuntimeException(e);
+          }
+        }
         return null;
       }
     }, AlreadyExistsException.class);
+
+  }
+
+  @Override
+  public void updateSchedule(final ProgramSchedule schedule) throws NotFoundException {
+    execute(new StoreTxRunnable<Void, NotFoundException>() {
+      @Override
+      public Void run(ProgramScheduleStoreDataset store) throws NotFoundException {
+        try {
+          // TODO: [CDAP-11576] need to clean up the inconsistent state if this operation fails
+          scheduler.updateProgramSchedule(schedule);
+        } catch (SchedulerException e) {
+          // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw NotFoundException.
+          // Need better error handling
+          LOG.error("Exception occurs when updating schedule {}", schedule, e);
+          throw new RuntimeException(e);
+        }
+        store.updateSchedule(schedule);
+        return null;
+      }
+    }, NotFoundException.class);
   }
 
   @Override
@@ -133,11 +175,40 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     deleteSchedules(Collections.singleton(scheduleId));
   }
 
+  private void deleteSchedulesInScheduler(List<ProgramSchedule> schedules) {
+    for (ProgramSchedule schedule : schedules) {
+      try {
+        // TODO: [CDAP-11576] need to clean up the inconsistent state if this operation fails
+        scheduler.deleteProgramSchedule(schedule);
+      } catch (Exception e) {
+        // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
+        // Need better error handling
+        LOG.error("Exception occurs when deleting schedule {}", schedule, e);
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  private void deleteScheduleInScheduler(ProgramSchedule schedule) throws NotFoundException {
+    try {
+      // TODO: [CDAP-11576] need to clean up the inconsistent state if this operation fails
+      scheduler.deleteProgramSchedule(schedule);
+    } catch (SchedulerException e) {
+      // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw NotFoundException.
+      // Need better error handling
+      LOG.error("Exception occurs when deleting schedule {}", schedule, e);
+      throw new RuntimeException(e);
+    }
+  }
+
   @Override
   public void deleteSchedules(final Iterable<? extends ScheduleId> scheduleIds) throws NotFoundException {
     execute(new StoreTxRunnable<Void, NotFoundException>() {
       @Override
       public Void run(ProgramScheduleStoreDataset store) throws NotFoundException {
+        for (ScheduleId scheduleId : scheduleIds) {
+          deleteScheduleInScheduler(store.getSchedule(scheduleId));
+        }
         store.deleteSchedules(scheduleIds);
         return null;
       }
@@ -149,6 +220,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     execute(new StoreTxRunnable<Void, RuntimeException>() {
       @Override
       public Void run(ProgramScheduleStoreDataset store) {
+        deleteSchedulesInScheduler(store.listSchedules(appId));
         store.deleteSchedules(appId);
         return null;
       }
@@ -160,6 +232,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     execute(new StoreTxRunnable<Void, RuntimeException>() {
       @Override
       public Void run(ProgramScheduleStoreDataset store) {
+        deleteSchedulesInScheduler(store.listSchedules(programId));
         store.deleteSchedules(programId);
         return null;
       }

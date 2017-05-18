@@ -29,10 +29,8 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationVerificationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
-import co.cask.cdap.internal.app.deploy.pipeline.CreateProgramSchedulesStage;
-import co.cask.cdap.internal.app.deploy.pipeline.CreateSchedulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateStreamsStage;
-import co.cask.cdap.internal.app.deploy.pipeline.DeleteScheduleStage;
+import co.cask.cdap.internal.app.deploy.pipeline.DeleteAndCreateSchedulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentCleanupStage;
@@ -53,7 +51,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
-import org.apache.tephra.TransactionSystemClient;
 
 /**
  * This class is concrete implementation of {@link Manager} that deploys an Application.
@@ -132,10 +129,8 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory, queueAdmin,
                                                     metricStore, metadataStore, privilegesManager, impersonator));
     pipeline.addLast(new ProgramGenerationStage(privilegesManager, authenticationContext));
-    pipeline.addLast(new DeleteScheduleStage(programScheduler, scheduler));
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
-    pipeline.addLast(new CreateSchedulesStage(programScheduler, scheduler));
-    pipeline.addLast(new CreateProgramSchedulesStage(programScheduler, scheduler));
+    pipeline.addLast(new DeleteAndCreateSchedulesStage(programScheduler, scheduler));
     pipeline.addLast(new SystemMetadataWriterStage(metadataStore));
     pipeline.setFinally(new DeploymentCleanupStage());
     return pipeline.execute(input);

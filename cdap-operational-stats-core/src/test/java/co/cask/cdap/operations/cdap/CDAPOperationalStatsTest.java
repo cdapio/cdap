@@ -53,10 +53,6 @@ public class CDAPOperationalStatsTest {
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(NAMESPACE).build());
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    scheduler = injector.getInstance(Scheduler.class);
-    if (scheduler instanceof Service) {
-      ((Service) scheduler).startAndWait();
-    }
     AppFabricTestHelper.deployApplication(NAMESPACE.toId(), AllProgramsApp.class, null, cConf);
     TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
     Transaction tx1 = txClient.startShort();
@@ -70,9 +66,6 @@ public class CDAPOperationalStatsTest {
   @AfterClass
   public static void teardown() throws Exception {
     namespaceAdmin.delete(NAMESPACE);
-    if (scheduler instanceof Service) {
-      ((Service) scheduler).stopAndWait();
-    }
   }
 
   @Test

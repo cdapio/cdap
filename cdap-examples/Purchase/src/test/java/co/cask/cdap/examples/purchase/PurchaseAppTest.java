@@ -31,6 +31,7 @@ import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.HttpURLConnection;
@@ -47,6 +48,7 @@ public class PurchaseAppTest extends TestBase {
 
   private static final Gson GSON = new Gson();
 
+  @Ignore // TODO: bring this back as part of CDAP-11516
   @Test
   public void test() throws Exception {
     // Deploy the PurchaseApp application
