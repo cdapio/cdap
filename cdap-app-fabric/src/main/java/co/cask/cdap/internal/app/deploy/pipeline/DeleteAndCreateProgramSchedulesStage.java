@@ -27,7 +27,6 @@ import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.scheduler.Scheduler;
 import com.google.common.reflect.TypeToken;
@@ -90,7 +89,7 @@ public class DeleteAndCreateProgramSchedulesStage extends AbstractStage<Applicat
 
   private ProgramSchedule toProgramSchedule(ApplicationWithPrograms input, ScheduleCreationSpec scheduleCreationSpec) {
     ProgramId programId = input.getApplicationId().workflow(scheduleCreationSpec.getProgramName());
-    ProtoTrigger trigger = (ProtoTrigger) scheduleCreationSpec.getTrigger();
+    Trigger trigger = scheduleCreationSpec.getTrigger();
     return new ProgramSchedule(scheduleCreationSpec.getName(), scheduleCreationSpec.getDescription(), programId,
                                scheduleCreationSpec.getProperties(), trigger, scheduleCreationSpec.getConstraints());
   }
