@@ -61,14 +61,8 @@ public class HiveExploreServiceInvalidateTxTest extends BaseHiveExploreServiceTe
       // Expected
     }
     Assert.assertEquals(1, transactionManager.getCurrentState().getInvalid().size());
-
-    try {
-      waitForCompletionStatus(exploreService.deleteNamespace(new NamespaceId("nonexistent")), 5, TimeUnit.SECONDS, 10);
-      Assert.fail("Expected HiveSQLException");
-    } catch (HiveSQLException e) {
-      // Expected
-    }
+    //Deleting a non-existing namespace should not fail for non-existing hive database
+    waitForCompletionStatus(exploreService.deleteNamespace(new NamespaceId("nonexistent")), 5, TimeUnit.SECONDS, 10);
     Assert.assertEquals(1, transactionManager.getCurrentState().getInvalid().size());
   }
-
 }
