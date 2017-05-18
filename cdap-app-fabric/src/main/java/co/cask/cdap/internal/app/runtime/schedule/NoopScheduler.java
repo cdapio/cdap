@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -31,6 +32,21 @@ import java.util.Map;
  * Noop scheduler.
  */
 public class NoopScheduler implements Scheduler {
+  @Override
+  public void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException {
+
+  }
+
+  @Override
+  public void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException {
+
+  }
+
+  @Override
+  public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+
+  }
+
   @Override
   public void schedule(ProgramId program, SchedulableProgramType programType,
                        Schedule schedule) throws SchedulerException {

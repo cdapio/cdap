@@ -22,6 +22,8 @@ import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
+import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
@@ -39,6 +41,7 @@ import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
@@ -137,6 +140,15 @@ public final class AppFabricTestModule extends AbstractModule {
   private Scheduler createNoopScheduler() {
     return new Scheduler() {
       @Override
+      public void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException {
+      }
+
+      @Override
+      public void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException {
+
+      }
+
+      @Override
       public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule) {
       }
 
@@ -184,6 +196,10 @@ public final class AppFabricTestModule extends AbstractModule {
       @Override
       public void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
                                  Map<String, String> properties) {
+      }
+
+      @Override
+      public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
       }
 
       @Override

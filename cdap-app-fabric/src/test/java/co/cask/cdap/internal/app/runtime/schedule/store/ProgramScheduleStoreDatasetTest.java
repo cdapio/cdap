@@ -22,6 +22,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -62,7 +64,7 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testFindSchedulesByEvent() throws Exception {
+  public void testFindSchedulesByEventAndUpdateSchedule() throws Exception {
 
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
     TransactionSystemClient txClient = getInjector().getInstance(TransactionSystemClient.class);
@@ -110,7 +112,36 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
                             ImmutableSet.copyOf(store.findSchedules(Schedulers.triggerKeyForPartition(DS2_ID))));
       }
     });
+    final ProgramSchedule sched11New = new ProgramSchedule(sched11.getName(), "time schedule", PROG1_ID,
+                                                           ImmutableMap.of("timeprop", "time"),
+                                                           new TimeTrigger("* * * * *"),
+                                                           ImmutableList.<Constraint>of());
+    final ProgramSchedule sched12New = new ProgramSchedule(sched12.getName(), "one partition schedule", PROG1_ID,
+                                                           ImmutableMap.of("pp", "p"),
+                                                           new PartitionTrigger(DS1_ID, 2),
+                                                           ImmutableList.<Constraint>of());
+    final ProgramSchedule sched22New = new ProgramSchedule(sched22.getName(), "one streamsize schedule", PROG2_ID,
+                                                           ImmutableMap.of("ss", "s"),
+                                                           new StreamSizeTrigger(NS_ID.stream("stream"), 1),
+                                                           ImmutableList.<Constraint>of());
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        store.updateSchedule(sched11New);
+        store.updateSchedule(sched12New);
+        store.updateSchedule(sched22New);
+      }
+    });
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // event for DS1 should trigger only sched12New after update
+        Assert.assertEquals(ImmutableSet.of(sched12New),
+                            ImmutableSet.copyOf(store.findSchedules(Schedulers.triggerKeyForPartition(DS1_ID))));
+        // event for DS2 triggers no schedule after update
+        Assert.assertEquals(ImmutableSet.<ProgramSchedule>of(),
+                            ImmutableSet.copyOf(store.findSchedules(Schedulers.triggerKeyForPartition(DS2_ID))));
+      }
+    });
   }
-
-
 }

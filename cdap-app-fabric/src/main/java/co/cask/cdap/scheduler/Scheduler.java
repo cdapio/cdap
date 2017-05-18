@@ -48,6 +48,15 @@ public interface Scheduler {
   void addSchedules(Iterable<? extends ProgramSchedule> schedules) throws AlreadyExistsException, BadRequestException;
 
   /**
+   * Updates a schedule in the store. The schedule with the same {@link ScheduleId}
+   * as the given {@code schedule} will be replaced.
+   *
+   * @param schedule the new schedule. The existing schedule with the same {@link ScheduleId} will be replaced
+   * @throws NotFoundException if the schedule with {@link ScheduleId} does not exist in the store
+   */
+  void updateSchedule(ProgramSchedule schedule) throws NotFoundException;
+
+  /**
    * Removes a schedule from the store. Succeeds whether the schedule exists or not.
    *
    * @param scheduleId the schedule to delete
@@ -82,7 +91,7 @@ public interface Scheduler {
    *
    * @param scheduleId the id of the schedule to read
    * @return the schedule from the store
-   * @throws NotFoundException is the schedule does not exist in the store
+   * @throws NotFoundException if the schedule does not exist in the store
    */
   ProgramSchedule getSchedule(ScheduleId scheduleId) throws NotFoundException;
 

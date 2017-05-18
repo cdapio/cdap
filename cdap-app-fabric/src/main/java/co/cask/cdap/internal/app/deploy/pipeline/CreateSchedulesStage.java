@@ -21,11 +21,7 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.schedule.StreamSizeSchedule;
-import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduleType;
@@ -51,12 +47,10 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
 
   private static final Logger LOG = LoggerFactory.getLogger(CreateSchedulesStage.class);
   private final co.cask.cdap.scheduler.Scheduler programScheduler;
-  private final Scheduler scheduler;
 
-  public CreateSchedulesStage(co.cask.cdap.scheduler.Scheduler programScheduler, Scheduler scheduler) {
+  public CreateSchedulesStage(co.cask.cdap.scheduler.Scheduler programScheduler) {
     super(TypeToken.of(ApplicationWithPrograms.class));
     this.programScheduler = programScheduler;
-    this.scheduler = scheduler;
   }
 
   @Override
@@ -83,8 +77,6 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
         // hence it is useless to update the schedule
         continue;
       }
-      ProgramType programType = ProgramType.valueOfSchedulableType(newScheduleSpec.getProgram().getProgramType());
-      ProgramId programId = appId.program(programType, newScheduleSpec.getProgram().getProgramName());
 
       // if the schedule differ in schedule type then we have deleted the existing one earlier in DeleteScheduleStage.
       // create it with the new type and spec here. See CDAP-8918 for details.
@@ -92,47 +84,32 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
         ScheduleType.fromSchedule(oldScheduleSpec.getSchedule())) {
         LOG.debug("Redeploying schedule {} with specification {} which existed earlier with specification {}",
                   entry.getKey(), newScheduleSpec, oldScheduleSpec);
-        createSchedule(programId, newScheduleSpec);
+        addProgramSchedule(appId, newScheduleSpec);
         continue;
       }
 
-      scheduler.updateSchedule(programId,
-                               newScheduleSpec.getProgram().getProgramType(),
-                               newScheduleSpec.getSchedule(), newScheduleSpec.getProperties());
-      if (oldScheduleSpec.getSchedule() instanceof TimeSchedule) {
-        programScheduler.deleteSchedule(input.getApplicationId().schedule(oldScheduleSpec.getSchedule().getName()));
-      }
-      addProgramSchedule(programId, newScheduleSpec);
+      ProgramType programType = ProgramType.valueOfSchedulableType(newScheduleSpec.getProgram().getProgramType());
+      ProgramId programId = appId.program(programType, newScheduleSpec.getProgram().getProgramName());
+
+      programScheduler.updateSchedule(Schedulers.toProgramSchedule(newScheduleSpec.getSchedule(), programId,
+                                                                   newScheduleSpec.getProperties()));
     }
 
     for (Map.Entry<String, ScheduleSpecification> entry : mapDiff.entriesOnlyOnRight().entrySet()) {
-      ScheduleSpecification scheduleSpec = entry.getValue();
-      ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-      createSchedule(appId.program(programType, scheduleSpec.getProgram().getProgramName()), scheduleSpec);
+      addProgramSchedule(appId, entry.getValue());
     }
 
     // Emit the input to next stage.
     emit(input);
   }
 
-  private void createSchedule(ProgramId programId, ScheduleSpecification scheduleSpec) throws SchedulerException {
-    scheduler.schedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
-                       scheduleSpec.getProperties());
-    addProgramSchedule(programId, scheduleSpec);
-  }
-
-  private void addProgramSchedule(ProgramId programId, ScheduleSpecification scheduleSpec) {
+  private void addProgramSchedule(ApplicationId appId, ScheduleSpecification scheduleSpec)
+    throws AlreadyExistsException, BadRequestException {
+    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+    ProgramId programId = appId.program(programType, scheduleSpec.getProgram().getProgramName());
     Schedule schedule = scheduleSpec.getSchedule();
-    if (schedule instanceof TimeSchedule || schedule instanceof StreamSizeSchedule) {
-      ProgramSchedule programSchedule =
-        Schedulers.toProgramSchedule(schedule, programId, scheduleSpec.getProperties());
-      try {
-        programScheduler.addSchedule(programSchedule);
-      } catch (AlreadyExistsException e) {
-        LOG.warn("Schedule {} already exists for program {}", schedule.getName(), programId);
-      } catch (BadRequestException e) {
-        LOG.warn("Schedule {} for program {} is not valid: {}", schedule.getName(), programId, e.getMessage());
-      }
-    }
+    ProgramSchedule programSchedule =
+      Schedulers.toProgramSchedule(schedule, programId, scheduleSpec.getProperties());
+    programScheduler.addSchedule(programSchedule);
   }
 }

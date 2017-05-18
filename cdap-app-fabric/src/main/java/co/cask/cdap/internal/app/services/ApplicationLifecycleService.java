@@ -54,7 +54,6 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
@@ -76,6 +75,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.route.store.RouteStore;
+import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.SecurityUtil;
@@ -709,10 +709,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     revokePrivileges(appId, spec);
 
     //Delete the schedules
-    for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
-      ProgramId workflowProgramId = appId.program(ProgramType.WORKFLOW, workflowSpec.getName());
-      scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
-    }
+    scheduler.deleteSchedules(appId);
 
     deleteMetrics(appId);
 
@@ -781,10 +778,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // enforce ADMIN privileges on the app
     authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
     //Delete the schedules
-    for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
-      ProgramId workflowProgramId = appId.program(ProgramType.WORKFLOW, workflowSpec.getName());
-      scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
-    }
+    scheduler.deleteSchedules(appId);
     store.removeApplication(appId);
   }
 

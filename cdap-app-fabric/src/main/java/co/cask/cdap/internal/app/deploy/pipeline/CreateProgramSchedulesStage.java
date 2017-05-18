@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
@@ -27,6 +28,8 @@ import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.scheduler.Scheduler;
 import com.google.common.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -34,15 +37,13 @@ import java.util.Map;
  * Responsible for creating program schedules from an ApplicationSpecification.
  */
 public class CreateProgramSchedulesStage extends AbstractStage<ApplicationWithPrograms> {
+  private static final Logger LOG = LoggerFactory.getLogger(CreateProgramSchedulesStage.class);
 
   private final Scheduler programScheduler;
-  private final co.cask.cdap.internal.app.runtime.schedule.Scheduler scheduler;
 
-  public CreateProgramSchedulesStage(Scheduler programScheduler,
-                                     co.cask.cdap.internal.app.runtime.schedule.Scheduler scheduler) {
+  public CreateProgramSchedulesStage(Scheduler programScheduler) {
     super(TypeToken.of(ApplicationWithPrograms.class));
     this.programScheduler = programScheduler;
-    this.scheduler = scheduler;
   }
 
   @Override
@@ -63,11 +64,6 @@ public class CreateProgramSchedulesStage extends AbstractStage<ApplicationWithPr
         new ProgramSchedule(scheduleCreationSpec.getName(), scheduleCreationSpec.getDescription(), programId,
                             scheduleCreationSpec.getProperties(), trigger, scheduleCreationSpec.getConstraints());
       programScheduler.addSchedule(programSchedule);
-      if (trigger instanceof TimeTrigger) {
-        Schedule timeSchedule = new TimeSchedule(scheduleCreationSpec.getName(), scheduleCreationSpec.getDescription(),
-                                                 ((TimeTrigger) trigger).getCronExpression());
-        scheduler.schedule(programId, SchedulableProgramType.WORKFLOW, timeSchedule);
-      }
     }
 
     // Emit the input to next stage.

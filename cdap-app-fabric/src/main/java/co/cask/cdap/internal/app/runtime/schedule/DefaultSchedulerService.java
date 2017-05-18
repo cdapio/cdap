@@ -16,20 +16,24 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import org.quartz.Job;
+import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * ScheduleJob class is used in quartz scheduler job store. Retaining the DefaultSchedulerService$ScheduleJob
@@ -46,8 +50,8 @@ public class DefaultSchedulerService {
     private static final Logger LOG = LoggerFactory.getLogger(ScheduledJob.class);
     private final ScheduleTaskPublisher taskPublisher;
 
-    ScheduledJob(Store store, MessagingService messagingService, CConfiguration cConf) {
-      this.taskPublisher = new ScheduleTaskPublisher(store, messagingService, cConf);
+    ScheduledJob(Store store, MessagingService messagingService, TopicId topicId) {
+      this.taskPublisher = new ScheduleTaskPublisher(store, messagingService, topicId);
     }
 
     @Override
@@ -63,20 +67,32 @@ public class DefaultSchedulerService {
       String namespaceId = parts[0];
       String applicationId = parts[1];
       String appVersion = parts[2];
-      ProgramType programType = ProgramType.valueOfSchedulableType(SchedulableProgramType.valueOf(parts[3]));
-      String programName = parts[4];
+      // Skip program type in parts[3] and program name in parts[4]
       String scheduleName = parts[5];
 
       LOG.debug("Schedule execute {}", key);
+      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
 
-      ProgramId programId = new ApplicationId(namespaceId, applicationId, appVersion).program(programType, programName);
+      builder.put(ProgramOptionConstants.RETRY_COUNT, Integer.toString(context.getRefireCount()));
+      builder.put(ProgramOptionConstants.SCHEDULE_NAME, scheduleName);
+
+      Map<String, String> userOverrides = ImmutableMap.of(ProgramOptionConstants.LOGICAL_START_TIME,
+                                                          Long.toString(context.getScheduledFireTime().getTime()));
+
+      JobDataMap jobDataMap = trigger.getJobDataMap();
+      // TODO: figure out whether this is needed. in ConstraintCheckerService, the same properties will be added to
+      // user overrides again
+      for (Map.Entry<String, Object> entry : jobDataMap.entrySet()) {
+        builder.put(entry.getKey(), jobDataMap.getString(entry.getKey()));
+      }
+
+      ScheduleId scheduleId = new ApplicationId(namespaceId, applicationId, appVersion).schedule(scheduleName);
       try {
-        taskPublisher.publishNotification(programId, scheduleName, context.getRefireCount(),
-                                          context.getScheduledFireTime().getTime());
+        taskPublisher.publishNotification(Notification.Type.TIME, scheduleId, builder.build(), userOverrides);
       } catch (Throwable t) {
         // Do not remove this log line. The exception at higher level gets caught by the quartz scheduler and is not
         // logged in cdap master logs making it hard to debug issues.
-        LOG.warn("Error while publishing notification for program {}. {}", programId, t);
+        LOG.warn("Error while publishing notification for schedule {}. {}", scheduleId, t);
         throw new JobExecutionException(t.getMessage(), t.getCause(), false);
       }
     }

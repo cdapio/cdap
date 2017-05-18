@@ -132,6 +132,32 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   }
 
   /**
+   * Add one or more schedules to the store.
+   *
+   * @param schedule the schedule to update
+   * @throws NotFoundException if one of the schedules already exists
+   */
+  public void updateSchedule(ProgramSchedule schedule) throws NotFoundException {
+    String scheduleKey = rowKeyForSchedule(schedule.getProgramId().getParent(), schedule.getName());
+    if (store.get(new Get(scheduleKey)).isEmpty()) {
+      throw new NotFoundException(schedule.getProgramId().getParent().schedule(schedule.getName()));
+    }
+    store.put(new Put(scheduleKey, SCHEDULE_COLUMN, GSON.toJson(schedule)));
+    int count = 0;
+    byte[] prefix = keyPrefixForTriggerScan(scheduleKey);
+    try (Scanner scanner = store.scan(new Scan(prefix, Bytes.stopKeyForPrefix(prefix)))) {
+      Row row;
+      while ((row = scanner.next()) != null) {
+        store.delete(row.getRow());
+      }
+    }
+    for (String triggerKey : extractTriggerKeys(schedule)) {
+      String triggerRowKey = rowKeyForTrigger(scheduleKey, count++);
+      store.put(new Put(triggerRowKey, TRIGGER_KEY_COLUMN, triggerKey));
+    }
+  }
+
+  /**
    * Removes a schedule from the store. Succeeds whether the schedule exists or not.
    *
    * @param scheduleId the schedule to delete

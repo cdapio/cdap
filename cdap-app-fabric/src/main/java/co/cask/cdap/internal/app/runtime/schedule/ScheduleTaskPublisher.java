@@ -18,16 +18,12 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.UserErrors;
-import co.cask.cdap.internal.UserMessages;
+import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.Notification;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
@@ -49,35 +45,34 @@ public final class ScheduleTaskPublisher {
   private final TopicId topicId;
   private final Store store;
 
-  public ScheduleTaskPublisher(Store store, MessagingService messagingService, CConfiguration cConf) {
+  public ScheduleTaskPublisher(Store store, MessagingService messagingService, TopicId topicId) {
     this.store = store;
     this.messagingService = messagingService;
-    this.topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(), cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC));
+    this.topicId = topicId;
   }
 
   /**
    * Publish notification for the triggered schedule
-   *
-   * @param programId       {@link ProgramId} of the program to be run when the schedule is triggered
-   * @param retryCount       number of times of Quartz tries to re-fire trigger
-   * @param logicalStartTime the scheduled time the trigger fired for
+   *  @param notificationType type of the notification
+   * @param scheduleId       {@link ScheduleId} of the triggered schedule
+   * @param systemOverrides Arguments that would be supplied as system runtime arguments for the program.
+   * @param userOverrides Arguments to add to the user runtime arguments for the program.
    */
-  public void publishNotification(ProgramId programId, String scheduleName, int retryCount, long logicalStartTime)
+  public void publishNotification(Notification.Type notificationType, ScheduleId scheduleId,
+                                  Map<String, String> systemOverrides, Map<String, String> userOverrides)
     throws Exception {
 
-    ApplicationSpecification appSpec = store.getApplication(programId.getParent());
+    ApplicationSpecification appSpec = store.getApplication(scheduleId.getParent());
     if (appSpec == null) {
-      throw new TaskExecutionException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), programId),
-                                       false);
+      throw new ApplicationNotFoundException(scheduleId.getParent());
     }
 
     Map<String, String> properties = new HashMap<>();
-    properties.put("programId", programId.toString());
-    properties.put(ProgramOptionConstants.SCHEDULE_NAME, scheduleName);
-    properties.put(ProgramOptionConstants.RETRY_COUNT, Integer.toString(retryCount));
-    properties.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(logicalStartTime));
+    properties.put(ProgramOptionConstants.SCHEDULE_ID, scheduleId.toString());
+    properties.put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(systemOverrides));
+    properties.put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userOverrides));
 
-    Notification notification = new Notification(Notification.Type.TIME, properties);
+    Notification notification = new Notification(notificationType, properties);
     messagingService.publish(StoreRequestBuilder.of(topicId).addPayloads(GSON.toJson(notification)).build());
   }
 }

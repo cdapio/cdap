@@ -19,7 +19,7 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.schedule.TimeSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduleType;
@@ -100,18 +100,17 @@ public class DeleteScheduleStage extends AbstractStage<ApplicationWithPrograms> 
   }
 
   private void deleteFromProgramScheduleStore(ApplicationId appId, ScheduleSpecification scheduleSpec)
-    throws NotFoundException {
-    if (scheduleSpec.getSchedule() instanceof TimeSchedule) {
-      ScheduleId scheduleId = appId.schedule(scheduleSpec.getSchedule().getName());
-      tryDeleteProgramSchedule(scheduleId);
-    }
-  }
-
-  private void tryDeleteProgramSchedule(ScheduleId scheduleId) throws NotFoundException {
+    throws NotFoundException, SchedulerException {
+    ScheduleId scheduleId = appId.schedule(scheduleSpec.getSchedule().getName());
     try {
       programScheduler.deleteSchedule(scheduleId);
     } catch (NotFoundException e) {
-      LOG.debug("Schedule '{}' has not been persisted in ProgramScheduleStoreDataset yet", scheduleId);
+      LOG.debug("Schedule '{}' has not been persisted in ProgramScheduleStoreDataset yet.", scheduleId);
+      ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+      scheduler.deleteSchedule(appId.program(programType,
+                                             scheduleSpec.getProgram().getProgramName()),
+                               scheduleSpec.getProgram().getProgramType(),
+                               scheduleSpec.getSchedule().getName());
     }
   }
 }

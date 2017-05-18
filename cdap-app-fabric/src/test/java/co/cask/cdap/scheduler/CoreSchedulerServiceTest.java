@@ -112,7 +112,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     // add a schedule for app1
     ProgramSchedule tsched1 = new ProgramSchedule("tsched1", "one time schedule", PROG1_ID,
                                                   ImmutableMap.of("prop1", "nn"),
-                                                  new TimeTrigger("* * * * 1"), ImmutableList.<Constraint>of());
+                                                  new TimeTrigger("* * ? * 1"), ImmutableList.<Constraint>of());
     scheduler.addSchedule(tsched1);
     Assert.assertEquals(tsched1, scheduler.getSchedule(TSCHED1_ID));
     Assert.assertEquals(ImmutableList.of(tsched1), scheduler.listSchedules(APP1_ID));
@@ -124,7 +124,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
                                                   new PartitionTrigger(DS1_ID, 1), ImmutableList.<Constraint>of());
     ProgramSchedule tsched11 = new ProgramSchedule("tsched11", "two times schedule", PROG11_ID,
                                                    ImmutableMap.of("prop2", "xx"),
-                                                   new TimeTrigger("* * * * 1,2"), ImmutableList.<Constraint>of());
+                                                   new TimeTrigger("* * ? * 1,2"), ImmutableList.<Constraint>of());
     ProgramSchedule psched2 = new ProgramSchedule("psched2", "two partition schedule", PROG2_ID,
                                                   ImmutableMap.of("propper", "popper"),
                                                   new PartitionTrigger(DS2_ID, 2), ImmutableList.<Constraint>of());
@@ -203,6 +203,9 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   public void testRunScheduledJobs() throws Exception {
     messagingService = getInjector().getInstance(MessagingService.class);
     final Scheduler scheduler = getInjector().getInstance(Scheduler.class);
+    if (scheduler instanceof Service) {
+      ((Service) scheduler).startAndWait();
+    }
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     dataEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
     store = getInjector().getInstance(Store.class);
@@ -212,10 +215,6 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     AppRequest<? extends Config> appRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
     deploy(APP_ID, appRequest);
-
-    if (scheduler instanceof Service) {
-      ((Service) scheduler).startAndWait();
-    }
     try {
       // Resume the schedule because schedules are initialized as paused
       resumeSchedule(APP_ID.getNamespace(), APP_ID.getApplication(),
@@ -225,7 +224,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
       long startTime = System.currentTimeMillis();
       for (int i = 0; i < 5; i++) {
-        testNewPartition(scheduler, i + 1);
+        testNewPartition(i + 1);
       }
       long elapsedTime = System.currentTimeMillis() - startTime;
       // Sleep to wait for one run of WORKFLOW_3 to complete as scheduled
@@ -246,9 +245,9 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     }
   }
 
-  private void testNewPartition(final Scheduler scheduler, int expectedNumRuns) throws Exception {
-    publishNotification(dataEventTopic, WORKFLOW_1, scheduler);
-    publishNotification(dataEventTopic, WORKFLOW_2, scheduler);
+  private void testNewPartition(int expectedNumRuns) throws Exception {
+    publishNotification(dataEventTopic, WORKFLOW_1, AppWithFrequentScheduledWorkflows.DATASET_NAME1);
+    publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
 
     try {
       waitForCompleteRuns(expectedNumRuns, WORKFLOW_1);
@@ -259,8 +258,6 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       LOG.info("WORKFLOW_2 runRecords: {}",
                store.getRuns(WORKFLOW_2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE));
     }
-    scheduler.deleteSchedule(APP_ID.schedule(WORKFLOW_1.getProgram()));
-    scheduler.deleteSchedule(APP_ID.schedule(WORKFLOW_2.getProgram()));
   }
 
   private void waitForCompleteRuns(int numRuns, final ProgramId program)
@@ -274,18 +271,13 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     }, 5, TimeUnit.SECONDS);
   }
 
-  private void publishNotification(TopicId topicId, final ProgramId programId, final Scheduler scheduler)
+  private void publishNotification(TopicId topicId, ProgramId programId, String dataset)
     throws TopicNotFoundException, IOException, TransactionFailureException,
     AlreadyExistsException, BadRequestException {
 
-    final String name = programId.getProgram();
-    final DatasetId datasetId = programId.getNamespaceId().dataset(name);
-    PartitionKey partitionKey = PartitionKey.builder().addIntField("age", 12).build();
+    DatasetId datasetId = programId.getNamespaceId().dataset(dataset);
+    PartitionKey partitionKey = PartitionKey.builder().addIntField("part1", 1).build();
     Notification notification = Notification.forPartitions(datasetId, ImmutableList.of(partitionKey));
-    scheduler.addSchedule(new ProgramSchedule(name, "",
-                                              programId, ImmutableMap.<String, String>of(),
-                                              new PartitionTrigger(datasetId, 1),
-                                              ImmutableList.<Constraint>of()));
     messagingService.publish(StoreRequestBuilder.of(topicId).addPayloads(GSON.toJson(notification)).build());
   }
 }

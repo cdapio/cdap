@@ -26,27 +26,31 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedStreamSizeScheduleStore;
-import co.cask.cdap.internal.app.services.ProgramLifecycleService;
-import co.cask.cdap.internal.app.services.PropertiesResolver;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.notifications.service.NotificationContext;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -93,12 +97,11 @@ public class StreamSizeScheduler implements Scheduler {
   private final NotificationService notificationService;
   private final MetricStore metricStore;
   private final Provider<Store> storeProvider;
-  private final ProgramLifecycleService lifecycleService;
-  private final PropertiesResolver propertiesResolver;
   private final DatasetBasedStreamSizeScheduleStore scheduleStore;
   private final ConcurrentMap<StreamId, StreamSubscriber> streamSubscribers;
-  private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final MessagingService messagingService;
   private final CConfiguration cConf;
+  private final TopicId topicId;
 
   // Key is scheduleId
   private final ConcurrentSkipListMap<String, StreamSubscriber> scheduleSubscribers;
@@ -118,22 +121,20 @@ public class StreamSizeScheduler implements Scheduler {
 
   @Inject
   public StreamSizeScheduler(CConfiguration cConf, NotificationService notificationService, MetricStore metricStore,
-                             Provider<Store> storeProvider, ProgramLifecycleService lifecycleService,
-                             PropertiesResolver propertiesResolver, DatasetBasedStreamSizeScheduleStore scheduleStore,
-                             NamespaceQueryAdmin namespaceQueryAdmin) {
+                             Provider<Store> storeProvider, MessagingService messagingService,
+                             DatasetBasedStreamSizeScheduleStore scheduleStore) {
     this.pollingDelay = TimeUnit.SECONDS.toMillis(
       cConf.getLong(Constants.Notification.Stream.STREAM_SIZE_SCHEDULE_POLLING_DELAY));
     this.notificationService = notificationService;
     this.metricStore = metricStore;
     this.storeProvider = storeProvider;
-    this.lifecycleService = lifecycleService;
-    this.propertiesResolver = propertiesResolver;
     this.scheduleStore = scheduleStore;
     this.streamSubscribers = Maps.newConcurrentMap();
     this.scheduleSubscribers = new ConcurrentSkipListMap<>();
     this.schedulerStarted = false;
-    this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.messagingService = messagingService;
     this.cConf = cConf;
+    this.topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.STREAM_SIZE_EVENT_TOPIC));
   }
 
   public void init() throws SchedulerException {
@@ -225,6 +226,31 @@ public class StreamSizeScheduler implements Scheduler {
   }
 
   @Override
+  public void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException, SchedulerException {
+    Preconditions.checkArgument(schedule.getTrigger() instanceof StreamSizeTrigger,
+                                "Schedule trigger should be of type StreamSizeTrigger");
+    ProgramId program = schedule.getProgramId();
+    StreamSizeSchedule streamSizeSchedule = Schedulers.toStreamSizeSchedule(schedule);
+    scheduleStreamSizeSchedule(program, program.getType().getSchedulableType(),
+                               schedule.getProperties(), streamSizeSchedule);
+  }
+
+  @Override
+  public void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException {
+    Preconditions.checkArgument(schedule.getTrigger() instanceof StreamSizeTrigger,
+                                "Schedule trigger should be of type StreamSizeTrigger");
+    ProgramId program = schedule.getProgramId();
+    StreamSizeSchedule streamSizeSchedule = Schedulers.toStreamSizeSchedule(schedule);
+    updateSchedule(program, program.getType().getSchedulableType(), streamSizeSchedule, schedule.getProperties());
+  }
+
+  @Override
+  public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    deleteSchedule(schedule.getProgramId(), schedule.getProgramId().getType().getSchedulableType(),
+                   schedule.getName());
+  }
+
+  @Override
   public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule)
     throws SchedulerException {
     schedule(program, programType, schedule, ImmutableMap.<String, String>of());
@@ -235,7 +261,13 @@ public class StreamSizeScheduler implements Scheduler {
                        Map<String, String> properties) throws SchedulerException {
     Preconditions.checkArgument(schedule instanceof StreamSizeSchedule,
                                 "Schedule should be of type StreamSizeSchedule");
-    StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
+    scheduleStreamSizeSchedule(program, programType, properties, (StreamSizeSchedule) schedule);
+  }
+
+  private void scheduleStreamSizeSchedule(ProgramId program, SchedulableProgramType programType,
+                                          Map<String, String> properties, StreamSizeSchedule streamSizeSchedule)
+    throws SchedulerException {
+
     StreamSubscriber streamSubscriber = streamSubscriberForSchedule(program, streamSizeSchedule);
 
     // Add the scheduleTask to the StreamSubscriber
@@ -983,13 +1015,14 @@ public class StreamSizeScheduler implements Scheduler {
      *
      * @param pollingInfo {@link StreamSize} info that came from polling the stream using metrics
      */
-    public void receivedPollingInformation(@Nonnull StreamSize pollingInfo) {
+    public void receivedPollingInformation(@Nonnull final StreamSize pollingInfo) {
       Preconditions.checkNotNull(pollingInfo);
       if (!active.get()) {
         return;
       }
 
       final StreamSizeSchedule currentSchedule;
+
       final ImmutableMap.Builder<String, String> argsBuilder = ImmutableMap.builder();
 
       if (pollingInfo.getSize() - basePollSize < toBytes(streamSizeSchedule.getDataTriggerMB())) {
@@ -1001,6 +1034,8 @@ public class StreamSizeScheduler implements Scheduler {
       argsBuilder.put(ProgramOptionConstants.RUN_DATA_SIZE, Long.toString(pollingInfo.getSize()));
       argsBuilder.put(ProgramOptionConstants.RUN_BASE_COUNT_TIME, Long.toString(basePollTs));
       argsBuilder.put(ProgramOptionConstants.RUN_BASE_COUNT_SIZE, Long.toString(basePollSize));
+      // TODO: figure out whether this is needed. in ConstraintCheckerService, the same properties will be added to
+      // user overrides again
       argsBuilder.putAll(properties);
       final Map<String, String> userOverrides = ImmutableMap.of(ProgramOptionConstants.LOGICAL_START_TIME,
                                                                 Long.toString(pollingInfo.getTimestamp()));
@@ -1024,16 +1059,17 @@ public class StreamSizeScheduler implements Scheduler {
       basePollTs = pollingInfo.getTimestamp();
 
 
-      final ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver,
-                                                                   taskExecutorService, namespaceQueryAdmin, cConf);
+      final ScheduleTaskPublisher taskPublisher = new ScheduleTaskPublisher(store, messagingService, topicId);
       try {
+        final ScheduleId scheduleId = programId.getParent().schedule(streamSizeSchedule.getName());
         scheduleStore.updateLastRun(programId, programType, streamSizeSchedule.getName(),
                                     pollingInfo.getSize(), pollingInfo.getTimestamp(),
                                     new DatasetBasedStreamSizeScheduleStore.TransactionMethod() {
                                       @Override
                                       public void execute() throws Exception {
                                         LOG.info("About to start streamSizeSchedule {}", currentSchedule.getName());
-                                        taskRunner.run(programId, argsBuilder.build(), userOverrides);
+                                        taskPublisher.publishNotification(Notification.Type.STREAM_SIZE, scheduleId,
+                                                                          argsBuilder.build(), userOverrides);
                                       }
                                     });
         lastRunSize = pollingInfo.getSize();

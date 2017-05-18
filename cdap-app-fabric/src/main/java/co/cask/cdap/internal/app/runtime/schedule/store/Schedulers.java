@@ -90,10 +90,10 @@ public class Schedulers {
     Trigger trigger;
     if (schedule instanceof TimeSchedule) {
       TimeSchedule timeSchedule = (TimeSchedule) schedule;
-      trigger = new TimeTrigger(((TimeSchedule) timeSchedule).getCronEntry());
+      trigger = new TimeTrigger(timeSchedule.getCronEntry());
     } else {
       StreamSizeSchedule streamSchedule = (StreamSizeSchedule) schedule;
-      StreamId streamId = new StreamId(programId.getNamespace(), streamSchedule.getStreamName());
+      StreamId streamId = programId.getNamespaceId().stream(streamSchedule.getStreamName());
       trigger = new StreamSizeTrigger(streamId, streamSchedule.getDataTriggerMB());
     }
     Integer maxConcurrentRuns = schedule.getRunConstraints().getMaxConcurrentRuns();
@@ -146,5 +146,11 @@ public class Schedulers {
       }
     }
     return specs;
+  }
+
+  public static StreamSizeSchedule toStreamSizeSchedule(ProgramSchedule schedule) {
+    StreamSizeTrigger trigger = (StreamSizeTrigger) schedule.getTrigger();
+    return new StreamSizeSchedule(schedule.getName(), schedule.getDescription(),
+                                  trigger.getStream().getStream(), trigger.getTriggerMB());
   }
 }
