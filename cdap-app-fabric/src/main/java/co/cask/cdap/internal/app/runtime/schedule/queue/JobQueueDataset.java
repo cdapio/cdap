@@ -26,6 +26,8 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerJsonCodec;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.Notification;
@@ -33,16 +35,13 @@ import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -101,37 +100,63 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
   public Job transitState(Job job, Job.State state) {
     // assert that the job state transition is valid
     job.getState().checkTransition(state);
-    SimpleJob newJob = new SimpleJob(job.getSchedule(), job.getCreationTime(), job.getNotifications(), state);
+    Job newJob = new SimpleJob(job.getSchedule(), job.getCreationTime(), job.getNotifications(), state);
     put(newJob);
     return newJob;
   }
 
   @Override
   public void addNotification(ProgramSchedule schedule, Notification notification) {
-    boolean existingJobModified = false;
+    boolean jobExists = false;
     try (CloseableIterator<Job> jobs = getJobsForSchedule(schedule.getScheduleId())) {
       while (jobs.hasNext()) {
+        jobExists = true;
         Job job = jobs.next();
-        if (job.getState() != Job.State.PENDING_LAUNCH) {
-          // check if its PENDING_LAUNCH. If so, create a new Job to avoid the chance that the job-launching
-          // process has conflict
+        if (job.getState() == Job.State.PENDING_TRIGGER) {
+          // only update the job's notifications if it is in PENDING_TRIGGER, so as to avoid conflict with the
+          // ConstraintCheckerService
           addNotification(job, notification);
-          existingJobModified = true;
+          break;
         }
       }
     }
-    // if no existing job was modified with the new notification, add a new job with the first notification
-    if (!existingJobModified) {
-      Job job = new SimpleJob(schedule, System.currentTimeMillis(),
-                              Lists.newArrayList(notification), Job.State.PENDING_TRIGGER);
-      put(job);
+    // if no job exists for the scheduleId, add a new job with the first notification
+    if (!jobExists) {
+      List<Notification> notifications = Collections.singletonList(notification);
+      Job.State jobState = isTriggerSatisfied(schedule.getTrigger(), notifications)
+        ? Job.State.PENDING_CONSTRAINT : Job.State.PENDING_TRIGGER;
+      put(new SimpleJob(schedule, System.currentTimeMillis(), notifications, jobState));
     }
   }
 
   private void addNotification(Job job, Notification notification) {
     List<Notification> notifications = new ArrayList<>(job.getNotifications());
     notifications.add(notification);
-    put(new SimpleJob(job.getSchedule(), job.getCreationTime(), notifications, job.getState()));
+
+    Job.State newState = job.getState();
+    if (isTriggerSatisfied(job.getSchedule().getTrigger(), notifications)) {
+      newState = Job.State.PENDING_CONSTRAINT;
+      job.getState().checkTransition(newState);
+    }
+    Job newJob = new SimpleJob(job.getSchedule(), job.getCreationTime(), notifications, newState);
+    put(newJob);
+  }
+
+  private boolean isTriggerSatisfied(Trigger trigger, List<Notification> notifications) {
+    if (trigger instanceof TimeTrigger) {
+      // TimeTrigger is satisfied as soon as the Notification arrive, due to how the Notification is initially created
+      return true;
+    }
+    if (trigger instanceof PartitionTrigger) {
+      PartitionTrigger partitionTrigger = (PartitionTrigger) trigger;
+      int numPartitions = 0;
+      for (Notification notification : notifications) {
+        String numPartitionsString = notification.getProperties().get("numPartitions");
+        numPartitions += Integer.parseInt(numPartitionsString);
+      }
+      return numPartitions >= partitionTrigger.getNumPartitions();
+    }
+    throw new IllegalArgumentException("Unknown trigger class: " + trigger.getClass());
   }
 
   @Override
