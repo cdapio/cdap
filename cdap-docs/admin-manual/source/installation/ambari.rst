@@ -4,6 +4,8 @@
 
 :section-numbering: true
 
+.. |su_hdfs| replace:: su hdfs
+
 .. _admin-installation-ambari:
 
 ================================
@@ -63,39 +65,46 @@ The **repository version** (shown in the commands below as |literal-cdap-slash-s
 must match the **CDAP series** which you’d like installed on your cluster. To install the
 **latest** version of the *CDAP 4.1 series,* you would install the *CDAP 4.1 repository.*
 
-Replace |---| in the commands that follow on this page |---| all references to |literal-cdap-slash-short-version|
-with the CDAP Repository from the list below that you would like to use:
+Replace |---| in the commands that follow on this page |---| all references to
+|literal-cdap-slash-short-version| with the CDAP Repository corresponding to the version
+that you would like to use (such as ``cdap/4.0`` for CDAP 4.0.x):
 
 .. _ambari-compatibility-matrix:
 
-+------------------------------------------------------------+
-| Supported Hortonworks Data Platform (HDP) Distributions    |
-+----------------+-----------------+-------------------------+
-| CDAP Series    | CDAP Repository | Hadoop Distributions    |
-+================+=================+=========================+
-| CDAP 4.1.x     | ``cdap/4.1``    | HDP 2.0 through HDP 2.6 |
-+----------------+-----------------+-------------------------+
-| CDAP 4.0.x     | ``cdap/4.0``    | HDP 2.0 through HDP 2.5 |
-+----------------+-----------------+-------------------------+
-| CDAP 3.6.x     | ``cdap/3.6``    | HDP 2.0 through HDP 2.4 |
-+----------------+-----------------+-------------------------+
-| CDAP 3.5.x     | ``cdap/3.5``    | HDP 2.0 through HDP 2.4 |
-+----------------+-----------------+-------------------------+
-| CDAP 3.4.x     | ``cdap/3.4``    | HDP 2.0 through HDP 2.4 |
-+----------------+-----------------+-------------------------+
-| CDAP 3.3.x     | ``cdap/3.3``    | HDP 2.0 through HDP 2.3 |
-+----------------+-----------------+-------------------------+
-| CDAP 3.2.x     | ``cdap/3.2``    | HDP 2.0 through HDP 2.3 |
-+----------------+-----------------+-------------------------+
-| CDAP 3.1.x     | ``cdap/3.1``    | HDP 2.0 through HDP 2.2 |
-+----------------+-----------------+-------------------------+
-| CDAP 3.0.x     | ``cdap/3.0``    | HDP 2.0 and HDP 2.1     |
-+----------------+-----------------+-------------------------+
++---------------------------------------------------------+
+| Supported Hortonworks Data Platform (HDP) Distributions |
++-------------------------------+-------------------------+
+| CDAP Series or Release        | Hadoop Distributions    |
++===============================+=========================+
+| CDAP 4.1.1                    | HDP 2.0 through HDP 2.6 |
++-------------------------------+-------------------------+
+| CDAP 4.1.0                    | HDP 2.0 through HDP 2.5 |
++-------------------------------+-------------------------+
+| CDAP 4.0.x                    | HDP 2.0 through HDP 2.5 |
++-------------------------------+-------------------------+
+| CDAP 3.6.x                    | HDP 2.0 through HDP 2.4 |
++-------------------------------+-------------------------+
+| CDAP 3.5.x                    | HDP 2.0 through HDP 2.4 |
++-------------------------------+-------------------------+
+| CDAP 3.4.x                    | HDP 2.0 through HDP 2.4 |
++-------------------------------+-------------------------+
+| CDAP 3.3.x                    | HDP 2.0 through HDP 2.3 |
++-------------------------------+-------------------------+
+| CDAP 3.2.x                    | HDP 2.0 through HDP 2.3 |
++-------------------------------+-------------------------+
+| CDAP 3.1.x                    | HDP 2.0 through HDP 2.2 |
++-------------------------------+-------------------------+
+| CDAP 3.0.x                    | HDP 2.0 and HDP 2.1     |
++-------------------------------+-------------------------+
 
 .. _ambari-compatibility-matrix-end:
 
-**Note:** The CDAP Ambari service has been tested on Ambari Server 2.0 and 2.1, as
-supplied from Hortonworks.
+**Notes:** 
+
+- The CDAP Ambari service has been tested on Ambari Server 2.0 and 2.1, as
+  supplied from Hortonworks.
+- To install a version lower than the highest current version (such as *CDAP 4.1.0* when
+  *4.1.1* is available), you will need to downgrade your repo after installing it.
 
 .. include:: /../target/_includes/ambari-installation.rst
   :start-after: .. _ambari-install-rpm-using-yum:
