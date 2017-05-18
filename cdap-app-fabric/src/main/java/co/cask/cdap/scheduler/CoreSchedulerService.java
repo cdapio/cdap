@@ -19,9 +19,11 @@ package co.cask.cdap.scheduler;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -34,8 +36,11 @@ import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.proto.NamespaceMeta;
+
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.base.Supplier;
@@ -68,7 +73,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   CoreSchedulerService(TransactionSystemClient txClient, final DatasetFramework datasetFramework,
                        final SchedulerService schedulerService,
                        final NotificationSubscriberService notificationSubscriberService,
-                       final ConstraintCheckerService constraintCheckerService) {
+                       final ConstraintCheckerService constraintCheckerService,
+                       final NamespaceQueryAdmin namespaceQueryAdmin, final Store store) {
     this.datasetFramework = datasetFramework;
     DynamicDatasetCache datasetCache = new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
                                                                    txClient, Schedulers.STORE_DATASET_ID.getParent(),
@@ -89,6 +95,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
                                            Schedulers.STORE_DATASET_ID, DatasetProperties.EMPTY);
             }
             schedulerService.startAndWait();
+            migrateSchedules(namespaceQueryAdmin, store);
             constraintCheckerService.startAndWait();
             notificationSubscriberService.startAndWait();
           }
@@ -102,6 +109,44 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         };
       }
     }, co.cask.cdap.common.service.RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS));
+  }
+
+  private void migrateSchedules(final NamespaceQueryAdmin namespaceQueryAdmin, final Store appMetaStore)
+    throws Exception {
+
+    List<NamespaceMeta> namespaceMetas = namespaceQueryAdmin.list();
+    boolean migrateComplete = execute(new StoreTxRunnable<Boolean, RuntimeException>() {
+      @Override
+      public Boolean run(ProgramScheduleStoreDataset store) {
+        return store.isMigrationComplete();
+      }
+    }, RuntimeException.class);
+    if (migrateComplete) {
+      return; // no need to migrate if migration is complete
+    }
+    String completedNamespace = null;
+    for (NamespaceMeta namespaceMeta : namespaceMetas) {
+      final NamespaceId namespaceId = namespaceMeta.getNamespaceId();
+      // Since namespaces are listed in lexicographical order, if the completedNamespace is larger than
+      // the current namespace lexicographically, then the current namespace is already migrated. Skip this namespace.
+      if (completedNamespace != null && completedNamespace.compareTo(namespaceId.toString()) > 0) {
+        continue;
+      }
+      completedNamespace = execute(new StoreTxRunnable<String, RuntimeException>() {
+        @Override
+        public String run(ProgramScheduleStoreDataset store) {
+          return store.migrateFromAppMetadataStore(namespaceId, appMetaStore);
+        }
+      }, RuntimeException.class);
+    }
+    // Set migration complete after migrating all namespaces
+    execute(new StoreTxRunnable<Void, RuntimeException>() {
+      @Override
+      public Void run(ProgramScheduleStoreDataset store) {
+        store.setMigrationComplete();
+        return null;
+      }
+    }, RuntimeException.class);
   }
 
   @Override
