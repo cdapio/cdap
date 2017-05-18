@@ -27,6 +27,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DFSUtil;
+import org.apache.hadoop.hdfs.DFSUtilClient;
 import org.apache.hadoop.hdfs.HAUtil;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -91,7 +92,7 @@ public class HDFSNodes extends AbstractHDFSStats implements HDFSNodesMXBean {
       }
     }
     String nameService = getNameService();
-    for (String nnId : DFSUtil.getNameNodeIds(conf, nameService)) {
+    for (String nnId : DFSUtilClient.getNameNodeIds(conf, nameService)) {
       namenodes.add(DFSUtil.getNamenodeServiceAddr(conf, nameService, nnId));
     }
     return namenodes;

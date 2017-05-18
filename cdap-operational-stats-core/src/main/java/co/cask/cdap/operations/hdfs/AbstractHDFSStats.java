@@ -30,6 +30,7 @@ import org.apache.hadoop.ha.HAServiceStatus;
 import org.apache.hadoop.ha.HAServiceTarget;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DFSUtil;
+import org.apache.hadoop.hdfs.DFSUtilClient;
 import org.apache.hadoop.hdfs.HAUtil;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.apache.hadoop.hdfs.tools.NNHAServiceTarget;
@@ -117,7 +118,7 @@ public abstract class AbstractHDFSStats extends AbstractOperationalStats {
 
     hdfsConf.set(CommonConfigurationKeys.HADOOP_SECURITY_SERVICE_USER_NAME_KEY, nameNodePrincipal);
 
-    for (String nnId : DFSUtil.getNameNodeIds(conf, nameService)) {
+    for (String nnId : DFSUtilClient.getNameNodeIds(conf, nameService)) {
       HAServiceTarget haServiceTarget = new NNHAServiceTarget(hdfsConf, nameService, nnId);
       HAServiceProtocol proxy = haServiceTarget.getProxy(hdfsConf, 10000);
       HAServiceStatus serviceStatus = proxy.getServiceStatus();

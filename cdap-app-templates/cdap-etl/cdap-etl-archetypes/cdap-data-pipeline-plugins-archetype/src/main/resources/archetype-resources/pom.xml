@@ -29,7 +29,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <spark.version>1.6.1</spark.version>
     <cdap.version>4.2.0-SNAPSHOT</cdap.version>
-    <hadoop.version>2.3.0</hadoop.version>
+    <hadoop.version>2.8.0</hadoop.version>
     <!-- properties for script build step that creates the config files for the artifacts -->
     <widgets.dir>widgets</widgets.dir>
     <docs.dir>docs</docs.dir>

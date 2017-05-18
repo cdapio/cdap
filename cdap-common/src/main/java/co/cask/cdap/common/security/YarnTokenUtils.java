@@ -80,7 +80,7 @@ public final class YarnTokenUtils {
           services.add(SecurityUtil.buildTokenService(YarnUtils.getRMAddress(configuration)).toString());
         }
 
-        Token<TokenIdentifier> token = ConverterUtils.convertFromYarn(rmDelegationToken, null);
+        Token<TokenIdentifier> token = ConverterUtils.convertFromYarn(rmDelegationToken, (InetSocketAddress) null);
         token.setService(new Text(Joiner.on(',').join(services)));
         credentials.addToken(new Text(token.getService()), token);
 

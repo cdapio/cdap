@@ -49,7 +49,7 @@
     <etl.avro.version>1.7.7</etl.avro.version>
     <hsqldb.version>2.3.1</hsqldb.version>
     <es.version>1.6.0</es.version>
-    <es-hadoop.version>2.1.0</es-hadoop.version>
+    <es-hadoop.version>2.8.0</es-hadoop.version>
     <commons-httpclient.version>3.1</commons-httpclient.version>
     <etl.geronimo-jms.version>1.1.1</etl.geronimo-jms.version>
   </properties>
