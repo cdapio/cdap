@@ -59,6 +59,7 @@ import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
+import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenDetail;
@@ -115,7 +116,9 @@ public class DataPipelineTest extends HydratorTestBase {
   
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
-                                                                       Constants.Security.Store.PROVIDER, "file");
+                                                                       Constants.Security.Store.PROVIDER, "file",
+                                                                       Constants.AppFabric.SPARK_COMPAT,
+                                                                       Compat.SPARK_COMPAT);
   private static final String WORDCOUNT_PLUGIN = "wordcount";
   private static final String FILTER_PLUGIN = "filterlines";
   private static final String SPARK_TYPE = co.cask.cdap.etl.common.Constants.SPARK_PROGRAM_PLUGIN_TYPE;
@@ -147,8 +150,15 @@ public class DataPipelineTest extends HydratorTestBase {
 
     File input = new File(testDir, "poem.txt");
     try (PrintWriter writer = new PrintWriter(input.getAbsolutePath())) {
-      writer.println("this is a poem");
-      writer.println("it is a bad poem");
+      writer.println("this");
+      writer.println("is");
+      writer.println("a");
+      writer.println("poem");
+      writer.println("it");
+      writer.println("is");
+      writer.println("a");
+      writer.println("bad");
+      writer.println("poem");
     }
     File wordCountOutput = new File(testDir, "poem_counts");
     File filterOutput = new File(testDir, "poem_filtered");
@@ -207,7 +217,7 @@ public class DataPipelineTest extends HydratorTestBase {
     // check filter output
     files = filterOutput.listFiles();
     Assert.assertNotNull("No output files for filter program found.", files);
-    List<String> expectedLines = ImmutableList.of("this is a poem");
+    List<String> expectedLines = ImmutableList.of("this", "is", "a", "poem", "it", "is", "a", "poem");
     List<String> actualLines = new ArrayList<>();
     for (File file : files) {
       String fileName = file.getName();

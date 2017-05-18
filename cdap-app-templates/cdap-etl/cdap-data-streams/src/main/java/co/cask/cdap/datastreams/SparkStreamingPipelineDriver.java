@@ -34,15 +34,16 @@ import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spark.StreamingCompat;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function0;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
-import org.apache.spark.streaming.api.java.JavaStreamingContextFactory;
 import org.apache.twill.filesystem.Location;
 
 import java.util.HashMap;
@@ -125,9 +126,9 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
                                    final JavaSparkExecutionContext sec,
                                    @Nullable final String checkpointDir) throws Exception {
 
-    JavaStreamingContextFactory contextFactory = new JavaStreamingContextFactory() {
+    Function0<JavaStreamingContext> contextFunction = new Function0<JavaStreamingContext>() {
       @Override
-      public JavaStreamingContext create() {
+      public JavaStreamingContext call() throws Exception {
         JavaStreamingContext jssc = new JavaStreamingContext(
           new JavaSparkContext(), Durations.milliseconds(pipelineSpec.getBatchIntervalMillis()));
         SparkStreamingPipelineRunner runner = new SparkStreamingPipelineRunner(sec, jssc, pipelineSpec, false);
@@ -148,8 +149,6 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
         return jssc;
       }
     };
-
-    return checkpointDir == null ? contextFactory.create() :
-      JavaStreamingContext.getOrCreate(checkpointDir, contextFactory);
+    return checkpointDir == null ? contextFunction.call() : StreamingCompat.getOrCreate(checkpointDir, contextFunction);
   }
 }

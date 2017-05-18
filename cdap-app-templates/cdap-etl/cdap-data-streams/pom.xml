@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>cdap-data-streams</artifactId>
-  <name>CDAP Data Streams Application</name>
+  <name>CDAP Data Streams Application Spark1 Scala 2.10</name>
   <packaging>jar</packaging>
 
   <properties>

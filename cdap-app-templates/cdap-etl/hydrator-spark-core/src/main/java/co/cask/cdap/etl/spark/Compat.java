@@ -26,23 +26,21 @@ import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.streaming.Time;
 import org.apache.spark.streaming.api.java.JavaDStream;
-import org.apache.spark.streaming.api.java.JavaPairDStream;
 import scala.Tuple2;
 
 /**
  * Utility class to handle incompatibilities between Spark1 and Spark2. All hydrator-spark-core modules must have this
- * class with the exact same method signatures. Incompatibilities are in a few places.
+ * class with the exact same method signatures. Incompatibilities are in a few places. Should not contain any
+ * classes from Spark streaming.
  *
  * FlatMapFunction and PairFlatMapFunction in Spark2 was changed to return an Iterator instead of an Iterable
  * This class contains convert methods to change a FlatMapFunc and PairFlatMapFunc into the corresponding Spark version
  * specific class.
  *
- * DStream.foreachRDD() no longer takes a Function2 in Spark2 in favor of VoidFunction2.
- * In Spark1, a Function2 must be used because Spark1.2 does not have VoidFunction2.
- *
  * Outer join methods in Spark1 use guava's Optional whereas Spark2 uses its own Optional.
  */
 public final class Compat {
+  public static final String SPARK_COMPAT = "spark1_2.10";
 
   private Compat() {
 
@@ -89,27 +87,6 @@ public final class Compat {
   public static <K, V1, V2> JavaPairRDD<K, Tuple2<Optional<V1>, Optional<V2>>> fullOuterJoin(JavaPairRDD<K, V1> left,
                                                                                              JavaPairRDD<K, V2> right,
                                                                                              int numPartitions) {
-    return left.fullOuterJoin(right, numPartitions);
-  }
-
-  public static <K, V1, V2> JavaPairDStream<K, Tuple2<V1, Optional<V2>>> leftOuterJoin(JavaPairDStream<K, V1> left,
-                                                                                       JavaPairDStream<K, V2> right) {
-    return left.leftOuterJoin(right);
-  }
-
-  public static <K, V1, V2> JavaPairDStream<K, Tuple2<V1, Optional<V2>>> leftOuterJoin(JavaPairDStream<K, V1> left,
-                                                                                       JavaPairDStream<K, V2> right,
-                                                                                       int numPartitions) {
-    return left.leftOuterJoin(right, numPartitions);
-  }
-
-  public static <K, V1, V2> JavaPairDStream<K, Tuple2<Optional<V1>, Optional<V2>>> fullOuterJoin(
-    JavaPairDStream<K, V1> left, JavaPairDStream<K, V2> right) {
-    return left.fullOuterJoin(right);
-  }
-
-  public static <K, V1, V2> JavaPairDStream<K, Tuple2<Optional<V1>, Optional<V2>>> fullOuterJoin(
-    JavaPairDStream<K, V1> left, JavaPairDStream<K, V2> right, int numPartitions) {
     return left.fullOuterJoin(right, numPartitions);
   }
 }
