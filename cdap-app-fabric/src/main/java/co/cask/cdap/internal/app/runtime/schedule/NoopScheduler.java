@@ -85,6 +85,11 @@ public class NoopScheduler implements Scheduler {
   }
 
   @Override
+  public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+
+  }
+
+  @Override
   public void deleteSchedule(ProgramId programId, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
 

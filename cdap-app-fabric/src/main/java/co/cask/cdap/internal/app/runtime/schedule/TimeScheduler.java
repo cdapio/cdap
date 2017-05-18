@@ -223,7 +223,7 @@ final class TimeScheduler implements Scheduler {
       // We do not need to check for same schedule in the current list as its already checked in app configuration stage
       if (scheduler.checkExists(triggerKey)) {
         throw new ObjectAlreadyExistsException("Unable to store Trigger with name " + triggerKey.getName() +
-                                                 "because one already exists with this identification.");
+                                                 " because one already exists with this identification.");
       }
     }
   }
@@ -345,6 +345,12 @@ final class TimeScheduler implements Scheduler {
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
     }
+  }
+
+  @Override
+  public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    deleteSchedule(schedule.getProgramId(), schedule.getProgramId().getType().getSchedulableType(),
+                   schedule.getName());
   }
 
   @Override
