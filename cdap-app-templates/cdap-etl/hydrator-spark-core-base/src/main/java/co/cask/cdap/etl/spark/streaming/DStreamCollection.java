@@ -17,7 +17,7 @@
 package co.cask.cdap.etl.spark.streaming;
 
 import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.etl.common.TransactionsUtility;
+import co.cask.cdap.etl.common.TransactionUtil;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.batch.SparkCompute;
@@ -121,7 +121,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
         }
       });
     } catch (TransactionFailureException e) {
-      throw TransactionsUtility.propagate(e, Exception.class);
+      throw TransactionUtil.propagate(e, Exception.class);
     }
     return wrap(stream.transform(new ComputeTransformFunction<>(sec, stageInfo, wrappedCompute)));
   }

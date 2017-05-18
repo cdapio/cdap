@@ -17,7 +17,7 @@
 package co.cask.cdap.datastreams;
 
 import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.etl.common.TransactionsUtility;
+import co.cask.cdap.etl.common.TransactionUtil;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSet;
@@ -105,7 +105,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
           }
         });
       } catch (TransactionFailureException e) {
-        throw TransactionsUtility.propagate(e, Exception.class);
+        throw TransactionUtil.propagate(e, Exception.class);
       }
       Location pipelineCheckpointDir = checkpointBaseRef.get().append(pipelineName).append(relativeCheckpointDir);
       checkpointDir = pipelineCheckpointDir.toURI().toString();

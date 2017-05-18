@@ -94,7 +94,7 @@ public class TxLookupProvider extends AbstractLookupProvider {
       });
       return result.get();
     } catch (TransactionFailureException e) {
-      throw TransactionsUtility.propagate(e);
+      throw TransactionUtil.propagate(e);
     }
   }
 }

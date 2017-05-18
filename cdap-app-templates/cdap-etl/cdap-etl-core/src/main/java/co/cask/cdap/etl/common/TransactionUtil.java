@@ -24,7 +24,11 @@ import org.apache.tephra.TransactionFailureException;
  * This is similar to co.cask.cdap.data2.transaction.Transactions, but added here to avoid dependency
  * on cdap-data-fabric package
  */
-public class TransactionsUtility {
+public final class TransactionUtil {
+
+  private TransactionUtil() {
+  }
+
   /**
    * Propagates the given {@link TransactionFailureException}. If the {@link TransactionFailureException#getCause()}
    * doesn't return {@code null}, the cause will be used instead for the propagation. This method will

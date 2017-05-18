@@ -18,7 +18,7 @@ package co.cask.cdap.etl.spark.streaming;
 
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.etl.common.TransactionsUtility;
+import co.cask.cdap.etl.common.TransactionUtil;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -82,7 +82,7 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
         }
       });
     } catch (TransactionFailureException e) {
-      throw TransactionsUtility.propagate(e, DatasetManagementException.class);
+      throw TransactionUtil.propagate(e, DatasetManagementException.class);
     }
   }
 
