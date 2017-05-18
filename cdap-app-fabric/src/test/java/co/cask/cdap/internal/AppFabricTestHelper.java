@@ -62,6 +62,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
@@ -124,16 +125,19 @@ public class AppFabricTestHelper {
         configuration.getBoolean(Constants.Security.Authorization.ENABLED)) {
         injector.getInstance(AuthorizationBootstrapper.class).run();
       }
-      injector.getInstance(TransactionManager.class).startAndWait();
-      injector.getInstance(DatasetOpExecutor.class).startAndWait();
-      injector.getInstance(DatasetService.class).startAndWait();
-      injector.getInstance(SchedulerService.class).startAndWait();
-      injector.getInstance(StreamCoordinatorClient.class).startAndWait();
-      injector.getInstance(NotificationService.class).startAndWait();
-      injector.getInstance(MetricsCollectionService.class).startAndWait();
       MessagingService messagingService = injector.getInstance(MessagingService.class);
       if (messagingService instanceof Service) {
         ((Service) messagingService).startAndWait();
+      }
+      injector.getInstance(TransactionManager.class).startAndWait();
+      injector.getInstance(DatasetOpExecutor.class).startAndWait();
+      injector.getInstance(DatasetService.class).startAndWait();
+      injector.getInstance(StreamCoordinatorClient.class).startAndWait();
+      injector.getInstance(NotificationService.class).startAndWait();
+      injector.getInstance(MetricsCollectionService.class).startAndWait();
+      Scheduler programScheduler = injector.getInstance(Scheduler.class);
+      if (programScheduler instanceof Service) {
+        ((Service) programScheduler).startAndWait();
       }
     }
     return injector;

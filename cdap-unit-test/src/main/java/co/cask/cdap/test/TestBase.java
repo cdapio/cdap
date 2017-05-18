@@ -80,7 +80,6 @@ import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.handlers.AuthorizationHandler;
 import co.cask.cdap.internal.app.runtime.messaging.BasicMessagingAdmin;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.MessagingService;
@@ -188,7 +187,7 @@ public class TestBase {
   private static boolean firstInit = true;
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
-  private static SchedulerService schedulerService;
+  private static Scheduler scheduler;
   private static ExploreExecutorService exploreExecutorService;
   private static ExploreClient exploreClient;
   private static DatasetOpExecutor dsOpService;
@@ -309,8 +308,10 @@ public class TestBase {
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
-    schedulerService = injector.getInstance(SchedulerService.class);
-    schedulerService.startAndWait();
+    scheduler = injector.getInstance(Scheduler.class);
+    if (scheduler instanceof Service) {
+      ((Service) scheduler).startAndWait();
+    }
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
       exploreExecutorService.startAndWait();
@@ -483,7 +484,9 @@ public class TestBase {
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.stopAndWait();
-    schedulerService.stopAndWait();
+    if (scheduler instanceof Service) {
+      ((Service) scheduler).stopAndWait();
+    }
     if (exploreClient != null) {
       Closeables.closeQuietly(exploreClient);
     }

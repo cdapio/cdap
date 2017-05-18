@@ -46,12 +46,10 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -118,7 +116,10 @@ class NotificationSubscriberService extends AbstractIdleService {
     taskExecutorService = MoreExecutors.listeningDecorator(
       Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("scheduler-subscriber-task").build()));
 
-    taskExecutorService.submit(new TimeEventNotificationSubscriberThread());
+    taskExecutorService.submit(new SchedulerEventNotificationSubscriberThread(
+      cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC)));
+    taskExecutorService.submit(new SchedulerEventNotificationSubscriberThread(
+      cConf.get(Constants.Scheduler.STREAM_SIZE_EVENT_TOPIC)));
     taskExecutorService.submit(new DataEventNotificationSubscriberThread());
   }
 
@@ -251,10 +252,10 @@ class NotificationSubscriberService extends AbstractIdleService {
     abstract void updateJobQueue(DatasetContext context, Notification notification) throws Exception;
   }
 
-  private class TimeEventNotificationSubscriberThread extends NotificationSubscriberThread {
+  private class SchedulerEventNotificationSubscriberThread extends NotificationSubscriberThread {
 
-    TimeEventNotificationSubscriberThread() {
-      super(cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC));
+    SchedulerEventNotificationSubscriberThread(String topic) {
+      super(topic);
     }
 
     @Override
@@ -262,8 +263,7 @@ class NotificationSubscriberService extends AbstractIdleService {
       throws IOException, DatasetManagementException, NotFoundException {
 
       Map<String, String> properties = notification.getProperties();
-      ProgramId programId = ProgramId.fromString(properties.get("programId"));
-      ScheduleId scheduleId = programId.getParent().schedule(properties.get(ProgramOptionConstants.SCHEDULE_NAME));
+      ScheduleId scheduleId = ScheduleId.fromString(properties.get(ProgramOptionConstants.SCHEDULE_ID));
       ProgramSchedule schedule;
       try {
         schedule = getScheduleDataset(context).getSchedule(scheduleId);
@@ -281,8 +281,7 @@ class NotificationSubscriberService extends AbstractIdleService {
           LOG.debug("Cannot find schedule '{}' in application '{}'", scheduleId.getSchedule(), scheduleId.getParent());
           return;
         }
-        schedule = Schedulers.toProgramSchedule((TimeSchedule) scheduleSpec.getSchedule(), programId,
-                                                scheduleSpec.getProperties());
+        schedule = Schedulers.toProgramSchedule(scheduleId.getParent(), scheduleSpec);
       }
       jobQueue.addNotification(schedule, notification);
     }

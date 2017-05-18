@@ -253,6 +253,10 @@ public final class Constants {
      * Topic name for publishing time events from time scheduler to the messaging system
      */
     public static final String TIME_EVENT_TOPIC = "time.event.topic";
+    /**
+     * Topic name for publishing time events from stream size scheduler to the messaging system
+     */
+    public static final String STREAM_SIZE_EVENT_TOPIC = "stream.size.event.topic";
   }
 
   /**

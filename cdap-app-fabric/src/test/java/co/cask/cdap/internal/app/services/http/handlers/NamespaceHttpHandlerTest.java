@@ -75,8 +75,6 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final String OTHER_NAME = "test1";
   private static final Gson GSON = new Gson();
 
-  private static LocationFactory baseLocationFactory;
-
   private void assertResponseCode(int expected, HttpResponse response) {
     Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
   }

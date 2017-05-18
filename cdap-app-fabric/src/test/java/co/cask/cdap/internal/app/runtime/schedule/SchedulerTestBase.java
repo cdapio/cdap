@@ -163,7 +163,6 @@ public abstract class SchedulerTestBase {
 
     streamSizeScheduler.suspendSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1);
     streamSizeScheduler.suspendSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2);
-    streamSizeScheduler.deleteSchedules(PROGRAM_ID, PROGRAM_TYPE);
     waitUntilFinished(runtimeService, PROGRAM_ID, 10);
   }
 

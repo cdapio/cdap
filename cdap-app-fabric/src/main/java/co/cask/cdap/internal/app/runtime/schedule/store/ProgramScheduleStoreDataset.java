@@ -127,6 +127,21 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   }
 
   /**
+   * Update an existing schedule in the store.
+   *
+   * @param schedule the schedule to update
+   * @throws NotFoundException if one of the schedules already exists
+   */
+  public void updateSchedule(ProgramSchedule schedule) throws NotFoundException {
+    deleteSchedules(schedule.getScheduleId());
+    try {
+      addSchedule(schedule);
+    } catch (AlreadyExistsException e) {
+      // Should never reach here
+    }
+  }
+
+  /**
    * Removes a schedule from the store. Succeeds whether the schedule exists or not.
    *
    * @param scheduleId the schedule to delete
@@ -336,6 +351,6 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   }
 
   private static byte[] keyPrefixForApplicationScan(ApplicationId appId) {
-    return Bytes.toBytes(appId.getNamespace() + '.' + appId.getApplication() + '.');
+    return Bytes.toBytes(appId.getNamespace() + '.' + appId.getApplication() + '.' + appId.getVersion() + '.');
   }
 }

@@ -18,10 +18,12 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ScheduleId;
 
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,29 @@ import java.util.Map;
  * Interfaces that defines all methods related to scheduling, un-scheduling jobs.
  */
 public interface Scheduler {
+
+  /**
+   * Convert and add a {@link ProgramSchedule} to the store.
+   *
+   * @param schedule the schedule to add
+   * @throws AlreadyExistsException if the schedule already exists
+   */
+  void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException, SchedulerException;
+
+  /**
+   * Updates a {@link ProgramSchedule} in the store. The schedule with the same {@link ScheduleId}
+   * as the given {@code schedule} will be replaced.
+   *
+   * @param schedule the new schedule. The existing schedule with the same {@link ScheduleId} will be replaced
+   */
+  void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException;
+
+  /**
+   * Deletes the schedule corresponding to the given {@link ProgramSchedule} if it exists
+   *
+   * @param schedule the {@link ProgramSchedule} to delete
+   */
+  void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException;
 
   /**
    * Schedule a program to be run in a defined schedule.
