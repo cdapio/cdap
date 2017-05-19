@@ -159,7 +159,7 @@ export default class FilterDirective extends Component {
         if (this.state.ignoreCase) {
           textValue = `(?i)${textValue}`;
         }
-        directive = `${condition} ${column} ${textValue}`;
+        directive = `${condition} ${column} ^${textValue}$`;
         break;
       case 'TEXTREGEX':
         directive = `${condition} ${column} ${textValue}`;
