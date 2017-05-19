@@ -50,16 +50,16 @@ and then restart CDAP:
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
 
 #. Update the CDAP repository definition by running either of these methods:
- 
+
    - On RPM using Yum:
 
-     .. include:: ../_includes/installation/installation.txt 
+     .. include:: ../_includes/installation/installation.txt
         :start-after: Download the Cask Yum repo definition file:
         :end-before:  .. end_install-rpm-using-yum
 
    - On Debian using APT:
 
-     .. include:: ../_includes/installation/installation.txt 
+     .. include:: ../_includes/installation/installation.txt
         :start-after: Download the Cask APT repo definition file:
         :end-before:  .. end_install-debian-using-apt
 
@@ -76,17 +76,17 @@ and then restart CDAP:
 #. Run the upgrade tool, as the user that runs CDAP Master (the CDAP user, indicated by ``<cdap-user>``)::
 
      $ sudo -u <cdap-user> /opt/cdap/master/bin/cdap run co.cask.cdap.data.tools.UpgradeTool upgrade
-     
+
    Note that once you have upgraded an instance of CDAP, you cannot reverse the process; down-grades
    to a previous version are not possible. Also, note that authorization is disabled in the *UpgradeTool*
    so that the ``cdap`` user can upgrade all users' data.
-   
+
    The *UpgradeTool* will produce output similar to the following, prompting you to continue with the upgrade:
-   
+
     .. container:: highlight
 
-      .. parsed-literal::    
-    
+      .. parsed-literal::
+
         UpgradeTool - version |version|-<build timestamp>.
 
         upgrade - Upgrades CDAP to |version|
@@ -103,15 +103,25 @@ and then restart CDAP:
 
    You can run the tool in a non-interactive fashion by using the ``force`` flag, in which case
    it will run unattended and not prompt for continuing::
-   
+
      $ sudo -u <cdap-user> /opt/cdap/master/bin/cdap run co.cask.cdap.data.tools.UpgradeTool upgrade force
-     
+
 #. Restart the CDAP processes::
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
 #. To upgrade existing pipeline applications created using the |previous-short-version|\.x versions of
    system artifacts, there are :ref:`separate instructions on doing so <cdap-pipelines-operating-upgrading-pipeline>`.
+
+#. Once CDAP has restarted, you can check the :ref:`status of the upgrade
+   <http-restful-api-monitor-status-system-upgrade>` using the :ref:`Monitor
+   HTTP RESTful API <http-restful-api-monitor>`::
+
+      $ curl -w"\n" -X GET "http://<cdap-host>:11015/v3/system/upgrade/status"
+
+   Returning::
+
+      {"defaultStore":true,"streamSizeScheduleStore":true,"timeScheduleStore":true }
 
 
 .. _admin-upgrading-packages-upgrading-hadoop:
@@ -162,18 +172,18 @@ version. The steps below will, if required, update the coprocessors appropriatel
 get upgraded correctly and HBase regionservers may crash.**
 
 1. Upgrade CDAP to a version that will support the new Hadoop version, following the usual
-   :ref:`CDAP upgrade procedure for packages <admin-upgrading-packages-upgrading-cdap>`. 
+   :ref:`CDAP upgrade procedure for packages <admin-upgrading-packages-upgrading-cdap>`.
 
 #. After upgrading CDAP, start CDAP and check that it is working correctly.
 
 #. Stop all CDAP applications and services::
-   
+
     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
 
 #. Disable all CDAP tables; from an HBase shell, run the command::
 
     > disable_all 'cdap.*'
-    
+
 #. Upgrade to the new version of Hadoop.
 
 #. Run the *Post-Hadoop Upgrade Tasks* |---| to upgrade CDAP for the new version of Hadoop |---| by running
@@ -184,7 +194,7 @@ get upgraded correctly and HBase regionservers may crash.**
 #. Enable all CDAP tables; from an HBase shell, run this command::
 
     > enable_all 'cdap.*'
-    
+
 #. Restart CDAP::
 
     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done

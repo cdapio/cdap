@@ -143,6 +143,37 @@ The status of these CDAP system services can be checked:
      - Returns the status of the metrics service
 
 
+.. _http-restful-api-monitor-status-system-upgrade:
+
+Checking the Status of a System Upgrade
+==========================================
+To check the status of a :ref:`CDAP system upgrade <upgrading-index>`, use::
+
+  GET /v3/system/upgrade/status
+
+**Note:** This returns useful information only for Distributed CDAP installation upgrades.
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The event successfully called the method, and the body contains the results
+
+.. rubric:: Example
+
+The response body will contain a JSON-formatted list of upgraded tables::
+
+  {
+      "defaultStore":false,
+      "streamSizeScheduleStore":false,
+      "timeScheduleStore":false
+  }
+
+
 Container Information of a System Service
 =========================================
 If you are trying to debug a CDAP system service, you can retrieve container info for a
