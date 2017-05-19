@@ -371,7 +371,7 @@ features:
           suggestion1: Please install "mysql" plugin manually or via market.
         searchPlaceholder: Search table name
         table:
-          colcountlabel: NUMBER OF COLUMMNS
+          colcountlabel: NUMBER OF COLUMNS
           namecollabel: NAME
         tableCount:
           0: No Tables
