@@ -544,7 +544,7 @@ public abstract class AppFabricTestBase {
     HttpResponse response = getAppResponse(namespace, appName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals("application/json", response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue());
-    return readResponse(response, LIST_JSON_OBJECT_TYPE);
+    return readResponse(response, JsonObject.class);
   }
 
   protected HttpResponse getAppResponse(String namespace, String appName) throws Exception {
