@@ -193,7 +193,7 @@ public class AuthorizationBootstrapperTest {
     // ensure that system datasets can be created by the system user
     Dataset systemDataset = DatasetsUtil.getOrCreateDataset(
       dsFramework, NamespaceId.SYSTEM.dataset("system-dataset"), Table.class.getName(), DatasetProperties.EMPTY,
-      Collections.<String, String>emptyMap(), this.getClass().getClassLoader());
+      Collections.<String, String>emptyMap());
     Assert.assertNotNull(systemDataset);
     // as part of bootstrapping, admin users were also granted admin privileges on the CDAP instance, so they can
     // create namespaces
