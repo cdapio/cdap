@@ -103,6 +103,10 @@
           <groupId>co.cask.cdap</groupId>
           <artifactId>cdap-spark-core</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-api-spark</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>

@@ -39,6 +39,7 @@ import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
+import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
@@ -77,7 +78,9 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
   private static int startCount = 0;
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
-                                                                       Constants.Security.Store.PROVIDER, "file");
+                                                                       Constants.Security.Store.PROVIDER, "file",
+                                                                       Constants.AppFabric.SPARK_COMPAT,
+                                                                       Compat.SPARK_COMPAT);
   private static final String DATA_TRACER_PROPERTY = "records.out";
 
   @BeforeClass

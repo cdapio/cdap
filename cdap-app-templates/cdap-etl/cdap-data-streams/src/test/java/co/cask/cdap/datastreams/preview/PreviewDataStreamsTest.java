@@ -36,6 +36,7 @@ import co.cask.cdap.etl.mock.test.HydratorTestBase;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
+import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
@@ -71,7 +72,9 @@ public class PreviewDataStreamsTest extends HydratorTestBase {
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
   private static int startCount = 0;
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
+                                                                       Constants.AppFabric.SPARK_COMPAT,
+                                                                       Compat.SPARK_COMPAT);
   private static final String DATA_TRACER_PROPERTY = "records.out";
 
   @BeforeClass
