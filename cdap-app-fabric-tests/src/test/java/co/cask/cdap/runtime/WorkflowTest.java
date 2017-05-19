@@ -157,8 +157,7 @@ public class WorkflowTest {
       AppFabricTestHelper.deployApplicationWithManager(ScheduleAppWithMissingWorkflow.class, TEMP_FOLDER_SUPPLIER);
       Assert.fail("Should have thrown Exception because Schedule is configured for non existent Workflow.");
     } catch (Exception ex) {
-      Assert.assertEquals("Workflow 'NonExistentWorkflow' is not configured with the Application.",
-                          ex.getCause().getMessage());
+      Assert.assertTrue(ex.getCause().getMessage().contains("is not configured"));
     }
 
     // try deploying app containing anonymous workflow

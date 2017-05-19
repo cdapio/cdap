@@ -42,7 +42,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
-import co.cask.cdap.internal.app.runtime.schedule.TimeScheduler;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
@@ -117,11 +116,11 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
 
   private final WorkflowClient workflowClient;
   private final DatasetFramework datasetFramework;
-  private final TimeScheduler timeScheduler;
+  private final co.cask.cdap.internal.app.runtime.schedule.Scheduler timeScheduler;
 
   @Inject
   WorkflowHttpHandler(Store store, WorkflowClient workflowClient, ProgramRuntimeService runtimeService,
-                      QueueAdmin queueAdmin, TimeScheduler timeScheduler,
+                      QueueAdmin queueAdmin, co.cask.cdap.internal.app.runtime.schedule.Scheduler timeScheduler,
                       MRJobInfoFetcher mrJobInfoFetcher, ProgramLifecycleService lifecycleService,
                       MetricStore metricStore, NamespaceQueryAdmin namespaceQueryAdmin, Scheduler scheduler,
                       DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient) {
