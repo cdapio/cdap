@@ -22,7 +22,6 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ScheduleType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.collect.ImmutableMap;
@@ -76,24 +75,22 @@ public class DeleteScheduleStage extends AbstractStage<ApplicationWithPrograms> 
       deleteFromProgramScheduleStore(input.getApplicationId(), scheduleSpec);
     }
 
-    // for the entries which differ schedule type delete them here so that we can re-create them again in
-    // CreateScheduleStage with new type and spec. Its required to delete it here because in next stage the
-    // application will be registered updating the schedule spec. See CDAP-8918 for details.
+    // for the entries with different schedule specs, delete them here so that we can re-create them again in
+    // CreateScheduleStage with new spec. It's used to be required to delete them here because in next stage the
+    // application will be registered updating the schedule spec. See CDAP-8918 for details. Now since app spec is
+    // no longer the source of truth for schedules, it's no longer required to delete the schedules here.
     for (Map.Entry<String, MapDifference.ValueDifference<ScheduleSpecification>> entry :
       mapDiff.entriesDiffering().entrySet()) {
       ScheduleSpecification newScheduleSpec = entry.getValue().rightValue();
       ScheduleSpecification oldScheduleSpec = entry.getValue().leftValue();
-      if (ScheduleType.fromSchedule(newScheduleSpec.getSchedule()) !=
-        ScheduleType.fromSchedule(oldScheduleSpec.getSchedule())) {
-        LOG.debug("Deleting existing schedule {} with specification {}. It will be created with specification {} " +
-                    "as they differ in schedule type.", entry.getKey(), oldScheduleSpec, newScheduleSpec);
-        ProgramType programType = ProgramType.valueOfSchedulableType(newScheduleSpec.getProgram().getProgramType());
-        scheduler.deleteSchedule(input.getApplicationId().program(programType,
-                                                                  oldScheduleSpec.getProgram().getProgramName()),
-                                 oldScheduleSpec.getProgram().getProgramType(),
-                                 oldScheduleSpec.getSchedule().getName());
-        deleteFromProgramScheduleStore(input.getApplicationId(), oldScheduleSpec);
-      }
+      LOG.debug("Deleting existing schedule {} with specification {}. It will be created with specification {}. ",
+                entry.getKey(), oldScheduleSpec, newScheduleSpec);
+      ProgramType programType = ProgramType.valueOfSchedulableType(newScheduleSpec.getProgram().getProgramType());
+      scheduler.deleteSchedule(input.getApplicationId().program(programType,
+                                                                oldScheduleSpec.getProgram().getProgramName()),
+                               oldScheduleSpec.getProgram().getProgramType(),
+                               oldScheduleSpec.getSchedule().getName());
+      deleteFromProgramScheduleStore(input.getApplicationId(), oldScheduleSpec);
     }
     // Emit the input to next stage.
     emit(input);

@@ -177,6 +177,13 @@ public interface Scheduler {
                              Map<String, String> properties) throws NotFoundException, SchedulerException;
 
   /**
+   * Deletes the schedule corresponding to the given {@link ProgramSchedule} if it exists
+   *
+   * @param schedule the {@link ProgramSchedule} to delete
+   */
+  void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException;
+
+  /**
    * Deletes the schedule.
    * Deletes the associated Job if no other schedules exist for that job.
    *

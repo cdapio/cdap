@@ -367,6 +367,12 @@ public class StreamSizeScheduler implements Scheduler {
   }
 
   @Override
+  public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    deleteSchedule(schedule.getProgramId(), schedule.getProgramId().getType().getSchedulableType(),
+                   schedule.getName());
+  }
+
+  @Override
   public void deleteSchedule(ProgramId programId, SchedulableProgramType programType, String scheduleName)
     throws ScheduleNotFoundException, SchedulerException {
     String scheduleId = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
