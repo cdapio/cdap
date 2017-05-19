@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.security;
 
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.ImplementedBy;
@@ -40,6 +41,7 @@ public interface Impersonator {
    * @param <T> return type of the callable
    *
    * @return the return value of the callable
+   * @throws NamespaceNotFoundException if the namespace does not exist
    * @throws Exception if the callable throws any exception
    */
   <T> T doAs(NamespaceId namespaceId, Callable<T> callable) throws Exception;
@@ -62,6 +64,7 @@ public interface Impersonator {
    * @param namespaceId namespace to lookup the user
    * @return {@link UserGroupInformation}
    * @throws IOException if there was any error fetching the {@link UserGroupInformation}
+   * @throws NamespaceNotFoundException if namespaceId does not exist
    */
-  UserGroupInformation getUGI(NamespaceId namespaceId) throws IOException;
+  UserGroupInformation getUGI(NamespaceId namespaceId) throws IOException, NamespaceNotFoundException;
 }

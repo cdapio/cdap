@@ -292,9 +292,9 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public StreamConfig getConfig(final Id.Stream streamId) throws IOException {
-    // No Authorization check performed in this method. If required, it should be added before this method is invoked
-    UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
     try {
+      // No Authorization check performed in this method. If required, it should be added before this method is invoked
+      UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
       return ImpersonationUtils.doAs(ugi, new Callable<StreamConfig>() {
         @Override
         public StreamConfig call() throws IOException {
