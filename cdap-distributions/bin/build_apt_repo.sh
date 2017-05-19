@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright © 2015-2016 Cask Data, Inc.
+# Copyright © 2015-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -118,7 +118,7 @@ function create_definition_file() {
   echo "Create APT repository definition file"
   cd ${STAGE_DIR}/${__maj_min}
   cat <<EOF > cask.list
-deb [ arch=amd64 ] http://${S3_BUCKET}/${S3_REPO_PATH}/${__maj_min} precise cdap
+deb [ arch=amd64 ] https://${S3_BUCKET}/${S3_REPO_PATH}/${__maj_min} precise cdap
 EOF
 }
 

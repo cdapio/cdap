@@ -40,7 +40,7 @@ __gitdir="${__tmpdir}/cdap"
 __packerdir="${__gitdir}/cdap-distributions/src/packer/scripts"
 __cdap_site_template="${__gitdir}/cdap-distributions/src/emr/cdap-conf.json"
 
-__repo_url=${CDAP_YUM_REPO_URL:-http://repository.cask.co/centos/6/x86_64/cdap/MAJ_MIN}
+__repo_url=${CDAP_YUM_REPO_URL:-https://repository.cask.co/centos/6/x86_64/cdap/MAJ_MIN}
 
 die() { echo "ERROR: ${*}"; exit 1; };
 

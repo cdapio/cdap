@@ -152,7 +152,7 @@ def write_sitemap(sitemap, output, version, compare=False):
     sitemap_urls = ''
     unique_files = []
     for fileURL in sitemap:
-        sitemap_urls += SITEMAP_URL_TEMPLATE % ("http://docs.cask.co/cdap/%s%s" % (version, fileURL.path_fragment))
+        sitemap_urls += SITEMAP_URL_TEMPLATE % ("//docs.cask.co/cdap/%s%s" % (version, fileURL.path_fragment))
         if compare and fileURL.path.endswith('.html'):
             md5_hash = fileURL.generate_md5()
             if md5_hash not in unique_files:

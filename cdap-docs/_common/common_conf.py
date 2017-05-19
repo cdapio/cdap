@@ -261,7 +261,7 @@ extlinks = {
     'cdap-java-source-github': (cdap_java_source_github_pattern , None),
     'cdap-security-extn-source-github': (cdap_security_extn_github_pattern, None),
     'cask-issue': ('https://issues.cask.co/browse/%s', ''),
-    'cask-repository-parcels-cdap': ("http://repository.cask.co/parcels/cdap/%s/%%s" % short_version, None),
+    'cask-repository-parcels-cdap': ("https://repository.cask.co/parcels/cdap/%s/%%s" % short_version, None),
     'cdap-guides': (cdap_guides_github_pattern, None),
     'spark-docs': ("https://spark.apache.org/docs/%s/%%s" % spark_version, None),
     'github-hydrator-plugins': (hydrator_plugins_github_pattern, None),

@@ -41,7 +41,7 @@ This will create the file ``/etc/yum.repos.d/cask.repo`` with:
 .. parsed-literal::
   [cask]
   name=Cask Packages
-  baseurl=http://repository.cask.co/centos/6/x86_64/cdap/|short-version|
+  baseurl=https://repository.cask.co/centos/6/x86_64/cdap/|short-version|
   enabled=1
   gpgcheck=1
 
