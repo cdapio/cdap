@@ -31,6 +31,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authorization.AuthorizationContextFactory;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.DefaultAuthorizationContext;
+import co.cask.cdap.security.authorization.DelegatingPrivilegeManager;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
@@ -96,7 +97,7 @@ public class AuthorizationModule extends PrivateModule {
     bind(AuthorizerInstantiator.class).in(Scopes.SINGLETON);
     expose(AuthorizerInstantiator.class);
 
-    bind(PrivilegesManager.class).toProvider(PrivilegesManagerProvider.class);
+    bind(PrivilegesManager.class).to(DelegatingPrivilegeManager.class);
     expose(PrivilegesManager.class);
   }
 
@@ -158,21 +159,6 @@ public class AuthorizationModule extends PrivateModule {
     @Override
     public Transactional get() {
       return Transactions.createTransactional(datasetCache);
-    }
-  }
-
-  private static final class PrivilegesManagerProvider implements Provider<PrivilegesManager> {
-
-    private final AuthorizerInstantiator authorizerInstantiator;
-
-    @Inject
-    private PrivilegesManagerProvider(AuthorizerInstantiator authorizerInstantiator) {
-      this.authorizerInstantiator = authorizerInstantiator;
-    }
-
-    @Override
-    public PrivilegesManager get() {
-      return authorizerInstantiator.get();
     }
   }
 }
