@@ -149,11 +149,11 @@
         },
         "hadoop": {
           "distribution": "hdp",
-          "distribution_version": "2.1.7.0"
+          "distribution_version": "2.5.3.0"
         },
         "java": {
           "install_flavor": "openjdk",
-          "jdk_version": 7
+          "jdk_version": 8
         }
       },
       "only": ["cdap-sdk-vm"]
