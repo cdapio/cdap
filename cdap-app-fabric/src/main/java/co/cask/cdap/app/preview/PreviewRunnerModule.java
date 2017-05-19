@@ -25,7 +25,6 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.inmemory.InMemoryStreamConsumerFactory;
 import co.cask.cdap.explore.client.ExploreClient;
@@ -73,20 +72,18 @@ public class PreviewRunnerModule extends PrivateModule {
   private final AuthorizerInstantiator authorizerInstantiator;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final PrivilegesManager privilegesManager;
-  private final StreamAdmin streamAdmin;
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final PreferencesStore preferencesStore;
 
   public PreviewRunnerModule(ArtifactRepository artifactRepository, ArtifactStore artifactStore,
                              AuthorizerInstantiator authorizerInstantiator, AuthorizationEnforcer authorizationEnforcer,
-                             PrivilegesManager privilegesManager, StreamAdmin streamAdmin,
+                             PrivilegesManager privilegesManager,
                              StreamCoordinatorClient streamCoordinatorClient, PreferencesStore preferencesStore) {
     this.artifactRepository = artifactRepository;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
     this.authorizationEnforcer = authorizationEnforcer;
     this.privilegesManager = privilegesManager;
-    this.streamAdmin = streamAdmin;
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.preferencesStore = preferencesStore;
   }
@@ -103,8 +100,6 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(AuthorizationEnforcer.class);
     bind(PrivilegesManager.class).toInstance(privilegesManager);
     expose(PrivilegesManager.class);
-    bind(StreamAdmin.class).toInstance(streamAdmin);
-    expose(StreamAdmin.class);
     bind(StreamConsumerFactory.class).to(InMemoryStreamConsumerFactory.class).in(Scopes.SINGLETON);
     expose(StreamConsumerFactory.class);
     bind(StreamCoordinatorClient.class).toInstance(streamCoordinatorClient);

@@ -38,6 +38,7 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.preview.PreviewDataModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.data.stream.preview.PreviewStreamAdminModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -80,9 +81,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
@@ -209,11 +207,12 @@ public class DefaultPreviewManager implements PreviewManager {
       new AuthenticationContextModules().getMasterModule(),
       new SecurityModules().getStandaloneModules(),
       new PreviewSecureStoreModule(secureStore),
+      new PreviewStreamAdminModule(streamAdmin),
       new PreviewDiscoveryRuntimeModule(discoveryService),
       new LocationRuntimeModule().getStandaloneModules(),
       new ConfigStoreModule().getStandaloneModule(),
       new PreviewRunnerModule(artifactRepository, artifactStore, authorizerInstantiator, authorizationEnforcer,
-                              privilegesManager, streamAdmin, streamCoordinatorClient, preferencesStore),
+                              privilegesManager, streamCoordinatorClient, preferencesStore),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new PreviewDataModules().getDataFabricModule(transactionManager),
       new PreviewDataModules().getDataSetsModule(datasetFramework),

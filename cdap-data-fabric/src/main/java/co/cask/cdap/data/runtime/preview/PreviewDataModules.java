@@ -29,7 +29,7 @@ import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
-import co.cask.cdap.data2.registry.DefaultUsageRegistry;
+import co.cask.cdap.data2.registry.NoOpUsageRegistry;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -45,8 +45,6 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.tephra.TransactionManager;
-
-import java.util.Set;
 
 /**
  * Data fabric modules for preview
@@ -99,10 +97,10 @@ public class PreviewDataModules {
         bind(LineageWriter.class).to(BasicLineageWriter.class);
         expose(LineageWriter.class);
 
-        bind(RuntimeUsageRegistry.class).to(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
+        bind(RuntimeUsageRegistry.class).to(NoOpUsageRegistry.class).in(Scopes.SINGLETON);
         expose(RuntimeUsageRegistry.class);
 
-        bind(UsageRegistry.class).to(DefaultUsageRegistry.class).in(Scopes.SINGLETON);
+        bind(UsageRegistry.class).to(NoOpUsageRegistry.class).in(Scopes.SINGLETON);
         expose(UsageRegistry.class);
       }
     };
