@@ -34,7 +34,7 @@ import java.util.Set;
  */
 public abstract class AbstractAuthorizationEnforcer implements AuthorizationEnforcer {
 
-  static final Predicate<EntityId> ALLOW_ALL = new Predicate<EntityId>() {
+  private static final Predicate<EntityId> ALLOW_ALL = new Predicate<EntityId>() {
     @Override
     public boolean apply(EntityId entityId) {
       return true;

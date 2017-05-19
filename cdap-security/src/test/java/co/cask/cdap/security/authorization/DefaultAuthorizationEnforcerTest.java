@@ -90,7 +90,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       try {
         authorizationEnforcer.enforce(APP, ALICE, Action.ADMIN);
         Assert.fail("Alice should not have ADMIN privilege on the APP.");
-      } catch (Exception ignored) {
+      } catch (UnauthorizedException ignored) {
         // expected
       }
     }
@@ -138,6 +138,14 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       // because the LoadingCache should make a blocking call to retrieve his privileges
       authEnforcementService.enforce(ds, BOB, Action.ADMIN);
       // revoke all of alice's privileges
+      authorizer.revoke(NS, ALICE, ImmutableSet.of(Action.READ));
+      try {
+        authEnforcementService.enforce(NS, ALICE, Action.READ);
+        Assert.fail(String.format("Expected %s to not have '%s' privilege on %s but it does.",
+                                  ALICE, Action.READ, NS));
+      } catch (UnauthorizedException ignored) {
+        // expected
+      }
       authorizer.revoke(NS);
 
       assertAuthorizationFailure(authEnforcementService, NS, ALICE, Action.READ);
@@ -222,6 +230,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
         new DefaultAuthorizationEnforcer(cConf, authorizerInstantiator);
       DatasetId ds = NS.dataset("ds");
       // All enforcement operations should succeed, since authorization is disabled
+      authorizerInstantiator.get().grant(ds, BOB, ImmutableSet.of(Action.ADMIN));
       authEnforcementService.enforce(NS, ALICE, Action.ADMIN);
       authEnforcementService.enforce(ds, BOB, Action.ADMIN);
       Predicate<EntityId> filter = authEnforcementService.createFilter(BOB);
