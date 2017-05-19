@@ -144,7 +144,7 @@ public class AuthorizationModule extends PrivateModule {
 
     @Override
     public Admin get() {
-      return new DefaultAdmin(dsFramework, NamespaceId.SYSTEM, secureStoreManager, defaultArtifactManager);
+      return new DefaultAdmin(dsFramework, NamespaceId.SYSTEM, secureStoreManager);
     }
   }
 

@@ -19,8 +19,6 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.artifact.ArtifactInfo;
-import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
@@ -39,10 +37,8 @@ import com.google.inject.assistedinject.Assisted;
 import org.apache.tephra.TransactionFailureException;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import javax.annotation.Nullable;
 
 /**
  * An {@link AuthorizationContext} that delegates to the provided {@link DatasetContext}, {@link Admin} and
@@ -202,16 +198,5 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   @Override
   public SecureStoreData getSecureData(String namespace, String name) throws Exception {
     return delegateSecureStore.getSecureData(namespace, name);
-  }
-
-  @Override
-  public List<ArtifactInfo> listArtifacts() throws IOException {
-    return delegateAdmin.listArtifacts();
-  }
-
-  @Override
-  public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
-                                                @Nullable ClassLoader parentClassLoader) throws IOException {
-    return delegateAdmin.createClassLoader(artifactInfo, parentClassLoader);
   }
 }

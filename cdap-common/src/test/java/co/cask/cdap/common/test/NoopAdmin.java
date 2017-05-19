@@ -17,21 +17,15 @@
 package co.cask.cdap.common.test;
 
 import co.cask.cdap.api.Admin;
-import co.cask.cdap.api.artifact.ArtifactInfo;
-import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 
-import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * A {@link Admin} that performs no-operation on all methods.
@@ -109,20 +103,5 @@ public class NoopAdmin implements Admin {
   @Override
   public void deleteTopic(String topic) throws TopicNotFoundException, IOException {
     // no-op
-  }
-
-  @Override
-  public List<ArtifactInfo> listArtifacts() {
-    return new ArrayList<>();
-  }
-
-  @Override
-  public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo, @Nullable ClassLoader parentClassLoader) {
-    return new CloseableClassLoader(this.getClass().getClassLoader(), new Closeable() {
-      @Override
-      public void close() throws IOException {
-        // no-op
-      }
-    });
   }
 }

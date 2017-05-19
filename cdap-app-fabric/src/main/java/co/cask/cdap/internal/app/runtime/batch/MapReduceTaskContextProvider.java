@@ -28,7 +28,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
-import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.messaging.MessagingService;
@@ -70,7 +69,6 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
   private final LoadingCache<ContextCacheKey, BasicMapReduceTaskContext> taskContexts;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
-  private final DefaultArtifactManager defaultArtifactManager;
 
   /**
    * Helper method to tell if the MR is running in local mode or not. This method doesn't really belongs to this
@@ -89,7 +87,6 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
     this.taskContexts = CacheBuilder.newBuilder().build(createCacheLoader(injector));
     this.authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
     this.authenticationContext = injector.getInstance(AuthenticationContext.class);
-    this.defaultArtifactManager = injector.getInstance(DefaultArtifactManager.class);
   }
 
   protected Injector getInjector() {
@@ -218,7 +215,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           spec, workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
           contextConfig.getTx(), programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources(), secureStore, secureStoreManager,
-          authorizationEnforcer, authenticationContext, messagingService, defaultArtifactManager
+          authorizationEnforcer, authenticationContext, messagingService
         );
       }
     };
