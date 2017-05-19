@@ -303,6 +303,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           Enumeration<JarEntry> entries = jobJarFile.entries();
           while (entries.hasMoreElements()) {
             JarEntry entry = entries.nextElement();
+            LOG.error("DW Jar Entry: {}", entry.getName());
             if (entry.getName().startsWith("lib/") && entry.getName().endsWith(".jar")) {
               jarFiles.add("job.jar/" + entry.getName());
             }
