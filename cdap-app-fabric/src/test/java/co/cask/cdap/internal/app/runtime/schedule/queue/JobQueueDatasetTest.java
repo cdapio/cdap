@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.schedule.queue;
 
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
@@ -265,14 +266,16 @@ public class JobQueueDatasetTest extends AppFabricTestBase {
         // should be 0 jobs in the JobQueue to begin with
         Assert.assertEquals(0, getAllJobs(jobQueue).size());
 
-        Notification notification =
-          new Notification(Notification.Type.PARTITION, ImmutableMap.of("someKey", "someValue"));
+        // Construct a partition notification with DATASET_ID
+        Notification notification = Notification.forPartitions(DATASET_ID, ImmutableList.<PartitionKey>of());
 
         Assert.assertNull(jobQueue.getJob(SCHED1_JOB.getJobKey()));
 
         jobQueue.put(SCHED1_JOB);
         Assert.assertEquals(SCHED1_JOB, jobQueue.getJob(SCHED1_JOB.getJobKey()));
 
+        // Since notification and SCHED1 have the same dataset id DATASET_ID, notification will be added to
+        // SCHED1_JOB, which is a job in SCHED1
         jobQueue.addNotification(SCHED1, notification);
         Assert.assertEquals(ImmutableList.of(notification), jobQueue.getJob(SCHED1_JOB.getJobKey()).getNotifications());
       }
