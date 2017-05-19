@@ -22,7 +22,7 @@
 
   <property>
     <name>dataset.service.exec.threads</name>
-    <value>300</value>
+    <value>100</value>
     <description>
       Set size of executor ThreadPool in netty for Dataset Service.
     </description>
