@@ -147,8 +147,11 @@ public abstract class AppFabricTestBase {
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
 
   protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  protected static final Type LIST_JSON_OBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
   protected static final Type LIST_RUNRECORD_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
+  protected static final Type LIST_SCHEDULE_DETAIL_TYPE = new TypeToken<List<ScheduleDetail>>() { }.getType();
+  protected static final Type SET_TRING_TYPE = new TypeToken<Set<String>>() { }.getType();
 
   protected static final String NONEXISTENT_NAMESPACE = "12jr0j90jf3foieoi33";
 
@@ -534,26 +537,24 @@ public abstract class AppFabricTestBase {
   protected List<JsonObject> getAppList(String namespace) throws Exception {
     HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
-    return readResponse(response, typeToken);
+    return readResponse(response, LIST_JSON_OBJECT_TYPE);
   }
 
   protected JsonObject getAppDetails(String namespace, String appName) throws Exception {
     HttpResponse response = getAppResponse(namespace, appName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals("application/json", response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue());
-    Type typeToken = new TypeToken<JsonObject>() { }.getType();
-    return readResponse(response, typeToken);
+    return readResponse(response, LIST_JSON_OBJECT_TYPE);
   }
 
   protected HttpResponse getAppResponse(String namespace, String appName) throws Exception {
     return doGet(getVersionedAPIPath(String.format("apps/%s", appName),
-                                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+                                     Constants.Gateway.API_VERSION_3_TOKEN, namespace));
   }
 
   protected HttpResponse getAppResponse(String namespace, String appName, String appVersion) throws Exception {
     return doGet(getVersionedAPIPath(String.format("apps/%s/versions/%s", appName, appVersion),
-                                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+                                     Constants.Gateway.API_VERSION_3_TOKEN, namespace));
   }
 
   protected Set<String> getAppVersions(String namespace, String appName) throws Exception {
@@ -561,16 +562,14 @@ public abstract class AppFabricTestBase {
                                                       Constants.Gateway.API_VERSION_3_TOKEN, namespace));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals("application/json", response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue());
-    Type typeToken = new TypeToken<Set<String>>() { }.getType();
-    return readResponse(response, typeToken);
+    return readResponse(response, SET_TRING_TYPE);
   }
 
   protected JsonObject getAppDetails(String namespace, String appName, String appVersion) throws Exception {
     HttpResponse response = getAppResponse(namespace, appName, appVersion);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals("application/json", response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue());
-    Type typeToken = new TypeToken<JsonObject>() { }.getType();
-    return readResponse(response, typeToken);
+    return readResponse(response, JsonObject.class);
   }
 
   protected void assertRunHistory(final Id.Program program, final String status, int expected,
@@ -628,8 +627,7 @@ public abstract class AppFabricTestBase {
   protected List<JsonObject> getArtifacts(String namespace) throws Exception {
     HttpResponse response = doGet(getVersionedAPIPath("artifacts", namespace));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
-    return readResponse(response, typeToken);
+    return readResponse(response, LIST_JSON_OBJECT_TYPE);
   }
 
   protected void deleteArtifact(Id.Artifact artifact, int expectedResponseCode) throws Exception {
@@ -879,7 +877,7 @@ public abstract class AppFabricTestBase {
     String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     HttpResponse response = doGet(versionedUrl);
     String json = EntityUtils.toString(response.getEntity());
-    return GSON.fromJson(json, new TypeToken<List<ScheduleDetail>>() { }.getType());
+    return GSON.fromJson(json, LIST_SCHEDULE_DETAIL_TYPE);
   }
 
   protected List<ScheduleDetail> getSchedules(String namespace, String appName, String appVersion,
@@ -889,7 +887,7 @@ public abstract class AppFabricTestBase {
     String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     HttpResponse response = doGet(versionedUrl);
     String json = EntityUtils.toString(response.getEntity());
-    return GSON.fromJson(json, new TypeToken<List<ScheduleDetail>>() { }.getType());
+    return GSON.fromJson(json, LIST_SCHEDULE_DETAIL_TYPE);
   }
 
   protected HttpResponse addSchedule(String namespace, String appName, @Nullable String appVersion, String scheduleName,
@@ -944,8 +942,7 @@ public abstract class AppFabricTestBase {
     String path = String.format("apps/%s/versions/%s/schedules", appName, appVersion);
     HttpResponse response = doGet(getVersionedAPIPath(path, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Type schedulesType = new TypeToken<List<ScheduleDetail>>() { }.getType();
-    return readResponse(response, schedulesType);
+    return readResponse(response, LIST_SCHEDULE_DETAIL_TYPE);
   }
 
   protected void verifyNoRunWithStatus(final Id.Program program, final String status) throws Exception {

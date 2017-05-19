@@ -21,10 +21,8 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
+import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.schedule.Schedules;
-import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -43,7 +41,7 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
   public static final String WORKFLOW_NAME = "SampleWorkflow";
   public static final String SCHEDULE = "SampleSchedule";
   public static final String SCHEDULE_2 = "SampleSchedule2";
-  public static final String SPARK = "SampleSpark";
+  public static final String MAPREDUCE = "SampleMR";
 
   @Override
   public void configure() {
@@ -59,7 +57,7 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
       }
 
       if (config.addWorkflow) {
-        addSpark(new SampleSpark());
+        addMapReduce(new SampleMR());
         addWorkflow(new SampleWorkflow());
       }
 
@@ -137,13 +135,8 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
     }
   }
 
-  private class SampleSpark extends AbstractSpark implements JavaSparkMain {
+  private class SampleMR extends AbstractMapReduce {
     @Override
-    public void configure() {
-      setMainClass(this.getClass());
-    }
-
-    @Override
-    public void run(JavaSparkExecutionContext sec) throws Exception { }
+    public void configure() { }
   }
 }

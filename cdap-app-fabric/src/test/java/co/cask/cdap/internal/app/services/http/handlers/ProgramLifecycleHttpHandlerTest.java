@@ -1254,13 +1254,13 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // adding a schedule to invalid type of program type should fail
     ScheduleSpecification invalidSpecification = new ScheduleSpecification(
-      timeSchedule, new ScheduleProgramInfo(SchedulableProgramType.SPARK, AppWithSchedule.SPARK), properties);
+      timeSchedule, new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, AppWithSchedule.MAPREDUCE), properties);
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, invalidSpecification);
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
 
     // adding a schedule for a program that does not exist
     ScheduleSpecification nonExistingSpecification = new ScheduleSpecification(
-      timeSchedule, new ScheduleProgramInfo(SchedulableProgramType.SPARK, AppWithSchedule.SPARK + "nope"), properties);
+      timeSchedule, new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "nope"), properties);
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, nonExistingSpecification);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
 

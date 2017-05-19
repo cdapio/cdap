@@ -23,6 +23,8 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ScheduledRuntime;
+import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ScheduleId;
@@ -36,6 +38,7 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -133,15 +136,22 @@ public class ScheduleClientTestRun extends ClientTestBase {
 
   @Test
   public void testScheduleChanges() throws Exception {
+    File appJar = createAppJarFile(FakeApp.class);
+    ArtifactSummary artifactSummary = new ArtifactSummary()
+
     // deploy the app with time and stream size schedule
     FakeApp.AppConfig config = new FakeApp.AppConfig(true, true, null, null, null);
-    appClient.deploy(namespace, createAppJarFile(FakeApp.class), config);
+    appClient.deploy(namespace, appJar, config);
     // now there should be two schedule
     List<ScheduleDetail> list = scheduleClient.list(workflow);
     Assert.assertEquals(2, list.size());
 
     // re-deploy the app with only time schedule i.e. we deleted the stream size schedule
     config = new FakeApp.AppConfig(true, false, null, null, null);
+    AppRequest<FakeApp.AppConfig> appRequest = new AppRequest<FakeApp.AppConfig>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config, null, null, false);
+
+    )
     appClient.deploy(namespace, createAppJarFile(FakeApp.class), config);
     // now there should be one schedule
     list = scheduleClient.list(workflow);

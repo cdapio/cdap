@@ -685,8 +685,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private void doAddSchedule(HttpRequest request, HttpResponder responder, String namespace, String appName,
-                             String appVersion, String scheduleName)
-    throws Exception {
+                             String appVersion, String scheduleName) throws Exception {
 
     ScheduleDetail scheduleFromRequest = readScheduleDetailBody(request, scheduleName, false);
 
