@@ -119,6 +119,18 @@ You can make these changes `using Cloudera Manager
 Please restart the stale services upon seeing a prompt to do so after making the above
 changes.
 
+Create the "cdap" User
+----------------------
+**The CDAP system user:** As Hadoop resolves users at the NameNode, the ``cdap`` user must
+be added there, or name resolution for the user will fail. With Cloudera Manager, the CDAP
+installation will create the ``cdap`` user on all nodes when it is distributed or
+activated on the cluster.
+
+Note that Cloudera Manager can be configured to not add users specified in a installation.
+This can be the case for installations whose IT policies or infrastructure do not allow
+local user creation. If this is the case, manual creation of the ``cdap`` user on nodes
+may be required.
+
 .. HDFS Permissions
 .. ----------------
 .. include:: /../target/_includes/cloudera-hdfs-permissions.rst
@@ -447,7 +459,7 @@ values for Cloudera may vary from the above appendix:
     :start-after: .. _cloudera-starting-services-java-heapmax:
     :end-before: .. end_of_list
 
-At this point, the CDAP installation is configured and is ready to be installed. Review
+**At this point, the CDAP installation is configured** and is ready to be installed. Review
 your settings before continuing to the next step, which will install and start CDAP.
 
 .. _cloudera-starting-services:
