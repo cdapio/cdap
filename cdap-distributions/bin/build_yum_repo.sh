@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright © 2015-2016 Cask Data, Inc.
+# Copyright © 2015-2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -130,7 +130,7 @@ function create_definition_file() {
   cat <<EOF > cask.repo
 [cask]
 name=Cask Packages
-baseurl=http://${S3_BUCKET}/${S3_REPO_PATH}/${__maj_min}
+baseurl=https://${S3_BUCKET}/${S3_REPO_PATH}/${__maj_min}
 enabled=1
 gpgcheck=1
 EOF

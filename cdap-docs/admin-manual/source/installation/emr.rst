@@ -100,7 +100,7 @@ Using the Create Cluster Wizard
    
      .. parsed-literal::
    
-       instance.isMaster=true "curl \http://downloads.cask.co/emr/install-|release|.sh | sudo bash -s"
+       instance.isMaster=true "curl \https://downloads.cask.co/emr/install-|release|.sh | sudo bash -s"
 
    .. figure:: ../_images/emr/emr-step3b-bootstrap-action-run-if.png
       :figwidth: 100%

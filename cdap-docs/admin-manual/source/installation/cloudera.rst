@@ -293,7 +293,7 @@ cm_ig_parcels.html>`__, but in summary these are the steps:
 
   .. parsed-literal::
 
-    \http://repository.cask.co/parcels/cdap/|short-version|\ /manifest.json
+    \https://repository.cask.co/parcels/cdap/|short-version|\ /manifest.json
 
 
 Installing CDAP Services

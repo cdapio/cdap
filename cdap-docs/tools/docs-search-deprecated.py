@@ -17,7 +17,7 @@
 #
 #
 # Reads in the Javadocs pages
-# (at http://docs.cask.co/cdap/<release-version>/en/reference-manual/javadocs/deprecated-list.html);
+# (at docs.cask.co/cdap/<release-version>/en/reference-manual/javadocs/deprecated-list.html);
 # extracts all of the listed deprecated items, and then searches in the Java, text, and
 # ReST files of the examples and the documentation for any usage. 
 #
@@ -44,15 +44,15 @@ def parse_options():
         usage="%prog [release]",
         description="Searches for deprecated items in documentation ('cdap-docs') and examples ('cdap-examples'). "
             "If no release is specified, 'current' is used instead. "
-            "Uses the lists at 'http://docs.cask.co/cdap/[release]/en/reference-manual/javadocs/deprecated-list.html' "
-            "and at 'http://docs.cask.co/cdap/json-versions.js'")
+            "Uses the lists at 'docs.cask.co/cdap/[release]/en/reference-manual/javadocs/deprecated-list.html' "
+            "and at 'docs.cask.co/cdap/json-versions.js'")
 
     (options, args) = parser.parse_args()
 
     return options, args, parser
 
 def load_json_versions(release):
-    json_versions_url = 'http://docs.cask.co/cdap/json-versions.js'
+    json_versions_url = '//docs.cask.co/cdap/json-versions.js'
     page = urllib2.urlopen(json_versions_url).read().strip()
     if page.startswith(r'versionscallback('):
         page = page[len(r'versionscallback('):]
@@ -77,7 +77,7 @@ def load_deprecated_items(release):
     deprecated_items = dict()
     longest = 0
     for version in versions:
-        deprecated_url = "http://docs.cask.co/cdap/%s/en/reference-manual/javadocs/deprecated-list.html" % version
+        deprecated_url = "//docs.cask.co/cdap/%s/en/reference-manual/javadocs/deprecated-list.html" % version
         deprecated_version = _load_deprecated_items(deprecated_url)
         for deprecated in deprecated_version:
             signatures = deprecated_version[deprecated]

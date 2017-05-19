@@ -84,13 +84,13 @@ GitHub. If you download the zip file, then the artifact is already built and pac
   .. Linux
 
   $ cd <CDAP-SDK-HOME>
-  $ curl -w"\n" -O -X GET "http://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip"
+  $ curl -w"\n" -O -X GET "https://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip"
   $ unzip cdap-wise-|cdap-apps-version|.zip
 
   .. Windows
   
   > cd <CDAP-SDK-HOME>
-  > curl -O -X GET "http://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip"
+  > curl -O -X GET "https://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip"
   > jar xf cdap-wise-|cdap-apps-version|.zip
 
             

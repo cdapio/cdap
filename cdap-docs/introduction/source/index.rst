@@ -1250,7 +1250,7 @@ Building Real World Applications
          .. tabbed-parsed-literal::
       
             $ cd cdap-sdk-|release|/examples
-            $ curl -O http://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip
+            $ curl -O https://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip
             $ unzip cdap-wise-|cdap-apps-version|.zip
 
          From within the CDAP CLI:
