@@ -23,7 +23,6 @@ import StreamDetailedView from 'components/StreamDetailedView';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import DataPrepHome from 'components/DataPrepHome';
-import FileBrowser from 'components/FileBrowser';
 import DataPrepConnections from 'components/DataPrepConnections';
 import DataPrepBrowser from 'components/DataPrep/DataPrepBrowser';
 import {setActiveBrowser, setDatabaseProperties} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
@@ -46,7 +45,6 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/streams/:streamId" component={StreamDetailedView} />
           <Route exact path="/ns/:namespace/dataprep" component={DataPrepHome} />
           <Route exact path="/ns/:namespace/dataprep/:workspaceId" component={DataPrepHome} />
-          <Route path="/ns/:namespace/file" component={FileBrowser} />
           <Route path="/ns/:namespace/databasebrowser" render={() => {
             setActiveBrowser({ name: 'database' });
             setDatabaseProperties({

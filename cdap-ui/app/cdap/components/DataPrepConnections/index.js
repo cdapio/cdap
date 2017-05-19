@@ -27,6 +27,7 @@ import MyDataPrepApi from 'api/dataprep';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
 import ConnectionsUpload from 'components/DataPrepConnections/UploadFile';
 import AddConnection from 'components/DataPrepConnections/AddConnection';
+import DatabaseBrowserWrapper from 'components/DataPrepConnections/DatabaseBrowserWrapper';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -112,16 +113,21 @@ export default class DataPrepConnections extends Component {
   renderDatabaseDetail() {
     if (!this.state.database) { return null; }
 
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    const baseLinkPath = `/ns/${namespace}/connections`;
+
     return (
       <div>
         {this.state.connectionsList.map((database) => {
           return (
-            <div
+            <NavLink
+              to={`${baseLinkPath}/database/${database.id}`}
+              activeClassName="active"
               className="menu-item-expanded-list"
               key={database.id}
             >
               {database.name}
-            </div>
+            </NavLink>
           );
         })}
       </div>
@@ -240,6 +246,8 @@ export default class DataPrepConnections extends Component {
         })}>
           <Route path={`${BASEPATH}/browser`}
             render={({match, location}) => {
+              setActiveBrowser({ name: 'file' });
+
               return (
                 <DataPrepBrowser
                   match={match}
@@ -253,6 +261,17 @@ export default class DataPrepConnections extends Component {
             render={() => {
               return (
                 <ConnectionsUpload toggle={this.toggleSidePanel} />
+              );
+            }}
+          />
+
+          <Route
+            path={`${BASEPATH}/database/:databaseId`}
+            render={(match) => {
+              return (
+                <DatabaseBrowserWrapper
+                  databaseId={match.match.params.databaseId}
+                />
               );
             }}
           />

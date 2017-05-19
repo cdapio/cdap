@@ -66,14 +66,14 @@ export default class DatabaseDetail extends Component {
       properties = {
         hostname: this.state.host,
         port: this.state.port,
-        username: this.state.username,
+        userName: this.state.username,
         password: this.state.password,
         database: this.state.database
       };
     } else {
       properties = {
         connectionString: this.state.jdbcString,
-        username: this.state.username,
+        userName: this.state.username,
         password: this.state.password
       };
     }
