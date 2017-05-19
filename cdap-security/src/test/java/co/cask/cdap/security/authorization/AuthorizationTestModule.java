@@ -22,7 +22,9 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
+import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
 import com.google.inject.Scopes;
 
 
@@ -39,7 +41,22 @@ public class AuthorizationTestModule extends PrivateModule {
     bind(AuthorizationContextFactory.class).to(NoOpAuthorizationContextFactory.class);
     bind(AuthorizerInstantiator.class).in(Scopes.SINGLETON);
     expose(AuthorizerInstantiator.class);
-    bind(PrivilegesManager.class).to(DefaultPrivilegesManager.class).in(Scopes.SINGLETON);
+    bind(PrivilegesManager.class).toProvider(PrivilegesManagerProvider.class).in(Scopes.SINGLETON);
     expose(PrivilegesManager.class);
+  }
+
+  private static final class PrivilegesManagerProvider implements Provider<PrivilegesManager> {
+
+    private final AuthorizerInstantiator authorizerInstantiator;
+
+    @Inject
+    private PrivilegesManagerProvider(AuthorizerInstantiator authorizerInstantiator) {
+      this.authorizerInstantiator = authorizerInstantiator;
+    }
+
+    @Override
+    public PrivilegesManager get() {
+      return authorizerInstantiator.get();
+    }
   }
 }

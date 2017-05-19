@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 
 /**
@@ -33,8 +34,6 @@ import java.util.HashSet;
  * have to implement these methods unless necessary.
  */
 public abstract class AbstractAuthorizer implements Authorizer {
-
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractAuthorizer.class);
 
   protected static final Predicate<EntityId> ALLOW_ALL = new Predicate<EntityId>() {
     @Override
@@ -70,7 +69,7 @@ public abstract class AbstractAuthorizer implements Authorizer {
       @Override
       public boolean apply(EntityId entityId) {
         try {
-          enforce(entityId, principal, new HashSet<>(Arrays.asList(Action.values())));
+          enforce(entityId, principal, EnumSet.allOf(Action.class));
           return true;
         } catch (UnauthorizedException e) {
           return false;

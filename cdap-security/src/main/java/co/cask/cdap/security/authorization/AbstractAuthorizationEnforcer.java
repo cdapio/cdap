@@ -25,6 +25,7 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -43,7 +44,7 @@ public abstract class AbstractAuthorizationEnforcer implements AuthorizationEnfo
   private final boolean securityEnabled;
   private final boolean authorizationEnabled;
 
-  public AbstractAuthorizationEnforcer(CConfiguration cConf) {
+  AbstractAuthorizationEnforcer(CConfiguration cConf) {
     this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
   }
@@ -53,7 +54,8 @@ public abstract class AbstractAuthorizationEnforcer implements AuthorizationEnfo
     if (!isSecurityAuthorizationEnabled()) {
       return;
     }
-    Set<Action> disallowed = new HashSet<>(actions.size());
+
+    Set<Action> disallowed = EnumSet.noneOf(Action.class);
     for (Action action : actions) {
       try {
         enforce(entity, principal, action);
@@ -61,7 +63,7 @@ public abstract class AbstractAuthorizationEnforcer implements AuthorizationEnfo
         disallowed.add(action);
       }
     }
-    if (disallowed.size() > 0) {
+    if (!disallowed.isEmpty()) {
       throw new UnauthorizedException(principal, disallowed, entity);
     }
   }

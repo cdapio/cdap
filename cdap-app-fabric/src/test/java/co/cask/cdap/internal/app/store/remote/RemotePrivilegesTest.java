@@ -28,13 +28,13 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.AuthorizationPrivilege;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.authorization.RemoteAuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Preconditions;
 import com.google.inject.Injector;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -84,7 +84,7 @@ public class RemotePrivilegesTest {
     cConf.setBoolean(Constants.Security.ENABLED, true);
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
-    cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, true);
+    cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 10000);
     cConf.setInt(Constants.Security.Authorization.CACHE_TTL_SECS, CACHE_TIMEOUT);
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, InMemoryAuthorizer.class.getName());
@@ -135,37 +135,37 @@ public class RemotePrivilegesTest {
     authorizationEnforcer.enforce(NS, ALICE, EnumSet.allOf(Action.class));
     authorizationEnforcer.enforce(APP, ALICE, Action.ADMIN);
     authorizationEnforcer.enforce(PROGRAM, ALICE, Action.EXECUTE);
-    Map<RemoteAuthorizationEnforcer.AuthorizationPrivilege, Boolean> authorizationPrivilegeBooleanMap =
+    Map<AuthorizationPrivilege, Boolean> authorizationPrivilegeBooleanMap =
       ((RemoteAuthorizationEnforcer) authorizationEnforcer).cacheAsMap();
     // 4 For EnumSet.allOf(Action.class) and one each for the next 2
     Assert.assertEquals(currentCount + 6, authorizationPrivilegeBooleanMap.size());
     Assert.assertTrue(authorizationPrivilegeBooleanMap.containsKey(
-      new RemoteAuthorizationEnforcer.AuthorizationPrivilege(ALICE, NS, Action.ADMIN)));
+      new AuthorizationPrivilege(ALICE, NS, Action.ADMIN)));
     Assert.assertTrue(authorizationPrivilegeBooleanMap.containsKey(
-      new RemoteAuthorizationEnforcer.AuthorizationPrivilege(ALICE, NS, Action.READ)));
+      new AuthorizationPrivilege(ALICE, NS, Action.READ)));
     Assert.assertTrue(authorizationPrivilegeBooleanMap.containsKey(
-      new RemoteAuthorizationEnforcer.AuthorizationPrivilege(ALICE, NS, Action.WRITE)));
+      new AuthorizationPrivilege(ALICE, NS, Action.WRITE)));
     Assert.assertTrue(authorizationPrivilegeBooleanMap.containsKey(
-      new RemoteAuthorizationEnforcer.AuthorizationPrivilege(ALICE, NS, Action.EXECUTE)));
+      new AuthorizationPrivilege(ALICE, NS, Action.EXECUTE)));
     Assert.assertFalse(authorizationPrivilegeBooleanMap.containsKey(
-      new RemoteAuthorizationEnforcer.AuthorizationPrivilege(BOB, NS, Action.ADMIN)));
+      new AuthorizationPrivilege(BOB, NS, Action.ADMIN)));
     Assert.assertFalse(authorizationPrivilegeBooleanMap.containsKey(
-      new RemoteAuthorizationEnforcer.AuthorizationPrivilege(BOB, NS, Action.READ)));
+      new AuthorizationPrivilege(BOB, NS, Action.READ)));
     Assert.assertFalse(authorizationPrivilegeBooleanMap.containsKey(
-      new RemoteAuthorizationEnforcer.AuthorizationPrivilege(BOB, NS, Action.WRITE)));
+      new AuthorizationPrivilege(BOB, NS, Action.WRITE)));
     Assert.assertFalse(authorizationPrivilegeBooleanMap.containsKey(
-      new RemoteAuthorizationEnforcer.AuthorizationPrivilege(BOB, NS, Action.EXECUTE)));
+      new AuthorizationPrivilege(BOB, NS, Action.EXECUTE)));
     privilegesManager.grant(NS, BOB, Collections.singleton(Action.ADMIN));
     authorizationEnforcer.enforce(NS, BOB, Action.ADMIN);
     Assert.assertTrue(authorizationPrivilegeBooleanMap.containsKey(
-      new RemoteAuthorizationEnforcer.AuthorizationPrivilege(BOB, NS, Action.ADMIN)));
+      new AuthorizationPrivilege(BOB, NS, Action.ADMIN)));
     TimeUnit.SECONDS.sleep(CACHE_TIMEOUT);
     Assert.assertFalse(authorizationPrivilegeBooleanMap.containsKey(
-      new RemoteAuthorizationEnforcer.AuthorizationPrivilege(ALICE, NS, Action.ADMIN)));
+      new AuthorizationPrivilege(ALICE, NS, Action.ADMIN)));
     Assert.assertFalse(authorizationPrivilegeBooleanMap.containsKey(
-      new RemoteAuthorizationEnforcer.AuthorizationPrivilege(ALICE, NS, Action.READ)));
+      new AuthorizationPrivilege(ALICE, NS, Action.READ)));
     Assert.assertFalse(authorizationPrivilegeBooleanMap.containsKey(
-      new RemoteAuthorizationEnforcer.AuthorizationPrivilege(ALICE, NS, Action.WRITE)));
+      new AuthorizationPrivilege(ALICE, NS, Action.WRITE)));
   }
 
   @AfterClass

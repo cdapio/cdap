@@ -82,7 +82,7 @@ public class SystemArtifactsAuthorizationTest {
     cConf.setBoolean(Constants.Security.ENABLED, true);
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
-    cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
+    cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                               InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, deploymentJar.toURI().getPath());

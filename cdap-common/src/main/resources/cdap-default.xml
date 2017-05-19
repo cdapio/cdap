@@ -2690,39 +2690,16 @@
   </property>
 
   <property>
-    <name>security.authorization.cache.enabled</name>
-    <value>true</value>
-    <description>
-      Determines if authorization policies can be cached by programs;
-      defaults to true
-    </description>
-  </property>
-
-  <property>
-    <name>security.authorization.cache.refresh.interval.secs</name>
-    <value>50</value>
-    <description>
-      The interval in seconds after which a background thread will refresh
-      cached authorization policies. It is recommended to keep this value
-      slightly lower than ${security.authorization.cache.ttl.secs}, so that
-      the cached authorization policies do not expire unless they have been
-      explicitly revoked. This setting only takes effect if
-      ${security.authorization.cache.enabled} is set to true.
-    </description>
-  </property>
-
-  <property>
     <name>security.authorization.cache.max.entries</name>
-    <value>10000</value>
+    <value>100000</value>
     <description>
-      Number of entries to hold in the container authorization cache. This setting only takes effect if
-      ${security.authorization.cache.enabled} is set to true.
+      Number of entries to hold in the container authorization cache. If this is set to 0 then no caching will be done.
     </description>
   </property>
 
   <property>
     <name>security.authorization.cache.ttl.secs</name>
-    <value>60</value>
+    <value>300</value>
     <description>
       The time-to-live in seconds for entries in the authorization cache
       used by programs. This setting only takes effect if

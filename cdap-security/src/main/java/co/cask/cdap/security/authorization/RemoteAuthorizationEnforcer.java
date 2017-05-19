@@ -19,35 +19,42 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
-import co.cask.cdap.common.internal.remote.MethodArgument;
 import co.cask.cdap.common.internal.remote.RemoteClient;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.AuthorizationPrivilege;
+import co.cask.cdap.proto.security.AuthorizationRequest;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpResponse;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.net.HttpURLConnection;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.ParametersAreNonnullByDefault;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Remote implementation of the AuthorizationEnforcer. Contacts master for authorization enforcement and
@@ -71,18 +78,19 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
     super(cConf);
     this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP,
                                          new DefaultHttpRequestConfig(false), "/v1/execute/");
-    this.cacheEnabled = cConf.getBoolean(Constants.Security.Authorization.CACHE_ENABLED);
-    int cacheTtlSecs = cConf.getInt(Constants.Security.Authorization.CACHE_TTL_SECS);
+    int cacheTTLSecs = cConf.getInt(Constants.Security.Authorization.CACHE_TTL_SECS);
     int cacheMaxEntries = cConf.getInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES);
+    // Cache can be disabled by setting the number of entries to <= 0
+    this.cacheEnabled = cacheMaxEntries > 0;
 
     authPolicyCache = CacheBuilder.newBuilder()
-      .expireAfterWrite(cacheTtlSecs, TimeUnit.SECONDS)
+      .expireAfterWrite(cacheTTLSecs, TimeUnit.SECONDS)
       .maximumSize(cacheMaxEntries)
       .build(new CacheLoader<AuthorizationPrivilege, Boolean>() {
-        @SuppressWarnings("NullableProblems")
         @Override
+        @ParametersAreNonnullByDefault
         public Boolean load(AuthorizationPrivilege authorizationPrivilege) throws Exception {
-          LOG.trace("Cache miss for " + authorizationPrivilege);
+          LOG.trace("Cache miss for {}", authorizationPrivilege);
           return doEnforce(authorizationPrivilege);
         }
       });
@@ -102,92 +110,14 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
   }
 
   private boolean doEnforce(AuthorizationPrivilege authorizationPrivilege) throws IOException {
-    HttpResponse response = executeRequest(authorizationPrivilege);
-    return HttpResponseStatus.OK.getCode() == response.getResponseCode();
-
-  }
-
-  private HttpResponse executeRequest(AuthorizationPrivilege authorizationPrivilege) throws IOException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "enforce")
-      .withBody(GSON.toJson(createBody(authorizationPrivilege.getEntityId(),
-                                       authorizationPrivilege.getPrincipal(),
-                                       authorizationPrivilege.getAction())))
+      .withBody(GSON.toJson(authorizationPrivilege))
       .build();
-    return remoteClient.execute(request);
-  }
-
-  private static List<MethodArgument> createBody(Object... arguments) {
-    List<MethodArgument> methodArguments = new ArrayList<>();
-    for (Object arg : arguments) {
-      if (arg == null) {
-        methodArguments.add(null);
-      } else {
-        String type = arg.getClass().getName();
-        methodArguments.add(new MethodArgument(type, GSON.toJsonTree(arg)));
-      }
-    }
-    return methodArguments;
+    return HttpURLConnection.HTTP_OK == remoteClient.execute(request).getResponseCode();
   }
 
   @VisibleForTesting
   public Map<AuthorizationPrivilege, Boolean> cacheAsMap() {
     return Collections.unmodifiableMap(authPolicyCache.asMap());
-  }
-
-  /**
-   * Key for caching Privileges on containers. This represents a specific privilege on which authorization can be
-   * enforced. The cache stores whether the enforce succeeded or failed.
-   */
-  public static class AuthorizationPrivilege {
-
-    private final Principal principal;
-    private final EntityId entityId;
-    private final Action action;
-
-    public AuthorizationPrivilege(Principal principal, EntityId entityId, Action action) {
-      this.principal = principal;
-      this.entityId = entityId;
-      this.action = action;
-    }
-
-    public Principal getPrincipal() {
-      return principal;
-    }
-
-    public EntityId getEntityId() {
-      return entityId;
-    }
-
-    public Action getAction() {
-      return action;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      AuthorizationPrivilege that = (AuthorizationPrivilege) o;
-      return Objects.equals(principal, that.principal) &&
-        Objects.equals(entityId, that.entityId) &&
-        action == that.action;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(principal, entityId, action);
-    }
-
-    @Override
-    public String toString() {
-      return "AuthorizationPrivilege{" +
-        "principal=" + principal +
-        ", entityId=" + entityId +
-        ", action=" + action +
-        '}';
-    }
   }
 }

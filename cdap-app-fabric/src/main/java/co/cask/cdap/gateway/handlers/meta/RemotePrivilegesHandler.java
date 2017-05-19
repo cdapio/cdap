@@ -16,20 +16,32 @@
 
 package co.cask.cdap.gateway.handlers.meta;
 
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.internal.remote.MethodArgument;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
+import co.cask.cdap.proto.codec.IdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.AuthorizationPrivilege;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Charsets;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.TypeLiteral;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.Set;
@@ -45,6 +57,9 @@ import javax.ws.rs.Path;
 public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
   private static final Logger LOG = LoggerFactory.getLogger(RemotePrivilegesHandler.class);
   private static final Type SET_OF_ACTIONS = new TypeLiteral<Set<Action>>() { }.getType();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+    .create();
 
   private final PrivilegesManager privilegesManager;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -58,12 +73,11 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
   @POST
   @Path("/enforce")
   public void enforce(HttpRequest request, HttpResponder responder) throws Exception {
-    Iterator<MethodArgument> arguments = parseArguments(request);
-    EntityId entityId = deserializeNext(arguments);
-    Principal principal = deserializeNext(arguments);
-    Action action = deserializeNext(arguments);
-    LOG.debug("Enforcing {} on {} for {}", action, entityId, principal);
-    authorizationEnforcer.enforce(entityId, principal, action);
+    AuthorizationPrivilege authorizationPrivilege = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
+                                                                  AuthorizationPrivilege.class);
+    LOG.debug("Enforcing for {}", authorizationPrivilege);
+    authorizationEnforcer.enforce(authorizationPrivilege.getEntityId(), authorizationPrivilege.getPrincipal(),
+                                  authorizationPrivilege.getAction());
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

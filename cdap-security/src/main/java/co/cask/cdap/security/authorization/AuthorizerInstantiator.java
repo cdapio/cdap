@@ -107,7 +107,7 @@ public class AuthorizerInstantiator implements Closeable, Supplier<Authorizer> {
     }
 
     if (!authorizationEnabled) {
-      LOG.info("Authorization is disabled. Authorization can be enabled  by setting " +
+      LOG.debug("Authorization is disabled. Authorization can be enabled  by setting " +
                   Constants.Security.Authorization.ENABLED + " to true.");
       authorizer = new NoOpAuthorizer();
       return authorizer;

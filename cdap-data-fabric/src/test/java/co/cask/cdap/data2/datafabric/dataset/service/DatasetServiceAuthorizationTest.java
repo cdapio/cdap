@@ -78,7 +78,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
-    cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
+    cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
     Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authorizerJar.toURI().getPath());
     return cConf;

@@ -158,7 +158,8 @@ public class AppFabricServer extends AbstractIdleService {
         programRuntimeService.start(),
         streamCoordinatorClient.start(),
         programLifecycleService.start(),
-        pluginService.start())
+        pluginService.start()
+      )
     ).get();
 
     int serverPort;

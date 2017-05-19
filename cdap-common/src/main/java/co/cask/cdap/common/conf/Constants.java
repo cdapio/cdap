@@ -871,8 +871,7 @@ public final class Constants {
       /** Prefix for extension properties */
       public static final String EXTENSION_CONFIG_PREFIX =
         "security.authorization.extension.config.";
-      /** Cache privileges on the containers */
-      public static final String CACHE_ENABLED = "security.authorization.cache.enabled";
+      /** TTL for entries in container's privilege cache */
       public static final String CACHE_TTL_SECS = "security.authorization.cache.ttl.secs";
       /** Maximum number of entries the authorization cache will hold */
       public static final String CACHE_MAX_ENTRIES = "security.authorization.cache.max.entries";

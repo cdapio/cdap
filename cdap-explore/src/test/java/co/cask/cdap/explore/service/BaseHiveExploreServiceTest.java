@@ -187,7 +187,7 @@ public class BaseHiveExploreServiceTest {
       cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
       cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath());
       cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
-      cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
+      cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
     }
     List<Module> modules = useStandalone ? createStandaloneModules(cConf, hConf, tmpFolder)
       : createInMemoryModules(cConf, hConf, tmpFolder);

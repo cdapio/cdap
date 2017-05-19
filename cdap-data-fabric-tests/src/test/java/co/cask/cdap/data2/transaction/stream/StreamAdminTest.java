@@ -103,7 +103,7 @@ public abstract class StreamAdminTest {
     cConf.setBoolean(Constants.Security.ENABLED, true);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
-    cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
+    cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
     LocationFactory locationFactory = new LocalLocationFactory(rootLocationFactoryPath);
     Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authorizerJar.toURI().getPath());
