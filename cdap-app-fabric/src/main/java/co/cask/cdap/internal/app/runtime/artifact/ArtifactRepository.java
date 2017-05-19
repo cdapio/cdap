@@ -58,12 +58,14 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,6 +87,7 @@ import javax.annotation.Nullable;
  * This class manages artifact and artifact metadata. It is mainly responsible for inspecting artifacts to determine
  * metadata for the artifact.
  */
+@Singleton
 public class ArtifactRepository {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactRepository.class);
   private final ArtifactStore artifactStore;
@@ -108,13 +111,16 @@ public class ArtifactRepository {
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
     this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
     this.systemArtifactDirs = new ArrayList<>();
-    for (String dir : cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR).split(";")) {
-      File file = new File(dir);
-      if (!file.isDirectory()) {
-        LOG.warn("Ignoring {} because it is not a directory.", file);
-        continue;
+    String systemArtifactsDir = cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR);
+    if (!Strings.isNullOrEmpty(systemArtifactsDir)) {
+      for (String dir : systemArtifactsDir.split(";")) {
+        File file = new File(dir);
+        if (!file.isDirectory()) {
+          LOG.warn("Ignoring {} because it is not a directory.", file);
+          continue;
+        }
+        systemArtifactDirs.add(file);
       }
-      systemArtifactDirs.add(file);
     }
     this.configReader = new ArtifactConfigReader();
     this.metadataStore = metadataStore;
