@@ -38,7 +38,7 @@ with our other :ref:`distribution instructions <installation-index>`.
   and `HBase client <http://www.apache.org/dyn/closer.cgi/hbase/>`__ libraries, and then
   install them on the hosts running CDAP services. No Hadoop or HBase services need be running.
 
-- All services run as the ``cdap`` user installed by the package manager.
+- All services run as the ``cdap`` user installed by the package manager. See `Create the "cdap" User`_ below.
 
 - If you are installing CDAP with the intention of using *replication,* see these
   instructions on :ref:`CDAP Replication <installation-replication>` *before* installing or starting CDAP.
@@ -59,6 +59,13 @@ Create the "cdap" User
 
 .. highlight:: console
 
+The base CDAP package will install ``cdap`` as a system user. However, in order to have a
+consistent UID for the ``cdap`` user across the cluster, or to ensure that it is created
+on the namenode when installing CDAP elsewhere, you need to check that the ``cdap`` user
+is installed |---| and installed consistently |---| on all nodes of the cluster.
+Though the base CDAP package will automatically install the ``cdap`` system user, it's
+best if the ``cdap`` user is manually created on all nodes of the cluster beforehand.
+
 To prepare your cluster for CDAP, manually create a ``cdap`` user on all nodes of the
 cluster. Make sure that the UID and GID for the ``cdap`` user is the same on each node of
 the cluster::
@@ -66,7 +73,7 @@ the cluster::
   $ id cdap
   uid=503(cdap) gid=504(cdap) groups=504(cdap)
 
-*Note:* The values returned by ``id cdap`` may differ from these shown depending on your
+*Note:* The values returned by ``id cdap`` may differ from these shown, depending on your
 system.
 
 When installing CDAP on an edge node, the ``cdap`` system user is only created locally. As
