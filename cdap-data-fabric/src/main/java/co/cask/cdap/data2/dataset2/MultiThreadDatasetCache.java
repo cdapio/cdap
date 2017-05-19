@@ -67,7 +67,7 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
                                  final Map<String, String> runtimeArguments,
                                  @Nullable final MetricsContext metricsContext,
                                  @Nullable final Map<String, Map<String, String>> staticDatasets,
-                                 @Nullable final String txClientId,
+                                 final String txClientId,
                                  final MultiThreadTransactionAware<?>...multiThreadTxAwares) {
     super(instantiator, txClient, namespace, runtimeArguments);
     this.perThreadMap = CacheBuilder.newBuilder()
