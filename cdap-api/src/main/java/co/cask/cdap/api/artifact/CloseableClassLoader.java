@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package co.cask.cdap.api.artifact;
 
 import java.io.Closeable;
 import java.io.IOException;

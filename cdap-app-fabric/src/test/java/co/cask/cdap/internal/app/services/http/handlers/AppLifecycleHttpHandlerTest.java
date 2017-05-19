@@ -23,6 +23,7 @@ import co.cask.cdap.BloatedWordCountApp;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.Config;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
@@ -31,7 +32,6 @@ import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -84,7 +84,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ExtraConfigApp");
     HttpResponse response = addAppArtifact(artifactId, AppWithNoServices.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = deploy(appId, new AppRequest<>(ArtifactSummary.from(artifactId), new ExtraConfig()));
+    response = deploy(appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId()), new ExtraConfig()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     deleteApp(appId, 200);
     deleteArtifact(artifactId, 200);
@@ -98,7 +98,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
-    response = deploy(appId, new AppRequest<>(ArtifactSummary.from(artifactId), config));
+    response = deploy(appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId()), config));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     JsonObject appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), "ConfigApp");
     Assert.assertEquals(GSON.toJson(config), appDetails.get("configuration").getAsString());
@@ -342,13 +342,13 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = addAppArtifact(ns2ArtifactId, BloatedWordCountApp.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Id.Application appId = Id.Application.from(ns2, appName);
-    response = deploy(appId, new AppRequest<Config>(ArtifactSummary.from(ns2ArtifactId)));
+    response = deploy(appId, new AppRequest<Config>(ArtifactSummary.from(ns2ArtifactId.toArtifactId())));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
 
     // deploy with name and version to testnamespace2
     ApplicationId app1 = new ApplicationId(TEST_NAMESPACE2, appName, VERSION1);
-    response = deploy(app1, new AppRequest<Config>(ArtifactSummary.from(ns2ArtifactId)));
+    response = deploy(app1, new AppRequest<Config>(ArtifactSummary.from(ns2ArtifactId.toArtifactId())));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
 

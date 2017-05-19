@@ -18,10 +18,10 @@ package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.artifact.ArtifactVersionRange;
+import co.cask.cdap.api.artifact.InvalidArtifactRangeException;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
-import co.cask.cdap.proto.artifact.ArtifactVersionRange;
-import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
 import com.google.common.base.CharMatcher;
 
 import javax.annotation.Nullable;

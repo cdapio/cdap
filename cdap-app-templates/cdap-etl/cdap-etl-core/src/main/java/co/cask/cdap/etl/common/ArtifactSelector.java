@@ -18,10 +18,9 @@ package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.artifact.ArtifactVersionRange;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.proto.artifact.ArtifactVersionRange;
 
 import java.util.Map;
 import java.util.NavigableMap;

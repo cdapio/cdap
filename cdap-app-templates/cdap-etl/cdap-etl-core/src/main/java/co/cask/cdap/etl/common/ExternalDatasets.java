@@ -24,7 +24,6 @@ import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.etl.batch.preview.NullOutputFormatProvider;
 import com.google.common.base.Throwables;
 
 import java.util.Collections;

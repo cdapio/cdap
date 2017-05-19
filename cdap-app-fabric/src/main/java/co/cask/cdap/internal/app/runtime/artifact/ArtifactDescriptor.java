@@ -32,10 +32,18 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
     this.location = location;
   }
 
+  /**
+   * get artifact Id
+   * @return {@link ArtifactId}
+   */
   public ArtifactId getArtifactId() {
     return artifactId;
   }
 
+  /**
+   * get location of artifact
+   * @return {@link Location} of artifact
+   */
   public Location getLocation() {
     return location;
   }

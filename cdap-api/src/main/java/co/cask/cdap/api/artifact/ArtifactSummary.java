@@ -14,12 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.proto.artifact;
+package co.cask.cdap.api.artifact;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.proto.Id;
 
 import java.util.Objects;
 
@@ -31,12 +28,6 @@ public class ArtifactSummary {
   protected final String name;
   protected final String version;
   protected final ArtifactScope scope;
-
-  public static ArtifactSummary from(Id.Artifact artifactId) {
-    ArtifactScope scope = Id.Namespace.SYSTEM.equals(artifactId.getNamespace()) ?
-      ArtifactScope.SYSTEM : ArtifactScope.USER;
-    return new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(), scope);
-  }
 
   public static ArtifactSummary from(ArtifactId artifactId) {
     return new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(), artifactId.getScope());
@@ -52,14 +43,26 @@ public class ArtifactSummary {
     this.scope = scope;
   }
 
+  /**
+   * get the name of the artifact
+   * @return name of the artifact
+   */
   public String getName() {
     return name;
   }
 
+  /**
+   * get the version of artifact
+   * @return artifact version
+   */
   public String getVersion() {
     return version;
   }
 
+  /**
+   * get the scope of the artifact
+   * @return artifact scope
+   */
   public ArtifactScope getScope() {
     return scope;
   }

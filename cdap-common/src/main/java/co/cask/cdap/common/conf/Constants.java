@@ -496,6 +496,7 @@ public final class Constants {
 
     public static final String GATEWAY_DISCOVERY_NAME = Service.GATEWAY;
     public static final String WEBAPP_DISCOVERY_NAME = "webapp/$HOST";
+    public static final String DONT_ROUTE_SERVICE = "dont-route-to-service";
   }
 
   /**

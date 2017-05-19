@@ -16,6 +16,8 @@
 
 package co.cask.cdap.proto.artifact;
 
+import co.cask.cdap.api.artifact.ArtifactSummary;
+
 import java.util.Objects;
 
 /**

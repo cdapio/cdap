@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.services.http;
 
 import co.cask.cdap.api.Config;
+import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
@@ -55,7 +56,6 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleUpdateDetail;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;

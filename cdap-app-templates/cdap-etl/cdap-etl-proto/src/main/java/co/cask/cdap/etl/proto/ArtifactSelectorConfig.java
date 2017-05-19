@@ -16,9 +16,6 @@
 
 package co.cask.cdap.etl.proto;
 
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
-
 import java.util.Objects;
 
 /**

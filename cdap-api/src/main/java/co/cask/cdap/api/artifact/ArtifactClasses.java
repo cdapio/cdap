@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto.artifact;
+package co.cask.cdap.api.artifact;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.plugin.PluginClass;
@@ -37,10 +37,18 @@ public final class ArtifactClasses {
     this.plugins = plugins;
   }
 
+  /**
+   * get set of application classes
+   * @return {@link Set<ApplicationClass>}
+   */
   public Set<ApplicationClass> getApps() {
     return apps;
   }
 
+  /**
+   * get the set of plugin classes
+   * @return {@link Set<PluginClass>}
+   */
   public Set<PluginClass> getPlugins() {
     return plugins;
   }

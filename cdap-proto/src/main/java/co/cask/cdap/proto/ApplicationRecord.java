@@ -16,7 +16,7 @@
 
 package co.cask.cdap.proto;
 
-import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import com.google.gson.annotations.SerializedName;
 

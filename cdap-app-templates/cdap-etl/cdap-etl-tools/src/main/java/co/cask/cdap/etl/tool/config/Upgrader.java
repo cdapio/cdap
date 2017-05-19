@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.tool.config;
 
 import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.etl.proto.UpgradeContext;
@@ -28,7 +29,6 @@ import co.cask.cdap.etl.proto.v2.ETLRealtimeConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.etl.tool.ETLVersion;
 import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;

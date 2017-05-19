@@ -14,9 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto.artifact;
-
-import co.cask.cdap.api.artifact.ArtifactVersion;
+package co.cask.cdap.api.artifact;
 
 /**
  * Represents a version range of an artifact.
@@ -35,10 +33,18 @@ public class ArtifactVersionRange {
     this.isUpperInclusive = isUpperInclusive;
   }
 
+  /**
+   * lower version of artifact range
+   * @return {@link ArtifactVersion} lower version range
+   */
   public ArtifactVersion getLower() {
     return lower;
   }
 
+  /**
+   * upper version of artifact range
+   * @return {@link ArtifactVersion} upper version range
+   */
   public ArtifactVersion getUpper() {
     return upper;
   }
@@ -123,7 +129,7 @@ public class ArtifactVersionRange {
   }
 
   // like String's indexOf(char, int), except it looks for either one of 2 characters
-  protected static int indexOf(String str, char option1, char option2, int startIndex) {
+  private static int indexOf(String str, char option1, char option2, int startIndex) {
     for (int i = startIndex; i < str.length(); i++) {
       char charAtIndex = str.charAt(i);
       if (charAtIndex == option1 || charAtIndex == option2) {

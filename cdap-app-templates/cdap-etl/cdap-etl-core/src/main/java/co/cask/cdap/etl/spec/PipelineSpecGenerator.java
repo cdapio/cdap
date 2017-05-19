@@ -30,7 +30,6 @@ import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.etl.common.ArtifactSelector;
 import co.cask.cdap.etl.common.ArtifactSelectorProvider;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultPipelineConfigurer;

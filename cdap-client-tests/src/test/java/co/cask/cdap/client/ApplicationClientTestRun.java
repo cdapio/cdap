@@ -17,6 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.api.Config;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.client.app.AppReturnsArgs;
 import co.cask.cdap.client.app.ConfigTestApp;
 import co.cask.cdap.client.app.ConfigurableProgramsApp;
@@ -33,7 +34,6 @@ import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;

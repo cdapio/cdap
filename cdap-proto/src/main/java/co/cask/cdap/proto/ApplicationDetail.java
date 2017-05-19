@@ -18,10 +18,10 @@ package co.cask.cdap.proto;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import com.google.gson.annotations.SerializedName;
 

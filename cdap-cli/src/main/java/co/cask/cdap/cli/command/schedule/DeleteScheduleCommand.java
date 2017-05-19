@@ -27,7 +27,6 @@ import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import javax.lang.model.element.Element;
 
 /**
  * Deletes a schedule.
