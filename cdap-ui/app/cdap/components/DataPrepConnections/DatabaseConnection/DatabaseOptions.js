@@ -21,6 +21,7 @@ import LoadingSVG from 'components/LoadingSVG';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
 import T from 'i18n-react';
+import ArtifactUploadWizard from 'components/CaskWizards/ArtifactUpload';
 
 const PREFIX = 'features.DataPrepConnections.AddConnections.Database.DatabaseOptions';
 
@@ -77,12 +78,19 @@ export default class DatabaseOptions extends Component {
 
     this.state = {
       loading: true,
-      drivers: {}
+      drivers: {},
+      uploadArtifact: false
     };
 
+    this.toggleArtifactUploadWizard = this.toggleArtifactUploadWizard.bind(this);
+    this.onWizardClose = this.onWizardClose.bind(this);
   }
 
   componentWillMount() {
+    this.fetchDrivers();
+  }
+
+  fetchDrivers() {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     MyDataPrepApi.listDrivers({namespace})
@@ -117,6 +125,10 @@ export default class DatabaseOptions extends Component {
     });
   }
 
+  toggleArtifactUploadWizard() {
+    this.setState({uploadArtifact: !this.state.uploadArtifact});
+  }
+
   onDBClick(db) {
     if (!db.installed) { return; }
 
@@ -128,7 +140,12 @@ export default class DatabaseOptions extends Component {
       return (
         <div className="db-installed">
           <span>{T.translate(`${PREFIX}.install`)}</span>
-          <span className="upload">{T.translate(`${PREFIX}.upload`)}</span>
+          <span
+            className="upload"
+            onClick={this.toggleArtifactUploadWizard}
+          >
+            {T.translate(`${PREFIX}.upload`)}
+          </span>
         </div>
       );
     }
@@ -164,6 +181,24 @@ export default class DatabaseOptions extends Component {
     );
   }
 
+  onWizardClose() {
+    this.setState({uploadArtifact: false});
+    this.fetchDrivers();
+  }
+
+  renderArtifactUploadWizard() {
+    if (!this.state.uploadArtifact) { return null; }
+
+    return (
+      <ArtifactUploadWizard
+        isOpen={true}
+        buildSuccessInfo={() => {}}
+        onClose={this.onWizardClose}
+        hideUploadHelper={true}
+      />
+    );
+  }
+
   render() {
     if (this.state.loading) {
       return (
@@ -191,6 +226,8 @@ export default class DatabaseOptions extends Component {
             }
           </div>
         </div>
+
+        {this.renderArtifactUploadWizard()}
       </div>
     );
   }
