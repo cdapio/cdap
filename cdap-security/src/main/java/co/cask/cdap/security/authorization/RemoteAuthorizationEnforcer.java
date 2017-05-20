@@ -24,7 +24,6 @@ import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.AuthorizationPrivilege;
-import co.cask.cdap.proto.security.AuthorizationRequest;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
@@ -33,9 +32,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -46,15 +42,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Remote implementation of the AuthorizationEnforcer. Contacts master for authorization enforcement and
@@ -71,7 +61,7 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
   private final RemoteClient remoteClient;
   private final boolean cacheEnabled;
 
-  private static LoadingCache<AuthorizationPrivilege, Boolean> authPolicyCache;
+  private final LoadingCache<AuthorizationPrivilege, Boolean> authPolicyCache;
 
   @Inject
   public RemoteAuthorizationEnforcer(CConfiguration cConf, final DiscoveryServiceClient discoveryClient) {

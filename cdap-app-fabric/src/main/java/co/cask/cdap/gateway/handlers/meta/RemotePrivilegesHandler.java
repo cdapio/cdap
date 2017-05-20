@@ -76,7 +76,7 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
     AuthorizationPrivilege authorizationPrivilege = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
                                                                   AuthorizationPrivilege.class);
     LOG.debug("Enforcing for {}", authorizationPrivilege);
-    authorizationEnforcer.enforce(authorizationPrivilege.getEntityId(), authorizationPrivilege.getPrincipal(),
+    authorizationEnforcer.enforce(authorizationPrivilege.getEntity(), authorizationPrivilege.getPrincipal(),
                                   authorizationPrivilege.getAction());
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -99,7 +99,7 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
     EntityId entityId = deserializeNext(arguments);
     Principal principal = deserializeNext(arguments);
     Set<Action> actions = deserializeNext(arguments, SET_OF_ACTIONS);
-    LOG.debug("Granting {} on {} to {}", actions, entityId, principal);
+    LOG.trace("Granting {} on {} to {}", actions, entityId, principal);
     privilegesManager.grant(entityId, principal, actions);
     LOG.info("Granted {} on {} to {} successfully", actions, entityId, principal);
     responder.sendStatus(HttpResponseStatus.OK);

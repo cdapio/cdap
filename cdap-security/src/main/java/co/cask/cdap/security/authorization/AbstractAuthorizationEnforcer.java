@@ -56,15 +56,17 @@ public abstract class AbstractAuthorizationEnforcer implements AuthorizationEnfo
     }
 
     Set<Action> disallowed = EnumSet.noneOf(Action.class);
+    UnauthorizedException unauthorizedException = new UnauthorizedException(principal, entity);
     for (Action action : actions) {
       try {
         enforce(entity, principal, action);
       } catch (UnauthorizedException e) {
         disallowed.add(action);
+        unauthorizedException.addSuppressed(e);
       }
     }
     if (!disallowed.isEmpty()) {
-      throw new UnauthorizedException(principal, disallowed, entity);
+      throw new UnauthorizedException(principal, disallowed, entity, unauthorizedException);
     }
   }
 

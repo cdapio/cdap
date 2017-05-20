@@ -25,28 +25,17 @@ import java.util.Objects;
  * Key for caching Privileges on containers. This represents a specific privilege on which authorization can be
  * enforced. The cache stores whether the enforce succeeded or failed.
  */
-public class AuthorizationPrivilege {
+public class AuthorizationPrivilege extends Privilege {
 
   private final Principal principal;
-  private final EntityId entityId;
-  private final Action action;
 
   public AuthorizationPrivilege(Principal principal, EntityId entityId, Action action) {
+    super(entityId, action);
     this.principal = principal;
-    this.entityId = entityId;
-    this.action = action;
   }
 
   public Principal getPrincipal() {
     return principal;
-  }
-
-  public EntityId getEntityId() {
-    return entityId;
-  }
-
-  public Action getAction() {
-    return action;
   }
 
   @Override
@@ -58,22 +47,18 @@ public class AuthorizationPrivilege {
       return false;
     }
     AuthorizationPrivilege that = (AuthorizationPrivilege) o;
-    return Objects.equals(principal, that.principal) &&
-      Objects.equals(entityId, that.entityId) &&
-      action == that.action;
+    return super.equals(o) && Objects.equals(principal, that.principal);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(principal, entityId, action);
+    return Objects.hash(super.hashCode(), principal);
   }
 
   @Override
   public String toString() {
-    return "AuthorizationPrivilege{" +
+    return super.toString() + "AuthorizationPrivilege{" +
       "principal=" + principal +
-      ", entityId=" + entityId +
-      ", action=" + action +
       '}';
   }
 }
