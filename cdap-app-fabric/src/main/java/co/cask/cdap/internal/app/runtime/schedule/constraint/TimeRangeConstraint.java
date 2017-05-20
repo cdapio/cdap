@@ -18,13 +18,8 @@ package co.cask.cdap.internal.app.runtime.schedule.constraint;
 
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.proto.ProtoConstraint;
-import com.google.common.base.Preconditions;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.TimeZone;
 
 /**
@@ -52,28 +47,18 @@ public class TimeRangeConstraint extends ProtoConstraint.TimeRangeConstraint imp
 
   private void initialize() {
     if (calendar == null) {
-      TimeZone tz = TimeZone.getTimeZone(timeZone);
-      calendar = Calendar.getInstance(tz);
-      DateFormat formatter = new SimpleDateFormat("HH:mm");
-      formatter.setTimeZone(tz);
-      Date startDate, endDate;
-      try {
-        startDate = formatter.parse(startTime);
-        calendar.setTime(startDate);
-        startHour = calendar.get(Calendar.HOUR_OF_DAY);
-        startMinute = calendar.get(Calendar.MINUTE);
-      } catch (ParseException e) {
-        throw new IllegalArgumentException(String.format("Failed to parse start time '%s'", startTime), e);
-      }
-      try {
-        endDate = formatter.parse(endTime);
-        calendar.setTime(endDate);
-        endHour = calendar.get(Calendar.HOUR_OF_DAY);
-        endMinute = calendar.get(Calendar.MINUTE);
-      } catch (ParseException e) {
-        throw new IllegalArgumentException(String.format("Failed to parse end time '%s'", endTime), e);
-      }
-      Preconditions.checkArgument(startDate.compareTo(endDate) < 0, "The start time must be before the end time.");
+      ValidationResult vr = doValidate();
+      Calendar calendar = vr.getCalendar();
+
+      calendar.setTime(vr.getStartDate());
+      startHour = calendar.get(Calendar.HOUR_OF_DAY);
+      startMinute = calendar.get(Calendar.MINUTE);
+
+      calendar.setTime(vr.getEndDate());
+      endHour = calendar.get(Calendar.HOUR_OF_DAY);
+      endMinute = calendar.get(Calendar.MINUTE);
+
+      this.calendar = calendar; // do this last, it should only be set if validation was successful
     }
   }
 

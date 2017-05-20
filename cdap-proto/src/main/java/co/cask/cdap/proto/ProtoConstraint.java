@@ -18,13 +18,17 @@ package co.cask.cdap.proto;
 
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Objects;
 import java.util.TimeZone;
-import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
- * Represents a schedule's run constraints in REST requests/repsonses.
+ * Represents a schedule's run constraints in REST requests/responses.
  */
 public abstract class ProtoConstraint implements Constraint {
 
@@ -175,8 +179,6 @@ public abstract class ProtoConstraint implements Constraint {
    */
   public static class TimeRangeConstraint extends ProtoConstraint {
 
-    private static final Pattern SIMPLE_TIME_PATTERN = Pattern.compile("^[0-9][0-9]:[0-9][0-9]$");
-
     protected final String timeZone;
     protected final String startTime;
     protected final String endTime;
@@ -205,22 +207,35 @@ public abstract class ProtoConstraint implements Constraint {
 
     @Override
     public void validate() {
-      validateSimpleTime("start", startTime);
-      validateSimpleTime("end ", endTime);
-      ProtoConstraint.validateNotNull(timeZone, "time zone");
-      TimeZone.getTimeZone(timeZone);
+      doValidate();
     }
 
-    private void validateSimpleTime(String name, String time) {
-      if (time == null) {
-        throw new IllegalArgumentException(name + " time must not be null");
+    /**
+     * Performs the validation. Can be called by subclasses to validate and initialize.
+     *
+     * @return Calendar, start and end date as a ValidationResult.
+     */
+    protected ValidationResult doValidate() {
+      ProtoConstraint.validateNotNull(timeZone, "time zone");
+      TimeZone tz = TimeZone.getTimeZone(timeZone);
+      Calendar calendar = Calendar.getInstance(tz);
+      DateFormat formatter = new SimpleDateFormat("HH:mm");
+      formatter.setTimeZone(tz);
+      Date startDate, endDate;
+      try {
+        startDate = formatter.parse(startTime);
+      } catch (ParseException e) {
+        throw new IllegalArgumentException(String.format("Failed to parse start time '%s'", startTime), e);
       }
-      if (!SIMPLE_TIME_PATTERN.matcher(time).matches()) {
-        throw new IllegalArgumentException(
-          String.format("%s time must be of the form 'HH:mm' but is '%s'", name, time));
+      try {
+        endDate = formatter.parse(endTime);
+      } catch (ParseException e) {
+        throw new IllegalArgumentException(String.format("Failed to parse end time '%s'", endTime), e);
       }
-      ProtoConstraint.validateInRange(Integer.valueOf(time.substring(0, 2)), name + " hour", 0, 24);
-      ProtoConstraint.validateInRange(Integer.valueOf(time.substring(3, 5)), name + " minute", 0, 60);
+      if (startDate.compareTo(endDate) >= 0) {
+        throw new IllegalArgumentException("The start time (%s) must be before the end time (%s).");
+      }
+      return new ValidationResult(calendar, startDate, endDate);
     }
 
     @Override
@@ -240,6 +255,33 @@ public abstract class ProtoConstraint implements Constraint {
     @Override
     public String toString() {
       return String.format("TimeRange(%s-%s in %s)", getStartTime(), getEndTime(), getTimeZone());
+    }
+
+    /**
+     * Helper class to capture the intermediate values of validation, to avoid code duplication.
+     */
+    protected static class ValidationResult {
+      private final Calendar calendar;
+      private final Date startDate;
+      private final Date endDate;
+
+      ValidationResult(Calendar calendar, Date startDate, Date endDate) {
+        this.calendar = calendar;
+        this.startDate = startDate;
+        this.endDate = endDate;
+      }
+
+      public Date getStartDate() {
+        return startDate;
+      }
+
+      public Date getEndDate() {
+        return endDate;
+      }
+
+      public Calendar getCalendar() {
+        return calendar;
+      }
     }
   }
 
