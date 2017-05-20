@@ -443,7 +443,7 @@
                 </configuration>
               </execution>
               <execution>
-                <id>copy-etl</id>
+                <id>copy-pipelines</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-resources</goal>
@@ -467,6 +467,18 @@
                         <include>cdap-etl-realtime-${project.version}.jar</include>
                       </includes>
                     </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-pipelines-spark1_2.10</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.artifacts.dir}/spark1_2.10</outputDirectory>
+                  <resources>
                     <resource>
                       <directory>
                         ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-pipeline/target
@@ -481,6 +493,34 @@
                       </directory>
                       <includes>
                         <include>cdap-data-streams-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-pipelines-spark2_2.11</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.artifacts.dir}/spark2_2.11</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-pipeline2_2.11/target
+                      </directory>
+                      <includes>
+                        <include>cdap-data-pipeline2_2.11-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-streams2_2.11/target
+                      </directory>
+                      <includes>
+                        <include>cdap-data-streams2_2.11-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>
@@ -643,6 +683,23 @@
                 <configuration>
                   <target>
                     <copy file="${project.build.directory}/examples/deploy_pom.xml" tofile="${stage.opt.dir}/examples/pom.xml" />
+                  </target>
+                </configuration>
+              </execution>
+              <!--
+                Rename cdap-data-pipeline2_2.11 to cdap-data-pipeline and cdap-data-streams2_2.11 to cdap-data-streams
+                This is may be removed if the UI supports different artifacts for each pipeline type.
+              -->
+              <execution>
+                <id>rename-pipeline-jars</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <move file="${stage.artifacts.dir}/spark2_2.11/cdap-data-pipeline2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/spark2_2.11/cdap-data-pipeline-${project.version}.jar" />
+                    <move file="${stage.artifacts.dir}/spark2_2.11/cdap-data-streams2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/spark2_2.11/cdap-data-streams-${project.version}.jar" />
                   </target>
                 </configuration>
               </execution>

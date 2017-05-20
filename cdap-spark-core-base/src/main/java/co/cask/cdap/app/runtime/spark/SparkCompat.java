@@ -42,9 +42,10 @@ public enum SparkCompat {
    * Throws an exception if the value is defined but invalid.
    */
   public static SparkCompat get(CConfiguration cConf) {
-    // use the value in the environment variable (expected in distributed)
+    // use the value in the system property (expected in distributed)
     // otherwise, check the conf for the spark compat version (expected in standalone and unit tests)
-    String compatStr = System.getenv(Constants.SPARK_COMPAT_ENV);
+    String compatStr = System.getProperty(Constants.AppFabric.SPARK_COMPAT);
+    compatStr = compatStr == null ? System.getenv(Constants.SPARK_HOME) : compatStr;
     compatStr = compatStr == null ? cConf.get(Constants.AppFabric.SPARK_COMPAT) : compatStr;
 
     if (SPARK1_2_10.compat.equals(compatStr)) {
