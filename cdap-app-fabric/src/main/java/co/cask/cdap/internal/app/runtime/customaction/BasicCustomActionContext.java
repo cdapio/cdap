@@ -28,7 +28,6 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
-import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.messaging.MessagingService;
@@ -55,13 +54,12 @@ public class BasicCustomActionContext extends AbstractContext implements CustomA
                                   DiscoveryServiceClient discoveryServiceClient,
                                   @Nullable PluginInstantiator pluginInstantiator,
                                   SecureStore secureStore, SecureStoreManager secureStoreManager,
-                                  MessagingService messagingService,
-                                  DefaultArtifactManager defaultArtifactManager) {
+                                  MessagingService messagingService) {
 
     super(workflow, programOptions, cConf, customActionSpecification.getDatasets(),
           datasetFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, workflowProgramInfo.updateMetricsTags(new HashMap<String, String>()), secureStore,
-          secureStoreManager, messagingService, pluginInstantiator, defaultArtifactManager);
+          secureStoreManager, messagingService, pluginInstantiator);
 
     this.customActionSpecification = customActionSpecification;
     this.workflowProgramInfo = workflowProgramInfo;

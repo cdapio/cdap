@@ -22,6 +22,8 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactInfo;
+import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
@@ -83,6 +85,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -833,6 +836,17 @@ public class HttpHandlerGeneratorTest {
     @Override
     public MessageFetcher getMessageFetcher() {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<ArtifactInfo> listArtifacts() throws IOException {
+      return null;
+    }
+
+    @Override
+    public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
+                                                  @Nullable ClassLoader parentClassLoader) throws IOException {
+      return null;
     }
   }
 }

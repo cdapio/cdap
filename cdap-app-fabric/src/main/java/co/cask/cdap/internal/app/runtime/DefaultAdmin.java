@@ -17,8 +17,6 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.Admin;
-import co.cask.cdap.api.artifact.ArtifactInfo;
-import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.messaging.MessagingAdmin;
 import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
@@ -28,11 +26,9 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.datafabric.dataset.DefaultDatasetManager;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -44,15 +40,12 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
   private final SecureStoreManager secureStoreManager;
   private final MessagingAdmin messagingAdmin;
   private final RetryStrategy retryStrategy;
-  private final DefaultArtifactManager defaultArtifactManager;
-  private final NamespaceId namespaceId;
 
   /**
    * Creates an instance without messaging admin support.
    */
-  public DefaultAdmin(DatasetFramework dsFramework, NamespaceId namespace, SecureStoreManager secureStoreManager,
-                      DefaultArtifactManager defaultArtifactManager) {
-    this(dsFramework, namespace, secureStoreManager, null, RetryStrategies.noRetry(), defaultArtifactManager);
+  public DefaultAdmin(DatasetFramework dsFramework, NamespaceId namespace, SecureStoreManager secureStoreManager) {
+    this(dsFramework, namespace, secureStoreManager, null, RetryStrategies.noRetry());
   }
 
   /**
@@ -60,13 +53,11 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
    */
   public DefaultAdmin(DatasetFramework dsFramework, NamespaceId namespace,
                       SecureStoreManager secureStoreManager, @Nullable MessagingAdmin messagingAdmin,
-                      RetryStrategy retryStrategy, DefaultArtifactManager defaultArtifactManager) {
+                      RetryStrategy retryStrategy) {
     super(dsFramework, namespace, retryStrategy);
     this.secureStoreManager = secureStoreManager;
     this.messagingAdmin = messagingAdmin;
     this.retryStrategy = retryStrategy;
-    this.defaultArtifactManager = defaultArtifactManager;
-    this.namespaceId = namespace;
   }
 
   @Override
@@ -189,26 +180,5 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
       // this should never happen
       throw new RuntimeException(e);
     }
-  }
-
-  @Override
-  public List<ArtifactInfo> listArtifacts() throws IOException {
-    return Retries.callWithRetries(new Retries.Callable<List<ArtifactInfo>, IOException>() {
-      @Override
-      public List<ArtifactInfo> call() throws IOException {
-        return defaultArtifactManager.listArtifacts(namespaceId);
-      }
-    }, retryStrategy);
-  }
-
-  @Override
-  public CloseableClassLoader createClassLoader(final ArtifactInfo artifactInfo,
-                                                final @Nullable ClassLoader parentClassLoader) throws IOException {
-    return Retries.callWithRetries(new Retries.Callable<CloseableClassLoader, IOException>() {
-      @Override
-      public CloseableClassLoader call() throws IOException {
-        return defaultArtifactManager.createClassLoader(namespaceId, artifactInfo, parentClassLoader);
-      }
-    }, retryStrategy);
   }
 }

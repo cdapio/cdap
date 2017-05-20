@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import co.cask.cdap.api.artifact.ArtifactInfo;
+import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -24,18 +26,22 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
@@ -49,6 +55,8 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   private final HttpServiceHandlerSpecification spec;
   private final int instanceId;
   private final AtomicInteger instanceCount;
+  private final DefaultArtifactManager defaultArtifactManager;
+  private final NamespaceId namespaceId;
 
   /**
    * Creates a BasicHttpServiceContext for the given HttpServiceHandlerSpecification.
@@ -77,10 +85,12 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
     super(program, programOptions, cConf, spec == null ? Collections.<String>emptySet() : spec.getDatasets(),
           dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator, defaultArtifactManager);
+          secureStore, secureStoreManager, messagingService, pluginInstantiator);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
+    this.defaultArtifactManager = defaultArtifactManager;
+    this.namespaceId = program.getId().getNamespaceId();
   }
 
   private static Map<String, String> createMetricsTags(@Nullable HttpServiceHandlerSpecification spec,
@@ -128,5 +138,26 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   @Override
   public int getDefaultTxTimeout() {
     return super.getDefaultTxTimeout();
+  }
+
+  @Override
+  public List<ArtifactInfo> listArtifacts() throws IOException {
+    return Retries.callWithRetries(new Retries.Callable<List<ArtifactInfo>, IOException>() {
+      @Override
+      public List<ArtifactInfo> call() throws IOException {
+        return defaultArtifactManager.listArtifacts(namespaceId);
+      }
+    }, retryStrategy);
+  }
+
+  @Override
+  public CloseableClassLoader createClassLoader(final ArtifactInfo artifactInfo,
+                                                @Nullable  final ClassLoader parentClassLoader) throws IOException {
+    return Retries.callWithRetries(new Retries.Callable<CloseableClassLoader, IOException>() {
+      @Override
+      public CloseableClassLoader call() throws IOException {
+        return defaultArtifactManager.createClassLoader(namespaceId, artifactInfo, parentClassLoader);
+      }
+    }, retryStrategy);
   }
 }

@@ -26,6 +26,6 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
  * This interface provides methods for operational calls from within a CDAP application.
  */
 @Beta
-public interface Admin extends DatasetManager, SecureStoreManager, MessagingAdmin, ArtifactManager {
+public interface Admin extends DatasetManager, SecureStoreManager, MessagingAdmin {
 
 }

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.artifact;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -23,6 +25,7 @@ import javax.annotation.Nullable;
 /**
  * Provides access to artifacts
  */
+@Beta
 public interface ArtifactManager {
   /**
    * Get the list of artifacts in the repository in the current and system namespace

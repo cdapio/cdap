@@ -74,7 +74,6 @@ import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
-import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.io.DatumWriterFactory;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.internal.io.SchemaGenerator;
@@ -146,7 +145,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messageService;
-  private final DefaultArtifactManager defaultArtifactManager;
 
   @Inject
   public FlowletProgramRunner(CConfiguration cConfiguration,
@@ -162,8 +160,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               RuntimeUsageRegistry runtimeUsageRegistry,
                               SecureStore secureStore,
                               SecureStoreManager secureStoreManager,
-                              MessagingService messagingService,
-                              DefaultArtifactManager defaultArtifactManager) {
+                              MessagingService messagingService) {
     this.cConf = cConfiguration;
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
@@ -178,7 +175,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messageService = messagingService;
-    this.defaultArtifactManager = defaultArtifactManager;
   }
 
   @SuppressWarnings("unchecked")
@@ -229,8 +225,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       flowletContext = new BasicFlowletContext(program, options, flowletName, instanceId, instanceCount,
                                                flowletDef.getDatasets(), flowletDef.getFlowletSpec(),
                                                metricsCollectionService, discoveryServiceClient, txClient,
-                                               dsFramework, secureStore, secureStoreManager, messageService, cConf,
-                                               defaultArtifactManager);
+                                               dsFramework, secureStore, secureStoreManager, messageService, cConf);
 
       // Creates tx related objects
       DataFabricFacade dataFabricFacade =
