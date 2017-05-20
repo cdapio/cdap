@@ -170,7 +170,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       initialize();
       SparkRuntimeContextConfig contextConfig = new SparkRuntimeContextConfig(runtimeContext.getConfiguration());
 
-      final File jobJar = generateJobJar(tempDir, contextConfig.isLocal());
+      final File jobJar = generateJobJar(tempDir, contextConfig.isLocal(), cConf);
       final List<LocalizeResource> localizeResources = new ArrayList<>();
 
       String metricsConfPath;
@@ -596,15 +596,17 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    *
    * @return The generated {@link File} in the given target directory
    */
-  private File generateJobJar(File tempDir, boolean isLocal) throws IOException {
+  private File generateJobJar(File tempDir, boolean isLocal, CConfiguration cConf) throws IOException {
     // in local mode, Spark Streaming with checkpointing will expect the same job jar to exist
     // in all runs of the program. This means it can't be created in the temporary directory for the run,
     // but must persist between runs
-    File targetDir = isLocal ? tempDir.getParentFile() : tempDir;
+    File targetDir = isLocal ?
+      new File(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "runtime"), "spark") : tempDir;
     File tempFile = new File(targetDir, "emptyJob.jar");
     if (tempFile.exists()) {
       return tempFile;
     }
+    DirUtils.mkdirs(targetDir.getAbsoluteFile());
     JarOutputStream output = new JarOutputStream(new FileOutputStream(tempFile));
     output.close();
     return tempFile;
