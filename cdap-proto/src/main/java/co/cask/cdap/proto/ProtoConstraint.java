@@ -217,7 +217,7 @@ public abstract class ProtoConstraint implements Constraint {
       }
       if (!SIMPLE_TIME_PATTERN.matcher(time).matches()) {
         throw new IllegalArgumentException(
-          String.format("%s time must be of the form 'hh:mm' but is '%s'", name, time));
+          String.format("%s time must be of the form 'HH:mm' but is '%s'", name, time));
       }
       ProtoConstraint.validateInRange(Integer.valueOf(time.substring(0, 2)), name + " hour", 0, 24);
       ProtoConstraint.validateInRange(Integer.valueOf(time.substring(3, 5)), name + " minute", 0, 60);

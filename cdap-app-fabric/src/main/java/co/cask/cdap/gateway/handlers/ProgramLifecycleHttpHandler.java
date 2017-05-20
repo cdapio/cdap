@@ -175,7 +175,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final MetricStore metricStore;
   private final MRJobInfoFetcher mrJobInfoFetcher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
-  protected final Scheduler scheduler;
+  protected final Scheduler programScheduler;
 
   /**
    * Store manages non-runtime lifecycle.
@@ -194,7 +194,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               QueueAdmin queueAdmin,
                               MRJobInfoFetcher mrJobInfoFetcher,
                               MetricStore metricStore,
-                              NamespaceQueryAdmin namespaceQueryAdmin, Scheduler scheduler) {
+                              NamespaceQueryAdmin namespaceQueryAdmin, Scheduler programScheduler) {
     this.store = store;
     this.runtimeService = runtimeService;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -203,7 +203,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.queueAdmin = queueAdmin;
     this.mrJobInfoFetcher = mrJobInfoFetcher;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
-    this.scheduler = scheduler;
+    this.programScheduler = programScheduler;
   }
 
   /**
@@ -630,7 +630,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private void doGetSchedule(HttpResponder responder, String namespace, String app, String version, String scheduleName)
     throws NotFoundException {
     ScheduleId scheduleId = new ApplicationId(namespace, app, version).schedule(scheduleName);
-    ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
+    ProgramSchedule schedule = programScheduler.getSchedule(scheduleId);
     responder.sendJson(HttpResponseStatus.OK, schedule.toScheduleDetail(), ScheduleDetail.class, GSON);
   }
 
@@ -656,7 +656,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private void doGetAllSchedules(HttpResponder responder, String namespace, String app, String version)
     throws NotFoundException {
     ApplicationId applicationId = new ApplicationId(namespace, app, version);
-    List<ProgramSchedule> schedules = scheduler.listSchedules(applicationId);
+    List<ProgramSchedule> schedules = programScheduler.listSchedules(applicationId);
     List<ScheduleDetail> details = Schedulers.toScheduleDetails(schedules);
     responder.sendJson(HttpResponseStatus.OK, details, Schedulers.SCHEDULE_DETAILS_TYPE, GSON);
   }
@@ -716,7 +716,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     List<Constraint> constraints = Objects.firstNonNull(scheduleFromRequest.getConstraints(), NO_CONSTRAINTS);
     ProgramSchedule schedule = new ProgramSchedule(scheduleName, description, programId, properties,
                                                    scheduleFromRequest.getTrigger(), constraints);
-    scheduler.addSchedule(schedule);
+    programScheduler.addSchedule(schedule);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -749,11 +749,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     ScheduleDetail scheduleDetail = readScheduleDetailBody(request, scheduleName, true);
     ScheduleId scheduleId = new ApplicationId(namespaceId, appId, appVersion).schedule(scheduleName);
-    ProgramSchedule existingSchedule = scheduler.getSchedule(scheduleId);
+    ProgramSchedule existingSchedule = programScheduler.getSchedule(scheduleId);
     ProgramSchedule updatedSchedule = combineForUpdate(scheduleDetail, existingSchedule);
     // TODO add an update() method to Scheduler
-    scheduler.deleteSchedule(scheduleId);
-    scheduler.addSchedule(updatedSchedule);
+    programScheduler.deleteSchedule(scheduleId);
+    programScheduler.addSchedule(updatedSchedule);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -791,7 +791,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       try {
         scheduleDetail = GSON.fromJson(json, ScheduleDetail.class);
       } catch (JsonSyntaxException e) {
-        throw new BadRequestException("Error parsing request body as a schedule specification" + e.getMessage());
+        throw new BadRequestException("Error parsing request body as a schedule specification: " + e.getMessage());
       }
     }
 
@@ -880,7 +880,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                 String appVersion, String scheduleName)
     throws NotFoundException, SchedulerException {
     ScheduleId scheduleId = new ApplicationId(namespaceId, appName, appVersion).schedule(scheduleName);
-    scheduler.deleteSchedule(scheduleId);
+    programScheduler.deleteSchedule(scheduleId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

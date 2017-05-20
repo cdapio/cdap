@@ -116,19 +116,19 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
 
   private final WorkflowClient workflowClient;
   private final DatasetFramework datasetFramework;
-  private final co.cask.cdap.internal.app.runtime.schedule.Scheduler timeScheduler;
+  private final co.cask.cdap.internal.app.runtime.schedule.Scheduler scheduler;
 
   @Inject
   WorkflowHttpHandler(Store store, WorkflowClient workflowClient, ProgramRuntimeService runtimeService,
-                      QueueAdmin queueAdmin, co.cask.cdap.internal.app.runtime.schedule.Scheduler timeScheduler,
+                      QueueAdmin queueAdmin, co.cask.cdap.internal.app.runtime.schedule.Scheduler scheduler,
                       MRJobInfoFetcher mrJobInfoFetcher, ProgramLifecycleService lifecycleService,
-                      MetricStore metricStore, NamespaceQueryAdmin namespaceQueryAdmin, Scheduler scheduler,
+                      MetricStore metricStore, NamespaceQueryAdmin namespaceQueryAdmin, Scheduler programScheduler,
                       DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient) {
     super(store, runtimeService, discoveryServiceClient, lifecycleService, queueAdmin,
-          mrJobInfoFetcher, metricStore, namespaceQueryAdmin, scheduler);
+          mrJobInfoFetcher, metricStore, namespaceQueryAdmin, programScheduler);
     this.workflowClient = workflowClient;
     this.datasetFramework = datasetFramework;
-    this.timeScheduler = timeScheduler;
+    this.scheduler = scheduler;
   }
 
   @POST
@@ -244,9 +244,9 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       }
       List<ScheduledRuntime> runtimes;
       if (previousRuntimeRequested) {
-        runtimes = timeScheduler.previousScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
+        runtimes = scheduler.previousScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
       } else {
-        runtimes = timeScheduler.nextScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
+        runtimes = scheduler.nextScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
       }
       responder.sendJson(HttpResponseStatus.OK, runtimes);
     } catch (SecurityException e) {
@@ -288,7 +288,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     if (appSpec == null) {
       throw new NotFoundException(application);
     }
-    List<ProgramSchedule> schedules = scheduler.listSchedules(application.workflow(workflow));
+    List<ProgramSchedule> schedules = programScheduler.listSchedules(application.workflow(workflow));
     responder.sendJson(HttpResponseStatus.OK, Schedulers.toScheduleDetails(schedules),
                        new TypeToken<List<ScheduleDetail>>() { }.getType(), GSON);
   }
