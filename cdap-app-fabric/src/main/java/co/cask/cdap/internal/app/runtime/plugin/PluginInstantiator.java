@@ -65,6 +65,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -438,6 +439,14 @@ public class PluginInstantiator implements Closeable {
           throw new InvalidPluginConfigException(String.format("Property of type char is not length 1: '%s'", value));
         } else {
           return value.charAt(0);
+        }
+      }
+
+      // discard decimal point for all non floating point data types
+      if (Long.class.equals(rawType) || Short.class.equals(rawType)
+        || Integer.class.equals(rawType) || Byte.class.equals(rawType)) {
+        if (value.endsWith(".0")) {
+          value = value.substring(0, value.lastIndexOf("."));
         }
       }
 

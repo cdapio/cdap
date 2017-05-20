@@ -33,6 +33,7 @@ import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.ArtifactConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
@@ -49,6 +50,7 @@ import co.cask.cdap.internal.app.runtime.artifact.app.plugin.PluginTestRunnable;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.EmptyClass;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin1;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin2;
+import co.cask.cdap.internal.app.runtime.plugin.InvalidPluginConfigException;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.app.runtime.plugin.TestMacroEvaluator;
@@ -63,6 +65,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -106,6 +110,10 @@ public class ArtifactRepositoryTest {
   private static ProgramClassLoader appClassLoader;
   private static MetadataStore metadataStore;
   private static File appArtifactFile;
+
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
+    .create();
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -311,6 +319,64 @@ public class ArtifactRepositoryTest {
                                            .build());
           Callable<String> plugin = instantiator.newInstance(pluginInfo);
           Assert.assertEquals("example.com,false,0,\u0000,0.0,0.0,0,0,0", plugin.call());
+        }
+      }
+    }
+  }
+
+  @Test
+  public void testPluginConfigWithNoStringValues() throws Exception {
+    File pluginDir = getFile();
+    SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = getPlugins();
+    copyArtifacts(pluginDir, plugins);
+
+    String numericValue = "42";
+
+    // Instantiate the plugins and execute them
+    try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
+      for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> entry : plugins.entrySet()) {
+        for (PluginClass pluginClass : entry.getValue()) {
+          Plugin pluginInfo = new Plugin(entry.getKey().getArtifactId(), pluginClass,
+                                         PluginProperties.builder().add("class.name", TEST_EMPTY_CLASS)
+                                           .add("nullableLongFlag", numericValue)
+                                           .add("host", "example.com")
+                                           .add("aBoolean", "${aBoolean}")
+                                           .add("aByte", numericValue)
+                                           .add("aChar", "${aChar}")
+                                           .add("aDouble", "${aDouble}")
+                                           .add("anInt", numericValue)
+                                           .add("aFloat", "${aFloat}")
+                                           .add("aLong", numericValue)
+                                           .add("aShort", numericValue)
+                                           .build());
+
+          // first test with quotes ("42")
+          String jsonPluginStr = GSON.toJson(pluginInfo);
+          pluginInfo = GSON.fromJson(jsonPluginStr, Plugin.class);
+          instantiator.newInstance(pluginInfo);
+
+          // test without quotes (42)
+          pluginInfo = GSON.fromJson(jsonPluginStr.replaceAll("\"" + numericValue + "\"", numericValue), Plugin.class);
+          instantiator.newInstance(pluginInfo);
+
+          // test with quotes and dot ("42.0")
+          pluginInfo = GSON.fromJson(jsonPluginStr.replaceAll(numericValue, numericValue + ".0"), Plugin.class);
+          instantiator.newInstance(pluginInfo);
+
+          // test with dot (42.0)
+          pluginInfo = GSON.fromJson(jsonPluginStr.replaceAll("\"" + numericValue + "\"", numericValue + ".0"),
+                                     Plugin.class);
+          instantiator.newInstance(pluginInfo);
+
+          // test with some actual double number 42.5
+          pluginInfo
+            = GSON.fromJson(jsonPluginStr.replaceAll("\"" + numericValue + "\"", numericValue + ".5"), Plugin.class);
+          try {
+            instantiator.newInstance(pluginInfo);
+            Assert.fail("Plugin instantiation should fail with value '42.5'");
+          } catch (InvalidPluginConfigException e) {
+            // expected
+          }
         }
       }
     }
