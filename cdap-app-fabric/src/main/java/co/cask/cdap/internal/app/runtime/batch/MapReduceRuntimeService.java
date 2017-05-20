@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.TransactionUtil;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.data.DatasetContext;
@@ -549,16 +550,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     if (TransactionControl.EXPLICIT == txControl) {
       doInitialize(job);
     } else {
-      try {
-        context.execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext context) throws Exception {
-            doInitialize(job);
-          }
-        });
-      } catch (TransactionFailureException e) {
-        throw Transactions.propagate(e, Exception.class);
-      }
+      TransactionUtil.execute(context, new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          doInitialize(job);
+        }
+      }, Exception.class);
     }
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
     try {
