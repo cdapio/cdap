@@ -134,7 +134,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Type BATCH_PROGRAMS_TYPE = new TypeToken<List<BatchProgram>>() { }.getType();
   private static final Type BATCH_RUNNABLES_TYPE = new TypeToken<List<BatchRunnable>>() { }.getType();
   private static final Type BATCH_STARTS_TYPE = new TypeToken<List<BatchProgramStart>>() { }.getType();
-  private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
 
   private static final String SCHEDULES = "schedules";
   /**
@@ -1700,6 +1699,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Invalid JSON in body");
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage());
     } catch (SecurityException e) {
       throw new UnauthorizedException("Unauthorized to update the log levels");
     }
@@ -1723,23 +1724,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       throw new UnauthorizedException("Unauthorized to reset the log levels");
     }
-  }
-
-  /**
-   * Helper method to transform the type of the log level map.
-   */
-  private Map<String, LogEntry.Level> transformLogLevelsMap(Map<String, String> logLevels)
-    throws BadRequestException {
-    Map<String, LogEntry.Level> result = new HashMap<>();
-    for (Map.Entry<String, String> entry : logLevels.entrySet()) {
-      String logLevel = entry.getValue();
-      try {
-        result.put(entry.getKey(), logLevel == null ? null : LogEntry.Level.valueOf(logLevel.toUpperCase()));
-      } catch (IllegalArgumentException e) {
-        throw new BadRequestException(String.format("%s is not a valid log level", logLevel));
-      }
-    }
-    return result;
   }
 
   private NamespaceId validateAndGetNamespace(String namespace) throws NamespaceNotFoundException {

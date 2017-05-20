@@ -19,6 +19,10 @@ package co.cask.cdap.common.twill;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.SystemServiceLiveInfo;
 import com.google.common.collect.ImmutableList;
+import org.apache.twill.api.logging.LogEntry;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * InMemory CDAP Service Management class.
@@ -77,6 +81,16 @@ public abstract class AbstractInMemoryMasterServiceManager implements MasterServ
 
   @Override
   public void restartInstances(int instanceId, int... moreInstanceIds) {
+    // No operation for in memory manager.
+  }
+
+  @Override
+  public void updateServiceLogLevels(Map<String, LogEntry.Level> logLevels) {
+    // No operation for in memory manager.
+  }
+
+  @Override
+  public void resetServiceLogLevels(Set<String> loggerNames) {
     // No operation for in memory manager.
   }
 }

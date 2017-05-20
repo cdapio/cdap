@@ -28,14 +28,17 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import org.apache.twill.api.logging.LogEntry;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -49,6 +52,7 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -64,7 +68,8 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
 
-  protected static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  protected static final Type MAP_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  protected static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
 
   /**
    * Name of the header that should specify the application archive
@@ -107,7 +112,7 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
   }
 
   protected Map<String, String> decodeArguments(HttpRequest request) throws JsonSyntaxException {
-    Map<String, String> args = parseBody(request, STRING_MAP_TYPE);
+    Map<String, String> args = parseBody(request, MAP_STRING_TYPE);
     if (args == null) {
       return ImmutableMap.of();
     }
@@ -152,5 +157,18 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Helper method to transform the type of the log level map.
+   */
+  protected Map<String, LogEntry.Level> transformLogLevelsMap(Map<String, String> logLevels) {
+    return Maps.transformValues(logLevels, new Function<String, LogEntry.Level>() {
+      @Override
+      @Nullable
+      public LogEntry.Level apply(@Nullable String input) {
+        return input == null ? null : LogEntry.Level.valueOf(input.toUpperCase());
+      }
+    });
   }
 }
