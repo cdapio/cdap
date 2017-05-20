@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.write;
 
+import co.cask.cdap.api.TransactionUtil;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.common.Bytes;
@@ -96,19 +97,14 @@ public class FileMetaDataManager {
                              final Location location) throws Exception {
     LOG.debug("Writing meta data for logging context {} as startTimeMs {} and location {}",
               logPartition, startTimeMs, location);
-
-    try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          getMetaTable(context).put(getRowKey(logPartition),
-                                    Bytes.toBytes(startTimeMs),
-                                    Bytes.toBytes(location.toURI().getPath()));
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e, Exception.class);
-    }
+    TransactionUtil.execute(transactional, new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        getMetaTable(context).put(getRowKey(logPartition),
+                                  Bytes.toBytes(startTimeMs),
+                                  Bytes.toBytes(location.toURI().getPath()));
+      }
+    }, Exception.class);
   }
 
   private byte[] getRowKey(String logPartition) {

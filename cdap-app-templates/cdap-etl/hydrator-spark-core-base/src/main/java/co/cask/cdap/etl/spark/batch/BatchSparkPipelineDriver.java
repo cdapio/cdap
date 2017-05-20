@@ -16,8 +16,8 @@
 
 package co.cask.cdap.etl.spark.batch;
 
+import co.cask.cdap.api.TransactionUtil;
 import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.etl.common.TransactionUtil;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;

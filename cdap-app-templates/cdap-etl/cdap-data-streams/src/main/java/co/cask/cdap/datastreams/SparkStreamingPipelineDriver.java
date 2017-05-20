@@ -16,8 +16,8 @@
 
 package co.cask.cdap.datastreams;
 
+import co.cask.cdap.api.TransactionUtil;
 import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.etl.common.TransactionUtil;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSet;
@@ -45,8 +45,6 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function0;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
-import org.apache.spark.streaming.api.java.JavaStreamingContextFactory;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 
 import java.util.HashMap;

@@ -16,9 +16,9 @@
 
 package co.cask.cdap.etl.realtime;
 
+import co.cask.cdap.api.TransactionUtil;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.etl.common.TransactionUtil;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
@@ -70,7 +70,6 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.meta;
 
+import co.cask.cdap.api.TransactionUtil;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.common.Bytes;
@@ -60,19 +61,14 @@ public class FileMetaDataWriter {
                             final Location location) throws Exception {
     LOG.debug("Writing meta data for logging context {} with startTimeMs {} sequence Id {} and location {}",
               identifier.getRowkey(), eventTimeMs, currentTimeMs, location);
-
-    try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          Table table = LoggingStoreTableUtil.getMetadataTable(context, datasetManager);
-          table.put(getRowKey(identifier, eventTimeMs, currentTimeMs),
-                    LoggingStoreTableUtil.META_TABLE_COLUMN_KEY, Bytes.toBytes(location.toURI().getPath()));
-        }
-      });
-    } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e, Exception.class);
-    }
+    TransactionUtil.execute(transactional, new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        Table table = LoggingStoreTableUtil.getMetadataTable(context, datasetManager);
+        table.put(getRowKey(identifier, eventTimeMs, currentTimeMs),
+                  LoggingStoreTableUtil.META_TABLE_COLUMN_KEY, Bytes.toBytes(location.toURI().getPath()));
+      }
+    }, Exception.class);
   }
 
   private byte[] getRowKey(LogPathIdentifier identifier, long eventTime, long currentTime) {
