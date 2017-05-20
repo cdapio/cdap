@@ -21,10 +21,9 @@ $cli-font: "Courier New", Courier, monospace;
 
 .dataprep-container {
   .dataprep-cli {
-    position: fixed;
     bottom: 54px;
     height: 30px;
-    width: 75%;
+    width: 100%;
     border-top: 1px solid #cccccc;
 
     .error-bar {

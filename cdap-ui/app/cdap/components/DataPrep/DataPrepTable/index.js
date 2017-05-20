@@ -312,20 +312,13 @@ export default class DataPrepTable extends Component {
       return (
         <div className="dataprep-table empty">
           <div>
-            <h5 className="text-xs-center">Please create a workspace to wrangle data</h5>
-            <div className="button-container text-xs-center">
-              <button
-                className="btn btn-primary"
-                onClick={this.openCreateWorkspaceModal}
-              >
-                Create
-              </button>
-            </div>
+            <h5 className="text-xs-center">Please select or upload a file to wrangle data</h5>
           </div>
         </div>
       );
     }
 
+    // FIXME: Not sure if this is possible now.
     if (data.length === 0 || headers.length === 0) {
       return (
         <div className="dataprep-table empty">

@@ -19,7 +19,7 @@
  var Store = require('../cdap/services/NamespaceStore').default;
  var Header = require('../cdap/components/Header').default;
  var ResourceCenterButton = require('../cdap/components/ResourceCenterButton').default;
- var DataPrep = require('../cdap/components/DataPrep').default;
+ var DataPrepHome = require('../cdap/components/DataPrepHome').default;
  var DataPrepHelper = require('../cdap/components/DataPrep/helper');
  var globalEvents = require('../cdap/services/global-events').default;
  var ee = require('event-emitter');
@@ -31,7 +31,7 @@
  export {
   Store,
   Header,
-  DataPrep,
+  DataPrepHome,
   DataPrepHelper,
   globalEvents,
   ee,

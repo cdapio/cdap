@@ -78,6 +78,9 @@ $gutter-width: 15px;
           border-bottom: 1px solid $connections-panel-border-color;
         }
 
+        &.expandable-menu {
+          padding: 10px 15px 10px 8px;
+        }
         a {
           color: $connections-menu-item-color;
           display: inline-block;
