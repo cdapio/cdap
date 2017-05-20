@@ -289,7 +289,7 @@ public class ArtifactStore {
 
       ArtifactData data = GSON.fromJson(Bytes.toString(columnEntry.getValue()), ArtifactData.class);
       ArtifactId artifactId = new ArtifactId(artifactKey.name, new ArtifactVersion(version),
-                                             artifactKey.namespace.equals(NamespaceId.SYSTEM) ?
+                                             artifactKey.namespace.equals(NamespaceId.SYSTEM.getNamespace()) ?
                                                ArtifactScope.SYSTEM : ArtifactScope.USER);
       queue.add(new ArtifactDetail(
         new ArtifactDescriptor(artifactId, Locations.getLocationFromAbsolutePath(locationFactory,
