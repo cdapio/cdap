@@ -15,47 +15,20 @@
  */
 
 class MyBatchPipelineSettingsCtrl {
-  constructor(GLOBALS, $scope, MY_CONFIG) {
+  constructor(GLOBALS, MY_CONFIG) {
     this.GLOBALS = GLOBALS;
     this.isDistributed = MY_CONFIG.isEnterprise ? true : false;
     this._isDisabled = this.isDisabled === 'true';
     this.templateType = this.store.getArtifact().name;
-    this.scheduleWidget = {
-      type: 'basic'
-    };
-    this.initialCron = this.store.getSchedule();
-    this.cron = this.initialCron;
-    if (!this.checkCron(this.initialCron)) {
-      this.scheduleWidget.type = 'advanced';
-    }
+
     this.engine = this.store.getEngine();
-    if (!this._isDisabled) {
-      // Debounce method for setting schedule
-      var setSchedule = _.debounce(() => this.actionCreator.setSchedule(this.cron), 1000);
-      var unsub = $scope.$watch('MyBatchPipelineSettingsCtrl.cron', setSchedule);
-      $scope.$on('$destroy', unsub);
-    }
-  }
-  checkCron(cron) {
-    var pattern = /^[0-9\*\s]*$/g;
-    var parse = cron.split('');
-    for (var i = 0; i < parse.length; i++) {
-      if (!parse[i].match(pattern)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   onEngineChange() {
     this.actionCreator.setEngine(this.engine);
   }
-  changeScheduler () {
-    this.initialCron = this.store.getDefaultSchedule();
-    this.cron = this.initialCron;
-  }
 }
 
-MyBatchPipelineSettingsCtrl.$inject = ['GLOBALS', '$scope', 'MY_CONFIG'];
+MyBatchPipelineSettingsCtrl.$inject = ['GLOBALS', 'MY_CONFIG'];
 angular.module(PKG.name + '.commons')
   .controller('MyBatchPipelineSettingsCtrl', MyBatchPipelineSettingsCtrl);

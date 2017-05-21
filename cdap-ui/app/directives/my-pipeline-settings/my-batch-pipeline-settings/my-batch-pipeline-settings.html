@@ -17,39 +17,6 @@
   <div class="pipeline-settings-content">
 
     <div>
-      <my-card data-title="Schedule" class="schedule">
-        <div class="radio-inline" ng-if="!MyBatchPipelineSettingsCtrl._isDisabled">
-          <label>
-            <input type="radio"
-                   ng-change="MyBatchPipelineSettingsCtrl.changeScheduler()"
-                   ng-model="MyBatchPipelineSettingsCtrl.scheduleWidget.type"
-                   value="basic"/>
-            Basic
-          </label>
-        </div>
-        <div class="radio-inline" ng-if="!MyBatchPipelineSettingsCtrl._isDisabled">
-          <label>
-            <input type="radio"
-                 ng-change="MyBatchPipelineSettingsCtrl.changeScheduler()"
-                 ng-model="MyBatchPipelineSettingsCtrl.scheduleWidget.type"
-                 value="advanced"/>
-            Advanced
-          </label>
-        </div>
-        <cron-selection
-          ng-if="MyBatchPipelineSettingsCtrl.scheduleWidget.type === 'basic'"
-          class="select-wrapper"
-          output="MyBatchPipelineSettingsCtrl.cron"
-          init="MyBatchPipelineSettingsCtrl.initialCron">
-        </cron-selection>
-        <div data-name="field"
-           ng-if="MyBatchPipelineSettingsCtrl.scheduleWidget.type === 'advanced'"
-           class="my-widget-container"
-           data-model="MyBatchPipelineSettingsCtrl.cron"
-           data-myconfig="{properties: {}, widget: 'schedule'}"
-           widget-container>
-        </div>
-      </my-card>
       <my-card data-title="Engine" class="engine">
         <form role="form" class="form-inline">
           <label class="radio-inline">

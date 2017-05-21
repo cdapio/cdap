@@ -42,7 +42,8 @@ class HydratorPlusPlusTopPanelCtrl {
     this.myAlertOnValium = myAlertOnValium;
     this.currentPreviewId = null;
     this.$window = $window;
-    this.showRunTimeArguments = false;
+    this.viewConfig = false;
+    this.viewScheduler = false;
     this.viewLogs = false;
     this.$q = $q;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
@@ -54,6 +55,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.resolvedMacros = {};
     this.userRuntimeArgumentsMap = {};
     this.runtimeArguments = {};
+    this.validToStartPreview = true;
     this.$stateParams = $stateParams;
     this.setState();
     this.setActiveNodes();
@@ -163,7 +165,6 @@ class HydratorPlusPlusTopPanelCtrl {
         description: this.HydratorPlusPlusConfigStore.getDescription()
       },
       viewSettings: this.myHelpers.objectQuery(this.state, 'viewSettings') || false,
-      viewConfigurations: this.myHelpers.objectQuery(this.state, 'viewConfigurations') || false,
       artifact: this.HydratorPlusPlusConfigStore.getArtifact()
     };
   }
@@ -243,27 +244,12 @@ class HydratorPlusPlusTopPanelCtrl {
 
     this.invalidName = (filteredMessages.length ? true : false);
   }
-  onValidate() {
-    this.HydratorPlusPlusConsoleActions.resetMessages();
-    let isStateValid = this.HydratorPlusPlusConfigStore.validateState(true);
-    if (isStateValid) {
-      this.HydratorPlusPlusConsoleActions.addMessage([{
-        type: 'success',
-        content: 'Validation success! Pipeline ' + this.HydratorPlusPlusConfigStore.getName() + ' is valid.'
-      }]);
-      return;
-    }
-    this.checkNameError();
-  }
   onPublish() {
     this.HydratorPlusPlusConfigActions.publishPipeline();
     this.checkNameError();
   }
   showSettings() {
     this.state.viewSettings = !this.state.viewSettings;
-  }
-  showConfigurations() {
-    this.state.viewConfigurations = !this.state.viewConfigurations;
   }
 
   // PREVIEW
@@ -421,7 +407,7 @@ class HydratorPlusPlusTopPanelCtrl {
               // if user added or removed macros in the stage config
               if (!angular.equals(newMacrosMap, this.macrosMap)) {
                 this.resolvedMacros = Object.assign({}, this.HydratorPlusPlusHydratorService.getPrefsRelevantToMacros(res, newMacrosMap));
-                this.macrosMap = Object.assign({}, this.resolvedMacros);
+                this.macrosMap = Object.assign({}, newMacrosMap, this.resolvedMacros);
               }
               // only update the macros that have new resolved values
               if (Object.keys(newPrefs).length > 0) {
@@ -433,6 +419,7 @@ class HydratorPlusPlusTopPanelCtrl {
               );
             }
             this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+            this.validToStartPreview = this.isValidToStartPreview();
             return this.runtimeArguments;
           },
           err => {
@@ -447,19 +434,31 @@ class HydratorPlusPlusTopPanelCtrl {
         this.previewActions.setMacros(this.macrosMap)
       );
       this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+      this.validToStartPreview = this.isValidToStartPreview();
       return this.$q.when(this.runtimeArguments);
     }
   }
 
-  toggleRuntimeArguments() {
-    if (!this.previewRunning) {
-      this.getRuntimeArguments()
-      .then(() => {
-        this.showRunTimeArguments = !this.showRunTimeArguments;
-      });
-    } else {
-      this.stopPreview();
-    }
+  toggleConfig() {
+    this.getRuntimeArguments()
+    .then(() => {
+      this.viewConfig = !this.viewConfig;
+    });
+  }
+
+  startOrStopPreview() {
+    this.getRuntimeArguments()
+    .then(() => {
+      if (this.previewRunning) {
+        this.stopPreview();
+      } else {
+        this.onPreviewStart();
+      }
+    });
+  }
+
+  toggleScheduler() {
+    this.viewScheduler = !this.viewScheduler;
   }
 
   applyRuntimeArguments() {
@@ -470,6 +469,20 @@ class HydratorPlusPlusTopPanelCtrl {
     this.previewStore.dispatch(
       this.previewActions.setMacrosAndUserRuntimeArgs(this.macrosMap, this.userRuntimeArgumentsMap)
     );
+    this.validToStartPreview = this.isValidToStartPreview();
+  }
+
+  isValidToStartPreview() {
+    let fullMacrosMap = Object.assign({}, this.macrosMap, this.userRuntimeArgumentsMap);
+    let hasMissingValues = this.myHelpers.objHasMissingValues(fullMacrosMap);
+    if (hasMissingValues.res) {
+      let notValidRuntimeArgs = hasMissingValues.keysWithMissingValue;
+      this.notValidRuntimeArgsString = '"' + notValidRuntimeArgs.join('", "') + '"';
+    } else {
+      this.notValidRuntimeArgsString = '';
+    }
+
+    return !hasMissingValues.res;
   }
 
   onPreviewStart() {
@@ -479,7 +492,7 @@ class HydratorPlusPlusTopPanelCtrl {
   runPreview() {
     this.previewLoading = true;
     this.loadingLabel = 'Starting';
-    this.showRunTimeArguments = false;
+    this.viewConfig = false;
 
     this.displayDuration = {
       minutes: '--',
@@ -832,7 +845,7 @@ class HydratorPlusPlusTopPanelCtrl {
     let postActions = config.postActions;
 
     if (actions.length > 0 || postActions.length > 0) {
-      this.showRunTimeArguments = false;
+      this.viewConfig = false;
       let confirmModal = this.$uibModal.open({
           templateUrl: '/assets/features/hydrator/templates/create/popovers/run-preview-action-confirmation-modal.html',
           size: 'lg',

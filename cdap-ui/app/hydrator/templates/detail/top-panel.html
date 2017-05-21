@@ -56,16 +56,25 @@
     </div>
 
     <div class="app-status-container">
+      <div class="btn"
+           ng-class="{'btn-select': TopPanelCtrl.viewConfig}"
+           ng-click="TopPanelCtrl.do('Config')">
+        <span class="fa fa-sliders"></span>
+        <div class="button-label">Configure</div>
+      </div>
       <!-- IF ETL BATCH -->
       <div ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1">
         <div ng-if="['Starting', 'Succeeded', 'Failed', 'Stopped', 'Deployed'].indexOf(TopPanelCtrl.appStatus) !== -1">
-          <div ng-click="TopPanelCtrl.do('Start')"
+          <div ng-click="!TopPanelCtrl.validToStartOrSchedule || TopPanelCtrl.do('Start')"
                class="btn"
-               ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'Starting'}"
-               ng-disabled="TopPanelCtrl.appStatus === 'Starting'">
+               uib-tooltip="Please provide values for runtime arguments {{ TopPanelCtrl.notValidRuntimeArgsString }}, before running the pipeline"
+               tooltip-placement="bottom"
+               tooltip-class="toppanel-tooltip"
+               tooltip-enable="!TopPanelCtrl.validToStartOrSchedule"
+               ng-disabled="TopPanelCtrl.appStatus === 'Starting' || !TopPanelCtrl.validToStartOrSchedule">
             <span ng-if="TopPanelCtrl.appStatus !== 'Starting'">
               <span class="fa fa-play text-success"></span>
-              <div class="button-label">Start</div>
+              <div class="button-label">Run</div>
             </span>
             <span ng-if="TopPanelCtrl.appStatus === 'Starting'">
               <span class="fa fa-spinner fa-spin"></span>
@@ -89,10 +98,13 @@
       <div ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1">
         <div ng-if="['Deployed', 'Scheduling'].indexOf(TopPanelCtrl.scheduleStatus) !== -1 || TopPanelCtrl.scheduleStatus.error">
 
-          <div ng-click="TopPanelCtrl.do('Schedule')"
+          <div ng-click="!TopPanelCtrl.validToStartOrSchedule || TopPanelCtrl.do('Schedule')"
               class="btn scheduler"
-              ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'Scheduling'}"
-            ng-disabled="TopPanelCtrl.scheduleStatus === 'Scheduling' || TopPanelCtrl.scheduleStatus.error">
+              uib-tooltip="Please provide values for runtime arguments {{ TopPanelCtrl.notValidRuntimeArgsString }}, before scheduling the pipeline"
+              tooltip-placement="bottom"
+              tooltip-class="toppanel-tooltip"
+              tooltip-enable="!TopPanelCtrl.validToStartOrSchedule"
+              ng-disabled="TopPanelCtrl.scheduleStatus === 'Scheduling' || TopPanelCtrl.scheduleStatus.error || !TopPanelCtrl.validToStartOrSchedule">
             <span class="double-line" ng-if="(TopPanelCtrl.scheduleStatus === 'Deployed' || TopPanelCtrl.scheduleStatus.error) && !TopPanelCtrl.scheduleLoading">
               <span class="fa icon-runtimestarttime"></span>
               <div class="button-label">
@@ -125,12 +137,15 @@
       <div ng-if="[TopPanelCtrl.GLOBALS.etlRealtime, TopPanelCtrl.GLOBALS.etlDataStreams].indexOf(TopPanelCtrl.app.type) !== -1">
         <div ng-if="['Stopped', 'Succeeded', 'Failed', 'Starting', 'Deployed'].indexOf(TopPanelCtrl.appStatus) !== -1">
           <div class="btn"
-            ng-class="{'btn-select': TopPanelCtrl.runPlayer.action === 'Starting'}"
-            ng-click="TopPanelCtrl.do('Start')"
-            ng-disabled="TopPanelCtrl.appStatus === 'Starting'">
+            ng-click="!TopPanelCtrl.validToStartOrSchedule || TopPanelCtrl.do('Start')"
+            uib-tooltip="Configure the pipeline before running"
+            tooltip-placement="bottom"
+            tooltip-class="toppanel-tooltip"
+            tooltip-enable="!TopPanelCtrl.validToStartOrSchedule"
+            ng-disabled="TopPanelCtrl.appStatus === 'Starting' || !TopPanelCtrl.validToStartOrSchedule">
             <span ng-if="TopPanelCtrl.appStatus !== 'Starting'">
               <span class="fa fa-play text-success"></span>
-              <div class="button-label">Start</div>
+              <div class="button-label">Run</div>
             </span>
             <span ng-if="TopPanelCtrl.appStatus === 'Starting'">
               <span class="fa fa-spinner fa-spin"></span>
@@ -223,8 +238,8 @@
   </div>
   <cask-resource-center-button></cask-resource-center-button>
   <div class="pipeline-settings-backdrop"
-       ng-if="TopPanelCtrl.viewSettings || TopPanelCtrl.viewSummary || TopPanelCtrl.viewLogs || TopPanelCtrl.runPlayer.view"
-       ng-click="TopPanelCtrl.viewSettings = false; TopPanelCtrl.viewSummary = false; TopPanelCtrl.runPlayer.view = false; TopPanelCtrl.viewLogs = false; TopPanelCtrl.runPlayer.action = null">
+       ng-if="TopPanelCtrl.viewSettings || TopPanelCtrl.viewSummary || TopPanelCtrl.viewLogs || TopPanelCtrl.viewScheduler || TopPanelCtrl.viewConfig"
+       ng-click="TopPanelCtrl.viewSettings = false; TopPanelCtrl.viewSummary = false; TopPanelCtrl.viewLogs = false; TopPanelCtrl.viewScheduler = false; TopPanelCtrl.viewConfig = false">
   </div>
   <div class="pipeline-settings">
     <div
@@ -236,16 +251,25 @@
       my-pipeline-settings>
     </div>
   </div>
-  <div class="pipeline-configurations" ng-if="TopPanelCtrl.runPlayer.view">
+  <div class="pipeline-scheduler" ng-if="TopPanelCtrl.viewScheduler">
+    <my-pipeline-scheduler
+      store="TopPanelCtrl.HydratorPlusPlusDetailNonRunsStore"
+      action-creator="TopPanelCtrl.HydratorPlusPlusDetailActions"
+      pipeline-name="{{TopPanelCtrl.app.name}}"
+      on-close="TopPanelCtrl.viewScheduler = false"
+      is-disabled="true"
+      start-schedule="TopPanelCtrl.schedulePipeline()">
+    </my-pipeline-scheduler>
+  </div>
+  <div class="pipeline-configurations" ng-if="TopPanelCtrl.viewConfig">
     <my-pipeline-configurations
       runtime-arguments="TopPanelCtrl.runtimeArguments"
       apply-runtime-arguments="TopPanelCtrl.applyRuntimeArguments()"
       resolved-macros="TopPanelCtrl.resolvedMacros"
       convert-runtime-args-to-macros="TopPanelCtrl.convertRuntimeArgsToMacros()"
-      run-pipeline="TopPanelCtrl.startOrSchedulePipeline()"
       pipeline-name="{{TopPanelCtrl.app.name}}"
-      pipeline-action="{{TopPanelCtrl.runPlayer.action}}"
-      on-close="TopPanelCtrl.runPlayer.view = false; TopPanelCtrl.runPlayer.action = null"
+      run-pipeline="TopPanelCtrl.startPipeline()"
+      on-close="TopPanelCtrl.viewConfig = false"
       namespace-id="{{TopPanelCtrl.$state.params.namespace}}">
     </my-pipeline-configurations>
   </div>
