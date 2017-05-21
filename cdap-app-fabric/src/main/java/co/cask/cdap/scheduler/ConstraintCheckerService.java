@@ -32,7 +32,7 @@ import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
-import co.cask.cdap.internal.app.runtime.schedule.constraint.AbstractCheckableConstraint;
+import co.cask.cdap.internal.app.runtime.schedule.constraint.CheckableConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintContext;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintResult;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
@@ -300,11 +300,11 @@ class ConstraintCheckerService extends AbstractIdleService {
     private boolean constraintsSatisfied(Job job) {
       ConstraintContext constraintContext = new ConstraintContext(job, System.currentTimeMillis());
       for (Constraint constraint : job.getSchedule().getConstraints()) {
-        if (!(constraint instanceof AbstractCheckableConstraint)) {
+        if (!(constraint instanceof CheckableConstraint)) {
           // this shouldn't happen, since all Constraint implementations should extend AbstractConstraint
           throw new IllegalArgumentException("Implementation of Constraint must extend AbstractConstraint");
         }
-        AbstractCheckableConstraint abstractConstraint = (AbstractCheckableConstraint) constraint;
+        CheckableConstraint abstractConstraint = (CheckableConstraint) constraint;
         ConstraintResult result = abstractConstraint.check(job.getSchedule(), constraintContext);
         if (result != ConstraintResult.SATISFIED) {
           // if any of the constraints are unsatisfied, return false

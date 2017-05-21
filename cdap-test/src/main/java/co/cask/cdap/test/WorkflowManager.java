@@ -19,6 +19,7 @@ package co.cask.cdap.test;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
@@ -34,12 +35,24 @@ public interface WorkflowManager extends ProgramManager<WorkflowManager> {
 
   /**
    * Get the list of schedules of the workflow
-   * @return List of {@link ScheduleSpecification}.
+   *
+   * @return List of {@link ScheduleDetail}.
    */
+  List<ScheduleDetail> getProgramSchedules();
+
+  /**
+   * Get the list of schedules of the workflow.
+   *
+   * @return List of {@link ScheduleSpecification}.
+   *
+   * @deprecated since release 4.2. Use {@link #getProgramSchedules()} instead.
+   */
+  @Deprecated
   List<ScheduleSpecification> getSchedules();
 
   /**
    * Get the {@link ScheduleManager} instance to manage the schedule
+   *
    * @param scheduleId of the workflow to retrieve
    * @return {@link ScheduleManager} instance to manage the schedule identified by scheduleId
    */
@@ -70,6 +83,7 @@ public interface WorkflowManager extends ProgramManager<WorkflowManager> {
 
   /**
    * Get node stated for the specified Workflow run.
+   *
    * @param workflowRunId the Workflow run for which node states to be returned
    * @return {@link Map} of node name to the {@link WorkflowNodeStateDetail}
    * @throws NotFoundException when the specified Workflow run is not found

@@ -46,6 +46,12 @@ public class TimeRangeConstraintTest {
   private static final DatasetId DATASET_ID = TEST_NS.dataset("pfs1");
 
   @Test
+  public void testInit() {
+    TimeRangeConstraint timeRangeConstraint = new TimeRangeConstraint("16:00", "17:00", TimeZone.getTimeZone("PST"));
+    Assert.assertEquals("PST", timeRangeConstraint.getTimeZone());
+  }
+
+  @Test
   public void test() {
     // simple construction should work
     new TimeRangeConstraint("03:16", "03:17", TimeZone.getDefault());

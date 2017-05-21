@@ -19,6 +19,5 @@ package co.cask.cdap.internal.schedule.trigger;
 /**
  * The mechanism by which a ProgramSchedule is scheduled.
  */
-public abstract class Trigger {
-
+public interface Trigger {
 }

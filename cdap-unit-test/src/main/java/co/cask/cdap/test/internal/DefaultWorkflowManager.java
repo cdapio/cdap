@@ -21,6 +21,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
@@ -31,6 +32,7 @@ import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.WorkflowManager;
 import com.google.common.base.Throwables;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -50,8 +52,27 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
   }
 
   @Override
+  public List<ScheduleDetail> getProgramSchedules() {
+    try {
+      return appFabricClient.getProgramSchedules(
+        programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
+    } catch (NotFoundException e) {
+      // this can only happen if the workflow was deleted, unlikely during a test but if so, empty list is correct
+      return Collections.emptyList();
+    }
+  }
+
+  @Deprecated
+  @Override
   public List<ScheduleSpecification> getSchedules() {
-    return appFabricClient.getSchedules(programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
+    try {
+      //noinspection deprecation
+      return appFabricClient.getSchedules(
+        programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
+    } catch (NotFoundException e) {
+      // this can only happen if the workflow was deleted, unlikely during a test but if so, empty list is correct
+      return Collections.emptyList();
+    }
   }
 
   @Override
