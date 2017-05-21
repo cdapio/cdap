@@ -27,7 +27,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
@@ -96,8 +95,8 @@ public class Schedulers {
       trigger = new TimeTrigger(((TimeSchedule) schedule).getCronEntry());
     } else {
       StreamSizeSchedule streamSizeSchedule = ((StreamSizeSchedule) schedule);
-      trigger = new StreamSizeTrigger(deployNamespace.stream(streamSizeSchedule.getStreamName()),
-                                      streamSizeSchedule.getDataTriggerMB());
+      trigger = new ProtoTrigger.StreamSizeTrigger(deployNamespace.stream(streamSizeSchedule.getStreamName()),
+                                                   streamSizeSchedule.getDataTriggerMB());
     }
     Integer maxConcurrentRuns = schedule.getRunConstraints().getMaxConcurrentRuns();
     List<Constraint> constraints = maxConcurrentRuns == null ? ImmutableList.<Constraint>of() :
@@ -117,7 +116,7 @@ public class Schedulers {
     } else {
       StreamSizeSchedule streamSchedule = (StreamSizeSchedule) schedule;
       StreamId streamId = programId.getNamespaceId().stream(streamSchedule.getStreamName());
-      trigger = new StreamSizeTrigger(streamId, streamSchedule.getDataTriggerMB());
+      trigger = new ProtoTrigger.StreamSizeTrigger(streamId, streamSchedule.getDataTriggerMB());
     }
     Integer maxConcurrentRuns = schedule.getRunConstraints().getMaxConcurrentRuns();
     List<Constraint> constraints = maxConcurrentRuns == null ? ImmutableList.<Constraint>of() :
@@ -172,7 +171,7 @@ public class Schedulers {
   }
 
   public static StreamSizeSchedule toStreamSizeSchedule(ProgramSchedule schedule) {
-    StreamSizeTrigger trigger = (StreamSizeTrigger) schedule.getTrigger();
+    ProtoTrigger.StreamSizeTrigger trigger = (ProtoTrigger.StreamSizeTrigger) schedule.getTrigger();
     return new StreamSizeSchedule(schedule.getName(), schedule.getDescription(),
                                   trigger.getStream().getStream(), trigger.getTriggerMB());
   }
