@@ -15,6 +15,7 @@
  */
 
 $top-panel-connection-color: #999999;
+$action-btn-inactive-color: #aaaaaa;
 
 @import '../../../styles/variables.scss';
 
@@ -148,6 +149,13 @@ $top-panel-connection-color: #999999;
 
         &:first-child { border-right: 1px solid #cccccc; }
         .fa { margin-right: 10px; }
+
+        &.inactive {
+          cursor: not-allowed;
+          color: $action-btn-inactive-color;
+
+          &:hover { background: transparent; }
+        }
       }
 
     }

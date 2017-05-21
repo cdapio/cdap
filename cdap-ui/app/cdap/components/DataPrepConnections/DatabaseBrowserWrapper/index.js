@@ -96,11 +96,12 @@ export default class DatabaseBrowserWrapper extends Component {
     }
 
     return (
-      <DataPrepBrowser />
+      <DataPrepBrowser toggle={this.props.toggle} />
     );
   }
 }
 
 DatabaseBrowserWrapper.propTypes = {
-  databaseId: PropTypes.string
+  databaseId: PropTypes.string,
+  toggle: PropTypes.func
 };

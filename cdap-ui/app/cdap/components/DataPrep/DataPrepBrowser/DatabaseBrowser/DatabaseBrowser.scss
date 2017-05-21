@@ -21,12 +21,19 @@ $header-bg: #eeeeee;
 $content-font-color: #333333;
 
 .database-browser {
-  padding: 10px;
   height: calc(100vh - 50px - 54px);
+
+  .database-browser-header,
+  .database-browser-content {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .database-browser-content { height: calc(100% - 56px - 46px); }
+
   .database-content-table {
     padding: 0;
-    margin-top: 10px;
-    height: calc(100% - 56px - 46px);
+
     .row {
       margin: 0;
     }
@@ -59,12 +66,9 @@ $content-font-color: #333333;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    .database-metadata {
-      padding-left: 5px;
-    }
-    .table-name-search {
-      padding-right: 5px;
-    }
+    height: 46px;
+
+    .database-metadata { padding-left: 5px; }
   }
   .empty-search-container {
     display: flex;

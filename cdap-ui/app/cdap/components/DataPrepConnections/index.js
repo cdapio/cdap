@@ -271,6 +271,7 @@ export default class DataPrepConnections extends Component {
               return (
                 <DatabaseBrowserWrapper
                   databaseId={match.match.params.databaseId}
+                  toggle={this.toggleSidePanel}
                 />
               );
             }}

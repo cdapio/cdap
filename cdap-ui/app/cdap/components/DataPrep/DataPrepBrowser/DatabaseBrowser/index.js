@@ -14,7 +14,7 @@
  * the License.
  */
 
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import isEqual from 'lodash/isEqual';
 import DataPrepApi from 'api/dataprep';
@@ -23,6 +23,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import {Input} from 'reactstrap';
+import IconSVG from 'components/IconSVG';
 
 require('./DatabaseBrowser.scss');
 
@@ -209,23 +210,32 @@ export default class DatabaseBrowser extends Component {
     }
     return (
       <div className="database-browser">
+        <div className="top-panel">
+          <div className="title">
+            <h5>
+              <span
+                className="fa fa-fw"
+                onClick={this.props.toggle}
+              >
+                <IconSVG name="icon-bars" />
+              </span>
+
+              <span>
+                {T.translate(`${PREFIX}.title`)}
+              </span>
+            </h5>
+          </div>
+        </div>
         {
           isNil(this.state.error) ?
             <div>
-              <h4>
-                <strong>
-                  {T.translate(`${PREFIX}.title`)}
-                </strong>
-              </h4>
               <div className="database-browser-header">
                 <div className="database-metadata">
                   <h5>{this.state.properties.databasename}</h5>
                   <span className="tables-count">
                     {
                       T.translate(`${PREFIX}.tableCount`, {
-                        context: {
-                          count: this.state.tables.length
-                        }
+                        count: this.state.tables.length
                       })
                     }
                   </span>
@@ -243,10 +253,16 @@ export default class DatabaseBrowser extends Component {
           :
             null
         }
-          {
-            renderContents(filteredTables)
-          }
+
+        <div className="database-browser-content">
+          { renderContents(filteredTables) }
+        </div>
       </div>
     );
   }
 }
+
+DatabaseBrowser.propTypes = {
+  toggle: PropTypes.func
+};
+
