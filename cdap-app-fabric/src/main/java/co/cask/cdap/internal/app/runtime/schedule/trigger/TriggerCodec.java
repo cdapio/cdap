@@ -18,14 +18,24 @@ package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.ProtoTrigger;
+import co.cask.cdap.proto.ProtoTriggerCodec;
+import com.google.common.collect.ImmutableMap;
+
+import java.util.Map;
 
 /**
- * A Trigger that schedules a ProgramSchedule, based upon a particular cron expression.
+ * Serialization and deserialization of Triggers as Json.
  */
-public class TimeTrigger extends ProtoTrigger.TimeTrigger implements Trigger {
+public class TriggerCodec extends ProtoTriggerCodec {
 
-  public TimeTrigger(String cronExpression) {
-    super(cronExpression);
+  private static final Map<ProtoTrigger.Type, Class<? extends Trigger>> TYPE_TO_INTERNAL_TRIGGER =
+    ImmutableMap.<ProtoTrigger.Type, Class<? extends Trigger>>builder()
+      .put(ProtoTrigger.Type.TIME, TimeTrigger.class)
+      .put(ProtoTrigger.Type.PARTITION, PartitionTrigger.class)
+      .put(ProtoTrigger.Type.STREAM_SIZE, StreamSizeTrigger.class)
+      .build();
+
+  public TriggerCodec() {
+    super(TYPE_TO_INTERNAL_TRIGGER);
   }
-
 }

@@ -17,16 +17,15 @@
 package co.cask.cdap.internal.app.runtime.schedule.constraint;
 
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.proto.ProtoConstraint;
 
 /**
  * A Constraint which requires a certain duration pass since the last execution of the schedule.
  */
-public class DurationSinceLastRunConstraint extends AbstractCheckableConstraint {
-
-  private final long millisSinceLastRun;
+public class DurationSinceLastRunConstraint extends ProtoConstraint.LastRunConstraint implements CheckableConstraint {
 
   public DurationSinceLastRunConstraint(long millisSinceLastRun) {
-    this.millisSinceLastRun = millisSinceLastRun;
+    super(millisSinceLastRun);
   }
 
   @Override

@@ -22,7 +22,7 @@ import co.cask.cdap.internal.schedule.constraint.Constraint;
 /**
  * A constraint that is checked before executing a schedule.
  */
-public abstract class AbstractCheckableConstraint extends Constraint {
+public interface CheckableConstraint extends Constraint {
 
   /**
    * Checks a ConstraintContext against a program schedule.
@@ -31,6 +31,5 @@ public abstract class AbstractCheckableConstraint extends Constraint {
    * @param context context information for the check
    * @return the result of the check
    */
-  public abstract ConstraintResult check(ProgramSchedule schedule, ConstraintContext context);
-
+  ConstraintResult check(ProgramSchedule schedule, ConstraintContext context);
 }

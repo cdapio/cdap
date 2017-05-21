@@ -17,16 +17,11 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.Config;
-import co.cask.cdap.api.annotation.ProcessInput;
-import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
-import co.cask.cdap.api.flow.AbstractFlow;
-import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Preconditions;
@@ -36,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Application with workflow scheduling.
@@ -47,6 +41,7 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
   public static final String WORKFLOW_NAME = "SampleWorkflow";
   public static final String SCHEDULE = "SampleSchedule";
   public static final String SCHEDULE_2 = "SampleSchedule2";
+  public static final String MAPREDUCE = "SampleMR";
 
   @Override
   public void configure() {
@@ -62,6 +57,7 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
       }
 
       if (config.addWorkflow) {
+        addMapReduce(new SampleMR());
         addWorkflow(new SampleWorkflow());
       }
 
@@ -71,11 +67,10 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
       scheduleProperties.put("someKey", "someValue");
 
       if (config.addWorkflow && config.addSchedule1) {
-        scheduleWorkflow(Schedules.builder(SCHEDULE)
-                           .setDescription("Sample schedule")
-                           .createTimeSchedule("0/15 * * * * ?"),
-                         WORKFLOW_NAME,
-                         scheduleProperties);
+        configureWorkflowSchedule(SCHEDULE, WORKFLOW_NAME)
+          .setDescription("Sample schedule")
+          .setProperties(scheduleProperties)
+          .triggerByTime("0/15 * * * * ?");
       }
       if (config.addWorkflow && config.addSchedule2) {
         scheduleWorkflow(Schedules.builder(SCHEDULE_2)
@@ -138,5 +133,10 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
       Preconditions.checkArgument(getContext().getRuntimeArguments().get("workflowKey").equals("workflowValue"));
       LOG.info("Ran dummy action");
     }
+  }
+
+  private class SampleMR extends AbstractMapReduce {
+    @Override
+    public void configure() { }
   }
 }

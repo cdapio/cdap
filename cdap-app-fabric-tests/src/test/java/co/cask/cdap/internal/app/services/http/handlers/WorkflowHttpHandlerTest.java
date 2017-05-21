@@ -43,6 +43,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
@@ -843,9 +844,9 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     setAndTestRuntimeArgs(programId, runtimeArguments);
 
     // get schedules
-    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, appName, workflowName);
+    List<ScheduleDetail> schedules = getSchedules(TEST_NAMESPACE2, appName, workflowName);
     Assert.assertEquals(1, schedules.size());
-    String scheduleName = schedules.get(0).getSchedule().getName();
+    String scheduleName = schedules.get(0).getName();
     Assert.assertFalse(scheduleName.isEmpty());
 
     // TODO [CDAP-2327] Sagar Investigate why following check fails sometimes. Mostly test case issue.
@@ -960,10 +961,10 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule2));
 
     // get schedules
-    List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, appName, workflowName);
+    List<ScheduleDetail> schedules = getSchedules(TEST_NAMESPACE2, appName, workflowName);
     Assert.assertEquals(2, schedules.size());
-    String scheduleName1 = schedules.get(0).getSchedule().getName();
-    String scheduleName2 = schedules.get(1).getSchedule().getName();
+    String scheduleName1 = schedules.get(0).getName();
+    String scheduleName2 = schedules.get(1).getName();
     Assert.assertNotNull(scheduleName1);
     Assert.assertFalse(scheduleName1.isEmpty());
 

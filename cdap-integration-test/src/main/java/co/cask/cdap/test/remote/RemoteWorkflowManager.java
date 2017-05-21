@@ -24,6 +24,8 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
@@ -59,6 +61,11 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
 
   @Override
   public List<ScheduleSpecification> getSchedules() {
+    return Schedulers.toScheduleSpecs(getProgramSchedules());
+  }
+
+  @Override
+  public List<ScheduleDetail> getProgramSchedules() {
     try {
       return scheduleClient.list(workflowId);
     } catch (Exception e) {

@@ -17,53 +17,54 @@
 package co.cask.cdap.internal.app.runtime.schedule.constraint;
 
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
+import co.cask.cdap.proto.ProtoConstraint;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.TimeZone;
 
 /**
  * A Constraint that defines a time range in which the schedule is allowed to execute.
  */
-public class TimeRangeConstraint extends AbstractCheckableConstraint {
+public class TimeRangeConstraint extends ProtoConstraint.TimeRangeConstraint implements CheckableConstraint {
 
   // only is satisfied within the range [startTime, endTime)
-  private final int startHour;
-  private final int startMinute;
-  private final int endHour;
-  private final int endMinute;
+  // this are transient so they don't get serialized to Json
+  private transient int startHour;
+  private transient int startMinute;
+  private transient int endHour;
+  private transient int endMinute;
 
-  private final Calendar calendar;
+  private transient Calendar calendar;
 
   public TimeRangeConstraint(String startTime, String endTime, TimeZone timeZone) {
-    calendar = Calendar.getInstance(timeZone);
+    super(startTime, endTime, timeZone);
+  }
 
-    DateFormat formatter = new SimpleDateFormat("HH:mm");
-    formatter.setTimeZone(timeZone);
-    try {
-      Date startDate = formatter.parse(startTime);
-      calendar.setTime(startDate);
+  @Override
+  public void validate() {
+    initialize();
+  }
+
+  private void initialize() {
+    if (calendar == null) {
+      ValidationResult vr = doValidate();
+      Calendar calendar = vr.getCalendar();
+
+      calendar.setTime(vr.getStartDate());
       startHour = calendar.get(Calendar.HOUR_OF_DAY);
       startMinute = calendar.get(Calendar.MINUTE);
 
-      Date endDate = formatter.parse(endTime);
-      calendar.setTime(endDate);
+      calendar.setTime(vr.getEndDate());
       endHour = calendar.get(Calendar.HOUR_OF_DAY);
       endMinute = calendar.get(Calendar.MINUTE);
 
-      Preconditions.checkArgument(startDate.compareTo(endDate) < 0, "The start time must be before the end time.");
-    } catch (ParseException e) {
-      throw new IllegalArgumentException("Failed to parse time.", e);
+      this.calendar = calendar; // do this last, it should only be set if validation was successful
     }
   }
 
   @Override
   public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
+    initialize();
     calendar.setTimeInMillis(context.getCheckTime());
     int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
     int minute = calendar.get(Calendar.MINUTE);
