@@ -45,6 +45,8 @@ public final class ProgramOptionConstants {
 
   public static final String WORKFLOW_NAME = "workflowName";
 
+  public static final String SCHEDULE_ID = "scheduleId";
+
   public static final String SCHEDULE_NAME = "scheduleName";
 
   public static final String RUN_DATA_SIZE = "runDataSize";
@@ -56,6 +58,10 @@ public final class ProgramOptionConstants {
   public static final String RUN_BASE_COUNT_SIZE = "runBaseCountSize";
 
   public static final String RUN_BASE_COUNT_TIME = "runBaseCountTime";
+
+  public static final String SYSTEM_OVERRIDES = "systemOverrides";
+
+  public static final String USER_OVERRIDES = "userOverrides";
 
   /**
    * Option to a local file path of a directory containing plugins artifacts.

@@ -52,21 +52,19 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
   private final DatasetFramework dsFramework;
   private final QueueAdmin queueAdmin;
   private final MetricStore metricStore;
-  private final Scheduler scheduler;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final ArtifactRepository artifactRepository;
   private final StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
   private final MessagingService messagingService;
 
 
-
   AbstractNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesStore preferencesStore,
-                                  DashboardStore dashboardStore, DatasetFramework dsFramework, QueueAdmin queueAdmin,
-                                  MetricStore metricStore, Scheduler scheduler,
-                                  ApplicationLifecycleService applicationLifecycleService,
-                                  ArtifactRepository artifactRepository,
-                                  StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
-                                  MessagingService messagingService) {
+                                   DashboardStore dashboardStore, DatasetFramework dsFramework, QueueAdmin queueAdmin,
+                                   MetricStore metricStore,
+                                   ApplicationLifecycleService applicationLifecycleService,
+                                   ArtifactRepository artifactRepository,
+                                   StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
+                                   MessagingService messagingService) {
     this.impersonator = impersonator;
     this.store = store;
     this.preferencesStore = preferencesStore;
@@ -74,7 +72,6 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
     this.dsFramework = dsFramework;
     this.queueAdmin = queueAdmin;
     this.metricStore = metricStore;
-    this.scheduler = scheduler;
     this.applicationLifecycleService = applicationLifecycleService;
     this.artifactRepository = artifactRepository;
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
@@ -93,8 +90,6 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
     dashboardStore.delete(namespaceId.getNamespace());
     // Delete all applications
     applicationLifecycleService.removeAll(namespaceId);
-    // Delete all the schedules
-    scheduler.deleteAllSchedules(namespaceId);
     // Delete datasets and modules
     dsFramework.deleteAllInstances(namespaceId);
     dsFramework.deleteAllModules(namespaceId);

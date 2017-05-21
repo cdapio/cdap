@@ -55,7 +55,6 @@ public class EntityExistenceTest {
   @ClassRule
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
   private static EntityExistenceVerifier existenceVerifier;
-  private static Scheduler scheduler;
   private static final String EXISTS = "exists";
   private static final String DOES_NOT_EXIST = "doesNotExist";
   private static final NamespaceId NAMESPACE = new NamespaceId(EXISTS);
@@ -70,10 +69,6 @@ public class EntityExistenceTest {
     NamespaceStore nsStore = injector.getInstance(NamespaceStore.class);
     ArtifactRepository artifactRepository = injector.getInstance(ArtifactRepository.class);
     cConf = injector.getInstance(CConfiguration.class);
-    scheduler = injector.getInstance(Scheduler.class);
-    if (scheduler instanceof Service) {
-      ((Service) scheduler).startAndWait();
-    }
     nsStore.create(new NamespaceMeta.Builder().setName(EXISTS).build());
     existenceVerifier = injector.getInstance(EntityExistenceVerifier.class);
     LocalLocationFactory lf = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
@@ -82,13 +77,6 @@ public class EntityExistenceTest {
     AppFabricTestHelper.deployApplication(NAMESPACE.toId(), AllProgramsApp.class, null, cConf);
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
     streamAdmin.createOrUpdateView(VIEW, new ViewSpecification(new FormatSpecification("csv", null)));
-  }
-
-  @AfterClass
-  public static void tearDown() {
-    if (scheduler instanceof Service) {
-      ((Service) scheduler).stopAndWait();
-    }
   }
 
   @Test

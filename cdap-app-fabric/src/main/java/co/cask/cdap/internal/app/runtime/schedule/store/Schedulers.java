@@ -19,14 +19,22 @@ package co.cask.cdap.internal.app.runtime.schedule.store;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
+import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
+import co.cask.cdap.internal.schedule.trigger.Trigger;
+import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -58,13 +66,45 @@ public class Schedulers {
     }
   }
 
-  public static ProgramSchedule toProgramSchedule(TimeSchedule timeSchedule, ProgramId programId,
-                                                  Map<String, String> properties) {
-    TimeTrigger trigger = new TimeTrigger(timeSchedule.getCronEntry());
-    Integer maxConcurrentRuns = timeSchedule.getRunConstraints().getMaxConcurrentRuns();
+  public static ScheduleCreationSpec toScheduleCreationSpec(NamespaceId deployNamespace, Schedule schedule,
+                                                            String programName, Map<String, String> properties) {
+    Trigger trigger;
+    if (schedule instanceof TimeSchedule) {
+      trigger = new TimeTrigger(((TimeSchedule) schedule).getCronEntry());
+    } else {
+      StreamSizeSchedule streamSizeSchedule = ((StreamSizeSchedule) schedule);
+      trigger = new StreamSizeTrigger(deployNamespace.stream(streamSizeSchedule.getStreamName()),
+                                      streamSizeSchedule.getDataTriggerMB());
+    }
+    Integer maxConcurrentRuns = schedule.getRunConstraints().getMaxConcurrentRuns();
     List<Constraint> constraints = maxConcurrentRuns == null ? ImmutableList.<Constraint>of() :
       ImmutableList.<Constraint>of(new ConcurrencyConstraint(maxConcurrentRuns));
-    return new ProgramSchedule(timeSchedule.getName(), timeSchedule.getDescription(), programId,
-                               properties, trigger, constraints);
+    return new ScheduleCreationSpec(schedule.getName(), schedule.getDescription(), programName,
+                                    properties, trigger, constraints);
+  }
+
+  public static ProgramSchedule toProgramSchedule(ApplicationId appId, ScheduleSpecification spec) {
+    Schedule schedule = spec.getSchedule();
+    ProgramType programType = ProgramType.valueOfSchedulableType(spec.getProgram().getProgramType());
+    ProgramId programId = appId.program(programType, spec.getProgram().getProgramName());
+    Trigger trigger;
+    if (schedule instanceof TimeSchedule) {
+      trigger = new TimeTrigger(((TimeSchedule) schedule).getCronEntry());
+    } else {
+      StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
+      trigger = new StreamSizeTrigger(programId.getNamespaceId().stream(streamSizeSchedule.getStreamName()),
+                                      streamSizeSchedule.getDataTriggerMB());
+    }
+    Integer maxConcurrentRuns = schedule.getRunConstraints().getMaxConcurrentRuns();
+    List<Constraint> constraints = maxConcurrentRuns == null ? ImmutableList.<Constraint>of() :
+      ImmutableList.<Constraint>of(new ConcurrencyConstraint(maxConcurrentRuns));
+    return new ProgramSchedule(schedule.getName(), schedule.getDescription(), programId,
+                               spec.getProperties(), trigger, constraints);
+  }
+
+  public static StreamSizeSchedule toStreamSizeSchedule(ProgramSchedule schedule) {
+    StreamSizeTrigger trigger = (StreamSizeTrigger) schedule.getTrigger();
+    return new StreamSizeSchedule(schedule.getName(), schedule.getDescription(),
+                                  trigger.getStreamId().getStream(), trigger.getDataTriggerMB());
   }
 }
