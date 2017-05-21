@@ -19,6 +19,7 @@ package co.cask.cdap.security.spi.authorization;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
 
 import java.util.Set;
 
@@ -52,4 +53,12 @@ public interface PrivilegesManager {
    * @param entity the {@link EntityId} on which all {@link Action actions} are to be revoked
    */
   void revoke(EntityId entity) throws Exception;
+
+  /**
+   * Returns all the {@link Privilege} for the specified {@link Principal}.
+   *
+   * @param principal the {@link Principal} for which to return privileges
+   * @return a {@link Set} of {@link Privilege} for the specified principal
+   */
+  Set<Privilege> listPrivileges(Principal principal) throws Exception;
 }

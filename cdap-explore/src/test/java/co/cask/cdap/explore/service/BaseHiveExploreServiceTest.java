@@ -70,7 +70,6 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
@@ -162,7 +161,6 @@ public class BaseHiveExploreServiceTest {
   private static StreamAdmin streamAdmin;
   private static StreamMetaStore streamMetaStore;
   private static NamespacedLocationFactory namespacedLocationFactory;
-  private static AuthorizationEnforcementService authorizationEnforcementService;
 
   protected static Injector injector;
 
@@ -189,15 +187,13 @@ public class BaseHiveExploreServiceTest {
       cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
       cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath());
       cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
-      cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
+      cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
     }
     List<Module> modules = useStandalone ? createStandaloneModules(cConf, hConf, tmpFolder)
       : createInMemoryModules(cConf, hConf, tmpFolder);
     injector = Guice.createInjector(modules);
-    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
     if (enableAuthorization) {
       injector.getInstance(AuthorizationBootstrapper.class).run();
-      authorizationEnforcementService.startAndWait();
     }
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
@@ -260,7 +256,6 @@ public class BaseHiveExploreServiceTest {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     transactionManager.stopAndWait();
-    authorizationEnforcementService.stopAndWait();
   }
 
 

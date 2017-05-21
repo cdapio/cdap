@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -104,7 +104,6 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InvalidAuthorizerException;
 import co.cask.cdap.security.guice.SecureStoreModules;
@@ -201,8 +200,6 @@ public class TestBase {
   private static AuthorizerInstantiator authorizerInstantiator;
   private static SecureStore secureStore;
   private static SecureStoreManager secureStoreManager;
-  private static AuthorizationEnforcementService authorizationEnforcementService;
-  private static AuthorizationBootstrapper authorizationBootstrapper;
   private static MessagingService messagingService;
   private static MessagingContext messagingContext;
   private static PreviewManager previewManager;
@@ -298,10 +295,8 @@ public class TestBase {
       ((Service) messagingService).startAndWait();
     }
 
-    authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
+    AuthorizationBootstrapper authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
     authorizationBootstrapper.run();
-    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
-    authorizationEnforcementService.startAndWait();
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
@@ -487,7 +482,6 @@ public class TestBase {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txService.stopAndWait();
-    authorizationEnforcementService.stopAndWait();
 
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();

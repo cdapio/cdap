@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,6 @@ import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Throwables;
@@ -77,11 +76,10 @@ public class Hive12ExploreService extends BaseHiveExploreService {
                               @Named(Constants.Explore.CREDENTIALS_DIR_NAME) File credentialsDir,
                               StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
                               SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                              AuthorizationEnforcementService authorizationEnforcementService,
                               AuthorizationEnforcer authorizationEnforcer,
                               AuthenticationContext authenticationContext) {
     super(txClient, datasetFramework, cConf, hConf, previewsDir, credentialsDir, streamAdmin, namespaceQueryAdmin,
-          datasetInstantiatorFactory, authorizationEnforcementService, authorizationEnforcer,
+          datasetInstantiatorFactory, authorizationEnforcer,
           authenticationContext);
   }
 

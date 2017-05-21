@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,7 +36,6 @@ import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.route.store.RouteStore;
-import co.cask.cdap.security.authorization.PrivilegesFetcherProxyService;
 import co.cask.cdap.security.tools.KeyStores;
 import co.cask.cdap.security.tools.SSLHandlerFactory;
 import co.cask.http.HandlerHook;
@@ -87,7 +86,6 @@ public class AppFabricServer extends AbstractIdleService {
   private final ProgramLifecycleService programLifecycleService;
   private final SystemArtifactLoader systemArtifactLoader;
   private final PluginService pluginService;
-  private final PrivilegesFetcherProxyService privilegesFetcherProxyService;
   private final AppVersionUpgradeService appVersionUpgradeService;
   private final RouteStore routeStore;
   private final CConfiguration cConf;
@@ -119,7 +117,6 @@ public class AppFabricServer extends AbstractIdleService {
                          NamespaceAdmin namespaceAdmin,
                          SystemArtifactLoader systemArtifactLoader,
                          PluginService pluginService,
-                         PrivilegesFetcherProxyService privilegesFetcherProxyService,
                          @Nullable AppVersionUpgradeService appVersionUpgradeService,
                          RouteStore routeStore) {
     this.hostname = hostname;
@@ -138,7 +135,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.programLifecycleService = programLifecycleService;
     this.systemArtifactLoader = systemArtifactLoader;
     this.pluginService = pluginService;
-    this.privilegesFetcherProxyService = privilegesFetcherProxyService;
     this.appVersionUpgradeService = appVersionUpgradeService;
     this.routeStore = routeStore;
     this.defaultNamespaceEnsurer = new DefaultNamespaceEnsurer(namespaceAdmin);
@@ -162,8 +158,7 @@ public class AppFabricServer extends AbstractIdleService {
         programRuntimeService.start(),
         streamCoordinatorClient.start(),
         programLifecycleService.start(),
-        pluginService.start(),
-        privilegesFetcherProxyService.start()
+        pluginService.start()
       )
     ).get();
 
@@ -281,7 +276,6 @@ public class AppFabricServer extends AbstractIdleService {
     notificationService.stopAndWait();
     programLifecycleService.stopAndWait();
     pluginService.stopAndWait();
-    privilegesFetcherProxyService.stopAndWait();
     if (appVersionUpgradeService != null) {
       appVersionUpgradeService.stopAndWait();
     }

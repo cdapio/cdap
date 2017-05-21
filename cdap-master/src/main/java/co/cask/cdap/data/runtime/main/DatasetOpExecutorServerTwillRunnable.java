@@ -51,7 +51,6 @@ import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.RemotePrivilegesManager;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
@@ -138,7 +137,6 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
 
   @Override
   protected void addServices(List<? super Service> services) {
-    services.add(injector.getInstance(AuthorizationEnforcementService.class));
     services.add(injector.getInstance(DatasetOpExecutorService.class));
     services.add(injector.getInstance(MetadataService.class));
     services.add(injector.getInstance(RemoteSystemOperationsService.class));

@@ -40,6 +40,11 @@ public class UnauthorizedException extends Exception implements HttpErrorStatusP
                         principal, actions, entityId));
   }
 
+  public UnauthorizedException(Principal principal, Set<Action> actions, EntityId entityId, Throwable ex) {
+    super(String.format("Principal '%s' is not authorized to perform actions '%s' on entity '%s'",
+                        principal, actions, entityId), ex);
+  }
+
   public UnauthorizedException(Principal principal, EntityId entityId) {
     super(String.format("Principal '%s' does not have privileges to access entity '%s'", principal, entityId));
   }

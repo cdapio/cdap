@@ -90,7 +90,7 @@ public class AuthorizationCLITest extends CLITestBase {
         Constants.Security.AUTH_HANDLER_CLASS, BasicAuthenticationHandler.class.getName(),
         Constants.Security.Router.BYPASS_AUTHENTICATION_REGEX, ".*",
         Constants.Security.Authorization.ENABLED, "true",
-        Constants.Security.Authorization.CACHE_ENABLED, "false",
+        Constants.Security.Authorization.CACHE_MAX_ENTRIES, "0",
         Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath(),
         // Bypass authorization enforcement for grant/revoke operations in this test. Authorization enforcement for
         // grant/revoke is tested in AuthorizationHandlerTest

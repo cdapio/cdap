@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,6 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.route.store.RouteStore;
-import co.cask.cdap.security.authorization.PrivilegesFetcherProxyService;
 import co.cask.http.HttpHandler;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -69,12 +68,11 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    MetricStore metricStore,
                                    SystemArtifactLoader systemArtifactLoader,
                                    PluginService pluginService,
-                                   PrivilegesFetcherProxyService privilegesFetcherProxyService,
                                    RouteStore routeStore) {
     super(cConf, sConf, discoveryService, schedulerService, notificationService, hostname, handlers,
           metricsCollectionService, programRuntimeService, applicationLifecycleService,
           programLifecycleService, streamCoordinatorClient, servicesNames, handlerHookNames, namespaceAdmin,
-          systemArtifactLoader, pluginService, privilegesFetcherProxyService, null, routeStore);
+          systemArtifactLoader, pluginService, null, routeStore);
     this.metricStore = metricStore;
   }
 

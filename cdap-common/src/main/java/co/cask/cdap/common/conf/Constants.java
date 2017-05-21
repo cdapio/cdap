@@ -872,10 +872,13 @@ public final class Constants {
       /** Prefix for extension properties */
       public static final String EXTENSION_CONFIG_PREFIX =
         "security.authorization.extension.config.";
-      public static final String CACHE_ENABLED = "security.authorization.cache.enabled";
+      /** TTL for entries in container's privilege cache */
       public static final String CACHE_TTL_SECS = "security.authorization.cache.ttl.secs";
-      public static final String CACHE_REFRESH_INTERVAL_SECS = "security.authorization.cache.refresh.interval.secs";
+      /** Maximum number of entries the authorization cache will hold */
+      public static final String CACHE_MAX_ENTRIES = "security.authorization.cache.max.entries";
       public static final String ADMIN_USERS = "security.authorization.admin.users";
+      /** Enable hierarchical privilege propagation, i.e. privilege on a parent will propagate to all descendants */
+      public static final String PROPAGATE_PRIVILEGES = "security.authorization.propagate.privileges";
     }
 
     /**

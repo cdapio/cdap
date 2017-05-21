@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,9 +48,9 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
@@ -95,11 +95,11 @@ public class AuthorizationBootstrapperTest {
   private static SystemArtifactLoader systemArtifactLoader;
   private static NamespaceQueryAdmin namespaceQueryAdmin;
   private static NamespaceAdmin namespaceAdmin;
-  private static AuthorizationEnforcementService authorizationEnforcementService;
   private static ArtifactRepository artifactRepository;
   private static DatasetFramework dsFramework;
   private static DiscoveryServiceClient discoveryServiceClient;
   private static InstanceId instanceId;
+  private static AuthorizationEnforcer authorizationEnforcer;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -108,7 +108,6 @@ public class AuthorizationBootstrapperTest {
     cConf.setBoolean(Constants.Security.ENABLED, true);
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
-    cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                               InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, deploymentJar.toURI().getPath());
@@ -126,12 +125,11 @@ public class AuthorizationBootstrapperTest {
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     txManager = injector.getInstance(TransactionManager.class);
     datasetService = injector.getInstance(DatasetService.class);
-    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
-    authorizationEnforcementService.startAndWait();
     systemArtifactLoader = injector.getInstance(SystemArtifactLoader.class);
     authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
     artifactRepository = injector.getInstance(ArtifactRepository.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
+    authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
   }
 
   @Test
@@ -140,8 +138,8 @@ public class AuthorizationBootstrapperTest {
       UserGroupInformation.getCurrentUser().getShortUserName(), Principal.PrincipalType.USER
     );
     // initial state: no privileges for system or admin users
-    Predicate<EntityId> systemUserFilter = authorizationEnforcementService.createFilter(systemUser);
-    Predicate<EntityId> adminUserFilter = authorizationEnforcementService.createFilter(ADMIN_USER);
+    Predicate<EntityId> systemUserFilter = authorizationEnforcer.createFilter(systemUser);
+    Predicate<EntityId> adminUserFilter = authorizationEnforcer.createFilter(ADMIN_USER);
     Assert.assertFalse(systemUserFilter.apply(instanceId));
     Assert.assertFalse(systemUserFilter.apply(NamespaceId.SYSTEM));
     Assert.assertFalse(adminUserFilter.apply(NamespaceId.DEFAULT));
@@ -151,8 +149,8 @@ public class AuthorizationBootstrapperTest {
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        Predicate<EntityId> systemUserFilter = authorizationEnforcementService.createFilter(systemUser);
-        Predicate<EntityId> adminUserFilter = authorizationEnforcementService.createFilter(ADMIN_USER);
+        Predicate<EntityId> systemUserFilter = authorizationEnforcer.createFilter(systemUser);
+        Predicate<EntityId> adminUserFilter = authorizationEnforcer.createFilter(ADMIN_USER);
         return systemUserFilter.apply(instanceId) && systemUserFilter.apply(NamespaceId.SYSTEM) &&
           adminUserFilter.apply(NamespaceId.DEFAULT);
       }
@@ -214,7 +212,6 @@ public class AuthorizationBootstrapperTest {
   public static void teardown() {
     datasetService.stopAndWait();
     txManager.stopAndWait();
-    authorizationEnforcementService.stopAndWait();
   }
 
   private void waitForService(final AbstractService service) throws Exception {
@@ -232,12 +229,11 @@ public class AuthorizationBootstrapperTest {
                                "%s service is not up after 10 seconds", discoverableName);
   }
 
-  private static File createAppJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {
+  private static void createAppJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                               cls, manifest);
     DirUtils.mkdirs(destFile.getParentFile());
     Files.copy(Locations.newInputSupplier(deploymentJar), destFile);
-    return destFile;
   }
 
   private static void createSystemArtifact(File systemArtifactsDir) throws IOException {
@@ -247,6 +243,5 @@ public class AuthorizationBootstrapperTest {
       systemArtifactsDir, String.format("%s-%s.jar", SYSTEM_ARTIFACT.getArtifact(), SYSTEM_ARTIFACT.getVersion())
     );
     createAppJar(PluginTestApp.class, systemArtifact, manifest);
-
   }
 }

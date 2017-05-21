@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -107,12 +107,16 @@ public class AuthorizerInstantiator implements Closeable, Supplier<Authorizer> {
     }
 
     if (!authorizationEnabled) {
-      LOG.debug("Authorization is disabled. Using a no-op authorizer.");
+      LOG.debug("Authorization is disabled. Authorization can be enabled  by setting " +
+                  Constants.Security.Authorization.ENABLED + " to true.");
       authorizer = new NoOpAuthorizer();
       return authorizer;
     }
     if (!authenticationEnabled) {
-      LOG.debug("Authorization is enabled. However, authentication is disabled. Using a no-op authorizer.");
+      LOG.info("Authorization is enabled. However, authentication is disabled. Authorization policies will not be " +
+                 "enforced. To enforce authorization policies please enable both authorization, by setting " +
+                 Constants.Security.Authorization.ENABLED + " to true and authentication, by setting " +
+                 Constants.Security.ENABLED + "to true.");
       authorizer = new NoOpAuthorizer();
       return authorizer;
     }

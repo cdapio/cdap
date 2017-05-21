@@ -43,7 +43,6 @@ import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
@@ -74,7 +73,6 @@ public class LevelDBFileStreamAdminTest extends StreamAdminTest {
   private static StreamCoordinatorClient streamCoordinatorClient;
   private static InMemoryAuditPublisher inMemoryAuditPublisher;
   private static Authorizer authorizer;
-  private static AuthorizationEnforcementService authorizationEnforcementService;
   private static OwnerAdmin ownerAdmin;
 
   @BeforeClass
@@ -115,17 +113,14 @@ public class LevelDBFileStreamAdminTest extends StreamAdminTest {
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     inMemoryAuditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
-    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
     ownerAdmin = injector.getInstance(OwnerAdmin.class);
     streamCoordinatorClient.startAndWait();
     setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
     txManager.startAndWait();
-    authorizationEnforcementService.startAndWait();
   }
 
   @AfterClass
   public static void finish() throws Exception {
-    authorizationEnforcementService.stopAndWait();
     streamCoordinatorClient.stopAndWait();
     txManager.stopAndWait();
   }

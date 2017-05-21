@@ -32,7 +32,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authorization.AuthorizationContextFactory;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.DefaultAuthorizationContext;
-import co.cask.cdap.security.authorization.DefaultPrivilegesManager;
+import co.cask.cdap.security.authorization.DelegatingPrivilegeManager;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
@@ -98,7 +98,7 @@ public class AuthorizationModule extends PrivateModule {
     bind(AuthorizerInstantiator.class).in(Scopes.SINGLETON);
     expose(AuthorizerInstantiator.class);
 
-    bind(PrivilegesManager.class).to(DefaultPrivilegesManager.class);
+    bind(PrivilegesManager.class).to(DelegatingPrivilegeManager.class);
     expose(PrivilegesManager.class);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,7 +40,6 @@ import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -183,7 +182,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       coreServices.add(injector.getInstance(BrokerService.class));
       coreServices.add(injector.getInstance(MetricsCollectionService.class));
       coreServices.add(injector.getInstance(StreamCoordinatorClient.class));
-      coreServices.add(injector.getInstance(AuthorizationEnforcementService.class));
 
       // Initialize log appender
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);

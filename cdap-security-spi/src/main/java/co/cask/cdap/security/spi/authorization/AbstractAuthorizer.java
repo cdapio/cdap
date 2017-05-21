@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,11 +20,13 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.Privilege;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Abstract class that implements {@link Authorizer} and provides default no-op implementations of
@@ -62,16 +64,18 @@ public abstract class AbstractAuthorizer implements Authorizer {
   }
 
   @Override
-  public Predicate<EntityId> createFilter(Principal principal) throws Exception {
-    Set<Privilege> privileges = listPrivileges(principal);
-    final Set<EntityId> allowedEntities = new HashSet<>();
-    for (Privilege privilege : privileges) {
-      allowedEntities.add(privilege.getEntity());
-    }
+  public Predicate<EntityId> createFilter(final Principal principal) throws Exception {
     return new Predicate<EntityId>() {
       @Override
       public boolean apply(EntityId entityId) {
-        return allowedEntities.contains(entityId);
+        try {
+          enforce(entityId, principal, EnumSet.allOf(Action.class));
+          return true;
+        } catch (UnauthorizedException e) {
+          return false;
+        } catch (Exception ex) {
+          throw new RuntimeException(ex);
+        }
       }
     };
   }

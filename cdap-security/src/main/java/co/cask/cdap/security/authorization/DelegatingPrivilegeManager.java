@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.inject.Inject;
@@ -26,29 +27,36 @@ import com.google.inject.Inject;
 import java.util.Set;
 
 /**
- * A {@link PrivilegesManager} that simply delegates to the configured {@link Authorizer}.
+ * A {@link PrivilegesManager} implements that delegates to the authorizer.
+ * Having this makes Guice injection for Privilege manager simple. That reason will go away once
+ * https://issues.cask.co/browse/CDAP-11561 is fixed.
  */
-public class AuthorizerAsPrivilegesManager implements PrivilegesManager {
+public class DelegatingPrivilegeManager implements PrivilegesManager {
 
-  private final AuthorizerInstantiator authorizerInstantiator;
+  private final Authorizer delegateAuthorizer;
 
   @Inject
-  AuthorizerAsPrivilegesManager(AuthorizerInstantiator authorizerInstantiator) {
-    this.authorizerInstantiator = authorizerInstantiator;
+  DelegatingPrivilegeManager(AuthorizerInstantiator authorizerInstantiator) {
+    this.delegateAuthorizer = authorizerInstantiator.get();
   }
 
   @Override
   public void grant(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    authorizerInstantiator.get().grant(entity, principal, actions);
+    delegateAuthorizer.grant(entity, principal, actions);
   }
 
   @Override
   public void revoke(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    authorizerInstantiator.get().revoke(entity, principal, actions);
+    delegateAuthorizer.revoke(entity, principal, actions);
   }
 
   @Override
   public void revoke(EntityId entity) throws Exception {
-    authorizerInstantiator.get().revoke(entity);
+    delegateAuthorizer.revoke(entity);
+  }
+
+  @Override
+  public Set<Privilege> listPrivileges(Principal principal) throws Exception {
+    return delegateAuthorizer.listPrivileges(principal);
   }
 }

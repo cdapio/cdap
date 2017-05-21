@@ -49,7 +49,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.RemotePrivilegesManager;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
@@ -184,11 +183,8 @@ public class ContextManager {
       injector.getInstance(SystemDatasetInstantiatorFactory.class);
     AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
     AuthorizationEnforcer authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
-    AuthorizationEnforcementService authorizationEnforcementService = injector.getInstance(
-      AuthorizationEnforcementService.class);
-    authorizationEnforcementService.startAndWait();
     return new Context(datasetFramework, streamAdmin, zkClientService, datasetInstantiatorFactory,
-                       authenticationContext, authorizationEnforcer, authorizationEnforcementService);
+                       authenticationContext, authorizationEnforcer);
   }
 
   /**
@@ -201,13 +197,11 @@ public class ContextManager {
     private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
     private final AuthenticationContext authenticationContext;
     private final AuthorizationEnforcer authorizationEnforcer;
-    private final AuthorizationEnforcementService authorizationEnforcementService;
 
     public Context(DatasetFramework datasetFramework, StreamAdmin streamAdmin,
                    ZKClientService zkClientService,
                    SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                   AuthenticationContext authenticationContext, AuthorizationEnforcer authorizationEnforcer,
-                   AuthorizationEnforcementService authorizationEnforcementService) {
+                   AuthenticationContext authenticationContext, AuthorizationEnforcer authorizationEnforcer) {
       // This constructor is called from the MR job Hive launches.
       this.datasetFramework = datasetFramework;
       this.streamAdmin = streamAdmin;
@@ -215,7 +209,6 @@ public class ContextManager {
       this.datasetInstantiatorFactory = datasetInstantiatorFactory;
       this.authenticationContext = authenticationContext;
       this.authorizationEnforcer = authorizationEnforcer;
-      this.authorizationEnforcementService = authorizationEnforcementService;
     }
 
     public Context(DatasetFramework datasetFramework, StreamAdmin streamAdmin,
@@ -223,7 +216,7 @@ public class ContextManager {
                    AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
       // This constructor is called from Hive server, that is the Explore module.
       this(datasetFramework, streamAdmin, null, datasetInstantiatorFactory, authenticationContext,
-           authorizationEnforcer, null);
+           authorizationEnforcer);
     }
 
     public StreamConfig getStreamConfig(StreamId streamId) throws IOException {
@@ -266,11 +259,8 @@ public class ContextManager {
 
     @Override
     public void close() {
-      // authorizationEnforcementService and zkClientService are null if used by the Explore service,
+      // zkClientService is null if used by the Explore service,
       // since Explore manages the lifecycle of the zk service. it is not null if used by a MR job launched by Hive.
-      if (authorizationEnforcementService != null) {
-        authorizationEnforcementService.stopAndWait();
-      }
 
       if (zkClientService != null) {
         zkClientService.stopAndWait();
