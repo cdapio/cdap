@@ -376,7 +376,7 @@ features:
         tableCount:
           0: No Tables
           1: '{count} Table'
-          _: "{context.count} Tables"
+          _: "{count} Tables"
         title: Select Table
     Directives:
       apply: Apply
@@ -588,6 +588,7 @@ features:
     TopPanel:
       applyBtnLabel: Apply
       addToPipelineBtnLabel: Add to Pipeline
+      database: Database
       file: HDFS
       invalidFieldNameMessage: Invalid column name "{fieldName}"
       invalidFieldNameRemedies1: "Spaces and special characters other than - or _ are not allowed in column names."
@@ -598,6 +599,7 @@ features:
         defaultErrorMessage: Error generating schema.
       PipelineModal:
         defaultErrorMessage: Error adding to pipeline
+      realtimeDisabledTooltip: "Importing data from databases in realtime is currently not supported."
       title: Data Preparation
       upgradeBtnLabel: Upgrade
       viewSchemaBtnLabel: View Schema

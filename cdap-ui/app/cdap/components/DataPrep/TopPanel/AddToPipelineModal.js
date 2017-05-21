@@ -26,6 +26,7 @@ import {objectQuery} from 'services/helpers';
 import T from 'i18n-react';
 import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
+import classnames from 'classnames';
 
 const mapErrorToMessage = (e) => {
   let message = e.message;
@@ -118,7 +119,7 @@ export default class AddToHydratorModal extends Component {
     return returnArtifact;
   }
 
-  constructSource(artifactsList, properties) {
+  constructFileSource(artifactsList, properties) {
     if (!properties) { return null; }
 
     let plugin = objectQuery(properties, 'values', '0');
@@ -160,6 +161,49 @@ export default class AddToHydratorModal extends Component {
         to: 'Wrangler'
       }]
     };
+  }
+
+  // Need to be modified once backend is complete
+  constructDatabaseSource(artifactsList, dbInfo) {
+    if (!dbInfo) { return null; }
+
+    let batchArtifact = find(artifactsList, { 'name': 'database-plugins' });
+    let pluginName = 'Database';
+
+    try {
+      let parsedProperties = JSON.parse(dbInfo.databaseConfig);
+
+      let pluginInfo = {
+        name: pluginName,
+        label: pluginName,
+        type: 'batchsource',
+        artifact: batchArtifact,
+        properties: {
+          referenceName: pluginName,
+          jdbcPluginName: 'mysql',
+          jdbcPluginType: 'jdbc',
+          connectionString: parsedProperties.connectionString,
+          user: parsedProperties.userName,
+          password: parsedProperties.password,
+          importQuery: dbInfo.name
+        }
+      };
+
+      let batchStage = {
+        name: pluginName,
+        plugin: pluginInfo
+      };
+
+      return {
+        batchSource: batchStage,
+        connections: [{
+          from: pluginName,
+          to: 'Wrangler'
+        }]
+      };
+    } catch (e) {
+      console.log('properties parse error', e);
+    }
   }
 
   constructProperties(pluginVersion) {
@@ -236,7 +280,13 @@ export default class AddToHydratorModal extends Component {
         let realtimeStages = [wranglerStage];
         let batchStages = [wranglerStage];
 
-        let sourceConfigs = this.constructSource(res[0], res[2]);
+        let sourceConfigs;
+        if (state.workspaceInfo.properties.connection === 'file') {
+          sourceConfigs = this.constructFileSource(res[0], res[2]);
+        } else if (state.workspaceInfo.properties.databaseConfig) {
+          sourceConfigs = this.constructDatabaseSource(res[0], state.workspaceInfo.properties);
+        }
+
         if (sourceConfigs) {
           realtimeStages.push(sourceConfigs.realtimeSource);
           batchStages.push(sourceConfigs.batchSource);
@@ -268,6 +318,10 @@ export default class AddToHydratorModal extends Component {
             artifactType: realtimeArtifact.name
           }
         });
+
+        if (state.workspaceInfo.properties.databaseConfig) {
+          realtimeUrl = null;
+        }
 
         let batchUrl = window.getHydratorUrl({
           stateName: 'hydrator.create',
@@ -323,6 +377,12 @@ export default class AddToHydratorModal extends Component {
         </div>
       );
     } else {
+      let realtimeDisabledTooltip;
+
+      if (!this.state.realtimeUrl) {
+        realtimeDisabledTooltip = T.translate('features.DataPrep.TopPanel.realtimeDisabledTooltip');
+      }
+
       content = (
         <div>
           <div className="message">
@@ -341,10 +401,14 @@ export default class AddToHydratorModal extends Component {
             </a>
             <a
               href={this.state.realtimeUrl}
-              className="btn btn-secondary"
+              className={classnames('btn btn-secondary', {
+                'inactive': !this.state.realtimeUrl
+              })}
               onClick={(() => {
+                if (!this.state.realtimeUrl) { return; }
                 window.localStorage.setItem(this.state.workspaceId, JSON.stringify(this.state.realtimeConfig));
               }).bind(this)}
+              title={realtimeDisabledTooltip}
             >
               <i className="fa icon-sparkstreaming"/>
               <span>Realtime Pipeline</span>

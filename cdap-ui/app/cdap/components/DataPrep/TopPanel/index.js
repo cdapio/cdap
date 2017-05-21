@@ -161,6 +161,17 @@ export default class DataPrepTopPanel extends Component {
             </div>
           </div>
         );
+      } else if (info.properties.databaseConfig) {
+        return (
+          <div className="data-prep-name">
+            <div className="connection-type">
+              {T.translate('features.DataPrep.TopPanel.database')}
+            </div>
+            <div className="title">
+              {info.properties.name}
+            </div>
+          </div>
+        );
       }
     }
 
