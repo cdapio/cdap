@@ -16,11 +16,8 @@
 
 package co.cask.cdap.gateway.handlers.meta;
 
-import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.internal.remote.MethodArgument;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
-import co.cask.cdap.proto.codec.IdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.AuthorizationPrivilege;
@@ -32,16 +29,12 @@ import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
 import com.google.inject.TypeLiteral;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.Set;
