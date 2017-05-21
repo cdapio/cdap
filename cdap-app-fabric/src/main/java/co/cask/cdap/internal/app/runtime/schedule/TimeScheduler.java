@@ -25,10 +25,10 @@ import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -164,7 +164,8 @@ public final class TimeScheduler implements Scheduler {
     }
 
     JobDetail job = addJob(program, programType);
-    scheduleJob(program, programType, schedule.getName(), ((TimeTrigger) schedule.getTrigger()).getCronExpression(),
+    scheduleJob(program, programType, schedule.getName(),
+                ((ProtoTrigger.TimeTrigger) schedule.getTrigger()).getCronExpression(),
                 job, schedule.getProperties());
   }
 
@@ -172,7 +173,8 @@ public final class TimeScheduler implements Scheduler {
   public void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException {
     ProgramId program = schedule.getProgramId();
     SchedulableProgramType programType = program.getType().getSchedulableType();
-    rescheduleJob(program, programType, schedule.getName(), ((TimeTrigger) schedule.getTrigger()).getCronExpression(),
+    rescheduleJob(program, programType, schedule.getName(),
+                  ((ProtoTrigger.TimeTrigger) schedule.getTrigger()).getCronExpression(),
                   schedule.getProperties());
   }
 
