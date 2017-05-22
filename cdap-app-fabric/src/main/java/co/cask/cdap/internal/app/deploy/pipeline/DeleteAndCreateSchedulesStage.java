@@ -63,24 +63,6 @@ public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWith
     }
 
     ApplicationId appId = input.getApplicationId();
-    // TODO: [CDAP-11575] Temporary solution before REST API is merged. ScheduleSpecification will be removed and
-    // the block of code below will be refactored
-    if (input.getExistingAppSpec() != null) {
-      // Get a set of old schedules from the existing app spec which are added by app deployment or REST API
-      Set<ProgramSchedule> oldSchedules = new HashSet<>();
-      for (ScheduleSpecification spec : input.getExistingAppSpec().getSchedules().values()) {
-        oldSchedules.add(Schedulers.toProgramSchedule(appId, spec));
-      }
-      // Get a set of old schedules from the existing app spec which are only added by app deployment
-      Set<ProgramSchedule> oldAppSchedules = getProgramScheduleSet(appId, input.getExistingAppSpec());
-      // Get schedules created by REST API only by taking schedules only in oldSchedules but not in oldAppSchedules
-      Set<ProgramSchedule> oldRestSchedules = Sets.difference(oldSchedules, oldAppSchedules);
-      for (ProgramSchedule restSchedule : oldRestSchedules) {
-        // Schedules created by REST API only exist in scheduler
-        scheduler.deleteProgramSchedule(restSchedule);
-      }
-    }
-
     // Get a set of new schedules from the app spec
     Set<ProgramSchedule> newSchedules = getProgramScheduleSet(appId, input.getSpecification());
 
