@@ -136,7 +136,6 @@ public class ScheduleClientTestRun extends ClientTestBase {
   }
 
   @Test
-  @Ignore // TODO: bring this back as part of CDAP-11516
   public void testScheduleChanges() throws Exception {
     File appJar = createAppJarFile(FakeApp.class);
 

@@ -48,7 +48,6 @@ public class PurchaseAppTest extends TestBase {
 
   private static final Gson GSON = new Gson();
 
-  @Ignore // TODO: bring this back as part of CDAP-11516
   @Test
   public void test() throws Exception {
     // Deploy the PurchaseApp application
