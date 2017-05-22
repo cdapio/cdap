@@ -80,9 +80,11 @@ export default class UncontrolledPopover extends Component {
     );
   }
   render() {
+    let iconName = this.props.icon || 'fa-caret-square-o-down';
+
     return (
       <span
-        className={classnames('fa fa-caret-square-o-down', {
+        className={classnames(`fa ${iconName}`, {
           'expanded': this.state.dropdownOpen
         })}
         id={this.state.id}
@@ -98,5 +100,6 @@ UncontrolledPopover.propTypes = {
   children: PropTypes.node.isRequired,
   dropdownOpen: PropTypes.bool,
   tetherOption: PropTypes.object,
-  documentElement: PropTypes.node
+  documentElement: PropTypes.node,
+  icon: PropTypes.string
 };

@@ -35,6 +35,22 @@ export default class DatabaseConnection extends Component {
     this.add = this.add.bind(this);
   }
 
+  componentWillMount() {
+    if (this.props.mode !== 'ADD') {
+      // Being Hardcoded right now until getting info back from backend
+
+      this.setActiveDB({
+        database: {
+          name: 'MySQL',
+          classname: 'db-mysql'
+        },
+        pluginInfo: {
+          version: '5.1.38'
+        }
+      });
+    }
+  }
+
   setActiveDB(db) {
     this.setState({activeDB: db});
   }
@@ -53,6 +69,8 @@ export default class DatabaseConnection extends Component {
         back={this.setActiveDB.bind(this, null)}
         db={this.state.activeDB}
         onAdd={this.add}
+        mode={this.props.mode}
+        connectionId={this.props.connectionId}
       />
     );
   }
@@ -73,7 +91,7 @@ export default class DatabaseConnection extends Component {
           backdrop="static"
         >
           <ModalHeader toggle={this.props.close}>
-            {T.translate(`${PREFIX}.modalHeader`)}
+            {T.translate(`${PREFIX}.ModalHeader.${this.props.mode}`, {connection: this.props.connectionId})}
           </ModalHeader>
 
           <ModalBody>
@@ -92,5 +110,7 @@ export default class DatabaseConnection extends Component {
 
 DatabaseConnection.propTypes = {
   close: PropTypes.func,
-  onAdd: PropTypes.func
+  onAdd: PropTypes.func,
+  mode: PropTypes.oneOf(['ADD', 'EDIT', 'DUPLICATE']).isRequired,
+  connectionId: PropTypes.string
 };

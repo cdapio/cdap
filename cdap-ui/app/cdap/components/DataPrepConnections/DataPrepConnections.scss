@@ -72,7 +72,7 @@ $gutter-width: 15px;
         padding: 10px 15px 10px 35px;
         cursor: pointer;
 
-        .fa:not(.caret) { margin-right: 10px; }
+        .fa { margin-right: 10px; }
 
         &:not(:last-child) {
           border-bottom: 1px solid $connections-panel-border-color;
@@ -104,19 +104,17 @@ $gutter-width: 15px;
 
         .menu-item-expanded-list {
           padding: 10px 27px;
+          width: calc(100% - 25px);
+        }
+
+        .expanded-menu-popover-icon > .fa {
+          margin-right: 0;
         }
 
         &.expandable {
           .expandable-title {
             padding-bottom: 5px;
-            position: relative;
             user-select: none;
-
-            .caret {
-              position: absolute;
-              left: -20px;
-              top: 3px;
-            }
           }
         }
       }

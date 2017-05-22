@@ -30,7 +30,7 @@ import ConnectionsUpload from 'components/DataPrepConnections/UploadFile';
 import AddConnection from 'components/DataPrepConnections/AddConnection';
 import isNil from 'lodash/isNil';
 import ExpandableMenu from 'components/UncontrolledComponents/ExpandableMenu';
-
+import ConnectionPopover from 'components/DataPrepConnections/ConnectionPopover';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -78,7 +78,6 @@ export default class DataPrepConnections extends Component {
       backendChecking: true,
       backendDown: false,
       connectionsList: [],
-      database: false,
       showUpload: false // FIXME: This is used only when showing with no routing. We can do better.
     };
 
@@ -189,16 +188,22 @@ export default class DataPrepConnections extends Component {
       <div>
         {this.state.connectionsList.map((database) => {
           return (
-            <NavLinkWrapper
-              to={`${baseLinkPath}/database/${database.id}`}
-              activeClassName="active"
-              className="menu-item-expanded-list"
-              key={database.id}
-              onClick={this.handlePropagation.bind(this, database)}
-              singleWorkspaceMode={this.props.singleWorkspaceMode}
-            >
-              {database.name}
-            </NavLinkWrapper>
+            <div key={database.id}>
+              <NavLinkWrapper
+                to={`${baseLinkPath}/database/${database.id}`}
+                activeClassName="active"
+                className="menu-item-expanded-list"
+                onClick={this.handlePropagation.bind(this, database)}
+                singleWorkspaceMode={this.props.singleWorkspaceMode}
+              >
+                {database.name}
+              </NavLinkWrapper>
+
+              <ConnectionPopover
+                connectionInfo={database}
+                onAction={this.fetchConnectionsList}
+              />
+            </div>
           );
         })}
       </div>
