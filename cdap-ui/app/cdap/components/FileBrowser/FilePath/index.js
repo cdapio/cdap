@@ -20,10 +20,38 @@ import {Link} from 'react-router-dom';
 import classnames from 'classnames';
 import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import {preventPropagation} from 'services/helpers';
 
 require('./FilePath.scss');
 
 const VIEW_LIMIT = 3;
+
+const LinkWrapper = ({enableRouting, children, to, ...attributes}) => {
+  if (enableRouting) {
+    return (
+      <Link
+        to={to}
+        {...attributes}
+      >
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <a
+      href={to}
+      {...attributes}
+    >
+      {children}
+    </a>
+  );
+};
+
+LinkWrapper.propTypes = {
+  enableRouting: PropTypes.string,
+  children: PropTypes.node,
+  to: PropTypes.string
+};
 
 export default class FilePath extends Component {
   constructor(props) {
@@ -33,6 +61,7 @@ export default class FilePath extends Component {
       originalPath: '',
       paths: []
     };
+    this.handlePropagation = this.handlePropagation.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -69,6 +98,17 @@ export default class FilePath extends Component {
     });
   }
 
+  handlePropagation(fullPath, e) {
+    if (!this.props.enableRouting) {
+      preventPropagation(e);
+      if (this.props.onPathChange && typeof this.props.onPathChange === 'function') {
+        let path = fullPath.slice(this.props.baseStatePath.length);
+        this.props.onPathChange(path);
+        return false;
+      }
+    }
+  }
+
   renderCollapsedDropdown(collapsedLinks) {
     return (
       <div className="collapsed-dropdown">
@@ -85,12 +125,14 @@ export default class FilePath extends Component {
                   <DropdownItem
                     title={path.name}
                   >
-                    <Link
+                    <LinkWrapper
                       key={path.id}
                       to={path.link}
+                      onClick={this.handlePropagation.bind(this, path.link)}
+                      enableRouting={this.props.enableRouting}
                     >
                       {path.name}
-                    </Link>
+                    </LinkWrapper>
                   </DropdownItem>
                 );
               })
@@ -107,16 +149,18 @@ export default class FilePath extends Component {
         {
           links.map((path, index) => {
             return (
-              <Link
+              <LinkWrapper
                 key={path.id}
                 to={path.link}
                 className={classnames({'active-directory': index === links.length - 1})}
+                onClick={this.handlePropagation.bind(this, path.link)}
+                enableRouting={this.props.enableRouting}
               >
                 {path.name}
                 {
                   index !== links.length - 1 ? <span className="path-divider">/</span> : null
                 }
-              </Link>
+              </LinkWrapper>
             );
           })
         }
@@ -158,5 +202,7 @@ export default class FilePath extends Component {
 
 FilePath.propTypes = {
   baseStatePath: PropTypes.string,
-  fullpath: PropTypes.string
+  fullpath: PropTypes.string,
+  enableRouting: PropTypes.bool,
+  onPathChange: PropTypes.func
 };

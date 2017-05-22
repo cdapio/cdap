@@ -14,12 +14,23 @@
  * the License.
  */
 import DataPrepBrowserStore, {Actions as BrowserStoreActions} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
+import NamespaceStore from 'services/NamespaceStore';
+import MyDataPrepApi from 'api/dataprep';
+import {objectQuery} from 'services/helpers';
 
 const setDatabaseInfoLoading = () => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_DATABASE_LOADING,
     payload: {
       loading: !DataPrepBrowserStore.getState().database.loading
+    }
+  });
+};
+const setDatabaseError = (payload) => {
+  DataPrepBrowserStore.dispatch({
+    type: BrowserStoreActions.SET_DATABASE_ERROR,
+    payload: {
+      loading: payload
     }
   });
 };
@@ -30,15 +41,40 @@ const setActiveBrowser = (payload) => {
   });
 };
 
-const setDatabaseProperties = (payload) => {
+const setDatabaseAsActiveBrowser = (payload) => {
+  setActiveBrowser(payload);
   setDatabaseInfoLoading();
+  let namespace = NamespaceStore.getState().selectedNamespace;
+  let {id} = payload;
+  let params = {
+    namespace,
+    connectionId: id
+  };
+  MyDataPrepApi.getConnection(params)
+    .subscribe((res) => {
+      let properties = objectQuery(res, 'values', 0, 'properties');
+
+      setDatabaseProperties({
+        properties
+      });
+
+    }, (err) => {
+      setDatabaseError({
+        payload: err
+      });
+    });
+};
+
+const setDatabaseProperties = (payload) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_DATABASE_PROPERTIES,
     payload
   });
+  setDatabaseInfoLoading();
 };
 
 export {
   setActiveBrowser,
-  setDatabaseProperties
+  setDatabaseProperties,
+  setDatabaseAsActiveBrowser
 };

@@ -19,7 +19,7 @@ import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
-import {Link, Redirect} from 'react-router-dom';
+import {Link} from 'react-router-dom';
 import {setWorkspace, getWorkspaceList} from 'components/DataPrep/store/DataPrepActionCreator';
 import IconSVG from 'components/IconSVG';
 import cookie from 'react-cookie';
@@ -37,9 +37,7 @@ export default class WorkspaceTabs extends Component {
     this.state = {
       activeWorkspace: initialState.dataprep.workspaceId,
       workspaceList: initialState.workspaces.list,
-      beginIndex: 0,
-      isEmpty: false,
-      reroute: false
+      beginIndex: 0
     };
 
     this.namespace = NamespaceStore.getState().selectedNamespace;
@@ -95,7 +93,9 @@ export default class WorkspaceTabs extends Component {
       workspaceId
     }).subscribe(() => {
       if (workspaceId === this.state.activeWorkspace) {
-        this.setState({reroute: true});
+        if (this.props.onWorkspaceDelete) {
+          this.props.onWorkspaceDelete();
+        }
         return;
       }
       this.getWorkspaceList();
@@ -218,25 +218,6 @@ export default class WorkspaceTabs extends Component {
   }
 
   render() {
-    if (this.state.isEmpty) {
-      return (
-        <Redirect to={`/ns/${this.namespace}/connections/browser`} />
-      );
-    }
-
-    if (this.state.reroute) {
-      return (
-        <Redirect to={`/ns/${this.namespace}/dataprep`} />
-      );
-    }
-
-    if (this.props.singleWorkspaceMode) {
-      return (
-        <div>
-          {this.renderActiveWorkspace(this.state.activeWorkspace)}
-        </div>
-      );
-    }
     return (
       <div className="workspace-tabs">
         {this.renderWorkspaceTabs()}
@@ -246,6 +227,6 @@ export default class WorkspaceTabs extends Component {
 }
 
 WorkspaceTabs.propTypes = {
-  singleWorkspaceMode: PropTypes.bool,
-  workspaceId: PropTypes.string
+  workspaceId: PropTypes.string,
+  onWorkspaceDelete: PropTypes.func
 };

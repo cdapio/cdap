@@ -20,7 +20,8 @@ import {objectQuery} from 'services/helpers';
 const Actions = {
   SET_DATABASE_PROPERTIES: 'SET_DATABASE_PROPERTIES',
   SET_DATABASE_LOADING: 'SET_DATABASE_LOADING',
-  SET_ACTIVEBROWSER: 'SET_ACTIVE_BROWSER'
+  SET_ACTIVEBROWSER: 'SET_ACTIVE_BROWSER',
+  SET_DATABASE_ERROR: 'SET_DATABASE_ERROR'
 };
 
 export {Actions} ;
@@ -32,7 +33,8 @@ const defaultDatabaseValue = {
     password: '',
     databasename: ''
   },
-  loading: false
+  loading: false,
+  error: null
 };
 
 const defaultActiveBrowser = {
@@ -43,11 +45,17 @@ const database = (state = defaultDatabaseValue, action = defaultAction) => {
   switch (action.type) {
     case Actions.SET_DATABASE_PROPERTIES:
       return Object.assign({}, state, {
-        properties: objectQuery(action, 'payload', 'properties') || state.properties
+        properties: objectQuery(action, 'payload', 'properties') || state.properties,
+        error: null
       });
     case Actions.SET_DATABASE_LOADING:
       return Object.assign({}, state, {
-        loading: action.payload.loading
+        loading: action.payload.loading,
+        error: null
+      });
+    case Actions.SET_DATABASE_ERROR:
+      return Object.assign({}, state, {
+        error: action.payload.error
       });
     default:
       return state;

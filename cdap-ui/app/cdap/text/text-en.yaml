@@ -585,6 +585,9 @@ features:
       Swap:
         title: Swap Two Column Names
     pageTitle: CDAP | Data Preparation
+    sidePanelTooltip: 
+      collapse: Collapse the side panel
+      expand: Expand the side panel
     TopPanel:
       applyBtnLabel: Apply
       addToPipelineBtnLabel: Add to Pipeline

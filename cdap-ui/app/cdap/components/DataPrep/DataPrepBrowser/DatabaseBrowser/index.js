@@ -16,9 +16,9 @@
 
 import React, {Component, PropTypes} from 'react';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
-import isEqual from 'lodash/isEqual';
 import DataPrepApi from 'api/dataprep';
 import isNil from 'lodash/isNil';
+import isEmpty from 'lodash/isEmpty';
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
@@ -48,19 +48,20 @@ export default class DatabaseBrowser extends Component {
   }
   componentDidMount() {
     this.storeSubscription = DataPrepBrowserStore.subscribe(() => {
-      let {database} = DataPrepBrowserStore.getState();
+      let {database, activeBrowser} = DataPrepBrowserStore.getState();
+      if (activeBrowser.name !== 'database') {
+        return;
+      }
       if (database.loading) {
         this.setState({
           loading: true
         });
         return;
       }
-      if (!isEqual(this.state.properties, database.properties)) {
-        this.setState({
-          properties: database.properties,
-          loading: false
-        }, this.fetchTables);
-      }
+      this.setState({
+        properties: database.properties,
+        error: database.error
+      }, this.fetchTables);
     });
   }
   handleSearch(e) {
@@ -85,6 +86,10 @@ export default class DatabaseBrowser extends Component {
       .subscribe(
         (res) => {
           let workspaceId = res.values[0].id;
+          if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
+            this.props.onWorkspaceCreate(workspaceId);
+            return;
+          }
           window.location.href = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
         },
         (err) => {
@@ -94,7 +99,7 @@ export default class DatabaseBrowser extends Component {
   }
   fetchTables() {
     let {userName, password, connectionString} = this.state.properties;
-    if (isNil(userName) || isNil(password) || isNil(connectionString)) {
+    if (isEmpty(userName) || isEmpty(password) || isEmpty(connectionString)) {
       return;
     }
     let {selectedNamespace: namespace} = NamespaceStore.getState();
@@ -263,6 +268,6 @@ export default class DatabaseBrowser extends Component {
 }
 
 DatabaseBrowser.propTypes = {
-  toggle: PropTypes.func
+  toggle: PropTypes.func,
+  onWorkspaceCreate: PropTypes.func
 };
-
