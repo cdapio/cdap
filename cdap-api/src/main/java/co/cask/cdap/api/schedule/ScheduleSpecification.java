@@ -17,6 +17,7 @@
 package co.cask.cdap.api.schedule;
 
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,7 +25,10 @@ import java.util.Map;
 
 /**
  * Specification for {@link Schedule}.
+ *
+ * @deprecated as of 4.2.0. Use {@link ScheduleCreationSpec} instead.
  */
+@Deprecated
 public final class ScheduleSpecification {
   private final Schedule schedule;
   private final ScheduleProgramInfo program;

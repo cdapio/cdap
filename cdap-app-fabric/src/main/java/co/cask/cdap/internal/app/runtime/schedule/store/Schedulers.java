@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.schedule.store;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.schedule.RunConstraints;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -34,7 +33,6 @@ import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ProtoConstraint;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -50,7 +48,6 @@ import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -136,38 +133,6 @@ public class Schedulers {
         return input == null ? null : input.toScheduleDetail();
       }
     });
-  }
-
-  /**
-   * Convert a list of schedule details to a list of schedule specifications, for backward compatibility.
-   *
-   * Schedules with triggets other than time or stream size triggers are ignored, so are run constraints
-   * other than concurrency consraints (these were not supported by the legacy APIs).
-   */
-  public static List<ScheduleSpecification> toScheduleSpecs(List<ScheduleDetail> details) {
-    List<ScheduleSpecification> specs = new ArrayList<>();
-    for (ScheduleDetail detail : details) {
-      if (detail.getTrigger() instanceof ProtoTrigger.TimeTrigger) {
-        ProtoTrigger.TimeTrigger trigger = ((ProtoTrigger.TimeTrigger) detail.getTrigger());
-        RunConstraints constraints = RunConstraints.NONE;
-        if (detail.getConstraints() != null) {
-          for (Constraint runConstraint : detail.getConstraints()) {
-            if (runConstraint instanceof ProtoConstraint.ConcurrenyConstraint) {
-              constraints = new RunConstraints(
-                ((ProtoConstraint.ConcurrenyConstraint) runConstraint).getMaxConcurrency());
-            }
-          }
-        }
-        specs.add(new ScheduleSpecification(
-          new TimeSchedule(detail.getName(),
-                           detail.getDescription(),
-                           trigger.getCronExpression(),
-                           constraints),
-          detail.getProgram(),
-          detail.getProperties()));
-      }
-    }
-    return specs;
   }
 
   public static StreamSizeSchedule toStreamSizeSchedule(ProgramSchedule schedule) {

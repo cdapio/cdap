@@ -60,7 +60,7 @@ public final class ListWorkflowSchedulesCommand extends AbstractCommand {
     String workflowName = programIdParts[1];
     WorkflowId workflowId = cliConfig.getCurrentNamespace().app(appId).workflow(workflowName);
 
-    List<ScheduleDetail> list = scheduleClient.list(workflowId);
+    List<ScheduleDetail> list = scheduleClient.listSchedules(workflowId);
     Table table = Table.builder()
       .setHeader("application", "program", "program type", "name", "description", "trigger", "properties")
       .setRows(list, new RowMaker<ScheduleDetail>() {

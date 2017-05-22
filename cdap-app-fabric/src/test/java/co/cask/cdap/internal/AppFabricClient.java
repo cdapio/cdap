@@ -29,7 +29,6 @@ import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.ApplicationDetail;
@@ -315,7 +314,7 @@ public class AppFabricClient {
   @Deprecated
   public List<ScheduleSpecification> getSchedules(String namespace, String app, String workflow)
     throws NotFoundException {
-    return Schedulers.toScheduleSpecs(getProgramSchedules(namespace, app, workflow));
+    return ScheduleDetail.toScheduleSpecs(getProgramSchedules(namespace, app, workflow));
   }
 
   public WorkflowTokenDetail getWorkflowToken(String namespaceId, String appId, String wflowId, String runId,
