@@ -48,6 +48,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -55,6 +56,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import java.util.zip.Deflater;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * TwillApplication wrapper for Master Services running in YARN.
@@ -364,24 +368,43 @@ public class MasterTwillApplication implements TwillApplication {
         }
       });
 
-    for (File file : exploreFiles) {
-      if (file.getName().endsWith(".tgz") || file.getName().endsWith(".gz")) {
-        // It's an archive, hence localize it archive so that it will be expanded to a directory on the container
-        localizeResources.put(file.getName(), new LocalizeResource(file, true));
-        // Includes the expanded directory, jars under that directory and jars under the "lib" to classpath
-        extraClassPath.add(file.getName());
-        extraClassPath.add(file.getName() + "/*");
-        extraClassPath.add(file.getName() + "/lib/*");
-      } else {
-        File targetFile = tempDir.resolve(System.currentTimeMillis() + "-" + file.getName()).toFile();
-        File resultFile = ExploreServiceUtils.patchHiveClasses(file, targetFile);
-        if (resultFile == targetFile) {
-          LOG.info("Rewritten HiveAuthFactory from jar file {} to jar file {}", file, resultFile);
-        }
-        localizeResources.put(resultFile.getName(), new LocalizeResource(resultFile));
-        extraClassPath.add(resultFile.getName());
-      }
+    // Create a zip file that contains all explore jar files.
+    // Upload and localizing one big file is fast than many small one.
+    String exploreArchiveName = "explore.archive.zip";
+    Path exploreArchive = Files.createTempFile(tempDir, "explore.archive", ".zip");
+    Set<String> addedJar = new HashSet<>();
 
+    try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(exploreArchive))) {
+      zos.setLevel(Deflater.NO_COMPRESSION);
+
+      for (File file : exploreFiles) {
+        if (file.getName().endsWith(".tgz") || file.getName().endsWith(".gz")) {
+          // It's an archive, hence localize it archive so that it will be expanded to a directory on the container
+          localizeResources.put(file.getName(), new LocalizeResource(file, true));
+          // Includes the expanded directory, jars under that directory and jars under the "lib" to classpath
+          extraClassPath.add(file.getName());
+          extraClassPath.add(file.getName() + "/*");
+          extraClassPath.add(file.getName() + "/lib/*");
+        } else {
+          // For jar file, add it to explore archive
+          File targetFile = tempDir.resolve(System.currentTimeMillis() + "-" + file.getName()).toFile();
+          File resultFile = ExploreServiceUtils.patchHiveClasses(file, targetFile);
+          if (resultFile == targetFile) {
+            LOG.info("Rewritten HiveAuthFactory from jar file {} to jar file {}", file, resultFile);
+          }
+
+          // don't add duplicate jar
+          if (addedJar.add(resultFile.getName())) {
+            zos.putNextEntry(new ZipEntry(resultFile.getName()));
+            Files.copy(resultFile.toPath(), zos);
+            extraClassPath.add(exploreArchiveName + File.separator + resultFile.getName());
+          }
+        }
+      }
+    }
+
+    if (!addedJar.isEmpty()) {
+      localizeResources.put(exploreArchiveName, new LocalizeResource(exploreArchive.toFile(), true));
     }
 
     // Explore also depends on MR, hence adding MR jars to the classpath.
