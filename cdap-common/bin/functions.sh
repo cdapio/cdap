@@ -499,12 +499,13 @@ cdap_set_spark() {
       if [[ -z ${SPARK_HOME} ]] || [[ ! -d ${SPARK_HOME} ]]; then
         return 1
       fi
+      cdap_mapr_set_spark_compat "${SPARK_HOME}"
     elif [[ $(which spark-shell 2>/dev/null) ]]; then
       # If there is no valid SPARK_HOME, we should unset the existing one if it is set
       # Otherwise the spark-shell won't run correctly
       unset SPARK_HOME
       ERR_FILE=$(mktemp)
-      SPARK_VAR_OUT=$(echo 'for ((key, value) <- sys.env) println (key + "=" + value); sys.exit' | spark-shell --master local 2>${ERR_FILE})
+      SPARK_VAR_OUT=$(echo '(sys.env ++ Map(("sparkVersion", org.apache.spark.SPARK_VERSION),("scalaVersion", scala.util.Properties.releaseVersion.get))).foreach { case (k, v) => println(s"$k=$v") }; sys.exit' | spark-shell --master local 2>${ERR_FILE})
       __ret=$?
       # spark-shell invocation above does not properly restore the stty.
       stty ${__saved_stty}
@@ -516,7 +517,9 @@ cdap_set_spark() {
         echo "${SPARK_ERR_MSG}"
         return 1
       fi
+
       SPARK_HOME=$(echo -e "${SPARK_VAR_OUT}" | grep ^SPARK_HOME= | cut -d= -f2)
+      cdap_set_spark_compat "${SPARK_VAR_OUT}"
     fi
   fi
 
@@ -524,8 +527,6 @@ cdap_set_spark() {
 
   # Find environment variables setup via spark-env.sh
   cdap_load_spark_env || logecho "[WARN] Fail to source spark-env.sh to setup environment variables for Spark"
-  # Determine Spark Compat version
-  cdap_set_spark_compat
   return 0
 }
 
@@ -559,15 +560,16 @@ cdap_load_spark_env() {
 }
 
 #
-# cdap_set_spark_compat
 # Attempts to determine the spark version and set the SPARK_COMPAT env variable for the CDAP master to use
+# by running spark-shell
 #
-cdap_set_spark_compat() {
+cdap_mapr_set_spark_compat() {
+  local readonly __spark_home=${1}
   local readonly __saved_stty=$(stty -g 2>/dev/null)
   # If SPARK_COMPAT is not already set, try to determine it
-  if [[ -z ${SPARK_COMPAT} ]] && [[ $(which spark-shell 2>/dev/null) ]]; then
+  if [[ -z ${SPARK_COMPAT} ]]; then
     ERR_FILE=$(mktemp)
-    SPARK_VAR_OUT=$(echo 'println("sparkVersion=" + org.apache.spark.SPARK_VERSION); println("scalaVersion=" + scala.util.Properties.releaseVersion.get); sys.exit' | spark-shell --master local 2>${ERR_FILE})
+    SPARK_VAR_OUT=$(echo 'Map(("sparkVersion", org.apache.spark.SPARK_VERSION),("scalaVersion", scala.util.Properties.releaseVersion.get)).foreach { case (k, v) => println(s"$k=$v") }; sys.exit' | ${__spark_home}/bin/spark-shell --master local 2>${ERR_FILE})
 
     __ret=$?
     # spark-shell invocation above does not properly restore the stty.
@@ -581,17 +583,26 @@ cdap_set_spark_compat() {
       return 1
     fi
 
-    SPARK_VERSION=$(echo -e "${SPARK_VAR_OUT}" | grep "^sparkVersion=" | cut -d= -f2)
-    SPARK_MAJOR_VERSION=$(echo ${SPARK_VERSION} | cut -d. -f1)
-    SCALA_VERSION=$(echo -e "${SPARK_VAR_OUT}" | grep "^scalaVersion=" | cut -d= -f2)
-    SCALA_MAJOR_VERSION=$(echo ${SCALA_VERSION} | cut -d. -f1)
-    SCALA_MINOR_VERSION=$(echo ${SCALA_VERSION} | cut -d. -f2)
-    SPARK_COMPAT="spark${SPARK_MAJOR_VERSION}_${SCALA_MAJOR_VERSION}.${SCALA_MINOR_VERSION}"
-
-    export SPARK_VERSION
-    export SPARK_COMPAT
+    cdap_set_spark_compat "${SPARK_VAR_OUT}"
   fi
 
+  return 0
+}
+
+#
+# Set the SPARK_VERSION and SPARK_COMPAT based on output from spark-shell
+#
+cdap_set_spark_compat() {
+  local __output=${1}
+  SPARK_VERSION=$(echo -e "${__output}" | grep "^sparkVersion=" | cut -d= -f2)
+  SPARK_MAJOR_VERSION=$(echo ${SPARK_VERSION} | cut -d. -f1)
+  SCALA_VERSION=$(echo -e "${__output}" | grep "^scalaVersion=" | cut -d= -f2)
+  SCALA_MAJOR_VERSION=$(echo ${SCALA_VERSION} | cut -d. -f1)
+  SCALA_MINOR_VERSION=$(echo ${SCALA_VERSION} | cut -d. -f2)
+  SPARK_COMPAT="spark${SPARK_MAJOR_VERSION}_${SCALA_MAJOR_VERSION}.${SCALA_MINOR_VERSION}"
+
+  export SPARK_VERSION
+  export SPARK_COMPAT
   return 0
 }
 
