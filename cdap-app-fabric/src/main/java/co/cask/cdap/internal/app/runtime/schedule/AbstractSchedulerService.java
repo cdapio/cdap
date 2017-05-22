@@ -24,11 +24,10 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -42,7 +41,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Abstract scheduler service common scheduling functionality. For each {@link Schedule} implementation, there is
@@ -111,27 +109,27 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
   @Override
   public void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException, SchedulerException {
-    if (schedule.getTrigger() instanceof TimeTrigger) {
+    if (schedule.getTrigger() instanceof ProtoTrigger.TimeTrigger) {
       timeScheduler.addProgramSchedule(schedule);
-    } else if (schedule.getTrigger() instanceof StreamSizeTrigger) {
+    } else if (schedule.getTrigger() instanceof ProtoTrigger.StreamSizeTrigger) {
       streamSizeScheduler.addProgramSchedule(schedule);
     }
   }
 
   @Override
   public void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException {
-    if (schedule.getTrigger() instanceof TimeTrigger) {
+    if (schedule.getTrigger() instanceof ProtoTrigger.TimeTrigger) {
       timeScheduler.updateProgramSchedule(schedule);
-    } else if (schedule.getTrigger() instanceof StreamSizeTrigger) {
+    } else if (schedule.getTrigger() instanceof ProtoTrigger.StreamSizeTrigger) {
       streamSizeScheduler.updateProgramSchedule(schedule);
     }
   }
 
   @Override
   public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
-    if (schedule.getTrigger() instanceof TimeTrigger) {
+    if (schedule.getTrigger() instanceof ProtoTrigger.TimeTrigger) {
       timeScheduler.deleteProgramSchedule(schedule);
-    } else if (schedule.getTrigger() instanceof StreamSizeTrigger) {
+    } else if (schedule.getTrigger() instanceof ProtoTrigger.StreamSizeTrigger) {
       streamSizeScheduler.deleteProgramSchedule(schedule);
     }
   }

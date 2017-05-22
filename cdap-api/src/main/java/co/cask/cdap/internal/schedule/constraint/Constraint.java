@@ -19,6 +19,5 @@ package co.cask.cdap.internal.schedule.constraint;
 /**
  * A constraint that is checked before executing a schedule.
  */
-public abstract class Constraint {
-
+public interface Constraint {
 }

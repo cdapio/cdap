@@ -17,51 +17,15 @@
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.internal.schedule.trigger.Trigger;
+import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.id.StreamId;
-import com.google.common.base.Objects;
 
 /**
- * A Trigger that schedules a ProgramSchedule, based upon data availability in a stream.
+ * A Trigger that schedules a ProgramSchedule, based on new data in a stream.
  */
-public class StreamSizeTrigger extends Trigger {
-  private final StreamId streamId;
-  private final int dataTriggerMB;
+public class StreamSizeTrigger extends ProtoTrigger.StreamSizeTrigger implements Trigger {
 
-  public StreamSizeTrigger(StreamId streamId, int dataTriggerMB) {
-    this.streamId = streamId;
-    this.dataTriggerMB = dataTriggerMB;
-  }
-
-  public StreamId getStreamId() {
-    return streamId;
-  }
-
-  public int getDataTriggerMB() {
-    return dataTriggerMB;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    StreamSizeTrigger that = (StreamSizeTrigger) o;
-    return dataTriggerMB == that.dataTriggerMB && streamId.equals(that.streamId);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(streamId, dataTriggerMB);
-  }
-
-  @Override
-  public String toString() {
-    return "StreamSizeTrigger{" +
-      "streamId=" + streamId +
-      ", dataTriggerMB=" + dataTriggerMB +
-      '}';
+  public StreamSizeTrigger(StreamId stream, int triggerMB) {
+    super(stream, triggerMB);
   }
 }

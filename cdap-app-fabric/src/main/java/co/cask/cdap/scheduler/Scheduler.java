@@ -17,6 +17,7 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -36,7 +37,7 @@ public interface Scheduler {
    * @param schedule the schedule to add
    * @throws AlreadyExistsException if the schedule already exists
    */
-  void addSchedule(ProgramSchedule schedule) throws AlreadyExistsException;
+  void addSchedule(ProgramSchedule schedule) throws AlreadyExistsException, BadRequestException;
 
   /**
    * Add one or more schedules to the store.
@@ -44,7 +45,7 @@ public interface Scheduler {
    * @param schedules the schedules to add
    * @throws AlreadyExistsException if one of the schedules already exists
    */
-  void addSchedules(Iterable<? extends ProgramSchedule> schedules) throws AlreadyExistsException;
+  void addSchedules(Iterable<? extends ProgramSchedule> schedules) throws AlreadyExistsException, BadRequestException;
 
   /**
    * Updates a schedule in the store. The schedule with the same {@link ScheduleId}
@@ -100,7 +101,7 @@ public interface Scheduler {
    * @param appId the application for which to list the schedules.
    * @return a list of schedules for the application; never null
    */
-  List<ProgramSchedule> listSchedules(ApplicationId appId);
+  List<ProgramSchedule> listSchedules(ApplicationId appId) throws NotFoundException;
 
   /**
    * Retrieve all schedules for a given program.
@@ -108,5 +109,5 @@ public interface Scheduler {
    * @param programId the program for which to list the schedules.
    * @return a list of schedules for the program; never null
    */
-  List<ProgramSchedule> listSchedules(ProgramId programId);
+  List<ProgramSchedule> listSchedules(ProgramId programId) throws NotFoundException;
 }

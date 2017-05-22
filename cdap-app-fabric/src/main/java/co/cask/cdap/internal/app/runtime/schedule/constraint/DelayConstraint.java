@@ -17,20 +17,15 @@
 package co.cask.cdap.internal.app.runtime.schedule.constraint;
 
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
+import co.cask.cdap.proto.ProtoConstraint;
 
 /**
  * A constraint which requires a certain amount of delay pass after the trigger is fired, before executing the program.
  */
-public class DelayConstraint extends AbstractCheckableConstraint {
-
-  private final long millisAfterTrigger;
+public class DelayConstraint extends ProtoConstraint.DelayConstraint implements CheckableConstraint {
 
   public DelayConstraint(long millisAfterTrigger) {
-    Preconditions.checkArgument(millisAfterTrigger >= 0,
-                                "Configured delay '%s' must not be a negative value.", millisAfterTrigger);
-    this.millisAfterTrigger = millisAfterTrigger;
+    super(millisAfterTrigger);
   }
 
   @Override

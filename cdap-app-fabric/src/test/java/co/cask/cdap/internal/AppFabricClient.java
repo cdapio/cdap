@@ -29,6 +29,9 @@ import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
+import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
@@ -36,7 +39,10 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ProtoConstraintCodec;
+import co.cask.cdap.proto.ProtoTriggerCodec;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
@@ -85,10 +91,13 @@ public class AppFabricClient {
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
     .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
+    .registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
+    .registerTypeAdapter(Constraint.class, new ProtoConstraintCodec())
     .create();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type RUN_RECORDS_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
-  private static final Type SCHEDULES_TYPE = new TypeToken<List<ScheduleSpecification>>() { }.getType();
+  private static final Type SCHEDULE_DETAILS_TYPE = new TypeToken<List<ScheduleDetail>>() { }.getType();
+  private static final Type SCHEDULE_SPECS_TYPE = new TypeToken<List<ScheduleSpecification>>() { }.getType();
 
   private final LocationFactory locationFactory;
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
@@ -285,16 +294,28 @@ public class AppFabricClient {
     return responder.decodeResponseContent(Instances.class);
   }
 
-  public List<ScheduleSpecification> getSchedules(String namespaceId, String appId, String wflowId) {
+  public List<ScheduleDetail> getProgramSchedules(String namespace, String app, String workflow)
+    throws NotFoundException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/workflows/%s/schedules",
-                               getNamespacePath(namespaceId), appId, wflowId);
+                               getNamespacePath(namespace), app, workflow);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    workflowHttpHandler.getWorkflowSchedules(request, responder, namespaceId, appId, wflowId);
+    workflowHttpHandler.getWorkflowSchedules(request, responder, namespace, app, workflow);
 
-    List<ScheduleSpecification> schedules = responder.decodeResponseContent(SCHEDULES_TYPE, GSON);
+    List<ScheduleDetail> schedules = responder.decodeResponseContent(SCHEDULE_DETAILS_TYPE, GSON);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow schedules failed");
     return schedules;
+  }
+
+  /**
+   * Return the specifications of all schedules of a workflow.
+   *
+   * @deprecated since release 4.2. Use {@link #getProgramSchedules(String, String, String)} instead.
+   */
+  @Deprecated
+  public List<ScheduleSpecification> getSchedules(String namespace, String app, String workflow)
+    throws NotFoundException {
+    return Schedulers.toScheduleSpecs(getProgramSchedules(namespace, app, workflow));
   }
 
   public WorkflowTokenDetail getWorkflowToken(String namespaceId, String appId, String wflowId, String runId,

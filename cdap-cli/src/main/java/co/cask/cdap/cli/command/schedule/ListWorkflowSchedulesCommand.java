@@ -15,8 +15,6 @@
  */
 package co.cask.cdap.cli.command.schedule;
 
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.english.Article;
@@ -26,8 +24,7 @@ import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ScheduleClient;
-import co.cask.cdap.internal.schedule.StreamSizeSchedule;
-import co.cask.cdap.internal.schedule.TimeSchedule;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
@@ -63,41 +60,22 @@ public final class ListWorkflowSchedulesCommand extends AbstractCommand {
     String workflowName = programIdParts[1];
     WorkflowId workflowId = cliConfig.getCurrentNamespace().app(appId).workflow(workflowName);
 
-    List<ScheduleSpecification> list = scheduleClient.list(workflowId);
+    List<ScheduleDetail> list = scheduleClient.list(workflowId);
     Table table = Table.builder()
-      .setHeader("application", "program", "program type", "name", "type", "description", "properties",
-                 "runtime args")
-      .setRows(list, new RowMaker<ScheduleSpecification>() {
+      .setHeader("application", "program", "program type", "name", "description", "trigger", "properties")
+      .setRows(list, new RowMaker<ScheduleDetail>() {
         @Override
-        public List<?> makeRow(ScheduleSpecification object) {
+        public List<?> makeRow(ScheduleDetail object) {
           return Lists.newArrayList(appId,
                                     object.getProgram().getProgramName(),
                                     object.getProgram().getProgramType().name(),
-                                    object.getSchedule().getName(),
-                                    getScheduleType(object.getSchedule()),
-                                    object.getSchedule().getDescription(),
-                                    getScheduleProperties(object.getSchedule()),
+                                    object.getName(),
+                                    object.getDescription(),
+                                    object.getTrigger(),
                                     GSON.toJson(object.getProperties()));
         }
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
-  }
-
-  private String getScheduleType(Schedule schedule) {
-    return schedule.getClass().getName();
-  }
-
-  private String getScheduleProperties(Schedule schedule) {
-    if (schedule instanceof TimeSchedule) {
-      TimeSchedule timeSchedule = (TimeSchedule) schedule;
-      return String.format("cron entry: %s", timeSchedule.getCronEntry());
-    } else if (schedule instanceof StreamSizeSchedule) {
-      StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
-      return String.format("stream: %s, trigger MB: %d",
-                           streamSizeSchedule.getStreamName(), streamSizeSchedule.getDataTriggerMB());
-    } else {
-      return "";
-    }
   }
 
   @Override
