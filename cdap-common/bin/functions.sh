@@ -499,7 +499,6 @@ cdap_set_spark() {
       if [[ -z ${SPARK_HOME} ]] || [[ ! -d ${SPARK_HOME} ]]; then
         return 1
       fi
-      cdap_mapr_set_spark_compat "${SPARK_HOME}"
     elif [[ $(which spark-shell 2>/dev/null) ]]; then
       # If there is no valid SPARK_HOME, we should unset the existing one if it is set
       # Otherwise the spark-shell won't run correctly
@@ -521,6 +520,10 @@ cdap_set_spark() {
       SPARK_HOME=$(echo -e "${SPARK_VAR_OUT}" | grep ^SPARK_HOME= | cut -d= -f2)
       cdap_set_spark_compat "${SPARK_VAR_OUT}"
     fi
+  fi
+
+  if [[ -z ${SPARK_COMPAT} ]]; then
+    cdap_set_spark_compat_with_spark_shell "${SPARK_HOME}"
   fi
 
   export SPARK_HOME
@@ -563,7 +566,7 @@ cdap_load_spark_env() {
 # Attempts to determine the spark version and set the SPARK_COMPAT env variable for the CDAP master to use
 # by running spark-shell
 #
-cdap_mapr_set_spark_compat() {
+cdap_set_spark_compat_with_spark_shell() {
   local readonly __spark_home=${1}
   local readonly __saved_stty=$(stty -g 2>/dev/null)
   # If SPARK_COMPAT is not already set, try to determine it
