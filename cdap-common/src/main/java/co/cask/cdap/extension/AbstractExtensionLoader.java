@@ -84,7 +84,6 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
   private final ServiceLoader<EXTENSION> systemExtensionLoader;
   private final LoadingCache<EXTENSION_TYPE, AtomicReference<EXTENSION>> extensionsCache;
   private final LoadingCache<File, ServiceLoader<EXTENSION>> serviceLoaderCache;
-  private final ClassLoader parentClassLoader;
   private Map<EXTENSION_TYPE, EXTENSION> allExtensions;
 
   @SuppressWarnings("unchecked")
@@ -100,7 +99,6 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
     this.systemExtensionLoader = ServiceLoader.load(this.extensionClass);
     this.serviceLoaderCache = createServiceLoaderCache();
     this.extensionsCache = createExtensionsCache();
-    this.parentClassLoader = new ScalaFilterClassLoader(getClass().getClassLoader());
   }
 
   /**
@@ -273,7 +271,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
       }
     }), URL.class);
 
-    URLClassLoader classLoader = new URLClassLoader(urls, parentClassLoader);
+    URLClassLoader classLoader = new URLClassLoader(urls, getClass().getClassLoader());
     return ServiceLoader.load(extensionClass, classLoader);
   }
 }

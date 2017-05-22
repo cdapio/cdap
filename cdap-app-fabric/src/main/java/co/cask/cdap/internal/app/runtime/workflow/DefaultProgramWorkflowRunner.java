@@ -16,14 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -34,13 +32,11 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
@@ -93,7 +89,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
   public Runnable create(String name) {
     ProgramRunner programRunner = programRunnerFactory.create(programType);
     try {
-      Program program = createProgram(programRunner, name);
+      ProgramId programId = workflowProgram.getId().getParent().program(programType, name);
+      Program program = Programs.create(cConf, workflowProgram, programId, programRunner);
       return getProgramRunnable(name, programRunner, program);
     } catch (Exception e) {
       closeProgramRunner(programRunner);
@@ -139,23 +136,6 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
         }
       }
     };
-  }
-
-  /**
-   * Creates a new {@link Program} instance for the execution by the given {@link ProgramRunner} and
-   * the program name.
-   */
-  private Program createProgram(ProgramRunner programRunner, String programName) throws IOException {
-    ClassLoader classLoader = workflowProgram.getClassLoader();
-    // The classloader should be ProgramClassLoader
-    Preconditions.checkArgument(classLoader instanceof ProgramClassLoader,
-                                "Program %s doesn't use ProgramClassLoader", workflowProgram);
-
-    ProgramId programId = new ProgramId(workflowProgram.getNamespaceId(), workflowProgram.getApplicationId(),
-                                        programType, programName);
-    ApplicationSpecification appSpec = workflowProgram.getApplicationSpecification();
-    return Programs.create(cConf, programRunner, new ProgramDescriptor(programId, appSpec),
-                           workflowProgram.getJarLocation(), ((ProgramClassLoader) classLoader).getDir());
   }
 
   private void runAndWait(ProgramRunner programRunner, Program program, ProgramOptions options) throws Exception {

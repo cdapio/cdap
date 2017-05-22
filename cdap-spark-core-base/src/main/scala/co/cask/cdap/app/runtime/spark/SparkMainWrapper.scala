@@ -243,14 +243,16 @@ object SparkMainWrapper {
     try {
       // This env variable is set by Spark for all known Spark versions
       // If it is missing, exception will be thrown
-      val stagingDir = sys.env("SPARK_YARN_STAGING_DIR")
+      val stagingURI = URI.create(sys.env("SPARK_YARN_STAGING_DIR"))
       val lf = new FileContextLocationFactory(hConf)
       val credentialsDir =
-        if (stagingDir.startsWith("/")) {
-          lf.create(stagingDir)
+        if (stagingURI.isAbsolute) {
+          lf.create(stagingURI.getPath)
         } else {
-          lf.getHomeLocation.append(stagingDir)
+          lf.getHomeLocation.append(stagingURI.getPath)
         }
+
+      LOG.info("Credentials DIR: {}", credentialsDir)
 
       val sparkConf = new SparkConf
       val updateIntervalMs = sparkConf.getLong("spark.yarn.token.renewal.interval", -1L)

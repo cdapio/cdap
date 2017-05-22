@@ -28,7 +28,6 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -145,6 +144,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   @Override
   public void initialize(TwillContext context) {
+    name = context.getSpecification().getName();
+    LOG.info("Initializing runnable: " + name);
+
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     System.setSecurityManager(new RunnableSecurityManager(System.getSecurityManager()));
 
@@ -153,8 +155,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     runLatch = new CountDownLatch(1);
     coreServices = new ArrayList<>();
-    name = context.getSpecification().getName();
-    LOG.info("Initializing runnable: " + name);
+
     try {
       CommandLine cmdLine = parseArgs(context.getApplicationArguments());
 
@@ -195,7 +196,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
         ApplicationSpecification appSpec = readAppSpec(new File(cmdLine.getOptionValue(RunnableOptions.APP_SPEC_FILE)));
 
         program = Programs.create(cConf, programRunner, new ProgramDescriptor(programId, appSpec),
-                                  programJarLocation, BundleJarUtil.unJar(programJarLocation, Files.createTempDir()));
+                                  programJarLocation, new File(cmdLine.getOptionValue(RunnableOptions.EXPANDED_JAR)));
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
@@ -363,6 +364,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private CommandLine parseArgs(String[] args) {
     Options opts = new Options()
       .addOption(createOption(RunnableOptions.JAR, "Program jar location"))
+      .addOption(createOption(RunnableOptions.EXPANDED_JAR, "Expanded program jar location"))
       .addOption(createOption(RunnableOptions.HADOOP_CONF_FILE, "Hadoop config file"))
       .addOption(createOption(RunnableOptions.CDAP_CONF_FILE, "CDAP config file"))
       .addOption(createOption(RunnableOptions.APP_SPEC_FILE, "Application specification file"))

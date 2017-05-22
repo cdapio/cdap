@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data.runtime.main;
+package co.cask.cdap.common.logging;
 
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
@@ -23,11 +23,11 @@ import org.apache.twill.api.logging.LogThrowable;
 /**
  *
  */
-public class TwillLogThrowableAdapter implements IThrowableProxy {
+final class TwillLogThrowableAdapter implements IThrowableProxy {
 
   private final LogThrowable throwable;
 
-  public TwillLogThrowableAdapter(LogThrowable throwable) {
+  TwillLogThrowableAdapter(LogThrowable throwable) {
     this.throwable = throwable;
   }
 

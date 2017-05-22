@@ -18,8 +18,6 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -31,6 +29,7 @@ import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
@@ -38,10 +37,10 @@ import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
@@ -50,18 +49,17 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
-import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A {@link ProgramRunner} to start a {@link Workflow} program in distributed mode.
@@ -82,7 +80,18 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
   @Override
   protected void validateOptions(Program program, ProgramOptions options) {
     super.validateOptions(program, options);
-    WorkflowSpecification spec = program.getApplicationSpecification().getWorkflows().get(program.getName());
+
+    // Extract and verify parameters
+    ApplicationSpecification appSpec = program.getApplicationSpecification();
+    Preconditions.checkNotNull(appSpec, "Missing application specification.");
+
+    ProgramType processorType = program.getType();
+    Preconditions.checkNotNull(processorType, "Missing processor type.");
+    Preconditions.checkArgument(processorType == ProgramType.WORKFLOW, "Only WORKFLOW process type is supported.");
+
+    WorkflowSpecification spec = appSpec.getWorkflows().get(program.getName());
+    Preconditions.checkNotNull(spec, "Missing WorkflowSpecification for %s", program.getName());
+
     for (WorkflowNode node : spec.getNodes()) {
       if (node.getType().equals(WorkflowNodeType.ACTION)) {
         SystemArguments.validateTransactionTimeout(options.getUserArguments().asMap(),
@@ -98,97 +107,52 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
   }
 
   @Override
-  protected ClassAcceptor getBundlerClassAcceptor(Program program) {
-    List<ClassAcceptor> acceptors = new ArrayList<>();
-    acceptors.add(super.getBundlerClassAcceptor(program));
+  protected void setupLaunchConfig(LaunchConfig launchConfig, Program program, ProgramOptions options,
+                                   CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
 
-    WorkflowSpecification spec = getWorkflowSpecification(program);
-    try (CloseableIterator<DistributedProgramRunner> iterator = getWorkflowNodeProgramRunner(spec)) {
-      while (iterator.hasNext()) {
-        acceptors.add(iterator.next().getBundlerClassAcceptor(program));
+    WorkflowSpecification spec = program.getApplicationSpecification().getWorkflows().get(program.getName());
+    List<ClassAcceptor> acceptors = new ArrayList<>();
+
+    // Only interested in MapReduce and Spark nodes
+    Set<SchedulableProgramType> runnerTypes = EnumSet.of(SchedulableProgramType.MAPREDUCE,
+                                                         SchedulableProgramType.SPARK);
+    for (WorkflowActionNode node : Iterables.filter(spec.getNodeIdMap().values(), WorkflowActionNode.class)) {
+      // For each type, we only need one node to setup the launch context
+      ScheduleProgramInfo programInfo = node.getProgram();
+      if (!runnerTypes.remove(programInfo.getProgramType())) {
+        continue;
       }
+
+      // Find the ProgramRunner of the given type and setup the launch context
+      ProgramType programType = ProgramType.valueOfSchedulableType(programInfo.getProgramType());
+      ProgramRunner runner = programRunnerFactory.create(programType);
+      try {
+        if (runner instanceof DistributedProgramRunner) {
+          // Call setupLaunchConfig with the corresponding program
+          ProgramId programId = program.getId().getParent().program(programType, programInfo.getProgramName());
+          ((DistributedProgramRunner) runner).setupLaunchConfig(launchConfig,
+                                                                Programs.create(cConf, program, programId, runner),
+                                                                options, cConf, hConf, tempDir);
+          acceptors.add(launchConfig.getClassAcceptor());
+        }
+      } finally {
+        if (runner instanceof Closeable) {
+          Closeables.closeQuietly((Closeable) runner);
+        }
+      }
+
     }
 
-    return new AndClassAcceptor(acceptors);
-  }
+    // Set the class acceptor
+    launchConfig.setClassAcceptor(new AndClassAcceptor(acceptors));
 
-  @Override
-  protected Map<String, ProgramTwillApplication.RunnableResource> getRunnables(Program program,
-                                                                               ProgramOptions programOptions) {
-    WorkflowSpecification spec = getWorkflowSpecification(program);
+    // Clear and set the runnable for the workflow driver
+    launchConfig.clearRunnables();
     Resources resources = findDriverResources(program.getApplicationSpecification().getSpark(),
                                               program.getApplicationSpecification().getMapReduce(), spec);
 
-    resources = SystemArguments.getResources(programOptions.getUserArguments().asMap(), resources);
-    Map<String, ProgramTwillApplication.RunnableResource> runnables = new HashMap<>();
-    runnables.put(spec.getName(), new ProgramTwillApplication.RunnableResource(
-      new WorkflowTwillRunnable(spec.getName()),
-      createResourceSpec(resources, 1)
-    ));
-    return runnables;
-  }
-
-  @Override
-  protected Map<String, LocalizeResource> getExtraLocalizeResources(Program program, File tempDir) {
-    Map<String, LocalizeResource> resources = new HashMap<>();
-
-    WorkflowSpecification spec = getWorkflowSpecification(program);
-    try (CloseableIterator<DistributedProgramRunner> iterator = getWorkflowNodeProgramRunner(spec)) {
-      while (iterator.hasNext()) {
-        resources.putAll(iterator.next().getExtraLocalizeResources(program, tempDir));
-      }
-    }
-    return resources;
-  }
-
-  @Override
-  protected void prepareLaunch(Program program, TwillPreparer preparer) {
-    WorkflowSpecification spec = getWorkflowSpecification(program);
-    try (CloseableIterator<DistributedProgramRunner> iterator = getWorkflowNodeProgramRunner(spec)) {
-      while (iterator.hasNext()) {
-        iterator.next().prepareLaunch(program, preparer);
-      }
-    }
-  }
-
-  @Override
-  protected Configuration createContainerHConf(Program program, Configuration hConf) {
-    WorkflowSpecification spec = getWorkflowSpecification(program);
-
-    Configuration result = super.createContainerHConf(program, hConf);
-    try (CloseableIterator<DistributedProgramRunner> iterator = getWorkflowNodeProgramRunner(spec)) {
-      while (iterator.hasNext()) {
-        result = iterator.next().createContainerHConf(program, result);
-      }
-    }
-    return result;
-  }
-
-  /**
-   * Returns the {@link WorkflowSpecification} for the given program.
-   */
-  private WorkflowSpecification getWorkflowSpecification(Program program) {
-    // Extract and verify parameters
-    ApplicationSpecification appSpec = program.getApplicationSpecification();
-    Preconditions.checkNotNull(appSpec, "Missing application specification.");
-
-    ProgramType processorType = program.getType();
-    Preconditions.checkNotNull(processorType, "Missing processor type.");
-    Preconditions.checkArgument(processorType == ProgramType.WORKFLOW, "Only WORKFLOW process type is supported.");
-
-    WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(program.getName());
-    Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
-    return workflowSpec;
-  }
-
-  private boolean hasProgramType(WorkflowSpecification spec, final SchedulableProgramType programType) {
-    return Iterables.any(
-      Iterables.filter(spec.getNodeIdMap().values(), WorkflowActionNode.class), new Predicate<WorkflowActionNode>() {
-        @Override
-        public boolean apply(WorkflowActionNode node) {
-          return node.getProgram().getProgramType() == programType;
-        }
-    });
+    resources = SystemArguments.getResources(options.getUserArguments(), resources);
+    launchConfig.addRunnable(spec.getName(), new WorkflowTwillRunnable(spec.getName()), resources, 1);
   }
 
   /**
@@ -221,35 +185,6 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
       }
     }
     return resources;
-  }
-
-  private CloseableIterator<DistributedProgramRunner> getWorkflowNodeProgramRunner(WorkflowSpecification workflowSpec) {
-    final List<DistributedProgramRunner> runners = new ArrayList<>();
-
-    for (SchedulableProgramType type : EnumSet.of(SchedulableProgramType.MAPREDUCE, SchedulableProgramType.SPARK)) {
-      if (hasProgramType(workflowSpec, type)) {
-        ProgramType programType = ProgramType.valueOfSchedulableType(type);
-        ProgramRunner runner = programRunnerFactory.create(programType);
-        if (runner instanceof DistributedProgramRunner) {
-          runners.add((DistributedProgramRunner) runner);
-        }
-      }
-    }
-
-    final Iterator<DistributedProgramRunner> iterator = runners.iterator();
-    return new AbstractCloseableIterator<DistributedProgramRunner>() {
-      @Override
-      protected DistributedProgramRunner computeNext() {
-        return iterator.hasNext() ? iterator.next() : endOfData();
-      }
-
-      @Override
-      public void close() {
-        for (Closeable closeable : Iterables.filter(runners, Closeable.class)) {
-          Closeables.closeQuietly(closeable);
-        }
-      }
-    };
   }
 
   /**

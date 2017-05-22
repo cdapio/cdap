@@ -45,7 +45,7 @@ public class MapReduceContainerLauncher {
    * @param args          arguments for the main class
    */
   @SuppressWarnings("unused")
-  public static void launch(String mainClassName, String[] args) {
+  public static void launch(String mainClassName, String[] args) throws Exception {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
     List<URL> urls = ClassLoaders.getClassLoaderURLs(systemClassLoader, new ArrayList<URL>());
@@ -114,7 +114,11 @@ public class MapReduceContainerLauncher {
       mainMethod.invoke(null, new Object[]{args});
       LOG.info("Main method returned {}", mainClassName);
     } catch (Exception e) {
-      throw new RuntimeException("Failed to call " + mainClassName + ".main(String[])", e);
+      // LOG the exception since this exception will be propagated back to JVM
+      // and kill the main thread (hence the JVM process).
+      // If we don't log it here as ERROR, it will be logged by UncaughtExceptionHandler as DEBUG level
+      LOG.error("Exception raised when calling {}.main(String[]) method", mainClassName, e);
+      throw e;
     }
   }
 }

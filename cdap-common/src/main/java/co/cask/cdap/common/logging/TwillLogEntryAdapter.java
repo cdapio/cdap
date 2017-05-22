@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data.runtime.main;
+package co.cask.cdap.common.logging;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -29,11 +29,11 @@ import java.util.Map;
 /**
  * Adapter from {@link org.apache.twill.api.logging.LogEntry} to {@link ch.qos.logback.classic.spi.ILoggingEvent}.
  */
-public class TwillLogEntryAdapter implements ILoggingEvent {
+final class TwillLogEntryAdapter implements ILoggingEvent {
 
   private final LogEntry entry;
 
-  public TwillLogEntryAdapter(LogEntry entry) {
+  TwillLogEntryAdapter(LogEntry entry) {
     this.entry = entry;
   }
 

@@ -23,44 +23,55 @@ import co.cask.cdap.app.runtime.spark.distributed.DistributedSparkProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
+import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
+import com.google.inject.Binding;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.ProvisionException;
+import com.google.inject.spi.InstanceBinding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
  * A {@link ProgramRuntimeProvider} that provides runtime system support for {@link ProgramType#SPARK} program.
  * This class shouldn't have dependency on Spark classes.
  */
-public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
+public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRuntimeProvider.class);
 
   private final SparkCompat providerSparkCompat;
+  private final boolean filterScalaClasses;
   private ClassLoader distributedRunnerClassLoader;
   private URL[] classLoaderUrls;
 
-  // only used by SparkTwillRunnable to directly call createProgramRunner, not to check whether spark is supported.
-  public SparkProgramRuntimeProvider() {
-    this(SparkCompat.UNKNOWN);
+  protected SparkProgramRuntimeProvider(SparkCompat providerSparkCompat) {
+    this(providerSparkCompat, false);
   }
 
-  protected SparkProgramRuntimeProvider(SparkCompat providerSparkCompat) {
+  /**
+   * Constructor used by SparkTwillRunnable only in distributed mode to enable scala class filtering.
+   */
+  protected SparkProgramRuntimeProvider(SparkCompat providerSparkCompat, boolean filterScalaClasses) {
     this.providerSparkCompat = providerSparkCompat;
+    this.filterScalaClasses = filterScalaClasses;
   }
 
   @Override
@@ -76,13 +87,14 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
         boolean rewriteYarnClient = injector.getInstance(CConfiguration.class)
                                             .getBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE);
         try {
-          SparkRunnerClassLoader classLoader = createClassLoader(rewriteYarnClient);
+          SparkRunnerClassLoader classLoader = createClassLoader(filterScalaClasses, rewriteYarnClient);
           try {
             // Closing of the SparkRunnerClassLoader is done by the SparkProgramRunner when the program execution
             // finished.
             // The current CDAP call run right after it get a ProgramRunner and never reuse a ProgramRunner.
             // TODO: CDAP-5506 to refactor the program runtime architecture to remove the need of this assumption
-            return createSparkProgramRunner(injector, SparkProgramRunner.class.getName(), classLoader);
+            return createSparkProgramRunner(createRunnerInjector(injector, classLoader),
+                                            SparkProgramRunner.class.getName(), classLoader);
           } catch (Throwable t) {
             // If there is any exception, close the classloader
             Closeables.closeQuietly(classLoader);
@@ -98,8 +110,10 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
         // no SparkContext being created, hence no need to provide runtime isolation.
         // This also limits the amount of permgen usage to be constant in the CDAP master regardless of how
         // many Spark programs are running. We never need to close the SparkRunnerClassLoader until process shutdown.
-        return createSparkProgramRunner(injector, DistributedSparkProgramRunner.class.getName(),
-                                        getDistributedRunnerClassLoader());
+        ClassLoader classLoader = getDistributedRunnerClassLoader();
+        return createSparkProgramRunner(createRunnerInjector(injector, classLoader),
+                                        DistributedSparkProgramRunner.class.getName(),
+                                        classLoader);
       default:
         throw new IllegalArgumentException("Unsupported Spark execution mode " + mode);
     }
@@ -116,11 +130,40 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
     return false;
   }
 
+  /**
+   * Creates a guice {@link Injector} for instantiating program runner.
+   *
+   * @param injector the parent injector
+   * @param runnerClassLoader the classloader for the program runner class
+   * @return a new injector for injection for program runner.
+   */
+  private Injector createRunnerInjector(Injector injector, final ClassLoader runnerClassLoader) {
+    return injector.createChildInjector(new AbstractModule() {
+      @Override
+      protected void configure() {
+        // Add a binding for SparkCompat enum
+        // The binding needs to be on the enum class loaded by the runner classloader
+        try {
+          Class<? extends Enum> type = (Class<? extends Enum>) runnerClassLoader.loadClass(SparkCompat.class.getName());
+          bindEnum(binder(), type, providerSparkCompat.name());
+        } catch (ClassNotFoundException e) {
+          // This shouldn't happen
+          throw Throwables.propagate(e);
+        }
+      }
+
+      private <T extends Enum<T>> void bindEnum(Binder binder, Class<T> enumType, String name) {
+        // This workaround the enum generic
+        binder.bind(enumType).toInstance(Enum.valueOf(enumType, name));
+      }
+    });
+  }
+
   private synchronized ClassLoader getDistributedRunnerClassLoader() {
     try {
       if (distributedRunnerClassLoader == null) {
         // Never needs to rewrite yarn client in CDAP master, which is the only place using distributed program runner
-        distributedRunnerClassLoader = createClassLoader(false);
+        distributedRunnerClassLoader = createClassLoader(true, false);
       }
       return distributedRunnerClassLoader;
     } catch (IOException e) {
@@ -158,6 +201,13 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
    */
   private <T> T createInstance(Injector injector, Type type, ClassLoader sparkClassLoader) throws Exception {
     Key<?> typeKey = Key.get(type);
+
+    // If there is an explicit instance binding, return the binded instance directly
+    Binding<?> binding = injector.getExistingBinding(typeKey);
+    if (binding != null && binding instanceof InstanceBinding) {
+      return (T) ((InstanceBinding) binding).getInstance();
+    }
+
     @SuppressWarnings("unchecked")
     Class<T> rawType = (Class<T>) typeKey.getTypeLiteral().getRawType();
 
@@ -202,19 +252,26 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
     try {
       return type.getDeclaredConstructor();
     } catch (NoSuchMethodException e) {
-      throw new ProvisionException("No constructor is annotated with @Inject and there is no default constructor", e);
+      throw new ProvisionException(
+        "No constructor is annotated with @Inject and there is no default constructor for class " + type.getName(), e);
     }
   }
 
   /**
    * Returns an array of {@link URL} being used by the {@link ClassLoader} of this {@link Class}.
    */
-  private synchronized SparkRunnerClassLoader createClassLoader(boolean rewriteYarnClient) throws IOException {
-    SparkRunnerClassLoader classLoader;
+  private synchronized SparkRunnerClassLoader createClassLoader(boolean filterScalaClasses,
+                                                                boolean rewriteYarnClient) throws IOException {
+    // Determine if needs to filter Scala classes or not.
+    ClassLoader runnerParentClassLoader = filterScalaClasses
+      ? new ScalaFilterClassLoader(getClass().getClassLoader()) : getClass().getClassLoader();
+
     if (classLoaderUrls == null) {
       classLoaderUrls = getSparkClassloaderURLs(getClass().getClassLoader());
     }
-    classLoader = new SparkRunnerClassLoader(classLoaderUrls, getClass().getClassLoader(), rewriteYarnClient);
+
+    SparkRunnerClassLoader runnerClassLoader = new SparkRunnerClassLoader(classLoaderUrls,
+                                                                          runnerParentClassLoader, rewriteYarnClient);
 
     // CDAP-8087: Due to Scala 2.10 bug in not able to support runtime reflection from multiple threads,
     // we create the runtime mirror from this synchronized method
@@ -228,10 +285,10 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
       // Use reflection to call scala.reflect.runtime.package$.MODULE$.universe.runtimeMirror(classLoader)
       // The scala.reflect.runtime.package$ is the class, which has a public MODULE$ field, which is scala way of
       // doing singleton object.
-      // We use reflection to avoid code dependency on the scala version.
-      Object scalaReflect = classLoader.loadClass("scala.reflect.runtime.package$").getField("MODULE$").get(null);
+      // We use reflection to avoid code dependency  on the scala version.
+      Object scalaReflect = runnerClassLoader.loadClass("scala.reflect.runtime.package$").getField("MODULE$").get(null);
       Object javaMirrors = scalaReflect.getClass().getMethod("universe").invoke(scalaReflect);
-      javaMirrors.getClass().getMethod("runtimeMirror", ClassLoader.class).invoke(javaMirrors, classLoader);
+      javaMirrors.getClass().getMethod("runtimeMirror", ClassLoader.class).invoke(javaMirrors, runnerClassLoader);
     } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException e) {
       // The SI-6240 is fixed in Scala 2.11 anyway and older Scala version should have the classes and methods
       // that we try to invoke above.
@@ -243,7 +300,7 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
                  "Running multiple Spark from the same JVM process might fail due to Scala reflection bug SI-6240.", e);
     }
 
-    return classLoader;
+    return runnerClassLoader;
   }
 
   /**
@@ -251,14 +308,58 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
    * given {@link ClassLoader}.
    */
   private URL[] getSparkClassloaderURLs(ClassLoader classLoader) throws IOException {
-    List<URL> urls = ClassLoaders.getClassLoaderURLs(classLoader, new ArrayList<URL>());
+    List<URL> urls = ClassLoaders.getClassLoaderURLs(classLoader, new LinkedList<URL>());
 
-    // If Spark classes are not available in the given ClassLoader, try to locate the Spark assembly jar
+    // If Spark classes are not available in the given ClassLoader, try to locate the Spark framework
     // This class cannot have dependency on Spark directly, hence using the class resource to discover if SparkContext
     // is there
     if (classLoader.getResource("org/apache/spark/SparkContext.class") == null) {
-      urls.add(SparkPackageUtils.locateSparkAssemblyJar().toURI().toURL());
+      // The scala from the Spark library should replace the one from the parent classloader
+      Iterator<URL> itor = urls.iterator();
+      while (itor.hasNext()) {
+        URL url = itor.next();
+        if (url.getPath().contains("org.scala-lang")) {
+          itor.remove();
+        }
+      }
+
+      for (File file : SparkPackageUtils.getLocalSparkLibrary(providerSparkCompat)) {
+        urls.add(file.toURI().toURL());
+      }
     }
     return urls.toArray(new URL[urls.size()]);
+  }
+
+  /**
+   * A ClassLoader that filter out scala class.
+   */
+  private static final class ScalaFilterClassLoader extends ClassLoader {
+
+    ScalaFilterClassLoader(ClassLoader parent) {
+      super(new FilterClassLoader(parent, new FilterClassLoader.Filter() {
+        @Override
+        public boolean acceptResource(String resource) {
+          return !resource.startsWith("scala/") && !"scala.class".equals(resource);
+        }
+
+        @Override
+        public boolean acceptPackage(String packageName) {
+          return !packageName.startsWith("scala/");
+        }
+      }));
+    }
+
+    @Override
+    public URL getResource(String name) {
+      URL resource = super.getResource(name);
+      if (resource == null) {
+        return null;
+      }
+      // resource = jar:file:/path/to/cdap/lib/org.scala-lang.scala-library-2.10.4.jar!/library.properties
+      // baseClasspath = /path/to/cdap/lib/org.scala-lang.scala-library-2.10.4.jar
+      String baseClasspath = ClassLoaders.getClassPathURL(name, resource).getPath();
+      String jarName = baseClasspath.substring(baseClasspath.lastIndexOf('/') + 1, baseClasspath.length());
+      return jarName.startsWith("org.scala-lang") ? null : resource;
+    }
   }
 }

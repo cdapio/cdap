@@ -37,6 +37,7 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
+import co.cask.cdap.common.logging.LoggerLogHandler;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
@@ -112,9 +113,6 @@ import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunnerService;
-import org.apache.twill.api.logging.LogEntry;
-import org.apache.twill.api.logging.LogHandler;
-import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
@@ -136,7 +134,6 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.file.Files;
@@ -797,19 +794,7 @@ public class MasterServiceMain extends DaemonMain {
 
       // Attache the log handler to pipe container logs to master log
       if (cConf.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
-        if (LOG instanceof ch.qos.logback.classic.Logger) {
-          controller.addLogHandler(new LogHandler() {
-            @Override
-            public void onLog(LogEntry entry) {
-              ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LOG;
-              logger.callAppenders(new TwillLogEntryAdapter(entry));
-            }
-          });
-        } else {
-          LOG.warn("Unsupported logger binding ({}) for container log collection. Falling back to System.out.",
-                   LOG.getClass().getName());
-          controller.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
-        }
+        controller.addLogHandler(new LoggerLogHandler(LOG));
       }
 
       // Monitor the application

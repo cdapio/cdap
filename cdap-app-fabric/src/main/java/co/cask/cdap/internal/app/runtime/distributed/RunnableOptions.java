@@ -21,6 +21,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
  */
 final class RunnableOptions {
   static final String JAR = "jar";
+  static final String EXPANDED_JAR = "ejar";
   static final String HADOOP_CONF_FILE = "hConf";
   static final String CDAP_CONF_FILE = "cConf";
   static final String APP_SPEC_FILE = "appSpec";

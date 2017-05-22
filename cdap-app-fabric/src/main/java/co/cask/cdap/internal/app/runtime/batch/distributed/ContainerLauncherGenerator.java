@@ -79,7 +79,7 @@ public final class ContainerLauncherGenerator {
     mg.endMethod();
 
     // Generate the main method
-    // public static void main(String[] args) {
+    // public static void main(String[] args) throws Exception {
     //   System.out.println("Launch class .....");
     //   <MainDelegator>.launch(<className>, args);
     // }

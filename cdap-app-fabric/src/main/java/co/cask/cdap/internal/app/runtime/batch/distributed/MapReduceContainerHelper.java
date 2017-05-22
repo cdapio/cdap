@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch.distributed;
 
+import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -93,7 +94,7 @@ public final class MapReduceContainerHelper {
     try {
       // Parse the path. It can contains '#' to represent the localized file name
       URI uri = new URI(framework);
-      String linkName = uri.getFragment();
+      String localizedName = LocalizationUtils.getLocalizedName(uri);
 
       // The following resolution logic is copied from JobSubmitter in MR.
       FileSystem fs = FileSystem.get(hConf);
@@ -102,15 +103,7 @@ public final class MapReduceContainerHelper {
       frameworkPath = fc.resolvePath(frameworkPath);
       uri = frameworkPath.toUri();
 
-      // If doesn't have localized name (in the URI fragment), then use the last part of the URI path as name
-      if (linkName == null) {
-        linkName = uri.getPath();
-        int idx = linkName.lastIndexOf('/');
-        if (idx >= 0) {
-          linkName = linkName.substring(idx + 1);
-        }
-      }
-      return new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), null, linkName);
+      return new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), null, localizedName);
     } catch (URISyntaxException e) {
       LOG.warn("Failed to parse {} as a URI. MapReduce framework path is not used. Check the setting for {}.",
                framework, MRJobConfig.MAPREDUCE_APPLICATION_FRAMEWORK_PATH, e);

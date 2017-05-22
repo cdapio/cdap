@@ -273,7 +273,7 @@ object SparkRuntimeEnv {
       } catch {
         case t: Throwable => {
           // causes a strange compilation error in spark2 if we don't use obj.toString
-          LOG.debug("Unable to access field {} from object {}", fieldName, obj.toString, t)
+          LOG.trace("Unable to access field {} from object {}", fieldName, obj.toString, t)
           None
         }
       }
@@ -292,7 +292,7 @@ object SparkRuntimeEnv {
       } catch {
         case t: Throwable => {
           // causes a strange compilation error in spark2 if we don't use obj.toString
-          LOG.debug("Unable to invoke method {} from object {}", methodName, obj.toString, t)
+          LOG.trace("Unable to invoke method {} from object {}", methodName, obj.toString, t)
           None
         }
       }

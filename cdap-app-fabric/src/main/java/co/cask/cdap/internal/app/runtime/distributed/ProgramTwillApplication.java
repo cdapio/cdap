@@ -109,7 +109,7 @@ public final class ProgramTwillApplication implements TwillApplication {
     Builder.LocalFileAdder fileAdder;
     Builder.MoreFile moreFile = null;
     for (Map.Entry<String, LocalizeResource> entry : localizeResources.entrySet()) {
-      LOG.debug("Localizing file for {}: {} {} {}", programId, entry.getKey(), entry.getValue());
+      LOG.debug("Localizing file for {}: {} {}", programId, entry.getKey(), entry.getValue());
       fileAdder = (moreFile == null) ? builder.withLocalFiles() : moreFile;
       moreFile = fileAdder.add(entry.getKey(), entry.getValue().getURI(), entry.getValue().isArchive());
     }

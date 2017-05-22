@@ -33,14 +33,15 @@ import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Distributed ProgramRunner for Worker.
@@ -61,8 +62,9 @@ public class DistributedWorkerProgramRunner extends DistributedProgramRunner {
   }
 
   @Override
-  protected Map<String, ProgramTwillApplication.RunnableResource> getRunnables(Program program,
-                                                                               ProgramOptions programOptions) {
+  protected void validateOptions(Program program, ProgramOptions options) {
+    super.validateOptions(program, options);
+
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
@@ -72,18 +74,21 @@ public class DistributedWorkerProgramRunner extends DistributedProgramRunner {
 
     WorkerSpecification workerSpec = appSpec.getWorkers().get(program.getName());
     Preconditions.checkNotNull(workerSpec, "Missing WorkerSpecification for %s", program.getName());
+  }
 
-    String instances = programOptions.getArguments().getOption(ProgramOptionConstants.INSTANCES,
+  @Override
+  protected void setupLaunchConfig(LaunchConfig launchConfig, Program program, ProgramOptions options,
+                                   CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
+    ApplicationSpecification appSpec = program.getApplicationSpecification();
+    WorkerSpecification workerSpec = appSpec.getWorkers().get(program.getName());
+
+    String instances = options.getArguments().getOption(ProgramOptionConstants.INSTANCES,
                                                         String.valueOf(workerSpec.getInstances()));
-    Resources resources = SystemArguments.getResources(programOptions.getUserArguments(),
+    Resources resources = SystemArguments.getResources(options.getUserArguments(),
                                                        workerSpec.getResources());
 
-    Map<String, ProgramTwillApplication.RunnableResource> runnables = new HashMap<>();
-    runnables.put(workerSpec.getName(),
-                  new ProgramTwillApplication.RunnableResource(
-                    new WorkerTwillRunnable(workerSpec.getName()),
-                    createResourceSpec(resources, Integer.parseInt(instances))));
-    return runnables;
+    launchConfig.addRunnable(workerSpec.getName(), new WorkerTwillRunnable(workerSpec.getName()),
+                             resources, Integer.parseInt(instances));
   }
 
   @Override
