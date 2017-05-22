@@ -65,7 +65,8 @@ public class LocalRouteStore implements RouteStore  {
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), txClient,
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)), RetryStrategies.retryOnConflict(20, 100));
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null, LocalRouteStore.class.getSimpleName())),
+      RetryStrategies.retryOnConflict(20, 100));
   }
 
   private KeyValueTable getRouteTable(DatasetContext context) throws IOException, DatasetManagementException {

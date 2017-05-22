@@ -140,7 +140,7 @@ public class DatasetTypeService extends AbstractIdleService {
       ImmutableMap.of(
         DatasetMetaTableUtil.META_TABLE_NAME, emptyArgs,
         DatasetMetaTableUtil.INSTANCE_TABLE_NAME, emptyArgs
-      ));
+      ), DatasetTypeService.class.getSimpleName());
     this.defaultModules = new LinkedHashMap<>(defaultModules);
     this.extensionModules = getExtensionModules(cConf);
   }

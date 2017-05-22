@@ -59,7 +59,7 @@ public class FileMetaDataManager {
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), txClient,
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null, FileMetaDataManager.class.getSimpleName())),
       RetryStrategies.retryOnConflict(20, 100)
     );
   }

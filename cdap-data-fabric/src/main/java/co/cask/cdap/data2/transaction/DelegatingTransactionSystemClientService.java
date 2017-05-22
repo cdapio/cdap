@@ -52,8 +52,23 @@ public class DelegatingTransactionSystemClientService
   }
 
   @Override
+  public Transaction startShort(String clientId) {
+    return delegate.startShort(clientId);
+  }
+
+  @Override
+  public Transaction startShort(String clientId, int timeout) {
+    return delegate.startShort(clientId, timeout);
+  }
+
+  @Override
   public Transaction startLong() {
     return delegate.startLong();
+  }
+
+  @Override
+  public Transaction startLong(String clientId) {
+    return delegate.startLong(clientId);
   }
 
   @Override

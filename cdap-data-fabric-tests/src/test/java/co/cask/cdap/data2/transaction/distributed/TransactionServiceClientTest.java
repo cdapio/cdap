@@ -186,8 +186,8 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
 
   @Test
   @Override
-  public void testNegativeTimeout() throws Exception {
-    super.testNegativeTimeout();
+  public void testIllegalArguments() throws Exception {
+    super.testIllegalArguments();
   }
 
   @Test

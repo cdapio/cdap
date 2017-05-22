@@ -49,4 +49,24 @@ public class RetryingShortTransactionSystemClient extends RetryingTransactionSys
       }
     });
   }
+
+  @Override
+  public Transaction startShort(final String clientId) {
+    return supplyWithRetries(new Supplier<Transaction>() {
+      @Override
+      public Transaction get() {
+        return delegate.startShort(clientId);
+      }
+    });
+  }
+
+  @Override
+  public Transaction startShort(final String clientId, final int timeout) {
+    return supplyWithRetries(new Supplier<Transaction>() {
+      @Override
+      public Transaction get() {
+        return delegate.startShort(clientId, timeout);
+      }
+    });
+  }
 }
