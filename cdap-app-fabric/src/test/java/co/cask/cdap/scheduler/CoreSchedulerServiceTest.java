@@ -18,6 +18,7 @@ package co.cask.cdap.scheduler;
 
 import co.cask.cdap.AppWithFrequentScheduledWorkflows;
 import co.cask.cdap.api.Config;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.app.store.Store;
@@ -39,7 +40,6 @@ import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
