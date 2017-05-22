@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -117,6 +118,11 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   @Override
   public Map<String, ScheduleSpecification> getSchedules() {
     return delegate.getSchedules();
+  }
+
+  @Override
+  public Map<String, ScheduleCreationSpec> getProgramSchedules() {
+    return delegate.getProgramSchedules();
   }
 
   @Override

@@ -40,14 +40,14 @@ import co.cask.cdap.internal.app.preview.DefaultDataTracerFactory;
 import co.cask.cdap.internal.app.preview.DefaultPreviewRunner;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
-import co.cask.cdap.internal.app.runtime.schedule.NoopScheduler;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.preview.DefaultPreviewStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.route.store.LocalRouteStore;
 import co.cask.cdap.route.store.RouteStore;
+import co.cask.cdap.scheduler.NoOpScheduler;
+import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
@@ -139,7 +139,9 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(PreviewRunner.class);
 
     bind(PreviewStore.class).to(DefaultPreviewStore.class).in(Scopes.SINGLETON);
-    bind(Scheduler.class).to(NoopScheduler.class);
+    bind(Scheduler.class).to(NoOpScheduler.class);
+    bind(co.cask.cdap.internal.app.runtime.schedule.Scheduler.class)
+      .to(co.cask.cdap.internal.app.runtime.schedule.NoOpScheduler.class);
 
     bind(DataTracerFactory.class).to(DefaultDataTracerFactory.class);
     expose(DataTracerFactory.class);

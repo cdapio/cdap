@@ -480,6 +480,22 @@
   </property>
 
   <property>
+    <name>time.event.topic</name>
+    <value>timeevent</value>
+    <description>
+      Topic name for publishing time events from time scheduler to the messaging system
+    </description>
+  </property>
+
+  <property>
+    <name>stream.size.event.topic</name>
+    <value>streamsizeevent</value>
+    <description>
+      Topic name for publishing time events from stream size scheduler to the messaging system
+    </description>
+  </property>
+
+  <property>
     <name>workflow.token.max.size.mb</name>
     <value>30</value>
     <description>
@@ -540,6 +556,14 @@
     <value>104857600</value>
     <description>
       Cache size in bytes for data fabric when in Standalone CDAP
+    </description>
+  </property>
+
+  <property>
+    <name>data.event.topic</name>
+    <value>dataevent</value>
+    <description>
+      Topic name for publishing data events to the messaging system
     </description>
   </property>
 
@@ -1656,7 +1680,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic}</value>
+    <value>${audit.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic},${time.event.topic},${stream.size.event.topic}</value>
     <description>
       A comma-separated list of topics that are always available in the
       system namespace. Multiple topics sharing the same prefix and

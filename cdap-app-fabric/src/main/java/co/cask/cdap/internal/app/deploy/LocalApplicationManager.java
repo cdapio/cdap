@@ -29,9 +29,8 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationVerificationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
-import co.cask.cdap.internal.app.deploy.pipeline.CreateSchedulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateStreamsStage;
-import co.cask.cdap.internal.app.deploy.pipeline.DeleteScheduleStage;
+import co.cask.cdap.internal.app.deploy.pipeline.DeleteAndCreateSchedulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentCleanupStage;
@@ -85,6 +84,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final PrivilegesManager privilegesManager;
   private final Impersonator impersonator;
   private final AuthenticationContext authenticationContext;
+  private final co.cask.cdap.scheduler.Scheduler programScheduler;
 
   @Inject
   LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
@@ -95,7 +95,8 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
                           UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
                           MetadataStore metadataStore, PrivilegesManager privilegesManager,
-                          Impersonator impersonator, AuthenticationContext authenticationContext) {
+                          Impersonator impersonator, AuthenticationContext authenticationContext,
+                          co.cask.cdap.scheduler.Scheduler programScheduler) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.store = store;
@@ -114,6 +115,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.privilegesManager = privilegesManager;
     this.impersonator = impersonator;
     this.authenticationContext = authenticationContext;
+    this.programScheduler = programScheduler;
   }
 
   @Override
@@ -127,9 +129,8 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory, queueAdmin,
                                                     metricStore, metadataStore, privilegesManager, impersonator));
     pipeline.addLast(new ProgramGenerationStage(privilegesManager, authenticationContext));
-    pipeline.addLast(new DeleteScheduleStage(scheduler));
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
-    pipeline.addLast(new CreateSchedulesStage(scheduler));
+    pipeline.addLast(new DeleteAndCreateSchedulesStage(programScheduler, scheduler));
     pipeline.addLast(new SystemMetadataWriterStage(metadataStore));
     pipeline.setFinally(new DeploymentCleanupStage());
     return pipeline.execute(input);

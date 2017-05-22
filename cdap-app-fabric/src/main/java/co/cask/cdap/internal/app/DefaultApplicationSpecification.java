@@ -28,6 +28,7 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.collect.ImmutableMap;
 
@@ -53,6 +54,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final Map<String, WorkflowSpecification> workflows;
   private final Map<String, ServiceSpecification> services;
   private final Map<String, ScheduleSpecification> schedules;
+  private final Map<String, ScheduleCreationSpec> programSchedules;
   private final Map<String, WorkerSpecification> workers;
   private final Map<String, Plugin> plugins;
 
@@ -67,10 +69,12 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, WorkflowSpecification> workflows,
                                          Map<String, ServiceSpecification> services,
                                          Map<String, ScheduleSpecification> schedules,
+                                         Map<String, ScheduleCreationSpec> programSchedules,
                                          Map<String, WorkerSpecification> workers,
                                          Map<String, Plugin> plugins) {
     this(name, ApplicationId.DEFAULT_VERSION, description, configuration, artifactId, streams, datasetModules,
-         datasetInstances, flows, mapReduces, sparks, workflows, services, schedules, workers, plugins);
+         datasetInstances, flows, mapReduces, sparks, workflows, services, schedules, programSchedules, workers,
+         plugins);
   }
 
   public DefaultApplicationSpecification(String name, String appVersion, String description, String configuration,
@@ -84,6 +88,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, WorkflowSpecification> workflows,
                                          Map<String, ServiceSpecification> services,
                                          Map<String, ScheduleSpecification> schedules,
+                                         Map<String, ScheduleCreationSpec> programSchedules,
                                          Map<String, WorkerSpecification> workers,
                                          Map<String, Plugin> plugins) {
     this.name = name;
@@ -100,6 +105,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this.workflows = ImmutableMap.copyOf(workflows);
     this.services = ImmutableMap.copyOf(services);
     this.schedules = ImmutableMap.copyOf(schedules);
+    this.programSchedules = ImmutableMap.copyOf(programSchedules);
     this.workers = ImmutableMap.copyOf(workers);
     this.plugins = ImmutableMap.copyOf(plugins);
   }
@@ -177,6 +183,10 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   @Override
   public Map<String, ScheduleSpecification> getSchedules() {
     return schedules;
+  }
+
+  public Map<String, ScheduleCreationSpec> getProgramSchedules() {
+    return programSchedules;
   }
 
   @Override

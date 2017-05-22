@@ -21,11 +21,13 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -104,6 +106,34 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       }
     }
   }
+
+  @Override
+  public void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException, SchedulerException {
+    if (schedule.getTrigger() instanceof ProtoTrigger.TimeTrigger) {
+      timeScheduler.addProgramSchedule(schedule);
+    } else if (schedule.getTrigger() instanceof ProtoTrigger.StreamSizeTrigger) {
+      streamSizeScheduler.addProgramSchedule(schedule);
+    }
+  }
+
+  @Override
+  public void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException {
+    if (schedule.getTrigger() instanceof ProtoTrigger.TimeTrigger) {
+      timeScheduler.updateProgramSchedule(schedule);
+    } else if (schedule.getTrigger() instanceof ProtoTrigger.StreamSizeTrigger) {
+      streamSizeScheduler.updateProgramSchedule(schedule);
+    }
+  }
+
+  @Override
+  public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    if (schedule.getTrigger() instanceof ProtoTrigger.TimeTrigger) {
+      timeScheduler.deleteProgramSchedule(schedule);
+    } else if (schedule.getTrigger() instanceof ProtoTrigger.StreamSizeTrigger) {
+      streamSizeScheduler.deleteProgramSchedule(schedule);
+    }
+  }
+
 
   @Override
   public void schedule(ProgramId programId, SchedulableProgramType programType, Schedule schedule)

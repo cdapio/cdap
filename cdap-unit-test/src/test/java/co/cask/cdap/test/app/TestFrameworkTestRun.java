@@ -801,6 +801,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     String scheduleName = schedules.get(0).getSchedule().getName();
     Assert.assertNotNull(scheduleName);
     Assert.assertFalse(scheduleName.isEmpty());
+
+    final int initialRuns = wfmanager.getHistory().size();
+    LOG.info("initialRuns = {}", initialRuns);
     wfmanager.getSchedule(scheduleName).resume();
 
     String status = wfmanager.getSchedule(scheduleName).status(200);
@@ -810,13 +813,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        return !wfmanager.getHistory().isEmpty();
+        return wfmanager.getHistory().size() > initialRuns;
       }
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     wfmanager.getSchedule(scheduleName).suspend();
     waitForScheduleState(scheduleName, wfmanager, Scheduler.ScheduleState.SUSPENDED);
 
+    TimeUnit.SECONDS.sleep(3); // Sleep for three seconds to make sure scheduled workflows are pending to run
     // All runs should be completed
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
@@ -832,6 +836,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     List<RunRecord> history = wfmanager.getHistory();
     int workflowRuns = history.size();
+    LOG.info("workflowRuns = {}", workflowRuns);
     Assert.assertTrue(workflowRuns > 0);
 
     //Sleep for some time and verify there are no more scheduled jobs after the suspend.

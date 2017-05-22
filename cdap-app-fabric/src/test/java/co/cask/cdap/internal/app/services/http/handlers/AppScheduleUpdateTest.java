@@ -19,10 +19,10 @@ package co.cask.cdap.internal.app.services.http.handlers;
 import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import org.junit.Assert;
@@ -56,9 +56,9 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
     ApplicationId defaultAppId = TEST_NAMESPACE_META2.getNamespaceId().app(AppWithSchedule.NAME);
     Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
 
-    List<ScheduleSpecification> actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
-                                                               defaultAppId.getApplication(),
-                                                               defaultAppId.getVersion());
+    List<ScheduleDetail> actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
+                                                        defaultAppId.getApplication(),
+                                                        defaultAppId.getVersion());
 
     // none of the schedules will be added - by default we have set update schedules to be false as system property.
     Assert.assertEquals(0, actualSchSpecs.size());
@@ -81,7 +81,6 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
 
-
     Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
 
     actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
@@ -95,7 +94,6 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
     request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
 
-
     Assert.assertEquals(200, deploy(defaultAppId, request).getStatusLine().getStatusCode());
 
     actualSchSpecs = listSchedules(TEST_NAMESPACE_META2.getNamespaceId().getNamespace(),
@@ -105,5 +103,4 @@ public class AppScheduleUpdateTest extends AppFabricTestBase {
     // workflow is deleted, so the schedules will be deleted now
     Assert.assertEquals(0, actualSchSpecs.size());
   }
-
 }

@@ -19,9 +19,15 @@ package co.cask.cdap.common.conf;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.BindingAnnotation;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Constants used by different systems are all defined here.
@@ -243,6 +249,14 @@ public final class Constants {
   public class Scheduler {
     public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
     public static final String CFG_SCHEDULER_MISFIRE_THRESHOLD_MS = "scheduler.misfire.threshold.ms";
+    /**
+     * Topic name for publishing time events from time scheduler to the messaging system
+     */
+    public static final String TIME_EVENT_TOPIC = "time.event.topic";
+    /**
+     * Topic name for publishing time events from stream size scheduler to the messaging system
+     */
+    public static final String STREAM_SIZE_EVENT_TOPIC = "stream.size.event.topic";
   }
 
   /**
@@ -316,6 +330,8 @@ public final class Constants {
 
     public static final String DATASET_UNCHECKED_UPGRADE = "dataset.unchecked.upgrade";
 
+    public static final String DATA_EVENT_TOPIC = "data.event.topic";
+
     /**
      * Constants for PartitionedFileSet's DynamicPartitioner
      */
@@ -345,6 +361,14 @@ public final class Constants {
       public static final int DEFAULT_EXEC_THREADS = 10;
       public static final int DEFAULT_BOSS_THREADS = 1;
       public static final int DEFAULT_WORKER_THREADS = 4;
+
+      /**
+       * Annotation for binding default dataset modules for the dataset service
+       */
+      @Retention(RUNTIME)
+      @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
+      @BindingAnnotation
+      public @interface DefaultDatasetModules { }
     }
 
     /**

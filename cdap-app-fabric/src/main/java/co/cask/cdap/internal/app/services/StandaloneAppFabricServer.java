@@ -27,9 +27,9 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.plugin.PluginService;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.route.store.RouteStore;
+import co.cask.cdap.scheduler.CoreSchedulerService;
 import co.cask.http.HttpHandler;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -53,7 +53,6 @@ public class StandaloneAppFabricServer extends AppFabricServer {
   public StandaloneAppFabricServer(CConfiguration cConf,
                                    SConfiguration sConf,
                                    DiscoveryService discoveryService,
-                                   SchedulerService schedulerService,
                                    NotificationService notificationService,
                                    @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
                                    @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
@@ -68,11 +67,12 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    MetricStore metricStore,
                                    SystemArtifactLoader systemArtifactLoader,
                                    PluginService pluginService,
-                                   RouteStore routeStore) {
-    super(cConf, sConf, discoveryService, schedulerService, notificationService, hostname, handlers,
+                                   RouteStore routeStore,
+                                   CoreSchedulerService coreSchedulerService) {
+    super(cConf, sConf, discoveryService, notificationService, hostname, handlers,
           metricsCollectionService, programRuntimeService, applicationLifecycleService,
           programLifecycleService, streamCoordinatorClient, servicesNames, handlerHookNames, namespaceAdmin,
-          systemArtifactLoader, pluginService, null, routeStore);
+          systemArtifactLoader, pluginService, null, routeStore, coreSchedulerService);
     this.metricStore = metricStore;
   }
 

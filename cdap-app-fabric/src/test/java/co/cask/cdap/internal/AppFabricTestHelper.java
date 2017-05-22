@@ -55,15 +55,18 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -122,13 +125,20 @@ public class AppFabricTestHelper {
         configuration.getBoolean(Constants.Security.Authorization.ENABLED)) {
         injector.getInstance(AuthorizationBootstrapper.class).run();
       }
+      MessagingService messagingService = injector.getInstance(MessagingService.class);
+      if (messagingService instanceof Service) {
+        ((Service) messagingService).startAndWait();
+      }
       injector.getInstance(TransactionManager.class).startAndWait();
       injector.getInstance(DatasetOpExecutor.class).startAndWait();
       injector.getInstance(DatasetService.class).startAndWait();
-      injector.getInstance(SchedulerService.class).startAndWait();
       injector.getInstance(StreamCoordinatorClient.class).startAndWait();
       injector.getInstance(NotificationService.class).startAndWait();
       injector.getInstance(MetricsCollectionService.class).startAndWait();
+      Scheduler programScheduler = injector.getInstance(Scheduler.class);
+      if (programScheduler instanceof Service) {
+        ((Service) programScheduler).startAndWait();
+      }
     }
     return injector;
   }

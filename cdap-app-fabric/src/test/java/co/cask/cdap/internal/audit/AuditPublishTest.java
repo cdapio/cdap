@@ -74,7 +74,6 @@ public class AuditPublishTest {
   private static MessagingService messagingService;
   private static TopicId auditTopic;
 
-
   @BeforeClass
   public static void init() throws Exception {
     cConf = CConfiguration.create();

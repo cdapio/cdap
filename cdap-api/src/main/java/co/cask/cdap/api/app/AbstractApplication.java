@@ -21,6 +21,7 @@ import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleConfigurer;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
@@ -169,5 +170,17 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
    */
   protected void scheduleWorkflow(Schedule schedule, String workflowName, Map<String, String> properties) {
     configurer.addSchedule(schedule, SchedulableProgramType.WORKFLOW, workflowName, properties);
+  }
+
+
+  /**
+   * Schedule the specified {@link Workflow}
+   * @param scheduleName the name of the schedule
+   * @param workflowName the name of the Workflow
+   *
+   * @return The {@link ScheduleConfigurer} used to configure the schedule
+   */
+  protected ScheduleConfigurer configureWorkflowSchedule(String scheduleName, String workflowName) {
+    return configurer.configureWorkflowSchedule(scheduleName, workflowName);
   }
 }

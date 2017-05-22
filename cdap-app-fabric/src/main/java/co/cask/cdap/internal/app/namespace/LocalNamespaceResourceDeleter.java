@@ -26,14 +26,11 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -42,22 +39,20 @@ import java.util.List;
  */
 public class LocalNamespaceResourceDeleter extends AbstractNamespaceResourceDeleter {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LocalNamespaceResourceDeleter.class);
-
   private final StreamAdmin streamAdmin;
   private final StreamHandler streamHandler;
 
   @Inject
   LocalNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesStore preferencesStore,
                                 DashboardStore dashboardStore, DatasetFramework dsFramework, QueueAdmin queueAdmin,
-                                MetricStore metricStore, Scheduler scheduler,
+                                MetricStore metricStore,
                                 ApplicationLifecycleService applicationLifecycleService,
                                 ArtifactRepository artifactRepository,
                                 StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
                                 MessagingService messagingService, StreamAdmin streamAdmin,
                                 StreamHandler streamHandler) {
     super(impersonator, store, preferencesStore, dashboardStore, dsFramework, queueAdmin, metricStore,
-          scheduler, applicationLifecycleService, artifactRepository, storageProviderNamespaceAdmin, messagingService);
+          applicationLifecycleService, artifactRepository, storageProviderNamespaceAdmin, messagingService);
     this.streamAdmin = streamAdmin;
     this.streamHandler = streamHandler;
 

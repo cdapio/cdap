@@ -32,10 +32,10 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceEnsurer;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginService;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.route.store.RouteStore;
+import co.cask.cdap.scheduler.CoreSchedulerService;
 import co.cask.cdap.security.tools.KeyStores;
 import co.cask.cdap.security.tools.SSLHandlerFactory;
 import co.cask.http.HandlerHook;
@@ -76,7 +76,6 @@ public class AppFabricServer extends AbstractIdleService {
 
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
-  private final SchedulerService schedulerService;
   private final ProgramRuntimeService programRuntimeService;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final NotificationService notificationService;
@@ -86,6 +85,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final ProgramLifecycleService programLifecycleService;
   private final SystemArtifactLoader systemArtifactLoader;
   private final PluginService pluginService;
+  private final CoreSchedulerService coreSchedulerService;
   private final AppVersionUpgradeService appVersionUpgradeService;
   private final RouteStore routeStore;
   private final CConfiguration cConf;
@@ -104,7 +104,7 @@ public class AppFabricServer extends AbstractIdleService {
   @Inject
   public AppFabricServer(CConfiguration cConf, SConfiguration sConf,
                          DiscoveryService discoveryService,
-                         SchedulerService schedulerService, NotificationService notificationService,
+                         NotificationService notificationService,
                          @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
                          @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
@@ -118,10 +118,10 @@ public class AppFabricServer extends AbstractIdleService {
                          SystemArtifactLoader systemArtifactLoader,
                          PluginService pluginService,
                          @Nullable AppVersionUpgradeService appVersionUpgradeService,
-                         RouteStore routeStore) {
+                         RouteStore routeStore,
+                         CoreSchedulerService coreSchedulerService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
-    this.schedulerService = schedulerService;
     this.handlers = handlers;
     this.cConf = cConf;
     this.sConf = sConf;
@@ -139,6 +139,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.routeStore = routeStore;
     this.defaultNamespaceEnsurer = new DefaultNamespaceEnsurer(namespaceAdmin);
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
+    this.coreSchedulerService = coreSchedulerService;
   }
 
   /**
@@ -152,13 +153,13 @@ public class AppFabricServer extends AbstractIdleService {
     Futures.allAsList(
       ImmutableList.of(
         notificationService.start(),
-        schedulerService.start(),
         applicationLifecycleService.start(),
         systemArtifactLoader.start(),
         programRuntimeService.start(),
         streamCoordinatorClient.start(),
         programLifecycleService.start(),
-        pluginService.start()
+        pluginService.start(),
+        coreSchedulerService.start()
       )
     ).get();
 
@@ -266,11 +267,11 @@ public class AppFabricServer extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
+    coreSchedulerService.stopAndWait();
     routeStore.close();
     defaultNamespaceEnsurer.stopAndWait();
     httpService.stopAndWait();
     programRuntimeService.stopAndWait();
-    schedulerService.stopAndWait();
     applicationLifecycleService.stopAndWait();
     systemArtifactLoader.stopAndWait();
     notificationService.stopAndWait();

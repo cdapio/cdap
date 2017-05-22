@@ -28,10 +28,11 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data.ProgramContext;
+import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
-import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
@@ -48,8 +49,6 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Objects;
@@ -149,16 +148,9 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   }
 
   @Override
-  public void initContext(ProgramRunId run) {
+  public void setContext(ProgramContext programContext) {
     if (datasetFramework instanceof ProgramContextAware) {
-      ((ProgramContextAware) datasetFramework).initContext(run);
-    }
-  }
-
-  @Override
-  public void initContext(ProgramRunId run, NamespacedEntityId componentId) {
-    if (datasetFramework instanceof ProgramContextAware) {
-      ((ProgramContextAware) datasetFramework).initContext(run, componentId);
+      ((ProgramContextAware) datasetFramework).setContext(programContext);
     }
   }
 

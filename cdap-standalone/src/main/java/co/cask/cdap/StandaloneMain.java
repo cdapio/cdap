@@ -470,7 +470,6 @@ public class StandaloneMain {
       new MetricsHandlerModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new LocationRuntimeModule().getStandaloneModules(),
-      new AppFabricServiceRuntimeModule().getStandaloneModules(),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
@@ -497,6 +496,7 @@ public class StandaloneMain {
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new PreviewHttpModule(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
+      new AppFabricServiceRuntimeModule().getStandaloneModules(),
       new OperationalStatsModule()
     );
   }

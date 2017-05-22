@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.guice;
 
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
@@ -61,6 +62,7 @@ import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
 import co.cask.cdap.gateway.handlers.meta.RemotePrivilegesHandler;
 import co.cask.cdap.gateway.handlers.preview.PreviewHttpHandler;
+import co.cask.cdap.internal.app.AppFabricDatasetModule;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -100,6 +102,7 @@ import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.route.store.LocalRouteStore;
 import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.route.store.ZKRouteStore;
+import co.cask.cdap.scheduler.CoreSchedulerService;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.DefaultUGIProvider;
@@ -335,13 +338,19 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
           })
       );
 
+      // Bind system datasets defined in App-fabric
+      MapBinder<String, DatasetModule> datasetModuleBinder = MapBinder.newMapBinder(
+        binder(), String.class, DatasetModule.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
+      datasetModuleBinder.addBinding("app-fabric").toInstance(new AppFabricDatasetModule());
+
       bind(Store.class).to(DefaultStore.class);
       // we can simply use DefaultStore for RuntimeStore, when its not running in a separate container
       bind(RuntimeStore.class).to(DefaultStore.class);
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-
+      bind(CoreSchedulerService.class).in(Scopes.SINGLETON);
+      bind(co.cask.cdap.scheduler.Scheduler.class).to(CoreSchedulerService.class);
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
 

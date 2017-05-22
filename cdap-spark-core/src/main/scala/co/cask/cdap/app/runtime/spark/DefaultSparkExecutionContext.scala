@@ -29,15 +29,15 @@ import org.apache.spark.rdd.RDD
 class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext, localizeResources: util.Map[String, File])
   extends AbstractSparkExecutionContext(runtimeContext, localizeResources) {
 
-    override protected def saveAsNewAPIHadoopDataset[K: ClassManifest, V: ClassManifest](sc: SparkContext,
-                                                                                         conf: Configuration,
-                                                                                         rdd: RDD[(K, V)]): Unit = {
-      // In Spark 1.2, we have to use the SparkContext.rddToPairRDDFunctions because the implicit
-      // conversion from RDD is not available.
-      if (sc.version == "1.2" || sc.version.startsWith("1.2.")) {
-        SparkContext.rddToPairRDDFunctions(rdd).saveAsNewAPIHadoopDataset(conf)
-      } else {
-        rdd.saveAsNewAPIHadoopDataset(conf)
-      }
+  override protected def saveAsNewAPIHadoopDataset[K: ClassManifest, V: ClassManifest](sc: SparkContext,
+                                                                                       conf: Configuration,
+                                                                                       rdd: RDD[(K, V)]): Unit = {
+    // In Spark 1.2, we have to use the SparkContext.rddToPairRDDFunctions because the implicit
+    // conversion from RDD is not available.
+    if (sc.version == "1.2" || sc.version.startsWith("1.2.")) {
+      SparkContext.rddToPairRDDFunctions(rdd).saveAsNewAPIHadoopDataset(conf)
+    } else {
+      rdd.saveAsNewAPIHadoopDataset(conf)
     }
   }
+}

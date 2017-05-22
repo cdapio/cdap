@@ -80,7 +80,6 @@ import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.handlers.AuthorizationHandler;
 import co.cask.cdap.internal.app.runtime.messaging.BasicMessagingAdmin;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.MessagingService;
@@ -102,6 +101,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
@@ -187,7 +187,7 @@ public class TestBase {
   private static boolean firstInit = true;
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
-  private static SchedulerService schedulerService;
+  private static Scheduler scheduler;
   private static ExploreExecutorService exploreExecutorService;
   private static ExploreClient exploreClient;
   private static DatasetOpExecutor dsOpService;
@@ -201,6 +201,7 @@ public class TestBase {
   private static SecureStore secureStore;
   private static SecureStoreManager secureStoreManager;
   private static MessagingService messagingService;
+  private static Scheduler programScheduler;
   private static MessagingContext messagingContext;
   private static PreviewManager previewManager;
 
@@ -307,8 +308,10 @@ public class TestBase {
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
-    schedulerService = injector.getInstance(SchedulerService.class);
-    schedulerService.startAndWait();
+    scheduler = injector.getInstance(Scheduler.class);
+    if (scheduler instanceof Service) {
+      ((Service) scheduler).startAndWait();
+    }
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
       exploreExecutorService.startAndWait();
@@ -322,6 +325,11 @@ public class TestBase {
     }
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     streamCoordinatorClient.startAndWait();
+    programScheduler = injector.getInstance(Scheduler.class);
+    if (programScheduler instanceof Service) {
+      ((Service) programScheduler).startAndWait();
+    }
+
     testManager = injector.getInstance(UnitTestManager.class);
     metricsManager = injector.getInstance(MetricsManager.class);
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
@@ -469,10 +477,16 @@ public class TestBase {
 
     namespaceAdmin.delete(NamespaceId.DEFAULT);
     authorizerInstantiator.close();
+
+    if (programScheduler instanceof Service) {
+      ((Service) programScheduler).stopAndWait();
+    }
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.stopAndWait();
-    schedulerService.stopAndWait();
+    if (scheduler instanceof Service) {
+      ((Service) scheduler).stopAndWait();
+    }
     if (exploreClient != null) {
       Closeables.closeQuietly(exploreClient);
     }
@@ -484,7 +498,7 @@ public class TestBase {
     txService.stopAndWait();
 
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).stopAndWait();
     }
   }
 

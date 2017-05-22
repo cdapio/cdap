@@ -202,13 +202,17 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
       switch (program.getProgramType()) {
         case WORKFLOW:
           if (!specification.getWorkflows().containsKey(program.getProgramName())) {
-            throw new RuntimeException(String.format("Workflow '%s' is not configured with the Application.",
-                                                     program.getProgramName()));
+            throw new RuntimeException(String.format("Schedule '%s' is invalid: Workflow '%s' is not configured " +
+                                                       "in application '%s'",
+                                                     entry.getValue().getSchedule().getName(),
+                                                     program.getProgramName(), specification.getName()));
           }
           break;
         default:
-          throw new RuntimeException(String.format("Program '%s' with Program Type '%s' cannot be scheduled.",
-                                                   program.getProgramName(), program.getProgramType()));
+          throw new RuntimeException(String.format("Schedule '%s' of application '%s' is invalid: Program '%s' " +
+                                                     "has type '%s', which cannot be scheduled.",
+                                                   program.getProgramName(), specification.getName(),
+                                                   program.getProgramType()));
       }
 
       // TODO StreamSizeSchedules should be resilient to stream inexistence [CDAP-1446]

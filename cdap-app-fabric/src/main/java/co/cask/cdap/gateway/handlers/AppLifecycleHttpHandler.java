@@ -16,8 +16,8 @@
 
 package co.cask.cdap.gateway.handlers;
 
+
 import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.ApplicationNotFoundException;
@@ -41,7 +41,6 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -50,6 +49,7 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
@@ -108,7 +108,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final ProgramRuntimeService runtimeService;
 
   private final CConfiguration configuration;
-  private final Scheduler scheduler;
+  private final Scheduler programScheduler;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final ApplicationLifecycleService applicationLifecycleService;
@@ -116,13 +116,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   AppLifecycleHttpHandler(CConfiguration configuration,
-                          Scheduler scheduler, ProgramRuntimeService runtimeService,
+                          Scheduler programScheduler,
+                          ProgramRuntimeService runtimeService,
                           NamespaceQueryAdmin namespaceQueryAdmin,
                           NamespacedLocationFactory namespacedLocationFactory,
                           ApplicationLifecycleService applicationLifecycleService) {
     this.configuration = configuration;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
-    this.scheduler = scheduler;
+    this.programScheduler = programScheduler;
     this.runtimeService = runtimeService;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.applicationLifecycleService = applicationLifecycleService;
@@ -506,7 +507,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             stopProgramIfRunning(programId);
             break;
           case WORKFLOW:
-            scheduler.deleteSchedules(programId, SchedulableProgramType.WORKFLOW);
+            programScheduler.deleteSchedules(programId);
             break;
           case MAPREDUCE:
             //no-op

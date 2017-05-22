@@ -21,9 +21,11 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.StreamSizeScheduleState;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
@@ -42,6 +44,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -75,6 +79,15 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
     scheduleStore = injector.getInstance(DatasetBasedStreamSizeScheduleStore.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     datasetFramework = injector.getInstance(DatasetFramework.class);
+
+    // this effectively waits for the relevant services to start up
+    final SchedulerService schedulerService = injector.getInstance(SchedulerService.class);
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return schedulerService.isRunning();
+      }
+    }, 10, TimeUnit.SECONDS);
   }
 
   @Test

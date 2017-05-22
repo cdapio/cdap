@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,8 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
+import co.cask.cdap.data.ProgramContext;
+import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.DequeueResult;
@@ -32,8 +33,6 @@ import co.cask.cdap.data2.transaction.queue.QueueConstants.QueueType;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -92,13 +91,8 @@ public class HBaseQueueClientFactory implements QueueClientFactory, ProgramConte
   }
 
   @Override
-  public void initContext(ProgramRunId run) {
-    queueAdmin.initContext(run);
-  }
-
-  @Override
-  public void initContext(ProgramRunId run, NamespacedEntityId componentId) {
-    queueAdmin.initContext(run, componentId);
+  public void setContext(ProgramContext programContext) {
+    queueAdmin.setContext(programContext);
   }
 
   @Override
