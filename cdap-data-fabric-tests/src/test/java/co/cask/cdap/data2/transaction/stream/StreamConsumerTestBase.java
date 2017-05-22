@@ -430,6 +430,7 @@ public abstract class StreamConsumerTestBase {
   @Category(SlowTests.class)
   @Test
   public void testTTLStartingFile() throws Exception {
+    final int groupConfigurationDelayTime = 1000;
     String stream = "testTTLStartingFile";
     StreamId streamId = TEST_NAMESPACE.stream(stream);
     StreamAdmin streamAdmin = getStreamAdmin();
@@ -473,6 +474,8 @@ public abstract class StreamConsumerTestBase {
       // Need to create consumer before write event because in HBase, creation of consumer took couple seconds.
       streamAdmin.configureGroups(streamId, ImmutableMap.of(0L, 1));
       streamAdmin.configureGroups(streamId, ImmutableMap.of(0L, 1, 1L, 1));
+      // Sleep to ensure that groups are configured (CDAP-8764)
+      Thread.sleep(groupConfigurationDelayTime);
       newConsumer = consumerFactory.create(streamId, stream,
                                            new ConsumerConfig(1L, 0, 1, DequeueStrategy.FIFO, null));
 
@@ -491,6 +494,8 @@ public abstract class StreamConsumerTestBase {
       // Need to create consumer before write event because in HBase, creation of consumer took couple seconds.
       streamAdmin.configureGroups(streamId, ImmutableMap.of(0L, 1));
       streamAdmin.configureGroups(streamId, ImmutableMap.of(0L, 1, 1L, 1));
+      // Sleep to ensure that groups are configured (CDAP-8764)
+      Thread.sleep(groupConfigurationDelayTime);
       newConsumer = consumerFactory.create(streamId, stream,
                                            new ConsumerConfig(1L, 0, 1, DequeueStrategy.FIFO, null));
 
@@ -514,6 +519,8 @@ public abstract class StreamConsumerTestBase {
       // Need to create consumer before write event because in HBase, creation of consumer took couple seconds.
       streamAdmin.configureGroups(streamId, ImmutableMap.of(0L, 1));
       streamAdmin.configureGroups(streamId, ImmutableMap.of(0L, 1, 1L, 1));
+      // Sleep to ensure that groups are configured (CDAP-8764)
+      Thread.sleep(groupConfigurationDelayTime);
       newConsumer = consumerFactory.create(streamId, stream,
                                            new ConsumerConfig(1L, 0, 1, DequeueStrategy.FIFO, null));
 
