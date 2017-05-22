@@ -707,7 +707,7 @@ public class TransactionContextTest {
     private final Set<TransactionAware> txAwares;
 
     SimpleTransactionContext(TransactionSystemClient txClient, TransactionAware...txAwares) {
-      super("", txClient);
+      super(txClient);
       this.txAwares = new LinkedHashSet<>(Arrays.asList(txAwares));
     }
 

@@ -67,8 +67,8 @@ public final class DefaultCheckpointManager implements CheckpointManager {
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), txClient,
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null,
-        DefaultCheckpointManager.class.getSimpleName())),
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)
+      ),
       RetryStrategies.retryOnConflict(20, 100)
     );
   }

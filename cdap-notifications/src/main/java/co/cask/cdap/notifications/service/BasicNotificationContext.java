@@ -43,7 +43,7 @@ public final class BasicNotificationContext implements NotificationContext {
     //      the owners, the runtime arguments and the metrics context.
     this.datasetContext = new MultiThreadDatasetCache(new SystemDatasetInstantiator(dsFramework),
                                                       txSystemClient, namespaceId,
-                                                      null, null, null, BasicNotificationContext.class.getSimpleName());
+                                                      null, null, null);
   }
 
   @Override

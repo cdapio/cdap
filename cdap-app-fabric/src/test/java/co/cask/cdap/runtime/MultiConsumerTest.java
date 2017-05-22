@@ -85,7 +85,7 @@ public class MultiConsumerTest {
     DynamicDatasetCache datasetCache = new SingleThreadDatasetCache(
       new SystemDatasetInstantiator(datasetFramework, getClass().getClassLoader(), null),
       AppFabricTestHelper.getInjector().getInstance(TransactionSystemClient.class),
-      NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null, "");
+      NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null);
 
     final KeyValueTable accumulated = datasetCache.getDataset("accumulated");
     TransactionExecutorFactory txExecutorFactory =

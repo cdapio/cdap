@@ -70,7 +70,6 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import org.apache.tephra.RetryStrategies;
@@ -167,13 +166,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
 
-    String clientId = generateClientId(program.getId(), runId, programOptions);
     TransactionSystemClient retryingTxClient = new RetryingShortTransactionSystemClient(txClient, retryStrategy);
     this.datasetCache = multiThreaded
       ? new MultiThreadDatasetCache(instantiator, retryingTxClient, new NamespaceId(program.getId().getNamespace()),
-                                    runtimeArguments, programMetrics, staticDatasets, clientId, messagingContext)
+                                    runtimeArguments, programMetrics, staticDatasets, messagingContext)
       : new SingleThreadDatasetCache(instantiator, retryingTxClient, new NamespaceId(program.getId().getNamespace()),
-                                     runtimeArguments, programMetrics, staticDatasets, clientId);
+                                     runtimeArguments, programMetrics, staticDatasets);
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
                                                   program.getApplicationSpecification().getPlugins());
@@ -187,12 +185,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     if (!multiThreaded) {
       datasetCache.addExtraTransactionAware(messagingContext);
     }
-  }
-
-  private static String generateClientId(ProgramId programId, RunId runId, ProgramOptions programOptions) {
-    String clientId = programId.run(runId).toString();
-    String instanceId = programOptions.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID);
-    return instanceId == null ? clientId : String.format("%s.%s", clientId, instanceId);
   }
 
   /**

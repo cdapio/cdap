@@ -112,7 +112,7 @@ public class DatasetTypeManager {
                                                     ImmutableMap.of(
                                                       DatasetMetaTableUtil.META_TABLE_NAME, emptyArgs,
                                                       DatasetMetaTableUtil.INSTANCE_TABLE_NAME, emptyArgs
-                                                    ), DatasetTypeManager.class.getSimpleName());
+                                                    ));
     this.systemTempPath = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                     cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath();
   }

@@ -184,8 +184,7 @@ public class ArtifactStore {
       Transactions.createTransactional(new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
                                                                    new TransactionSystemClientAdapter(txClient),
                                                                    META_ID.getParent(),
-                                                                   Collections.<String, String>emptyMap(), null, null,
-                                                                   ArtifactStore.class.getSimpleName())),
+                                                                   Collections.<String, String>emptyMap(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
     this.impersonator = impersonator;

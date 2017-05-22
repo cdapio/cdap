@@ -134,7 +134,7 @@ public class DefaultStore implements Store {
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(framework), new TransactionSystemClientAdapter(txClient),
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null, DefaultStore.class.getSimpleName())),
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
 

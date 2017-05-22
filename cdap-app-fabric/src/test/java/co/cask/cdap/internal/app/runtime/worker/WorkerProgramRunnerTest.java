@@ -113,7 +113,7 @@ public class WorkerProgramRunnerTest {
     datasetCache = new SingleThreadDatasetCache(
       new SystemDatasetInstantiator(dsFramework, WorkerProgramRunnerTest.class.getClassLoader(), null),
       injector.getInstance(TransactionSystemClient.class),
-      NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null, "");
+      NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null);
     metricStore = injector.getInstance(MetricStore.class);
 
     txService.startAndWait();

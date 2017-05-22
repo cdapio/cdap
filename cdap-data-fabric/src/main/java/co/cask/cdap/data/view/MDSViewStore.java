@@ -74,7 +74,7 @@ public final class MDSViewStore implements ViewStore {
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), txClient,
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null, MDSViewStore.class.getSimpleName())),
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
   }

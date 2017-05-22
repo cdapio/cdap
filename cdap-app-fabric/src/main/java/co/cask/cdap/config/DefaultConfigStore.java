@@ -69,7 +69,7 @@ public class DefaultConfigStore implements ConfigStore {
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null, DefaultConfigStore.class.getSimpleName())),
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
   }

@@ -45,16 +45,6 @@ public class RetryingLongTransactionSystemClient extends RetryingTransactionSyst
   }
 
   @Override
-  public Transaction startLong(final String clientId) {
-    return supplyWithRetries(new Supplier<Transaction>() {
-      @Override
-      public Transaction get() {
-        return delegate.startLong(clientId);
-      }
-    });
-  }
-
-  @Override
   public boolean canCommit(final Transaction tx,
                            final Collection<byte[]> changeIds) throws TransactionNotInProgressException {
     return callWithRetries(new Retries.Callable<Boolean, TransactionNotInProgressException>() {

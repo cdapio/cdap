@@ -32,7 +32,7 @@ public class SingleThreadDatasetCacheTest extends DynamicDatasetCacheTest {
   protected DynamicDatasetCache createCache(SystemDatasetInstantiator instantiator,
                                             Map<String, String> arguments,
                                             Map<String, Map<String, String>> staticDatasets) {
-    return new SingleThreadDatasetCache(instantiator, txClient, NAMESPACE, arguments, null, staticDatasets, "");
+    return new SingleThreadDatasetCache(instantiator, txClient, NAMESPACE, arguments, null, staticDatasets);
   }
 
   @Test

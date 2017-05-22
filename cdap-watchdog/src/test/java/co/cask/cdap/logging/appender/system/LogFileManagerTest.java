@@ -124,7 +124,7 @@ public class LogFileManagerTest {
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(injector.getInstance(DatasetFramework.class)),
         injector.getInstance(TransactionSystemClient.class),
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null, "")),
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
 

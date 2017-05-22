@@ -40,13 +40,11 @@ import javax.annotation.Nullable;
 public abstract class AbstractTransactionContext extends TransactionContext {
 
   private final TransactionSystemClient txClient;
-  private final String clientId;
   private Transaction currentTx;
 
-  protected AbstractTransactionContext(String clientId, TransactionSystemClient txClient) {
+  protected AbstractTransactionContext(TransactionSystemClient txClient) {
     // Passing null to parent to make sure nothing in parent class would work
     super(null);
-    this.clientId = clientId;
     this.txClient = txClient;
   }
 
@@ -99,14 +97,14 @@ public abstract class AbstractTransactionContext extends TransactionContext {
   @Override
   public void start() throws TransactionFailureException {
     Preconditions.checkState(currentTx == null, "Already have an active transaction.");
-    currentTx = txClient.startShort(clientId);
+    currentTx = txClient.startShort();
     startAllTxAwares();
   }
 
   @Override
   public void start(int timeout) throws TransactionFailureException {
     Preconditions.checkState(currentTx == null, "Already have an active transaction.");
-    currentTx = txClient.startShort(clientId, timeout);
+    currentTx = txClient.startShort(timeout);
     startAllTxAwares();
   }
 

@@ -57,7 +57,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
     this.transactional = Transactions.createTransactional(
       new MultiThreadDatasetCache(new SystemDatasetInstantiator(dsFramework),
                                   new TransactionSystemClientAdapter(txClient),
-                                  NamespaceId.SYSTEM, null, null, null, DefaultNamespaceStore.class.getSimpleName())
+                                  NamespaceId.SYSTEM, null, null, null)
     );
   }
 

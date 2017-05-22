@@ -59,7 +59,7 @@ public class DatasetInstanceManager {
                                                     NamespaceId.SYSTEM, emptyArgs, null,
                                                     ImmutableMap.of(
                                                       DatasetMetaTableUtil.INSTANCE_TABLE_NAME, emptyArgs
-                                                    ), DatasetInstanceManager.class.getSimpleName());
+                                                    ));
   }
 
   /**

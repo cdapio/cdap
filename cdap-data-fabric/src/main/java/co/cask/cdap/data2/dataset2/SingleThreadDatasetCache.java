@@ -73,7 +73,6 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   private final Map<DatasetCacheKey, TransactionAware> activeTxAwares = new HashMap<>();
   private final Map<DatasetCacheKey, Dataset> staticDatasets = new HashMap<>();
   private final Deque<TransactionAware> extraTxAwares = new LinkedList<>();
-  private final String txClientId;
 
   private DelayedDiscardingTransactionContext txContext = null;
 
@@ -89,8 +88,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
                                   final NamespaceId namespace,
                                   Map<String, String> runtimeArguments,
                                   @Nullable final MetricsContext metricsContext,
-                                  @Nullable Map<String, Map<String, String>> staticDatasets,
-                                  String txClientId) {
+                                  @Nullable Map<String, Map<String, String>> staticDatasets) {
     super(instantiator, txClient, namespace, runtimeArguments);
     this.datasetLoader = new CacheLoader<DatasetCacheKey, Dataset>() {
       @Override
@@ -126,7 +124,6 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
                                 getDataset(entry.getKey(), entry.getValue()));
       }
     }
-    this.txClientId = txClientId;
   }
 
   /**
@@ -270,7 +267,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
                                               txContext.getCurrentTransaction().getTransactionId());
     }
     dismissTransactionContext();
-    txContext = new DelayedDiscardingTransactionContext(txClientId, txClient, activeTxAwares.values());
+    txContext = new DelayedDiscardingTransactionContext(txClient, activeTxAwares.values());
     return txContext;
   }
 
@@ -363,9 +360,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     private final Set<TransactionAware> toDiscard;
     private final Iterable<TransactionAware> allTxAwares;
 
-    DelayedDiscardingTransactionContext(String clientId, TransactionSystemClient txClient,
-                                        Iterable<TransactionAware> txAwares) {
-      super(clientId, txClient);
+    DelayedDiscardingTransactionContext(TransactionSystemClient txClient, Iterable<TransactionAware> txAwares) {
+      super(txClient);
       this.regularTxAwares = Sets.newIdentityHashSet();
       this.toDiscard = Sets.newIdentityHashSet();
 
