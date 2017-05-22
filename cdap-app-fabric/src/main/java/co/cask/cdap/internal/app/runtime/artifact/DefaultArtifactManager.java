@@ -37,6 +37,7 @@ import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
+import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -179,25 +180,31 @@ public class DefaultArtifactManager {
       }
       File unpackedDir = DirUtils.createTempDir(tmpDir);
       BundleJarUtil.unJar(location, unpackedDir);
-
-      return new CloseableClassLoader(
-        new DirectoryClassLoader(unpackedDir, parentClassLoader == null ? bootstrapClassLoader : parentClassLoader),
-        new DeleteContents(unpackedDir));
+      DirectoryClassLoader directoryClassLoader =
+        new DirectoryClassLoader(unpackedDir, parentClassLoader == null ? bootstrapClassLoader : parentClassLoader);
+      return new CloseableClassLoader(directoryClassLoader, new ClassLoaderCleanup(directoryClassLoader, unpackedDir));
     } else {
       throw new IOException(String.format("Exception while getting artifacts list %s",
                                           httpResponse.getResponseBodyAsString()));
     }
   }
 
-  class DeleteContents implements Closeable {
+  private static final class ClassLoaderCleanup implements Closeable {
     private final File directory;
+    private final DirectoryClassLoader directoryClassLoader;
 
-    DeleteContents(File directory) {
+    private ClassLoaderCleanup(DirectoryClassLoader directoryClassLoader, File directory) {
+      this.directoryClassLoader = directoryClassLoader;
       this.directory = directory;
     }
     @Override
     public void close() throws IOException {
-      DirUtils.deleteDirectoryContents(directory);
+      try {
+        Closeables.closeQuietly(directoryClassLoader);
+        DirUtils.deleteDirectoryContents(directory);
+      } catch (IOException e) {
+        LOG.warn("Failed to delete directory {}", directory, e);
+      }
     }
   }
 }
