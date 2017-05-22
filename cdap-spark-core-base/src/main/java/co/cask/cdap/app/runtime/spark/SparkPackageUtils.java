@@ -71,6 +71,8 @@ public final class SparkPackageUtils {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkPackageUtils.class);
 
+  // Environment variable name to instruct Spark submit to run in YARN mode
+  public static final String SPARK_YARN_MODE = "SPARK_YARN_MODE";
   // The prefix for spark environment variable names. It is being setup by the startup script.
   private static final String SPARK_ENV_PREFIX = "_SPARK_";
   // Environment variable name for the spark conf directory.
@@ -295,7 +297,7 @@ public final class SparkPackageUtils {
     // because inside Spark code, it will set and unset the SPARK_YARN_MODE system properties, causing
     // fork in distributed mode not working. Setting it in the environment, which Spark uses for defaults,
     // so it can't be unset by Spark
-    env.put("SPARK_YARN_MODE", "true");
+    env.put(SPARK_YARN_MODE, "true");
 
     sparkEnv = Collections.unmodifiableMap(env);
     return sparkEnv;
@@ -316,7 +318,7 @@ public final class SparkPackageUtils {
     // because inside Spark code, it will set and unset the SPARK_YARN_MODE system properties, causing
     // fork in distributed mode not working. Setting it in the environment, which Spark uses for defaults,
     // so it can't be unset by Spark
-    env.put("SPARK_YARN_MODE", "true");
+    env.put(SPARK_YARN_MODE, "true");
 
     return Collections.unmodifiableMap(env);
   }
