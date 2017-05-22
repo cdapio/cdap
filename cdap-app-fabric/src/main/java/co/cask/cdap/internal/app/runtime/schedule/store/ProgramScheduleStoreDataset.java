@@ -125,13 +125,6 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
       ApplicationId appId = namespaceId.app(appSpec.getName(), appSpec.getAppVersion());
       for (ScheduleSpecification scheduleSpec : appSpec.getSchedules().values()) {
         String scheduleKey = rowKeyForSchedule(appId, scheduleSpec.getSchedule().getName());
-        if (!store.get(new Get(scheduleKey)).isEmpty()) {
-          // If Scheduler dies in the middle of migrating a namespace and restarts migration in the same namespace,
-          // schedules already migrated may be encountered again
-          LOG.debug("Skip migrating schedule '{}' since it has already been migrated.",
-                    scheduleSpec.getSchedule().getName());
-          continue;
-        }
         ProgramSchedule schedule = Schedulers.toProgramSchedule(appId, scheduleSpec);
         persistSchedule(scheduleKey, schedule);
       }
