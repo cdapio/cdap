@@ -187,6 +187,7 @@ angular.module(PKG.name+'.services')
     let keysWithMissingValue = [];
     for(let key in obj){
       if (obj.hasOwnProperty(key) &&
+        key.length !== 0 &&
         (typeof obj[key] === 'undefined' ||
         typeof obj[key] === 'string' && obj[key].length === 0 ||
         obj[key] === null)) {

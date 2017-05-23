@@ -77,6 +77,15 @@ class HydratorPlusPlusPreviewActions {
       });
     };
   }
+
+  setTimeoutInMinutes (timeoutInMinutes) {
+    return (dispatch) => {
+      dispatch({
+        type: this.previewActions.SET_TIMEOUT_IN_MINUTES,
+        payload: {timeoutInMinutes}
+      });
+    };
+  }
 }
 
 angular.module(`${PKG.name}.feature.hydrator`)

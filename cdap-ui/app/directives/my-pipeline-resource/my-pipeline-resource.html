@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016 Cask Data, Inc.
+  Copyright © 2016-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -13,20 +13,20 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<div class="resource-group">
-  <label class="control-label"> CPU </label>
-  <select class="form-control"
+<div class="resource-group row">
+  <span class="col-xs-4 control-label"> CPU </span>
+  <select class="small-dropdown form-control"
     ng-model="virtualCores"
     ng-options="core as core for core in cores"
     ng-change="onVirtualCoresChange()"
     >
   </select>
 </div>
-<div class="resource-group">
-  <label class="control-label"> Memory </label>
+<div class="resource-group row">
+  <span class="col-xs-4 control-label"> Memory </span>
   <my-number-widget
     ng-model="memoryMB"
     config="numberConfig"
   ></my-number-widget>
-  <label class="control-label mb">MB</span>
+  <span class="control-label mb">MB</span>
 </div>

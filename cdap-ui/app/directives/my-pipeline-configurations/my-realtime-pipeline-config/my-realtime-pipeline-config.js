@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,17 +15,26 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .directive('myBatchPipelineSettings', function() {
+  .directive('myRealtimePipelineConfig', function() {
     return {
       restrict: 'E',
       scope: {
+        runtimeArguments: '=',
+        resolvedMacros: '=',
+        applyRuntimeArguments: '&',
+        convertRuntimeArgsToMacros: '&',
+        pipelineName: '@',
+        runPipeline: '&',
+        onClose: '&',
+        namespace: '@',
         store: '=',
         actionCreator: '=',
-        isDisabled: '@'
+        isDisabled: '=',
+        showPreviewConfig: '='
       },
       bindToController: true,
-      templateUrl: 'my-pipeline-settings/my-batch-pipeline-settings/my-batch-pipeline-settings.html',
-      controller: 'MyBatchPipelineSettingsCtrl',
-      controllerAs: 'MyBatchPipelineSettingsCtrl'
+      controller: 'MyRealtimePipelineConfigCtrl',
+      controllerAs: 'RealtimePipelineConfigCtrl',
+      templateUrl: 'my-pipeline-configurations/my-realtime-pipeline-config/my-realtime-pipeline-config.html'
     };
   });

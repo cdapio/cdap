@@ -25,6 +25,8 @@ import { Modal, ModalHeader, ModalBody, Tooltip } from 'reactstrap';
 import myPreferenceApi from 'api/preference';
 import {convertProgramToApi} from 'services/program-api-converter';
 import KeyValuePairs from 'components/KeyValuePairs';
+import KeyValueStore from 'components/KeyValuePairs/KeyValueStore';
+import KeyValueStoreActions from 'components/KeyValuePairs/KeyValueStoreActions';
 import NamespaceStore from 'services/NamespaceStore';
 
 export default class SetPreferenceModal extends Component {
@@ -33,7 +35,6 @@ export default class SetPreferenceModal extends Component {
 
     this.state = {
       saving: false,
-      resettingFields: false,
       showResetMessage: false,
       keyValues: {},
       inheritedPreferences: [],
@@ -99,12 +100,7 @@ export default class SetPreferenceModal extends Component {
   }
 
   onKeyValueChange(keyValues) {
-    if (!this.state.resettingFields) {
-      this.setState({keyValues});
-    }
-    else {
-      this.setState({resettingFields: false});
-    }
+    this.setState({keyValues});
   }
 
   getSpecifiedPreferences() {
@@ -125,8 +121,11 @@ export default class SetPreferenceModal extends Component {
               keyValues = {'pairs': this.getKeyValPair(res)};
             }
             this.setState({
-              keyValues,
-              resettingFields: true
+              keyValues
+            });
+            KeyValueStore.dispatch({
+              type: KeyValueStoreActions.onUpdate,
+              payload: {pairs: keyValues.pairs}
             });
           },
           (error) => {
@@ -324,7 +323,6 @@ export default class SetPreferenceModal extends Component {
                   <KeyValuePairs
                     keyValues = {this.state.keyValues}
                     onKeyValueChange = {this.onKeyValueChange}
-                    resettingFields = {this.state.resettingFields}
                   />
                 )
               :

@@ -71,48 +71,25 @@
 
   <div class="btn-group action-buttons"
        ng-if="!HydratorPlusPlusTopPanelCtrl.previewMode">
-    <div class="btn"
+    <div class="btn border-right"
          ng-click="HydratorPlusPlusTopPanelCtrl.isPreviewEnabled && HydratorPlusPlusTopPanelCtrl.togglePreviewMode()"
          uib-tooltip="Pipeline preview is not available in distributed mode."
          tooltip-placement="bottom"
          tooltip-class="toppanel-tooltip"
          tooltip-enable="!HydratorPlusPlusTopPanelCtrl.isPreviewEnabled"
          ng-disabled="!HydratorPlusPlusTopPanelCtrl.isPreviewEnabled">
-      <span class="fa icon-eye"></span>
-      <div class="button-label">Preview</div>
+      <div class="btn-container">
+        <span class="fa icon-eye"></span>
+        <div class="button-label">Preview</div>
+      </div>
     </div>
-    <div class="btn"
-         ng-click="HydratorPlusPlusTopPanelCtrl.showSettings()"
-         ng-class="{'active': HydratorPlusPlusTopPanelCtrl.state.viewSettings}">
-      <span class="fa fa-sliders"></span>
-      <div class="button-label">Settings</div>
-    </div>
-    <div class="btn"
-         ng-click="HydratorPlusPlusTopPanelCtrl.onImport()">
-      <span class="fa icon-import"></span>
-      <div class="button-label">Import</div>
-    </div>
-    <div class="btn"
-         ng-click="!HydratorPlusPlusTopPanelCtrl.hasNodes || HydratorPlusPlusTopPanelCtrl.onExport()"
-         uib-tooltip="Start building a pipeline before exporting"
-         tooltip-placement="bottom auto"
-         tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
-         tooltip-class="toppanel-tooltip"
-         tooltip-append-to-body="true"
-         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes">
-      <span class="fa icon-export"></span>
-      <div class="button-label">Export</div>
-    </div>
-    <div class="btn"
-         ng-click="!HydratorPlusPlusTopPanelCtrl.hasNodes || HydratorPlusPlusTopPanelCtrl.onSaveDraft()"
-         uib-tooltip="Start building a pipeline before saving"
-         tooltip-placement="bottom auto"
-         tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
-         tooltip-class="toppanel-tooltip"
-         tooltip-append-to-body="true"
-         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes">
-      <span class="fa icon-savedraft"></span>
-      <div class="button-label">Save</div>
+    <div class="btn margin-left"
+         ng-click="HydratorPlusPlusTopPanelCtrl.toggleConfig()"
+         ng-class="{'btn-select': HydratorPlusPlusTopPanelCtrl.viewConfig}">
+      <div class="btn-container">
+        <span class="fa fa-sliders"></span>
+        <div class="button-label">Configure</div>
+      </div>
     </div>
     <div class="btn"
          ng-if="HydratorPlusPlusTopPanelCtrl.state.artifact.name === HydratorPlusPlusTopPanelCtrl.GLOBALS.etlDataPipeline"
@@ -124,10 +101,25 @@
          tooltip-class="toppanel-tooltip"
          tooltip-append-to-body="true"
          ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes">
-      <span class="fa icon-runtimestarttime"></span>
-      <div class="button-label">Schedule</div>
+      <div class="btn-container">
+        <span class="fa icon-runtimestarttime"></span>
+        <div class="button-label">Schedule</div>
+      </div>
     </div>
     <div class="btn"
+         ng-click="!HydratorPlusPlusTopPanelCtrl.hasNodes || HydratorPlusPlusTopPanelCtrl.onSaveDraft()"
+         uib-tooltip="Start building a pipeline before saving"
+         tooltip-placement="bottom auto"
+         tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
+         tooltip-class="toppanel-tooltip"
+         tooltip-append-to-body="true"
+         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes">
+      <div class="btn-container">
+        <span class="fa icon-savedraft"></span>
+        <div class="button-label">Save</div>
+      </div>
+    </div>
+    <div class="btn border-right"
          ng-click="!HydratorPlusPlusTopPanelCtrl.hasNodes || HydratorPlusPlusTopPanelCtrl.onPublish()"
          uib-tooltip="Start building a pipeline before deploying"
          tooltip-placement="bottom auto"
@@ -135,8 +127,30 @@
          tooltip-class="toppanel-tooltip"
          tooltip-append-to-body="true"
          ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes">
-      <span class="fa icon-publish"></span>
-      <div class="button-label">Deploy</div>
+      <div class="btn-container">
+        <span class="fa icon-publish"></span>
+        <div class="button-label">Deploy</div>
+      </div>
+    </div>
+    <div class="btn margin-left"
+         ng-click="HydratorPlusPlusTopPanelCtrl.onImport()">
+      <div class="btn-container">
+        <span class="fa icon-import"></span>
+        <div class="button-label">Import</div>
+      </div>
+    </div>
+    <div class="btn border-right"
+         ng-click="!HydratorPlusPlusTopPanelCtrl.hasNodes || HydratorPlusPlusTopPanelCtrl.onExport()"
+         uib-tooltip="Start building a pipeline before exporting"
+         tooltip-placement="bottom auto"
+         tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
+         tooltip-class="toppanel-tooltip"
+         tooltip-append-to-body="true"
+         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes">
+      <div class="btn-container">
+        <span class="fa icon-export"></span>
+        <div class="button-label">Export</div>
+      </div>
     </div>
   </div>
 
@@ -145,14 +159,18 @@
      ng-if="HydratorPlusPlusTopPanelCtrl.previewMode">
     <div class="btn active"
          ng-click="HydratorPlusPlusTopPanelCtrl.togglePreviewMode()">
-      <span class="fa icon-eye"></span>
-      <div class="button-label">Preview</div>
+      <div class="btn-container">
+        <span class="fa icon-eye"></span>
+        <div class="button-label">Preview</div>
+      </div>
     </div>
-    <div class="btn"
+    <div class="btn no-border-left"
          ng-click="HydratorPlusPlusTopPanelCtrl.toggleConfig()"
          ng-class="{'btn-select': HydratorPlusPlusTopPanelCtrl.viewConfig}">
-      <span class="fa fa-sliders"></span>
-      <div class="button-label">Configure</div>
+      <div class="btn-container">
+        <span class="fa fa-sliders"></span>
+        <div class="button-label">Configure</div>
+      </div>
     </div>
     <div class="btn"
           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && !HydratorPlusPlusTopPanelCtrl.previewRunning"
@@ -162,65 +180,59 @@
           tooltip-class="toppanel-tooltip"
           tooltip-enable="!HydratorPlusPlusTopPanelCtrl.validToStartPreview"
           ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading || !HydratorPlusPlusTopPanelCtrl.validToStartPreview">
-      <span class="fa fa-play text-success"></span>
-      <div class="button-label">
-         Run
+      <div class="btn-container">
+        <span class="fa fa-play text-success"></span>
+        <div class="button-label">Run</div>
       </div>
     </div>
     <div class="btn"
           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.previewRunning"
           ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.startOrStopPreview()"
           ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading">
-      <span class="fa fa-stop text-danger"></span>
-      <div class="button-label">
-        Stop
+      <div class="btn-container">
+        <span class="fa fa-stop text-danger"></span>
+        <div class="button-label">Stop</div>
       </div>
     </div>
     <div class="btn"
           ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading">
-      <span class="fa fa-refresh fa-spin"></span>
-      <div class="button-label">
-        {{HydratorPlusPlusTopPanelCtrl.loadingLabel}}
+      <div class="btn-container">
+        <span class="fa fa-refresh fa-spin"></span>
+        <div class="button-label">
+          {{HydratorPlusPlusTopPanelCtrl.loadingLabel}}
+        </div>
       </div>
     </div>
     <div class="btn run-time">
-      <span>
-        {{ HydratorPlusPlusTopPanelCtrl.displayDuration.minutes }}:{{ HydratorPlusPlusTopPanelCtrl.displayDuration.seconds }}
-      </span>
-      <div class="button-label">Duration</div>
+      <div class="btn-container">
+        <span>
+          {{ HydratorPlusPlusTopPanelCtrl.displayDuration.minutes }}:{{ HydratorPlusPlusTopPanelCtrl.displayDuration.seconds }}
+        </span>
+        <div class="button-label">Duration</div>
+      </div>
     </div>
     <div class="btn log-viewer"
          ng-class="{'btn-select': HydratorPlusPlusTopPanelCtrl.viewLogs}"
          ng-click="HydratorPlusPlusTopPanelCtrl.viewLogs = !HydratorPlusPlusTopPanelCtrl.viewLogs">
-      <span class="fa fa-file-text-o"></span>
-      <div class="button-label">Logs</div>
+      <div class="btn-container">
+        <span class="fa fa-file-text-o"></span>
+        <div class="button-label">Logs</div>
+      </div>
     </div>
   </div>
 
   <cask-resource-center-button></cask-resource-center-button>
 </div>
 <div class="pipeline-settings-backdrop"
-     ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings ||
-     HydratorPlusPlusTopPanelCtrl.viewLogs ||
+     ng-if="HydratorPlusPlusTopPanelCtrl.viewLogs ||
      HydratorPlusPlusTopPanelCtrl.viewConfig ||
      HydratorPlusPlusTopPanelCtrl.viewScheduler"
-     ng-click="HydratorPlusPlusTopPanelCtrl.state.viewSettings =
-     HydratorPlusPlusTopPanelCtrl.viewLogs =
+     ng-click="HydratorPlusPlusTopPanelCtrl.viewLogs =
      HydratorPlusPlusTopPanelCtrl.viewConfig =
      HydratorPlusPlusTopPanelCtrl.viewScheduler = false">
 </div>
-<div class="pipeline-settings">
-  <div
-    store="HydratorPlusPlusTopPanelCtrl.HydratorPlusPlusConfigStore"
-    action-creator="HydratorPlusPlusTopPanelCtrl.HydratorPlusPlusConfigActions"
-    ng-if="HydratorPlusPlusTopPanelCtrl.state.viewSettings"
-    is-disabled="false"
-    template-type="{{HydratorPlusPlusTopPanelCtrl.state.artifact.name}}"
-    my-pipeline-settings>
-  </div>
-</div>
 <div class="pipeline-configurations" ng-if="HydratorPlusPlusTopPanelCtrl.viewConfig">
-  <my-pipeline-configurations
+  <div
     runtime-arguments="HydratorPlusPlusTopPanelCtrl.runtimeArguments"
     apply-runtime-arguments="HydratorPlusPlusTopPanelCtrl.applyRuntimeArguments()"
     convert-runtime-args-to-macros="HydratorPlusPlusTopPanelCtrl.convertRuntimeArgsToMacros()"
@@ -228,8 +240,14 @@
     run-pipeline="HydratorPlusPlusTopPanelCtrl.startOrStopPreview()"
     pipeline-name="{{HydratorPlusPlusTopPanelCtrl.state.metadata['name']}}"
     on-close="HydratorPlusPlusTopPanelCtrl.viewConfig = false"
-    namespace-id="{{HydratorPlusPlusTopPanelCtrl.$state.params.namespace}}">
-  </my-pipeline-configurations>
+    namespace-id="{{HydratorPlusPlusTopPanelCtrl.$state.params.namespace}}"
+    store="HydratorPlusPlusTopPanelCtrl.HydratorPlusPlusConfigStore"
+    action-creator="HydratorPlusPlusTopPanelCtrl.HydratorPlusPlusConfigActions"
+    template-type="{{HydratorPlusPlusTopPanelCtrl.state.artifact.name}}"
+    is-disabled="false"
+    show-preview-config="HydratorPlusPlusTopPanelCtrl.previewMode"
+    my-pipeline-config>
+  </div>
 </div>
 <div class="pipeline-scheduler" ng-if="HydratorPlusPlusTopPanelCtrl.viewScheduler">
   <my-pipeline-scheduler
