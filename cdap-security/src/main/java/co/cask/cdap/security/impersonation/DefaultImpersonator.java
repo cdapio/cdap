@@ -63,8 +63,10 @@ public class DefaultImpersonator implements Impersonator {
   public <T> T doAs(NamespacedEntityId entityId, Callable<T> callable,
                     ImpersonatedOpType impersonatedOpType) throws Exception {
     UserGroupInformation ugi = getUGI(entityId, impersonatedOpType);
-    LOG.debug("Performing doAs with UGI {} for entity {} and impersonation operation type", ugi, entityId,
-              impersonatedOpType);
+    if (!UserGroupInformation.getCurrentUser().equals(ugi)) {
+      LOG.debug("Performing doAs with UGI {} for entity {} and impersonation operation type {}", ugi, entityId,
+                impersonatedOpType);
+    }
     return ImpersonationUtils.doAs(ugi, callable);
   }
 
