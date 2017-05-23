@@ -77,21 +77,19 @@ public abstract class AbstractPayloadTable implements PayloadTable {
     final CloseableIterator<RawPayloadTableEntry> scanner = read(startRow, stopRow, limit);
     return new AbstractCloseableIterator<Entry>() {
       private boolean closed = false;
-      private byte[] skipStartRow = inclusive ? null : startRow;
+      private boolean skipFirstRow = !inclusive;
 
       @Override
       protected Entry computeNext() {
         if (closed || (!scanner.hasNext())) {
           return endOfData();
         }
-        RawPayloadTableEntry entry = scanner.next();
 
         // See if we need to skip the first row returned by the scanner
-        if (skipStartRow != null) {
-          byte[] row = skipStartRow;
-          // After first row, we don't need to match anymore
-          skipStartRow = null;
-          if (Bytes.equals(row, entry.getKey()) && !scanner.hasNext()) {
+        RawPayloadTableEntry entry = scanner.next();
+        if (skipFirstRow) {
+          skipFirstRow = false;
+          if (!scanner.hasNext()) {
             return endOfData();
           }
           entry = scanner.next();

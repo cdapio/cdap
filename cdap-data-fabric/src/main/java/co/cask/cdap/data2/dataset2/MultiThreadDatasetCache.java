@@ -168,6 +168,4 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
     perThreadMap.cleanUp();
     return perThreadMap.asMap().keySet();
   }
-
 }
-
