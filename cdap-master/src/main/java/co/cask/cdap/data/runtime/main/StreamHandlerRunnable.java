@@ -88,7 +88,8 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
     // Set the instance id
     cConf.setInt(Constants.Stream.CONTAINER_INSTANCE_ID, context.getInstanceId());
 
-    injector = createInjector(cConf, hConf);
+    String txClientId = String.format("cdap.service.%s.%d", Constants.Service.STREAMS, context.getInstanceId());
+    injector = createInjector(cConf, hConf, txClientId);
     injector.getInstance(LogAppenderInitializer.class).initialize();
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
@@ -104,7 +105,7 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
   }
 
   @VisibleForTesting
-  static Injector createInjector(CConfiguration cConf, Configuration hConf) {
+  static Injector createInjector(CConfiguration cConf, Configuration hConf, String txClientId) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
@@ -116,7 +117,7 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
       new NamespaceClientRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),
-      new DataFabricModules().getDistributedModules(),
+      new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
       new ExploreClientModule(),

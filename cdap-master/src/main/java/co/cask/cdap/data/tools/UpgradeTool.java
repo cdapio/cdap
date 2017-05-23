@@ -221,7 +221,7 @@ public class UpgradeTool {
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new SecureStoreModules().getDistributedModules(),
-      new DataFabricModules().getDistributedModules(),
+      new DataFabricModules(UpgradeTool.class.getName()).getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

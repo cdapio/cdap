@@ -32,6 +32,11 @@ import org.apache.tephra.runtime.TransactionModules;
  * The Guice module of data fabric bindings for in memory execution.
  */
 public class DataFabricInMemoryModule extends AbstractModule {
+  private final String txClientId;
+
+  public DataFabricInMemoryModule(String txClientId) {
+    this.txClientId = txClientId;
+  }
 
   @Override
   protected void configure() {
@@ -43,7 +48,7 @@ public class DataFabricInMemoryModule extends AbstractModule {
     // bind transactions
     bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
     bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);
-    install(new TransactionModules().getInMemoryModules());
+    install(new TransactionModules(txClientId).getInMemoryModules());
     install(new TransactionExecutorModule());
   }
 }

@@ -499,7 +499,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
       new NotificationFeedClientModule(),
       new TwillModule(),
       new ExploreClientModule(),
-      new DataFabricModules().getDistributedModules(),
+      new DataFabricModules(HBaseQueueDebugger.class.getName()).getDistributedModules(),
       new ServiceStoreModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),

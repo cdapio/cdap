@@ -46,11 +46,11 @@ import org.slf4j.LoggerFactory;
  * Defines guice bindings for distributed modules.
  */
 public class DataFabricDistributedModule extends AbstractModule {
-
   private static final Logger LOG = LoggerFactory.getLogger(DataFabricDistributedModule.class);
+  private final String txClientId;
 
-  public DataFabricDistributedModule() {
-
+  public DataFabricDistributedModule(String txClientId) {
+    this.txClientId = txClientId;
   }
 
   @Override
@@ -63,7 +63,7 @@ public class DataFabricDistributedModule extends AbstractModule {
     // bind transactions
     bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
     bind(TransactionSystemClientService.class).to(DistributedTransactionSystemClientService.class);
-    install(new TransactionModules().getDistributedModules());
+    install(new TransactionModules(txClientId).getDistributedModules());
     install(new TransactionExecutorModule());
   }
 

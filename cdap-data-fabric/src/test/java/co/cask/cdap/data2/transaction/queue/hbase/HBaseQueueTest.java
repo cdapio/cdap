@@ -31,7 +31,7 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
-import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
@@ -155,7 +155,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     cConf.setLong(TxConstants.Manager.CFG_TX_MAX_TIMEOUT, 100000000L);
 
     injector = Guice.createInjector(
-      new DataFabricDistributedModule(),
+      new DataFabricModules().getDistributedModules(),
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),

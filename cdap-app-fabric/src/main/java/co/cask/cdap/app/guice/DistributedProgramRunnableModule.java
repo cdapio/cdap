@@ -86,8 +86,10 @@ public class DistributedProgramRunnableModule {
   }
 
   // usable from any program runtime, such as mapreduce task, spark task, etc
-  public Module createModule(final ProgramId programId, @Nullable final String principal) {
-    Module combined = getCombinedModules(programId);
+  public Module createModule(final ProgramId programId, String runId, String instaneId,
+                             @Nullable final String principal) {
+
+    Module combined = getCombinedModules(programId, generateClient(programId, runId, instaneId));
 
     combined = addAuthenticationModule(principal, combined);
 
@@ -100,10 +102,15 @@ public class DistributedProgramRunnableModule {
     });
   }
 
+  private static String generateClient(ProgramId programId, String runId, String instanceId) {
+    return String.format("%s.%s.%s", programId.toString(), runId, instanceId);
+  }
+
   // TODO(terence) make this works for different mode
   // usable from anywhere a TwillContext is exposed
-  public Module createModule(final TwillContext context, ProgramId programId, @Nullable String principal) {
-    return Modules.combine(createModule(programId, principal),
+  public Module createModule(final TwillContext context, ProgramId programId, String runId, String instanceId,
+                             @Nullable String principal) {
+    return Modules.combine(createModule(programId, runId, instanceId, principal),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -136,7 +143,7 @@ public class DistributedProgramRunnableModule {
                            new AuthenticationContextModules().getProgramContainerModule());
   }
 
-  private Module getCombinedModules(final ProgramId programId) {
+  private Module getCombinedModules(final ProgramId programId, String txClientId) {
     return Modules.combine(
       new ConfigModule(cConf, hConf),
       new IOModule(),
@@ -147,7 +154,7 @@ public class DistributedProgramRunnableModule {
       new LocationRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new DataFabricModules().getDistributedModules(),
+      new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
