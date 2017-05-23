@@ -900,6 +900,9 @@ public class MasterServiceMain extends DaemonMain {
               .withEnv(Collections.singletonMap("CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR));
           }
 
+          LOG.error("DW Add log4j dependency");
+          preparer.withDependencies(org.apache.log4j.Level.class);
+
           // Add yarn queue name if defined
           String queueName = cConf.get(Constants.Service.SCHEDULER_QUEUE);
           if (queueName != null) {
