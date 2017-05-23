@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.guice;
 
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
@@ -42,9 +43,9 @@ public class DistributedProgramRunnableModuleTest {
   public void createModule() throws Exception {
     DistributedProgramRunnableModule distributedProgramRunnableModule =
       new DistributedProgramRunnableModule(CConfiguration.create(), new Configuration());
-    Guice.createInjector(distributedProgramRunnableModule.createModule(new ProgramId("ns", "app",
-                                                                                     ProgramType.MAPREDUCE, "program"),
-                                                                       "user/host@KDC.NET"));
+    Guice.createInjector(distributedProgramRunnableModule.createModule(
+      new ProgramId("ns", "app", ProgramType.MAPREDUCE, "program"), RunIds.generate().getId(),
+      "0", "user/host@KDC.NET"));
     Guice.createInjector(distributedProgramRunnableModule.createModule(new TwillContext() {
       @Override
       public RunId getRunId() {
@@ -121,6 +122,7 @@ public class DistributedProgramRunnableModuleTest {
       public Cancellable announce(String serviceName, int port, byte[] payload) {
         return null;
       }
-    }, new ProgramId("ns", "app", ProgramType.MAPREDUCE, "program"), "user/host@KDC.NET"));
+    }, new ProgramId("ns", "app", ProgramType.MAPREDUCE, "program"), RunIds.generate().getId(), "0",
+                                                                       "user/host@KDC.NET"));
   }
 }

@@ -132,10 +132,12 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
 
     // Set the host name to the one provided by Twill
     cConf.set(Constants.Explore.SERVER_ADDRESS, context.getHost().getHostName());
+    String txClientId = String.format("cdap.service.%s.%d", Constants.Service.EXPLORE_HTTP_USER_SERVICE,
+                                      context.getInstanceId());
 
     // NOTE: twill client will try to load all the classes present here - including hive classes but it
     // will fail since Hive classes are not in master classpath, and ignore those classes silently
-    injector = createInjector(cConf, hConf);
+    injector = createInjector(cConf, hConf, txClientId);
     injector.getInstance(LogAppenderInitializer.class).initialize();
 
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
@@ -391,7 +393,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
   }
 
   @VisibleForTesting
-  static Injector createInjector(CConfiguration cConf, Configuration hConf) {
+  static Injector createInjector(CConfiguration cConf, Configuration hConf, String txClientId) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(), new ZKClientModule(),
@@ -401,7 +403,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
-      new DataFabricModules().getDistributedModules(),
+      new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
       new ExploreRuntimeModule().getDistributedModules(),

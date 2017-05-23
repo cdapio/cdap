@@ -43,8 +43,9 @@ final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowP
   }
 
   @Override
-  protected Module createModule(TwillContext context, ProgramId programId, @Nullable String principal) {
-    Module module = super.createModule(context, programId, principal);
+  protected Module createModule(TwillContext context, ProgramId programId, String runId, String instanceId,
+                                @Nullable String principal) {
+    Module module = super.createModule(context, programId, runId, instanceId, principal);
     return Modules.combine(module, new PrivateModule() {
       @Override
       protected void configure() {
