@@ -28,7 +28,6 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -112,15 +111,22 @@ public final class SparkContainerLauncher {
         .getDeclaredMethod("redirectToLogger", String.class)
         .invoke(null, mainClassName);
 
+      // Force setting the system property CDAP_LOG_DIR to <LOG_DIR>. This is to workaround bug in Spark 1.2
+      // that it passes executor environment via command line properties, which get resolved by yarn launcher,
+      // which causes executor logs attempt to write to driver log directory
+      if (System.getProperty("spark.executorEnv.CDAP_LOG_DIR") != null) {
+        System.setProperty("spark.executorEnv.CDAP_LOG_DIR", "<LOG_DIR>");
+      }
+
       LOG.info("Launch main class {}.main({})", mainClassName, Arrays.toString(args));
       classLoader.loadClass(mainClassName).getMethod("main", String[].class).invoke(null, new Object[]{args});
       LOG.info("Main method returned {}", mainClassName);
-    } catch (Exception e) {
+    } catch (Throwable t) {
       // LOG the exception since this exception will be propagated back to JVM
       // and kill the main thread (hence the JVM process).
       // If we don't log it here as ERROR, it will be logged by UncaughtExceptionHandler as DEBUG level
-      LOG.error("Exception raised when calling {}.main(String[]) method", mainClassName, e);
-      throw e;
+      LOG.error("Exception raised when calling {}.main(String[]) method", mainClassName, t);
+      throw t;
     }
   }
 
