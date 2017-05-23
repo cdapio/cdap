@@ -61,7 +61,7 @@ public abstract class PayloadTableTest {
          PayloadTable table = getPayloadTable()) {
       metadataTable.createTopic(metadata);
       List<PayloadTable.Entry> entryList = new ArrayList<>();
-      entryList.add(new TestPayloadEntry(topicId, GENERATION, txWritePtr, 0L, (short) 0, Bytes.toBytes(payload)));
+      entryList.add(new TestPayloadEntry(topicId, GENERATION, txWritePtr, 1L, (short) 1, Bytes.toBytes(payload)));
       table.store(entryList.iterator());
       byte[] messageId = new byte[MessageId.RAW_ID_SIZE];
       MessageId.putRawId(0L, (short) 0, 0L, (short) 0, messageId, 0);
