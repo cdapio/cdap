@@ -1,5 +1,18 @@
 {
   "cdap": {
     "version": "3.1.1-2"
+  },
+  "nodejs": {
+    "install_method": "binary",
+    "version": "4.5.0",
+    "binary": {
+      "checksum": {
+        "linux_x64": "c6ee1f4303353e3605ff70de180431417eb594fe08daf612e692216236750c55"
+      }
+    }
+  },
+  "java": {
+    "install_flavor": "openjdk",
+    "jdk_version": 8
   }
 }
