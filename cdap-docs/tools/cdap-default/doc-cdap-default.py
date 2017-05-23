@@ -37,7 +37,7 @@
 # keys: name of property
 # values: Property class object (value and description)
 # Defaults in source code are in no particular order.
-# 
+#
 # Sort by key
 # Output rst table to standard out
 # If filepath provided, writes to file instead
@@ -46,6 +46,7 @@ import json
 import os
 import sys
 import textwrap
+import traceback
 import xml.etree.ElementTree as ET
 
 from datetime import datetime
@@ -113,14 +114,14 @@ XML_FINAL         = '    <final>true</final>\n'
 XML_PROP_CLOSE    = '  </property>\n\n'
 XML_CONFIG_CLOSE  = '</configuration>\n'
 XML_OTHER         = "  Current:"
- 
+
 SDL_CONFIG_LABEL  = "   %s"
 SDL_CONFIG_NAME   = "          \"configName\": \"%s\","
 SDL_OTHER         = "        Current:"
 SDL_DESCRIPTION   = "          \"description\": \"%s\","
 SDL_DEFAULT       = "          \"default\": \"%s\","
 
-        
+
 class Item:
     MAX_RST_VALUE_CHAR_LENGTH = 40
 
@@ -133,18 +134,42 @@ class Item:
             return ''
 
     @staticmethod
-    def _split_text(text, length=70, delimiter='.'):
-        # Splits text into blocks not exceeding length if possible, on delimiter
-        if len(text) > length and text.count(delimiter):
-            # Split text into multiple pieces
-            split = text.rfind(delimiter, 0, length)
-            left = text[:split+1]
-            right = text[split+1:]
-            if right:
-                texts = Item._split_text(right, length, delimiter)
-                if not texts[-1]:
-                    texts = texts[:-1]
-            return (left,) + texts
+    def _split_text(text, length=70, delimiters=(';', ',', '.', '/')):
+        # Splits text into blocks not exceeding length if possible, on as delimiter
+        if len(text) > length and delimiters:
+            aDelimiterFound = False
+            for delimiter in delimiters:
+                aDelimiterFound = text.count(delimiter)
+                if aDelimiterFound:
+                    break
+            if not aDelimiterFound:
+                return (text, '')
+            # 1st attempt: Split text into multiple pieces, using a found delimiter within length
+            split = -1
+            for delimiter in delimiters:
+                split = text.rfind(delimiter, 0, length)
+                if split != -1:
+                    break
+            # 2nd attempt: Split text into multiple pieces, using a found delimiter outside length
+            if split == -1:
+                for delimiter in delimiters:
+                    split = text.find(delimiter, 0)
+                    if split != -1:
+                        break
+            if split != -1:
+                left = text[:split+1]
+                right = text[split+1:]
+                if right:
+                    try:
+                      texts = Item._split_text(right, length, delimiters)
+                    except:
+                      texts = (right,)
+                    if not texts[-1]:
+                        texts = texts[:-1]
+                return (left,) + texts
+            else:
+                # Bail and just return the text
+                return (text, '')
         else:
             return (text, '')
 
@@ -188,14 +213,14 @@ class Item:
                 t += text[c]
         if in_literal:
             t += '``'
-        return t 
+        return t
 
     def __init__(self, name='', value='', description ='', final=None):
         self.name = name
         self.value = self.encode(value)
         self.description = self.encode(description)
         self.final = final
-    
+
     def __str__(self):
         if self.final != None:
             return "%s:\n%s (%s)\n%s" % (self.name, self.value, self.final, self.description)
@@ -207,14 +232,14 @@ class Item:
             self.__dict__[name] = "%s\n%s" % (self.__dict__[name], value)
         else:
             self.__dict__[name] = value
-    
+
     def rst(self):
         FINAL_RST = ' :ref:`[Final] <cdap-site-xml-note-final>`'
 
         name = self.format_rst_block(self.name)
         if self.final:
             name += FINAL_RST
-            
+
         if self.value.count(' '):
             value = BLOCK_START + BLOCK_JOIN.join(self.value.split()) + '``'
         elif not self.value:
@@ -233,15 +258,15 @@ class Item:
             description = description.replace('&gt;"', '>""')
             description = description.replace('&gt;', '>')
             description = description.replace('>""', '&gt;"')
-        
+
         description = self.literals_in_description(description, ('${', '}'))
         description = self.literals_in_description(description, ('<', '>'))
-            
+
         rst = "%s%s\n%s%s\n%s%s\n" % (NAME_START, name,
                                       VALUE_START, value,
                                       DESC_START, description)
         return rst
-    
+
     def set_attribute(self, name, value):
         v1 = "%s" % self.encode(value)
         if name == 'description' and v1 == 'None':
@@ -253,19 +278,19 @@ class Item:
         else:
             v = v1
         self.__dict__[name] = v
-            
+
     def get_attribute(self, name):
         if name == 'rst':
             return self._rst()
         else:
             return self.__dict__[name]
-    
+
     def append_value(self, value):
         self._append("value", value)
 
     def append_description(self, description):
         self._append("description", description)
-    
+
     def display(self):
         print self.name
 
@@ -287,12 +312,12 @@ class Section:
 
     def display(self):
         print "\nSection %s" % self.name
-       
+
 
 class PIParser(ET.XMLTreeBuilder):
     """ProcessingInstruction Parser from http://effbot.org/zone/element-pi.htm
        An XML parser that preserves processing instructions and comments
-       
+
        Usage:
        def parse(source):
            return ET.parse(source, PIParser())
@@ -324,19 +349,19 @@ class XML_Source_File:
     def __init__(self, source='', excluded=[]):
         self.source = source
         self.excluded = excluded
-        
+
     def add_exclusion(self, exclusion):
         if exclusion not in self.excluded:
             self.excluded.append(exclusion)
-            
+
     def compare(self, default_xml_file, update, compare_values):
         print "Comparing\n  %s\nto\n  %s" % (self.source, default_xml_file)
         self._compare(default_xml_file, update, compare_values)
-        
+
     def _compare(self, default_xml_file, update, compare_values):
         compare_xml_files(default_xml_file, self.source, update=update, compare_values=compare_values, exclusions=self.excluded)
 
-            
+
 class SDL_Source_File(XML_Source_File):
     def _compare(self, default_xml_file, update, compare_values):
         compare_xml_sdl(default_xml_file, self.source, update=update, compare_values=compare_values, exclusions=self.excluded)
@@ -350,7 +375,7 @@ def parse_options():
         description="Generates an RST file from an XML file such as 'cdap-default.xml'")
 
     # Generation, source and target
-    
+
     parser.add_option(
         '-a', '--all',
         dest='compare_all',
@@ -422,7 +447,7 @@ def parse_options():
         default='')
 
     # Displaying file and output to terminal
-    
+
     parser.add_option(
         '-p', '--props',
         dest='load_props',
@@ -471,6 +496,12 @@ def parse_options():
              'a file at the same location with \'_revised.xml\'',
         default=False)
 
+    parser.add_option(
+        '', '--debug',
+        dest='debug',
+        help='Print extra debugging info, if available',
+        default='False')
+
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(1)
@@ -486,7 +517,7 @@ def is_string_type(var):
 
 def default_xml_filepath(extra_path=''):
     return os.path.join(SOURCE_PATH, RELATIVE_PATH, CDAP_DEFAULT_XML + extra_path)
-    
+
 def deprecated_xml_filepath(extra_path=''):
     return os.path.join(SOURCE_PATH, CDAP_DEFAULT_DEPRECATED_XML + extra_path)
 
@@ -525,15 +556,15 @@ def load_xml_sdl_files():
             property = line[1:].strip()
             if file:
                 print "    Property exclusion: '%s'" % property
-                file.add_exclusion(property) 
+                file.add_exclusion(property)
             else:
                 print "    WARNING Property in wrong location: outside file: %s" % property
         else:
             if file:
                 files.append(file)
-                file = None            
+                file = None
             print "  Source: %s" % line
-            
+
             if line.startswith('http'):
                 f, f_source = download_to_file(line)
             else:
@@ -545,7 +576,7 @@ def load_xml_sdl_files():
                 file = SDL_Source_File(f)
             else:
                 print "Unknown filetype for: '%s'" % f
-            
+
     if file:
         files.append(file)
     print
@@ -565,12 +596,12 @@ def load_xml(source='', include_exclusions=False, include_comments=True):
             tree = ET.fromstring(source, PIParser())
     except:
         raise Exception(func, "'%s' not a valid source" % source)
-    
+
     if include_exclusions:
         exclusions = []
     else:
         exclusions = load_exclusions()
-    
+
     items = []
     root = tree.getroot()
     for outer_element in root:
@@ -578,9 +609,9 @@ def load_xml(source='', include_exclusions=False, include_comments=True):
             if inner_element.tag == 'property':
                 item = Item()
                 for attribute in inner_element:
-                    item.set_attribute(attribute.tag, attribute.text)                
+                    item.set_attribute(attribute.tag, attribute.text)
                 if item.name not in exclusions:
-                    items.append(item) 
+                    items.append(item)
             elif include_comments:
                 items.append(Section(inner_element.text))
 
@@ -589,20 +620,20 @@ def load_xml(source='', include_exclusions=False, include_comments=True):
 def create_rst(items):
     """Create rst from items"""
     table = ''
-    if items: 
+    if items:
         for item in items:
             table += item.rst()
     return table
 
 def rebuild(filepath=''):
     """Loads the cdap-default.xml, and rebuilds it according to these rules:
-    - First two sections: 
+    - First two sections:
         General Configuration
         Global Configuration
     - Remaining sections alphabetical
     - Properties within a section alphabetical
     - Descriptions wrapped to a 70 character line-length"""
-    
+
     print 'Rebuilding cdap-default.xml'
     items, tree = load_xml('', include_exclusions=True)
     exclusions = load_exclusions()
@@ -619,7 +650,7 @@ def rebuild(filepath=''):
                     section_name = "Section %s" % section_counter
                 defaults[section_name] = section
                 section = []
-                
+
             # Start new section
             section_counter += 1
             section_name = item.name
@@ -628,8 +659,8 @@ def rebuild(filepath=''):
             section.append(item)
     if section: # End old section
         defaults[section_name] = section
-        section = []  
-    
+        section = []
+
     print "Sections: %d Keys: %d Properties: %d" % (section_counter, len(defaults.keys()), properties_counter)
 
     # Build XML file
@@ -639,10 +670,10 @@ def rebuild(filepath=''):
     for key in FIRST_TWO_SECTIONS:
         if key in keys:
             keys.remove(key)
-            
+
     keys.sort()
     FIRST_TWO_SECTIONS.reverse()
-    
+
     for key in FIRST_TWO_SECTIONS:
         if key in defaults.keys():
             keys = [key] + keys
@@ -653,7 +684,7 @@ def rebuild(filepath=''):
         props.sort(key = lambda p: p.name)
         for prop in props:
             if prop_names.has_key(prop.name):
-                print ("WARNING: Duplicate entry for property \"%s\" in sections \"%s\" and \"%s\"" 
+                print ("WARNING: Duplicate entry for property \"%s\" in sections \"%s\" and \"%s\""
                     % (prop.name, key, prop_names[prop.name]))
             else:
                 prop_names[prop.name] = key
@@ -673,7 +704,7 @@ def rebuild(filepath=''):
                 xml += XML_FINAL
             xml += XML_PROP_CLOSE
     xml += XML_CONFIG_CLOSE
-    
+
     if filepath:
         f = open(filepath, 'wb')
         f.write(XML_HEADER.encode('utf8'))
@@ -690,7 +721,7 @@ def resort(filepath, revised_filepath):
     - Properties within a section alphabetical
     - Descriptions wrapped to a 70 character line-length
     """
-    
+
     print "Resorting %s" % filepath
     items, tree = load_xml(filepath, include_exclusions=True)
     in_section = True
@@ -706,7 +737,7 @@ def resort(filepath, revised_filepath):
                     section_name = "Section %s" % section_counter
                 defaults[section_name] = section
                 section = []
-                
+
             # Start new section
             section_counter += 1
             section_name = item.name
@@ -715,15 +746,15 @@ def resort(filepath, revised_filepath):
             section.append(item)
     if section: # End old section
         defaults[section_name] = section
-        section = []  
-    
+        section = []
+
     print "Sections: %d Keys: %d Properties: %d" % (section_counter, len(defaults.keys()), properties_counter)
 
     # Build XML file
     prop_names = {}
     xml = XML_CONFIG_OPEN
     keys = defaults.keys()
-            
+
     keys.sort()
 
     section_counter = 0
@@ -735,7 +766,7 @@ def resort(filepath, revised_filepath):
         props.sort(key = lambda p: p.name)
         for prop in props:
             if prop_names.has_key(prop.name):
-                print ("WARNING: Duplicate entry for property \"%s\" in sections \"%s\" and \"%s\"" 
+                print ("WARNING: Duplicate entry for property \"%s\" in sections \"%s\" and \"%s\""
                     % (prop.name, key, prop_names[prop.name]))
             else:
                 prop_names[prop.name] = key
@@ -754,7 +785,7 @@ def resort(filepath, revised_filepath):
             xml += XML_PROP_CLOSE
             properties_counter += 1
     xml += XML_CONFIG_CLOSE
-    
+
     if revised_filepath:
         f = open(revised_filepath, 'wb')
         f.write(XML_HEADER.encode('utf8'))
@@ -766,7 +797,7 @@ def resort(filepath, revised_filepath):
         for line in xml.split('\n'):
             print line
     print "Sections: %d Keys: %d Properties: %d" % (section_counter, len(defaults.keys()), properties_counter)
-    
+
 
 def load_create_rst(filesource='', filepath='', ignore=False):
     defaults, tree = load_xml(filesource, include_exclusions=ignore)
@@ -777,7 +808,7 @@ def load_create_rst(filesource='', filepath='', ignore=False):
         f.close()
     else:
         print table
-        
+
 def load_summary(source='', props_only=False, ignore=False):
     items, tree = load_xml(source, include_exclusions=ignore)
     section_counter = 0
@@ -786,7 +817,7 @@ def load_summary(source='', props_only=False, ignore=False):
         if str(item.__class__) == '__main__.Section':
             section_counter += 1
             if not props_only:
-                item.display()                
+                item.display()
         else:
             properties_counter += 1
             item.display()
@@ -826,7 +857,7 @@ def compare_files(source, other_source, target=None, update=False, compare_value
 
 def compare_xml_files(source, other_source, target=None, update=False, compare_values=False, exclusions=[]):
     # Compares two XML files
-    items = load_xml_source('source', source)    
+    items = load_xml_source('source', source)
     other_items = load_xml_source('other_source', other_source)
     mis_matches_list = compare_items(items, other_items, update, compare_values)
     if update:
@@ -848,13 +879,13 @@ def compare_xml_files(source, other_source, target=None, update=False, compare_v
                 print xml
             print "%s\n      %s\n" % (XML_OTHER, other_item_description)
         print
-            
+
 def compare_items(items_list, other_items_list, update=False, compare_values=False):
     # Compares two lists of source_title, items, items_keys, items_dict
     in_both = []
     items_source_title, items, items_keys, items_dict = items_list
     other_items_source_title, other_items, other_items_keys, other_items_dict = other_items_list
-    
+
     print "Looking in '%s' for each item in '%s'" % (other_items_source_title, items_source_title)
     only_in_source = []
     for item in items:
@@ -866,7 +897,7 @@ def compare_items(items_list, other_items_list, update=False, compare_values=Fal
     print "  Only in '%s': %d" % (items_source_title, len(only_in_source))
     for name in only_in_source:
         print "    %s" % name
-            
+
     print "Looking in '%s' for each item in '%s'" % (items_source_title, other_items_source_title)
     only_in_other_source = []
     for other_item in other_items:
@@ -920,7 +951,7 @@ def compare_items(items_list, other_items_list, update=False, compare_values=Fal
 def compare_xml_sdl(source, other_source, target=None, update=False, compare_values=False, exclusions=[]):
     # Compares an XML source to an SDL source
     items = load_xml_source('XML source', source)
-    
+
     sdl_source_title = 'SDL other source'
     print "Loading '%s':\nLoading %s" % (sdl_source_title, other_source)
     f = open(other_source)
@@ -981,7 +1012,7 @@ def compare_xml_sdl(source, other_source, target=None, update=False, compare_val
                 print SDL_OTHER
                 print SDL_DEFAULT % other_item_d_v
                 print
-    
+
 def download_to_file(url):
     # Downloads from a URL to a temp file and
     # returns a filepath and the data downloaded
@@ -1014,23 +1045,23 @@ def generated_deprecated(filesource='', filepath='', ignore=False):
     default_names = []
     for d in defaults:
         default_names.append(d.name)
-        
+
     deprecated_names = []
     for d in deprecated:
         deprecated_names.append(d.name)
     deprecated_names.reverse()
-    
+
     print "Deprecated property check: %d" % len(deprecated)
     duplicates = 0
     for d in deprecated_names:
         if d in default_names:
             print " Deprecated property is also in CDAP defaults.xml: %s" % d
-            duplicates += 1    
+            duplicates += 1
     if duplicates:
         raise Exception(func, "Duplicated properties in CDAP defaults.xml: %d" % duplicates)
-    
+
     deprecated_commented, tree = load_xml(filesource, include_exclusions=ignore, include_comments=True)
-    table = create_rst(deprecated_commented)    
+    table = create_rst(deprecated_commented)
     if filepath:
         f = open(filepath, 'w')
         f.write(table)
@@ -1078,8 +1109,15 @@ def main():
             load_create_rst('', '')
 
     except Exception, e:
-        sys.stderr.write("Error: %s\n" % e)
-        sys.exit(1)
-            
+        try:
+            exc_info = sys.exc_info()
+        finally:
+            if options.debug:
+                print "Displaying the *original* exception"
+                traceback.print_exception(*exc_info)
+            del exc_info
+            sys.stderr.write("Error: %s\n" % e)
+            sys.exit(1)
+
 if __name__ == '__main__':
     main()
