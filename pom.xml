@@ -1484,6 +1484,16 @@
         <version>${spark2.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-repl_2.10</artifactId>
+        <version>${spark1.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-repl_2.11</artifactId>
+        <version>${spark2.version}</version>
+      </dependency>
+      <dependency>
         <groupId>co.cask.cdap</groupId>
         <artifactId>cdap-authentication-client</artifactId>
         <version>${cdap.client.version}</version>
