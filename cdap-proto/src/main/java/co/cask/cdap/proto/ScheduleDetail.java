@@ -17,8 +17,10 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.schedule.RunConstraints;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
@@ -123,27 +125,35 @@ public class ScheduleDetail {
   public static List<ScheduleSpecification> toScheduleSpecs(List<ScheduleDetail> details) {
     List<ScheduleSpecification> specs = new ArrayList<>();
     for (ScheduleDetail detail : details) {
-      if (detail.getTrigger() instanceof ProtoTrigger.TimeTrigger) {
-        ProtoTrigger.TimeTrigger trigger = ((ProtoTrigger.TimeTrigger) detail.getTrigger());
-        RunConstraints constraints = RunConstraints.NONE;
-        if (detail.getConstraints() != null) {
-          for (Constraint runConstraint : detail.getConstraints()) {
-            if (runConstraint instanceof ProtoConstraint.ConcurrenyConstraint) {
-              constraints = new RunConstraints(
-                ((ProtoConstraint.ConcurrenyConstraint) runConstraint).getMaxConcurrency());
-            }
+      RunConstraints constraints = RunConstraints.NONE;
+      if (detail.getConstraints() != null) {
+        for (Constraint runConstraint : detail.getConstraints()) {
+          if (runConstraint instanceof ProtoConstraint.ConcurrenyConstraint) {
+            constraints = new RunConstraints(
+              ((ProtoConstraint.ConcurrenyConstraint) runConstraint).getMaxConcurrency());
+            break;
           }
         }
-        specs.add(new ScheduleSpecification(
-          new TimeSchedule(detail.getName(),
-                           detail.getDescription(),
-                           trigger.getCronExpression(),
-                           constraints),
-          detail.getProgram(),
-          detail.getProperties()));
       }
+      Schedule schedule;
+      if (detail.getTrigger() instanceof ProtoTrigger.TimeTrigger) {
+        ProtoTrigger.TimeTrigger trigger = ((ProtoTrigger.TimeTrigger) detail.getTrigger());
+        schedule = new TimeSchedule(detail.getName(),
+                                    detail.getDescription(),
+                                    trigger.getCronExpression(),
+                                    constraints);
+      } else if (detail.getTrigger() instanceof ProtoTrigger.StreamSizeTrigger) {
+        ProtoTrigger.StreamSizeTrigger trigger = (ProtoTrigger.StreamSizeTrigger) detail.getTrigger();
+        schedule = new StreamSizeSchedule(detail.getName(),
+                                          detail.getDescription(),
+                                          trigger.getStream().getStream(),
+                                          trigger.getTriggerMB(),
+                                          constraints);
+      } else {
+        continue;
+      }
+      specs.add(new ScheduleSpecification(schedule, detail.getProgram(), detail.getProperties()));
     }
     return specs;
   }
-
 }
