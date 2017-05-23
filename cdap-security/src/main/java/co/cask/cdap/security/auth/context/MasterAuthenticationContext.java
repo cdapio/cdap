@@ -53,6 +53,6 @@ public class MasterAuthenticationContext implements AuthenticationContext {
         throw Throwables.propagate(e);
       }
     }
-    return new Principal(userId, Principal.PrincipalType.USER);
+    return new Principal(userId, SecurityRequestContext.getPrincipalType());
   }
 }
