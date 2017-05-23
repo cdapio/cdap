@@ -50,12 +50,12 @@
       },
       "installScriptActions": [{
         "name": "[concat('cdap-pageblob-configure-v0','-' ,uniquestring(variables('applicationName')))]",
-        "uri": "http://downloads.cask.co/hdinsight/pageblob-configure-4.2.0-SNAPSHOT.sh",
+        "uri": "http://downloads.cask.co/hdinsight/pageblob-configure-4.3.0-SNAPSHOT.sh",
         "roles": ["edgenode"]
       },
       {
         "name": "[concat('cdap-install-v0','-' ,uniquestring(variables('applicationName')))]",
-        "uri": "http://downloads.cask.co/hdinsight/install-4.2.0-SNAPSHOT.sh",
+        "uri": "http://downloads.cask.co/hdinsight/install-4.3.0-SNAPSHOT.sh",
         "roles": ["edgenode"]
       }],
       "uninstallScriptActions": [],
