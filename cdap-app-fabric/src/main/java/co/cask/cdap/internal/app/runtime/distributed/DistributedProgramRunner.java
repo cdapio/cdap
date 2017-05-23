@@ -237,6 +237,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
         localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackURI, false));
       }
 
+      LOG.error("DW This is the localizeResources {}", localizeResources.entrySet());
+
       Callable<ProgramController> callable = new Callable<ProgramController>() {
         @Override
         public ProgramController call() throws Exception {
@@ -301,6 +303,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
           if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
             extraDependencies.add(SecureStoreUtils.getKMSSecureStore());
           }
+          LOG.error("DW Adding Log4j dependency.");
+          extraDependencies.add(org.apache.log4j.Logger.class);
           twillPreparer.withDependencies(extraDependencies);
 
           // Add the additional classes to the classpath that comes from the container jar setting
