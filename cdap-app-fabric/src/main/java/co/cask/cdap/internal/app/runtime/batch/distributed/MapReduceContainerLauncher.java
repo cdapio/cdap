@@ -113,12 +113,12 @@ public class MapReduceContainerLauncher {
       LOG.info("Launch main class {}.main({})", mainClassName, Arrays.toString(args));
       mainMethod.invoke(null, new Object[]{args});
       LOG.info("Main method returned {}", mainClassName);
-    } catch (Exception e) {
+    } catch (Throwable t) {
       // LOG the exception since this exception will be propagated back to JVM
       // and kill the main thread (hence the JVM process).
       // If we don't log it here as ERROR, it will be logged by UncaughtExceptionHandler as DEBUG level
-      LOG.error("Exception raised when calling {}.main(String[]) method", mainClassName, e);
-      throw e;
+      LOG.error("Exception raised when calling {}.main(String[]) method", mainClassName, t);
+      throw t;
     }
   }
 }

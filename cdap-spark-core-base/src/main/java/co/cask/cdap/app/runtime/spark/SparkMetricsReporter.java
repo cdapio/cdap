@@ -25,6 +25,8 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Timer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.SortedMap;
@@ -36,6 +38,7 @@ import java.util.concurrent.TimeUnit;
  */
 final class SparkMetricsReporter extends ScheduledReporter {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SparkMetricsReporter.class);
   private final MetricsContext metricsContext;
 
   SparkMetricsReporter(MetricRegistry registry,
@@ -73,8 +76,14 @@ final class SparkMetricsReporter extends ScheduledReporter {
           metricName = metricNameParts[1];
         }
 
-        long value = ((Number) entry.getValue().getValue()).longValue();
-        metricsContext.gauge(metricName, value);
+        try {
+          long value = ((Number) entry.getValue().getValue()).longValue();
+          metricsContext.gauge(metricName, value);
+        } catch (Exception e) {
+          // In older Spark version, there is race getting the gauge value, which result in exception.
+          // Since this is just metrics collection for Spark metrics, simply ignore it.
+          LOG.debug("Exception raised when collecting Spark metrics {}", entry.getKey(), e);
+        }
       }
     }
   }
