@@ -163,14 +163,101 @@ A filter string can be supplied as an optional parameter. It will filter the ret
 to those that match the supplied string.
 
 
+.. _http-restful-api-logging-changing-system-service-log-levels:
+
+Changing System Service Log Levels
+==================================
+Log levels can be set for any system service at runtime. Once changed, they can be reset
+back to what they were by using the :ref:`system service reset endpoint
+<http-restful-api-system-service-logging-resetting>` shown below.
+
+**Note:** Dynamically-changing log levels for system services is only supported under
+Distributed CDAP.
+
+Setting System Service Log Levels
+---------------------------------
+To set the log levels of a system service at runtime under Distributed CDAP, submit an
+HTTP PUT request::
+
+  PUT /v3/system/services/<service-id>/loglevels
+
+with a JSON map in the request body consisting of pairs of logger names and log levels,
+such as::
+
+  '{ "co.cask.cdap":"ERROR", "ROOT":"TRACE" }'
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``service-id``
+     - One of ``appfabric``, ``dataset.executor``, ``explore.service``, ``log.saver``,
+       ``messaging.service``, ``metrics``, ``metrics.processor``, ``streams``, ``transaction``
+
+Note that changing the log levels of the ``appfabric`` service **will also** change the
+log levels of the ``dataset.service`` as they run on the same node.
+
+For example::
+
+  PUT /v3/system/services/metrics.processor/loglevels \
+      -d '{ "co.cask.cdap":"ERROR", "ROOT":"TRACE" }'
+
+will update the log levels of the system service *metrics.processor* with the log level of
+``co.cask.cdap`` changed to ``ERROR`` and the log level of ``ROOT`` changed to ``TRACE``.
+
+.. _http-restful-api-system-service-logging-resetting:
+
+Resetting System Service Log Levels
+-----------------------------------
+Resetting the log levels will change the log levels back to what they were when the system
+service was started.
+
+To reset the log levels of a system service, at runtime under Distributed CDAP mode, submit
+an HTTP PUT request::
+
+  POST /v3/system/services/<service-id>/resetloglevels
+
+with an optional JSON array in the request body consisting of the logger names to be
+reset, such as::
+
+  '[ "co.cask.cdap", "ROOT" ]'
+
+If the body is not provided or is empty, it will reset the log levels of all logger names.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``service-id``
+     - One of ``appfabric``, ``dataset.executor``, ``explore.service``, ``log.saver``,
+       ``messaging.service``,``metrics``, ``metrics.processor``, ``streams``, ``transaction``
+
+Note that resetting the log levels of the ``appfabric`` service **will also** rest the
+log levels of the ``dataset.service`` as they run on the same node.
+
+For example::
+
+  POST /v3/system/services/metrics.processor/resetloglevels \
+      -d '[ "co.cask.cdap", "ROOT" ]'
+
+will reset the log level of the system service *metrics.processor* with log levels of
+``co.cask.cdap`` and ``ROOT`` reset back to what they were when the *metrics.processor*
+service was started.
+
+
 .. _http-restful-api-logging-changing-program-log-levels:
 
 Changing Program Log Levels
 ===========================
 Log levels can be set for a particular run of a program. Once changed, they can be reset back to what
-they started with by using the :ref:`reset endpoint <http-restful-api-logging-resetting>` shown below.
+they started with by using the :ref:`program reset endpoint <http-restful-api-program-logging-resetting>`
+shown below.
 
-**Note:** The log levels can only be changed for programs that are running under Distributed CDAP.
+**Note:** The log levels can only be changed dynamically for programs that are running under Distributed CDAP.
 Currently, only flows, services, or workers are supported.
 
 Setting Program Log Levels
@@ -191,7 +278,7 @@ To set the log levels of a flowlet in the run of a flow in a particular version 
 
   PUT /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/flows/<flow-id>/flowlet/<flowlet-id>/runs/<run-id>/loglevels
 
-and, in all cases, with a JSON map in the request body consisting of a map of logger names and log level pairs, such as::
+and, in all cases, with a JSON map in the request body consisting of pairs of logger names and log levels, such as::
 
   '{ "co.cask.cdap":"ERROR", "ROOT":"TRACE" }'
 
@@ -223,9 +310,11 @@ For example::
   PUT /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/run-id/cdec1791-c2c0-11e6-ac6b-42010a800022/loglevels \
       -d '{ "co.cask.cdap":"ERROR", "ROOT":"TRACE" }'
 
-will update the log levels of the flow *WhoFlow* in the *HelloWorld* application with two log level arguments.
+will update the log levels of the flow *WhoFlow* in the *HelloWorld* application with 
+the log level of ``co.cask.cdap`` changed to ``ERROR``
+and log level of ``ROOT`` changed to ``TRACE``.
 
-.. _http-restful-api-logging-resetting:
+.. _http-restful-api-program-logging-resetting:
 
 Resetting Program Log Levels
 ----------------------------
@@ -247,7 +336,10 @@ To reset the log levels of a flowlet in the run of a flow in a particular versio
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/flows/<flow-id>/flowlet/<flowlet-id>/runs/<run-id>/resetloglevels
 
-and, in all cases, with an optional JSON array in the request body consisting of the logger names to be reset.
+and, in all cases, with an optional JSON array in the request body consisting of the logger names to be reset, such as::
+
+  '[ "co.cask.cdap", "ROOT" ]'
+
 If the body is not provided or is empty, it will reset the log levels of all logger names.
 
 .. list-table::
@@ -278,4 +370,6 @@ For example::
   POST /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/run-id/cdec1791-c2c0-11e6-ac6b-42010a800022/resetloglevels \
       -d '[ "co.cask.cdap", "ROOT" ]'
 
-will reset the log level of the *WhoFlow* flow in the *HelloWorld* application for the two logger names.
+will reset the log level of the *WhoFlow* flow in the *HelloWorld* application
+with the log levels of ``co.cask.cdap`` and ``ROOT`` reset back to
+what they were when the flow was started.
