@@ -838,6 +838,7 @@ public class FileStreamAdmin implements StreamAdmin {
       try {
         if (enable) {
           exploreFacade.enableExploreStream(stream, tableNaming.getTableName(stream), format);
+          LOG.info("Explore enabled on Stream '{}'.", stream.getStream());
         } else {
           exploreFacade.disableExploreStream(stream, tableNaming.getTableName(stream));
         }

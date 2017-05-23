@@ -89,7 +89,6 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
               GSON.toJson(FactTable.getSplits(DefaultMetricStore.AGGREGATIONS.size())));
 
     MetricsTable table = getOrCreateMetricsTable(tableName, props.build());
-    LOG.debug("FactTable created: {}", tableName);
     return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));
   }
 
@@ -97,7 +96,6 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   public MetricsConsumerMetaTable createConsumerMeta() {
     String tableName = cConf.get(Constants.Metrics.KAFKA_META_TABLE);
     MetricsTable table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
-    LOG.debug("MetricsConsumerMetaTable created: {}", tableName);
     return new MetricsConsumerMetaTable(table);
   }
 
