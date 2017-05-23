@@ -63,15 +63,8 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
   private URL[] classLoaderUrls;
 
   protected SparkProgramRuntimeProvider(SparkCompat providerSparkCompat) {
-    this(providerSparkCompat, false);
-  }
-
-  /**
-   * Constructor used by SparkTwillRunnable only in distributed mode to enable scala class filtering.
-   */
-  protected SparkProgramRuntimeProvider(SparkCompat providerSparkCompat, boolean filterScalaClasses) {
     this.providerSparkCompat = providerSparkCompat;
-    this.filterScalaClasses = filterScalaClasses;
+    this.filterScalaClasses = Boolean.parseBoolean(System.getenv(SparkPackageUtils.SPARK_YARN_MODE));
   }
 
   @Override

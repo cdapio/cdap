@@ -47,7 +47,7 @@ final class SparkTwillRunnable extends AbstractProgramTwillRunnable<ProgramRunne
     // The actual execution mode of the job is governed by the framework configuration,
     // which is in the hConf we shipped from DistributedSparkProgramRunner
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    return new SparkProgramRuntimeProvider(SparkCompat.get(cConf), true) { }
+    return new SparkProgramRuntimeProvider(SparkCompat.get(cConf)) { }
       .createProgramRunner(ProgramType.SPARK, ProgramRuntimeProvider.Mode.LOCAL, injector);
   }
 }
