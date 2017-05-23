@@ -106,8 +106,9 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
 
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       if (!tableUtil.hasNamespace(admin, hbaseNamespace)) {
-        throw new IOException(String.format("Custom mapped HBase namespace doesn't exist %s for namespace %s",
-                                            hbaseNamespace, namespaceMeta.getName()));
+        throw new IOException(String.format("HBase namespace '%s' specified for new namespace '%s' does not" +
+                                              " exist. Please specify an existing HBase namespace.", hbaseNamespace,
+                                            namespaceMeta.getName()));
       }
     }
   }

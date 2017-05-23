@@ -138,7 +138,9 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
       // no namespace custom location was provided one must be created by cdap
       namespaceHome = namespacedLocationFactory.get(namespaceMeta);
       if (namespaceHome.exists()) {
-        throw new FileAlreadyExistsException(namespaceHome.toString());
+        throw new FileAlreadyExistsException(null, null,
+                                             String.format("HDFS directory '%s' for '%s' already exists.",
+                                                           namespaceHome, namespaceId));
       }
       createdHome = createNamespaceDir(namespaceHome, "home", namespaceId);
     }
