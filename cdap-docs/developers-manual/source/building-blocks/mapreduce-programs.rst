@@ -8,9 +8,9 @@
 MapReduce Programs
 ==================
 
-A *MapReduce* program is used to process data in batch. MapReduce can be
+A *MapReduce program* is used to process data in batch. MapReduce can be
 written as in a conventional Hadoop system. Additionally, CDAP
-**datasets** can be accessed from MapReduce as both input and
+:ref:`datasets <datasets-index>` can be accessed from MapReduce as both input and
 output.
 
 To process data using MapReduce, either specify ``addMapReduce()`` in your
@@ -19,7 +19,7 @@ application specification::
   public void configure() {
     ...
     addMapReduce(new WordCountJob());
-    
+
 or specify ``addWorkflow()`` in your application and specify your MapReduce in the
 :ref:`workflow <workflows>` definition::
 
@@ -27,7 +27,7 @@ or specify ``addWorkflow()`` in your application and specify your MapReduce in t
     ...
     // Run a MapReduce on the acquired data using a workflow
     addWorkflow(new PurchaseHistoryWorkflow());
-    
+
 It is recommended to implement the ``MapReduce`` interface by extending the ``AbstractMapReduce``
 class, which allows the overriding of these three methods:
 
@@ -89,7 +89,7 @@ CDAP ``Mapper`` and ``Reducer`` implement `the standard Hadoop APIs
 (note that CDAP only supports the "new" API in ``org.apache.hadoop.mapreduce``, and not the
 "old" API in ``org.apache.hadoop.mapred``)::
 
-  public static class PurchaseMapper 
+  public static class PurchaseMapper
       extends Mapper<byte[], Purchase, Text, Text> {
 
     private Metrics mapMetrics;
@@ -105,9 +105,9 @@ CDAP ``Mapper`` and ``Reducer`` implement `the standard Hadoop APIs
     }
   }
 
-  public static class PerUserReducer 
+  public static class PerUserReducer
       extends Reducer<Text, Text, String, PurchaseHistory> {
-    
+
     @UseDataSet("frequentCustomers")
     private KeyValueTable frequentCustomers;
     private Metrics reduceMetrics;
@@ -226,7 +226,7 @@ See also the section on :ref:`Using Datasets in Programs <datasets-in-programs>`
 
 .. rubric: Datasets as MapReduce Input or Output
 
-A MapReduce program can interact with a dataset by using it as 
+A MapReduce program can interact with a dataset by using it as
 :ref:`an input <mapreduce-datasets-input>` or :ref:`an output <mapreduce-datasets-output>`.
 The dataset needs to implement specific interfaces to support this, as described in the
 following sections.
@@ -345,9 +345,10 @@ some rules to follow:
   at the time the long-running transaction was started.
 
 - All writes of the long-running transaction are committed atomically,
-  and only become visible to others after they are committed.
+  and only become visible to other transactions after they are committed.
 
-- The long-running transaction can read its own writes.
+- Tasks of a MapReduce program may not see each other's writes because of buffering of
+  datasets.
 
 However, there is a key difference: long-running transactions do not participate in
 conflict detection. If another transaction overlaps with the long-running transaction and
@@ -360,8 +361,11 @@ processing writes to a disjoint set of columns.
 
 It's important to note that the MapReduce framework will reattempt a task (Mapper or
 Reducer) if it fails. If the task is writing to a dataset, the reattempt of the task will
-most likely repeat the writes that were already performed in the failed attempt. Therefore
+most likely repeat the writes that were already performed in the failed attempt. Therefore,
 it is highly advisable that all writes performed by MapReduce programs be idempotent.
+
+If your Map Reduce Job performs speculative execution, a similar repetition of
+of writes can occur.
 
 See :ref:`transaction-system` for additional information.
 

@@ -156,19 +156,17 @@ from the cache, every thread that uses it must individually call ``discardDatase
 Multi-threading and Dataset Access
 ----------------------------------
 
-As mentioned above, if a program is multi-threaded, CDAP will make sure that every
-thread has its own instance of a dataset. This is because datasets are not thread-safe,
-and each thread must operate on its own instance of a Dataset.
+As mentioned above |---| under :ref:`static <static-dataset-instantiation>` and
+:ref:`dynamic <dynamic-dataset-instantiation>` instantiation |---| if a program is
+multi-threaded, CDAP will make sure that every thread has its own instance of a dataset.
+This is because **datasets are not thread-safe**, cannot be shared across threads, and
+each thread must operate on its own instance of a Dataset.
 
 As a consequence, multiple threads accessing the same dataset will have different
-instances of the same dataset. If they are in the same transaction, issues can arise. If the
-datasets are :ref:`Table-based <datasets-overview-types>`: the threads will buffer writes
-in-memory and will not see each other's writes. Then, upon flush, it is possible that the
-different threads will overwrite each others' changes. For :ref:`FileSets <datasets-fileset>`,
-multiple threads can end up writing to the same file.
+instances of the same dataset.
 
-One solution is to design your use of the datasets so that each thread writes to unique
-columns, preventing overwriting.
+As :ref:`transactions <transaction-system>` are not thread-safe, the dataset context of a
+transaction as well as datasets obtained through it may not be shared across threads.
 
 .. _cross-namespace-dataset-access:
 
