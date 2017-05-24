@@ -85,7 +85,6 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
   protected final void startUp() throws Exception {
     streamCoordinatorClient.startAndWait();
     janitorService.startAndWait();
-    sizeCollector.startAndWait();
     initialize();
   }
 
@@ -97,7 +96,6 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
       executor.shutdownNow();
     }
 
-    sizeCollector.stopAndWait();
     janitorService.stopAndWait();
     streamCoordinatorClient.stopAndWait();
   }

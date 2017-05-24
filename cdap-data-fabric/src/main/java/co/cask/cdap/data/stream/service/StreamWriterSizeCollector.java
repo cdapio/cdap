@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Keep track of the sizes of the files written by one {@link StreamHandler}.
  */
-public interface StreamWriterSizeCollector extends Service {
+public interface StreamWriterSizeCollector {
 
   // TODO have one implementation of this
 

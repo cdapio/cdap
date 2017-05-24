@@ -18,14 +18,10 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.AbstractIdleService;
-import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -33,27 +29,13 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Basic implementation of a {@link StreamWriterSizeCollector}.
  */
-public class BasicStreamWriterSizeCollector extends AbstractIdleService implements StreamWriterSizeCollector {
+public class BasicStreamWriterSizeCollector implements StreamWriterSizeCollector {
   private static final Logger LOG = LoggerFactory.getLogger(BasicStreamWriterSizeCollector.class);
 
   private final ConcurrentMap<StreamId, AtomicLong> streamSizes;
-  private final List<Cancellable> truncationSubscriptions;
 
   public BasicStreamWriterSizeCollector() {
     this.streamSizes = Maps.newConcurrentMap();
-    this.truncationSubscriptions = Lists.newArrayList();
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-    // No-op
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    for (Cancellable subscription : truncationSubscriptions) {
-      subscription.cancel();
-    }
   }
 
   public Map<StreamId, AtomicLong> getStreamSizes() {
