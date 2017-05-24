@@ -41,6 +41,7 @@ import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +58,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -130,6 +133,12 @@ public final class ConcurrentStreamWriter implements Closeable {
             LOG.error("Error while refreshing event queue.", t);
           }
         }
+      }
+
+      @Override
+      protected ScheduledExecutorService executor() {
+        return Executors.newSingleThreadScheduledExecutor(
+          Threads.createDaemonThreadFactory("concurrent-stream-writer"));
       }
 
       @Override
