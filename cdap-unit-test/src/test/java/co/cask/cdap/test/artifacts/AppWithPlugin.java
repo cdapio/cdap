@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -82,6 +83,7 @@ public class AppWithPlugin extends AbstractApplication {
   }
 
   public static class WorkflowWithPlugin extends AbstractWorkflow {
+    private Metrics metrics;
 
     @Override
     protected void configure() {
@@ -93,6 +95,7 @@ public class AppWithPlugin extends AbstractApplication {
 
     @Override
     public void destroy() {
+      metrics.gauge(String.format("destroy.%s", WORKFLOW), 1);
       WorkflowContext context = getContext();
       KeyValueTable table = context.getDataset(WORKFLOW_TABLE);
       try {
