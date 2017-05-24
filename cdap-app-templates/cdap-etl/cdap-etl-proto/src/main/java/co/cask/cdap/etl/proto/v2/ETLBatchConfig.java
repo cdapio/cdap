@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * ETL Batch Configuration.
@@ -38,6 +39,7 @@ import java.util.Set;
 public final class ETLBatchConfig extends ETLConfig {
   private final Engine engine;
   private final String schedule;
+  private final Integer maxConcurrentRuns;
   private final List<ETLStage> postActions;
   // for backwards compatibility
   private final List<ETLStage> actions;
@@ -53,12 +55,14 @@ public final class ETLBatchConfig extends ETLConfig {
                          Resources driverResources,
                          Resources clientResources,
                          int numOfRecordsPreview,
+                         @Nullable Integer maxConcurrentRuns,
                          Map<String, String> engineProperties) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
           numOfRecordsPreview, engineProperties);
     this.postActions = ImmutableList.copyOf(postActions);
     this.engine = engine;
     this.schedule = schedule;
+    this.maxConcurrentRuns = maxConcurrentRuns;
     // field only exists for backwards compatibility -- used by convertOldConfig()
     this.actions = null;
   }
@@ -94,6 +98,11 @@ public final class ETLBatchConfig extends ETLConfig {
     return schedule;
   }
 
+  @Nullable
+  public Integer getMaxConcurrentRuns() {
+    return maxConcurrentRuns;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -111,13 +120,14 @@ public final class ETLBatchConfig extends ETLConfig {
     return Objects.equals(engine, that.engine) &&
       Objects.equals(schedule, that.schedule) &&
       Objects.equals(postActions, that.postActions) &&
-      Objects.equals(actions, that.actions);
+      Objects.equals(actions, that.actions) &&
+      Objects.equals(maxConcurrentRuns, that.maxConcurrentRuns);
 
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), engine, schedule, postActions, actions);
+    return Objects.hash(super.hashCode(), engine, schedule, postActions, actions, maxConcurrentRuns);
   }
 
   @Override
@@ -125,7 +135,9 @@ public final class ETLBatchConfig extends ETLConfig {
     return "ETLBatchConfig{" +
       "engine=" + engine +
       ", schedule='" + schedule + '\'' +
+      ", maxConcurrentRuns=" + maxConcurrentRuns +
       ", postActions=" + postActions +
+      ", actions=" + actions +
       "} " + super.toString();
   }
 
@@ -140,6 +152,7 @@ public final class ETLBatchConfig extends ETLConfig {
     private final String schedule;
     private Engine engine;
     private List<ETLStage> endingActions;
+    private Integer maxConcurrentRuns;
 
     public Builder(String schedule) {
       super();
@@ -174,10 +187,15 @@ public final class ETLBatchConfig extends ETLConfig {
       return this;
     }
 
+    public Builder setMaxConcurrentRuns(int maxConcurrentRuns) {
+      this.maxConcurrentRuns = maxConcurrentRuns;
+      return this;
+    }
+
     public ETLBatchConfig build() {
       return new ETLBatchConfig(stages, connections, endingActions, resources, stageLoggingEnabled,
                                 processTimingEnabled, engine, schedule, driverResources, clientResources,
-                                numOfRecordsPreview, properties);
+                                numOfRecordsPreview, maxConcurrentRuns, properties);
     }
   }
 }
