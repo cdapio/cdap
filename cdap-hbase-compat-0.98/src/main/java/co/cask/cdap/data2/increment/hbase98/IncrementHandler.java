@@ -19,7 +19,6 @@ package co.cask.cdap.data2.increment.hbase98;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase.TimestampOracle;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.Cell;
@@ -88,6 +87,13 @@ public class IncrementHandler extends BaseRegionObserver {
       for (HColumnDescriptor columnDesc : tableDesc.getFamilies()) {
         state.initFamily(columnDesc.getName(), convertFamilyValues(columnDesc.getValues()));
       }
+    }
+  }
+
+  @Override
+  public void stop(CoprocessorEnvironment e) throws IOException {
+    if (state != null) {
+      state.stop();
     }
   }
 

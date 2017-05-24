@@ -25,8 +25,10 @@ import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.SaltedHBaseQueueStrategy;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
+import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCacheSupplier;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfig;
+import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.TableNameAwareCacheSupplier;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import com.google.common.base.Supplier;
@@ -51,6 +53,7 @@ import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.tephra.TxConstants;
+import org.apache.tephra.coprocessor.CacheSupplier;
 import org.apache.tephra.coprocessor.TransactionStateCache;
 import org.apache.tephra.hbase.txprune.CompactionState;
 import org.apache.tephra.persist.TransactionVisibilityState;
@@ -76,9 +79,13 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   private TableName configTableName;
   private CConfigurationReader cConfReader;
   private Supplier<TransactionVisibilityState> txSnapshotSupplier;
+
+  private CacheSupplier<TransactionStateCache> txStateCacheSupplier;
+  private ConsumerConfigCacheSupplier configCacheSupplier;
+  private CompactionState compactionState;
+
   private TransactionStateCache txStateCache;
   private ConsumerConfigCache configCache;
-  private CompactionState compactionState;
   private Boolean pruneEnable;
 
   private int prefixBytes;
@@ -110,7 +117,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       Configuration conf = env.getConfiguration();
       String hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
       final String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
-      txStateCache = new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf).get();
+      txStateCacheSupplier = new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
+      txStateCache = txStateCacheSupplier.get();
       txSnapshotSupplier = new Supplier<TransactionVisibilityState>() {
         @Override
         public TransactionVisibilityState get() {
@@ -121,7 +129,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       configTableName = HTableNameConverter.toTableName(hbaseNamespacePrefix,
                                                         TableId.from(namespaceId, queueConfigTableId));
       cConfReader = new CConfigurationReader(conf, sysConfigTablePrefix);
-      configCache = createConfigCache(env);
+      configCacheSupplier = createConfigCache(env);
+      configCache = configCacheSupplier.get();
     }
   }
 
@@ -130,6 +139,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     if (compactionState != null) {
       compactionState.stop();
     }
+    configCacheSupplier.release();
+    txStateCacheSupplier.release();
   }
 
   @Override
@@ -202,7 +213,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       // If prune enable has never been initialized, try to do so now
       initializePruneState(env);
     } else {
-      CConfiguration conf = getConfigCache(env).getCConf();
+      CConfiguration conf = configCache.getCConf();
       if (conf != null) {
         boolean newPruneEnable = conf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE,
                                                  TxConstants.TransactionPruning.DEFAULT_PRUNE_ENABLE);
@@ -220,7 +231,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   }
 
   private void initializePruneState(RegionCoprocessorEnvironment env) {
-    CConfiguration conf = getConfigCache(env).getCConf();
+    CConfiguration conf = configCache.getCConf();
     if (conf != null) {
       pruneEnable = conf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE,
                                     TxConstants.TransactionPruning.DEFAULT_PRUNE_ENABLE);
@@ -254,22 +265,14 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   // needed for queue unit-test
   @SuppressWarnings("unused")
   private void updateCache() throws IOException {
-    ConsumerConfigCache configCache = this.configCache;
     if (configCache != null) {
       configCache.updateCache();
     }
   }
 
-  private ConsumerConfigCache getConfigCache(CoprocessorEnvironment env) {
-    if (!configCache.isAlive()) {
-      configCache = createConfigCache(env);
-    }
-    return configCache;
-  }
-
-  private ConsumerConfigCache createConfigCache(final CoprocessorEnvironment env) {
-    return ConsumerConfigCache.getInstance(configTableName, cConfReader,
-                                           txSnapshotSupplier, new InputSupplier<HTableInterface>() {
+  private ConsumerConfigCacheSupplier createConfigCache(final CoprocessorEnvironment env) {
+    return TableNameAwareCacheSupplier.getSupplier(configTableName, cConfReader,
+                                                   txSnapshotSupplier, new InputSupplier<HTableInterface>() {
         @Override
         public HTableInterface getInput() throws IOException {
           return env.getTable(configTableName);
@@ -341,7 +344,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
                                                            cell.getRowLength());
           currentQueue = queueName.toBytes();
           currentQueueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
-          consumerConfig = getConfigCache(env).getConsumerConfig(currentQueue);
+          consumerConfig = configCache.getConsumerConfig(currentQueue);
         }
 
         invalidTxData = false;
@@ -357,7 +360,6 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
           // no config is present yet and not invalid data, so cannot evict
           return hasNext;
         }
-
 
         if (invalidTxData || canEvict(consumerConfig, results)) {
           rowsEvicted++;
