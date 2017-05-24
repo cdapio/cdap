@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Supplier;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
@@ -30,6 +29,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.tephra.TxConstants;
+import org.apache.tephra.coprocessor.CacheSupplier;
 import org.apache.tephra.coprocessor.TransactionStateCache;
 import org.apache.tephra.persist.TransactionVisibilityState;
 
@@ -57,16 +57,25 @@ public class IncrementHandlerState {
 
   public static final Log LOG = LogFactory.getLog(IncrementHandlerState.class);
   private final HTableDescriptor hTableDescriptor;
-
-  private TransactionStateCache cache;
-  private TimestampOracle timeOracle = new TimestampOracle();
   private final Configuration conf;
+
   protected final Set<byte[]> txnlFamilies = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
   protected Map<byte[], Long> ttlByFamily = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+
+  private CacheSupplier<TransactionStateCache> txStateCacheSupplier;
+  private TransactionStateCache cache;
+
+  private TimestampOracle timeOracle = new TimestampOracle();
 
   public IncrementHandlerState(Configuration conf, HTableDescriptor hTableDescriptor) {
     this.conf = conf;
     this.hTableDescriptor = hTableDescriptor;
+  }
+
+  public void stop() {
+    if (txStateCacheSupplier != null) {
+      txStateCacheSupplier.release();
+    }
   }
 
   @VisibleForTesting
@@ -74,7 +83,8 @@ public class IncrementHandlerState {
     this.timeOracle = timeOracle;
   }
 
-  protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(HTableDescriptor htd, Configuration conf) {
+  protected CacheSupplier<TransactionStateCache> getTransactionStateCacheSupplier(HTableDescriptor htd,
+                                                                                  Configuration conf) {
     String tablePrefix = htd.getValue(Constants.Dataset.TABLE_PREFIX);
     String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(tablePrefix);
     return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
@@ -106,8 +116,8 @@ public class IncrementHandlerState {
 
     // get the transaction state cache as soon as we have a transactional family
     if (!txnlFamilies.isEmpty() && cache == null) {
-      Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(hTableDescriptor, conf);
-      this.cache = cacheSupplier.get();
+      txStateCacheSupplier = getTransactionStateCacheSupplier(hTableDescriptor, conf);
+      cache = txStateCacheSupplier.get();
     }
   }
 

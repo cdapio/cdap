@@ -25,7 +25,6 @@ import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.TopicMetadataCache;
 import co.cask.cdap.messaging.TopicMetadataCacheSupplier;
-import com.google.common.base.Supplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -51,6 +50,7 @@ import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.tephra.TxConstants;
 import org.apache.tephra.coprocessor.TransactionStateCache;
+import org.apache.tephra.coprocessor.TransactionStateCacheSupplier;
 import org.apache.tephra.hbase.txprune.CompactionState;
 import org.apache.tephra.persist.TransactionVisibilityState;
 
@@ -78,6 +78,7 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
   private static final Log LOG = LogFactory.getLog(MessageTableRegionObserver.class);
 
   private int prefixLength;
+  private TransactionStateCacheSupplier txStateCacheSupplier;
   private TransactionStateCache txStateCache;
   private TopicMetadataCache topicMetadataCache;
 
@@ -98,9 +99,8 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
       String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
       CConfigurationReader cConfReader = new CConfigurationReader(env.getConfiguration(), sysConfigTablePrefix);
 
-      Supplier<TransactionStateCache> cacheSupplier = getTransactionStateCacheSupplier(hbaseNamespacePrefix,
-                                                                                       env.getConfiguration());
-      txStateCache = cacheSupplier.get();
+      txStateCacheSupplier = getTransactionStateCacheSupplier(hbaseNamespacePrefix, env.getConfiguration());
+      txStateCache = txStateCacheSupplier.get();
       topicMetadataCacheSupplier = new TopicMetadataCacheSupplier(env, cConfReader, hbaseNamespacePrefix,
                                                                   metadataTableNamespace, new DefaultScanBuilder());
       topicMetadataCache = topicMetadataCacheSupplier.get();
@@ -109,10 +109,11 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
 
   @Override
   public void stop(CoprocessorEnvironment e) {
-    topicMetadataCacheSupplier.release();
     if (compactionState != null) {
       compactionState.stop();
     }
+    topicMetadataCacheSupplier.release();
+    txStateCacheSupplier.release();
   }
 
   @Override
@@ -231,7 +232,7 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
     }
   }
 
-  private Supplier<TransactionStateCache> getTransactionStateCacheSupplier(String tablePrefix, Configuration conf) {
+  private TransactionStateCacheSupplier getTransactionStateCacheSupplier(String tablePrefix, Configuration conf) {
     String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(tablePrefix);
     return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
   }
