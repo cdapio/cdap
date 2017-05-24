@@ -126,9 +126,9 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   }
 
   /**
-   * Returns the value for the {@code --master} argument for the Spark submission.
+   * Add the {@code --master} argument for the Spark submission.
    */
-  protected abstract String getMaster(Map<String, String> configs);
+  protected abstract void addMaster(Map<String, String> configs, ImmutableList.Builder<String> argBuilder);
 
   /**
    * Invoked for stopping the Spark job explicitly.
@@ -185,7 +185,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
                                              List<LocalizeResource> resources, File jobJar) {
     ImmutableList.Builder<String> builder = ImmutableList.builder();
 
-    builder.add("--master").add(getMaster(configs));
+    addMaster(configs, builder);
     builder.add("--class").add(SparkMainWrapper.class.getName());
     builder.add("--conf").add("spark.app.name=" + spec.getName());
 
