@@ -21,7 +21,7 @@ import T from 'i18n-react';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
 import {Redirect} from 'react-router-dom';
-import sortBy from 'lodash/sortBy';
+import orderBy from 'lodash/orderBy';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
 import LoadingSVG from 'components/LoadingSVG';
 import DataPrepConnections from 'components/DataPrepConnections';
@@ -122,7 +122,7 @@ export default class DataPrepHome extends Component {
           });
           return;
         }
-        let sortedWorkspace = sortBy(res.values, ['name']);
+        let sortedWorkspace = orderBy(res.values, [(workspace) => workspace.name.toLowerCase()], ['asc']);
         let isCurrentWorkspaceIdValid = sortedWorkspace.find(ws => ws.id === this.props.match.params.workspaceId);
         if (this.props.match.params.workspaceId && !isCurrentWorkspaceIdValid) {
           let url = this.props.match.url.slice(0, this.props.match.url.indexOf(this.props.match.params.workspaceId));

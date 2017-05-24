@@ -199,6 +199,7 @@ export default class DataPrep extends Component {
       <WorkspaceTabs
         workspaceId={this.state.currentWorkspace}
         onWorkspaceDelete={this.props.onWorkspaceDelete}
+        sidePanelToggle={this.state.sidePanelToggle}
       />
     );
   }
